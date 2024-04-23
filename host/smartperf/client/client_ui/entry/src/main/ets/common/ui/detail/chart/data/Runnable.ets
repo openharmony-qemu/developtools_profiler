@@ -13,23 +13,25 @@
  * limitations under the License.
  */
 
-import {Poolable} from '../utils/Poolable';
+import { Poolable } from '../utils/Poolable';
 export default class Runnable extends Poolable {
-  _type:string;
+  _type: string;
   callback: {};
 
-  constructor(_type:string,callback:{}){
+  constructor(_type: string, callback: {}) {
     super();
     this._type = _type;
     this.callback = callback;
   }
 
-  protected setType(_type:string){
+  protected setType(_type: string) {
     this._type = _type;
   }
 
-  protected setCallback(callback: {}){
+  protected setCallback(callback: {}) {
     this.callback = callback;
   }
-  public instantiate(): Poolable{return null};
+  public instantiate(): Poolable {
+    return null;
+  }
 }

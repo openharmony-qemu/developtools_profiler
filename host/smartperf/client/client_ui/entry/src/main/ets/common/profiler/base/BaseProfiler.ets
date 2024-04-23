@@ -13,10 +13,10 @@
  * limitations under the License.
  */
 import { GPData } from '../../entity/DatabaseEntity';
-import { CollectorType } from './ProfilerConstant'
+import { CollectorType } from './ProfilerConstant';
 
 export abstract class BaseProfiler {
-  abstract init(): CollectorType
-  abstract isSupport(): Boolean
-  abstract readData(): GPData
+  abstract init(): CollectorType;
+  abstract isSupport(): Boolean;
+  abstract readData(): GPData;
 }

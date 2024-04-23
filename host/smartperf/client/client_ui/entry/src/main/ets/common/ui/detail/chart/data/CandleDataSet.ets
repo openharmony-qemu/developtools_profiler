@@ -13,21 +13,20 @@
  * limitations under the License.
  */
 
-import {DataSet} from './DataSet';
+import { DataSet } from './DataSet';
 import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet';
 import ColorTemplate from '../utils/ColorTemplate';
-import {JArrayList} from '../utils/JArrayList';
+import { JArrayList } from '../utils/JArrayList';
 import CandleEntry from './CandleEntry';
 import Utils from '../utils/Utils';
 import ICandleDataSet from '../interfaces/datasets/ICandleDataSet';
-import Paint, {Style} from '../data/paint';
+import Paint, { Style } from '../data/paint';
 
 /**
  * DataSet for the CandleStickChart.
  *
  */
 export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleEntry> implements ICandleDataSet {
-
   /**
    * the width of the shadow of the candle
    */
@@ -55,7 +54,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    * paint style when open < close
    * increasing candlesticks are traditionally hollow
    */
-  protected mIncreasingPaintStyle: Style= Style.STROKE;
+  protected mIncreasingPaintStyle: Style = Style.STROKE;
   /**
    * paint style when open > close
    * descreasing candlesticks are traditionally filled
@@ -111,30 +110,22 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
     candleDataSet.mShadowColor = this.mShadowColor;
   }
 
-  public myCalcMinMax(e: CandleEntry): void  {
+  public myCalcMinMax(e: CandleEntry): void {
+    if (e.getLow() < this.mYMin) this.mYMin = e.getLow();
 
-    if (e.getLow() < this.mYMin)
-    this.mYMin = e.getLow();
-
-    if (e.getHigh() > this.mYMax)
-    this.mYMax = e.getHigh();
+    if (e.getHigh() > this.mYMax) this.mYMax = e.getHigh();
 
     this.calcMinMaxX(e);
   }
 
   protected myCalcMinMaxY(e: CandleEntry): void {
+    if (e.getHigh() < this.mYMin) this.mYMin = e.getHigh();
 
-    if (e.getHigh() < this.mYMin)
-    this.mYMin = e.getHigh();
+    if (e.getHigh() > this.mYMax) this.mYMax = e.getHigh();
 
-    if (e.getHigh() > this.mYMax)
-    this.mYMax = e.getHigh();
+    if (e.getLow() < this.mYMin) this.mYMin = e.getLow();
 
-    if (e.getLow() < this.mYMin)
-    this.mYMin = e.getLow();
-
-    if (e.getLow() > this.mYMax)
-    this.mYMax = e.getLow();
+    if (e.getLow() > this.mYMax) this.mYMax = e.getLow();
   }
 
   /**
@@ -143,12 +134,9 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param space
    */
-  public setBarSpace(space: number): void  {
-
-    if (space < 0)
-    space = 0;
-    if (space > 0.45)
-    space = 0.45;
+  public setBarSpace(space: number): void {
+    if (space < 0) space = 0;
+    if (space > 0.45) space = 0.45;
 
     this.mBarSpace = space;
   }
@@ -162,7 +150,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param width
    */
-  public setShadowWidth(width: number): void  {
+  public setShadowWidth(width: number): void {
     this.mShadowWidth = Utils.convertDpToPixel(width);
   }
 
@@ -175,7 +163,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param showCandleBar
    */
-  public setShowCandleBar(showCandleBar: boolean): void  {
+  public setShowCandleBar(showCandleBar: boolean): void {
     this.mShowCandleBar = showCandleBar;
   }
 
@@ -201,7 +189,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param color
    */
-  public setNeutralColor(color: number): void  {
+  public setNeutralColor(color: number): void {
     this.mNeutralColor = color;
   }
 
@@ -215,7 +203,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param color
    */
-  public setIncreasingColor(color: number): void  {
+  public setIncreasingColor(color: number): void {
     this.mIncreasingColor = color;
   }
 
@@ -229,7 +217,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param color
    */
-  public setDecreasingColor(color: number): void  {
+  public setDecreasingColor(color: number): void {
     this.mDecreasingColor = color;
   }
 
@@ -259,7 +247,7 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    *
    * @param decreasingPaintStyle
    */
-  public setDecreasingPaintStyle(decreasingPaintStyle: Style): void  {
+  public setDecreasingPaintStyle(decreasingPaintStyle: Style): void {
     this.mDecreasingPaintStyle = decreasingPaintStyle;
   }
 

@@ -13,152 +13,167 @@
  * limitations under the License.
  */
 
-import Paint,{Style,ImagePaint,RectPaint,BackGroundPaint,PathPaint} from '../data/Paint';
+import Paint, { Style, ImagePaint, RectPaint, BackGroundPaint, PathPaint } from '../data/Paint';
 import MyRect from '../data/Rect';
 import Utils from '../utils/Utils';
 import { ColorStop } from '../data/LineDataSet';
 
-export enum Type{
-  EMPTY, COLOR, LINEAR_GRADIENT, DRAWABLE
+export enum Type {
+  EMPTY,
+  COLOR,
+  LINEAR_GRADIENT,
+  DRAWABLE,
 }
 
-export enum MyDirection{
-  DOWN, UP, RIGHT, LEFT
+export enum MyDirection {
+  DOWN,
+  UP,
+  RIGHT,
+  LEFT,
 }
-export default class Fill{
+export default class Fill {
+  /**
+   * the type of fill
+   */
+  private mType: Type = Type.EMPTY;
 
   /**
-     * the type of fill
-     */
-  private mType:Type = Type.EMPTY;
+   * the color that is used for filling
+   */
+  private mColor: number = null;
+
+  private mFinalColor: number = null;
 
   /**
-     * the color that is used for filling
-     */
-  private mColor:number = null;
+   * the drawable to be used for filling
+   */
+  protected mDrawable: ImagePaint /*mDrawable*/;
 
-  private mFinalColor:number= null;
+  private mGradientColors: number[];
 
-  /**
-     * the drawable to be used for filling
-     */
-  protected mDrawable:ImagePaint/*mDrawable*/;
-
-  private mGradientColors:number[];
-
-  private mGradientPositions:number[];
+  private mGradientPositions: number[];
 
   /**
-     * transparency used for filling
-     */
-  private mAlpha:number = 255;
+   * transparency used for filling
+   */
+  private mAlpha: number = 255;
 
-  constructor (color?:number,startColor?:number,endColor?:number,gradientColors?:number[],gradientPositions?:number[],drawable?:ImagePaint){
-    if(color!=null&&color!=undefined){
+  constructor(
+    color?: number,
+    startColor?: number,
+    endColor?: number,
+    gradientColors?: number[],
+    gradientPositions?: number[],
+    drawable?: ImagePaint
+  ) {
+    if (color != null && color != undefined) {
       this.mType = Type.COLOR;
       this.mColor = color;
       this.calculateFinalColor();
-      return
+      return;
     }
-    if(startColor!=null&&startColor!=undefined&&endColor!=null&&endColor!=undefined){
+    if (startColor != null && startColor != undefined && endColor != null && endColor != undefined) {
       this.mType = Type.LINEAR_GRADIENT;
       this.mGradientColors = [startColor, endColor];
       this.mGradientPositions = [0.0, 1.0];
-      return
+      return;
     }
-    if(gradientColors!=null&&gradientColors!=undefined){
+    if (gradientColors != null && gradientColors != undefined) {
       this.mType = Type.LINEAR_GRADIENT;
       this.mGradientColors = gradientColors;
       this.mGradientPositions = gradientPositions;
-      return
+      return;
     }
-    if(drawable!=null&&drawable!=undefined){
+    if (drawable != null && drawable != undefined) {
       this.mType = Type.DRAWABLE;
       this.mDrawable = drawable;
-      return
+      return;
     }
   }
 
-  public getType():Type{
+  public getType(): Type {
     return this.mType;
   }
 
-  public setType(type:Type):void{
+  public setType(type: Type): void {
     this.mType = type;
   }
 
-  public getColor():number{
+  public getColor(): number {
     return this.mColor;
   }
 
-  public setColor(color:number):void{
+  public setColor(color: number): void {
     this.mColor = color;
     this.calculateFinalColor();
   }
 
-  public getGradientColors():number[] {
+  public getGradientColors(): number[] {
     return this.mGradientColors;
   }
-  public getGradientPositions():number[] {
+  public getGradientPositions(): number[] {
     return this.mGradientPositions;
   }
 
-  public setGradientPositions(positions:number[]):void{
+  public setGradientPositions(positions: number[]): void {
     this.mGradientPositions = positions;
   }
 
-  public setGradientColors( colors?:number[],startColor?:number,endColor?:number):void{
-    if(colors!=null&&colors!=undefined){
+  public setGradientColors(colors?: number[], startColor?: number, endColor?: number): void {
+    if (colors != null && colors != undefined) {
       this.mGradientColors = colors;
-      return
+      return;
     }
-    this.mGradientColors =[startColor, endColor];
+    this.mGradientColors = [startColor, endColor];
   }
 
-  public getAlpha():number{
+  public getAlpha(): number {
     return this.mAlpha;
   }
 
-  public setAlpha(alpha:number):void{
+  public setAlpha(alpha: number): void {
     this.mAlpha = alpha;
     this.calculateFinalColor();
   }
 
-  private calculateFinalColor():void{
-
-    if (this.mColor == null){
+  private calculateFinalColor(): void {
+    if (this.mColor == null) {
       this.mFinalColor = null;
-    } else{
-
-      let alpha:number= Math.floor(((this.mColor >> 24) / 255.0) * (this.mAlpha / 255.0) * 255.0);
+    } else {
+      let alpha: number = Math.floor(((this.mColor >> 24) / 255.0) * (this.mAlpha / 255.0) * 255.0);
       this.mFinalColor = (alpha << 24) | (this.mColor & 0xffffff);
     }
   }
 
-  public fillRect(paint:RectPaint,left:number, top:number, right:number, bottom:number,
-                  gradientDirection:MyDirection):Paint{
-    switch (this.mType){
-
+  public fillRect(
+    paint: RectPaint,
+    left: number,
+    top: number,
+    right: number,
+    bottom: number,
+    gradientDirection: MyDirection
+  ): Paint {
+    switch (this.mType) {
       case Type.EMPTY:
         return;
       case Type.COLOR:
         if (this.mFinalColor == null) return;
-        if (this.isClipPathSupported()){
-          let rectB:BackGroundPaint=new BackGroundPaint();
+        if (this.isClipPathSupported()) {
+          let rectB: BackGroundPaint = new BackGroundPaint();
           rectB.setBackgroundColor(this.mFinalColor);
           return rectB;
-        }else {
+        } else {
           // save
-          let previous:Style= paint.getStyle();
-          let previousColor:number = (paint.getColor() as number);
+          let previous: Style = paint.getStyle();
+          let previousColor: number = paint.getColor() as number;
 
           // set
           paint.setStyle(Style.FILL);
           paint.setColor(this.mFinalColor);
-          let rectP:RectPaint=new RectPaint(paint);
-          rectP.setStartPoint([left,top]);
-          rectP.setWidth(right-left);
-          rectP.setHeight(bottom-top);
+          let rectP: RectPaint = new RectPaint(paint);
+          rectP.setStartPoint([left, top]);
+          rectP.setWidth(right - left);
+          rectP.setHeight(bottom - top);
 
           // restore
           paint.setColor(previousColor);
@@ -168,65 +183,68 @@ export default class Fill{
 
       case Type.LINEAR_GRADIENT:
         if (this.mGradientColors == null) return;
-        let gradient:RectPaint=new RectPaint();
-//        let leftResult:number=(gradientDirection == MyDirection.RIGHT? right: gradientDirection == MyDirection.LEFT ? left: left)
-        let leftResult:number = left;
-//        let topResult:number=(gradientDirection == MyDirection.UP? bottom: gradientDirection == MyDirection.DOWN? top: top)
+        let gradient: RectPaint = new RectPaint();
+      //        let leftResult:number=(gradientDirection == MyDirection.RIGHT? right: gradientDirection == MyDirection.LEFT ? left: left)
+        let leftResult: number = left;
+      //        let topResult:number=(gradientDirection == MyDirection.UP? bottom: gradientDirection == MyDirection.DOWN? top: top)
         let topResult = top;
-//        let rightResult:number=(gradientDirection == MyDirection.RIGHT ? left  : gradientDirection == MyDirection.LEFT? right : left)
-        let rightResult:number=right;
-//        let bottomResult:number=(gradientDirection == MyDirection.UP? top: gradientDirection == MyDirection.DOWN ? bottom: top)
+      //        let rightResult:number=(gradientDirection == MyDirection.RIGHT ? left  : gradientDirection == MyDirection.LEFT? right : left)
+        let rightResult: number = right;
+      //        let bottomResult:number=(gradientDirection == MyDirection.UP? top: gradientDirection == MyDirection.DOWN ? bottom: top)
         let bottomResult = bottom;
-        gradient.setX(leftResult)
-        gradient.setY(topResult)
-        gradient.setWidth(rightResult-leftResult);
+        gradient.setX(leftResult);
+        gradient.setY(topResult);
+        gradient.setWidth(rightResult - leftResult);
         gradient.setHeight(bottomResult - topResult);
         gradient.setStyle(paint.getStyle());
         gradient.setColor(paint.getColor());
-        let colorArr:Array<ColorStop> =new Array<ColorStop>()
+        let colorArr: Array<ColorStop> = new Array<ColorStop>();
 
-        for(let i=0;i<this.mGradientColors.length;i++){
-          colorArr.push([this.mGradientColors[i],this.mGradientPositions[i]])
+        for (let i = 0; i < this.mGradientColors.length; i++) {
+          colorArr.push([this.mGradientColors[i], this.mGradientPositions[i]]);
         }
-        gradient.setGradientFillColor(colorArr)
+        gradient.setGradientFillColor(colorArr);
         return gradient;
 
       case Type.DRAWABLE:
-        if (this.mDrawable == null||this.mDrawable) return
-        let imagePaint=new ImagePaint(this.mDrawable);
-        imagePaint.x=left;
-        imagePaint.y=top;
-        imagePaint.setWidth(right-left)
-        imagePaint.setHeight(bottom-top)
+        if (this.mDrawable == null || this.mDrawable) return;
+        let imagePaint = new ImagePaint(this.mDrawable);
+        imagePaint.x = left;
+        imagePaint.y = top;
+        imagePaint.setWidth(right - left);
+        imagePaint.setHeight(bottom - top);
         return imagePaint;
     }
   }
 
-  public fillPath( chartWidth:number,chartHeight:number,path:string/*Path*/, paint:PathPaint,
-                   clipRect:MyRect):Paint{
-
-    switch (this.mType){
-
+  public fillPath(
+    chartWidth: number,
+    chartHeight: number,
+    path: string /*Path*/,
+    paint: PathPaint,
+    clipRect: MyRect
+  ): Paint {
+    switch (this.mType) {
       case Type.EMPTY:
         return;
 
       case Type.COLOR:
-        if (this.mFinalColor == null||this.mFinalColor==undefined) return;
+        if (this.mFinalColor == null || this.mFinalColor == undefined) return;
 
         if (clipRect != null && this.isClipPathSupported()) {
-          let rectP:BackGroundPaint=new BackGroundPaint();
+          let rectP: BackGroundPaint = new BackGroundPaint();
           rectP.setBackgroundColor(this.mFinalColor);
           return rectP;
         } else {
           // save
-          let previous:Style = paint.getStyle();
+          let previous: Style = paint.getStyle();
           let previousColor = paint.getColor();
 
           // set
           paint.setStyle(Style.FILL);
           paint.setColor(this.mFinalColor);
-          let pathP:PathPaint=new PathPaint(paint);
-          pathP.setCommands(path)
+          let pathP: PathPaint = new PathPaint(paint);
+          pathP.setCommands(path);
           // restore
           paint.setColor(previousColor);
           paint.setStyle(previous);
@@ -234,51 +252,54 @@ export default class Fill{
         }
       case Type.LINEAR_GRADIENT:
         if (this.mGradientColors == null) return;
-        let gradient:PathPaint=new PathPaint();
-        let leftResult:number=0
-        let topResult:number=0
-        let rightResult:number=chartWidth;
-        let bottomResult:number=chartHeight
-        gradient.setX(leftResult)
-        gradient.setY(topResult)
-        gradient.setWidth(rightResult-leftResult);
-        gradient.setHeight(bottomResult-topResult);
-        let colorArr:Array<ColorStop> =new Array<ColorStop>()
-        for(let i=0;i<this.mGradientColors.length;i++){
-          colorArr.push([this.mGradientColors[i],this.mGradientPositions[i]])
+        let gradient: PathPaint = new PathPaint();
+        let leftResult: number = 0;
+        let topResult: number = 0;
+        let rightResult: number = chartWidth;
+        let bottomResult: number = chartHeight;
+        gradient.setX(leftResult);
+        gradient.setY(topResult);
+        gradient.setWidth(rightResult - leftResult);
+        gradient.setHeight(bottomResult - topResult);
+        let colorArr: Array<ColorStop> = new Array<ColorStop>();
+        for (let i = 0; i < this.mGradientColors.length; i++) {
+          colorArr.push([this.mGradientColors[i], this.mGradientPositions[i]]);
         }
         gradient.setStyle(paint.getStyle());
         gradient.setColor(paint.getColor());
-        gradient.setGradientFillColor(colorArr)
+        gradient.setGradientFillColor(colorArr);
         return gradient;
       case Type.DRAWABLE:
         if (this.mDrawable == null) return;
 
         this.ensureClipPathSupported();
 
-        let imagePaint=new ImagePaint(this.mDrawable);
-        let leftImage:number=(clipRect == null ? 0 : clipRect.left)
-        let topImage:number=(clipRect == null ? 0 : clipRect.top)
-        let rightImage:number=(clipRect == null ?chartWidth : clipRect.right)
-        let bottomImage:number=(clipRect == null ? chartHeight: clipRect.bottom)
-        imagePaint.x=leftImage;
-        imagePaint.y=topImage;
-        imagePaint.setWidth(rightImage-leftImage)
-        imagePaint.setHeight(bottomImage-topImage)
+        let imagePaint = new ImagePaint(this.mDrawable);
+        let leftImage: number = clipRect == null ? 0 : clipRect.left;
+        let topImage: number = clipRect == null ? 0 : clipRect.top;
+        let rightImage: number = clipRect == null ? chartWidth : clipRect.right;
+        let bottomImage: number = clipRect == null ? chartHeight : clipRect.bottom;
+        imagePaint.x = leftImage;
+        imagePaint.y = topImage;
+        imagePaint.setWidth(rightImage - leftImage);
+        imagePaint.setHeight(bottomImage - topImage);
 
         return this.mDrawable;
     }
   }
 
-  private isClipPathSupported():boolean{
+  private isClipPathSupported(): boolean {
     return Utils.getSDKInt() >= 8;
   }
 
-  private ensureClipPathSupported():void{
-    if (Utils.getSDKInt() < 8)
-    {
-      throw new Error("Fill-drawables not (yet) supported below API level 18, " +
-      "this code was run on API level " + Utils.getSDKInt() + ".");
+  private ensureClipPathSupported(): void {
+    if (Utils.getSDKInt() < 8) {
+      throw new Error(
+        'Fill-drawables not (yet) supported below API level 18, ' +
+        'this code was run on API level ' +
+        Utils.getSDKInt() +
+        '.'
+      );
     }
   }
 }

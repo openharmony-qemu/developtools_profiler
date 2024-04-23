@@ -94,6 +94,7 @@ private:
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
     long long lastTime = -1;
+    long long lastFrameReadyTime = 0;
     int fpsNum = 0;
     bool isFirstResult = false;
     long oneSec = 1000000;

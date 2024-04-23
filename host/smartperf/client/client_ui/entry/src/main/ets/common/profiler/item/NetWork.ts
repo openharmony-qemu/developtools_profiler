@@ -13,59 +13,58 @@
  * limitations under the License.
  */
 import { createGPData } from '../base/BaseProfilerUtils';
-import { BaseProfiler } from '../base/BaseProfiler'
-import { CollectorType } from '../base/ProfilerConstant'
-import connection from '@ohos.net.connection'
-import SPLogger from '../../../common/utils/SPLogger'
+import { BaseProfiler } from '../base/BaseProfiler';
+import { CollectorType } from '../base/ProfilerConstant';
+import connection from '@ohos.net.connection';
+import SPLogger from '../../../common/utils/SPLogger';
 
-export class NetWork extends BaseProfiler{
-  private netMap: Map<String, String> = new Map
-  private catchNetUp = "-1"
-  private catchNetDown = "-1"
-  public static instance: NetWork = null
+export class NetWork extends BaseProfiler {
+  private netMap: Map<String, String> = new Map();
+  private catchNetUp = '-1';
+  private catchNetDown = '-1';
+  public static instance: NetWork = null;
   public static getInstance() {
     if (this.instance == null) {
-      this.instance = new NetWork()
+      this.instance = new NetWork();
     }
-    return this.instance
+    return this.instance;
   }
 
   init() {
     //初始化NET
     connection.getDefaultNet().then(function (netHandle) {
       connection.getNetCapabilities(netHandle).then(function (info) {
-        if(info != undefined){
-          globalThis.isNetAlive = true
-        }else{
-          globalThis.isNetAlive = false
+        if (info != undefined) {
+          globalThis.isNetAlive = true;
+        } else {
+          globalThis.isNetAlive = false;
         }
-      })
-    })
-    return CollectorType.TYPE_NET
+      });
+    });
+    return CollectorType.TYPE_NET;
   }
 
   isSupport() {
-    SPLogger.DEBUG(NetWork.name, "networkInfo support:" + globalThis.isNetAlive)
-    return globalThis.isNetAlive
+    SPLogger.DEBUG(NetWork.name, 'networkInfo support:' + globalThis.isNetAlive);
+    return globalThis.isNetAlive;
   }
 
   readData() {
-    this.handleMessage()
-    this.netMap.set("netSpeedUp",this.catchNetUp)
-    this.netMap.set("netSpeedDown",this.catchNetDown)
-    return createGPData("NetWork", this.netMap)
+    this.handleMessage();
+    this.netMap.set('netSpeedUp', this.catchNetUp);
+    this.netMap.set('netSpeedDown', this.catchNetDown);
+    return createGPData('NetWork', this.netMap);
   }
 
-  handleMessage(){
-    var that = this
+  handleMessage() {
+    var that = this;
     connection.getDefaultNet().then(function (netHandle) {
       connection.getNetCapabilities(netHandle).then(function (info) {
-        SPLogger.DEBUG(NetWork.name,"networkInfo up:" + info["linkUpBandwidthKbps"] )
-        SPLogger.DEBUG(NetWork.name,"networkInfo down:" + info["linkDownBandwidthKbps"])
-        that.catchNetDown = info["linkDownBandwidthKbps"].toString()
-        that.catchNetUp = info["linkUpBandwidthKbps"].toString()
-      })
-    })
+        SPLogger.DEBUG(NetWork.name, 'networkInfo up:' + info['linkUpBandwidthKbps']);
+        SPLogger.DEBUG(NetWork.name, 'networkInfo down:' + info['linkDownBandwidthKbps']);
+        that.catchNetDown = info['linkDownBandwidthKbps'].toString();
+        that.catchNetUp = info['linkUpBandwidthKbps'].toString();
+      });
+    });
   }
-
 }

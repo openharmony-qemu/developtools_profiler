@@ -17,25 +17,23 @@ import RadarEntry from '../../data/RadarEntry';
 import ILineRadarDataSet from './ILineRadarDataSet';
 
 export default interface IRadarDataSet extends ILineRadarDataSet<RadarEntry> {
-
     // flag indicating whether highlight circle should be drawn or not
-    isDrawHighlightCircleEnabled() : boolean;
+    isDrawHighlightCircleEnabled(): boolean;
 
     // Sets whether highlight circle should be drawn or not
-    setDrawHighlightCircleEnabled(enabled : boolean) : void;
+    setDrawHighlightCircleEnabled(enabled: boolean): void;
 
-    getHighlightCircleFillColor() : number;
+    getHighlightCircleFillColor(): number;
 
     // The stroke color for highlight circle.
     // If Utils.COLOR_NONE, the color of the dataset is taken.
-    getHighlightCircleStrokeColor() : number;
+    getHighlightCircleStrokeColor(): number;
 
-    getHighlightCircleStrokeAlpha() : number;
+    getHighlightCircleStrokeAlpha(): number;
 
-    getHighlightCircleInnerRadius() : number;
+    getHighlightCircleInnerRadius(): number;
 
-    getHighlightCircleOuterRadius() : number;
+    getHighlightCircleOuterRadius(): number;
 
-    getHighlightCircleStrokeWidth() : number;
-
+    getHighlightCircleStrokeWidth(): number;
 }

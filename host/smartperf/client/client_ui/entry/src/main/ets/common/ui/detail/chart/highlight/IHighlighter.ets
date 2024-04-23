@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-import Highlight from './Highlight'
+import Highlight from './Highlight';
 
-export default interface IHighlighter
-{
-
+export default interface IHighlighter {
     /**
      * Returns a Highlight object corresponding to the given x- and y- touch positions in pixels.
      *
@@ -25,5 +23,5 @@ export default interface IHighlighter
      * @param y
      * @return
      */
-    getHighlight(x:number,y:number):Highlight ;
+    getHighlight(x: number, y: number): Highlight;
 }

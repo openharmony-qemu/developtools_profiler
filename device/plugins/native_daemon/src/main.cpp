@@ -177,6 +177,11 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
             }
         } else if (args[idx] == "-jn") {
             hookData.filterNapiName = args[idx + 1];
+        } else if (args[idx] == "-mfm") {
+            hookData.mallocFreeMatchingInterval = std::stoi(args[idx + 1], nullptr);
+            if (std::to_string(hookData.mallocFreeMatchingInterval) != args[idx + 1]) {
+                return false;
+            }
         } else {
             printf("args[%zu] = %s\n", idx, args[idx].c_str());
             return false;
@@ -285,6 +290,7 @@ int main(int argc, char* argv[])
                 <-js jsStackReport>
                 <-jsd maxJsStackDepth>
                 <-jn filterNapiName>
+                <-mfm mallocFreeMatchingInterval_>
                 )";
                 printf("%s\n", help.c_str());
                 return 0;

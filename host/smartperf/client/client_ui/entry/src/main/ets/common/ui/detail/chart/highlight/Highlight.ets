@@ -13,47 +13,46 @@
  * limitations under the License.
  */
 
-import {AxisDependency} from '../components/YAxis'
+import { AxisDependency } from '../components/YAxis';
 
 /**
  * Contains information needed to determine the highlighted value.
  */
 export default class Highlight {
-
     /**
      * the x-value of the highlighted value
      */
-    private mX:number = Number.NaN;
+    private mX: number = Number.NaN;
 
     /**
      * the y-value of the highlighted value
      */
-    private mY:number = Number.NaN;
+    private mY: number = Number.NaN;
 
     /**
      * the x-pixel of the highlight
      */
-    private mXPx:number;
+    private mXPx: number;
 
     /**
      * the y-pixel of the highlight
      */
-    private mYPx:number;
+    private mYPx: number;
 
     /**
      * the index of the data object - in case it refers to more than one
      */
-    private mDataIndex:number = -1;
+    private mDataIndex: number = -1;
 
     /**
      * the index of the dataset the highlighted value is in
      */
-    private mDataSetIndex:number;
+    private mDataSetIndex: number;
 
     /**
      * index which value of a stacked bar entry is highlighted, default -1
      */
-    private mStackIndex:number = -1;
+    private mStackIndex: number = -1;
 
     /**
      * the axis the highlighted value belongs to
@@ -63,39 +62,47 @@ export default class Highlight {
     /**
      * the x-position (pixels) on which this highlight object was last drawn
      */
-    private mDrawX:number;
+    private mDrawX: number;
 
     /**
      * the y-position (pixels) on which this highlight object was last drawn
      */
-    private mDrawY:number;
+    private mDrawY: number;
 
-    constructor(x:number,y?:number,dataSetIndex?:number,dataIndex?:number,stackIndex?:number,xPx?:number,yPx?:number,axis?:AxisDependency){
-      this.mX = x;
-      if(y==null||y==undefined){
-        this.mY = Number.NaN
-      }else{
-        this.mY = y;
-      }
-      this.mDataSetIndex = dataSetIndex;
-      this.mStackIndex = stackIndex;
-      if (dataIndex==null||dataIndex==undefined){
-        this.mDataIndex = -1;
-      } else {
-        this.mDataIndex = dataIndex;
-      }
-      this.mXPx = xPx;
-      this.mYPx = yPx;
-      this.axis = axis;
+    constructor(
+        x: number,
+        y?: number,
+        dataSetIndex?: number,
+        dataIndex?: number,
+        stackIndex?: number,
+        xPx?: number,
+        yPx?: number,
+        axis?: AxisDependency
+    ) {
+        this.mX = x;
+        if (y == null || y == undefined) {
+            this.mY = Number.NaN;
+        } else {
+            this.mY = y;
+        }
+        this.mDataSetIndex = dataSetIndex;
+        this.mStackIndex = stackIndex;
+        if (dataIndex == null || dataIndex == undefined) {
+            this.mDataIndex = -1;
+        } else {
+            this.mDataIndex = dataIndex;
+        }
+        this.mXPx = xPx;
+        this.mYPx = yPx;
+        this.axis = axis;
     }
-
 
     /**
      * returns the x-value of the highlighted value
      *
      * @return
      */
-    public getX():number {
+    public getX(): number {
         return this.mX;
     }
 
@@ -104,21 +111,21 @@ export default class Highlight {
      *
      * @return
      */
-    public getY():number {
+    public getY(): number {
         return this.mY;
     }
 
     /**
      * returns the x-position of the highlight in pixels
      */
-    public getXPx():number {
+    public getXPx(): number {
         return this.mXPx;
     }
 
     /**
      * returns the y-position of the highlight in pixels
      */
-    public getYPx():number {
+    public getYPx(): number {
         return this.mYPx;
     }
 
@@ -127,11 +134,11 @@ export default class Highlight {
      *
      * @return
      */
-    public getDataIndex():number {
+    public getDataIndex(): number {
         return this.mDataIndex;
     }
 
-    public setDataIndex(mDataIndex:number):void {
+    public setDataIndex(mDataIndex: number): void {
         this.mDataIndex = mDataIndex;
     }
 
@@ -140,7 +147,7 @@ export default class Highlight {
      *
      * @return
      */
-    public getDataSetIndex():number {
+    public getDataSetIndex(): number {
         return this.mDataSetIndex;
     }
 
@@ -150,11 +157,11 @@ export default class Highlight {
      *
      * @return
      */
-    public getStackIndex():number {
+    public getStackIndex(): number {
         return this.mStackIndex;
     }
 
-    public isStacked():boolean {
+    public isStacked(): boolean {
         return this.mStackIndex >= 0;
     }
 
@@ -163,7 +170,7 @@ export default class Highlight {
      *
      * @return
      */
-    public getAxis():AxisDependency {
+    public getAxis(): AxisDependency {
         return this.axis;
     }
 
@@ -173,7 +180,7 @@ export default class Highlight {
      * @param x
      * @param y
      */
-    public setDraw(x:number, y:number):void {
+    public setDraw(x: number, y: number): void {
         this.mDrawX = x;
         this.mDrawY = y;
     }
@@ -183,7 +190,7 @@ export default class Highlight {
      *
      * @return
      */
-    public getDrawX():number {
+    public getDrawX(): number {
         return this.mDrawX;
     }
 
@@ -192,7 +199,7 @@ export default class Highlight {
      *
      * @return
      */
-    public getDrawY():number {
+    public getDrawY(): number {
         return this.mDrawY;
     }
 
@@ -203,21 +210,30 @@ export default class Highlight {
      * @param h
      * @return
      */
-    public equalTo(h:Highlight):boolean {
-
-        if (h == null)
-            return false;
+    public equalTo(h: Highlight): boolean {
+        if (h == null) return false;
         else {
-            if (this.mDataSetIndex == h.mDataSetIndex && this.mX == h.mX
-                    && this.mStackIndex == h.mStackIndex && this.mDataIndex == h.mDataIndex)
-                return true;
-            else
-                return false;
+            if (
+            this.mDataSetIndex == h.mDataSetIndex &&
+            this.mX == h.mX &&
+            this.mStackIndex == h.mStackIndex &&
+            this.mDataIndex == h.mDataIndex
+            )
+            return true;
+            else return false;
         }
     }
 
-    public toString():String {
-        return "Highlight, x: " + this.mX + ", y: " + this.mY + ", dataSetIndex: " + this.mDataSetIndex
-                + ", stackIndex (only stacked barentry): " + this.mStackIndex;
+    public toString(): String {
+        return (
+            'Highlight, x: ' +
+            this.mX +
+            ', y: ' +
+            this.mY +
+            ', dataSetIndex: ' +
+            this.mDataSetIndex +
+            ', stackIndex (only stacked barentry): ' +
+            this.mStackIndex
+        );
     }
 }

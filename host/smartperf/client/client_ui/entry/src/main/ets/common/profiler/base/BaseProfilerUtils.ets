@@ -17,28 +17,27 @@ import util from '@ohos.util';
 import { GPData } from '../../entity/DatabaseEntity';
 import SPLogger from '../../utils/SPLogger';
 
-const BUFF_SIZE = 1024
-const TAG="BaseProfilerUtils"
+const BUFF_SIZE = 1024;
+const TAG = 'BaseProfilerUtils';
 /**
  * 构造GPData
  */
 export function createGPData(moduleType: string, values: Map<String, String>): GPData {
   var now = new Date();
-  return new GPData(moduleType, now.getTime(), values)
+  return new GPData(moduleType, now.getTime(), values);
 }
 
-
-export function isAccess(path: string):boolean{
-  SPLogger.DEBUG("BaseProfilerUtils","ets check path is start..."+ "path:" + path);
-  var isAccess = false
+export function isAccess(path: string): boolean {
+  SPLogger.DEBUG('BaseProfilerUtils', 'ets check path is start...' + 'path:' + path);
+  var isAccess = false;
   try {
     fileio.accessSync(path);
-    isAccess = true
-    SPLogger.DEBUG("BaseProfilerUtils","ets check path is finish..."+ "path:" + path);
-  } catch(err) {
-    SPLogger.DEBUG(TAG,"accessSync failed with error:"+ err + "path:" + path);
+    isAccess = true;
+    SPLogger.DEBUG('BaseProfilerUtils', 'ets check path is finish...' + 'path:' + path);
+  } catch (err) {
+    SPLogger.DEBUG(TAG, 'accessSync failed with error:' + err + 'path:' + path);
   }
-  return isAccess
+  return isAccess;
 }
 
 /**
@@ -46,29 +45,28 @@ export function isAccess(path: string):boolean{
  * @param path
  */
 export function fileOpen(path: string): String {
-
   if (!isAccess(path)) {
-    return "null"
+    return 'null';
   }
 
   try {
-    var fd = -1
-    fd = fileio.openSync(path, 0o0)
+    var fd = -1;
+    fd = fileio.openSync(path, 0o0);
     let buf = new ArrayBuffer(BUFF_SIZE);
     fileio.readSync(fd, buf);
-    var result: String = String.fromCharCode.apply(null, new Uint8Array(buf))
-    SPLogger.DEBUG(TAG,"fileOpen path data:"+result);
-    return util.printf("%s", result.substring(0, lastIndex(result))).toString()
+    var result: String = String.fromCharCode.apply(null, new Uint8Array(buf));
+    SPLogger.DEBUG(TAG, 'fileOpen path data:' + result);
+    return util.printf('%s', result.substring(0, lastIndex(result))).toString();
   } catch (err) {
-    SPLogger.ERROR(TAG,"fileOpen path:" + path + " error:" + err);
-    let errStr:String = err
-    if(errStr.indexOf("denied")>0){
-      return "null"
+    SPLogger.ERROR(TAG, 'fileOpen path:' + path + ' error:' + err);
+    let errStr: String = err;
+    if (errStr.indexOf('denied') > 0) {
+      return 'null';
     }
   } finally {
-    fileio.closeSync(fd)
+    fileio.closeSync(fd);
   }
-  return "null"
+  return 'null';
 }
 
 /**
@@ -77,39 +75,37 @@ export function fileOpen(path: string): String {
  * @param regexp
  */
 export function travelFile(path: string, regexp: string): Array<String> {
-  let dir
-  let fileNames = []
+  let dir;
+  let fileNames = [];
 
   if (!isAccess(path)) {
-    return []
+    return [];
   }
 
   try {
     dir = fileio.opendirSync(path);
     do {
-      var dirent = dir.readSync()
+      var dirent = dir.readSync();
       if (dirent == null) {
-        break
+        break;
       }
-      let name: String = dirent.name
+      let name: String = dirent.name;
       if (name.match(regexp)) {
-        SPLogger.DEBUG(TAG, "travelFile get name:" + dirent.name)
-        fileNames.push(name)
+        SPLogger.DEBUG(TAG, 'travelFile get name:' + dirent.name);
+        fileNames.push(name);
       }
-      if (regexp == "") {
-        fileNames.push(name)
+      if (regexp == '') {
+        fileNames.push(name);
       }
-    } while (dirent != null)
+    } while (dirent != null);
   } catch (err) {
-    SPLogger.ERROR(TAG, "travelFile get err:" + err);
-    SPLogger.ERROR(TAG, "travelFile err path:" + path);
+    SPLogger.ERROR(TAG, 'travelFile get err:' + err);
+    SPLogger.ERROR(TAG, 'travelFile err path:' + path);
   } finally {
     dir.closeSync();
   }
-  return fileNames
+  return fileNames;
 }
-
-
 
 /**
  * 返回字符结尾符坐标
@@ -135,20 +131,19 @@ export function sleep(numberMillis) {
   var exitTime = now.getTime() + numberMillis;
   while (true) {
     now = new Date();
-    if (now.getTime() > exitTime)
-    return;
+    if (now.getTime() > exitTime) return;
   }
 }
 /**
  * 提取字符串数字
  */
 export function extractNumber(originStr) {
-  let result = ""
+  let result = '';
   for (var index = 0; index < originStr.length; index++) {
     const element: string = originStr[index];
-    if (element.match("^[0-9]*$")) {
-      result += element
+    if (element.match('^[0-9]*$')) {
+      result += element;
     }
   }
-  return result
+  return result;
 }

@@ -18,68 +18,68 @@
  * @param Number time 时间戳
  * @param String format 格式
  */
-export function dateFormat(time?: number, format: string='Y-m-d h:i:s') {
-    const t = new Date(time)
-    // 日期格式
-    format = format || 'Y-m-d h:i:s'
-    let year = t.getFullYear()
-    // 由于 getMonth 返回值会比正常月份小 1
-    let month = t.getMonth() + 1
-    let day = t.getDate()
-    let hours = t.getHours()
-    let minutes = t.getMinutes()
-    let seconds = t.getSeconds()
+export function dateFormat(time?: number, format: string = 'Y-m-d h:i:s') {
+  const t = new Date(time);
+  // 日期格式
+  format = format || 'Y-m-d h:i:s';
+  let year = t.getFullYear();
+  // 由于 getMonth 返回值会比正常月份小 1
+  let month = t.getMonth() + 1;
+  let day = t.getDate();
+  let hours = t.getHours();
+  let minutes = t.getMinutes();
+  let seconds = t.getSeconds();
 
-    const hash = {
-        'y': year,
-        'm': month,
-        'd': day,
-        'h': hours,
-        'i': minutes,
-        's': seconds
-    }
-    // 是否补 0
-    const isAddZero = (o) => {
-        return /m|d|h|i|s/.test(o)
-    }
-    return format.replace(/\w/g, o => {
-        let rt = hash[o.toLocaleLowerCase()]
-        return rt > 9 || !isAddZero(o) ? rt : `0${rt}`
-    })
+  const hash = {
+    y: year,
+    m: month,
+    d: day,
+    h: hours,
+    i: minutes,
+    s: seconds,
+  };
+  // 是否补 0
+  const isAddZero = (o) => {
+    return /m|d|h|i|s/.test(o);
+  };
+  return format.replace(/\w/g, (o) => {
+    let rt = hash[o.toLocaleLowerCase()];
+    return rt > 9 || !isAddZero(o) ? rt : `0${rt}`;
+  });
 }
 /**
  * 计时器 转 时分秒字符串 HH:mm:ss
  * @param time
  */
 export function secToTime(time: number): String {
-    var timeStr: String = null
-    var hour: number = 0
-    var minute: number = 0
-    var second: number = 0
-    if (time <= 0) {
-        return "00:00"
+  var timeStr: String = null;
+  var hour: number = 0;
+  var minute: number = 0;
+  var second: number = 0;
+  if (time <= 0) {
+    return '00:00';
+  } else {
+    minute = parseInt((time / 60).toString());
+    if (minute < 60) {
+      second = time % 60;
+      timeStr = unitFormat(minute) + ':' + unitFormat(second);
     } else {
-        minute = parseInt((time / 60).toString())
-        if (minute < 60) {
-            second = time % 60
-            timeStr = unitFormat(minute) + ":" + unitFormat(second)
-        } else {
-            hour = parseInt((minute / 60).toString())
-            minute = minute % 60
-            second = time - hour * 3600 - minute * 60
-            timeStr =
-            unitFormat(hour) + ":" + unitFormat(minute) + ":" + unitFormat(second)
-        }
+      hour = parseInt((minute / 60).toString());
+      minute = minute % 60;
+      second = time - hour * 3600 - minute * 60;
+      timeStr =
+        unitFormat(hour) + ':' + unitFormat(minute) + ':' + unitFormat(second);
     }
-    return timeStr
+  }
+  return timeStr;
 }
 
 export function unitFormat(i: number): String {
-    var retStr: String
-    if (i >= 0 && i < 10) {
-        retStr = "0" + i.toString()
-    } else {
-        retStr = "" + i.toString()
-    }
-    return retStr
+  var retStr: String;
+  if (i >= 0 && i < 10) {
+    retStr = '0' + i.toString();
+  } else {
+    retStr = '' + i.toString();
+  }
+  return retStr;
 }

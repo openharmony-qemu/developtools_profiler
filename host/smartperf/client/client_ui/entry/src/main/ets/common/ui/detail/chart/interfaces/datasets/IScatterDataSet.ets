@@ -18,32 +18,31 @@ import ILineScatterCandleRadarDataSet from './ILineScatterCandleRadarDataSet';
 import IShapeRenderer from '../../renderer/scatter/IShapeRenderer';
 
 export default interface IScatterDataSet extends ILineScatterCandleRadarDataSet<EntryOhos> {
-
     /**
      * Returns the currently set scatter shape size
      *
      * @return
      */
-    getScatterShapeSize() : number;
+    getScatterShapeSize(): number;
 
     /**
      * Returns radius of the hole in the shape
      *
      * @return
      */
-    getScatterShapeHoleRadius() : number;
+    getScatterShapeHoleRadius(): number;
 
     /**
      * Returns the color for the hole in the shape
      *
      * @return
      */
-    getScatterShapeHoleColor() : number;
+    getScatterShapeHoleColor(): number;
 
     /**
      * Returns the IShapeRenderer responsible for rendering this DataSet.
      *
      * @return
      */
-    getShapeRenderer() : IShapeRenderer;
+    getShapeRenderer(): IShapeRenderer;
 }

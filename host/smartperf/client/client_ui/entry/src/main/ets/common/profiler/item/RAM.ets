@@ -13,50 +13,50 @@
  * limitations under the License.
  */
 import { createGPData, extractNumber } from '../base/BaseProfilerUtils';
-import { BaseProfiler } from '../base/BaseProfiler'
-import { CollectorType } from '../base/ProfilerConstant'
-import { SocketProfiler} from '../base/SocketProfiler'
+import { BaseProfiler } from '../base/BaseProfiler';
+import { CollectorType } from '../base/ProfilerConstant';
+import { SocketProfiler } from '../base/SocketProfiler';
 import WorkerHandler from '../WorkerHandler';
-let MainWorker = globalThis.MainWorker
+let MainWorker = globalThis.MainWorker;
 
 MainWorker.onmessage = function (result) {
-  WorkerHandler.socketHandler(result)
-}
+  WorkerHandler.socketHandler(result);
+};
 
-export class RAM extends BaseProfiler implements SocketProfiler{
-  private ramMap: Map<String, String> = new Map
-  public static instance: RAM = null
+export class RAM extends BaseProfiler implements SocketProfiler {
+  private ramMap: Map<String, String> = new Map();
+  public static instance: RAM = null;
   public static getInstance() {
     if (this.instance == null) {
-      this.instance = new RAM()
+      this.instance = new RAM();
     }
-    return this.instance
+    return this.instance;
   }
 
   init() {
     //初始化RAM节点
-    return CollectorType.TYPE_RAM
+    return CollectorType.TYPE_RAM;
   }
 
-  isSupport(){
+  isSupport() {
     if (globalThis.useDaemon) {
-      return true
+      return true;
     }
-    return false
+    return false;
   }
 
   readData() {
     if (globalThis.useDaemon) {
-      this.readMessageQueue()
+      this.readMessageQueue();
     }
-    return createGPData("RAM", this.ramMap)
+    return createGPData('RAM', this.ramMap);
   }
-  readMessageQueue(){
-    MainWorker.postMessage({ "ram": true, "pkg": globalThis.collectPkg })
+  readMessageQueue() {
+    MainWorker.postMessage({ ram: true, pkg: globalThis.collectPkg });
     if (globalThis.ramArr.length > 0) {
-      let ramQueue: Array<String> = globalThis.ramArr
-      let curRAM = ramQueue.pop()
-      this.ramMap.set("pss", extractNumber(curRAM))
+      let ramQueue: Array<String> = globalThis.ramArr;
+      let curRAM = ramQueue.pop();
+      this.ramMap.set('pss', extractNumber(curRAM));
     }
   }
 }

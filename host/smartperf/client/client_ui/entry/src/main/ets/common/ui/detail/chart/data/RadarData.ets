@@ -14,8 +14,8 @@
  */
 
 import Highlight from '../highlight/Highlight';
-import IRadarDataSet from '../interfaces/datasets/IRadarDataSet'
-import {JArrayList} from '../utils/JArrayList';
+import IRadarDataSet from '../interfaces/datasets/IRadarDataSet';
+import { JArrayList } from '../utils/JArrayList';
 import ChartData from './ChartData';
 import EntryOhos from './EntryOhos';
 
@@ -23,10 +23,9 @@ import EntryOhos from './EntryOhos';
  * Data container for the RadarChart.
  */
 export default class RadarData extends ChartData<IRadarDataSet> {
+    private mLabels: JArrayList<string>;
 
-    private mLabels : JArrayList<string>;
-
-    constructor(dataSets ?: JArrayList<IRadarDataSet>) {
+    constructor(dataSets?: JArrayList<IRadarDataSet>) {
         super(dataSets);
     }
 
@@ -35,16 +34,16 @@ export default class RadarData extends ChartData<IRadarDataSet> {
      *
      * @param labels
      */
-    public setLabels(labels : JArrayList<string>) : void {
-     this.mLabels = labels;
+    public setLabels(labels: JArrayList<string>): void {
+        this.mLabels = labels;
     }
 
-    public getLabels() : JArrayList<string> {
+    public getLabels(): JArrayList<string> {
         return this.mLabels;
     }
 
     // @Override
-    public getEntryForHighlight(highlight : Highlight) : EntryOhos {
+    public getEntryForHighlight(highlight: Highlight): EntryOhos {
         return super.getDataSetByIndex(highlight.getDataSetIndex()).getEntryForIndex(highlight.getX());
     }
 }

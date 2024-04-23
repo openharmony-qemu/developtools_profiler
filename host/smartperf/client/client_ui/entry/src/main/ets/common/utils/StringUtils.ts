@@ -17,17 +17,17 @@
  * 字符串工具类
  */
 export default class StringUtils {
-    static s2L(src: string): number {
-        let result = -1;
-        if (typeof src == "undefined" || src == null || src == "") {
-            return result;
-        }
-        try {
-            result = parseInt(src);
-            return result;
-        } catch (e) {
-            e.printStackTrace();
-            return result;
-        }
+  static s2L(src: string): number {
+    let result = -1;
+    if (typeof src == 'undefined' || src == null || src == '') {
+      return result;
     }
+    try {
+      result = parseInt(src);
+      return result;
+    } catch (e) {
+      e.printStackTrace();
+      return result;
+    }
+  }
 }

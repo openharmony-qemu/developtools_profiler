@@ -24,6 +24,7 @@
 #include "buffer_writer.h"
 #include "ffrt_profiler_result.pb.h"
 #include "ffrt_profiler_result.pbencoder.h"
+#include "ffrt_profiler_common.h"
 
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 namespace OHOS::Developtools::Profiler {
@@ -31,7 +32,7 @@ class FfrtProfilerManager;
 
 class FfrtProfilerHandle {
 public:
-    explicit FfrtProfilerHandle(clockid_t pluginDataClockId, uint32_t bufferSize, bool isProtobufSerialize = true);
+    explicit FfrtProfilerHandle(uint32_t bufferSize, bool isProtobufSerialize = true);
     ~FfrtProfilerHandle();
 
     void SetWriter(const std::shared_ptr<Writer>& writer);
@@ -55,7 +56,7 @@ private:
     template <typename T>
     void SerializeTraceData(T& protoData, const int8_t data[], uint32_t size);
     template <typename T>
-    void SerializeThreadData(T& protoData, const int8_t data[], uint32_t size);
+    void ReportCommonData(T& protoData, FfrtResultBase* base);
     template <typename T>
     void SerializeRawData(T& protoData, const int8_t data[], uint32_t size);
 
@@ -64,13 +65,12 @@ private:
     std::shared_ptr<Writer> writer_{nullptr};
     WriterStructPtr writerStruct_{nullptr};
     bool isProtobufSerialize_{true};
-    clockid_t pluginDataClockId_ = CLOCK_REALTIME;
     std::variant<::FfrtProfilerResult, ProtoEncoder::FfrtProfilerResult> protoData_;
-    uint64_t flushSize_{0};
     uint32_t flushCount_{0};
     uint32_t bufferSize_{0};
     uint32_t pid_{0};
     std::string processName_;
+    bool reportProcessName_{true};
 };
 } // OHOS::Developtools::Profiler
 

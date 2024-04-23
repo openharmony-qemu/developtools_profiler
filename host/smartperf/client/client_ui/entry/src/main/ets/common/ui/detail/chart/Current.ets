@@ -97,10 +97,10 @@ export struct Current {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();

@@ -28,7 +28,6 @@ export default class MyRect {
   right: number;
   bottom: number;
 
-
   /**
    * Create a new rectangle with the specified coordinates. Note: no range
    * checking is performed, so the caller must ensure that left <= right and
@@ -40,7 +39,7 @@ export default class MyRect {
    * @param bottom The Y coordinate of the bottom of the rectangle
    */
   constructor(left?: number, top?: number, right?: number, bottom?: number, r?: MyRect) {
-    this.left = left == undefined ? 0 : left
+    this.left = left == undefined ? 0 : left;
     this.top = top == undefined ? 0 : top;
     this.right = right == undefined ? 0 : right;
     this.bottom = bottom == undefined ? 0 : bottom;
@@ -68,19 +67,18 @@ export default class MyRect {
   }
 
   public toString(): string {
-    var sb = "";
-    sb += "Rect(";
+    var sb = '';
+    sb += 'Rect(';
     sb += this.left;
-    sb += ", ";
+    sb += ', ';
     sb += this.top;
-    sb += " - ";
+    sb += ' - ';
     sb += this.right;
-    sb += ", ";
+    sb += ', ';
     sb += this.bottom;
-    sb += ")";
+    sb += ')';
     return sb;
   }
-
 
   /**
    * Returns true if the rectangle is empty (left >= right or top >= bottom)
@@ -189,15 +187,14 @@ export default class MyRect {
     this.top = newTop;
   }
 
-
   /**
-       * Insets the rectangle on all sides specified by the insets.
-       * @hide
-       * @param left The amount to add from the rectangle's left
-       * @param top The amount to add from the rectangle's top
-       * @param right The amount to subtract from the rectangle's right
-       * @param bottom The amount to subtract from the rectangle's bottom
-       */
+   * Insets the rectangle on all sides specified by the insets.
+   * @hide
+  * @param left The amount to add from the rectangle's left
+   * @param top The amount to add from the rectangle's top
+   * @param right The amount to subtract from the rectangle's right
+   * @param bottom The amount to subtract from the rectangle's bottom
+   */
   public inset(left: number, top: number, right: number, bottom: number) {
     this.left += left;
     this.top += top;
@@ -206,18 +203,24 @@ export default class MyRect {
   }
 
   /**
-       * Returns true if (x,y) is inside the rectangle. The left and top are
-       * considered to be inside, while the right and bottom are not. This means
-       * that for a x,y to be contained: left <= x < right and top <= y < bottom.
-       * An empty rectangle never contains any point.
-       *
-       * @param x The X coordinate of the point being tested for containment
-       * @param y The Y coordinate of the point being tested for containment
-       * @return true iff (x,y) are contained by the rectangle, where containment
-       *              means left <= x < right and top <= y < bottom
-       */
+   * Returns true if (x,y) is inside the rectangle. The left and top are
+   * considered to be inside, while the right and bottom are not. This means
+   * that for a x,y to be contained: left <= x < right and top <= y < bottom.
+   * An empty rectangle never contains any point.
+   *
+   * @param x The X coordinate of the point being tested for containment
+   * @param y The Y coordinate of the point being tested for containment
+   * @return true iff (x,y) are contained by the rectangle, where containment
+   *              means left <= x < right and top <= y < bottom
+   */
   public contains(x: number, y: number): boolean {
-    return this.left < this.right && this.top < this.bottom // check for empty first
-    && x >= this.left && x < this.right && y >= this.top && y < this.bottom;
+    return (
+      this.left < this.right &&
+      this.top < this.bottom && // check for empty first
+      x >= this.left &&
+      x < this.right &&
+      y >= this.top &&
+      y < this.bottom
+    );
   }
 }

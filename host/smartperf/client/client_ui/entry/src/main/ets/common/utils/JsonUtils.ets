@@ -14,7 +14,7 @@
  */
 
 export default {
-  _mapToJson(map: Map<string, object>): string{
+  _mapToJson(map: Map<string, object>): string {
     var obj = Object.create(null);
 
     var iterator = map.keys();
@@ -23,9 +23,5 @@ export default {
       obj[key] = map.get(key);
     }
     return JSON.stringify(obj);
-  }
-}
-
-
-
-
+  },
+};

@@ -17,22 +17,21 @@ import EntryOhos from '../../data/EntryOhos';
 import IBarLineScatterCandleBubbleDataSet from './IBarLineScatterCandleBubbleDataSet';
 
 export default interface IBubbleDataSet extends IBarLineScatterCandleBubbleDataSet<EntryOhos> {
-
     /**
      * Sets the width of the circle that surrounds the bubble when highlighted,
      * in dp.
      *
      * @param width
      */
-    setHighlightCircleWidth(width : number) : void;
+    setHighlightCircleWidth(width: number): void;
 
-    getMaxSize() : number;
+    getMaxSize(): number;
 
-    isNormalizeSizeEnabled() : boolean;
+    isNormalizeSizeEnabled(): boolean;
 
     /**
      * Returns the width of the highlight-circle that surrounds the bubble
-      * @return
+     * @return
      */
-    getHighlightCircleWidth() : number;
+    getHighlightCircleWidth(): number;
 }

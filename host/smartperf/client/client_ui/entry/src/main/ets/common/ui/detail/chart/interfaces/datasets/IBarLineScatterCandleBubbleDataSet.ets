@@ -17,11 +17,10 @@ import EntryOhos from '../../data/EntryOhos';
 import IDataSet from './IDataSet';
 
 export default interface IBarLineScatterCandleBubbleDataSet<T extends EntryOhos> extends IDataSet<T> {
-
     /**
      * Returns the color that is used for drawing the highlight indicators.
      *
      * @return
      */
-    getHighLightColor() : number;
+    getHighLightColor(): number;
 }

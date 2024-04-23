@@ -17,37 +17,36 @@
 // AbstractList 实现了List接口 ，
 // 最终ArrayList/ArrayQueue等，继承自AbstractList
 // 因此这里可能需要进行修改
-import { JList } from './JList'
+import { JList } from './JList';
 
 export class JArrayList<T> implements JList<T> {
-
-  dataSouce:Array<T>;
-  listSize:number; // 列表的大小
-  pos:number;     // 列表中当前的位置
+  dataSouce: Array<T>;
+  listSize: number; // 列表的大小
+  pos: number; // 列表中当前的位置
 
   constructor() {
     this.dataSouce = [];
     this.listSize = 0; // 列表的大小
-    this.pos = 0;     // 列表中当前的位置
+    this.pos = 0; // 列表中当前的位置
   }
 
   /**
    * 在列表的末尾添加新元素
    * @param {*} element 要添加的元素
    */
-  append(element:T) {
+  append(element: T) {
     this.dataSouce[this.listSize++] = element;
   }
 
-  add(element:T) {
-    this.append(element)
-    return this
+  add(element: T) {
+    this.append(element);
+    return this;
   }
 
-  addAll(newArray:JList<T>) {
-    let len = newArray.length()
+  addAll(newArray: JList<T>) {
+    let len = newArray.length();
     for (let i = 0; i < len; i++) {
-      this.append(newArray.get(i))
+      this.append(newArray.get(i));
     }
   }
 
@@ -56,7 +55,7 @@ export class JArrayList<T> implements JList<T> {
    * @param {*} element
    * @param {*} after
    */
-  insert(element:T) {
+  insert(element: T) {
     this.dataSouce.push(element);
     this.listSize++;
   }
@@ -65,7 +64,7 @@ export class JArrayList<T> implements JList<T> {
    * 在列表中移除一个元素
    * @param {*} element 要删除的元素
    */
-  remove(element:T) {
+  remove(element: T) {
     // 查找当前元素的索引
     const index = this.dataSouce.indexOf(element);
     if (index >= 0) {
@@ -79,10 +78,10 @@ export class JArrayList<T> implements JList<T> {
   /**
    * 判断给定的值是否在列表中
    */
-  contains(element:T) {
+  contains(element: T) {
     return this.dataSouce.indexOf(element) > -1;
   }
-  indexOf(element:T):number {
+  indexOf(element: T): number {
     return this.dataSouce.indexOf(element);
   }
 
@@ -113,7 +112,7 @@ export class JArrayList<T> implements JList<T> {
    * 将当前位置向后移一位
    */
   next() {
-    if (this.pos <= (this.listSize - 1)) {
+    if (this.pos <= this.listSize - 1) {
       ++this.pos;
     }
   }
@@ -142,10 +141,10 @@ export class JArrayList<T> implements JList<T> {
   /**
    * 返回指定位置的元素
    */
-  get(pos:number) {
+  get(pos: number) {
     return this.dataSouce[pos];
   }
-  at(pos:number):T {
+  at(pos: number): T {
     return this.get(pos);
   }
 
@@ -162,22 +161,22 @@ export class JArrayList<T> implements JList<T> {
   /**
    * 列表的长度
    */
-  length():number {
+  length(): number {
     return this.listSize;
   }
-  size():number {
+  size(): number {
     return this.listSize;
   }
-  isEmpty():boolean {
+  isEmpty(): boolean {
     return this.listSize == 0;
   }
 
   /**
    * 显示当前列表的元素
    */
-  toArray(a?:T[]):T[] {
+  toArray(a?: T[]): T[] {
     if (a == null) {
-      return this.dataSouce
+      return this.dataSouce;
     }
     if (a.length < this.length()) {
       return new Array<T>();
@@ -186,11 +185,10 @@ export class JArrayList<T> implements JList<T> {
   /**
    * 显示当前列表的元素
    */
-  toString(interval?:string):string {
+  toString(interval?: string): string {
     if (interval == null) {
       return this.dataSouce.join('');
     }
     return this.dataSouce.join(interval);
   }
 }
-

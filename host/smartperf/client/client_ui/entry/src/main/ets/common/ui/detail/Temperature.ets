@@ -430,10 +430,10 @@ export struct Temperature {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();
@@ -692,9 +692,9 @@ export struct Temperature {
       Scroll() {
         Column({ space: 20 }) {
 
-            LineChart({lineChartModel: this.lineChartModel5})
-            Text("ShellBackTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
+          LineChart({lineChartModel: this.lineChartModel5})
+          Text("ShellBackTemp(℃)") {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
 
         }.width('100%').alignItems(HorizontalAlign.Center)
       }.width('100%')
