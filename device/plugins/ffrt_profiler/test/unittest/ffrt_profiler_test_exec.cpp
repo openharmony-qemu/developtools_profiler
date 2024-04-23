@@ -21,16 +21,20 @@
 #include "ffrt.h"
 
 #define NSEC_PER_SEC 1000000000L
+namespace {
+constexpr static int TWO_NUM = 2;
+constexpr static int VALUE_NUM = 100;
+
 long GetNanos()
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * NSEC_PER_SEC + ts.tv_nsec;
 }
+} // namespace
 
 int main(int argc, char *argv[])
 {
-    static constexpr int TWO_NUM = 2;
     if (argc != TWO_NUM) {
         return 0;
     }
@@ -48,7 +52,6 @@ int main(int argc, char *argv[])
     long elapsedTime = 0;
     std::cout << "start" << std::endl;
     startTime = GetNanos();
-    static constexpr int VALUE_NUM = 100;
     for (int i = 0; i < std::atoi(argv[1]); ++i) {
         int x = 1;
         ffrt::submit([&] { x = VALUE_NUM; }, {}, {&x});

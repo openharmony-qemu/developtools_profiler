@@ -50,8 +50,8 @@ FfrtProfilerManager::~FfrtProfilerManager()
 void FfrtProfilerManager::Init()
 {
     auto commandPoller = std::make_shared<CommandPoller>(shared_from_this());
-    CHECK_NOTNULL(commandPoller, , "create CommandPoller FAILED!");
-    CHECK_TRUE(commandPoller->OnConnect(), , "connect FAILED");
+    CHECK_NOTNULL(commandPoller, NO_RETVAL, "create CommandPoller FAILED!");
+    CHECK_TRUE(commandPoller->OnConnect(), NO_RETVAL, "FfrtProfilerManager::Init connect FAILED");
     SetCommandPoller(commandPoller);
     RegisterAgentPlugin("ffrt-profiler");
 }
