@@ -92,6 +92,7 @@ private:
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
     long long lastTime = -1;
+    long long lastFrameReadyTime = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     unsigned long sleepNowTime = 10000;

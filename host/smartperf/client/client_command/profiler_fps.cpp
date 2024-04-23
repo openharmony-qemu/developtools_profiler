@@ -306,8 +306,14 @@ void ProfilerFPS::GetSameTimeNums()
         if (lastTime != -1) {
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
+        } else {
+            if (lastFrameReadyTime != 0) {
+               jitter = frameReadyTime - lastFrameReadyTime;
+               fpsInfo.jitters.push_back(jitter);
+            }
         }
         lastTime = frameReadyTime;
+        lastFrameReadyTime = frameReadyTime;
     }
 }
 bool ProfilerFPS::IsForeGround()
