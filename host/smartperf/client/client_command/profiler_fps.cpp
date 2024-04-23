@@ -308,8 +308,8 @@ void ProfilerFPS::GetSameTimeNums()
             fpsInfo.jitters.push_back(jitter);
         } else {
             if (lastFrameReadyTime != 0) {
-               jitter = frameReadyTime - lastFrameReadyTime;
-               fpsInfo.jitters.push_back(jitter);
+                jitter = frameReadyTime - lastFrameReadyTime;
+                fpsInfo.jitters.push_back(jitter);
             }
         }
         lastTime = frameReadyTime;
