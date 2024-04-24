@@ -1102,7 +1102,8 @@ void StackPreprocess::FlushCheck(T& stackData)
         if constexpr (std::is_same<T, ::BatchNativeHookData>::value) {
             FlushData(stackData);
         } else {
-            if (stackData.Size() > flushSize_) {
+            uint64_t dataLen = static_cast<uint64_t>(stackData.Size());
+            if (dataLen > flushSize_) {
                 FlushData(stackData);
             }
         }
@@ -1349,7 +1350,7 @@ size_t StackPreprocess::ComputeAlign(size_t size)
 
 void StackPreprocess::WriteHookConfig()
 {
-    const int configSize = hookConfig_.ByteSizeLong();
+    const size_t configSize = hookConfig_.ByteSizeLong();
     auto buffer = std::make_unique<uint8_t[]>(configSize);
     hookConfig_.SerializeToArray(buffer.get(), configSize);
 

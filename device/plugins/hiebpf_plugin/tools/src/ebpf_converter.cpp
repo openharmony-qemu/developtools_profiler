@@ -74,7 +74,8 @@ void EbpfConverter::StartParsing()
 
     char cmdline[header.cmdLineLen + 1];
     if (header.cmdLineLen > 0) {
-        CHK(Read(reinterpret_cast<void*>(cmdline), sizeof(cmdline) - 1));
+        size_t dataLen = sizeof(cmdline) > 1 ? static_cast<size_t>(sizeof(cmdline) - 1) : 0;
+        CHK(Read(reinterpret_cast<void*>(cmdline), dataLen));
         outData_ << "\ncmdline: " << cmdline << '\n';
     }
     fileSize_ = lseek(fd_, header.headSize, SEEK_SET);
@@ -208,7 +209,8 @@ void EbpfConverter::EventMapsParsing()
     char fileName[maps.fileNameLen + 1];
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (maps.fileNameLen > 0) {
-        CHK(Read(reinterpret_cast<void*>(fileName), sizeof(fileName) - 1));
+        size_t dataLen = sizeof(fileName) > 1 ? static_cast<size_t>(sizeof(fileName) - 1) : 0;
+        CHK(Read(reinterpret_cast<void*>(fileName), dataLen));
         maps.fileName = fileName;
     }
     auto iter = maps_.find(maps.pid);
@@ -266,7 +268,8 @@ void EbpfConverter::SymbolInfoParsing()
     char fileName[info.fileNameSize + 1];
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (info.fileNameSize > 0) {
-        CHK(Read(reinterpret_cast<void*>(&fileName), sizeof(fileName) - 1));
+        size_t dataLen = sizeof(fileName) > 1 ? static_cast<size_t>(sizeof(fileName) - 1) : 0;
+        CHK(Read(reinterpret_cast<void*>(&fileName), dataLen));
         info.fileName = fileName;
     }
     record_[std::string(fileName)] = Record(fileName, symAddr, strAddr);
@@ -335,7 +338,8 @@ void EbpfConverter::EventStrParsing()
     CHK(Read(reinterpret_cast<void*>(&str), EVENT_STR_FIXED_SIZE));
     char fileName[str.strLen + 1];
     if (str.strLen > 0) {
-        CHK(Read(reinterpret_cast<void*>(&fileName), sizeof(fileName) - 1));
+        size_t dataLen = sizeof(fileName) > 1 ? static_cast<size_t>(sizeof(fileName) - 1) : 0;
+        CHK(Read(reinterpret_cast<void*>(&fileName), dataLen));
         str.fileName = fileName;
     }
     str_.push_back(str);

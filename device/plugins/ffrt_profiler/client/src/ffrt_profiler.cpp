@@ -79,7 +79,7 @@ void FfrtProfiler::CheckFfrtProfilerParam()
             std::vector<std::string> values;
             SplitString(paramValue, ",", values);
             for (auto& item : values) {
-                int pid = strtoull(item.c_str(), nullptr, 0);
+                uint64_t pid = strtoull(item.c_str(), nullptr, 0);
                 if (((pid > 0) && (pid == pid_)) || ((pid == 0) && (item == processName_))) {
                     Enable();
                     break;

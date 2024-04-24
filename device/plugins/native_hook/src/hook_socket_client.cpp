@@ -38,7 +38,7 @@ constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
 constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
 
 struct OptArg {
-    int pos;
+    size_t pos;
     char *buf;
 };
 

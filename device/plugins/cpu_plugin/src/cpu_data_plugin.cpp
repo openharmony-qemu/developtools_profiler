@@ -590,7 +590,8 @@ template <typename T> void CpuDataPlugin::WriteThread(T& threadInfo, const char*
         }
 
         if (i == THREAD_NAME_POS) {
-            std::string curWord = std::string(totalbuffer.CurWord() + 1, totalbuffer.CurWordSize() - 1);
+            size_t nameLeng = totalbuffer.CurWordSize() > 1 ? static_cast<size_t>(totalbuffer.CurWordSize() - 1) : 0;
+            std::string curWord = std::string(totalbuffer.CurWord() + 1, nameLeng);
             threadInfo.set_thread_name(curWord);
         } else if (i == THREAD_STATE_POS) {
             std::string curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());

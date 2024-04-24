@@ -69,7 +69,7 @@ bool FfrtProfilerSocketClient::ProtocolProc(SocketContext &context, uint32_t pnu
     PROFILER_LOG_INFO(LOG_CORE, "ffrt profiler client: smbFd: %d, eventFd: %d, shmSize: %d",
         smbFd_, eventFd_, config->shmSize);
 
-    flushInterval_ = config->flushCount;
+    flushInterval_ = static_cast<uint32_t>(config->flushCount);
     block_ = config->block;
     profiler_->SetClockId(config->clock);
     PROFILER_LOG_INFO(LOG_CORE, "ffrt profiler client: flushInterval: %d, block: %d, clock: %d",

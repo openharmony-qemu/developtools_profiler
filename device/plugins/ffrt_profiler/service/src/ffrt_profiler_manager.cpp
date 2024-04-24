@@ -368,7 +368,7 @@ bool FfrtProfilerManager::RegisterAgentPlugin(const std::string& pluginPath)
     if (commandPoller_->RegisterPlugin(request, response)) {
         if (response.status() == ResponseStatus::OK) {
             PROFILER_LOG_DEBUG(LOG_CORE, "response.plugin_id() = %d", response.plugin_id());
-            agentIndex_ = response.plugin_id();
+            agentIndex_ = static_cast<int>(response.plugin_id());
             PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
         } else {
             PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 1");
