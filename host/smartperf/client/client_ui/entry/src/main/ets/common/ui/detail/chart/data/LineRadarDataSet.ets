@@ -25,8 +25,7 @@ import Utils from '../utils/Utils';
  */
 export default abstract class LineRadarDataSet<T extends EntryOhos>
 extends LineScatterCandleRadarDataSet<T>
-implements ILineRadarDataSet<T>
-{
+implements ILineRadarDataSet<T> {
   // TODO: Move to using `Fill` class
   /**
    * the color that is used for filling the line surface
@@ -38,7 +37,7 @@ implements ILineRadarDataSet<T>
   /**
    * the drawable to be used for filling the line surface
    */
-  protected mFillDrawable: Object /*Drawable*/;
+  protected mFillDrawable: Object;/*Drawable*/
 
   /**
    * transparency used for filling line surface
@@ -119,8 +118,12 @@ implements ILineRadarDataSet<T>
    * @param width
    */
   public setLineWidth(width: number): void {
-    if (width < 0.0) width = 0.0;
-    if (width > 10.0) width = 10.0;
+    if (width < 0.0) {
+      width = 0.0;
+    }
+    if (width > 10.0) {
+      width = 10.0;
+    }
     this.mLineWidth = width;
   }
 

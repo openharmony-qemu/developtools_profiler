@@ -367,7 +367,7 @@ export default class XAxisRenderer extends AxisRenderer {
     return limitPaint;
   }
 
-  mLimitLineSegmentsBuffer = new Array<number>(4);
+  private mLimitLineSegmentsBuffer = new Array<number>(4);
   private mLimitLinePath = new Paint();
 
   public renderLimitLineLine(limitLine: LimitLine, position: number[]): Paint {

@@ -35,10 +35,10 @@ import Renderer from './Renderer';
 import { JArrayList } from '../utils/JArrayList';
 import Paint, { LinePaint, TextPaint, PathPaint, CirclePaint, RectPaint } from '../data/Paint';
 class Point {
-    x1: number = 0;
-    y1: number = 0;
-    x2: number = 0;
-    y2: number = 0;
+    private x1: number = 0;
+    private y1: number = 0;
+    private x2: number = 0;
+    private y2: number = 0;
     constructor(x1: number, y1: number, x2: number, y2: number) {
         this.x1 = x1;
         this.y1 = y1;

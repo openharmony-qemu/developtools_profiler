@@ -26,20 +26,20 @@ export default class WorkerHandler {
         globalThis.fpsJitterArr.push(arr[2]);
         globalThis.timerFps = arr[1];
         if (
-          globalThis.catchTraceState == CatchTraceStatus.catch_trace_start ||
-          globalThis.catchTraceState == CatchTraceStatus.catch_trace_finish ||
-          globalThis.catchTraceState ==
+          globalThis.catchTraceState === CatchTraceStatus.catch_trace_start ||
+          globalThis.catchTraceState === CatchTraceStatus.catch_trace_finish ||
+          globalThis.catchTraceState ===
             CatchTraceStatus.catch_trace_first_running
         ) {
           if (
-            globalThis.fpsJitterArr != undefined &&
-            globalThis.fpsJitterArr != null &&
-            globalThis.fpsJitterArr != ''
+            globalThis.fpsJitterArr !== undefined &&
+            globalThis.fpsJitterArr !== null &&
+            globalThis.fpsJitterArr !== ''
           ) {
             let tempQueue: Array<String> = globalThis.fpsJitterArr;
             let curJitter = tempQueue.pop();
             let tempJitterArr = curJitter.split('==');
-            for (var i = 0; i < tempJitterArr.length; i++) {
+            for (let i = 0; i < tempJitterArr.length; i++) {
               let tmp = tempJitterArr[i];
               let jitter = parseInt(tmp) / 1e6;
               if (jitter > 100) {

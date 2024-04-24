@@ -22,29 +22,29 @@ import { FillStyle } from './LineDataSet';
  * @param value
  */
 export default class Paint {
-  color: Color | number | string | Resource = Color.Black;
-  textSize: number = 10;
-  fill: Color | number | string | Resource = null;
-  stroke: Color | number | string | Resource = null;
-  strokeWidth: number = 0;
-  strokeRadius: number = 0;
-  style: Style = null;
-  alpha: number = 1;
-  typeface: FontWeight = FontWeight.Normal;
-  textAlign: TextAlign = TextAlign.Start;
-  align: Align = Align.LEFT;
-  strokeDashArray: number[] = [0, 0];
-  strokeDashOffset: number = 0;
-  dashPathEffect: DashPathEffect;
-  x: number = 0;
-  y: number = 0;
-  width: number | string = null;
-  height: number | string = null;
-  visibility: Visibility = Visibility.Visible;
-  clickPosition = -1;
-  value = 0;
-  translateX = 0;
-  translateY = 0;
+  public color: Color | number | string | Resource = Color.Black;
+  public textSize: number = 10;
+  public fill: Color | number | string | Resource = null;
+  public stroke: Color | number | string | Resource = null;
+  public strokeWidth: number = 0;
+  public strokeRadius: number = 0;
+  public style: Style = null;
+  public alpha: number = 1;
+  public typeface: FontWeight = FontWeight.Normal;
+  public textAlign: TextAlign = TextAlign.Start;
+  public align: Align = Align.LEFT;
+  public strokeDashArray: number[] = [0, 0];
+  public strokeDashOffset: number = 0;
+  public dashPathEffect: DashPathEffect;
+  public x: number = 0;
+  public y: number = 0;
+  public width: number | string = null;
+  public height: number | string = null;
+  public visibility: Visibility = Visibility.Visible;
+  public clickPosition = -1;
+  public value = 0;
+  public translateX = 0;
+  public translateY = 0;
 
   constructor(paint?: Paint) {
     if (paint != null && paint != undefined) {
@@ -271,8 +271,8 @@ export default class Paint {
  * 用于绘制Line的属性类
  */
 export class LinePaint extends Paint {
-  startPoint: number[] = [0, 0];
-  endPoint: number[] = [0, 0];
+  public startPoint: number[] = [0, 0];
+  public endPoint: number[] = [0, 0];
 
   constructor(paint?: LinePaint) {
     super(paint);
@@ -300,16 +300,16 @@ export class LinePaint extends Paint {
 }
 
 export class TextPaint extends Paint {
-  text: string = '';
+  public text: string = '';
   constructor(paint?: TextPaint) {
     super(paint);
     if (paint != null && paint != undefined) {
       this.text = paint.text;
     }
   }
-  translateX: number = 0;
-  translateY: number = 0;
-  rotate: number = 0;
+  public translateX: number = 0;
+  public translateY: number = 0;
+  public rotate: number = 0;
   setText(value: string) {
     this.text = value;
   }
@@ -342,32 +342,32 @@ export class TextPaint extends Paint {
 }
 
 export class PathPaint extends Paint {
-  commands: string = '';
-  commandsFill: string = '';
-  filled: boolean = false;
-  linearGradientColors: Array<ColorStop> = null;
-  enabled: boolean = false;
-  circleColor: string | number | Color = Color.White;
-  colors: JArrayList<Number> = null;
-  radius: number = 2;
-  circleHoleRadius: number = 1;
-  circleHoleColor: string | number | Color = Color.White;
-  circleHoleEnabled: boolean = true;
-  drawValueEnable: boolean = true;
-  rotate: number;
-  rotateText: number;
-  percentage: string = '';
-  filledColor: number = 0;
-  label: string = '';
-  axisDependency: AxisDependency = AxisDependency.LEFT;
-  lineSvg: string = '';
-  fillStyle: FillStyle = FillStyle.MIN;
-  positionX: number;
-  positionY: number;
-  labelX: number;
-  labelY: number;
-  iconX: number = 0;
-  iconY: number = 0;
+  public commands: string = '';
+  public commandsFill: string = '';
+  public filled: boolean = false;
+  public linearGradientColors: Array<ColorStop> = null;
+  public enabled: boolean = false;
+  public circleColor: string | number | Color = Color.White;
+  public colors: JArrayList<Number> = null;
+  public radius: number = 2;
+  public circleHoleRadius: number = 1;
+  public circleHoleColor: string | number | Color = Color.White;
+  public circleHoleEnabled: boolean = true;
+  public drawValueEnable: boolean = true;
+  public rotate: number;
+  public rotateText: number;
+  public percentage: string = '';
+  public filledColor: number = 0;
+  public label: string = '';
+  public axisDependency: AxisDependency = AxisDependency.LEFT;
+  public lineSvg: string = '';
+  public fillStyle: FillStyle = FillStyle.MIN;
+  public positionX: number;
+  public positionY: number;
+  public labelX: number;
+  public labelY: number;
+  public iconX: number = 0;
+  public iconY: number = 0;
 
   constructor(paint?: PathPaint) {
     super(paint);
@@ -497,9 +497,9 @@ export class PathPaint extends Paint {
 }
 
 export class PathFillPaint extends Paint {
-  commandsFill: string = '';
-  filled: boolean = false;
-  linearGradientColors: Array<ColorStop> = null;
+  public commandsFill: string = '';
+  public filled: boolean = false;
+  public linearGradientColors: Array<ColorStop> = null;
 
   constructor(paint?: PathFillPaint) {
     super(paint);
@@ -532,8 +532,8 @@ export enum Style {
  * 用于绘制Legend的属性类
  */
 export class RectPaint extends Paint {
-  startPoint: number[] = [0, 0];
-  linearGradientColors: Array<ColorStop>;
+  public startPoint: number[] = [0, 0];
+  public linearGradientColors: Array<ColorStop>;
 
   constructor(paint?: RectPaint) {
     super(paint);
@@ -558,7 +558,7 @@ export class RectPaint extends Paint {
 }
 
 export class BackGroundPaint extends RectPaint {
-  backgroundColor: number = 0xffffff;
+  public backgroundColor: number = 0xffffff;
 
   constructor(paint?: BackGroundPaint) {
     super(paint);
@@ -581,8 +581,8 @@ export class LinearGradientPaint extends RectPaint {
   }
 }
 export class IndexPositionPaint extends RectPaint {
-  dataSetIndex: number;
-  dataIndex: number;
+  public dataSetIndex: number;
+  public dataIndex: number;
   constructor(paint?: IndexPositionPaint) {
     super(paint);
   }
@@ -603,13 +603,13 @@ export class IndexPositionPaint extends RectPaint {
 }
 
 export class CirclePaint extends Paint {
-  enabled: boolean = false;
-  circleColor: string | number | Color = Color.White;
-  colors: JArrayList<number> = null;
-  radius: number = 2;
-  circleHoleRadius: number = 1;
-  circleHoleColor: string | number | Color = Color.White;
-  circleHoleEnabled: boolean = true;
+  public enabled: boolean = false;
+  public circleColor: string | number | Color = Color.White;
+  public colors: JArrayList<number> = null;
+  public radius: number = 2;
+  public circleHoleRadius: number = 1;
+  public circleHoleColor: string | number | Color = Color.White;
+  public circleHoleEnabled: boolean = true;
 
   constructor(paint?: Paint) {
     super(paint);
@@ -645,7 +645,7 @@ export class CirclePaint extends Paint {
 }
 
 export class ImagePaint extends Paint {
-  icon: string | Resource = null;
+  public icon: string | Resource = null;
   constructor(paint?: ImagePaint) {
     super(paint);
     if (paint != null && paint != undefined) {
@@ -669,8 +669,8 @@ export enum Align {
 }
 
 export class DashPathEffect {
-  dash: number[];
-  offset: number;
+  public dash: number[];
+  public offset: number;
 
   constructor(dash: number[], offset: number) {
     this.dash = dash;

@@ -68,7 +68,7 @@ export class XAxis extends AxisBase {
 
     constructor() {
         super();
-        this.mYOffset = 4 /*Utils.convertDpToPixel(4)*/; // -3
+        this.mYOffset = 4;
     }
 
     /**

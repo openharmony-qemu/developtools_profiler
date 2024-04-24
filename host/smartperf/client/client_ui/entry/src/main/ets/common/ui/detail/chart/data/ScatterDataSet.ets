@@ -80,7 +80,8 @@ export class ScatterDataSet extends LineScatterCandleRadarDataSet<EntryOhos> imp
     }
 
     /**
-     * Sets the ScatterShape this DataSet should be drawn with. This will search for an available IShapeRenderer and set this
+     * Sets the ScatterShape this DataSet should be drawn with.
+     * This will search for an available IShapeRenderer and set this
      * renderer for the DataSet.
      *
      * @param shape

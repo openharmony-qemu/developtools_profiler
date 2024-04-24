@@ -18,7 +18,7 @@
  * @param Number time 时间戳
  * @param String format 格式
  */
-export function dateFormat(time?: number, format: string = 'Y-m-d h:i:s') {
+export function dateFormat(time?: number, format: string = 'Y-m-d h:i:s'): string {
   const t = new Date(time);
   // 日期格式
   format = format || 'Y-m-d h:i:s';
@@ -39,7 +39,7 @@ export function dateFormat(time?: number, format: string = 'Y-m-d h:i:s') {
     s: seconds,
   };
   // 是否补 0
-  const isAddZero = (o) => {
+  const isAddZero = (o): boolean => {
     return /m|d|h|i|s/.test(o);
   };
   return format.replace(/\w/g, (o) => {
@@ -52,10 +52,10 @@ export function dateFormat(time?: number, format: string = 'Y-m-d h:i:s') {
  * @param time
  */
 export function secToTime(time: number): String {
-  var timeStr: String = null;
-  var hour: number = 0;
-  var minute: number = 0;
-  var second: number = 0;
+  let timeStr: String = null;
+  let hour: number = 0;
+  let minute: number = 0;
+  let second: number = 0;
   if (time <= 0) {
     return '00:00';
   } else {
@@ -75,7 +75,7 @@ export function secToTime(time: number): String {
 }
 
 export function unitFormat(i: number): String {
-  var retStr: String;
+  let retStr: String;
   if (i >= 0 && i < 10) {
     retStr = '0' + i.toString();
   } else {

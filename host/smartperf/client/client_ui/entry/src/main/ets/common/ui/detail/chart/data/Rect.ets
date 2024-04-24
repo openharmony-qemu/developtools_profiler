@@ -23,10 +23,10 @@
  * @param r
  */
 export default class MyRect {
-  left: number;
-  top: number;
-  right: number;
-  bottom: number;
+  public left: number;
+  public top: number;
+  public right: number;
+  public bottom: number;
 
   /**
    * Create a new rectangle with the specified coordinates. Note: no range
@@ -61,8 +61,12 @@ export default class MyRect {
   }
 
   public equals(o: Object): boolean {
-    if (this == o) return true;
-    if (o == null || this != o) return false;
+    if (this == o) {
+      return true;
+    }
+    if (o == null || this != o) {
+      return false;
+    }
     return this.left == o.left && this.top == o.top && this.right == o.right && this.bottom == o.bottom;
   }
 

@@ -21,20 +21,20 @@ import Paint from './Paint';
 import ViewPortHandler from '../utils/ViewPortHandler';
 
 export default class XAixsMode {
-    paints: Paint[] = [];
-    handler: ViewPortHandler = new ViewPortHandler();
-    topAxis: XAxis = new XAxis();
-    bottomAxis: XAxis = new XAxis();
-    width: number = 300;
-    height: number = 300;
-    minOffset: number = 15;
-    yLeftLongestLabel: string = 'AAA';
-    yRightLongestLabel: string = 'AAA';
-    XLimtLine: LimitLine = new LimitLine(35, 'Index 10');
+    public paints: Paint[] = [];
+    public handler: ViewPortHandler = new ViewPortHandler();
+    public topAxis: XAxis = new XAxis();
+    public bottomAxis: XAxis = new XAxis();
+    public width: number = 300;
+    public height: number = 300;
+    public minOffset: number = 15;
+    public yLeftLongestLabel: string = 'AAA';
+    public yRightLongestLabel: string = 'AAA';
+    public XLimtLine: LimitLine = new LimitLine(35, 'Index 10');
 
-    xPosition: number = 0;
-    yPosition: number = 0;
-    clipPath: string;
+    public xPosition: number = 0;
+    public yPosition: number = 0;
+    public clipPath: string;
 
     public draw() {
         this.paints = [];
@@ -43,7 +43,8 @@ export default class XAixsMode {
 
         this.handler.restrainViewPort(this.minOffset, this.minOffset, this.minOffset, this.minOffset);
         this.handler.setChartDimens(this.width, this.height);
-        let mAxisRendererTop: XAxisRenderer = new XAxisRenderer(this.handler, this.topAxis, new Transformer(this.handler));
+        let mAxisRendererTop: XAxisRenderer =
+            new XAxisRenderer(this.handler, this.topAxis, new Transformer(this.handler));
         mAxisRendererTop.yLeftLongestLabel = this.yLeftLongestLabel;
         mAxisRendererTop.yRightLongestLabel = this.yRightLongestLabel;
         mAxisRendererTop.computeAxis(this.topAxis.mAxisMinimum, this.topAxis.mAxisMaximum, false);

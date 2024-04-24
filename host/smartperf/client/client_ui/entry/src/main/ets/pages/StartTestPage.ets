@@ -15,30 +15,30 @@
 
 import { commonStartAbility } from '../common/utils/AbilityUtils';
 import router from '@system.router';
-import {  SwitchItem, CollectItem } from '../common/entity/LocalConfigEntity';
+import { SwitchItem, CollectItem } from '../common/entity/LocalConfigEntity';
 import { StartTestTitleComponent } from '../common/ui/StartTestTitleComponent';
-import { ProfilerTask } from '../common/profiler/ProfilerTask'
-import { CollectorType } from '../common/profiler/base/ProfilerConstant'
+import { ProfilerTask } from '../common/profiler/ProfilerTask';
+import { CollectorType } from '../common/profiler/base/ProfilerConstant';
 import { getPidOfAbility } from '../common/utils/SystemUtils';
 import prompt from '@system.prompt';
-import SPLogger from '../../ets/common/utils/SPLogger'
+import SPLogger from '../../ets/common/utils/SPLogger';
 
 
-const TAG = "StartTestPage"
+const TAG = 'StartTestPage'
 /*
  * 测试配置页
  */
 @Entry
 @Component
 struct StartTestPage {
-  @State selectApp: string = "请选择一个应用"
-  @State selectAppIcon: string = ""
+  @State selectApp: string = '请选择一个应用'
+  @State selectAppIcon: string = ''
   @State private collectConfigs: Array<CollectItem> = new Array()
-  @State private switchList:Array<SwitchItem> = new Array(
-    new SwitchItem("trace", '是否抓取trace', $r("app.media.icon_average_frame_b"), false, true),
-    new SwitchItem("screen_capture", '是否开启截图', $r("app.media.icon_screencap"), false, true)
+  @State private switchList: Array<SwitchItem> = new Array(
+    new SwitchItem('trace', '是否抓取trace', $r('app.media.icon_average_frame_b'), false, true),
+    new SwitchItem('screen_capture', '是否开启截图', $r('app.media.icon_screencap'), false, true)
   )
-  @State private testName: string = "" // 测试名称
+  @State private testName: string = '' // 测试名称
 
   dialogController: CustomDialogController = new CustomDialogController({
     builder: CustomDialogCollect({ cancel: () => {
@@ -85,19 +85,19 @@ struct StartTestPage {
 
     Column() {
       //开始测试title
-      StartTestTitleComponent({ title: "开始测试" })
+      StartTestTitleComponent({ title: '开始测试' })
 
       Scroll() {
         Column() {
           //请选择一个应用
           Row({ space: '15vp' }) {
-            if (this.selectAppIcon == "") {
+            if (this.selectAppIcon == '') {
               Image($r('app.media.logo')).width('70vp').height('70vp').margin({ left: '2%' })
             } else {
               Image(this.selectAppIcon).width('70vp').height('70vp').margin({ left: '2%' })
             }
             Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-              Text(this.selectApp).fontSize('15fp').fontColor($r("app.color.color_333"))
+              Text(this.selectApp).fontSize('15fp').fontColor($r('app.color.color_333'))
 
               Image($r('app.media.icon_enter')).width('15vp').height('15vp').margin({ right: '35vp' })
             }.height('70vp').width('85%')
@@ -105,11 +105,11 @@ struct StartTestPage {
           .height('100vp')
           .width('95%')
           .borderRadius('5vp')
-          .backgroundColor($r("app.color.color_fff"))
+          .backgroundColor($r('app.color.color_fff'))
           .margin({ top: '20vp' })
           .onClick(() => {
             router.push({ uri: 'pages/AppSelectPage', params: {
-              StartPage: "StartTest"
+              startPage: 'StartTest'
             } })
           })
 
@@ -118,25 +118,25 @@ struct StartTestPage {
             Image($r('app.media.icon_test_index')).width('25vp').height('25vp').margin({ left: '2%' })
 
             Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-              Text('测试指标').fontSize('15fp').fontColor($r("app.color.color_333"))
+              Text('测试指标').fontSize('15fp').fontColor($r('app.color.color_333'))
 
               Image($r('app.media.icon_enter')).width('15vp').height('15vp').margin({ right: '15vp' })
             }.height('60vp').width('90%').onClick(() => {
-              console.log("TestIndicators---------onClick")
-              if (this.selectApp == "请选择一个应用" || this.selectApp == "SmartPerf") {
-                console.log("TestIndicators---------please choose app")
-                prompt.showToast({ message: "please choose app!", duration: 1000 })
+              console.log('TestIndicators---------onClick')
+              if (this.selectApp == '请选择一个应用' || this.selectApp == 'SmartPerf') {
+                console.log('TestIndicators---------please choose app')
+                prompt.showToast({ message: 'please choose app!', duration: 1000 })
                 return
               }
-              console.log("TestIndicators---------dialogController.open()")
+              console.log('TestIndicators---------dialogController.open()')
               this.dialogController.open()
-              console.log("TestIndicators---------dialogController.open  End()")
+              console.log('TestIndicators---------dialogController.open  End()')
             })
           }
           .height('60vp')
           .width('95%')
           .borderRadius('5vp')
-          .backgroundColor($r("app.color.color_fff"))
+          .backgroundColor($r('app.color.color_fff'))
           .margin({ top: '10vp' })
 
           //测试名称
@@ -144,10 +144,10 @@ struct StartTestPage {
             Image($r('app.media.icon_test_name')).width('25vp').height('25vp').margin({ left: '2%' })
 
             Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-              Text('测试名称').fontSize('15fp').fontColor($r("app.color.color_333"))
+              Text('测试名称').fontSize('15fp').fontColor($r('app.color.color_333'))
 
               Row() {
-                Text(this.testName).fontSize('15fp').fontColor($r("app.color.color_333"))
+                Text(this.testName).fontSize('15fp').fontColor($r('app.color.color_333'))
 
                 Image($r('app.media.icon_enter')).width('15vp').height('15vp').margin({ right: '15vp' })
               }
@@ -155,7 +155,7 @@ struct StartTestPage {
               this.textController.open()
             })
 
-          }.height('60vp').width('95%').borderRadius('5vp').backgroundColor($r("app.color.color_fff"))
+          }.height('60vp').width('95%').borderRadius('5vp').backgroundColor($r('app.color.color_fff'))
 
           SwitchComponent({ switchList: $switchList })
           Blank()
@@ -165,31 +165,31 @@ struct StartTestPage {
             .border({ radius: '20vp' })
             .width('80%')
             .height('60vp')
-            .backgroundColor($r("app.color.colorPrimary"))
+            .backgroundColor($r('app.color.colorPrimary'))
             .onClick(() => {
 
               let taskConfig = this.resolveTaskConfig()
-              console.log("console.log:" + JSON.stringify(taskConfig));
+              console.log('console.log:' + JSON.stringify(taskConfig));
 
-              if (this.selectApp == "请选择一个应用" || this.selectApp == "SmartPerf") {
-                prompt.showToast({ message: "please choose app!", duration: 1000 })
+              if (this.selectApp == '请选择一个应用' || this.selectApp == 'SmartPerf') {
+                prompt.showToast({ message: 'please choose app!', duration: 1000 })
                 return
               }
-			if(router!=null){
-				if(router.getParams()!=null){
-					if(router.getParams()["selectPackageName"]!=null){
+			if (router != null) {
+				if (router.getParams() != null) {
+					if (router.getParams()['selectPackageName'] != null) {
 					  //启动app
 					  commonStartAbility(new String(router.getParams()["selectPackageName"]).toString(), new String(router.getParams()["selectAbilityName"]).toString())
 					  //启动悬浮窗
 					  globalThis.CreateFloatingWindow()
-					  router.back({ uri: "pages/MainPage" })
+					  router.back({ uri: 'pages/MainPage' })
 					 }
 			  }
 			}
             })
 
-          Divider().height('15%').width("80%").visibility(Visibility.Hidden)
-        }.height("100%")
+          Divider().height('15%').width('80%').visibility(Visibility.Hidden)
+        }.height('100%')
       }.width('100%').scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto)
 
     }.height('100%').width('100%').backgroundColor('#EEEEEE')
@@ -201,16 +201,16 @@ struct StartTestPage {
     let appVersion
     let selectPackageName
     let appIconId
-    if (routerParams != undefined && routerParams !=null) {
-      appName = routerParams["appName"]
-      appVersion = routerParams["appVersion"]
-      selectPackageName = routerParams["selectPackageName"]
-      appIconId = routerParams["appIconId"]
+    if (routerParams != undefined && routerParams != null) {
+      appName = routerParams['appName']
+      appVersion = routerParams['appVersion']
+      selectPackageName = routerParams['selectPackageName']
+      appIconId = routerParams['appIconId']
     }
     if (appName == null && appName == undefined) {
-      this.selectApp = "请选择一个应用"
-      this.testName = ""
-      this.selectAppIcon = ""
+      this.selectApp = '请选择一个应用'
+      this.testName = ''
+      this.selectAppIcon = ''
     } else {
       this.selectApp = new String(appName).toString()
       globalThis.appName = new String(appName).toString()
@@ -222,59 +222,59 @@ struct StartTestPage {
       let D = date.getDate() + '-';
       let h
       if (date.getHours() < 10) {
-        h = "0" + date.getHours();
+        h = '0' + date.getHours();
       } else {
         h = date.getHours();
       }
       let m = date.getMinutes();
-      globalThis.testTaskName = "游戏测试" + M + D + h + m
-      this.testName = "游戏测试" + M + D + h + m
+      globalThis.testTaskName = '游戏测试' + M + D + h + m
+      this.testName = '游戏测试' + M + D + h + m
     }
   }
 
   resolveTaskConfig() {
     let collects = this.collectConfigs
-    let collectStr = ""
+    let collectStr = ''
     for (var i = 0; i < collects.length; i++) {
       const collect = collects[i];
       if (i != collects.length - 1) {
-        collectStr += collect.name + "::" + collect.isSelect + ","
+        collectStr += collect.name + '::' + collect.isSelect + ','
       } else {
-        collectStr += collect.name + "::" + collect.isSelect
+        collectStr += collect.name + '::' + collect.isSelect
       }
     }
 
     let switchs = this.switchList
-    let switchStr = ""
+    let switchStr = ''
     for (var j = 0; j < switchs.length; j++) {
       const st = switchs[j];
       if (j != switchs.length - 1) {
-        switchStr += st.id + "::" + st.isOpen + ","
+        switchStr += st.id + '::' + st.isOpen + ','
       } else {
-        switchStr += st.id + "::" + st.isOpen
+        switchStr += st.id + '::' + st.isOpen
       }
     }
 
     let taskConfig = {
-      "selectAppName": globalThis.packageName,
-      "allConfigs": collectStr + "," + switchStr
+      'selectAppName': globalThis.packageName,
+      'allConfigs': collectStr + ',' + switchStr
     }
 
     let configItems: { [key: string]: boolean } = {}
     let allConfigsArr: string[] = []
-    let curSelectPkg = ""
+    let curSelectPkg = ''
     if (taskConfig !== undefined) {
-      allConfigsArr = taskConfig.allConfigs.split(",")
+      allConfigsArr = taskConfig.allConfigs.split(',')
       curSelectPkg = taskConfig.selectAppName
     }
     for (var index = 0; index < allConfigsArr.length; index++) {
       const config = allConfigsArr[index];
-      let params = config.split("::")
-      if (params[1] == "true" || params[1] == "1") {
+      let params = config.split('::')
+      if (params[1] == 'true' || params[1] == '1') {
         configItems[params[0]] = true
-      }else if (params[1] == "false" || params[1] == "0") {
+      } else if (params[1] == 'false' || params[1] == '0') {
         configItems[params[0]] = false
-      }else {
+      } else {
         configItems[params[0]] = false
       }
     }
@@ -307,14 +307,14 @@ struct SwitchComponent {
               Image(switchItem.switchSrc).width('25vp').height('25vp').margin({ left: '2%' })
 
               Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-                Text(switchItem.switchName).fontSize('15fp').fontColor($r("app.color.color_333"))
+                Text(switchItem.switchName).fontSize('15fp').fontColor($r('app.color.color_333'))
 
                 Toggle({ type: ToggleType.Switch, isOn: switchItem.isOpen })
                   .width('60vp')
                   .height('25vp')
                   .enabled(switchItem.enable)
                   .onChange((isOn) => {
-                    console.log("isOn" + isOn)
+                    console.log('isOn' + isOn)
                     switchItem.isOpen = isOn
                   })
                   .margin({ right: '10vp' })
@@ -323,7 +323,7 @@ struct SwitchComponent {
             .height('60vp')
             .width('100%')
             .borderRadius('5vp')
-            .backgroundColor($r("app.color.color_fff"))
+            .backgroundColor($r('app.color.color_fff'))
             .margin({ top: '10vp' })
           }
         }, switchItem => switchItem.switchName)
@@ -342,18 +342,18 @@ struct CustomDialogCollect {
   build() {
     Column() {
       List() {
-        ForEach(this.collectConfigs, (Item) => {
+        ForEach(this.collectConfigs, (item) => {
           ListItem() {
-            if(Item.isSupport) {
+            if (item.isSupport) {
               Row({ space: '15vp' }) {
                 Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-                  Text(Item.name).fontSize('18fp').fontColor($r("app.color.color_333")).margin({ left: 20 })
-                  Toggle({ type: ToggleType.Switch, isOn: Item.isSupport })
+                  Text(item.name).fontSize('18fp').fontColor($r('app.color.color_333')).margin({ left: 20 })
+                  Toggle({ type: ToggleType.Switch, isOn: item.isSupport })
                     .width('60vp')
                     .height('25vp')
                     .enabled(true)
                     .onChange((isOn) => {
-                      Item.isSelect = isOn
+                      item.isSelect = isOn
                     })
                     .margin({ right: '5vp' })
                 }.height('60vp').width('90%')
@@ -361,13 +361,13 @@ struct CustomDialogCollect {
               .height('60vp')
               .width('100%')
               .borderRadius('5vp')
-              .backgroundColor($r("app.color.color_fff"))
+              .backgroundColor($r('app.color.color_fff'))
               .margin({ top: '10vp' })
             } else {
               Row({ space: '15vp' }) {
                 Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-                  Text(Item.name).fontSize('18fp').fontColor($r("app.color.color_333")).margin({ left: 20 })
-                  Toggle({ type: ToggleType.Switch, isOn: Item.isSupport })
+                  Text(item.name).fontSize('18fp').fontColor($r('app.color.color_333')).margin({ left: 20 })
+                  Toggle({ type: ToggleType.Switch, isOn: item.isSupport })
                     .width('60vp')
                     .height('25vp')
                     .enabled(false)
@@ -375,16 +375,16 @@ struct CustomDialogCollect {
                 }.height('60vp').width('90%')
               }
               .onClick(() => {
-                  prompt.showToast({ duration: 1000, message: "not support" })
+                  prompt.showToast({ duration: 1000, message: 'not support' })
               })
               .height('60vp')
               .width('100%')
               .borderRadius('5vp')
-              .backgroundColor($r("app.color.color_eee"))
+              .backgroundColor($r('app.color.color_eee'))
               .margin({ top: '10vp' })
             }
           }
-        }, Item => Item.name)
+        }, item => item.name)
       }
 
       Flex({ justifyContent: FlexAlign.SpaceAround }) {
@@ -411,7 +411,7 @@ export struct TextInputDialog {
   confirm: () => void
 
   aboutToAppear() {
-    console.log("TextInputDialog called")
+    console.log('TextInputDialog called')
   }
 
   build() {

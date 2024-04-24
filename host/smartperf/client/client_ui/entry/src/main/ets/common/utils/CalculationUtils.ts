@@ -45,7 +45,7 @@ export default class CalculationUtils {
     this.size = fpsList.length;
     this.gameFPS = gameFPS;
     this.point =
-      gameFPS == 30 ? 25 : gameFPS == 40 ? 30 : gameFPS == 60 ? 45 : 10;
+      gameFPS === 30 ? 25 : gameFPS === 40 ? 30 : gameFPS === 60 ? 45 : 10;
   }
 
   //抖动率计算
@@ -111,7 +111,7 @@ export default class CalculationUtils {
     let percentOf6To10 = 0;
     let percentOf10To16 = 0;
 
-    if (size != 1) {
+    if (size !== 1) {
       percentOf3To = numOfDiff3To / size;
       percentOf5To = numOfDiff5To / size;
       percentOf8To = numOfDiff8To / size;
@@ -124,22 +124,22 @@ export default class CalculationUtils {
       percentOf6To10 = numOfDiff6To10 / size;
       percentOf10To16 = numOfDiff10To16 / size;
     }
-    if (this.gameFPS == 25 || this.gameFPS == 30) {
+    if (this.gameFPS === 25 || this.gameFPS === 30) {
       jitterRite = percentOf3To * 100;
     }
-    if (this.gameFPS == 40 || this.gameFPS == 45) {
+    if (this.gameFPS === 40 || this.gameFPS === 45) {
       jitterRite = (percentOf3To5 * 0.4 + percentOf5To * 0.6) * 100;
     }
-    if (this.gameFPS == 60) {
+    if (this.gameFPS === 60) {
       jitterRite =
         (percentOf3To5 * 0.2 + percentOf5To8 * 0.3 + percentOf8To * 0.5) * 100;
     }
-    if (this.gameFPS == 90) {
+    if (this.gameFPS === 90) {
       jitterRite =
         (percentOf5To8 * 0.2 + percentOf8To12 * 0.3 + percentOf12To * 0.5) *
         100;
     }
-    if (this.gameFPS == 120) {
+    if (this.gameFPS === 120) {
       jitterRite =
         (percentOf6To10 * 0.2 + percentOf10To16 * 0.3 + percentOf16To * 0.5) *
         100;
@@ -163,7 +163,7 @@ export default class CalculationUtils {
     for (let i = 0; i < fpsJitterList.length; i++) {
       let jitter = fpsJitterList[i].split(';;');
       for (let j = 0; j < jitter.length; j++) {
-        var n = Number(jitter[j]);
+        let n = Number(jitter[j]);
         if (!isNaN(n) && n / 1e6 > 100) {
           num++;
         }

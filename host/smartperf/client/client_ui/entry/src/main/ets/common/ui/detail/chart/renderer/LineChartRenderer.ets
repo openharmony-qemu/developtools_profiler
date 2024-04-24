@@ -31,7 +31,7 @@ import LineScatterCandleRadarRenderer from '../renderer/LineScatterCandleRadarRe
 export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
   protected mChart: LineDataProvider;
   private min;
-  max: number;
+  private max: number;
   private range: number;
   private phaseY: number = 1;
   private phaseX: number = 1;

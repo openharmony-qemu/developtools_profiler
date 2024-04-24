@@ -17,7 +17,7 @@ import { BaseProfiler } from '../base/BaseProfiler';
 import StringUtils from '../../utils/StringUtils';
 import { CollectorType } from '../base/ProfilerConstant';
 import SPLogger from '../../../common/utils/SPLogger';
-enum POWER_CONFIG {
+enum PowerConfig {
   //设备电源驱动默认节点
   POWER_PATH = '/sys/class/power_supply/Battery',
 }
@@ -37,7 +37,7 @@ export class Power extends BaseProfiler {
 
   init() {
     //初始化Power节点
-    let pathNodes = travelFile(POWER_CONFIG.POWER_PATH, '');
+    let pathNodes = travelFile(PowerConfig.POWER_PATH, '');
     pathNodes.forEach((path) => {
       this.enableSupportItem.forEach((item) => {
         if (path == item) {
@@ -53,7 +53,7 @@ export class Power extends BaseProfiler {
   }
 
   isSupport() {
-    if (isAccess(POWER_CONFIG.POWER_PATH)) {
+    if (isAccess(PowerConfig.POWER_PATH)) {
       return true;
     }
     return false;
@@ -69,7 +69,7 @@ export class Power extends BaseProfiler {
           let powerValue = this.readVoltageNow();
           this.powerMap.set(powerKey, powerValue);
         } else {
-          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + '/' + powerKey);
+          let powerValue = fileOpen(PowerConfig.POWER_PATH + '/' + powerKey);
           this.powerMap.set(powerKey, powerValue);
         }
       }
@@ -81,13 +81,13 @@ export class Power extends BaseProfiler {
     if (this.supportItemKey.length > 0) {
       for (let powerKey of Array.from(new Set(this.supportItemKey))) {
         if (powerKey == 'current_now') {
-          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + '/' + powerKey);
+          let powerValue = fileOpen(PowerConfig.POWER_PATH + '/' + powerKey);
           globalThis.powerCurArr.push(powerValue);
           console.error('last CurrentNow-->push' + powerValue);
         }
 
         if (powerKey == 'voltage_now') {
-          let powerValue = fileOpen(POWER_CONFIG.POWER_PATH + '/' + powerKey);
+          let powerValue = fileOpen(PowerConfig.POWER_PATH + '/' + powerKey);
           globalThis.powerVoltArr.push(powerValue);
           console.error('last VoltageNow-->push' + powerValue);
         }
@@ -97,7 +97,7 @@ export class Power extends BaseProfiler {
 
   //TODO 电流是否取绝对值累加
   readCurrentNow(): string {
-    let powerQueue: Array<String> = globalThis.powerCurArr;
+    let powerQueue: string[] = globalThis.powerCurArr;
     let lastValue = 0;
     while (powerQueue.length >= 4) {
       lastValue += StringUtils.s2L(powerQueue.pop().toString());
@@ -110,7 +110,7 @@ export class Power extends BaseProfiler {
 
   //TODO 电流是否取绝对值累加
   readVoltageNow(): string {
-    let powerQueue: Array<String> = globalThis.powerVoltArr;
+    let powerQueue: string[] = globalThis.powerVoltArr;
     let lastValue = 0;
     while (powerQueue.length >= 4) {
       lastValue += StringUtils.s2L(powerQueue.pop().toString());

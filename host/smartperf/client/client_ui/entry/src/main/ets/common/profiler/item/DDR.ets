@@ -17,7 +17,7 @@ import { BaseProfiler } from '../base/BaseProfiler';
 import { CollectorType } from '../base/ProfilerConstant';
 import SPLogger from '../../../common/utils/SPLogger';
 
-enum DDR_CONFIG {
+enum DdrConfig {
   DDR_BASE = '/sys/class/devfreq/ddrfreq/cur_freq',
 }
 
@@ -38,14 +38,14 @@ export class DDR extends BaseProfiler {
   }
 
   isSupport() {
-    if (isAccess(DDR_CONFIG.DDR_BASE)) {
+    if (isAccess(DdrConfig.DDR_BASE)) {
       return true;
     }
     return false;
   }
 
   readData() {
-    const path = DDR_CONFIG.DDR_BASE;
+    const path = DdrConfig.DDR_BASE;
     let ddr = fileOpen(path);
     this.ddrMap.set('ddrFreq', ddr);
     SPLogger.DEBUG(DDR.name, 'profile_readDDR' + ddr);

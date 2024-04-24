@@ -26,8 +26,8 @@ import LineData from '../data/LineData';
 import {XAxis} from '../components/XAxis';
 import XAxisView from '../components/renderer/XAxisView';
 import YAxisView from '../components/renderer/YAxisView'
-import YAxis,{AxisDependency}  from '../components/YAxis'
-import PathView,{ PathViewModel } from '../components/PathView'
+import YAxis, {AxisDependency} from '../components/YAxis'
+import PathView, { PathViewModel } from '../components/PathView'
 import Utils from '../utils/Utils'
 import YAxisRenderer from '../renderer/YAxisRenderer'
 import Transformer from '../utils/Transformer'
@@ -62,13 +62,13 @@ export default struct LineChart {
           });
         }
         .clip(new Path().commands(this.lineChartModel.clipPath))
-        .visibility(this.lineChartModel.isShowXAxis ? Visibility.Visible: Visibility.Hidden)
+        .visibility(this.lineChartModel.isShowXAxis ? Visibility.Visible : Visibility.Hidden)
 
         Stack({ alignContent: Alignment.TopStart }) {
           YAxisView({ model:this.lineChartModel.pathViewModel.leftAxisModel })
           YAxisView({ model: this.lineChartModel.pathViewModel.rightAxisModel })
         }
-        .visibility(this.lineChartModel.isShowXAxis ? Visibility.Visible: Visibility.Hidden)
+        .visibility(this.lineChartModel.isShowXAxis ? Visibility.Visible : Visibility.Hidden)
 
         PathView({ model: this.lineChartModel.pathViewModel })
       }.backgroundColor(this.lineChartModel.rootViewBgColor)
@@ -88,15 +88,15 @@ export default struct LineChart {
 
     // 数据设置 setLegend
     let entries : JArrayList<LegendEntry> = new JArrayList<LegendEntry>();
-    for(let i=0; i<this.lineChartModel.lineData.getDataSets().size(); i++) {
+    for (let i = 0; i < this.lineChartModel.lineData.getDataSets().size(); i++) {
       let dataSet = this.lineChartModel.lineData.getDataSetByIndex(i)
       let entry = new LegendEntry(
-      dataSet.getLabel(),                  // 设置图例的字符串,mLabel
-      dataSet.getForm(),                   // 设置图例的形状,mShape,默认值LegendForm.SQUARE
-      dataSet.getFormSize(),               // 图例大小,mFormSize,默认值8
-      dataSet.getFormLineWidth(),          // 图例线宽,mFormLineWidth,默认值3
-        null,                                // 设置虚线,dataSet.getFormLineDashEffect()
-      dataSet.getColor()                   // 设置图例图形的颜色,
+      dataSet.getLabel(), // 设置图例的字符串,mLabel
+      dataSet.getForm(), // 设置图例的形状,mShape,默认值LegendForm.SQUARE
+      dataSet.getFormSize(), // 图例大小,mFormSize,默认值8
+      dataSet.getFormLineWidth(), // 图例线宽,mFormLineWidth,默认值3
+        null, // 设置虚线,dataSet.getFormLineDashEffect()
+      dataSet.getColor() // 设置图例图形的颜色,
       )
       entries.add(entry)
     }
@@ -104,10 +104,10 @@ export default struct LineChart {
     this.lineChartModel.legend.setTextSize(14);
     this.lineChartModel.legend.setCustom(entries);
     this.lineChartModel.legend.setVerticalAlignment(LegendVerticalAlignment.CENTER)
-    console.log("LineChart left:"+this.lineChartModel.left+", top:"+this.lineChartModel.top+", right:"+this.lineChartModel.right+", bottom:"+this.lineChartModel.bottom);
+    console.log('LineChart left:' + this.lineChartModel.left + ', top:' + this.lineChartModel.top + ', right:' + this.lineChartModel.right + ', bottom:' + this.lineChartModel.bottom);
   }
 
-  private initPathViewModel(){
+  private initPathViewModel() {
     this.pathViewModel.lineChartModel = this.lineChartModel
     this.pathViewModel.width = this.lineChartModel.width;
     this.pathViewModel.height = this.lineChartModel.height;
@@ -141,65 +141,68 @@ export default struct LineChart {
 }
 
 export class LineChartModel {
-  topAxis: XAxis; //顶部X轴
-  bottomAxis: XAxis; //底部X轴
-  width: number = 300; //表的宽度
-  height: number = 300; //表的高度
-  rootViewBgColor: number | string | Color = Color.White; //chart区域的背景色
-  chartBgColor: number | string | Color = "#00FFFFFF"; //根布局的背景色
-  legendWidth: number = 300; //legend的宽度
-  legendHeight: number = 50; //legend的高度
-  minOffset: number = 15; //轴线偏移量
-  leftAxis: YAxis;
-  rightAxis: YAxis;
-  lineData: LineData;
-  legend: Legend  = new Legend();
-  isShowLegend:boolean = true;
-  isInverted: boolean = false;
-  legendModel: LegendView.Model = new LegendView.Model();
-  leftTextWidth: number = 0;
-  rightTextWidth: number = 0;
-  top: number = 0;
-  bottom: number = 0;
-  left: number = 0;
-  right: number = 0;
-  isShowHeightlight:boolean = true;
-  isShowValue:boolean = true;
-  xScale: number = 1;
-  yLeftScale: number = 1;
-  yRightScale: number = 1;
-  value: string = "";
-  valueSize: number = 12;
-  valueWidth: number = 36;
-  valueHeight: number = 12;
-  imageWidth: number = 40;
-  imageHeight: number = 30;
-  clipPath: string = '';
-  clipYPath: string = '';
-  test: string = "";
-  isShowXAxis:boolean = true;
-  isShowYAxis:boolean = true;
+  private topAxis: XAxis; //顶部X轴
+  private bottomAxis: XAxis; //底部X轴
+  private width: number = 300; //表的宽度
+  private height: number = 300; //表的高度
+  private rootViewBgColor: number | string | Color = Color.White; //chart区域的背景色
+  private chartBgColor: number | string | Color = '#00FFFFFF'; //根布局的背景色
+  private legendWidth: number = 300; //legend的宽度
+  private legendHeight: number = 50; //legend的高度
+  private minOffset: number = 15; //轴线偏移量
+  private leftAxis: YAxis;
+  private rightAxis: YAxis;
+  private lineData: LineData;
+  private legend: Legend = new Legend();
+  private isShowLegend:boolean = true;
+  private isInverted: boolean = false;
+  private legendModel: LegendView.Model = new LegendView.Model();
+  private leftTextWidth: number = 0;
+  private rightTextWidth: number = 0;
+  private top: number = 0;
+  private bottom: number = 0;
+  private left: number = 0;
+  private right: number = 0;
+  private isShowHeightlight:boolean = true;
+  private isShowValue:boolean = true;
+  private xScale: number = 1;
+  private yLeftScale: number = 1;
+  private yRightScale: number = 1;
+  private value: string = '';
+  private valueSize: number = 12;
+  private valueWidth: number = 36;
+  private valueHeight: number = 12;
+  private imageWidth: number = 40;
+  private imageHeight: number = 30;
+  private clipPath: string = '';
+  private clipYPath: string = '';
+  private test: string = '';
+  private isShowXAxis:boolean = true;
+  private isShowYAxis:boolean = true;
 
-  pathViewModel: PathViewModel;
+  private pathViewModel: PathViewModel;
 
-  constructor(){
+  constructor() {
 
   }
 
   public init(): void {
     let textPaint:TextPaint = new TextPaint();
     textPaint.setTextSize(this.leftAxis.getTextSize());
-    this.leftTextWidth = Utils.calcTextWidth(textPaint,this.getYLongestLabel(this.leftAxis));
-    this.rightTextWidth = Utils.calcTextWidth(textPaint,this.getYLongestLabel(this.rightAxis));
+    this.leftTextWidth = Utils.calcTextWidth(textPaint, this.getYLongestLabel(this.leftAxis));
+    this.rightTextWidth = Utils.calcTextWidth(textPaint, this.getYLongestLabel(this.rightAxis));
     this.left = this.minOffset + this.leftTextWidth;
     this.top = this.minOffset;
     this.right = this.width - this.minOffset - this.rightTextWidth;
     this.bottom = this.height - this.minOffset;
     this.lineData.mDisplayRect = new MyRect(this.left, this.top, this.right, this.bottom);
 
-    this.xScale = (this.lineData.mDisplayRect.right - this.lineData.mDisplayRect.left) / (this.topAxis.getAxisMaximum() - (this.topAxis.getAxisMinimum() < 0 ? this.topAxis.getAxisMinimum() : 0));
-    this.yLeftScale = (this.lineData.mDisplayRect.bottom - this.lineData.mDisplayRect.top) / (this.leftAxis.getAxisMaximum() - this.leftAxis.getAxisMinimum());
-    this.yRightScale = (this.lineData.mDisplayRect.bottom - this.lineData.mDisplayRect.top) / (this.rightAxis.getAxisMaximum() - this.rightAxis.getAxisMinimum());
+    this.xScale = (this.lineData.mDisplayRect.right - this.lineData.mDisplayRect.left) /
+      (this.topAxis.getAxisMaximum() - (this.topAxis.getAxisMinimum() < 0 ? this.topAxis.getAxisMinimum() : 0));
+    this.yLeftScale = (this.lineData.mDisplayRect.bottom - this.lineData.mDisplayRect.top) /
+      (this.leftAxis.getAxisMaximum() - this.leftAxis.getAxisMinimum());
+    this.yRightScale = (this.lineData.mDisplayRect.bottom - this.lineData.mDisplayRect.top) /
+      (this.rightAxis.getAxisMaximum() - this.rightAxis.getAxisMinimum());
 
     this.legendModel.setLegend(this.legend)
       .setWidth(this.legendWidth)
@@ -223,95 +226,95 @@ export class LineChartModel {
   }
 
 
-  public setWidth(width: number){
+  public setWidth(width: number) {
     this.width = width;
   }
 
-  public setHeight(height: number){
+  public setHeight(height: number) {
     this.height = height;
   }
 
-  public setRootViewBgColor(rootViewBgColor: number | string | Color){
+  public setRootViewBgColor(rootViewBgColor: number | string | Color) {
     this.rootViewBgColor = rootViewBgColor;
   }
 
-  public setChartBgColor(chartBgColor: number | string | Color){
+  public setChartBgColor(chartBgColor: number | string | Color) {
     this.chartBgColor = chartBgColor;
   }
 
-  public setTopAxis(topAxis: XAxis){
+  public setTopAxis(topAxis: XAxis) {
     this.topAxis = topAxis;
   }
 
-  public setBottomAxis(bottomAxis: XAxis){
+  public setBottomAxis(bottomAxis: XAxis) {
     this.bottomAxis = bottomAxis;
   }
 
-  public setLeftAxis(leftAxis: YAxis){
+  public setLeftAxis(leftAxis: YAxis) {
     this.leftAxis = leftAxis;
   }
 
-  public setRightAxis(rightAxis: YAxis){
+  public setRightAxis(rightAxis: YAxis) {
     this.rightAxis = rightAxis;
   }
 
-  public setMinOffset(minOffset: number){
+  public setMinOffset(minOffset: number) {
     this.minOffset = minOffset;
   }
 
-  public setIsShowLegend(isShowLegend: boolean){
+  public setIsShowLegend(isShowLegend: boolean) {
     this.isShowLegend = isShowLegend;
   }
 
-  public setIsInverted(isInverted: boolean){
+  public setIsInverted(isInverted: boolean) {
     this.isInverted = isInverted;
   }
 
-  public setIsShowHeightlight(isShowHeightlight: boolean){
+  public setIsShowHeightlight(isShowHeightlight: boolean) {
     this.isShowHeightlight = isShowHeightlight;
   }
 
-  public setIsShowValue(isShowValue: boolean){
+  public setIsShowValue(isShowValue: boolean) {
     this.isShowValue = isShowValue;
   }
 
-  public setPathViewModel(pathViewModel: PathViewModel){
+  public setPathViewModel(pathViewModel: PathViewModel) {
     this.pathViewModel = pathViewModel;
   }
 
-  public calcClipPath(){
+  public calcClipPath() {
     let rect = this.lineData.mDisplayRect;
-    this.clipPath='M'+Utils.convertDpToPixel(rect.left)+' '+Utils.convertDpToPixel(0)
-    +'L'+Utils.convertDpToPixel(rect.right)+' '+Utils.convertDpToPixel(0)
-    +'L'+Utils.convertDpToPixel(rect.right)+' '+Utils.convertDpToPixel(this.height)
-    +'L'+Utils.convertDpToPixel(rect.left)+' '+Utils.convertDpToPixel(this.height)
-    +' Z'
+    this.clipPath = 'M' + Utils.convertDpToPixel(rect.left) + ' ' + Utils.convertDpToPixel(0) +
+    'L' + Utils.convertDpToPixel(rect.right) + ' ' + Utils.convertDpToPixel(0) +
+    'L' + Utils.convertDpToPixel(rect.right) + ' ' + Utils.convertDpToPixel(this.height) +
+    'L' + Utils.convertDpToPixel(rect.left) + ' ' + Utils.convertDpToPixel(this.height) +
+    ' Z'
   }
 
-  public calcYClipPath(){
+  public calcYClipPath() {
     let rect = this.lineData.mDisplayRect;
-    this.clipYPath='M'+Utils.convertDpToPixel(this.minOffset/2)+' '+Utils.convertDpToPixel(rect.top)
-    +'L'+Utils.convertDpToPixel(this.width - this.minOffset/2)+' '+Utils.convertDpToPixel(rect.top)
-    +'L'+Utils.convertDpToPixel(this.width - this.minOffset/2)+' '+Utils.convertDpToPixel(rect.bottom)
-    +'L'+Utils.convertDpToPixel(this.minOffset/2)+' '+Utils.convertDpToPixel(rect.bottom)
-    +' Z'
+    this.clipYPath = 'M' + Utils.convertDpToPixel(this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.top) +
+    'L' + Utils.convertDpToPixel(this.width - this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.top) +
+    'L' + Utils.convertDpToPixel(this.width - this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.bottom) +
+    'L' + Utils.convertDpToPixel(this.minOffset / 2) + ' '+ tils.convertDpToPixel(rect.bottom) +
+    ' Z'
   }
 
-  public getPathViewModel(): PathViewModel{
+  public getPathViewModel(): PathViewModel {
     return this.pathViewModel;
   }
 
-  public setLineData(lineData: LineData){
+  public setLineData(lineData: LineData) {
     this.lineData = lineData;
   }
 
-  public setPathViewData(lineData: LineData){
+  public setPathViewData(lineData: LineData) {
     this.lineData = lineData;
     this.init();
     this.pathViewModel.setPathViewData(lineData);
   }
 
-  public getLineData(): LineData{
+  public getLineData(): LineData {
     return this.lineData;
   }
 

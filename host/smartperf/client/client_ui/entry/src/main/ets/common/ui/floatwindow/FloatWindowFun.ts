@@ -14,6 +14,7 @@
  */
 
 import wm from '@ohos.window';
+import { CollectorType } from '../../profiler/base/ProfilerConstant';
 import SPLogger from '../../utils/SPLogger';
 
 const TAG = 'FloatWindowFun';
@@ -61,13 +62,13 @@ export class FloatWindowFun {
       });
     };
     globalThis.MoveFloatingWindow = (offsetX: number, offsetY: number) => {
-      var xx =
+      let xx =
         this.floatingWindowOffsetX + offsetX * 2 < 0
           ? 0
           : this.floatingWindowOffsetX + offsetX * 2 > this.windowWidth - 200
           ? this.windowWidth - 200
           : this.floatingWindowOffsetX + offsetX * 2;
-      var yy =
+      let yy =
         this.floatingWindowOffsetY + offsetY * 2 < 0
           ? 0
           : this.floatingWindowOffsetY + offsetY * 2 > this.windowHeight - 200
@@ -139,13 +140,13 @@ export class FloatWindowFun {
     };
 
     globalThis.MoveTitleWindow = (offsetX: number, offsetY: number) => {
-      var xx =
+      let xx =
         this.titleWindowOffsetX + offsetX * 2 < 0
           ? 0
           : this.titleWindowOffsetX + offsetX * 2 > this.windowWidth - 500
           ? this.windowWidth - 500
           : this.titleWindowOffsetX + offsetX * 2;
-      var yy =
+      let yy =
         this.titleWindowOffsetY + offsetY * 2 < 0
           ? 0
           : this.titleWindowOffsetY + offsetY * 2 > this.windowHeight - 330

@@ -194,7 +194,9 @@ export class ProfilerTask {
       globalThis.packageName
       )
       .then((data) => {
-        if (data.length != 0) tPowers.push(data[0]);
+        if (data.length != 0) {
+          tPowers.push(data[0]);
+        }
         database
           .query_applications_cpu(
           dateFormat(globalThis.startTime),
@@ -202,7 +204,9 @@ export class ProfilerTask {
           globalThis.packageName
           )
           .then((data) => {
-            if (data.length != 0) tPowers.push(data[0]);
+            if (data.length != 0) {
+              tPowers.push(data[0]);
+            }
             database
               .query_applications_gpu(
               dateFormat(globalThis.startTime),
@@ -210,7 +214,9 @@ export class ProfilerTask {
               globalThis.packageName
               )
               .then((data) => {
-                if (data.length != 0) tPowers.push(data[0]);
+                if (data.length != 0) {
+                  tPowers.push(data[0]);
+                }
                 database
                   .query_applications_audio(
                   dateFormat(globalThis.startTime),
@@ -218,7 +224,9 @@ export class ProfilerTask {
                   globalThis.packageName
                   )
                   .then((data) => {
-                    if (data.length != 0) tPowers.push(data[0]);
+                    if (data.length != 0) {
+                      tPowers.push(data[0]);
+                    }
                     database
                       .query_applications_ddr(
                       dateFormat(globalThis.startTime),
@@ -226,7 +234,9 @@ export class ProfilerTask {
                       globalThis.packageName
                       )
                       .then((data) => {
-                        if (data.length != 0) tPowers.push(data[0]);
+                        if (data.length != 0) {
+                          tPowers.push(data[0]);
+                        }
                         database
                           .query_applications_dss(
                           dateFormat(globalThis.startTime),
@@ -234,7 +244,9 @@ export class ProfilerTask {
                           globalThis.packageName
                           )
                           .then((data) => {
-                            if (data.length != 0) tPowers.push(data[0]);
+                            if (data.length != 0) {
+                              tPowers.push(data[0]);
+                            }
                             database
                               .query_applications_system_idle(
                               dateFormat(globalThis.startTime),
@@ -242,7 +254,9 @@ export class ProfilerTask {
                               globalThis.packageName
                               )
                               .then((data) => {
-                                if (data.length != 0) tPowers.push(data[0]);
+                                if (data.length != 0) {
+                                  tPowers.push(data[0]);
+                                }
                                 database
                                   .query_applications_wifi_data(
                                   dateFormat(globalThis.startTime),
@@ -250,7 +264,9 @@ export class ProfilerTask {
                                   globalThis.packageName
                                   )
                                   .then((data) => {
-                                    if (data.length != 0) tPowers.push(data[0]);
+                                    if (data.length != 0) {
+                                      tPowers.push(data[0]);
+                                    }
                                     for (var i = 0; i < tPowers.length; i++) {
                                       database.insertPowerSensor(
                                         'task_powersensor_info',

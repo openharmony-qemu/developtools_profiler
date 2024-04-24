@@ -20,9 +20,9 @@ import SPLogger from '../../../common/utils/SPLogger';
 
 import worker from '@ohos.worker';
 import WorkerHandler from '../WorkerHandler';
-let MainWorker = globalThis.MainWorker;
+let mainWorker = globalThis.MainWorker;
 
-MainWorker.onmessage = function (result) {
+mainWorker.onmessage = function (result) {
   WorkerHandler.socketHandler(result);
 };
 
@@ -57,7 +57,7 @@ export class FPS extends BaseProfiler implements SocketProfiler {
   }
 
   readMessageQueue() {
-    MainWorker.postMessage({ fps: true, pkg: globalThis.collectPkg });
+    mainWorker.postMessage({ fps: true, pkg: globalThis.collectPkg });
     SPLogger.DEBUG(FPS.name, 'messageQueue for fps' + globalThis.fpsArr.length);
     if (globalThis.fpsArr.length > 0) {
       let fpsQueue: Array<String> = globalThis.fpsArr;
