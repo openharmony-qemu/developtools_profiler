@@ -239,7 +239,7 @@ static std::string SplitNameFromTypeName(const std::string& typeName)
     if (typeName.size() > 0) { // split type and name
         auto posT0 = typeName.rfind(" ");
         std::string rightHalf = typeName.substr(posT0 + 1);
-        size_t dataIndex = rightHalf.size() > 1 ?  static_cast<size_t>(rightHalf.size() - 1) : 0;
+        size_t dataIndex = rightHalf.size() > 1 ? rightHalf.size() - 1 : 0;
         if (rightHalf[dataIndex] != ']') {
             name = rightHalf;
         } else {

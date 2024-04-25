@@ -87,7 +87,7 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, in
     size_t pos = path.rfind("/");
     if (pos != std::string::npos) {
         std::string dirName = path.substr(0, pos+1);
-        size_t index = path.length() > (pos + 1) ? static_cast<size_t>(path.length() - pos - 1) : 0;
+        size_t index = path.length() > (pos + 1) ? path.length() - pos - 1 : 0;
         std::string fileName = path.substr(pos+1, index);
         CHECK_TRUE(!(std::regex_search(dirName, dirNameRegex) || std::regex_search(fileName, fileNameRegex)), -1,
                    "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
