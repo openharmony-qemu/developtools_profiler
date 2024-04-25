@@ -176,7 +176,7 @@ bool FtraceParser::ParseEventFormat(const std::string& formatDesc, EventFormat& 
         }
     }
     CHECK_TRUE(format.fields.size() > 0, false, "ParseEventFormat from %s failed!", formatDesc.c_str());
-    size_t lastFiledIndex = format.fields.size() > 1 ? static_cast<size_t>(format.fields.size() - 1) : 0;
+    size_t lastFiledIndex = format.fields.size() > 1 ? format.fields.size() - 1 : 0;
     format.eventSize = format.fields[lastFiledIndex].offset + format.fields[lastFiledIndex].size;
     return true;
 }
