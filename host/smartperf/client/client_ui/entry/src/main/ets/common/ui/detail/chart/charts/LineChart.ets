@@ -296,7 +296,7 @@ export class LineChartModel {
     this.clipYPath = 'M' + Utils.convertDpToPixel(this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.top) +
     'L' + Utils.convertDpToPixel(this.width - this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.top) +
     'L' + Utils.convertDpToPixel(this.width - this.minOffset / 2) + ' ' + Utils.convertDpToPixel(rect.bottom) +
-    'L' + Utils.convertDpToPixel(this.minOffset / 2) + ' '+ tils.convertDpToPixel(rect.bottom) +
+    'L' + Utils.convertDpToPixel(this.minOffset / 2) + ' '+ Utils.convertDpToPixel(rect.bottom) +
     ' Z'
   }
 
