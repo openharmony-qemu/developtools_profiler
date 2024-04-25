@@ -141,46 +141,46 @@ export default struct LineChart {
 }
 
 export class LineChartModel {
-  private topAxis: XAxis; //顶部X轴
-  private bottomAxis: XAxis; //底部X轴
-  private width: number = 300; //表的宽度
-  private height: number = 300; //表的高度
-  private rootViewBgColor: number | string | Color = Color.White; //chart区域的背景色
-  private chartBgColor: number | string | Color = '#00FFFFFF'; //根布局的背景色
-  private legendWidth: number = 300; //legend的宽度
-  private legendHeight: number = 50; //legend的高度
-  private minOffset: number = 15; //轴线偏移量
-  private leftAxis: YAxis;
-  private rightAxis: YAxis;
-  private lineData: LineData;
-  private legend: Legend = new Legend();
-  private isShowLegend:boolean = true;
-  private isInverted: boolean = false;
-  private legendModel: LegendView.Model = new LegendView.Model();
-  private leftTextWidth: number = 0;
-  private rightTextWidth: number = 0;
-  private top: number = 0;
-  private bottom: number = 0;
-  private left: number = 0;
-  private right: number = 0;
-  private isShowHeightlight:boolean = true;
-  private isShowValue:boolean = true;
-  private xScale: number = 1;
-  private yLeftScale: number = 1;
-  private yRightScale: number = 1;
-  private value: string = '';
-  private valueSize: number = 12;
-  private valueWidth: number = 36;
-  private valueHeight: number = 12;
-  private imageWidth: number = 40;
-  private imageHeight: number = 30;
-  private clipPath: string = '';
-  private clipYPath: string = '';
-  private test: string = '';
-  private isShowXAxis:boolean = true;
-  private isShowYAxis:boolean = true;
+  public topAxis: XAxis; //顶部X轴
+  public bottomAxis: XAxis; //底部X轴
+  public width: number = 300; //表的宽度
+  public height: number = 300; //表的高度
+  public rootViewBgColor: number | string | Color = Color.White; //chart区域的背景色
+  public chartBgColor: number | string | Color = '#00FFFFFF'; //根布局的背景色
+  public legendWidth: number = 300; //legend的宽度
+  public legendHeight: number = 50; //legend的高度
+  public minOffset: number = 15; //轴线偏移量
+  public leftAxis: YAxis;
+  public rightAxis: YAxis;
+  public lineData: LineData;
+  public legend: Legend = new Legend();
+  public isShowLegend:boolean = true;
+  public isInverted: boolean = false;
+  public legendModel: LegendView.Model = new LegendView.Model();
+  public leftTextWidth: number = 0;
+  public rightTextWidth: number = 0;
+  public top: number = 0;
+  public bottom: number = 0;
+  public left: number = 0;
+  public right: number = 0;
+  public isShowHeightlight:boolean = true;
+  public isShowValue:boolean = true;
+  public xScale: number = 1;
+  public yLeftScale: number = 1;
+  public yRightScale: number = 1;
+  public value: string = '';
+  public valueSize: number = 12;
+  public valueWidth: number = 36;
+  public valueHeight: number = 12;
+  public imageWidth: number = 40;
+  public imageHeight: number = 30;
+  public clipPath: string = '';
+  public clipYPath: string = '';
+  public test: string = '';
+  public isShowXAxis:boolean = true;
+  public isShowYAxis:boolean = true;
 
-  private pathViewModel: PathViewModel;
+  public pathViewModel: PathViewModel;
 
   constructor() {
 
