@@ -204,7 +204,8 @@ inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len
     if (google::protobuf::internal::IsStructurallyValidUTF8(data, dataLen)) {
         auto* info = hisyseventInfoProto->add_info();
         info->set_id(id_);
-        info->set_context(data, strlen(data) - 1); // - \n
+        size_t dataLen = strlen(data) > 1 ? strlen(data) - 1 : 0;
+        info->set_context(data, dataLen); // - \n
         id_++;
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "NOTE HisyseventPlugin: hisysevent context include invalid UTF-8 data");
