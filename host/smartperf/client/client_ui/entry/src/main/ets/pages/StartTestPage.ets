@@ -109,7 +109,7 @@ struct StartTestPage {
           .margin({ top: '20vp' })
           .onClick(() => {
             router.push({ uri: 'pages/AppSelectPage', params: {
-              startPage: 'StartTest'
+              StartPage: 'StartTest'
             } })
           })
 
