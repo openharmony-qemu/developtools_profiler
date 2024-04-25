@@ -14,11 +14,11 @@
  */
 
 export class JList<T> {
-  dataSouce: Array<T>;
+  public dataSouce: Array<T>;
 
-  listSize: number; // 列表的大小
+  public listSize: number; // 列表的大小
 
-  pos: number; // 列表中当前的位置
+  public pos: number; // 列表中当前的位置
 
   constructor() {
     this.dataSouce = [];

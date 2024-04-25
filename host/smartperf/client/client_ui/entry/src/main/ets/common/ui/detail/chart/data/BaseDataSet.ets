@@ -266,8 +266,11 @@ export default abstract class BaseDataSet<T extends EntryOhos> implements IDataS
   }
 
   public setValueFormatter(f: IValueFormatter): void {
-    if (f == null) return;
-    else this.mValueFormatter = f;
+    if (f == null) {
+      return;
+    } else {
+      this.mValueFormatter = f;
+    }
   }
 
   public getValueFormatter(): IValueFormatter {
@@ -424,7 +427,9 @@ export default abstract class BaseDataSet<T extends EntryOhos> implements IDataS
 
   public contains(e: T): boolean {
     for (let i = 0; i < this.getEntryCount(); i++) {
-      if (this.getEntryForIndex(i) == e) return true;
+      if (this.getEntryForIndex(i) == e) {
+        return true;
+      }
     }
     return false;
   }

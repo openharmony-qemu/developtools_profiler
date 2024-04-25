@@ -42,8 +42,8 @@ export default interface IMarker {
    *
    * @param e         The Entry the IMarker belongs to. This can also be any subclass of Entry, like BarEntry or
    *                  CandleEntry, simply cast it at runtime.
-   * @param highlight The highlight object contains information about the highlighted value such as it's dataset-index, the
-   *                  selected range or stack-index (only stacked bar entries).
+   * @param highlight The highlight object contains information about the highlighted value such as it's dataset-index, 
+   *                  the selected range or stack-index (only stacked bar entries).
    */
   refreshContent(e: EntryOhos, highlight: Highlight): void;
 

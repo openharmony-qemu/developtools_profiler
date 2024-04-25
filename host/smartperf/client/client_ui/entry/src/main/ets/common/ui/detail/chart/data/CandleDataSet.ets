@@ -111,21 +111,33 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
   }
 
   public myCalcMinMax(e: CandleEntry): void {
-    if (e.getLow() < this.mYMin) this.mYMin = e.getLow();
+    if (e.getLow() < this.mYMin) {
+      this.mYMin = e.getLow();
+    }
 
-    if (e.getHigh() > this.mYMax) this.mYMax = e.getHigh();
+    if (e.getHigh() > this.mYMax) {
+      this.mYMax = e.getHigh();
+    }
 
     this.calcMinMaxX(e);
   }
 
   protected myCalcMinMaxY(e: CandleEntry): void {
-    if (e.getHigh() < this.mYMin) this.mYMin = e.getHigh();
+    if (e.getHigh() < this.mYMin) {
+      this.mYMin = e.getHigh();
+    }
 
-    if (e.getHigh() > this.mYMax) this.mYMax = e.getHigh();
+    if (e.getHigh() > this.mYMax) {
+      this.mYMax = e.getHigh();
+    }
 
-    if (e.getLow() < this.mYMin) this.mYMin = e.getLow();
+    if (e.getLow() < this.mYMin) {
+      this.mYMin = e.getLow();
+    }
 
-    if (e.getLow() > this.mYMax) this.mYMax = e.getLow();
+    if (e.getLow() > this.mYMax) {
+      this.mYMax = e.getLow();
+    }
   }
 
   /**
@@ -135,8 +147,12 @@ export default class CandleDataSet extends LineScatterCandleRadarDataSet<CandleE
    * @param space
    */
   public setBarSpace(space: number): void {
-    if (space < 0) space = 0;
-    if (space > 0.45) space = 0.45;
+    if (space < 0) {
+      space = 0;
+    }
+    if (space > 0.45) {
+      space = 0.45;
+    }
 
     this.mBarSpace = space;
   }

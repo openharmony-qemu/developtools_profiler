@@ -18,17 +18,17 @@
  */
 export default class GameUtils {
   // 30,40,60 连续丢帧>=3帧 为一般卡顿
-  static GENERAL_CATON_FLAG_LOW: number = 3;
+  private static GENERAL_CATON_FLAG_LOW: number = 3;
   // 30,40,60 连续丢帧>=6帧 为严重卡顿
-  static CRITICAL_CATON_FLAG_LOW: number = 6;
+  private static CRITICAL_CATON_FLAG_LOW: number = 6;
   // 30,40,60 连续丢帧>=9帧 为致命卡顿
-  static FATAL_CATON_FLAG_LOW: number = 9;
+  private static FATAL_CATON_FLAG_LOW: number = 9;
   // 90,120 连续丢帧>=4帧 为一般卡顿
-  static GENERAL_CATON_FLAG_HIGHT: number = 4;
+  private static GENERAL_CATON_FLAG_HIGHT: number = 4;
   // 90,120 连续丢帧>=8帧 为严重卡顿
-  static CRITICAL_CATON_FLAG_HIGHT: number = 8;
+  private static CRITICAL_CATON_FLAG_HIGHT: number = 8;
   // 90,120 连续丢帧>=12帧 为致命卡顿
-  static FATAL_CATON_FLAG_HIGHT: number = 12;
+  private static FATAL_CATON_FLAG_HIGHT: number = 12;
 
   // 连续丢帧数组长度
   private static JANK_SIZE: number = 21;
@@ -126,7 +126,7 @@ export default class GameUtils {
     return Math.round(100.0 * Math.exp(-0.458 * 100 * param));
   }
 
-  public static createJankStr(jankSrcStr: string, fullFPS: number, JankMap: Map<string, number>): string {
+  public static createJankStr(jankSrcStr: string, fullFPS: number, jankMap: Map<string, number>): string {
     if (null == jankSrcStr || jankSrcStr == '') {
       return 'NA';
     }
@@ -188,7 +188,7 @@ export default class GameUtils {
         .concat(':')
         .concat(String(jankCountMap.get(key)))
         .concat(';');
-      JankMap.set(jankKey, jankCountMap.get(key));
+      jankMap.set(jankKey, jankCountMap.get(key));
     }
 
     jitterStr = jitterBuilder.slice(0, jitterBuilder.length);

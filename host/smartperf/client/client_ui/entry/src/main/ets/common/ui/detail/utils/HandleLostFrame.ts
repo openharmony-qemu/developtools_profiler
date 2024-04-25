@@ -33,7 +33,7 @@ export default class HandleLostFrame {
   }
 
   getJankMap(jankSrcStr: String): Map<number, number> {
-    if (jankSrcStr == '' || jankSrcStr === undefined) {
+    if (jankSrcStr === '' || jankSrcStr === undefined) {
       return new Map();
     }
     let allDrawFrame: string[] = jankSrcStr.split(',');
@@ -50,10 +50,10 @@ export default class HandleLostFrame {
     for (let i of jitters.keys()) {
       let doubleJank = jitters[i] / 1e6;
       console.log(TAG + 'for jitters[' + i + ']' + doubleJank);
-      var jankRange = 0;
+      let jankRange = 0;
       jankRange = this.getJankRange(2, doubleJank);
       console.log(TAG + 'for jankRange' + jankRange);
-      if (jankRange != 0) {
+      if (jankRange !== 0) {
         console.log(
           TAG + 'for jitters[' + jankRange + ']' + jankCountMap.get(jankRange)
         );
@@ -76,12 +76,12 @@ export default class HandleLostFrame {
     if (currRange > 22) {
       return 0;
     }
-    if (currRange == 2) {
+    if (currRange === 2) {
       if (jank < this.mJankArray[currRange - 2]) {
         return 0;
       }
     }
-    if (currRange == 22) {
+    if (currRange === 22) {
       if (jank >= this.mJankArray[currRange - 2]) {
         return currRange;
       } else {

@@ -166,7 +166,9 @@ export default abstract class AxisBase extends ComponentBase {
    * The minumum number of labels on the axis
    */
   public setAxisMinLabels(labels: number): void {
-    if (labels > 0) this.mAxisMinLabels = labels;
+    if (labels > 0) {
+      this.mAxisMinLabels = labels;
+    }
   }
 
   /**
@@ -180,7 +182,9 @@ export default abstract class AxisBase extends ComponentBase {
    * The maximum number of labels on the axis
    */
   public setAxisMaxLabels(labels: number): void {
-    if (labels > 0) this.mAxisMaxLabels = labels;
+    if (labels > 0) {
+      this.mAxisMaxLabels = labels;
+    }
   }
 
   /**
@@ -351,8 +355,12 @@ export default abstract class AxisBase extends ComponentBase {
    *              to have uneven values
    */
   public setLabelCount(count: number, force?: boolean): void {
-    if (count > this.getAxisMaxLabels()) count = this.getAxisMaxLabels();
-    if (count < this.getAxisMinLabels()) count = this.getAxisMinLabels();
+    if (count > this.getAxisMaxLabels()) {
+      count = this.getAxisMaxLabels();
+    }
+    if (count < this.getAxisMinLabels()) {
+      count = this.getAxisMinLabels();
+    }
     this.mLabelCount = count;
     this.mForceLabels = false;
     if (force != null || force != undefined) {
@@ -493,15 +501,20 @@ export default abstract class AxisBase extends ComponentBase {
     var longest: string = '';
     for (var i = 0; i < this.mEntries.length; i++) {
       var text: string = this.getFormattedLabel(i);
-      if (text && text != null && longest.length < text.length) longest = text;
+      if (text && text != null && longest.length < text.length) {
+        longest = text;
+      }
     }
 
     return longest;
   }
 
   public getFormattedLabel(index: number): string {
-    if (index < 0 || index >= this.mEntries.length) return '';
-    else return this.getValueFormatter().getFormattedValue(this.mEntries[index], this);
+    if (index < 0 || index >= this.mEntries.length) {
+      return '';
+    } else {
+      return this.getValueFormatter().getFormattedValue(this.mEntries[index], this);
+    }
   }
 
   /**
@@ -514,8 +527,11 @@ export default abstract class AxisBase extends ComponentBase {
    * @param f
    */
   public setValueFormatter(f: IAxisValueFormatter): void {
-    if (!f || f == null) this.mAxisValueFormatter = new DefaultAxisValueFormatter(this.mDecimals);
-    else this.mAxisValueFormatter = f;
+    if (!f || f == null) {
+      this.mAxisValueFormatter = new DefaultAxisValueFormatter(this.mDecimals);
+    } else {
+      this.mAxisValueFormatter = f;
+    }
   }
 
   /**
@@ -529,8 +545,9 @@ export default abstract class AxisBase extends ComponentBase {
     this.mAxisValueFormatter == null ||
     (this.mAxisValueFormatter instanceof DefaultAxisValueFormatter &&
     (this.mAxisValueFormatter as DefaultAxisValueFormatter).getDecimalDigits() != this.mDecimals)
-    )
-    this.mAxisValueFormatter = new DefaultAxisValueFormatter(this.mDecimals);
+    ) {
+      this.mAxisValueFormatter = new DefaultAxisValueFormatter(this.mDecimals);
+    }
 
     return this.mAxisValueFormatter;
   }

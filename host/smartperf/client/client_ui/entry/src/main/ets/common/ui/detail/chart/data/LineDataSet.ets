@@ -133,8 +133,12 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    * @param intensity
    */
   public setCubicIntensity(intensity: number): void {
-    if (intensity > 1) intensity = 1;
-    if (intensity < 0.05) intensity = 0.05;
+    if (intensity > 1) {
+      intensity = 1;
+    }
+    if (intensity < 0.05) {
+      intensity = 0.05;
+    }
     this.mCubicIntensity = intensity;
   }
 

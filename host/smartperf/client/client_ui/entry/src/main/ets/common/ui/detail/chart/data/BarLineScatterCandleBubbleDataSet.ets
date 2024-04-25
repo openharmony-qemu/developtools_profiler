@@ -24,8 +24,7 @@ import { JArrayList } from '../utils/JArrayList';
  */
 export default abstract class BarLineScatterCandleBubbleDataSet<T extends EntryOhos>
 extends DataSet<T>
-implements IBarLineScatterCandleBubbleDataSet<T>
-{
+implements IBarLineScatterCandleBubbleDataSet<T> {
   /**
    * default highlight color
    */

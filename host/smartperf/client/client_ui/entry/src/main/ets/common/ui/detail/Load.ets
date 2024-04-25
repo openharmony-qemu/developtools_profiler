@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -24,7 +24,7 @@ import { JArrayList } from './chart/utils/JArrayList';
 import ILineDataSet from './chart/interfaces/datasets/ILineDataSet'
 import { TIndexInfo } from '../../entity/DatabaseEntity';
 import window from '@ohos.window';
-import CheckEmptyUtils from'../../utils/CheckEmptyUtils'
+import CheckEmptyUtils from '../../utils/CheckEmptyUtils'
 
 /**
  * 负载页面
@@ -32,82 +32,82 @@ import CheckEmptyUtils from'../../utils/CheckEmptyUtils'
 @Component
 export struct Load {
   @State private gpData: Array<TIndexInfo> = new Array()
-  atWidth: number =350 ; //表的宽度
-  atHeight: number = 300; //表的高度
-  minOffset: number = 15; //X轴线偏移量
+  public atWidth: number = 350; //表的宽度
+  public atHeight: number = 300; //表的高度
+  public minOffset: number = 15; //X轴线偏移量
 
   //cpuLoad0 cpuLoad1 cpuLoad2 cpuLoad3
-  topAxis: XAxis = new XAxis(); //顶部X轴
-  bottomAxis: XAxis = new XAxis(); //底部X轴
-  leftAxis: YAxis = null;
-  rightAxis: YAxis = null;
-  lineData: LineData = null;
+  public topAxis: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis: XAxis = new XAxis(); //底部X轴
+  public leftAxis: YAxis = null;
+  public rightAxis: YAxis = null;
+  public lineData: LineData = null;
 
   //CPUFre0 CPUFre1  CPUFre2  CPUFre3
-  topAxis1: XAxis = new XAxis(); //顶部X轴
-  bottomAxis1: XAxis = new XAxis(); //底部X轴
-  leftAxis1: YAxis = null;
-  rightAxis1: YAxis = null;
-  lineData1: LineData = null;
+  public topAxis1: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis1: XAxis = new XAxis(); //底部X轴
+  public leftAxis1: YAxis = null;
+  public rightAxis1: YAxis = null;
+  public lineData1: LineData = null;
 
   //CPULoad4 CPULoad5 CPULoad6
-  topAxis2: XAxis = new XAxis(); //顶部X轴
-  bottomAxis2: XAxis = new XAxis(); //底部X轴
-  leftAxis2: YAxis = null;
-  rightAxis2: YAxis = null;
-  lineData2: LineData = null;
+  public topAxis2: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis2: XAxis = new XAxis(); //底部X轴
+  public leftAxis2: YAxis = null;
+  public rightAxis2: YAxis = null;
+  public lineData2: LineData = null;
 
   //CPUFre4 CPUFre5  CPUFre6
-  topAxis3: XAxis = new XAxis(); //顶部X轴
-  bottomAxis3: XAxis = new XAxis(); //底部X轴
-  leftAxis3: YAxis = null;
-  rightAxis3: YAxis = null;
-  lineData3: LineData = null;
+  public topAxis3: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis3: XAxis = new XAxis(); //底部X轴
+  public leftAxis3: YAxis = null;
+  public rightAxis3: YAxis = null;
+  public lineData3: LineData = null;
 
   //CPULoad7
-  topAxis4: XAxis = new XAxis(); //顶部X轴
-  bottomAxis4: XAxis = new XAxis(); //底部X轴
-  leftAxis4: YAxis = null;
-  rightAxis4: YAxis = null;
-  lineData4: LineData = null;
+  public topAxis4: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis4: XAxis = new XAxis(); //底部X轴
+  public leftAxis4: YAxis = null;
+  public rightAxis4: YAxis = null;
+  public lineData4: LineData = null;
 
   //CPUFre7
-  topAxis5: XAxis = new XAxis(); //顶部X轴
-  bottomAxis5: XAxis = new XAxis(); //底部X轴
-  leftAxis5: YAxis = null;
-  rightAxis5: YAxis = null;
-  lineData5: LineData = null;
+  public topAxis5: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis5: XAxis = new XAxis(); //底部X轴
+  public leftAxis5: YAxis = null;
+  public rightAxis5: YAxis = null;
+  public lineData5: LineData = null;
 
   //GPULoad
-  topAxis6: XAxis = new XAxis(); //顶部X轴
-  bottomAxis6: XAxis = new XAxis(); //底部X轴
-  leftAxis6: YAxis = null;
-  rightAxis6: YAxis = null;
-  lineData6: LineData = null;
+  public topAxis6: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis6: XAxis = new XAxis(); //底部X轴
+  public leftAxis6: YAxis = null;
+  public rightAxis6: YAxis = null;
+  public lineData6: LineData = null;
 
   //GPUFre
-  topAxis7: XAxis = new XAxis(); //顶部X轴
-  bottomAxis7: XAxis = new XAxis(); //底部X轴
-  leftAxis7: YAxis = null;
-  rightAxis7: YAxis = null;
-  lineData7: LineData = null;
+  public topAxis7: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis7: XAxis = new XAxis(); //底部X轴
+  public leftAxis7: YAxis = null;
+  public rightAxis7: YAxis = null;
+  public lineData7: LineData = null;
 
   //DDRFre
-  topAxis8: XAxis = new XAxis(); //顶部X轴
-  bottomAxis8: XAxis = new XAxis(); //底部X轴
-  leftAxis8: YAxis = null;
-  rightAxis8: YAxis = null;
-  lineData8: LineData = null;
+  public topAxis8: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis8: XAxis = new XAxis(); //底部X轴
+  public leftAxis8: YAxis = null;
+  public rightAxis8: YAxis = null;
+  public lineData8: LineData = null;
 
-  lineChartModel : LineChartModel = new LineChartModel();
-  lineChartModel1 : LineChartModel = new LineChartModel();
-  lineChartModel2 : LineChartModel = new LineChartModel();
-  lineChartModel3 : LineChartModel = new LineChartModel();
-  lineChartModel4 : LineChartModel = new LineChartModel();
-  lineChartModel5 : LineChartModel = new LineChartModel();
-  lineChartModel6 : LineChartModel = new LineChartModel();
-  lineChartModel7 : LineChartModel = new LineChartModel();
-  lineChartModel8 : LineChartModel = new LineChartModel();
+  public lineChartModel : LineChartModel = new LineChartModel();
+  public lineChartModel1 : LineChartModel = new LineChartModel();
+  public lineChartModel2 : LineChartModel = new LineChartModel();
+  public lineChartModel3 : LineChartModel = new LineChartModel();
+  public lineChartModel4 : LineChartModel = new LineChartModel();
+  public lineChartModel5 : LineChartModel = new LineChartModel();
+  public lineChartModel6 : LineChartModel = new LineChartModel();
+  public lineChartModel7 : LineChartModel = new LineChartModel();
+  public lineChartModel8 : LineChartModel = new LineChartModel();
 
   aboutToAppear() {
     //CPULoad 0-3
@@ -582,7 +582,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu0Load == "") {
+      if (gpDataCur.cpu0Load == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu0Load).valueOf()));
@@ -591,7 +591,7 @@ export struct Load {
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
-    let set1 = new LineDataSet(values, "cpu0Load(%)");
+    let set1 = new LineDataSet(values, 'cpu0Load(%)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -609,7 +609,7 @@ export struct Load {
     let values2 = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu1Load == "") {
+      if (gpDataCur.cpu1Load == '') {
         continue
       }
       values2.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu1Load).valueOf()));
@@ -618,7 +618,7 @@ export struct Load {
     gradientFillColor2.push([0x0C0099CC, 0.2])
     gradientFillColor2.push([0x7F0099CC, 0.4])
     gradientFillColor2.push([0x0099CC, 1.0])
-    let set2 = new LineDataSet(values2, "cpu1Load(%)");
+    let set2 = new LineDataSet(values2, 'cpu1Load(%)');
     set2.setDrawFilled(false);
     set2.setMode(Mode.CUBIC_BEZIER);
     set2.setDrawValues(false);
@@ -636,7 +636,7 @@ export struct Load {
     let values3 = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu2Load == "") {
+      if (gpDataCur.cpu2Load == '') {
         continue
       }
       values3.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu2Load).valueOf()));
@@ -645,7 +645,7 @@ export struct Load {
     gradientFillColor3.push([0x0C0099CC, 0.2])
     gradientFillColor3.push([0x7F0099CC, 0.4])
     gradientFillColor3.push([0x0099CC, 1.0])
-    let set3 = new LineDataSet(values3, "cpu2Load(%)");
+    let set3 = new LineDataSet(values3, 'cpu2Load(%)');
     set3.setDrawFilled(false);
     set3.setMode(Mode.CUBIC_BEZIER);
     set3.setGradientFillColor(gradientFillColor3)
@@ -663,7 +663,7 @@ export struct Load {
     let values4 = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu3Load == "") {
+      if (gpDataCur.cpu3Load == '') {
         continue
       }
       values4.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu3Load).valueOf()));
@@ -672,7 +672,7 @@ export struct Load {
     gradientFillColor4.push([0x0C0099CC, 0.2])
     gradientFillColor4.push([0x7F0099CC, 0.4])
     gradientFillColor4.push([0x0099CC, 1.0])
-    let set4 = new LineDataSet(values4, "cpu3Load(%)");
+    let set4 = new LineDataSet(values4, 'cpu3Load(%)');
     set4.setDrawFilled(false);
     set1.setDrawValues(false);
     set4.setMode(Mode.CUBIC_BEZIER);
@@ -695,7 +695,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu0Frequency == "") {
+      if (gpDataCur.cpu0Frequency == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu0Frequency).valueOf() / 1e3));
@@ -709,7 +709,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "cpu0Frequency(MHZ)");
+    let set1 = new LineDataSet(values, 'cpu0Frequency(MHZ)');
     set1.setDrawFilled(false);
     set1.setDrawValues(false);
     set1.setMode(Mode.CUBIC_BEZIER);
@@ -733,7 +733,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu4Load == "") {
+      if (gpDataCur.cpu4Load == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu4Load).valueOf()));
@@ -742,7 +742,7 @@ export struct Load {
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
-    let set1 = new LineDataSet(values, "cpu4Load(%)");
+    let set1 = new LineDataSet(values, 'cpu4Load(%)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -760,7 +760,7 @@ export struct Load {
     let values2 = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu5Load == "") {
+      if (gpDataCur.cpu5Load == '') {
         continue
       }
       values2.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu5Load).valueOf()));
@@ -769,7 +769,7 @@ export struct Load {
     gradientFillColor2.push([0x0C0099CC, 0.2])
     gradientFillColor2.push([0x7F0099CC, 0.4])
     gradientFillColor2.push([0x0099CC, 1.0])
-    let set2 = new LineDataSet(values2, "cpu5Load(%)");
+    let set2 = new LineDataSet(values2, 'cpu5Load(%)');
     set2.setDrawFilled(false);
     set2.setMode(Mode.CUBIC_BEZIER);
     set2.setDrawValues(false);
@@ -787,7 +787,7 @@ export struct Load {
     let values3 = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu6Load == "") {
+      if (gpDataCur.cpu6Load == '') {
         continue
       }
       values3.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu6Load).valueOf()));
@@ -797,7 +797,7 @@ export struct Load {
     gradientFillColor3.push([0x7F0099CC, 0.4])
     gradientFillColor3.push([0x0099CC, 1.0])
 
-    let set3 = new LineDataSet(values3, "cpu6Load(%)");
+    let set3 = new LineDataSet(values3, 'cpu6Load(%)');
     set3.setDrawFilled(false);
     set3.setDrawValues(false);
     set3.setMode(Mode.CUBIC_BEZIER);
@@ -822,7 +822,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu4Frequency == "") {
+      if (gpDataCur.cpu4Frequency == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu4Frequency).valueOf() / 1e3));
@@ -832,7 +832,7 @@ export struct Load {
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
-    let set1 = new LineDataSet(values, "cpu4Frequency(MHZ)");
+    let set1 = new LineDataSet(values, 'cpu4Frequency(MHZ)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -855,7 +855,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu7Load == "") {
+      if (gpDataCur.cpu7Load == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu7Load).valueOf()));
@@ -869,7 +869,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "cpu7Load(%)");
+    let set1 = new LineDataSet(values, 'cpu7Load(%)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -892,7 +892,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.cpu7Frequency == "") {
+      if (gpDataCur.cpu7Frequency == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu7Frequency).valueOf() / 1e3));
@@ -906,7 +906,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "cpu7Frequency(MHZ)");
+    let set1 = new LineDataSet(values, 'cpu7Frequency(MHZ)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -929,7 +929,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.gpuLoad == "") {
+      if (gpDataCur.gpuLoad == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.gpuLoad).valueOf()));
@@ -943,7 +943,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "GPULoad(%)");
+    let set1 = new LineDataSet(values, 'GPULoad(%)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -965,7 +965,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.gpuFrequency == "") {
+      if (gpDataCur.gpuFrequency == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.gpuFrequency).valueOf() / 1e6));
@@ -979,7 +979,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "GPUFrequency(MHZ)");
+    let set1 = new LineDataSet(values, 'GPUFrequency(MHZ)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -1001,7 +1001,7 @@ export struct Load {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.ddrFrequency == "") {
+      if (gpDataCur.ddrFrequency == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.ddrFrequency).valueOf() / 1e6));
@@ -1015,7 +1015,7 @@ export struct Load {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "DDR Frequency(MHZ)");
+    let set1 = new LineDataSet(values, 'DDR Frequency(MHZ)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -1038,49 +1038,49 @@ export struct Load {
       Scroll() {
         Column({ space: 20 }) {
           LineChart({lineChartModel: this.lineChartModel})
-          Row({ space: 20 })  {
-            Text("cpu0Load(%),") {
+          Row({ space: 20 }) {
+            Text('cpu0Load(%),') {
             }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
             Text('cpu1Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
             Text('cpu2Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
             Text('cpu3Load(%)').fontWeight(FontWeight.Bold).fontColor(Color.Orange).fontSize('15fp').textAlign(TextAlign.Center)
           }
           LineChart({lineChartModel: this.lineChartModel1})
-          Text("cpu0Frequency(MHZ)") {
+          Text('cpu0Frequency(MHZ)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
           LineChart({lineChartModel: this.lineChartModel2})
-          Row({ space: 20 })  {
+          Row({ space: 20 }) {
             Text('cpu4Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Red).fontSize('15fp').textAlign(TextAlign.Center)
-            Text("cpu5Load(%),") {
+            Text('cpu5Load(%),') {
             }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
             Text('cpu6Load(%),').fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
           }
           LineChart({lineChartModel: this.lineChartModel3})
-          Text("cpu4Frequency(MHZ)") {
+          Text('cpu4Frequency(MHZ)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
           LineChart({lineChartModel: this.lineChartModel4})
-          Text("cpu7Load(%)") {
+          Text('cpu7Load(%)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
           LineChart({lineChartModel: this.lineChartModel5})
-          Text("cpu7Frequency(MHZ)") {
+          Text('cpu7Frequency(MHZ)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
 
           LineChart({lineChartModel: this.lineChartModel6})
-          Text("GPULoad(%)") {
+          Text('GPULoad(%)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
           LineChart({lineChartModel: this.lineChartModel7})
-          Text("GPUFrequency(MHZ)") {
+          Text('GPUFrequency(MHZ)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
 
           Stack() {
             Column() {
               LineChart({lineChartModel: this.lineChartModel8})
-              Text("DDR Frequency(MHZ)") {
-              }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center).margin({ top: "50%" })
+              Text('DDR Frequency(MHZ)') {
+              }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center).margin({ top: '50%' })
             }
           }
         }.width('100%').alignItems(HorizontalAlign.Center)

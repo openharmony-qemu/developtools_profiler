@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 import { secToTime } from '../common/utils/TimeUtils';
-import { TaskStatus }  from '../common/profiler/base/ProfilerConstant';
-import { ProfilerTask } from "../common/profiler/ProfilerTask"
-import { initFloatWindow,destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
+import { TaskStatus } from '../common/profiler/base/ProfilerConstant';
+import { ProfilerTask } from '../common/profiler/ProfilerTask';
+import { initFloatWindow, destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
-let MainWorker = globalThis.MainWorker
+let mainWorker = globalThis.MainWorker
 import { CollectorType } from '../common/profiler/base/ProfilerConstant'
 
-MainWorker.onmessage = function (result) {
+mainWorker.onmessage = function (result) {
   WorkerHandler.socketHandler(result)
 }
 @Entry
@@ -54,34 +54,34 @@ struct FloatBall {
   }
 
   initAllCollect() {
-    console.log("collectIntervalCollect initAllCollect....");
+    console.log('collectIntervalCollect initAllCollect....');
     if (globalThis.collectConfigs != -1 && globalThis.collectPkg != -1) {
-      if(globalThis.collectConfigs.screen_capture){
-        MainWorker.postMessage({"screen_capture":true})
+      if (globalThis.collectConfigs.screen_capture) {
+        mainWorker.postMessage({'screen_capture':true})
       }
-      if(globalThis.collectConfigs.trace){
-        MainWorker.postMessage({"catch_trace_start":true})
+      if (globalThis.collectConfigs.trace) {
+        mainWorker.postMessage({'catchTraceStart':true})
       }
       globalThis.collectIntervalCollect = setInterval(() => {
-        console.log("collectIntervalCollect running....");
+        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskStart()
           this.timerNum++
         }
-        console.log("collectIntervalCollect running status::"+ this.playerState + 'cm-timerNum' +this.timerNum);
+        console.log('collectIntervalCollect running status::' + this.playerState + 'cm-timerNum' + this.timerNum);
       }, 1000)
 
       globalThis.collectPowerCollect = setInterval(() => {
-        console.log("collectIntervalCollect running....");
+        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
         }
-        console.log("collectIntervalCollect running status::"+ this.playerState);
+        console.log('collectIntervalCollect running status::' + this.playerState);
       }, 250)
     }
     globalThis.task_status = TaskStatus.task_running
     this.playerState = TaskStatus.task_running
-    console.log("collectIntervalCollect initAllCollect finished....");
+    console.log('collectIntervalCollect initAllCollect finished....');
   }
 
   singleEvent() {
@@ -89,8 +89,7 @@ struct FloatBall {
     if (this.playerState == TaskStatus.task_running) {
       globalThis.task_status = TaskStatus.task_pause
       this.playerState = TaskStatus.task_pause
-    }
-    else if (this.playerState == TaskStatus.task_pause) {
+    } else if (this.playerState == TaskStatus.task_pause) {
       globalThis.task_status = TaskStatus.task_running
       this.playerState = TaskStatus.task_running
     }
@@ -117,25 +116,26 @@ struct FloatBall {
     var exitTime = now.getTime() + 1000;
     while (true) {
       now = new Date();
-      if (now.getTime() > exitTime)
-      break;
+      if (now.getTime() > exitTime) {
+        break;
+      }
     }
     ProfilerTask.getInstance().taskGetDubai()
   }
-  async dubai_data_to_disk(){
-    MainWorker.postMessage({"setDuBaiDb": true})
+  async dubai_data_to_disk() {
+    mainWorker.postMessage({'setDuBaiDb': true})
   }
-  destroyAllWindow(){
+  destroyAllWindow() {
     console.log('cm-floatBall-destroyAllWindow')
     globalThis.DestroyFloatingWindow()
     globalThis.DestroyTitleWindow()
     destoryAllFloatWindow()
   }
 
-  clearAllInterVal(){
+  clearAllInterVal() {
     console.log('cm-floatBall-clearAllInterVal')
-    if(globalThis.collectConfigs.trace){
-      MainWorker.postMessage({"catch_trace_end":true})
+    if(globalThis.collectConfigs.trace) {
+      mainWorker.postMessage({'catchTraceEnd':true})
     }
     clearInterval(globalThis.collectIntervalCollect)
     clearInterval(globalThis.collectPowerCollect)
@@ -158,24 +158,24 @@ struct FloatBall {
           .fill(Color.White)
           .fillOpacity(0)
           .opacity(0.8)
-          .border({ radius: '90vp', width: '0.5vp', color: $r("app.color.colorPrimary") })
+          .border({ radius: '90vp', width: '0.5vp', color: $r('app.color.colorPrimary') })
           .linearGradient({
             angle: 135,
             direction: GradientDirection.Left,
-            colors: [[$r("app.color.colorPrimary"), 1.0], [$r("app.color.colorPrimary"), 1.0]]
+            colors: [[$r('app.color.colorPrimary'), 1.0], [$r('app.color.colorPrimary'), 1.0]]
           })
         Text('start')
           .fontSize(18)
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
           .onClick(() => {
-            console.log("collectIntervalCollect  single click ....");
+            console.log('collectIntervalCollect  single click ....');
             this.dubai_data_to_disk()
             this.initAllCollect()
 
-            console.log("collectIntervalCollect  single click finished....");
+            console.log('collectIntervalCollect  single click finished....');
           })
           .gesture(
           GestureGroup(GestureMode.Exclusive,
@@ -206,45 +206,45 @@ struct FloatBall {
             .fill(Color.White)
             .fillOpacity(0)
             .opacity(0.8)
-            .border({ radius: '90vp', width: '0.5vp', color: $r("app.color.color_666") })
+            .border({ radius: '90vp', width: '0.5vp', color: $r('app.color.color_666') })
             .linearGradient({
               angle: 135,
               direction: GradientDirection.Left,
-              colors: [[$r("app.color.color_666"), 0.7], [$r("app.color.color_666"), 0.7]]
+              colors: [[$r('app.color.color_666'), 0.7], [$r('app.color.color_666'), 0.7]]
             })
-        }else{
+        } else {
           Circle()
             .width('90vp')
             .height('90vp')
             .fill(Color.White)
             .fillOpacity(0)
             .opacity(0.5)
-            .border({ radius: '90vp', width: '0.5vp', color: $r("app.color.colorPrimary") })
+            .border({ radius: '90vp', width: '0.5vp', color: $r('app.color.colorPrimary') })
             .linearGradient({
               angle: 135,
               direction: GradientDirection.Left,
-              colors: [[$r("app.color.colorPrimary"), 0.7], [$r("app.color.colorPrimary"), 0.7]]
+              colors: [[$r('app.color.colorPrimary'), 0.7], [$r('app.color.colorPrimary'), 0.7]]
             })
         }
         Text(secToTime(this.timerNum).toString())
           .fontSize('16fp')
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
           .onClick(res => {
             this.isDoubleFlag = false
-            for(let i = 0; i < this.mHits.length - 1; i++) {
+            for (let i = 0; i < this.mHits.length - 1; i++) {
               this.mHits[i] = this.mHits[i + 1]
             }
             this.mHits[this.mHits.length - 1] = new Date().getTime()
-            if(this.mHits[0] >= new Date().getTime() - this.DURATION) {
+            if (this.mHits[0] >= new Date().getTime() - this.DURATION) {
               this.doubleEvent()
               this.isDoubleFlag = true
               this.mHits = Array(this.COUNTS)
             } else {
               this.singleClickId = setTimeout(()=>{
-                if(!this.isDoubleFlag) {
+                if (!this.isDoubleFlag) {
                   this.singleEvent()
                 }
               }, 300)

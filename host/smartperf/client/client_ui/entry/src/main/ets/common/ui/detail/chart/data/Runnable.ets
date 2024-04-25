@@ -15,8 +15,8 @@
 
 import { Poolable } from '../utils/Poolable';
 export default class Runnable extends Poolable {
-  _type: string;
-  callback: {};
+  private _type: string;
+  private callback: {};
 
   constructor(_type: string, callback: {}) {
     super();

@@ -145,9 +145,13 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
 
             for (let dataSet of this.mDataSets.dataSouce) {
                 if (dataSet.getAxisDependency() == AxisDependency.LEFT) {
-                    if (dataSet.getYMin() < this.mLeftAxisMin) this.mLeftAxisMin = dataSet.getYMin();
+                    if (dataSet.getYMin() < this.mLeftAxisMin) {
+                        this.mLeftAxisMin = dataSet.getYMin();
+                    }
 
-                    if (dataSet.getYMax() > this.mLeftAxisMax) this.mLeftAxisMax = dataSet.getYMax();
+                    if (dataSet.getYMax() > this.mLeftAxisMax) {
+                        this.mLeftAxisMax = dataSet.getYMax();
+                    }
                 }
             }
         }
@@ -161,9 +165,13 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
 
             for (let dataSet of this.mDataSets.dataSouce) {
                 if (dataSet.getAxisDependency() == AxisDependency.RIGHT) {
-                    if (dataSet.getYMin() < this.mRightAxisMin) this.mRightAxisMin = dataSet.getYMin();
+                    if (dataSet.getYMin() < this.mRightAxisMin) {
+                        this.mRightAxisMin = dataSet.getYMin();
+                    }
 
-                    if (dataSet.getYMax() > this.mRightAxisMax) this.mRightAxisMax = dataSet.getYMax();
+                    if (dataSet.getYMax() > this.mRightAxisMax) {
+                        this.mRightAxisMax = dataSet.getYMax();
+                    }
                 }
             }
         }
@@ -197,11 +205,15 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
         if (axis == AxisDependency.LEFT) {
             if (this.mLeftAxisMin == Number.MAX_VALUE) {
                 return this.mRightAxisMin;
-            } else return this.mLeftAxisMin;
+            } else {
+                return this.mLeftAxisMin;
+            }
         } else {
             if (this.mRightAxisMin == Number.MAX_VALUE) {
                 return this.mLeftAxisMin;
-            } else return this.mRightAxisMin;
+            } else {
+                return this.mRightAxisMin;
+            }
         }
     }
 
@@ -218,11 +230,15 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
         if (axis == AxisDependency.LEFT) {
             if (this.mLeftAxisMax == -Number.MAX_VALUE) {
                 return this.mRightAxisMax;
-            } else return this.mLeftAxisMax;
+            } else {
+                return this.mLeftAxisMax;
+            }
         } else {
             if (this.mRightAxisMax == -Number.MAX_VALUE) {
                 return this.mLeftAxisMax;
-            } else return this.mRightAxisMax;
+            } else {
+                return this.mRightAxisMax;
+            }
         }
     }
 
@@ -266,10 +282,18 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     protected getDataSetIndexByLabel(dataSets: JArrayList<T>, label: string, ignorecase: boolean): number {
         if (ignorecase) {
-            for (let i: number = 0; i < dataSets.size(); i++)
-            if (label.toLowerCase() == dataSets.get(i).getLabel().toLowerCase()) return i;
+            for (let i: number = 0; i < dataSets.size(); i++) {
+                if (label.toLowerCase() == dataSets.get(i).getLabel().toLowerCase()) {
+                    return i;
+                }
+            }
+
         } else {
-            for (let i: number = 0; i < dataSets.size(); i++) if (label == dataSets.get(i).getLabel()) return i;
+            for (let i: number = 0; i < dataSets.size(); i++) {
+                if (label == dataSets.get(i).getLabel()) {
+                    return i;
+                }
+            }
         }
 
         return -1;
@@ -297,9 +321,12 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @return the entry that is highlighted
      */
     public getEntryForHighlight(highlight: Highlight): EntryOhos {
-        if (highlight.getDataSetIndex() >= this.mDataSets.size()) return null;
+        if (highlight.getDataSetIndex() >= this.mDataSets.size()) {
+            return null;
+        }
         else {
-            return this.mDataSets.get(highlight.getDataSetIndex()).getEntryForXValue(highlight.getX(), highlight.getY());
+            return this.mDataSets.get(highlight.getDataSetIndex()).
+                    getEntryForXValue(highlight.getX(), highlight.getY());
         }
     }
 
@@ -315,12 +342,18 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
     public getDataSetByLabel(label: string, ignorecase: boolean): T {
         let index: number = this.getDataSetIndexByLabel(this.mDataSets, label, ignorecase);
 
-        if (index < 0 || index >= this.mDataSets.size()) return null;
-        else return this.mDataSets.get(index);
+        if (index < 0 || index >= this.mDataSets.size()) {
+            return null;
+        }
+        else {
+            return this.mDataSets.get(index);
+        }
     }
 
     public getDataSetByIndex(index: number): T {
-        if (this.mDataSets == null || index < 0 || index >= this.mDataSets.size()) return null;
+        if (this.mDataSets == null || index < 0 || index >= this.mDataSets.size()) {
+            return null;
+        }
 
         return this.mDataSets.get(index);
     }
@@ -331,7 +364,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param d
      */
     public addDataSet(d: T): void {
-        if (d == null) return;
+        if (d == null) {
+            return;
+        }
 
         this.calcMinMax1(d);
 
@@ -346,7 +381,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param d
      */
     public removeDataSet(d: T): boolean {
-        if (d == null) return false;
+        if (d == null) {
+            return false;
+        }
 
         let removed: boolean = this.mDataSets.remove(d);
 
@@ -366,7 +403,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param index
      */
     public removeDataSetUnused(index: number): boolean {
-        if (index >= this.mDataSets.size() || index < 0) return false;
+        if (index >= this.mDataSets.size() || index < 0) {
+            return false;
+        }
 
         let data: T = this.mDataSets.get(index);
         return this.removeDataSet(data);
@@ -383,7 +422,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
         if (this.mDataSets.size() > dataSetIndex && dataSetIndex >= 0) {
             let data: IDataSet<EntryOhos> = this.mDataSets.get(dataSetIndex);
             // add the entry to the dataset
-            if (!data.addEntry(e)) return;
+            if (!data.addEntry(e)) {
+                return;
+            }
 
             this.calcMinMax2(e, data.getAxisDependency());
         } else {
@@ -426,11 +467,19 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
         if (this.mXMin > d.getXMin()) this.mXMin = d.getXMin();
 
         if (d.getAxisDependency() == AxisDependency.LEFT) {
-            if (this.mLeftAxisMax < d.getYMax()) this.mLeftAxisMax = d.getYMax();
-            if (this.mLeftAxisMin > d.getYMin()) this.mLeftAxisMin = d.getYMin();
+            if (this.mLeftAxisMax < d.getYMax()) {
+                this.mLeftAxisMax = d.getYMax();
+            }
+            if (this.mLeftAxisMin > d.getYMin()) {
+                this.mLeftAxisMin = d.getYMin();
+            }
         } else {
-            if (this.mRightAxisMax < d.getYMax()) this.mRightAxisMax = d.getYMax();
-            if (this.mRightAxisMin > d.getYMin()) this.mRightAxisMin = d.getYMin();
+            if (this.mRightAxisMax < d.getYMax()) {
+                this.mRightAxisMax = d.getYMax();
+            }
+            if (this.mRightAxisMin > d.getYMin()) {
+                this.mRightAxisMin = d.getYMin();
+            }
         }
     }
 
@@ -442,7 +491,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     public removeEntry(e: EntryOhos, dataSetIndex: number): boolean {
         // entry null, outofbounds
-        if (e == null || dataSetIndex >= this.mDataSets.listSize) return false;
+        if (e == null || dataSetIndex >= this.mDataSets.listSize) {
+            return false;
+        }
 
         let data: IDataSet<EntryOhos> = this.mDataSets.get(dataSetIndex);
 
@@ -454,7 +505,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
             }
 
             return removed;
-        } else return false;
+        } else {
+            return false;
+        }
     }
 
     /**
@@ -467,12 +520,16 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @return
      */
     public removeEntryUnused(xValue: number, dataSetIndex: number): boolean {
-        if (dataSetIndex >= this.mDataSets.size()) return false;
+        if (dataSetIndex >= this.mDataSets.size()) {
+            return false;
+        }
 
         let dataSet: IDataSet<EntryOhos> = this.mDataSets.get(dataSetIndex);
         let e: EntryOhos = dataSet.getEntryForXValue(xValue, Number.NaN);
 
-        if (e == null) return false;
+        if (e == null) {
+            return false;
+        }
 
         return this.removeEntry(e, dataSetIndex);
     }
@@ -485,7 +542,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @return
      */
     public getDataSetForEntry(e: EntryOhos): T {
-        if (e == null) return null;
+        if (e == null) {
+            return null;
+        }
 
         for (let i = 0; i < this.mDataSets.size(); i++) {
             let dataSet: T = this.mDataSets.get(i);
@@ -505,7 +564,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @return
      */
     public getColors(): number[] {
-        if (this.mDataSets == null) return null;
+        if (this.mDataSets == null) {
+            return null;
+        }
 
         let clrcnt: number = 0;
 
@@ -546,7 +607,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     protected getFirstLeft(sets: JArrayList<T>): T {
         for (let dataSet of sets.dataSouce) {
-            if (dataSet.getAxisDependency() == AxisDependency.LEFT) return dataSet;
+            if (dataSet.getAxisDependency() == AxisDependency.LEFT) {
+                return dataSet;
+            }
         }
         return null;
     }
@@ -559,7 +622,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     public getFirstRight(sets: JArrayList<T>): T {
         for (let dataSet of sets.dataSouce) {
-            if (dataSet.getAxisDependency() == AxisDependency.RIGHT) return dataSet;
+            if (dataSet.getAxisDependency() == AxisDependency.RIGHT) {
+                return dataSet;
+            }
         }
         return null;
     }
@@ -570,7 +635,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param f
      */
     public setValueFormatter(f: IValueFormatter): void {
-        if (f == null) return;
+        if (f == null) {
+            return;
+        }
         else {
             for (let data of this.mDataSets.dataSouce) {
                 data.setValueFormatter(f);
@@ -657,7 +724,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     public isHighlightEnabled(): boolean {
         for (let data of this.mDataSets.dataSouce) {
-            if (!data.isHighlightEnabled()) return false;
+            if (!data.isHighlightEnabled()) {
+                return false;
+            }
         }
         return true;
     }
@@ -682,7 +751,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      */
     public contains(dataSet: T): boolean {
         for (let data of this.mDataSets.dataSouce) {
-            if (data == dataSet) return true;
+            if (data == dataSet) {
+                return true;
+            }
         }
 
         return false;
@@ -709,12 +780,16 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @return
      */
     public getMaxEntryCountSet(): T {
-        if (this.mDataSets == null || this.mDataSets.isEmpty()) return null;
+        if (this.mDataSets == null || this.mDataSets.isEmpty()) {
+            return null;
+        }
 
         let max: T = this.mDataSets.get(0);
 
         for (let data of this.mDataSets.dataSouce) {
-            if (data.getEntryCount() > max.getEntryCount()) max = data;
+            if (data.getEntryCount() > max.getEntryCount()) {
+                max = data;
+            }
         }
 
         return max;

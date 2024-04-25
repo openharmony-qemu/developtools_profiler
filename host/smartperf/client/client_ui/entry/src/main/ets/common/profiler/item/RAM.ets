@@ -17,9 +17,9 @@ import { BaseProfiler } from '../base/BaseProfiler';
 import { CollectorType } from '../base/ProfilerConstant';
 import { SocketProfiler } from '../base/SocketProfiler';
 import WorkerHandler from '../WorkerHandler';
-let MainWorker = globalThis.MainWorker;
+let mainWorker = globalThis.MainWorker;
 
-MainWorker.onmessage = function (result) {
+mainWorker.onmessage = function (result) {
   WorkerHandler.socketHandler(result);
 };
 
@@ -52,7 +52,7 @@ export class RAM extends BaseProfiler implements SocketProfiler {
     return createGPData('RAM', this.ramMap);
   }
   readMessageQueue() {
-    MainWorker.postMessage({ ram: true, pkg: globalThis.collectPkg });
+    mainWorker.postMessage({ ram: true, pkg: globalThis.collectPkg });
     if (globalThis.ramArr.length > 0) {
       let ramQueue: Array<String> = globalThis.ramArr;
       let curRAM = ramQueue.pop();

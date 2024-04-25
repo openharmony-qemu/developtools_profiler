@@ -58,7 +58,6 @@ export default class Legend extends ComponentBase {
 
   /**
    * Entries that will be appended to the end of the auto calculated entries after calculating the legend.
-   * (if the legend has already been calculated, you will need to call notifyDataSetChanged() to let the changes take effect)
    */
   private mExtraEntries: LegendEntry[];
 
@@ -167,14 +166,20 @@ export default class Legend extends ComponentBase {
 
     for (let entry of this.mEntries) {
       var formSize: number = Utils.convertDpToPixel(Number.isNaN(entry.formSize) ? this.mFormSize : entry.formSize);
-      if (formSize > maxFormSize) maxFormSize = formSize;
+      if (formSize > maxFormSize) {
+        maxFormSize = formSize;
+      }
 
       var label: string = entry.label;
-      if (label == null) continue;
+      if (label == null) {
+        continue;
+      }
 
       var length: number = Utils.calcTextWidth(p, label);
 
-      if (length > max) max = length;
+      if (length > max) {
+        max = length;
+      }
     }
 
     return max + maxFormSize + formToTextSpace;
@@ -191,11 +196,15 @@ export default class Legend extends ComponentBase {
 
     for (let entry of this.mEntries) {
       var label: string = entry.label;
-      if (label == null) continue;
+      if (label == null) {
+        continue;
+      }
 
       var length: number = Utils.calcTextHeight(p, label);
 
-      if (length > max) max = length;
+      if (length > max) {
+        max = length;
+      }
     }
 
     return max;
@@ -224,8 +233,11 @@ export default class Legend extends ComponentBase {
       entry.formColor = colors[i];
       entry.label = labels[i];
 
-      if (entry.formColor == ColorTemplate.COLOR_SKIP || entry.formColor == 0) entry.form = LegendForm.NONE;
-      else if (entry.formColor == ColorTemplate.COLOR_NONE) entry.form = LegendForm.EMPTY;
+      if (entry.formColor == ColorTemplate.COLOR_SKIP || entry.formColor == 0) {
+        entry.form = LegendForm.NONE;
+      } else if (entry.formColor == ColorTemplate.COLOR_NONE) {
+        entry.form = LegendForm.EMPTY;
+      }
 
       entries.add(entry);
     }
@@ -620,18 +632,23 @@ export default class Legend extends ComponentBase {
           var formSize: number = Number.isNaN(e.formSize) ? defaultFormSize : Utils.convertDpToPixel(e.formSize);
           var label: string = e.label;
 
-          if (!wasStacked) width = 0.1;
+          if (!wasStacked) {
+            width = 0.1;
+          }
 
           if (drawingForm) {
-            if (wasStacked) width += stackSpace;
+            if (wasStacked) {
+              width += stackSpace;
+            }
             width += formSize;
           }
 
           // grouped forms have null labels
           if (label != null) {
             // make a step to the left
-            if (drawingForm && !wasStacked) width += formToTextSpace;
-            else if (wasStacked) {
+            if (drawingForm && !wasStacked) {
+              width += formToTextSpace;
+            } else if (wasStacked) {
               maxWidth = Math.max(maxWidth, width);
               maxHeight += labelLineHeight + yEntrySpace;
               width = 0.1;
@@ -644,7 +661,9 @@ export default class Legend extends ComponentBase {
           } else {
             wasStacked = true;
             width += formSize;
-            if (i < entryCount - 1) width += stackSpace;
+            if (i < entryCount - 1) {
+              width += stackSpace;
+            }
           }
 
           maxWidth = Math.max(maxWidth, width);
@@ -755,9 +774,13 @@ export default class Legend extends ComponentBase {
     var max: number = 0;
     for (let entry of this.mEntries) {
       var label: string = entry.label;
-      if (label == null) continue;
+      if (label == null) {
+        continue;
+      }
       var length: number = this.getTextSize();
-      if (length > max) max = length;
+      if (length > max) {
+        max = length;
+      }
     }
     return max;
   }
@@ -767,11 +790,17 @@ export default class Legend extends ComponentBase {
     var formToTextSpace: number = this.mFormToTextSpace;
     for (let entry of this.mEntries) {
       var formSize: number = Utils.convertDpToPixel(Number.isNaN(entry.formSize) ? this.mFormSize : entry.formSize);
-      if (formSize > maxFormSize) maxFormSize = formSize;
+      if (formSize > maxFormSize) {
+        maxFormSize = formSize;
+      }
       var label: string = entry.label;
-      if (label == null) continue;
+      if (label == null) {
+        continue;
+      }
       var length: number = (label.length * this.getTextSize()) / 2;
-      if (length > max) max = length;
+      if (length > max) {
+        max = length;
+      }
     }
     return max + maxFormSize + formToTextSpace;
   }
@@ -840,7 +869,9 @@ export default class Legend extends ComponentBase {
           } else {
             wasStacked = true;
             width += formSize;
-            if (i < entryCount - 1) width += stackSpace;
+            if (i < entryCount - 1) {
+              width += stackSpace;
+            }
           }
           maxWidth = Math.max(maxWidth, width);
         }
@@ -878,7 +909,7 @@ export default class Legend extends ComponentBase {
           console.log('1.0  i(' + i + ')requiredWidth(' + requiredWidth + ') ?= stackSpace(' + stackSpace + ')');
           // grouped forms have null labels
           if (label != null) {
-            this.mCalculatedLabelSizes.add(new FSize(this.getTextSize() * label.length, this.getTextSize())); // ��ǩ��length
+            this.mCalculatedLabelSizes.add(new FSize(this.getTextSize() * label.length, this.getTextSize()));
             console.log(
               '1.1  i(' +
               i +

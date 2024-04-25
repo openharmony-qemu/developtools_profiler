@@ -67,13 +67,21 @@ export default class EntryOhos extends BaseEntry {
      * @return
      */
     public equalTo(e: EntryOhos): boolean {
-        if (!e) return false;
+        if (!e) {
+            return false;
+        }
 
-        if (e.getData() != this.getData()) return false;
+        if (e.getData() != this.getData()) {
+            return false;
+        }
 
-        if (Math.abs(e.x - this.x) > Utils.FLOAT_EPSILON) return false;
+        if (Math.abs(e.x - this.x) > Utils.FLOAT_EPSILON) {
+            return false;
+        }
 
-        if (Math.abs(e.getY() - this.getY()) > Utils.FLOAT_EPSILON) return false;
+        if (Math.abs(e.getY() - this.getY()) > Utils.FLOAT_EPSILON) {
+            return false;
+        }
 
         return true;
     }

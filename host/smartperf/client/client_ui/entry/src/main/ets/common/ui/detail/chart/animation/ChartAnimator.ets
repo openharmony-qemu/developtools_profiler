@@ -26,10 +26,6 @@ export default class ChartAnimator {
 
   constructor() {}
 
-  //    constructor(listener:AnimatorUpdateListener) {
-  //        this.mListener = listener;
-  //    }
-
   private xAnimator(duration: number, easing: EasingFunction): ObjectAnimator {
     let animatorX = ObjectAnimator.ofFloat(this, 'phaseX', 0, 1);
     animatorX.setInterpolator(easing);

@@ -29,7 +29,7 @@ export function csvGeneralInfo(tGeneralInfo: TGeneralInfo): string {
 export function csvTIndexInfo(tIndexInfos: Array<TIndexInfo>): string {
   let tittle = csvTIndexInfoTittle();
   let data = '';
-  for (var index = 0; index < tIndexInfos.length; index++) {
+  for (let index = 0; index < tIndexInfos.length; index++) {
     const t = tIndexInfos[index];
     for (let k of Object.keys(t)) {
       data += t[k] + ',';
@@ -43,7 +43,7 @@ export function csvTIndexInfo(tIndexInfos: Array<TIndexInfo>): string {
 
 //水平生成 TIndexInfo TITTLE to string
 export function csvTIndexInfoTittle(): string {
-  var tIndexInfo: TIndexInfo = new TIndexInfo();
+  let tIndexInfo: TIndexInfo = new TIndexInfo();
   let data = '';
   for (let k of Object.keys(tIndexInfo)) {
     data += k + ',';

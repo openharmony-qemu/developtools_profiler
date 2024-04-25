@@ -15,7 +15,7 @@
 
 export abstract class Poolable {
   public static NO_OWNER = -1;
-  currentOwnerId = Poolable.NO_OWNER;
+  public currentOwnerId = Poolable.NO_OWNER;
 
   abstract instantiate(): Poolable;
 }

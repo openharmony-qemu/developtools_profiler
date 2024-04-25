@@ -367,7 +367,7 @@ export default class Transformer {
   /**
    * buffer for performance
    */
-  ptsBuffer: number[] = new Array<number>(2);
+  public ptsBuffer: number[] = new Array<number>(2);
 
   /**
    * Returns a recyclable MPPointD instance.

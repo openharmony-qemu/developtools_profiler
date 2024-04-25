@@ -13,13 +13,13 @@
  * limitations under the License.
  */
 export default class FloatWindowConstant {
-  static CURRENT_NOW = 0;
-  static SHELL_BACK_TEMP = 1;
-  static DDR_FREQUENCY = 2;
-  static GPU_FREQUENCY = 3;
-  static CPU0_FREQUENCY = 4;
-  static CPU1_FREQUENCY = 5;
-  static CPU2_FREQUENCY = 6;
-  static RAM = 6;
-  static FPS = 7;
+  public static CURRENT_NOW = 0;
+  public static SHELL_BACK_TEMP = 1;
+  public static DDR_FREQUENCY = 2;
+  public static GPU_FREQUENCY = 3;
+  public static CPU0_FREQUENCY = 4;
+  public static CPU1_FREQUENCY = 5;
+  public static CPU2_FREQUENCY = 6;
+  public static RAM = 6;
+  public static FPS = 7;
 }

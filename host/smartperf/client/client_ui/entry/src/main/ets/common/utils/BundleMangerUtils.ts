@@ -35,14 +35,14 @@ export default class BundleManager {
     bundle
       .queryAbilityByWant(want, 1)
       .then(async (data) => {
-        await SPLogger.INFO(
+        SPLogger.INFO(
           TAG,
           'getIconByBundleName data length [' + data.length + ']'
         );
         for (let j = 0; j < data.length; j++) {
           let bundleName = data[j].bundleName;
           for (let i = 0; i < mBundleNames.length; i++) {
-            if (mBundleNames[i] == bundleName) {
+            if (mBundleNames[i] === bundleName) {
               let bundleContext = globalThis.abilityContext.createBundleContext(
                 mBundleNames[i]
               );
@@ -79,7 +79,7 @@ export default class BundleManager {
     bundle
       .queryAbilityByWant(want, 1)
       .then(async (data) => {
-        await SPLogger.INFO(
+        SPLogger.INFO(
           TAG,
           'xxx getAllApplicationInfo data length [' + data.length + ']'
         );

@@ -72,14 +72,18 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
     this.mYMin = Number.MAX_VALUE;
     this.mXMax = -Number.MAX_VALUE;
     this.mXMin = Number.MAX_VALUE;
-    if (!this.mEntries || this.mEntries == null || this.mEntries.isEmpty()) return;
+    if (!this.mEntries || this.mEntries == null || this.mEntries.isEmpty()) {
+      return;
+    }
     for (let e of this.mEntries.dataSouce) {
       this.myCalcMinMax(e);
     }
   }
 
   public myCalcMinMax(e?: T): void {
-    if (!e) return;
+    if (!e) {
+      return;
+    }
     this.calcMinMaxX(e);
     this.myCalcMinMaxY(e);
   }
@@ -94,7 +98,9 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
     var indexFrom: number = this.getEntryIndex(fromX, Number.NaN, Rounding.DOWN);
     var indexTo: number = this.getEntryIndex(toX, Number.NaN, Rounding.UP);
 
-    if (indexTo < indexFrom) return;
+    if (indexTo < indexFrom) {
+      return;
+    }
 
     for (var i: number = indexFrom; i <= indexTo; i++) {
       // only recalculate y
@@ -208,7 +214,9 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
   }
 
   public addEntryOrdered(e: T): void {
-    if (!e) return;
+    if (!e) {
+      return;
+    }
 
     if (!this.mEntries) {
       this.mEntries = new JArrayList<T>();
@@ -229,7 +237,9 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
   }
 
   public addEntry(e: T): boolean {
-    if (!e) return false;
+    if (!e) {
+      return false;
+    }
 
     var values: JArrayList<T> = this.getEntries();
     if (!values) {
@@ -244,9 +254,13 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
   }
 
   public removeEntry(e: T): boolean {
-    if (!e) return false;
+    if (!e) {
+      return false;
+    }
 
-    if (!this.mEntries) return false;
+    if (!this.mEntries) {
+      return false;
+    }
 
     // remove the entry
     var removed: boolean = this.mEntries.remove(e);
@@ -270,14 +284,18 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
       myRounding = rounding;
     }
     var index: number = this.getEntryIndex(xValue, closestToY, myRounding);
-    if (index > -1) return this.mEntries.get(index);
+    if (index > -1) {
+      return this.mEntries.get(index);
+    }
   }
 
   public getEntryForIndex(index: number): T {
     return this.mEntries.get(index);
   }
   public getEntryIndex(xValue: number, closestToY: number, rounding: Rounding): number {
-    if (!this.mEntries || this.mEntries.isEmpty()) return -1;
+    if (!this.mEntries || this.mEntries.isEmpty()) {
+      return -1;
+    }
 
     var low: number = 0;
     var high: number = this.mEntries.size() - 1;
@@ -287,8 +305,8 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
       var m: number = Math.floor((low + high) / 2);
       var d1: number = this.mEntries.get(m).getX() - xValue;
       var d2: number = this.mEntries.get(m + 1).getX() - xValue;
-      var ad1: number = Math.abs(d1),
-        ad2 = Math.abs(d2);
+      var ad1: number = Math.abs(d1);
+      var ad2: Number = Math.abs(d2);
 
       if (ad2 < ad1) {
         // [m + 1] is closer to xValue
@@ -326,18 +344,24 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
       }
       // Search by closest to y-value
       if (!Number.isNaN(closestToY)) {
-        while (closest > 0 && this.mEntries.get(closest - 1).getX() == closestXValue) closest -= 1;
+        while (closest > 0 && this.mEntries.get(closest - 1).getX() == closestXValue) {
+          closest -= 1;
+        }
 
         var closestYValue: number = this.mEntries.get(closest).getY();
         var closestYIndex: number = closest;
 
         while (true) {
           closest += 1;
-          if (closest >= this.mEntries.size()) break;
+          if (closest >= this.mEntries.size()) {
+            break;
+          }
 
           var value: EntryOhos = this.mEntries.get(closest);
 
-          if (value.getX() != closestXValue) break;
+          if (value.getX() != closestXValue) {
+            break;
+          }
 
           if (Math.abs(value.getY() - closestToY) <= Math.abs(closestYValue - closestToY)) {
             closestYValue = closestToY;
@@ -376,8 +400,11 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
 
         break;
       } else {
-        if (xValue > entry.getX()) low = m + 1;
-        else high = m - 1;
+        if (xValue > entry.getX()) {
+          low = m + 1;
+        } else {
+          high = m - 1;
+        }
       }
     }
 

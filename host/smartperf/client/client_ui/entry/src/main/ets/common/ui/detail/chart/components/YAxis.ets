@@ -257,8 +257,11 @@ export default class YAxis extends AxisBase {
      */
     //    @Deprecated
     public setStartAtZero(startAtZero: boolean): void {
-        if (startAtZero) super.setAxisMinimum(0);
-        else super.resetAxisMinimum();
+        if (startAtZero) {
+            super.setAxisMinimum(0);
+        } else {
+            super.resetAxisMinimum();
+        }
     }
 
     /**
@@ -352,9 +355,13 @@ export default class YAxis extends AxisBase {
         var minWidth: number = this.getMinWidth();
         var maxWidth: number = this.getMaxWidth();
 
-        if (minWidth > 0) minWidth = Utils.convertDpToPixel(minWidth);
+        if (minWidth > 0) {
+            minWidth = Utils.convertDpToPixel(minWidth);
+        }
 
-        if (maxWidth > 0 && maxWidth != Number.POSITIVE_INFINITY) maxWidth = Utils.convertDpToPixel(maxWidth);
+        if (maxWidth > 0 && maxWidth != Number.POSITIVE_INFINITY) {
+            maxWidth = Utils.convertDpToPixel(maxWidth);
+        }
 
         width = Math.max(minWidth, Math.min(width, maxWidth > 0.0 ? maxWidth : width));
 
@@ -380,9 +387,12 @@ export default class YAxis extends AxisBase {
      * @return
      */
     public needsOffset(): boolean {
-        if (super.isEnabled() && super.isDrawLabelsEnabled() && this.getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART)
-        return true;
-        else return false;
+        if (super.isEnabled() && super.isDrawLabelsEnabled()
+            && this.getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART) {
+            return true;
+        } else {
+            return false;
+        }
     }
 
     /**

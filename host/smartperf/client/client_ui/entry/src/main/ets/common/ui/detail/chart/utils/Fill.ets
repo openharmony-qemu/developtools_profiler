@@ -47,7 +47,7 @@ export default class Fill {
   /**
    * the drawable to be used for filling
    */
-  protected mDrawable: ImagePaint /*mDrawable*/;
+  protected mDrawable: ImagePaint;/*mDrawable*/
 
   private mGradientColors: number[];
 

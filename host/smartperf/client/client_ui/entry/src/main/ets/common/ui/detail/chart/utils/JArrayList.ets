@@ -20,9 +20,9 @@
 import { JList } from './JList';
 
 export class JArrayList<T> implements JList<T> {
-  dataSouce: Array<T>;
-  listSize: number; // 列表的大小
-  pos: number; // 列表中当前的位置
+  public dataSouce: Array<T>;
+  public listSize: number; // 列表的大小
+  public pos: number; // 列表中当前的位置
 
   constructor() {
     this.dataSouce = [];

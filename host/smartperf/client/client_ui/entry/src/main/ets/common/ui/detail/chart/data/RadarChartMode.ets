@@ -76,16 +76,16 @@ export default class RadarChartMode {
     public xScale: number;
     public yScale: number;
 
-    data: RadarData = new RadarData();
-    displayCenterY: number = 0;
-    mRotationAngle: number = 270;
-    mRawRotationAngle = 270;
-    mStartAngle: number = 0;
-    yAxisRenderer: YAxisRendererRadarChart;
-    xAxisRenderer: XAxisRendererRadarChart;
-    radarRender: RadarChartRenderer;
-    handler: ViewPortHandler;
-    mAnimator: ChartAnimator;
+    public data: RadarData = new RadarData();
+    public displayCenterY: number = 0;
+    public mRotationAngle: number = 270;
+    public mRawRotationAngle = 270;
+    public mStartAngle: number = 0;
+    public yAxisRenderer: YAxisRendererRadarChart;
+    public xAxisRenderer: XAxisRendererRadarChart;
+    public radarRender: RadarChartRenderer;
+    public handler: ViewPortHandler;
+    public mAnimator: ChartAnimator;
     constructor(yAxis?: YAxis, data?: RadarData) {
         if (yAxis) {
             this.yAxis = yAxis;
@@ -258,8 +258,8 @@ export default class RadarChartMode {
     }
     public getAngleForPoint(x: number, y: number): number {
         let c: MPPointF = this.getCenterOffsets();
-        let tx = x - c.x,
-            ty = y - c.y;
+        let tx = x - c.x;
+        let ty = y - c.y;
         let length = Math.sqrt(tx * tx + ty * ty);
         let r = Math.acos(ty / length);
         let angle: number = (180 * r) / Math.PI;
@@ -268,13 +268,16 @@ export default class RadarChartMode {
         }
         angle = angle + 90;
 
-        if (angle > 360) angle = angle - 360;
+        if (angle > 360) {
+            angle = angle - 360;
+        }
+
         MPPointF.recycleInstance(c);
         return angle;
     }
-    paints: Paint[] = [];
-    highLight: Paint[] = [];
-    indexHighLightPaint: IndexPositionPaint = null;
+    public paints: Paint[] = [];
+    public highLight: Paint[] = [];
+    public indexHighLightPaint: IndexPositionPaint = null;
     public drawChart(): Paint[] {
         let paintsTemp: Paint[] = [];
         let webPaint: Paint[] = this.radarRender.drawExtras();

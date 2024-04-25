@@ -17,7 +17,7 @@ import { fileOpen, createGPData, isAccess } from '../base/BaseProfilerUtils';
 import { BaseProfiler } from '../base/BaseProfiler';
 import { CollectorType } from '../base/ProfilerConstant';
 import SPLogger from '../../../common/utils/SPLogger';
-enum THERMAL_CONFIG {
+enum ThermalConfig {
   THERMAL_BASE = '/sys/devices/virtual/thermal',
 }
 
@@ -37,7 +37,7 @@ export class Thermal extends BaseProfiler {
   init() {
     //初始化Thermal node
     var dir;
-    dir = fileio.opendirSync(THERMAL_CONFIG.THERMAL_BASE);
+    dir = fileio.opendirSync(ThermalConfig.THERMAL_BASE);
     do {
       var dirent = dir.readSync();
       if (dirent == null) {
@@ -46,7 +46,7 @@ export class Thermal extends BaseProfiler {
       let name: String = dirent.name;
       SPLogger.DEBUG(Thermal.name, 'thermal_zone name:' + name);
       if (name.match('thermal_zone') && name.match('thermal_zone1') == null) {
-        let typeName = fileOpen(THERMAL_CONFIG.THERMAL_BASE + '/' + dirent.name + '/type');
+        let typeName = fileOpen(ThermalConfig.THERMAL_BASE + '/' + dirent.name + '/type');
         if (this.enableSupportItem.length > 0) {
           this.enableSupportItem.find((item: String) => {
             if (typeName.match(item.toString())) {
@@ -62,7 +62,7 @@ export class Thermal extends BaseProfiler {
   }
 
   isSupport() {
-    if (isAccess(THERMAL_CONFIG.THERMAL_BASE)) {
+    if (isAccess(ThermalConfig.THERMAL_BASE)) {
       return true;
     }
     return false;
@@ -72,7 +72,7 @@ export class Thermal extends BaseProfiler {
     if (this.supportItemMap.size > 0) {
       let timeZones = this.supportItemMap.keys();
       for (let timeZone of timeZones) {
-        let tempValue = fileOpen(THERMAL_CONFIG.THERMAL_BASE + '/' + timeZone + '/temp');
+        let tempValue = fileOpen(ThermalConfig.THERMAL_BASE + '/' + timeZone + '/temp');
         this.thermalMap.set(this.supportItemMap.get(timeZone), tempValue);
       }
     }

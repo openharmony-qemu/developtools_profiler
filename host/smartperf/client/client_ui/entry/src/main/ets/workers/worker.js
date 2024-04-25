@@ -14,7 +14,7 @@
  */
 
 import worker from '@ohos.worker'; // 导入worker模块
-import net_socket from '@ohos.net.socket';
+import netSocket from '@ohos.net.socket';
 
 const workTag = 'SmartPerf::Work:: ';
 let parentPort = worker.parentPort; // 获取parentPort属性
@@ -35,7 +35,7 @@ export let UdpSendAddress = {
 
 export let flagPackageNum = 0;
 
-export let udp = net_socket.constructUDPSocketInstance();
+export let udp = netSocket.constructUDPSocketInstance();
 udp.bind(IPv4BindAddr, (err) => {
   if (err) {
     console.log(workTag + 'Worker socket bind fail');
@@ -47,9 +47,7 @@ udp.bind(IPv4BindAddr, (err) => {
       console.log(workTag + 'Worker socket getState fail');
       return;
     }
-    console.log(
-      workTag + 'Worker socket getState success:' + JSON.stringify(data)
-    );
+    console.log(workTag + 'Worker socket getState success:' + JSON.stringify(data));
   });
 });
 
@@ -63,9 +61,7 @@ parentPort.onmessage = function (e) {
       parentPort.postMessage('UdpStatus$-1');
       console.log(workTag + 'Worker socket getState error', err);
     }
-    console.log(
-      workTag + 'Worker socket getState success:' + JSON.stringify(data)
-    );
+    console.log(workTag + 'Worker socket getState success:' + JSON.stringify(data));
 
     if (socketCollectItems.testConnection) {
       for (let i = 0; i < 10; i++) {
@@ -123,9 +119,7 @@ parentPort.onmessage = function (e) {
         address: UdpSendAddress,
         data: messageTrace,
       });
-      console.log(
-        workTag + 'sub worker catch_trace_start :' + 'catch_trace_start'
-      );
+      console.log(workTag + 'sub worker catch_trace_start :' + 'catch_trace_start');
     }
     if (socketCollectItems.catch_trace_end) {
       let messageTrace = 'catch_trace_end';
@@ -159,9 +153,7 @@ udp.on('message', function (data) {
           if (arrStr[0].indexOf('||') !== -1 && arrStr[1].indexOf('||') !== -1) {
             let fps = arrStr[0].split('||');
             let fpsJitter = arrStr[1].split('||');
-            parentPort.postMessage(
-              'FPS$' + fps[1].toString() + '$' + fpsJitter[1].toString()
-            );
+            parentPort.postMessage('FPS$' + fps[1].toString() + '$' + fpsJitter[1].toString());
           }
         }
       }
@@ -175,8 +167,8 @@ function includes(all, sub) {
   all = all.toLowerCase();
   sub = sub.toLowerCase();
 
-  var firstChar = sub.substring(0, 1);
-  var subLength = sub.length;
+  let firstChar = sub.substring(0, 1);
+  let subLength = sub.length;
 
   for (let i = 0; i < all.length - subLength + 1; i++) {
     if (all.charAt(i) === firstChar) {

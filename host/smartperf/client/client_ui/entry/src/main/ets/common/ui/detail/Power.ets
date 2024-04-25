@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -30,18 +30,18 @@ import { getCpuCoreInfo, } from '../../utils/SystemUtils';
 @Component
 export struct Power {
   @State private gpData: Array<TIndexInfo> = new Array()
-  topAxis: XAxis = new XAxis(); //顶部X轴
-  bottomAxis: XAxis = new XAxis(); //底部X轴
-  atWidth: number =350 ; //表的宽度
-  atHeight: number = 300; //表的高度
-  minOffset: number = 15; //X轴线偏移量
-  leftAxis: YAxis = null;
-  rightAxis: YAxis = null;
-  lineData: LineData = null;
-  lineChartModel : LineChartModel = new LineChartModel();
-  lineData2: LineData = null;
-  lineChartModel2 : LineChartModel = new LineChartModel();
-  testDuration:string =globalThis.testDuration
+  public topAxis: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis: XAxis = new XAxis(); //底部X轴
+  public atWidth: number = 350 ; //表的宽度
+  public atHeight: number = 300; //表的高度
+  public minOffset: number = 15; //X轴线偏移量
+  public leftAxis: YAxis = null;
+  public rightAxis: YAxis = null;
+  public lineData: LineData = null;
+  public lineChartModel : LineChartModel = new LineChartModel();
+  public lineData2: LineData = null;
+  public lineChartModel2 : LineChartModel = new LineChartModel();
+  public testDuration:string = globalThis.testDuration
   @State private summaryItems: Array<SummaryItem> = new Array()
   private controller: TabsController = new TabsController()
   aboutToAppear() {
@@ -56,26 +56,26 @@ export struct Power {
 
 
     for (var index = 0; index < this.gpData.length; index++) {
-      console.log('globalThis.TIndexInfo--batteryTemp ' +  this.gpData[index].batteryTemp);
-      console.log('globalThis.TIndexInfo--length: ' +  this.gpData.length);
+      console.log('globalThis.TIndexInfo--batteryTemp ' + this.gpData[index].batteryTemp);
+      console.log('globalThis.TIndexInfo--length: ' + this.gpData.length);
       const gpDataCur = this.gpData[index];
       let currentNow = Number(gpDataCur.currentNow).valueOf()
       curVoltage = Number(gpDataCur.voltageNow).valueOf() / 1e6
       let batteryTemp = Number(gpDataCur.batteryTemp).valueOf()/10;
-      avgBatteryTemp+=batteryTemp
-        batteryTemp>maxBatteryTemp?maxBatteryTemp=batteryTemp:null
+      avgBatteryTemp += batteryTemp
+        batteryTemp > maxBatteryTemp?maxBatteryTemp = batteryTemp : null
       normalCurrentNow += Math.abs(currentNow) * Math.abs(curVoltage) / 3.8;     //机测电压 原型机3.8  wgr4.0
-        (0-currentNow )> maxCurrentNow ? maxCurrentNow = (0-currentNow ) : null
+        (0 - currentNow ) > maxCurrentNow ? maxCurrentNow = (0 - currentNow ) : null
 
     }
 
     this.summaryItems.push(
-      new SummaryItem($r("app.media.icon_normalized_current"), "归一化电流", (normalCurrentNow / this.gpData.length).toFixed(0) + "mA", "#fff8f8"),
-      new SummaryItem($r("app.media.icon_normalized_current"), "最大电流", maxCurrentNow.toFixed(0) + "mA", "#fff8f8"),
-      new SummaryItem($r("app.media.icon_normalized_current"), "电压", (curVoltage *1000 / (this.gpData.length+1)).toFixed(0)+ "mV", "#fff8f8"),
-      new SummaryItem($r("app.media.icon_max_temperature"), "平均温度", (avgBatteryTemp/ (this.gpData.length+1)).toFixed(0) + "℃", "#fff8f8"),
-      new SummaryItem($r("app.media.icon_max_temperature"), "最大温度", (maxBatteryTemp ).toFixed(0) + "℃", "#fff8f8"),
-      new SummaryItem($r("app.media.icon_normalized_current"), "归一耗电", (normalCurrentNow*parseInt(this.testDuration)/3600/ (this.gpData.length-1)).toFixed(5) + "mAH", "#fff8f8"),
+      new SummaryItem($r('app.media.icon_normalized_current'), '归一化电流', (normalCurrentNow / this.gpData.length).toFixed(0) + 'mA', '#fff8f8'),
+      new SummaryItem($r('app.media.icon_normalized_current'), '最大电流', maxCurrentNow.toFixed(0) + 'mA', '#fff8f8'),
+      new SummaryItem($r('app.media.icon_normalized_current'), '电压', (curVoltage * 1000 / (this.gpData.length + 1)).toFixed(0) + 'mV', '#fff8f8'),
+      new SummaryItem($r('app.media.icon_max_temperature'), '平均温度', (avgBatteryTemp / (this.gpData.length + 1)).toFixed(0) + '℃', '#fff8f8'),
+      new SummaryItem($r('app.media.icon_max_temperature'), '最大温度', (maxBatteryTemp).toFixed(0) + '℃', '#fff8f8'),
+      new SummaryItem($r('app.media.icon_normalized_current'), '归一耗电', (normalCurrentNow * parseInt(this.testDuration) / 3600 / (this.gpData.length - 1)).toFixed(5) + 'mAH', '#fff8f8'),
     )
 
     this.lineData = this.initCurveData();
@@ -190,7 +190,7 @@ export struct Power {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.currentNow == "") {
+      if (gpDataCur.currentNow == '') {
         parseInt
         continue
       }
@@ -207,7 +207,7 @@ export struct Power {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "Power Info(归一化电流 MA)");
+    let set1 = new LineDataSet(values, 'Power Info(归一化电流 MA)');
 
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -233,7 +233,7 @@ export struct Power {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.currentNow == "") {
+      if (gpDataCur.currentNow == '') {
         parseInt
         continue
       }
@@ -250,7 +250,7 @@ export struct Power {
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "Power Info(归一化电流 MA)");
+    let set1 = new LineDataSet(values, 'Power Info(归一化电流 MA)');
 
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -279,20 +279,20 @@ export struct Power {
             Grid() {
               ForEach(this.summaryItems, item => {
                 GridItem() {
-                  Row({ space: "3vp" }) {
+                  Row({ space: '3vp' }) {
                     Image(item.icon).width('25vp').height('25vp')
                     Text(item.content).fontSize('12fp').textAlign(TextAlign.Start)
                     Text(item.value).fontSize('10fp').textAlign(TextAlign.Start)
                   }.alignItems(VerticalAlign.Center).width('100%')
                 }
-                .width("90%")
+                .width('90%')
                 .align(Alignment.Center)
                 .backgroundColor(item.backColor)
                 .border({ radius: '5vp', color: '#ffffff' }).shadow({radius : 5})
                 .margin({top: '20vp'})
-                .padding("10vp")
+                .padding('10vp')
               }, item => item.content)
-            }.margin({left: "15%", right: "15%" }).width('90%')
+            }.margin({left: '15%', right: '15%' }).width('90%')
             .columnsTemplate('1fr 1fr')
           }.width('100%')
           .height('100%')
@@ -300,7 +300,7 @@ export struct Power {
         TabContent() {
           Column() {
             LineChart({lineChartModel: this.lineChartModel})
-            Text("Power Info(归一化电流 MA)") {
+            Text('Power Info(归一化电流 MA)') {
             }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
 
           }.width('100%')
@@ -309,14 +309,14 @@ export struct Power {
         TabContent() {
           Column() {
             LineChart({lineChartModel: this.lineChartModel2})
-            Text("电压(MV)") {
+            Text('电压(MV)') {
             }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
 
           }.width('100%')
           .height('100%')
         }.tabBar('电压')
       }
-      .backgroundColor("#f5f5f5")
+      .backgroundColor('#f5f5f5')
       .barWidth(360)
       .scrollable(true)
       .barHeight(60)

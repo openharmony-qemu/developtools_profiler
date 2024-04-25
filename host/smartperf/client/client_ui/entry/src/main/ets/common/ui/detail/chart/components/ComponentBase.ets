@@ -117,8 +117,12 @@ export default abstract class ComponentBase {
      * @param size the text size, in DP
      */
     public setTextSize(size: number): void {
-        if (size > 24) size = 24;
-        if (size < 6) size = 6;
+        if (size > 24) {
+            size = 24;
+        }
+        if (size < 6) {
+            size = 6;
+        }
 
         this.mTextSize = size;
     }

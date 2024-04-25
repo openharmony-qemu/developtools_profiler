@@ -17,35 +17,35 @@ import XAixsMode from './XAixsMode';
 import { YAxisModel } from '../components/renderer/YAxisView';
 
 export default class ScaleMode {
-    width: number = 300; //表的宽度
-    height: number = 300; //表的高度
-    scaleX: number = 1; //当前X累计放大倍数
-    scaleY: number = 1; //当前Y累计放大倍数
-    preTouchScaleX: number = 1; //上一次 手势、双击缩放后的缩放
+    public width: number = 300; //表的宽度
+    public height: number = 300; //表的高度
+    public scaleX: number = 1; //当前X累计放大倍数
+    public scaleY: number = 1; //当前Y累计放大倍数
+    public preTouchScaleX: number = 1; //上一次 手势、双击缩放后的缩放
 
-    moveX: number = 0; //累计平移X
-    moveY: number = 0; //累计平移Y
-    currentMoveX: number = 0; //当前次的位移
-    currentMoveY: number = 0; //当前次的位移
-    startMoveX: number = 0;
-    startMoveY: number = 0;
+    public moveX: number = 0; //累计平移X
+    public moveY: number = 0; //累计平移Y
+    public currentMoveX: number = 0; //当前次的位移
+    public currentMoveY: number = 0; //当前次的位移
+    public startMoveX: number = 0;
+    public startMoveY: number = 0;
 
-    currentXSpace: number = 0; //缩放之后 需要移回的距离
-    currentYSpace: number = 0; //缩放之后 需要移回的距离
+    public currentXSpace: number = 0; //缩放之后 需要移回的距离
+    public currentYSpace: number = 0; //缩放之后 需要移回的距离
 
-    isZoom: boolean = false;
-    centerX: number = 0; //双指缩放、双击的中心点X
-    centerY: number = 0; //双指缩放、双击的中心点Y
-    firstTouch: TouchObject; //第一个手指按下点
-    secondTouch: TouchObject; //第二个手指按下点
-    firstClickTime: number = 0; //第一次点击的时间 用于判断是否为双击
+    public isZoom: boolean = false;
+    public centerX: number = 0; //双指缩放、双击的中心点X
+    public centerY: number = 0; //双指缩放、双击的中心点Y
+    public firstTouch: TouchObject; //第一个手指按下点
+    public secondTouch: TouchObject; //第二个手指按下点
+    public firstClickTime: number = 0; //第一次点击的时间 用于判断是否为双击
 
-    onDoubleClickScale: number = 0.1; //双击放大倍数 增加0.4倍
-    leftAxisModel: YAxisModel = new YAxisModel();
-    rightAxisModel: YAxisModel = new YAxisModel();
+    public onDoubleClickScale: number = 0.1; //双击放大倍数 增加0.4倍
+    public leftAxisModel: YAxisModel = new YAxisModel();
+    public rightAxisModel: YAxisModel = new YAxisModel();
 
-    xAixsMode: XAixsMode = new XAixsMode();
-    isNeedScale: boolean = true;
+    public xAixsMode: XAixsMode = new XAixsMode();
+    public isNeedScale: boolean = true;
 
     public touchScale(xScale: number, yScale: number, event: TouchEvent) {
         this.scaleX = xScale * this.preTouchScaleX;

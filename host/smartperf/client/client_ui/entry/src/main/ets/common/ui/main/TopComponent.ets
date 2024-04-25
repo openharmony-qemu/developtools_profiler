@@ -18,7 +18,7 @@
  */
 @Component
 export struct TopComponent {
-  @State title: string = "SmartPerf"
+  @State title: string = 'SmartPerf'
 
   build() {
     //开始测试title
@@ -27,7 +27,7 @@ export struct TopComponent {
       .height('8%')
       .fontSize('20fp')
       .fontWeight(FontWeight.Bold)
-      .fontColor($r("app.color.color_fff"))
+      .fontColor($r('app.color.color_fff'))
       .alignSelf(ItemAlign.Start)
       .textAlign(TextAlign.Start)
       .margin({ left: '15vp', top: '30vp' })

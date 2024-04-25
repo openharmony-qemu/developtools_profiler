@@ -22,8 +22,7 @@ import { JArrayList } from '../utils/JArrayList';
 
 export default abstract class LineScatterCandleRadarDataSet<T extends EntryOhos>
 extends BarLineScatterCandleBubbleDataSet<T>
-implements ILineScatterCandleRadarDataSet<T>
-{
+implements ILineScatterCandleRadarDataSet<T> {
     protected mDrawVerticalHighlightIndicator: boolean = true;
     protected mDrawHorizontalHighlightIndicator: boolean = true;
 

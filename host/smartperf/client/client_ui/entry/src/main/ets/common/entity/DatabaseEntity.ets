@@ -245,7 +245,7 @@ export class TIndexInfo {
   public networkDownSpeed: String;
   public wlanSingleIntensity: String;
   public radioSingleIntensity: String;
-  public networkDelay_SDK: String;
+  public networkDelaySdk: String;
   constructor(
     timestamp?: String,
     taskId?: String,
@@ -383,16 +383,16 @@ export class TIndexInfo {
     shellFrame: String,
     shellFront: String,
     shellBack: String,
-    soc_thermal: String,
-    system_h: String,
+    socThermal: String,
+    systemH: String,
     gpu: String,
     ambient: String
   ) {
     this.shellFrameTemp = shellFrame;
     this.shellFrontTemp = shellFront;
     this.shellBackTemp = shellBack;
-    this.socThermalTemp = soc_thermal;
-    this.systemHTemp = system_h;
+    this.socThermalTemp = socThermal;
+    this.systemHTemp = systemH;
     this.gpuTemp = gpu;
     this.ambientTemp = ambient;
   }
