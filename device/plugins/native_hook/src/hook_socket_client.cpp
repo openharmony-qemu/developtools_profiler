@@ -213,5 +213,6 @@ bool HookSocketClient::SendNmdInfo()
     struct OptArg opt = {0, reinterpret_cast<char*>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "a");
     shareMemoryBlockNmd_->PutRawTimeout(reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1);
+    free(nmdBuf);
     return true;
 }
