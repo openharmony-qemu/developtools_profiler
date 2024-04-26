@@ -50,7 +50,7 @@ private:
     int smbFd_;
     int eventFd_;
     int pid_;
-    int nmdFd_;
+    int nmdFd_{0};
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;

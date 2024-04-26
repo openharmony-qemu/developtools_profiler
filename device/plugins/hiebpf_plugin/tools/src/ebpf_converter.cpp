@@ -209,7 +209,7 @@ void EbpfConverter::EventMapsParsing()
     char fileName[maps.fileNameLen + 1];
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (maps.fileNameLen > 0) {
-        size_t dataLen = sizeof(fileName) > 1 ? static_cast<size_t>(sizeof(fileName) - 1) : 0;
+        size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         CHK(Read(reinterpret_cast<void*>(fileName), dataLen));
         maps.fileName = fileName;
     }
@@ -268,7 +268,7 @@ void EbpfConverter::SymbolInfoParsing()
     char fileName[info.fileNameSize + 1];
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (info.fileNameSize > 0) {
-        size_t dataLen = sizeof(fileName) > 1 ? static_cast<size_t>(sizeof(fileName) - 1) : 0;
+        size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         CHK(Read(reinterpret_cast<void*>(&fileName), dataLen));
         info.fileName = fileName;
     }

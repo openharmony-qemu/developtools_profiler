@@ -1129,7 +1129,7 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
 {
     int64_t pid = 0;
     int64_t size = 0;
-    size_t dataLen = strlen(word) > 1 ? static_cast<size_t>(strlen(word) - 1) : 0;
+    size_t dataLen = strlen(word) > 1 ? strlen(word) - 1 : 0;
     switch (key) {
         case RS_SIZE:
             size = strtol(word, nullptr, DEC_BASE);

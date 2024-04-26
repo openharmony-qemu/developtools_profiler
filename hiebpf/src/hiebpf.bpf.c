@@ -493,7 +493,8 @@ int get_filename_by_inode(char *filename, const size_t len, const struct inode *
             break;
         }
         pos += (size_t)dentry_name_len;
-        filename[pos - 1] = '/';
+        size_t index = pos > 1 ? pos - 1 : 0;
+        filename[index] = '/';
         struct dentry *temp_dentry = BPF_CORE_READ(curr_dentry, d_parent);
         if (temp_dentry == curr_dentry || temp_dentry == NULL) {
             break;
