@@ -347,7 +347,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
 uint64_t getJsChainId()
 {
-    if (g_ClientConfig.arktsConfig.jsStackReport) {
+    if (g_ClientConfig.arktsConfig.jsStackReport > 0) {
             OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
             if (hitraceId.IsValid()) {
                 return hitraceId.GetChainId();

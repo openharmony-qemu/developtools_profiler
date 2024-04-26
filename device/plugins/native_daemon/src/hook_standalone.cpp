@@ -82,7 +82,7 @@ void SetNativeHookConfig(const HookData& hookData)
     }
 
     if (g_nativeConfig.string_compressed() || hookData.rawString ||
-        g_nativeConfig.response_library_mode() || g_nativeConfig.js_stack_report()) {
+        g_nativeConfig.response_library_mode() || g_nativeConfig.js_stack_report() > 0) {
         g_hookManager->SethookStandalone(true);
     }
     PROFILER_LOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());

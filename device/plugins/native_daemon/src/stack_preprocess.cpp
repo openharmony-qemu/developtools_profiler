@@ -49,9 +49,11 @@ constexpr static uint32_t RIGHT_MOVE_16 = 16;
 constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 constexpr static uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
 constexpr static uint64_t DWARF_ERROR_ID = 999999;
+constexpr static uint64_t DWARF_NAPI_CALLBACK = 999999;
 static std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
 static std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
-
+constexpr static int NAPI_CALL_STACK = 2; // just for napi call stack
+constexpr static uint32_t FRAME_DEPTH = 2; // add two frames
 #ifdef PERFORMANCE_DEBUG
 constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
 static std::atomic<uint64_t> timeCost = 0;
@@ -108,7 +110,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
     u64regs_.resize(PERF_REG_ARM64_MAX);
 #endif
     callFrames_.reserve(hookConfig_.max_stack_depth() + hookConfig_.max_js_stack_depth());
-    if (hookConfig_.fp_unwind() && hookConfig_.js_stack_report()) {
+    if (hookConfig_.fp_unwind() && hookConfig_.js_stack_report() > 0) {
         fpJsCallStacks_.reserve(hookConfig_.max_js_stack_depth());
     }
 }
@@ -367,7 +369,7 @@ void StackPreprocess::TakeResults()
             callFrames_.clear();
             if (hookConfig_.fp_unwind()) {
                 FillFpNativeIp(rawData);
-                if (rawData->stackConext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report()) {
+                if (rawData->stackConext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report() > 0) {
                     FillFpJsData(rawData);
                 }
             } else if (rawData->stackConext->type != PR_SET_VMA_MSG) {
@@ -564,7 +566,14 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
         return 0;
     }
     callStack_.clear();
-    callStack_.reserve(callFrames.size());
+    bool isNapi = false;
+    if (rawStack->stackConext->type == MEMORY_USING_MSG && hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
+        callStack_.reserve(callFrames.size() + 1); // 1 : insert a frame
+        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+        isNapi = true;
+    } else {
+        callStack_.reserve(callFrames.size());
+    }
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
@@ -572,6 +581,14 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
             idx = 0;
         }
         FillOfflineCallStack(callFrames, idx, stackData);
+    }
+    if (isNapi) {
+        // insert a frame
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        FillNapiStack(tagName, callFrames, napiIndex_);
+        ReportFrameMap(callFrames.back(), stackData);
+        ++napiIndex_;
     }
     // return call stack id
     std::lock_guard<std::mutex> guard(mtx_);
@@ -646,6 +663,25 @@ void StackPreprocess::SetEventFrame(const RawStackPtr& rawStack, std::vector<Cal
     }
 }
 
+void StackPreprocess::FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex)
+{
+    #if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
+    CallFrame& jsCallFrame = callFrames_.emplace_back(0 & (~pacMask));
+    jsCallFrame.symbolName_ = tagName;
+    jsCallFrame.isJsFrame_ = true;
+    jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
+    jsCallFrame.needReport_ |= SYMBOL_NAME_ID_REPORT;
+    jsCallFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    jsCallFrame.callFrameId_ = DWARF_NAPI_CALLBACK + napiIndex;
+    jsCallFrame.symbolNameId_ = DWARF_NAPI_CALLBACK + napiIndex;
+    jsCallFrame.filePathId_ = DWARF_NAPI_CALLBACK + napiIndex;
+    jsCallFrame.filePath_ = "no-napi-file-path";
+}
+
 template <typename T>
 void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
     T& stackData)
@@ -653,14 +689,28 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::
     // ignore the first two frame if dwarf unwind
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     callStack_.clear();
-    callStack_.reserve(callFrames.size() + 1);
+    bool isNapi = false;
+    if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
+        callStack_.reserve(callFrames.size() + FRAME_DEPTH);
+        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+        isNapi = true;
+    } else {
+        callStack_.reserve(callFrames.size() + 1);
+    }
     callStack_.push_back(rawStack->stackConext->mallocSize | SIZE_MASK);
     if (!hookConfig_.offline_symbolization()) {
         FillCallStack(callFrames, idx, stackData);
     } else {
         FillOfflineCallStack(callFrames, idx, stackData);
     }
-
+    // insert a frame
+    if (isNapi) {
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        FillNapiStack(tagName, callFrames, napiIndex_);
+        ReportFrameMap(callFrames.back(), stackData);
+        ++napiIndex_;
+    }
     std::lock_guard<std::mutex> guard(mtx_);
     // by call stack id set alloc statistics data.
     uint32_t stackId = FindCallStackId(callStack_);

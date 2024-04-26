@@ -44,7 +44,7 @@ message NativeHookConfig {
     uint32 sample_interval = 24;
     bool response_library_mode = 25;
     repeated int32 expand_pids = 26;
-    bool js_stack_report = 27;
+    int32 js_stack_report = 27;
     uint32 max_js_stack_depth = 28;
     string filter_napi_name = 29;
 }
