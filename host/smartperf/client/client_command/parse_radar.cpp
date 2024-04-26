@@ -107,7 +107,7 @@ std::string ParseRadar::ParseRadarFrame(std::string string)
     std::string result = "";
     return result;
 }
-std::string ParseRadar::ExtractString(const std::string &str, const std::string &target)
+std::string ParseRadar::ExtractString(const std::string &str, const std::string &target) const
 {
     LOGI("Radar.str====: %s", str.c_str());
     size_t pos = str.find(target);

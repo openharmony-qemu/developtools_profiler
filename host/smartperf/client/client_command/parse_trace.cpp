@@ -33,7 +33,7 @@ double ParseTrace::ParseTraceNoh(const std::string &fileNamePath, const std::str
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(fileNamePath);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "File "
                   << "open fail" << std::endl;
@@ -128,7 +128,7 @@ double ParseTrace::ParseTraceCold(const std::string &fileNamePath, const std::st
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(fileNamePath);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "File "
                   << "open fail" << std::endl;
@@ -149,7 +149,7 @@ double ParseTrace::ParseTraceHot(const std::string &fileNamePath)
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(fileNamePath);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "File "
                   << "open fail" << std::endl;

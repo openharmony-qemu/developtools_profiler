@@ -58,7 +58,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
         content += ',';
     }
     if (!content.empty()) {
-        content = content.substr(0, content.length() - 1); // Cancel the last ',' sign
+        content.pop_back();
     }
 
     result["info"] = content;
@@ -223,7 +223,11 @@ long long GpuCounter::GetCounterDuration()
 {
     bool startFlag = false;
     long long ret = -1;
-    std::ifstream file(constConfigFile);
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(constConfigFile.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    std::ifstream file(realPath);
     std::string line;
 
     if (!file.is_open()) {

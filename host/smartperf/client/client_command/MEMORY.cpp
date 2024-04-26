@@ -68,8 +68,9 @@ std::map<std::string, std::string> MEMORY::GetRamInfo() const
         procRamInfo["heapFree"] = "NA";
         return procRamInfo;
     }
-    std::string cmd = "hidumper --mem " + processId;
-    FILE *fd = popen(cmd.c_str(), "r");
+    std::stringstream cmd;
+    cmd << "hidumper --mem " << processId;
+    FILE *fd = popen(cmd.str().c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;
     }
@@ -156,7 +157,7 @@ std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::strin
     sumRamInfo["swapPss"] = paramsInfo[MEMORY_SEVENTH];
     sumRamInfo["heapSize"] = paramsInfo[MEMORY_EIGHTH];
     sumRamInfo["heapAlloc"] = paramsInfo[MEMORY_NINTH];
-    sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[MEMORY_TENTH].size() - 1);
+    sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(static_cast<int>(paramsInfo[MEMORY_TENTH].size()) - 1);
     return sumRamInfo;
 }
 }

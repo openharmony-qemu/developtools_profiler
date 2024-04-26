@@ -75,7 +75,7 @@ std::map<std::string, std::string> FPS::ItemData()
 std::string FPS::GetScreenInfo() const
 {
     std::string resultScreen = SPUtils::GetScreen();
-    int pos = resultScreen.find("=");
+    unsigned int pos = resultScreen.find("=");
     std::string numStr = resultScreen.substr(pos + 1);
     LOGI("numStr====: %s", numStr.c_str());
     return numStr;

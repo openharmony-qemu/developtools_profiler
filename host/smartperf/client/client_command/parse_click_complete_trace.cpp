@@ -32,7 +32,7 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(fileNamePath);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "File "
                   << "open fail" << std::endl;

@@ -36,7 +36,7 @@ public:
 private:
     std::ifstream infile;
     std::string flagTime = "0";
-    int flagTouch = 0;
+    size_t flagTouch = 0;
     std::string startTime = "0";
     std::string endTime = "0";
     std::string endTimeFlag = "0";

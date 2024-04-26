@@ -50,6 +50,7 @@ struct FpsInfo {
     {
         fps = 0;
         curTime = 0;
+        currTimeDump = 0;
     }
 };
 struct FpsCurrentFpsTime {

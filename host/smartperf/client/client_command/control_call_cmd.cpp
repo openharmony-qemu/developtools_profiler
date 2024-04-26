@@ -26,7 +26,6 @@
 #include "include/sp_utils.h"
 #include "include/parse_click_complete_trace.h"
 #include "include/parse_click_response_trace.h"
-#include "include/sp_parse_fps.h"
 #include "include/parse_page_fps_trace.h"
 #include "include/parse_start_frame_trace.h"
 #include "include/parse_start_trace_noh.h"
@@ -54,8 +53,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         time = SmartPerf::ControlCallCmd::StartResponse(v);
     } else if (v[typeName] == "coldStartHM") {
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
-    } else if (v[typeName] == "fps") {
-        result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
         result = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "startFrame") {
@@ -193,19 +190,6 @@ std::string ControlCallCmd::PageFps()
     result = "FPS:" + stream.str() + "fps";
     return result;
 }
-std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
-{
-    OHOS::SmartPerf::StartUpDelay sd;
-    SpParseFPS parseFPS;
-    std::string cmdResult;
-    int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
-}
 double ControlCallCmd::ResponseTime()
 {
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
@@ -306,7 +290,6 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "startResponse" + ".ftrace";
     if (sd.pointXY == "0 0") {
@@ -369,7 +352,6 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     if (sd.pointXY == "0 0") {
@@ -404,7 +386,6 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     OHOS::SmartPerf::ParseTrace parseTrace;
     OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
-    std::string deviceType = sd.GetDeviceType();
     if (isOhTest) {
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
