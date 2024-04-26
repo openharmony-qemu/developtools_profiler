@@ -161,13 +161,6 @@ export default class ScaleMode {
      * @param event
      */
     public onSingleClick(event: ClickEvent) {
-        /* scaleX: number= 1 //当前X累计放大倍数
-             scaleY: number= 1 //当前Y累计放大倍数
-             moveX: number= 0 //累计平移X
-             moveY: number= 0 //累计平移Y
-             centerX: number= 0 //双指缩放、双击的中心点X
-             centerY: number= 0 //双指缩放、双击的中心点Y*/
-        //参数可在子类直接调用
     }
     /**
      * 需要覆写的 双击击事件

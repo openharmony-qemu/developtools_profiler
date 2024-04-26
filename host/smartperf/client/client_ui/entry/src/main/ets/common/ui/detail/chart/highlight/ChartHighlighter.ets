@@ -137,15 +137,19 @@ export default class ChartHighlighter<T extends BarLineScatterCandleBubbleDataPr
     protected getHighlightsAtXValue(xVal: number, x: number, y: number): JArrayList<Highlight> {
         this.mHighlightBuffer.clear();
 
-        var data: BarLineScatterCandleBubbleData<IBarLineScatterCandleBubbleDataSet<EntryOhos>> = this.getData();
+        let data: BarLineScatterCandleBubbleData<IBarLineScatterCandleBubbleDataSet<EntryOhos>> = this.getData();
 
-        if (data == null) return this.mHighlightBuffer;
+        if (data == null) {
+            return this.mHighlightBuffer;
+        }
 
         for (var i: number = 0, dataSetCount = data.getDataSetCount(); i < dataSetCount; i++) {
-            var dataSet: IDataSet<EntryOhos> = data.getDataSetByIndex(i);
+            let dataSet: IDataSet<EntryOhos> = data.getDataSetByIndex(i);
 
             // don't include DataSets that cannot be highlighted
-            if (!dataSet.isHighlightEnabled()) continue;
+            if (!dataSet.isHighlightEnabled()) {
+                continue;
+            }
 
             this.mHighlightBuffer.addAll(this.buildHighlights(dataSet, i, xVal, Rounding.CLOSEST));
         }
@@ -168,25 +172,29 @@ export default class ChartHighlighter<T extends BarLineScatterCandleBubbleDataPr
         xVal: number,
         rounding: Rounding
     ): JArrayList<Highlight> {
-        var highlights: JArrayList<Highlight> = new JArrayList<Highlight>();
+        let highlights: JArrayList<Highlight> = new JArrayList<Highlight>();
 
         //noinspection unchecked
-        var entries: JArrayList<EntryOhos> = set.getEntriesForXValue(xVal);
+        let entries: JArrayList<EntryOhos> = set.getEntriesForXValue(xVal);
         if (entries.size() == 0) {
             // Try to find closest x-value and take all entries for that x-value
-            var closest: EntryOhos = set.getEntryForXValue(xVal, Number.NaN, rounding);
+            let closest: EntryOhos = set.getEntryForXValue(xVal, Number.NaN, rounding);
             if (closest != null) {
                 //noinspection unchecked
                 entries = set.getEntriesForXValue(closest.getX());
             }
         }
 
-        if (entries.size() == 0) return highlights;
+        if (entries.size() == 0) {
+            return highlights;
+        }
 
         for (let e of entries.dataSouce) {
-            var pixels: MPPointD = this.mChart.getTransformer(set.getAxisDependency()).getPixelForValues(e.getX(), e.getY());
+            let pixels: MPPointD = this.mChart.getTransformer(set.getAxisDependency())
+                                        .getPixelForValues(e.getX(), e.getY());
 
-            highlights.add(new Highlight(e.getX(), e.getY(), pixels.x, pixels.y, dataSetIndex, set.getAxisDependency()));
+            highlights.add(new Highlight(e.getX(), e.getY(),
+                pixels.x, pixels.y, dataSetIndex, set.getAxisDependency()));
         }
 
         return highlights;
@@ -196,8 +204,8 @@ export default class ChartHighlighter<T extends BarLineScatterCandleBubbleDataPr
      * Returns the Highlight of the DataSet that contains the closest value on the
      * y-axis.
      *
-     * @param closestValues        contains two Highlight objects per DataSet closest to the selected x-position (determined by
-     *                             rounding up an down)
+     * @param closestValues        contains two Highlight objects per DataSet closest
+     *       to the selected x-position (determined by rounding up an down)
      * @param x
      * @param y
      * @param axis                 the closest axis

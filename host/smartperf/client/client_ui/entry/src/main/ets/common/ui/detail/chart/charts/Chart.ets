@@ -195,7 +195,9 @@ export default abstract class Chart<T> {
     this.mInfoPaint.setTextAlign(TextAlign.Center);
     this.mInfoPaint.setTextSize(Utils.convertDpToPixel(12));
 
-    if (this.mLogEnabled) console.info('Chart.init()');
+    if (this.mLogEnabled) {
+      console.info('Chart.init()');
+    }
   }
 
   /**
@@ -218,14 +220,17 @@ export default abstract class Chart<T> {
 
     // @ts-ignore 缺失方法
     for (let item of this.mData.getDataSets()) {
-      if (item.needsFormatter() || item.getValueFormatter() == this.mDefaultValueFormatter)
-      item.setValueFormatter(this.mDefaultValueFormatter);
+      if (item.needsFormatter() || item.getValueFormatter() == this.mDefaultValueFormatter) {
+        item.setValueFormatter(this.mDefaultValueFormatter);
+      }
     }
 
     // let the chart know there is new data
     this.notifyDataSetChanged();
 
-    if (this.mLogEnabled) console.info(Chart.LOG_TAG + ':Data is set.');
+    if (this.mLogEnabled) {
+      console.info(Chart.LOG_TAG + ':Data is set.');
+    }
   }
 
   /**
@@ -257,11 +262,15 @@ export default abstract class Chart<T> {
    * @return
    */
   public isEmpty(): boolean {
-    if (this.mData == null) return true;
-    else {
+    if (this.mData == null) {
+      return true;
+    } else {
       // @ts-ignore 缺失方法
-      if (this.mData.getEntryCount() <= 0) return true;
-      else return false;
+      if (this.mData.getEntryCount() <= 0) {
+        return true;
+      } else {
+        return false;
+      }
     }
   }
 
@@ -355,19 +364,14 @@ export default abstract class Chart<T> {
    * Draws the description text in the bottom right corner of the chart (per default)
    */
   protected drawDescription(): Paint[] {
-    // check if description should be drawn
     if (this.mDescription != null && this.mDescription.isEnabled()) {
       let position: MPPointF = this.mDescription.getPosition();
-
       this.mDescPaint.setTypeface(this.mDescription.getTypeface());
       this.mDescPaint.setTextSize(this.mDescription.getTextSize());
       this.mDescPaint.setColor(this.mDescription.getTextColor());
       this.mDescPaint.setTextAlign(this.mDescription.getTextAlign());
-
-      let x,
-        y: number = 0;
-
-      // if no position specified, draw on default position
+      let x: number = 0;
+      let y: number = 0;
       if (position == null) {
         x = this.width - this.mViewPortHandler.offsetRight() - this.mDescription.getXOffset();
         y = this.height - this.mViewPortHandler.offsetBottom() - this.mDescription.getYOffset();
@@ -375,13 +379,11 @@ export default abstract class Chart<T> {
         x = position.x;
         y = position.y;
       }
-
       (this.mDescPaint as TextPaint).setText(this.mDescription.getText());
       this.mDescPaint.setX(x);
       this.mDescPaint.setY(y);
       return [this.mDescPaint];
     }
-
     return [];
   }
 
@@ -531,9 +533,13 @@ export default abstract class Chart<T> {
     }
     let e: EntryOhos = null;
 
-    if (high == null) this.mIndicesToHighlight = null;
+    if (high == null) {
+      this.mIndicesToHighlight = null;
+    }
     else {
-      if (this.mLogEnabled) console.info(Chart.LOG_TAG + ':Highlighted: ' + high.toString());
+      if (this.mLogEnabled) {
+        console.info(Chart.LOG_TAG + ':Highlighted: ' + high.toString());
+      }
 
       // @ts-ignore  缺失方法
       e = this.mData.getEntryForHighlight(high);
@@ -548,7 +554,9 @@ export default abstract class Chart<T> {
     this.setLastHighlighted(this.mIndicesToHighlight);
 
     if (callListener && this.mSelectionListener != null) {
-      if (!this.valuesToHighlight()) this.mSelectionListener.onNothingSelected();
+      if (!this.valuesToHighlight()) {
+        this.mSelectionListener.onNothingSelected();
+      }
       else {
         // notify the listener
         this.mSelectionListener.onValueSelected(e, high);
@@ -620,7 +628,9 @@ export default abstract class Chart<T> {
     let paints: Paint[] = [];
 
     // if there is no marker view or drawing marker is disabled
-    if (this.mMarker == null || !this.isDrawMarkersEnabled() || !this.valuesToHighlight()) return;
+    if (this.mMarker == null || !this.isDrawMarkersEnabled() || !this.valuesToHighlight()) {
+      return;
+    }
 
     for (let i = 0; i < this.mIndicesToHighlight.length; i++) {
       let highlight: Highlight = this.mIndicesToHighlight[i];
@@ -633,12 +643,16 @@ export default abstract class Chart<T> {
       let entryIndex: number = dataSet.getEntryIndex(e);
 
       // make sure entry not null
-      if (e == null || entryIndex > dataSet.getEntryCount() * this.mAnimator.getPhaseX()) continue;
+      if (e == null || entryIndex > dataSet.getEntryCount() * this.mAnimator.getPhaseX()) {
+        continue;
+      }
 
-      let pos: number[] = this.getMarkerPosition(highlight);
-
+      let pos: number[] = []
+          pos = this.getMarkerPosition(highlight);
       // check bounds
-      if (!this.mViewPortHandler.isInBounds(pos[0], pos[1])) continue;
+      if (!this.mViewPortHandler.isInBounds(pos[0], pos[1])) {
+        continue;
+      }
 
       // callbacks to update the content
       this.mMarker.refreshContent(e, highlight);
@@ -705,9 +719,13 @@ export default abstract class Chart<T> {
    * @param newValue
    */
   public setDragDecelerationFrictionCoef(newValue: number) {
-    if (newValue < 0) newValue = 0;
+    if (newValue < 0) {
+      newValue = 0;
+    }
 
-    if (newValue >= 1) newValue = 0.999;
+    if (newValue >= 1) {
+      newValue = 0.999;
+    }
 
     this.mDragDecelerationFrictionCoef = newValue;
   }
@@ -1166,7 +1184,9 @@ export default abstract class Chart<T> {
    * @param renderer
    */
   public setRenderer(renderer: DataRenderer) {
-    if (renderer != null) this.mRenderer = renderer;
+    if (renderer != null) {
+      this.mRenderer = renderer;
+    }
   }
 
   public getHighlighter(): IHighlighter {
@@ -1199,9 +1219,11 @@ export default abstract class Chart<T> {
    * @return
    */
   public getChartBitmap(): Paint[] {
-    var returnedBitmap: Paint[] = [];
-    var background = this.getBackground();
-    if (background == null) background = '#ffffff';
+    let returnedBitmap: Paint[] = [];
+    let background = this.getBackground();
+    if (background == null) {
+      background = '#ffffff';
+    }
     return returnedBitmap;
   }
 

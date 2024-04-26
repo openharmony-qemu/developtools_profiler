@@ -47,21 +47,23 @@ export default class YAxisRenderer extends AxisRenderer {
    * draws the y-axis labels to the screen
    */
   public renderAxisLabels(): Paint[] {
-    if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawLabelsEnabled()) return [];
+    if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawLabelsEnabled()) {
+      return [];
+    }
 
-    var positions: number[] = this.getTransformedPositions();
+    let positions: number[] = this.getTransformedPositions();
 
     this.mAxisLabelPaint.setTypeface(this.mYAxis.getTypeface());
     this.mAxisLabelPaint.setTextSize(this.mYAxis.getTextSize());
     this.mAxisLabelPaint.setColor(this.mYAxis.getTextColor());
 
-    var xOffset = this.mYAxis.getXOffset();
-    var yOffset = Utils.calcTextHeight(this.mAxisLabelPaint, 'A') + this.mYAxis.getYOffset();
+    let xOffset = this.mYAxis.getXOffset();
+    let yOffset = Utils.calcTextHeight(this.mAxisLabelPaint, 'A') + this.mYAxis.getYOffset();
 
-    var dependency: AxisDependency = this.mYAxis.getAxisDependency();
-    var labelPosition: YAxisLabelPosition = this.mYAxis.getLabelPosition();
+    let dependency: AxisDependency = this.mYAxis.getAxisDependency();
+    let labelPosition: YAxisLabelPosition = this.mYAxis.getLabelPosition();
 
-    var xPos: number = 0;
+    let xPos: number = 0;
 
     if (dependency == AxisDependency.LEFT) {
       if (labelPosition == YAxisLabelPosition.OUTSIDE_CHART) {
@@ -85,7 +87,9 @@ export default class YAxisRenderer extends AxisRenderer {
   }
 
   public renderAxisLine(): Paint[] {
-    if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawAxisLineEnabled()) return [];
+    if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawAxisLineEnabled()) {
+      return [];
+    }
 
     this.mAxisLinePaint.setColor(this.mYAxis.getAxisLineColor());
     this.mAxisLinePaint.setStrokeWidth(this.mYAxis.getAxisLineWidth());
@@ -122,16 +126,16 @@ export default class YAxisRenderer extends AxisRenderer {
    * @param positions
    */
   protected drawYLabels(fixedPosition: number, positions: number[], offset: number): Paint[] {
-    var paints = [];
+    let paints = [];
     const fromIndex = this.mYAxis.isDrawBottomYLabelEntryEnabled() ? 0 : 1;
     const to = this.mYAxis.isDrawTopYLabelEntryEnabled() ? this.mYAxis.mEntryCount : this.mYAxis.mEntryCount - 1;
 
-    var xOffset: number = this.mYAxis.getLabelXOffset();
+    let xOffset: number = this.mYAxis.getLabelXOffset();
 
     // draw
-    for (var i = fromIndex; i < to; i++) {
-      var newLabelPaint = new TextPaint(this.mAxisLabelPaint as TextPaint);
-      var text: string = this.mYAxis.getFormattedLabel(i);
+    for (let i = fromIndex; i < to; i++) {
+      let newLabelPaint = new TextPaint(this.mAxisLabelPaint as TextPaint);
+      let text: string = this.mYAxis.getFormattedLabel(i);
       newLabelPaint.setText(text);
       newLabelPaint.setX(fixedPosition + xOffset);
       let interval =
@@ -177,28 +181,29 @@ export default class YAxisRenderer extends AxisRenderer {
   protected mRenderGridLinesPath: string = '';
 
   public renderGridLines(): Paint[] {
-    var paints = [];
+    let paints = [];
     const fromIndex = this.mYAxis.isDrawBottomYLabelEntryEnabled() ? 0 : 1;
     const to = this.mYAxis.isDrawTopYLabelEntryEnabled() ? this.mYAxis.mEntryCount : this.mYAxis.mEntryCount - 1;
 
-    if (!this.mYAxis.isEnabled()) return [];
+    if (!this.mYAxis.isEnabled()) {
+      return [];
+    }
 
     if (this.mYAxis.isDrawGridLinesEnabled()) {
-      var positions: number[] = this.getTransformedPositions();
+      let positions: number[] = this.getTransformedPositions();
 
       this.mGridPaint.setColor(this.mYAxis.getGridColor());
       this.mGridPaint.setStrokeWidth(this.mYAxis.getGridLineWidth());
       this.mGridPaint.setDashPathEffect(this.mYAxis.getGridDashPathEffect());
 
-      var gridLinePath: string = this.mRenderGridLinesPath;
+      let gridLinePath: string = this.mRenderGridLinesPath;
       gridLinePath = '';
 
-      //      var yOffset = Utils.calcTextHeight(this.mAxisLabelPaint, "A") / 2.5 + this.mYAxis.getYOffset()
       // draw the grid
-      for (var i = 0; i < positions.length; i += 2) {
-        var newGridPaint = new PathPaint(this.mGridPaint as PathPaint);
+      for (let i = 0; i < positions.length; i += 2) {
+        let newGridPaint = new PathPaint(this.mGridPaint as PathPaint);
         gridLinePath = '';
-        var interval =
+        let interval =
           ((this.mAxisLinePaint as LinePaint).endPoint[1] - (this.mAxisLinePaint as LinePaint).startPoint[1]) /
           (to - 1);
         let lastNumber = this.mAxis.mEntries[this.mAxis.mEntries.length - 1];
@@ -282,9 +287,9 @@ export default class YAxisRenderer extends AxisRenderer {
     if (this.mGetTransformedPositionsBuffer.length != this.mYAxis.mEntryCount * 2) {
       this.mGetTransformedPositionsBuffer = new Array<number>(this.mYAxis.mEntryCount * 2);
     }
-    var positions: number[] = this.mGetTransformedPositionsBuffer;
+    let positions: number[] = this.mGetTransformedPositionsBuffer;
 
-    for (var i = 0; i < positions.length; i += 2) {
+    for (let i = 0; i < positions.length; i += 2) {
       // only fill y values, x values are not needed for y-labels
       positions[i + 1] = this.mYAxis.mEntries[i / 2];
     }
@@ -309,12 +314,12 @@ export default class YAxisRenderer extends AxisRenderer {
     this.mZeroLineClippingRect.inset(0, -this.mYAxis.getZeroLineWidth(), 0, -this.mYAxis.getZeroLineWidth());
 
     // draw zero line
-    var pos: MPPointD = this.mTrans.getPixelForValues(0, 0);
+    let pos: MPPointD = this.mTrans.getPixelForValues(0, 0);
 
     this.mZeroLinePaint.setColor(this.mYAxis.getZeroLineColor());
     this.mZeroLinePaint.setStrokeWidth(this.mYAxis.getZeroLineWidth());
 
-    var zeroLinePath: string = this.mDrawZeroLinePath;
+    let zeroLinePath: string = this.mDrawZeroLinePath;
     zeroLinePath =
     'M' +
     this.mViewPortHandler.contentLeft() +
@@ -338,21 +343,25 @@ export default class YAxisRenderer extends AxisRenderer {
    * @param c
    */
   public renderLimitLines(): Paint[] {
-    var limitLines: JArrayList<LimitLine> = this.mYAxis.getLimitLines();
-    var paints = [];
+    let limitLines: JArrayList<LimitLine> = this.mYAxis.getLimitLines();
+    let paints = [];
 
-    if (limitLines == null || limitLines.size() <= 0) return [];
+    if (limitLines == null || limitLines.size() <= 0) {
+      return [];
+    }
 
-    var pts: number[] = this.mRenderLimitLinesBuffer;
+    let pts: number[] = this.mRenderLimitLinesBuffer;
     pts[0] = 0;
     pts[1] = 0;
-    var limitLinePath: string = this.mRenderLimitLines;
+    let limitLinePath: string = this.mRenderLimitLines;
     limitLinePath = '';
 
-    for (var i = 0; i < limitLines.size(); i++) {
-      var l: LimitLine = limitLines.get(i);
+    for (let i = 0; i < limitLines.size(); i++) {
+      let l: LimitLine = limitLines.get(i);
 
-      if (!l.isEnabled()) continue;
+      if (!l.isEnabled()) {
+        continue;
+      }
 
       this.mLimitLineClippingRect.set(
       this.mViewPortHandler.getContentRect().left,
@@ -362,7 +371,7 @@ export default class YAxisRenderer extends AxisRenderer {
       );
       this.mLimitLineClippingRect.inset(0, -l.getLineWidth(), 0, -l.getLineWidth());
 
-      var newPathLine = new PathPaint();
+      let newPathLine = new PathPaint();
       newPathLine.set(this.mLimitLinePaint);
       newPathLine.setStyle(Style.STROKE);
       newPathLine.setColor(l.getLineColor());
@@ -373,7 +382,7 @@ export default class YAxisRenderer extends AxisRenderer {
 
       this.mTrans.pointValuesToPixel(pts);
 
-      var interval = (this.mAxisLinePaint as LinePaint).endPoint[1] - (this.mAxisLinePaint as LinePaint).startPoint[1];
+      let interval = (this.mAxisLinePaint as LinePaint).endPoint[1] - (this.mAxisLinePaint as LinePaint).startPoint[1];
       let offset =
         interval -
         interval * ((l.getLimit() - this.mAxis.mAxisMinimum) / (this.mAxis.mAxisMaximum - this.mAxis.mAxisMinimum));
@@ -393,7 +402,7 @@ export default class YAxisRenderer extends AxisRenderer {
       limitLinePath = '';
       paints.push(newPathLine);
 
-      var label: string = l.getLabel();
+      let label: string = l.getLabel();
       //
       // if drawing the limit-value label is enabled
       if (label != null && label != '') {
@@ -407,8 +416,8 @@ export default class YAxisRenderer extends AxisRenderer {
         textPaint.setTextSize(l.getTextSize());
 
         const labelLineHeight: number = Utils.calcTextHeight(textPaint, label);
-        var xOffset: number = Utils.calcTextWidth(textPaint, l.getLabel()) + l.getXOffset() + 4;
-        var yOffset: number = l.getLineWidth() + labelLineHeight + l.getYOffset();
+        let xOffset: number = Utils.calcTextWidth(textPaint, l.getLabel()) + l.getXOffset() + 4;
+        let yOffset: number = l.getLineWidth() + labelLineHeight + l.getYOffset();
 
         const position: LimitLabelPosition = l.getLabelPosition();
 

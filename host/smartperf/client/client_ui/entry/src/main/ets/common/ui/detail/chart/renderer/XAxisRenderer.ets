@@ -105,7 +105,9 @@ export default class XAxisRenderer extends AxisRenderer {
   }
 
   public renderAxisLabels(): Paint[] {
-    if (!this.mXAxis.isEnabled() || !this.mXAxis.isDrawLabelsEnabled()) return [];
+    if (!this.mXAxis.isEnabled() || !this.mXAxis.isDrawLabelsEnabled()) {
+      return [];
+    }
 
     let yoffset = this.mXAxis.getYOffset();
 
@@ -132,7 +134,7 @@ export default class XAxisRenderer extends AxisRenderer {
       return this.drawLabels(this.mViewPortHandler.contentBottom() - yoffset - this.mXAxis.mLabelRotatedHeight, pointF);
     } else {
       // BOTH SIDED
-      let paintArr: Paint[] = new Array();
+      let paintArr: Paint[] = [];
       pointF.x = 0.5;
       pointF.y = 1.0;
       paintArr = paintArr.concat(this.drawLabels(this.mViewPortHandler.contentTop() - yoffset, pointF));
@@ -144,7 +146,9 @@ export default class XAxisRenderer extends AxisRenderer {
     MPPointF.recycleInstance(pointF);
   }
   public renderAxisLine(): Paint[] {
-    if (!this.mXAxis.isDrawAxisLineEnabled() || !this.mXAxis.isEnabled()) return [];
+    if (!this.mXAxis.isDrawAxisLineEnabled() || !this.mXAxis.isEnabled()) {
+      return [];
+    }
 
     this.mAxisLinePaint.setColor(this.mXAxis.getAxisLineColor());
     this.mAxisLinePaint.setStrokeWidth(this.mXAxis.getAxisLineWidth());
@@ -209,7 +213,7 @@ export default class XAxisRenderer extends AxisRenderer {
     }
 
     this.mTrans.pointValuesToPixel(positions);
-    let labelPaint: Paint[] = new Array();
+    let labelPaint: Paint[] = [];
     for (let i = 0; i < positions.length; i += 2) {
       let x = positions[i];
 
@@ -242,8 +246,8 @@ export default class XAxisRenderer extends AxisRenderer {
   }
 
   protected drawLabel(formattedLabel: string, x: number, y: number, anchor: MPPointF, angleDegrees: number): Paint {
-    var xResult = this.calcXLeftOffset(x);
-    var labelPaint = new TextPaint(this.mAxisLabelPaint as TextPaint);
+    let xResult = this.calcXLeftOffset(x);
+    let labelPaint = new TextPaint(this.mAxisLabelPaint as TextPaint);
     return Utils.drawXAxisValue(formattedLabel, xResult, y, labelPaint, anchor, angleDegrees);
   }
 
@@ -251,7 +255,9 @@ export default class XAxisRenderer extends AxisRenderer {
   protected mRenderGridLinesBuffer = new Array(2);
 
   public renderGridLines(): Paint[] {
-    if (!this.mXAxis.isDrawGridLinesEnabled() || !this.mXAxis.isEnabled()) return [];
+    if (!this.mXAxis.isDrawGridLinesEnabled() || !this.mXAxis.isEnabled()) {
+      return [];
+    }
     this.mGridPaint.setColor(this.mXAxis.getGridColor());
     this.mGridPaint.setStrokeWidth(this.mXAxis.getGridLineWidth());
     this.mGridPaint.setDashPathEffect(this.mXAxis.getGridDashPathEffect());
@@ -272,7 +278,7 @@ export default class XAxisRenderer extends AxisRenderer {
 
     var gridLinePath: string = this.mRenderGridLinesPath;
     gridLinePath = '';
-    var girdLinePaint: Paint[] = new Array();
+    var girdLinePaint: Paint[] = [];
 
     for (var i = 0; i < positions.length; i += 2) {
       let x = positions[i];
@@ -337,9 +343,13 @@ export default class XAxisRenderer extends AxisRenderer {
   public renderLimitLines(): Paint[] {
     let limitLines: JArrayList<LimitLine> = this.mXAxis.getLimitLines();
 
-    if (limitLines == null || limitLines.size() <= 0 || !this.mAxis.isDrawLimitLinesBehindDataEnabled()) return [];
+    if (limitLines == null
+          || limitLines.size() <= 0
+          || !this.mAxis.isDrawLimitLinesBehindDataEnabled()) {
+      return [];
+    }
 
-    var limitPaint: Paint[] = new Array();
+    let limitPaint: Paint[] = [];
 
     let position = this.mRenderLimitLinesBuffer;
     position[0] = 0;
@@ -347,7 +357,9 @@ export default class XAxisRenderer extends AxisRenderer {
 
     for (var i = 0; i < limitLines.size(); i++) {
       let l: LimitLine = limitLines.get(i);
-      if (!l.isEnabled()) continue;
+      if (!l.isEnabled()) {
+        continue;
+      }
 
       this.mLimitLineClippingRect.set(
       this.mViewPortHandler.getContentRect().left,
@@ -441,7 +453,8 @@ export default class XAxisRenderer extends AxisRenderer {
     }
   }
   public calcXLeftOffset(xVlaus: number): number {
-    var xResult = xVlaus / this.getAxisPercent() + this.mViewPortHandler.contentLeft() + this.getLeftYTextWidth();
+    var xResult = xVlaus / this.getAxisPercent() +
+                  this.mViewPortHandler.contentLeft() + this.getLeftYTextWidth();
     return xResult;
   }
   public getAxisPercent(): number {

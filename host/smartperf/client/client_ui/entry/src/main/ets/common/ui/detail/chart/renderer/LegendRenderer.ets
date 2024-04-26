@@ -72,8 +72,7 @@ export default class LegendRenderer extends Renderer {
         this.mLegendLabelPaint.setTextSize(9);
         this.mLegendLabelPaint.setAlign(Align.LEFT);
 
-        this.mLegendFormPaint = new Paint(/*Paint.ANTI_ALIAS_FLAG*/);
-        //this.mLegendFormPaint.push(new Paint())
+        this.mLegendFormPaint = new Paint();
         this.mLegendFormPaint.setStyle(Style.FILL);
     }
 
@@ -107,24 +106,26 @@ export default class LegendRenderer extends Renderer {
             this.computedEntries.clear();
 
             // loop for building up the colors and labels used in the legend
-            for (var i: number = 0; i < data.getDataSetCount(); i++) {
-                var dataSet: IDataSet<EntryOhos> = data.getDataSetByIndex(i);
-                if (dataSet == null) continue;
+            for (let i: number = 0; i < data.getDataSetCount(); i++) {
+                let dataSet: IDataSet<EntryOhos> = data.getDataSetByIndex(i);
+                if (dataSet == null) {
+                    continue;
+                }
 
-                var clrs: JArrayList<Number> = dataSet.getColors();
-                var entryCount: number = dataSet.getEntryCount();
+                let clrs: JArrayList<Number> = dataSet.getColors();
+                let entryCount: number = dataSet.getEntryCount();
 
                 // if we have a barchart with stacked bars
                 if (dataSet.constructor.name == 'IBarDataSet<EntryOhos>' && (<IBarDataSet>dataSet).isStacked()) {
-                    var bds: IBarDataSet = <IBarDataSet>dataSet;
-                    var sLabels: string[] = bds.getStackLabels();
+                    let bds: IBarDataSet = <IBarDataSet>dataSet;
+                    let sLabels: string[] = bds.getStackLabels();
 
-                    var minEntries: number = Math.min(clrs.size(), bds.getStackSize());
+                    let minEntries: number = Math.min(clrs.size(), bds.getStackSize());
 
-                    for (var j: number = 0; j < minEntries; j++) {
-                        var label: string;
+                    for (let j: number = 0; j < minEntries; j++) {
+                        let label: string;
                         if (sLabels.length > 0) {
-                            var labelIndex: number = j % minEntries;
+                            let labelIndex: number = j % minEntries;
                             label = labelIndex < sLabels.length ? sLabels[labelIndex] : null;
                         } else {
                             label = null;
@@ -158,8 +159,8 @@ export default class LegendRenderer extends Renderer {
                 } else {
                     // all others
 
-                    for (var j: number = 0; j < clrs.size() && j < entryCount; j++) {
-                        var label: string;
+                    for (let j: number = 0; j < clrs.size() && j < entryCount; j++) {
+                        let label: string;
 
                         // if multiple colors are set for a DataSet, group them
                         if (j < clrs.size() - 1 && j < entryCount - 1) {
@@ -184,8 +185,8 @@ export default class LegendRenderer extends Renderer {
             }
 
             if (this.mLegend.getExtraEntries() != null) {
-                var datas: LegendEntry[] = this.mLegend.getExtraEntries();
-                for (var i: number = 0; i < datas.length; i++) {
+                let datas: LegendEntry[] = this.mLegend.getExtraEntries();
+                for (let i: number = 0; i < datas.length; i++) {
                     this.computedEntries.add(datas[i]);
                 }
             }
@@ -193,9 +194,11 @@ export default class LegendRenderer extends Renderer {
             this.mLegend.setEntries(this.computedEntries);
         }
 
-        var tf: FontWeight /*Typeface*/ = this.mLegend.getTypeface();
+        let tf: FontWeight /*Typeface*/ = this.mLegend.getTypeface();
 
-        if (tf != null) this.mLegendLabelPaint.setTypeface(tf);
+        if (tf != null) {
+            this.mLegendLabelPaint.setTypeface(tf);
+        }
 
         this.mLegendLabelPaint.setTextSize(this.mLegend.getTextSize());
         this.mLegendLabelPaint.setColor(this.mLegend.getTextColor());
@@ -209,39 +212,43 @@ export default class LegendRenderer extends Renderer {
     // public void renderLegend(Canvas c) {
     public renderLegend(): Paint[] {
         let datas: Point[] = [];
-        if (!this.mLegend.isEnabled()) return;
+        if (!this.mLegend.isEnabled()) {
+            return;
+        }
 
-        var tf: FontWeight /*Typeface*/ = this.mLegend.getTypeface();
+        let tf: FontWeight = this.mLegend.getTypeface();
 
-        if (tf != null) this.mLegendLabelPaint.setTypeface(tf);
+        if (tf != null) {
+            this.mLegendLabelPaint.setTypeface(tf);
+        }
 
         this.mLegendLabelPaint.setTextSize(this.mLegend.getTextSize());
         this.mLegendLabelPaint.setColor(this.mLegend.getTextColor());
 
-        var labelLineHeight: number = Utils.getLineHeight(this.mLegendLabelPaint);
-        var labelLineSpacing: number = Utils.getLineSpacing(this.mLegendLabelPaint) + this.mLegend.getYEntrySpace();
-        var formYOffset: number = labelLineHeight - Utils.calcTextHeight(this.mLegendLabelPaint, 'ABC') / 2.0;
+        let labelLineHeight: number = Utils.getLineHeight(this.mLegendLabelPaint);
+        let labelLineSpacing: number = Utils.getLineSpacing(this.mLegendLabelPaint) + this.mLegend.getYEntrySpace();
+        let formYOffset: number = labelLineHeight - Utils.calcTextHeight(this.mLegendLabelPaint, 'ABC') / 2.0;
 
-        var entries: LegendEntry[] = this.mLegend.getEntries();
+        let entries: LegendEntry[] = this.mLegend.getEntries();
 
-        var formToTextSpace: number = this.mLegend.getFormToTextSpace();
-        var xEntrySpace: number = this.mLegend.getXEntrySpace();
-        var orientation: LegendOrientation = this.mLegend.getOrientation(); // "HORIZONTAL" ͼ������
-        var horizontalAlignment: LegendHorizontalAlignment = this.mLegend.getHorizontalAlignment(); // "LEFT" ˮƽ���뷽ʽ
-        var verticalAlignment: LegendVerticalAlignment = this.mLegend.getVerticalAlignment(); // "BOTTOM
-        var direction: LegendDirection = this.mLegend.getDirection(); // "LEFT_TO_RIGHT" ͼ�����ı�����
-        var defaultFormSize: number = this.mLegend.getFormSize();
+        let formToTextSpace: number = this.mLegend.getFormToTextSpace();
+        let xEntrySpace: number = this.mLegend.getXEntrySpace();
+        let orientation: LegendOrientation = this.mLegend.getOrientation(); // "HORIZONTAL" ͼ������
+        let horizontalAlignment: LegendHorizontalAlignment = this.mLegend.getHorizontalAlignment(); // "LEFT" ˮƽ���뷽ʽ
+        let verticalAlignment: LegendVerticalAlignment = this.mLegend.getVerticalAlignment(); // "BOTTOM
+        let direction: LegendDirection = this.mLegend.getDirection(); // "LEFT_TO_RIGHT" ͼ�����ı�����
+        let defaultFormSize: number = this.mLegend.getFormSize();
 
         // space between the entries �ѵ����֮�����µĿռ�
-        var stackSpace: number = this.mLegend.getStackSpace();
+        let stackSpace: number = this.mLegend.getStackSpace();
 
-        var yoffset: number = this.mLegend.getYOffset();
-        var xoffset: number = this.mLegend.getXOffset();
-        var originPosX: number = 0.0;
-        var paints: Paint[] = [];
+        let yoffset: number = this.mLegend.getYOffset();
+        let xoffset: number = this.mLegend.getXOffset();
+        let originPosX: number = 0.0;
+        let paints: Paint[] = [];
 
         switch (horizontalAlignment) {
-            case LegendHorizontalAlignment.LEFT:
+            case LegendHorizontalAlignment.LEFT: {
                 if (orientation == LegendOrientation.VERTICAL) {
                     originPosX = xoffset;
                 } else {
@@ -256,33 +263,45 @@ export default class LegendRenderer extends Renderer {
                     this.mViewPortHandler.contentLeft() +
                     ')'
                 );
-                if (direction == LegendDirection.RIGHT_TO_LEFT) originPosX += this.mLegend.mNeededWidth;
+                if (direction == LegendDirection.RIGHT_TO_LEFT) {
+                    originPosX += this.mLegend.mNeededWidth;
+                }
 
                 break;
+            }
+            case LegendHorizontalAlignment.RIGHT: {
+                if (orientation == LegendOrientation.VERTICAL) {
+                    originPosX = this.mViewPortHandler.getChartWidth() - xoffset;
+                } else {
+                    originPosX = this.mViewPortHandler.contentRight() - xoffset;
+                }
 
-            case LegendHorizontalAlignment.RIGHT:
-                if (orientation == LegendOrientation.VERTICAL) originPosX = this.mViewPortHandler.getChartWidth() - xoffset;
-                else originPosX = this.mViewPortHandler.contentRight() - xoffset;
-
-                if (direction == LegendDirection.LEFT_TO_RIGHT) originPosX -= this.mLegend.mNeededWidth;
+                if (direction == LegendDirection.LEFT_TO_RIGHT) {
+                    originPosX -= this.mLegend.mNeededWidth;
+                }
 
                 break;
-
-            case LegendHorizontalAlignment.CENTER:
-                if (orientation == LegendOrientation.VERTICAL) originPosX = this.mViewPortHandler.getChartWidth() / 2.0;
-                else originPosX = this.mViewPortHandler.contentLeft() + this.mViewPortHandler.contentWidth() / 2.0;
+            }
+            case LegendHorizontalAlignment.CENTER: {
+                if (orientation == LegendOrientation.VERTICAL) {
+                    originPosX = this.mViewPortHandler.getChartWidth() / 2.0;
+                } else {
+                    originPosX = this.mViewPortHandler.contentLeft() + this.mViewPortHandler.contentWidth() / 2.0;
+                }
 
                 originPosX += direction == LegendDirection.LEFT_TO_RIGHT ? +xoffset : -xoffset;
 
-            // Horizontally layed out legends do the center offset on a line basis,
-            // So here we offset the vertical ones only.
+                // Horizontally layed out legends do the center offset on a line basis,
+                // So here we offset the vertical ones only.
                 if (orientation == LegendOrientation.VERTICAL) {
                     originPosX +=
                         direction == LegendDirection.LEFT_TO_RIGHT
                         ? -this.mLegend.mNeededWidth / 2.0 + xoffset
                         : this.mLegend.mNeededWidth / 2.0 - xoffset;
                 }
-
+                break;
+            }
+            default:
                 break;
         }
 
@@ -290,22 +309,22 @@ export default class LegendRenderer extends Renderer {
         orientation // "HORIZONTAL"
         ) {
             case LegendOrientation.HORIZONTAL: {
-                var calculatedLineSizes: JArrayList<FSize> = this.mLegend.getCalculatedLineSizes();
-                var calculatedLabelSizes: JArrayList<FSize> = this.mLegend.getCalculatedLabelSizes();
-                var calculatedLabelBreakPoints: JArrayList<Boolean> = this.mLegend.getCalculatedLabelBreakPoints();
+                let calculatedLineSizes: JArrayList<FSize> = this.mLegend.getCalculatedLineSizes();
+                let calculatedLabelSizes: JArrayList<FSize> = this.mLegend.getCalculatedLabelSizes();
+                let calculatedLabelBreakPoints: JArrayList<Boolean> = this.mLegend.getCalculatedLabelBreakPoints();
 
-                var posX: number = originPosX;
-                var posY: number = 0.0;
+                let posX: number = originPosX;
+                let posY: number = 0.0;
 
                 switch (
                 verticalAlignment // "BOTTOM"
                 ) {
-                    case LegendVerticalAlignment.TOP:
+                    case LegendVerticalAlignment.TOP: {
                         posY = yoffset;
                         console.log('2.0 posY(' + JSON.stringify(posY) + ')= yoffset(' + yoffset + ')');
                         break;
-
-                    case LegendVerticalAlignment.BOTTOM:
+                    }
+                    case LegendVerticalAlignment.BOTTOM: {
                         posY = this.mViewPortHandler.getChartHeight() - yoffset - this.mLegend.mNeededHeight;
                         console.log(
                             '2.1 posY(' +
@@ -319,8 +338,8 @@ export default class LegendRenderer extends Renderer {
                             ')'
                         );
                         break;
-
-                    case LegendVerticalAlignment.CENTER:
+                    }
+                    case LegendVerticalAlignment.CENTER: {
                         posY = (this.mViewPortHandler.getChartHeight() - this.mLegend.mNeededHeight) / 2.0 + yoffset;
                         console.log(
                             '2.1 posY(' +
@@ -334,21 +353,24 @@ export default class LegendRenderer extends Renderer {
                             ')'
                         );
                         break;
+                    }
+                    default:
+                        break;
                 }
 
-                var lineIndex: number = 0;
-                for (var i: number = 0, count = entries.length; i < count; i++) {
+                let lineIndex: number = 0;
+                for (let i: number = 0, count = entries.length; i < count; i++) {
                     let x1: number = 0;
                     let y1: number = 0;
                     let x2: number = 0;
                     let y2: number = 0;
 
-                    var e: LegendEntry = entries[i];
-                    var drawingForm: boolean = e.form != LegendForm.NONE;
-                    var formSize: number = Number.isNaN(e.formSize) ? defaultFormSize : Utils.convertDpToPixel(e.formSize);
+                    let e: LegendEntry = entries[i];
+                    let drawingForm: boolean = e.form != LegendForm.NONE;
+                    let formSize: number = Number.isNaN(e.formSize)
+                        ? defaultFormSize : Utils.convertDpToPixel(e.formSize);
 
                     if (i < calculatedLabelBreakPoints.size() && calculatedLabelBreakPoints.get(i)) {
-                        // ����ƫ����
                         posX = originPosX;
                         posY += labelLineHeight + labelLineSpacing;
                         console.log(
@@ -378,10 +400,12 @@ export default class LegendRenderer extends Renderer {
                         lineIndex++;
                     }
 
-                    var isStacked: boolean = e.label == null; // grouped forms have null labels
+                    let isStacked: boolean = e.label == null; // grouped forms have null labels
 
                     if (drawingForm) {
-                        if (direction == LegendDirection.RIGHT_TO_LEFT) posX -= formSize;
+                        if (direction == LegendDirection.RIGHT_TO_LEFT) {
+                            posX -= formSize;
+                        }
 
                         x1 = posX;
                         y1 = posY;
@@ -411,7 +435,9 @@ export default class LegendRenderer extends Renderer {
                             posX += direction == LegendDirection.RIGHT_TO_LEFT ? -formToTextSpace : formToTextSpace;
                         }
 
-                        if (direction == LegendDirection.RIGHT_TO_LEFT) posX -= calculatedLabelSizes.get(i).width;
+                        if (direction == LegendDirection.RIGHT_TO_LEFT) {
+                            posX -= calculatedLabelSizes.get(i).width;
+                        }
 
                         x2 = posX;
                         y2 = posY;
@@ -442,65 +468,78 @@ export default class LegendRenderer extends Renderer {
                 }
 
                 break;
-            }
 
+            }
             case LegendOrientation.VERTICAL: {
                 // contains the stacked legend size in pixels
-                var stack: number = 0;
-                var wasStacked: boolean = false;
-                var posY: number = 0.1;
+                let stack: number = 0;
+                let wasStacked: boolean = false;
+                let posY: number = 0.1;
 
                 switch (verticalAlignment) {
-                    case LegendVerticalAlignment.TOP:
-                        posY = horizontalAlignment == LegendHorizontalAlignment.CENTER ? 0.1 : this.mViewPortHandler.contentTop();
+                    case LegendVerticalAlignment.TOP: {
+                        posY = horizontalAlignment == LegendHorizontalAlignment.CENTER
+                            ? 0.1 : this.mViewPortHandler.contentTop();
                         posY += yoffset;
                         break;
-
-                    case LegendVerticalAlignment.BOTTOM:
+                    }
+                    case LegendVerticalAlignment.BOTTOM: {
                         posY =
                             horizontalAlignment == LegendHorizontalAlignment.CENTER
                             ? this.mViewPortHandler.getChartHeight()
                             : this.mViewPortHandler.contentBottom();
                         posY -= this.mLegend.mNeededHeight + yoffset;
                         break;
-
-                    case LegendVerticalAlignment.CENTER:
+                    }
+                    case LegendVerticalAlignment.CENTER: {
                         posY =
                         this.mViewPortHandler.getChartHeight() / 2.0 -
                         this.mLegend.mNeededHeight / 2.0 +
                         this.mLegend.getYOffset();
                         break;
+                    }
+                    default:
+                        break;
                 }
 
-                for (var i: number = 0; i < entries.length; i++) {
-                    var e: LegendEntry = entries[i];
-                    var drawingForm: boolean = e.form != LegendForm.NONE;
-                    var formSize: number = Number.isNaN(e.formSize) ? defaultFormSize : Utils.convertDpToPixel(e.formSize);
+                for (let i: number = 0; i < entries.length; i++) {
+                    let e: LegendEntry = entries[i];
+                    let drawingForm: boolean = e.form != LegendForm.NONE;
+                    let formSize: number = Number.isNaN(e.formSize) ?
+                        defaultFormSize : Utils.convertDpToPixel(e.formSize);
 
-                    var posX: number = originPosX;
+                    let posX: number = originPosX;
 
                     if (drawingForm) {
-                        if (direction == LegendDirection.LEFT_TO_RIGHT) posX += stack;
-                        else posX -= formSize - stack;
+                        if (direction == LegendDirection.LEFT_TO_RIGHT) {
+                            posX += stack;
+                        } else {
+                            posX -= formSize - stack;
+                        }
 
-                        this.mLegendFormPaint = this.drawForm(/*c,*/ posX, posY + formYOffset, e, this.mLegend);
+                        this.mLegendFormPaint = this.drawForm(posX, posY + formYOffset, e, this.mLegend);
 
-                        if (direction == LegendDirection.LEFT_TO_RIGHT) posX += formSize;
+                        if (direction == LegendDirection.LEFT_TO_RIGHT) {
+                            posX += formSize;
+                        }
                     }
 
                     if (e.label != null) {
-                        if (drawingForm && !wasStacked)
-                        posX += direction == LegendDirection.LEFT_TO_RIGHT ? formToTextSpace : -formToTextSpace;
-                        else if (wasStacked) posX = originPosX;
+                        if (drawingForm && !wasStacked) {
+                            posX += direction == LegendDirection.LEFT_TO_RIGHT ? formToTextSpace : -formToTextSpace;
+                        } else if (wasStacked) {
+                            posX = originPosX;
+                        }
 
-                        if (direction == LegendDirection.RIGHT_TO_LEFT)
-                        posX -= Utils.calcTextWidth(this.mLegendLabelPaint[i], e.label);
+                        if (direction == LegendDirection.RIGHT_TO_LEFT) {
+                            posX -= Utils.calcTextWidth(this.mLegendLabelPaint[i], e.label);
+                        }
 
                         if (!wasStacked) {
-                            this.mLegendLabelPaint = this.drawLabel(/*c,*/ posX, posY + formYOffset, e.label);
+                            this.mLegendLabelPaint = this.drawLabel(posX, posY + formYOffset, e.label);
                         } else {
                             posY += formYOffset + labelLineSpacing;
-                            this.mLegendLabelPaint = this.drawLabel(/*c,*/ posX, posY + formYOffset, e.label);
+                            this.mLegendLabelPaint = this.drawLabel(posX, posY + formYOffset, e.label);
                         }
 
                         // make a step down
@@ -516,6 +555,8 @@ export default class LegendRenderer extends Renderer {
 
                 break;
             }
+            default:
+                break;
         }
         console.log('6. LegendRenderer datas:' + JSON.stringify(datas));
         return paints;
@@ -536,27 +577,30 @@ export default class LegendRenderer extends Renderer {
         entry.formColor == ColorTemplate.COLOR_SKIP ||
         entry.formColor == ColorTemplate.COLOR_NONE ||
         entry.formColor == 0
-        )
-        return;
+        ){
+            return;
+        }
 
-        var form: LegendForm = entry.form;
-        if (form == LegendForm.DEFAULT) form = legend.getForm();
+        let form: LegendForm = entry.form;
+        if (form == LegendForm.DEFAULT) {
+            form = legend.getForm();
+        }
 
-        var formSize: number = Utils.convertDpToPixel(Number.isNaN(entry.formSize) ? legend.getFormSize() : entry.formSize);
-        var half: number = formSize / 2;
+        let formSize: number = Utils.convertDpToPixel(Number.isNaN(entry.formSize) ?
+                                legend.getFormSize() : entry.formSize);
+        let half: number = formSize / 2;
 
         switch (form) {
             case LegendForm.NONE:
             // Do nothing
                 break;
-
             case LegendForm.EMPTY:
             // Do not draw, but keep space for the form
                 break;
-
             case LegendForm.DEFAULT:
-            case LegendForm.CIRCLE:
-                var circlePaint: CirclePaint = new CirclePaint(); //= this.mLegendFormPaint as CirclePaint;
+
+            case LegendForm.CIRCLE: {
+                let circlePaint: CirclePaint = new CirclePaint(); //= this.mLegendFormPaint as CirclePaint;
                 circlePaint.setColor(entry.formColor);
                 circlePaint.setStyle(Style.FILL);
                 circlePaint.setX(x + half);
@@ -565,9 +609,9 @@ export default class LegendRenderer extends Renderer {
                 circlePaint.setHeight(half);
                 return circlePaint;
                 break;
-
-            case LegendForm.SQUARE:
-                var rectPaint: RectPaint = new RectPaint(); //= this.mLegendFormPaint as RectPaint;
+            }
+            case LegendForm.SQUARE: {
+                let rectPaint: RectPaint = new RectPaint(); //= this.mLegendFormPaint as RectPaint;
                 rectPaint.setStroke(entry.formColor);
                 rectPaint.setStyle(Style.FILL);
                 rectPaint.setStartPoint([x, y]);
@@ -575,24 +619,24 @@ export default class LegendRenderer extends Renderer {
                 rectPaint.setHeight(half);
                 return rectPaint;
                 break;
-
-            case LegendForm.LINE:
-                {
-                    var linePaint: LinePaint; //= this.mLegendFormPaint as LinePaint;
-                    var formLineWidth: number = Utils.convertDpToPixel(
+            }
+            case LegendForm.LINE: {
+                    let linePaint: LinePaint; //= this.mLegendFormPaint as LinePaint;
+                    let formLineWidth: number = Utils.convertDpToPixel(
                         Number.isNaN(entry.formLineWidth) ? legend.getFormLineWidth() : entry.formLineWidth
                     );
-                    /*var formLineDashEffect : DashPathEffect = entry.formLineDashEffect == null
-                                  ? legend.getFormLineDashEffect()
-                                  : entry.formLineDashEffect;*/
+
                     linePaint.setStyle(Style.STROKE);
                     linePaint.setStrokeWidth(formLineWidth);
 
                     linePaint.setStartPoint([x, y]);
                     linePaint.setEndPoint([x + formSize, y]);
                     return linePaint;
-                }
                 break;
+            }
+            default:
+                break;
+
         }
     }
 
@@ -604,9 +648,8 @@ export default class LegendRenderer extends Renderer {
      * @param y
      * @param label the label to draw
      */
-    // protected void drawLabel(Canvas c, float x, float y, String label) {
-    protected drawLabel(/*c : Canvas,*/ x: number, y: number, label: string): Paint {
-        var textPaint: TextPaint = new TextPaint(this.mLegendLabelPaint as TextPaint); //= this.mLegendLabelPaint as TextPaint;
+    protected drawLabel(x: number, y: number, label: string): Paint {
+        let textPaint: TextPaint = new TextPaint(this.mLegendLabelPaint as TextPaint);
         textPaint.setText(label);
         textPaint.setX(x);
         textPaint.setY(y);

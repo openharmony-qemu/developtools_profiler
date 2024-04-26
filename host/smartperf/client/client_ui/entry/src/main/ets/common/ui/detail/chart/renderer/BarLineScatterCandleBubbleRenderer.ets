@@ -102,7 +102,9 @@ export default abstract class BarLineScatterCandleBubbleRenderer extends DataRen
    * @return
    */
   protected isInBoundsX(e: EntryOhos, dataSet: IBarLineScatterCandleBubbleDataSet<EntryOhos>): boolean {
-    if (e == null) return false;
+    if (e == null) {
+      return false;
+    }
 
     let entryIndex = dataSet.getEntryIndexByEntry(e);
 

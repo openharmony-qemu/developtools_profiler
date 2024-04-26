@@ -25,22 +25,28 @@ import IFillFormatter from './IFillFormatter';
  */
 export default class DefaultFillFormatter implements IFillFormatter {
     public getFillLinePosition(dataSet: ILineDataSet, dataProvider: LineDataProvider): number {
-        var fillMin: number = 0;
-        var chartMaxY: number = dataProvider.getYChartMax();
-        var chartMinY: number = dataProvider.getYChartMin();
+        let fillMin: number = 0;
+        let chartMaxY: number = dataProvider.getYChartMax();
+        let chartMinY: number = dataProvider.getYChartMin();
 
-        var data: LineData = dataProvider.getLineData();
+        let data: LineData = dataProvider.getLineData();
 
         if (dataSet.getYMax() > 0 && dataSet.getYMin() < 0) {
             fillMin = 0;
         } else {
-            var max: number;
-            var min: number;
+            let max: number;
+            let min: number;
 
-            if (data.getYMax() > 0) max = 0;
-            else max = chartMaxY;
-            if (data.getYMin() < 0) min = 0;
-            else min = chartMinY;
+            if (data.getYMax() > 0) {
+                max = 0;
+            } else {
+                max = chartMaxY;
+            }
+            if (data.getYMin() < 0) {
+                min = 0;
+            } else {
+                min = chartMinY;
+            }
 
             fillMin = dataSet.getYMin() >= 0 ? min : max;
         }

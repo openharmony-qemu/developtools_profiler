@@ -163,7 +163,10 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
   public drawData(): Paint[] {
     let pathPaintArr: Paint[] = [];
 
-    let firstPointX, lastPointX, minPointY, maxPointY: number;
+    let firstPointX: number = 0;
+    let lastPointX: number = 0;
+    let minPointY: number = 0;
+    let maxPointY: number = 0;
 
     let xScale: number = this.pathViewModel.xScale;
     let yScale: number = 1;
@@ -227,7 +230,9 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
     minPointY: number,
     maxPointY: number
   ): Paint[] {
-    if (this.lineData.getDataSetCount() < 1) return null;
+    if (this.lineData.getDataSetCount() < 1) {
+      return null;
+    }
 
     let chartMode: Mode = dataSet.getMode();
     switch (chartMode) {
@@ -288,7 +293,9 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
       let next = cur;
       let nextIndex = -1;
 
-      if (cur == null) return;
+      if (cur == null) {
+        return;
+      }
 
       var commandsData: string = '';
       var commandsDataFill: string = '';
@@ -381,7 +388,8 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
     minY: number,
     maxY: number
   ): Paint[] {
-    let x, y: number;
+    let x: number = 0;
+    let y: number = 0;
 
     var commandsData: string = '';
     var commandsFillData: string = '';
@@ -392,7 +400,8 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
       commandsFillData = 'M' + firstPointX + ' ' + maxY;
     }
 
-    let entryArray: Array<EntryOhos> = dataSet.getEntries().toArray();
+    let entryArray: Array<EntryOhos> = [];
+    entryArray = dataSet.getEntries().toArray();
     let entryOhosY: number;
     for (let i = 0; i < entryArray.length; i++) {
       if (i > this.animateXIndex) {
@@ -516,7 +525,7 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
   }
 
   public drawCircle(): Paint[] {
-    let circlePaints: Paint[] = new Array();
+    let circlePaints: Paint[] = [];
 
     let xScale: number = this.pathViewModel.xScale;
     let yScale: number = 1;
@@ -566,11 +575,11 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
   }
 
   public drawValues(): Paint[] {
-    let textPaints: Paint[] = new Array();
+    let textPaints: Paint[] = [];
 
     let xScale: number = this.pathViewModel.xScale;
     let yScale: number = 1;
-    let entryArray: Array<EntryOhos>;
+    let entryArray: Array<EntryOhos> = [];
 
     for (let i = 0; i < this.lineData.getDataSetCount(); i++) {
       let lineDataSet: LineDataSet = this.pathViewModel.getLineData().getDataSetByIndex(i) as LineDataSet;
@@ -617,7 +626,7 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
   }
 
   private creatPathPaintArr(dataSet: LineDataSet, commandsData: string, commandsDataFill?: string): Paint[] {
-    let pathPaints: Paint[] = new Array();
+    let pathPaints: Paint[] = [];
 
     let pathPaint: PathPaint = new PathPaint();
     pathPaint.setCommands(commandsData);

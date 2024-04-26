@@ -67,7 +67,8 @@ export default interface IDataSet<T extends EntryOhos> {
     calcMinMax(): void;
 
     /**
-     * Calculates the min and max y-values from the Entry closest to the given fromX to the Entry closest to the given toX value.
+     * Calculates the min and max y-values from the Entry closest
+     * to the given fromX to the Entry closest to the given toX value.
      * This is only needed for the autoScaleMinMax feature.
      *
      * @param fromX
@@ -460,7 +461,10 @@ export default interface IDataSet<T extends EntryOhos> {
      *
      * For all charts except Pie and Radar it will be ordinary (x offset,y offset).
      *
-     * For Pie and Radar chart it will be (y offset, distance from center offset); so if you want icon to be rendered under value, you should increase X component of CGPoint, and if you want icon to be rendered closet to center, you should decrease height component of CGPoint.
+     * For Pie and Radar chart it will be (y offset, distance from center offset);
+     * so if you want icon to be rendered under value, you should increase X component of CGPoint,
+     * and if you want icon to be rendered closet to center,
+     * you should decrease height component of CGPoint.
      * @param offset
      */
     setIconsOffset(offset: MPPointF): void;

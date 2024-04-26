@@ -128,11 +128,11 @@ export default abstract class AxisRenderer extends Renderer {
     this.mViewPortHandler.contentWidth() > 10 &&
     !this.mViewPortHandler.isFullyZoomedOutY()
     ) {
-      var p1: MPPointD = this.mTrans.getValuesByTouchPoint(
+      let p1: MPPointD = this.mTrans.getValuesByTouchPoint(
       this.mViewPortHandler.contentLeft(),
       this.mViewPortHandler.contentTop()
       );
-      var p2: MPPointD = this.mTrans.getValuesByTouchPoint(
+      let p2: MPPointD = this.mTrans.getValuesByTouchPoint(
       this.mViewPortHandler.contentLeft(),
       this.mViewPortHandler.contentBottom()
       );
@@ -158,38 +158,40 @@ export default abstract class AxisRenderer extends Renderer {
    * @return
    */
   protected computeAxisValues(min: number, max: number) {
-    var yMin = min;
-    var yMax = max;
+    let yMin = min;
+    let yMax = max;
 
-    var labelCount = this.mAxis.getLabelCount();
-    var range = Math.abs(yMax - yMin);
+    let labelCount = this.mAxis.getLabelCount();
+    let range = Math.abs(yMax - yMin);
 
     if (labelCount == 0 || range <= 0 || range == Infinity) {
-      this.mAxis.mEntries = new Array<number>();
-      this.mAxis.mCenteredEntries = new Array<number>();
+      this.mAxis.mEntries = [];
+      this.mAxis.mCenteredEntries = [];
       this.mAxis.mEntryCount = 0;
       return;
     }
 
     // Find out how much spacing (in y value space) between axis values
-    var rawInterval: number = range / labelCount;
-    var interval: number = Utils.roundToNextSignificant(rawInterval);
+    let rawInterval: number = range / labelCount;
+    let interval: number = Utils.roundToNextSignificant(rawInterval);
 
     // If granularity is enabled, then do not allow the interval to go below specified granularity.
     // This is used to avoid repeated values when rounding values for display.
-    if (this.mAxis.isGranularityEnabled())
-    interval = interval < this.mAxis.getGranularity() ? this.mAxis.getGranularity() : interval;
+    if (this.mAxis.isGranularityEnabled()) {
+      interval = interval < this.mAxis.getGranularity() ? this.mAxis.getGranularity() : interval;
+    }
+
 
     // Normalize interval
-    var intervalMagnitude = Utils.roundToNextSignificant(Math.pow(10, Math.floor(Math.log10(interval))));
-    var intervalSigDigit = Math.floor(interval / intervalMagnitude);
+    let intervalMagnitude = Utils.roundToNextSignificant(Math.pow(10, Math.floor(Math.log10(interval))));
+    let intervalSigDigit = Math.floor(interval / intervalMagnitude);
     if (intervalSigDigit > 5) {
       // Use one order of magnitude higher, to avoid intervals like 0.9 or 90
       // if it's 0.0 after floor(), we use the old value
       interval = Math.floor(10.0 * intervalMagnitude) == 0.0 ? interval : Math.floor(10.0 * intervalMagnitude);
     }
 
-    var n = this.mAxis.isCenterAxisLabelsEnabled() ? 1 : 0;
+    let n = this.mAxis.isCenterAxisLabelsEnabled() ? 1 : 0;
 
     // force label count
     if (this.mAxis.isForceLabelsEnabled()) {
@@ -201,9 +203,9 @@ export default abstract class AxisRenderer extends Renderer {
         this.mAxis.mEntries = new Array<number>(labelCount);
       }
 
-      var v = min;
+      let v = min;
 
-      for (var i = 0; i < labelCount; i++) {
+      for (let i = 0; i < labelCount; i++) {
         this.mAxis.mEntries[i] = v;
         v += interval;
       }
@@ -212,15 +214,15 @@ export default abstract class AxisRenderer extends Renderer {
 
       // no forced count
     } else {
-      var first = interval == 0.0 ? 0.0 : Math.ceil(yMin / interval) * interval;
+      let first = interval == 0.0 ? 0.0 : Math.ceil(yMin / interval) * interval;
       if (this.mAxis.isCenterAxisLabelsEnabled()) {
         first -= interval;
       }
 
-      var last = interval == 0.0 ? 0.0 : Utils.nextUp(Math.floor(yMax / interval) * interval);
+      let last = interval == 0.0 ? 0.0 : Utils.nextUp(Math.floor(yMax / interval) * interval);
 
-      var f;
-      var i: number;
+      let f;
+      let i: number;
 
       if (interval != 0.0 && last != first) {
         for (f = first; f <= last; f += interval) {
@@ -238,10 +240,9 @@ export default abstract class AxisRenderer extends Renderer {
       }
 
       for (f = first, i = 0; i < n; f += interval, ++i) {
-        if (f == 0.0)
-        // Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
-        f = 0.0;
-
+        if (f == 0.0) {
+          f = 0.0;
+        }
         this.mAxis.mEntries[i] = f;
       }
     }
@@ -258,9 +259,9 @@ export default abstract class AxisRenderer extends Renderer {
         this.mAxis.mCenteredEntries = new Array<number>(n);
       }
 
-      var offset: number = interval / 2;
+      let offset: number = interval / 2;
 
-      for (var i = 0; i < n; i++) {
+      for (let i = 0; i < n; i++) {
         this.mAxis.mCenteredEntries[i] = this.mAxis.mEntries[i] + offset;
       }
     }

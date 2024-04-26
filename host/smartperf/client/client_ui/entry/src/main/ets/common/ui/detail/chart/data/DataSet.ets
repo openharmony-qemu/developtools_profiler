@@ -62,7 +62,9 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
     super(label);
     this.mEntries = entries;
 
-    if (!this.mEntries || this.mEntries == null) this.mEntries = new JArrayList<T>();
+    if (!this.mEntries || this.mEntries == null) {
+      this.mEntries = new JArrayList<T>();
+    }
 
     this.calcMinMax();
   }
@@ -95,8 +97,8 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
     if (!this.mEntries || this.mEntries == null || this.mEntries.isEmpty()) {
       return;
     }
-    var indexFrom: number = this.getEntryIndex(fromX, Number.NaN, Rounding.DOWN);
-    var indexTo: number = this.getEntryIndex(toX, Number.NaN, Rounding.UP);
+    let indexFrom: number = this.getEntryIndex(fromX, Number.NaN, Rounding.DOWN);
+    let indexTo: number = this.getEntryIndex(toX, Number.NaN, Rounding.UP);
 
     if (indexTo < indexFrom) {
       return;
@@ -109,15 +111,23 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
   }
 
   protected calcMinMaxX(e: T): void {
-    if (e.getX() < this.mXMin) this.mXMin = e.getX();
+    if (e.getX() < this.mXMin) {
+      this.mXMin = e.getX();
+    }
 
-    if (e.getX() > this.mXMax) this.mXMax = e.getX();
+    if (e.getX() > this.mXMax) {
+      this.mXMax = e.getX();
+    }
   }
 
   protected myCalcMinMaxY(e: T): void {
-    if (e.getY() < this.mYMin) this.mYMin = e.getY();
+    if (e.getY() < this.mYMin) {
+      this.mYMin = e.getY();
+    }
 
-    if (e.getY() > this.mYMax) this.mYMax = e.getY();
+    if (e.getY() > this.mYMax) {
+      this.mYMax = e.getY();
+    }
   }
 
   public getEntryCount(): number {
@@ -375,16 +385,18 @@ export abstract class DataSet<T extends EntryOhos> extends BaseDataSet<T> {
   }
 
   public getEntriesForXValue(xValue: number): JArrayList<T> {
-    var entries: JArrayList<T> = new JArrayList<T>();
-    var low: number = 0;
-    var high: number = this.mEntries.size() - 1;
+    let entries: JArrayList<T> = new JArrayList<T>();
+    let low: number = 0;
+    let high: number = this.mEntries.size() - 1;
 
     while (low <= high) {
-      var m: number = (high + low) / 2;
-      var entry: T = this.mEntries.get(m);
+      let m: number = (high + low) / 2;
+      let entry: T = this.mEntries.get(m);
       // if we have a match
       if (xValue == entry.getX()) {
-        while (m > 0 && this.mEntries.get(m - 1).getX() == xValue) m--;
+        while (m > 0 && this.mEntries.get(m - 1).getX() == xValue) {
+          m--;
+        }
 
         high = this.mEntries.size();
 

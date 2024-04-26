@@ -29,8 +29,11 @@ export default class Range {
 	 * @return
 	 */
 	public contains(value: number): boolean {
-		if (value > this.myfrom && value <= this.to) return true;
-		else return false;
+		if (value > this.myfrom && value <= this.to) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	public isLarger(value: number): boolean {

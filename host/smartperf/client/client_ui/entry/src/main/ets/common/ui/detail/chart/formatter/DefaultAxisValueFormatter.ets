@@ -31,16 +31,18 @@ export default class DefaultAxisValueFormatter implements IAxisValueFormatter {
   constructor(digits: number) {
     this.digits = digits;
 
-    var b: string = '';
+    let b: string = '';
     for (var i = 0; i < digits; i++) {
-      if (i == 0) b += '.';
+      if (i == 0) {
+        b += '.';
+      }
       b += '0';
     }
   }
 
   public getFormattedValue(value: number, axis: AxisBase): string {
     // avoid memory allocations here (for performance)
-    var str = String(value.toFixed(1)).split('.');
+    let str = String(value.toFixed(1)).split('.');
     if (str[1] == '0') {
       return str[0];
     } else {
