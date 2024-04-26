@@ -33,10 +33,10 @@ import SPLogger from '../common/utils/SPLogger'
 @Component
 struct ReportDetail {
   private controller: TabsController = new TabsController()
-  private gpData: Array<TIndexInfo> = new Array()
+  private gpData: TIndexInfo[] = []
   private reportItem: ReportItem = null
-  private tPowerSensorList: Array<TPowerSensorInfo> = new Array<TPowerSensorInfo>()
-  private tPowerAppList: Array<TPowerAppInfo> = new Array<TPowerAppInfo>()
+  private tPowerSensorList: TPowerSensorInfo[] = []
+  private tPowerAppList: TPowerAppInfo[] = []
   aboutToAppear() {
 
     let data:any = router.getParams()['gpData']
@@ -57,14 +57,14 @@ struct ReportDetail {
     })
     //归一化电流
     database.queryData(timeStamp + '.db').then(data => {
-      let normalCurrentNow = data.reduce((pre,cur)=> {
+      let normalCurrentNow = data.reduce((pre, cur)=> {
         return pre + Number(cur.currentNow).valueOf()
       }, 0)
       return Math.abs(normalCurrentNow / data.length / 1.1125)
     }).then((normalCurrentNow)=>{
       database.query_powerapp_info(timeStamp).then(data => {
         data.forEach(t=>{
-          let current = (Number(t.percent)) * normalCurrentNow  / 100
+          let current = (Number(t.percent)) * normalCurrentNow / 100
           t.setCurrent(current.toFixed(5))
           t.setPercent(Number(t.percent).toFixed(2) + '%')
           this.tPowerAppList.push(t)

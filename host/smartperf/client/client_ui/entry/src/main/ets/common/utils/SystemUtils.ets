@@ -19,7 +19,7 @@ import appManager from '@ohos.application.appManager';
 
 export function getCpuCoreInfo(): Array<String> {
   const basePath = '/sys/devices/system/cpu/cpufreq';
-  let defaultPolicy = new Array('policy0', 'policy1', 'policy2');
+  let defaultPolicy = ['policy0', 'policy1', 'policy2'];
   var supportPolicy = [];
   let policyArr = travelFile(basePath, 'policy');
 
@@ -30,7 +30,7 @@ export function getCpuCoreInfo(): Array<String> {
       }
     });
   });
-  var coreArr = new Array();
+  var coreArr = [];
   for (var index = 0; index < supportPolicy.length; index++) {
     const policy = supportPolicy[index];
     var affectedCpus = fileOpen(basePath + '/' + policy + '/affected_cpus');
@@ -41,7 +41,7 @@ export function getCpuCoreInfo(): Array<String> {
 
 export function getPidOfAbility(processName: string): Promise<String> {
   return appManager.getProcessRunningInfos().then((data) => {
-    let processArr: Array<ProcessRunningInfo> = data;
+    let processArr: ProcessRunningInfo[] = [...data];
     var pid = '-1';
     processArr.forEach((process) => {
       if (process.processName == processName) {
@@ -52,8 +52,7 @@ export function getPidOfAbility(processName: string): Promise<String> {
   });
 }
 export function bubbleSort(arr: Array<number>): Array<number> {
-  let final: Array<number> = new Array(...arr);
-
+  let final: number[] = [...arr];
   for (let i = 0; i < final.length; i++) {
     let isSwap: boolean = true;
     for (let j = 0; j < final.length - i - 1; j++) {

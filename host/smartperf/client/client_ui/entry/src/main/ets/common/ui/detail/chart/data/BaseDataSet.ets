@@ -274,7 +274,9 @@ export default abstract class BaseDataSet<T extends EntryOhos> implements IDataS
   }
 
   public getValueFormatter(): IValueFormatter {
-    if (this.needsFormatter()) return Utils.getDefaultValueFormatter();
+    if (this.needsFormatter()) {
+      return Utils.getDefaultValueFormatter();
+    }
     return this.mValueFormatter;
   }
 

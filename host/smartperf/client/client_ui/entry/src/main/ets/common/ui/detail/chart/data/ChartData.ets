@@ -120,7 +120,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * Calc minimum and maximum values (both x and y) over all DataSets.
      */
     public calcMinMax() {
-        if (this.mDataSets == null) return;
+        if (this.mDataSets == null) {
+            return;
+        }
 
         this.mYMax = -Number.MAX_VALUE;
         this.mYMin = Number.MAX_VALUE;
@@ -437,18 +439,34 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param axis
      */
     protected calcMinMax2(e: EntryOhos, axis: AxisDependency): void {
-        if (this.mYMax < e.getY()) this.mYMax = e.getY();
-        if (this.mYMin > e.getY()) this.mYMin = e.getY();
+        if (this.mYMax < e.getY()) {
+            this.mYMax = e.getY();
+        }
+        if (this.mYMin > e.getY()) {
+            this.mYMin = e.getY();
+        }
 
-        if (this.mXMax < e.getX()) this.mXMax = e.getX();
-        if (this.mXMin > e.getX()) this.mXMin = e.getX();
+        if (this.mXMax < e.getX()) {
+            this.mXMax = e.getX();
+        }
+        if (this.mXMin > e.getX()) {
+            this.mXMin = e.getX();
+        }
 
         if (axis == AxisDependency.LEFT) {
-            if (this.mLeftAxisMax < e.getY()) this.mLeftAxisMax = e.getY();
-            if (this.mLeftAxisMin > e.getY()) this.mLeftAxisMin = e.getY();
+            if (this.mLeftAxisMax < e.getY()) {
+                this.mLeftAxisMax = e.getY();
+            }
+            if (this.mLeftAxisMin > e.getY()) {
+                this.mLeftAxisMin = e.getY();
+            }
         } else {
-            if (this.mRightAxisMax < e.getY()) this.mRightAxisMax = e.getY();
-            if (this.mRightAxisMin > e.getY()) this.mRightAxisMin = e.getY();
+            if (this.mRightAxisMax < e.getY()) {
+                this.mRightAxisMax = e.getY();
+            }
+            if (this.mRightAxisMin > e.getY()) {
+                this.mRightAxisMin = e.getY();
+            }
         }
     }
 
@@ -458,11 +476,19 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
      * @param d
      */
     protected calcMinMax1(d: T): void {
-        if (this.mYMax < d.getYMax()) this.mYMax = d.getYMax();
-        if (this.mYMin > d.getYMin()) this.mYMin = d.getYMin();
+        if (this.mYMax < d.getYMax()) {
+            this.mYMax = d.getYMax();
+        }
+        if (this.mYMin > d.getYMin()) {
+            this.mYMin = d.getYMin();
+        }
 
-        if (this.mXMax < d.getXMax()) this.mXMax = d.getXMax();
-        if (this.mXMin > d.getXMin()) this.mXMin = d.getXMin();
+        if (this.mXMax < d.getXMax()) {
+            this.mXMax = d.getXMax();
+        }
+        if (this.mXMin > d.getXMin()) {
+            this.mXMin = d.getXMin();
+        }
 
         if (d.getAxisDependency() == AxisDependency.LEFT) {
             if (this.mLeftAxisMax < d.getYMax()) {
@@ -548,7 +574,9 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
             let dataSet: T = this.mDataSets.get(i);
 
             for (let j = 0; j < dataSet.getEntryCount(); j++) {
-                if (e.equalTo(dataSet.getEntryForXValue(e.getX(), e.getY()))) return dataSet;
+                if (e.equalTo(dataSet.getEntryForXValue(e.getX(), e.getY()))) {
+                    return dataSet;
+                }
             }
         }
 

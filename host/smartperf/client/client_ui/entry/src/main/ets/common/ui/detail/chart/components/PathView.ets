@@ -41,7 +41,7 @@ export default struct PathView {
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
-      if(this.test()) { }
+      if (this.test()) { }
       if (this.model.paintArry.length > 0) {
         ForEach(this.model.paintArry, (item: Paint) => {
 
@@ -205,7 +205,6 @@ export class PathViewModel extends ScaleMode {
     let circlePaint: Paint[] = this.mRenderer.drawCircle();
     this.valuePaint = this.mRenderer.drawValues();
     this.heightlightPaint = this.mRenderer.drawHighlighted();
-
     this.paintArry = [];
     this.paintArry = this.paintArry.concat(pathPaint);
     this.paintArry = this.paintArry.concat(circlePaint);
@@ -217,20 +216,15 @@ export class PathViewModel extends ScaleMode {
     this.heightlightPaint = [];
     this.heightlightPaint = this.mRenderer.drawHighlighted();
   }
-
-  transX: number = 0;
-  transMaxY: number = 0;
-  transMinY: number = 0;
+  public transX: number = 0;
+  public transMaxY: number = 0;
+  public transMinY: number = 0;
   public onDoubleClick(event: ClickEvent) {
     this.currentXSpace = this.centerX * this.scaleX - this.centerX;
     this.currentYSpace = this.centerY * this.scaleY - this.centerY;
-
-
-
     let maxXBefore: number = this.paintArry[this.paintArry.length - 1].x;
     let maxYBefore: number = Number.MIN_VALUE;
     let minYBefore: number = Number.MAX_VALUE;
-
     for (let i = 0; i < this.valuePaint.length; i++) {
       if (maxYBefore < this.valuePaint[i].y) {
         maxYBefore = this.valuePaint[i].y;
@@ -263,7 +257,7 @@ export class PathViewModel extends ScaleMode {
     }
     this.setXPosition(this.moveX - this.currentXSpace)
     let moveYSource = this.leftAxisModel.lastHeight * this.scaleY - this.leftAxisModel.lastHeight
-    this.leftAxisModel.translate(moveYSource+this.moveY - this.currentYSpace);
+    this.leftAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
 
   }
 
@@ -306,7 +300,7 @@ export class PathViewModel extends ScaleMode {
       this.lineChartModel.test = '' + this.currentYSpace;
     }
     this.setXPosition(this.moveX - this.currentXSpace)
-    let moveYSource = this.leftAxisModel.lastHeight*this.scaleY - this.leftAxisModel.lastHeight
+    let moveYSource = this.leftAxisModel.lastHeight * this.scaleY - this.leftAxisModel.lastHeight
     this.leftAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
   }
 
@@ -364,7 +358,7 @@ export class PathViewModel extends ScaleMode {
         this.curX = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
   public animateY(durationMillis: number) {
@@ -383,7 +377,7 @@ export class PathViewModel extends ScaleMode {
         this.curY = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
   public animateXY(durationMillis: number) {
@@ -403,7 +397,7 @@ export class PathViewModel extends ScaleMode {
         this.curY = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
   private clearPaint() {

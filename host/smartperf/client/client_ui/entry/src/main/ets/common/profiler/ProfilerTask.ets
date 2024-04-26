@@ -77,23 +77,23 @@ export class ProfilerTask {
     //时间计数器
     globalThis.collectIntervalNum = -1;
     //入库数据
-    globalThis.tTndexs = new Array<TIndexInfo>();
+    globalThis.tTndexs = [];
     //实时数据
     globalThis.tTndex = new TIndexInfo();
     // ram队列
-    globalThis.ramArr = new Array<String>();
+    globalThis.ramArr = [];
     // fps队列
-    globalThis.fpsArr = new Array<String>();
+    globalThis.fpsArr = [];
     // fpsJitter队列
-    globalThis.fpsJitterArr = new Array<String>();
+    globalThis.fpsJitterArr = [];
 
     // fps队列
-    globalThis.fpsArr = new Array<String>();
+    globalThis.fpsArr = [];
     // power 电流队列
-    globalThis.powerCurArr = new Array<String>();
+    globalThis.powerCurArr = [];
 
     // power 电压队列
-    globalThis.powerVoltArr = new Array<String>();
+    globalThis.powerVoltArr = [];
     globalThis.taskId = -1;
     initDbIndex();
     //初始化数据库  2022-02-23 dbName改为时间戳
@@ -103,7 +103,7 @@ export class ProfilerTask {
 
   taskStart() {
     SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask taskStart call');
-    var gpDataArr: Array<GPData> = new Array<GPData>();
+    var gpDataArr: GPData[] = [];
     this.collectItems.forEach((moduleName) => {
       let typeCollect = ProfilerFactory.getProfilerByConfig(moduleName.toString());
       if (typeCollect != null) {
@@ -177,7 +177,7 @@ export class ProfilerTask {
     SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask taskStop called');
   }
   taskGetDubai() {
-    let tPowers: Array<TPowerSensorInfo> = new Array();
+    let tPowers: TPowerSensorInfo[] = [];
     SPLogger.INFO(
       'TAG',
       'resultSet query_applications_display-----startTime' + JSON.stringify(dateFormat(globalThis.startTime))
@@ -302,7 +302,7 @@ export class ProfilerTask {
     //结束时间
     globalThis.endTime = -1;
     //入库数据
-    globalThis.tTndexs = new Array<TIndexInfo>();
+    globalThis.tTndexs = [];
 
     //采集配置恢复fileOpen
     globalThis.collectConfigs = -1;
@@ -317,14 +317,14 @@ export class ProfilerTask {
     globalThis.powerValue = 0;
 
     //socket采集队列 fps ram
-    globalThis.fpsArr = new Array<String>();
+    globalThis.fpsArr = [];
 
     // power 电流队列
-    globalThis.powerCurArr = new Array<String>();
+    globalThis.powerCurArr = [];
 
     // power 电压队列
-    globalThis.powerVoltArr = new Array<String>();
-    globalThis.fpsJitterArr = new Array<String>();
-    globalThis.ramArr = new Array<String>();
+    globalThis.powerVoltArr = [];
+    globalThis.fpsJitterArr = [];
+    globalThis.ramArr = [];
   }
 }

@@ -26,7 +26,7 @@ export struct PowerDubai {
     let sumPower:number = 0
     let sumCurrent:number = 0
 
-    for (var i = 0; i < this.tPowerSensorList.length ; i++) {
+    for (var i = 0; i < this.tPowerSensorList.length; i++) {
 
       if (this.tPowerSensorList[i].power == '' || this.tPowerSensorList[i].power == null) {
         this.tPowerSensorList[i].setPower('0')

@@ -50,7 +50,9 @@ export default class DefaultValueFormatter implements IValueFormatter {
 
         var b: string = '';
         for (var i = 0; i < digits; i++) {
-            if (i == 0) b += '.';
+            if (i == 0) {
+                b += '.';
+            }
             b += '0';
         }
     }
@@ -63,7 +65,6 @@ export default class DefaultValueFormatter implements IValueFormatter {
     ): string {
         // put more logic here ...
         // avoid memory allocations here (for performance reasons)
-
         return value.toFixed(1) + '';
     }
 

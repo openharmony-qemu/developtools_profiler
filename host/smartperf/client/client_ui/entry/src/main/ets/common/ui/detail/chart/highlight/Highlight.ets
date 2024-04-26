@@ -211,16 +211,20 @@ export default class Highlight {
      * @return
      */
     public equalTo(h: Highlight): boolean {
-        if (h == null) return false;
+        if (h == null) {
+            return false;
+        }
         else {
             if (
             this.mDataSetIndex == h.mDataSetIndex &&
             this.mX == h.mX &&
             this.mStackIndex == h.mStackIndex &&
             this.mDataIndex == h.mDataIndex
-            )
-            return true;
-            else return false;
+            ) {
+                return true;
+            } else {
+                return false;
+            }
         }
     }
 

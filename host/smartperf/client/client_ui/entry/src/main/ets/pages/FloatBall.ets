@@ -41,10 +41,8 @@ struct FloatBall {
   singleClickId = 0 // 单击事件ID
 
   aboutToAppear() {
-
     ProfilerTask.getInstance().initModule()
     ProfilerTask.getInstance().taskInit()
-    //创建TiTile窗
     console.log('cm-floatBall-CreateTitleWindow1')
     globalThis.CreateTitleWindow()
     console.log('cm-floatBall-CreateTitleWindow2')
@@ -134,7 +132,7 @@ struct FloatBall {
 
   clearAllInterVal() {
     console.log('cm-floatBall-clearAllInterVal')
-    if(globalThis.collectConfigs.trace) {
+    if (globalThis.collectConfigs.trace) {
       mainWorker.postMessage({'catchTraceEnd':true})
     }
     clearInterval(globalThis.collectIntervalCollect)

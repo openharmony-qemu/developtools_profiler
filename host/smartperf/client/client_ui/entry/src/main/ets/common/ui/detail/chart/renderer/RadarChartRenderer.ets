@@ -135,7 +135,9 @@ export default class RadarChartRenderer extends LineRadarRenderer {
         pOut
       );
       //
-      if (Number.isNaN(pOut.x)) continue;
+      if (Number.isNaN(pOut.x)) {
+        continue;
+      }
 
       if (!hasMovedToPoint) {
         surface = 'M' + Utils.convertDpToPixel(pOut.x) + ' ' + Utils.convertDpToPixel(pOut.y) + ' ';
@@ -254,7 +256,7 @@ export default class RadarChartRenderer extends LineRadarRenderer {
     this.mWebPaint.setColor(this.radarChartMode.getWebColor());
     this.mWebPaint.setAlpha(this.radarChartMode.getWebAlpha());
 
-    let linePaintArr: Paint[] = new Array<LinePaint>();
+    let linePaintArr: LinePaint[] = [];
 
     const xIncrements: number = 1 + this.radarChartMode.getSkipWebLineCount();
     let maxEntryCount: number = this.radarChartMode.getData().getMaxEntryCountSet().getEntryCount();
@@ -313,10 +315,14 @@ export default class RadarChartRenderer extends LineRadarRenderer {
     for (let high of indices) {
       let dataSet: IRadarDataSet = radarData.getDataSetByIndex(high.getDataSetIndex());
 
-      if (dataSet == null || !dataSet.isHighlightEnabled()) continue;
+      if (dataSet == null || !dataSet.isHighlightEnabled()) {
+        continue;
+      }
 
       let e: RadarEntry = dataSet.getEntryForIndex(high.getDataIndex());
-      if (!this.isInBoundsX(e, dataSet)) continue;
+      if (!this.isInBoundsX(e, dataSet)) {
+        continue;
+      }
 
       let y: number = e.getY() - this.radarChartMode.getYChartMin();
 

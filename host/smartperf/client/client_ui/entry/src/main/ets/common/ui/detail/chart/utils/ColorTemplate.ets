@@ -42,9 +42,9 @@ class Color {
   }
 
   public static RGBToHSV(r, g, b, hsv: number[]) {
-    var h = 0,
-      s = 0,
-      v = 0;
+    let h = 0;
+    let s = 0;
+    let v = 0;
     let arr = [r, g, b];
     arr.sort(function (a, b) {
       return a - b;
@@ -76,14 +76,14 @@ class Color {
   }
 
   public static HSVToColor(alpha: number, arr: number[]): number {
-    var h = arr[0],
-      s = arr[1],
-      v = arr[2];
+    let h = arr[0];
+    let s = arr[1];
+    let v = arr[2];
     s = s / 100;
     v = v / 100;
-    var r = 0,
-      g = 0,
-      b = 0;
+    let r = 0;
+    let g = 0;
+    let b = 0;
     var i = Math.floor((h / 60) % 6);
     var f = h / 60 - i;
     var p = v * (1 - s);

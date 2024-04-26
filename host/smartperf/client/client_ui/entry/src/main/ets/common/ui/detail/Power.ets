@@ -29,7 +29,7 @@ import { getCpuCoreInfo, } from '../../utils/SystemUtils';
 @Entry
 @Component
 export struct Power {
-  @State private gpData: Array<TIndexInfo> = new Array()
+  @State private gpData: TIndexInfo[] = []
   public topAxis: XAxis = new XAxis(); //顶部X轴
   public bottomAxis: XAxis = new XAxis(); //底部X轴
   public atWidth: number = 350; //表的宽度
@@ -42,7 +42,7 @@ export struct Power {
   public lineData2: LineData = null;
   public lineChartModel2 : LineChartModel = new LineChartModel();
   public testDuration:string = globalThis.testDuration
-  @State private summaryItems: Array<SummaryItem> = new Array()
+  @State private summaryItems: SummaryItem[] = []
   private controller: TabsController = new TabsController()
   aboutToAppear() {
 
@@ -61,10 +61,10 @@ export struct Power {
       const gpDataCur = this.gpData[index];
       let currentNow = Number(gpDataCur.currentNow).valueOf()
       curVoltage = Number(gpDataCur.voltageNow).valueOf() / 1e6
-      let batteryTemp = Number(gpDataCur.batteryTemp).valueOf()/10;
+      let batteryTemp = Number(gpDataCur.batteryTemp).valueOf() / 10;
       avgBatteryTemp += batteryTemp
-        batteryTemp > maxBatteryTemp?maxBatteryTemp = batteryTemp : null
-      normalCurrentNow += Math.abs(currentNow) * Math.abs(curVoltage) / 3.8;     //机测电压 原型机3.8  wgr4.0
+        batteryTemp > maxBatteryTemp ? maxBatteryTemp = batteryTemp : null
+      normalCurrentNow += Math.abs(currentNow) * Math.abs(curVoltage) / 3.8; //机测电压 原型机3.8  wgr4.0
         (0 - currentNow ) > maxCurrentNow ? maxCurrentNow = (0 - currentNow ) : null
 
     }
@@ -200,7 +200,7 @@ export struct Power {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -243,7 +243,7 @@ export struct Power {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])

@@ -33,8 +33,8 @@ const TAG = 'StartTestPage'
 struct StartTestPage {
   @State selectApp: string = '请选择一个应用'
   @State selectAppIcon: string = ''
-  @State private collectConfigs: Array<CollectItem> = new Array()
-  @State private switchList: Array<SwitchItem> = new Array(
+  @State private collectConfigs: CollectItem[] = []
+  @State private switchList: SwitchItem[] = new Array(
     new SwitchItem('trace', '是否抓取trace', $r('app.media.icon_average_frame_b'), false, true),
     new SwitchItem('screenCapture', '是否开启截图', $r('app.media.icon_screencap'), false, true)
   )
@@ -179,7 +179,7 @@ struct StartTestPage {
 				if (router.getParams() != null) {
 					if (router.getParams()['selectPackageName'] != null) {
 					  //启动app
-					  commonStartAbility(new String(router.getParams()["selectPackageName"]).toString(), new String(router.getParams()["selectAbilityName"]).toString())
+            commonStartAbility(`${router.getParams()['selectPackageName']}`.toString(), `${router.getParams()['selectAbilityName']}`.toString())
 					  //启动悬浮窗
 					  globalThis.CreateFloatingWindow()
 					  router.back({ uri: 'pages/MainPage' })
@@ -212,11 +212,11 @@ struct StartTestPage {
       this.testName = ''
       this.selectAppIcon = ''
     } else {
-      this.selectApp = new String(appName).toString()
-      globalThis.appName = new String(appName).toString()
-      globalThis.appVersion = new String(appVersion).toString()
-      globalThis.packageName = new String(selectPackageName).toString()
-      this.selectAppIcon = new String(appIconId).toString()
+      this.selectApp = `${appName}`.toString()
+      globalThis.appName = `${appName}`.toString()
+      globalThis.appVersion = `${appVersion}`.toString()
+      globalThis.packageName = `${selectPackageName}`.toString()
+      this.selectAppIcon = `${appIconId}`.toString()
       let date = new Date()
       let M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1);
       let D = date.getDate() + '-';
@@ -284,7 +284,7 @@ struct StartTestPage {
     return taskConfig
   }
 
-  search(id: string, myArray: Array<SwitchItem>): SwitchItem{
+  search(id: string, myArray: Array<SwitchItem>): SwitchItem {
     for (var i = 0; i < myArray.length; i++) {
       if (myArray[i].id === id) {
         return myArray[i];

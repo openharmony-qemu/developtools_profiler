@@ -31,7 +31,7 @@ import CheckEmptyUtils from '../../utils/CheckEmptyUtils'
  */
 @Component
 export struct Load {
-  @State private gpData: Array<TIndexInfo> = new Array()
+  @State private gpData: TIndexInfo[] = []
   public atWidth: number = 350; //表的宽度
   public atHeight: number = 300; //表的高度
   public minOffset: number = 15; //X轴线偏移量
@@ -587,7 +587,7 @@ export struct Load {
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu0Load).valueOf()));
     }
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -614,7 +614,7 @@ export struct Load {
       }
       values2.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu1Load).valueOf()));
     }
-    let gradientFillColor2 = new Array<ColorStop>();
+    let gradientFillColor2 = [];
     gradientFillColor2.push([0x0C0099CC, 0.2])
     gradientFillColor2.push([0x7F0099CC, 0.4])
     gradientFillColor2.push([0x0099CC, 1.0])
@@ -641,7 +641,7 @@ export struct Load {
       }
       values3.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu2Load).valueOf()));
     }
-    let gradientFillColor3 = new Array<ColorStop>();
+    let gradientFillColor3 = [];
     gradientFillColor3.push([0x0C0099CC, 0.2])
     gradientFillColor3.push([0x7F0099CC, 0.4])
     gradientFillColor3.push([0x0099CC, 1.0])
@@ -668,7 +668,7 @@ export struct Load {
       }
       values4.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu3Load).valueOf()));
     }
-    let gradientFillColor4 = new Array<ColorStop>();
+    let gradientFillColor4 = [];
     gradientFillColor4.push([0x0C0099CC, 0.2])
     gradientFillColor4.push([0x7F0099CC, 0.4])
     gradientFillColor4.push([0x0099CC, 1.0])
@@ -702,7 +702,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -738,7 +738,7 @@ export struct Load {
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu4Load).valueOf()));
     }
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -765,7 +765,7 @@ export struct Load {
       }
       values2.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu5Load).valueOf()));
     }
-    let gradientFillColor2 = new Array<ColorStop>();
+    let gradientFillColor2 = [];
     gradientFillColor2.push([0x0C0099CC, 0.2])
     gradientFillColor2.push([0x7F0099CC, 0.4])
     gradientFillColor2.push([0x0099CC, 1.0])
@@ -792,7 +792,7 @@ export struct Load {
       }
       values3.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu6Load).valueOf()));
     }
-    let gradientFillColor3 = new Array<ColorStop>();
+    let gradientFillColor3 = [];
     gradientFillColor3.push([0x0C0099CC, 0.2])
     gradientFillColor3.push([0x7F0099CC, 0.4])
     gradientFillColor3.push([0x0099CC, 1.0])
@@ -827,7 +827,7 @@ export struct Load {
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.cpu4Frequency).valueOf() / 1e3));
     }
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -862,7 +862,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -899,7 +899,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -936,7 +936,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -972,7 +972,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
@@ -1008,7 +1008,7 @@ export struct Load {
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])

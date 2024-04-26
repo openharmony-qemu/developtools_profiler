@@ -30,7 +30,7 @@ export default class XAxisRendererRadarChart extends XAxisRenderer {
     }
 
     public renderAxisLabels(): Paint[] {
-        let paintArr: Paint[] = new Array();
+        let paintArr: Paint[] = [];
 
         let labelRotationAngleDegrees: number = this.mXAxis.getLabelRotationAngle();
         let drawLabelAnchor: MPPointF = MPPointF.getInstance(0.5, 0.25);

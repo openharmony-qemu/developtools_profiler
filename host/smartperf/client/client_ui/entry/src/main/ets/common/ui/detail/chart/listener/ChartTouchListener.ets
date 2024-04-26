@@ -60,11 +60,6 @@ export default abstract class ChartTouchListener<T extends Chart> {
   protected mLastHighlighted: Highlight;
 
   /**
-   * the gesturedetector used for detecting taps and longpresses, ...
-   */
-  //    protected mGestureDetector:GestureDetector;
-
-  /**
    * the chart the listener represents
    */
   protected mChart: T;
@@ -79,9 +74,11 @@ export default abstract class ChartTouchListener<T extends Chart> {
    * @param me
    */
   public startAction(me: TouchEvent) {
-    var l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
+    let l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
 
-    if (l != null) l.onChartGestureStart(me, this.mLastGesture);
+    if (l != null) {
+      l.onChartGestureStart(me, this.mLastGesture);
+    }
   }
 
   /**
@@ -90,9 +87,11 @@ export default abstract class ChartTouchListener<T extends Chart> {
    * @param me
    */
   public endAction(me: TouchEvent) {
-    var l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
+    let l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
 
-    if (l != null) l.onChartGestureEnd(me, this.mLastGesture);
+    if (l != null) {
+      l.onChartGestureEnd(me, this.mLastGesture);
+    }
   }
 
   /**

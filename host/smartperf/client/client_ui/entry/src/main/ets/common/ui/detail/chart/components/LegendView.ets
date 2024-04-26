@@ -69,7 +69,7 @@ struct LegendView {
 
 namespace LegendView {
   export class Model {
-    paints: Paint[] = []
+    public paints: Paint[] = []
 
     public mHandler: ViewPortHandler = new ViewPortHandler();
     public yEntrySpace : number = 5

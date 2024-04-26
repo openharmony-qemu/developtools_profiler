@@ -33,8 +33,8 @@ const TAG: string = 'Performance'
  */
 @Component
 export struct Performance {
-  @State private gpData: Array<TIndexInfo> = new Array()
-  @State lostList: Array<FpsLostFrame> = new Array<FpsLostFrame>()
+  @State private gpData: TIndexInfo[] = []
+  @State lostList: FpsLostFrame[] = []
   public lostLine: Array<number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
   public fpsValues: Array<number> = []
   public fpsJitterValues: Array<string> = []
@@ -177,7 +177,7 @@ export struct Performance {
     this.handleLostFrame();
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])

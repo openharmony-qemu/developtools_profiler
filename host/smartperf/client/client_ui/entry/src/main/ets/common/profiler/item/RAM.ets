@@ -54,7 +54,7 @@ export class RAM extends BaseProfiler implements SocketProfiler {
   readMessageQueue() {
     mainWorker.postMessage({ ram: true, pkg: globalThis.collectPkg });
     if (globalThis.ramArr.length > 0) {
-      let ramQueue: Array<String> = globalThis.ramArr;
+      let ramQueue: String[] = globalThis.ramArr;
       let curRAM = ramQueue.pop();
       this.ramMap.set('pss', extractNumber(curRAM));
     }

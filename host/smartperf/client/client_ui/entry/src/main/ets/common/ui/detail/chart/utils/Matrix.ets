@@ -112,9 +112,6 @@ export default class Matrix {
     var values = matrix.getValues();
     this.postScale(values[Matrix.MSCALE_X], values[Matrix.MSCALE_Y]);
     this.postTranslate(values[Matrix.MTRANS_X], values[Matrix.MTRANS_Y]);
-    //    this.data[Matrix.MTRANS_X] = values[Matrix.MTRANS_X] * this.data[Matrix.MSCALE_X]
-    //    this.data[Matrix.MSCALE_X] *= values[Matrix.MSCALE_X]
-    //    this.data[Matrix.MSCALE_Y] *= values[Matrix.MSCALE_Y]
   }
 
   public mapPoints(pts: number[]) {

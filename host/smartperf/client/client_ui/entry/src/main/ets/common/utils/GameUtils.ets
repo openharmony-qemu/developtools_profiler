@@ -134,7 +134,7 @@ export default class GameUtils {
     // 初始化连续丢帧数组
     GameUtils.initJankArray(fullFPS);
 
-    let allDrawFrame: Array<string> = jankSrcStr.split(',');
+    let allDrawFrame: string[] = jankSrcStr.split(',');
     let jitters = new Array<number>(allDrawFrame.length);
     for (let i = 0; i < allDrawFrame.length; i++) {
       try {
@@ -176,7 +176,7 @@ export default class GameUtils {
       }
     }
 
-    let jitterBuilder = new String();
+    let jitterBuilder = [];
 
     let allKeysIterator = jankCountMap.keys();
 

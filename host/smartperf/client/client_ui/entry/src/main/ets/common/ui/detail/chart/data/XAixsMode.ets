@@ -61,7 +61,6 @@ export default class XAixsMode {
         mAxisRendererBottom.computeAxis(this.bottomAxis.mAxisMinimum, this.bottomAxis.mAxisMaximum, false);
         this.paints = this.paints.concat(mAxisRendererBottom.renderAxisLine());
         this.paints = this.paints.concat(mAxisRendererBottom.renderAxisLabels());
-
         this.paints = this.paints.concat(mAxisRendererTop.renderLimitLines());
 
         let arr = [];
