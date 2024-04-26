@@ -232,14 +232,6 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
     resultPid = resultPid.substr(0, splitFlag);
     return resultPid;
 }
-std::string StartUpDelay::GetDeviceType()
-{
-    std::string cmdResult;
-    SPUtils::LoadCmd("param get |grep ohos.boot.hardware", cmdResult);
-    size_t splitFlag = cmdResult.find("= ");
-    std::string deviceType = cmdResult.substr(splitFlag + 1);
-    return deviceType;
-}
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
 {
     char realPath[PATH_MAX] = {0x00};

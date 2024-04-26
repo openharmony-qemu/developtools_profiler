@@ -69,7 +69,7 @@ std::map<std::string, std::string> MEMORY::GetRamInfo() const
         return procRamInfo;
     }
     std::stringstream cmd;
-    cmd << "hidumper --mem " << processId
+    cmd << "hidumper --mem " << processId;
     FILE *fd = popen(cmd.str().c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;

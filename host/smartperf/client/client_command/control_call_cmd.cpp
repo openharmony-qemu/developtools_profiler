@@ -290,7 +290,6 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "startResponse" + ".ftrace";
     if (sd.pointXY == "0 0") {
@@ -353,7 +352,6 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
-    std::string deviceType = sd.GetDeviceType();
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     if (sd.pointXY == "0 0") {
@@ -388,7 +386,6 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     OHOS::SmartPerf::ParseTrace parseTrace;
     OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
-    std::string deviceType = sd.GetDeviceType();
     if (isOhTest) {
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
