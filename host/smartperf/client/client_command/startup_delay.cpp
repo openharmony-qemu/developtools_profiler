@@ -246,7 +246,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
     if (realpath(fileName.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    std::ifstream file(fileName, std::ios::in);
+    std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
     size_t findIndex = std::string::npos;
@@ -282,7 +282,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                pointXY = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
+                pointXY = boundStr.substr(leftStart + 1, (leftEnd > leftStart ? leftEnd - leftStart - 1 : 0));
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
@@ -295,7 +295,7 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
     if (realpath(fileName.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    std::ifstream file(fileName, std::ios::in);
+    std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
     while (getline(file, strLine)) {
@@ -324,7 +324,7 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                pointXY = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
+                pointXY = boundStr.substr(leftStart + 1, (leftEnd > leftStart ? leftEnd - leftStart - 1 : 0));
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;

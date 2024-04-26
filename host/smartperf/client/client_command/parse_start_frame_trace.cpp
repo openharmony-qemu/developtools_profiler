@@ -36,7 +36,7 @@ double StartFrameTraceNoh::ParseStartFrameTraceNoh(std::string file)
     if (realpath(file.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(file);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseStartFrameTraceNoh open file(%s) failed ", file.c_str());
@@ -108,10 +108,10 @@ double StartFrameTraceNoh::GetFps()
     } else {
         double startTime = std::stod(SmartPerf::StartFrameTraceNoh::GetLineTime(startLine));
         double endTime = std::stod(SmartPerf::StartFrameTraceNoh::GetLineTime(fullScreenLine));
-        for (size_t i = 0; i < startTimeArr.size() - 1; ++i) {
+        for (size_t i = 0; i + 1 < startTimeArr.size(); ++i) {
             double result = 0;
             if (startTimeArr[i].times >= startTime && endTimeArr[i].times > startTimeArr[i].times) {
-                int next = i + 1;
+                size_t next = i + 1;
                 result = startTimeArr[next].times - endTimeArr[i].times;
             }
             double mark = 0.05;
@@ -132,9 +132,9 @@ std::string StartFrameTraceNoh::GetLineTime(std::string line)
 }
 std::string StartFrameTraceNoh::CutString(std::string line, std::string start, std::string end, size_t offset)
 {
-    size_t position1 = line.find(start);
-    size_t position2 = line.find(end);
-    return line.substr(position1 + offset, position2 - position1 - offset);
+    int position1 = static_cast<int>(line.find(start));
+    int position2 = static_cast<int>(line.find(end));
+    return line.substr(position1 + offset, position2 - position1 - static_cast<int>(offset));
 }
 std::vector<std::string> StartFrameTraceNoh::Split(std::string str, std::string pattern)
 {

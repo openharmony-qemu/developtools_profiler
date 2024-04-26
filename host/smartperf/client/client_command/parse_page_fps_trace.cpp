@@ -27,7 +27,7 @@ double ParsePageFpsTrace::PageFpsTrace(std::string file)
     if (realpath(file.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(file);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParsePageFpsTrace open file(%s) fialed ", file.c_str());

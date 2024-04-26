@@ -24,6 +24,7 @@
 #include "display_manager.h"
 #include "wm_common.h"
 #include "png.h"
+#include <filesystem>
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
@@ -88,7 +89,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("/data/local/tmp/capture created! \n");
         LOGI("/data/local/tmp/capture created!");
     };
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    std::filesystem::path canonicalPath = std::filesystem::canonical(savePath);
+    auto fd = open(canonicalPath.c_str(), O_RDWR | O_CREAT, 0640);
     SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
     (void)close(fd);
 }

@@ -26,7 +26,6 @@
 #include "include/sp_utils.h"
 #include "include/parse_click_complete_trace.h"
 #include "include/parse_click_response_trace.h"
-#include "include/sp_parse_fps.h"
 #include "include/parse_page_fps_trace.h"
 #include "include/parse_start_frame_trace.h"
 #include "include/parse_start_trace_noh.h"
@@ -54,8 +53,6 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
         time = SmartPerf::ControlCallCmd::StartResponse(v);
     } else if (v[typeName] == "coldStartHM") {
         time = SmartPerf::ControlCallCmd::ColdStartHM(v);
-    } else if (v[typeName] == "fps") {
-        result = SmartPerf::ControlCallCmd::SlideFps(v);
     } else if (v[typeName] == "pagefps") {
         result = SmartPerf::ControlCallCmd::PageFps();
     } else if (v[typeName] == "startFrame") {
@@ -192,19 +189,6 @@ std::string ControlCallCmd::PageFps()
     stream << fps;
     result = "FPS:" + stream.str() + "fps";
     return result;
-}
-std::string ControlCallCmd::SlideFps(std::vector<std::string> v)
-{
-    OHOS::SmartPerf::StartUpDelay sd;
-    SpParseFPS parseFPS;
-    std::string cmdResult;
-    int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-    thGetTrace.join();
-    std::string fps = parseFPS.ParseTraceFile(traceName, v[typePKG]);
-    return fps;
 }
 double ControlCallCmd::ResponseTime()
 {

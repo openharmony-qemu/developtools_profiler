@@ -25,7 +25,11 @@ namespace SmartPerf {
 double StallingRateTrace::StallingRateResult(std::string file)
 {
     double stalligRate = 0;
-    infile.open(file);
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(file.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());

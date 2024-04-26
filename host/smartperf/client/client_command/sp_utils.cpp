@@ -102,7 +102,7 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)
 {
-    if (path.rfind("/") != path.size() - 1) {
+    if (path.rfind("/") != path.size() - 1U) {
         return path + "/";
     }
 
@@ -205,7 +205,7 @@ std::string SPUtils::GetTopPkgName()
     LoadCmd(cmd, curTopPkgStr);
     uint64_t left = curTopPkgStr.find_first_of("[");
     uint64_t right = curTopPkgStr.find_first_of("]");
-    std::string topPkg = curTopPkgStr.substr(left + 1, right - left - 1);
+    std::string topPkg = curTopPkgStr.substr(left + 1, static_cast<int64_t>(right) - static_cast<int64_t>(left) - 1);
     return topPkg;
 }
 
@@ -348,7 +348,7 @@ void SPUtils::RemoveSpace(std::string &str)
     }
 
     if (len > 0) {
-        str = str.substr(0, str.length() - len);
+        str = str.substr(0, static_cast<int>(str.length()) - len);
     }
 }
 
