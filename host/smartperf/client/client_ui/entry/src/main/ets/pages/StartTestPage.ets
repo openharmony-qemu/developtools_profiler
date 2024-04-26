@@ -36,7 +36,7 @@ struct StartTestPage {
   @State private collectConfigs: Array<CollectItem> = new Array()
   @State private switchList: Array<SwitchItem> = new Array(
     new SwitchItem('trace', '是否抓取trace', $r('app.media.icon_average_frame_b'), false, true),
-    new SwitchItem('screen_capture', '是否开启截图', $r('app.media.icon_screencap'), false, true)
+    new SwitchItem('screenCapture', '是否开启截图', $r('app.media.icon_screencap'), false, true)
   )
   @State private testName: string = '' // 测试名称
 
@@ -109,7 +109,7 @@ struct StartTestPage {
           .margin({ top: '20vp' })
           .onClick(() => {
             router.push({ uri: 'pages/AppSelectPage', params: {
-              StartPage: 'StartTest'
+              startPage: 'startTest'
             } })
           })
 

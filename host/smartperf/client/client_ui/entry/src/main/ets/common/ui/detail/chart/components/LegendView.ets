@@ -28,7 +28,8 @@ struct LegendView {
     this.model.mLegend.calculateNeededSizes(this.model.mHandler);
     this.model.mHandler.setChartDimens(
       this.model.mWidth, 
-      (this.model.mLegend.mNeededHeight > this.model.mHeight) ? (this.model.mLegend.mNeededHeight + 5) : this.model.mHeight
+      (this.model.mLegend.mNeededHeight > this.model.mHeight) ?
+        (this.model.mLegend.mNeededHeight + 5) : this.model.mHeight
     );
 
     var mLegendRenderer : LegendRenderer = new LegendRenderer(this.model.mHandler, this.model.mLegend);

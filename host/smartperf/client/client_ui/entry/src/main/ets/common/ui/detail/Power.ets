@@ -32,7 +32,7 @@ export struct Power {
   @State private gpData: Array<TIndexInfo> = new Array()
   public topAxis: XAxis = new XAxis(); //顶部X轴
   public bottomAxis: XAxis = new XAxis(); //底部X轴
-  public atWidth: number = 350 ; //表的宽度
+  public atWidth: number = 350; //表的宽度
   public atHeight: number = 300; //表的高度
   public minOffset: number = 15; //X轴线偏移量
   public leftAxis: YAxis = null;

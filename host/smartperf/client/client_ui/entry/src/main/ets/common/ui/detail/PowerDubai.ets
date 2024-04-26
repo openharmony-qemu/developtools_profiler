@@ -18,8 +18,8 @@ import SPLogger from '../../utils/SPLogger'
 @Component
 @Preview
 export struct PowerDubai {
-  @State tPowerSensorList: TPowerSensorInfo[] = new Array<TPowerSensorInfo>()
-  @State tPowerAppInfoList: TPowerAppInfo[] = new Array<TPowerAppInfo>()
+  @State tPowerSensorList: TPowerSensorInfo[] = []
+  @State tPowerAppInfoList: TPowerAppInfo[] = []
   aboutToAppear() {
     SPLogger.ERROR('TAG', 'resultSet query_applications_display-----display11111--' + JSON.stringify(this.tPowerSensorList))
     SPLogger.ERROR('TAG', 'resultSet query_applications_display-----display22222--' + JSON.stringify(this.tPowerAppInfoList[0]))
@@ -41,13 +41,13 @@ export struct PowerDubai {
       this.tPowerSensorList[i].setPerenct((Number(this.tPowerSensorList[i].power) * 100 / sumPower).toFixed(2) + '%')
     }
     this.tPowerSensorList.sort((a, b) => parseInt(a.current) - parseInt(b.current));
-    this.tPowerSensorList.push(new TPowerSensorInfo('', 'Toal', sumPower.toFixed(5) + '', sumCurrent.toFixed(5) + '' , '100%',$r('app.color.color_fff')))
-    this.tPowerSensorList.unshift(new TPowerSensorInfo('', 'Sensor' , 'Power(mAh)' , 'Current(mA)' , 'Percent(%)' , $r('app.color.colorPrimary')))
+    this.tPowerSensorList.push(new TPowerSensorInfo('', 'Toal', sumPower.toFixed(5) + '', sumCurrent.toFixed(5) + '', '100%', $r('app.color.color_fff')))
+    this.tPowerSensorList.unshift(new TPowerSensorInfo('', 'Sensor', 'Power(mAh)', 'Current(mA)', 'Percent(%)', $r('app.color.colorPrimary')))
 
     this.tPowerAppInfoList.forEach(it=>{
       it.setColor($r('app.color.color_fff'))
     })
-    this.tPowerAppInfoList.unshift(new TPowerAppInfo('', '' , 'ProcessName' , 'Power(mAh)' , 'Current(mA)' , 'Percent' , $r('app.color.colorPrimary')))
+    this.tPowerAppInfoList.unshift(new TPowerAppInfo('', '', 'ProcessName', 'Power(mAh)', 'Current(mA)', 'Percent', $r('app.color.colorPrimary')))
 
   }
 

@@ -26,7 +26,7 @@ import { TIndexInfo } from '../../entity/DatabaseEntity';
 
 @Component
 export struct Temperature {
-  @State private gpData: TIndexInfo[] = new Array()
+  @State private gpData: TIndexInfo[] = []
   topAxis: XAxis = new XAxis(); //顶部X轴
   bottomAxis: XAxis = new XAxis(); //底部X轴
   atWidth: number = 350 ; //表的宽度

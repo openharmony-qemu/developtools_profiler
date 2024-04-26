@@ -323,8 +323,7 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
     public getEntryForHighlight(highlight: Highlight): EntryOhos {
         if (highlight.getDataSetIndex() >= this.mDataSets.size()) {
             return null;
-        }
-        else {
+        } else {
             return this.mDataSets.get(highlight.getDataSetIndex()).
                     getEntryForXValue(highlight.getX(), highlight.getY());
         }
@@ -344,8 +343,7 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
 
         if (index < 0 || index >= this.mDataSets.size()) {
             return null;
-        }
-        else {
+        } else {
             return this.mDataSets.get(index);
         }
     }
@@ -637,8 +635,7 @@ export default class ChartData<T extends IDataSet</*T extends*/ EntryOhos>> {
     public setValueFormatter(f: IValueFormatter): void {
         if (f == null) {
             return;
-        }
-        else {
+        } else {
             for (let data of this.mDataSets.dataSouce) {
                 data.setValueFormatter(f);
             }

@@ -92,7 +92,7 @@ export default struct PathView {
                 .strokeWidth(item.strokeWidth)
                 .position({ x: 0, y: 0 })
                 .visibility(this.model.isShowHeightlight ? Visibility.Visible : Visibility.None)
-            } else if (item instanceof ImagePaint){
+            } else if (item instanceof ImagePaint) {
             } else if (item instanceof TextPaint) {
               Text(item.text)
                 .position({ x: item.x, y: item.y })
@@ -192,11 +192,11 @@ export class PathViewModel extends ScaleMode {
     this.positionX = this.rect.left;
 
     this.xScale = (this.rect.right - this.rect.left) / (this.xAxis.getAxisMaximum() - this.xAxis.getAxisMinimum());
-    this.yLeftScale = (this.rect.bottom - this.rect.top)
-                  / (this.yleftAxis.getAxisMaximum() - this.yleftAxis.getAxisMinimum());
+    this.yLeftScale = (this.rect.bottom - this.rect.top) /
+      (this.yleftAxis.getAxisMaximum() - this.yleftAxis.getAxisMinimum());
 
-    this.yRightScale = (this.rect.bottom - this.rect.top)
-                  / (this.yRightAxis.getAxisMaximum() - this.yRightAxis.getAxisMinimum());
+    this.yRightScale = (this.rect.bottom - this.rect.top) /
+      (this.yRightAxis.getAxisMaximum() - this.yRightAxis.getAxisMinimum());
 
   }
 

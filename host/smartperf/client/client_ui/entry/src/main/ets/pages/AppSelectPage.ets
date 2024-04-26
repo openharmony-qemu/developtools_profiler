@@ -60,7 +60,7 @@ struct appInfoComponent {
               Divider().vertical(false).margin({ top: '5vp' }).height('1vp')
             }.margin({ left: '4%' }).height('100%').padding({ top: '20vp' })
           }.alignSelf(ItemAlign.Start).width('100%').height('80vp').onClick(() => {
-            if (router.getParams()['StartPage'] == 'StartTest') {
+            if (router.getParams()['startPage'] == 'startTest') {
               router.back({ uri: 'pages/StartTestPage', params: {
                 selectPackageName: appInfoItem.packageName,
                 selectAbilityName: appInfoItem.abilityName,

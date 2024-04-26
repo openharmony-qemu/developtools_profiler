@@ -106,7 +106,7 @@ parentPort.onmessage = function (e) {
       });
       console.log(workTag + 'sub worker messageRam :' + messageRam);
     }
-    if (socketCollectItems.screen_capture) {
+    if (socketCollectItems.screenCapture) {
       udp.send({
         address: UdpSendAddress,
         data: 'get_capture',
