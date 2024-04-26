@@ -25,7 +25,7 @@ namespace Developtools {
 namespace NativeDaemon {
 uint32_t RoundUp(uint32_t x, const int align)
 {
-    return (((x) + (align)-1) / (align)) * (align);
+    return (((x) + (align) >= 1 ? (x) + (align) - 1 : 0) / (align)) * (align);
 }
 
 std::string StringReplace(std::string source, const std::string &from, const std::string &to)
