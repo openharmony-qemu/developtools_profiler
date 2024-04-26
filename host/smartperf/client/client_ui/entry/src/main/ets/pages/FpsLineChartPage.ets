@@ -38,7 +38,7 @@ struct FpsLineChartPage {
         this.data.push(0) //在末尾填充一个元素
       } else {
         this.lineFps = globalThis.timerFps
-        if (this.lineFps==0) {
+        if (this.lineFps == 0) {
           this.data.push(0)
         } else {
           let lineCount: number = this.lineFps / 1.5

@@ -387,8 +387,8 @@ export default class YAxis extends AxisBase {
      * @return
      */
     public needsOffset(): boolean {
-        if (super.isEnabled() && super.isDrawLabelsEnabled()
-            && this.getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART) {
+        if (super.isEnabled() && super.isDrawLabelsEnabled() &&
+            this.getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART) {
             return true;
         } else {
             return false;

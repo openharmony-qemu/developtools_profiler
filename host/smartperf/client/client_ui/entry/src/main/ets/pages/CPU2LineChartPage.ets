@@ -59,7 +59,7 @@ struct CPU2LineChartPage {
     Stack({ alignContent: Alignment.Top }) {
       FloatWindowComponent({ title: `sp_cpu2Frequency`, data: this.data })
       Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-        Text(this.floatName  + ':' )
+        Text(this.floatName + ':' )
           .fontSize('10fp')
           .fontColor($r('app.color.color_fff'))
           .margin({ left: 5, top: 1 }) //文本显示

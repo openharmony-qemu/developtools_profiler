@@ -30,7 +30,7 @@ export default class XAixsMode {
     public minOffset: number = 15;
     public yLeftLongestLabel: string = 'AAA';
     public yRightLongestLabel: string = 'AAA';
-    public XLimtLine: LimitLine = new LimitLine(35, 'Index 10');
+    public xLimtLine: LimitLine = new LimitLine(35, 'Index 10');
 
     public xPosition: number = 0;
     public yPosition: number = 0;

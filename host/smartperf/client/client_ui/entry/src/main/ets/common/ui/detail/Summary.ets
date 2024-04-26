@@ -25,8 +25,8 @@ const TAG = 'SummaryTAG'
 @Component
 @Preview
 export struct Summary {
-  @State private gpData: TIndexInfo[] = new Array()
-  @State private summaryItems: SummaryItem[] = new Array()
+  @State private gpData: TIndexInfo[] = []
+  @State private summaryItems: SummaryItem[] = []
 
   aboutToAppear() {
 
@@ -125,7 +125,7 @@ export struct Summary {
       cpuB = cpuFreqMap.get('cpu' + cpuCoreArr[1] + 'FreqSum') / 1e3
       cpuC = cpuFreqMap.get('cpu' + cpuCoreArr[2] + 'FreqSum') / 1e3
     }
-    var cpuList = Array(cpuA, cpuB, cpuC).sort()
+    var cpuList = [cpuA, cpuB, cpuC].sort()
 
     cpuMin = cpuList[0]
     cpuMid = cpuList[1]

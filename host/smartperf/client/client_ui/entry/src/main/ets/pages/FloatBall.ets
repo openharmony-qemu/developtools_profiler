@@ -56,8 +56,8 @@ struct FloatBall {
   initAllCollect() {
     console.log('collectIntervalCollect initAllCollect....');
     if (globalThis.collectConfigs != -1 && globalThis.collectPkg != -1) {
-      if (globalThis.collectConfigs.screen_capture) {
-        mainWorker.postMessage({'screen_capture':true})
+      if (globalThis.collectConfigs.screenCapture) {
+        mainWorker.postMessage({'screenCapture':true})
       }
       if (globalThis.collectConfigs.trace) {
         mainWorker.postMessage({'catchTraceStart':true})
