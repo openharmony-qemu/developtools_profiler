@@ -111,6 +111,7 @@ export default class Fill {
   public getGradientColors(): number[] {
     return this.mGradientColors;
   }
+
   public getGradientPositions(): number[] {
     return this.mGradientPositions;
   }
@@ -157,40 +158,34 @@ export default class Fill {
       case Type.EMPTY:
         return;
       case Type.COLOR:
-        if (this.mFinalColor == null) return;
+        if (this.mFinalColor == null) {
+          return;
+        }
         if (this.isClipPathSupported()) {
           let rectB: BackGroundPaint = new BackGroundPaint();
           rectB.setBackgroundColor(this.mFinalColor);
           return rectB;
         } else {
-          // save
           let previous: Style = paint.getStyle();
           let previousColor: number = paint.getColor() as number;
-
-          // set
           paint.setStyle(Style.FILL);
           paint.setColor(this.mFinalColor);
           let rectP: RectPaint = new RectPaint(paint);
           rectP.setStartPoint([left, top]);
           rectP.setWidth(right - left);
           rectP.setHeight(bottom - top);
-
-          // restore
           paint.setColor(previousColor);
           paint.setStyle(previous);
           return rectP;
         }
-
       case Type.LINEAR_GRADIENT:
-        if (this.mGradientColors == null) return;
+        if (this.mGradientColors == null) {
+          return;
+        }
         let gradient: RectPaint = new RectPaint();
-      //        let leftResult:number=(gradientDirection == MyDirection.RIGHT? right: gradientDirection == MyDirection.LEFT ? left: left)
         let leftResult: number = left;
-      //        let topResult:number=(gradientDirection == MyDirection.UP? bottom: gradientDirection == MyDirection.DOWN? top: top)
         let topResult = top;
-      //        let rightResult:number=(gradientDirection == MyDirection.RIGHT ? left  : gradientDirection == MyDirection.LEFT? right : left)
         let rightResult: number = right;
-      //        let bottomResult:number=(gradientDirection == MyDirection.UP? top: gradientDirection == MyDirection.DOWN ? bottom: top)
         let bottomResult = bottom;
         gradient.setX(leftResult);
         gradient.setY(topResult);
@@ -198,16 +193,16 @@ export default class Fill {
         gradient.setHeight(bottomResult - topResult);
         gradient.setStyle(paint.getStyle());
         gradient.setColor(paint.getColor());
-        let colorArr: Array<ColorStop> = new Array<ColorStop>();
-
+        let colorArr: ColorStop[] = [];
         for (let i = 0; i < this.mGradientColors.length; i++) {
           colorArr.push([this.mGradientColors[i], this.mGradientPositions[i]]);
         }
         gradient.setGradientFillColor(colorArr);
         return gradient;
-
       case Type.DRAWABLE:
-        if (this.mDrawable == null || this.mDrawable) return;
+        if (this.mDrawable == null || this.mDrawable) {
+          return;
+        }
         let imagePaint = new ImagePaint(this.mDrawable);
         imagePaint.x = left;
         imagePaint.y = top;
@@ -229,8 +224,9 @@ export default class Fill {
         return;
 
       case Type.COLOR:
-        if (this.mFinalColor == null || this.mFinalColor == undefined) return;
-
+        if (this.mFinalColor == null || this.mFinalColor == undefined) {
+          return;
+        }
         if (clipRect != null && this.isClipPathSupported()) {
           let rectP: BackGroundPaint = new BackGroundPaint();
           rectP.setBackgroundColor(this.mFinalColor);
@@ -251,7 +247,9 @@ export default class Fill {
           return pathP;
         }
       case Type.LINEAR_GRADIENT:
-        if (this.mGradientColors == null) return;
+        if (this.mGradientColors == null) {
+          return;
+        }
         let gradient: PathPaint = new PathPaint();
         let leftResult: number = 0;
         let topResult: number = 0;
@@ -261,7 +259,7 @@ export default class Fill {
         gradient.setY(topResult);
         gradient.setWidth(rightResult - leftResult);
         gradient.setHeight(bottomResult - topResult);
-        let colorArr: Array<ColorStop> = new Array<ColorStop>();
+        let colorArr: ColorStop[] = [];
         for (let i = 0; i < this.mGradientColors.length; i++) {
           colorArr.push([this.mGradientColors[i], this.mGradientPositions[i]]);
         }
@@ -270,7 +268,9 @@ export default class Fill {
         gradient.setGradientFillColor(colorArr);
         return gradient;
       case Type.DRAWABLE:
-        if (this.mDrawable == null) return;
+        if (this.mDrawable == null) {
+          return;
+        }
 
         this.ensureClipPathSupported();
 

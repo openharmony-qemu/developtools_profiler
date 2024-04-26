@@ -52,8 +52,9 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
 
         // If granularity is enabled, then do not allow the interval to go below specified granularity.
         // This is used to avoid repeated values when rounding values for display.
-        if (this.mAxis.isGranularityEnabled())
-        interval = interval < this.mAxis.getGranularity() ? this.mAxis.getGranularity() : interval;
+        if (this.mAxis.isGranularityEnabled()) {
+            interval = interval < this.mAxis.getGranularity() ? this.mAxis.getGranularity() : interval;
+        }
 
         // Normalize interval
         let intervalMagnitude: number = Utils.roundToNextSignificant(Math.pow(10, Math.log10(interval)));
@@ -114,10 +115,9 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
             }
 
             for (f = first, i = 0; i < n; f += interval, ++i) {
-                if (f == 0.0)
-                // Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
-                f = 0.0;
-
+                if (f === 0.0) {
+                    f = 0.0; //Fix for negative zero case (Where value == -0.0, and 0.0 == -0.0)
+                }
                 this.mAxis.mEntries[i] = f;
             }
         }
@@ -146,7 +146,9 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
     }
 
     public renderAxisLabels(): Paint[] {
-        if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawLabelsEnabled()) return;
+        if (!this.mYAxis.isEnabled() || !this.mYAxis.isDrawLabelsEnabled()) {
+            return;
+        }
 
         this.mAxisLabelPaint.setTypeface(this.mYAxis.getTypeface());
         this.mAxisLabelPaint.setTextSize(this.mYAxis.getTextSize());
@@ -176,30 +178,23 @@ export default class YAxisRendererRadarChart extends YAxisRenderer {
     private mRenderLimitLinesPathBuffer: string = '';
     public renderLimitLines(): Paint[] {
         let limitLines: JArrayList<LimitLine> = this.mYAxis.getLimitLines();
-
-        if (limitLines == null) return;
-
+        if (limitLines == null) {
+            return;
+        }
         let sliceangle: number = this.radarChartMode.getSliceAngle();
-
-        // calculate the factor that is needed for transforming the value to
-        // pixels
         let factor: number = this.radarChartMode.getFactor();
-
         let center: MPPointF = this.radarChartMode.getCenterOffsets();
         let pOut: MPPointF = MPPointF.getInstance(0, 0);
         for (let i = 0; i < limitLines.size(); i++) {
             let l: LimitLine = limitLines.get(i);
-
-            if (!l.isEnabled()) continue;
-
+            if (!l.isEnabled()) {
+                continue;
+            }
             this.mLimitLinePaint.setColor(l.getLineColor());
             this.mLimitLinePaint.setDashPathEffect(l.getDashPathEffect());
             this.mLimitLinePaint.setStrokeWidth(l.getLineWidth());
-
             let r: number = (l.getLimit() - this.radarChartMode.getYChartMin()) * factor;
-
             let limitPath: string = this.mRenderLimitLinesPathBuffer;
-
             for (let j = 0; j < this.radarChartMode.getData().getMaxEntryCountSet().getEntryCount(); j++) {
                 Utils.getPosition(center, r, sliceangle * j + this.radarChartMode.getRotationAngle(), pOut);
             }

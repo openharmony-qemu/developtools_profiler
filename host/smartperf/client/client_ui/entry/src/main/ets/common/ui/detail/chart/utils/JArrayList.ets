@@ -179,7 +179,7 @@ export class JArrayList<T> implements JList<T> {
       return this.dataSouce;
     }
     if (a.length < this.length()) {
-      return new Array<T>();
+      return [];
     }
   }
   /**

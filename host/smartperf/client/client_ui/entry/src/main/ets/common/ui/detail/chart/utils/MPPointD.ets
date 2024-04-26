@@ -17,11 +17,7 @@ import { Poolable } from './Poolable';
 import { ObjectPool } from './ObjectPool';
 import { JArrayList } from './JArrayList';
 
-/**
- * Point encapsulating two double values.
- *
- * @author Philipp Jahoda
- */
+
 export default class MPPointD extends Poolable {
   private static pool: ObjectPool<MPPointD> = ObjectPool.create(64, new MPPointD(0, 0)).setReplenishPercentage(0.5);
 
@@ -49,9 +45,7 @@ export default class MPPointD extends Poolable {
     this.y = y;
   }
 
-  /**
-   * returns a string representation of the object
-   */
+
   public toString(): string {
     return 'MPPointD, x: ' + this.x + ', y: ' + this.y;
   }

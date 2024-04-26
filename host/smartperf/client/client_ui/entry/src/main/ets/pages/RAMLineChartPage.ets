@@ -70,7 +70,7 @@ struct RAMLineChartPage {
           .fontColor('#FF0000')
           .fontWeight(5)
           .margin({ left: 1, top: 1 }) //文本显示
-        Text(this.random + "")
+        Text(this.random + '')
           .fontSize('1fp')
           .fontColor($r('app.color.color_fff')).visibility(Visibility.None)
         Image($r('app.media.icon_close_small')).width('20vp').height('20vp').onClick(() => {

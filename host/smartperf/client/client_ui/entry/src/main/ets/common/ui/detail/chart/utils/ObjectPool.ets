@@ -25,7 +25,6 @@ import { Poolable } from './Poolable';
  *   Benefit - The pool can very quickly determine if an object is elligable for storage without iteration.
  *   Benefit - The pool can also know if an instance of Poolable is already stored in a different pool instance.
  *   Benefit - The pool can grow as needed, if it is empty
- *   Cost - However, refilling the pool when it is empty might incur a time cost with sufficiently large capacity.  Set the replenishPercentage to a lower number if this is a concern.
  */
 export abstract class ObjectPool<T extends Poolable> {
   private static ids = 0;

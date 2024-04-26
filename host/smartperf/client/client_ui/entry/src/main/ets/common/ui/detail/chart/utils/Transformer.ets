@@ -80,12 +80,12 @@ export default class Transformer {
   public prepareMatrixOffset(inverted: boolean) {
     this.mMatrixOffset.reset();
 
-    if (!inverted)
-    this.mMatrixOffset.postTranslate(
-    this.mViewPortHandler.offsetLeft(),
-      this.mViewPortHandler.getChartHeight() - this.mViewPortHandler.offsetBottom()
-    );
-    else {
+    if (!inverted) {
+      this.mMatrixOffset.postTranslate(
+        this.mViewPortHandler.offsetLeft(),
+        this.mViewPortHandler.getChartHeight() - this.mViewPortHandler.offsetBottom()
+      );
+    } else {
       this.mMatrixOffset.setTranslate(this.mViewPortHandler.offsetLeft(), -this.mViewPortHandler.offsetTop());
       this.mMatrixOffset.postScale(1.0, -1.0);
     }
@@ -233,12 +233,6 @@ export default class Transformer {
     return valuePoints;
   }
 
-  /**
-   * transform a path with all the given matrices VERY IMPORTANT: keep order
-   * to value-touch-offset
-   *
-   * @param path
-   */
   public pathValueToPixel(path: string): string {
     path = this.pathTransform(path, this.mMatrixValueToPx);
     path = this.pathTransform(path, this.mViewPortHandler.getMatrixTouch());

@@ -107,8 +107,11 @@ export default class ViewPortHandler {
   }
 
   public hasChartDimens(): boolean {
-    if (this.mChartHeight > 0 && this.mChartWidth > 0) return true;
-    else return false;
+    if (this.mChartHeight > 0 && this.mChartWidth > 0) {
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public restrainViewPort(offsetLeft: number, offsetTop: number, offsetRight: number, offsetBottom: number) {
@@ -338,7 +341,9 @@ export default class ViewPortHandler {
     // make sure scale and translation are within their bounds
     this.limitTransAndScale(this.mMatrixTouch, this.mContentRect);
 
-    if (invalidate) chart.invalidate();
+    if (invalidate) {
+      chart.invalidate();
+    }
 
     newMatrix.set(this.mMatrixTouch);
     return newMatrix;
@@ -393,7 +398,9 @@ export default class ViewPortHandler {
    * @param xScale
    */
   public setMinimumScaleX(xScale: number) {
-    if (xScale < 1) xScale = 1;
+    if (xScale < 1) {
+      xScale = 1;
+    }
 
     this.mMinScaleX = xScale;
 
@@ -406,7 +413,9 @@ export default class ViewPortHandler {
    * @param xScale
    */
   public setMaximumScaleX(xScale: number) {
-    if (xScale == 0.0) xScale = Number.MAX_VALUE;
+    if (xScale == 0.0) {
+      xScale = Number.MAX_VALUE;
+    }
 
     this.mMaxScaleX = xScale;
 
@@ -420,9 +429,13 @@ export default class ViewPortHandler {
    * @param maxScaleX
    */
   public setMinMaxScaleX(minScaleX: number, maxScaleX: number) {
-    if (minScaleX < 1) minScaleX = 1;
+    if (minScaleX < 1) {
+      minScaleX = 1;
+    }
 
-    if (maxScaleX == 0.0) maxScaleX = Number.MAX_VALUE;
+    if (maxScaleX == 0.0) {
+      maxScaleX = Number.MAX_VALUE;
+    }
 
     this.mMinScaleX = minScaleX;
     this.mMaxScaleX = maxScaleX;
@@ -436,7 +449,9 @@ export default class ViewPortHandler {
    * @param yScale
    */
   public setMinimumScaleY(yScale: number) {
-    if (yScale < 1) yScale = 1;
+    if (yScale < 1) {
+      yScale = 1;
+    }
 
     this.mMinScaleY = yScale;
 
@@ -449,7 +464,9 @@ export default class ViewPortHandler {
    * @param yScale
    */
   public setMaximumScaleY(yScale: number) {
-    if (yScale == 0.0) yScale = Number.MAX_VALUE;
+    if (yScale == 0.0) {
+      yScale = Number.MAX_VALUE;
+    }
 
     this.mMaxScaleY = yScale;
 
@@ -457,9 +474,13 @@ export default class ViewPortHandler {
   }
 
   public setMinMaxScaleY(minScaleY: number, maxScaleY: number) {
-    if (minScaleY < 1) minScaleY = 1;
+    if (minScaleY < 1) {
+      minScaleY = 1;
+    }
 
-    if (maxScaleY == 0.0) maxScaleY = Number.MAX_VALUE;
+    if (maxScaleY == 0.0) {
+      maxScaleY = Number.MAX_VALUE;
+    }
 
     this.mMinScaleY = minScaleY;
     this.mMaxScaleY = maxScaleY;

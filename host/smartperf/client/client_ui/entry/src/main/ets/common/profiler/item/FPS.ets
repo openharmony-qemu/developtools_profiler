@@ -60,8 +60,8 @@ export class FPS extends BaseProfiler implements SocketProfiler {
     mainWorker.postMessage({ fps: true, pkg: globalThis.collectPkg });
     SPLogger.DEBUG(FPS.name, 'messageQueue for fps' + globalThis.fpsArr.length);
     if (globalThis.fpsArr.length > 0) {
-      let fpsQueue: Array<String> = globalThis.fpsArr;
-      let fpsJitterQueue: Array<String> = globalThis.fpsJitterArr;
+      let fpsQueue: String[] = globalThis.fpsArr;
+      let fpsJitterQueue: String[] = globalThis.fpsJitterArr;
       let curFPS = fpsQueue.pop();
       globalThis.timerFps = curFPS;
       let curFPSJitter = fpsJitterQueue.pop();

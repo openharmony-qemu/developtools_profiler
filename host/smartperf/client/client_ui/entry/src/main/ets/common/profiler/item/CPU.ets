@@ -135,10 +135,10 @@ export class CPU extends BaseProfiler {
   }
 
   ArrStr2Number(arr: Array<String>): Array<number> {
-    let result = new Array<number>();
+    let result = [];
     for (var index = 0; index < arr.length; index++) {
       const element = arr[index].replace('\n', '');
-      result.push(new Number(element).valueOf());
+      result.push(`${element}`.valueOf());
     }
     return result;
   }
