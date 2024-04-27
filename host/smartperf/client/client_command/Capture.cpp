@@ -64,8 +64,8 @@ void Capture::SocketMessage()
 void Capture::ThreadGetCatch(const std::string &curTime) const
 {
     auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".png";
-    std::string cmdResult;
     if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
+        std::string cmdResult;
         SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
         printf("/data/local/tmp/capture created! \n");
         LOGI("/data/local/tmp/capture created!");
@@ -89,8 +89,11 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("/data/local/tmp/capture created! \n");
         LOGI("/data/local/tmp/capture created!");
     };
-    std::filesystem::path canonicalPath = std::filesystem::canonical(savePath);
-    auto fd = open(canonicalPath.c_str(), O_RDWR | O_CREAT, 0640);
+    char resolvedPath[PATH_MAX] = {0X00};
+    if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    auto fd = open(resolvedPath, O_RDWR | O_CREAT, 0644);
     SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
     (void)close(fd);
 }

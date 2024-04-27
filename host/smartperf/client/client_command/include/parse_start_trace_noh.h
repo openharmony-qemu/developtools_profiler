@@ -25,8 +25,8 @@ public:
     double ParseStartTraceNohe(std::string file);
     double CalculateTime();
     std::string GetLineTime(std::string line);
-    std::string CutString(std::string line, std::string start, std::string end, size_t offset);
-    std::vector<std::string> Split(std::string str, std::string pattern);
+    std::string CutString(std::string line, const std::string &start, const std::string &end, size_t offset);
+    std::vector<std::string> Split(std::string str, const std::string &pattern);
 
 private:
     std::ifstream infile;

@@ -27,21 +27,21 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-double ParseRadar::ParseRadarStart(std::string string)
+double ParseRadar::ParseRadarStart(const std::string &string)
 {
     double time = -1;
     std::string target = "\"E2E_LATENCY\":";
     time = std::stod(ExtractString(string, target));
     return time;
 }
-double ParseRadar::ParseRadarStartResponse(std::string string)
+double ParseRadar::ParseRadarStartResponse(const std::string &string)
 {
     double time = -1;
     std::string target = "\"RESPONSE_LATENCY\":";
     time = std::stod(ExtractString(string, target));
     return time;
 }
-std::string ParseRadar::ParseRadarAppStrart(std::string string)
+std::string ParseRadar::ParseRadarAppStrart(const std::string &string)
 {
     std::string animationCompleteTime = ExtractString(string, "\"ANIMATION_LATENCY\":");
     std::string completeTime = ExtractString(string, "\"E2E_LATENCY\":");
@@ -60,27 +60,27 @@ std::string ParseRadar::ParseRadarAppStrart(std::string string)
     LOGI("Radar.result====: %s", result.c_str());
     return result;
 }
-double ParseRadar::ParseRadarResponse(std::string string)
+double ParseRadar::ParseRadarResponse(const std::string &string)
 {
     double time = -1;
     std::string target = "\"RESPONSE_LATENCY\":";
     time = std::stod(ExtractString(string, target));
     return time;
 }
-double ParseRadar::ParseRadarComplete(std::string string)
+double ParseRadar::ParseRadarComplete(const std::string &string)
 {
     double time = -1;
     std::string target = "\"E2E_LATENCY\":";
     time = std::stod(ExtractString(string, target));
     return time;
 }
-std::string ParseRadar::ParseRadarMaxFrame(std::string string)
+std::string ParseRadar::ParseRadarMaxFrame(const std::string &string)
 {
     std::string maxRenderSeqMissedFrames = ExtractString(string, "\"MAX_RENDER_SEQ_MISSED_FRAMES\":");
     std::string result = "MAX_RENDER_SEQ_MISSED_FRAMES:" + maxRenderSeqMissedFrames;
     return result;
 }
-std::string ParseRadar::ParseRadarFrame(std::string string)
+std::string ParseRadar::ParseRadarFrame(const std::string &string)
 {
     std::string budleName = ExtractString(string, "\"BUNDLE_NAME_EX\":");
     std::cout << "BUNDLE_NAME:" << budleName << std::endl;

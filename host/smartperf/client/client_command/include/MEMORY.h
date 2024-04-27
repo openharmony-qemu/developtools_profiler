@@ -44,7 +44,7 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-    void SetPackageName(const std::string pName);
+    void SetPackageName(const std::string &pName);
 
 private:
     MEMORY() {};

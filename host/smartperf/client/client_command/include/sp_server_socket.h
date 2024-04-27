@@ -33,7 +33,7 @@ public:
     int Recvfrom();
     // TCP
     int Accept();
-    int Send(std::string sendBuf) const;
+    int Send(const std::string &sendBuf) const;
     int Recv();
     // 关闭
     void Close();

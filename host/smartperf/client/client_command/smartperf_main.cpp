@@ -26,7 +26,7 @@
 #include "parameters.h"
 
 
-static std::string GetOptions(std::vector<std::string> &argv)
+static std::string GetOptions(const std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;

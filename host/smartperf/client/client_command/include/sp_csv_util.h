@@ -27,7 +27,7 @@ namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
 public:
-    static void WriteCsv(std::string path, std::vector<SPData> vmap)
+    static void WriteCsv(const std::string &path, std::vector<SPData> vmap)
     {
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};

@@ -60,7 +60,7 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
     } else if (v[typeName] == "fpsohtest") {
         SPUtils::LoadCmd("GP_daemon_fps 10", result);
     } else if (v[typeName] == "frameLoss") {
-        SmartPerf::ControlCallCmd::GetFrame();
+        result = SmartPerf::ControlCallCmd::GetFrame();
     } else if (v[typeName] == "appStartTime") {
         result = ControlCallCmd::GetAppStartTime();
     } else if (v[typeName] == "slideList") {

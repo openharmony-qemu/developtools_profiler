@@ -30,7 +30,7 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%ll) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
         mThreshold, mLowfps, mCurNum);
 }
-void ByTrace::SetTraceCmd(std::string mTraceCmd) const
+void ByTrace::SetTraceCmd(const std::string &mTraceCmd) const
 {
     traceCmd = mTraceCmd;
 }
@@ -48,7 +48,7 @@ void ByTrace::ThreadGetTrace() const
     std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
 }
-TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps)
+TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
 {
     times++;
     int two = 2;

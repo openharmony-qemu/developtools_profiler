@@ -26,7 +26,7 @@ public:
     double CalculateTime();
     double CalculateTimeEnd();
     std::string GetLineTime(std::string line);
-    std::string CutString(std::string line, std::string start, std::string end, size_t offset);
+    std::string CutString(std::string line, const std::string &start, const std::string &end, size_t offset);
 
 private:
     std::ifstream infile;

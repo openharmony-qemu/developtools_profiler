@@ -26,8 +26,6 @@
 namespace {
 struct DumpEntity {
     const std::string windowName;
-    const std::string displayId;
-    const std::string pid;
     const std::string windId;
 };
 struct FpsInfo {
@@ -89,7 +87,6 @@ static std::string GetLayer()
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd != nullptr) {
         int lineNum = 0;
-        std::string line;
         char buf[1024] = {'\0'};
         const int paramFifteen = 15;
         const int paramThree = 3;
@@ -97,7 +94,7 @@ static std::string GetLayer()
         const int windowIdIndex = 3;
         const int focusNameIndex = 2;
         while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            line = buf;
+            std::string line = buf;
             if (line[0] == '-' || line[0] == ' ') {
                 continue;
             }
@@ -294,11 +291,10 @@ int main(int argc, char *argv[])
         printf("exec failed, require one param | example: GP_daemon_fps 10");
         return 0;
     }
-    int num = 1;
     if (!strcmp(argv[1], "")) {
         printf("the args of num must be not-null!\n");
     } else {
-        num = atoi(argv[1]);
+        int num = atoi(argv[1]);
         if (num < 0) {
             printf("set num:%d not valid arg\n", num);
         }

@@ -21,8 +21,8 @@ namespace SmartPerf {
 class SpProfilerFactory {
 public:
     static SpProfiler *GetProfilerItem(MessageType messageType);
-    static void SetProfilerPkg(std::string pkg);
-    static void SetProfilerLayer(std::string layer);
+    static void SetProfilerPkg(const std::string &pkg);
+    static void SetProfilerLayer(const std::string &layer);
     static void SetByTrace(std::string message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);
 };

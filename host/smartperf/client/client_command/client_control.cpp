@@ -24,7 +24,7 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-int ClientControl::SocketStart(std::string args)
+int ClientControl::SocketStart(const std::string &args)
 {
     std::string messageInit = message + args;
     int resultId = OHOS::SmartPerf::ClientControl::InitSocket();

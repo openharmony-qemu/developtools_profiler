@@ -67,7 +67,6 @@ double ParsePageFpsTrace::CalculateTime()
             if (count == 0) {
                 completeLine = line;
                 frameStartInterval = frameEndTime;
-                frameStartInterval = 0;
                 frameEndTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(completeLine));
                 updateCount = false;
             }
@@ -103,7 +102,8 @@ std::string ParsePageFpsTrace::GetLineTime(std::string line)
     size_t position2 = line.find(":");
     return line.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParsePageFpsTrace::CutString(std::string line, std::string start, std::string end, size_t offset)
+std::string ParsePageFpsTrace::CutString(std::string line, const std::string &start,
+    const std::string &end, size_t offset)
 {
     size_t position1 = line.find(start);
     size_t position2 = line.find(end);

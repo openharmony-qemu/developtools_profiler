@@ -18,7 +18,7 @@ namespace OHOS {
 namespace SmartPerf {
 class EditorCommand {
 public:
-    EditorCommand(int argc, std::vector<std::string> v);
+    EditorCommand(int argc, const std::vector<std::string> &v);
     ~EditorCommand() {};
 };
 }

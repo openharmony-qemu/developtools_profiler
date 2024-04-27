@@ -64,7 +64,7 @@ public:
     static void InitSomething();
     std::string ExecCommand();
     void HelpCommand(CommandHelp type) const;
-    void HandleCommand(std::string argStr, std::string argStr1);
+    void HandleCommand(std::string argStr, const std::string &argStr1);
     // 采集次数
     int num = 0;
     // 包名

@@ -84,7 +84,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         std::cout << result << std::endl;
     }
 }
-void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
+void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {

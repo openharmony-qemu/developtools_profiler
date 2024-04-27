@@ -50,6 +50,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     }
     args.push_back(command);
     StuckNotification snf;
+    snf.isEffective = false;
     std::string sessionId;
     long long interval = 1000;
     std::string pkg;
@@ -104,7 +105,7 @@ static std::string MapToString(std::map<std::string, std::string> myMap)
     return str;
 }
 
-ErrCode SPTask::InitTask(std::string recvStr)
+ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
@@ -306,9 +307,9 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
             std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
             ThreadGetHiperf(startCaptuerTime);
         } else {
-            long long diff = RM_0;
             long long nowTime = SPUtils::GetCurTime();
-            diff = startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) : (nowTime - startCaptuerTime);
+            long long diff = startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) :
+                (nowTime - startCaptuerTime);
             std::cout << "else::" << startCaptuerTime << std::endl;
             if (diff > RM_5000 && (!CheckCounterId())) {
                 isCaptureTrace = false;
@@ -345,7 +346,7 @@ std::thread SPTask::ThreadGetHiperf(long long ts)
     return thGetTrace;
 }
 
-void SPTask::GetHiperf(std::string traceName)
+void SPTask::GetHiperf(const std::string &traceName)
 {
     std::string result;
     std::string tmp = SetHiperf(traceName);
@@ -383,7 +384,7 @@ void SPTask::KillHiperfCmd()
     return;
 }
 
-std::string SPTask::SetHiperf(std::string traceName)
+std::string SPTask::SetHiperf(const std::string &traceName)
 {
     std::string hiPrefix = "hiprofiler_";
     std::string dataPrefix = "perf_";

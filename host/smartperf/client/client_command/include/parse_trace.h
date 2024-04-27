@@ -30,8 +30,8 @@ public:
     double ParseHotTrace(const std::string &fileNamePath);
     static double GetTime(std::string start, std::string end);
     std::string GetStartTime(std::string line, const std::string &startTimeBefore);
-    std::string GetWindowTime(std::string line, std::string wt);
-    std::string GetFrameId(std::string line, std::string appPid, std::string fid);
+    std::string GetWindowTime(std::string line, const std::string &wt);
+    std::string GetFrameId(std::string line, const std::string &appPid, const std::string &fid);
 
 private:
     std::ifstream infile;
