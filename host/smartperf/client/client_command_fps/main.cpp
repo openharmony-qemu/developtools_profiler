@@ -87,7 +87,6 @@ static std::string GetLayer()
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd != nullptr) {
         int lineNum = 0;
-        std::string line;
         char buf[1024] = {'\0'};
         const int paramFifteen = 15;
         const int paramThree = 3;
@@ -95,7 +94,7 @@ static std::string GetLayer()
         const int windowIdIndex = 3;
         const int focusNameIndex = 2;
         while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            line = buf;
+            std::string line = buf;
             if (line[0] == '-' || line[0] == ' ') {
                 continue;
             }
@@ -106,7 +105,7 @@ static std::string GetLayer()
                 continue;
             }
             if (params.size() == paramFifteen) {
-                DumpEntity dumpEntity { params[0], params[1], params[2], params[3] };
+                DumpEntity dumpEntity { params[0], params[1]};
                 dumpEntityList.push_back(dumpEntity);
             }
             if (params.size() == paramThree) {
