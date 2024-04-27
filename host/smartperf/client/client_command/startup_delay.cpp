@@ -241,16 +241,17 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
+    size_t findIndex = std::string::npos;
     while (getline(file, strLine)) {
         size_t appPkgIndex = strLine.find("AppName_text_" + appPkgName);
         size_t appIndex = strLine.find(curAppName);
         if (appIndex != std::string::npos) {
-            size_t findIndex = appIndex;
+            findIndex = appIndex;
             if (findIndex == std::string::npos) {
                 break;
             }
         } else {
-            size_t findIndex = appPkgIndex;
+            findIndex = appPkgIndex;
             if (findIndex == std::string::npos) {
                 break;
             }
@@ -268,8 +269,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
                 pointVector.push_back(startX);
             }
             size_t num = 3;
-            size_t pointNum = pointVector.size();
-            if (pointNum > num) {
+            if (pointVector.size() > num) {
                 int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
                 int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
                 pointXY = std::to_string(x) + " " + std::to_string(y);
