@@ -37,21 +37,27 @@ RingBuffer::RingBuffer(const std::size_t bufSize, const enum MemAlignShift shift
         case H_ALIGN_SHIFT: {
             bufSize_ = (bufSize_ >> H_ALIGN_SHIFT);
             uint16_t *temp = new(std::nothrow) uint16_t[bufSize_];
-            buffer_ = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                buffer_ = reinterpret_cast<char *>(temp);
+            }
             bufSize_ = (bufSize_ << H_ALIGN_SHIFT);
             break;
         }
         case W_ALIGN_SHIFT: {
             bufSize_ = (bufSize_ >> W_ALIGN_SHIFT);
             uint32_t *temp = new(std::nothrow) uint32_t[bufSize_];
-            buffer_ = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                buffer_ = reinterpret_cast<char *>(temp);
+            }
             bufSize_ = (bufSize_ << W_ALIGN_SHIFT);
             break;
         }
         case D_ALIGN_SHIFT: {
             bufSize_ = (bufSize_ >> D_ALIGN_SHIFT);
             uint64_t *temp = new(std::nothrow) uint64_t[bufSize_];
-            buffer_ = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                buffer_ = reinterpret_cast<char *>(temp);
+            }
             bufSize_ = (bufSize_ << D_ALIGN_SHIFT);
             break;
         }
@@ -75,6 +81,9 @@ ssize_t RingBuffer::Read(const int fd, const std::size_t len)
         if (Resize() != 0) {
             return -1;
         }
+    }
+    if (buffer_ == nullptr) {
+        return -1;
     }
     // now we have enough free space to read in from fd
     destBufs[0].iov_base = buffer_ + tail_;
@@ -115,6 +124,9 @@ ssize_t RingBuffer::Write(const int fd, std::size_t len)
     if (len == 0) {
         return 0;
     }
+    if (buffer_ == nullptr) {
+        return -1;
+    }
     // now we are sure there is at least 'len' bytes data in the buffer
     srcBufs[0].iov_base = buffer_ + head_;
     if (head_ + len > bufSize_) {
@@ -152,6 +164,9 @@ std::size_t RingBuffer::Get(char* dest, const std::size_t len)
     if (len > dataSize) {
         return 0;
     }
+    if (buffer_ == nullptr) {
+        return -1;
+    }
     if (head_ + len > bufSize_) {
         // data splitted
         if (memcpy_s(dest, len, buffer_ + head_, bufSize_ - head_) != EOK) {
@@ -188,6 +203,9 @@ int RingBuffer::Put(const char* str, const std::size_t len)
         if (Resize() != 0) {
             return -1;
         }
+    }
+    if (buffer_ == nullptr) {
+        return -1;
     }
     if (tail_ + len < bufSize_) {
         // continuous free space
@@ -228,6 +246,9 @@ int RingBuffer::Put(const std::string& str)
             return -1;
         }
     }
+    if (buffer_ == nullptr) {
+        return -1;
+    }
     if (tail_ + len < bufSize_) {
         // continuous free space
         if (memcpy_s(buffer_ + tail_, bufSize_ - tail_, str.c_str(), len) != EOK) {
@@ -262,19 +283,25 @@ char* RingBuffer::Allocate(std::size_t bufSize)
         case H_ALIGN_SHIFT: {
             bufSize = (bufSize >> H_ALIGN_SHIFT);
             uint16_t *temp = new(std::nothrow) uint16_t[bufSize];
-            newBuffer = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                newBuffer = reinterpret_cast<char *>(temp);
+            }
             break;
         }
         case W_ALIGN_SHIFT: {
             bufSize = (bufSize >> W_ALIGN_SHIFT);
             uint32_t *temp = new(std::nothrow) uint32_t[bufSize];
-            newBuffer = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                newBuffer = reinterpret_cast<char *>(temp);
+            }
             break;
         }
         case D_ALIGN_SHIFT: {
             bufSize = (bufSize >> D_ALIGN_SHIFT);
             uint64_t *temp = new(std::nothrow) uint64_t[bufSize];
-            newBuffer = reinterpret_cast<char *>(temp);
+            if (temp != nullptr) {
+                newBuffer = reinterpret_cast<char *>(temp);
+            }
             break;
         }
     }
@@ -286,6 +313,9 @@ int RingBuffer::Resize()
     std::size_t expandedSize {bufSize_ << 1};
     char* newBuf = Allocate(expandedSize);
     if (newBuf == nullptr) {
+        return -1;
+    }
+    if (buffer_ == nullptr) {
         return -1;
     }
     // copy data to the new buffer

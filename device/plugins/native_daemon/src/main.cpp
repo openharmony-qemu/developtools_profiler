@@ -209,6 +209,12 @@ bool VerifyCommand(std::vector<std::string> args, HookData& hookData)
     return false;
 }
 
+volatile sig_atomic_t g_isRunning = true;
+void SignalSigintHandler(int sig)
+{
+    g_isRunning = false;
+}
+
 void GetHookedProceInfo(HookData& hookData)
 {
     printf("Record file = %s, apply sharememory size = %u\n", hookData.fileName.c_str(), hookData.smbSize);
@@ -238,9 +244,10 @@ void GetHookedProceInfo(HookData& hookData)
     if (!OHOS::Developtools::Profiler::Hook::StartHook(hookData)) {
         return;
     }
-    while (true) {
+    while (g_isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
     }
+    OHOS::Developtools::Profiler::Hook::EndHook();
 }
 } // namespace
 
@@ -270,6 +277,7 @@ int main(int argc, char* argv[])
             }
             HookData hookData;
             if (VerifyCommand(args, hookData)) {
+                signal(SIGINT, SignalSigintHandler);
                 GetHookedProceInfo(hookData);
             } else {
                 std::string help = R"(Usage: native_daemon
