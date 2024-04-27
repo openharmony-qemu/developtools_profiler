@@ -87,6 +87,7 @@ static std::string GetLayer()
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd != nullptr) {
         int lineNum = 0;
+        std::string line;
         char buf[1024] = {'\0'};
         const int paramFifteen = 15;
         const int paramThree = 3;
@@ -94,7 +95,7 @@ static std::string GetLayer()
         const int windowIdIndex = 3;
         const int focusNameIndex = 2;
         while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            std::string line = buf;
+            line = buf;
             if (line[0] == '-' || line[0] == ' ') {
                 continue;
             }

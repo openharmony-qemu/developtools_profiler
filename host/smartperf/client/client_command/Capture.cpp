@@ -89,7 +89,7 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("/data/local/tmp/capture created! \n");
         LOGI("/data/local/tmp/capture created!");
     };
-    char resolvedPath[PATH_MAX] = {0X00};
+    char resolvedPath[PATH_MAX] = {0x00};
     if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
         std::cout << "" << std::endl;
     }

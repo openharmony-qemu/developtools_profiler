@@ -55,7 +55,7 @@ public:
         }
         outFile.close();
     }
-    static void WriteCsvH(std::string path, std::map<std::string, std::string> vmap)
+    static void WriteCsvH(const std::string &path, std::map<std::string, std::string> vmap)
     {
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};
