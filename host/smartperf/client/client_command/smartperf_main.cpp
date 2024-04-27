@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
-    if (!g_checkCMDParam(vec, errorInfo)) {
+    if (!g_checkCmdParam(vec, errorInfo)) {
         std::cout << "SP_daemon:" << errorInfo << std::endl <<
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;
