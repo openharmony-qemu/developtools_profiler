@@ -241,17 +241,16 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
-    size_t findIndex = std::string::npos;
     while (getline(file, strLine)) {
         size_t appPkgIndex = strLine.find("AppName_text_" + appPkgName);
         size_t appIndex = strLine.find(curAppName);
         if (appIndex != std::string::npos) {
-            findIndex = appIndex;
+            size_t findIndex = appIndex;
             if (findIndex == std::string::npos) {
                 break;
             }
         } else {
-            findIndex = appPkgIndex;
+            size_t findIndex = appPkgIndex;
             if (findIndex == std::string::npos) {
                 break;
             }
