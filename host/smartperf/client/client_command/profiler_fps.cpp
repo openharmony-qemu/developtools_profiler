@@ -201,7 +201,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     }
 }
 
-void ProfilerFPS::GetFPS(td::vector<std::string> v)
+void ProfilerFPS::GetFPS(std::vector<std::string> v)
 {
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");

@@ -325,8 +325,7 @@ static void GetFpsUniteInfo(int num)
         FpsConfig fpsUniteConfig;
         gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
         gfpsUniteInfo = GetSurfaceFrame(uniteLayer, fpsUniteConfig);
-        if (gfpsUniteInfo.fps > gfpsInfo.fps)
-        {
+        if (gfpsUniteInfo.fps > gfpsInfo.fps) {
             printf("fps:%d|%lld\n", gfpsUniteInfo.fps, gfpsUniteInfo.currentFpsTime);
         } else {
             printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);

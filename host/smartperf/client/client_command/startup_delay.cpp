@@ -276,8 +276,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                int pointXYLength = static_cast<int>(leftEnd - leftStart - 1);
-                pointXY = boundStr.substr(leftStart + 1, pointXYLength);
+                pointXY = boundStr.substr(leftStart + 1, static_cast<int>(leftEnd - leftStart - 1));
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
