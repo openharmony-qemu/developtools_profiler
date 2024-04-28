@@ -102,7 +102,7 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)
 {
-    if (!path.empty() && path.back() != "/") {
+    if (!path.empty() && path.back() != '/') {
         return path + "/";
     } else {
         return path;
