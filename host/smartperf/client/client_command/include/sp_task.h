@@ -31,7 +31,7 @@ enum class ExceptionMsg {
     PACKAGE_NULL,
 };
 
-const std::map<ExceptionMsg, std::string> ExceptionMsgMap = {
+const std::map<ExceptionMsg, std::string> EXCEPTION_MSG_MAP = {
     { ExceptionMsg::NO_ERR, "NoErr" },
     { ExceptionMsg::SESSION_ID_NULL, "SessionIdNull" },
     { ExceptionMsg::TASK_CONFIG_NULL, "TaskConfigNull" },

@@ -22,14 +22,14 @@ namespace OHOS {
 namespace SmartPerf {
 class ParseRadar {
 public:
-    double ParseRadarStart(const std::string &string);
-    double ParseRadarStartResponse(const std::string &string);
-    double ParseRadarResponse(const std::string &string);
-    std::string ParseRadarAppStrart(const std::string &string);
-    double ParseRadarComplete(const std::string &string);
+    double ParseRadarStart(const std::string &string) const;
+    double ParseRadarStartResponse(const std::string &string) const;
+    double ParseRadarResponse(const std::string &string) const;
+    std::string ParseRadarAppStrart(const std::string &string) const;
+    double ParseRadarComplete(const std::string &string) const;
     std::string ExtractString(const std::string &str, const std::string &target) const;
-    std::string ParseRadarFrame(const std::string &string);
-    std::string ParseRadarMaxFrame(const std::string &string);
+    std::string ParseRadarFrame(const std::string &string) const;
+    std::string ParseRadarMaxFrame(const std::string &string) const;
 };
 }
 }

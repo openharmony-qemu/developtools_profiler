@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(argc, vec);
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::ClientControl cc;

@@ -56,10 +56,10 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         }
     }
     if (argv.size() >= threeParamMore) {
-        for (size_t i = 1; i <= argv.size() - 1; i++) {
+        for (int i = 1; i <= static_cast<int>(argv.size()) - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
-            if (i < argv.size() - 1) {
+            if (i < static_cast<int>(argv.size()) - 1) {
                 argStr1 = argv[i + 1];
             }
             if (COMMAND_MAP.count(argStr) > 0) {
