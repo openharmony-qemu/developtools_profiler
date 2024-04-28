@@ -43,7 +43,7 @@ struct Login {
     .linearGradient({
       angle: 135,
       direction: GradientDirection.Left,
-      colors: [[$r("app.color.colorPrimary"), 0.0], [$r("app.color.colorPrimary"), 1.0]]
+      colors: [[$r('app.color.colorPrimary'), 0.0], [$r('app.color.colorPrimary'), 1.0]]
     })
   }
 }

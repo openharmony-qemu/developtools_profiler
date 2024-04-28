@@ -21,7 +21,7 @@ import { questionList, QuestionItem } from '../common/entity/LocalConfigEntity';
 struct Question {
   build() {
     Column() {
-      StartTestTitleComponent({ title: "常见问题" })
+      StartTestTitleComponent({ title: '常见问题' })
       QuestionComponent()
     }
   }
@@ -54,7 +54,7 @@ struct QuestionComponent {
             .margin({ bottom: 2, top: 2 })
             .shadow({ radius: 10, color: Color.Gray, offsetX: 10, offsetY: 5 })
           }
-        }, QuestionItem => QuestionItem.question)
+        }, questionItem => questionItem.question)
       }.edgeEffect(EdgeEffect.None) // 滑动到边缘无效果
       .chainAnimation(false) // 联动特效关闭
     }.width('95%').height('88%')

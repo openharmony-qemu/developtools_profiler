@@ -20,7 +20,7 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-SpServerSocket::SpServerSocket() {}
+SpServerSocket::SpServerSocket() : sockPort(0) {}
 
 SpServerSocket::~SpServerSocket()
 {
@@ -75,7 +75,7 @@ int SpServerSocket::Sendto(std::string &sendBuf)
     return 0;
 }
 
-int SpServerSocket::Send(std::string sendBuf)
+int SpServerSocket::Send(const std::string &sendBuf) const
 {
     int sendBytes = send(connFd, sendBuf.c_str(), sendBuf.size(), 0);
     if (sendBytes < 0) {
@@ -88,9 +88,15 @@ int SpServerSocket::Send(std::string sendBuf)
 
 void SpServerSocket::Close()
 {
-    shutdown(sock, SHUT_RD);
-    close(sock);
-    sock = -1;
+    int optval = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    local.sin_family = AF_INET;
+    local.sin_port = htons(sockPort);
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
+        std::cout << "Socket Bind failed:" << sock << std::endl;
+        LOGI("SpServerSocket::Init Socket Bind failed");
+    }
 }
 
 int SpServerSocket::Recvfrom()

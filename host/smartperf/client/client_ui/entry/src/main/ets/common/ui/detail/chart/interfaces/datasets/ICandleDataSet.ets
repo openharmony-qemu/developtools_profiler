@@ -15,17 +15,16 @@
 
 import EntryOhos from '../../data/EntryOhos';
 import ILineScatterCandleRadarDataSet from './ILineScatterCandleRadarDataSet';
-import {Style} from '../../data/Paint'
+import { Style } from '../../data/Paint';
 
 export default interface ICandleDataSet extends ILineScatterCandleRadarDataSet<EntryOhos> {
-
     /**
      * Returns the space that is left out on the left and right side of each
      * candle.
      *
      * @return
      */
-    getBarSpace() : number;
+    getBarSpace(): number;
 
     /**
      * Returns whether the candle bars should show?
@@ -35,61 +34,61 @@ export default interface ICandleDataSet extends ILineScatterCandleRadarDataSet<E
      *
      * @return
      */
-    getShowCandleBar() : boolean;
+    getShowCandleBar(): boolean;
 
     /**
      * Returns the width of the candle-shadow-line in pixels.
      *
      * @return
      */
-    getShadowWidth() : number;
+    getShadowWidth(): number;
 
     /**
      * Returns shadow color for all entries
      *
      * @return
      */
-    getShadowColor() : number;
+    getShadowColor(): number;
 
     /**
      * Returns the neutral color (for open == close)
      *
      * @return
      */
-    getNeutralColor() : number;
+    getNeutralColor(): number;
 
     /**
      * Returns the increasing color (for open < close).
      *
      * @return
      */
-    getIncreasingColor() : number;
+    getIncreasingColor(): number;
 
     /**
      * Returns the decreasing color (for open > close).
      *
      * @return
      */
-    getDecreasingColor() : number;
+    getDecreasingColor(): number;
 
     /**
      * Returns paint style when open < close
      *
      * @return
      */
-    getIncreasingPaintStyle() :Style;
+    getIncreasingPaintStyle(): Style;
 
     /**
      * Returns paint style when open > close
      *
      * @return
      */
-    getDecreasingPaintStyle() : Style;
+    getDecreasingPaintStyle(): Style;
 
     /**
      * Is the shadow color same as the candle color?
      *
      * @return
      */
-    getShadowColorSameAsCandle() : boolean;
+    getShadowColorSameAsCandle(): boolean;
 }

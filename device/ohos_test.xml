@@ -195,14 +195,10 @@
             <option name="push" value="plugins/gpu_plugin/test/utresources/info/2/gpustat2.txt -> /data/local/tmp/resource/" src="res"/>
         </preparer>
     </target>
-    <target name="native_memory_profiler_sa_ut">
+    <target name="ffrt_profiler_ut">
         <preparer>
-            <option name="push" value="plugins/arkts_plugin/test/resources/entry-default-signed.hap -> /data/local/tmp/" src="res"/>
-            <option name="shell" value="bm install -r -p /data/local/tmp/entry-default-signed.hap"/>
-            <option name="shell" value="aa start -a EntryAbility -b cn.openharmony.rebound_project"/>
+            <option name="push" value="developtools/hiprofiler/ffrt_profiler_test_exe -> /data/local/tmp/" src="out"/>
+            <option name="shell" value="chmod +x /data/local/tmp/ffrt_profiler_test_exe"/>
         </preparer>
-        <cleaner>
-            <option name="uninstall" value="cn.openharmony.rebound_project"/>
-        </cleaner>
     </target>
 </configuration>

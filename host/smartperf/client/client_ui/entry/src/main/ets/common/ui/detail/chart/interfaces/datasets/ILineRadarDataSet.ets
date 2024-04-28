@@ -15,23 +15,22 @@
 
 import EntryOhos from '../../data/EntryOhos';
 import ILineScatterCandleRadarDataSet from './ILineScatterCandleRadarDataSet';
-import {ColorStop} from '../../data/LineDataSet';
+import { ColorStop } from '../../data/LineDataSet';
 
 export default interface ILineRadarDataSet<T extends EntryOhos> extends ILineScatterCandleRadarDataSet<T> {
-
     /**
      * Returns the color that is used for filling the line surface area.
      *
      * @return
      */
-    getFillColor() : number;
+    getFillColor(): number;
 
     /**
      * Returns the drawable used for filling the area below the line.
      *
      * @return
      */
-    getFillDrawable() :Object/* Drawable*/;
+    getFillDrawable(): Object /* Drawable*/;
 
     /**
      * Returns the alpha value that is used for filling the line surface,
@@ -39,21 +38,21 @@ export default interface ILineRadarDataSet<T extends EntryOhos> extends ILineSca
      *
      * @return
      */
-    getFillAlpha() : number;
+    getFillAlpha(): number;
 
     /**
      * Returns the stroke-width of the drawn line
      *
      * @return
      */
-    getLineWidth() : number;
+    getLineWidth(): number;
 
     /**
      * Returns true if filled drawing is enabled, false if not
      *
      * @return
      */
-    isDrawFilledEnabled() : boolean;
+    isDrawFilledEnabled(): boolean;
 
     /**
      * Set to true if the DataSet should be drawn filled (surface), and not just
@@ -63,7 +62,7 @@ export default interface ILineRadarDataSet<T extends EntryOhos> extends ILineSca
      *
      * @param enabled
      */
-    setDrawFilled(enabled : boolean) : void;
+    setDrawFilled(enabled: boolean): void;
 
     getGradientFillColor(): Array<ColorStop>;
 

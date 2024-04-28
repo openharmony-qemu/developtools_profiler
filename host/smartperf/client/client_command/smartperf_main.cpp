@@ -23,9 +23,10 @@
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+#include "parameters.h"
 
 
-std::string &GetOptions(std::vector<std::string> &argv)
+static std::string GetOptions(const std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;
@@ -33,7 +34,7 @@ std::string &GetOptions(std::vector<std::string> &argv)
     for (std::size_t i = 0; i < argv.size(); i++) {
         if (!isFill) {
             strFlag = argv[i];
-            if (std::string::npos != strFlag.find("SP_daemon")) {
+            if (strFlag.find("SP_daemon") != std::string::npos) {
                 isFill = true;
             }
         } else {
@@ -46,7 +47,7 @@ std::string &GetOptions(std::vector<std::string> &argv)
     return str;
 }
 
-bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
+static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
@@ -58,7 +59,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     if (str.find("--help") != std::string::npos || str.find("--version") != std::string::npos) {
         std::vector<std::string> out;
         OHOS::SmartPerf::SPUtils::StrSplit(str, "-", out);
-        if (1 != out.size()) {
+        if (out.size() != 1) {
             errorInfo = "--help and --version cannot be used together with other options";
             return false;
         } else {
@@ -71,7 +72,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("stop");
     keys.insert("screen");
     keys.insert("sections");
-    for (auto a : OHOS::SmartPerf::commandMap) {
+    for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
@@ -98,13 +99,17 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
 
 int main(int argc, char *argv[])
 {
+    if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
+        std::cout << "Not a development mode state" << std::endl;
+        return 0;
+    }
     std::string errorInfo;
     std::vector<std::string> vec;
 
     for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
-    if (!CheckCMDParam(vec, errorInfo)) {
+    if (!g_checkCmdParam(vec, errorInfo)) {
         std::cout << "SP_daemon:" << errorInfo << std::endl <<
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;

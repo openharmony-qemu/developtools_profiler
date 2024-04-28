@@ -156,9 +156,9 @@ void ProfilerFPS::GetTimeDiff()
 
 void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime) const
 {
-    long long msJiange = 100;
     if (printCount < ten) {
         for (int i = 0; i < ten - printCount; i++) {
+            long long msJiange = 100;
             msStartTime += msJiange;
             printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
@@ -170,12 +170,12 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     int msCount = 0;
     long long msJiange = 100000000;
     long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
-    long long currTime = 0;
     long long currLastTime = lastCurrTime;
     long long harTime = 100;
     int printCount = 0;
+    uint32_t count = 0;
     for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
-        currTime = fpsInfoResult.currTimeStamps[i];
+        long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             msCount++;
         } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
@@ -190,29 +190,29 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
             msCount = 0;
             msStartTime += msJiange;
             currLastTime += harTime;
-            i--;
+            count--;
         }
         if (i == (fpsInfoResult.currTimeStamps.size() - 1)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             printCount++;
             GetSectionsPrint(printCount, currLastTime);
         }
+        count++;
     }
 }
 
-void ProfilerFPS::GetFPS(int argc, std::vector<std::string> v)
+void ProfilerFPS::GetFPS(int args, std::vector<std::string> v)
 {
-    int sectionsNum = 0;
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
-        num = atoi(v[number].c_str());
-        if (num < 0) {
-            printf("set num:%d not valid arg\n", num);
+        this->num = atoi(v[number].c_str());
+        if (this->num < 0) {
+            printf("set num:%d not valid arg\n", this->num);
         }
-        printf("set num:%d success\n", num);
-        sectionsNum = atoi(v[four].c_str());
-        for (int i = 0; i < num; i++) {
+        printf("set num:%d success\n", this->num);
+        int sectionsNum = atoi(v[four].c_str());
+        for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
     }
@@ -294,7 +294,6 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
 
 void ProfilerFPS::GetSameTimeNums()
 {
-    long long jitter;
     std::string onScreenTime = std::to_string(frameReadyTime / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
@@ -303,16 +302,23 @@ void ProfilerFPS::GetSameTimeNums()
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
+        long long jitter;
         if (lastTime != -1) {
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
+        } else {
+            if (lastFrameReadyTime != 0) {
+                jitter = frameReadyTime - lastFrameReadyTime;
+                fpsInfo.jitters.push_back(jitter);
+            }
         }
         lastTime = frameReadyTime;
+        lastFrameReadyTime = frameReadyTime;
     }
 }
 bool ProfilerFPS::IsForeGround()
 {
-    const std::string cmd = "aa dump -l";
+    const std::string cmd = "hidumper -s WindowManagerService -a -a";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;
@@ -342,7 +348,7 @@ bool ProfilerFPS::IsForeGround()
     return false;
 }
 
-bool ProfilerFPS::IsFindForeGround(std::string line)
+bool ProfilerFPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);
     if (foreGroundTag.find("FOREGROUND") != std::string::npos) {

@@ -20,6 +20,8 @@
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
 #include "include/FPS.h"
+#include "include/RAM.h"
+#include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
 #include "ByTrace.h"
@@ -30,6 +32,7 @@
 #include <sstream>
 #include <regex>
 #include "unistd.h"
+#include <future>
 
 namespace OHOS {
 namespace SmartPerf {
@@ -47,6 +50,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     }
     args.push_back(command);
     StuckNotification snf;
+    snf.isEffective = false;
     std::string sessionId;
     long long interval = 1000;
     std::string pkg;
@@ -69,7 +73,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
                 isFPS = true;
             }
-            if (commandMap.end() != commandMap.find(args[i])) {
+            if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
                 configs.push_back(args[i]);
             }
         }
@@ -101,7 +105,7 @@ static std::string MapToString(std::map<std::string, std::string> myMap)
     return str;
 }
 
-ErrCode SPTask::InitTask(std::string recvStr)
+ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
@@ -129,6 +133,67 @@ ErrCode SPTask::InitTask(std::string recvStr)
     std::cout << "ExceptionMsg:" << errInfo << std::endl;
     return ErrCode::FAILED;
 }
+
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
+{
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string ramConfig : curTaskInfo.taskConfig) {
+        if (ramConfig.find("-r") != std::string::npos) {
+            futureResult = std::async(std::launch::async, []() {
+                return RAM::GetInstance().ItemData();
+            });
+        }
+    }
+    return futureResult;
+}
+
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
+{
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string fpsConfig : curTaskInfo.taskConfig) {
+        if (fpsConfig.find("-f") != std::string::npos) {
+            futureResult = std::async(std::launch::async, []() {
+                return FPS::GetInstance().ItemData();
+            });
+        }
+    }
+    return futureResult;
+}
+
+void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (ramResult.valid()) {
+        std::map<std::string, std::string> result = ramResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
+void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (fpsResult.valid()) {
+        std::map<std::string, std::string> result = fpsResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
+void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
+{
+    for (std::string itConfig : curTaskInfo.taskConfig) {
+        if (itConfig.find("-snapshot") != std::string::npos) {
+            Capture::GetInstance().SocketMessage();
+            std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
+            dataMap.insert(captureMap.begin(), captureMap.end());
+        }
+        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
+        if (profiler != nullptr) {
+            std::map<std::string, std::string> itemMap = profiler->ItemData();
+            dataMap.insert(itemMap.begin(), itemMap.end());
+        }
+    }
+}
+
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGI("SPTask::StartTask start ");
@@ -142,18 +207,16 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
     thread = std::thread([this, msgTask]() {
-        std::cout << "Task " << curTaskInfo.sessionId << ": collecting data loop..." << std::endl;
         while (isRunning) {
-            // 执行采集任务
             long long lastTime = SPUtils::GetCurTime();
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-            for (std::string itConfig : curTaskInfo.taskConfig) {
-                SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(itConfig));
-                std::map<std::string, std::string> itemMap = profiler->ItemData();
-                dataMap.insert(itemMap.begin(), itemMap.end());
-            }
+            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+            std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
+            GetItemData(dataMap);
+            CheckFutureRam(ramResult, dataMap);
+            CheckFutureFps(fpsResult, dataMap);
             if (curTaskInfo.stuckInfo.isEffective) {
                 std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
                 if (!timeUsedMap.empty()) {
@@ -173,7 +236,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             }
         }
     });
-
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
@@ -245,9 +307,9 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
             std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
             ThreadGetHiperf(startCaptuerTime);
         } else {
-            long long diff = RM_0;
             long long nowTime = SPUtils::GetCurTime();
-            diff = startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) : (nowTime - startCaptuerTime);
+            long long diff = startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) :
+                (nowTime - startCaptuerTime);
             std::cout << "else::" << startCaptuerTime << std::endl;
             if (diff > RM_5000 && (!CheckCounterId())) {
                 isCaptureTrace = false;
@@ -284,7 +346,7 @@ std::thread SPTask::ThreadGetHiperf(long long ts)
     return thGetTrace;
 }
 
-void SPTask::GetHiperf(std::string traceName)
+void SPTask::GetHiperf(const std::string &traceName)
 {
     std::string result;
     std::string tmp = SetHiperf(traceName);
@@ -297,7 +359,7 @@ void SPTask::GetHiperf(std::string traceName)
 bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 {
     std::set<std::string> keys;
-    for (auto a : commandMap) {
+    for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
 
@@ -322,7 +384,7 @@ void SPTask::KillHiperfCmd()
     return;
 }
 
-std::string SPTask::SetHiperf(std::string traceName)
+std::string SPTask::SetHiperf(const std::string &traceName)
 {
     std::string hiPrefix = "hiprofiler_";
     std::string dataPrefix = "perf_";

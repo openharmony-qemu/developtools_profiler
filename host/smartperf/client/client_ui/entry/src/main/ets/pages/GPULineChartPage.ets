@@ -12,26 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
-import { FloatWindowComponent } from '../common/FloatWindowComponent'
-import { TaskStatus }  from '../common/profiler/base/ProfilerConstant';
+import { hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
+import { FloatWindowComponent } from '../common/FloatWindowComponent';
+import { TaskStatus } from '../common/profiler/base/ProfilerConstant';
 
 @Entry
 @Component
 struct GPULineChartPage {
-  data: number[]= [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
-  @State random: number= 0 //用于刷新的随机数
-  @State gpuFrequency: number= 0 //数值
+  data: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
+  @State random: number = 0 //用于刷新的随机数
+  @State gpuFrequency: number = 0 //数值
 
   offsetX: number = -1 //悬浮框移动触摸点 X
   offsetY: number = -1 //悬浮框移动触摸点 X
-  private floatName: string= "gpu频点"
-  task_state = 1
+  private floatName: string = 'gpu频点'
+  taskState = 1
 
   aboutToAppear() {
     globalThis.LineChartCollect = setInterval(() => {
-      this.task_state = globalThis.task_status
-      if (this.task_state == TaskStatus.task_running) {
+      this.taskState = globalThis.task_status
+      if (this.taskState == TaskStatus.task_running) {
 
         if (this.data.length >= 22) {
 
@@ -61,20 +61,20 @@ struct GPULineChartPage {
       FloatWindowComponent({ title: `sp_gpuFrequency`, data: this.data })
       Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
 
-        Text(this.floatName  + ":" )
+        Text(this.floatName + ':' )
           .fontSize('10fp')
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .margin({ left: 5, top: 1 }) //文本显示
-        Text(  this.gpuFrequency + "MHz")
+        Text( this.gpuFrequency + 'MHz')
           .fontSize('20fp')
           .fontColor('#FF0000')
           .fontWeight(5)
-          .margin({ left: 1,top: 1 }) //文本显示
-        Text(this.random + "")
+          .margin({ left: 1, top: 1 }) //文本显示
+        Text(this.random + '')
           .fontSize('1fp')
-          .fontColor($r("app.color.color_fff")).visibility(Visibility.None)
-        Image($r("app.media.icon_close_small")).width('20vp').height('20vp').onClick(() => {
-          hideFloatWindow("sp_gpuFrequency")
+          .fontColor($r('app.color.color_fff')).visibility(Visibility.None)
+        Image($r('app.media.icon_close_small')).width('20vp').height('20vp').onClick(() => {
+          hideFloatWindow('sp_gpuFrequency')
 
 
         }).align(Alignment.TopEnd)

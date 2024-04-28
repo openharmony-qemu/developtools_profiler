@@ -126,6 +126,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
 {
     if (!HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
+        return;
     }
     std::lock_guard<std::mutex> guard(mtx_);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -143,7 +144,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
     }
 
     if (config->hookMgr->GetPid() > 0) {
-        std::lock_guard<std::mutex> guard(nmdMtx_);
+        std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
         if (nmdPidType_.find(config->hookMgr->GetPid()) != nmdPidType_.end()) {
             config->hookMgr->SetNmdInfo(nmdPidType_[config->hookMgr->GetPid()]);
         }
@@ -193,8 +194,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
 
     if (fd == 0) {
-        fd = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
-        CHECK_TRUE(fd >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
+        int fdTemp = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+        CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
+        fd = static_cast<uint32_t>(fdTemp);
     }
 
     std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);

@@ -23,15 +23,13 @@ import ViewPortHandler from '../utils/ViewPortHandler';
  *
  * @author Philipp Jahoda
  */
-export default class DefaultValueFormatter implements IValueFormatter
-{
-
+export default class DefaultValueFormatter implements IValueFormatter {
     /**
      * DecimalFormat for formatting
      */
     //protected  mFormat:DecimalFormat;
 
-    protected  mDecimalDigits:number;
+    protected mDecimalDigits: number;
 
     /**
      * Constructor that specifies to how many digits the value should be
@@ -39,33 +37,35 @@ export default class DefaultValueFormatter implements IValueFormatter
      *
      * @param digits
      */
-     constructor(digits:number){
-      this.setup(digits);
-     }
+    constructor(digits: number) {
+        this.setup(digits);
+    }
     /**
      * Sets up the formatter with a given number of decimal digits.
      *
      * @param digits
      */
-    public  setup(digits:number):void {
-
+    public setup(digits: number): void {
         this.mDecimalDigits = digits;
 
-        var b:string = "";
+        var b: string = '';
         for (var i = 0; i < digits; i++) {
-            if (i == 0)
-                b+=".";
-            b+="0";
+            if (i == 0) {
+                b += '.';
+            }
+            b += '0';
         }
-
     }
 
-    public  getFormattedValue( value:number, entry:EntryOhos, dataSetIndex:number,  viewPortHandler:ViewPortHandler):string {
-
+    public getFormattedValue(
+        value: number,
+        entry: EntryOhos,
+        dataSetIndex: number,
+        viewPortHandler: ViewPortHandler
+    ): string {
         // put more logic here ...
         // avoid memory allocations here (for performance reasons)
-
-        return value.toFixed(1)+"" ;
+        return value.toFixed(1) + '';
     }
 
     /**
@@ -73,7 +73,7 @@ export default class DefaultValueFormatter implements IValueFormatter
      *
      * @return
      */
-    public  getDecimalDigits():number {
+    public getDecimalDigits(): number {
         return this.mDecimalDigits;
     }
 }

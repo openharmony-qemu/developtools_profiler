@@ -166,12 +166,8 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
             }
             printf("set responseLibraryMode mode:%s\n", rawString.c_str());
         } else if (args[idx] == "-js") {
-            std::string rawString = args[idx + 1];
-            if (rawString == "false") {
-                hookData.jsStackReport = false;
-            } else if (rawString == "true") {
-                hookData.jsStackReport = true;
-            } else {
+            hookData.jsStackReport = std::stoi(args[idx + 1], nullptr);
+            if (std::to_string(hookData.jsStackReport) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-jsd") {
@@ -181,6 +177,11 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
             }
         } else if (args[idx] == "-jn") {
             hookData.filterNapiName = args[idx + 1];
+        } else if (args[idx] == "-mfm") {
+            hookData.mallocFreeMatchingInterval = std::stoi(args[idx + 1], nullptr);
+            if (std::to_string(hookData.mallocFreeMatchingInterval) != args[idx + 1]) {
+                return false;
+            }
         } else {
             printf("args[%zu] = %s\n", idx, args[idx].c_str());
             return false;
@@ -286,9 +287,10 @@ int main(int argc, char* argv[])
                 <-c string_compressed true|false>
                 <-r raw_string true|false>
                 <-so responseLibraryMode true|false>
-                <-js jsStackReport true|false>
+                <-js jsStackReport>
                 <-jsd maxJsStackDepth>
                 <-jn filterNapiName>
+                <-mfm mallocFreeMatchingInterval_>
                 )";
                 printf("%s\n", help.c_str());
                 return 0;

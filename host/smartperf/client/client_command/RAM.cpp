@@ -47,7 +47,7 @@ std::map<std::string, std::string> RAM::ItemData()
             result.insert(*it);
         }
     }
-
+    LOGI("RAM::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -66,7 +66,7 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     return sysRamInfo;
 }
 
-void RAM::SetPackageName(std::string pName)
+void RAM::SetPackageName(const std::string &pName)
 {
     packageName = pName;
 }

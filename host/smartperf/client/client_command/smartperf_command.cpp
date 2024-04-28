@@ -31,8 +31,8 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
     LOGI("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
-        std::string pid = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = "taskset -p f " + pid;
+        std::string pidStr = sd.GetPidByPkg("SP_daemon");
+        std::string cmdStr = "taskset -p f " + pidStr;
         std::string result = "";
         SPUtils::LoadCmd(cmdStr, result);
         daemon(0, 0);
@@ -46,9 +46,9 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         tSocket1.join();
     }
     if (argv.size() == twoParam) {
-        auto iterator = commandHelpMap.begin();
-        while (iterator != commandHelpMap.end()) {
-            if (0 == iterator->second.compare(argv[1])) {
+        auto iterator = COMMAND_HELP_MAP.begin();
+        while (iterator != COMMAND_HELP_MAP.end()) {
+            if (iterator->second.compare(argv[1]) == 0) {
                 HelpCommand(iterator->first);
                 break;
             }
@@ -56,13 +56,13 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         }
     }
     if (argv.size() >= threeParamMore) {
-        for (int i = 1; i <= argv.size() - 1; i++) {
+        for (size_t i = 1; i <= argv.size() - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
             if (i < argv.size() - 1) {
                 argStr1 = argv[i + 1];
             }
-            if (commandMap.count(argStr) > 0) {
+            if (COMMAND_MAP.count(argStr) > 0) {
                 HandleCommand(argStr, argStr1);
             }
         }
@@ -84,10 +84,10 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         std::cout << result << std::endl;
     }
 }
-void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
+void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
-    switch (commandMap.at(argStr)) {
+    switch (COMMAND_MAP.at(argStr)) {
         case CommandType::CT_N:
             num = atoi(argStr1.c_str());
             break;
@@ -143,7 +143,7 @@ std::string SmartPerfCommand::ExecCommand()
 
         for (size_t j = 0; j < configs.size(); j++) {
             std::string curParam = configs[j];
-            SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(commandMap.at(curParam));
+            SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
             if (profiler != nullptr) {
                 std::map<std::string, std::string> data = profiler->ItemData();
                 spMap.insert(data.cbegin(), data.cend());

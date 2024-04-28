@@ -18,42 +18,37 @@ import { TIndexInfo } from '../entity/DatabaseEntity';
 
 //垂直生成 TGenneralInfo to string
 export function csvGeneralInfo(tGeneralInfo: TGeneralInfo): string {
-    let data = ""
-    for (let k of Object.keys(tGeneralInfo)) {
-        data += k + "," + tGeneralInfo[k] + "\n"
-    }
-    return data
+  let data = '';
+  for (let k of Object.keys(tGeneralInfo)) {
+    data += k + ',' + tGeneralInfo[k] + '\n';
+  }
+  return data;
 }
 
 //水平生成 TIndexInfo to string
 export function csvTIndexInfo(tIndexInfos: Array<TIndexInfo>): string {
-    let tittle = csvTIndexInfoTittle()
-    let data = ""
-    for (var index = 0; index < tIndexInfos.length; index++) {
-        const t = tIndexInfos[index];
-        for (let k of Object.keys(t)) {
-            data += t[k] + ","
-        }
-        data = data.substring(0, data.lastIndexOf(","))
-        data += "\n"
+  let tittle = csvTIndexInfoTittle();
+  let data = '';
+  for (let index = 0; index < tIndexInfos.length; index++) {
+    const t = tIndexInfos[index];
+    for (let k of Object.keys(t)) {
+      data += t[k] + ',';
     }
-    let result = tittle + data
-    return result
+    data = data.substring(0, data.lastIndexOf(','));
+    data += '\n';
+  }
+  let result = tittle + data;
+  return result;
 }
 
 //水平生成 TIndexInfo TITTLE to string
 export function csvTIndexInfoTittle(): string {
-    var tIndexInfo: TIndexInfo = new TIndexInfo()
-    let data = ""
-    for (let k of Object.keys(tIndexInfo)) {
-        data += k + ","
-    }
-    data = data.substring(0, data.lastIndexOf(","))
-    data += "\n"
-    return data
+  let tIndexInfo: TIndexInfo = new TIndexInfo();
+  let data = '';
+  for (let k of Object.keys(tIndexInfo)) {
+    data += k + ',';
+  }
+  data = data.substring(0, data.lastIndexOf(','));
+  data += '\n';
+  return data;
 }
-
-
-
-
-

@@ -29,6 +29,7 @@
 #include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/GpuCounter.h"
+#include "include/sp_log.h"
 
 
 namespace OHOS {
@@ -57,6 +58,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
         ProfilerFPS::GetInstance().SetTraceCatch();
     } else if (messageType == MessageType::GET_CAPTURE) {
+        Capture::GetInstance().SocketMessage();
         profiler = &Capture::GetInstance();
     } else if (messageType == MessageType::SET_DUBAI_DB) {
         Dubai::DumpDubaiBegin();
@@ -71,7 +73,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 
     return profiler;
 }
-void SpProfilerFactory::SetProfilerPkg(std::string pkg)
+void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
@@ -84,7 +86,7 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
 }
-void SpProfilerFactory::SetProfilerLayer(std::string layer)
+void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetLayerName(layer);
@@ -100,7 +102,6 @@ void SpProfilerFactory::SetByTrace(std::string message)
     int mInterval = 0;
     long long mThreshold = 0;
     int lowFps = 0;
-    int mCurNum = 1;
     for (std::string vItem : values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
@@ -117,15 +118,16 @@ void SpProfilerFactory::SetByTrace(std::string message)
             lowFps = std::stoi(vItems[1]);
         }
     }
-    ByTrace &bTrace = ByTrace::GetInstance();
+    const ByTrace &bTrace = ByTrace::GetInstance();
     if (message.find("traceSum") != std::string::npos) {
+        int mCurNum = 1;
         bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
     }
     if (message.find("bytrace -b 2048") != std::string::npos) {
         bTrace.SetTraceCmd(message);
     }
 }
-SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
+SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
     switch (commandType) {
@@ -136,9 +138,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &GPU::GetInstance();
             break;
         case CommandType::CT_F:
-        case CommandType::CT_F1:
-        case CommandType::CT_F2:
-            profiler = &FPS::GetInstance();
+            if (cmdFlag) {
+                profiler = &FPS::GetInstance();
+            }
             break;
         case CommandType::CT_D:
             profiler = &DDR::GetInstance();
@@ -150,7 +152,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             profiler = &Temperature::GetInstance();
             break;
         case CommandType::CT_R:
-            profiler = &RAM::GetInstance();
+            if (cmdFlag) {
+                profiler = &RAM::GetInstance();
+            }
             break;
         case CommandType::CT_NET:
             profiler = &Network::GetInstance();
@@ -159,7 +163,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType)
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_SNAPSHOT:
-            profiler = &Capture::GetInstance();
+            if (cmdFlag) {
+                profiler = &Capture::GetInstance();
+            }
             break;
         case CommandType::CT_HW:
             break;

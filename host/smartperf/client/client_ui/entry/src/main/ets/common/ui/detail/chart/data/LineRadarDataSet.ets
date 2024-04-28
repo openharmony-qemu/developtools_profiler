@@ -14,29 +14,30 @@
  */
 
 import { ColorStop } from '../data/LineDataSet';
-import EntryOhos from './EntryOhos'
-import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet'
-import ILineRadarDataSet from '../interfaces/datasets/ILineRadarDataSet'
-import {JArrayList} from '../utils/JArrayList'
-import Utils from '../utils/Utils'
+import EntryOhos from './EntryOhos';
+import LineScatterCandleRadarDataSet from './LineScatterCandleRadarDataSet';
+import ILineRadarDataSet from '../interfaces/datasets/ILineRadarDataSet';
+import { JArrayList } from '../utils/JArrayList';
+import Utils from '../utils/Utils';
 
 /**
  * Base dataset for line and radar DataSets.
  */
-export default abstract class LineRadarDataSet <T extends EntryOhos> extends LineScatterCandleRadarDataSet<T> implements ILineRadarDataSet<T> {
-
-// TODO: Move to using `Fill` class
+export default abstract class LineRadarDataSet<T extends EntryOhos>
+extends LineScatterCandleRadarDataSet<T>
+implements ILineRadarDataSet<T> {
+  // TODO: Move to using `Fill` class
   /**
    * the color that is used for filling the line surface
    */
-//  private mFillColor: number = Color.rgb(140, 234, 255);
-  private mFillColor: number = 0x8CEAFF;
+  //  private mFillColor: number = Color.rgb(140, 234, 255);
+  private mFillColor: number = 0x8ceaff;
   private mLinearGradientColors: Array<ColorStop>;
 
   /**
    * the drawable to be used for filling the line surface
    */
-  protected mFillDrawable:Object/*Drawable*/;
+  protected mFillDrawable: Object;/*Drawable*/
 
   /**
    * transparency used for filling line surface
@@ -57,7 +58,7 @@ export default abstract class LineRadarDataSet <T extends EntryOhos> extends Lin
     super(yVals, label);
   }
 
-  public getFillColor(): number{
+  public getFillColor(): number {
     return this.mFillColor;
   }
 
@@ -82,7 +83,7 @@ export default abstract class LineRadarDataSet <T extends EntryOhos> extends Lin
     return this.mLinearGradientColors;
   }
 
-  public getFillDrawable():Object/*Drawable*/  {
+  public getFillDrawable(): Object /*Drawable*/ {
     return this.mFillDrawable;
   }
 
@@ -91,12 +92,12 @@ export default abstract class LineRadarDataSet <T extends EntryOhos> extends Lin
    *
    * @param drawable
    */
-//    @TargetApi(18)
-  public setFillDrawable(drawable:Object/*Drawable*/): void {
+  //    @TargetApi(18)
+  public setFillDrawable(drawable: Object /*Drawable*/): void {
     this.mFillDrawable = drawable;
   }
 
-  public getFillAlpha(): number{
+  public getFillAlpha(): number {
     return this.mFillAlpha;
   }
 
@@ -106,7 +107,7 @@ export default abstract class LineRadarDataSet <T extends EntryOhos> extends Lin
    *
    * @param alpha
    */
-  public setFillAlpha(alpha:number):void  {
+  public setFillAlpha(alpha: number): void {
     this.mFillAlpha = alpha;
   }
 
@@ -116,28 +117,29 @@ export default abstract class LineRadarDataSet <T extends EntryOhos> extends Lin
    *
    * @param width
    */
-  public setLineWidth(width:number):void  {
-
-    if (width < 0.0)
-    width = 0.0;
-    if (width > 10.0)
-    width = 10.0;
+  public setLineWidth(width: number): void {
+    if (width < 0.0) {
+      width = 0.0;
+    }
+    if (width > 10.0) {
+      width = 10.0;
+    }
     this.mLineWidth = width;
   }
 
-  public getLineWidth():number {
+  public getLineWidth(): number {
     return this.mLineWidth;
   }
 
-  public setDrawFilled(filled:boolean):void  {
+  public setDrawFilled(filled: boolean): void {
     this.mDrawFilled = filled;
   }
 
-  public isDrawFilledEnabled():boolean  {
+  public isDrawFilledEnabled(): boolean {
     return this.mDrawFilled;
   }
 
-  protected copyTo(lineRadarDataSet:LineRadarDataSet<T>): void {
+  protected copyTo(lineRadarDataSet: LineRadarDataSet<T>): void {
     super.copyTo(lineRadarDataSet);
     lineRadarDataSet.mDrawFilled = this.mDrawFilled;
     lineRadarDataSet.mFillAlpha = this.mFillAlpha;

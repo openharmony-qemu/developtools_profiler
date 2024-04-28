@@ -24,7 +24,7 @@ import { secToTime } from '../../utils/TimeUtils';
 export struct Mine {
   build() {
     Column({ space: '15vp' }) {
-      TopComponent({ title: "我的" })
+      TopComponent({ title: '我的' })
 
       Image($r('app.media.person'))
         .width('80vp')

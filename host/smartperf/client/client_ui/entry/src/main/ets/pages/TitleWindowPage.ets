@@ -12,18 +12,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { TIndexInfo } from '../common/entity/DatabaseEntity'
-import { showFloatWindow, hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
+import { TIndexInfo } from '../common/entity/DatabaseEntity';
+import { showFloatWindow, hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
 import { getCpuCoreInfo} from '../common/utils/SystemUtils';
-import FloatWindowConstant from '../common/ui/floatwindow/FloatWindowConstant'
-import CommonEvent from '@ohos.commonEvent'
+import FloatWindowConstant from '../common/ui/floatwindow/FloatWindowConstant';
+import CommonEvent from '@ohos.commonEvent';
 
 
 @Component
 export struct ItemContent {
   private icon
   private tittle: string
-  @State  value: string = "-1"
+  @State value: string = '-1'
   private onClickCallBack: () => void
 
   build() {
@@ -45,7 +45,7 @@ export struct ItemContent {
 @Entry
 @Component
 struct TitleWindowPage {
-  private data: boolean[]= [false, false, false, false, false, false, false, false]
+  private data: boolean[] = [false, false, false, false, false, false, false, false]
   @State tIndexInfo: TIndexInfo = new TIndexInfo()
   offsetX: number = -1
   offsetY: number = -1
@@ -58,13 +58,13 @@ struct TitleWindowPage {
     var subscriber
     //订阅者信息
     var subscribeInfo = {
-      events: ["event"]
+      events: ['event']
     };
     //订阅公共事件回调
-    function SubscribeCallBack(err, data) {
-      if (data.data == "") {
+    function subscribeCallBack(err, data) {
+      if (data.data == '') {
       } else {
-        console.error("subscriberCurData:" + data.data);
+        console.error('subscriberCurData:' + data.data);
         that.tIndexInfo = JSON.parse(data.data)
         globalThis.cpu0Frequency = that.tIndexInfo.cpu0Frequency
         globalThis.cpu1Frequency = that.tIndexInfo.cpu1Frequency
@@ -89,13 +89,13 @@ struct TitleWindowPage {
       }
     }
     //创建订阅者回调
-    function CreateSubscriberCallBack(err, data) {
+    function createSubscriberCallBack(err, data) {
       subscriber = data;
       //订阅公共事件
-      CommonEvent.subscribe(subscriber, SubscribeCallBack);
+      CommonEvent.subscribe(subscriber, subscribeCallBack);
     }
     //创建订阅者
-    CommonEvent.createSubscriber(subscribeInfo, CreateSubscriberCallBack);
+    CommonEvent.createSubscriber(subscribeInfo, createSubscriberCallBack);
   }
 
   MoveWindow(offsetX: number, offsetY: number) {
@@ -122,11 +122,11 @@ struct TitleWindowPage {
       Column({ space: 2 }) {
 
         Row() {
-          Image($r("app.media.logo")).width(10).height(10).margin({ left: '2%' })
-          Text("SmartPerf")
+          Image($r('app.media.logo')).width(10).height(10).margin({ left: '2%' })
+          Text('SmartPerf')
             .fontSize(12)
-            .fontColor($r("app.color.color_fff")).margin({ left: '2%' })
-          Image($r("app.media.icon_close_small")).height(15).width(15).margin({ left: '45%' }).onClick(() => {
+            .fontColor($r('app.color.color_fff')).margin({ left: '2%' })
+          Image($r('app.media.icon_close_small')).height(15).width(15).margin({ left: '45%' }).onClick(() => {
             //关闭实时悬浮框
             globalThis.HideTitleWindow()
           })
@@ -136,107 +136,107 @@ struct TitleWindowPage {
 
         if (this.tIndexInfo.fps != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_average_frame_b"),
-            value: (this.tIndexInfo.fps.toString()) + "FPS",
-            tittle: "帧率",
+            icon: $r('app.media.icon_average_frame_b'),
+            value: (this.tIndexInfo.fps.toString()) + 'FPS',
+            tittle: '帧率',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_FPS", FloatWindowConstant.FPS)
+              this.floatWindowEvent('sp_FPS', FloatWindowConstant.FPS)
             }
           })
         }
 
         if (this.tIndexInfo.currentNow != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_normalized_current"),
-            value:  (0 - Number(this.tIndexInfo.currentNow)).toString() + "mA",
-            tittle: "电流",
+            icon: $r('app.media.icon_normalized_current'),
+            value:  (0 - Number(this.tIndexInfo.currentNow)).toString() + 'mA',
+            tittle: '电流',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_currentNow", FloatWindowConstant.CURRENT_NOW)
+              this.floatWindowEvent('sp_currentNow', FloatWindowConstant.CURRENT_NOW)
             }
           })
         }
         if (this.tIndexInfo.ddrFrequency != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo.ddrFrequency.toString()) / 1e6).toString() + "MHz",
-            tittle: "DDR频率",
+            icon: $r('app.media.icon_counter'),
+            value: (parseInt(this.tIndexInfo.ddrFrequency.toString()) / 1e6).toString() + 'MHz',
+            tittle: 'DDR频率',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_ddrFrequency", FloatWindowConstant.DDR_FREQUENCY)
+              this.floatWindowEvent('sp_ddrFrequency', FloatWindowConstant.DDR_FREQUENCY)
             }
           })
         }
 
-        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"] != undefined) {
+        if (this.tIndexInfo['cpu' + this.cpuCoreArr[0] + 'Frequency'] != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[0] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu0Load + "%",
-            tittle: "CPU-A频率",
+            icon: $r('app.media.icon_counter'),
+            value: (parseInt(this.tIndexInfo['cpu' + this.cpuCoreArr[0] + 'Frequency'].toString()) / 1e3).toString() + 'MHz' + this.tIndexInfo.cpu0Load + '%',
+            tittle: 'CPU-A频率',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_cpu0Frequency", FloatWindowConstant.CPU0_FREQUENCY)
+              this.floatWindowEvent('sp_cpu0Frequency', FloatWindowConstant.CPU0_FREQUENCY)
             }
           })
         }
 
-        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"] != undefined) {
+        if (this.tIndexInfo['cpu' + this.cpuCoreArr[1] + 'Frequency'] != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[1] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu1Load + "%",
-            tittle: "CPU-B频率",
+            icon: $r('app.media.icon_counter'),
+            value: (parseInt(this.tIndexInfo['cpu' + this.cpuCoreArr[1] + 'Frequency'].toString()) / 1e3).toString() + 'MHz' + this.tIndexInfo.cpu1Load + '%',
+            tittle: 'CPU-B频率',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_cpu1Frequency", FloatWindowConstant.CPU1_FREQUENCY)
+              this.floatWindowEvent('sp_cpu1Frequency', FloatWindowConstant.CPU1_FREQUENCY)
             }
           })
         }
-        if (this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"] != undefined) {
+        if (this.tIndexInfo['cpu' + this.cpuCoreArr[2] + 'Frequency'] != undefined) {
 
           ItemContent({
-            icon: $r("app.media.icon_counter"),
-            value: (parseInt(this.tIndexInfo["cpu"+ this.cpuCoreArr[2] +"Frequency"].toString()) / 1e3).toString() + "MHz  " + this.tIndexInfo.cpu2Load + "%",
-            tittle: "CPU-C频率",
+            icon: $r('app.media.icon_counter'),
+            value: (parseInt(this.tIndexInfo['cpu' + this.cpuCoreArr[2] + 'Frequency'].toString()) / 1e3).toString() + 'MHz' + this.tIndexInfo.cpu2Load + '%',
+            tittle: 'CPU-C频率',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_cpu2Frequency", FloatWindowConstant.CPU2_FREQUENCY)
+              this.floatWindowEvent('sp_cpu2Frequency', FloatWindowConstant.CPU2_FREQUENCY)
             }
           })
         }
 
         if (this.tIndexInfo.gpuFrequency != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_frame_score"),
-            value: (parseInt(this.tIndexInfo.gpuFrequency.toString()) / 1e6).toString() + "MHz  " + this.tIndexInfo.gpuLoad + "%",
-            tittle: "GPU频点",
+            icon: $r('app.media.icon_frame_score'),
+            value: (parseInt(this.tIndexInfo.gpuFrequency.toString()) / 1e6).toString() + 'MHz' + this.tIndexInfo.gpuLoad + '%',
+            tittle: 'GPU频点',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_gpuFrequency", FloatWindowConstant.GPU_FREQUENCY)
+              this.floatWindowEvent('sp_gpuFrequency', FloatWindowConstant.GPU_FREQUENCY)
             }
           })
         }
         if (this.tIndexInfo.pss != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_jank_each_hour"),
-            value: this.tIndexInfo.pss + "KB",
-            tittle: "RAM",
+            icon: $r('app.media.icon_jank_each_hour'),
+            value: this.tIndexInfo.pss + 'KB',
+            tittle: 'RAM',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_RAM", FloatWindowConstant.RAM)
+              this.floatWindowEvent('sp_RAM', FloatWindowConstant.RAM)
             }
           })
         }
         if (this.tIndexInfo.socThermalTemp != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_max_temperature"),
-            value: (parseInt(this.tIndexInfo.socThermalTemp.toString()) / 1e3).toString() + "℃",
-            tittle: "SOC温度",
+            icon: $r('app.media.icon_max_temperature'),
+            value: (parseInt(this.tIndexInfo.socThermalTemp.toString()) / 1e3).toString() + '℃',
+            tittle: 'SOC温度',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_shellBackTemp", FloatWindowConstant.SHELL_BACK_TEMP)
+              this.floatWindowEvent('sp_shellBackTemp', FloatWindowConstant.SHELL_BACK_TEMP)
             }
           })
         }
 
         if (this.tIndexInfo.shellFrameTemp != undefined) {
           ItemContent({
-            icon: $r("app.media.icon_max_temperature"),
-            value: (parseInt(this.tIndexInfo.shellFrameTemp.toString()) / 1e3).toString() + "℃",
-            tittle: "壳温",
+            icon: $r('app.media.icon_max_temperature'),
+            value: (parseInt(this.tIndexInfo.shellFrameTemp.toString()) / 1e3).toString() + '℃',
+            tittle: '壳温',
             onClickCallBack: () => {
-              this.floatWindowEvent("sp_shellBackTemp", FloatWindowConstant.SHELL_BACK_TEMP)
+              this.floatWindowEvent('sp_shellBackTemp', FloatWindowConstant.SHELL_BACK_TEMP)
             }
           })
         }

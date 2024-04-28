@@ -33,7 +33,7 @@ double ParseStartTraceNoh::ParseStartTraceNohe(std::string file)
     if (realpath(file.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(file);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseStartTraceNoh open file(%s) failed ", file.c_str());
@@ -87,24 +87,29 @@ std::string ParseStartTraceNoh::GetLineTime(std::string line)
     size_t position2 = line.find(":");
     return line.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParseStartTraceNoh::CutString(std::string line, std::string start, std::string end, size_t offset)
+std::string ParseStartTraceNoh::CutString(std::string line, const std::string &start,
+    const std::string &end, size_t offset)
 {
-    size_t position1 = line.find(start);
-    size_t position2 = line.find(end);
-    return line.substr(position1 + offset, position2 - position1 - offset);
+    int position1 = static_cast<int>(line.find(start));
+    int position2 = static_cast<int>(line.find(end));
+    return line.substr(position1 + offset, position2 - position1 - static_cast<int>(offset));
 }
-std::vector<std::string> ParseStartTraceNoh::Split(std::string str, std::string pattern)
+std::vector<std::string> ParseStartTraceNoh::Split(std::string str, const std::string &pattern)
 {
-    std::string::size_type pos;
     std::vector<std::string> result;
-    str += pattern;
-    size_t size = str.size();
-    for (size_t i = 0; i < size; i++) {
-        pos = str.find(pattern, i);
-        if (pos < size) {
-            std::string s = str.substr(i, pos - i);
-            result.push_back(s);
-            i = pos + pattern.size() - 1;
+    if (str.empty() || pattern.empty() || str.size() < pattern.size()) {
+        return result;
+    }
+    size_t start = 0; // start index
+    while (start < str.size()) {
+        size_t pos = str.find(pattern, start);
+        if (pos != std::string::npos) {
+            result.push_back(str.substr(start, pos - start));
+            start = pos + pattern.size(); // next start index
+        } else {
+            //the last start
+            result.push_back(str.substr(start));
+            break;
         }
     }
     return result;

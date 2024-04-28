@@ -15,4 +15,5 @@ hiviewdfx.hiprofiler.profilerd.start=0
 hiviewdfx.hiprofiler.plugins.start=0
 hiviewdfx.hiprofiler.native_memoryd.start=0
 hiviewdfx.hiprofiler.memprofiler.start=0
+hiviewdfx.hiprofiler.ffrtprofiler.target=""
 libc.hook_mode=""

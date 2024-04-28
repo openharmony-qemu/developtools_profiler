@@ -12,24 +12,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import LineChart from './chart/charts/LineChart'
-import { LineChartModel } from './chart/charts/LineChart'
+import LineChart from './chart/charts/LineChart';
+import { LineChartModel } from './chart/charts/LineChart';
 import { XAxis, XAxisPosition } from './chart/components/XAxis';
-import YAxis, { AxisDependency, YAxisLabelPosition } from './chart/components/YAxis'
+import YAxis, { AxisDependency, YAxisLabelPosition } from './chart/components/YAxis';
 import LineData from './chart/data/LineData';
 import { LineDataSet, ColorStop, Mode } from './chart/data/LineDataSet';
 import EntryOhos from './chart/data/EntryOhos';
 import { JArrayList } from './chart/utils/JArrayList';
-import ILineDataSet from './chart/interfaces/datasets/ILineDataSet'
+import ILineDataSet from './chart/interfaces/datasets/ILineDataSet';
 import { TIndexInfo } from '../../entity/DatabaseEntity';
 
 
 @Component
 export struct Temperature {
-  @State private gpData: Array<TIndexInfo> = new Array()
+  @State private gpData: TIndexInfo[] = []
   topAxis: XAxis = new XAxis(); //顶部X轴
   bottomAxis: XAxis = new XAxis(); //底部X轴
-  atWidth: number =350 ; //表的宽度
+  atWidth: number = 350; //表的宽度
   atHeight: number = 300; //表的高度
   minOffset: number = 15; //X轴线偏移量
   leftAxis: YAxis = null;
@@ -430,30 +430,30 @@ export struct Temperature {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.systemHTemp == "") {
+      if (gpDataCur.systemHTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.systemHTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "SystemHTemp(℃)");
+    let set1 = new LineDataSet(values, 'SystemHTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -475,21 +475,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.batteryTemp == "") {
+      if (gpDataCur.batteryTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.batteryTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "BatteryTemp(℃)");
+    let set1 = new LineDataSet(values, 'BatteryTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -511,21 +511,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.shellFrontTemp == "") {
+      if (gpDataCur.shellFrontTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.shellFrontTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "ShellFrontTemp(℃)");
+    let set1 = new LineDataSet(values, 'ShellFrontTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -547,21 +547,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.shellFrameTemp == "") {
+      if (gpDataCur.shellFrameTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.shellFrameTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "ShellFrameTemp(℃)");
+    let set1 = new LineDataSet(values, 'ShellFrameTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -583,21 +583,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.socThermalTemp == "") {
+      if (gpDataCur.socThermalTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.socThermalTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "SocThermalTemp(℃)");
+    let set1 = new LineDataSet(values, 'SocThermalTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -619,21 +619,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.shellBackTemp == "") {
+      if (gpDataCur.shellBackTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.shellBackTemp).valueOf() / 1000));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "ShellBackTemp(℃)");
+    let set1 = new LineDataSet(values, 'ShellBackTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -655,21 +655,21 @@ export struct Temperature {
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
-      if (gpDataCur.gpuTemp == "") {
+      if (gpDataCur.gpuTemp == '') {
         continue
       }
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.gpuTemp).valueOf()));
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "GPUTemp(℃)");
+    let set1 = new LineDataSet(values, 'GPUTemp(℃)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -692,9 +692,9 @@ export struct Temperature {
       Scroll() {
         Column({ space: 20 }) {
 
-            LineChart({lineChartModel: this.lineChartModel5})
-            Text("ShellBackTemp(℃)") {
-            }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
+          LineChart({lineChartModel: this.lineChartModel5})
+          Text('ShellBackTemp(℃)') {
+          }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
 
         }.width('100%').alignItems(HorizontalAlign.Center)
       }.width('100%')

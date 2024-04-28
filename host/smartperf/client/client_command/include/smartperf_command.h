@@ -56,15 +56,15 @@ public:
         "SP_daemon -stop \n"
         "SP_daemon -screen \n";
 
-    const int oneParam = 1;
-    const int twoParam = 2;
-    const int threeParamMore = 3;
+    const size_t oneParam = 1;
+    const size_t twoParam = 2;
+    const size_t threeParamMore = 3;
     explicit SmartPerfCommand(std::vector<std::string> argv);
     ~SmartPerfCommand() {};
     static void InitSomething();
     std::string ExecCommand();
     void HelpCommand(CommandHelp type) const;
-    void HandleCommand(std::string argStr, std::string argStr1);
+    void HandleCommand(std::string argStr, const std::string &argStr1);
     // 采集次数
     int num = 0;
     // 包名

@@ -53,7 +53,7 @@ static int g_fd = -1;
 static int g_runing = 1;
 static int g_threadNum = 1;
 static int g_mallocSize = 1;
-static const char* g_fileName = "./mmapTest";
+static const char* TEST_FILE_NAME = "./mmapTest";
 static unsigned int g_hookFlag = 0;
 
 static char* DepthMalloc(int depth, int mallocSize)
@@ -374,7 +374,7 @@ static void MmapInit(void)
     // 设置随机种子
     RandSrand();
     // 设置全局映射的目标文件
-    g_fd = OpenFile(g_fileName);
+    g_fd = OpenFile(TEST_FILE_NAME);
 }
 
 // 写映射
@@ -475,7 +475,7 @@ static int CommandParse(int argc, char** argv)
                 }
                 break;
             case 'o':
-                g_fileName = optarg;
+                TEST_FILE_NAME = optarg;
                 break;
             case 'h':
             default:

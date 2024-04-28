@@ -247,7 +247,6 @@ bool PluginManager::UnloadPlugin(const uint32_t pluginId)
 bool PluginManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "%s:ready", __func__);
-
     for (size_t idx = 0; idx < config.size(); ++idx) {
         PROFILER_LOG_DEBUG(LOG_CORE, "%s:config->name() = %s", __func__, config[idx].name().c_str());
         auto it = pluginIds_.find(config[idx].name());

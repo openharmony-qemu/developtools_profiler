@@ -170,6 +170,7 @@ private:
     void FillFpNativeIp(RawStackPtr& rawData);
     void FillFpJsData(RawStackPtr& rawData);
     void FillDwarfErrorStack();
+    void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -193,11 +194,11 @@ private:
     std::unordered_map<uint64_t, uint32_t> responseLibraryMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
-    std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_ {STATISTICS_MAP_SZIE};
+    std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
     // Key is call stack id, value is recordstatistic data pointer
-    std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_ {STATISTICS_PERIOD_DATA_SIZE};
+    std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_;
     // Key is alloc or mmap address, value first is mallocsize, second is recordstatistic data pointer
-    std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> allocAddrMap_ {ALLOC_ADDRMAMP_SIZE};
+    std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> allocAddrMap_;
     // Key is alloc or mmap address, value is ReportEventBaseData list iterator
     std::unordered_map<uint64_t, std::list<ReportEventBaseData>::iterator> applyAndReleaseMatchIntervallMap_;
     std::list<ReportEventBaseData> applyAndReleaseMatchPeriodListData_;
@@ -224,6 +225,8 @@ private:
     std::set<std::string> jsStackSet_ = {};
     bool unwindFailReport_ = true;
     std::vector<std::string> prctlPeriodTags_; // applyAndReleaseMatchInterval mode used
+    std::vector<std::string> fpJsCallStacks_;
+    std::atomic<uint64_t> napiIndex_{1};
 };
 
 #endif // STACK_PREPROCESS_H

@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -20,7 +20,7 @@ import Paint from '../data/Paint';
 import { XAxis } from './XAxis';
 import YAxis from './YAxis';
 import {PathPaint} from '../data/Paint';
-import { CirclePaint , PathFillPaint,TextPaint, LinePaint, ImagePaint}  from '../data/Paint'
+import { CirclePaint, PathFillPaint, TextPaint, LinePaint, ImagePaint} from '../data/Paint'
 import LineChartRenderer from '../renderer/LineChartRenderer';
 import LineData from '../data/LineData';
 import Utils from '../utils/Utils'
@@ -34,14 +34,14 @@ export default struct PathView {
   public aboutToAppear() {
     this.model.calcClipPath();
   }
-  public test():boolean{
-    console.log("pathview:"+this.model.width)
+  public test() : boolean {
+    console.log('pathview:' + this.model.width)
     return true
   }
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
-      if(this.test()){}
+      if (this.test()) { }
       if (this.model.paintArry.length > 0) {
         ForEach(this.model.paintArry, (item: Paint) => {
 
@@ -80,10 +80,10 @@ export default struct PathView {
               }
             }
           }
-        }, (item: Paint) => "")
-        if(this.model.heightlightPaint.length > 0){
+        }, (item: Paint) => '')
+        if (this.model.heightlightPaint.length > 0) {
           ForEach(this.model.heightlightPaint, (item: Paint) => {
-            if(item instanceof LinePaint){
+            if (item instanceof LinePaint) {
               Line()
                 .startPoint(item.startPoint)
                 .endPoint(item.endPoint)
@@ -92,14 +92,8 @@ export default struct PathView {
                 .strokeWidth(item.strokeWidth)
                 .position({ x: 0, y: 0 })
                 .visibility(this.model.isShowHeightlight ? Visibility.Visible : Visibility.None)
-            } else if (item instanceof ImagePaint){
-//              Image($r('app.media.marker2'))
-//                .width(item.width)
-//                .height(item.height)
-//                .objectFit(ImageFit.Fill)
-//                .position({ x:item.x,y:item.y })
-//                .visibility(this.model.isShowClickValue ? Visibility.Visible : Visibility.None)
-            } else if (item instanceof TextPaint){
+            } else if (item instanceof ImagePaint) {
+            } else if (item instanceof TextPaint) {
               Text(item.text)
                 .position({ x: item.x, y: item.y })
                 .fontSize(item.textSize)
@@ -107,7 +101,7 @@ export default struct PathView {
                 .fontColor(item.color)
                 .visibility(this.model.isShowClickValue ? Visibility.Visible : Visibility.None)
             }
-          }, (item: Paint) => "")
+          }, (item: Paint) => '')
         }
       }
     }
@@ -126,63 +120,63 @@ export default struct PathView {
 
 }
 
-export class PathViewModel extends ScaleMode{
-  yleftAxis: YAxis;
-  yRightAxis: YAxis;
-  xAxis: XAxis;
-  width: number = 300;
-  height: number = 300;
-  isInverted: boolean = false;
-  isShowHeightlight: boolean = true;
-  isShowClickValue: boolean = true;
-  minOffset: number = 15; //X轴线偏移量
-  positionX: number= 0;
-  lineData: LineData = new LineData()
-  xScale: number = 1;
-  yLeftScale: number = 1;
-  yRightScale: number = 1;
-  backgroundColor: Color | string | number = "#00FFFFFF"; // chart区域背景色 默认透明色
-  rect: MyRect;
-  paintArry: Paint[] = [];
-  valuePaint: Paint[] = [];
-  heightlightPaint: Paint[] = [];
-  mRenderer: LineChartRenderer;
-  eventX: number = 0;
-  eventY: number = 0;
-  clickTransX: number = 0;
-  clickTransY: number = 0;
-  clipPath: string = "";
-  lineChartModel: LineChartModel=null;
+export class PathViewModel extends ScaleMode {
+  public yleftAxis: YAxis;
+  public yRightAxis: YAxis;
+  public xAxis: XAxis;
+  public width: number = 300;
+  public height: number = 300;
+  public isInverted: boolean = false;
+  public isShowHeightlight: boolean = true;
+  public isShowClickValue: boolean = true;
+  public minOffset: number = 15; //X轴线偏移量
+  public positionX: number = 0;
+  public lineData: LineData = new LineData()
+  public xScale: number = 1;
+  public yLeftScale: number = 1;
+  public yRightScale: number = 1;
+  public backgroundColor: Color | string | number = '#00FFFFFF'; // chart区域背景色 默认透明色
+  public rect: MyRect;
+  public paintArry: Paint[] = [];
+  public valuePaint: Paint[] = [];
+  public heightlightPaint: Paint[] = [];
+  public mRenderer: LineChartRenderer;
+  public eventX: number = 0;
+  public eventY: number = 0;
+  public clickTransX: number = 0;
+  public clickTransY: number = 0;
+  public clipPath: string = '';
+  public lineChartModel: LineChartModel = null;
 
-  public setYLeftAxis(yleftAxis: YAxis): void{
-      this.yleftAxis = yleftAxis;
+  public setYLeftAxis(yleftAxis: YAxis) : void {
+    this.yleftAxis = yleftAxis;
   }
 
-  public setYRightAxis(yRightAxis: YAxis): void{
+  public setYRightAxis(yRightAxis: YAxis) : void {
     this.yRightAxis = yRightAxis;
   }
 
-  public setXAxis(xAxis: XAxis): void{
+  public setXAxis(xAxis: XAxis) : void {
     this.xAxis = xAxis;
   }
 
-  public setIsInverted(isInverted: boolean): void{
+  public setIsInverted(isInverted: boolean) : void {
     this.isInverted = isInverted;
   }
 
-  public setIsShowHeightlight(isShowHeightlight: boolean): void{
+  public setIsShowHeightlight(isShowHeightlight: boolean) : void {
     this.isShowHeightlight = isShowHeightlight;
   }
 
-  public setIsShowClickValue(isShowClickValue: boolean): void{
+  public setIsShowClickValue(isShowClickValue: boolean) : void {
     this.isShowClickValue = isShowClickValue;
   }
 
-  public getLineData(): LineData{
+  public getLineData() : LineData {
     return this.lineData;
   }
 
-  public setPathViewData(lineData: LineData): void{
+  public setPathViewData(lineData: LineData) : void {
     this.lineData = lineData;
 
     this.computerScale();
@@ -192,54 +186,50 @@ export class PathViewModel extends ScaleMode{
     this.ondraw();
   }
 
-  private computerScale(): void{
+  private computerScale() : void {
     this.rect = this.lineData.mDisplayRect;
 
     this.positionX = this.rect.left;
 
-    this.xScale = (this.rect.right - this.rect.left)/(this.xAxis.getAxisMaximum()-this.xAxis.getAxisMinimum());
-    this.yLeftScale = (this.rect.bottom - this.rect.top)/(this.yleftAxis.getAxisMaximum()-this.yleftAxis.getAxisMinimum());
+    this.xScale = (this.rect.right - this.rect.left) / (this.xAxis.getAxisMaximum() - this.xAxis.getAxisMinimum());
+    this.yLeftScale = (this.rect.bottom - this.rect.top) /
+      (this.yleftAxis.getAxisMaximum() - this.yleftAxis.getAxisMinimum());
 
-    this.yRightScale = (this.rect.bottom - this.rect.top)/(this.yRightAxis.getAxisMaximum()-this.yRightAxis.getAxisMinimum());
+    this.yRightScale = (this.rect.bottom - this.rect.top) /
+      (this.yRightAxis.getAxisMaximum() - this.yRightAxis.getAxisMinimum());
 
   }
 
-  private ondraw(){
+  private ondraw() {
     let pathPaint: Paint[] = this.mRenderer.drawData();
     let circlePaint: Paint[] = this.mRenderer.drawCircle();
     this.valuePaint = this.mRenderer.drawValues();
     this.heightlightPaint = this.mRenderer.drawHighlighted();
-
     this.paintArry = [];
     this.paintArry = this.paintArry.concat(pathPaint);
     this.paintArry = this.paintArry.concat(circlePaint);
     this.paintArry = this.paintArry.concat(this.valuePaint);
   }
-  public onSingleClick(event: ClickEvent){
+  public onSingleClick(event: ClickEvent) {
     this.eventX = event.x;
     this.eventY = event.y;
     this.heightlightPaint = [];
     this.heightlightPaint = this.mRenderer.drawHighlighted();
   }
-
-  transX: number = 0;
-  transMaxY: number = 0;
-  transMinY: number = 0;
-  public onDoubleClick(event: ClickEvent){
-    this.currentXSpace =  this.centerX * this.scaleX - this.centerX;
+  public transX: number = 0;
+  public transMaxY: number = 0;
+  public transMinY: number = 0;
+  public onDoubleClick(event: ClickEvent) {
+    this.currentXSpace = this.centerX * this.scaleX - this.centerX;
     this.currentYSpace = this.centerY * this.scaleY - this.centerY;
-
-
-
     let maxXBefore: number = this.paintArry[this.paintArry.length - 1].x;
     let maxYBefore: number = Number.MIN_VALUE;
     let minYBefore: number = Number.MAX_VALUE;
-
-    for(let i = 0; i < this.valuePaint.length; i++){
-      if(maxYBefore < this.valuePaint[i].y){
+    for (let i = 0; i < this.valuePaint.length; i++) {
+      if (maxYBefore < this.valuePaint[i].y) {
         maxYBefore = this.valuePaint[i].y;
       }
-      if(minYBefore > this.valuePaint[i].y){
+      if (minYBefore > this.valuePaint[i].y) {
         minYBefore = this.valuePaint[i].y;
       }
     }
@@ -250,11 +240,11 @@ export class PathViewModel extends ScaleMode{
     let maxYAfter: number = Number.MIN_VALUE;
     let minYAfter: number = Number.MAX_VALUE;
 
-    for(let i = 0; i < this.valuePaint.length; i++){
-      if(maxYAfter < this.valuePaint[i].y){
+    for (let i = 0; i < this.valuePaint.length; i++) {
+      if (maxYAfter < this.valuePaint[i].y) {
         maxYAfter = this.valuePaint[i].y;
       }
-      if(minYAfter > this.valuePaint[i].y){
+      if (minYAfter > this.valuePaint[i].y) {
         minYAfter = this.valuePaint[i].y;
       }
     }
@@ -263,11 +253,11 @@ export class PathViewModel extends ScaleMode{
     this.transMaxY += maxYAfter - maxYBefore;
     this.transMinY += minYAfter - minYBefore;
     if (this.lineChartModel != null) {
-      this.lineChartModel.test = "" + this.currentYSpace;
+      this.lineChartModel.test = '' + this.currentYSpace;
     }
-    this.setXPosition(this.moveX-this.currentXSpace)
-    let moveYSource=this.leftAxisModel.lastHeight*this.scaleY - this.leftAxisModel.lastHeight
-    this.leftAxisModel.translate(moveYSource+this.moveY-this.currentYSpace);
+    this.setXPosition(this.moveX - this.currentXSpace)
+    let moveYSource = this.leftAxisModel.lastHeight * this.scaleY - this.leftAxisModel.lastHeight
+    this.leftAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
 
   }
 
@@ -294,51 +284,51 @@ export class PathViewModel extends ScaleMode{
     this.leftAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
     this.rightAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
     if (this.lineChartModel != null) {
-      this.lineChartModel.test = "" + this.moveY;
+      this.lineChartModel.test = '' + this.moveY;
     }
     this.setXPosition(this.moveX - this.currentXSpace)
     this.ondraw();
   }
 
-  public onScale(event: TouchEvent){
-    this.currentXSpace =  this.centerX * this.scaleX - this.centerX;
+  public onScale(event: TouchEvent) {
+    this.currentXSpace = this.centerX * this.scaleX - this.centerX;
     this.currentYSpace = this.centerY * this.scaleY - this.centerY;
 
     this.ondraw();
 
     if (this.lineChartModel != null) {
-      this.lineChartModel.test = "" + this.currentYSpace;
+      this.lineChartModel.test = '' + this.currentYSpace;
     }
-    this.setXPosition(this.moveX-this.currentXSpace)
-    let moveYSource=this.leftAxisModel.lastHeight*this.scaleY - this.leftAxisModel.lastHeight
-    this.leftAxisModel.translate(moveYSource+this.moveY-this.currentYSpace);
+    this.setXPosition(this.moveX - this.currentXSpace)
+    let moveYSource = this.leftAxisModel.lastHeight * this.scaleY - this.leftAxisModel.lastHeight
+    this.leftAxisModel.translate(moveYSource + this.moveY - this.currentYSpace);
   }
 
-  public calcClipPath(){
-    this.clipPath='M'+Utils.convertDpToPixel(this.rect.left - this.positionX)+' '+Utils.convertDpToPixel(this.rect.top - this.minOffset)
-    +'L'+Utils.convertDpToPixel(this.rect.right - this.positionX)+' '+Utils.convertDpToPixel(this.rect.top - this.minOffset)
-    +'L'+Utils.convertDpToPixel(this.rect.right - this.positionX)+' '+Utils.convertDpToPixel(this.rect.bottom - this.minOffset)
-    +'L'+Utils.convertDpToPixel(this.rect.left - this.positionX)+' '+Utils.convertDpToPixel(this.rect.bottom - this.minOffset)
-    +' Z'
+  public calcClipPath() {
+    this.clipPath = 'M' + Utils.convertDpToPixel(this.rect.left - this.positionX) + ' ' + Utils.convertDpToPixel(this.rect.top - this.minOffset) +
+    'L' + Utils.convertDpToPixel(this.rect.right - this.positionX) + ' ' + Utils.convertDpToPixel(this.rect.top - this.minOffset) +
+    'L' + Utils.convertDpToPixel(this.rect.right - this.positionX) + ' ' + Utils.convertDpToPixel(this.rect.bottom - this.minOffset) +
+    'L' + Utils.convertDpToPixel(this.rect.left - this.positionX) + ' ' + Utils.convertDpToPixel(this.rect.bottom - this.minOffset) +
+    ' Z'
   }
 
-  public setBackgroundColor(color: Color | string | number): void{
+  public setBackgroundColor(color: Color | string | number): void {
     this.backgroundColor = color;
   }
 
-  public setMinOffset(minOffset: number): void{
+  public setMinOffset(minOffset: number) : void {
     this.minOffset = minOffset;
   }
 
-  public getYLeftAxis(): YAxis{
+  public getYLeftAxis() : YAxis {
     return this.yleftAxis;
   }
 
-  public getYRightAxis(): YAxis{
+  public getYRightAxis() : YAxis {
     return this.yRightAxis;
   }
 
-  public getXAxis(): XAxis{
+  public getXAxis() : XAxis {
     return this.xAxis;
   }
 
@@ -352,7 +342,7 @@ export class PathViewModel extends ScaleMode{
   private textPaint: Paint[] = [];
   private tempArry = []
 
-  public animateX(durationMillis: number){
+  public animateX(durationMillis: number) {
     this.clearPaint();
 
     let maxCount = this.lineData.getMaxEntryCountSet().getEntryCount();
@@ -364,14 +354,14 @@ export class PathViewModel extends ScaleMode{
 
       this.onDraw();
 
-      if(this.curX >= maxCount){
+      if (this.curX >= maxCount) {
         this.curX = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
-  public animateY(durationMillis: number){
+  public animateY(durationMillis: number) {
     this.clearPaint();
 
     let maxCount = this.lineData.getMaxEntryCountSet().getEntryCount();
@@ -383,14 +373,14 @@ export class PathViewModel extends ScaleMode{
 
       this.onDraw();
 
-      if(this.curY >= 1){
+      if (this.curY >= 1) {
         this.curY = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
-  public animateXY(durationMillis: number){
+  public animateXY(durationMillis: number) {
     this.clearPaint();
     let maxCount = this.lineData.getMaxEntryCountSet().getEntryCount();
 
@@ -402,15 +392,15 @@ export class PathViewModel extends ScaleMode{
 
       this.onDraw();
 
-      if(this.curY >= 1){
+      if (this.curY >= 1) {
         this.curX = 0;
         this.curY = 0;
         clearInterval(this.timerId)
       }
-    },durationMillis)
+    }, durationMillis)
   }
 
-  private clearPaint(){
+  private clearPaint() {
     this.pathPaint = [];
     this.circlePaint = [];
     this.textPaint = [];
@@ -418,7 +408,7 @@ export class PathViewModel extends ScaleMode{
     this.paintArry = [];
   }
 
-  private onDraw(){
+  private onDraw() {
     this.pathPaint = this.mRenderer.drawData();
     this.circlePaint = this.mRenderer.drawCircle();
     this.textPaint = this.mRenderer.drawValues();

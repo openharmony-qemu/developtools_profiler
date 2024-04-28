@@ -14,33 +14,37 @@
  */
 
 export default class CheckEmptyUtils {
-
   /**
-     * Check obj is empty.
-     *
-     * @param {Object} obj need checked object
-     * @return {boolean} true(empty)
-     */
+   * Check obj is empty.
+   *
+   * @param {Object} obj need checked object
+   * @return {boolean} true(empty)
+   */
   static isEmpty(obj) {
-    return (typeof obj === 'undefined' || obj === null || obj === '' || Object.keys(obj).length === 0);
+    return (
+      typeof obj === 'undefined' ||
+      obj === null ||
+      obj === '' ||
+      Object.keys(obj).length === 0
+    );
   }
 
   /**
-     * Check str is empty.
-     *
-     * @param {string} str need checked string
-     * @return {boolean} true(empty)
-     */
+   * Check str is empty.
+   *
+   * @param {string} str need checked string
+   * @return {boolean} true(empty)
+   */
   static checkStrIsEmpty(str) {
     return str.trim().length === 0;
   }
 
   /**
-     * Check array is empty.
-     *
-     * @param {Array} arr need checked array
-     * @return {boolean} true(empty)
-     */
+   * Check array is empty.
+   *
+   * @param {Array} arr need checked array
+   * @return {boolean} true(empty)
+   */
   static isEmptyArr(arr) {
     return arr.length === 0;
   }

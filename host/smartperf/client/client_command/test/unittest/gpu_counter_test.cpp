@@ -24,13 +24,14 @@
 #include <cstdio>
 #include <functional>
 #include "GpuCounter.h"
+#include "sp_utils.h"
 
 using namespace testing::ext;
 using namespace std;
 
 namespace OHOS {
 namespace SmartPerf {
-class SPdaemonTest : public testing::Test {
+class SPdaemonGpuTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -43,18 +44,38 @@ public:
  * @tc.desc: Test Init
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, Init001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, Init001, TestSize.Level1)
 {
+    std::string result;
+    std::string constConfigFile = "/bin/config.txt";
+    std::string constExecFile = "/bin/counters_collector";
+    std::string constLibFile = "/bin/libGPU_PCM.so";
+    std::string constV2File = "/bin/counters_collector_v2.txt";
+    std::string constCheckProductInfo = "param get const.product.name";
+    std::string constProductInfo = "Mate 60 Pro";
+
     std::string recvBuf;
     std::map<std::string, std::string> data;
     int ret = GpuCounter::GetInstance().Init(recvBuf, data);
 
-    EXPECT_EQ(ret, -4);
+    SPUtils::LoadCmd(constCheckProductInfo, result);
+    if (result.empty() || std::string::npos == result.find(constProductInfo)) {
+        EXPECT_EQ(ret, -4);
+        return;
+    }
+    if ((!SPUtils::FileAccess(constV2File)) || (!SPUtils::FileAccess(constExecFile)) ||
+        (!SPUtils::FileAccess(constConfigFile)) || (!SPUtils::FileAccess(constLibFile))) {
+        EXPECT_EQ(ret, -1);
+        return;
+    }
+
+    EXPECT_EQ(ret, -2);
+    return;
 }
 
 /*
 // 002屏蔽GpuCounter.cpp 第35、78-83行进行测试（后续测试添加依赖文件，文件齐全，所以屏蔽该测试）
-HWTEST_F(SPdaemonTest, Init002, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, Init002, TestSize.Level1)
 {
     std::string recvBuf;
     std::map<std::string, std::string> data;
@@ -99,7 +120,7 @@ HWTEST_F(SPdaemonTest, Init005, TestSize.Level1)
  * @tc.desc: Test ItemData
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, ItemData001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, ItemData001, TestSize.Level1)
 {
     bool ret = false;
     std::string recvBuf = "catch_gpu_counter";
@@ -121,17 +142,15 @@ HWTEST_F(SPdaemonTest, ItemData001, TestSize.Level1)
  * @tc.desc: Test GetCounterDuration
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, GetCounterDuration001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, GetCounterDuration001, TestSize.Level1)
 {
     int ret = -1;
-    const char* cmd = "cd /data/local/tmp";
-    std::string fileName = "config.txt";
+    std::string fileName = "/bin/config.txt";
 
-    ret = system(cmd);
     FILE *file = fopen(fileName.c_str(), "r+");
 
     long long lg = GpuCounter::GetInstance().GetCounterDuration();
-    if (ret == 0 && file != nullptr) {
+    if (file != nullptr) {
         if (lg >= 0) {
             ret = 1;
         }
@@ -146,10 +165,10 @@ HWTEST_F(SPdaemonTest, GetCounterDuration001, TestSize.Level1)
  * @tc.desc: Test Start
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, Start001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, Start001, TestSize.Level1)
 {
     int ret = GpuCounter::GetInstance().Start();
-    EXPECT_EQ(ret, -1);
+    EXPECT_EQ(ret, 0);
 }
 
 /**
@@ -157,7 +176,7 @@ HWTEST_F(SPdaemonTest, Start001, TestSize.Level1)
  * @tc.desc: Test Rest
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, Rest001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, Rest001, TestSize.Level1)
 {
     GpuCounter::GetInstance().Rest();
 }
@@ -167,13 +186,12 @@ HWTEST_F(SPdaemonTest, Rest001, TestSize.Level1)
  * @tc.desc: Test Check
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, Check001, TestSize.Level1)
+HWTEST_F(SPdaemonGpuTest, Check001, TestSize.Level1)
 {
     std::string recvBuf = "catch_gpu_counter";
     std::map<std::string, std::string> data;
     GpuCounter::GetInstance().Init(recvBuf, data);
     GpuCounter::GetInstance().Check();
 }
-
 }
 }

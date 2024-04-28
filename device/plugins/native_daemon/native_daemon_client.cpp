@@ -24,7 +24,7 @@
 
 using namespace OHOS::Developtools::NativeDaemon;
 
-static uint32_t TestDumpFile(std::string postfix = "")
+static uint32_t TestDumpFile(const std::string postfix = "")
 {
     uint32_t fd = static_cast<uint32_t>(open(("/data/local/tmp/test_dump_file" + postfix + ".htrace").c_str(),
                                              O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
@@ -75,7 +75,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --clockId                           -c : clockId\n");
             printf("    --dumpData                          -dd : dump data\n");
             printf("    --sampleInterval                    -spi : sampleInterval, default: 0\n");
-            printf("    --jsStackReport                     -jr : jsStackReport, default: false\n");
+            printf("    --jsStackReport                     -jr : jsStackReport, default: 0\n");
             printf("    --maxJsStackDepth                   -mjsd : maxJsStackDepth, default: 0\n");
             printf("    --filterNapiName                    -fnapi : filterNapiName \n");
             return 0;
@@ -140,7 +140,7 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--printNmd") || (arg == "-nmd")) {
             config->printNmd_ = true;
         } else if ((arg == "--jsStackReport") || (arg == "-jr")) {
-            config->jsStackReport_ = true;
+            config->jsStackReport_ = static_cast<int32_t>(std::stoi(argv[++i]));;
         } else if ((arg == "--maxJsStackDepth") || (arg == "-mjsd")) {
             config->maxJsStackDepth_ = std::stoi(argv[++i]);
         } else if ((arg == "--filterNapiName") || (arg == "-fnapi")) {

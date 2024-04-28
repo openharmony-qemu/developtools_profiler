@@ -17,7 +17,7 @@ import router from '@system.router';
 
 @Component
 export struct StartTestTitleComponent {
-  private title: string = "开始测试"
+  private title: string = '开始测试'
 
   build() {
     //开始测试title
@@ -34,8 +34,8 @@ export struct StartTestTitleComponent {
       Text(this.title)
         .fontSize('20fp')
         .fontWeight(FontWeight.Bold)
-        .fontColor($r("app.color.color_fff"))
+        .fontColor($r('app.color.color_fff'))
         .margin({ top: '30vp' })
-    }.backgroundColor($r("app.color.colorPrimary")).width('100%').height('12%')
+    }.backgroundColor($r('app.color.colorPrimary')).width('100%').height('12%')
   }
 }

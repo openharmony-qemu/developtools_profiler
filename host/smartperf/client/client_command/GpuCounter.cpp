@@ -58,7 +58,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
         content += ',';
     }
     if (!content.empty()) {
-        content = content.substr(0, content.length() - 1); // Cancel the last ',' sign
+        content.pop_back();
     }
 
     result["info"] = content;
@@ -68,7 +68,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
 }
 
 
-int GpuCounter::Init(std::string packageName, std::map<std::string, std::string> &retMap)
+int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::string> &retMap)
 {
     int ret = 0;
     std::string result;
@@ -76,7 +76,7 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
     Rest();
     do {
         SPUtils::LoadCmd(constCheckProductInfo, result);
-        if (result.empty() || std::string::npos == result.find(constProductInfo)) {
+        if (result.empty() || result.find(constProductInfo) == std::string::npos) {
             errorInfo = "Non Hisilicon chips";
             ret = ERROR_CODE_NEGATIVE_FOUR;
             break;
@@ -120,12 +120,12 @@ int GpuCounter::Init(std::string packageName, std::map<std::string, std::string>
 
 void GpuCounter::Rest()
 {
-    std::string result;
     isStop = false;
     fileList.clear();
     startCaptureTime = 0;
     KillCounter(); // counters_collector if runing kill
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
+        std::string result;
         SPUtils::LoadCmd(constRmCsv, result); // clear history files
     }
 }
@@ -223,7 +223,11 @@ long long GpuCounter::GetCounterDuration()
 {
     bool startFlag = false;
     long long ret = -1;
-    std::ifstream file(constConfigFile);
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(constConfigFile.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    std::ifstream file(realPath);
     std::string line;
 
     if (!file.is_open()) {
@@ -232,13 +236,13 @@ long long GpuCounter::GetCounterDuration()
 
     while (std::getline(file, line)) {
         if (!startFlag) {
-            if (std::string::npos != line.find("collector {")) {
+            if (line.find("collector {") != std::string::npos) {
                 startFlag = true;
             }
             continue;
         }
 
-        if (std::string::npos != line.find("duration_ms:")) {
+        if (line.find("duration_ms:") != std::string::npos) {
             std::vector<std::string> out;
             SPUtils::StrSplit(line, ":", out);
 
@@ -251,10 +255,10 @@ long long GpuCounter::GetCounterDuration()
             try {
                 ret = std::stoll(value);
                 break;
-            } catch (std::exception &e) {
+            } catch (const std::exception &e) {
                 return -1;
             }
-        } else if (std::string::npos != line.find("}")) {
+        } else if (line.find("}") != std::string::npos) {
             startFlag = false;
         }
     }

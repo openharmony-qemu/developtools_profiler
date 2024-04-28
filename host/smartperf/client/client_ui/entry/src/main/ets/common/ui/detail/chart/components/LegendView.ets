@@ -16,7 +16,7 @@
 import Legend, {LegendForm} from './Legend'
 import LegendRenderer from '../renderer/LegendRenderer'
 import ViewPortHandler from '../utils/ViewPortHandler'
-import Paint,{LinePaint,CirclePaint,RectPaint,TextPaint} from '../data/Paint'
+import Paint, {LinePaint, CirclePaint, RectPaint, TextPaint} from '../data/Paint'
 
 @Component
 @Preview
@@ -26,28 +26,32 @@ struct LegendView {
 
   aboutToAppear() {
     this.model.mLegend.calculateNeededSizes(this.model.mHandler);
-    this.model.mHandler.setChartDimens(this.model.mWidth, (this.model.mLegend.mNeededHeight > this.model.mHeight) ? (this.model.mLegend.mNeededHeight + 5) : this.model.mHeight);
+    this.model.mHandler.setChartDimens(
+      this.model.mWidth, 
+      (this.model.mLegend.mNeededHeight > this.model.mHeight) ?
+        (this.model.mLegend.mNeededHeight + 5) : this.model.mHeight
+    );
 
     var mLegendRenderer : LegendRenderer = new LegendRenderer(this.model.mHandler, this.model.mLegend);
     this.model.paints = this.model.paints.concat(mLegendRenderer.renderLegend())
-    console.log("mLegendRenderer.computeLegend"+JSON.stringify(this.model.paints));
+    console.log('mLegendRenderer.computeLegend' + JSON.stringify(this.model.paints));
   }
 
   build() {
     Stack() {
-      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center  }) {
+      Flex({ direction: FlexDirection.Row, alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center }) {
         ForEach(this.model.paints, (item:Paint) => {
-          if(item instanceof CirclePaint){
+          if (item instanceof CirclePaint) {
             Circle()
               .width(item.width)
               .height(item.height)
               .fill(item.stroke)
               .position({ x: item.x, y: item.y })
-          }else if(item.constructor.name == "RectPaint"){
+          } else if (item.constructor.name == 'RectPaint') {
             Rect({width: item.width, height: item.height})
               .fill(item.stroke)
               .position({ x: item.x, y: item.y })
-          }else if(item.constructor.name == "TextPaint"){
+          } else if (item.constructor.name == 'TextPaint') {
             Text((<TextPaint>item).text)
               .fontWeight(item.typeface)
               .fontSize(item.textSize)
@@ -55,7 +59,7 @@ struct LegendView {
               .textAlign(item.textAlign)
               .position({ x: item.x, y: item.y })
           }
-        },(item: Paint) => (item.alpha + "").toString())
+        }, (item: Paint) => (item.alpha + '').toString())
       }
       .size({ width: '90%', height: '90%' })
     }
@@ -65,34 +69,36 @@ struct LegendView {
 
 namespace LegendView {
   export class Model {
-    paints:Paint[] = []
+    public paints: Paint[] = []
 
-    mHandler:ViewPortHandler = new ViewPortHandler();
-    YEntrySpace : number = 5
-    FormToTextSpace : number = 2
-    mLegend: Legend = new Legend();
-    mWidth: number = 300;
-    mHeight: number = 50;
+    public mHandler: ViewPortHandler = new ViewPortHandler();
+    public yEntrySpace : number = 5
+    public formToTextSpace : number = 2
+    public mLegend: Legend = new Legend();
+    public mWidth: number = 300;
+    public mHeight: number = 50;
 
-    setLegend(mLegend:Legend):Model{
+    setLegend(mLegend:Legend):Model {
       this.mLegend = mLegend
       return this
     }
 
-    setWidth(mWidth:number):Model{
+    setWidth(mWidth:number):Model {
       this.mWidth = mWidth
       return this
     }
 
-    setHeight(mHeight:number):Model{
+    setHeight(mHeight:number):Model {
       this.mHeight = mHeight
       return this
     }
 
-    public refresh(){
+    public refresh() {
       this.paints = []
       this.mLegend.calculateNeededSizes(this.mHandler);
-      this.mHandler.setChartDimens(this.mWidth, (this.mLegend.mNeededHeight > this.mHeight) ? (this.mLegend.mNeededHeight + 5) : this.mHeight);
+      this.mHandler.setChartDimens(
+        this.mWidth, (this.mLegend.mNeededHeight > this.mHeight) ? (this.mLegend.mNeededHeight + 5) : this.mHeight
+      );
 
       var mLegendRenderer : LegendRenderer = new LegendRenderer(this.mHandler, this.mLegend);
       this.paints = this.paints.concat(mLegendRenderer.renderLegend())

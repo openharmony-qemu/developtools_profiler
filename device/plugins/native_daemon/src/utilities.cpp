@@ -25,7 +25,7 @@ namespace Developtools {
 namespace NativeDaemon {
 uint32_t RoundUp(uint32_t x, const int align)
 {
-    return (((x) + (align)-1) / (align)) * (align);
+    return (((x) + (align) >= 1 ? (x) + (align) - 1 : 0) / (align)) * (align);
 }
 
 std::string StringReplace(std::string source, const std::string &from, const std::string &to)
@@ -79,6 +79,23 @@ std::vector<std::string> StringSplit(std::string source, std::string split)
     }
     return result;
 }
+
+void AdvancedSplitString(const std::string_view& str, const std::string& delimiters, std::vector<std::string>& elems)
+{
+    std::string::size_type pos = 0;
+    std::string::size_type prev = 0;
+    while ((pos = str.find_first_of(delimiters, prev)) != std::string::npos) {
+        if (pos > prev) {
+            elems.emplace_back(str, prev, pos - prev);
+        }
+        prev = pos + 1;
+    }
+
+    if (prev < str.size()) {
+        elems.emplace_back(str, prev, str.size() - prev);
+    }
+}
+
 StdoutRecord::StdoutRecord(const std::string &tempFile, const std::string &mode)
 {
     if (!tempFile.empty()) {

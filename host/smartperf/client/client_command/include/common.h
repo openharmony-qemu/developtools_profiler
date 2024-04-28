@@ -44,7 +44,7 @@ enum class MessageType {
     BACK_TO_DESKTOP,
 };
 
-const std::unordered_map<MessageType, std::string> messageMap = {
+const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CPU_NUM, std::string("get_cpu_num") },
     { MessageType::GET_CPU_FREQ, std::string("get_cpu_freq") },
     { MessageType::GET_CPU_LOAD, std::string("get_cpu_load") },
@@ -79,8 +79,6 @@ enum class CommandType {
     CT_G,
     CT_D,
     CT_F,
-    CT_F1,
-    CT_F2,
     CT_T,
     CT_P,
     CT_R,
@@ -101,7 +99,7 @@ enum class CommandHelp {
     SCREEN,
 };
 
-const std::unordered_map<std::string, CommandType> commandMap = {
+const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-N"), CommandType::CT_N },
     { std::string("-PKG"), CommandType::CT_PKG },
     { std::string("-PID"), CommandType::CT_PID },
@@ -109,8 +107,6 @@ const std::unordered_map<std::string, CommandType> commandMap = {
     { std::string("-c"), CommandType::CT_C },
     { std::string("-g"), CommandType::CT_G },
     { std::string("-f"), CommandType::CT_F },
-    { std::string("-f1"), CommandType::CT_F1 },
-    { std::string("-f2"), CommandType::CT_F1 },
     { std::string("-t"), CommandType::CT_T },
     { std::string("-p"), CommandType::CT_P },
     { std::string("-r"), CommandType::CT_R },
@@ -135,8 +131,6 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_C, std::string("-c") },
     { CommandType::CT_G, std::string("-g") },
     { CommandType::CT_F, std::string("-f") },
-    { CommandType::CT_F1, std::string("-f1") },
-    { CommandType::CT_F1, std::string("-f2") },
     { CommandType::CT_T, std::string("-t") },
     { CommandType::CT_P, std::string("-p") },
     { CommandType::CT_R, std::string("-r") },
@@ -154,7 +148,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
 };
 
 
-const std::unordered_map<CommandHelp, std::string> commandHelpMap = {
+const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::HELP, std::string("--help") },
     { CommandHelp::VERSION, std::string("--version") },
     { CommandHelp::SCREEN, std::string("-screen") },

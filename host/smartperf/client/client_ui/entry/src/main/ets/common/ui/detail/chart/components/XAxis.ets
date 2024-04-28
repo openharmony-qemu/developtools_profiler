@@ -24,58 +24,57 @@ import AxisBase from './AxisBase';
  * @author Philipp Jahoda
  */
 export class XAxis extends AxisBase {
-
     /**
      * width of the x-axis labels in pixels - this is automatically
      * calculated by the computeSize() methods in the renderers
      */
-    public mLabelWidth : number = 1;
+    public mLabelWidth: number = 1;
 
     /**
      * height of the x-axis labels in pixels - this is automatically
      * calculated by the computeSize() methods in the renderers
      */
-    public mLabelHeight : number = 1;
+    public mLabelHeight: number = 1;
 
     /**
      * width of the (rotated) x-axis labels in pixels - this is automatically
      * calculated by the computeSize() methods in the renderers
      */
-    public mLabelRotatedWidth : number = 1;
+    public mLabelRotatedWidth: number = 1;
 
     /**
      * height of the (rotated) x-axis labels in pixels - this is automatically
      * calculated by the computeSize() methods in the renderers
      */
-    public mLabelRotatedHeight : number = 1;
+    public mLabelRotatedHeight: number = 1;
 
     /**
      * This is the angle for drawing the X axis labels (in degrees)
      */
-    protected mLabelRotationAngle : number = 0;
+    protected mLabelRotationAngle: number = 0;
 
     /**
      * if set to true, the chart will avoid that the first and last label entry
      * in the chart "clip" off the edge of the chart
      */
-    private mAvoidFirstLastClipping : boolean = false;
+    private mAvoidFirstLastClipping: boolean = false;
 
     /**
      * the position of the x-labels relative to the chart
      */
-    private mPosition : XAxisPosition = XAxisPosition.TOP;
+    private mPosition: XAxisPosition = XAxisPosition.TOP;
 
-    public longest:string;
+    public longest: string;
 
     constructor() {
         super();
-        this.mYOffset = 4/*Utils.convertDpToPixel(4)*/; // -3
+        this.mYOffset = 4;
     }
 
     /**
      * returns the position of the x-labels
      */
-    public getPosition() : XAxisPosition {
+    public getPosition(): XAxisPosition {
         return this.mPosition;
     }
 
@@ -84,14 +83,14 @@ export class XAxis extends AxisBase {
      *
      * @param pos
      */
-    public setPosition(pos : XAxisPosition) : void {
+    public setPosition(pos: XAxisPosition): void {
         this.mPosition = pos;
     }
 
     /**
      * returns the angle for drawing the X axis labels (in degrees)
      */
-    public getLabelRotationAngle() : number{
+    public getLabelRotationAngle(): number {
         return this.mLabelRotationAngle;
     }
 
@@ -100,7 +99,7 @@ export class XAxis extends AxisBase {
      *
      * @param angle the angle in degrees
      */
-    public setLabelRotationAngle(angle : XAxisPosition) : void {
+    public setLabelRotationAngle(angle: XAxisPosition): void {
         this.mLabelRotationAngle = angle;
     }
 
@@ -110,7 +109,7 @@ export class XAxis extends AxisBase {
      *
      * @param enabled
      */
-    public setAvoidFirstLastClipping(enabled : boolean) : void {
+    public setAvoidFirstLastClipping(enabled: boolean): void {
         this.mAvoidFirstLastClipping = enabled;
     }
 
@@ -119,14 +118,18 @@ export class XAxis extends AxisBase {
      *
      * @return
      */
-    public isAvoidFirstLastClippingEnabled() : boolean {
+    public isAvoidFirstLastClippingEnabled(): boolean {
         return this.mAvoidFirstLastClipping;
     }
 }
 
 /**
-    * enum for the position of the x-labels relative to the chart
-    */
+ * enum for the position of the x-labels relative to the chart
+ */
 export enum XAxisPosition {
-    TOP, BOTTOM, BOTH_SIDED, TOP_INSIDE, BOTTOM_INSIDE
+    TOP,
+    BOTTOM,
+    BOTH_SIDED,
+    TOP_INSIDE,
+    BOTTOM_INSIDE,
 }

@@ -126,9 +126,8 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
     CHECK_TRUE(type == 0 || type == 1, RET_ERR, "NativeMemoryProfilerSaClientManager: type is invalid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     config->printNmd_ = true;
-    config->nmdPid_ = pid;
-    config->nmdType_ = type;
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+    config->nmdPid_ = static_cast<uint32_t>(pid);
+    config->nmdType_ = static_cast<uint32_t>(type);
     auto service = GetRemoteService();
     if (service == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");

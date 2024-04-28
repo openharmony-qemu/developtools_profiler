@@ -18,8 +18,8 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
 message OptimizeReport {
-  int64 start_time = 1;                 //统计起始时间
-  int64 end_time = 2;                   //统计结束时间
+  int64 start_time = 1;                 //统计起始时间CLOCK_REALTIME类型
+  int64 end_time = 2;                   //统计结束时间CLOCK_REALTIME类型
   string bundle_name = 3;               //调优应用包名（AppStatistic/AppDetail/AbnormalEvents必传，其他非必传）
   uint32 message_type = 4;              //调优消息类型值累加（建议用于二进制位运算，判断是否包含某消息类型）
   RealBattery real_battery = 5;         //电源信息统计，对应messageType为1（对应原hisysevent中的POWER_IDE_BATTERY上报）
@@ -27,15 +27,19 @@ message OptimizeReport {
   AppDetail app_detail = 7;             //指定应用的各器件调优信息，对应messageType为4
   ComponentTop component_top = 8;       //整机各器件的top应用信息，对应messageType为8（对应原hisysevent中的POWER_IDE_*上报）
   AbnormalEvents abnormal_events = 9;   //指定应用的异常事件检测，对应messageType为16（应用异常快速检测，3min/次）
+  ThermalReport thermal_report = 10;    //5.0新增：热温度信息，对应messageType为32
+  int64 start_time_b = 11;              //5.0新增：统计起始时间CLOCK_BOOTTIME类型
+  int64 end_time_b = 12;                //5.0新增：统计结束时间CLOCK_BOOTTIME类型
 }
 
 message RealBattery {
   int64 capacity = 1;   //电池容量
   int64 charge = 2;     //充电状态
-  int64 current = 3;    //电池电流
+  int64 current = 3;    //电池电流，计划日落，用real_current替代
   int64 gas_gauge = 4;  //电池电量
   int64 level = 5;      //电池百分比
   int64 screen = 6;     //屏幕状态
+  repeated int32 real_current = 7;   //5.0新增：实时电流，100ms采集一次
 }
 
 message AppStatistic {
@@ -48,6 +52,8 @@ message AppStatistic {
   AppStatisticCommon gpu = 7;         //指定应用的gpu统计信息
   AppStatisticCommon location = 8;    //指定应用的location统计信息
   AppStatisticCommon wifiscan = 9;    //指定应用的wifiscan统计信息
+  AppStatisticCommon wifi = 10;       //5.0新增：指定应用的wifi流量统计信息
+  AppStatisticCommon modem = 11;      //5.0新增：指定应用的modem流量统计信息
 }
 
 message AppStatisticCommon {
@@ -86,15 +92,16 @@ message AppDetailWifi {
 
 message AppDetailDisplay {
   int64 count_1hz = 1;      //刷新率在每秒1次的驻留时长
-  int64 count_10hz = 2;     //刷新率在每秒10次的驻留时长
-  int64 count_15hz = 3;     //刷新率在每秒15次的驻留时长
-  int64 count_24hz = 4;     //刷新率在每秒24次的驻留时长
-  int64 count_30hz = 5;     //刷新率在每秒30次的驻留时长
-  int64 count_45hz = 6;     //刷新率在每秒45次的驻留时长
-  int64 count_60hz = 7;     //刷新率在每秒60次的驻留时长
-  int64 count_90hz = 8;     //刷新率在每秒90次的驻留时长
-  int64 count_120hz = 9;    //刷新率在每秒120次的驻留时长
-  int64 count_180hz = 10;   //刷新率在每秒180次的驻留时长
+  int64 count_5hz = 2;      //刷新率在每秒5次的驻留时长
+  int64 count_10hz = 3;     //刷新率在每秒10次的驻留时长
+  int64 count_15hz = 4;     //刷新率在每秒15次的驻留时长
+  int64 count_24hz = 5;     //刷新率在每秒24次的驻留时长
+  int64 count_30hz = 6;     //刷新率在每秒30次的驻留时长
+  int64 count_45hz = 7;     //刷新率在每秒45次的驻留时长
+  int64 count_60hz = 8;     //刷新率在每秒60次的驻留时长
+  int64 count_90hz = 9;     //刷新率在每秒90次的驻留时长
+  int64 count_120hz = 10;   //刷新率在每秒120次的驻留时长
+  int64 count_180hz = 11;   //刷新率在每秒180次的驻留时长
 }
 
 message ComponentTop {
@@ -180,4 +187,9 @@ message AbnormalEventInfo {
   int64 usage_load = 4;           //使用负载
   int64 usage_freq = 5;           //使用频率
   int32 usage_count = 6;          //使用次数
+}
+
+message ThermalReport {           //热温度信息
+  int64 shell_temp = 1;           //外壳温度
+  int64 thermal_level = 2;        //温度等级
 }

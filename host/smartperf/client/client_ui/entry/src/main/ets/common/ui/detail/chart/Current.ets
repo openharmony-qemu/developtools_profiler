@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -23,20 +23,20 @@ import { JArrayList } from './utils/JArrayList';
 import ILineDataSet from './interfaces/datasets/ILineDataSet'
 import { TIndexInfo } from '../../../entity/DatabaseEntity';
 
-const TAG='Current'
+const TAG = 'Current'
 @Entry
 @Component
 export struct Current {
-  @State gpData: Array<TIndexInfo> = new Array()
-  topAxis: XAxis = new XAxis(); //顶部X轴
-  bottomAxis: XAxis = new XAxis(); //底部X轴
-  atWidth: number = globalThis.screenWith > 800 ? 700 : 350 ; //表的宽度
-  atHeight: number = globalThis.screenWith > 800 ? 200 : 300; //表的高度
-  minOffset: number = 15; //X轴线偏移量
-  leftAxis: YAxis = null;
-  rightAxis: YAxis = null;
-  lineData: LineData = null;
-  lineChartModel : LineChartModel = new LineChartModel();
+  @State gpData: Array<TIndexInfo> = []
+  public topAxis: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis: XAxis = new XAxis(); //底部X轴
+  public atWidth: number = globalThis.screenWith > 800 ? 700 : 350; //表的宽度
+  public atHeight: number = globalThis.screenWith > 800 ? 200 : 300; //表的高度
+  public minOffset: number = 15; //X轴线偏移量
+  public leftAxis: YAxis = null;
+  public rightAxis: YAxis = null;
+  public lineData: LineData = null;
+  public lineChartModel : LineChartModel = new LineChartModel();
 
   aboutToAppear() {
 
@@ -50,9 +50,9 @@ export struct Current {
 
     this.topAxis.setPosition(XAxisPosition.TOP);
     this.topAxis.setAxisMinimum(0);
-    if(this.gpData.length==2){
+    if (this.gpData.length == 2) {
       this.topAxis.setAxisMaximum(globalThis.testDuration);
-    }else {
+    } else {
       this.topAxis.setAxisMaximum((this.gpData.length - 1) / 2);
     }
 
@@ -63,9 +63,9 @@ export struct Current {
     }
     this.bottomAxis.setPosition(XAxisPosition.BOTTOM);
     this.bottomAxis.setAxisMinimum(0);
-    if(this.gpData.length==2){
+    if (this.gpData.length == 2) {
       this.bottomAxis.setAxisMaximum(globalThis.testDuration);
-    }else {
+    } else {
       this.bottomAxis.setAxisMaximum((this.gpData.length - 1) / 2);
     }
 
@@ -97,10 +97,10 @@ export struct Current {
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();
@@ -111,26 +111,26 @@ export struct Current {
         continue
       }
 
-      if(this.gpData.length==2){
-        values.add(new EntryOhos(Number(index).valueOf()*globalThis.testDuration,
+      if (this.gpData.length == 2) {
+        values.add(new EntryOhos(Number(index).valueOf() * globalThis.testDuration,
         Math.round((Number(gpDataCur.currentNow).valueOf() * (Number(gpDataCur.voltageNow).valueOf() / 1e6)) / 3.8)
         ))
-      }else{
-        values.add(new EntryOhos(Number(index).valueOf()/2,
+      } else {
+        values.add(new EntryOhos(Number(index).valueOf() / 2,
         Math.round((Number(gpDataCur.currentNow).valueOf() * (Number(gpDataCur.voltageNow).valueOf() / 1e6)) / 3.8)
         ));
       }
     }
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor: Array<ColorStop> = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "Power Info(归一化电流 MA)");
+    let set1 = new LineDataSet(values, 'Power Info(归一化电流 MA)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setGradientFillColor(gradientFillColor)
@@ -153,7 +153,7 @@ export struct Current {
       Scroll() {
         Column({ space: 20 }) {
           LineChart({lineChartModel: this.lineChartModel})
-          Text("归一化电流 (mA)") {
+          Text('归一化电流 (mA)') {
           }.fontWeight(FontWeight.Bold).fontColor(Color.Blue).fontSize('15fp').textAlign(TextAlign.Center)
         }.width('100%').alignItems(HorizontalAlign.Center)
       }.width('100%')

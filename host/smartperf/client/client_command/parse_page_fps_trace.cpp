@@ -27,7 +27,7 @@ double ParsePageFpsTrace::PageFpsTrace(std::string file)
     if (realpath(file.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    infile.open(file);
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParsePageFpsTrace open file(%s) fialed ", file.c_str());
@@ -56,7 +56,7 @@ double ParsePageFpsTrace::CalculateTime()
                 responseLine = line;
                 needUpdateResponseLine = false;
             }
-            frameStartTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(line));
+            frameStartTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(line));
         }
         if (updateCount) {
             if (line.find("B|" + pid + "|") != std::string::npos && line.find("-" + pid) != std::string::npos) {
@@ -67,8 +67,7 @@ double ParsePageFpsTrace::CalculateTime()
             if (count == 0) {
                 completeLine = line;
                 frameStartInterval = frameEndTime;
-                frameStartInterval = 0;
-                frameEndTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(completeLine));
+                frameEndTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(completeLine));
                 updateCount = false;
             }
         }
@@ -89,21 +88,22 @@ double ParsePageFpsTrace::CalculateTimeEnd()
     } else if (completeLine.compare("") == 0) {
         LOGW("can not find response and complete point {H:RSMainThread::DoComposition}");
     } else {
-        double responseTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(responseLine));
-        double completeTime = std::stod(SmartPerf::ParsePageFpsTrace::getLineTime(completeLine));
+        double responseTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(responseLine));
+        double completeTime = std::stod(SmartPerf::ParsePageFpsTrace::GetLineTime(completeLine));
         return frameNum / (completeTime - responseTime);
     }
     return -1.0;
 }
 
-std::string ParsePageFpsTrace::getLineTime(std::string line)
+std::string ParsePageFpsTrace::GetLineTime(std::string line)
 {
     size_t num = 7;
     size_t position1 = line.find("....");
     size_t position2 = line.find(":");
     return line.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParsePageFpsTrace::CutString(std::string line, std::string start, std::string end, size_t offset)
+std::string ParsePageFpsTrace::CutString(std::string line, const std::string &start,
+    const std::string &end, size_t offset)
 {
     size_t position1 = line.find(start);
     size_t position2 = line.find(end);

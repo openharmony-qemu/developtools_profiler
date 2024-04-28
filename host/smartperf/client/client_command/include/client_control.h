@@ -20,14 +20,14 @@ namespace OHOS {
 namespace SmartPerf {
 class ClientControl {
 public:
-    int SocketStart(std::string agrs);
+    int SocketStart(const std::string &args);
     int SocketStop();
     int InitSocket();
-    void StartSPDaemon();
+    void StartSPDaemon() const;
     int CloseSocket();
 
 private:
-    int clientSocket;
+    int clientSocket = 0;
     struct sockaddr_in serverAddress;
     static const int arraySize = 1024;
     char buffer[arraySize] = {0};

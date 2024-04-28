@@ -207,6 +207,13 @@ void HilogPlugin::Run(void)
     } else {
         hilogInfo = std::make_unique<ProtoEncoder::HilogInfo>(resultWriter_->startReport(resultWriter_));
     }
+    time_t startTm = time(nullptr);
+    struct tm* pTime = localtime(&startTm);
+    char startTime[FILE_NAME_LEN] = {0};
+    if (pTime != nullptr) {
+        (void)snprintf_s(startTime, FILE_NAME_LEN, FILE_NAME_LEN - 1, "%02d-%02d %02d:%02d:%02d",
+                         pTime->tm_mon + 1, pTime->tm_mday, pTime->tm_hour, pTime->tm_min, pTime->tm_sec);
+    }
 
     while (running_) {
         if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_BUFFER_LEN - 1, fp_.get()) == nullptr) {
@@ -219,6 +226,11 @@ void HilogPlugin::Run(void)
         }
 
         auto cptr = reinterpret_cast<char*>(buffer.get());
+        std::string curTime = cptr;
+        curTime = curTime.substr(0, TIME_SEC_WIDTH);
+        if (curTime < startTime) {
+            continue;
+        }
         if (resultWriter_->isProtobufSerialize) {
             ParseLogLineData(cptr, strlen(cptr), dataProto.get());
 
@@ -330,8 +342,9 @@ template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T&
     detail->set_tag(std::string(end, end + index - 1));
     pTmp++;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin: RemoveSpaces failed!");
-    if (google::protobuf::internal::IsStructurallyValidUTF8(pTmp, strlen(pTmp) - 1)) {
-        hilogLineInfo.set_context(pTmp, strlen(pTmp) - 1);  // - \n
+    size_t dataLen = strlen(pTmp) > 1 ? strlen(pTmp) -1 : 0;
+    if (google::protobuf::internal::IsStructurallyValidUTF8(pTmp, dataLen)) {
+        hilogLineInfo.set_context(pTmp, dataLen);  // - \n
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin: log context include invalid UTF-8 data");
         hilogLineInfo.set_context("");

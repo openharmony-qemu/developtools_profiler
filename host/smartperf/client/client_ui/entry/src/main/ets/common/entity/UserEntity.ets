@@ -15,16 +15,16 @@
 
 export class User {
   public token: String;
-  public expires_in: String; //过期时间
-  public refresh_token: String; //刷新token
-  public expires_at: String; //时间
-  public token_type: String; //token类型
+  public expiresIn: String; //过期时间
+  public refreshToken: String; //刷新token
+  public expiresAt: String; //时间
+  public tokenType: String; //token类型
 
-  constructor(token?: String, expires_in?: String, refresh_token?: String, expires_at?: String, token_type?: String) {
-    this.token = token
-    this.expires_in = expires_in
-    this.refresh_token = refresh_token
-    this.expires_at = expires_at
-    this.token_type = token_type
+  constructor(token?: String, expiresIn?: String, refreshToken?: String, expiresAt?: String, tokenType?: String) {
+    this.token = token;
+    this.expiresIn = expiresIn;
+    this.refreshToken = refreshToken;
+    this.expiresAt = expiresAt;
+    this.tokenType = tokenType;
   }
 }

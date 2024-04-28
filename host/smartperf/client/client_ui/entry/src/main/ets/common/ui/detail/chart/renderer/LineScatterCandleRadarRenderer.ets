@@ -14,36 +14,34 @@
  */
 
 import Paint from '../data/Paint';
-import {PathPaint} from '../data/Paint';
-import BarLineScatterCandleBubbleRenderer from './BarLineScatterCandleBubbleRenderer'
-import ChartAnimator from '../animation/ChartAnimator'
-import ViewPortHandler from '../utils/ViewPortHandler'
-import ILineScatterCandleRadarDataSet from '../interfaces/datasets/ILineScatterCandleRadarDataSet'
+import { PathPaint } from '../data/Paint';
+import BarLineScatterCandleBubbleRenderer from './BarLineScatterCandleBubbleRenderer';
+import ChartAnimator from '../animation/ChartAnimator';
+import ViewPortHandler from '../utils/ViewPortHandler';
+import ILineScatterCandleRadarDataSet from '../interfaces/datasets/ILineScatterCandleRadarDataSet';
 
 /**
  * Created by Philipp Jahoda on 11/07/15.
  */
 export default abstract class LineScatterCandleRadarRenderer extends BarLineScatterCandleBubbleRenderer {
-
-/**
-  * path that is used for drawing highlight-lines (drawLines(...) cannot be used because of dashes)
-  */
+  /**
+   * path that is used for drawing highlight-lines (drawLines(...) cannot be used because of dashes)
+   */
   private mHighlightLinePath: PathPaint = new PathPaint();
 
   constructor(animator: ChartAnimator, viewPortHandler: ViewPortHandler) {
     super(animator, viewPortHandler);
   }
 
-/**
-  * Draws vertical & horizontal highlight-lines if enabled.
-  *
-  * @param c
-  * @param x x-position of the highlight line intersection
-  * @param y y-position of the highlight line intersection
-  * @param set the currently drawn dataset
-  */
+  /**
+   * Draws vertical & horizontal highlight-lines if enabled.
+   *
+   * @param c
+   * @param x x-position of the highlight line intersection
+   * @param y y-position of the highlight line intersection
+   * @param set the currently drawn dataset
+   */
   protected drawHighlightLines(x: number, y: number, dataSet: ILineScatterCandleRadarDataSet<any>): Paint[] {
-
     let pathPaints: Paint[] = [];
 
     // set color and stroke-width
@@ -55,22 +53,24 @@ export default abstract class LineScatterCandleRadarRenderer extends BarLineScat
 
     // draw vertical highlight lines
     if (dataSet.isVerticalHighlightIndicatorEnabled()) {
-
       let pathPath = new PathPaint();
       pathPath.set(this.mHighlightPaint);
-      pathPath.setCommands("M"+x+" "+this.mViewPortHandler.contentTop()+" L"+x+" "+this.mViewPortHandler.contentBottom())+" Z"
+      pathPath.setCommands(
+        'M' + x + ' ' + this.mViewPortHandler.contentTop() + ' L' + x + ' ' + this.mViewPortHandler.contentBottom()
+      ) + ' Z';
       // create vertical path
       pathPaints.push(pathPath);
     }
 
     // draw horizontal highlight lines
     if (dataSet.isHorizontalHighlightIndicatorEnabled()) {
-
       let pathPath = new PathPaint();
       pathPath.set(this.mHighlightPaint);
-      pathPath.setCommands("M"+this.mViewPortHandler.contentLeft()+" "+y+" L"+this.mViewPortHandler.contentRight()+" "+y)+" Z"
+      pathPath.setCommands(
+        'M' + this.mViewPortHandler.contentLeft() + ' ' + y + ' L' + this.mViewPortHandler.contentRight() + ' ' + y
+      ) + ' Z';
       // create horizontal path
-      pathPaints.push(pathPath)
+      pathPaints.push(pathPath);
     }
     return pathPaints;
   }

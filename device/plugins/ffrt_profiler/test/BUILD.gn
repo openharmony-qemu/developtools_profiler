@@ -1,0 +1,109 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//build/test.gni")
+import("../../../base/config.gni")
+
+module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
+config("module_private_config") {
+  visibility = [ ":*" ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+  }
+}
+
+ohos_executable("ffrt_profiler_test_exe") {
+  output_name = "ffrt_profiler_test_exe"
+
+  sources = [ "unittest/ffrt_profiler_test_exec.cpp" ]
+
+  defines = []
+  external_deps = []
+
+  external_deps += [
+    "bounds_checking_function:libsec_static",
+    "ffrt:libffrt",
+    "init:libbegetutil",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines += [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
+  }
+
+  install_enable = false
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_unittest("ffrt_profiler_ut") {
+  module_out_path = module_output_path
+
+  include_dirs = [
+    "${OHOS_PROFILER_DIR}/device/base/include",
+    "//third_party/googletest/googletest/include/gtest",
+    "../service/include",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src",
+  ]
+
+  sources = [
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src/buffer_writer.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src/writer_adapter.cpp",
+    "../service/src/ffrt_profiler_common.cpp",
+    "../service/src/ffrt_profiler_handle.cpp",
+    "../service/src/ffrt_profiler_manager.cpp",
+    "../service/src/ffrt_profiler_socket_service.cpp",
+    "unittest/ffrt_profiler_test.cpp",
+  ]
+
+  public_deps = [
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/ffrt_profiler:ffrt_profiler_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/ffrt_profiler:ffrt_profiler_encoder",
+  ]
+
+  public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
+
+  cflags = [
+    "-Wno-inconsistent-missing-override",
+    "-Dprivate=public",  #allow test code access private members
+  ]
+
+  external_deps = [
+    "hilog:libhilog",
+    "init:libbegetutil",
+  ]
+  configs = [ ":module_private_config" ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"
+}
+
+group("unittest") {
+  testonly = true
+  deps = [
+    ":ffrt_profiler_test_exe",
+    ":ffrt_profiler_ut",
+  ]
+}

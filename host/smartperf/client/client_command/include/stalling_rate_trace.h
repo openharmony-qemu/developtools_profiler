@@ -25,10 +25,10 @@ class StallingRateTrace {
 public:
     double StallingRateResult(std::string file);
     double CalculateTime();
-    double GetFrameRate(std::string line);
-    int GetFenceId(std::string line);
-    std::string GetOnScreenTimeStart(std::string line);
-    double GetTimes(std::string line, std::string sign);
+    double GetFrameRate(std::string line) const;
+    int GetFenceId(std::string line) const;
+    std::string GetOnScreenTimeStart(std::string line) const;
+    double GetTimes(std::string line, const std::string &sign) const;
     void GetScreenInfo(std::string line);
     void CalculateRoundTime();
 private:

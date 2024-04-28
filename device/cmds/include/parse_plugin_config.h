@@ -45,6 +45,7 @@ public:
     bool SetSerializeArkTSConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeXpowerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeGpuConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
+    bool SetSerializeFfrtProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
 
     google::protobuf::TextFormat::Parser& GetParser()
     {

@@ -29,9 +29,9 @@ public:
     // 开始抓trace线程
     void ThreadGetTrace() const;
     // trace命令配置
-    void SetTraceCmd(std::string traceCmd) const;
+    void SetTraceCmd(const std::string &mTraceCmd) const;
     // 校验fps-jitters
-    TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps);
+    TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps) const;
     // 触发trace
     void TriggerCatch(long long curTime) const;
 

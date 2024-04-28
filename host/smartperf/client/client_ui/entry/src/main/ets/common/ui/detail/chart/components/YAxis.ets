@@ -16,7 +16,7 @@
 import router from '../utils/Utils';
 import AxisBase from './AxisBase';
 import Utils from '../utils/Utils';
-import Paint from '../data/Paint'
+import Paint from '../data/Paint';
 
 /**
  * Class representing the y-axis labels settings and its entries. Only use the setter methods to
@@ -31,95 +31,96 @@ import Paint from '../data/Paint'
  */
 
 export enum AxisDependency {
-    LEFT, RIGHT
+    LEFT,
+    RIGHT,
 }
 
 export enum YAxisLabelPosition {
-    OUTSIDE_CHART, INSIDE_CHART
+    OUTSIDE_CHART,
+    INSIDE_CHART,
 }
 
 export default class YAxis extends AxisBase {
+    /**
+     * indicates if the bottom y-label entry is drawn or not
+     */
+    private mDrawBottomYLabelEntry: boolean = true;
 
     /**
-    * indicates if the bottom y-label entry is drawn or not
-    */
-    private mDrawBottomYLabelEntry : boolean = true;
+     * indicates if the top y-label entry is drawn or not
+     */
+    private mDrawTopYLabelEntry: boolean = true;
 
     /**
-    * indicates if the top y-label entry is drawn or not
-    */
-    private mDrawTopYLabelEntry : boolean = true;
+     * flag that indicates if the axis is inverted or not
+     */
+    protected mInverted: boolean = false;
 
     /**
-    * flag that indicates if the axis is inverted or not
-    */
-    protected mInverted : boolean = false;
+     * flag that indicates if the zero-line should be drawn regardless of other grid lines
+     */
+    protected mDrawZeroLine: boolean = false;
 
     /**
-    * flag that indicates if the zero-line should be drawn regardless of other grid lines
-    */
-    protected mDrawZeroLine : boolean = false;
+     * flag indicating that auto scale min restriction should be used
+     */
+    private mUseAutoScaleRestrictionMin: boolean = false;
 
     /**
-    * flag indicating that auto scale min restriction should be used
-    */
-    private mUseAutoScaleRestrictionMin : boolean = false;
+     * flag indicating that auto scale max restriction should be used
+     */
+    private mUseAutoScaleRestrictionMax: boolean = false;
 
     /**
-    * flag indicating that auto scale max restriction should be used
-    */
-    private mUseAutoScaleRestrictionMax : boolean = false;
+     * Color of the zero line
+     */
+    protected mZeroLineColor: number = Color.Gray;
 
     /**
-    * Color of the zero line
-    */
-    protected mZeroLineColor : number = Color.Gray;
+     * Width of the zero line in pixels
+     */
+    protected mZeroLineWidth: number = 1;
 
     /**
-    * Width of the zero line in pixels
-    */
-    protected mZeroLineWidth : number = 1;
+     * axis space from the largest value to the top in percent of the total axis range
+     */
+    protected mSpacePercentTop: number = 10;
 
     /**
-    * axis space from the largest value to the top in percent of the total axis range
-    */
-    protected mSpacePercentTop : number = 10;
+     * axis space from the smallest value to the bottom in percent of the total axis range
+     */
+    protected mSpacePercentBottom: number = 10;
 
     /**
-    * axis space from the smallest value to the bottom in percent of the total axis range
-    */
-    protected mSpacePercentBottom : number = 10;
+     * the position of the y-labels relative to the chart
+     */
+    private mPosition: YAxisLabelPosition = YAxisLabelPosition.OUTSIDE_CHART;
 
     /**
-    * the position of the y-labels relative to the chart
-    */
-    private mPosition : YAxisLabelPosition = YAxisLabelPosition.OUTSIDE_CHART;
+     * the horizontal offset of the y-label
+     */
+    private mXLabelOffset: number = 0.0;
 
     /**
-    * the horizontal offset of the y-label
-    */
-    private mXLabelOffset : number = 0.0;
+     * the side this axis object represents
+     */
+    private mAxisDependency: AxisDependency;
 
     /**
-    * the side this axis object represents
-    */
-    private mAxisDependency : AxisDependency;
+     * the minimum width that the axis should take (in dp).
+     * <p/>
+     * default: 0.0
+     */
+    protected mMinWidth: number = 0;
 
     /**
-    * the minimum width that the axis should take (in dp).
-    * <p/>
-    * default: 0.0
-    */
-    protected mMinWidth : number = 0;
+     * the maximum width that the axis can take (in dp).
+     * use Inifinity for disabling the maximum
+     * default: Float.POSITIVE_INFINITY (no maximum specified)
+     */
+    protected mMaxWidth: number = Number.POSITIVE_INFINITY;
 
-    /**
-    * the maximum width that the axis can take (in dp).
-    * use Inifinity for disabling the maximum
-    * default: Float.POSITIVE_INFINITY (no maximum specified)
-    */
-    protected mMaxWidth : number = Number.POSITIVE_INFINITY;
-
-    constructor(position ?: AxisDependency) {
+    constructor(position?: AxisDependency) {
         super();
 
         // default left
@@ -131,234 +132,236 @@ export default class YAxis extends AxisBase {
         this.mYOffset = 0;
     }
 
-    public getAxisDependency() : AxisDependency {
+    public getAxisDependency(): AxisDependency {
         return this.mAxisDependency;
     }
 
     /**
-    * @return the minimum width that the axis should take (in dp).
-    */
-    public getMinWidth() : number {
+     * @return the minimum width that the axis should take (in dp).
+     */
+    public getMinWidth(): number {
         return this.mMinWidth;
     }
 
     /**
-    * Sets the minimum width that the axis should take (in dp).
-    *
-    * @param minWidth
-    */
-    public setMinWidth(minWidth : number) : void {
+     * Sets the minimum width that the axis should take (in dp).
+     *
+     * @param minWidth
+     */
+    public setMinWidth(minWidth: number): void {
         this.mMinWidth = minWidth;
     }
 
     /**
-    * @return the maximum width that the axis can take (in dp).
-    */
-    public getMaxWidth() : number {
+     * @return the maximum width that the axis can take (in dp).
+     */
+    public getMaxWidth(): number {
         return this.mMaxWidth;
     }
 
     /**
-    * Sets the maximum width that the axis can take (in dp).
-    *
-    * @param maxWidth
-    */
-    public setMaxWidth(maxWidth : number) : void {
+     * Sets the maximum width that the axis can take (in dp).
+     *
+     * @param maxWidth
+     */
+    public setMaxWidth(maxWidth: number): void {
         this.mMaxWidth = maxWidth;
     }
 
     /**
-    * returns the position of the y-labels
-    */
-    public getLabelPosition() : YAxisLabelPosition {
+     * returns the position of the y-labels
+     */
+    public getLabelPosition(): YAxisLabelPosition {
         return this.mPosition;
     }
 
     /**
-    * sets the position of the y-labels
-    *
-    * @param pos
-    */
-    public setPosition(pos : YAxisLabelPosition) : void {
+     * sets the position of the y-labels
+     *
+     * @param pos
+     */
+    public setPosition(pos: YAxisLabelPosition): void {
         this.mPosition = pos;
     }
 
     /**
-    * returns the horizontal offset of the y-label
-    */
-    public getLabelXOffset() : number {
+     * returns the horizontal offset of the y-label
+     */
+    public getLabelXOffset(): number {
         return this.mXLabelOffset;
     }
 
     /**
-    * sets the horizontal offset of the y-label
-    *
-    * @param xOffset
-    */
-    public setLabelXOffset(xOffset : number) : void {
+     * sets the horizontal offset of the y-label
+     *
+     * @param xOffset
+     */
+    public setLabelXOffset(xOffset: number): void {
         this.mXLabelOffset = xOffset;
     }
 
     /**
-    * returns true if drawing the top y-axis label entry is enabled
-    *
-    * @return
-    */
-    public isDrawTopYLabelEntryEnabled() : boolean {
+     * returns true if drawing the top y-axis label entry is enabled
+     *
+     * @return
+     */
+    public isDrawTopYLabelEntryEnabled(): boolean {
         return this.mDrawTopYLabelEntry;
     }
 
     /**
-    * returns true if drawing the bottom y-axis label entry is enabled
-    *
-    * @return
-    */
-    public isDrawBottomYLabelEntryEnabled() : boolean {
+     * returns true if drawing the bottom y-axis label entry is enabled
+     *
+     * @return
+     */
+    public isDrawBottomYLabelEntryEnabled(): boolean {
         return this.mDrawBottomYLabelEntry;
     }
 
     /**
-    * set this to true to enable drawing the top y-label entry. Disabling this can be helpful
-    * when the top y-label and
-    * left x-label interfere with each other. default: true
-    *
-    * @param enabled
-    */
-    public setDrawTopYLabelEntry(enabled : boolean) : void {
+     * set this to true to enable drawing the top y-label entry. Disabling this can be helpful
+     * when the top y-label and
+     * left x-label interfere with each other. default: true
+     *
+     * @param enabled
+     */
+    public setDrawTopYLabelEntry(enabled: boolean): void {
         this.mDrawTopYLabelEntry = enabled;
     }
 
     /**
-    * If this is set to true, the y-axis is inverted which means that low values are on top of
-    * the chart, high values
-    * on bottom.
-    *
-    * @param enabled
-    */
-    public setInverted(enabled : boolean) : void {
+     * If this is set to true, the y-axis is inverted which means that low values are on top of
+     * the chart, high values
+     * on bottom.
+     *
+     * @param enabled
+     */
+    public setInverted(enabled: boolean): void {
         this.mInverted = enabled;
     }
 
     /**
-    * If this returns true, the y-axis is inverted.
-    *
-    * @return
-    */
-    public isInverted() : boolean {
+     * If this returns true, the y-axis is inverted.
+     *
+     * @return
+     */
+    public isInverted(): boolean {
         return this.mInverted;
     }
 
     /**
-    * This method is deprecated.
-    * Use setAxisMinimum(...) / setAxisMaximum(...) instead.
-    *
-    * @param startAtZero
-    */
-//    @Deprecated
-    public setStartAtZero(startAtZero : boolean) : void {
-        if (startAtZero)
+     * This method is deprecated.
+     * Use setAxisMinimum(...) / setAxisMaximum(...) instead.
+     *
+     * @param startAtZero
+     */
+    //    @Deprecated
+    public setStartAtZero(startAtZero: boolean): void {
+        if (startAtZero) {
             super.setAxisMinimum(0);
-        else
+        } else {
             super.resetAxisMinimum();
+        }
     }
 
     /**
-    * Sets the top axis space in percent of the full range. Default 10f
-    *
-    * @param percent
-    */
-    public setSpaceTop(percent : number) : void {
+     * Sets the top axis space in percent of the full range. Default 10f
+     *
+     * @param percent
+     */
+    public setSpaceTop(percent: number): void {
         this.mSpacePercentTop = percent;
     }
 
     /**
-    * Returns the top axis space in percent of the full range. Default 10f
-    *
-    * @return
-    */
-    public getSpaceTop() : number {
+     * Returns the top axis space in percent of the full range. Default 10f
+     *
+     * @return
+     */
+    public getSpaceTop(): number {
         return this.mSpacePercentTop;
     }
 
     /**
-    * Sets the bottom axis space in percent of the full range. Default 10f
-    *
-    * @param percent
-    */
-    public setSpaceBottom(percent : number) : void {
+     * Sets the bottom axis space in percent of the full range. Default 10f
+     *
+     * @param percent
+     */
+    public setSpaceBottom(percent: number): void {
         this.mSpacePercentBottom = percent;
     }
 
     /**
-    * Returns the bottom axis space in percent of the full range. Default 10f
-    *
-    * @return
-    */
-    public getSpaceBottom() : number {
+     * Returns the bottom axis space in percent of the full range. Default 10f
+     *
+     * @return
+     */
+    public getSpaceBottom(): number {
         return this.mSpacePercentBottom;
     }
 
-    public isDrawZeroLineEnabled() : boolean {
+    public isDrawZeroLineEnabled(): boolean {
         return this.mDrawZeroLine;
     }
 
     /**
-    * Set this to true to draw the zero-line regardless of weather other
-    * grid-lines are enabled or not. Default: false
-    *
-    * @param mDrawZeroLine
-    */
-    public setDrawZeroLine(mDrawZeroLine : boolean) : void {
+     * Set this to true to draw the zero-line regardless of weather other
+     * grid-lines are enabled or not. Default: false
+     *
+     * @param mDrawZeroLine
+     */
+    public setDrawZeroLine(mDrawZeroLine: boolean): void {
         this.mDrawZeroLine = mDrawZeroLine;
     }
 
-    public getZeroLineColor() : number {
+    public getZeroLineColor(): number {
         return this.mZeroLineColor;
     }
 
     /**
-    * Sets the color of the zero line
-    *
-    * @param color
-    */
-    public setZeroLineColor(color : number) : void {
+     * Sets the color of the zero line
+     *
+     * @param color
+     */
+    public setZeroLineColor(color: number): void {
         this.mZeroLineColor = color;
     }
 
-    public getZeroLineWidth() : number {
+    public getZeroLineWidth(): number {
         return this.mZeroLineWidth;
     }
 
     /**
-    * Sets the width of the zero line in dp
-    *
-    * @param width
-    */
-    public setZeroLineWidth(width : number) : void {
+     * Sets the width of the zero line in dp
+     *
+     * @param width
+     */
+    public setZeroLineWidth(width: number): void {
         this.mZeroLineWidth = Utils.convertDpToPixel(width);
     }
 
     /**
-    * This is for normal (not horizontal) charts horizontal spacing.
-    *
-    * @param p
-    * @return
-    */
-    public getRequiredWidthSpace(p : Paint) : number {
-
+     * This is for normal (not horizontal) charts horizontal spacing.
+     *
+     * @param p
+     * @return
+     */
+    public getRequiredWidthSpace(p: Paint): number {
         p.setTextSize(this.mTextSize);
 
-        var label : string = super.getLongestLabel();
-        var width : number = Utils.calcTextWidth(p, label) + super.getXOffset() * 2;
+        var label: string = super.getLongestLabel();
+        var width: number = Utils.calcTextWidth(p, label) + super.getXOffset() * 2;
 
-        var minWidth : number = this.getMinWidth();
-        var maxWidth : number = this.getMaxWidth();
+        var minWidth: number = this.getMinWidth();
+        var maxWidth: number = this.getMaxWidth();
 
-        if (minWidth > 0)
+        if (minWidth > 0) {
             minWidth = Utils.convertDpToPixel(minWidth);
+        }
 
-        if (maxWidth > 0 && maxWidth != Number.POSITIVE_INFINITY)
+        if (maxWidth > 0 && maxWidth != Number.POSITIVE_INFINITY) {
             maxWidth = Utils.convertDpToPixel(maxWidth);
+        }
 
         width = Math.max(minWidth, Math.min(width, maxWidth > 0.0 ? maxWidth : width));
 
@@ -366,92 +369,84 @@ export default class YAxis extends AxisBase {
     }
 
     /**
-    * This is for HorizontalBarChart vertical spacing.
-    *
-    * @param p
-    * @return
-    */
-    public getRequiredHeightSpace(p : Paint) : number {
-
+     * This is for HorizontalBarChart vertical spacing.
+     *
+     * @param p
+     * @return
+     */
+    public getRequiredHeightSpace(p: Paint): number {
         p.setTextSize(this.mTextSize);
 
-        var label : string = super.getLongestLabel();
+        var label: string = super.getLongestLabel();
         return Utils.calcTextHeight(p, label) + super.getYOffset() * 2;
     }
 
     /**
-    * Returns true if this axis needs horizontal offset, false if no offset is needed.
-    *
-    * @return
-    */
-    public needsOffset() : boolean {
-        if (super.isEnabled() && super.isDrawLabelsEnabled() && this.getLabelPosition() == YAxisLabelPosition
-                .OUTSIDE_CHART)
+     * Returns true if this axis needs horizontal offset, false if no offset is needed.
+     *
+     * @return
+     */
+    public needsOffset(): boolean {
+        if (super.isEnabled() && super.isDrawLabelsEnabled() &&
+            this.getLabelPosition() == YAxisLabelPosition.OUTSIDE_CHART) {
             return true;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
-    * Returns true if autoscale restriction for axis min value is enabled
-    */
-//    @Deprecated
-    public isUseAutoScaleMinRestriction( ) : boolean {
+     * Returns true if autoscale restriction for axis min value is enabled
+     */
+    //    @Deprecated
+    public isUseAutoScaleMinRestriction(): boolean {
         return this.mUseAutoScaleRestrictionMin;
     }
 
     /**
-    * Sets autoscale restriction for axis min value as enabled/disabled
-    */
-//    @Deprecated
-    public setUseAutoScaleMinRestriction(isEnabled : boolean) : void {
+     * Sets autoscale restriction for axis min value as enabled/disabled
+     */
+    //    @Deprecated
+    public setUseAutoScaleMinRestriction(isEnabled: boolean): void {
         this.mUseAutoScaleRestrictionMin = isEnabled;
     }
 
     /**
-    * Returns true if autoscale restriction for axis max value is enabled
-    */
-//    @Deprecated
-    public isUseAutoScaleMaxRestriction() : boolean {
+     * Returns true if autoscale restriction for axis max value is enabled
+     */
+    //    @Deprecated
+    public isUseAutoScaleMaxRestriction(): boolean {
         return this.mUseAutoScaleRestrictionMax;
     }
 
     /**
-    * Sets autoscale restriction for axis max value as enabled/disabled
-    */
-//    @Deprecated
-    public setUseAutoScaleMaxRestriction(isEnabled : boolean) : void {
+     * Sets autoscale restriction for axis max value as enabled/disabled
+     */
+    //    @Deprecated
+    public setUseAutoScaleMaxRestriction(isEnabled: boolean): void {
         this.mUseAutoScaleRestrictionMax = isEnabled;
     }
 
-
-//    @Override
-    public calculate(dataMin : number, dataMax : number) : void {
-
-        var min : number = dataMin;
-        var max : number = dataMax;
+    //    @Override
+    public calculate(dataMin: number, dataMax: number): void {
+        var min: number = dataMin;
+        var max: number = dataMax;
 
         // Make sure max is greater than min
         // Discussion: https://github.com/danielgindi/Charts/pull/3650#discussion_r221409991
-        if (min > max)
-        {
-            if (this.mCustomAxisMax && this.mCustomAxisMin)
-            {
-                var t : number = min;
+        if (min > max) {
+            if (this.mCustomAxisMax && this.mCustomAxisMin) {
+                var t: number = min;
                 min = max;
                 max = t;
-            }
-            else if (this.mCustomAxisMax)
-            {
+            } else if (this.mCustomAxisMax) {
                 min = max < 0 ? max * 1.5 : max * 0.5;
-            }
-            else if (this.mCustomAxisMin)
-            {
+            } else if (this.mCustomAxisMin) {
                 max = min < 0 ? min * 0.5 : min * 1.5;
             }
         }
 
-        var range : number = Math.abs(max - min);
+        var range: number = Math.abs(max - min);
 
         // in case all values are equal
         if (range == 0) {

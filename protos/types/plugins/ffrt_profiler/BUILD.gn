@@ -1,0 +1,107 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../protos.gni")
+
+ffrt_profiler_data_sources = [
+  "./ffrt_profiler_config.proto",
+  "./ffrt_profiler_result.proto",
+]
+
+#######################################################
+proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
+proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
+
+ffrt_profiler_data_codegen = []
+ffrt_profiler_data_codegen_standard = []
+ffrt_profiler_data_codegen_encoder = []
+ffrt_profiler_data_codegen_all = []
+foreach(proto, ffrt_profiler_data_sources) {
+  name = get_path_info(proto, "name")
+  ffrt_profiler_data_codegen += [
+    "$proto_out_dir/$name.pb.h",
+    "$proto_out_dir/$name.pb.cc",
+  ]
+  ffrt_profiler_data_codegen_standard += [
+    "$proto_out_dir/${name}_standard.pb.h",
+    "$proto_out_dir/${name}_standard.pb.cc",
+  ]
+  ffrt_profiler_data_codegen_encoder += [
+    "$proto_out_dir/$name.pbencoder.h",
+    "$proto_out_dir/$name.pbencoder.cc",
+  ]
+}
+ffrt_profiler_data_codegen_all += ffrt_profiler_data_codegen
+ffrt_profiler_data_codegen_all += ffrt_profiler_data_codegen_standard
+ffrt_profiler_data_codegen_all += ffrt_profiler_data_codegen_encoder
+
+config("ffrt_profiler_include_config") {
+  include_dirs = [ "$proto_out_dir" ]
+}
+
+#######################################################
+action("ffrt_profiler_data_cpp_gen") {
+  script = "${OHOS_PROFILER_DIR}/build/protoc.sh"
+  sources = ffrt_profiler_data_sources
+  outputs = ffrt_profiler_data_codegen_all
+  args = [
+    "$libc_dir_proto",
+    "$root_output_dir_proto",
+    "$proto_rel_out_dir",
+    "--cpp_out",
+    "$proto_rel_out_dir",
+    "--proto_path",
+    rebase_path(".", root_build_dir),
+  ]
+  args += rebase_path(sources, root_build_dir)
+
+  deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+
+  external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+}
+
+ohos_source_set("ffrt_profiler_cpp") {
+  deps = [ ":ffrt_profiler_data_cpp_gen" ]
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":ffrt_profiler_include_config" ]
+  sources = ffrt_profiler_data_codegen
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("ffrt_profiler_encoder") {
+  deps = [ ":ffrt_profiler_data_cpp_gen" ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":ffrt_profiler_include_config" ]
+  sources = ffrt_profiler_data_codegen_encoder
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_source_set("ffrt_profiler_cpp_standard") {
+  deps = [ ":ffrt_profiler_data_cpp_gen" ]
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
+  include_dirs = [ "$proto_out_dir" ]
+  public_configs = [ ":ffrt_profiler_include_config" ]
+  sources = ffrt_profiler_data_codegen_standard
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}

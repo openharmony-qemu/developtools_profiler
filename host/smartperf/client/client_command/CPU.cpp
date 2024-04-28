@@ -82,7 +82,7 @@ std::map<std::string, std::string> CPU::ItemData()
     return result;
 }
 
-void CPU::SetPackageName(std::string pName)
+void CPU::SetPackageName(const std::string &pName)
 {
     packageName = pName;
     LOGI("CPU SetPackageName name(%s)", pName.c_str());

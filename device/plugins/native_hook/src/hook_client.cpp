@@ -283,9 +283,12 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
-    g_hookClient->SendNmdInfo();
-    if (g_hookClient != nullptr) {
-        g_hookClient->Flush();
+    {
+        std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+        if (g_hookClient != nullptr) {
+            g_hookClient->SendNmdInfo();
+            g_hookClient->Flush();
+        }
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
@@ -344,7 +347,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
 uint64_t getJsChainId()
 {
-    if (g_ClientConfig.arktsConfig.jsStackReport) {
+    if (g_ClientConfig.arktsConfig.jsStackReport > 0) {
             OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
             if (hitraceId.IsValid()) {
                 return hitraceId.GetChainId();

@@ -77,8 +77,9 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 void SpLog(SpLogLevel logLevel, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
-    va_list arg;
-    int32_t ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
+    int32_t ret = 0;
+    va_list arg = {0};
+    ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
     if (ret != 0) {
         SpLogOut(logLevel, "SP log memset_s error.");
         return;

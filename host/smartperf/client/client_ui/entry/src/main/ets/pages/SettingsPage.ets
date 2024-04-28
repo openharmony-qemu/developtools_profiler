@@ -25,17 +25,17 @@ struct SettingsPage {
   build() {
     Column() {
       //开始测试title
-      StartTestTitleComponent({ title: "设置" })
+      StartTestTitleComponent({ title: '设置' })
 
       Row({ space: '15vp' }) {
         Image($r('app.media.icon_language')).width('25vp').height('25vp').margin({ left: '2%' })
 
         Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-          Text('语言切换').fontSize('15fp').fontColor($r("app.color.color_333"))
+          Text('语言切换').fontSize('15fp').fontColor($r('app.color.color_333'))
 
           Image($r('app.media.icon_enter')).width('15vp').height('15vp').margin({ left: '15vp' })
         }.height('47vp').width('82%')
-      }.height('47vp').width('95%').backgroundColor($r("app.color.color_fff")).margin({ top: '10vp' })
+      }.height('47vp').width('95%').backgroundColor($r('app.color.color_fff')).margin({ top: '10vp' })
 
       Divider().layoutWeight(1).visibility(Visibility.Hidden)
 
@@ -44,7 +44,7 @@ struct SettingsPage {
         .fontColor($r('app.color.color_fff'))
         .margin({ bottom: '45vp' })
         .border({ radius: '20vp' })
-        .backgroundColor($r("app.color.colorPrimary"))
+        .backgroundColor($r('app.color.colorPrimary'))
         .width('80%')
         .height('45vp')
         .textAlign(TextAlign.Center)

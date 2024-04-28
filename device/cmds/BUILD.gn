@@ -42,6 +42,7 @@ ohos_executable("hiprofiler_cmd") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_plugin_config_cpp_standard",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/ffrt_profiler:ffrt_profiler_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_plugin_config_cpp_standard",

@@ -13,104 +13,121 @@
  * limitations under the License.
  */
 
-import {JArrayList} from '../utils/JArrayList';
+import { JArrayList } from '../utils/JArrayList';
 
 class Color {
-  build(){}
-  public static argb(a: number, r: number, g: number, b: number): number{
+  build() {}
+  public static argb(a: number, r: number, g: number, b: number): number {
     return 0xff000000 | (a << 24) | (r << 16) | (g << 8) | b;
   }
 
-  public static rgb(r: number, g: number, b: number): number{
+  public static rgb(r: number, g: number, b: number): number {
     return 0xff000000 | (r << 16) | (g << 8) | b;
   }
 
   public static alpha(color: number): number {
-    return (color>>24) & 0xff;
+    return (color >> 24) & 0xff;
   }
 
   public static red(color: number): number {
-    return (color>>16) & 0xff;
+    return (color >> 16) & 0xff;
   }
 
   public static green(color: number): number {
-    return (color>>8) & 0xff;
+    return (color >> 8) & 0xff;
   }
 
   public static blue(color: number): number {
-    return (color) & 0xff;
+    return color & 0xff;
   }
 
-  public static RGBToHSV(r,g,b,hsv:number[]){
-    var h = 0, s = 0, v = 0;
-    let arr = [r,g,b];
+  public static RGBToHSV(r, g, b, hsv: number[]) {
+    let h = 0;
+    let s = 0;
+    let v = 0;
+    let arr = [r, g, b];
     arr.sort(function (a, b) {
-        return a - b;
-    })
-    var max = arr[2]
+      return a - b;
+    });
+    var max = arr[2];
     var min = arr[0];
     v = max / 255;
     if (max === 0) {
-        s = 0;
+      s = 0;
     } else {
-        s = 1 - (min / max);
+      s = 1 - min / max;
     }
     if (max === min) {
-        h = 0;//事实上，max===min的时候，h无论为多少都无所谓
+      h = 0; //事实上，max===min的时候，h无论为多少都无所谓
     } else if (max === r && g >= b) {
-        h = 60 * ((g - b) / (max - min)) + 0;
+      h = 60 * ((g - b) / (max - min)) + 0;
     } else if (max === r && g < b) {
-        h = 60 * ((g - b) / (max - min)) + 360
+      h = 60 * ((g - b) / (max - min)) + 360;
     } else if (max === g) {
-        h = 60 * ((b - r) / (max - min)) + 120
+      h = 60 * ((b - r) / (max - min)) + 120;
     } else if (max === b) {
-        h = 60 * ((r - g) / (max - min)) + 240
+      h = 60 * ((r - g) / (max - min)) + 240;
     }
     h = Math.floor(h);
     s = Math.floor(s * 100);
     v = Math.floor(v * 100);
-    hsv.splice(0,hsv.length);
-    hsv.push(h,s,v)
+    hsv.splice(0, hsv.length);
+    hsv.push(h, s, v);
   }
 
-  public static HSVToColor(alpha: number,arr:number[]): number{
-    var h = arr[0], s = arr[1], v = arr[2];
+  public static HSVToColor(alpha: number, arr: number[]): number {
+    let h = arr[0];
+    let s = arr[1];
+    let v = arr[2];
     s = s / 100;
     v = v / 100;
-    var r = 0, g = 0, b = 0;
+    let r = 0;
+    let g = 0;
+    let b = 0;
     var i = Math.floor((h / 60) % 6);
     var f = h / 60 - i;
     var p = v * (1 - s);
     var q = v * (1 - f * s);
     var t = v * (1 - (1 - f) * s);
     switch (i) {
-        case 0:
-            r = v; g = t; b = p;
-            break;
-        case 1:
-            r = q; g = v; b = p;
-            break;
-        case 2:
-            r = p; g = v; b = t;
-            break;
-        case 3:
-            r = p; g = q; b = v;
-            break;
-        case 4:
-            r = t; g = p; b = v;
-            break;
-        case 5:
-            r = v; g = p; b = q;
-            break;
-        default:
-            break;
+      case 0:
+        r = v;
+        g = t;
+        b = p;
+        break;
+      case 1:
+        r = q;
+        g = v;
+        b = p;
+        break;
+      case 2:
+        r = p;
+        g = v;
+        b = t;
+        break;
+      case 3:
+        r = p;
+        g = q;
+        b = v;
+        break;
+      case 4:
+        r = t;
+        g = p;
+        b = v;
+        break;
+      case 5:
+        r = v;
+        g = p;
+        b = q;
+        break;
+      default:
+        break;
     }
-    r = Math.floor(r * alpha)
-    g = Math.floor(g * alpha)
-    b = Math.floor(b * alpha)
-    return Color.rgb(r,g,b)
+    r = Math.floor(r * alpha);
+    g = Math.floor(g * alpha);
+    b = Math.floor(b * alpha);
+    return Color.rgb(r, g, b);
   }
-
 }
 
 /**
@@ -121,90 +138,103 @@ class Color {
  * @author Philipp Jahoda
  */
 class ColorTemplate {
-  build(){}
+  build() {}
   /**
-    * an "invalid" color that indicates that no color is set
-    */
+   * an "invalid" color that indicates that no color is set
+   */
   public static COLOR_NONE: number = 0x00112233;
 
   /**
-    * this "color" is used for the Legend creation and indicates that the next
-    * form should be skipped
-    */
+   * this "color" is used for the Legend creation and indicates that the next
+   * form should be skipped
+   */
   public static COLOR_SKIP: number = 0x00112234;
 
   /**
-    * THE COLOR THEMES ARE PREDEFINED (predefined color integer arrays), FEEL
-    * FREE TO CREATE YOUR OWN WITH AS MANY DIFFERENT COLORS AS YOU WANT
-    */
+   * THE COLOR THEMES ARE PREDEFINED (predefined color integer arrays), FEEL
+   * FREE TO CREATE YOUR OWN WITH AS MANY DIFFERENT COLORS AS YOU WANT
+   */
   public static LIBERTY_COLORS: number[] = [
-    Color.rgb(207, 248, 246), Color.rgb(148, 212, 212), Color.rgb(136, 180, 187),
-    Color.rgb(118, 174, 175), Color.rgb(42, 109, 130)
+    Color.rgb(207, 248, 246),
+    Color.rgb(148, 212, 212),
+    Color.rgb(136, 180, 187),
+    Color.rgb(118, 174, 175),
+    Color.rgb(42, 109, 130),
   ];
   public static JOYFUL_COLORS: number[] = [
-    Color.rgb(217, 80, 138), Color.rgb(254, 149, 7), Color.rgb(254, 247, 120),
-    Color.rgb(106, 167, 134), Color.rgb(53, 194, 209)
+    Color.rgb(217, 80, 138),
+    Color.rgb(254, 149, 7),
+    Color.rgb(254, 247, 120),
+    Color.rgb(106, 167, 134),
+    Color.rgb(53, 194, 209),
   ];
   public static PASTEL_COLORS: number[] = [
-    Color.rgb(64, 89, 128), Color.rgb(149, 165, 124), Color.rgb(217, 184, 162),
-    Color.rgb(191, 134, 134), Color.rgb(179, 48, 80)
+    Color.rgb(64, 89, 128),
+    Color.rgb(149, 165, 124),
+    Color.rgb(217, 184, 162),
+    Color.rgb(191, 134, 134),
+    Color.rgb(179, 48, 80),
   ];
   public static COLORFUL_COLORS: number[] = [
-    Color.rgb(193, 37, 82), Color.rgb(255, 102, 0), Color.rgb(245, 199, 0),
-    Color.rgb(106, 150, 31), Color.rgb(179, 100, 53)
+    Color.rgb(193, 37, 82),
+    Color.rgb(255, 102, 0),
+    Color.rgb(245, 199, 0),
+    Color.rgb(106, 150, 31),
+    Color.rgb(179, 100, 53),
   ];
   public static VORDIPLOM_COLORS: number[] = [
-    Color.rgb(192, 255, 140), Color.rgb(255, 247, 140), Color.rgb(255, 208, 140),
-    Color.rgb(140, 234, 255), Color.rgb(255, 140, 157)
+    Color.rgb(192, 255, 140),
+    Color.rgb(255, 247, 140),
+    Color.rgb(255, 208, 140),
+    Color.rgb(140, 234, 255),
+    Color.rgb(255, 140, 157),
   ];
-  public static MATERIAL_COLORS: number[] = [
-    0x2ecc71, 0xf1c40f, 0xe74c3c, 0x3498db
-  ];
+  public static MATERIAL_COLORS: number[] = [0x2ecc71, 0xf1c40f, 0xe74c3c, 0x3498db];
 
   /**
-    * Converts the given hex-color-string to rgb.
-    *
-    * @param hex
-    * @return
-    */
+   * Converts the given hex-color-string to rgb.
+   *
+   * @param hex
+   * @return
+   */
   public static rgb(hex: string): number {
-    var color: number = Number(hex.replace("#", ""));
-    var r: number = (color >> 16) & 0xFF;
-    var g: number = (color >> 8) & 0xFF;
-    var b: number = (color >> 0) & 0xFF;
+    var color: number = Number(hex.replace('#', ''));
+    var r: number = (color >> 16) & 0xff;
+    var g: number = (color >> 8) & 0xff;
+    var b: number = (color >> 0) & 0xff;
     return Color.rgb(r, g, b);
   }
 
   /**
-    *
-    * @return
-    */
+   *
+   * @return
+   */
   public static getHoloBlue(): number {
-    return Color.rgb(51,181,229)
+    return Color.rgb(51, 181, 229);
   }
 
   /**
-    * Sets the alpha component of the given color.
-    *
-    * @param color
-    * @param alpha 0 - 255
-    * @return
-    */
-  public static colorWithAlpha(color: number, alpha: number): number{
+   * Sets the alpha component of the given color.
+   *
+   * @param color
+   * @param alpha 0 - 255
+   * @return
+   */
+  public static colorWithAlpha(color: number, alpha: number): number {
     return (color & 0xffffff) | ((alpha & 0xff) << 24);
   }
 
   /**
-    * turn an array of resource-colors (contains resource-id integers) into an
-    * array list of actual color integers
-    *
-    * @param r
-    * @param colors an integer array of resource id's of colors
-    * @return
-    */
+   * turn an array of resource-colors (contains resource-id integers) into an
+   * array list of actual color integers
+   *
+   * @param r
+   * @param colors an integer array of resource id's of colors
+   * @return
+   */
   public static createColors(colors?: number[]): JArrayList<number> {
     var result: JArrayList<number> = new JArrayList<number>();
-    for (var i = 0;i < colors.length; i++) {
+    for (var i = 0; i < colors.length; i++) {
       result.add(colors[i]);
     }
     return result;
@@ -216,7 +246,7 @@ class ColorTemplate {
    * @param g
    * @param b
    */
-  public static colorRgb(r: number, g: number, b: number): number{
+  public static colorRgb(r: number, g: number, b: number): number {
     return 0xff000000 | (r << 16) | (g << 8) | b;
   }
 
@@ -227,7 +257,7 @@ class ColorTemplate {
    * @param green
    * @param blue
    */
-  public static argb(alpha:number,red:number,green:number,blue:number):number{
+  public static argb(alpha: number, red: number, green: number, blue: number): number {
     return (alpha << 24) | (red << 16) | (green << 8) | blue;
   }
 
@@ -235,28 +265,26 @@ class ColorTemplate {
    * from Color red()
    * @param color
    */
-  public static red(color:number):number{
-    return (color >> 16) & 0xFF;
+  public static red(color: number): number {
+    return (color >> 16) & 0xff;
   }
 
   /**
    * from Color green()
    * @param color
    */
-  public static green(color:number):number{
-    return (color >> 8) & 0xFF;
+  public static green(color: number): number {
+    return (color >> 8) & 0xff;
   }
 
   /**
    * from Color blue()
    * @param color
    */
-  public static blue(color:number):number{
-    return color & 0xFF;
+  public static blue(color: number): number {
+    return color & 0xff;
   }
-
-
 }
 
 export { Color, ColorTemplate };
-export default ColorTemplate
+export default ColorTemplate;

@@ -18,30 +18,30 @@ import { FloatWindowComponent } from '../common/FloatWindowComponent'
 @Entry
 @Component
 struct FpsLineChartPage {
-  data: number[]= [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
-  @State random: number= 0 //用于刷新的随机数
-  @State LineFps: number= 0 //数值
+  data: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
+  @State random: number = 0 //用于刷新的随机数
+  @State lineFps: number = 0 //数值
 
   offsetX: number = -1 //悬浮框移动触摸点 X
   offsetY: number = -1 //悬浮框移动触摸点 X
-  private floatName: string= "FPS"
-  task_state = 1
+  private floatName: string = 'FPS'
+  taskState = 1
 
   aboutToAppear() {
     globalThis.LineChartCollect = setInterval(() => {
       if (this.data.length >= 22) {
-        console.log("GestureEvent--------------shift:" + this.data);
-        this.data.shift()  //移除第一个元素
+        console.log('GestureEvent--------------shift:' + this.data);
+        this.data.shift() //移除第一个元素
       }
       if (globalThis.timerFps == undefined) {
-        this.LineFps = 0
+        this.lineFps = 0
         this.data.push(0) //在末尾填充一个元素
       } else {
-        this.LineFps = globalThis.timerFps
-        if(this.LineFps==0){
+        this.lineFps = globalThis.timerFps
+        if (this.lineFps == 0) {
           this.data.push(0)
-        }else{
-          let lineCount: number = this.LineFps / 1.5
+        } else {
+          let lineCount: number = this.lineFps / 1.5
           this.data.push(lineCount)//在末尾填充一个元素
         }
       }
@@ -53,21 +53,21 @@ struct FpsLineChartPage {
     Stack({ alignContent: Alignment.Top }) {
       FloatWindowComponent({ title: `sp_FPS`, data: this.data })
       Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-        Text(this.floatName  + ":" )
+        Text(this.floatName + ':' )
           .fontSize('10fp')
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .margin({ left: 5, top: 1 }) //文本显示
-        Text(  this.LineFps + "fps")
+        Text( this.lineFps + 'fps')
           .fontSize('20fp')
           .fontColor('#FF0000')
           .fontWeight(5)
-          .margin({ left: 1,top: 1 }) //文本显示
-        Text(this.random + "")
+          .margin({ left: 1, top: 1 }) //文本显示
+        Text(this.random + '')
           .fontSize('1fp')
-          .fontColor($r("app.color.color_fff")).visibility(Visibility.None)
-        Image($r("app.media.icon_close_small")).width('15vp').height('15vp').onClick(() => {
-          hideFloatWindow("sp_FPS")
-          console.log("hideFloatWindow---------------------" + this.floatName)
+          .fontColor($r('app.color.color_fff')).visibility(Visibility.None)
+        Image($r('app.media.icon_close_small')).width('15vp').height('15vp').onClick(() => {
+          hideFloatWindow('sp_FPS')
+          console.log('hideFloatWindow---------------------' + this.floatName)
         }).align(Alignment.TopEnd)
       }.height('25vp').width('100%')
 

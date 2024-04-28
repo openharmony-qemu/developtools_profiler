@@ -18,6 +18,7 @@
 #include <functional>
 #include <vector>
 #include <thread>
+#include <future>
 #include <map>
 #include <mutex>
 #include "sp_csv_util.h"
@@ -43,14 +44,14 @@ enum class ErrCode {
 };
 struct StuckNotification {
     bool isEffective = false;
-    int fps;
-    long long frameTime;
+    int fps = 0;
+    long long frameTime = 0;
 };
 struct TaskInfo {
-    std::string sessionId;
-    std::string packageName;
+    std::string sessionId = "";
+    std::string packageName = "";
     std::vector<std::string> taskConfig = {};
-    long long freq;
+    long long freq = 0;
     StuckNotification stuckInfo;
 };
 
@@ -61,23 +62,30 @@ public:
         static SPTask instance;
         return instance;
     }
-    ErrCode InitTask(std::string recvStr);
+    ErrCode InitTask(const std::string &recvStr);
     ErrCode StartTask(std::function<void(std::string data)> msgTask);
     void StopTask();
     std::string GetCurrentTimeAsString();
     std::map<std::string, std::string> DetectionAndGrab();
     bool CheckTcpParam(std::string str, std::string &errorInfo);
+    std::future<std::map<std::string, std::string>> AsyncCollectRam();
+    std::future<std::map<std::string, std::string>> AsyncCollectFps();
+    void CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
+        std::map<std::string, std::string> &dataMap);
+    void CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
+        std::map<std::string, std::string> &dataMap);
+    void GetItemData(std::map<std::string, std::string> &dataMap);
 
 private:
     std::thread ThreadGetHiperf(long long ts);
-    void GetHiperf(std::string traceName);
-    std::string SetHiperf(std::string traceName);
+    void GetHiperf(const std::string &traceName);
+    std::string SetHiperf(const std::string &traceName);
     bool CheckCounterId();
     void KillHiperfCmd();
 
 private:
     TaskInfo curTaskInfo;
-    long long startTime;
+    long long startTime = 0;
     std::thread thread;
     std::vector<SPData> vmap;
     bool isRunning = false;

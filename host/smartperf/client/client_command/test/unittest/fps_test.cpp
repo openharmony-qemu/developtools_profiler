@@ -29,7 +29,7 @@ using namespace std;
 
 namespace OHOS {
 namespace SmartPerf {
-class SPdaemonTest : public testing::Test {
+class SPdaemonFpsTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -42,7 +42,7 @@ public:
  * @tc.desc: Test SetFpsCurrentFpsTime
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, SetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, SetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
 {
     bool ret = false;
     FpsInfo fpsInfoResult;
@@ -61,7 +61,7 @@ HWTEST_F(SPdaemonTest, SetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
  * @tc.desc: Test GetFpsCurrentFpsTime
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, GetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, GetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
 {
     bool ret = false;
     FpsCurrentFpsTime fcf = FPS::GetInstance().GetFpsCurrentFpsTime();

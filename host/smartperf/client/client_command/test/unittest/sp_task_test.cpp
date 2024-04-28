@@ -31,7 +31,7 @@ using namespace std;
 
 namespace OHOS {
 namespace SmartPerf {
-class SPdaemonTest : public testing::Test {
+class SPdaemonTaskTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -44,7 +44,7 @@ public:
  * @tc.desc: Test CheckTcpParam
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, CheckTcpParamTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonTaskTest, CheckTcpParamTestCase001, TestSize.Level1)
 {
     std::string str = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r";
     std::string errorInfo = "";
@@ -53,7 +53,7 @@ HWTEST_F(SPdaemonTest, CheckTcpParamTestCase001, TestSize.Level1)
     EXPECT_TRUE(flag);
 }
 
-HWTEST_F(SPdaemonTest, CheckTcpParamTestCase002, TestSize.Level1)
+HWTEST_F(SPdaemonTaskTest, CheckTcpParamTestCase002, TestSize.Level1)
 {
     std::string str = "";
     std::string errorInfo = "";
@@ -62,7 +62,7 @@ HWTEST_F(SPdaemonTest, CheckTcpParamTestCase002, TestSize.Level1)
     EXPECT_FALSE(flag);
 }
 
-HWTEST_F(SPdaemonTest, CheckTcpParamTestCase003, TestSize.Level1)
+HWTEST_F(SPdaemonTaskTest, CheckTcpParamTestCase003, TestSize.Level1)
 {
     std::string str = "";
     std::string errorInfo = "";
@@ -76,7 +76,7 @@ HWTEST_F(SPdaemonTest, CheckTcpParamTestCase003, TestSize.Level1)
  * @tc.desc: Test DetectionAndGrab
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonTest, DetectionAndGrabTestCase001, TestSize.Level1)
+HWTEST_F(SPdaemonTaskTest, DetectionAndGrabTestCase001, TestSize.Level1)
 {
     bool ret = false;
     std::map<std::string, std::string> templateMap;

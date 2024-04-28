@@ -15,15 +15,14 @@
 
 import { DashPathEffect } from './Paint';
 import { DataSet } from './DataSet';
-import LineRadarDataSet from './LineRadarDataSet'
-import EntryOhos from './EntryOhos'
-import ILineDataSet from '../interfaces/datasets/ILineDataSet'
-import IFillFormatter from '../formatter/IFillFormatter'
-import DefaultFillFormatter from '../formatter/DefaultFillFormatter'
-import Utils from '../utils/Utils'
-import {JArrayList} from '../utils/JArrayList'
-import ColorTemplate from '../utils/ColorTemplate'
-
+import LineRadarDataSet from './LineRadarDataSet';
+import EntryOhos from './EntryOhos';
+import ILineDataSet from '../interfaces/datasets/ILineDataSet';
+import IFillFormatter from '../formatter/IFillFormatter';
+import DefaultFillFormatter from '../formatter/DefaultFillFormatter';
+import Utils from '../utils/Utils';
+import { JArrayList } from '../utils/JArrayList';
+import ColorTemplate from '../utils/ColorTemplate';
 
 export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDataSet {
   /**
@@ -63,7 +62,7 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
   /**
    * the path effect of this DataSet that makes dashed lines possible
    */
-  private mDashPathEffect: DashPathEffect  = null;
+  private mDashPathEffect: DashPathEffect = null;
 
   /**
    * formatter for customizing the position of the fill-line
@@ -83,13 +82,12 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
     }
     this.mCircleColors.clear();
     this.mCircleColors.add(0x8ceaff);
-
   }
 
   public copy(): DataSet<EntryOhos> {
     let entries = new JArrayList<EntryOhos>();
     for (let i = 0; i < this.mEntries.size(); i++) {
-        entries.add(this.mEntries.get(i).copy());
+      entries.add(this.mEntries.get(i).copy());
     }
     let copied = new LineDataSet(entries, this.getLabel());
     this.copyTo(copied);
@@ -124,7 +122,7 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @return
    */
-  public setMode(mode: Mode): void  {
+  public setMode(mode: Mode): void {
     this.mMode = mode;
   }
 
@@ -135,11 +133,12 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    * @param intensity
    */
   public setCubicIntensity(intensity: number): void {
-    if (intensity > 1)
-    intensity = 1;
-    if (intensity < 0.05)
-    intensity = 0.05;
-    ;
+    if (intensity > 1) {
+      intensity = 1;
+    }
+    if (intensity < 0.05) {
+      intensity = 0.05;
+    }
     this.mCubicIntensity = intensity;
   }
 
@@ -153,12 +152,11 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param radius
    */
-  public setCircleRadius(radius: number): void  {
-
+  public setCircleRadius(radius: number): void {
     if (radius >= 1) {
       this.mCircleRadius = radius;
     } else {
-      console.log("LineDataSet", "Circle radius cannot be < 1")
+      console.log('LineDataSet', 'Circle radius cannot be < 1');
     }
   }
 
@@ -172,12 +170,11 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param holeRadius
    */
-  public setCircleHoleRadius(holeRadius: number): void{
-
+  public setCircleHoleRadius(holeRadius: number): void {
     if (holeRadius >= 0.5) {
       this.mCircleHoleRadius = holeRadius;
     } else {
-      console.log("LineDataSet", "Circle radius cannot be < 0.5")
+      console.log('LineDataSet', 'Circle radius cannot be < 0.5');
     }
   }
 
@@ -231,16 +228,16 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param enabled
    */
-  public setDrawCircles(enabled: boolean): void  {
+  public setDrawCircles(enabled: boolean): void {
     this.mDrawCircles = enabled;
   }
 
-  public isDrawCirclesEnabled(): boolean  {
+  public isDrawCirclesEnabled(): boolean {
     return this.mDrawCircles;
   }
 
   //      @Deprecated
-  public isDrawCubicEnabled(): boolean  {
+  public isDrawCubicEnabled(): boolean {
     return this.mMode == Mode.CUBIC_BEZIER;
   }
 
@@ -268,16 +265,15 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
     return this.mCircleColors.length();
   }
 
-
-  public setCircleColorsByArray(colors: JArrayList<number>): void{
+  public setCircleColorsByArray(colors: JArrayList<number>): void {
     this.mCircleColors = colors;
   }
 
-  public setCircleColors(colors:number[]):void  {
+  public setCircleColors(colors: number[]): void {
     this.mCircleColors = ColorTemplate.createColors(colors);
   }
 
-  public setCircleColorsByArrayAndCon(colors: number[]): void  {
+  public setCircleColorsByArrayAndCon(colors: number[]): void {
     var clrs: JArrayList<Number> = this.mCircleColors;
     if (clrs == null) {
       clrs = new JArrayList();
@@ -295,20 +291,20 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param color
    */
-  public setCircleColor(color: number): void  {
+  public setCircleColor(color: number): void {
     this.resetCircleColors();
     this.mCircleColor = color;
     this.mCircleColors.add(color);
   }
 
-  public getCircleColor(): number  {
+  public getCircleColor(): number {
     return this.mCircleColor;
   }
 
   /**
    * resets the circle-colors array and creates a new one
    */
-  public resetCircleColors(): void  {
+  public resetCircleColors(): void {
     if (this.mCircleColors == null) {
       this.mCircleColors = new JArrayList<Number>();
     }
@@ -320,7 +316,7 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param color
    */
-  public setCircleHoleColor(color: number): void  {
+  public setCircleHoleColor(color: number): void {
     this.mCircleHoleColor = color;
   }
 
@@ -333,11 +329,11 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param enabled
    */
-  public setDrawCircleHole(enabled: boolean): void  {
+  public setDrawCircleHole(enabled: boolean): void {
     this.mDrawCircleHole = enabled;
   }
 
-  public isDrawCircleHoleEnabled(): boolean  {
+  public isDrawCircleHoleEnabled(): boolean {
     return this.mDrawCircleHole;
   }
 
@@ -347,24 +343,22 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
    *
    * @param formatter
    */
-  public setFillFormatter(formatter: IFillFormatter): void  {
-
+  public setFillFormatter(formatter: IFillFormatter): void {
     if (!formatter) {
       this.mFillFormatter = new DefaultFillFormatter();
     } else {
       if (formatter instanceof DefaultFillFormatter) {
-        this.mFillFormatter = <DefaultFillFormatter> formatter;
+        this.mFillFormatter = <DefaultFillFormatter>formatter;
       }
     }
   }
 
-  public getFillFormatter(): IFillFormatter  {
+  public getFillFormatter(): IFillFormatter {
     return this.mFillFormatter;
   }
-  getDashPathEffectHighlight():DashPathEffect{
-    return
+  getDashPathEffectHighlight(): DashPathEffect {
+    return;
   }
-
 
   public setFillStyle(fillStyle: FillStyle) {
     this.fillStyle = fillStyle;
@@ -375,17 +369,16 @@ export class LineDataSet extends LineRadarDataSet<EntryOhos> implements ILineDat
   }
 }
 
-export type ColorStop = [Color | string | number,number];
+export type ColorStop = [Color | string | number, number];
 
 export enum Mode {
   LINEAR,
   STEPPED,
   CUBIC_BEZIER,
-  HORIZONTAL_BEZIER
+  HORIZONTAL_BEZIER,
 }
 
 export enum FillStyle {
   MIN,
-  MAX
+  MAX,
 }
-
