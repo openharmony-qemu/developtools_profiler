@@ -39,8 +39,7 @@ int main(int argc, char *argv[])
         return 0;
     }
     int i = 0;
-
-    for (i = 0; i < TWO_NUM; i++) {
+    for (; i < TWO_NUM; i++) {
         std::cout << "hook" << std::endl;
         sleep(TWO_NUM);
         ffrt::submit([i] { std::cout << "num: " << i << std::endl; });
@@ -52,7 +51,7 @@ int main(int argc, char *argv[])
     long elapsedTime = 0;
     std::cout << "start" << std::endl;
     startTime = GetNanos();
-    for (int i = 0; i < std::atoi(argv[1]); ++i) {
+    for (int j = 0; j < std::atoi(argv[1]); ++j) {
         int x = 1;
         ffrt::submit([&] { x = VALUE_NUM; }, {}, {&x});
     }

@@ -54,11 +54,11 @@ const std::string MGR_SVC_INTERVAL_STR = "--------------------------------------
 const std::string MEM_PROFILE_STR = "Channel:";
 } // namespace
 
-MemoryDataPlugin::MemoryDataPlugin()
-    : buffer_(new (std::nothrow) uint8_t[READ_BUFFER_SIZE]), meminfoFd_(-1), vmstatFd_(-1), err_(-1)
+MemoryDataPlugin::MemoryDataPlugin() : meminfoFd_(-1), vmstatFd_(-1), err_(-1)
 {
     InitProto2StrVector();
     SetPath(const_cast<char*>("/proc"));
+    buffer_ = std::make_unique<uint8_t[]>(READ_BUFFER_SIZE);
 }
 
 MemoryDataPlugin::~MemoryDataPlugin()

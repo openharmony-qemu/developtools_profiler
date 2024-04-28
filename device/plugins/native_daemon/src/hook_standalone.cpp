@@ -32,13 +32,6 @@ namespace Hook {
 const int PAGE_BYTES = 4096;
 std::shared_ptr<HookManager> g_hookManager;
 NativeHookConfig g_nativeConfig;
-static void SignalHandl(int signo)
-{
-    std::vector<uint32_t> pluginIds;
-    g_hookManager->StopPluginSession(pluginIds);
-    g_hookManager->DestroyPluginSession(pluginIds);
-    exit(-1);
-}
 
 void SetNativeHookConfig(const HookData& hookData)
 {
@@ -90,9 +83,7 @@ void SetNativeHookConfig(const HookData& hookData)
 
 bool StartHook(HookData& hookData)
 {
-    signal(SIGINT, SignalHandl);
     g_hookManager = std::make_shared<HookManager>();
-
     std::vector<ProfilerPluginConfig> config;
 #if defined(__arm__)
     hookData.fpUnwind = false;
@@ -103,6 +94,13 @@ bool StartHook(HookData& hookData)
     CHECK_TRUE(g_hookManager->CreatePluginSession(config), false, "StartHook CreatePluginSession invalid");
     g_hookManager->StartPluginSession();
     return true;
+}
+
+void EndHook()
+{
+    std::vector<uint32_t> pluginIds;
+    g_hookManager->StopPluginSession(pluginIds);
+    g_hookManager->DestroyPluginSession(pluginIds);
 }
 } // namespace Hook
 } // namespace Profiler

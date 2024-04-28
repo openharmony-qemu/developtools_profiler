@@ -70,6 +70,7 @@ struct HookData {
 
 namespace OHOS::Developtools::Profiler::Hook {
 bool StartHook(HookData& hookData);
+void EndHook();
 } // namespace OHOS::Developtools::Profiler::Hook
 
 #endif // HOOK_STANDALONE_H
