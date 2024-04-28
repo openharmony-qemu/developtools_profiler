@@ -247,7 +247,7 @@ static FpsInfo GetSurfaceFrame(std::string name, FpsConfig &fpsConfig)
     }
     ProcessResult(fp, fpsConfig, fpsInfo);
     pclose(fp);
-    return GetSurfaceFrameResult(fpsConfig, fpsInfo, );
+    return GetSurfaceFrameResult(fpsConfig, fpsInfo, lastLineTime);
 }
 
 static void ReplaceString(std::string &res)
