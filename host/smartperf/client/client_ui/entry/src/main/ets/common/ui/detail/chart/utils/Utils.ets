@@ -100,8 +100,7 @@ export default abstract class Utils {
   public static nextUp(d: number): number {
     if (d == Infinity) {
       return d;
-    }
-    else {
+    } else {
       d += 0.0;
       return d >= 0.0 ? (d += 0.000000001) : (d -= 0.000000001);
     }
