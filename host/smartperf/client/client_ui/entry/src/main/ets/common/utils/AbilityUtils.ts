@@ -22,8 +22,8 @@ const TAG = 'AbilityUtils';
 export function commonStartAbility(
   bundleName: string,
   abilityName: string,
-  parameters?: { [key: string]: any }
-) {
+  parameters?: { [key: string]: unknown }
+): void {
   SPLogger.INFO(
     TAG,
     'Operation bundleName:' +

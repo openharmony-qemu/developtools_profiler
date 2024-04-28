@@ -15,7 +15,7 @@
 import { CatchTraceStatus } from './base/ProfilerConstant';
 
 export default class WorkerHandler {
-  static socketHandler(result) {
+  static socketHandler(result): void {
     let arr = result.data.split('$');
     switch (arr[0]) {
       case 'RAM':

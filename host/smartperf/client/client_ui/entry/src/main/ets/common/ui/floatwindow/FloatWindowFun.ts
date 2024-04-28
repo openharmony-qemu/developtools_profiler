@@ -29,8 +29,8 @@ export class FloatWindowFun {
   static windowWidth: number = 2560;
   static windowHeight: number = 1600;
   static atWidth: number = 95;
-  static initAllFun() {
-    globalThis.CreateFloatingWindow = () => {
+  static initAllFun(): void {
+    globalThis.CreateFloatingWindow = (): void => {
       //5.5SP2  2106 改成 8
       wm.create(
         globalThis.abilityContext,
@@ -61,7 +61,7 @@ export class FloatWindowFun {
           });
       });
     };
-    globalThis.MoveFloatingWindow = (offsetX: number, offsetY: number) => {
+    globalThis.MoveFloatingWindow = (offsetX: number, offsetY: number): void => {
       let xx =
         this.floatingWindowOffsetX + offsetX * 2 < 0
           ? 0
@@ -83,7 +83,7 @@ export class FloatWindowFun {
     globalThis.SetFloatingWindowPosition = (
       offsetX: number,
       offsetY: number
-    ) => {
+    ): void => {
       this.floatingWindowOffsetX =
         this.floatingWindowOffsetX + offsetX * 2 < 0
           ? 0
@@ -98,7 +98,7 @@ export class FloatWindowFun {
           : this.floatingWindowOffsetY + offsetY * 2;
     };
 
-    globalThis.DestroyFloatingWindow = () => {
+    globalThis.DestroyFloatingWindow = (): void => {
       wm.find('sp_floatingWindow').then((fltWin) => {
         fltWin.destroy().then(() => {
           globalThis.showFloatingWindow = false;
@@ -106,7 +106,7 @@ export class FloatWindowFun {
       });
     };
 
-    globalThis.CreateTitleWindow = () => {
+    globalThis.CreateTitleWindow = (): void => {
       wm.create(
         globalThis.abilityContext,
         'sp_TitleWindow',
@@ -139,7 +139,7 @@ export class FloatWindowFun {
       });
     };
 
-    globalThis.MoveTitleWindow = (offsetX: number, offsetY: number) => {
+    globalThis.MoveTitleWindow = (offsetX: number, offsetY: number): void => {
       let xx =
         this.titleWindowOffsetX + offsetX * 2 < 0
           ? 0
@@ -157,7 +157,7 @@ export class FloatWindowFun {
       });
     };
 
-    globalThis.SetTitleWindowPosition = (offsetX: number, offsetY: number) => {
+    globalThis.SetTitleWindowPosition = (offsetX: number, offsetY: number): void => {
       this.titleWindowOffsetX =
         this.titleWindowOffsetX + offsetX * 2 < 0
           ? 0
@@ -172,7 +172,7 @@ export class FloatWindowFun {
           : this.titleWindowOffsetY + offsetY * 2;
     };
 
-    globalThis.DestroyTitleWindow = () => {
+    globalThis.DestroyTitleWindow = (): void => {
       console.log('cm-destroy-TitleWindow');
       wm.find('sp_TitleWindow').then((fltWin) => {
         console.log('cm-destroy-TitleWindow1');
@@ -180,7 +180,7 @@ export class FloatWindowFun {
       });
     };
 
-    globalThis.HideTitleWindow = () => {
+    globalThis.HideTitleWindow = (): void => {
       console.log('cm-hide-TitleWindow');
       wm.find('sp_TitleWindow').then((fltWin) => {
         console.log('cm-hide-TitleWindow1');
@@ -189,7 +189,7 @@ export class FloatWindowFun {
       });
     };
 
-    globalThis.ShowTitleWindow = () => {
+    globalThis.ShowTitleWindow = (): void => {
       console.log('cm-show-TitleWindow');
       wm.find('sp_TitleWindow').then((fltWin) => {
         console.log('cm-show-TitleWindow1');

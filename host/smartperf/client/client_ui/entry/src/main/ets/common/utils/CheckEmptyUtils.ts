@@ -20,7 +20,7 @@ export default class CheckEmptyUtils {
    * @param {Object} obj need checked object
    * @return {boolean} true(empty)
    */
-  static isEmpty(obj) {
+  static isEmpty(obj): boolean {
     return (
       typeof obj === 'undefined' ||
       obj === null ||
@@ -35,7 +35,7 @@ export default class CheckEmptyUtils {
    * @param {string} str need checked string
    * @return {boolean} true(empty)
    */
-  static checkStrIsEmpty(str) {
+  static checkStrIsEmpty(str): boolean  {
     return str.trim().length === 0;
   }
 
@@ -45,7 +45,7 @@ export default class CheckEmptyUtils {
    * @param {Array} arr need checked array
    * @return {boolean} true(empty)
    */
-  static isEmptyArr(arr) {
+  static isEmptyArr(arr): boolean  {
     return arr.length === 0;
   }
 }

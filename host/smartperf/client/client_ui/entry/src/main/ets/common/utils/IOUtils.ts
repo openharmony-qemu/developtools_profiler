@@ -20,7 +20,7 @@ import SPLogger from '../utils/SPLogger';
  * @param data
  */
 const TAG = 'IOUtils';
-export function createFilePath(path: string, data: string) {
+export function createFilePath(path: string, data: string): void {
   SPLogger.INFO(TAG, 'createFilePath called:' + path);
   let writer;
   try {

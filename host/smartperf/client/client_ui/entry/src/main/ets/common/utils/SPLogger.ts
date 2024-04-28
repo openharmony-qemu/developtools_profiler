@@ -27,28 +27,28 @@ export default class SPLogger {
   private static bastTag = 'SmartPerf:';
 
   //debug debug日志
-  static DEBUG(tag: string, msg: string) {
+  static DEBUG(tag: string, msg: string): void {
     if (SPLogger.isPrintLog && SPLogger.isPrintDebugLog) {
       console.debug(SPLogger.bastTag + tag + ',' + msg);
     }
   }
 
   //info 级别日志
-  static INFO(tag: string, msg: string) {
+  static INFO(tag: string, msg: string): void {
     if (SPLogger.isPrintLog && SPLogger.isPrintInfoLog) {
       console.info(SPLogger.bastTag + tag + ',' + msg);
     }
   }
 
   //warn 级别日志
-  static WARN(tag: string, msg: string) {
+  static WARN(tag: string, msg: string): void {
     if (SPLogger.isPrintLog && SPLogger.isPrintWarnLog) {
       console.warn(SPLogger.bastTag + tag + ',' + msg);
     }
   }
 
   //error 级别日志
-  static ERROR(tag: string, msg: string) {
+  static ERROR(tag: string, msg: string): void {
     if (SPLogger.isPrintLog && SPLogger.isPrintErrorLog) {
       console.error(SPLogger.bastTag + tag + ',' + msg);
     }

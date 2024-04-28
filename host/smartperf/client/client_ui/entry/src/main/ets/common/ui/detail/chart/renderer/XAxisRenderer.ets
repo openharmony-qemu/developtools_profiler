@@ -225,9 +225,9 @@ export default class XAxisRenderer extends AxisRenderer {
           if (i / 2 == this.mXAxis.mEntryCount - 1 && this.mXAxis.mEntryCount > 1) {
             let width = Utils.calcTextWidth(this.mAxisLabelPaint, label);
 
-            if (width > this.mViewPortHandler.offsetRight() * 2 && x + width > this.mViewPortHandler.getChartWidth())
-            x -= width / 2;
-
+            if (width > this.mViewPortHandler.offsetRight() * 2 && x + width > this.mViewPortHandler.getChartWidth()) {
+              x -= width / 2;
+            }
             // avoid clipping of the first
           } else if (i == 0) {
             let width = Utils.calcTextWidth(this.mAxisLabelPaint, label);
