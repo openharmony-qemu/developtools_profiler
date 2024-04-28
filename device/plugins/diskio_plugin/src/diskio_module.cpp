@@ -46,6 +46,7 @@ static int DiskioPluginReportResultOptimize(RandomWriteCtx* randomWrite)
 static int DiskioPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    CHECK_NOTNULL(g_plugin, -1, "g_plugin is nullptr");
     g_plugin->Stop();
     g_plugin = nullptr;
     return 0;
