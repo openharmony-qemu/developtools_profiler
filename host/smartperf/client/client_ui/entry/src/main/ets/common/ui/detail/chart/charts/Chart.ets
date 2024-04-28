@@ -535,8 +535,7 @@ export default abstract class Chart<T> {
 
     if (high == null) {
       this.mIndicesToHighlight = null;
-    }
-    else {
+    } else {
       if (this.mLogEnabled) {
         console.info(Chart.LOG_TAG + ':Highlighted: ' + high.toString());
       }

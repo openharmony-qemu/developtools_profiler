@@ -400,7 +400,7 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
       commandsFillData = 'M' + firstPointX + ' ' + maxY;
     }
 
-    let entryArray: Array<EntryOhos> = [];
+    let entryArray: EntryOhos[] = [];
     entryArray = dataSet.getEntries().toArray();
     let entryOhosY: number;
     for (let i = 0; i < entryArray.length; i++) {
@@ -579,7 +579,7 @@ export default class LineChartRenderer extends LineScatterCandleRadarRenderer {
 
     let xScale: number = this.pathViewModel.xScale;
     let yScale: number = 1;
-    let entryArray: Array<EntryOhos> = [];
+    let entryArray: EntryOhos[] = [];
 
     for (let i = 0; i < this.lineData.getDataSetCount(); i++) {
       let lineDataSet: LineDataSet = this.pathViewModel.getLineData().getDataSetByIndex(i) as LineDataSet;

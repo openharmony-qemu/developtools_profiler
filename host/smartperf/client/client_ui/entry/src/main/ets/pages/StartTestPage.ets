@@ -34,10 +34,10 @@ struct StartTestPage {
   @State selectApp: string = '请选择一个应用'
   @State selectAppIcon: string = ''
   @State private collectConfigs: CollectItem[] = []
-  @State private switchList: SwitchItem[] = new Array(
+  @State private switchList: SwitchItem[] = [
     new SwitchItem('trace', '是否抓取trace', $r('app.media.icon_average_frame_b'), false, true),
     new SwitchItem('screenCapture', '是否开启截图', $r('app.media.icon_screencap'), false, true)
-  )
+  ]
   @State private testName: string = '' // 测试名称
 
   dialogController: CustomDialogController = new CustomDialogController({

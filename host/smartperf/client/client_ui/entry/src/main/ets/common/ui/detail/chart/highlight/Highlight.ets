@@ -213,8 +213,7 @@ export default class Highlight {
     public equalTo(h: Highlight): boolean {
         if (h == null) {
             return false;
-        }
-        else {
+        } else {
             if (
             this.mDataSetIndex == h.mDataSetIndex &&
             this.mX == h.mX &&
