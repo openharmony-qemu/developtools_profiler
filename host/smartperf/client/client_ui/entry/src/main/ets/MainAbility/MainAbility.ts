@@ -25,24 +25,24 @@ import worker from '@ohos.worker';
 let MainWorker = new worker.Worker('entry/ets/workers/worker.js');
 globalThis.MainWorker = MainWorker;
 
-MainWorker.onmessage = function (result) {
+MainWorker.onmessage = function (result): void {
   WorkerHandler.socketHandler(result);
 };
 
 let abilityWindowStage;
 export default class MainAbility extends Ability {
-  onCreate(want, launchParam) {
+  onCreate(): void {
     console.log('cm-MainAbility-onCreate');
     globalThis.showFloatingWindow = false;
     BundleManager.getAppList().then((appList) => {
       globalThis.appList = appList;
     });
   }
-  onDestroy() {
+  onDestroy(): void {
     console.log('cm-MainAbility-onDestroy');
     MainWorker.terminate();
   }
-  onWindowStageCreate(windowStage) {
+  onWindowStageCreate(windowStage): void {
     globalThis.abilityContext = this.context;
     abilityWindowStage = windowStage;
     abilityWindowStage.setUIContent(this.context, 'pages/LoginPage', null);
@@ -78,13 +78,13 @@ export default class MainAbility extends Ability {
       }
     );
   }
-  onWindowStageDestroy() {}
-  onForeground() {
+  onWindowStageDestroy(): void {}
+  onForeground(): void {
     console.log('cm-MainAbility-onForeground');
     initDb();
     FloatWindowFun.initAllFun();
     //NetWork.getInstance().init()
     MainWorker.postMessage({ testConnection: true });
   }
-  onBackground() {}
+  onBackground(): void {}
 }

@@ -51,8 +51,8 @@ export default {
   },
 
   //插入表( T_GENERAL_INFO)
-  insertGeneraData(tableName: string, tGeneralInfo: TGeneralInfo) {
-    var strMap = new Map();
+  insertGeneraData(tableName: string, tGeneralInfo: TGeneralInfo): void {
+    let strMap = new Map();
     for (let k of Object.keys(tGeneralInfo)) {
       strMap.set(k, tGeneralInfo[k]);
     }
@@ -66,25 +66,6 @@ export default {
       endTime: strMap.get('endTime'),
       testDuration: strMap.get('testDuration'),
       taskName: strMap.get('taskName'),
-      //      "testCase":strMap.get("testCase"),
-      //      "testType":strMap.get("testType"),
-      //      "user":strMap.get("user"),
-      //      "userId":strMap.get("userId"),
-      //      "projectId":strMap.get("projectId"),
-      //      "dataSource":strMap.get("dataSource"),
-      //      "spVersion":strMap.get("spVersion"),
-      //      "deviceTypeName":strMap.get("deviceTypeName"),
-      //      "brand":strMap.get("brand"),
-      //      "deviceName":strMap.get("deviceName"),
-      //      "board":strMap.get("board"),
-      //      "version":strMap.get("version"),
-      //      "plat":strMap.get("plat"),
-      //      "cpuCluster":strMap.get("cpuCluster"),
-      //      "sn":strMap.get("sn"),
-      //      "resolution":strMap.get("resolution"),
-      //      "screenBrightness":strMap.get("screenBrightness"),
-      //      "volume":strMap.get("volume"),
-      //      "batteryVolume":strMap.get("batteryVolume")
     };
     try {
       const STORE_CONFIG: relationalStore.StoreConfig = {
@@ -100,7 +81,7 @@ export default {
             '--> insert into  insertGeneraData :tableName:' +
               tableName +
               '| valueInsert:' +
-              JSON.stringify(valueInsert)
+            JSON.stringify(valueInsert)
           );
           rdbStore.insert(tableName, valueInsert);
         }
@@ -111,8 +92,8 @@ export default {
   },
 
   //插入表(T_INDEX_INFO)
-  insertData(tableName: string, pathSuffix: number, tIndexInfo: TIndexInfo) {
-    var strMap = new Map();
+  insertData(tableName: string, pathSuffix: number, tIndexInfo: TIndexInfo): void {
+    let strMap = new Map();
     for (let k of Object.keys(tIndexInfo)) {
       strMap.set(k, tIndexInfo[k]);
     }
@@ -178,7 +159,6 @@ export default {
       name: dbName,
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TGeneralInfo>();
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -203,6 +183,7 @@ export default {
           ]);
         })
         .then((resultSet) => {
+          let results: TGeneralInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sessionId = resultSet.getString(
               resultSet.getColumnIndex('sessionId')
@@ -272,7 +253,6 @@ export default {
       name: dbPath,
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TIndexInfo>();
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -319,6 +299,7 @@ export default {
           ]);
         })
         .then((resultSet) => {
+          let results: TIndexInfo[] = [];
           while (resultSet.goToNextRow()) {
             let timestamp = resultSet.getString(
               resultSet.getColumnIndex('timestamp')
@@ -487,11 +468,11 @@ export default {
    * @param gpDatas
    */
   gpArray2Index(gpDatas: Array<GPData>): TIndexInfo {
-    var tIndexInfo: TIndexInfo = new TIndexInfo();
+    let tIndexInfo: TIndexInfo = new TIndexInfo();
     tIndexInfo.setTaskId('18');
     tIndexInfo.setTimeStamp(new Date().getTime().toString());
     if (gpDatas != null) {
-      for (var index = 0; index < gpDatas.length; index++) {
+      for (let index = 0; index < gpDatas.length; index++) {
         let curGPData: GPData = gpDatas[index];
         let map = curGPData.values;
 
@@ -568,13 +549,13 @@ export default {
     tableName: string,
     pathSuffix: number,
     tPowerSenspor: TPowerSensorInfo
-  ) {
+  ): void {
     SPLogger.INFO(
       'TAG',
       'resultSet query_applications_display-----tPowerSenspor' +
-        JSON.stringify(tPowerSenspor)
+      JSON.stringify(tPowerSenspor)
     );
-    var strMap = new Map();
+    let strMap = new Map();
     for (let k of Object.keys(tPowerSenspor)) {
       strMap.set(k, tPowerSenspor[k]);
     }
@@ -598,7 +579,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----tPowerSenspor' +
-              JSON.stringify(pathSuffix)
+            JSON.stringify(pathSuffix)
           );
           rdbStore.insert(tableName, valueInsert);
         }
@@ -613,13 +594,13 @@ export default {
     tableName: string,
     pathSuffix: number,
     tPowerApp: TPowerAppInfo
-  ) {
+  ): void {
     SPLogger.INFO(
       'TAG',
       'resultSet query_applications_display-----tPowerApp' +
-        JSON.stringify(tPowerApp)
+      JSON.stringify(tPowerApp)
     );
-    var strMap = new Map();
+    let strMap = new Map();
     for (let k of Object.keys(tPowerApp)) {
       strMap.set(k, tPowerApp[k]);
     }
@@ -641,7 +622,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----tPowerApp' +
-              JSON.stringify(pathSuffix)
+            JSON.stringify(pathSuffix)
           );
           rdbStore.insert(tableName, valueInsert);
         }
@@ -661,28 +642,29 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_display ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_display ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----display' +
-              JSON.stringify(strSQL)
+            JSON.stringify(strSQL)
           );
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'display';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -701,7 +683,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----display' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -720,7 +702,7 @@ export default {
       name: pathSuffix + '.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -731,6 +713,7 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = resultSet.getString(
               resultSet.getColumnIndex('sensor')
@@ -767,24 +750,25 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_cpu ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_cpu ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
 
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'cpu';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -803,7 +787,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----cpu' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -824,24 +808,25 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_gpu ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_gpu ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
 
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'gpu';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -860,7 +845,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----gpu' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -881,23 +866,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_wifi_data ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_wifi_data ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'wifi_data';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -916,7 +902,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----wifi_data' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -937,23 +923,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select sum(energy)/3600.0 power,sum(energy)/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_system_idle ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_system_idle ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'system_idle';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -972,7 +959,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----system_idle' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -993,23 +980,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_audio ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_audio ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'audio';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -1028,7 +1016,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----audio' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -1049,23 +1037,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_dss ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_dss ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'dss';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -1084,7 +1073,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----dss' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -1105,23 +1094,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_ddr ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_ddr ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'ddr';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -1140,7 +1130,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----ddr' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -1160,23 +1150,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_sensor ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_sensor ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'sensor';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -1195,7 +1186,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----sensor' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -1216,23 +1207,24 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerSensorInfo>();
+
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select (sum(foreground_energy)+sum(background_energy))/3600.0 power, (sum(foreground_energy)+sum(background_energy))/((max(end_time)-min(start_time))/1000.0) current ' +
-            'from detailed_applications_rom ' +
-            'where formatted_start_time >= ' +
+              'from detailed_applications_rom ' +
+              'where formatted_start_time >= ' +
             JSON.stringify(start_time) +
-            ' and formatted_end_time <= ' +
+              ' and formatted_end_time <= ' +
             JSON.stringify(end_time) +
-            ' and name = ' +
+              ' and name = ' +
             JSON.stringify(pkg_name);
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'rom';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -1251,7 +1243,7 @@ export default {
           SPLogger.INFO(
             'TAG',
             'resultSet query_applications_display-----rom' +
-              JSON.stringify(results)
+            JSON.stringify(results)
           );
           return results;
         });
@@ -1271,8 +1263,8 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerAppInfo>();
-    var strSQL: String = '';
+
+    let strSQL: String = '';
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1289,32 +1281,32 @@ export default {
           );
           strSQL =
             'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
-            'from detailed_applications_cpu ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
-            'from detailed_applications_display ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
-            'from detailed_applications_gpu ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
-            'from detailed_applications_system_idle ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
-            'from detailed_applications_wifi_data ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
-            'from detailed_applications_sensor ' +
-            sqlWhereReplace +
-            'union all ' +
-            'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
-            'from detailed_applications_audio ' +
-            sqlWhereReplace;
+              'from detailed_applications_cpu ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
+              'from detailed_applications_display ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
+              'from detailed_applications_gpu ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name,round(energy/3600.0,5) as energy ' +
+              'from detailed_applications_system_idle ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
+              'from detailed_applications_wifi_data ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
+              'from detailed_applications_sensor ' +
+              sqlWhereReplace +
+              'union all ' +
+              'select formatted_start_time, formatted_end_time, name, round((foreground_energy+background_energy)/3600.0,5) as energy ' +
+              'from detailed_applications_audio ' +
+              sqlWhereReplace;
 
           return rdbStore.querySql(strSQL.toString());
         })
@@ -1322,10 +1314,11 @@ export default {
           SPLogger.ERROR(
             'TAG',
             'resultSet query_applications_display-----result L:' +
-              resultSet.rowCount
+            resultSet.rowCount
           );
           let tMap: Map<String, String> = new Map();
           let totalSumEnergy: number = 0.0;
+
           while (resultSet.goToNextRow()) {
             let sum_energy = resultSet.getString(
               resultSet.getColumnIndex('energy')
@@ -1333,7 +1326,7 @@ export default {
             totalSumEnergy = totalSumEnergy + Number(sum_energy);
             let name = resultSet.getString(resultSet.getColumnIndex('name'));
             let existElement = tMap.get(name);
-            if (existElement != undefined) {
+            if (existElement !== undefined) {
               //存在则修改
               let newP: Number = Number(existElement) + Number(sum_energy);
               tMap.set(name, newP.toString());
@@ -1341,7 +1334,7 @@ export default {
               tMap.set(name, sum_energy);
             }
           }
-
+          let results: TPowerAppInfo[] = [];
           //遍历去重相加后的arr
           for (let [name, power] of tMap) {
             let percent = (Number(power) * 100) / totalSumEnergy;
@@ -1356,14 +1349,14 @@ export default {
             SPLogger.ERROR(
               'TAG',
               'resultSet query_applications_display-----result0:' +
-                JSON.stringify(tPowerAppInfo)
+              JSON.stringify(tPowerAppInfo)
             );
             results.push(tPowerAppInfo);
           }
           return results
             .sort(
               (a, b) =>
-                parseFloat(b.power.toString()) - parseFloat(a.power.toString())
+              parseFloat(b.power.toString()) - parseFloat(a.power.toString())
             )
             .slice(0, 20);
         })
@@ -1371,7 +1364,7 @@ export default {
           SPLogger.ERROR(
             'TAG',
             'resultSet query_applications_display-----result after:' +
-              results.length
+            results.length
           );
           return results;
         });
@@ -1389,7 +1382,6 @@ export default {
       name: pathSuffix + '.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results = Array<TPowerAppInfo>();
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1400,6 +1392,7 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
+          let results: TPowerAppInfo[] = [];
           while (resultSet.goToNextRow()) {
             let process = resultSet.getString(
               resultSet.getColumnIndex('process')
