@@ -192,7 +192,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
             currLastTime += harTime;
             count--;
         }
-        if (i == (fpsInfoResult.currTimeStamps.size() - 1)) {
+        if (i == (static_cast<int>(fpsInfoResult.currTimeStamps.size()) - 1)) {
             printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
             printCount++;
             GetSectionsPrint(printCount, currLastTime);
@@ -201,7 +201,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
     }
 }
 
-void ProfilerFPS::GetFPS(int args, std::vector<std::string> v)
+void ProfilerFPS::GetFPS(std::vector<std::string> v)
 {
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");

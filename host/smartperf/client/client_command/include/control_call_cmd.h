@@ -23,7 +23,7 @@ namespace SmartPerf {
 class ControlCallCmd {
 public:
     double ColdStart(std::vector<std::string> v);
-    double ColdStartHM(std::vector<std::string> v);
+    double ColdStartHM(std::vector<std::string> v) const;
     double HotStart(std::vector<std::string> v);
     double CompleteTime();
     double ResponseTime();

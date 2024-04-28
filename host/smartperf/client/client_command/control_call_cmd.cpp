@@ -212,7 +212,7 @@ double ControlCallCmd::ResponseTime()
     }
     return time;
 }
-double ControlCallCmd::ColdStartHM(std::vector<std::string> v)
+double ControlCallCmd::ColdStartHM(std::vector<std::string> v) const
 {
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParseTrace parseTrace;

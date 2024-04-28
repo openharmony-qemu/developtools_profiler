@@ -102,11 +102,11 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)
 {
-    if (path.rfind("/") != path.size() - 1U) {
+    if (!path.empty() && path.back() != '/') {
         return path + "/";
+    } else {
+        return path;
     }
-
-    return path;
 }
 
 void SPUtils::ForDirFiles(const std::string &path, std::vector<std::string> &files)
