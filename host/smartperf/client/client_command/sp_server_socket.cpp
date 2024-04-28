@@ -20,7 +20,7 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-SpServerSocket::SpServerSocket() {}
+SpServerSocket::SpServerSocket() : sockPort(0) {}
 
 SpServerSocket::~SpServerSocket()
 {
@@ -75,7 +75,7 @@ int SpServerSocket::Sendto(std::string &sendBuf)
     return 0;
 }
 
-int SpServerSocket::Send(std::string sendBuf) const
+int SpServerSocket::Send(const std::string &sendBuf) const
 {
     int sendBytes = send(connFd, sendBuf.c_str(), sendBuf.size(), 0);
     if (sendBytes < 0) {

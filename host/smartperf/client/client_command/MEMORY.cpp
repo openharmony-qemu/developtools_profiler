@@ -40,7 +40,7 @@ std::map<std::string, std::string> MEMORY::ItemData()
     return result;
 }
 
-void MEMORY::SetPackageName(const std::string pName)
+void MEMORY::SetPackageName(const std::string &pName)
 {
     packageName = pName;
 }
@@ -149,6 +149,9 @@ std::map<std::string, std::string> MEMORY::GetPssRamInfo(FILE *fd, std::vector<s
 std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
+    if (paramsInfo.empty()) {
+        return sumRamInfo;
+    }
     sumRamInfo["sharedClean"] = paramsInfo[MEMORY_SECOND];
     sumRamInfo["sharedDirty"] = paramsInfo[MEMORY_THIRD];
     sumRamInfo["privateClean"] = paramsInfo[MEMORY_FOURTH];

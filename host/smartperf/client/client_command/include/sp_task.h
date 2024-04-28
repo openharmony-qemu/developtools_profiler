@@ -44,14 +44,14 @@ enum class ErrCode {
 };
 struct StuckNotification {
     bool isEffective = false;
-    int fps;
-    long long frameTime;
+    int fps = 0;
+    long long frameTime = 0;
 };
 struct TaskInfo {
-    std::string sessionId;
-    std::string packageName;
+    std::string sessionId = "";
+    std::string packageName = "";
     std::vector<std::string> taskConfig = {};
-    long long freq;
+    long long freq = 0;
     StuckNotification stuckInfo;
 };
 
@@ -62,7 +62,7 @@ public:
         static SPTask instance;
         return instance;
     }
-    ErrCode InitTask(std::string recvStr);
+    ErrCode InitTask(const std::string &recvStr);
     ErrCode StartTask(std::function<void(std::string data)> msgTask);
     void StopTask();
     std::string GetCurrentTimeAsString();
@@ -78,14 +78,14 @@ public:
 
 private:
     std::thread ThreadGetHiperf(long long ts);
-    void GetHiperf(std::string traceName);
-    std::string SetHiperf(std::string traceName);
+    void GetHiperf(const std::string &traceName);
+    std::string SetHiperf(const std::string &traceName);
     bool CheckCounterId();
     void KillHiperfCmd();
 
 private:
     TaskInfo curTaskInfo;
-    long long startTime;
+    long long startTime = 0;
     std::thread thread;
     std::vector<SPData> vmap;
     bool isRunning = false;

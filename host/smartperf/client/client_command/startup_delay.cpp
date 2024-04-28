@@ -188,8 +188,8 @@ bool StartUpDelay::GetSpTcp()
     std::string str;
     SPUtils::LoadCmd("pidof SP_daemon", resultPid);
     size_t splitFlag = resultPid.find(" ");
-    resultPid = resultPid.substr(0, splitFlag);
-    SPUtils::LoadCmd("kill " + resultPid, str);
+    std::string resultProcId = resultPid.substr(0, splitFlag);
+    SPUtils::LoadCmd("kill " + resultProcId, str);
     return false;
 }
 std::thread StartUpDelay::ThreadGetHisysIdResponse() const
@@ -229,8 +229,8 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
     std::string resultPid;
     SPUtils::LoadCmd("pidof " + curPkgName, resultPid);
     size_t splitFlag = resultPid.find(" ");
-    resultPid = resultPid.substr(0, splitFlag);
-    return resultPid;
+    std::string resultProcId = resultPid.substr(0, splitFlag);
+    return resultProcId;
 }
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
 {
@@ -247,11 +247,14 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
         size_t appIndex = strLine.find(curAppName);
         if (appIndex != std::string::npos) {
             findIndex = appIndex;
+            if (findIndex == std::string::npos) {
+                break;
+            }
         } else {
             findIndex = appPkgIndex;
-        }
-        if (findIndex == std::string::npos) {
-            break;
+            if (findIndex == std::string::npos) {
+                break;
+            }
         }
         size_t bounds = strLine.rfind("bounds", findIndex);
         if (bounds > 0) {
@@ -266,8 +269,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
                 pointVector.push_back(startX);
             }
             size_t num = 3;
-            size_t pointNum = pointVector.size();
-            if (pointNum > num) {
+            if (pointVector.size() > num) {
                 int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
                 int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
                 pointXY = std::to_string(x) + " " + std::to_string(y);
@@ -290,8 +292,9 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
+    size_t appIndex = -1;
     while (getline(file, strLine)) {
-        size_t appIndex = strLine.find(curAppName);
+        appIndex = strLine.find(curAppName);
         if (appIndex <= 0) {
             break;
         }

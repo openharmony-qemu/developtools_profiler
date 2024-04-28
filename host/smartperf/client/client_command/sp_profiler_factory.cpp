@@ -73,7 +73,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 
     return profiler;
 }
-void SpProfilerFactory::SetProfilerPkg(std::string pkg)
+void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
@@ -86,7 +86,7 @@ void SpProfilerFactory::SetProfilerPkg(std::string pkg)
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
 }
-void SpProfilerFactory::SetProfilerLayer(std::string layer)
+void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetLayerName(layer);
@@ -118,7 +118,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
             lowFps = std::stoi(vItems[1]);
         }
     }
-    ByTrace &bTrace = ByTrace::GetInstance();
+    const ByTrace &bTrace = ByTrace::GetInstance();
     if (message.find("traceSum") != std::string::npos) {
         int mCurNum = 1;
         bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);

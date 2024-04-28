@@ -82,7 +82,8 @@ std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr) const
     size_t position2 = lineStr.find(":");
     return lineStr.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParseSlideFpsTrace::CutString(std::string lineStr, std::string start, std::string end, size_t offset) const
+std::string ParseSlideFpsTrace::CutString(std::string lineStr, const std::string &start,
+    const std::string &end, size_t offset) const
 {
     size_t position1 = lineStr.find(start);
     size_t position2 = lineStr.find(end);

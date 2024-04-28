@@ -76,7 +76,7 @@ double ParseTrace::ParseNohTrace(const std::string &fileNamePath, const std::str
     codeTime = SmartPerf::ParseTrace::GetTime(startTime, endTime);
     return codeTime;
 }
-std::string ParseTrace::GetFrameId(std::string line, std::string appPid, std::string fid)
+std::string ParseTrace::GetFrameId(std::string line, const std::string &appPid, const std::string &fid)
 {
     std::string::size_type positionTransactionFlag = line.find("transactionFlag:[" + appPid);
     if (positionTransactionFlag != std::string::npos) {
@@ -91,18 +91,18 @@ std::string ParseTrace::GetFrameId(std::string line, std::string appPid, std::st
     }
     return frameId;
 }
-std::string ParseTrace::GetWindowTime(std::string line, std::string wt)
+std::string ParseTrace::GetWindowTime(std::string line, const std::string &wt)
 {
     size_t positionWindow = line.find("H:RSUniRender::Process:[leashWindow");
     if (positionWindow != std::string::npos) {
         size_t positionWindow1 = line.rfind(")");
         size_t subNumSize = 4;
         std::string windowSizeFlag = line.substr(positionWindow1 - subNumSize, subNumSize);
-        std::string windowSize = "0";
+        std::string windowSize = "";
         if (std::stof(windowSize) == 0) {
             const int windowSizeNum = 1344;
             if (std::stof(windowSizeFlag) == windowSizeNum) {
-                windowSize = "0";
+                windowSize = "";
             } else {
                 windowSize = windowSizeFlag;
             }

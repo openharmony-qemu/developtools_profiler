@@ -43,7 +43,7 @@ public:
         }
         return result;
     }
-    std::string SplitMsg(const std::string recvBuf) const
+    std::string SplitMsg(const std::string &recvBuf) const
     {
         std::vector<std::string> sps;
         SPUtils::StrSplit(recvBuf, "::", sps);
@@ -109,7 +109,7 @@ public:
                 spSocket.Send("SP_daemon is running");
                 return;
             }
-            auto lambdaTask = [](std::string data) {
+            auto lambdaTask = [](const std::string &data) {
                 std::cout << data << std::endl;
             };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
@@ -121,7 +121,7 @@ public:
                 spSocket.Send("start::False");
             }
         } else if (recvStr.find("start::") != std::string::npos) {
-            auto lambdaTask = [&spSocket](std::string data) { spSocket.Send(data); };
+            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
             LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
             if (code == ErrCode::OK) {
@@ -139,7 +139,7 @@ public:
             EditorRecv(recvStr, spSocket);
         }
     }
-    void EditorRecv(std::string recvStr, SpServerSocket &spSocket) const
+    void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const
     {
         std::vector<std::string> vec;
         int size = recvStr.size();

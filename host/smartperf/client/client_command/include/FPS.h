@@ -63,7 +63,7 @@ public:
     void SetPackageName(std::string pName);
     void SetLayerName(std::string sName);
     FpsInfo GetFpsInfo();
-    FpsInfo GetDiffLayersFpsInfo(std::string sName);
+    FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
     bool IsForeGround();
     bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();

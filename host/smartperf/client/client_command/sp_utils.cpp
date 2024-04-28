@@ -348,7 +348,9 @@ void SPUtils::RemoveSpace(std::string &str)
     }
 
     if (len > 0) {
-        str = str.substr(0, static_cast<int>(str.length()) - len);
+        for (int i = 0; i < len; i++) {
+            str.pop_back();
+        }
     }
 }
 
