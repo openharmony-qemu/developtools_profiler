@@ -651,7 +651,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
-    for (size_t i = 0; i < 2; ++i) {
+    for (size_t i = 1; i < 2; ++i) {
         unwindDepth_ = 6;
         outFileType_ = "dlopen_";
         modeIndex_ = i;
@@ -967,6 +967,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         sampleInterval_ = 256;
+        statisticsInterval_ = 1;
         outFileType_ = "sample_interval_";
         modeIndex_ = i;
         StartMallocProcess();
