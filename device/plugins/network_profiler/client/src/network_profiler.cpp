@@ -19,9 +19,9 @@
 #include <fstream>
 #include <unistd.h>
 #include <sched.h>
+#include <sys/prctl.h>
 
 #include "logging.h"
-#include "network_profiler_common.h"
 
 namespace {
 CachedHandle g_cachedHandle;
@@ -29,9 +29,9 @@ CachedHandle g_cachedHandle;
 #define UNEXPECTANTLY(exp) (__builtin_expect(!!(exp), false))
 
 std::mutex g_mtx;
-std::once_flag flag;
-const std::string THREAD_ID_HEAD = "/proc/self/task/";
-const std::string THREAD_ID_TAIL = "/comm";
+std::once_flag g_flag;
+__thread int g_needReportThreadName = 1;
+const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
 } // namespace
 
 namespace OHOS::Developtools::Profiler {
@@ -51,10 +51,16 @@ NetworkProfiler* NetworkProfiler::GetInstance()
 NetworkProfiler::NetworkProfiler()
 {
     pid_ = getprocpid();
-    processName_ = GetProcessName(pid_);
+    processName_ = GetProcessNameByPid(pid_);
 }
 
 NetworkProfiler::~NetworkProfiler() {}
+
+bool NetworkProfiler::IsProfilerEnable()
+{
+    CheckNetworkProfilerParam();
+    return enable_;
+}
 
 void NetworkProfiler::CheckNetworkProfilerParam()
 {
@@ -66,14 +72,14 @@ void NetworkProfiler::CheckNetworkProfilerParam()
     }
     int changed = 0;
     const char *paramValue = CachedParameterGetChanged(g_cachedHandle, &changed);
-    std::call_once(flag, [&]() { changed = 1; });
+    std::call_once(g_flag, [&]() { changed = 1; });
 
     if (UNEXPECTANTLY(changed == 1) && paramValue != nullptr) {
         if (!enable_ && strlen(paramValue) > 0) {
             std::vector<std::string> values;
-            SplitString(paramValue, ",", values);
+            SplitParamValue(paramValue, ",", values);
             for (auto& item : values) {
-                int32_t pid = static_cast<int32_t>(strtoull(item.c_str(), nullptr, 0));
+                int pid = strtoull(item.c_str(), nullptr, 0);
                 if (((pid > 0) && (pid == pid_)) || ((pid == 0) && (item == processName_))) {
                     Enable();
                     break;
@@ -108,20 +114,20 @@ void NetworkProfiler::Disable()
     enable_ = false;
 }
 
-void NetworkProfiler::NetworkProfilerTrace(const int32_t traceType, char* data, uint64_t dataLength)
+void NetworkProfiler::NetworkProfiling(const uint8_t type, const char* data, size_t dataSize)
 {
     if (EXPECTANTLY((!enable_))) {
         return;
     }
-    NetworkData networkData;
-    networkData.type = traceType;
-    networkData.tid = getproctid();
-    clock_gettime(CLOCK_REALTIME, &networkData.ts);
-    GetThreadName(networkData.threadName, MAX_COMM_LEN);
-    NetworkProfilerBase(reinterpret_cast<const void*>(&networkData), sizeof(NetworkResultBase), data, dataLength);
+    NetworkEvent event;
+    event.type = type;
+    event.tid = getproctid();
+    clock_gettime(clockType_, &event.ts);
+    GetThreadName(event.threadName);
+    NetworkProfilerSendData(reinterpret_cast<const void*>(&event), sizeof(event), data, dataSize);
 }
 
-void NetworkProfiler::NetworkProfilerBase(const void* src, size_t size, const char* payload, size_t payloadSize)
+void NetworkProfiler::NetworkProfilerSendData(const void* src, size_t size, const char* payload, size_t payloadSize)
 {
     if (EXPECTANTLY((!enable_)) || src == nullptr) {
         return;
@@ -133,26 +139,16 @@ void NetworkProfiler::NetworkProfilerBase(const void* src, size_t size, const ch
     }
 
     if (!holder->SendNetworkProfilerData(src, size, payload, payloadSize)) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "network profiler SendNetworkProfilerData failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "network profiler SendNetworkProfilerData failed");
     }
 }
 
-void NetworkProfiler::GetThreadName(uint8_t* data, size_t size)
+void NetworkProfiler::GetThreadName(const void* src)
 {
-    if (data == nullptr || size == 0) {
+    if (!g_needReportThreadName) {
         return;
     }
-    std::string threadNameStr = THREAD_ID_HEAD + std::to_string(getproctid()) + THREAD_ID_TAIL;
-    FILE* fp = fopen(threadNameStr.c_str(), "r");
-    if (fp == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "network profiler fopen %s failed", threadNameStr.c_str());
-        return;
-    }
-
-    if (fgets(reinterpret_cast<char*>(data), size, fp) == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "network profiler fgets failed");
-    }
-
-    (void)fclose(fp);
+    prctl(PR_GET_NAME, src);
+    g_needReportThreadName = 0;
 }
 } // namespace OHOS::Developtools::Profiler

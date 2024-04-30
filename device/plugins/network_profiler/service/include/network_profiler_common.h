@@ -21,10 +21,11 @@
 #include <vector>
 
 namespace OHOS::Developtools::Profiler {
-const static std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
-const static char NETWORK_PROFILER_UNIX_SOCKET_PATH[] = "network_profiler_unix_socket";
-const static char NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH[] = "/dev/unix/socket/network_profiler_unix_socket";
-static constexpr uint8_t MAX_COMM_LEN = 16;
+static constexpr uint8_t MAX_TNAME_LEN = 16;
+static constexpr int32_t ALIGNAS_LEN = 8;
+
+void SplitParamValue(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
+std::string GetProcessNameByPid(int32_t pid);
 
 struct NetworkConfig {
     int32_t shmSize = 0;
@@ -33,21 +34,17 @@ struct NetworkConfig {
     bool block = 0;
 };
 
-enum class EventType : int32_t {
-    INVALID,
+enum class NetworkEventType : int32_t {
+    INVALID = -1,
     TRAFFIC,
     HTTP,
 };
 
-struct alignas(8) NetworkResultBase { //8 is 8 bit
-    int32_t type = static_cast<int32_t>(EventType::INVALID);
+struct alignas(ALIGNAS_LEN) NetworkEvent { //8 is 8 bit
+    int32_t type = static_cast<int32_t>(NetworkEventType::INVALID);
     int32_t tid = 0;
     struct timespec ts;
-    uint8_t threadName[MAX_COMM_LEN] = {0};
-};
-
-struct alignas(8) NetworkData : public NetworkResultBase { //8 is 8 bit
-    char* data;
+    char threadName[MAX_TNAME_LEN] = {0};
 };
 }
 
