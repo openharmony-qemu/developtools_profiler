@@ -43,8 +43,8 @@ EXPORT_API int ohos_malloc_hook_munmap(void*, size_t);
 EXPORT_API void ohos_malloc_hook_memtrace(void*, size_t, const char*, bool);
 EXPORT_API int ohos_malloc_hook_prctl(int option, unsigned long, unsigned long, unsigned long, unsigned long);
 EXPORT_API bool ohos_set_filter_size(size_t size, void* ret);
-EXPORT_API bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t, const char*, size_t);
-EXPORT_API void* ohos_malloc_hook_get_hook_js_config();
+EXPORT_API bool ohos_malloc_hook_send_hook_misc_data(uint64_t, const char*, size_t, uint32_t);
+EXPORT_API void* ohos_malloc_hook_get_hook_config();
 
 #ifdef __cplusplus
 }
