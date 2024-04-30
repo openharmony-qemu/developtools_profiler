@@ -85,6 +85,7 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
             return -1;
         }
     }
+    dataQueuePtr_ = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
     // 加载对应so 库文件
     if (!StartPowerManager(messageType, bundleName)) {
         PROFILER_LOG_ERROR(LOG_CORE, "start power manager failed!");
@@ -118,7 +119,6 @@ bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bun
         PROFILER_LOG_ERROR(LOG_CORE, "Failed to startOptimizeMode");
         return false;
     }
-    dataQueuePtr_ = std::make_shared<PowerMessageQueue>(MAX_QUEUE_SIZE);
     return true;
 }
 
@@ -187,6 +187,9 @@ int XpowerPlugin::Stop()
         stopOptimizeMode(listenerHandle_);
         PROFILER_LOG_INFO(LOG_CORE, "stop xpower plugin callback");
     }
-    dataQueuePtr_->ShutDown();
+    if (dataQueuePtr_ != nullptr) {
+        dataQueuePtr_->ShutDown();
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "%s:stop xpower plugin success", __func__);
     return 0;
 }
