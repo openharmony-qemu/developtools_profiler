@@ -531,7 +531,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (nmdParamInfo_.type == 0) {
             PrintStat(nmdParamInfo_.fd, 0);
         } else if (nmdParamInfo_.type == 1) {
-            int waitTime = 0;
+            uint32_t waitTime = 0;
             while ((!PrintStat(nmdParamInfo_.fd, 1)) && waitTime < MAX_WAIT_TIME) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME));
                 waitTime += WAIT_TIME;
