@@ -24,17 +24,13 @@ message NetworkProfilerConfig {
     // Data collection of program restart
     repeated string restart_process_name = 3;
     enum ClockId {
-        CLOCKID_REALTIME = 0;
-        CLOCKID_MONOTONIC = 1;
-        CLOCKID_PROCESS_CPUTIME_ID = 2; // since Linux 2.6.12
-        CLOCKID_THREAD_CPUTIME_ID = 3;  // since Linux 2.6.12
-        CLOCKID_MONOTONIC_RAW = 4;      // since Linux 2.6.28; Linux-specific
-        CLOCKID_REALTIME_COARSE = 5;    // since Linux 2.6.32; Linux-specific
-        CLOCKID_MONOTONIC_COARSE = 6;   // since Linux 2.6.32; Linux-specific
-        CLOCKID_BOOTTIME = 7;           // since Linux 2.6.39; Linux-specific
-        CLOCKID_REALTIME_ALARM = 8;     // since Linux 3.0; Linux-specific
-        CLOCKID_BOOTTIME_ALARM = 9;     // since Linux 3.0; Linux-specific
-        CLOCKID_TAI = 10;               // since Linux 3.10; Linux-specific
+        UNKNOW = 0;
+        BOOTTIME = 1;
+        REALTIME = 2;
+        REALTIME_COARSE = 3;
+        MONOTONIC = 4;
+        MONOTONIC_COARSE = 5;
+        MONOTONIC_RAW = 6;
     };
     ClockId clock_id = 4;
     uint32 smb_pages = 5;
