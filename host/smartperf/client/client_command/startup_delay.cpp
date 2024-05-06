@@ -273,12 +273,9 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                if (leftStart != std::string::npos && leftEnd != std::string::npos && leftEnd > leftStart) {
-                    std::string pointSubstr = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
-                    pointXY = std::regex_replace(pointSubstr, std::regex(","), " ");
-                } else {
-                    std::cout << "Error extracting bounds." << std::endl;
-                }
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
+                pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
         }
@@ -320,12 +317,9 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                 if (leftStart != std::string::npos && leftEnd != std::string::npos && leftEnd > leftStart) {
-                    std::string pointSubstr = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
-                    pointXY = std::regex_replace(pointSubstr, std::regex(","), " ");
-                } else {
-                    std::cout << "Error extracting bounds." << std::endl;
-                }
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
+                pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
         }
