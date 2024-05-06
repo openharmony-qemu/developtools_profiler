@@ -193,7 +193,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
             count--;
         }
         long long size = fpsInfoResult.currTimeStamps.size();
-        if (size < 1) {
+        if (size <= 1) {
             return;
         }
         if (i == (size - 1)) {
