@@ -24,6 +24,7 @@ ohos_shared_library("ohhidebug") {
   deps = [ "../native:hidebug_native" ]
 
   external_deps = [
+    "bounds_checking_function:libsec_static",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
