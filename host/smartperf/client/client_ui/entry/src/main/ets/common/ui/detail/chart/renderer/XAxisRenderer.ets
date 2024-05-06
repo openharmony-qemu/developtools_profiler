@@ -343,9 +343,9 @@ export default class XAxisRenderer extends AxisRenderer {
   public renderLimitLines(): Paint[] {
     let limitLines: JArrayList<LimitLine> = this.mXAxis.getLimitLines();
 
-    if (limitLines == null
-          || limitLines.size() <= 0
-          || !this.mAxis.isDrawLimitLinesBehindDataEnabled()) {
+    if (limitLines == null ||
+            limitLines.size() <= 0 ||
+                !this.mAxis.isDrawLimitLinesBehindDataEnabled()) {
       return [];
     }
 

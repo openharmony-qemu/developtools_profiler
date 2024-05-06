@@ -59,7 +59,7 @@ HWTEST_F(SPdaemonGpuTest, Init001, TestSize.Level1)
     int ret = GpuCounter::GetInstance().Init(recvBuf, data);
 
     SPUtils::LoadCmd(constCheckProductInfo, result);
-    if (result.empty() || std::string::npos == result.find(constProductInfo)) {
+    if (result.empty() || result.find(constProductInfo) == std::string::npos) {
         EXPECT_EQ(ret, -4);
         return;
     }

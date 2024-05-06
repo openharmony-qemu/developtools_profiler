@@ -159,6 +159,7 @@ export default {
       name: dbName,
       securityLevel: relationalStore.SecurityLevel.S1,
     };
+    let results: TGeneralInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -183,7 +184,6 @@ export default {
           ]);
         })
         .then((resultSet) => {
-          let results: TGeneralInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sessionId = resultSet.getString(
               resultSet.getColumnIndex('sessionId')
@@ -244,6 +244,7 @@ export default {
         });
     } catch (err) {
       SPLogger.ERROR(TAG, 'resultSet queryGeneralData:err' + err);
+      return results;
     }
   },
 
@@ -253,6 +254,7 @@ export default {
       name: dbPath,
       securityLevel: relationalStore.SecurityLevel.S1,
     };
+    let results: TIndexInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -299,7 +301,6 @@ export default {
           ]);
         })
         .then((resultSet) => {
-          let results: TIndexInfo[] = [];
           while (resultSet.goToNextRow()) {
             let timestamp = resultSet.getString(
               resultSet.getColumnIndex('timestamp')
@@ -461,6 +462,7 @@ export default {
         });
     } catch (err) {
       SPLogger.ERROR(TAG, 'resultSet queryIndexInfo Data:err' + err);
+      return results;
     }
   },
   /**
@@ -642,7 +644,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -664,7 +666,6 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'display';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
@@ -692,6 +693,7 @@ export default {
         TAG,
         'resultSet query_applications_display err22222:' + err
       );
+      return results;
     }
   },
   //查询表（task_powersensor_info）
@@ -702,18 +704,16 @@ export default {
       name: pathSuffix + '.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
         .then(async (rdbStore) => {
           let strSQL: string =
             'select * ' + 'from task_powersensor_info order by power desc  ';
-
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = resultSet.getString(
               resultSet.getColumnIndex('sensor')
@@ -738,6 +738,7 @@ export default {
         TAG,
         'resultSet query_applications_display err22222:' + err
       );
+      return results;
     }
   },
   //查询表（detailed_applications_cpu）
@@ -750,7 +751,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -768,34 +769,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'cpu';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----cpu' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+        return results;
     }
   },
   //查询表（detailed_applications_gpu）
@@ -808,7 +794,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -826,34 +812,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'gpu';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----gpu' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_wifi_data）
@@ -866,7 +837,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -883,34 +854,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'wifi_data';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----wifi_data' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_system_idle）
@@ -923,7 +879,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -940,34 +896,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'system_idle';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----system_idle' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_audio）
@@ -980,7 +921,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -997,34 +938,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'audio';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----audio' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_dss）
@@ -1037,7 +963,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1054,34 +980,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'dss';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----dss' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_ddr）
@@ -1094,7 +1005,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1111,36 +1022,22 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'ddr';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----ddr' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
-  }, //查询表（detailed_applications_sensor）
+  },
+  //查询表（detailed_applications_sensor）
   async query_applications_sensor(
     start_time: String,
     end_time: String,
@@ -1150,7 +1047,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1167,34 +1064,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'sensor';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----sensor' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询表（detailed_applications_rom）
@@ -1207,7 +1089,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerSensorInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1224,34 +1106,19 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerSensorInfo[] = [];
           while (resultSet.goToNextRow()) {
             let sensor = 'rom';
             let power = resultSet.getString(resultSet.getColumnIndex('power'));
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo(
-              '',
-              sensor,
-              power,
-              current,
-              ''
-            );
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
             results.push(tPowerSensorInfo);
           }
-          SPLogger.INFO(
-            'TAG',
-            'resultSet query_applications_display-----rom' +
-            JSON.stringify(results)
-          );
           return results;
         });
     } catch (err) {
-      SPLogger.ERROR(
-        TAG,
-        'resultSet query_applications_display err22222:' + err
-      );
+      return results;
     }
   },
   //查询dubai 所有进程功耗 并插入表 t_power_appinfo
@@ -1263,7 +1130,7 @@ export default {
       name: 'dubai.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-
+    let results: TPowerAppInfo[] = [];
     let strSQL: String = '';
     try {
       return await relationalStore
@@ -1334,7 +1201,6 @@ export default {
               tMap.set(name, sum_energy);
             }
           }
-          let results: TPowerAppInfo[] = [];
           //遍历去重相加后的arr
           for (let [name, power] of tMap) {
             let percent = (Number(power) * 100) / totalSumEnergy;
@@ -1373,6 +1239,7 @@ export default {
         TAG,
         'resultSet query_applications_display err22222:' + err
       );
+      return results;
     }
   },
 
@@ -1382,6 +1249,7 @@ export default {
       name: pathSuffix + '.db',
       securityLevel: relationalStore.SecurityLevel.S1,
     };
+    let results: TPowerAppInfo[] = [];
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -1392,7 +1260,6 @@ export default {
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
-          let results: TPowerAppInfo[] = [];
           while (resultSet.goToNextRow()) {
             let process = resultSet.getString(
               resultSet.getColumnIndex('process')
@@ -1421,6 +1288,7 @@ export default {
         TAG,
         'resultSet query_applications_display query_powerapp_info:' + err
       );
+      return results;
     }
   },
 };

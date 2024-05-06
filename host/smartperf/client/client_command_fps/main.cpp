@@ -163,7 +163,7 @@ static void ProcessFpsResult(FpsConfig &fpsConfig, FpsInfo &fpsInfo, long long f
         (fpsInfo.timeStampQ).push(frameReadyTime);
     }
 }
-static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo) 
+static void ProcessResult(FILE *fp, FpsConfig &fpsConfig, FpsInfo &fpsInfo)
 {
     char tmp[1024];
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
@@ -297,6 +297,10 @@ static std::string GetSurFace()
 }
 static void GetFpsUniteInfo(int num)
 {
+    if (num <= 0) {
+        printf("Invalid value for num: %d\n", num);
+        return;
+    }
     FpsInfo gfpsInfo;
     FpsInfo gfpsUniteInfo;
     std::string layerName;

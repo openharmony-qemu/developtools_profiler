@@ -247,14 +247,11 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
         size_t appIndex = strLine.find(curAppName);
         if (appIndex != std::string::npos) {
             findIndex = appIndex;
-            if (findIndex == std::string::npos) {
-                break;
-            }
         } else {
             findIndex = appPkgIndex;
-            if (findIndex == std::string::npos) {
-                break;
-            }
+        }
+        if (findIndex == std::string::npos) {
+            break;
         }
         size_t bounds = strLine.rfind("bounds", findIndex);
         if (bounds > 0) {
@@ -276,7 +273,8 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                pointXY = boundStr.substr(leftStart + 1, static_cast<int>(leftEnd - leftStart - 1));
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
@@ -319,8 +317,8 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                int pointXYLength = static_cast<int>(leftEnd - leftStart - 1);
-                pointXY = boundStr.substr(leftStart + 1, pointXYLength);
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;

@@ -24,7 +24,7 @@ export struct FloatWindowComponent {
   private settings: RenderingContextSettings = new RenderingContextSettings(true)
   private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
   @State title: string = 'SmartPerf'
-  private xPoint: number = 5 //x起始坐标
+  private xPoint: number = 5
   private yPoint: number = 108 //Y起始坐标
   private xScale: number = 8 //刻度
   private yScale: number = 21 //刻度

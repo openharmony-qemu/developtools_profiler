@@ -35,7 +35,7 @@ export default class CheckEmptyUtils {
    * @param {string} str need checked string
    * @return {boolean} true(empty)
    */
-  static checkStrIsEmpty(str): boolean  {
+  static checkStrIsEmpty(str): boolean {
     return str.trim().length === 0;
   }
 
@@ -45,7 +45,7 @@ export default class CheckEmptyUtils {
    * @param {Array} arr need checked array
    * @return {boolean} true(empty)
    */
-  static isEmptyArr(arr): boolean  {
+  static isEmptyArr(arr): boolean {
     return arr.length === 0;
   }
 }
