@@ -123,7 +123,7 @@ export struct Current {
     }
 
 
-    let gradientFillColor: Array<ColorStop> = [];
+    let gradientFillColor: ColorStop[] = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])

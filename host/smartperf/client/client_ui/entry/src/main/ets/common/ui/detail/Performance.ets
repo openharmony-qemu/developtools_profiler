@@ -36,8 +36,8 @@ export struct Performance {
   @State private gpData: TIndexInfo[] = []
   @State lostList: FpsLostFrame[] = []
   public lostLine: Array<number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-  public fpsValues: Array<number> = []
-  public fpsJitterValues: Array<string> = []
+  public fpsValues: number[] = []
+  public fpsJitterValues: string[] = []
   public topAxis: XAxis = new XAxis(); //顶部X轴
   public bottomAxis: XAxis = new XAxis(); //底部X轴
   public atWidth: number = 350; //表的宽度

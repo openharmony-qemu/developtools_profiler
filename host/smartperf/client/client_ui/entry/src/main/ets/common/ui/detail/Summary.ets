@@ -125,7 +125,7 @@ export struct Summary {
       cpuB = cpuFreqMap.get('cpu' + cpuCoreArr[1] + 'FreqSum') / 1e3
       cpuC = cpuFreqMap.get('cpu' + cpuCoreArr[2] + 'FreqSum') / 1e3
     }
-    var cpuList = [cpuA, cpuB, cpuC].sort()
+    let cpuList = [cpuA, cpuB, cpuC].sort()
 
     cpuMin = cpuList[0]
     cpuMid = cpuList[1]

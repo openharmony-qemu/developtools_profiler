@@ -555,8 +555,7 @@ export default abstract class Chart<T> {
     if (callListener && this.mSelectionListener != null) {
       if (!this.valuesToHighlight()) {
         this.mSelectionListener.onNothingSelected();
-      }
-      else {
+      } else {
         // notify the listener
         this.mSelectionListener.onValueSelected(e, high);
       }

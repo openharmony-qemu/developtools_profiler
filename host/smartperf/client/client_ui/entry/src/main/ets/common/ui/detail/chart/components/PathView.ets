@@ -193,10 +193,10 @@ export class PathViewModel extends ScaleMode {
 
     this.xScale = (this.rect.right - this.rect.left) / (this.xAxis.getAxisMaximum() - this.xAxis.getAxisMinimum());
     this.yLeftScale = (this.rect.bottom - this.rect.top) /
-      (this.yleftAxis.getAxisMaximum() - this.yleftAxis.getAxisMinimum());
+        (this.yleftAxis.getAxisMaximum() - this.yleftAxis.getAxisMinimum());
 
     this.yRightScale = (this.rect.bottom - this.rect.top) /
-      (this.yRightAxis.getAxisMaximum() - this.yRightAxis.getAxisMinimum());
+        (this.yRightAxis.getAxisMaximum() - this.yRightAxis.getAxisMinimum());
 
   }
 
