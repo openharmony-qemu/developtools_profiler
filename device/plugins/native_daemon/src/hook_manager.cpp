@@ -52,6 +52,25 @@ constexpr uint32_t WAIT_TIME = 100;
 constexpr uint32_t MAX_WAIT_TIME = 500;
 }
 
+HookManager::~HookManager()
+{
+    hookService_ = nullptr;
+    for (const auto& item : hookCtx_) {
+        if (item->eventPoller != nullptr) {
+            item->eventPoller = nullptr;
+        }
+        if (item->shareMemoryBlock != nullptr) {
+            item->shareMemoryBlock = nullptr;
+        }
+        if (item->stackPreprocess != nullptr) {
+            item->stackPreprocess = nullptr;
+        }
+        if (item->stackData != nullptr) {
+            item->stackData = nullptr;
+        }
+    }
+}
+
 bool HookManager::CheckProcess()
 {
     if (hookConfig_.pid() > 0) {
@@ -453,9 +472,6 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 {
-    // release hook service
-    hookService_ = nullptr;
-
     for (const auto& item : hookCtx_) {
         if (item->eventPoller != nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset!");
@@ -464,16 +480,10 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             }
             item->eventPoller->Stop();
             item->eventPoller->Finalize();
-            item->eventPoller = nullptr;
         }
-
         if (item->shareMemoryBlock != nullptr) {
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
-            item->shareMemoryBlock = nullptr;
         }
-        item->eventNotifier = nullptr;
-        item->stackPreprocess = nullptr;
-        item->stackData = nullptr;
     }
     if (fpHookData_) {
         fclose(fpHookData_);
