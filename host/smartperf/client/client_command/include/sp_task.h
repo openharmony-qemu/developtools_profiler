@@ -98,7 +98,7 @@ private:
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
-  -o /data/local/tmp/hitrace/)";
+  -o /data/local/tmp/)";
     std::string strTwo = R"(.htrace \
   -t 5 \
   -s \
@@ -110,7 +110,7 @@ private:
     buffers {
     pages: 16384
     })";
-    std::string strFive = R"( result_file: "/data/local/tmp/hitrace/)";
+    std::string strFive = R"( result_file: "/data/local/tmp/)";
     std::string strSix = R"(.htrace"
     sample_duration: 5000
     })";
@@ -146,7 +146,7 @@ private:
     clock: "boot"
     trace_period_ms: 200
     debug_on: false
-    hitrace_time: 30
+    hitrace_time: 5
     }
     })";
     std::string strSeven = R"( plugin_configs {
@@ -154,7 +154,7 @@ private:
   sample_interval: 5000
   config_data {
     is_root: false
-   outfile_name: "/data/local/tmp/hitrace/perf/)";
+   outfile_name: "/data/local/tmp/)";
     std::string strEight = R"(.data"
    record_args: "-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking )";
     std::string strTen = R"(--call-stack dwarf --clockid monotonic --offcpu -m 256"
