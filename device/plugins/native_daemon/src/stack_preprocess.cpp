@@ -40,7 +40,7 @@ constexpr static uint32_t LG_TINY_MAXCLASS = 3;
 constexpr static uint32_t MAX_MATCH_CNT = 1000;
 constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
-constexpr static uint32_t MAX_BATCH_CNT = 5;
+constexpr static uint32_t MAX_BATCH_CNT = 20;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
 constexpr static uint32_t RIGHT_MOVE_4 = 4;
@@ -422,7 +422,6 @@ void StackPreprocess::TakeResults()
                         SetHookData(rawData, callFrames_, stackData);
                     }
                 }
-                FlushCheck(stackData);
                 }, stackData_);
 
 #ifdef PERFORMANCE_DEBUG
@@ -446,6 +445,9 @@ void StackPreprocess::TakeResults()
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
+        std::visit([&](auto& stackData) {
+            FlushCheck(stackData);
+            }, stackData_);
         IntervalFlushRecordStatistics();
         IntervalFlushApplyAndReleaseMatchData();
     } // while
