@@ -1,22 +1,22 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
 
 import ScaleMode from '../../data/ScaleMode';
-import LimitLine,{LimitLabelPosition} from '../LimitLine';
-import Paint,{LinePaint,TextPaint,PathPaint} from '../../data/Paint'
-import {XAxis,XAxisPosition} from '../XAxis'
+import LimitLine, {LimitLabelPosition} from '../LimitLine';
+import Paint, {LinePaint, TextPaint, PathPaint} from '../../data/Paint'
+import {XAxis, XAxisPosition} from '../XAxis'
 import XAxisRenderer from '../../renderer/XAxisRenderer'
 import Transformer from '../..//utils/Transformer'
 import ViewPortHandler from '../../utils/ViewPortHandler'
@@ -35,21 +35,21 @@ export default struct XAxisView {
   @State
   minOffset:number = 15;
   @State
-  yLeftLongestLabel:string="AAA"
+  yLeftLongestLabel:string = 'AAA'
   @State
-  yRightLongestLabel:string="AAA"
+  yRightLongestLabel:string = 'AAA'
   @State
-  XLimtLine:LimitLine = new LimitLine(35, "Index 10");
+  xLimtLine:LimitLine = new LimitLine(35, 'Index 10');
 
   @State
-  scaleMode:ScaleMode=new ScaleMode()
-  aboutToAppear(){
+  scaleMode:ScaleMode = new ScaleMode()
+  aboutToAppear() {
     this.scaleMode.xAixsMode.draw()
   }
 
   build() {
     Stack({ alignContent: Alignment.TopStart }) {
-      if(this.scaleMode.xAixsMode.paints && this.scaleMode.xAixsMode.paints.length>0) {
+      if (this.scaleMode.xAixsMode.paints && this.scaleMode.xAixsMode.paints.length > 0) {
         ForEach(this.scaleMode.xAixsMode.paints, (item: Paint) => {
           if (item instanceof LinePaint) {
             Line()
@@ -79,7 +79,7 @@ export default struct XAxisView {
               .strokeOpacity(item.alpha)
               .position({ x: item.x, y: item.y })
           }
-        }, (item: Paint) => (item.alpha + "").toString())
+        }, (item: Paint) => (item.alpha + '').toString())
       }
     }
     .width(this.scaleMode.xAixsMode.width)

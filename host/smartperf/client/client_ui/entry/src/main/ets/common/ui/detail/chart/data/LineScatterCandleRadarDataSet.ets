@@ -14,13 +14,15 @@
  */
 
 import { DashPathEffect } from './Paint';
-import EntryOhos from './EntryOhos'
-import BarLineScatterCandleBubbleDataSet from './BarLineScatterCandleBubbleDataSet'
-import ILineScatterCandleRadarDataSet from '../interfaces/datasets/ILineScatterCandleRadarDataSet'
-import Utils from '../utils/Utils'
-import {JArrayList} from '../utils/JArrayList'
+import EntryOhos from './EntryOhos';
+import BarLineScatterCandleBubbleDataSet from './BarLineScatterCandleBubbleDataSet';
+import ILineScatterCandleRadarDataSet from '../interfaces/datasets/ILineScatterCandleRadarDataSet';
+import Utils from '../utils/Utils';
+import { JArrayList } from '../utils/JArrayList';
 
-export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos> extends BarLineScatterCandleBubbleDataSet<T> implements ILineScatterCandleRadarDataSet<T> {
+export default abstract class LineScatterCandleRadarDataSet<T extends EntryOhos>
+extends BarLineScatterCandleBubbleDataSet<T>
+implements ILineScatterCandleRadarDataSet<T> {
     protected mDrawVerticalHighlightIndicator: boolean = true;
     protected mDrawHorizontalHighlightIndicator: boolean = true;
 
@@ -28,7 +30,7 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
     protected mHighlightLineWidth: number = 0.5;
 
     /** the path effect for dashed highlight-lines */
-    protected  mHighlightDashPathEffect:DashPathEffect = null;
+    protected mHighlightDashPathEffect: DashPathEffect = null;
 
     constructor(yVals: JArrayList<T>, label: string) {
         super(yVals, label);
@@ -47,7 +49,7 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
      * Enables / disables the vertical highlight-indicator. If disabled, the indicator is not drawn.
      * @param enabled
      */
-    public setDrawVerticalHighlightIndicator(enabled: boolean): void  {
+    public setDrawVerticalHighlightIndicator(enabled: boolean): void {
         this.mDrawVerticalHighlightIndicator = enabled;
     }
 
@@ -55,7 +57,7 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
      * Enables / disables both vertical and horizontal highlight-indicators.
      * @param enabled
      */
-    public setDrawHighlightIndicators(enabled: boolean): void  {
+    public setDrawHighlightIndicators(enabled: boolean): void {
         this.setDrawVerticalHighlightIndicator(enabled);
         this.setDrawHorizontalHighlightIndicator(enabled);
     }
@@ -72,11 +74,11 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
      * Sets the width of the highlight line in dp.
      * @param width
      */
-    public setHighlightLineWidth(width: number): void  {
+    public setHighlightLineWidth(width: number): void {
         this.mHighlightLineWidth = Utils.convertDpToPixel(width);
     }
 
-    public getHighlightLineWidth(): number{
+    public getHighlightLineWidth(): number {
         return this.mHighlightLineWidth;
     }
 
@@ -87,10 +89,9 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
      * @param spaceLength the length of space inbetween the line-pieces
      * @param phase offset, in degrees (normally, use 0)
      */
-    public enableDashedHighlightLine(lineLength: number, spaceLength: number, phase: number): void  {
-        var arr=[lineLength, spaceLength];
-        this.mHighlightDashPathEffect = new DashPathEffect(arr,
-          phase);
+    public enableDashedHighlightLine(lineLength: number, spaceLength: number, phase: number): void {
+        var arr = [lineLength, spaceLength];
+        this.mHighlightDashPathEffect = new DashPathEffect(arr, phase);
     }
 
     /**
@@ -105,15 +106,15 @@ export default abstract class LineScatterCandleRadarDataSet <T extends EntryOhos
      * Default: disabled
      * @return
      */
-    public isDashedHighlightLineEnabled(): boolean  {
-        return !this.mHighlightDashPathEffect? false : true;
+    public isDashedHighlightLineEnabled(): boolean {
+        return !this.mHighlightDashPathEffect ? false : true;
     }
 
-    public getDashPathEffectHighlight():DashPathEffect /*DashPathEffect*/ {
+    public getDashPathEffectHighlight(): DashPathEffect /*DashPathEffect*/ {
         return this.mHighlightDashPathEffect;
     }
 
-    protected copyTo(lineScatterCandleRadarDataSet: LineScatterCandleRadarDataSet<T>): void  {
+    protected copyTo(lineScatterCandleRadarDataSet: LineScatterCandleRadarDataSet<T>): void {
         super.copyTo(lineScatterCandleRadarDataSet);
         lineScatterCandleRadarDataSet.mDrawHorizontalHighlightIndicator = this.mDrawHorizontalHighlightIndicator;
         lineScatterCandleRadarDataSet.mDrawVerticalHighlightIndicator = this.mDrawVerticalHighlightIndicator;

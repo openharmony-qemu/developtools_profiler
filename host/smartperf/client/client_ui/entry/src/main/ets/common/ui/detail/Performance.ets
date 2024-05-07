@@ -1,13 +1,13 @@
 /*
  * Copyright (C) 2022 Huawei Device Co., Ltd.
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (the 'License');
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
+ * distributed under the License is distributed on an 'AS IS' BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
@@ -27,29 +27,29 @@ import CalculationUtils from '../../utils/CalculationUtils';
 import { FpsLostFrame } from './data/DetailCommon';
 import SPLogger from '../../utils/SPLogger'
 
-const TAG: string = "Performance"
+const TAG: string = 'Performance'
 /**
  * 性能页面
  */
 @Component
 export struct Performance {
-  @State private gpData: Array<TIndexInfo> = new Array()
-  @State lostList: Array<FpsLostFrame> = new Array<FpsLostFrame>()
-  lostLine: Array<number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
-  fpsValues: Array<number> = new Array()
-  fpsJitterValues: Array<string> = new Array()
-  topAxis: XAxis = new XAxis(); //顶部X轴
-  bottomAxis: XAxis = new XAxis(); //底部X轴
-  atWidth: number =350 ; //表的宽度
-  atHeight: number = 300; //表的高度
-  minOffset: number = 15; //X轴线偏移量
-  leftAxis: YAxis = null;
-  rightAxis: YAxis = null;
-  lineData: LineData = null;
-  lineChartModel : LineChartModel =  new LineChartModel();
+  @State private gpData: TIndexInfo[] = []
+  @State lostList: FpsLostFrame[] = []
+  public lostLine: Array<number> = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]
+  public fpsValues: number[] = []
+  public fpsJitterValues: string[] = []
+  public topAxis: XAxis = new XAxis(); //顶部X轴
+  public bottomAxis: XAxis = new XAxis(); //底部X轴
+  public atWidth: number = 350; //表的宽度
+  public atHeight: number = 300; //表的高度
+  public minOffset: number = 15; //X轴线偏移量
+  public leftAxis: YAxis = null;
+  public rightAxis: YAxis = null;
+  public lineData: LineData = null;
+  public lineChartModel : LineChartModel = new LineChartModel();
 
   aboutToAppear() {
-    SPLogger.DEBUG(TAG, "this.gpData.length" + this.gpData.length);
+    SPLogger.DEBUG(TAG, 'this.gpData.length' + this.gpData.length);
     this.lineData = this.initCurveData();
     if (this.gpData.length < 10) {
       this.topAxis.setLabelCount(this.gpData.length, false);
@@ -60,7 +60,7 @@ export struct Performance {
     this.topAxis.setPosition(XAxisPosition.TOP);
     this.topAxis.setAxisMinimum(0);
     this.topAxis.setAxisMaximum(this.gpData.length - 1);
-     this.topAxis.setDrawAxisLine(false)
+    this.topAxis.setDrawAxisLine(false)
     if (this.gpData.length < 10) {
       this.bottomAxis.setLabelCount(this.gpData.length, false);
     } else {
@@ -121,70 +121,70 @@ export struct Performance {
       sumLostFrame += parseInt(lostFrameMap.get(key).toString())
     }
     SPLogger.DEBUG(TAG,
-      " sumLostFrame" + sumLostFrame);
+      ' sumLostFrame' + sumLostFrame);
     for (let key of lostFrameMap.keys()) {
-      SPLogger.DEBUG(TAG, "value start  key: " + key);
-      SPLogger.DEBUG(TAG, "value start  : " + lostFrameMap.get(key).toString() + "total: " + sumLostFrame);
+      SPLogger.DEBUG(TAG, 'value start  key: ' + key);
+      SPLogger.DEBUG(TAG, 'value start  : ' + lostFrameMap.get(key).toString() + 'total: ' + sumLostFrame);
       let fpsLostFrame = new FpsLostFrame((parseInt(key.toString()) - 1).toString(), lostFrameMap.get(key).toString(),
-      this.getPercent(parseInt(lostFrameMap.get(key).toString()), sumLostFrame).toString(), $r("app.color.color_fff"))
+      this.getPercent(parseInt(lostFrameMap.get(key).toString()), sumLostFrame).toString(), $r('app.color.color_fff'))
       this.lostList.push(fpsLostFrame)
     }
     let list = this.lostList.sort((a, b) => parseInt(a.key) - parseInt(b.key))
-    this.lostList.unshift(new FpsLostFrame("丢帧", "丢帧次数", "占比", $r("app.color.colorPrimary")))
-    SPLogger.DEBUG(TAG, "this.lostList" + this.lostList.length)
-    SPLogger.DEBUG(TAG, "this.lostList JSON" + JSON.stringify(this.lostList))
-    SPLogger.DEBUG(TAG, "this.list JSON" + JSON.stringify(list))
+    this.lostList.unshift(new FpsLostFrame('丢帧', '丢帧次数', '占比', $r('app.color.colorPrimary')))
+    SPLogger.DEBUG(TAG, 'this.lostList' + this.lostList.length)
+    SPLogger.DEBUG(TAG, 'this.lostList JSON' + JSON.stringify(this.lostList))
+    SPLogger.DEBUG(TAG, 'this.list JSON' + JSON.stringify(list))
   }
 
   /**
-    * 获取百分比
-    */
+   * 获取百分比
+   */
   private getPercent(value: number, total: number): String {
-    SPLogger.DEBUG(TAG, "value end  : " + value + "total: " + total);
+    SPLogger.DEBUG(TAG, 'value end  : ' + value + 'total: ' + total);
     if (isNaN(value) || isNaN(total)) {
-      return "0.00%";
+      return '0.00%';
     }
-    let result: String = total <= 0 ? "0.00%" : (Math.round(value / total * 10000) / 100.00).toFixed(2) + "%";
-    SPLogger.DEBUG(TAG, "value value / total * 10000 : " + value / total * 10000);
-    SPLogger.DEBUG(TAG, "value Math.round(value / total * 10000) : " + Math.round(value / total * 10000));
-    SPLogger.DEBUG(TAG, "value Math.round(value / total * 10000) : " + (Math.round(value / total * 10000) / 100.00));
-    SPLogger.DEBUG(TAG, "value result : " + result);
+    let result: String = total <= 0 ? '0.00%' : (Math.round(value / total * 10000) / 100.00).toFixed(2) + '%';
+    SPLogger.DEBUG(TAG, 'value value / total * 10000 : ' + value / total * 10000);
+    SPLogger.DEBUG(TAG, 'value Math.round(value / total * 10000) : ' + Math.round(value / total * 10000));
+    SPLogger.DEBUG(TAG, 'value Math.round(value / total * 10000) : ' + (Math.round(value / total * 10000) / 100.00));
+    SPLogger.DEBUG(TAG, 'value result : ' + result);
     return result;
   }
 
   /**
-     * 初始化数据
-     * @param count  曲线图点的个数
-     * @param range  y轴范围
-     */
+   * 初始化数据
+   * @param count  曲线图点的个数
+   * @param range  y轴范围
+   */
   private initCurveData(): LineData {
 
     let values = new JArrayList<EntryOhos>();
     for (let index: number = 0; index < this.gpData.length; index++) {
       const gpDataCur = this.gpData[index];
 
-      if (gpDataCur.fps == "" || gpDataCur.fps === undefined) {
+      if (gpDataCur.fps == '' || gpDataCur.fps === undefined) {
         continue
       }
       this.fpsValues.push(parseInt(gpDataCur.fps.toString()))
-      SPLogger.DEBUG(TAG, "gpDataCur.fpsJitters"  + gpDataCur.fpsJitters);
-      this.fpsJitterValues.push(gpDataCur.fpsJitters.toString().replace("\"", ""))
+      SPLogger.DEBUG(TAG, 'gpDataCur.fpsJitters' + gpDataCur.fpsJitters);
+      this.fpsJitterValues.push(gpDataCur.fpsJitters.toString().replace('\'', ''))
       values.add(new EntryOhos(Number(index).valueOf(), Number(gpDataCur.fps).valueOf()));
     }
-    SPLogger.DEBUG(TAG, "this.fpsJitterValues"  + JSON.stringify(this.fpsJitterValues));
+    SPLogger.DEBUG(TAG, 'this.fpsJitterValues' + JSON.stringify(this.fpsJitterValues));
 
     //处理丢帧
     this.handleLostFrame();
 
 
-    let gradientFillColor = new Array<ColorStop>();
+    let gradientFillColor = [];
     gradientFillColor.push([0x0C0099CC, 0.2])
     gradientFillColor.push([0x7F0099CC, 0.4])
     gradientFillColor.push([0x0099CC, 1.0])
 
     let dataSet = new JArrayList<ILineDataSet>();
 
-    let set1 = new LineDataSet(values, "fps(HZ)");
+    let set1 = new LineDataSet(values, 'fps(HZ)');
     set1.setDrawFilled(false);
     set1.setMode(Mode.CUBIC_BEZIER);
     set1.setDrawValues(false);
@@ -206,10 +206,10 @@ export struct Performance {
     Scroll() {
       Column({ space: '3vp' }) {
         LineChart({lineChartModel: this.lineChartModel})
-        Text("fps(HZ)") {
+        Text('fps(HZ)') {
         }.fontWeight(FontWeight.Bold).fontColor(Color.Green).fontSize('15fp').textAlign(TextAlign.Center)
-        Text("丢帧统计表\n(注：该表用于统计每一秒的丢帧数, 帧率基线取决于当前数据的最高帧率,\n其中丢帧的指的是丢几帧, 丢帧次数为整场数据的左侧丢帧值得发生次数)") {
-        }.fontWeight(FontWeight.Bold).fontColor($r("app.color.color_333")).fontSize('12fp').textAlign(TextAlign.Center)
+        Text('丢帧统计表\n(注：该表用于统计每一秒的丢帧数, 帧率基线取决于当前数据的最高帧率,\n其中丢帧的指的是丢几帧, 丢帧次数为整场数据的左侧丢帧值得发生次数)') {
+        }.fontWeight(FontWeight.Bold).fontColor($r('app.color.color_333')).fontSize('12fp').textAlign(TextAlign.Center)
 
         List() {
           ForEach(this.lostList, (lostFrame) => {
@@ -217,36 +217,36 @@ export struct Performance {
               Flex({ justifyContent: FlexAlign.Center, alignItems: ItemAlign.Center }) {
                 Text(lostFrame.key)
                   .fontSize('12fp')
-                  .fontColor($r("app.color.color_333"))
+                  .fontColor($r('app.color.color_333'))
                   .height('30vp')
                   .width('20%')
-                  .border({ width: '1vp', color: $r("app.color.color_999") })
+                  .border({ width: '1vp', color: $r('app.color.color_999') })
                   .backgroundColor(lostFrame.color)
                   .textAlign(TextAlign.Center)
 
                 Text(lostFrame.value)
                   .fontSize('12fp')
-                  .fontColor($r("app.color.color_333"))
+                  .fontColor($r('app.color.color_333'))
                   .height('30vp')
                   .width('20%')
-                  .border({ width: '1vp', color: $r("app.color.color_999") })
+                  .border({ width: '1vp', color: $r('app.color.color_999') })
                   .backgroundColor(lostFrame.color)
                   .textAlign(TextAlign.Center)
 
                 Text(lostFrame.percent)
                   .fontSize('12fp')
-                  .fontColor($r("app.color.color_333"))
+                  .fontColor($r('app.color.color_333'))
                   .height('30vp')
                   .width('20%')
-                  .border({ width: '1vp', color: $r("app.color.color_999") })
+                  .border({ width: '1vp', color: $r('app.color.color_999') })
                   .backgroundColor(lostFrame.color)
                   .textAlign(TextAlign.Center)
               }.width('100%')
             }
           }, lostFrame => lostFrame.key)
-        }.width('100%').height("100%").margin({ bottom: "50%" })
+        }.width('100%').height('100%').margin({ bottom: '50%' })
       }.alignItems(HorizontalAlign.Center)
-    }.scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).height("100%")
+    }.scrollable(ScrollDirection.Vertical).scrollBar(BarState.Auto).height('100%')
 
   }
 }

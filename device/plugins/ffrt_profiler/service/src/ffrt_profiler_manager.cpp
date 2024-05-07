@@ -50,8 +50,8 @@ FfrtProfilerManager::~FfrtProfilerManager()
 void FfrtProfilerManager::Init()
 {
     auto commandPoller = std::make_shared<CommandPoller>(shared_from_this());
-    CHECK_NOTNULL(commandPoller, , "create CommandPoller FAILED!");
-    CHECK_TRUE(commandPoller->OnConnect(), , "connect FAILED");
+    CHECK_NOTNULL(commandPoller, NO_RETVAL, "create CommandPoller FAILED!");
+    CHECK_TRUE(commandPoller->OnConnect(), NO_RETVAL, "FfrtProfilerManager::Init connect FAILED");
     SetCommandPoller(commandPoller);
     RegisterAgentPlugin("ffrt-profiler");
 }
@@ -235,7 +235,7 @@ bool FfrtProfilerManager::HandleFfrtProfilerContext(const std::shared_ptr<FfrtPr
     PROFILER_LOG_INFO(LOG_CORE, "%s smbFd = %d, eventFd = %d\n", ctx->smbName.c_str(),
         ctx->shareMemoryBlock->GetfileDescriptor(), ctx->eventNotifier->GetFd());
 
-    ctx->handle = std::make_shared<FfrtProfilerHandle>(CLOCK_REALTIME, BUFFER_SIZE, isProtobufSerialize_);
+    ctx->handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, isProtobufSerialize_);
     if (isProtobufSerialize_) {
         ctx->handle->SetWriter(g_buffWriter);
     } else {
@@ -368,7 +368,7 @@ bool FfrtProfilerManager::RegisterAgentPlugin(const std::string& pluginPath)
     if (commandPoller_->RegisterPlugin(request, response)) {
         if (response.status() == ResponseStatus::OK) {
             PROFILER_LOG_DEBUG(LOG_CORE, "response.plugin_id() = %d", response.plugin_id());
-            agentIndex_ = response.plugin_id();
+            agentIndex_ = static_cast<int>(response.plugin_id());
             PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin OK");
         } else {
             PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin FAIL 1");

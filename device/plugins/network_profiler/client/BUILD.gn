@@ -18,14 +18,17 @@ config("network_config") {
   visibility = [ ":*" ]
   include_dirs = [
     "include",
-    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/common/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service/include",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/device/base/include",
   ]
-  defines = [ "NO_PROTOBUF" ]
+  defines = [
+    "NO_PROTOBUF",
+    "HAVE_HILOG",
+  ]
 }
 
 ohos_shared_library("libnetwork_profiler") {
@@ -41,6 +44,7 @@ ohos_shared_library("libnetwork_profiler") {
   sources += [
     "${OHOS_PROFILER_DIR}/device/base/src/epoll_event_poller.cpp",
     "${OHOS_PROFILER_DIR}/device/base/src/event_notifier.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service/src/network_profiler_common.cpp",
     "${OHOS_PROFILER_DIR}/device/services/ipc/src/client_connection.cpp",
     "${OHOS_PROFILER_DIR}/device/services/ipc/src/service_entry.cpp",
     "${OHOS_PROFILER_DIR}/device/services/ipc/src/socket_context.cpp",
@@ -48,13 +52,14 @@ ohos_shared_library("libnetwork_profiler") {
     "${OHOS_PROFILER_DIR}/device/services/ipc/src/unix_socket_server.cpp",
   ]
 
-  deps = [ "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory" ]
+  deps = [
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
+  ]
 
   external_deps = [ "init:libbegetutil" ]
 
   defines = []
   if (current_toolchain != host_toolchain) {
-    defines += [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]
   }
 

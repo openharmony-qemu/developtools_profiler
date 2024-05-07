@@ -14,64 +14,60 @@
  */
 
 import { fileOpen, travelFile } from '../profiler/base/BaseProfilerUtils';
-import { ProcessRunningInfo } from '../utils/../entity/SystemEntity'
+import { ProcessRunningInfo } from '../utils/../entity/SystemEntity';
 import appManager from '@ohos.application.appManager';
 
 export function getCpuCoreInfo(): Array<String> {
-  const basePath = "/sys/devices/system/cpu/cpufreq"
-  let defaultPolicy = new Array(
-    "policy0", "policy1", "policy2"
-  )
-  var supportPolicy = []
-  let policyArr = travelFile(basePath, "policy")
+  const basePath = '/sys/devices/system/cpu/cpufreq';
+  let defaultPolicy = ['policy0', 'policy1', 'policy2'];
+  var supportPolicy = [];
+  let policyArr = travelFile(basePath, 'policy');
 
   policyArr.forEach((policy) => {
     defaultPolicy.forEach((defaultItem) => {
       if (defaultItem == policy) {
-        supportPolicy.push(defaultItem)
+        supportPolicy.push(defaultItem);
       }
-    })
-  })
-  var coreArr = new Array()
+    });
+  });
+  var coreArr = [];
   for (var index = 0; index < supportPolicy.length; index++) {
     const policy = supportPolicy[index];
-    var affected_cpus = fileOpen(basePath + "/" + policy + "/affected_cpus")
-    coreArr.push(affected_cpus.charAt(0))
+    var affectedCpus = fileOpen(basePath + '/' + policy + '/affected_cpus');
+    coreArr.push(affectedCpus.charAt(0));
   }
-  return coreArr
+  return coreArr;
 }
 
 export function getPidOfAbility(processName: string): Promise<String> {
-  return appManager.getProcessRunningInfos().then(data => {
-    let processArr: Array<ProcessRunningInfo> = data
-    var pid = "-1"
-    processArr.forEach(process=>{
-        if (process.processName == processName) {
-            pid = process.pid.toString()
-        }
-    })
-    return pid
-  })
+  return appManager.getProcessRunningInfos().then((data) => {
+    let processArr: ProcessRunningInfo[] = [...data];
+    var pid = '-1';
+    processArr.forEach((process) => {
+      if (process.processName == processName) {
+        pid = process.pid.toString();
+      }
+    });
+    return pid;
+  });
 }
 export function bubbleSort(arr: Array<number>): Array<number> {
-  let final: Array<number> = new Array(...arr);
-
+  let final: number[] = [...arr];
   for (let i = 0; i < final.length; i++) {
-    let no_swap: boolean = true;
+    let isSwap: boolean = true;
     for (let j = 0; j < final.length - i - 1; j++) {
       // 如果前一个更大，则和后面的交换
       if (final[j] > final[j + 1]) {
         let temp = final[j + 1];
         final[j + 1] = final[j];
         final[j] = temp;
-        no_swap = false;
+        isSwap = false;
       }
     }
     // 如果未冒泡，则已经排序完毕
-    if (no_swap) {
+    if (isSwap) {
       break;
     }
   }
   return final;
 }
-

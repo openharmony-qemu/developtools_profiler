@@ -56,10 +56,10 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         }
     }
     if (argv.size() >= threeParamMore) {
-        for (int i = 1; i <= argv.size() - 1; i++) {
+        for (int i = 1; i <= static_cast<int>(argv.size()) - 1; i++) {
             std::string argStr = argv[i];
             std::string argStr1;
-            if (i < argv.size() - 1) {
+            if (i < static_cast<int>(argv.size()) - 1) {
                 argStr1 = argv[i + 1];
             }
             if (COMMAND_MAP.count(argStr) > 0) {
@@ -84,7 +84,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         std::cout << result << std::endl;
     }
 }
-void SmartPerfCommand::HandleCommand(std::string argStr, std::string argStr1)
+void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {

@@ -75,7 +75,7 @@ std::map<std::string, std::string> FPS::ItemData()
 std::string FPS::GetScreenInfo() const
 {
     std::string resultScreen = SPUtils::GetScreen();
-    int pos = resultScreen.find("=");
+    unsigned int pos = resultScreen.find("=");
     std::string numStr = resultScreen.substr(pos + 1);
     LOGI("numStr====: %s", numStr.c_str());
     return numStr;
@@ -103,7 +103,7 @@ void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
 }
-FpsInfo FPS::GetDiffLayersFpsInfo(std::string sName)
+FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
     GetCurrentTime();
     fpsInfoMax = GetSurfaceFrame(sName);
@@ -130,10 +130,10 @@ FpsInfo FPS::GetFpsInfo()
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-    std::string uniteLayer = "UniRender";
     bool onTop = IsForeGround();
     if (onTop) {
         LOGI("onTop===========");
+        std::string uniteLayer = "UniRender";
         GetCurrentTime();
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
@@ -197,7 +197,6 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
 
 void FPS::GetSameTimeNums()
 {
-    long long jitter;
     std::string onScreenTime = std::to_string(frameReadyTime / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
@@ -206,11 +205,18 @@ void FPS::GetSameTimeNums()
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
+        long long jitter;
         if (lastTime != -1) {
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
+        } else {
+            if (lastFrameReadyTime != 0) {
+                jitter = frameReadyTime - lastFrameReadyTime;
+                fpsInfo.jitters.push_back(jitter);
+            }
         }
         lastTime = frameReadyTime;
+        lastFrameReadyTime = frameReadyTime;
     }
 }
 

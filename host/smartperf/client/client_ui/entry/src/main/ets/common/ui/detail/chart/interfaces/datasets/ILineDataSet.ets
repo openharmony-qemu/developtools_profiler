@@ -14,11 +14,11 @@
  */
 
 import EntryOhos from '../../data/EntryOhos';
-import {Mode} from '../../data/LineDataSet';
+import { Mode } from '../../data/LineDataSet';
 import IFillFormatter from '../../formatter/IFillFormatter';
 import ILineRadarDataSet from './ILineRadarDataSet';
-import {DashPathEffect} from '../../data/Paint'
-import { FillStyle } from '../../data/LineDataSet'
+import { DashPathEffect } from '../../data/Paint';
+import { FillStyle } from '../../data/LineDataSet';
 
 export default interface ILineDataSet extends ILineRadarDataSet<EntryOhos> {
     /**
@@ -26,7 +26,7 @@ export default interface ILineDataSet extends ILineRadarDataSet<EntryOhos> {
      *
      * @return
      */
-    getMode() : Mode;
+    getMode(): Mode;
 
     /**
      * Returns the intensity of the cubic lines (the effect intensity).
@@ -34,17 +34,17 @@ export default interface ILineDataSet extends ILineRadarDataSet<EntryOhos> {
      *
      * @return
      */
-    getCubicIntensity() : number;
+    getCubicIntensity(): number;
 
     /**
      * Returns the size of the drawn circles.
      */
-    getCircleRadius() : number;
+    getCircleRadius(): number;
 
     /**
      * Returns the hole radius of the drawn circles.
      */
-    getCircleHoleRadius() : number;
+    getCircleHoleRadius(): number;
 
     /**
      * Returns the color at the given index of the DataSet's circle-color array.
@@ -53,44 +53,44 @@ export default interface ILineDataSet extends ILineRadarDataSet<EntryOhos> {
      * @param index
      * @return
      */
-    getCircleColorByIndex(index : number) : number;
+    getCircleColorByIndex(index: number): number;
 
-    getCircleColor() : number;
+    getCircleColor(): number;
 
     /**
      * Returns the number of colors in this DataSet's circle-color array.
      *
      * @return
      */
-    getCircleColorCount() : number;
+    getCircleColorCount(): number;
 
     /**
      * Returns true if drawing circles for this DataSet is enabled, false if not
      *
      * @return
      */
-    isDrawCirclesEnabled() : boolean;
+    isDrawCirclesEnabled(): boolean;
 
     /**
      * Returns the color of the inner circle (the circle-hole).
      *
      * @return
      */
-    getCircleHoleColor() : number;
+    getCircleHoleColor(): number;
 
     /**
      * Returns true if drawing the circle-holes is enabled, false if not.
      *
      * @return
      */
-    isDrawCircleHoleEnabled() : boolean;
+    isDrawCircleHoleEnabled(): boolean;
 
     /**
      * Returns the DashPathEffect that is used for drawing the lines.
      *
      * @return
      */
-    getDashPathEffect() : DashPathEffect;
+    getDashPathEffect(): DashPathEffect;
 
     /**
      * Returns true if the dashed-line effect is enabled, false if not.
@@ -98,14 +98,14 @@ export default interface ILineDataSet extends ILineRadarDataSet<EntryOhos> {
      *
      * @return
      */
-    isDashedLineEnabled() : boolean;
+    isDashedLineEnabled(): boolean;
 
     /**
      * Returns the IFillFormatter that is set for this DataSet.
      *
      * @return
      */
-    getFillFormatter() : IFillFormatter;
+    getFillFormatter(): IFillFormatter;
 
     getFillStyle(): FillStyle;
 }

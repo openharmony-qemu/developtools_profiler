@@ -198,7 +198,8 @@ bool SmapsStats::ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadI
                 head.endAddr = strtoull(smapsHeadInfo.endAddrStr.c_str(), nullptr, HEX_BASE);
             }
         } else if (i == 1) {
-            smapsHeadInfo.permission = word.substr(0, word.size() - 1);
+            size_t dataLen = word.size() > 1 ? word.size() - 1 : 0;
+            smapsHeadInfo.permission = word.substr(0, dataLen);
         } else if (i == 4) { // 4: iNode index
             smapsHeadInfo.iNode = strtoll(word.substr(0, word.size()).c_str(), nullptr, DEC_BASE);
         }
@@ -215,9 +216,9 @@ bool SmapsStats::GetMemUsageField(std::string& line, MemUsageInfo& memusage)
     char field[64];
     int len = 0;
     const char* pLine = line.c_str();
-
     int ret = sscanf_s(pLine, "%63s %n", field, sizeof(field), &len);
-    if (ret == 1 && *field && field[strlen(field) - 1] == ':') {
+    size_t dataIndex = strlen(field) > 1 ? strlen(field) - 1 : 0;
+    if (ret == 1 && *field && field[dataIndex] == ':') {
         const char* c = pLine + len;
         std::string strfield(field);
         switch (field[0]) {

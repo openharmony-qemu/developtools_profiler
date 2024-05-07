@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-import {moveFloatWindow,setFloatWindow} from './ui/floatwindow/utils/FloatWindowUtils'
+import {moveFloatWindow, setFloatWindow} from './ui/floatwindow/utils/FloatWindowUtils'
 
 
 
@@ -23,21 +23,21 @@ import {moveFloatWindow,setFloatWindow} from './ui/floatwindow/utils/FloatWindow
 export struct FloatWindowComponent {
   private settings: RenderingContextSettings = new RenderingContextSettings(true)
   private context: CanvasRenderingContext2D = new CanvasRenderingContext2D(this.settings)
-  @State title: string = "SmartPerf"
-  private XPoint: number = 5  //x起始坐标
-  private YPoint: number = 108   //Y起始坐标
-  private XScale: number =8 //刻度
-  private YScale: number = 21 //刻度
-  private XLength: number = 168 //X轴长度
-  private YLength: number = 105  //Y轴长度
-  @State data: number[]= [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]   //数据集合
-  private MaxDataSize: number= this.XLength / this.XScale  //数据集合的最大长度
-  @State NumericalValue: number= 0   //数值
-  offsetX: number = -1    //悬浮框移动触摸点 X
-  offsetY: number = -1   //悬浮框移动触摸点 X
+  @State title: string = 'SmartPerf'
+  private xPoint: number = 5
+  private yPoint: number = 108 //Y起始坐标
+  private xScale: number = 8 //刻度
+  private yScale: number = 21 //刻度
+  private xLength: number = 168 //X轴长度
+  private yLength: number = 105 //Y轴长度
+  @State data: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
+  private maxDataSize: number = this.xLength / this.xScale //数据集合的最大长度
+  @State numericalValue: number = 0 //数值
+  offsetX: number = -1 //悬浮框移动触摸点 X
+  offsetY: number = -1 //悬浮框移动触摸点 X
 
   MoveWindow(offsetX: number, offsetY: number) {
-    moveFloatWindow(this.title,offsetX, offsetY)
+    moveFloatWindow(this.title, offsetX, offsetY)
   }
 
   SetWindowPosition(offsetX: number, offsetY: number) {
@@ -50,33 +50,33 @@ export struct FloatWindowComponent {
         .height('100%')
         .onReady(() => {
           //Y轴
-          this.context.clearRect(this.XPoint + 0.5, this.YPoint - this.YLength, this.XLength, this.YLength)
+          this.context.clearRect(this.xPoint + 0.5, this.yPoint - this.yLength, this.xLength, this.yLength)
           this.context.beginPath()
-          this.context.strokeStyle="#ffffff"
-          this.context.moveTo(this.XPoint, this.YPoint - this.YLength)
-          this.context.lineTo(this.XPoint, this.YPoint)
+          this.context.strokeStyle = '#ffffff'
+          this.context.moveTo(this.xPoint, this.yPoint - this.yLength)
+          this.context.lineTo(this.xPoint, this.yPoint)
           this.context.stroke()
           //X轴
           this.context.beginPath()
-          this.context.strokeStyle="#ffffff"
-          this.context.moveTo(this.XPoint, this.YPoint)
-          this.context.lineTo(this.XPoint + this.XLength, this.YPoint)
+          this.context.strokeStyle = '#ffffff'
+          this.context.moveTo(this.xPoint, this.yPoint)
+          this.context.lineTo(this.xPoint + this.xLength, this.yPoint)
           this.context.stroke()
           //K线绘制
           if (this.data.length > 1) {
             for (let i = 1; i < this.data.length; i++) {
               this.context.beginPath()
-              this.context.strokeStyle="#ffffff"
-              console.log("GestureEvent--------------beginPath:" + this.data[i-1]);
-              this.context.moveTo(this.XPoint + (i - 1) * this.XScale, this.YPoint - this.data[i-1])
-              this.context.lineTo(this.XPoint + i * this.XScale, this.YPoint - this.data[i])
+              this.context.strokeStyle = '#ffffff'
+              console.log('GestureEvent--------------beginPath:' + this.data[i - 1]);
+              this.context.moveTo(this.xPoint + (i - 1) * this.xScale, this.yPoint - this.data[i - 1])
+              this.context.lineTo(this.xPoint + i * this.xScale, this.yPoint - this.data[i])
               this.context.stroke()
             }
           }
         })
     }
     .width('100%')
-    .height('100%').margin({  top: 20 }).gesture(
+    .height('100%').margin({ top: 20 }).gesture(
     GestureGroup(GestureMode.Exclusive,
     PanGesture({})
       .onActionStart((event: GestureEvent) => {

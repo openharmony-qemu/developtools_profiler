@@ -70,6 +70,7 @@
 ```bash
 C:\Users\test>hdc_std shell
 # SP_daemon --help
+OpenHarmony performance testing tool SmartPerf command-line version
 Usage: SP_daemon <options> <arguments>
 options:
 These are common commands list:

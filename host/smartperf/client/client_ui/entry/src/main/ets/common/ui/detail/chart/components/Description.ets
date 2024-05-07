@@ -18,53 +18,52 @@ import Utils from '../utils/Utils';
 import ComponentBase from './ComponentBase';
 
 export default class Description extends ComponentBase {
+  /**
+   * the text used in the description
+   */
+  private text: string = 'Description Label';
 
   /**
-     * the text used in the description
-     */
-  private text:string = "Description Label";
+   * the custom position of the description text
+   */
+  private mPosition: MPPointF;
 
   /**
-     * the custom position of the description text
-     */
-  private mPosition:MPPointF;
+   * the alignment of the description text
+   */
+  private mTextAlign: TextAlign = TextAlign.End;
 
-  /**
-     * the alignment of the description text
-     */
-  private  mTextAlign:TextAlign = TextAlign.End
-
-  constructor(){
+  constructor() {
     super();
     // default size
     this.mTextSize = Utils.convertDpToPixel(8);
   }
 
   /**
-     * Sets the text to be shown as the description.
-     *
-     * @param text
-     */
-  public setText( text:string):void {
+   * Sets the text to be shown as the description.
+   *
+   * @param text
+   */
+  public setText(text: string): void {
     this.text = text;
   }
 
   /**
-     * Returns the description text.
-     *
-     * @return
-     */
-  public getText():string{
+   * Returns the description text.
+   *
+   * @return
+   */
+  public getText(): string {
     return this.text;
   }
 
   /**
-     * Sets a custom position for the description text in pixels on the screen.
-     *
-     * @param x - xcoordinate
-     * @param y - ycoordinate
-     */
-  public  setPosition(x:number, y:number):void {
+   * Sets a custom position for the description text in pixels on the screen.
+   *
+   * @param x - xcoordinate
+   * @param y - ycoordinate
+   */
+  public setPosition(x: number, y: number): void {
     if (this.mPosition == null) {
       this.mPosition = MPPointF.getInstance(x, y);
     } else {
@@ -74,29 +73,29 @@ export default class Description extends ComponentBase {
   }
 
   /**
-     * Returns the customized position of the description, or null if none set.
-     *
-     * @return
-     */
-  public getPosition():MPPointF {
+   * Returns the customized position of the description, or null if none set.
+   *
+   * @return
+   */
+  public getPosition(): MPPointF {
     return this.mPosition;
   }
 
   /**
-    * Sets the text alignment of the description text. Default RIGHT.
-    *
-    * @param align
-    */
-  public setTextAlign(align:TextAlign) {
+   * Sets the text alignment of the description text. Default RIGHT.
+   *
+   * @param align
+   */
+  public setTextAlign(align: TextAlign) {
     this.mTextAlign = align;
   }
 
   /**
-    * Returns the text alignment of the description.
-    *
-    * @return
-    */
-  public getTextAlign():TextAlign {
+   * Returns the text alignment of the description.
+   *
+   * @return
+   */
+  public getTextAlign(): TextAlign {
     return this.mTextAlign;
   }
 }

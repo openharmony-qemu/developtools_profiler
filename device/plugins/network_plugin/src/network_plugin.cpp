@@ -27,10 +27,10 @@ constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
 const std::string DEFAULT_NET_PATH("/proc/net/xt_qtaguid/stats");
 } // namespace
 
-NetworkPlugin::NetworkPlugin()
-    : buffer_(new (std::nothrow) uint8_t[READ_BUFFER_SIZE]), fp_(nullptr, nullptr)
+NetworkPlugin::NetworkPlugin() : fp_(nullptr, nullptr)
 {
     pidUid_.clear();
+    buffer_ = std::make_unique<uint8_t[]>(READ_BUFFER_SIZE);
 }
 
 int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)

@@ -32,13 +32,6 @@ namespace Hook {
 const int PAGE_BYTES = 4096;
 std::shared_ptr<HookManager> g_hookManager;
 NativeHookConfig g_nativeConfig;
-static void SignalHandl(int signo)
-{
-    std::vector<uint32_t> pluginIds;
-    g_hookManager->StopPluginSession(pluginIds);
-    g_hookManager->DestroyPluginSession(pluginIds);
-    exit(-1);
-}
 
 void SetNativeHookConfig(const HookData& hookData)
 {
@@ -61,11 +54,13 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_js_stack_report(hookData.jsStackReport);
     g_nativeConfig.set_max_js_stack_depth(hookData.maxJsStackdepth);
     g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
+    g_nativeConfig.set_malloc_free_matching_interval(hookData.mallocFreeMatchingInterval);
     for (const std::string& pid: hookData.pids) {
         g_nativeConfig.add_expand_pids(atoi(pid.data()));
     }
     // statistical reporting must be callframe compressed and accurate.
-    if (g_nativeConfig.statistics_interval() > 0) {
+    if (g_nativeConfig.statistics_interval() > 0 ||
+        g_nativeConfig.malloc_free_matching_interval() > 0) {
         g_nativeConfig.set_callframe_compress(true);
         g_nativeConfig.set_record_accurately(true);
     }
@@ -80,7 +75,7 @@ void SetNativeHookConfig(const HookData& hookData)
     }
 
     if (g_nativeConfig.string_compressed() || hookData.rawString ||
-        g_nativeConfig.response_library_mode() || g_nativeConfig.js_stack_report()) {
+        g_nativeConfig.response_library_mode() || g_nativeConfig.js_stack_report() > 0) {
         g_hookManager->SethookStandalone(true);
     }
     PROFILER_LOG_INFO(LOG_CORE, "hookData config = %s", hookData.ToString().c_str());
@@ -88,9 +83,7 @@ void SetNativeHookConfig(const HookData& hookData)
 
 bool StartHook(HookData& hookData)
 {
-    signal(SIGINT, SignalHandl);
     g_hookManager = std::make_shared<HookManager>();
-
     std::vector<ProfilerPluginConfig> config;
 #if defined(__arm__)
     hookData.fpUnwind = false;
@@ -101,6 +94,13 @@ bool StartHook(HookData& hookData)
     CHECK_TRUE(g_hookManager->CreatePluginSession(config), false, "StartHook CreatePluginSession invalid");
     g_hookManager->StartPluginSession();
     return true;
+}
+
+void EndHook()
+{
+    std::vector<uint32_t> pluginIds;
+    g_hookManager->StopPluginSession(pluginIds);
+    g_hookManager->DestroyPluginSession(pluginIds);
 }
 } // namespace Hook
 } // namespace Profiler

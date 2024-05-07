@@ -25,7 +25,11 @@ namespace SmartPerf {
 double StallingRateTrace::StallingRateResult(std::string file)
 {
     double stalligRate = 0;
-    infile.open(file);
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(file.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());
@@ -149,13 +153,13 @@ std::string StallingRateTrace::GetOnScreenTimeStart(std::string line) const
     return startTime;
 }
 
-double StallingRateTrace::GetTimes(std::string line, std::string sign) const
+double StallingRateTrace::GetTimes(std::string line, const std::string &sign) const
 {
     double signTime = 0;
-    size_t subNum = 5;
     size_t position1 = line.find("....");
     size_t position2 = line.find(":");
     if (line.find(sign) != std::string::npos) {
+        size_t subNum = 5;
         signTime = std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
     }
     return signTime;

@@ -47,6 +47,7 @@ static int XpowerPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
 static int XpowerPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    CHECK_NOTNULL(g_plugin, -1, "g_plugin is nullptr");
     g_plugin->Stop();
     return 0;
 }

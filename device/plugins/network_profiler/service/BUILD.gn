@@ -1,0 +1,63 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2023. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("../../../base/config.gni")
+
+config("network_profiler_service_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "include",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/include",
+    "${OHOS_PROFILER_DIR}/device/base/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src",
+  ]
+}
+
+ohos_source_set("network_profiler_service") {
+  public_configs = [ ":network_profiler_service_config" ]
+
+  sources = [
+    "src/network_profiler_common.cpp",
+    "src/network_profiler_handle.cpp",
+    "src/network_profiler_manager.cpp",
+    "src/network_profiler_socket_service.cpp",
+  ]
+
+  public_deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/network_profiler:network_profiler_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/network_profiler:network_profiler_encoder",
+  ]
+
+  external_deps = [
+    "init:libbegetutil",
+    "protobuf:protobuf_lite",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
+  }
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}

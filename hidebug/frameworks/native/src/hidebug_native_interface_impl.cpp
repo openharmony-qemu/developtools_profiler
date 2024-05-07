@@ -180,7 +180,7 @@ std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
     }
 
     ProcessMemory nativeMemInfo;
-    uint32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
+    int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
     nativeMemInfo.pss = pssInfo;
     nativeMemInfo.rss = collectResult.data.rss;
     nativeMemInfo.sharedDirty = collectResult.data.sharedDirty;
@@ -193,7 +193,7 @@ std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
         HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
         return {};
     }
-    nativeMemInfo.vss = collectVss.data;
+    nativeMemInfo.vss = static_cast<int32_t>(collectVss.data);
     return nativeMemInfo;
 }
 

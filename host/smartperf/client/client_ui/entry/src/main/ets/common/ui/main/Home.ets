@@ -20,7 +20,7 @@ import { OtherSupport, TestMode } from '../../entity/LocalConfigEntity';
 import SPLogger from '../../utils/SPLogger'
 import batteryinfo from '@ohos.batteryInfo';
 
-const TAG = "Home"
+const TAG = 'Home'
 /*
   home页
  */
@@ -38,14 +38,14 @@ export struct Home {
 
   aboutToAppear() {
 
-    globalThis.collectIntervalPower= setInterval(() => {
+    globalThis.collectIntervalPower = setInterval(() => {
       let nowCurrent = batteryinfo.nowCurrent
       let remainingEnergy = batteryinfo.remainingEnergy
       let voltage = Math.round(batteryinfo.voltage / 1000)
       let temperature = batteryinfo.batteryTemperature
 
-      this.state = "剩余电量：" + remainingEnergy.toString() + "mAh     瞬时电流："
-      + nowCurrent.toString() + "mA     \n瞬时电压：" + voltage.toString() + "mV       电池温度：" + (temperature/10).toFixed(1).toString() + "℃"
+      this.state = '剩余电量：' + remainingEnergy.toString() + 'mAh     瞬时电流：' +
+      nowCurrent.toString() + 'mA     \n瞬时电压：' + voltage.toString() + 'mV       电池温度：' + (temperature / 10).toFixed(1).toString() + '℃'
     }, 1000)
 
 
@@ -55,11 +55,11 @@ export struct Home {
     Flex({ direction: FlexDirection.Column, alignItems: ItemAlign.Start, justifyContent: FlexAlign.Start }) {
       Column() {
         Column() {
-          TopComponent({ title: "SmartPerf " })
+          TopComponent({ title: 'SmartPerf ' })
 
           Text('性能/功耗测试')
             .fontSize('18fp')
-            .fontColor($r("app.color.color_fff"))
+            .fontColor($r('app.color.color_fff'))
             .textAlign(TextAlign.Start)
             .margin({ top: '20vp' })
 
@@ -69,11 +69,11 @@ export struct Home {
               .height('180vp')
               .fill(Color.White)
               .fillOpacity(0)
-              .border({ radius: '90vp', width: '0.5vp', color: $r("app.color.color_fff") })
+              .border({ radius: '90vp', width: '0.5vp', color: $r('app.color.color_fff') })
               .linearGradient({
                 angle: 135,
                 direction: GradientDirection.Left,
-                colors: [[$r("app.color.color_80B3193F"), 0.0], [$r("app.color.color_80fff"), 1.0]]
+                colors: [[$r('app.color.color_80B3193F'), 0.0], [$r('app.color.color_80fff'), 1.0]]
               })
 
             Text('开始测试')
@@ -88,7 +88,7 @@ export struct Home {
             }
             .width(this.circleWidth)
             .height(this.circleHeight)
-            .border({ width: '1vp', radius: this.circleRadius, color: $r("app.color.color_80fff") })
+            .border({ width: '1vp', radius: this.circleRadius, color: $r('app.color.color_80fff') })
             .opacity(this.atOpacity)
             .animation({
               duration: 1000,
@@ -106,21 +106,21 @@ export struct Home {
             if (!globalThis.showFloatingWindow) {
               router.push({ uri: 'pages/StartTestPage' })
             } else {
-              prompt.showToast({ message: "已经有应用正在测试，请关闭测试再进行操作", duration: 1000 })
+              prompt.showToast({ message: '已经有应用正在测试，请关闭测试再进行操作', duration: 1000 })
             }
           })
-          Text(this.state.toString()).fontSize(12).height('5%').fontColor($r("app.color.color_fff"))
+          Text(this.state.toString()).fontSize(12).height('5%').fontColor($r('app.color.color_fff'))
           Text(this.deviceStr)
             .fontSize('25fp')
-            .fontColor($r("app.color.color_fff"))
+            .fontColor($r('app.color.color_fff'))
             .fontWeight(FontWeight.Bold)
             .textAlign(TextAlign.Start)
             .margin({ top: '20vp', bottom: '40vp' })
         }.backgroundColor($r('app.color.colorPrimary')).width('100%')
         .alignItems(HorizontalAlign.Center)
         .onAppear(() => {
-          SPLogger.DEBUG(TAG, "deviceInfo.brand:->" + deviceInfo.brand + "deviceInfo.productModel:->" + deviceInfo.productModel )
-          this.deviceStr = deviceInfo.brand + " " + deviceInfo.productModel
+          SPLogger.DEBUG(TAG, 'deviceInfo.brand:->' + deviceInfo.brand + 'deviceInfo.productModel:->' + deviceInfo.productModel )
+          this.deviceStr = deviceInfo.brand + ' ' + deviceInfo.productModel
         })
 
         GridExample()
@@ -131,8 +131,8 @@ export struct Home {
 
 @Component
 struct GridExample {
-  @State support: Array<OtherSupport> =new Array(
-    new OtherSupport('亮度调节', '调节屏幕亮度', TestMode.BRIGHTNESS, $r("app.media.icon_brightness_plus"))
+  @State support: Array<OtherSupport> = new Array(
+    new OtherSupport('亮度调节', '调节屏幕亮度', TestMode.BRIGHTNESS, $r('app.media.icon_brightness_plus'))
   )
 
 
@@ -146,24 +146,24 @@ struct GridExample {
                 .height(60)
               Text(otherSupport.testName)
                 .fontSize('13fp')
-                .fontColor($r("app.color.color_333"))
+                .fontColor($r('app.color.color_333'))
                 .height('30%')
                 .textAlign(TextAlign.Center)
 
               Text(otherSupport.testSrc)
                 .fontSize('10fp')
-                .fontColor($r("app.color.color_999"))
+                .fontColor($r('app.color.color_999'))
                 .height('30%')
                 .textAlign(TextAlign.Center)
             }
           }
-          .backgroundColor($r("app.color.color_fff"))
+          .backgroundColor($r('app.color.color_fff'))
           .width('100%')
           .margin({ top: '10vp' })
           .padding({ top: '8vp', right: '20vp', bottom: '8vp', left: '20vp' })
           .onClick(() => {
             if (otherSupport.testMode == TestMode.ONLINE) {
-              prompt.showToast({ message: "开发中" })
+              prompt.showToast({ message: '开发中' })
             } else if (otherSupport.testMode == TestMode.BRIGHTNESS) {
               router.push({ uri: 'pages/LightAdjust' })
             }

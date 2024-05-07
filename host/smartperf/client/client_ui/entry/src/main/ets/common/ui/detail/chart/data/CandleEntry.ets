@@ -20,20 +20,26 @@ import EntryOhos from './EntryOhos';
  * Subclass of Entry that holds all values for one entry in a CandleStickChart.
  */
 export default class CandleEntry extends EntryOhos {
-
     /** shadow-high value */
-    private  mShadowHigh:number = 0;
+    private mShadowHigh: number = 0;
 
     /** shadow-low value */
-    private mShadowLow:number= 0;
+    private mShadowLow: number = 0;
 
     /** close value */
-    private  mClose:number = 0;
+    private mClose: number = 0;
 
     /** open value */
-    private  mOpen:number = 0;
-    constructor(x:number, shadowH?:number, shadowL?:number, open?:number, close?:number,
-                        icon?:ImagePaint, data?:Object) {
+    private mOpen: number = 0;
+    constructor(
+        x: number,
+        shadowH?: number,
+        shadowL?: number,
+        open?: number,
+        close?: number,
+        icon?: ImagePaint,
+        data?: Object
+    ) {
         super(x, (shadowH + shadowL) / 2, icon, data);
         this.mShadowHigh = shadowH;
         this.mShadowLow = shadowL;
@@ -43,19 +49,19 @@ export default class CandleEntry extends EntryOhos {
     /**
      * Returns the overall range (difference) between shadow-high and
      * shadow-low.
-     * 
+     *
      * @return
      */
-    public getShadowRange():number {
+    public getShadowRange(): number {
         return Math.abs(this.mShadowHigh - this.mShadowLow);
     }
 
     /**
      * Returns the body size (difference between open and close).
-     * 
+     *
      * @return
      */
-    public getBodyRange():number {
+    public getBodyRange(): number {
         return Math.abs(this.mOpen - this.mClose);
     }
 
@@ -63,67 +69,73 @@ export default class CandleEntry extends EntryOhos {
      * Returns the center value of the candle. (Middle value between high and
      * low)
      */
-    public getY():number {
+    public getY(): number {
         return super.getY();
     }
 
-    public  copy():CandleEntry{
-
-        var c:CandleEntry = new CandleEntry(this.getX(), this.mShadowHigh, this.mShadowLow, this.mOpen,
-                this.mClose,null, this.getData());
+    public copy(): CandleEntry {
+        var c: CandleEntry = new CandleEntry(
+        this.getX(),
+        this.mShadowHigh,
+        this.mShadowLow,
+        this.mOpen,
+        this.mClose,
+            null,
+        this.getData()
+        );
 
         return c;
     }
 
     /**
      * Returns the upper shadows highest value.
-     * 
+     *
      * @return
      */
-    public getHigh():number {
+    public getHigh(): number {
         return this.mShadowHigh;
     }
 
-    public  setHigh(mShadowHigh:number):void {
+    public setHigh(mShadowHigh: number): void {
         this.mShadowHigh = mShadowHigh;
     }
 
     /**
      * Returns the lower shadows lowest value.
-     * 
+     *
      * @return
      */
-    public getLow():number {
+    public getLow(): number {
         return this.mShadowLow;
     }
 
-    public  setLow(mShadowLow:number):void {
+    public setLow(mShadowLow: number): void {
         this.mShadowLow = mShadowLow;
     }
 
     /**
      * Returns the bodys close value.
-     * 
+     *
      * @return
      */
-    public getClose():number {
+    public getClose(): number {
         return this.mClose;
     }
 
-    public setClose(mClose:number) :void{
+    public setClose(mClose: number): void {
         this.mClose = mClose;
     }
 
     /**
      * Returns the bodys open value.
-     * 
+     *
      * @return
      */
-    public getOpen():number {
+    public getOpen(): number {
         return this.mOpen;
     }
 
-    public  setOpen( mOpen:number):void{
+    public setOpen(mOpen: number): void {
         this.mOpen = mOpen;
     }
 }

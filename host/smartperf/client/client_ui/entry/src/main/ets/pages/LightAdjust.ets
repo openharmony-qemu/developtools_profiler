@@ -27,7 +27,7 @@ struct LightAdjust {
   build() {
     Column() {
 
-      StartTestTitleComponent({ title: "亮度调整" })
+      StartTestTitleComponent({ title: '亮度调整' })
 
       Row() {
         Slider({
@@ -51,7 +51,7 @@ struct LightAdjust {
 
       Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
 
-        Text("+").fontSize('25fp').fontWeight(FontWeight.Bold).onClick(() => {
+        Text('+').fontSize('25fp').fontWeight(FontWeight.Bold).onClick(() => {
           if (this.outSetValue == 255) {
             return
           }
@@ -61,7 +61,7 @@ struct LightAdjust {
 
         Text(this.outSetValue.toFixed(0)).fontWeight(FontWeight.Bold).fontSize('25fp')
 
-        Text("-").fontSize('25fp').fontWeight(FontWeight.Bold).onClick(() => {
+        Text('-').fontSize('25fp').fontWeight(FontWeight.Bold).onClick(() => {
           if (this.outSetValue == 0) {
             return
           }

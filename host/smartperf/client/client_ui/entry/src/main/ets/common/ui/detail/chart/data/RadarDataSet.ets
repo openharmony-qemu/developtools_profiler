@@ -15,98 +15,97 @@
 
 import IRadarDataSet from '../interfaces/datasets/IRadarDataSet';
 import ColorTemplate from '../utils/ColorTemplate';
-import {JArrayList} from '../utils/JArrayList';
+import { JArrayList } from '../utils/JArrayList';
 import RadarEntry from './RadarEntry';
 import LineRadarDataSet from './LineRadarDataSet';
-import {DataSet} from './DataSet';
+import { DataSet } from './DataSet';
 
 export default class RadarDataSet extends LineRadarDataSet<RadarEntry> implements IRadarDataSet {
-
     // flag indicating whether highlight circle should be drawn or not
-    protected mDrawHighlightCircleEnabled : boolean = false;
+    protected mDrawHighlightCircleEnabled: boolean = false;
 
-    protected mHighlightCircleFillColor : number = Color.White;
+    protected mHighlightCircleFillColor: number = Color.White;
 
     // The stroke color for highlight circle.
     // If Utils.COLOR_NONE, the color of the dataset is taken.
-    protected mHighlightCircleStrokeColor : number = ColorTemplate.COLOR_NONE;
+    protected mHighlightCircleStrokeColor: number = ColorTemplate.COLOR_NONE;
 
-    protected mHighlightCircleStrokeAlpha : number = (0.3 * 255);
-    protected mHighlightCircleInnerRadius : number = 3.0;
-    protected mHighlightCircleOuterRadius : number = 4.0;
-    protected mHighlightCircleStrokeWidth : number = 2.0;
+    protected mHighlightCircleStrokeAlpha: number = 0.3 * 255;
+    protected mHighlightCircleInnerRadius: number = 3.0;
+    protected mHighlightCircleOuterRadius: number = 4.0;
+    protected mHighlightCircleStrokeWidth: number = 2.0;
 
-    constructor(yVals : JArrayList<RadarEntry>, label : string ) {
+    constructor(yVals: JArrayList<RadarEntry>, label: string) {
         super(yVals, label);
     }
 
     // Returns true if highlight circle should be drawn, false if not
     // @Override
-    public isDrawHighlightCircleEnabled() : boolean {
+    public isDrawHighlightCircleEnabled(): boolean {
         return this.mDrawHighlightCircleEnabled;
     }
 
     // Sets whether highlight circle should be drawn or not
     // @Override
-    public setDrawHighlightCircleEnabled(enabled : boolean) : void {
+    public setDrawHighlightCircleEnabled(enabled: boolean): void {
         this.mDrawHighlightCircleEnabled = enabled;
     }
 
     // @Override
-    public getHighlightCircleFillColor() : number {
+    public getHighlightCircleFillColor(): number {
         return this.mHighlightCircleFillColor;
     }
 
-    public setHighlightCircleFillColor(color : number) : void {
+    public setHighlightCircleFillColor(color: number): void {
         this.mHighlightCircleFillColor = color;
     }
 
     // Returns the stroke color for highlight circle.
     // If Utils.COLOR_NONE, the color of the dataset is taken.
     // @Override
-    public getHighlightCircleStrokeColor() : number {
+    public getHighlightCircleStrokeColor(): number {
         return this.mHighlightCircleStrokeColor;
     }
 
     // Sets the stroke color for highlight circle.
     // Set to Utils.COLOR_NONE in order to use the color of the dataset;
-    public setHighlightCircleStrokeColor(color) : void {
+    public setHighlightCircleStrokeColor(color): void {
         this.mHighlightCircleStrokeColor = color;
     }
 
     // @Override
-    public getHighlightCircleStrokeAlpha() : number {
+    public getHighlightCircleStrokeAlpha(): number {
         return this.mHighlightCircleStrokeAlpha;
     }
 
-    public setHighlightCircleStrokeAlpha(alpha : number)  : void {
+    public setHighlightCircleStrokeAlpha(alpha: number): void {
         this.mHighlightCircleStrokeAlpha = alpha;
     }
 
     // @Override
-    public getHighlightCircleInnerRadius() : number {
+    public getHighlightCircleInnerRadius(): number {
         return this.mHighlightCircleInnerRadius;
     }
 
-    public setHighlightCircleInnerRadius(radius : number)  : void {
+    public setHighlightCircleInnerRadius(radius: number): void {
         this.mHighlightCircleInnerRadius = radius;
     }
 
     // @Override
-    public getHighlightCircleOuterRadius() : number{
+    public getHighlightCircleOuterRadius(): number {
         return this.mHighlightCircleOuterRadius;
     }
 
-    public setHighlightCircleOuterRadius(radius : number)  : void {
+    public setHighlightCircleOuterRadius(radius: number): void {
         this.mHighlightCircleOuterRadius = radius;
     }
 
     // @Override
-    public getHighlightCircleStrokeWidth() : number {
+    public getHighlightCircleStrokeWidth(): number {
         return this.mHighlightCircleStrokeWidth;
     }
 
-    public setHighlightCircleStrokeWidth(strokeWidth : number) : void {
+    public setHighlightCircleStrokeWidth(strokeWidth: number): void {
         this.mHighlightCircleStrokeWidth = strokeWidth;
     }
 

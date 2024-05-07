@@ -322,7 +322,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.response_library_mode()) {
         hookConfig_.set_fp_unwind(true);
         hookConfig_.set_offline_symbolization(true);
-        hookConfig_.set_js_stack_report(false);
+        hookConfig_.set_js_stack_report(0);
     }
     // offlinem symbolization, callframe must be compressed
     if (hookConfig_.offline_symbolization()) {
@@ -347,7 +347,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_string_compressed(true);
     }
 
-    if (hookConfig_.js_stack_report() && hookConfig_.max_js_stack_depth() == 0) {
+    if (hookConfig_.js_stack_report() > 0 && hookConfig_.max_js_stack_depth() == 0) {
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
 

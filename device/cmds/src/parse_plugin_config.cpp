@@ -32,6 +32,7 @@
 #include "trace_plugin_config_standard.pb.h"
 #include "xpower_plugin_config_standard.pb.h"
 #include "ffrt_profiler_config_standard.pb.h"
+#include "network_profiler_config_standard.pb.h"
 
 namespace {
 constexpr int REMAINDER = 2;
@@ -135,6 +136,8 @@ bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName,
         ret = SetSerializeGpuConfig(pluginName, pluginConfig);
     } else if (pluginName == "ffrt-profiler") {
         ret = SetSerializeFfrtProfilerConfig(pluginName, pluginConfig);
+    } else if (pluginName == "network-profiler") {
+        ret = SetSerializeNetworkProfilerConfig(pluginName, pluginConfig);
     } else {
         printf("unsupport plugin: %s\n", pluginName.c_str());
     }
@@ -425,6 +428,23 @@ bool ParsePluginConfig::SetSerializeFfrtProfilerConfig(const std::string& plugin
 
     std::vector<uint8_t> configDataVec(ffrtConfigNolite->ByteSizeLong());
     if (ffrtConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
+        return false;
+    }
+    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    return true;
+}
+
+bool ParsePluginConfig::SetSerializeNetworkProfilerConfig(const std::string& pluginName,
+    ProfilerPluginConfig& pluginConfig)
+{
+    std::string configData = pluginConfigMap[pluginName];
+    auto networkConfigNolite = std::make_unique<ForStandard::NetworkProfilerConfig>();
+    if (!parser_.ParseFromString(configData, networkConfigNolite.get())) {
+        return false;
+    }
+
+    std::vector<uint8_t> configDataVec(networkConfigNolite->ByteSizeLong());
+    if (networkConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
     pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());

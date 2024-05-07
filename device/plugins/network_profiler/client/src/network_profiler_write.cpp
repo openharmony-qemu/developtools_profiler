@@ -23,7 +23,11 @@
 #include "share_memory_allocator.h"
 
 namespace OHOS::Developtools::Profiler {
-NetworkProfilerWriter::NetworkProfilerWriter(std::string name, uint32_t size, int smbFd, int eventFd, bool block)
+NetworkProfilerWriter::NetworkProfilerWriter(std::string name,
+    uint32_t size,
+    int smbFd,
+    int eventFd,
+    bool block)
     : pluginName_(name), block_(block)
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:%s %d [%d] [%d]", __func__, name.c_str(), size, smbFd, eventFd);
@@ -79,8 +83,12 @@ long NetworkProfilerWriter::WriteWithPayloadTimeout(const void* data, size_t siz
         return 0;
     }
     if (block_) {
-        return shareMemoryBlock_->PutWithPayloadSync(reinterpret_cast<const int8_t*>(data), size,
-                                                     reinterpret_cast<const int8_t*>(payload), payloadSize, callback);
+        return shareMemoryBlock_->PutWithPayloadSync(
+            reinterpret_cast<const int8_t*>(data),
+            size,
+            reinterpret_cast<const int8_t*>(payload),
+            payloadSize,
+            callback);
     } else {
         return shareMemoryBlock_->PutWithPayloadTimeout(
             reinterpret_cast<const int8_t*>(data), size, reinterpret_cast<const int8_t*>(payload), payloadSize);

@@ -66,7 +66,7 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     return sysRamInfo;
 }
 
-void RAM::SetPackageName(std::string pName)
+void RAM::SetPackageName(const std::string &pName)
 {
     packageName = pName;
 }
@@ -82,7 +82,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
         procRamInfo["pss"] = "NA";
         return procRamInfo;
     }
-    std::string cmd = "hidumper --mem "+ processId;
+    std::string cmd = "hidumper --mem " + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;

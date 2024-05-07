@@ -188,8 +188,8 @@ bool StartUpDelay::GetSpTcp()
     std::string str;
     SPUtils::LoadCmd("pidof SP_daemon", resultPid);
     size_t splitFlag = resultPid.find(" ");
-    resultPid = resultPid.substr(0, splitFlag);
-    SPUtils::LoadCmd("kill " + resultPid, str);
+    std::string resultProcId = resultPid.substr(0, splitFlag);
+    SPUtils::LoadCmd("kill " + resultProcId, str);
     return false;
 }
 std::thread StartUpDelay::ThreadGetHisysIdResponse() const
@@ -229,16 +229,8 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
     std::string resultPid;
     SPUtils::LoadCmd("pidof " + curPkgName, resultPid);
     size_t splitFlag = resultPid.find(" ");
-    resultPid = resultPid.substr(0, splitFlag);
-    return resultPid;
-}
-std::string StartUpDelay::GetDeviceType()
-{
-    std::string cmdResult;
-    SPUtils::LoadCmd("param get |grep ohos.boot.hardware", cmdResult);
-    size_t splitFlag = cmdResult.find("= ");
-    std::string deviceType = cmdResult.substr(splitFlag + 1);
-    return deviceType;
+    std::string resultProcId = resultPid.substr(0, splitFlag);
+    return resultProcId;
 }
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
 {
@@ -246,7 +238,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
     if (realpath(fileName.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    std::ifstream file(fileName, std::ios::in);
+    std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
     size_t findIndex = std::string::npos;
@@ -274,15 +266,15 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
                 pointVector.push_back(startX);
             }
             size_t num = 3;
-            size_t pointNum = pointVector.size();
-            if (pointNum > num) {
+            if (pointVector.size() > num) {
                 int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
                 int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
                 pointXY = std::to_string(x) + " " + std::to_string(y);
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                pointXY = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;
@@ -295,11 +287,12 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
     if (realpath(fileName.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
-    std::ifstream file(fileName, std::ios::in);
+    std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
     std::regex pattern("\\d+");
+    size_t appIndex = -1;
     while (getline(file, strLine)) {
-        size_t appIndex = strLine.find(curAppName);
+        appIndex = strLine.find(curAppName);
         if (appIndex <= 0) {
             break;
         }
@@ -324,7 +317,8 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
             } else {
                 size_t leftStart = boundStr.find_first_of("[");
                 size_t leftEnd = boundStr.find_first_of("]");
-                pointXY = boundStr.substr(leftStart + 1, leftEnd - leftStart - 1);
+                int pointXYcount = static_cast<int>(leftEnd - leftStart);
+                pointXY = boundStr.substr(leftStart + 1, pointXYcount - 1);
                 pointXY = pointXY.replace(pointXY.find(","), 1, " ");
             }
             break;

@@ -14,16 +14,14 @@
  */
 
 #include "ffrt_profiler_handle.h"
-#include "ffrt_profiler_common.h"
 
 namespace {
 constexpr uint8_t FLUSH_INTERVAL = 10;
-std::once_flag g_onceProcessName;
 }
 
 namespace OHOS::Developtools::Profiler {
-FfrtProfilerHandle::FfrtProfilerHandle(clockid_t pluginDataClockId, uint32_t bufferSize, bool isProtobufSerialize)
-    : isProtobufSerialize_(isProtobufSerialize), pluginDataClockId_(pluginDataClockId), bufferSize_(bufferSize)
+FfrtProfilerHandle::FfrtProfilerHandle(uint32_t bufferSize, bool isProtobufSerialize)
+    : isProtobufSerialize_(isProtobufSerialize), bufferSize_(bufferSize)
 {
     if (isProtobufSerialize_) {
         buffer_ = std::make_unique<uint8_t[]>(bufferSize);
@@ -78,11 +76,31 @@ void FfrtProfilerHandle::SerializeDataImpl(T& protoData, const int8_t data[], ui
         PROFILER_LOG_ERROR(LOG_CORE, "%s type is invalid", __FUNCTION__);
         return;
     }
+    ReportCommonData(protoData, baseData);
     if (baseData->type == TRACE_DATA) {
         SerializeTraceData(protoData, data, size);
     } else {
         SerializeRawData(protoData, data, size);
     }
+}
+
+template <typename T>
+void FfrtProfilerHandle::ReportCommonData(T& protoData, FfrtResultBase* base)
+{
+    if (base == nullptr || strlen(base->threadName) == 0) {
+        return;
+    }
+    FlushData(protoData);
+    auto baseDataProto = protoData.add_ffrt_event();
+    SerializeBaseData(baseDataProto, reinterpret_cast<const int8_t*>(base));
+
+    if (reportProcessName_) {
+        baseDataProto->set_process_name(processName_.c_str(), processName_.size());
+        reportProcessName_ = false;
+    }
+
+    baseDataProto->set_thread_name(base->threadName, strlen(base->threadName));
+    FlushData(protoData);
 }
 
 template <typename T>
@@ -94,14 +112,6 @@ void FfrtProfilerHandle::SerializeBaseData(T& baseDataProto, const int8_t* data)
     baseDataProto->set_tv_nsec(baseData->ts.tv_nsec);
     baseDataProto->set_pid(pid_);
     baseDataProto->set_tid(baseData->tid);
-    std::call_once(g_onceProcessName, [&]() {
-        baseDataProto->set_process_name(processName_.c_str(), processName_.size());
-    });
-
-    size_t threadNameSize = strlen(baseData->threadName);
-    if (threadNameSize > 0) {
-        baseDataProto->set_thread_name(baseData->threadName, threadNameSize);
-    }
 }
 
 template <typename T>

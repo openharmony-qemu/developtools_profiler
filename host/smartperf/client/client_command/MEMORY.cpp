@@ -40,7 +40,7 @@ std::map<std::string, std::string> MEMORY::ItemData()
     return result;
 }
 
-void MEMORY::SetPackageName(const std::string pName)
+void MEMORY::SetPackageName(const std::string &pName)
 {
     packageName = pName;
 }
@@ -68,8 +68,9 @@ std::map<std::string, std::string> MEMORY::GetRamInfo() const
         procRamInfo["heapFree"] = "NA";
         return procRamInfo;
     }
-    std::string cmd = "hidumper --mem " + processId;
-    FILE *fd = popen(cmd.c_str(), "r");
+    std::stringstream cmd;
+    cmd << "hidumper --mem " << processId;
+    FILE *fd = popen(cmd.str().c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;
     }
@@ -148,6 +149,9 @@ std::map<std::string, std::string> MEMORY::GetPssRamInfo(FILE *fd, std::vector<s
 std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
+    if (paramsInfo.empty()) {
+        return sumRamInfo;
+    }
     sumRamInfo["sharedClean"] = paramsInfo[MEMORY_SECOND];
     sumRamInfo["sharedDirty"] = paramsInfo[MEMORY_THIRD];
     sumRamInfo["privateClean"] = paramsInfo[MEMORY_FOURTH];
@@ -156,7 +160,7 @@ std::map<std::string, std::string> MEMORY::SaveSumRamInfo(std::vector<std::strin
     sumRamInfo["swapPss"] = paramsInfo[MEMORY_SEVENTH];
     sumRamInfo["heapSize"] = paramsInfo[MEMORY_EIGHTH];
     sumRamInfo["heapAlloc"] = paramsInfo[MEMORY_NINTH];
-    sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(paramsInfo[MEMORY_TENTH].size() - 1);
+    sumRamInfo["heapFree"] = paramsInfo[MEMORY_TENTH].erase(static_cast<int>(paramsInfo[MEMORY_TENTH].size()) - 1);
     return sumRamInfo;
 }
 }

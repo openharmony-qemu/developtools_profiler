@@ -58,7 +58,7 @@ public:
     bool printNmd_{false};
     uint32_t nmdPid_{0};
     uint32_t nmdType_{0};
-    bool jsStackReport_{false};
+    int32_t jsStackReport_{0};
     uint8_t maxJsStackDepth_{0};
     std::string filterNapiName_;
 };

@@ -14,16 +14,15 @@
  */
 
 import ILineDataSet from '../interfaces/datasets/ILineDataSet';
-import {JArrayList} from '../utils/JArrayList';
+import { JArrayList } from '../utils/JArrayList';
 import BarLineScatterCandleBubbleData from './BarLineScatterCandleBubbleData';
 
 /**
  * Data object that encapsulates all data associated with a LineChart.
- * 
+ *
  */
 export default class LineData extends BarLineScatterCandleBubbleData<ILineDataSet> {
-
-    public constructor(dataSets ?: JArrayList<ILineDataSet>) {
+    public constructor(dataSets?: JArrayList<ILineDataSet>) {
         super(dataSets);
     }
 }

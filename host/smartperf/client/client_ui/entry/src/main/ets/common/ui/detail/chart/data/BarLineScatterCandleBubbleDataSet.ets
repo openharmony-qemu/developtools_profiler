@@ -13,21 +13,22 @@
  * limitations under the License.
  */
 
-import EntryOhos from './EntryOhos'
-import {DataSet, Rounding} from './DataSet'
-import IBarLineScatterCandleBubbleDataSet from '../interfaces/datasets/IBarLineScatterCandleBubbleDataSet'
-import {JArrayList} from '../utils/JArrayList'
+import EntryOhos from './EntryOhos';
+import { DataSet, Rounding } from './DataSet';
+import IBarLineScatterCandleBubbleDataSet from '../interfaces/datasets/IBarLineScatterCandleBubbleDataSet';
+import { JArrayList } from '../utils/JArrayList';
 
 /**
  * Baseclass of all DataSets for Bar-, Line-, Scatter- and CandleStickChart.
  *
  */
-export default abstract class BarLineScatterCandleBubbleDataSet <T extends EntryOhos> extends DataSet<T> implements IBarLineScatterCandleBubbleDataSet<T> {
-
+export default abstract class BarLineScatterCandleBubbleDataSet<T extends EntryOhos>
+extends DataSet<T>
+implements IBarLineScatterCandleBubbleDataSet<T> {
   /**
    * default highlight color
    */
-  protected mHighLightColor: number =0xffbb73;
+  protected mHighLightColor: number = 0xffbb73;
 
   constructor(yVals: JArrayList<T>, label: string) {
     super(yVals, label);
@@ -48,9 +49,8 @@ export default abstract class BarLineScatterCandleBubbleDataSet <T extends Entry
     return this.mHighLightColor;
   }
 
-  protected copyTo(barLineScatterCandleBubbleDataSet: BarLineScatterCandleBubbleDataSet<T>):void  {
+  protected copyTo(barLineScatterCandleBubbleDataSet: BarLineScatterCandleBubbleDataSet<T>): void {
     super.copyTo(barLineScatterCandleBubbleDataSet);
     barLineScatterCandleBubbleDataSet.mHighLightColor = this.mHighLightColor;
   }
-
 }

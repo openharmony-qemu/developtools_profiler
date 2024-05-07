@@ -187,8 +187,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
 
     if (fd == 0) {
-        fd = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
-        CHECK_TRUE(fd >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
+        int fdTemp = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+        CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
+        fd = static_cast<uint32_t>(fdTemp);
     }
 
     std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);

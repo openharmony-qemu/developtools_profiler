@@ -12,31 +12,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import SPLogger from './SPLogger'
-const TAG = "AbilityUtils"
+import SPLogger from './SPLogger';
+const TAG = 'AbilityUtils';
 /**
  * 启动ability  since API8
  * @param bundleName
  * @param abilityName
  */
-export function commonStartAbility(bundleName: string, abilityName: string, parameters?: { [key: string]: any }) {
-    SPLogger.INFO(TAG, "Operation bundleName:" + bundleName + "Operation abilityName:" + abilityName);
-    let str = {
-        "bundleName": bundleName,
-        "abilityName": abilityName,
-        "parameters": parameters
+export function commonStartAbility(
+  bundleName: string,
+  abilityName: string,
+  parameters?: { [key: string]: unknown }
+): void {
+  SPLogger.INFO(
+    TAG,
+    'Operation bundleName:' +
+      bundleName +
+      'Operation abilityName:' +
+      abilityName
+  );
+  let str = {
+    bundleName: bundleName,
+    abilityName: abilityName,
+    parameters: parameters,
+  };
+  console.info(abilityName + ' Operation after. Cause:');
+  globalThis.abilityContext.startAbility(str, (err, data) => {
+    if (err) {
+      SPLogger.ERROR(
+        TAG,
+        abilityName + ' Operation failed. Cause:' + JSON.stringify(err)
+      );
+      return;
     }
-    console.info(abilityName + ' Operation after. Cause:');
-    globalThis.abilityContext.startAbility(str, (err, data) => {
-        if (err) {
-            SPLogger.ERROR(TAG,abilityName + ' Operation failed. Cause:' + JSON.stringify(err));
-            return;
-        }
-        SPLogger.INFO(TAG,abilityName + ' Operation successful. Data: ' + JSON.stringify(data))
-    });
+    SPLogger.INFO(
+      TAG,
+      abilityName + ' Operation successful. Data: ' + JSON.stringify(data)
+    );
+  });
 }
-
-
-
-
-

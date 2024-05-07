@@ -54,11 +54,11 @@ const std::string MGR_SVC_INTERVAL_STR = "--------------------------------------
 const std::string MEM_PROFILE_STR = "Channel:";
 } // namespace
 
-MemoryDataPlugin::MemoryDataPlugin()
-    : buffer_(new (std::nothrow) uint8_t[READ_BUFFER_SIZE]), meminfoFd_(-1), vmstatFd_(-1), err_(-1)
+MemoryDataPlugin::MemoryDataPlugin() : meminfoFd_(-1), vmstatFd_(-1), err_(-1)
 {
     InitProto2StrVector();
     SetPath(const_cast<char*>("/proc"));
+    buffer_ = std::make_unique<uint8_t[]>(READ_BUFFER_SIZE);
 }
 
 MemoryDataPlugin::~MemoryDataPlugin()
@@ -1129,6 +1129,7 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
 {
     int64_t pid = 0;
     int64_t size = 0;
+    size_t dataLen = strlen(word) > 1 ? strlen(word) - 1 : 0;
     switch (key) {
         case RS_SIZE:
             size = strtol(word, nullptr, DEC_BASE);
@@ -1136,8 +1137,8 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
             rsDumpInfo.set_size(size);
             break;
         case RS_TYPE:
-            if (*(word + strlen(word) - 1) == '\t') {
-                rsDumpInfo.set_type(std::string(word, strlen(word) - 1));
+            if (*(word + dataLen) == '\t') {
+                rsDumpInfo.set_type(std::string(word, dataLen));
             } else {
                 rsDumpInfo.set_type(word);
             }
@@ -1148,8 +1149,8 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
             rsDumpInfo.set_pid(pid);
             break;
         case RS_SURFACENAME:
-            if (*(word + strlen(word) - 1) == '\t') {
-                rsDumpInfo.set_surface_name(std::string(word, strlen(word) - 1));
+            if (*(word + dataLen) == '\t') {
+                rsDumpInfo.set_surface_name(std::string(word, dataLen));
             } else {
                 rsDumpInfo.set_surface_name(word);
             }
@@ -1387,7 +1388,9 @@ template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
                 auto* profileMemInfo = dataProto.add_profilememinfo();
                 BufferSplitter totalBuffer(static_cast<const char*>(line.c_str()), line.size() + 1);
                 if (totalBuffer.NextWord(':') && totalBuffer.NextWord('(')) {
-                    profileMemInfo->set_channel(std::string(totalBuffer.CurWord(), totalBuffer.CurWordSize() - 1));
+                    size_t dataLen =
+                        totalBuffer.CurWordSize() > 1 ? static_cast<size_t>(totalBuffer.CurWordSize() - 1) : 0;
+                    profileMemInfo->set_channel(std::string(totalBuffer.CurWord(), dataLen));
                 }
                 if (totalBuffer.NextWord(':') && totalBuffer.NextWord(')')) {
                     profileMemInfo->set_total_memory_size(strtoull(totalBuffer.CurWord(), nullptr, DEC_BASE));

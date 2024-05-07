@@ -18,7 +18,7 @@ import router from '@system.router';
 import SPLogger from '../common/utils/SPLogger'
 
 
-const TAG = "AppSelectPage"
+const TAG = 'AppSelectPage'
 /**
  * app应用选择页
  */
@@ -27,7 +27,7 @@ const TAG = "AppSelectPage"
 struct AppSelectPage {
   build() {
     Column() {
-      StartTestTitleComponent({ title: "选择应用" })
+      StartTestTitleComponent({ title: '选择应用' })
       appInfoComponent()
     }.width('100%').height('100%')
   }
@@ -54,14 +54,14 @@ struct appInfoComponent {
             }) {
               Text(appInfoItem.appName)
                 .fontSize('15fp')
-                .fontColor($r("app.color.color_333"))
+                .fontColor($r('app.color.color_333'))
                 .fontWeight(FontWeight.Bold)
-              Text(appInfoItem.appVersion).fontSize('12fp').fontColor($r("app.color.color_333"))
+              Text(appInfoItem.appVersion).fontSize('12fp').fontColor($r('app.color.color_333'))
               Divider().vertical(false).margin({ top: '5vp' }).height('1vp')
             }.margin({ left: '4%' }).height('100%').padding({ top: '20vp' })
           }.alignSelf(ItemAlign.Start).width('100%').height('80vp').onClick(() => {
-            if (router.getParams()["StartPage"] == "StartTest") {
-              router.back({ uri: "pages/StartTestPage", params: {
+            if (router.getParams()['startPage'] == 'startTest') {
+              router.back({ uri: 'pages/StartTestPage', params: {
                 selectPackageName: appInfoItem.packageName,
                 selectAbilityName: appInfoItem.abilityName,
                 appName: appInfoItem.appName,

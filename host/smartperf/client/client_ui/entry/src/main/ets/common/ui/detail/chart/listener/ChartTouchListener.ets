@@ -14,26 +14,33 @@
  */
 
 import Highlight from '../highlight/Highlight';
-import Chart from '../charts/Chart'
-import OnChartGestureListener from './OnChartGestureListener'
+import Chart from '../charts/Chart';
+import OnChartGestureListener from './OnChartGestureListener';
 
 export enum ChartGesture {
-  NONE, DRAG, X_ZOOM, Y_ZOOM, PINCH_ZOOM, ROTATE, SINGLE_TAP, DOUBLE_TAP, LONG_PRESS, FLING
+  NONE,
+  DRAG,
+  X_ZOOM,
+  Y_ZOOM,
+  PINCH_ZOOM,
+  ROTATE,
+  SINGLE_TAP,
+  DOUBLE_TAP,
+  LONG_PRESS,
+  FLING,
 }
 
 /**
  * Created by philipp on 12/06/15.
  */
 // @ts-ignore
-export default abstract class ChartTouchListener <T extends Chart> {
-
-
-/**
-  * the last touch gesture that has been performed
-  **/
+export default abstract class ChartTouchListener<T extends Chart> {
+  /**
+   * the last touch gesture that has been performed
+   **/
   protected mLastGesture: ChartGesture = ChartGesture.NONE;
 
-// states
+  // states
   protected static NONE: number = 0;
   protected static DRAG: number = 1;
   protected static X_ZOOM: number = 2;
@@ -42,91 +49,84 @@ export default abstract class ChartTouchListener <T extends Chart> {
   protected static POST_ZOOM: number = 5;
   protected static ROTATE: number = 6;
 
-/**
-  * integer field that holds the current touch-state
-  */
+  /**
+   * integer field that holds the current touch-state
+   */
   protected mTouchMode: number = ChartTouchListener.NONE;
 
-/**
-  * the last highlighted object (via touch)
-  */
+  /**
+   * the last highlighted object (via touch)
+   */
   protected mLastHighlighted: Highlight;
 
-/**
-  * the gesturedetector used for detecting taps and longpresses, ...
-  */
-//    protected mGestureDetector:GestureDetector;
-
-/**
-  * the chart the listener represents
-  */
+  /**
+   * the chart the listener represents
+   */
   protected mChart: T;
 
   constructor(chart: T) {
     this.mChart = chart;
   }
 
-/**
-  * Calls the OnChartGestureListener to do the start callback
-  *
-  * @param me
-  */
+  /**
+   * Calls the OnChartGestureListener to do the start callback
+   *
+   * @param me
+   */
   public startAction(me: TouchEvent) {
+    let l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
 
-    var l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
-
-    if (l != null)
-    l.onChartGestureStart(me, this.mLastGesture);
+    if (l != null) {
+      l.onChartGestureStart(me, this.mLastGesture);
+    }
   }
 
-/**
-  * Calls the OnChartGestureListener to do the end callback
-  *
-  * @param me
-  */
+  /**
+   * Calls the OnChartGestureListener to do the end callback
+   *
+   * @param me
+   */
   public endAction(me: TouchEvent) {
+    let l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
 
-    var l: OnChartGestureListener = this.mChart.getOnChartGestureListener();
-
-    if (l != null)
-    l.onChartGestureEnd(me, this.mLastGesture);
+    if (l != null) {
+      l.onChartGestureEnd(me, this.mLastGesture);
+    }
   }
 
-/**
-  * Sets the last value that was highlighted via touch.
-  *
-  * @param high
-  */
+  /**
+   * Sets the last value that was highlighted via touch.
+   *
+   * @param high
+   */
   public setLastHighlighted(high: Highlight) {
     this.mLastHighlighted = high;
   }
 
-/**
-  * returns the touch mode the listener is currently in
-  *
-  * @return
-  */
+  /**
+   * returns the touch mode the listener is currently in
+   *
+   * @return
+   */
   public getTouchMode(): number {
     return this.mTouchMode;
   }
 
-/**
-  * Returns the last gesture that has been performed on the chart.
-  *
-  * @return
-  */
+  /**
+   * Returns the last gesture that has been performed on the chart.
+   *
+   * @return
+   */
   public getLastGesture(): ChartGesture {
     return this.mLastGesture;
   }
 
-
-/**
-  * Perform a highlight operation.
-  *
-  * @param e
-  */
+  /**
+   * Perform a highlight operation.
+   *
+   * @param e
+   */
   protected performHighlight(h: Highlight, e: TouchEvent) {
-
     if (h == null || h == this.mLastHighlighted) {
       this.mChart.highlightValue(null, true);
       this.mLastHighlighted = null;
@@ -135,15 +135,15 @@ export default abstract class ChartTouchListener <T extends Chart> {
       this.mLastHighlighted = h;
     }
   }
-/**
-  * returns the distance between two points
-  *
-  * @param eventX
-  * @param startX
-  * @param eventY
-  * @param startY
-  * @return
-  */
+  /**
+   * returns the distance between two points
+   *
+   * @param eventX
+   * @param startX
+   * @param eventY
+   * @param startY
+   * @return
+   */
   protected static distance(eventX: number, startX: number, eventY: number, startY: number): number {
     let dx: number = eventX - startX;
     let dy: number = eventY - startY;

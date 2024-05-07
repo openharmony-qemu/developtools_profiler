@@ -59,6 +59,7 @@ FlowController::FlowController()
     ftraceParser_ = std::make_unique<FtraceParser>();
     ksymsParser_ = std::make_unique<KernelSymbolsParser>();
     ftraceSupported_ = FtraceFsOps::GetInstance().GetFtraceRoot().size() > 0;
+    traceCollector_ = OHOS::HiviewDFX::UCollectClient::TraceCollector::Create();
 }
 
 FlowController::~FlowController(void)
@@ -94,7 +95,6 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 
     resultWriter_ = writer;
     tansporter_ = std::move(transmiter);
-    traceCollector_ = OHOS::HiviewDFX::UCollectClient::TraceCollector::Create();
     return 0;
 }
 
@@ -268,6 +268,8 @@ int FlowController::StartCapture(void)
 
     // clear old trace
     FtraceFsOps::GetInstance().ClearTraceBuffer();
+    // recover the hitrace
+    traceCollector_->Recover();
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
     if (!FtraceFsOps::GetInstance().SetSavedCmdLinesSize(savedCmdlinesSize)) {

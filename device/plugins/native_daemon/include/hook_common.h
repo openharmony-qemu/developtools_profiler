@@ -124,8 +124,8 @@ struct alignas(8) ReportEventBaseData { // 8 is 8 bit
 };
 
 struct alignas(8) ArkTsClientConfig { // 8 is 8 bit
+        int32_t jsStackReport = 0;
         uint8_t maxJsStackDepth = 0;
-        bool jsStackReport = false;
         bool jsFpunwind = false;
         char filterNapiName[64] = {""};
 };
@@ -149,8 +149,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         freeEventOnlyAddrEnable = false;
         printNmd = false;
         nmdType = -1;
+        arktsConfig.jsStackReport = 0;
         arktsConfig.maxJsStackDepth = 0;
-        arktsConfig.jsStackReport = false;
         arktsConfig.jsFpunwind = false;
         arktsConfig.filterNapiName[0] = '\0';
     }

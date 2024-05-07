@@ -56,7 +56,7 @@ FfrtProfiler::FfrtProfiler()
 
 FfrtProfiler::~FfrtProfiler() {}
 
-bool FfrtProfiler::IsProfilerEnable()
+bool FfrtProfiler::IsProfilerEnabled()
 {
     CheckFfrtProfilerParam();
     return enable_;
@@ -79,7 +79,7 @@ void FfrtProfiler::CheckFfrtProfilerParam()
             std::vector<std::string> values;
             SplitString(paramValue, ",", values);
             for (auto& item : values) {
-                int pid = strtoull(item.c_str(), nullptr, 0);
+                int32_t pid = static_cast<int32_t>(strtoull(item.c_str(), nullptr, 0));
                 if (((pid > 0) && (pid == pid_)) || ((pid == 0) && (item == processName_))) {
                     Enable();
                     break;
@@ -131,15 +131,15 @@ void FfrtProfiler::FfrtProfilerTrace(const uint8_t traceType, const std::string&
     if (lable.empty()) {
         FfrtProfilerSendData(reinterpret_cast<const void*>(&trace), sizeof(trace), nullptr, 0);
     } else {
-        std::string strAligned = std::move(lable);
-        size_t paddingCount = (strAligned.size() + ALIGNED_MASK) & (~ALIGNED_MASK);
-        strAligned.append(paddingCount, '\0');
+        std::string strAligned = lable;
+        size_t paddingCount = (strAligned.size() + 1 + ALIGNED_MASK) & (~ALIGNED_MASK);
+        strAligned.append(paddingCount - strAligned.size() - 1, '\0');
         FfrtProfilerSendData(reinterpret_cast<const void*>(&trace), sizeof(trace), strAligned.c_str(),
-            strAligned.size());
+            strAligned.size() + 1);
     }
 }
 
-void FfrtProfiler::FfrtProfiling(const EventType& type, const char* payload, size_t payloadSize)
+void FfrtProfiler::FfrtProfiling(const EventType type, const char* payload, size_t payloadSize)
 {
     if (EXPECTANTLY((!enable_)) || payload == nullptr || payloadSize == 0) {
         return;

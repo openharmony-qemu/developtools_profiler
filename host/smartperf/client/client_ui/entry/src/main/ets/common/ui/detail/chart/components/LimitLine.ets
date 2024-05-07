@@ -13,18 +13,17 @@
  * limitations under the License.
  */
 
-import Paint, {Style, DashPathEffect} from '../data/Paint'
-import Utils from '../utils/Utils'
-import ComponentBase from '../components/ComponentBase'
+import Paint, { Style, DashPathEffect } from '../data/Paint';
+import Utils from '../utils/Utils';
+import ComponentBase from '../components/ComponentBase';
 
 /**
  * The limit line is an additional feature for all Line-, Bar- and
  * ScatterCharts. It allows the displaying of an additional line in the chart
  * that marks a certain maximum / limit on the specified axis (x- or y-axis).
- * 
+ *
  */
 export default class LimitLine extends ComponentBase {
-
   /** limit / maximum (the y-value or xIndex) */
   private mLimit: number = 0;
 
@@ -32,13 +31,13 @@ export default class LimitLine extends ComponentBase {
   private mLineWidth: number = 2;
 
   /** the color of the limit line */
-  private mLineColor: number | string = "#ED5B5B";
+  private mLineColor: number | string = '#ED5B5B';
 
   /** the style of the label text */
   private mTextStyle: Style = Style.FILL_AND_STROKE;
 
   /** label string that is drawn next to the limit line */
-  private mLabel: string = "";
+  private mLabel: string = '';
 
   /** the path effect of this LimitLine that makes dashed lines possible */
   private mDashPathEffect: DashPathEffect = null;
@@ -47,7 +46,7 @@ export default class LimitLine extends ComponentBase {
   private mLabelPosition: LimitLabelPosition = LimitLabelPosition.RIGHT_TOP;
 
   constructor(limit: number, label?: string) {
-    super()
+    super();
     this.mLimit = limit;
     this.mLabel = label;
   }
@@ -68,10 +67,12 @@ export default class LimitLine extends ComponentBase {
    * @param width
    */
   public setLineWidth(width: number) {
-    if (width < 0.2)
-    width = 0.2;
-    if (width > 12.0)
-    width = 12.0;
+    if (width < 0.2) {
+      width = 0.2;
+    }
+    if (width > 12.0) {
+      width = 12.0;
+    }
     this.mLineWidth = width;
   }
 
@@ -111,7 +112,7 @@ export default class LimitLine extends ComponentBase {
    * @param phase offset, in degrees (normally, use 0)
    */
   public enableDashedLine(lineLength: number, spaceLength: number, phase: number) {
-    this.mDashPathEffect = new DashPathEffect([lineLength, spaceLength],phase);
+    this.mDashPathEffect = new DashPathEffect([lineLength, spaceLength], phase);
   }
 
   /**
@@ -132,10 +133,10 @@ export default class LimitLine extends ComponentBase {
   }
 
   /**
-    * returns the DashPathEffect that is set for this LimitLine
-    *
-    * @return
-    */
+   * returns the DashPathEffect that is set for this LimitLine
+   *
+   * @return
+   */
   public getDashPathEffect(): DashPathEffect {
     return this.mDashPathEffect;
   }
@@ -151,48 +152,48 @@ export default class LimitLine extends ComponentBase {
   }
 
   /**
-       * Returns the color of the value-text that is drawn next to the LimitLine.
-       *
-       * @return
-       */
+   * Returns the color of the value-text that is drawn next to the LimitLine.
+   *
+   * @return
+   */
   public getTextStyle(): Style {
     return this.mTextStyle;
   }
 
   /**
-       * Sets the position of the LimitLine value label (either on the right or on
-       * the left edge of the chart). Not supported for RadarChart.
-       *
-       * @param pos
-       */
+   * Sets the position of the LimitLine value label (either on the right or on
+   * the left edge of the chart). Not supported for RadarChart.
+   *
+   * @param pos
+   */
   public setLabelPosition(pos: LimitLabelPosition) {
     this.mLabelPosition = pos;
   }
 
   /**
-       * Returns the position of the LimitLine label (value).
-       *
-       * @return
-       */
+   * Returns the position of the LimitLine label (value).
+   *
+   * @return
+   */
   public getLabelPosition(): LimitLabelPosition {
     return this.mLabelPosition;
   }
 
   /**
-       * Sets the label that is drawn next to the limit line. Provide "" if no
-       * label is required.
-       *
-       * @param label
-       */
+   * Sets the label that is drawn next to the limit line. Provide "" if no
+   * label is required.
+   *
+   * @param label
+   */
   public setLabel(label: string) {
     this.mLabel = label;
   }
 
   /**
-       * Returns the label that is drawn next to the limit line.
-       *
-       * @return
-       */
+   * Returns the label that is drawn next to the limit line.
+   *
+   * @return
+   */
   public getLabel(): string {
     return this.mLabel;
   }
@@ -200,5 +201,8 @@ export default class LimitLine extends ComponentBase {
 
 /** enum that indicates the position of the LimitLine label */
 export enum LimitLabelPosition {
-  LEFT_TOP, LEFT_BOTTOM, RIGHT_TOP, RIGHT_BOTTOM
+  LEFT_TOP,
+  LEFT_BOTTOM,
+  RIGHT_TOP,
+  RIGHT_BOTTOM,
 }

@@ -13,78 +13,69 @@
  * limitations under the License.
  */
 import fileio from '@ohos.fileio';
-import { fileOpen, createGPData, isAccess} from '../base/BaseProfilerUtils';
-import { BaseProfiler } from '../base/BaseProfiler'
-import { CollectorType } from '../base/ProfilerConstant'
-import SPLogger from '../../../common/utils/SPLogger'
-enum THERMAL_CONFIG{
-  THERMAL_BASE = "/sys/devices/virtual/thermal"
+import { fileOpen, createGPData, isAccess } from '../base/BaseProfilerUtils';
+import { BaseProfiler } from '../base/BaseProfiler';
+import { CollectorType } from '../base/ProfilerConstant';
+import SPLogger from '../../../common/utils/SPLogger';
+enum ThermalConfig {
+  THERMAL_BASE = '/sys/devices/virtual/thermal',
 }
 
 export class Thermal extends BaseProfiler {
-  private thermalMap: Map<String, String> = new Map
-  private enableSupportItem = [
-    "gpu-thermal",
-    "soc-thermal",
-    "shell_back",
-    "shell_front",
-    "shell_frame",
-  ]
-  private supportItemMap = new Map
+  private thermalMap: Map<String, String> = new Map();
+  private enableSupportItem = ['gpu-thermal', 'soc-thermal', 'shell_back', 'shell_front', 'shell_frame'];
+  private supportItemMap = new Map();
 
-  public static instance: Thermal = null
+  public static instance: Thermal = null;
   public static getInstance() {
     if (this.instance == null) {
-      this.instance = new Thermal()
+      this.instance = new Thermal();
     }
-    return this.instance
+    return this.instance;
   }
 
   init() {
     //初始化Thermal node
-    var dir
-    dir = fileio.opendirSync(THERMAL_CONFIG.THERMAL_BASE);
+    var dir;
+    dir = fileio.opendirSync(ThermalConfig.THERMAL_BASE);
     do {
-      var dirent = dir.readSync()
-      if (dirent == null ) {
-        break
+      var dirent = dir.readSync();
+      if (dirent == null) {
+        break;
       }
-      let name: String = dirent.name
-      SPLogger.DEBUG(Thermal.name,"thermal_zone name:" + name)
-      if (name.match("thermal_zone") && name.match("thermal_zone1") == null) {
-          let typeName = fileOpen(THERMAL_CONFIG.THERMAL_BASE + "/" + dirent.name + "/type")
-          if (this.enableSupportItem.length > 0) {
-            this.enableSupportItem.find((item: String) => {
-              if (typeName.match(item.toString())) {
-                SPLogger.DEBUG(Thermal.name,"thermal_zone match name:" + typeName)
-                this.supportItemMap.set(name, item)
-                SPLogger.DEBUG(Thermal.name,"thermal_zone match name this.supportItemMap:" + this.supportItemMap.size)
-              }
-            })
-          }
+      let name: String = dirent.name;
+      SPLogger.DEBUG(Thermal.name, 'thermal_zone name:' + name);
+      if (name.match('thermal_zone') && name.match('thermal_zone1') == null) {
+        let typeName = fileOpen(ThermalConfig.THERMAL_BASE + '/' + dirent.name + '/type');
+        if (this.enableSupportItem.length > 0) {
+          this.enableSupportItem.find((item: String) => {
+            if (typeName.match(item.toString())) {
+              SPLogger.DEBUG(Thermal.name, 'thermal_zone match name:' + typeName);
+              this.supportItemMap.set(name, item);
+              SPLogger.DEBUG(Thermal.name, 'thermal_zone match name this.supportItemMap:' + this.supportItemMap.size);
+            }
+          });
+        }
       }
-    } while (dirent != null)
-    return CollectorType.TYPE_TEMPERATURE
+    } while (dirent != null);
+    return CollectorType.TYPE_TEMPERATURE;
   }
 
-  isSupport(){
-    if(isAccess(THERMAL_CONFIG.THERMAL_BASE)){
-      return true
+  isSupport() {
+    if (isAccess(ThermalConfig.THERMAL_BASE)) {
+      return true;
     }
-    return false
+    return false;
   }
 
   readData() {
     if (this.supportItemMap.size > 0) {
-      let timeZones = this.supportItemMap.keys()
+      let timeZones = this.supportItemMap.keys();
       for (let timeZone of timeZones) {
-        let tempValue = fileOpen(THERMAL_CONFIG.THERMAL_BASE + "/" + timeZone + "/temp")
-        this.thermalMap.set(this.supportItemMap.get(timeZone),tempValue)
+        let tempValue = fileOpen(ThermalConfig.THERMAL_BASE + '/' + timeZone + '/temp');
+        this.thermalMap.set(this.supportItemMap.get(timeZone), tempValue);
       }
     }
-    return createGPData("Temp", this.thermalMap)
+    return createGPData('Temp', this.thermalMap);
   }
 }
-
-
-

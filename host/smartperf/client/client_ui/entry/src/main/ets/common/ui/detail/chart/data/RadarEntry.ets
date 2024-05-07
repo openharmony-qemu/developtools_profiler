@@ -16,8 +16,8 @@
 import EntryOhos from './EntryOhos';
 
 export default class RadarEntry extends EntryOhos {
-    constructor(value : number, data ?: Object) {
-        super(0, value,null,data);
+    constructor(value: number, data?: Object) {
+        super(0, value, null, data);
     }
 
     /**
@@ -25,11 +25,11 @@ export default class RadarEntry extends EntryOhos {
      *
      * @return
      */
-    public getValue() : number {
+    public getValue(): number {
         return super.getY();
     }
 
-    public copy() : RadarEntry {
+    public copy(): RadarEntry {
         var e = new RadarEntry(super.getY(), super.getData());
         return e;
     }

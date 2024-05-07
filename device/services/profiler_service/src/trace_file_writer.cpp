@@ -53,7 +53,7 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     fileWriteLength_ = sizeof(header_);
     mapOffset_ = sizeof(header_);
     messageWriteOffset_ = PIECE_HEAD_LEN;
-    pageSize_ = sysconf(_SC_PAGE_SIZE);
+    pageSize_ = static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
     fileLength_ = DEFULT_PAGES * pageSize_;
 
     if (ftruncate(fd_, fileLength_) != 0) {
@@ -509,11 +509,10 @@ void TraceFileWriter::FinishReport(int32_t size)
         realSize, strerror(errno));
 
     // write data length
-    *((int*)(&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_])) = size;
-
-    mapOffset_ += realSize;
-    fileWriteLength_ += realSize;
-    writeBytes_ += realSize;
+    *(reinterpret_cast<int*>((&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_]))) = size;
+    mapOffset_ += static_cast<uint64_t>(realSize);
+    fileWriteLength_ += static_cast<uint64_t>(realSize);
+    writeBytes_ += static_cast<uint64_t>(realSize);
     ++writeCount_;
 }
 

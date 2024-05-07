@@ -47,6 +47,10 @@ static pthread_key_t g_updateThreadNameCount;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 
+enum class MISC_TYPE : uint32_t {
+    JS_STACK_DATA = 1,
+};
+
 #ifdef PERFORMANCE_DEBUG
 static std::atomic<uint64_t> g_timeCost = 0;
 static std::atomic<uint64_t> g_dataCounts = 0;
@@ -283,15 +287,18 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
-    if (g_hookClient != nullptr) {
-        if (g_hookClient->GetNmdType() == 1) {
-            PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
-            g_hookClient->SendNmdInfo();
+    {
+        std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+        if (g_hookClient != nullptr) {
+            if (g_hookClient->GetNmdType() == 1) {
+                PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
+                g_hookClient->SendNmdInfo();
+            }
+            g_hookClient->SendEndMsg();
+            g_hookClient->Flush();
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
         }
-        g_hookClient->SendEndMsg();
-        g_hookClient->Flush();
-    } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
@@ -350,7 +357,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
 uint64_t getJsChainId()
 {
-    if (g_ClientConfig.arktsConfig.jsStackReport) {
+    if (g_ClientConfig.arktsConfig.jsStackReport > 0) {
             OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
             if (hitraceId.IsValid()) {
                 return hitraceId.GetChainId();
@@ -1243,20 +1250,22 @@ static bool IsPidChanged(void)
     return g_isPidChanged;
 }
 
-bool ohos_malloc_hook_send_hook_js_rawstack(uint64_t id, const char* jsStackptr, size_t jsStackSize)
+bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
-    StackRawData rawdata = {{{{0}}}};
-    rawdata.jsChainId = id;
-    rawdata.type = JS_STACK_MSG;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder != nullptr) {
-        return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), jsStackptr, jsStackSize);
+    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
+        StackRawData rawdata = {{{{0}}}};
+        rawdata.jsChainId = id;
+        rawdata.type = JS_STACK_MSG;
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if (holder != nullptr) {
+            return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize);
+        }
     }
     return false;
 }
 
-void* ohos_malloc_hook_get_hook_js_config()
+void* ohos_malloc_hook_get_hook_config()
 {
     return &g_ClientConfig.arktsConfig;
 }

@@ -13,21 +13,21 @@
  * limitations under the License.
  */
 
-import {ObjectPool} from './ObjectPool'
-import {Poolable} from './Poolable'
+import { ObjectPool } from './ObjectPool';
+import { Poolable } from './Poolable';
 
 export default class MPPointF extends Poolable {
-  private static pool: ObjectPool<MPPointF> =ObjectPool.create(32, new MPPointF(0, 0)).setReplenishPercentage(0.5);
+  private static pool: ObjectPool<MPPointF> = ObjectPool.create(32, new MPPointF(0, 0)).setReplenishPercentage(0.5);
   public x: number;
   public y: number;
 
   public constructor(x?: number, y?: number) {
-    super()
+    super();
     this.x = x;
     this.y = y;
   }
 
-  public static getInstance(x ?: number, y ?: number, copy ?: MPPointF): MPPointF{
+  public static getInstance(x?: number, y?: number, copy?: MPPointF): MPPointF {
     if (copy != null) {
       let result: MPPointF = this.pool.get();
       result.x = copy.x;
@@ -51,11 +51,11 @@ export default class MPPointF extends Poolable {
     MPPointF.pool.recycleArray(instances);
   }
 
-  public getX(): number{
+  public getX(): number {
     return this.x;
   }
 
-  public getY(): number{
+  public getY(): number {
     return this.y;
   }
 

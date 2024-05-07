@@ -50,6 +50,7 @@ struct FpsInfo {
     {
         fps = 0;
         curTime = 0;
+        currTimeDump = 0;
     }
 };
 struct FpsCurrentFpsTime {
@@ -62,7 +63,7 @@ public:
     void SetPackageName(std::string pName);
     void SetLayerName(std::string sName);
     FpsInfo GetFpsInfo();
-    FpsInfo GetDiffLayersFpsInfo(std::string sName);
+    FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
     bool IsForeGround();
     bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();
@@ -92,6 +93,7 @@ private:
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
     long long lastTime = -1;
+    long long lastFrameReadyTime = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     unsigned long sleepNowTime = 10000;

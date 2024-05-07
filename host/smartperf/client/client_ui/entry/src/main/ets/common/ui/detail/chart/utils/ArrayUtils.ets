@@ -13,17 +13,16 @@
  * limitations under the License.
  */
 
-export default class ArrayUtils{
-  static copyOfRange(arr:number[],fromIndex:number,toIndex:number):number[]{
-
+export default class ArrayUtils {
+  static copyOfRange(arr: number[], fromIndex: number, toIndex: number): number[] {
     //需将copya的类型指定为any，这样才能够使其能够任意添加属性
-    var copya:number[];
+    var copya: number[];
     //最关键的是注意 下面 当a中有方法时，json.parse(json.stringify(xx))是无效的
-    for(var i=0;i<arr.length;i++){
-      if(typeof arr[i]=='function'){
+    for (var i = 0; i < arr.length; i++) {
+      if (typeof arr[i] == 'function') {
         return [];
-      }else{
-        copya[i] = JSON.parse(JSON.stringify(arr[i]))
+      } else {
+        copya[i] = JSON.parse(JSON.stringify(arr[i]));
       }
     }
     return copya;

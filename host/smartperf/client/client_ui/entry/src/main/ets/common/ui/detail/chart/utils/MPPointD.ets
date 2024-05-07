@@ -13,19 +13,15 @@
  * limitations under the License.
  */
 
-import {Poolable} from './Poolable'
-import {ObjectPool} from './ObjectPool'
-import {JArrayList} from './JArrayList'
+import { Poolable } from './Poolable';
+import { ObjectPool } from './ObjectPool';
+import { JArrayList } from './JArrayList';
 
-/**
- * Point encapsulating two double values.
- *
- * @author Philipp Jahoda
- */
+
 export default class MPPointD extends Poolable {
-  private static pool: ObjectPool<MPPointD> =ObjectPool.create(64, new MPPointD(0, 0)).setReplenishPercentage(0.5);
+  private static pool: ObjectPool<MPPointD> = ObjectPool.create(64, new MPPointD(0, 0)).setReplenishPercentage(0.5);
 
-  public static getInstance(x: number, y: number): MPPointD{
+  public static getInstance(x: number, y: number): MPPointD {
     var result: MPPointD = this.pool.get();
     result.x = x;
     result.y = y;
@@ -36,8 +32,7 @@ export default class MPPointD extends Poolable {
     this.pool.recycle(instance);
   }
 
-
-  public instantiate(): Poolable{
+  public instantiate(): Poolable {
     return new MPPointD(0, 0);
   }
 
@@ -45,15 +40,13 @@ export default class MPPointD extends Poolable {
   public y: number;
 
   private constructor(x: number, y: number) {
-    super()
+    super();
     this.x = x;
     this.y = y;
   }
 
-  /**
-     * returns a string representation of the object
-     */
+
   public toString(): string {
-    return "MPPointD, x: " + this.x + ", y: " + this.y;
+    return 'MPPointD, x: ' + this.x + ', y: ' + this.y;
   }
 }

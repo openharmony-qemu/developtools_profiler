@@ -12,26 +12,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import { hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils'
-import { FloatWindowComponent } from '../common/FloatWindowComponent'
-import { TaskStatus }  from '../common/profiler/base/ProfilerConstant';
+import { hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
+import { FloatWindowComponent } from '../common/FloatWindowComponent';
+import { TaskStatus } from '../common/profiler/base/ProfilerConstant';
 
 @Entry
 @Component
 struct CurrentNowLineChartPage {
-  data: number[]= [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
-  @State random: number= 0 //用于刷新的随机数
-  @State currentNow: number= 0 //数值
+  data: number[] = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] //数据集合
+  @State random: number = 0 //用于刷新的随机数
+  @State currentNow: number = 0 //数值
 
   offsetX: number = -1 //悬浮框移动触摸点 X
   offsetY: number = -1 //悬浮框移动触摸点 X
-  private floatName: string= "currentNow"
-  task_state = 1
+  private floatName: string = 'currentNow'
+  taskState = 1
 
   aboutToAppear() {
     globalThis.LineChartCollect = setInterval(() => {
-      this.task_state = globalThis.task_status
-      if (this.task_state == TaskStatus.task_running) {
+      this.taskState = globalThis.task_status
+      if (this.taskState == TaskStatus.task_running) {
         if (this.data.length >= 22) {
 
           this.data.shift() //移除第一个元素
@@ -59,21 +59,21 @@ struct CurrentNowLineChartPage {
     Stack({ alignContent: Alignment.Top }) {
       FloatWindowComponent({ title: `sp_currentNow`, data: this.data })
       Flex({ justifyContent: FlexAlign.SpaceBetween, alignItems: ItemAlign.Center }) {
-        Text("电流" + ":" )
+        Text('电流' + ':' )
           .fontSize('10fp')
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .margin({ left: 5, top: 1 }) //文本显示
-        Text( (0-this.currentNow) + "mA")
+        Text( (0 - this.currentNow) + 'mA')
           .fontSize('20fp')
           .fontColor('#FF0000')
           .fontWeight(900)
-          .margin({ left: 1,top: 1 }) //文本显示
-        Text(this.random + "")
+          .margin({ left: 1, top: 1 }) //文本显示
+        Text(this.random + '')
           .fontSize('1fp')
-          .fontColor($r("app.color.color_fff")).visibility(Visibility.None)
-        Image($r("app.media.icon_close_small")).width('20vp').height('20vp').onClick(() => {
-          hideFloatWindow("sp_currentNow")
-          console.log("hideFloatWindow---------------------" + this.floatName)
+          .fontColor($r('app.color.color_fff')).visibility(Visibility.None)
+        Image($r('app.media.icon_close_small')).width('20vp').height('20vp').onClick(() => {
+          hideFloatWindow('sp_currentNow')
+          console.log('hideFloatWindow---------------------' + this.floatName)
         }).align(Alignment.TopEnd)
       }.height('20vp').width('100%')
 

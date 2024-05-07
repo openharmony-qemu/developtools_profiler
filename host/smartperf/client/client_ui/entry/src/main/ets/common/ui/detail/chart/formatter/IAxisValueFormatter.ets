@@ -13,22 +13,20 @@
  * limitations under the License.
  */
 
-import AxisBase from '../components/AxisBase'
+import AxisBase from '../components/AxisBase';
 /**
  * Custom formatter interface that allows formatting of
  * axis labels before they are being drawn.
  */
-export default interface IAxisValueFormatter
-{
-
-    /**
-     * Called when a value from an axis is to be formatted
-     * before being drawn. For performance reasons, avoid excessive calculations
-     * and memory allocations inside this method.
-     *
-     * @param value the value to be formatted
-     * @param axis  the axis the value belongs to
-     * @return
-     */
-   getFormattedValue(value:number,axis:AxisBase):string;
+export default interface IAxisValueFormatter {
+  /**
+   * Called when a value from an axis is to be formatted
+   * before being drawn. For performance reasons, avoid excessive calculations
+   * and memory allocations inside this method.
+   *
+   * @param value the value to be formatted
+   * @param axis  the axis the value belongs to
+   * @return
+   */
+  getFormattedValue(value: number, axis: AxisBase): string;
 }

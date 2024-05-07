@@ -21,9 +21,8 @@
 #include <string>
 #include <mutex>
 #include <thread>
-#include <fstream>
 #include "param/sys_param.h"
-
+#include "network_profiler_common.h"
 #include "network_profiler_socker_client.h"
 
 namespace OHOS::Developtools::Profiler {
@@ -32,8 +31,8 @@ public:
     static NetworkProfiler* GetInstance();
     virtual ~NetworkProfiler();
 
-    void NetworkProfilerTrace(const int32_t traceType, char* data, uint64_t dataLength);
-    void CheckNetworkProfilerParam();
+    bool IsProfilerEnable();
+    void NetworkProfiling(const uint8_t type, const char* data, size_t dataSize);
 
     void SetClockId(int32_t type)
     {
@@ -47,56 +46,11 @@ public:
 
 private:
     NetworkProfiler();
+    void CheckNetworkProfilerParam();
     void Enable();
     void Disable();
-    void NetworkProfilerBase(const void* src, size_t size, const char* payload = nullptr, size_t payloadSize = 0);
-    void GetThreadName(uint8_t* data, size_t size);
-    static void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret)
-    {
-        if (str.empty()) {
-            PROFILER_LOG_ERROR(LOG_CORE, "The string splited is empty!");
-            return;
-        }
-        std::string::size_type beginPos = str.find_first_not_of(sep);
-        std::string::size_type findPos = 0;
-        while (beginPos != std::string::npos) {
-            findPos = str.find(sep, beginPos);
-            std::string tmp;
-            if (findPos != std::string::npos) {
-                tmp = str.substr(beginPos, findPos - beginPos);
-                beginPos = findPos + sep.length();
-            } else {
-                tmp = str.substr(beginPos);
-                beginPos = findPos;
-            }
-            if (!tmp.empty()) {
-                ret.push_back(tmp);
-                tmp.clear();
-            }
-        }
-    }
-    static std::string GetProcessName(int32_t pid)
-    {
-        std::string path = "/proc/" + std::to_string(pid) + "/cmdline";
-        std::ifstream cmdlineFile(path);
-        if (!cmdlineFile) {
-            return "";
-        }
-
-        std::string processName;
-        std::getline(cmdlineFile, processName, '\0');
-        if (processName.substr(0, 2) == "./") {
-        processName = processName.substr(2);
-        }
-        size_t found = processName.rfind("/");
-        std::string procName;
-        if (found != std::string::npos) {
-            procName = processName.substr(found + 1);
-        } else {
-            procName = processName;
-        }
-        return procName;
-    }
+    void NetworkProfilerSendData(const void* src, size_t size, const char* payload = nullptr, size_t payloadSize = 0);
+    void GetThreadName(const void* src);
 
 private:
     static NetworkProfiler* instance_;

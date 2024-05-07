@@ -35,7 +35,7 @@ public:
     }
 
     // -3 sandbox path invalid, -2 package name error -1 dependency file not detected
-    int Init(std::string packageName, std::map<std::string, std::string> &retMap);
+    int Init(const std::string &packageName, std::map<std::string, std::string> &retMap);
     void Rest();
     // 0 ok，-1 run failed
     int Start();

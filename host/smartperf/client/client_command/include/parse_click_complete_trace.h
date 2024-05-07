@@ -31,7 +31,7 @@ public:
 private:
     std::ifstream infile;
     std::string flagTime = "0";
-    int flagTouch = 0;
+    size_t flagTouch = 0;
     int appPidnum = 0;
     double completeTime = -1;
     std::string startTime = "0";

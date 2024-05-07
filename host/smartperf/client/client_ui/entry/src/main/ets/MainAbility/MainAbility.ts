@@ -13,69 +13,78 @@
  * limitations under the License.
  */
 
-import Ability from '@ohos.app.ability.UIAbility'
-import { initDb } from '../common/database/LocalRepository'
-import { FloatWindowFun } from '../common/ui/floatwindow/FloatWindowFun'
+import Ability from '@ohos.app.ability.UIAbility';
+import { initDb } from '../common/database/LocalRepository';
+import { FloatWindowFun } from '../common/ui/floatwindow/FloatWindowFun';
 import { NetWork } from '../common/profiler/item/NetWork';
 import BundleManager from '../common/utils/BundleMangerUtils';
-import display from '@ohos.display' // 导入模块
+import display from '@ohos.display'; // 导入模块
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
 
-let MainWorker = new worker.Worker("entry/ets/workers/worker.js")
-globalThis.MainWorker = MainWorker
+let MainWorker = new worker.Worker('entry/ets/workers/worker.js');
+globalThis.MainWorker = MainWorker;
 
-MainWorker.onmessage = function (result) {
-    WorkerHandler.socketHandler(result)
-}
+MainWorker.onmessage = function (result): void {
+  WorkerHandler.socketHandler(result);
+};
 
 let abilityWindowStage;
 export default class MainAbility extends Ability {
-
-    onCreate(want, launchParam) {
-        console.log('cm-MainAbility-onCreate');
-        globalThis.showFloatingWindow=false
-        BundleManager.getAppList().then(appList => {
-            globalThis.appList = appList
-        })
-    }
-    onDestroy() {
-        console.log('cm-MainAbility-onDestroy');
-        MainWorker.terminate()
-    }
-    onWindowStageCreate(windowStage) {
-        globalThis.abilityContext = this.context
-        abilityWindowStage = windowStage;
-        abilityWindowStage.setUIContent(this.context, "pages/LoginPage", null)
-        globalThis.useDaemon = false
-        display.getDefaultDisplay().then((disp) => {
-            globalThis.screenWith = disp.width
-            if(globalThis.screenWith>1400){
-                globalThis.coefficient=1
-                console.log('globalThis.screenWith :coefficient-- ' +  globalThis.coefficient);
-            }else if( globalThis.screenWith>800&&globalThis.screenWith<1400){
-             globalThis.coefficient=1.8
-             console.log('globalThis.screenWith :coefficient-- ' +  globalThis.coefficient);
-            }else{
-                globalThis.coefficient=1
-                console.log('globalThis.screenWith :coefficient-- ' +  globalThis.coefficient);
-            }
-            console.log('globalThis.screenWith : ' + globalThis.screenWith);
-        }, (err) => {
-            console.log('display.getDefaultDisplay failed, error : ' + JSON.stringify(err));
-        })
-    }
-    onWindowStageDestroy() {}
-    onForeground() {
-        console.log('cm-MainAbility-onForeground');
-        initDb()
-        FloatWindowFun.initAllFun()
-        //NetWork.getInstance().init()
-        MainWorker.postMessage({ "testConnection": true })
-    }
-    onBackground() {}
-};
-
-
-
-
+  onCreate(): void {
+    console.log('cm-MainAbility-onCreate');
+    globalThis.showFloatingWindow = false;
+    BundleManager.getAppList().then((appList) => {
+      globalThis.appList = appList;
+    });
+  }
+  onDestroy(): void {
+    console.log('cm-MainAbility-onDestroy');
+    MainWorker.terminate();
+  }
+  onWindowStageCreate(windowStage): void {
+    globalThis.abilityContext = this.context;
+    abilityWindowStage = windowStage;
+    abilityWindowStage.setUIContent(this.context, 'pages/LoginPage', null);
+    globalThis.useDaemon = false;
+    display.getDefaultDisplay().then(
+      (disp) => {
+        globalThis.screenWith = disp.width;
+        if (globalThis.screenWith > 1400) {
+          globalThis.coefficient = 1;
+          console.log(
+            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+          );
+        } else if (
+          globalThis.screenWith > 800 &&
+          globalThis.screenWith < 1400
+        ) {
+          globalThis.coefficient = 1.8;
+          console.log(
+            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+          );
+        } else {
+          globalThis.coefficient = 1;
+          console.log(
+            'globalThis.screenWith :coefficient-- ' + globalThis.coefficient
+          );
+        }
+        console.log('globalThis.screenWith : ' + globalThis.screenWith);
+      },
+      (err) => {
+        console.log(
+          'display.getDefaultDisplay failed, error : ' + JSON.stringify(err)
+        );
+      }
+    );
+  }
+  onWindowStageDestroy(): void {}
+  onForeground(): void {
+    console.log('cm-MainAbility-onForeground');
+    initDb();
+    FloatWindowFun.initAllFun();
+    //NetWork.getInstance().init()
+    MainWorker.postMessage({ testConnection: true });
+  }
+  onBackground(): void {}
+}

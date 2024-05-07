@@ -13,15 +13,14 @@
  * limitations under the License.
  */
 
-import ChartInterface from '../dataprovider/ChartInterface'
-import BarLineScatterCandleBubbleData from '../../data/BarLineScatterCandleBubbleData'
-import IBarLineScatterCandleBubbleDataSet from '../datasets/IBarLineScatterCandleBubbleDataSet'
-import EntryOhos from '../../data/EntryOhos'
-import Transformer from '../../utils/Transformer'
-import {AxisDependency} from '../../components/YAxis'
+import ChartInterface from '../dataprovider/ChartInterface';
+import BarLineScatterCandleBubbleData from '../../data/BarLineScatterCandleBubbleData';
+import IBarLineScatterCandleBubbleDataSet from '../datasets/IBarLineScatterCandleBubbleDataSet';
+import EntryOhos from '../../data/EntryOhos';
+import Transformer from '../../utils/Transformer';
+import { AxisDependency } from '../../components/YAxis';
 
 export default interface BarLineScatterCandleBubbleDataProvider extends ChartInterface {
-
     getTransformer(axis: AxisDependency): Transformer;
 
     isInverted(axis: AxisDependency): boolean;

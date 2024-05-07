@@ -28,7 +28,7 @@ export struct HomeBottomPage {
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center, direction: FlexDirection.Column }) {
         if (this.currentPage == 0) {
           Image($r('app.media.icon_home_selected')).width(this.imgW).height(this.imgH)
-          Text('首页').fontSize('12vp').fontColor($r("app.color.colorPrimary"))
+          Text('首页').fontSize('12vp').fontColor($r('app.color.colorPrimary'))
         } else {
           Image($r('app.media.icon_home_unselected')).width(this.imgW).height(this.imgH)
           Text('首页').fontSize('12vp').fontColor(Color.Black)
@@ -37,14 +37,14 @@ export struct HomeBottomPage {
       .onClick(() => {
         this.currentPage = 0
       })
-      .backgroundColor($r("app.color.color_fff"))
+      .backgroundColor($r('app.color.color_fff'))
       .width('180px')
       .height('100%')
 
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center, direction: FlexDirection.Column }) {
         if (this.currentPage == 1) {
           Image($r('app.media.icon_report_selected')).width(this.imgW).height(this.imgH)
-          Text('报告').fontSize('12vp').fontColor($r("app.color.colorPrimary"))
+          Text('报告').fontSize('12vp').fontColor($r('app.color.colorPrimary'))
         } else {
           Image($r('app.media.icon_report_unselected')).width(this.imgW).height(this.imgH)
           Text('报告').fontSize('12vp').fontColor(Color.Black)
@@ -53,14 +53,14 @@ export struct HomeBottomPage {
       .onClick(() => {
         this.currentPage = 1
       })
-      .backgroundColor($r("app.color.color_fff"))
+      .backgroundColor($r('app.color.color_fff'))
       .width('180px')
       .height('100%')
 
       Flex({ alignItems: ItemAlign.Center, justifyContent: FlexAlign.Center, direction: FlexDirection.Column }) {
         if (this.currentPage == 2) {
           Image($r('app.media.icon_mine_selected')).width(this.imgW).height(this.imgH)
-          Text('我的').fontSize('12vp').fontColor($r("app.color.colorPrimary"))
+          Text('我的').fontSize('12vp').fontColor($r('app.color.colorPrimary'))
         } else {
           Image($r('app.media.icon_mine_unselected')).width(this.imgW).height(this.imgH)
           Text('我的').fontSize('12vp').fontColor(Color.Black)
@@ -69,11 +69,11 @@ export struct HomeBottomPage {
       .onClick(() => {
         this.currentPage = 2
       })
-      .backgroundColor($r("app.color.color_fff"))
+      .backgroundColor($r('app.color.color_fff'))
       .width('180px')
       .height('100%')
     }
-    .backgroundColor($r("app.color.color_fff"))
+    .backgroundColor($r('app.color.color_fff'))
     .width('100%')
     .height('12%')
   }

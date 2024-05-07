@@ -17,17 +17,13 @@ option optimize_for = LITE_RUNTIME;
 message NetworkProfilerEvent {
     uint64 tv_sec = 1;
     uint64 tv_nsec = 2;
-    int32 uid = 3
-    uint32 pid = 4;
-    uint32 tid = 5;
-    bytes process_name = 6;
-    bytes thread_name = 7;
-    enum NetworkType {
-        TRAFFIC = 0;
-        HTTP = 1;
-    };
-    NetworkType type = 8;
-    bytes data = 9;
+    int32 uid = 3;
+    int32 type = 4;
+    uint32 pid = 5;
+    uint32 tid = 6;
+    bytes process_name = 7;
+    bytes thread_name = 8;
+    bytes payload = 9;
 }
 
 message NetworkProfilerResult {

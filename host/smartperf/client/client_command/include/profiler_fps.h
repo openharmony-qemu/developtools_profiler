@@ -60,7 +60,7 @@ class ProfilerFPS : public SpProfiler {
 public:
     void SetTraceCatch();
     void SetPackageName(std::string pName);
-    void GetFPS(int args, std::vector<std::string> v);
+    void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     bool IsForeGround();
@@ -94,6 +94,7 @@ private:
     long long lastReadyTime = -1;
     long long frameReadyTime = 0;
     long long lastTime = -1;
+    long long lastFrameReadyTime = 0;
     int fpsNum = 0;
     bool isFirstResult = false;
     long oneSec = 1000000;

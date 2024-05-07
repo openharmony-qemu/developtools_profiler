@@ -28,7 +28,7 @@ public:
     double GetFrameRate(std::string line) const;
     int GetFenceId(std::string line) const;
     std::string GetOnScreenTimeStart(std::string line) const;
-    double GetTimes(std::string line, std::string sign) const;
+    double GetTimes(std::string line, const std::string &sign) const;
     void GetScreenInfo(std::string line);
     void CalculateRoundTime();
 private:

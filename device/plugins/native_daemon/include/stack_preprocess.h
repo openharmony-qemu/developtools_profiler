@@ -174,6 +174,7 @@ private:
     void FillFpNativeIp(RawStackPtr& rawData);
     void FillFpJsData(RawStackPtr& rawData);
     void FillDwarfErrorStack();
+    void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -229,6 +230,7 @@ private:
     bool unwindFailReport_ = true;
     std::vector<std::string> prctlPeriodTags_; // applyAndReleaseMatchInterval mode used
     std::vector<std::string> fpJsCallStacks_;
+    std::atomic<uint64_t> napiIndex_{1};
 };
 
 #endif // STACK_PREPROCESS_H

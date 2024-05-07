@@ -26,7 +26,7 @@
 #include "parameters.h"
 
 
-static std::string GetOptions(std::vector<std::string> &argv)
+static std::string GetOptions(const std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;
@@ -47,7 +47,7 @@ static std::string GetOptions(std::vector<std::string> &argv)
     return str;
 }
 
-static bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
+static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
-    if (!CheckCMDParam(vec, errorInfo)) {
+    if (!g_checkCmdParam(vec, errorInfo)) {
         std::cout << "SP_daemon:" << errorInfo << std::endl <<
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(argc, vec);
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::ClientControl cc;

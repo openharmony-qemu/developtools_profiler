@@ -13,34 +13,33 @@
  * limitations under the License.
  */
 import fileio from '@ohos.fileio';
-import SPLogger from '../utils/SPLogger'
+import SPLogger from '../utils/SPLogger';
 /**
  * create file by path
  * @param path
  * @param data
  */
-const TAG = "IOUtils"
-export function createFilePath(path: string, data: string) {
-    SPLogger.INFO(TAG,"createFilePath called:" + path);
-    let writer
-    try {
-        fileio.mkdirSync(globalThis.abilityContext.getApplicationContext().filesDir + "/" + globalThis.dbTime)
-    } catch (err) {
-        SPLogger.INFO(TAG,"createFilePath:mkdirSync" + err);
-    }
+const TAG = 'IOUtils';
+export function createFilePath(path: string, data: string): void {
+  SPLogger.INFO(TAG, 'createFilePath called:' + path);
+  let writer;
+  try {
+    fileio.mkdirSync(
+      globalThis.abilityContext.getApplicationContext().filesDir +
+        '/' +
+        globalThis.dbTime
+    );
+  } catch (err) {
+    SPLogger.INFO(TAG, 'createFilePath:mkdirSync' + err);
+  }
 
-    try {
-        writer = fileio.openSync(path, 0o102, 0o666);
-        fileio.writeSync(writer, data);
-        SPLogger.INFO(TAG,"createFilePath:WRITER SUCCESS");
-    } catch (err) {
-        SPLogger.INFO(TAG,"createFilePath:err" + err);
-    } finally {
-        fileio.closeSync(writer);
-    }
+  try {
+    writer = fileio.openSync(path, 0o102, 0o666);
+    fileio.writeSync(writer, data);
+    SPLogger.INFO(TAG, 'createFilePath:WRITER SUCCESS');
+  } catch (err) {
+    SPLogger.INFO(TAG, 'createFilePath:err' + err);
+  } finally {
+    fileio.closeSync(writer);
+  }
 }
-
-
-
-
-

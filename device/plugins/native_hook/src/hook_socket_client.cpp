@@ -36,7 +36,7 @@ std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
 
 struct OptArg {
-    int pos;
+    size_t pos;
     char *buf;
 };
 

@@ -34,10 +34,10 @@ constexpr int CPU_HZ_H = 10;
 const int PERCENT = 100;
 } // namespace
 
-ProcessDataPlugin::ProcessDataPlugin()
-    : buffer_(new (std::nothrow) uint8_t[READ_BUFFER_SIZE]), err_(-1)
+ProcessDataPlugin::ProcessDataPlugin() : err_(-1)
 {
     SetPath("/proc/");
+    buffer_ = std::make_unique<uint8_t[]>(READ_BUFFER_SIZE);
 }
 
 ProcessDataPlugin::~ProcessDataPlugin()

@@ -13,35 +13,34 @@
  * limitations under the License.
  */
 
-export default  class Range {
+export default class Range {
+	public myfrom: number;
+	public to: number;
 
-	public myfrom:number;
-	public to:number;
-
-	constructor( myfrom:number, to:number) {
+	constructor(myfrom: number, to: number) {
 		this.myfrom = myfrom;
 		this.to = to;
 	}
 
 	/**
 	 * Returns true if this range contains (if the value is in between) the given value, false if not.
-	 * 
+	 *
 	 * @param value
 	 * @return
 	 */
-	public contains( value:number):boolean {
-
-		if (value > this.myfrom && value <= this.to)
+	public contains(value: number): boolean {
+		if (value > this.myfrom && value <= this.to) {
 			return true;
-		else
+		} else {
 			return false;
+		}
 	}
 
-	public isLarger(value:number):boolean {
+	public isLarger(value: number): boolean {
 		return value > this.to;
 	}
 
-	public  isSmaller(value:number):boolean  {
+	public isSmaller(value: number): boolean {
 		return value < this.myfrom;
 	}
 }
