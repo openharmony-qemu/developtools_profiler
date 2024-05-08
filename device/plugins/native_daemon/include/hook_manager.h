@@ -111,7 +111,6 @@ public:
     {
         return noDataQueue_;
     }
-    bool PrintStat(uint32_t fd, const char* result);
     void SetPid(int pid)
     {
         pid_ = pid;

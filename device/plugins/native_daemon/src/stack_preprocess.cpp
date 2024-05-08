@@ -40,6 +40,8 @@ constexpr static uint32_t LG_TINY_MAXCLASS = 3;
 constexpr static uint32_t MAX_MATCH_CNT = 1000;
 constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
+constexpr static uint32_t WAIT_STOP_TIME = 5000;
+constexpr static uint32_t WAIT_TIME_ONCE = 10;
 constexpr static uint32_t MAX_BATCH_CNT = 5;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
@@ -168,7 +170,16 @@ bool StackPreprocess::StartTakeResults()
 bool StackPreprocess::StopTakeResults()
 {
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
+    int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+        std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true, false);
+    if (timeFd == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
+        return false;
+    }
     if (!dataRepeater_) {
+        while (!isStopTakeData_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_ONCE));
+        }
         return true;
     }
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
@@ -234,6 +245,14 @@ bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData)
     return true;
 }
 
+void StackPreprocess::ForceStop()
+{
+    isStopTakeData_ = true;
+    if (dataRepeater_ != nullptr) {
+        dataRepeater_->Close();
+    }
+}
+
 void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
                                            const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
 {
@@ -280,6 +299,14 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
                 runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
+            } else if (rawData->stackConext->type == NMD_MSG) {
+                const char* nmdResult = reinterpret_cast<const char*>(rawData->data);
+                lseek(nmdFd_, 0, SEEK_END);
+                (void)write(nmdFd_, nmdResult, strlen(nmdResult));
+                return true;
+            }  else if (rawData->stackConext->type == END_MSG) {
+                isStopTakeData_ = true;
+                return true;
             }
             {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -341,6 +368,12 @@ void StackPreprocess::TakeResults()
         for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
             auto rawData = batchRawStack[i];
             if (!rawData || isStopTakeData_) {
+                break;
+            }
+            if (rawData->stackConext->type == NMD_MSG) {
+                continue;
+            } else if (rawData->stackConext->type == END_MSG) {
+                isStopTakeData_ = true;
                 break;
             }
 #ifdef PERFORMANCE_DEBUG

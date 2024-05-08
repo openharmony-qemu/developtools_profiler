@@ -268,6 +268,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
+        ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -411,10 +412,11 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 
             if (rawStack->stackConext->type == NMD_MSG && printMallocNmd_) {
                 rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
-                PrintStat(nmdParamInfo_.fd, reinterpret_cast<const char*>(rawStack->data));
+                const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
+                lseek(nmdParamInfo_.fd, 0, SEEK_END);
+                (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
                 return true;
             } else if (rawStack->stackConext->type == END_MSG) {
-                hookCtx->stackPreprocess->SetStopFlag(true);
                 return true;
             }
             rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
@@ -453,6 +455,9 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                                                      reinterpret_cast<char*>(rawStack->data));
             continue;
         } else if (rawStack->stackConext->type == END_MSG) {
+            if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
+                break;
+            }
             if (!hookCtx->stackData->PutRawStack(nullptr, false)) {
                 break;
             }
@@ -691,13 +696,6 @@ std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
         }
     }
     return {-1, -1};
-}
-
-bool HookManager::PrintStat(uint32_t fd, const char* result)
-{
-    lseek(fd, 0, SEEK_END);
-    (void)write(fd, result, strlen(result));
-    return true;
 }
 
 void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
