@@ -391,4 +391,69 @@ describe("HidebugJsTest", function () {
         }
     })
 
+    /**
+     * @tc.name: HidebugJsTest_016
+     * @tc.desc: getVMRuntimeStats测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_016', 0, function () {
+        console.info("---------------------------HidebugJsTest_016----------------------------------");
+        try {
+            let runtimeStats = hidebug.getVMRuntimeStats();
+            expect(runtimeStats["ark.gc.gc-count"] >= 0).assertTrue();
+            expect(runtimeStats["ark.gc.gc-time"] >= 0).assertTrue();
+            expect(runtimeStats["ark.gc.gc-bytes-allocated"] >= 0).assertTrue();
+            expect(runtimeStats["ark.gc.gc-bytes-freed"] >= 0).assertTrue();
+            expect(runtimeStats["ark.gc.fullgc-longtime-count"] >= 0).assertTrue();
+            expect(runtimeStats["others"] === undefined).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_017
+     * @tc.desc: getVMRuntimeStat正常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_017', 0, function () {
+        console.info("---------------------------HidebugJsTest_017----------------------------------");
+        try {
+            let gcCount = hidebug.getVMRuntimeStat("ark.gc.gc-count");
+            let gcTime = hidebug.getVMRuntimeStat("ark.gc.gc-time");
+            let gcBytesAllocated = hidebug.getVMRuntimeStat("ark.gc.gc-bytes-allocated");
+            let gcBytesFreed = hidebug.getVMRuntimeStat("ark.gc.gc-bytes-freed");
+            let fullGcLongTimeCount = hidebug.getVMRuntimeStat("ark.gc.fullgc-longtime-count");
+            expect(gcCount >= 0).assertTrue();
+            expect(gcTime >= 0).assertTrue();
+            expect(gcBytesAllocated >= 0).assertTrue();
+            expect(gcBytesFreed >= 0).assertTrue();
+            expect(fullGcLongTimeCount >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_018
+     * @tc.desc: getVMRuntimeStat参数异常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_018', 0, function () {
+        console.info("---------------------------HidebugJsTest_018----------------------------------");
+        try {
+            hidebug.getVMRuntimeStat("others");
+            expect(false).assertTrue();
+        } catch (error) {
+            expect(error.code === "401").assertTrue();
+            expect(error.message === "Invalid parameter, unknown property.").assertTrue();
+        }
+    })
 })

@@ -43,6 +43,7 @@
 #include "refbase.h"
 #include "storage_acl.h"
 #include "system_ability_definition.h"
+#include "napi_hidebug_gc.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -226,7 +227,7 @@ static std::string GetFileNameParam(napi_env env, napi_callback_info info)
     return fileName;
 }
 
-static bool GetFileNameParamThrowErrorVersion(napi_env env, napi_callback_info info, std::string &fileName)
+static bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName)
 {
     size_t argc = ONE_VALUE_LIMIT;
     napi_value argv[ONE_VALUE_LIMIT] = { nullptr };
@@ -347,7 +348,7 @@ napi_value StartProfiling(napi_env env, napi_callback_info info)
 napi_value StartJsCpuProfiling(napi_env env, napi_callback_info info)
 {
     std::string fileName;
-    if (!GetFileNameParamThrowErrorVersion(env, info, fileName)) {
+    if (!GetTheOnlyStringParam(env, info, fileName)) {
         std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -413,7 +414,7 @@ napi_value DumpHeapData(napi_env env, napi_callback_info info)
 napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 {
     std::string fileName;
-    if (!GetFileNameParamThrowErrorVersion(env, info, fileName)) {
+    if (!GetTheOnlyStringParam(env, info, fileName)) {
         std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -849,6 +850,32 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info)
+{
+    napi_value vmRunTimeStats;
+    napi_create_object(env, &vmRunTimeStats);
+    for (const auto &[k, v] : GC::vmGcMap_) {
+        napi_set_named_property(env, vmRunTimeStats, k.c_str(), v(env));
+    }
+    return vmRunTimeStats;
+}
+
+napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info)
+{
+    std::string param;
+    if (!GetTheOnlyStringParam(env, info, param)) {
+        std::string paramErrorMessage = "Invalid parameter, a string parameter required.";
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    if (GC::vmGcMap_.find(param) == GC::vmGcMap_.end()) {
+        std::string paramErrorMessage = "Invalid parameter, unknown property.";
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    return GC::vmGcMap_.at(param)(env);
+}
+
 static bool JudgeValueRange(const std::string &type, int32_t value)
 {
     if (limitResource.find(type) != limitResource.end()) {
@@ -984,6 +1011,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo),
         DECLARE_NAPI_FUNCTION("startAppTraceCapture", StartAppTraceCapture),
         DECLARE_NAPI_FUNCTION("stopAppTraceCapture", StopAppTraceCapture),
+        DECLARE_NAPI_FUNCTION("getVMRuntimeStats", GetVMRuntimeStats),
+        DECLARE_NAPI_FUNCTION("getVMRuntimeStat", GetVMRuntimeStat),
         DECLARE_NAPI_FUNCTION("setAppResourceLimit", SetAppResourceLimit),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
