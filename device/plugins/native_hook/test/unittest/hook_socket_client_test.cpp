@@ -84,6 +84,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
     metaSize = sizeof(ts);
+    hookClient.unixSocketClient_ = nullptr;
     EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
     EXPECT_FALSE(hookClient.SendStackWithPayload(buffer.get(), metaSize, buffer.get(), metaSize));
     hookClient.unixSocketClient_ = std::make_shared<UnixSocketClient>();
