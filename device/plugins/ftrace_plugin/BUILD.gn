@@ -68,6 +68,7 @@ ohos_shared_library("ftrace_plugin") {
   deps = [ ":ftrace_plugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
+    version_script = "libftrace_plugin.map"
     external_deps = [
       "hilog:libhilog",
       "hiview:libucollection_client",
