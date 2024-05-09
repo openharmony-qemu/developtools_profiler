@@ -71,6 +71,7 @@ public:
         bool isRecordAccurately = false;
     };
     HookManager() = default;
+    ~HookManager();
     bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 

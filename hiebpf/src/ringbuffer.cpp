@@ -30,7 +30,10 @@ RingBuffer::RingBuffer(const std::size_t bufSize, const enum MemAlignShift shift
     switch (shift) {
         case B_ALIGN_SHIFT: {
             bufSize_ = (bufSize_ >> B_ALIGN_SHIFT);
-            buffer_ = new(std::nothrow) char[bufSize_];
+            uint16_t *temp = new(std::nothrow) uint16_t[bufSize_];
+            if (temp != nullptr) {
+                buffer_ = reinterpret_cast<char *>(temp);
+            }
             bufSize_ = (bufSize_ << B_ALIGN_SHIFT);
             break;
         }

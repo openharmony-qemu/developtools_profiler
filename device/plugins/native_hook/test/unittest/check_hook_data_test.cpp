@@ -51,6 +51,7 @@ constexpr int FREE_VEC_SIZE = 4;
 constexpr int WAIT_TIME = 5;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
+constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
 const std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
@@ -128,7 +129,7 @@ public:
             }
             if (jsReport_) {
                 command_.push_back(const_cast<char*>("-js"));
-                command_.push_back(const_cast<char*>("true"));
+                command_.push_back(const_cast<char*>(std::to_string(START_JS_REPORT).c_str()));
                 command_.push_back(const_cast<char*>("-jsd"));
                 command_.push_back(const_cast<char*>(std::to_string(jsMaxDepth_).c_str()));
             }
