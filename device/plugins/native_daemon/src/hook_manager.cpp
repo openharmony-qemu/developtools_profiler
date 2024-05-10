@@ -694,7 +694,7 @@ void HookManager::WriteHookConfig()
     }
 }
 
-std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
+std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
