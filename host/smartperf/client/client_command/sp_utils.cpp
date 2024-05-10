@@ -254,6 +254,25 @@ static std::string GetSplitOne(std::string cmd)
     return result;
 }
 
+std::string SPUtils::GetDeviceInfoMap()
+{
+    std::map<std::string, std::string> deviceInfoMap;
+    std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo();
+    std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo();
+    std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
+    deviceInfoMap.insert(cpuInfo.begin(), cpuInfo.end());
+    deviceInfoMap.insert(gpuInfo.begin(), gpuInfo.end());
+    deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
+    if (deviceInfoMap.empty()) {
+        LOGI("Failed to obtain device information");
+    }
+    for (auto iter = deviceInfoMap.cbegin(); iter != deviceInfoMap.cend(); ++iter) {
+        printf("%s: %s\n", iter->first.c_str(), iter->second.c_str());
+    }
+    std::cout << "" << std::endl;
+    return std::string("command exec finished!");
+}
+
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
@@ -261,19 +280,27 @@ std::map<std::string, std::string> SPUtils::GetDeviceInfo()
     std::string deviceTypeName = GetSplitOne("param get ohos.boot.hardware");
     std::string brand = GetSplitOne("param get const.product.brand");
     std::string version = GetSplitOne("param get const.product.software.version");
+    std::string abilist = GetSplitOne("param get const.product.cpu.abilist");
+    std::string name = GetSplitOne("param get const.product.name");
+    std::string model = GetSplitOne("param get const.product.model");
+    std::string fullname = GetSplitOne("param get const.ohos.fullname");
     resultMap["sn"] = sn;
     resultMap["deviceTypeName"] = deviceTypeName;
     resultMap["brand"] = brand;
     resultMap["board"] = "hw";
     resultMap["version"] = version;
+    resultMap["abilist"] = abilist;
+    resultMap["name"] = name;
+    resultMap["model"] = model;
+    resultMap["fullname"] = fullname;
     return resultMap;
 }
 std::map<std::string, std::string> SPUtils::GetCpuInfo()
 {
+    std::string clusterNames;
     std::vector<std::string> policyFiles;
     std::map<std::string, std::string> resultMap;
     std::string basePath = "/sys/devices/system/cpu/cpufreq/";
-    std::cout << "policyFiles size:" << policyFiles.size() << std::endl;
     DIR *dir = opendir(basePath.c_str());
     if (dir == nullptr) {
         return resultMap;
@@ -295,7 +322,7 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo()
         LoadFile(policyFiles[i] + "/cpuinfo_max_freq", max);
         std::string min;
         LoadFile(policyFiles[i] + "/cpuinfo_min_freq", min);
-        std::string nameBase = "cpu-c" + std::to_string(i + 1) + "-";
+        std::string nameBase = "cpu_c" + std::to_string(i + 1) + "_";
         resultMap[nameBase + "cluster"] = cpus;
         resultMap[nameBase + "max"] = max;
         resultMap[nameBase + "min"] = min;

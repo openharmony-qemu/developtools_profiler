@@ -72,6 +72,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("stop");
     keys.insert("screen");
     keys.insert("sections");
+    keys.insert("deviceinfo");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -137,6 +138,8 @@ int main(int argc, char *argv[])
     } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
         OHOS::SmartPerf::ClientControl cc;
         cc.SocketStop();
+    } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
+        std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
     std::cout << cmd.ExecCommand() << std::endl;

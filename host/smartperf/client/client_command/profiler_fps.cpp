@@ -28,6 +28,7 @@
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
+#include "include/startup_delay.h"
 
 
 namespace OHOS {
@@ -37,21 +38,26 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     std::map<std::string, std::string> result;
     FpsInfoProfiler finalResult = GetFpsInfo();
     lastFpsInfoResult = finalResult;
-    result["fps"] = std::to_string(finalResult.fps);
-    LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
-    LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
-    std::string jitterStr = "";
-    std::string split = "";
-    for (size_t i = 0; i < finalResult.jitters.size(); i++) {
-        if (i > 0) {
-            split = ";;";
+    if (processFlag) {
+        result["fps"] = "NA";
+        result["fpsJitters"] = "NA"; 
+    } else {
+        result["fps"] = std::to_string(finalResult.fps);
+        LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
+        LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
+        std::string jitterStr = "";
+        std::string split = "";
+        for (size_t i = 0; i < finalResult.jitters.size(); i++) {
+            if (i > 0) {
+                split = ";;";
+            }
+            jitterStr += split + std::to_string(finalResult.jitters[i]);
         }
-        jitterStr += split + std::to_string(finalResult.jitters[i]);
-    }
-    result["fpsJitters"] = jitterStr;
-    LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
-    if (isCatchTrace > 0) {
-        ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
+        result["fpsJitters"] = jitterStr;
+        LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
+        if (isCatchTrace > 0) {
+            ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
+        }
     }
     return result;
 }
@@ -226,6 +232,7 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
+    processFlag = false;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     if (pkgName.empty()) {
@@ -238,7 +245,16 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
             GetCurrentTime(fifty);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
-            fpsInfoMax.Clear();
+            std::string processId = "";
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(pkgName);
+            LOGI("ProfilerFPS::processId -- %s", processId.c_str());
+            if (processId.empty()) {
+                processFlag = true;
+                fpsInfoMax.Clear();
+            } else {
+                fpsInfoMax.Clear();
+            }
         }
     }
     return fpsInfoMax;
@@ -321,7 +337,7 @@ void ProfilerFPS::GetSameTimeNums()
 }
 bool ProfilerFPS::IsForeGround()
 {
-    const std::string cmd = "hidumper -s WindowManagerService -a -a";
+    const std::string cmd = "aa dump -l";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

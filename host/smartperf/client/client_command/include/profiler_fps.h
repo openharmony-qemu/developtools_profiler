@@ -110,6 +110,7 @@ private:
     bool isFoundAppName = false;
     bool isFoundBundleName = false;
     int isCatchTrace = 0;
+    bool processFlag = false;
 };
 }
 }
