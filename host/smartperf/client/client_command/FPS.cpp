@@ -44,7 +44,7 @@ std::map<std::string, std::string> FPS::ItemData()
     result["refreshrate"] = GetScreenInfo();
     if (processFlag) {
         result["fps"] = "NA";
-        result["fpsJitters"] = "NA"; 
+        result["fpsJitters"] = "NA";
     } else {
         result["fps"] = std::to_string(fpsInfoResult.fps);
         LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
@@ -225,7 +225,7 @@ void FPS::GetSameTimeNums()
 
 bool FPS::IsForeGround()
 {
-    const std::string cmd = "aa dump -l";
+    const std::string cmd = "hidumper -s WindowManagerService -a -a";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

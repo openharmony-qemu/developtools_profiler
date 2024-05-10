@@ -257,9 +257,9 @@ static std::string GetSplitOne(std::string cmd)
 std::string SPUtils::GetDeviceInfoMap()
 {
     std::map<std::string, std::string> deviceInfoMap;
-    std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo();
-    std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo();
-    std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
+    std::map<std::string, std::string> cpuInfo = GetCpuInfo();
+    std::map<std::string, std::string> gpuInfo = GetGpuInfo();
+    std::map<std::string, std::string> deviceInfo = GetDeviceInfo();
     deviceInfoMap.insert(cpuInfo.begin(), cpuInfo.end());
     deviceInfoMap.insert(gpuInfo.begin(), gpuInfo.end());
     deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
@@ -313,7 +313,10 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo()
         if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
             continue;
         }
-        policyFiles.push_back(IncludePathDelimiter(basePath) + std::string(ptr->d_name));
+        std::string clusterName = std::string(ptr->d_name);
+        clusterNames += clusterNames + " ";
+        resultMap["cpu_cluster_name"] = clusterNames;
+        policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
     for (size_t i = 0; i < policyFiles.size(); i++) {
         std::string cpus;

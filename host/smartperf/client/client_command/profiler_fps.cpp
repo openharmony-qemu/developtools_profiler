@@ -40,7 +40,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     lastFpsInfoResult = finalResult;
     if (processFlag) {
         result["fps"] = "NA";
-        result["fpsJitters"] = "NA"; 
+        result["fpsJitters"] = "NA";
     } else {
         result["fps"] = std::to_string(finalResult.fps);
         LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
@@ -198,7 +198,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
             currLastTime += harTime;
             count--;
         }
-        long long size = fpsInfoResult.currTimeStamps.size();
+        int size = fpsInfoResult.currTimeStamps.size();
         if (size <= 1) {
             return;
         }
@@ -337,7 +337,7 @@ void ProfilerFPS::GetSameTimeNums()
 }
 bool ProfilerFPS::IsForeGround()
 {
-    const std::string cmd = "aa dump -l";
+    const std::string cmd = "hidumper -s WindowManagerService -a -a";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

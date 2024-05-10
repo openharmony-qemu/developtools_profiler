@@ -118,6 +118,7 @@ std::string GetRadarFrame();
 std::map<std::string, std::string> GetDeviceInfo();
 std::map<std::string, std::string> GetCpuInfo();
 std::map<std::string, std::string> GetGpuInfo();
+std::string GetDeviceInfoMap();
 std::string GetScreen();
 void RemoveSpace(std::string &str);
 bool IntegerVerification(std::string str, std::string errorInfo);

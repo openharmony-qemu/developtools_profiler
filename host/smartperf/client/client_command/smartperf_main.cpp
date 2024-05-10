@@ -51,7 +51,6 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
-
     if (str.empty()) {
         return true;
     }
@@ -140,6 +139,7 @@ int main(int argc, char *argv[])
         cc.SocketStop();
     } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
+        return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
     std::cout << cmd.ExecCommand() << std::endl;
