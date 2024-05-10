@@ -87,7 +87,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->printNmd_);
     READUINT32(parcel, config->nmdPid_);
     READUINT32(parcel, config->nmdType_);
-    WRITEINT32(parcel, config->jsStackReport_);
+    READINT32(parcel, config->jsStackReport_);
     READUINT8(parcel, config->maxJsStackDepth_);
     READSTRING(parcel, config->filterNapiName_);
     PrintConfig(config);

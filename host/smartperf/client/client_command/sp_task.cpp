@@ -109,17 +109,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
-    if (!SPUtils::FileAccess("/data/local/tmp/hitrace")) {
-        SPUtils::LoadCmd("mkdir /data/local/tmp/hitrace", result);
-    } else {
-        SPUtils::LoadCmd("rm -rf /data/local/tmp/hitrace/*.htrace", result);
-    }
+    SPUtils::LoadCmd("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace", result);
     result.clear();
-    if (!SPUtils::FileAccess("/data/local/tmp/hitrace/perf")) {
-        SPUtils::LoadCmd("mkdir /data/local/tmp/hitrace/perf", result);
-    } else {
-        SPUtils::LoadCmd("rm -rf /data/local/tmp/hitrace/perf/*.data", result);
-    }
+    SPUtils::LoadCmd("rm -f /data/local/tmp/perf_[0-9]*.data", result);
     std::cout << recvStr << std::endl;
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
@@ -226,13 +218,12 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             SPData spdata;
             spdata.values.insert(dataMap.begin(), dataMap.end());
             vmap.push_back(spdata);
+
+            msgTask(MapToString(dataMap));
             long long nextTime = SPUtils::GetCurTime();
             long long costTime = nextTime - lastTime;
             if (costTime < curTaskInfo.freq) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
-            }
-            if (isRunning) {
-                msgTask(MapToString(dataMap));
             }
         }
     });
@@ -242,6 +233,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 void SPTask::StopTask()
 {
     LOGI("SPTask::StopTask start");
+    isRunning = false;
     if (isInit) {
         KillHiperfCmd();
 
@@ -280,7 +272,7 @@ void SPTask::StopTask()
         OHOS::SmartPerf::SpCsvUtil::WriteCsvH(outGeneralPath, destMap);
         OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
     }
-    isRunning = false;
+
     isInit = false;
     vmap.clear();
     if (thread.joinable()) {
@@ -351,8 +343,9 @@ void SPTask::GetHiperf(const std::string &traceName)
     std::string result;
     std::string tmp = SetHiperf(traceName);
     std::cout << tmp << std::endl;
-    result.clear();
+    LOGI("hiprofiler exec (%s)", tmp.c_str());
     SPUtils::LoadCmd(tmp, result);
+    LOGI("hiprofiler exec end (%s)", result.c_str());
 }
 
 
