@@ -33,6 +33,11 @@ enum TraceState {
     TRACE_NO_RUNNING = 11400105,
 };
 
+enum MemoryState {
+    MEMORY_FAILED = -1,
+    MEMORY_SUCCESS = 0,
+};
+
 class HidebugNativeInterface {
 public:
     static std::unique_ptr<HidebugNativeInterface> CreateInstance();
@@ -49,6 +54,7 @@ public:
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
     virtual int StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize, std::string &file) = 0;
     virtual int StopAppTraceCapture() = 0;
+    virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
     virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
     virtual std::optional<ProcessMemory> GetAppNativeMemInfo() = 0;
     virtual std::optional<SysMemory> GetSystemMemInfo() = 0;

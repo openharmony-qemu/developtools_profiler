@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <cerrno>
 #include <codecvt>
 #include <fstream>
@@ -30,6 +31,7 @@
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
+#include "file_ex.h"
 #include "hidebug_native_interface.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
@@ -39,6 +41,8 @@
 #include "napi/native_node_api.h"
 #include "native_engine/native_engine.h"
 #include "refbase.h"
+#include "storage_acl.h"
+#include "system_ability_definition.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -55,6 +59,14 @@ constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 constexpr int FIRST_POS = 0;
 constexpr int SECOND_POS = 1;
 constexpr int THIRD_POS = 2;
+constexpr int PSS_MIN = 1024;
+constexpr int PSS_MAX = 4 * 1024 * 1024;
+constexpr int JS_MIN = 85;
+constexpr int JS_MAX = 95;
+constexpr int FD_MIN = 10;
+constexpr int FD_MAX = 10000;
+constexpr int THREAD_MIN = 1;
+constexpr int THREAD_MAX = 1000;
 const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
@@ -68,6 +80,17 @@ enum ErrorCode {
     WITHOUT_WRITE_PERMISSON = 11400103,
     SYSTEM_STATUS_ABNORMAL = 11400104,
     NO_CAPTURE_TRACE_RUNNING = 11400105,
+};
+
+const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
+    "pss_memory",
+    "js_heap",
+    "fd",
+    "thread"
+};
+static std::map<std::string, std::pair<int, int>> limitResource = {
+    {{"pss_memory", {PSS_MIN, PSS_MAX}}, {"js_heap", {JS_MIN, JS_MAX}},
+        {"fd", {FD_MIN, FD_MAX}}, {"thread", {THREAD_MIN, THREAD_MAX}}}
 };
 }
 
@@ -826,6 +849,114 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+static bool JudgeValueRange(const std::string &type, int32_t value)
+{
+    if (limitResource.find(type) != limitResource.end()) {
+        auto limitValue = limitResource[type];
+        if (value >= limitValue.first && value <= limitValue.second) {
+            return true;
+        }
+    }
+    return false;
+}
+
+static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std::string& type,
+    int32_t& value, bool& enabledDebugLog)
+{
+    const int valueNum = 3;
+    size_t argc = valueNum;
+    napi_value argv[valueNum] = { nullptr };
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (argc != valueNum) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Invalid numbers of params!");
+        return false;
+    }
+    if (!MatchValueType(env, argv[FIRST_POS], napi_string) &&
+        !MatchValueType(env, argv[SECOND_POS], napi_number) &&
+        !MatchValueType(env, argv[THIRD_POS], napi_boolean)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam params type error.");
+        return false;
+    }
+    size_t bufLen = 0;
+    napi_status status = napi_get_value_string_utf8(env, argv[FIRST_POS], nullptr, 0, &bufLen);
+    if (status != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input filename param length failed.");
+        return false;
+    }
+    const int bufMax = 128;
+    if (bufLen > bufMax || bufLen == 0) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. input filename param length is illegal.");
+        return false;
+    }
+    std::vector<char> buf(bufLen + 1, 0);
+    napi_get_value_string_utf8(env, argv[FIRST_POS], buf.data(), bufLen + 1, &bufLen);
+    type = std::string(buf.data());
+    if (type.empty()) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
+        return false;
+    }
+    auto findType = std::find(RESOURCE_TYPE_LIST.begin(), RESOURCE_TYPE_LIST.end(), type);
+    if (findType == RESOURCE_TYPE_LIST.end()) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
+        return false;
+    }
+    if (napi_get_value_int32(env, argv[SECOND_POS], &value) != napi_ok || value < 0) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
+        return false;
+    }
+    if (!JudgeValueRange(type, value)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. The value range is invalid.");
+        return false;
+    }
+    if (napi_get_value_bool(env, argv[THIRD_POS], &enabledDebugLog) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input enabledDebugLog failed.");
+        return false;
+    }
+    return true;
+}
+
+static bool CreateSanBoxDir()
+{
+    constexpr mode_t defaultLogDirMode = 0x0770;
+    const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
+    if (!OHOS::FileExists(reourceLimitDir)) {
+        OHOS::ForceCreateDirectory(reourceLimitDir);
+        OHOS::ChangeModeDirectory(reourceLimitDir, defaultLogDirMode);
+    }
+    if (OHOS::StorageDaemon::AclSetAccess(reourceLimitDir, "g:1201:rwx") != 0) {
+        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
+        return false;
+    }
+    return true;
+}
+
+napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
+{
+    std::string type = "";
+    int32_t value = 0;
+    bool enabledDebugLog = false;
+    if (!GetAppResourceLimitParam(env, info, type, value, enabledDebugLog)) {
+        return CreateUndefined(env);
+    }
+    auto abilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (!abilityManager) {
+        return CreateUndefined(env);
+    }
+    sptr<IRemoteObject> remoteObject = abilityManager->CheckSystemAbility(DFX_SYS_HIVIEW_ABILITY_ID);
+    if (remoteObject == nullptr) {
+        HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. No this system ability.");
+        std::string idErrorMessage = "system ability is not exist.";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), idErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    auto result = HidebugNativeInterface::CreateInstance()->GetMemoryLeakResource(type, value, enabledDebugLog);
+    if (result == MemoryState::MEMORY_FAILED) {
+        return CreateUndefined(env);
+    }
+    CreateSanBoxDir();
+    return CreateUndefined(env);
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -853,6 +984,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo),
         DECLARE_NAPI_FUNCTION("startAppTraceCapture", StartAppTraceCapture),
         DECLARE_NAPI_FUNCTION("stopAppTraceCapture", StopAppTraceCapture),
+        DECLARE_NAPI_FUNCTION("setAppResourceLimit", SetAppResourceLimit),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
