@@ -92,6 +92,7 @@ enum class CommandType {
     CT_FL,
     CT_FTL,
     CT_M,
+    CT_GC,
 };
 enum class CommandHelp {
     HELP,
@@ -121,6 +122,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-fl"), CommandType::CT_FL },
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-m"), CommandType::CT_M },
+    { std::string("-gc"), CommandType::CT_GC },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -145,6 +147,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_FL, std::string("-fl") },
     { CommandType::CT_FTL, std::string("-ftl") },
     { CommandType::CT_M, std::string("-m") },
+    { CommandType::CT_GC, std::string("-gc") },
 };
 
 

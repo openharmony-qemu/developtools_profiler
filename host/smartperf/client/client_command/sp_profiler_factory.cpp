@@ -172,6 +172,15 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
         case CommandType::CT_M:
             profiler = &MEMORY::GetInstance();
             break;
+        case CommandType::CT_GC:
+            if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_INIT) {
+                std::map<std::string, std::string> retMap;
+                GpuCounter::GetInstance().Init("/data/local/tmp/", retMap);
+                profiler = &GpuCounter::GetInstance();
+            } else if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_START) {
+                GpuCounter::GetInstance().Check();
+            }
+            break;
         default:
             break;
     }

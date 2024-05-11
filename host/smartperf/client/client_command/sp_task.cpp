@@ -356,6 +356,11 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
 
+    auto itr = keys.find("gc"); // editor tcp does not support gc
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
+
     return SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 

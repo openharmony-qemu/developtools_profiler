@@ -121,6 +121,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_SNAPSHOT:
         case CommandType::CT_M:
         case CommandType::CT_HW:
+        case CommandType::CT_GC:
             configs.push_back(argStr);
             break;
         default:
@@ -133,7 +134,9 @@ std::string SmartPerfCommand::ExecCommand()
 {
     LOGI("SmartPerfCommand::ExecCommand start num(%d)", num);
     int index = 0;
+    bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
+    std::string errInfo;
     const long long freq = 1000;
     while (index < num) {
         long long lastTime = SPUtils::GetCurTime();
@@ -147,14 +150,32 @@ std::string SmartPerfCommand::ExecCommand()
             if (profiler != nullptr) {
                 std::map<std::string, std::string> data = profiler->ItemData();
                 spMap.insert(data.cbegin(), data.cend());
+
+                auto cit = data.find("gpu_counter");
+                if (cit == data.end()) {
+                    continue;
+                }
+
+                if (cit->second == "true") {
+                    callGpuCounterResult = true;
+                } else {
+                    cit = data.find("error");
+                    errInfo = "gpu_counter error:";
+                    errInfo += (cit != data.end()) ? cit->second : "run failed";
+                    break;
+                }
             }
+        }
+
+        if (!errInfo.empty()) { // GPU Counter init failed
+            printf("%s\n", errInfo.c_str());
+            break;
         }
 
         std::cout << std::endl;
         int i = 0;
         for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-            printf("order:%d %s=%s\n", i, iter->first.c_str(), iter->second.c_str());
-            i++;
+            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
         }
         std::cout << std::endl;
 
@@ -167,6 +188,18 @@ std::string SmartPerfCommand::ExecCommand()
             std::this_thread::sleep_for(std::chrono::milliseconds(freq - costTime));
         }
         index++;
+    }
+
+    if (callGpuCounterResult) {
+        int i = 0;
+        std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
+        for (auto a = data.begin(); a != data.end(); ++a) {
+            printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
+        }
+
+        SPData spdata;
+        spdata.values.insert(data.begin(), data.end());
+        vmap.push_back(spdata);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);

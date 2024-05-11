@@ -28,13 +28,25 @@ namespace OHOS {
 namespace SmartPerf {
 const long long WAIT_EXIT_TIME = 500;
 const int ERROR_CODE_NEGATIVE_TWO = -2;
-const int ERROR_CODE_NEGATIVE_THREE = -3;
 const int ERROR_CODE_NEGATIVE_FOUR = -4;
+
+GpuCounter::GpuCounter()
+{
+    originalEP = GetPerm();
+    LOGI("original execute permissions(%d)", (int)originalEP);
+}
+
 std::map<std::string, std::string> GpuCounter::ItemData()
 {
     std::map<std::string, std::string> result;
 
-    isStop = true;
+    if (initCheckPath == "/data/local/tmp/" && (gcStatus == GC_START || gcStatus == GC_INIT) && (!initMap.empty())) {
+        result.insert(initMap.begin(), initMap.end());
+        initMap.clear();
+        return result;
+    }
+
+    gcStatus = GC_STOP;
     KillCounter();
 
     std::this_thread::sleep_for(std::chrono::microseconds(WAIT_EXIT_TIME));
@@ -44,8 +56,14 @@ std::map<std::string, std::string> GpuCounter::ItemData()
         std::string outStr;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(SPUtils::GetCurTime()) + ".csv";
         std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
-        std::cout << "FileAccess mvCmd" << mvCmd << std::endl;
-        SPUtils::LoadCmd(mvCmd, outStr);
+        LOGI("ItemData new file name(%s)", newFileName.c_str());
+        if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
+            SetPerm(EP_PERMISSIVE);
+            SPUtils::LoadCmd(mvCmd, outStr);
+            SetPerm(EP_ENFORCING);
+        } else {
+            SPUtils::LoadCmd(mvCmd, outStr);
+        }
         fileList.push_back(newFileName);
     }
 
@@ -74,6 +92,8 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
     std::string result;
     std::string errorInfo;
     Rest();
+
+    initCheckPath = packageName;
     do {
         SPUtils::LoadCmd(constCheckProductInfo, result);
         if (result.empty() || result.find(constProductInfo) == std::string::npos) {
@@ -92,16 +112,20 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
             ret = ERROR_CODE_NEGATIVE_TWO;
             break;
         }
-        sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
-        if (access(sandBoxPath.c_str(), W_OK) == -1) { // Determine whether SandBox can be written
-            errorInfo = "unable to access sandbox path(" + sandBoxPath + ")";
-            ret = ERROR_CODE_NEGATIVE_THREE;
-            break;
+
+        if (packageName == "/data/local/tmp/") {
+            sandBoxPath = packageName;
+        } else {
+            sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
+        }
+        if (access(sandBoxPath.c_str(), W_OK) == 0) {
+            isSandBoxWrite = true;
         }
     } while (false);
     if (ret != 0) {
         retMap["gpu_counter"] = "false";
         retMap["error"] = errorInfo;
+        initMap.insert(retMap.begin(), retMap.end());
         LOGE("%s", errorInfo.c_str());
         return ret;
     }
@@ -115,27 +139,32 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
         retMap["error"] = errorInfo;
         LOGE("%s", errorInfo.c_str());
     }
+    initMap.insert(retMap.begin(), retMap.end());
     return ret;
 }
 
 void GpuCounter::Rest()
 {
-    isStop = false;
+    std::string result;
+
+    gcStatus = GC_INIT;
     fileList.clear();
     startCaptureTime = 0;
     KillCounter(); // counters_collector if runing kill
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
-        std::string result;
         SPUtils::LoadCmd(constRmCsv, result); // clear history files
     }
+    sandBoxPath = "";
+    initCheckPath = "";
 }
 
 int GpuCounter::Start()
 {
     int ret = -1;
 
+    gcStatus = GC_START;
     captureDuration = GetCounterDuration();
-    std::cout << "captureDuration" << captureDuration << std::endl;
+    LOGI("Start captureDuration(%lld)", captureDuration);
     if (captureDuration <= 0) {
         captureDuration = constDefaultCaptureDuration;
         LOGW("read config duration failed,load default(%ll)", captureDuration);
@@ -155,7 +184,7 @@ int GpuCounter::Start()
 
 void GpuCounter::Check()
 {
-    if (isStop) {
+    if (gcStatus != GC_START) {
         return;
     }
 
@@ -167,19 +196,28 @@ void GpuCounter::Check()
         return;
     }
 
-    std::cout << " GpuCounter::Check diff > captureDuration diffvalue" << diff << std::endl;
+    LOGI("GpuCounter::Check diff(%lld)", diff);
     std::vector<std::string> pidList;
     GetCounterId(pidList);
     if (!pidList.empty()) { // GPU process did not exit
         return;
     }
 
-    std::string result;
-    std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(nowTime) + ".csv";
-    std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
-    SPUtils::LoadCmd(mvCmd, result);
-    fileList.push_back(newFileName);
-    std::cout << " new file name=" << newFileName << std::endl;
+    if (SPUtils::FileAccess(constOutSourCVSFile)) {
+        std::string result;
+        std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(nowTime) + ".csv";
+        std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
+
+        if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
+            SetPerm(EP_PERMISSIVE);
+            SPUtils::LoadCmd(mvCmd, outStr);
+            SetPerm(EP_ENFORCING);
+        } else {
+            SPUtils::LoadCmd(mvCmd, outStr);
+        }
+        fileList.push_back(newFileName);
+        LOGI("new file name(%s)", newFileName.c_str());
+    }
 
     Start();
 
@@ -191,11 +229,9 @@ void GpuCounter::GetCounterId(std::vector<std::string> &pidList)
 {
     std::string result;
 
-    std::cout << "GetCounterId constGetCounterId=" << constGetCounterId << std::endl;
     pidList.clear();
     SPUtils::LoadCmd(constGetCounterId, result);
     SPUtils::StrSplit(result, " ", pidList);
-    std::cout << "GetCounterId end result=" << result << std::endl;
 
     return;
 }
@@ -205,16 +241,13 @@ void GpuCounter::KillCounter()
     std::vector<std::string> pidList;
     std::string result;
 
-    std::cout << "KillCounter start" << std::endl;
     GetCounterId(pidList);
 
     for (auto it = pidList.begin(); pidList.end() != it; ++it) {
         std::string killStr = constKillProcess + *it;
-        std::cout << "KillCounter killStr" << killStr << std::endl;
         result.clear();
         SPUtils::LoadCmd(killStr, result);
     }
-    std::cout << "KillCounter end" << std::endl;
     return;
 }
 
@@ -272,6 +305,36 @@ long long GpuCounter::GetCounterDuration()
 int GpuCounter::Capture()
 {
     return system(constCmd.c_str());
+}
+
+GpuCounter::ExecutePermissions GpuCounter::GetPerm()
+{
+    ExecutePermissions ep = EP_INVALID;
+    std::string result;
+    SPUtils::LoadCmd("getenforce", result);
+    if (result == "Permissive") {
+        ep = EP_PERMISSIVE;
+    } else if (result == "Enforcing") {
+        ep = EP_ENFORCING;
+    }
+
+    return ep;
+}
+
+void GpuCounter::SetPerm(ExecutePermissions code)
+{
+    if (!(code == EP_ENFORCING || code == EP_PERMISSIVE)) {
+        return;
+    }
+
+    if (originalEP == EP_PERMISSIVE) {
+        return;
+    }
+
+    std::string result;
+    std::string cmd = "setenforce " + std::to_string(int(code));
+    SPUtils::LoadCmd(cmd, result);
+    return;
 }
 }
 }
