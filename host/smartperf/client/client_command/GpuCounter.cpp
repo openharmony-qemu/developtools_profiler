@@ -210,10 +210,10 @@ void GpuCounter::Check()
 
         if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
             SetPerm(EP_PERMISSIVE);
-            SPUtils::LoadCmd(mvCmd, outStr);
+            SPUtils::LoadCmd(mvCmd, result);
             SetPerm(EP_ENFORCING);
         } else {
-            SPUtils::LoadCmd(mvCmd, outStr);
+            SPUtils::LoadCmd(mvCmd, result);
         }
         fileList.push_back(newFileName);
         LOGI("new file name(%s)", newFileName.c_str());
