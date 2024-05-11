@@ -1500,8 +1500,7 @@ void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
         jsCallFrame.filePath_ = StringViewMemoryHold::GetInstance().HoldStringView(jsCallStack.c_str() + jsFilePathPos);
         if (hookConfig_.offline_symbolization()) {
             DfxSymbol symbol;
-            if (runtime_instance->ArktsGetSymbolCache(jsCallFrame, symbol)) {
-            } else {
+            if (!runtime_instance->ArktsGetSymbolCache(jsCallFrame, symbol)) {
                 symbol.filePathId_ = runtime_instance->FillArkTsFilePath(jsCallFrame.filePath_);
                 symbol.symbolName_ = jsCallFrame.symbolName_;
                 symbol.module_ = jsCallFrame.filePath_;
