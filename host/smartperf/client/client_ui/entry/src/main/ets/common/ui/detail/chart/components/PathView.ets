@@ -236,7 +236,14 @@ export class PathViewModel extends ScaleMode {
 
     this.ondraw();
 
-    let maxXAfter: number = this.paintArry[this.paintArry.length - 1].x;
+    let maxXAfter: number = 0;
+    try {
+      if(this.paintArry.length > 0) {
+        maxXAfter = this.paintArry[this.paintArry.length - 1].x;
+      }
+    } catch(e) {
+      console.log(e);
+    }
     let maxYAfter: number = Number.MIN_VALUE;
     let minYAfter: number = Number.MAX_VALUE;
 
