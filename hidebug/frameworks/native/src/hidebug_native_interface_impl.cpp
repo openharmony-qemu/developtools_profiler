@@ -24,6 +24,7 @@
 #include "hidebug_app_thread_cpu.h"
 #include "hilog/log.h"
 #include "client/cpu_collector.h"
+#include "client/memory_collector.h"
 #include "utility/memory_collector.h"
 
 namespace OHOS {
@@ -43,6 +44,7 @@ public:
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     int StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize, std::string &file) override;
     int StopAppTraceCapture() override;
+    int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
     std::optional<ProcessMemory> GetAppNativeMemInfo() override;
@@ -216,6 +218,30 @@ std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
     sysMemInfo.memFree = collectResult.data.memFree;
     sysMemInfo.memAvailable = collectResult.data.memAvailable;
     return sysMemInfo;
+}
+
+int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
+    int32_t value, bool enabledDebugLog)
+{
+    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource");
+    auto memoryCollect = UCollectClient::MemoryCollector::Create();
+    if (!memoryCollect) {
+        HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, return result");
+        return MemoryState::MEMORY_FAILED;
+    }
+    UCollectClient::MemoryCaller memoryCaller;
+    memoryCaller.pid = getprocpid();
+    memoryCaller.resourceType = type;
+    memoryCaller.limitValue = value;
+    memoryCaller.enabledDebugLog = enabledDebugLog;
+    auto result = memoryCollect->SetAppResourceLimit(memoryCaller);
+    if (result.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, retCode: %{public}d, return the last result",
+            static_cast<int>(result.retCode));
+        return MemoryState::MEMORY_FAILED;
+    }
+    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
+    return MemoryState::MEMORY_SUCCESS;
 }
 
 int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
