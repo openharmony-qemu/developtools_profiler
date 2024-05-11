@@ -452,13 +452,49 @@ bool VerifyPath(const std::string& filePath, const std::vector<std::string>& val
     return false;
 }
 
+const char* RealPath(std::string &filePath)
+{
+    if (filePath.find('.') == -1) {
+        return filePath.c_str();
+    }
+    std::vector<std::string> paths;
+    for (auto charac : filePath) {
+        if (charac != '/') {
+            (paths.back()) += charac;
+        } else {
+            paths.emplace_back("");
+        }
+    }
+    std::vector<std::string> validPaths;
+    for (std::string& pathName: paths) {
+        if (pathName == "..") {
+            if (validPaths.size() == 0) {
+                return NULL;
+            } else {
+                validPaths.pop_back();
+            }
+        } else {
+            validPaths.emplace_back(pathName);
+        }
+    }
+    if (validPaths.back() == "") {
+        validPaths.pop_back();
+    }
+    filePath = "/";
+    for (std::string &pathName : validPaths) {
+        filePath += pathName;
+        filePath += "/";
+    }
+    return filePath.c_str();
+}
+
 bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)
 {
-    char* realFilePath = realpath(filePath.c_str(), nullptr);
+    std::string pathName = filePath;
+    const char* realFilePath = RealPath(pathName);
     CHECK_NOTNULL(realFilePath, false, "Fail to realPath: %s", filePath.c_str());
 
     std::string realFilePathStr(realFilePath);
-    free(realFilePath);
     CHECK_TRUE(VerifyPath(realFilePathStr, validPaths), false, "Fail to VerifyPath: %s", realFilePathStr.c_str());
 
     std::ifstream fileStream(realFilePathStr, std::ios::in);
