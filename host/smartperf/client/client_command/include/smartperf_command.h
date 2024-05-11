@@ -19,6 +19,7 @@
 #include <iostream>
 #include <vector>
 #include "common.h"
+#include "sp_utils.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -66,6 +67,7 @@ public:
     std::string ExecCommand();
     void HelpCommand(CommandHelp type) const;
     void HandleCommand(std::string argStr, const std::string &argStr1);
+    int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     // 采集次数
     int num = 0;
     // 包名

@@ -162,6 +162,19 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
         case CommandType::CT_TTRACE:
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
+        default:
+            break;
+    }
+    if (profiler == nullptr) {
+        profiler = GetCmdProfilerItemContinue(commandType, cmdFlag);
+    }
+    return profiler;
+}
+
+SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandType, bool cmdFlag)
+{
+    SpProfiler *profiler = nullptr;
+    switch (commandType) {
         case CommandType::CT_SNAPSHOT:
             if (cmdFlag) {
                 profiler = &Capture::GetInstance();

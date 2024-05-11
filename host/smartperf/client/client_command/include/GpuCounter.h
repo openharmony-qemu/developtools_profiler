@@ -32,7 +32,6 @@ public:
         GC_STOP,
     };
 
-
     enum ExecutePermissions {
         EP_INVALID = -1,
         EP_PERMISSIVE = 0,
@@ -62,6 +61,7 @@ public:
     long long GetCounterDuration();
 
 private:
+    int CheckResources(const std::string &packageName, std::string &errorInfo);
     void GetCounterId(std::vector<std::string> &pidList);
     void KillCounter();
     int Capture();

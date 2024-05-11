@@ -25,6 +25,7 @@ public:
     static void SetProfilerLayer(const std::string &layer);
     static void SetByTrace(std::string message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);
+    static SpProfiler *GetCmdProfilerItemContinue(CommandType commandType, bool cmdFlag);
 };
 }
 }

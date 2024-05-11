@@ -85,6 +85,33 @@ std::map<std::string, std::string> GpuCounter::ItemData()
     return result;
 }
 
+int GpuCounter::CheckResources(const std::string &packageName, std::string &errorInfo)
+{
+    std::string result;
+
+    SPUtils::LoadCmd(constCheckProductInfo, result);
+    if (result.empty() || result.find(constProductInfo) == std::string::npos) {
+        errorInfo = "Non Hisilicon chips";
+        return ERROR_CODE_NEGATIVE_FOUR;
+    }
+    if ((!SPUtils::FileAccess(constV2File)) || (!SPUtils::FileAccess(constExecFile)) ||
+        (!SPUtils::FileAccess(constConfigFile)) || (!SPUtils::FileAccess(constLibFile))) {
+        errorInfo = "Missing dependency files such as counters_collector";
+        return -1;
+    }
+    if (packageName.empty()) {
+        errorInfo = "package name is empty";
+        return ERROR_CODE_NEGATIVE_TWO;
+    }
+
+    if (packageName == "/data/local/tmp/") {
+        sandBoxPath = packageName;
+    } else {
+        sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
+    }
+
+    return 0;
+}
 
 int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::string> &retMap)
 {
@@ -92,36 +119,7 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
     std::string result;
     std::string errorInfo;
     Rest();
-
-    initCheckPath = packageName;
-    do {
-        SPUtils::LoadCmd(constCheckProductInfo, result);
-        if (result.empty() || result.find(constProductInfo) == std::string::npos) {
-            errorInfo = "Non Hisilicon chips";
-            ret = ERROR_CODE_NEGATIVE_FOUR;
-            break;
-        }
-        if ((!SPUtils::FileAccess(constV2File)) || (!SPUtils::FileAccess(constExecFile)) ||
-            (!SPUtils::FileAccess(constConfigFile)) || (!SPUtils::FileAccess(constLibFile))) {
-            errorInfo = "Missing dependency files such as counters_collector";
-            ret = -1;
-            break;
-        }
-        if (packageName.empty()) {
-            errorInfo = "package name is empty";
-            ret = ERROR_CODE_NEGATIVE_TWO;
-            break;
-        }
-
-        if (packageName == "/data/local/tmp/") {
-            sandBoxPath = packageName;
-        } else {
-            sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
-        }
-        if (access(sandBoxPath.c_str(), W_OK) == 0) {
-            isSandBoxWrite = true;
-        }
-    } while (false);
+    ret = CheckResources(packageName, errorInfo);
     if (ret != 0) {
         retMap["gpu_counter"] = "false";
         retMap["error"] = errorInfo;
@@ -129,6 +127,12 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
         LOGE("%s", errorInfo.c_str());
         return ret;
     }
+
+    initCheckPath = packageName;
+    if (access(sandBoxPath.c_str(), W_OK) == 0) {
+        isSandBoxWrite = true;
+    }
+
     SPUtils::LoadCmd(constAddPermissionsCounter, result);
     ret = Start();
     if (ret == 0) {
