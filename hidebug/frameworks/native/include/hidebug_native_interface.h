@@ -21,6 +21,7 @@
 #include <optional>
 #include "hitrace_meter.h"
 #include "resource/memory.h"
+#include "hidebug/hidebug_type.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -56,7 +57,7 @@ public:
     virtual int StopAppTraceCapture() = 0;
     virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
     virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
-    virtual std::optional<ProcessMemory> GetAppNativeMemInfo() = 0;
+    virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() = 0;
     virtual std::optional<SysMemory> GetSystemMemInfo() = 0;
 };
 }

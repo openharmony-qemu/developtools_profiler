@@ -44,7 +44,10 @@ ohos_source_set("libhidebug_init_source") {
 ohos_shared_library("hidebug_native") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  include_dirs = [ "include" ]
+  include_dirs = [
+    "../../interfaces/native/kits/include",
+    "include",
+  ]
 
   sources = [
     "src/hidebug_app_thread_cpu.cpp",
