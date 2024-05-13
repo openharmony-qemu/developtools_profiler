@@ -121,6 +121,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_SNAPSHOT:
         case CommandType::CT_M:
         case CommandType::CT_HW:
+        case CommandType::CT_GC:
             configs.push_back(argStr);
             break;
         default:
@@ -129,35 +130,66 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
     }
 }
 
+int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap)
+{
+    int rc = 0;
+    std::string errInfo;
+
+    for (size_t j = 0; j < configs.size(); j++) {
+        std::string curParam = configs[j];
+        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
+        if (profiler != nullptr) {
+            std::map<std::string, std::string> data = profiler->ItemData();
+            spMap.insert(data.cbegin(), data.cend());
+
+            auto cit = data.find("gpu_counter");
+            if (cit == data.end()) {
+                continue;
+            }
+
+            if (cit->second == "true") {
+                rc = 1;
+            } else {
+                cit = data.find("error");
+                errInfo = "gpu_counter error:";
+                errInfo += (cit != data.end()) ? cit->second : "run failed";
+                break;
+            }
+        }
+    }
+
+    if (!errInfo.empty()) { // GPU Counter init failed
+        printf("%s\n", errInfo.c_str());
+        return -1;
+    }
+
+    return rc;
+}
+
 std::string SmartPerfCommand::ExecCommand()
 {
     LOGI("SmartPerfCommand::ExecCommand start num(%d)", num);
+    int rc = 0;
     int index = 0;
+    bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
     const long long freq = 1000;
     while (index < num) {
-        long long lastTime = SPUtils::GetCurTime();
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
-        long long timestamp = SPUtils::GetCurTime();
-        spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(timestamp)));
-
-        for (size_t j = 0; j < configs.size(); j++) {
-            std::string curParam = configs[j];
-            SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
-            if (profiler != nullptr) {
-                std::map<std::string, std::string> data = profiler->ItemData();
-                spMap.insert(data.cbegin(), data.cend());
-            }
+        long long lastTime = SPUtils::GetCurTime();
+        spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
+        rc = GetItemInfo(spMap);
+        if (rc == -1) {
+            break;
+        } else if (rc == 1) {
+            callGpuCounterResult = true;
         }
-
         std::cout << std::endl;
         int i = 0;
         for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-            printf("order:%d %s=%s\n", i, iter->first.c_str(), iter->second.c_str());
-            i++;
+            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
         }
         std::cout << std::endl;
-
         SPData spdata;
         spdata.values.insert(spMap.cbegin(), spMap.cend());
         vmap.push_back(spdata);
@@ -167,6 +199,18 @@ std::string SmartPerfCommand::ExecCommand()
             std::this_thread::sleep_for(std::chrono::milliseconds(freq - costTime));
         }
         index++;
+    }
+
+    if (callGpuCounterResult) {
+        int i = 0;
+        std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
+        for (auto a = data.begin(); a != data.end(); ++a) {
+            printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
+        }
+
+        SPData spdata;
+        spdata.values.insert(data.begin(), data.end());
+        vmap.push_back(spdata);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);

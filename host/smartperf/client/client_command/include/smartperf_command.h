@@ -19,6 +19,7 @@
 #include <iostream>
 #include <vector>
 #include "common.h"
+#include "sp_utils.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -49,6 +50,7 @@ public:
         " -OUT           set csv output path.\n"
         " -d             get device DDR information \n"
         " -m             get other memory \n"
+        " -gc            get CPU counter,output in file format at '/data/local/tmp/' \n"
         "example:\n"
         "SP_daemon -N 20 -c -g -t -p -r -m -net -snapshot -d \n"
         "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -net -snapshot -d \n"
@@ -65,6 +67,7 @@ public:
     std::string ExecCommand();
     void HelpCommand(CommandHelp type) const;
     void HandleCommand(std::string argStr, const std::string &argStr1);
+    int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     // 采集次数
     int num = 0;
     // 包名

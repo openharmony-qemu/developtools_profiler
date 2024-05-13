@@ -26,12 +26,30 @@ namespace OHOS {
 namespace SmartPerf {
 class GpuCounter : public SpProfiler {
 public:
+    enum GcStatus {
+        GC_INIT = 0,
+        GC_START,
+        GC_STOP,
+    };
+
+    enum ExecutePermissions {
+        EP_INVALID = -1,
+        EP_PERMISSIVE = 0,
+        EP_ENFORCING = 1,
+    };
+
+public:
     std::map<std::string, std::string> ItemData() override;
 
     static GpuCounter &GetInstance()
     {
         static GpuCounter instance;
         return instance;
+    }
+
+    GcStatus GetStatus()
+    {
+        return gcStatus;
     }
 
     // -3 sandbox path invalid, -2 package name error -1 dependency file not detected
@@ -43,16 +61,23 @@ public:
     long long GetCounterDuration();
 
 private:
+    int CheckResources(const std::string &packageName, std::string &errorInfo);
     void GetCounterId(std::vector<std::string> &pidList);
     void KillCounter();
     int Capture();
+    void SetPerm(ExecutePermissions code);
+    ExecutePermissions GetPerm();
 
 private:
-    bool isStop = false;
+    bool isSandBoxWrite = false;
+    ExecutePermissions originalEP = EP_INVALID;
+    GcStatus gcStatus = GC_INIT;
     long long startCaptureTime = 0;
     long long captureDuration = 0;
     std::vector<std::string> fileList;
     std::string sandBoxPath;
+    std::string initCheckPath;
+    std::map<std::string, std::string> initMap;
 
 private:
     const long long constDefaultCaptureDuration = 5000; // Unit ms
@@ -60,7 +85,7 @@ private:
     const std::string constMvFile = "mv -f ";
     const std::string constKillProcess = "kill -9  ";
     const std::string constGetCounterId = "pidof counters_collector";
-    const std::string constRmCsv = "rm /data/local/tmp/gpu_conter.csv";
+    const std::string constRmCsv = "rm /data/local/tmp/gpu_counter.csv";
     const std::string constAddPermissionsCounter = "chmod 777 /bin/counters_collector";
     const std::string constCmd =
         "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt &";
@@ -78,7 +103,7 @@ private:
     const std::string constProductInfo = "Mate 60 Pro";
 
 private:
-    GpuCounter() {};
+    GpuCounter();
     GpuCounter(const GpuCounter &);
     GpuCounter &operator = (const GpuCounter &);
 };
