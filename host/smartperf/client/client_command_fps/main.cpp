@@ -353,7 +353,7 @@ int main(int argc, char *argv[])
         printf("the args of num must be not-null!\n");
     } else {
         int num = atoi(argv[1]);
-        if (num < 0) {
+        if (num <= 0) {
             printf("set num:%d not valid arg\n", num);
         }
         printf("set num:%d success\n", num);

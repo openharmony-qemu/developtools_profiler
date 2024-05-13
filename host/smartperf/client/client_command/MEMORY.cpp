@@ -76,7 +76,7 @@ std::map<std::string, std::string> MEMORY::GetRamInfo() const
     }
     std::vector<std::string> paramsInfo;
     procRamInfo = GetPssRamInfo(fd, paramsInfo);
-    if (procRamInfo.find("gpuPss") != procRamInfo.end() && procRamInfo["gpuPss"].empty()) {
+    if (procRamInfo.find("arktsHeapPss") != procRamInfo.end() && procRamInfo["gpuPss"].empty()) {
         procRamInfo["gpuPss"] = "NA";
         procRamInfo["graphicPss"] = "NA";
         procRamInfo["arktsHeapPss"] = "NA";

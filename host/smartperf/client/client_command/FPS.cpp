@@ -42,32 +42,25 @@ std::map<std::string, std::string> FPS::ItemData()
         prevResultFpsInfo = fpsInfoResult;
     }
     result["refreshrate"] = GetScreenInfo();
-    result["fps"] = std::to_string(fpsInfoResult.fps);
-    LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
-    LOGI("result.curTime====: %s", std::to_string(fpsInfoResult.curTime).c_str());
-    std::string jitterStr = "";
-    std::string split = "";
-    for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
-        if (i > 0) {
-            split = ";;";
+    if (processFlag) {
+        result["fps"] = "NA";
+        result["fpsJitters"] = "NA";
+    } else {
+        result["fps"] = std::to_string(fpsInfoResult.fps);
+        LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
+        LOGI("result.curTime====: %s", std::to_string(fpsInfoResult.curTime).c_str());
+        std::string jitterStr = "";
+        std::string split = "";
+        for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
+            if (i > 0) {
+                split = ";;";
+            }
+            jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
         }
-        jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
+        result["fpsJitters"] = jitterStr;
+        LOGI("result.jitters====: %s", jitterStr.c_str());
+        SetFpsCurrentFpsTime(fpsInfoResult);
     }
-    result["fpsJitters"] = jitterStr;
-    LOGI("result.jitters====: %s", jitterStr.c_str());
-    if (pkgName.length() > 0) {
-        std::string processId = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(pkgName);
-        LOGI("FPS::processId -- %s", processId.c_str());
-        if (processId.empty()) {
-            result["fps"] = "NA";
-            result["fpsJitters"] = "NA";
-        }
-    }
-
-    SetFpsCurrentFpsTime(fpsInfoResult);
-
     LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
 }
@@ -126,6 +119,7 @@ void FPS::GetCurrentTime()
 
 FpsInfo FPS::GetFpsInfo()
 {
+    processFlag = false;
     fpsInfoMax.fps = 0;
     if (pkgName.empty()) {
         return fpsInfoMax;
@@ -137,7 +131,16 @@ FpsInfo FPS::GetFpsInfo()
         GetCurrentTime();
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        fpsInfoMax.Clear();
+        std::string processId = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        processId = sp.GetPidByPkg(pkgName);
+        LOGI("FPS::processId -- %s", processId.c_str());
+        if (processId.empty()) {
+            processFlag = true;
+            fpsInfoMax.Clear();
+        } else {
+            fpsInfoMax.Clear();
+        }
     }
     return fpsInfoMax;
 }
@@ -222,7 +225,7 @@ void FPS::GetSameTimeNums()
 
 bool FPS::IsForeGround()
 {
-    const std::string cmd = "hidumper -s WindowManagerService -a -a";
+    const std::string cmd = "aa dump -l";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

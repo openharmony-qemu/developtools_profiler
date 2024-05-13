@@ -101,6 +101,7 @@ private:
     bool isFoundBundleName = false;
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
+    bool processFlag = false;
 };
 }
 }
