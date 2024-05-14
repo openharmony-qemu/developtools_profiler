@@ -42,6 +42,7 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
 double ParseSlideFpsTrace::CalculateTime()
 {
     std::string line;
+    int two = 2;
     while (getline(infile, line)) {
         if (line.find("H:touchEventDispatch") != std::string::npos) {
             count++;
@@ -49,32 +50,58 @@ double ParseSlideFpsTrace::CalculateTime()
                 needTime = true;
                 frameNow = 0;
                 touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+                swiperFlingFlag = 0;
             }
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
             doCompositionTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
-            if (flagWeb) {
+        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
+            line.find("H:APP_LIST_FLING,") != std::string::npos) {
+            listFlag++;
+            if (listFlag == two) {
                 completeTime = doCompositionTime;
                 frameNum = frameNow;
-                flagWeb = false;
             }
-        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
-            line.find("H:APP_LIST_FLING 0") != std::string::npos) {
-            flagWeb = true;
         }
-        if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {
-            frameNow = 1;
-            needTime = false;
-            responseTime = doCompositionTime;
-        }
+        AppSwiperScroll(line);
     }
     if (completeTime == 0 || responseTime == 0) {
         return -1;
     } else {
-        return frameNum / (completeTime - responseTime);
+        double fps = (frameNum - 1) / (completeTime - responseTime);
+        double flagNum = 120;
+        double flagNumb = 121;
+        if (fps > flagNum && fps < flagNumb) {
+            fps = flagNum;
+        }
+        return fps;
     }
     return -1.0;
 }
+
+void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
+{
+    if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
+        if (swiperScrollFlag == 0) {
+            touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            needTime = true;
+            swiperScrollFlag = 1;
+        }
+    }
+    if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
+        if (swiperFlingFlag == 1) {
+            completeTime = doCompositionTime;
+            frameNum = frameNow;
+        }
+        swiperFlingFlag++;
+    }
+    if (touchTime != 0 && (doCompositionTime - touchTime) > completionTime && needTime) {
+        frameNow = 1;
+        needTime = false;
+        responseTime = doCompositionTime;
+    }
+}
+
 std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr) const
 {
     size_t num = 7;

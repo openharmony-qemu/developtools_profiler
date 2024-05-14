@@ -27,11 +27,10 @@ public:
     double CalculateTime();
     std::string GetLineTime(std::string lineStr) const;
     std::string CutString(std::string lineStr, const std::string &start, const std::string &end, size_t offset) const;
-
+    void AppSwiperScroll(std::string line);
 private:
     std::ifstream infile;
     bool needTime = false;
-    bool flagWeb = false;
     int frameNum = 0;
     int frameNow = 0;
     int count = 0;
@@ -41,6 +40,9 @@ private:
     double doCompositionTime = 0;
     double completionTime = 0.035;
     double completeTime = 0;
+    int swiperScrollFlag = 0;
+    int swiperFlingFlag = 0;
+    int listFlag = 0;
 };
 }
 }

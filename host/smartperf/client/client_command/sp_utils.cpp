@@ -314,7 +314,7 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo()
             continue;
         }
         std::string clusterName = std::string(ptr->d_name);
-        clusterNames += clusterNames + " ";
+        clusterNames += clusterName + " ";
         resultMap["cpu_cluster_name"] = clusterNames;
         policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
