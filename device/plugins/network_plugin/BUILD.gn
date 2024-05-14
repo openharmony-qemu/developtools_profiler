@@ -45,7 +45,7 @@ ohos_source_set("networkplugin_source") {
 }
 ohos_shared_library("networkplugin") {
   output_name = "networkplugin"
-
+  version_script = "libnetwork_plugin.map"
   deps = [ ":networkplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

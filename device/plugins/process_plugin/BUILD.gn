@@ -46,6 +46,7 @@ ohos_source_set("processplugin_source") {
 
 ohos_shared_library("processplugin") {
   output_name = "processplugin"
+  version_script = "libprocess_plugin.map"
   deps = [ ":processplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

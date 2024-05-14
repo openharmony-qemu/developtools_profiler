@@ -16,6 +16,7 @@ import("../../base/config.gni")
 
 ohos_shared_library("xpowerplugin") {
   output_name = "xpowerplugin"
+  version_script = "libxpower_plugin.map"
   sources = [
     "src/power_message_queue.cpp",
     "src/xpower_module.cpp",

@@ -50,7 +50,7 @@ ohos_source_set("hiebpfplugin_source") {
 
 ohos_shared_library("hiebpfplugin") {
   output_name = "hiebpfplugin"
-
+  version_script = "libhiebpf_plugin.map"
   deps = [ ":hiebpfplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [

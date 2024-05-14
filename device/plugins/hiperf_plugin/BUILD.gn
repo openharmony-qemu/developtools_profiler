@@ -56,6 +56,7 @@ ohos_source_set("hiperfplugin_source") {
 
 ohos_shared_library("hiperfplugin") {
   deps = [ ":hiperfplugin_source" ]
+  version_script = "libhiperf_plugin.map"
   if (current_toolchain != host_toolchain) {
     defines = [
       "HAVE_HILOG",

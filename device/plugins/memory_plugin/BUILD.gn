@@ -52,7 +52,7 @@ ohos_source_set("memdataplugin_source") {
 
 ohos_shared_library("memdataplugin") {
   output_name = "memdataplugin"
-
+  version_script = "libmemory_plugin.map"
   deps = [ ":memdataplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
