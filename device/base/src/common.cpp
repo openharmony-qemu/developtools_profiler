@@ -444,13 +444,7 @@ const char* RealPath(std::string &filePath)
         return filePath.c_str();
     }
     std::vector<std::string> paths;
-    for (auto charac : filePath) {
-        if (charac != '/') {
-            (paths.back()) += charac;
-        } else {
-            paths.emplace_back("");
-        }
-    }
+    SplitString(filePath, "/", paths)
     std::vector<std::string> validPaths;
     for (std::string& pathName: paths) {
         if (pathName == "..") {
