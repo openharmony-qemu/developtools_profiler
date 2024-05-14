@@ -59,7 +59,7 @@ constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
 
 using OHOS::Developtools::NativeDaemon::buildArchType;
-static std::shared_ptr<HookSocketClient> g_hookClient;
+static std::shared_ptr<HookSocketClient> g_hookClient {nullptr};
 static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::mutex g_tagMapMutex;
@@ -238,6 +238,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_hookPid = GetRealPid();
     g_mallocTimes = 0;
+    g_hookClient.reset();
     if (g_hookClient != nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "hook already started");
         return true;

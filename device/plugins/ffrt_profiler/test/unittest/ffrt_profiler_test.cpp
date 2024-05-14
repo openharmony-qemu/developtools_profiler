@@ -62,6 +62,7 @@ public:
         cmdStr += "smb_pages: 16384\n"
                 "flush_interval: 5\n"
                 "block: true\n"
+                "clock_id: BOOTTIME\n"
             "  }\n"
             "}\n"
             "CONFIG\n";
