@@ -31,7 +31,7 @@ public:
     double GetTimes(std::string line, const std::string &sign) const;
     void GetScreenInfo(std::string line);
     void CalculateRoundTime();
-    void AppList(std::string line, const std::string &signS, std::string &signF);
+    void AppList(std::string line, const std::string &signS, const std::string &signF);
     void AppSwiperScroll(std::string line, const std::string &signS);
 private:
     std::ifstream infile;

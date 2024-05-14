@@ -55,7 +55,7 @@ double ParseSlideFpsTrace::CalculateTime()
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
             doCompositionTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
-        } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
+        } else if (line.find("H:WEB_LIST_FLING,") != std::string::npos ||
             line.find("H:APP_LIST_FLING,") != std::string::npos) {
             listFlag++;
             if (listFlag == two) {

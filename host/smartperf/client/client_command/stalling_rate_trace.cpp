@@ -50,7 +50,7 @@ double StallingRateTrace::CalculateTime()
         AppList(line, signS, signF);
         AppSwiperScroll(line, signS);
         if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
-            if (swiperScrollFlag == 1) {
+            if (swiperFlingFlag == 1) {
                 dynamicFinishTime = GetTimes(line, signF);
                 animalFlag = false;
             }
@@ -85,7 +85,7 @@ double StallingRateTrace::CalculateTime()
     return frameLossRate;
 }
 
-void StallingRateTrace::AppList(std::string line, const std::string &signS, std::string &signF)
+void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
         line.find("H:APP_LIST_FLING,") != std::string::npos ||
