@@ -89,9 +89,7 @@ std::string ControlCallCmd::TimeDelay()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
-    std::thread thGetHisysId2 = sd.ThreadGetHisysIdComplete();
-    std::thread thGetHisysId3 = sd.ThreadGetHisysIdMaxFrame();
+    std::thread thGetHisysId = sd.ThreadGetHisysIds();
     std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
     std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarComplete);
     std::future<std::string> futureResult3 = std::async(std::launch::async, SPUtils::GetRadarFrame);
@@ -100,8 +98,6 @@ std::string ControlCallCmd::TimeDelay()
     std::string str3 = futureResult3.get();
     thGetTrace.join();
     thGetHisysId.join();
-    thGetHisysId2.join();
-    thGetHisysId3.join();
     double strResponseTime = radar.ParseRadarResponse(str);
     stream << strResponseTime;
     double strCompleteTime = radar.ParseRadarComplete(str2);
@@ -135,15 +131,13 @@ std::string ControlCallCmd::SlideList()
         time = pcrt.ParseResponseTrace(traceName);
     } else {
         std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-        std::thread thGetHisysId = sd.ThreadGetHisysIdResponse();
-        std::thread thGetHisysId2 = sd.ThreadGetHisysIdMaxFrame();
+        std::thread thGetHisysId = sd.ThreadGetHisysIds();
         std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
         std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
         std::string str = futureResult.get();
         std::string str2 = futureResult2.get();
         thGetTrace.join();
         thGetHisysId.join();
-        thGetHisysId2.join();
         double responseTime = radar.ParseRadarResponse(str);
         stream << responseTime;
         std::string maxFrame = radar.ParseRadarMaxFrame(str2);
@@ -169,7 +163,7 @@ std::string ControlCallCmd::GetFrame()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_frame.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("frame", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysId();
+    std::thread thGetHisysId = sd.ThreadGetHisysIds();
     std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
     thGetHisysId.join();
@@ -315,15 +309,13 @@ std::string ControlCallCmd::GetAppStartTime() const
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysIdStart();
-    std::thread thGetHisysIdMaxFrame = sd.ThreadGetHisysIdMaxFrame();
+    std::thread thGetHisysId = sd.ThreadGetHisysIds();
     std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadar);
     std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
     std::string str = futureResult.get();
     std::string str2 = futureResult2.get();
     thGetTrace.join();
     thGetHisysId.join();
-    thGetHisysIdMaxFrame.join();
     std::string resultStream = radar.ParseRadarAppStrart(str);
     std::string resultStream2 = radar.ParseRadarMaxFrame(str2);
     LOGI("resultStream====: %s", resultStream.c_str());

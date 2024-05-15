@@ -27,16 +27,10 @@ public:
     std::thread ThreadGetLayout();
     void InputEvent(const std::string &point);
     std::thread ThreadInputEvent(const std::string &point);
-    void GetHisysIdResponse() const;
-    std::thread ThreadGetHisysIdResponse() const;
-    void GetHisysIdComplete() const;
-    std::thread ThreadGetHisysIdComplete() const;
+    void GetHisysIdAndKill();
+    std::thread ThreadGetHisysIds();
     void GetHisysId();
     std::thread ThreadGetHisysId();
-    void GetHisysIdStart() const;
-    std::thread ThreadGetHisysIdStart() const;
-    void GetHisysIdMaxFrame() const;
-    std::thread ThreadGetHisysIdMaxFrame() const;
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();

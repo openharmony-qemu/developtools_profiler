@@ -47,19 +47,19 @@ double StallingRateTrace::CalculateTime()
     std::string signF = "F|";
     std::string line;
     while (getline(infile, line)) {
-        if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
-            line.find("H:APP_LIST_FLING,") != std::string::npos ||
-            line.find("H:WEB_LIST_FLING,") != std::string::npos ||
-            line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos) {
-            if (animalFlag) {
+        AppList(line, signS, signF);
+        AppSwiperScroll(line, signS);
+        if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
+            if (swiperFlingFlag == 1) {
                 dynamicFinishTime = GetTimes(line, signF);
-                LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
                 animalFlag = false;
-            } else {
-                dynamicStartTime = GetTimes(line, signS);
-                LOGI("dynamicStartTime=====: %s", std::to_string(dynamicStartTime).c_str());
-                animalFlag = true;
             }
+            if (dynamicFinishTime == 0) {
+                swiperFlingFlag = 0;
+            } else if (dynamicStartTime != 0) {
+                break;
+            }
+            swiperFlingFlag++;
         }
         if (animalFlag) {
             if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
@@ -83,6 +83,38 @@ double StallingRateTrace::CalculateTime()
         LOGI("frameLossRate=====: %s", std::to_string(frameLossRate).c_str());
     }
     return frameLossRate;
+}
+
+void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
+{
+    if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
+        line.find("H:APP_LIST_FLING,") != std::string::npos ||
+        line.find("H:WEB_LIST_FLING,") != std::string::npos ||
+        line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos) {
+        if (animalFlag) {
+            dynamicFinishTime = GetTimes(line, signF);
+            LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
+            animalFlag = false;
+        } else {
+            dynamicStartTime = GetTimes(line, signS);
+            LOGI("dynamicStartTime=====: %s", std::to_string(dynamicStartTime).c_str());
+            animalFlag = true;
+            swiperScrollFlag = 0;
+            frameLossTime = 0;
+        }
+    }
+}
+
+void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &signS)
+{
+    if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
+        if (swiperScrollFlag == 0) {
+            dynamicStartTime = GetTimes(line, signS);
+            frameLossTime = 0;
+            swiperScrollFlag = 1;
+            animalFlag = true;
+        }
+    }
 }
 
 void StallingRateTrace::CalculateRoundTime()
@@ -146,7 +178,7 @@ int StallingRateTrace::GetFenceId(std::string line) const
 std::string StallingRateTrace::GetOnScreenTimeStart(std::string line) const
 {
     std::string startTime = "0";
-    size_t subNum = 5;
+    size_t subNum = 7;
     size_t position1 = line.find("....");
     size_t position2 = line.find(":");
     startTime = line.substr(position1 + subNum, position2 - position1 - subNum);
@@ -159,7 +191,7 @@ double StallingRateTrace::GetTimes(std::string line, const std::string &sign) co
     size_t position1 = line.find("....");
     size_t position2 = line.find(":");
     if (line.find(sign) != std::string::npos) {
-        size_t subNum = 5;
+        size_t subNum = 7;
         signTime = std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
     }
     return signTime;

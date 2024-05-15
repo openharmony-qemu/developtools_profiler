@@ -31,6 +31,8 @@ public:
     double GetTimes(std::string line, const std::string &sign) const;
     void GetScreenInfo(std::string line);
     void CalculateRoundTime();
+    void AppList(std::string line, const std::string &signS, const std::string &signF);
+    void AppSwiperScroll(std::string line, const std::string &signS);
 private:
     std::ifstream infile;
     double nowFrameRate = 0;
@@ -45,6 +47,8 @@ private:
     double dynamicFinishTime = 0;
     bool animalFlag = false;
     bool upperScreenFlag = false;
+    int swiperScrollFlag = 0;
+    int swiperFlingFlag = 0;
 };
 }
 }
