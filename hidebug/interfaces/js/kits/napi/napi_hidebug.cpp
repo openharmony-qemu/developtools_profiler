@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <ctime>
 #include <malloc.h>
+#include <parameters.h>
 #include <unistd.h>
 
 #include "application_context.h"
@@ -71,6 +72,8 @@ const std::string SLASH_STR = "/";
 const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
 const std::string HEAPSNAPSHOT_FILE = ".heapsnapshot";
+const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
+const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 enum ErrorCode {
     PERMISSION_ERROR = 201,
     PARAMETER_ERROR = 401,
@@ -930,13 +933,28 @@ static bool CreateSanBoxDir()
     return true;
 }
 
+static bool CheckVersionType(const std::string& type, const std::string& key)
+{
+    auto versionType = OHOS::system::GetParameter(key, "unknown");
+    return (versionType.find(type) != std::string::npos);
+}
+
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
+    if (!CheckVersionType("beta", KEY_HIVIEW_USER_TYPE) &&
+        !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
+        HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
+        return CreateUndefined(env);
+    }
     std::string type = "";
     int32_t value = 0;
     bool enabledDebugLog = false;
     if (!GetAppResourceLimitParam(env, info, type, value, enabledDebugLog)) {
         return CreateUndefined(env);
+    }
+    if (type == "js_heap") { // js_heap set value
+        NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
+        engine->SetJsDumpThresholds(value);
     }
     auto abilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!abilityManager) {
