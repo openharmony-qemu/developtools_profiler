@@ -36,7 +36,8 @@ enum OptimizeMessageType : uint32_t {
     MESSAGE_APP_DETAIL = 1 << 2,
     MESSAGE_COMPONENT_TOP = 1 << 3,
     MESSAGE_ABNORMAL_EVENTS = 1 << 4,
-    MESSAGE_OPTIMIZE_MAX = (MESSAGE_ABNORMAL_EVENTS << 1) - 1,
+    MESSAGE_THERMAL_REPORT = 1 << 5,
+    MESSAGE_OPTIMIZE_MAX = (MESSAGE_THERMAL_REPORT << 1) - 1,
 };
 struct PowerOptimizeData {
     std::unique_ptr<uint8_t[]> baseData; // save the powere message data
