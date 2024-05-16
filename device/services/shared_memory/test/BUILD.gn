@@ -31,7 +31,6 @@ ohos_unittest("shared_memory_ut") {
   include_dirs = [
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
-    "//third_party/googletest/googletest/include/gtest",
   ]
   configs = [ ":module_private_config" ]
   deps = [
@@ -45,7 +44,12 @@ ohos_unittest("shared_memory_ut") {
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "googletest:gtest",
+    "hilog:libhilog",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

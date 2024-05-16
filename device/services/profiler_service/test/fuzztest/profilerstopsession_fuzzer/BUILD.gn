@@ -36,7 +36,14 @@ ohos_fuzztest("ProfilerStopSessionFuzzTest") {
     "../../..:profiler_service",
     "../../../../plugin_service:hiprofiler_plugin_service",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "abseil-cpp:absl_sync",
+    "grpc:grpc",
+    "grpc:grpcxx",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
+  ]
 }
 
 ###############################################################################

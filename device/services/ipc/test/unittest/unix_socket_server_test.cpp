@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "service_entry.h"
 #include "unix_socket_client.h"
 #include "unix_socket_server.h"

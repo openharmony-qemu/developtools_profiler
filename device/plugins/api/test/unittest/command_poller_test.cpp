@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 
-#include <gmock/gmock.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
 #include "command_poller.h"
+
+#include <gtest/gtest.h>
 
 #include "plugin_manager.h"
 #include "plugin_service.ipc.h"
@@ -37,7 +35,7 @@ public:
         }
         return true;
     }
-    virtual bool UnloadPlugin(const std::string& pluginPath)
+    bool UnloadPlugin(const std::string& pluginPath) override
     {
         if (pluginPath == "existplugin") {
             return true;
@@ -46,7 +44,7 @@ public:
         }
         return true;
     }
-    virtual bool UnloadPlugin(const uint32_t pluginId)
+    bool UnloadPlugin(const uint32_t pluginId) override
     {
         if (pluginId == 0) {
             return false;
@@ -54,7 +52,7 @@ public:
         return true;
     }
 
-    virtual bool CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
+    bool CreatePluginSession(const std::vector<ProfilerPluginConfig>& config) override
     {
         if (config[0].name() == "existplugin") {
             return true;
@@ -63,15 +61,15 @@ public:
         }
         return true;
     }
-    virtual bool DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
+    bool DestroyPluginSession(const std::vector<uint32_t>& pluginIds) override
     {
         if (pluginIds[0] != 1) {
             return false;
         }
         return true;
     }
-    virtual bool StartPluginSession(const std::vector<uint32_t>& pluginIds,
-                                        const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
+    bool StartPluginSession(const std::vector<uint32_t>& pluginIds, const std::vector<ProfilerPluginConfig>& config,
+                            PluginResult& result) override
     {
         if (pluginIds[0] == 0) {
             return false;
@@ -84,7 +82,7 @@ public:
         }
         return true;
     }
-    virtual bool StopPluginSession(const std::vector<uint32_t>& pluginIds)
+    bool StopPluginSession(const std::vector<uint32_t>& pluginIds) override
     {
         if (pluginIds[0] == 0) {
             return false;
@@ -92,34 +90,34 @@ public:
         return true;
     }
 
-    virtual bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
-                              bool isProtobufSerialize = true)
+    bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
+                      bool isProtobufSerialize = true) override
     {
         if (bufferSize == 0) {
             return false;
         }
         return true;
     }
-    virtual bool ResetWriter(uint32_t pluginId)
+    bool ResetWriter(uint32_t pluginId) override
     {
         if (pluginId == 0) {
             return false;
         }
         return true;
     }
-    virtual void SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
+    void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override
     {
         this->commandPoller_ = p;
     }
 
-    virtual bool ReportPluginBasicData(const std::vector<uint32_t>& pluginIds)
+    bool ReportPluginBasicData(const std::vector<uint32_t>& pluginIds) override
     {
         return true;
     }
+
 private:
     CommandPollerPtr commandPoller_;
 };
-
 
 class CommandPollerTest : public ::testing::Test {
 protected:
@@ -212,4 +210,4 @@ HWTEST_F(CommandPollerTest, DestoryCmdTest, TestSize.Level1)
     EXPECT_FALSE(commandPoller->OnDestroySessionCmd(failed2Cmd));
     EXPECT_FALSE(commandPoller->OnDestroySessionCmd(failed3Cmd));
 }
-}
+} // namespace

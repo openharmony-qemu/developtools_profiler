@@ -26,17 +26,18 @@ ohos_shared_library("xpowerplugin") {
     "include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/bounds_checking_function/include",
   ]
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
     "../../base:hiprofiler_base",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_static",
+      "hilog:libhilog",
+      "protobuf:protobuf_lite",
+    ]
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   install_enable = true
@@ -46,12 +47,7 @@ ohos_shared_library("xpowerplugin") {
 
 ohos_executable("xpowerdecoder") {
   output_name = "xpowerdecoder"
-  include_dirs = [
-    "//third_party/bounds_checking_function/include",
-    "//third_party/protobuf/src",
-    "//third_party/cJSON",
-    "./include",
-  ]
+  include_dirs = [ "./include" ]
   sources = [
     "test/xpower_decoder.cpp",
     "test/xpower_main.cpp",
@@ -60,8 +56,6 @@ ohos_executable("xpowerdecoder") {
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/cJSON:cjson_static",
   ]
   cflags = [
     "-Wno-error=inline-asm",
@@ -70,7 +64,13 @@ ohos_executable("xpowerdecoder") {
   ldflags = [ "-rdynamic" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_static",
+      "cJSON:cjson_static",
+      "hilog:libhilog",
+      "openssl:libcrypto_shared",
+      "protobuf:protobuf_lite",
+    ]
   }
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

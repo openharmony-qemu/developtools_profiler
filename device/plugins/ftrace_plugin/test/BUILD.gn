@@ -47,15 +47,12 @@ ohos_unittest("ftrace_plugin_ut") {
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
   include_dirs = [
     "../include",
     "../../../memory_plugin/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
     "//commonlibrary/c_utils/base/include",
   ]
   cflags = [
@@ -63,8 +60,12 @@ ohos_unittest("ftrace_plugin_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
+    "bounds_checking_function:libsec_static",
+    "googletest:gtest",
     "hilog:libhilog",
     "hiview:libucollection_client",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

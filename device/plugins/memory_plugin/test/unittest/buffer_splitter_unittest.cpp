@@ -13,10 +13,7 @@
  * limitations under the License.
  */
 #include <memory>
-
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "buffer_splitter.h"
 
 using namespace testing::ext;

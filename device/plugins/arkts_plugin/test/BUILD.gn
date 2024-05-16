@@ -29,8 +29,6 @@ ohos_unittest("arktsplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/arkts_plugin:arkts_source",
     "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/arkts_plugin:arkts_plugin_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/openssl:libcrypto_shared",
   ]
   include_dirs = [
     "../include",
@@ -38,14 +36,17 @@ ohos_unittest("arktsplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/base/include",
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

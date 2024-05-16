@@ -14,8 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 
 #include "hook_socket_client.h"
 #include "hook_service.h"

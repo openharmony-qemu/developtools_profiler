@@ -56,7 +56,10 @@ ohos_shared_library("libffrt_profiler") {
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
   ]
 
-  external_deps = [ "init:libbegetutil" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "init:libbegetutil",
+  ]
 
   defines = []
   if (current_toolchain != host_toolchain) {

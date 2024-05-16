@@ -12,8 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <string>
 
 #include "process_utils.h"

@@ -29,8 +29,6 @@ ohos_unittest("plugin_module_api_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/stream_data:stream_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest",
   ]
   include_dirs = [
     "../",
@@ -40,8 +38,6 @@ ohos_unittest("plugin_module_api_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/device/plugins/api/src",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin/src/buffer_splitter.cpp",
@@ -57,11 +53,14 @@ ohos_unittest("plugin_module_api_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
+    "bounds_checking_function:libsec_static",
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
+    "googletest:gtest",
     "graphic_2d:librender_service_client",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

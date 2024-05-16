@@ -19,8 +19,6 @@ config("shared_memory_config") {
     "include",
     "../../base/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
-    "//third_party/bounds_checking_function/include",
-    "//commonlibrary/c_utils/base/include",
   ]
 }
 
@@ -34,16 +32,14 @@ ohos_source_set("shared_memory_source") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
 
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
-    "//third_party/bounds_checking_function:libsec_static",
-  ]
-
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
+      "bounds_checking_function:libsec_static",
       "c_utils:utils",
       "hilog:libhilog",
+      "protobuf:protobuf",
+      "protobuf:protobuf_lite",
     ]
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -57,6 +53,7 @@ ohos_shared_library("shared_memory") {
     external_deps = [
       "c_utils:utils",
       "hilog:libhilog",
+      "protobuf:protobuf_lite",
     ]
   }
   install_enable = true

@@ -39,7 +39,6 @@ ohos_unittest("xpowerplugin_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
     "../../../base:hiprofiler_base",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
 
   include_dirs = [
@@ -47,8 +46,6 @@ ohos_unittest("xpowerplugin_ut") {
     "../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
 
   cflags = [
@@ -56,7 +53,13 @@ ohos_unittest("xpowerplugin_ut") {
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

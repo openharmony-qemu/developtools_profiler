@@ -25,20 +25,21 @@ ohos_source_set("hisyseventplugin_source") {
     "include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/bounds_checking_function/include",
   ]
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hisysevent_data:hisysevent_data_encoder",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_static",
+      "hilog:libhilog",
+      "protobuf:protobuf_lite",
+    ]
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
 }

@@ -29,15 +29,19 @@ ohos_fuzztest("HidumpStartPluginFuzzTest") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/hidump_plugin:hidumpplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   include_dirs = [
     "../../../include",
     "../../../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/bounds_checking_function/include",
   ]
 }
 

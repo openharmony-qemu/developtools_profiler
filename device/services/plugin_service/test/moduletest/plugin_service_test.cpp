@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 
 #include "plugin_service.ipc.h"
 #include "socket_context.h"

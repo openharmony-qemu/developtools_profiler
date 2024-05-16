@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "ipc_generator_impl.h"
 
 using namespace testing::ext;

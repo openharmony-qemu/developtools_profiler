@@ -17,8 +17,7 @@
 #include <fcntl.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <thread>
 #include <ifaddrs.h>
 #include <arpa/inet.h>

@@ -28,21 +28,24 @@ ohos_unittest("hidumpplugin_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/hidump_plugin:hidumpplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
   include_dirs = [
     "../include",
     "../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

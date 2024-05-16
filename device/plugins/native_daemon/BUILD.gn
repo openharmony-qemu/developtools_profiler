@@ -88,8 +88,6 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
-    "//third_party/bounds_checking_function/include",
-    "//third_party/googletest/googletest/include",
   ]
 
   include_dirs += [
@@ -117,9 +115,6 @@ ohos_executable("native_daemon") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
     "../../base:hiprofiler_base",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/openssl:libcrypto_shared",
-    "//third_party/zlib:libz",
   ]
 
   if (hiprofiler_use_libunwind) {
@@ -130,10 +125,15 @@ ohos_executable("native_daemon") {
     "ability_base:extractortool",
     "access_token:libaccesstoken_sdk",
     "access_token:libtoken_setproc",
+    "bounds_checking_function:libsec_static",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
+    "zlib:libz",
   ]
 
   defines = [ "ENABLE_HAP_EXTRACTOR" ]

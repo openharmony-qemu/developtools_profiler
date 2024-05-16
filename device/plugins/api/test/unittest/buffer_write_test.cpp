@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
+#include <gtest/gtest.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 #include "buffer_writer.h"

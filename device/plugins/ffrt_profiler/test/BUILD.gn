@@ -52,7 +52,6 @@ ohos_unittest("ffrt_profiler_ut") {
 
   include_dirs = [
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
     "../service/include",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
@@ -72,7 +71,6 @@ ohos_unittest("ffrt_profiler_ut") {
   ]
 
   public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
@@ -91,8 +89,10 @@ ohos_unittest("ffrt_profiler_ut") {
   ]
 
   external_deps = [
+    "googletest:gtest",
     "hilog:libhilog",
     "init:libbegetutil",
+    "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

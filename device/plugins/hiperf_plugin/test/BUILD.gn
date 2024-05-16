@@ -34,8 +34,6 @@ ohos_unittest("hiperfplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//commonlibrary/c_utils/base/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
@@ -43,6 +41,7 @@ ohos_unittest("hiperfplugin_ut") {
   ]
   external_deps = [
     "c_utils:utils",
+    "googletest:gtest",
     "hilog:libhilog",
   ]
   configs = [ ":module_private_config" ]

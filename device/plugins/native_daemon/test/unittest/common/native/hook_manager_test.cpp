@@ -13,9 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "hook_manager.h"
 #include "hook_service.h"
 #include "hook_socket_client.h"

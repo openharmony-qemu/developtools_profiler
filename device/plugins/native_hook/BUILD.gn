@@ -51,8 +51,6 @@ ohos_source_set("native_hook_source") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
-    "//third_party/bounds_checking_function/include",
-    "//third_party/googletest/googletest/include",
   ]
   public_configs = [
     ":hook_config",
@@ -61,15 +59,15 @@ ohos_source_set("native_hook_source") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_lite",
     "../../base:hiprofiler_base",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/zlib:libz",
   ]
   if (hiprofiler_use_libunwind) {
     public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
   }
   external_deps = [
+    "bounds_checking_function:libsec_static",
     "hitrace:libhitracechain",
     "init:libbegetutil",
+    "zlib:libz",
   ]
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder_static" ]
@@ -113,12 +111,11 @@ ohos_executable("nativetest_c") {
     }
     external_deps = [ "hilog:libhilog" ]
   }
-  include_dirs = [ "//third_party/bounds_checking_function/include" ]
-  deps = [ "//third_party/bounds_checking_function:libsec_static" ]
   cflags = [
     "-Wno-error=inline-asm",
     "-O3",
   ]
+  external_deps += [ "bounds_checking_function:libsec_static" ]
   ldflags = [ "-rdynamic" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -173,13 +170,11 @@ ohos_executable("malloctest_cpp") {
     external_deps = [ "hilog:libhilog" ]
   }
 
-  include_dirs = [ "//third_party/bounds_checking_function/include" ]
-  deps = [ "//third_party/bounds_checking_function:libsec_static" ]
-
   cflags = [
     "-Wno-error=inline-asm",
     "-O3",
   ]
+  external_deps += [ "bounds_checking_function:libsec_static" ]
   ldflags = [ "-rdynamic" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -215,10 +210,8 @@ ohos_executable("statisticstest_cpp") {
     "-Wno-error=inline-asm",
     "-O3",
   ]
-
-  deps = [ "//third_party/bounds_checking_function:libsec_static" ]
-  include_dirs = [ "//third_party/bounds_checking_function/include" ]
   ldflags = [ "-rdynamic" ]
+  external_deps += [ "bounds_checking_function:libsec_static" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

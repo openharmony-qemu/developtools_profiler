@@ -58,15 +58,17 @@ action("hiebpf_data_cpp_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }
 
 ohos_source_set("hiebpf_data_cpp") {
   deps = [ ":hiebpf_data_cpp_gen" ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
   ]
+
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hiebpf_include_config" ]
   sources = hiebpf_data_codegen
@@ -76,9 +78,10 @@ ohos_source_set("hiebpf_data_cpp") {
 
 ohos_source_set("hiebpf_data_cpp_standard") {
   deps = [ ":hiebpf_data_cpp_gen" ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":hiebpf_include_config" ]

@@ -14,8 +14,7 @@
  */
 #include <cinttypes>
 #include <fstream>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <random>
 #include <string>
 

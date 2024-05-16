@@ -51,15 +51,21 @@ ohos_unittest("profiler_service_ut") {
     "../:profiler_service",
     "../../../base:hiprofiler_base",
   ]
-  include_dirs = [
-    "//third_party/googletest/googletest/include/gtest",
-    "${OHOS_PROFILER_DIR}/interfaces/kits",
-  ]
+  include_dirs = [ "${OHOS_PROFILER_DIR}/interfaces/kits" ]
   configs = [ ":cflags_config" ]
   if (use_clang_coverage) {
     defines = [ "COVERAGE_TEST" ]
   }
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "abseil-cpp:absl_sync",
+    "googletest:gtest",
+    "grpc:grpc",
+    "grpc:grpcxx",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 
