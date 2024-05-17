@@ -440,6 +440,9 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
 
 const char* RealPath(std::string &filePath)
 {
+    if (filePath.size() > 0 && (filePath.back() == '/' || filePath.back() == '.')) {
+        return nullptr;
+    }
     if (filePath.find('.') == -1) {
         return filePath.c_str();
     }
@@ -449,7 +452,7 @@ const char* RealPath(std::string &filePath)
     for (std::string& pathName: paths) {
         if (pathName == "..") {
             if (validPaths.size() == 0) {
-                return NULL;
+                return nullptr;
             } else {
                 validPaths.pop_back();
             }
@@ -457,14 +460,12 @@ const char* RealPath(std::string &filePath)
             validPaths.emplace_back(pathName);
         }
     }
-    if (validPaths.back() == "") {
-        validPaths.pop_back();
-    }
     filePath = "/";
     for (std::string &pathName : validPaths) {
         filePath += pathName;
         filePath += "/";
     }
+    filePath.pop_back();
     return filePath.c_str();
 }
 

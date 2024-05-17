@@ -692,7 +692,7 @@ void HookManager::WriteHookConfig()
 std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
     shareMemoryNmd_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("nmd " + std::to_string(pid),
-                                                                                 SHARED_MEMORY_SIZE);
+                                                                                SHARED_MEMORY_SIZE);
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
             if (item->pid == -1) {
