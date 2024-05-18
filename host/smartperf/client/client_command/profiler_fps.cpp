@@ -342,8 +342,6 @@ bool ProfilerFPS::IsForeGround()
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;
-    isFoundAppName = false;
-    isFoundBundleName = false;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return false;

@@ -328,10 +328,11 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
         LoadFile(policyFiles[i] + "/cpuinfo_max_freq", max);
         std::string min;
         LoadFile(policyFiles[i] + "/cpuinfo_min_freq", min);
+        std::string nameBase;
         if (!isTcpMessage) {
-            std::string nameBase = "cpu_c" + std::to_string(i + 1) + "_";
+            nameBase = "cpu_c" + std::to_string(i + 1) + "_";
         } else {
-            std::string nameBase = "cpu-c" + std::to_string(i + 1) + "-";
+            nameBase = "cpu-c" + std::to_string(i + 1) + "-";
         }
         resultMap[nameBase + "cluster"] = cpus;
         resultMap[nameBase + "max"] = max;
@@ -352,13 +353,8 @@ std::map<std::string, std::string> SPUtils::GetGpuInfo(bool isTcpMessage)
             SPUtils::LoadFile(path + "/max_freq", max);
             std::string min;
             SPUtils::LoadFile(path + "/min_freq", min);
-            if (isTcpMessage) [
-                resultMap["gpu-max-freq"] = max;
-                resultMap["gpu-min-freq"] = min;
-            ] else {
-                resultMap["gpu_max_freq"] = max;
-                resultMap["gpu_min_freq"] = min;
-            }
+            resultMap["gpu_max_freq"] = max;
+            resultMap["gpu_min_freq"] = min;
         }
     }
     return resultMap;

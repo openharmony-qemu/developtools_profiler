@@ -37,9 +37,9 @@ void ByTrace::ThreadGetTrace() const
     std::string result;
     std::string cmdString;
     if (access("/sys/kernel/tracing/hongmeng", F_OK) != -1) {
-        cmdString = "hitrace -t 5 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace -t 5 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
