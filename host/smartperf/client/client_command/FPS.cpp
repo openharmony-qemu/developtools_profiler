@@ -229,12 +229,11 @@ bool FPS::IsForeGround()
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;
-    isFoundAppName = false;
-    isFoundBundleName = false;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return false;
     }
+    bool tag = false;
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
         std::string line = buf;
         if (line.find(appLine) != std::string::npos) {
@@ -245,14 +244,14 @@ bool FPS::IsForeGround()
         }
         if (isFoundAppName || isFoundBundleName) {
             if (line.find("app state") != std::string::npos) {
-                bool tag = IsFindForeGround(line);
-                pclose(fd);
-                return tag;
+                tag = IsFindForeGround(line);
+                isFoundAppName = false;
+                isFoundBundleName = false;
             }
         }
     }
     pclose(fd);
-    return false;
+    return tag;
 }
 
 bool FPS::IsFindForeGround(std::string line) const

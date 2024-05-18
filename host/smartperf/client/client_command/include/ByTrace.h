@@ -28,8 +28,6 @@ public:
     void SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps, int mCurNum) const;
     // 开始抓trace线程
     void ThreadGetTrace() const;
-    // trace命令配置
-    void SetTraceCmd(const std::string &mTraceCmd) const;
     // 校验fps-jitters
     TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps) const;
     // 触发trace
@@ -52,12 +50,11 @@ private:
     mutable long long lastTriggerTime = -1;
     // 当前是否触发
     mutable long long currentTrigger = -1;
-    // traceCmd
-    mutable std::string traceCmd = "";
     // 低帧触发
     mutable int lowfps = -1;
     // 前2秒采的不准
     mutable int times = 0;
+    mutable bool isTaskCompleted = false;
 };
 }
 }
