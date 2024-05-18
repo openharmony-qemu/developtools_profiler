@@ -348,6 +348,7 @@ bool ProfilerFPS::IsForeGround()
     if (fd == nullptr) {
         return false;
     }
+    bool tag = false;
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
         std::string line = buf;
         if (line.find(appLine) != std::string::npos) {
@@ -358,14 +359,14 @@ bool ProfilerFPS::IsForeGround()
         }
         if (isFoundAppName || isFoundBundleName) {
             if (line.find("app state") != std::string::npos) {
-                bool tag = IsFindForeGround(line);
-                pclose(fd);
-                return tag;
+                tag = IsFindForeGround(line);
+                isFoundAppName = false;
+                isFoundBundleName = false;
             }
         }
     }
     pclose(fd);
-    return false;
+    return tag;
 }
 
 bool ProfilerFPS::IsFindForeGround(std::string line) const

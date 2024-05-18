@@ -256,9 +256,10 @@ static std::string GetSplitOne(std::string cmd)
 
 std::string SPUtils::GetDeviceInfoMap()
 {
+    bool isTcpMessage = false;
     std::map<std::string, std::string> deviceInfoMap;
-    std::map<std::string, std::string> cpuInfo = GetCpuInfo();
-    std::map<std::string, std::string> gpuInfo = GetGpuInfo();
+    std::map<std::string, std::string> cpuInfo = GetCpuInfo(isTcpMessage);
+    std::map<std::string, std::string> gpuInfo = GetGpuInfo(isTcpMessage);
     std::map<std::string, std::string> deviceInfo = GetDeviceInfo();
     deviceInfoMap.insert(cpuInfo.begin(), cpuInfo.end());
     deviceInfoMap.insert(gpuInfo.begin(), gpuInfo.end());
@@ -295,7 +296,7 @@ std::map<std::string, std::string> SPUtils::GetDeviceInfo()
     resultMap["fullname"] = fullname;
     return resultMap;
 }
-std::map<std::string, std::string> SPUtils::GetCpuInfo()
+std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
 {
     std::string clusterNames;
     std::vector<std::string> policyFiles;
@@ -314,8 +315,10 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo()
             continue;
         }
         std::string clusterName = std::string(ptr->d_name);
-        clusterNames += clusterName + " ";
-        resultMap["cpu_cluster_name"] = clusterNames;
+        if (!isTcpMessage) {
+            clusterNames += clusterName + " ";
+            resultMap["cpu_cluster_name"] = clusterNames;
+        }
         policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
     for (size_t i = 0; i < policyFiles.size(); i++) {
@@ -325,14 +328,18 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo()
         LoadFile(policyFiles[i] + "/cpuinfo_max_freq", max);
         std::string min;
         LoadFile(policyFiles[i] + "/cpuinfo_min_freq", min);
-        std::string nameBase = "cpu_c" + std::to_string(i + 1) + "_";
+        if (!isTcpMessage) {
+            std::string nameBase = "cpu_c" + std::to_string(i + 1) + "_";
+        } else {
+            std::string nameBase = "cpu-c" + std::to_string(i + 1) + "-";
+        }
         resultMap[nameBase + "cluster"] = cpus;
         resultMap[nameBase + "max"] = max;
         resultMap[nameBase + "min"] = min;
     }
     return resultMap;
 }
-std::map<std::string, std::string> SPUtils::GetGpuInfo()
+std::map<std::string, std::string> SPUtils::GetGpuInfo(bool isTcpMessage)
 {
     const std::vector<std::string> gpuCurFreqPaths = {
         "/sys/class/devfreq/fde60000.gpu/",
@@ -345,8 +352,13 @@ std::map<std::string, std::string> SPUtils::GetGpuInfo()
             SPUtils::LoadFile(path + "/max_freq", max);
             std::string min;
             SPUtils::LoadFile(path + "/min_freq", min);
-            resultMap["gpu_max_freq"] = max;
-            resultMap["gpu_min_freq"] = min;
+            if (isTcpMessage) [
+                resultMap["gpu-max-freq"] = max;
+                resultMap["gpu-min-freq"] = min;
+            ] else {
+                resultMap["gpu_max_freq"] = max;
+                resultMap["gpu_min_freq"] = min;
+            }
         }
     }
     return resultMap;
