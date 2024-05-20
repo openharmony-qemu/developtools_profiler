@@ -24,6 +24,7 @@ import { CirclePaint, PathFillPaint, TextPaint, LinePaint, ImagePaint} from '../
 import LineChartRenderer from '../renderer/LineChartRenderer';
 import LineData from '../data/LineData';
 import Utils from '../utils/Utils'
+import SPLogger from '../../../../utils/SPLogger';
 
 @Component
 @Preview
@@ -221,8 +222,19 @@ export class PathViewModel extends ScaleMode {
   public transMinY: number = 0;
   public onDoubleClick(event: ClickEvent) {
     this.currentXSpace = this.centerX * this.scaleX - this.centerX;
-    this.currentYSpace = this.centerY * this.scaleY - this.centerY;
-    let maxXBefore: number = this.paintArry[this.paintArry.length - 1].x;
+    this.currentYSpace = this.centerY * this.scaleY - this.centerY; 
+     let maxXBefore: number = 0;
+    try{
+      SPLogger.INFO(PathViewModel.name,'定义maxXBefore===========');
+      if(this.paintArry.length > 0){
+        SPLogger.INFO(PathViewModel.name,'maxXBefore :: this.paintArry.length = ' + this.paintArry.length);
+        maxXBefore = this.paintArry[this.paintArry.length - 1].x;
+      }
+      SPLogger.INFO(PathViewModel.name,'给maxXBefore赋值成功===========');
+    } catch (error) {
+      console.log(error);
+      SPLogger.ERROR(PathViewModel.name,'maxXBefore::' + error);
+    }
     let maxYBefore: number = Number.MIN_VALUE;
     let minYBefore: number = Number.MAX_VALUE;
     for (let i = 0; i < this.valuePaint.length; i++) {
@@ -235,8 +247,19 @@ export class PathViewModel extends ScaleMode {
     }
 
     this.ondraw();
-
-    let maxXAfter: number = this.paintArry[this.paintArry.length - 1].x;
+    let tag: string = 'maxXAfter'; 
+    let maxXAfter: number = 0;
+    try {
+      SPLogger.INFO(tag,'定义maxXAfter===========');
+      if(this.paintArry.length > 0) {
+        SPLogger.INFO(tag,'this.paintArry.length = ' + this.paintArry.length);
+        maxXAfter = this.paintArry[this.paintArry.length - 1].x;
+      }
+      SPLogger.INFO(tag,'给maxXAfter赋值成功===========');
+    } catch(error) {
+      console.log(error);
+      SPLogger.ERROR(tag,'maxXAfter::' + error);
+    }
     let maxYAfter: number = Number.MIN_VALUE;
     let minYAfter: number = Number.MAX_VALUE;
 
