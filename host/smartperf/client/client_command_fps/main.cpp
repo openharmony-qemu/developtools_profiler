@@ -311,6 +311,7 @@ static void GetFpsUniteInfo(int num)
     uniteLayer = GetSurFace();
     unsigned long oneSec = 1000000;
     std::string cmdResult;
+
     for (int i = 0; i < num; i++) {
         unsigned long runTime;
         gettimeofday(&start, nullptr);
@@ -325,6 +326,7 @@ static void GetFpsUniteInfo(int num)
                 LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
             }
         }
+
         FpsConfig fpsConfig;
         FpsConfig fpsUniteConfig;
         gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
@@ -334,6 +336,7 @@ static void GetFpsUniteInfo(int num)
         } else {
             printf("fps:%d|%lld\n", gfpsInfo.fps, gfpsInfo.currentFpsTime);
         }
+        
         fflush(stdout);
         gettimeofday(&end, nullptr);
         runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
