@@ -198,7 +198,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
             currLastTime += harTime;
             count--;
         }
-        int size = fpsInfoResult.currTimeStamps.size();
+        uint32_t size = fpsInfoResult.currTimeStamps.size();
         if (size <= 1) {
             return;
         }
