@@ -108,8 +108,8 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("Battery");
-    std::string::size_type strTwo = result.find("shell_back");
+    std::string::size_type strOne = result.find("timestamp");
+    std::string::size_type strTwo = result.find("soc_thermal");
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
