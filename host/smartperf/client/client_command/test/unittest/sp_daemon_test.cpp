@@ -109,7 +109,7 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("timestamp");
-    std::string::size_type strTwo = result.find("soc_thermal");
+    std::string::size_type strTwo = result.find("soc-thermal");
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
