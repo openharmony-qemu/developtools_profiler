@@ -203,8 +203,8 @@ std::string SmartPerfCommand::ExecCommand()
 
     if (callGpuCounterResult) {
         int i = 0;
-        std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        for (const auto& a = data.begin(); a != data.end(); ++a) {
+       const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
+        for (auto a = data.cbegin(); a != data.cend(); ++a) {
             printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
         }
 
