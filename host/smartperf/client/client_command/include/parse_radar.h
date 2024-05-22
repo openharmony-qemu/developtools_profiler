@@ -25,11 +25,18 @@ public:
     double ParseRadarStart(const std::string &string) const;
     double ParseRadarStartResponse(const std::string &string) const;
     double ParseRadarResponse(const std::string &string) const;
+    double ParseRadarDelayTime(const std::string &string, const std::string &target, const int &delayTime) const;
     std::string ParseRadarAppStrart(const std::string &string) const;
     double ParseRadarComplete(const std::string &string) const;
     std::string ExtractString(const std::string &str, const std::string &target) const;
     std::string ParseRadarFrame(const std::string &string) const;
     std::string ParseRadarMaxFrame(const std::string &string) const;
+    double GetMaxDelayTime(const int &delayTime, std::string value) const
+private:
+    int delayTimeResponse = 1000;
+    int delayTimeComplete = 2500;
+    std::string targetResponse = "\"RESPONSE_LATENCY\"";
+    std::string targetComplete = "\"E2E_LATENCY\"";
 };
 }
 }
