@@ -76,16 +76,16 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
     std::stringstream ss(string);
     std::string segment;
     int maxDelayTime = -1;
-    while (getline(ss, segment, "}")) {
+    while (getline(ss, segment, '}')) {
         if (segment.empty()) {
             continue;
         }
         std::string segments = segment.substr(1);
         std::stringstream ss2(segments);
         std::string pair;
-        while (getline(ss2, pair, ",")) {
-            std::string key = pair.substr(0, pair.find(":"));
-            std::string value = pair.substr(pair.find(":") + 1);
+        while (getline(ss2, pair, ',')) {
+            std::string key = pair.substr(0, pair.find(':'));
+            std::string value = pair.substr(pair.find(':') + 1);
             if (key == target) {
                 maxDelayTime = GetMaxDelayTime(delayTime, value);
             }
