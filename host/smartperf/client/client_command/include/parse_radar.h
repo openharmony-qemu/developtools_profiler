@@ -31,7 +31,7 @@ public:
     std::string ExtractString(const std::string &str, const std::string &target) const;
     std::string ParseRadarFrame(const std::string &string) const;
     std::string ParseRadarMaxFrame(const std::string &string) const;
-    double GetMaxDelayTime(const int &delayTime, std::string value) const
+    double GetMaxDelayTime(const int &delayTime, std::string value) const;
 private:
     int delayTimeResponse = 1000;
     int delayTimeComplete = 2500;
