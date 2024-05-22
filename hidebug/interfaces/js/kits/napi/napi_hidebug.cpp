@@ -706,11 +706,20 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     napi_set_named_property(env, appMemoryLimit, "vssLimit", vssLimit);
 
     NativeEngine *engine = reinterpret_cast<NativeEngine *>(env);
+    if (engine == nullptr) {
+        return CreateUndefined(env);
+    }
     napi_value vmHeapLimit;
     uint64_t vmHeapLimitValue = engine->GetHeapLimitSize();
     vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmHeapLimitValue, &vmHeapLimit);
     napi_set_named_property(env, appMemoryLimit, "vmHeapLimit", vmHeapLimit);
+
+    napi_value vmTotalHeapSize;
+    uint64_t vmTotalHeapSizeValue = engine->GetProcessHeapLimitSize();
+    vmTotalHeapSizeValue = vmTotalHeapSizeValue >> BYTE_2_KB_SHIFT_BITS;
+    napi_create_bigint_uint64(env, vmTotalHeapSizeValue, &vmTotalHeapSize);
+    napi_set_named_property(env, appMemoryLimit, "vmTotalHeapSize", vmTotalHeapSize);
 
     return appMemoryLimit;
 }
