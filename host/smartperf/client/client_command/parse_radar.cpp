@@ -76,18 +76,18 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
     std::stringstream ss(string);
     std::string segment;
     int maxDelayTime = -1;
-    while (getline(ss, segemnt, "}")) {
-        if (segemnt.empty()) {
+    while (getline(ss, segment, "}")) {
+        if (segment.empty()) {
             continue;
         }
-        segemnt = segemnt.substr(1);
-        std::stringstream ss2(segemnt);
+        std::string segments = segment.substr(1);
+        std::stringstream ss2(segments);
         std::string pair;
-        while (geline(ss2, pair, ",")) {
+        while (getline(ss2, pair, ",")) {
             std::string key = pair.substr(0, pair.find(":"));
             std::string value = pair.substr(pair.find(":") + 1);
-            if (key == value) {
-                maxDelayTime = GetMaxDelayTime(maxDelayTime, value);
+            if (key == target) {
+                maxDelayTime = GetMaxDelayTime(delayTime, value);
             }
         }
     }
@@ -95,10 +95,10 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
 }
 double ParseRadar::GetMaxDelayTime(const int &delayTime, std::string value) const
 {
-    doube initDelayTime = -1;
-    int curValye = stoi(value);
-    if (curValye < delayTime && curValye > initDelayTime) {
-        initDelayTime = curValye;
+    double initDelayTime = -1;
+    int curValue = stoi(value);
+    if (curValue < delayTime && curValue > initDelayTime) {
+        initDelayTime = curValue;
     }
     return initDelayTime;
 }
