@@ -1312,7 +1312,7 @@ void ohos_malloc_hook_memtrace(void* addr, size_t size, const char* tag, bool is
 void ohos_malloc_hook_aligned_alloc(size_t align, size_t len)
 {
     __set_hook_flag(false);
-    hook_aligned_alloc(align, len);
+    hook_aligned_alloc(GetDispatch()->aligned_alloc, align, len);
     __set_hook_flag(true);
 }
 
