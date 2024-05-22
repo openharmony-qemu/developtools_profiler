@@ -459,6 +459,103 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     return ret;
 }
 
+void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
+{
+    void* ret = nullptr;
+    if (fn) {
+        ret = fn(align, len);
+    }
+    if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+        return ret;
+    }
+    if (!ohos_set_filter_size(len, ret)) {
+        return ret;
+    }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(len) == 0) {  //0 not sampling
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
+        return ret;
+    }
+
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return ret;
+    }
+    if (!UpdateThreadName(holder)) {
+        return ret;
+    }
+    StackRawData rawdata = {{{{0}}}};
+    const char* stackptr = nullptr;
+    const char* stackendptr = nullptr;
+    int stackSize = 0;
+    int fpStackDepth = 0;
+    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+
+    if (g_ClientConfig.fpunwind) {
+#ifdef __aarch64__
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
+        stackSize = 0;
+        rawdata.jsChainId = getJsChainId();
+#endif
+    } else {
+        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
+        GetLocalRegs(regs);
+        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
+    }
+    rawdata.type = MALLOC_MSG;
+    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
+    rawdata.mallocSize = len;
+    rawdata.addr = ret;
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        Addr2Bitpool(ret);
+    }
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    g_mallocTimes++;
+#ifdef PERFORMANCE_DEBUG
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    g_dataCounts += stackSize;
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
+    return ret;
+}
+
 void* hook_valloc(void* (*fn)(size_t), size_t size)
 {
     void* pRet = nullptr;
@@ -1209,6 +1306,13 @@ void ohos_malloc_hook_memtrace(void* addr, size_t size, const char* tag, bool is
 {
     __set_hook_flag(false);
     hook_memtrace(addr, size, tag, isUsing);
+    __set_hook_flag(true);
+}
+
+void ohos_malloc_hook_aligned_alloc(size_t align, size_t len)
+{
+    __set_hook_flag(false);
+    hook_aligned_alloc(align, len);
     __set_hook_flag(true);
 }
 
