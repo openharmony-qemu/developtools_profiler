@@ -1254,14 +1254,6 @@ void ohos_malloc_hook_free(void* p)
     __set_hook_flag(true);
 }
 
-void* ohos_malloc_hook_memalign(size_t alignment, size_t bytes)
-{
-    __set_hook_flag(false);
-    void* ret = hook_memalign(GetDispatch()->memalign, alignment, bytes);
-    __set_hook_flag(true);
-    return ret;
-}
-
 size_t ohos_malloc_hook_malloc_usable_size(void* mem)
 {
     __set_hook_flag(false);

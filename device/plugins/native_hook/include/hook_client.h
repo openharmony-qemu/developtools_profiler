@@ -36,7 +36,6 @@ EXPORT_API void* ohos_malloc_hook_realloc(void*, size_t);
 EXPORT_API void* ohos_malloc_hook_calloc(size_t, size_t);
 EXPORT_API void* ohos_malloc_hook_valloc(size_t);
 EXPORT_API void ohos_malloc_hook_free(void*);
-EXPORT_API void* ohos_malloc_hook_memalign(size_t, size_t);
 EXPORT_API void* ohos_malloc_hook_aligned_alloc(size_t, size_t);
 EXPORT_API size_t ohos_malloc_hook_malloc_usable_size(void*);
 EXPORT_API void* ohos_malloc_hook_mmap(void*, size_t, int, int, int, off_t);
