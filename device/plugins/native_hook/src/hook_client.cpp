@@ -1309,11 +1309,12 @@ void ohos_malloc_hook_memtrace(void* addr, size_t size, const char* tag, bool is
     __set_hook_flag(true);
 }
 
-void ohos_malloc_hook_aligned_alloc(size_t align, size_t len)
+void* ohos_malloc_hook_aligned_alloc(size_t align, size_t len)
 {
     __set_hook_flag(false);
-    hook_aligned_alloc(GetDispatch()->aligned_alloc, align, len);
+    void* ret = hook_aligned_alloc(GetDispatch()->aligned_alloc, align, len);
     __set_hook_flag(true);
+    return ret;
 }
 
 int  ohos_malloc_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
