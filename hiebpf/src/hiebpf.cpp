@@ -206,7 +206,6 @@ int main(int argc, char* argv[])
             (void)dup2(nullFd, STDOUT_FILENO); // redirect stdout to /dev/null
             g_ipcServer.SetHandleCallback(HandleIpcMessage);
             if (!g_ipcServer.Start()) {
-                HHLOGE(true, "ipc server start failed");
                 return 0;
             }
         } else { // parent process
