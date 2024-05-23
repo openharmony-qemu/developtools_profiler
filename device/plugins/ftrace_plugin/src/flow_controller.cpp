@@ -100,7 +100,7 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 
 bool FlowController::CreateRawDataReaders()
 {
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
         auto reader = std::make_unique<FtraceDataReader>(FtraceFsOps::GetInstance().GetHmRawTracePath());
         CHECK_NOTNULL(reader, false, "create hm raw trace reader FAILED!");
         ftraceReaders_.emplace_back(std::move(reader));
@@ -134,7 +134,7 @@ bool FlowController::CreatePagedMemoryPool()
         pagesPerBlock = MAX_BLOCK_SIZE_PAGES;
     }
 
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
         memPool_ = std::make_unique<PagedMemPool>(bufferSizePages, 1);
     } else {
         memPool_ = std::make_unique<PagedMemPool>(pagesPerBlock, platformCpuNum_);
@@ -146,7 +146,7 @@ bool FlowController::CreatePagedMemoryPool()
 bool FlowController::CreateRawDataBuffers()
 {
     int num = platformCpuNum_;
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
         num = 1;
     }
     for (int i = 0; i < num; i++) {
@@ -405,7 +405,7 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
 
 void FlowController::CaptureWorkOnNomalMode()
 {
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
         HmCaptureWorkOnNomalModeInner();
     } else {
         CaptureWorkOnNomalModeInner();
@@ -811,7 +811,7 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
 void FlowController::SetupTraceBufferSize(uint32_t sizeKb)
 {
     uint32_t maxBufferSizeKb = MAX_BUFFER_SIZE_KB;
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
         maxBufferSizeKb = HM_MAX_BUFFER_SIZE_KB;
     }
     if (sizeKb < MIN_BUFFER_SIZE_KB) {

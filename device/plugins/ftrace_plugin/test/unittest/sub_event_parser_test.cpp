@@ -138,7 +138,7 @@ HWTEST_F(SubEventParserTest, ParseEvent, TestSize.Level1)
     std::vector<uint8_t> buffer(PAGE_SIZE, 0);
     std::vector<uint8_t> zeros(PAGE_SIZE, 0);
     std::string traceRaw;
-    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+    if (FtraceFsOps::GetInstance().hmTraceDir_ != "") {
         traceRaw = FtraceFsOps::GetInstance().GetHmRawTracePath();
     } else {
         traceRaw = FtraceFsOps::GetInstance().GetRawTracePath(0);
