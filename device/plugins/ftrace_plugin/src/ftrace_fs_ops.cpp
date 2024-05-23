@@ -18,6 +18,7 @@
 #include <set>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/utsname.h>
 #include <unistd.h>
 
 #include "file_utils.h"
@@ -30,7 +31,7 @@ FtraceFsOps& FtraceFsOps::GetInstance()
     return instance;
 }
 
-FtraceFsOps::FtraceFsOps() : ftraceRoot_(GetFtraceRoot()), hmTraceDir_(GetHmTraceDir())
+FtraceFsOps::FtraceFsOps() : ftraceRoot_(GetFtraceRoot())
 {
     PROFILER_LOG_INFO(LOG_CORE, "FtraceFsOps create!");
 }
@@ -54,23 +55,20 @@ std::string FtraceFsOps::GetFtraceRoot()
     return "";
 }
 
-std::string FtraceFsOps::GetHmTraceDir()
+bool FtraceFsOps::IsHmKernel()
 {
-    if (access((ftraceRoot_ + "/hongmeng").c_str(), F_OK) == 0) {
-        return "/hongmeng";
-    } else {
-        return "";
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("hmkernel") != std::string::npos;
     }
+    return isHM;
 }
 
 int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content)
 {
     bool ret = false;
-    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
-        if (FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content) > 0) {
-            ret = true;
-        }
-    }
     if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
         if (FileUtils::WriteFile(ftraceRoot_ + path, content) > 0) {
             ret = true;
@@ -83,11 +81,6 @@ int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& cont
 int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content, int flags)
 {
     bool ret = false;
-    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), W_OK) == 0) {
-        if (FileUtils::WriteFile(ftraceRoot_ + hmTraceDir_ + path, content, flags) > 0) {
-            ret = true;
-        }
-    }
     if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
         if (FileUtils::WriteFile(ftraceRoot_ + path, content, flags) > 0) {
             ret = true;
@@ -99,11 +92,7 @@ int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& cont
 
 std::string FtraceFsOps::ReadTraceFile(const std::string& path) const
 {
-    if (access((ftraceRoot_ + hmTraceDir_ + path).c_str(), R_OK) == 0) {
-        return FileUtils::ReadFile(ftraceRoot_ + hmTraceDir_ + path);
-    } else {
-        return FileUtils::ReadFile(ftraceRoot_ + path);
-    }
+    return FileUtils::ReadFile(ftraceRoot_ + path);
 }
 
 std::string FtraceFsOps::GetPrintkFormats() const
@@ -185,7 +174,7 @@ std::string FtraceFsOps::GetRawTracePath(int cpu) const
 
 std::string FtraceFsOps::GetHmRawTracePath() const
 {
-    return ftraceRoot_ + hmTraceDir_ + "/trace_pipe_raw";
+    return ftraceRoot_ + "/trace_pipe_raw";
 }
 
 std::string FtraceFsOps::GetPageHeaderFormat() const
@@ -202,25 +191,11 @@ std::string FtraceFsOps::GetEventDataFormat(const std::string& type, const std::
     }
 }
 
-std::string FtraceFsOps::HmGetEventDataFormat(const std::string& type, const std::string& name) const
-{
-    if (access((ftraceRoot_ + "/hongmeng/events/" + type + "/" + name + "/format").c_str(), R_OK) == 0) {
-        return FileUtils::ReadFile(ftraceRoot_ + "/hongmeng/events/" + type + "/" + name + "/format");
-    } else {
-        return "";
-    }
-}
-
 bool FtraceFsOps::ClearTraceBuffer()
 {
     char realPath[PATH_MAX + 1] = {0};
 
-    std::string path;
-    if (access((ftraceRoot_ + hmTraceDir_ + "/trace").c_str(), F_OK) == 0) {
-        path = ftraceRoot_ + hmTraceDir_ + "/trace";
-    } else {
-        path = ftraceRoot_ + "/trace";
-    }
+    std::string path = ftraceRoot_ + "/trace";
 
     CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), false,
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
@@ -255,12 +230,7 @@ bool FtraceFsOps::SetTraceClock(const std::string& clock)
 
 std::string FtraceFsOps::GetTraceClock()
 {
-    std::string path;
-    if (access((ftraceRoot_ + hmTraceDir_ + "/trace_clock").c_str(), F_OK) == 0) {
-        path = ftraceRoot_ + hmTraceDir_ + "/trace_clock";
-    } else {
-        path = ftraceRoot_ + "/trace_clock";
-    }
+    std::string path = ftraceRoot_ + "/trace_clock";
 
     std::string value = FileUtils::ReadFile(path);
     auto pos = value.find('[');
@@ -295,8 +265,8 @@ static void AddPlatformEvents(std::set<std::pair<std::string, std::string>> &eve
 std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents()
 {
     std::set<std::pair<std::string, std::string>> eventSet;
-    if (hmTraceDir_ != "") {
-        AddPlatformEvents(eventSet, ftraceRoot_ + hmTraceDir_ + "/events");
+    if (IsHmKernel()) {
+        AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
     }
     AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
     PROFILER_LOG_INFO(LOG_CORE, "get platform event formats done, types: %zu!", eventSet.size());

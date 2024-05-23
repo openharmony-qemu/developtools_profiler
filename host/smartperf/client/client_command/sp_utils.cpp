@@ -23,6 +23,7 @@
 #include <climits>
 #include <cctype>
 #include <climits>
+#include <sys/utsname.h>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -577,6 +578,17 @@ bool SPUtils::IntegerValueVerification(std::set<std::string> &keys, std::map<std
     }
 
     return true;
+}
+
+bool SPUtils::IsHmKernel()
+{
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("hmkernel") != std::string::npos;
+    }
+    return isHM;
 }
 }
 }
