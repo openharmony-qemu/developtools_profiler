@@ -22,10 +22,10 @@
 
 #define NSEC_PER_SEC 1000000000L
 namespace {
-constexpr static int TWO_NUM = 2;
-constexpr static int VALUE_NUM = 100;
+constexpr int TWO_NUM = 2;
+constexpr int VALUE_NUM = 100;
 
-long GetNanos()
+static long GetNanos()
 {
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
