@@ -87,7 +87,7 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
     if (fd == nullptr) {
         return false;
     }
-    char buf[1024] = {'\0'};
+    char buf[4096] = {'\0'};
     int ret = fread(buf, sizeof(buf), 1, fd);
     if (ret >= 0) {
         result = buf;
