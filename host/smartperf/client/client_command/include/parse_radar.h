@@ -33,10 +33,10 @@ public:
     std::string ParseRadarMaxFrame(const std::string &string) const;
     double GetMaxDelayTime(const int &delayTime, std::string value) const;
 private:
-    int delayTimeResponse = 1000;
-    int delayTimeComplete = 2500;
-    std::string targetResponse = "\"RESPONSE_LATENCY\"";
-    std::string targetComplete = "\"E2E_LATENCY\"";
+    const int delayTimeResponse = 1000;
+    const int delayTimeComplete = 2500;
+    const std::string targetResponse = "\"RESPONSE_LATENCY\"";
+    const std::string targetComplete = "\"E2E_LATENCY\"";
 };
 }
 }
