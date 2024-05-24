@@ -28,8 +28,9 @@ FTRACE_NS_BEGIN
 class FtraceFsOps {
 public:
     static FtraceFsOps& GetInstance();
+
     static std::string GetFtraceRoot();
-    bool IsHmKernel();
+    std::string GetHmTraceDir();
     int WriteTraceFile(const std::string& path, const std::string& content);
     int WriteTraceFile(const std::string& path, const std::string& content, int flags);
     std::string ReadTraceFile(const std::string& path) const;
@@ -49,6 +50,7 @@ public:
     std::string GetHmRawTracePath() const;
     MOCKABLE std::string GetPageHeaderFormat() const;
     MOCKABLE std::string GetEventDataFormat(const std::string& type, const std::string& name) const;
+    std::string HmGetEventDataFormat(const std::string& type, const std::string& name) const;
     MOCKABLE std::vector<std::pair<std::string, std::string>> GetPlatformEvents();
 
     // for ftrace control nodes
@@ -79,6 +81,7 @@ private:
 
 private:
     std::string ftraceRoot_;
+    std::string hmTraceDir_;
 };
 FTRACE_NS_END
 

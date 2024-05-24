@@ -36,7 +36,7 @@ void ByTrace::ThreadGetTrace() const
     isTaskCompleted = true;
     std::string result;
     std::string cmdString;
-    if (SPUtils::IsHmKernel()) {
+    if (access("/sys/kernel/tracing/hongmeng", F_OK) != -1) {
         cmdString = "hitrace -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
         cmdString = "hitrace -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
