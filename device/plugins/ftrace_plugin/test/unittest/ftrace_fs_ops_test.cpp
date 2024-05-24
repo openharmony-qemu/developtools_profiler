@@ -479,8 +479,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionFalse, TestSize.Level1)
 HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbNormal, TestSize.Level1)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().SetBufferSizeKb(1024));
-    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + FtraceFsOps::GetInstance().hmTraceDir_
-                       + "/buffer_size_kb";
+    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/buffer_size_kb";
     std::string content = FileUtils::ReadFile(path);
     EXPECT_STREQ(content.c_str(), "1024\n");
 }
