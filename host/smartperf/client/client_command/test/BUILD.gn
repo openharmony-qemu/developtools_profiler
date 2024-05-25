@@ -24,12 +24,14 @@ ohos_unittest("sp_daemon_ut") {
   sources = [
     "../ByTrace.cpp",
     "../Capture.cpp",
+    "../DDR.cpp",
     "../FPS.cpp",
     "../GpuCounter.cpp",
     "../sp_log.cpp",
     "../sp_task.cpp",
     "../sp_utils.cpp",
     "../startup_delay.cpp",
+    "unittest/ddr_test.cpp",
     "unittest/fps_test.cpp",
     "unittest/gpu_counter_test.cpp",
     "unittest/smartperf_main_test.cpp",
@@ -44,6 +46,7 @@ ohos_unittest("sp_daemon_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
     "//third_party/googletest:gtest",
+    "//third_party/googletest:mockh"
     "//third_party/libpng:libpng",
   ]
   external_deps = [

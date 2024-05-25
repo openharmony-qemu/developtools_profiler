@@ -145,7 +145,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         if (profiler != nullptr) {
             std::map<std::string, std::string> data = profiler->ItemData();
             spMap.insert(data.cbegin(), data.cend());
-
+            
             auto cit = data.find("gpu_counter");
             if (cit == data.end()) {
                 continue;
@@ -220,6 +220,7 @@ std::string SmartPerfCommand::ExecCommand()
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
     return std::string("command exec finished!");
 }
+
 void SmartPerfCommand::InitSomething()
 {
     std::string cmdResult;

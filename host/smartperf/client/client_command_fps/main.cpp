@@ -297,7 +297,7 @@ static std::string GetSurFace()
 }
 static void GetFpsUniteInfo(int num)
 {
-    if (num <= 0) {
+    if (num < 0) {
         printf("Invalid value for num: %d\n", num);
         return;
     }
@@ -326,7 +326,6 @@ static void GetFpsUniteInfo(int num)
                 LoadCmd("hidumper -s 10 -a \"fpsClear" + layerName + "\"", cmdResult);
             }
         }
-
         FpsConfig fpsConfig;
         FpsConfig fpsUniteConfig;
         gfpsInfo = GetSurfaceFrame(layerName, fpsConfig);
@@ -355,12 +354,14 @@ int main(int argc, char *argv[])
     if (!strcmp(argv[1], "")) {
         printf("the args of num must be not-null!\n");
     } else {
-        int num = atoi(argv[1]);
-        if (num <= 0) {
+        int num;
+        std::istringstream iss(argv[1]);
+        if (!(iss >> num) || num < 0) {
             printf("set num:%d not valid arg\n", num);
+        } else {
+            printf("set num:%d success\n", num);
+            GetFpsUniteInfo(num);
         }
-        printf("set num:%d success\n", num);
-        GetFpsUniteInfo(num);
     }
     printf("GP_daemon_fps exec finished!\n");
     return 0;

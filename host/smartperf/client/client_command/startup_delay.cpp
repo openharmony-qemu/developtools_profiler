@@ -39,6 +39,7 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);
 }
+
 std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName)
 {
     std::thread thGetTrace(&StartUpDelay::GetTrace, this, sessionID, traceName);

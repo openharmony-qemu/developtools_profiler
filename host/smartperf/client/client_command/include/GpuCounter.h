@@ -81,7 +81,6 @@ private:
 
 private:
     const long long constDefaultCaptureDuration = 5000; // Unit ms
-
     const std::string constMvFile = "mv -f ";
     const std::string constKillProcess = "kill -9  ";
     const std::string constGetCounterId = "pidof counters_collector";
