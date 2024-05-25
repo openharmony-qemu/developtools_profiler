@@ -65,7 +65,9 @@ bool FtraceParser::Init()
 {
     fixedCharArrayRegex_ = std::regex(R"(char \w+\[\d+\])");
     flexDataLocArrayRegex_ = std::regex(R"(__data_loc [a-zA-Z_0-9 ]+\[\] \w+)");
-
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+        return true;
+    }
     std::string printkFormats = FtraceFsOps::GetInstance().GetPrintkFormats();
     CHECK_TRUE(printkFormats.size() > 0, false, "read printk_formats failed!");
     CHECK_TRUE(PrintkFormatsParser::GetInstance().Parse(printkFormats), false, "parse printk_formats failed");
@@ -98,29 +100,6 @@ bool FtraceParser::SetupEvent(const std::string& type, const std::string& name)
             false, "setup %s/%s failed!", type.c_str(), name.c_str());
         CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(format),
             false, "setup pbzero %s/%s failed!", type.c_str(), name.c_str());
-    }
-
-    /* hongmeng trace event may exist both in ldk and hongmeng */
-    EventFormat hmformat;
-    hmformat.eventType = type;
-    hmformat.eventName = name;
-    desc = FtraceFsOps::GetInstance().HmGetEventDataFormat(type, name);
-    if (desc != "") {
-        CHECK_TRUE(ParseEventFormat(desc.data(), hmformat), false, " parse hm %s/%s/format failed!",
-            type.c_str(), name.c_str());
-
-        for (auto &fmt: hmformat.commonFields) {
-            fmt.offset += offsetof(struct HmTraceHeader, commonType);
-        }
-        for (auto &fmt: hmformat.fields) {
-            fmt.offset += offsetof(struct HmTraceHeader, commonType);
-        }
-        hmformat.eventSize += offsetof(struct HmTraceHeader, commonType);
-
-        CHECK_TRUE(SubEventParser<FtraceEvent>::GetInstance().SetupEvent(hmformat),
-            false, "setup hm %s/%s failed!", type.c_str(), name.c_str());
-        CHECK_TRUE(SubEventParser<ProtoEncoder::FtraceEvent>::GetInstance().SetupEvent(hmformat),
-            false, "setup hm pbzero %s/%s failed!", type.c_str(), name.c_str());
     }
     return true;
 }
