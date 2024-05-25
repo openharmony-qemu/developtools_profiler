@@ -22,6 +22,7 @@ enum XpowerMessageType {
     APP_DETAIL = 2;
     COMPONENT_TOP = 3;
     ABNORMAL_EVENTS = 4;
+    THERMAL_REPORT = 5;
 }
 
 message XpowerConfig {

@@ -15,6 +15,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include "unistd.h"
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/sp_log.h"
@@ -30,23 +31,24 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%ll) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
         mThreshold, mLowfps, mCurNum);
 }
-void ByTrace::SetTraceCmd(const std::string &mTraceCmd) const
-{
-    traceCmd = mTraceCmd;
-}
 void ByTrace::ThreadGetTrace() const
 {
+    isTaskCompleted = true;
     std::string result;
-    std::stringstream sstream;
+    std::string cmdString;
+    if (access("/sys/kernel/tracing/hongmeng", F_OK) != -1) {
+        cmdString = "hitrace -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+    } else {
+        cmdString = "hitrace -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+    }
+    std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
-    sstream.str("");
-    sstream << traceCmd;
-    sstream << " > /data/local/tmp/sptrace_";
-    sstream << time << ".ftrace";
-    std::string traceCmdExe = sstream.str();
+    std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
+    std::string traceCmdExe = cmdString + cmdStringEnd + traceFile;
     SPUtils::LoadCmd(traceCmdExe, result);
     std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
+    isTaskCompleted = false;
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
 {
@@ -54,7 +56,8 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
     int two = 2;
     long long curTime = SPUtils::GetCurTime();
     if (curNum <= sum && currentTrigger < 0 && times > two) {
-        for (size_t i = 0; i < jitters.size(); i++) {
+        times = 0;
+        for (size_t i = 1; i < jitters.size(); i++) {
             long long normalJitter = jitters[i] / 1e6;
             if (normalJitter > threshold || cfps < lowfps) {
                 TriggerCatch(curTime);
@@ -71,12 +74,17 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
 }
 void ByTrace::TriggerCatch(long long curTime) const
 {
+    int oneHundred = 100;
     if ((curTime - lastTriggerTime) / 1e3 > interval) {
+        if (isTaskCompleted) {
+            while (isTaskCompleted) {
+                std::this_thread::sleep_for(std::chrono::milliseconds(oneHundred));
+            }
+        }
         std::thread tStart(&ByTrace::ThreadGetTrace, this);
         currentTrigger = 1;
         lastTriggerTime = curTime;
         curNum++;
-        std::cout << "TRACE START >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
         tStart.detach();
     }
 }

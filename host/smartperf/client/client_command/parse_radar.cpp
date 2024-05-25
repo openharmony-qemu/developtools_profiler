@@ -43,11 +43,15 @@ double ParseRadar::ParseRadarStartResponse(const std::string &string) const
 }
 std::string ParseRadar::ParseRadarAppStrart(const std::string &string) const
 {
+    std::ostringstream stream;
+    std::ostringstream streamComplete;
     std::string animationCompleteTime = ExtractString(string, "\"ANIMATION_LATENCY\":");
-    std::string completeTime = ExtractString(string, "\"E2E_LATENCY\":");
-    std::string responseTime = ExtractString(string, "\"RESPONSE_LATENCY\":");
+    double completeTime = ParseRadarDelayTime(string, targetComplete, delayTimeComplete);
+    streamComplete << completeTime;
+    double responseTime = ParseRadarDelayTime(string, targetResponse, delayTimeResponse);
+    stream << responseTime;
     std::string firstFrameDrawnTime = ExtractString(string, "\"FIRST_FRAEM_DRAWN_LATENCY\":");
-    std::string result = "ResponseTime:" + responseTime +
+    std::string result = "ResponseTime:" + stream.str() +
         "ms\n"
         "FirstFrameDrawnTime:" +
         firstFrameDrawnTime +
@@ -56,22 +60,52 @@ std::string ParseRadar::ParseRadarAppStrart(const std::string &string) const
         animationCompleteTime +
         "ms\n"
         "CompleteTime:" +
-        completeTime + "ms\n";
+        streamComplete.str() + "ms\n";
     LOGI("Radar.result====: %s", result.c_str());
     return result;
 }
 double ParseRadar::ParseRadarResponse(const std::string &string) const
 {
     double time = -1;
-    std::string target = "\"RESPONSE_LATENCY\":";
-    time = std::stod(ExtractString(string, target));
+    time = ParseRadarDelayTime(string, targetResponse, delayTimeResponse);
     return time;
+}
+
+double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::string &target, const int &delayTime) const
+{
+    std::stringstream ss(string);
+    std::string segment;
+    int maxDelayTime = -1;
+    while (getline(ss, segment, '}')) {
+        if (segment.empty()) {
+            continue;
+        }
+        std::string segments = segment.substr(1);
+        std::stringstream ss2(segments);
+        std::string pair;
+        while (getline(ss2, pair, ',')) {
+            std::string key = pair.substr(0, pair.find(':'));
+            std::string value = pair.substr(pair.find(':') + 1);
+            if (key == target) {
+                maxDelayTime = GetMaxDelayTime(delayTime, value);
+            }
+        }
+    }
+    return static_cast<double>(maxDelayTime);
+}
+double ParseRadar::GetMaxDelayTime(const int &delayTime, std::string value) const
+{
+    double initDelayTime = -1;
+    int curValue = stoi(value);
+    if (curValue < delayTime && curValue > initDelayTime) {
+        initDelayTime = curValue;
+    }
+    return initDelayTime;
 }
 double ParseRadar::ParseRadarComplete(const std::string &string) const
 {
     double time = -1;
-    std::string target = "\"E2E_LATENCY\":";
-    time = std::stod(ExtractString(string, target));
+    time = ParseRadarDelayTime(string, targetComplete, delayTimeComplete);
     return time;
 }
 std::string ParseRadar::ParseRadarMaxFrame(const std::string &string) const

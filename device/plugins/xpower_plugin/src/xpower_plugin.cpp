@@ -37,6 +37,7 @@ XpowerPlugin::XpowerPlugin()
     procMesTypeMapping_.insert({XpowerMessageType::APP_DETAIL, OptimizeMessageType::MESSAGE_APP_DETAIL});
     procMesTypeMapping_.insert({XpowerMessageType::COMPONENT_TOP, OptimizeMessageType::MESSAGE_COMPONENT_TOP});
     procMesTypeMapping_.insert({XpowerMessageType::ABNORMAL_EVENTS, OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS});
+    procMesTypeMapping_.insert({XpowerMessageType::THERMAL_REPORT, OptimizeMessageType::MESSAGE_THERMAL_REPORT});
 }
 
 XpowerPlugin::~XpowerPlugin()
@@ -55,10 +56,6 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "%s:parseFromArray failed!", __func__);
     uint32_t messageType = static_cast<uint32_t>(OptimizeMessageType::MESSAGE_OPTIMIZE_STOP);
     std::string bundleName = protoConfig_.bundle_name();
-    if (bundleName.empty()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
-        return -1;
-    }
     // Get message type
     if (protoConfig_.message_type().size() > 0) {
         for (int i = 0; i < protoConfig_.message_type().size(); i++) {
@@ -66,10 +63,18 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
             messageType |= mesType;
         }
     }
+    if (messageType == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : messageType is empty!");
+        return -1;
+    }
     PROFILER_LOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
     if ((messageType & OptimizeMessageType::MESSAGE_APP_STATISTIC) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_APP_DETAIL) != 0 ||
         (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
+        if (bundleName.empty()) {
+            PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
+            return -1;
+        }
         // check bundleName
         int32_t uid = COMMON::GetPackageUid(bundleName);
         if (uid < AID_HAP_START || uid > AID_HAP_END) {

@@ -38,12 +38,16 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         daemon(0, 0);
         InitSomething();
         SpThreadSocket udpThreadSocket;
+        SpThreadSocket udpExThreadSocket;
         SpThreadSocket tcpThreadSocket;
         std::thread tSocket(&SpThreadSocket::Process, tcpThreadSocket, ProtoType::TCP);
         sleep(1);
         std::thread tSocket1(&SpThreadSocket::Process, udpThreadSocket, ProtoType::UDP);
+        sleep(1);
+        std::thread udpexThread(&SpThreadSocket::Process, udpExThreadSocket, ProtoType::UDPEX);
         tSocket.join();
         tSocket1.join();
+        udpexThread.join();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -203,8 +207,8 @@ std::string SmartPerfCommand::ExecCommand()
 
     if (callGpuCounterResult) {
         int i = 0;
-        std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        for (auto a = data.begin(); a != data.end(); ++a) {
+        const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
+        for (auto a = data.cbegin(); a != data.cend(); ++a) {
             printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
         }
 

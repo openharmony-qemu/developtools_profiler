@@ -164,7 +164,7 @@ export class ProfilerTask {
     globalThis.testTaskName
     );
     tGeneralInfo.board = deviceInfo.brand;
-    tGeneralInfo.deviceTypeName = deviceInfo.deviceType;
+    tGeneralInfo.deviceTypeName = deviceInfo.productModel;
     tGeneralInfo.brand = deviceInfo.brand;
     tGeneralInfo.version = deviceInfo.displayVersion;
     tGeneralInfo.sn = deviceInfo.serial;

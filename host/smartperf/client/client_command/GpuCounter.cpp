@@ -33,7 +33,7 @@ const int ERROR_CODE_NEGATIVE_FOUR = -4;
 GpuCounter::GpuCounter()
 {
     originalEP = GetPerm();
-    LOGI("original execute permissions(%d)", (int)originalEP);
+    LOGI("original execute permissions(%d)", static_cast<int>(originalEP));
 }
 
 std::map<std::string, std::string> GpuCounter::ItemData()

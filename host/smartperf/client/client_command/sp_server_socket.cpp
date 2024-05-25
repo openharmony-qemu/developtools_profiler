@@ -33,9 +33,9 @@ int SpServerSocket::Init(ProtoType type)
         sock = socket(AF_INET, SOCK_STREAM, 0);
         sockPort = tcpPort;
     }
-    if (type == ProtoType::UDP) {
+    if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
         sock = socket(AF_INET, SOCK_DGRAM, 0);
-        sockPort = udpPort;
+        sockPort = (type == ProtoType::UDP ? udpPort : udpExPort);
     }
     if (sock < 0) {
         std::cout << "Socket Create Failed:" << sock << std::endl;
@@ -47,7 +47,7 @@ int SpServerSocket::Init(ProtoType type)
     local.sin_addr.s_addr = htonl(INADDR_ANY);
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
         std::cout << "Socket Bind failed:" << sock << std::endl;
-        LOGE("SpServerSocket::Init Socket Bind failed");
+        LOGE("SpServerSocket::Init Socket Bind failed prot(%d)", sockPort);
         return -1;
     }
     if (type == ProtoType::TCP) {
@@ -58,7 +58,7 @@ int SpServerSocket::Init(ProtoType type)
         }
     }
 
-    LOGI("SpServerSocket::Init OK");
+    LOGI("SpServerSocket::Init OK,prot(%d)", sockPort);
     return 0;
 }
 

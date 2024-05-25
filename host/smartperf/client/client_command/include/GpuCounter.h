@@ -47,7 +47,7 @@ public:
         return instance;
     }
 
-    GcStatus GetStatus()
+    GcStatus GetStatus() const
     {
         return gcStatus;
     }

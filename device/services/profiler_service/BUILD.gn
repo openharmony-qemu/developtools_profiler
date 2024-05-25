@@ -50,16 +50,16 @@ ohos_source_set("profiler_service") {
     ":profiler_service_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "grpc:grpc",
+    "grpc:grpcxx",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
+  ]
   if (current_toolchain != host_toolchain) {
-    external_deps = [
-      "bounds_checking_function:libsec_static",
-      "grpc:grpc",
-      "grpc:grpcxx",
-      "hilog:libhilog",
-      "openssl:libcrypto_shared",
-      "protobuf:protobuf",
-      "protobuf:protobuf_lite",
-    ]
+    external_deps += [ "hilog:libhilog" ]
   }
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
 }

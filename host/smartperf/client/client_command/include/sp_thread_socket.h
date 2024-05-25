@@ -61,8 +61,8 @@ public:
             LOGI("Socket TCP Init called!");
             TypeTcp(spSocket);
         }
-        if (type == ProtoType::UDP) {
-            LOGI("Socket UDP Init called!");
+        if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
+            LOGI("Socket UDP Init called! type(%d)", static_cast<int>(type));
             while (1) {
                 spSocket.Recvfrom();
                 HandleMsg(spSocket);

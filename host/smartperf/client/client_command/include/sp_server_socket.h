@@ -20,7 +20,8 @@ namespace OHOS {
 namespace SmartPerf {
 enum class ProtoType {
     TCP,
-    UDP
+    UDP,
+    UDPEX
 };
 class SpServerSocket {
 public:
@@ -50,6 +51,7 @@ private:
     char rbuf[buffSizeRecv] = "";
     const int udpPort = 8283;
     const int tcpPort = 8284;
+    const int udpExPort = 8285;
 };
 }
 }

@@ -27,7 +27,7 @@ using namespace OHOS::Developtools::Profiler;
 namespace {
 const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 const std::string FFRT_TEST_EXE = "/data/local/tmp/ffrt_profiler_test_exe";
-constexpr static int FILE_SIZE = 2000;
+constexpr int FILE_SIZE = 2000;
 class FfrtPofilerTest : public ::testing::Test {
 public:
     FfrtPofilerTest() {}

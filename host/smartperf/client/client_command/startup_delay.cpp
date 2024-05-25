@@ -103,7 +103,7 @@ void StartUpDelay::GetHisysIdAndKill()
     while (ss >> singleId) {
         hisysIdVec.push_back(singleId);
     }
-    for (int i = 0; i < hisysIdVec.size(); i++) {
+    for (size_t i = 0; i < hisysIdVec.size(); i++) {
         SPUtils::LoadCmd("kill " + hisysIdVec[i], str);
     }
 }

@@ -232,6 +232,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 }
 void SPTask::StopTask()
 {
+    bool isTcpMessage = true;
     LOGI("SPTask::StopTask start");
     isRunning = false;
     if (isInit) {
@@ -262,8 +263,8 @@ void SPTask::StopTask()
             { "target_fps", refreshrate },
         };
         std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
-        std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo();
-        std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo();
+        std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
+        std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo(isTcpMessage);
         std::map<std::string, std::string> destMap;
         destMap.insert(taskInfoMap.begin(), taskInfoMap.end());
         destMap.insert(deviceInfo.begin(), deviceInfo.end());
