@@ -46,7 +46,6 @@ ohos_unittest("sp_daemon_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
     "//third_party/googletest:gtest",
-    "//third_party/googletest:gmock",
     "//third_party/libpng:libpng",
   ]
   external_deps = [

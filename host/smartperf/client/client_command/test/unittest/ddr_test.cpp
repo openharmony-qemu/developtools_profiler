@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include <gtest/gtest.h>
-#include <gmock/gmock.h>
 #include "DDR.h"
 #include "sp_utils.h"
 #include "common.h"
