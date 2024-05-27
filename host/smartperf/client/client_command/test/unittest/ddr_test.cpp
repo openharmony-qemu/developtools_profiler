@@ -46,7 +46,7 @@ long long GetDdrFreq()
     long long freq = -1;
     std::string ddrfreq = "123456";
     std::string ddrCurFreqPath = "/bin/config.txt";
-    OHOS::SmartPerf::SPUils::LoadFile(ddrCurFreqPath, ddrfreq);
+    OHOS::SmartPerf::SPUtils::LoadFile(ddrCurFreqPath, ddrfreq);
     freq = std::atoll(ddrfreq.c_str());
     return freq;
 }

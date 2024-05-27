@@ -268,7 +268,7 @@ long long GpuCounter::GetCounterDuration()
     std::string line;
 
     if (!file.is_open()) {
-        return -1;
+        return false;
     }
 
     while (std::getline(file, line)) {
@@ -285,6 +285,7 @@ long long GpuCounter::GetCounterDuration()
 
             std::string value = out[1];
             if (value.empty()) {
+                file.cose();
                 return -1;
             }
 
@@ -293,6 +294,7 @@ long long GpuCounter::GetCounterDuration()
                 ret = std::stoll(value);
                 break;
             } catch (const std::exception &e) {
+                file.close();
                 return -1;
             }
         } else if (line.find("}") != std::string::npos) {

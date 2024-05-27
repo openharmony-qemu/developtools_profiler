@@ -321,6 +321,7 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
         }
         policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
+    closedir(dir);
     for (size_t i = 0; i < policyFiles.size(); i++) {
         std::string cpus;
         LoadFile(policyFiles[i] + "/affected_cpus", cpus);
