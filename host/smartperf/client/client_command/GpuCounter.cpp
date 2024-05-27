@@ -285,7 +285,7 @@ long long GpuCounter::GetCounterDuration()
 
             std::string value = out[1];
             if (value.empty()) {
-                file.cose();
+                file.close();
                 return -1;
             }
 
