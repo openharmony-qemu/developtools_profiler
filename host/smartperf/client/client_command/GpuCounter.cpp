@@ -262,13 +262,14 @@ long long GpuCounter::GetCounterDuration()
     long long ret = -1;
     char realPath[PATH_MAX] = {0x00};
     if (realpath(constConfigFile.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return -1;
     }
     std::ifstream file(realPath);
     std::string line;
 
     if (!file.is_open()) {
-        return false;
+        return -1;
     }
 
     while (std::getline(file, line)) {

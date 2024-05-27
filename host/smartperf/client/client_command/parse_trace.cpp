@@ -31,18 +31,17 @@ double ParseTrace::ParseTraceNoh(const std::string &fileNamePath, const std::str
     double code = -1;
     char realPath[PATH_MAX] = {0x00};
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return code;
     }
     infile.open(realPath);
     if (infile.fail()) {
         std::cout << "File "
                   << "open fail" << std::endl;
         LOGE("ParseTrace open file(%s) failed ", fileNamePath.c_str());
-        infile.close();
         return code;
-    } else {
-        code = SmartPerf::ParseTrace::ParseNohTrace(fileNamePath, appPid);
     }
+    code = SmartPerf::ParseTrace::ParseNohTrace(fileNamePath, appPid);
     infile.close();
     return code * conversion;
 }
@@ -126,7 +125,8 @@ double ParseTrace::ParseTraceCold(const std::string &fileNamePath, const std::st
     double code = -1;
     char realPath[PATH_MAX] = {0x00};
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return code;
     }
     infile.open(realPath);
     if (infile.fail()) {
@@ -134,9 +134,8 @@ double ParseTrace::ParseTraceCold(const std::string &fileNamePath, const std::st
                   << "open fail" << std::endl;
         LOGE("ParseTrace::ParseTraceCold open file(%s) failed ", fileNamePath.c_str());
         return 0;
-    } else {
-        code = SmartPerf::ParseTrace::ParseCodeTrace(fileNamePath, appPid);
     }
+    code = SmartPerf::ParseTrace::ParseCodeTrace(fileNamePath, appPid);
     infile.close();
     LOGI("ParseTrace::ParseTraceCold OK");
     return code * conversion;
@@ -147,7 +146,8 @@ double ParseTrace::ParseTraceHot(const std::string &fileNamePath)
     double code = -1;
     char realPath[PATH_MAX] = {0x00};
     if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return -1;
     }
     infile.open(realPath);
     if (infile.fail()) {
@@ -155,9 +155,8 @@ double ParseTrace::ParseTraceHot(const std::string &fileNamePath)
                   << "open fail" << std::endl;
         LOGE("ParseTrace::ParseTraceHot open file(%s) failed ", fileNamePath.c_str());
         return 0;
-    } else {
-        code = SmartPerf::ParseTrace::ParseHotTrace(fileNamePath);
     }
+    code = SmartPerf::ParseTrace::ParseHotTrace(fileNamePath);
     infile.close();
     LOGI("ParseTrace::ParseTraceHot OK");
     return code * conversion;
