@@ -34,16 +34,17 @@ double StartFrameTraceNoh::ParseStartFrameTraceNoh(std::string file)
     double frameRate = -1.0;
     char realPath[PATH_MAX] = {0x00};
     if (realpath(file.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return frameRate;
     }
     infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseStartFrameTraceNoh open file(%s) failed ", file.c_str());
         return frameRate;
-    } else {
-        frameRate = SmartPerf::StartFrameTraceNoh::CalculateTime();
     }
+    frameRate = SmartPerf::StartFrameTraceNoh::CalculateTime();
+    infile.close();
     return frameRate;
 }
 double StartFrameTraceNoh::CalculateTime()

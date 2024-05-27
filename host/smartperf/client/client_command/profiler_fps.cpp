@@ -336,6 +336,7 @@ void ProfilerFPS::GetSameTimeNums()
         lastFrameReadyTime = frameReadyTime;
     }
 }
+
 bool ProfilerFPS::IsForeGround()
 {
     const std::string cmd = "aa dump -l";

@@ -91,7 +91,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     };
     char resolvedPath[PATH_MAX] = {0x00};
     if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get resolved path." << std::endl;
+        return;
     }
     auto fd = open(resolvedPath, O_RDWR | O_CREAT, 0644);
     SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);

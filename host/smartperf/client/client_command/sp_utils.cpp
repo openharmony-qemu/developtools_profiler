@@ -63,7 +63,8 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
 {
     char realPath[PATH_MAX] = {0x00};
     if (realpath(filePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return false;
     }
     std::ifstream file(realPath);
     if (!file.is_open()) {
@@ -322,6 +323,7 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
         }
         policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
+    closedir(dir);
     for (size_t i = 0; i < policyFiles.size(); i++) {
         std::string cpus;
         LoadFile(policyFiles[i] + "/affected_cpus", cpus);

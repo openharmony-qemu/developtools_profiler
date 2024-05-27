@@ -39,6 +39,7 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);
 }
+
 std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName)
 {
     std::thread thGetTrace(&StartUpDelay::GetTrace, this, sessionID, traceName);
@@ -147,7 +148,8 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
 {
     char realPath[PATH_MAX] = {0x00};
     if (realpath(fileName.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
@@ -196,7 +198,8 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
 {
     char realPath[PATH_MAX] = {0x00};
     if (realpath(fileName.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+        std::cout << "Error: Unable to get real path." << std::endl;
+        return;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
