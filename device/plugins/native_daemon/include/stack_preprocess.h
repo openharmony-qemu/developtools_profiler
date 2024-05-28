@@ -62,6 +62,10 @@ public:
     {
         pid_ = pid;
     }
+    inline void InitStatisticsTime()
+    {
+        lastStatisticsTime_ = std::chrono::steady_clock::now();
+    }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack);
@@ -172,6 +176,7 @@ private:
     void FillDwarfErrorStack();
     void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
+    std::chrono::steady_clock time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};

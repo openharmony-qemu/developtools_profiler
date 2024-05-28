@@ -173,9 +173,12 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         DisableHook();
         return false;
     }
-    ++g_flushCount;
-    if (g_flushCount % FLUSH_FLAG == 0) {
-        stackWriter_->Flush();
+    {
+        std::lock_guard<std::recursive_timed_mutex> guard(socketMutex_);
+        ++g_flushCount;
+        if (g_flushCount % FLUSH_FLAG == 0) {
+            stackWriter_->Flush();
+        }
     }
     return true;
 }
