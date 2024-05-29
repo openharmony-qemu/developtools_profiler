@@ -323,6 +323,7 @@ describe("HidebugJsTest", function () {
             expect(temp.rssLimit >= BigInt(0)).assertTrue();
             expect(temp.vssLimit >= BigInt(0)).assertTrue();
             expect(temp.vmHeapLimit >= BigInt(0)).assertTrue();
+            expect(temp.vmTotalHeapSize >= BigInt(0)).assertTrue();
         } catch (error) {
             expect().assertFail();
         }
