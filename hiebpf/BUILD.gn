@@ -75,9 +75,7 @@ ohos_source_set("hiebpf.bpf") {
     remove_configs += [ "//build/config/sanitizers:default_sanitizer_flags" ]
   }
   cflags_c = [ "-fno-lto" ]
-  sources = [
-    "./src/hiebpf.bpf.c",
-  ]
+  sources = [ "./src/hiebpf.bpf.c" ]
   configs = [
     ":common_config",
     ":kern_common_config",
@@ -90,9 +88,7 @@ ohos_source_set("hiebpf.bpf") {
 action("gen_bpf_skeleton") {
   script = "./scripts/gen_skeleton.sh"
   sources = []
-  outputs = [
-    "$skel_out_dir/hiebpf.skel.h",
-  ]
+  outputs = [ "$skel_out_dir/hiebpf.skel.h" ]
   bpftool_dir = rebase_path("//prebuilts/develop_tools/bpftool/bin/bpftool")
   skel_src_dir_abs = rebase_path("${skel_src_dir}")
   skel_out_dir_abs = rebase_path("${skel_out_dir}")
@@ -101,9 +97,7 @@ action("gen_bpf_skeleton") {
     skel_src_dir_abs,
     skel_out_dir_abs,
   ]
-  deps = [
-    ":hiebpf.bpf",
-  ]
+  deps = [ ":hiebpf.bpf" ]
 }
 
 ohos_source_set("hiebpf_source_common") {
@@ -141,13 +135,9 @@ ohos_source_set("hiebpf_source_common") {
 }
 
 ohos_executable("hiebpf") {
-  sources = [
-    "./src/hiebpf.cpp",
-  ]  # this is main()
+  sources = [ "./src/hiebpf.cpp" ]  # this is main()
 
-  deps = [
-    ":hiebpf_source_common",
-  ]
+  deps = [ ":hiebpf_source_common" ]
 
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
