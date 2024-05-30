@@ -77,9 +77,9 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
-    std::string pssValue = "";
+    std::string pssValue = "0";
     if (processId.size() == 0) {
-        procRamInfo["pss"] = "NA";
+        procRamInfo["pss"] = pssValue;
         return procRamInfo;
     }
     std::string cmd = "hidumper --mem " + processId;

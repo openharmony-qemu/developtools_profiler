@@ -32,8 +32,7 @@ public:
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};
         if (realpath(path.c_str(), realPath) == nullptr) {
-            std::cout << "Error: Unable to get real path." << std::endl;
-            return;
+            std::cout << "" << std::endl;
         }
         outFile.open(path.c_str(), std::ios::out);
         int i = 0;
@@ -61,8 +60,7 @@ public:
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};
         if (realpath(path.c_str(), realPath) == nullptr) {
-            std::cout << "Error: Unable to get real path." << std::endl;
-            return;
+            std::cout << "" << std::endl;
         }
         outFile.open(path.c_str(), std::ios::out);
         for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
