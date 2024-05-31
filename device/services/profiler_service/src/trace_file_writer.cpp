@@ -57,13 +57,13 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     fileLength_ = DEFULT_PAGES * pageSize_;
 
     if (ftruncate(fd_, fileLength_) != 0) {
-        HILOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", fileLength_, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return;
     }
 
     fileMapAddr_ = mmap(nullptr, fileLength_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd_, 0);
     if (fileMapAddr_ == MAP_FAILED) {
-        HILOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
         return;
     }
 
@@ -458,27 +458,28 @@ void TraceFileWriter::LogDiskUsage()
 bool TraceFileWriter::RemapFile()
 {
     if (munmap(fileMapAddr_, fileLength_) != 0) {
-        HILOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return false;
     }
 
     // file size increased by DEFULT_PAGES * pageSize_(64M)
     size_t newLength = fileLength_ + DEFULT_PAGES * pageSize_;
     if (ftruncate(fd_, newLength) != 0) {
-        HILOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", newLength, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", newLength, strerror(errno));
         return false;
     }
 
     size_t remapPos = fileWriteLength_ & ~(pageSize_ - 1);
     fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, remapPos);
     if (fileMapAddr_ == MAP_FAILED) {
-        HILOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos, strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos,
+                           strerror(errno));
         return false;
     }
 
     mapOffset_ = fileWriteLength_ - remapPos;
     fileLength_ = newLength;
-    HILOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) sucess", remapPos, mapOffset_, fileLength_);
+    PROFILER_LOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) sucess", remapPos, mapOffset_, fileLength_);
     return true;
 }
 
@@ -486,7 +487,7 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
 {
     if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
         if (!RemapFile()) {
-            HILOG_ERROR(LOG_CORE, "RemapFile failed!");
+            PROFILER_LOG_ERROR(LOG_CORE, "RemapFile failed!");
             return false;
         }
     }
