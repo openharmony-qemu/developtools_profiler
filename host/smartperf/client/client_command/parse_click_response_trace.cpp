@@ -29,8 +29,10 @@ double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
 {
     int conversion = 1000;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+    bool success = (realpath(fileNamePath.c_str(), realPath) == nullptr);
+    if (!success) {
+        std::cout << "Error: Unable to get real path" << std::endl;
+        return;
     }
     infile.open(realPath);
     if (infile.fail()) {

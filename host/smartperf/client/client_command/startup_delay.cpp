@@ -147,8 +147,10 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
 {
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(fileName.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+    bool success = (realpath(fileName.c_str(), realPath) == nullptr);
+    if (!success) {
+        std::cout << "Error: Unable to get real path" << std::endl;
+        return;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
@@ -196,8 +198,10 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
 void StartUpDelay::InitXY(const std::string &curAppName, const std::string &fileName)
 {
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(fileName.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+    bool success = (realpath(fileName.c_str(), realPath) == nullptr);
+    if (!success) {
+        std::cout << "Error: Unable to get real path" << std::endl;
+        return;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";

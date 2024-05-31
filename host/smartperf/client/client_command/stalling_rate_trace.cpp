@@ -26,8 +26,10 @@ double StallingRateTrace::StallingRateResult(std::string file)
 {
     double stalligRate = 0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
+    bool success = (realpath(file.c_str(), realPath) == nullptr);
+    if (!success) {
+        std::cout << "Error: Unable to get real path" << std::endl;
+        return;
     }
     infile.open(realPath);
     if (infile.fail()) {
