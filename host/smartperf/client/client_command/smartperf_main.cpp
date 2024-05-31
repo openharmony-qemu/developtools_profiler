@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
     } else if (argc > 1 && strcmp(argv[1], "-performancemode") == 0) {
         int performanceModeId = 10020;
         OHOS::SOCPERF::SocPerfClient::GetInstance().PerfRequest(performanceModeId, "");
-	    return 0;
+        return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
     std::cout << cmd.ExecCommand() << std::endl;
