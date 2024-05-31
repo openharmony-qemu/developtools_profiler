@@ -532,6 +532,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->Close();
         }
+        item->stackPreprocess->FinishTraceFile();
     }
 
     if (printMallocNmd_) {
