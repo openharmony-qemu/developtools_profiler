@@ -33,7 +33,7 @@ double ParseTrace::ParseTraceNoh(const std::string &fileNamePath, const std::str
     bool success = (realpath(fileNamePath.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return code;
     }
     infile.open(realPath);
     if (infile.fail()) {
@@ -128,7 +128,7 @@ double ParseTrace::ParseTraceCold(const std::string &fileNamePath, const std::st
     bool success = (realpath(fileNamePath.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return code;
     }
     infile.open(realPath);
     if (infile.fail()) {
@@ -150,7 +150,7 @@ double ParseTrace::ParseTraceHot(const std::string &fileNamePath)
     bool success = (realpath(fileNamePath.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return code;
     }
     infile.open(realPath);
     if (infile.fail()) {

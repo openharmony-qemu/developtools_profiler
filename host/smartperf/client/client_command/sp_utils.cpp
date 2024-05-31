@@ -65,7 +65,7 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     bool success = (realpath(filePath.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return false;
     }
     std::ifstream file(realPath);
     if (!file.is_open()) {

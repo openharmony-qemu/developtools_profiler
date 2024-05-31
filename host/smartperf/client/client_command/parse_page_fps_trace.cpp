@@ -27,7 +27,7 @@ double ParsePageFpsTrace::PageFpsTrace(std::string file)
     bool success = (realpath(file.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return fps;
     }
     infile.open(realPath);
     if (infile.fail()) {

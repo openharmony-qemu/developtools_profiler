@@ -29,7 +29,7 @@ double StallingRateTrace::StallingRateResult(std::string file)
     bool success = (realpath(file.c_str(), realPath) == nullptr);
     if (!success) {
         std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        return stalligRate;
     }
     infile.open(realPath);
     if (infile.fail()) {
