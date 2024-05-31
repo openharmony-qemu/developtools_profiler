@@ -24,6 +24,7 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
+#include "socperf_client.h"
 
 
 static std::string GetOptions(const std::vector<std::string> &argv)
@@ -72,6 +73,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("screen");
     keys.insert("sections");
     keys.insert("deviceinfo");
+    keys.insert("performancemode");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -140,6 +142,10 @@ int main(int argc, char *argv[])
     } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-performancemode") == 0) {
+        int performanceModeId = 10020;
+        OHOS::SOCPERF::SocPerfClient::GetInstance().PerfRequest(performanceModeId, "");
+	    return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
     std::cout << cmd.ExecCommand() << std::endl;
