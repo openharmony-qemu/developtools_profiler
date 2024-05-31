@@ -1445,8 +1445,7 @@ void StackPreprocess::FinishReport()
     profilerPluginData_.set_tv_nsec(ts.tv_nsec);
 
     int32_t len = profilerPluginData_.Finish();
-    if (writer_ == nullptr)
-    {
+    if (writer_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s: the writer is nullptr!", __func__);
         return;
     }
