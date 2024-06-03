@@ -146,7 +146,7 @@ ohos_executable("hiebpf") {
 
 group("hiebpf_tool") {
   if (current_toolchain == "//build/toolchain/ohos:ohos_clang_arm64") {
-    if (!is_asan && use_musl) {
+    if (!is_asan && !is_tsan && use_musl) {
       deps = [
         ":hiebpf",
         ":hiebpf.bpf",
