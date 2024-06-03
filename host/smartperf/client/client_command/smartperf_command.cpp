@@ -164,6 +164,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 
     if (!errInfo.empty()) { // GPU Counter init failed
         printf("%s\n", errInfo.c_str());
+        LOGE("%s", errInfo.c_str());
         return -1;
     }
 

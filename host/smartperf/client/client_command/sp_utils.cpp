@@ -398,7 +398,7 @@ void SPUtils::RemoveSpace(std::string &str)
 
 bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
 {
-    unsigned int dest = 0;
+    uint64_t dest = 0;
     bool isValid = false;
 
     if (str.empty()) {

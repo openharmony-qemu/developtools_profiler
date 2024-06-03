@@ -89,15 +89,7 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
-    auto itr = keys.find("f1");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
-    itr = keys.find("f2");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
-    itr = keys.find("fl");
+    auto itr = keys.find("fl");
     if (keys.end() != itr) {
         keys.erase(itr);
     }
@@ -162,8 +154,6 @@ HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)
     std::vector<std::string> argv;
     argv.push_back("SP_daemon");
     argv.push_back("-start");
-    argv.push_back("-f1");
-    argv.push_back("-f2");
     argv.push_back("-fl");
     argv.push_back("-ftl");
 

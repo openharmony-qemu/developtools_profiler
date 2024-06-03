@@ -28,7 +28,7 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     threshold = mThreshold;
     lowfps = mLowfps;
     curNum = mCurNum;
-    LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%ll) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
+    LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%lld) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
         mThreshold, mLowfps, mCurNum);
 }
 void ByTrace::ThreadGetTrace() const

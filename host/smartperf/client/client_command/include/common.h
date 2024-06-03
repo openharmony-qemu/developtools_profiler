@@ -89,8 +89,8 @@ enum class CommandType {
     CT_INTERVAL,
     CT_NET,
     CT_VIEW,
-    CT_FL,
-    CT_FTL,
+    CT_FL,      //帧率限制值
+    CT_FTL,     //帧间隔限制值，单位ms
     CT_M,
     CT_GC,
 };
