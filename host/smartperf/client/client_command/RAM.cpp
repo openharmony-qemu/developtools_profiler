@@ -85,6 +85,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::string cmd = "hidumper --mem " + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
+        procRamInfo["pss"] = "0";
         return procRamInfo;
     }
     const int paramEleven = 11;

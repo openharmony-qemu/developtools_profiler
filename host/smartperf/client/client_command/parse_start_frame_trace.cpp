@@ -33,8 +33,8 @@ double StartFrameTraceNoh::ParseStartFrameTraceNoh(std::string file)
 {
     double frameRate = -1.0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
-        std::cout << "Error: Unable to get real path." << std::endl;
+    if (!(realpath(file.c_str(), realPath) == nullptr)) {
+        std::cout << "Error: Unable to get real path" << std::endl;
         return frameRate;
     }
     infile.open(realPath);
