@@ -47,7 +47,6 @@ public:
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
-    std::recursive_timed_mutex socketMutex_;
     int smbFd_;
     int eventFd_;
     int pid_;
