@@ -20,13 +20,12 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Power::ItemData()
 {
-    int oneThousand = 1000;
     std::map<std::string, std::string> result;
     std::string currentNow;
     SPUtils::LoadFile(currentNowPath, currentNow);
     std::string voltageNow;
     SPUtils::LoadFile(voltageNowPath, voltageNow);
-    result["currentNow"] = std::to_string(std::stoi(currentNow) / oneThousand);
+    result["currentNow"] = currentNow;
     result["voltageNow"] = voltageNow;
     if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {
         result["currentNow"] = "NA";

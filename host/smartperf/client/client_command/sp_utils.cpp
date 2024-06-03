@@ -62,8 +62,7 @@ bool SPUtils::Cmp(const std::string &a, const std::string &b)
 bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
 {
     char realPath[PATH_MAX] = {0x00};
-    bool success = (realpath(filePath.c_str(), realPath) == nullptr);
-    if (!success) {
+    if (!(realpath(filePath.c_str(), realPath) == nullptr)) {
         std::cout << "Error: Unable to get real path" << std::endl;
         return false;
     }
