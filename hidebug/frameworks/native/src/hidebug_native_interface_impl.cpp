@@ -47,7 +47,7 @@ public:
     int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
-    std::optional<ProcessMemory> GetAppNativeMemInfo() override;
+    std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() override;
     std::optional<SysMemory> GetSystemMemInfo() override;
 private:
     /**
@@ -166,7 +166,7 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
     return memoryLimit;
 }
 
-std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
+std::optional<HiDebug_NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
 {
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
@@ -181,7 +181,7 @@ std::optional<ProcessMemory> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
         return {};
     }
 
-    ProcessMemory nativeMemInfo;
+    HiDebug_NativeMemInfo nativeMemInfo;
     int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
     nativeMemInfo.pss = pssInfo;
     nativeMemInfo.rss = collectResult.data.rss;
