@@ -51,6 +51,8 @@ using namespace OHOS::Developtools::Profiler;
     constexpr uint32_t SAVED_CMDLINE_SIZE_LARGE = 4096; // save cmdline sizes for cpu num no less than 8
     constexpr int OCTA_CORE_CPU = 8; // 8 core
     constexpr unsigned int RMQ_ENTRY_ALIGN_MASK = (1U << 2) - 1;
+    const string TRACE_PROPERTY = "debug.hitrace.tags.enableflags";
+    const string BGSRV_PROPERTY = "5456538433239656448";
 } // namespace
 
 FTRACE_NS_BEGIN
@@ -269,7 +271,11 @@ int FlowController::StartCapture(void)
     // clear old trace
     FtraceFsOps::GetInstance().ClearTraceBuffer();
     // recover the hitrace
-    traceCollector_->Recover();
+    std::string param = OHOS::system::GetParameter(TRACE_PROPERTY, "");
+    if (param != "0" && param != BGSRV_PROPERTY) {
+        traceCollector_->Recover();
+    }
+
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
     if (!FtraceFsOps::GetInstance().SetSavedCmdLinesSize(savedCmdlinesSize)) {
