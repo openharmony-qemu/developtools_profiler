@@ -86,7 +86,7 @@ bool ByTrace::CheckHitraceId() const
     std::string result;
     SPUtils::LoadCmd("ps -ef |grep hitrace |grep -v grep", result);
     if (result.empty()) {
-        retrun false;
+        return false;
     }
     if (result.find("-t") != std::string::npos) {
         return true;
