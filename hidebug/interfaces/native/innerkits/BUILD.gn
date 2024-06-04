@@ -34,6 +34,8 @@ ohos_shared_library("libhidebug") {
     "init:libbegetutil",
   ]
 
+  cflags = [ "-fstack-protector-strong" ]
+
   install_images = [
     "system",
     "updater",

@@ -19,6 +19,7 @@ ohos_shared_library("hidebug") {
   include_dirs = [
     "$hidebug_path/frameworks/native/include",
     ".",
+    "$hidebug_path/interfaces/native/kits/include",
   ]
 
   sources = [
