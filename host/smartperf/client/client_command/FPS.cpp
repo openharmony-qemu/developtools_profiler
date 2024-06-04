@@ -41,7 +41,13 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetFpsInfo();
         prevResultFpsInfo = fpsInfoResult;
     }
-    result["refreshrate"] = GetScreenInfo();
+    if (screen == "0") {
+        result["refreshrate"] = GetScreenInfo();
+        screen = GetScreenInfo();
+    } else {
+        result["refreshrate"] = screen;
+        screen = GetScreenInfo();
+    }
     if (processFlag) {
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";

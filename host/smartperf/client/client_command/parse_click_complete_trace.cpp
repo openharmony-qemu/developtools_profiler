@@ -29,7 +29,7 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
 {
     int conversion = 1000;
     char realPath[PATH_MAX] = {0x00};
-    if (!(realpath(fileNamePath.c_str(), realPath) == nullptr)) {
+    if ((realpath(fileNamePath.c_str(), realPath) == nullptr)) {
         std::cout << "Error: Unable to get real path" << std::endl;
         return 0;
     }

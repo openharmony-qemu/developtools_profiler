@@ -33,7 +33,6 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
 }
 void ByTrace::ThreadGetTrace() const
 {
-    isTaskCompleted = true;
     std::string result;
     std::string cmdString;
     if (SPUtils::IsHmKernel()) {
@@ -48,7 +47,6 @@ void ByTrace::ThreadGetTrace() const
     SPUtils::LoadCmd(traceCmdExe, result);
     std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
-    isTaskCompleted = false;
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
 {
@@ -74,19 +72,26 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
 }
 void ByTrace::TriggerCatch(long long curTime) const
 {
-    int oneHundred = 100;
-    if ((curTime - lastTriggerTime) / 1e3 > interval) {
-        if (isTaskCompleted) {
-            while (isTaskCompleted) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(oneHundred));
-            }
-        }
+    if ((curTime - lastTriggerTime) / 1e3 > interval && !CheckHitraceId()) {
         std::thread tStart(&ByTrace::ThreadGetTrace, this);
         currentTrigger = 1;
         lastTriggerTime = curTime;
         curNum++;
         tStart.detach();
     }
+}
+
+bool ByTrace::CheckHitraceId() const
+{
+    std::string result;
+    SPUtils::LoadCmd("ps -ef |grep hitrace |grep -v grep", result);
+    if (result.empty()) {
+        retrun false;
+    }
+    if (result.find("-t") != std::string::npos) {
+        return true;
+    }
+    return false;
 }
 }
 }
