@@ -27,7 +27,9 @@
 namespace OHOS {
 namespace SmartPerf {
 const long long WAIT_EXIT_TIME = 500;
+const long long WAIT_RUN_TIME = 200;
 const int ERROR_CODE_NEGATIVE_TWO = -2;
+const int ERROR_CODE_NEGATIVE_THREE = -3;
 const int ERROR_CODE_NEGATIVE_FOUR = -4;
 
 GpuCounter::GpuCounter()
@@ -89,6 +91,13 @@ int GpuCounter::CheckResources(const std::string &packageName, std::string &erro
 {
     std::string result;
 
+    SPUtils::LoadCmd(constWhoami, result);
+    if (result.empty() || result.find(constUserInfo) == std::string::npos) {
+        errorInfo = "Non root users";
+        return ERROR_CODE_NEGATIVE_THREE;
+    }
+
+    result.clear();
     SPUtils::LoadCmd(constCheckProductInfo, result);
     if (result.empty() || result.find(constProductInfo) == std::string::npos) {
         errorInfo = "Non Hisilicon chips";
@@ -164,24 +173,25 @@ void GpuCounter::Rest()
 
 int GpuCounter::Start()
 {
-    int ret = -1;
+    int ret = 0;
 
     gcStatus = GC_START;
     captureDuration = GetCounterDuration();
     LOGI("Start captureDuration(%lld)", captureDuration);
     if (captureDuration <= 0) {
         captureDuration = constDefaultCaptureDuration;
-        LOGW("read config duration failed,load default(%ll)", captureDuration);
+        LOGW("read config duration failed,load default(%lld)", captureDuration);
     }
 
-    ret = Capture();
-    if (ret) {
-        LOGW("counters_collector run failed  ret(%d)", ret);
+    ThreadCapture();
+    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_RUN_TIME));
+    std::vector<std::string> pidList;
+    GetCounterId(pidList);
+    if (pidList.empty()) {
+        LOGE("counters_collector run failed  ret(%d)", ret);
         return -1;
     }
-
     startCaptureTime = SPUtils::GetCurTime();
-
     LOGI("GpuCounter Started ret(%d)", ret);
     return ret;
 }
@@ -255,6 +265,21 @@ void GpuCounter::KillCounter()
     return;
 }
 
+bool GpuCounter::IsNum(const std::string value)
+{
+    bool isNum = false;
+    for (size_t i = 0; i < value.length(); i++) {
+        if (value[i] == ' ') {
+            continue;
+        } else if (value[i] >= '0' && value[i] <= '9') {
+            isNum = true;
+            break;
+        } else {
+            break;
+        }
+    }
+    return isNum;
+}
 
 long long GpuCounter::GetCounterDuration()
 {
@@ -267,11 +292,9 @@ long long GpuCounter::GetCounterDuration()
     }
     std::ifstream file(realPath);
     std::string line;
-
     if (!file.is_open()) {
         return -1;
     }
-
     while (std::getline(file, line)) {
         if (!startFlag) {
             if (line.find("collector {") != std::string::npos) {
@@ -279,39 +302,35 @@ long long GpuCounter::GetCounterDuration()
             }
             continue;
         }
-
         if (line.find("duration_ms:") != std::string::npos) {
             std::vector<std::string> out;
             SPUtils::StrSplit(line, ":", out);
-
-            std::string value = out[1];
-            if (value.empty()) {
-                file.close();
-                return -1;
-            }
-
-            SPUtils::RemoveSpace(value);
-            try {
-                ret = std::stoll(value);
+            if (out.size() <= 1) {
                 break;
-            } catch (const std::exception &e) {
-                file.close();
-                return -1;
             }
+            std::string value = out[1];
+            if (IsNum(value)) {
+                ret = std::stoll(value);
+            }
+            break;
         } else if (line.find("}") != std::string::npos) {
             startFlag = false;
         }
     }
-
     file.close();
-
     return ret;
 }
-
 
 int GpuCounter::Capture()
 {
     return system(constCmd.c_str());
+}
+
+std::thread GpuCounter::ThreadCapture()
+{
+    std::thread th(&GpuCounter::Capture, this);
+    th.detach();
+    return th;
 }
 
 GpuCounter::ExecutePermissions GpuCounter::GetPerm()

@@ -52,7 +52,6 @@ public:
         return gcStatus;
     }
 
-    // -3 sandbox path invalid, -2 package name error -1 dependency file not detected
     int Init(const std::string &packageName, std::map<std::string, std::string> &retMap);
     void Rest();
     // 0 ok，-1 run failed
@@ -61,12 +60,15 @@ public:
     long long GetCounterDuration();
 
 private:
+    // 0 succed, -1 dependency file not detected, -2 package name error, -3 non root users, -4 Non Hisilicon chips
     int CheckResources(const std::string &packageName, std::string &errorInfo);
     void GetCounterId(std::vector<std::string> &pidList);
     void KillCounter();
     int Capture();
+    std::thread ThreadCapture();
     void SetPerm(ExecutePermissions code);
     ExecutePermissions GetPerm();
+    bool IsNum(const std::string value);
 
 private:
     bool isSandBoxWrite = false;
@@ -87,7 +89,7 @@ private:
     const std::string constRmCsv = "rm /data/local/tmp/gpu_counter.csv";
     const std::string constAddPermissionsCounter = "chmod 777 /bin/counters_collector";
     const std::string constCmd =
-        "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt &";
+        "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt >/dev/null 2>&1";
 
     const std::string constSandBoxFile = "/files/";
     const std::string constSandBoxPath = "/data/app/el2/100/base/";
@@ -99,7 +101,9 @@ private:
     const std::string constLibFile = "/bin/libGPU_PCM.so";
     const std::string constV2File = "/bin/counters_collector_v2.txt";
     const std::string constCheckProductInfo = "param get const.product.name";
-    const std::string constProductInfo = "Mate 60 Pro";
+    const std::string constProductInfo = "60";
+    const std::string constWhoami = "whoami";
+    const std::string constUserInfo = "root";
 
 private:
     GpuCounter();

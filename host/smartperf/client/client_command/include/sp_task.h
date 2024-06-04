@@ -21,6 +21,7 @@
 #include <future>
 #include <map>
 #include <mutex>
+#include <climits>
 #include "sp_csv_util.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -45,7 +46,7 @@ enum class ErrCode {
 struct StuckNotification {
     bool isEffective = false;
     int fps = 0;
-    long long frameTime = 0;
+    long long frameTime = LLONG_MAX;
 };
 struct TaskInfo {
     std::string sessionId = "";
@@ -77,7 +78,7 @@ public:
     void GetItemData(std::map<std::string, std::string> &dataMap);
 
 private:
-    std::thread ThreadGetHiperf(long long ts);
+    std::thread ThreadGetHiperf(long long timeStamp);
     void GetHiperf(const std::string &traceName);
     std::string SetHiperf(const std::string &traceName);
     bool CheckCounterId();
@@ -92,7 +93,6 @@ private:
     bool isInit = false;
     std::mutex mtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
-    bool isCaptureTrace = false;
     long long startCaptuerTime = 0;
     int requestId = 1;
 
