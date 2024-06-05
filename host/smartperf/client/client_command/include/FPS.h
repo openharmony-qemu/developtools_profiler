@@ -102,6 +102,7 @@ private:
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
+    std::string screen = "0";
 };
 }
 }

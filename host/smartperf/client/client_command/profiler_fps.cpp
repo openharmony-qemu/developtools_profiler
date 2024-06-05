@@ -30,7 +30,6 @@
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
 
-
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
@@ -228,7 +227,6 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
     }
     printf("SP_daemon exec finished!\n");
 }
-
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {

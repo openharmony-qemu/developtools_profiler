@@ -31,7 +31,7 @@ public:
     {
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};
-        if (!(realpath(path.c_str(), realPath) == nullptr)) {
+        if ((realpath(path.c_str(), realPath) == nullptr)) {
             std::cout << "Error: Unable to get real path" << std::endl;
             return;
         }
@@ -60,7 +60,7 @@ public:
     {
         std::ofstream outFile;
         char realPath[PATH_MAX] = {0x00};
-        if (!(realpath(path.c_str(), realPath) == nullptr)) {
+        if ((realpath(path.c_str(), realPath) == nullptr)) {
             std::cout << "Error: Unable to get real path" << std::endl;
             return;
         }

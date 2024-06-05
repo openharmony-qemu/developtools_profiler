@@ -30,7 +30,7 @@ double ParseStartTraceNoh::ParseStartTraceNohe(std::string file)
 {
     double codeTime = -1.0;
     char realPath[PATH_MAX] = {0x00};
-    if (!(realpath(file.c_str(), realPath) == nullptr)) {
+    if ((realpath(file.c_str(), realPath) == nullptr)) {
         std::cout << "Error: Unable to get real path" << std::endl;
         return codeTime;
     }
