@@ -277,7 +277,6 @@ int FlowController::StartCapture(void)
         traceCollector_->Recover();
     }
 
-
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
     if (!FtraceFsOps::GetInstance().SetSavedCmdLinesSize(savedCmdlinesSize)) {
         PROFILER_LOG_ERROR(LOG_CORE, "SetSavedCmdLinesSize %u fail.", savedCmdlinesSize);
