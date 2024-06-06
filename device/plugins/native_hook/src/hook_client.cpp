@@ -231,7 +231,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
 
 static bool IsPidChanged(void);
 
-bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
+void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_miStart = mallinfo2();
@@ -241,19 +241,32 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     g_hookClient.reset();
     if (g_hookClient != nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "hook already started");
-        return true;
+        return nullptr;
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler, disableHookCallback);
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
+                                                          reinterpret_cast<void (*)()>(disableHookCallback));
     }
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
+    return nullptr;
+}
+
+bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
+{
+    pthread_t threadStart;
+    if (pthread_create(&threadStart, nullptr, MallocHookStart,
+                       reinterpret_cast<void *>(disableHookCallback))) {
+        PROFILER_LOG_INFO(LOG_CORE, "create MallocHookStart fail");
+        return false;
+    }
+    pthread_detach(threadStart);
     pthread_key_create(&g_disableHookFlag, nullptr);
     pthread_setspecific(g_disableHookFlag, nullptr);
     pthread_key_create(&g_hookTid, nullptr);
     pthread_setspecific(g_hookTid, nullptr);
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
@@ -265,8 +278,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
             g_maxSize = max > 0 ? max : INT_MAX;
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
-        PROFILER_LOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
-                          paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
     }
     return true;
 }
