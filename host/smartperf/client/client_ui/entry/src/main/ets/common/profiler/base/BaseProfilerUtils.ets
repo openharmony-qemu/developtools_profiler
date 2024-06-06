@@ -28,12 +28,10 @@ export function createGPData(moduleType: string, values: Map<String, String>): G
 }
 
 export function isAccess(path: string): boolean {
-  SPLogger.DEBUG('BaseProfilerUtils', 'ets check path is start...' + 'path:' + path);
   var isAccess = false;
   try {
     fileio.accessSync(path);
     isAccess = true;
-    SPLogger.DEBUG('BaseProfilerUtils', 'ets check path is finish...' + 'path:' + path);
   } catch (err) {
     SPLogger.DEBUG(TAG, 'accessSync failed with error:' + err + 'path:' + path);
   }
@@ -55,7 +53,6 @@ export function fileOpen(path: string): String {
     let buf = new ArrayBuffer(BUFF_SIZE);
     fileio.readSync(fd, buf);
     var result: String = String.fromCharCode.apply(null, new Uint8Array(buf));
-    SPLogger.DEBUG(TAG, 'fileOpen path data:' + result);
     return util.printf('%s', result.substring(0, lastIndex(result))).toString();
   } catch (err) {
     SPLogger.ERROR(TAG, 'fileOpen path:' + path + ' error:' + err);

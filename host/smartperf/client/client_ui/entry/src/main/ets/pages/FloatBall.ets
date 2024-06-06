@@ -60,20 +60,16 @@ struct FloatBall {
         mainWorker.postMessage({'catchTraceStart':true})
       }
       globalThis.collectIntervalCollect = setInterval(() => {
-        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskStart()
           this.timerNum++
         }
-        console.log('collectIntervalCollect running status::' + this.playerState + 'cm-timerNum' + this.timerNum);
       }, 1000)
 
       globalThis.collectPowerCollect = setInterval(() => {
-        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
         }
-        console.log('collectIntervalCollect running status::' + this.playerState);
       }, 250)
     }
     globalThis.task_status = TaskStatus.task_running
