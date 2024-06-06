@@ -68,7 +68,7 @@ public:
     void GetSameTimeNums();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
-    void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int num) const;
+    void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long msJiange) const;
     void GetTimeDiff();
     void GetCurrentTime(int sleepNum);

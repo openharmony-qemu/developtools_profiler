@@ -169,11 +169,12 @@ void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int nu
     }
 }
 
-void ProfilerFPS::PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const
+void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
+                                long long currTimeStart, long long currLastTime) const
 {
     int conversionFps = 1000000;
     int conversionTime = 1000;
-    int fpsNum = 0;
+    long long times = 120;
     if (msCount == 0) {
         fpsNum = 0;
     } else {
@@ -181,16 +182,18 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast, long long c
     }
     long long timeN = (currTimeLast - currTimeStart) / conversionTime;
     long long fpsSections = (fpsNum * conversionFps) / timeN;
-    if (fpsSections > 120) {
-        fpsSections = 120;
+    if (fpsSections > times) {
+        fpsSections = times;
     }
     printf("sectionsFps:%lld|%lld\n", fpsSections, currLastTime);
 }
 
-void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int num) const
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
 {
     int msCount = 0;
-    long long msJiange = msClear / num;
+    if (nums != 0) {
+        long long msJiange = msClear / nums;
+    }
     long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
     long long currLastTime = lastCurrTime;
     long long harTime = msJiange / 1000000;
