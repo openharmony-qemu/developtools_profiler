@@ -94,8 +94,8 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
     }
     lastFpsInfoResult = fpsInfoResult;
-    if (sectionsNum == ten && fpsInfoResult.fps != 0) {
-        GetSectionsFps(fpsInfoResult);
+    if (sectionsNum != 0 && fpsInfoResult.fps != 0) {
+        GetSectionsFps(fpsInfoResult, sectionsNum);
     }
     time_t now = time(nullptr);
     if (now == -1) {
@@ -159,52 +159,77 @@ void ProfilerFPS::GetTimeDiff()
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
-void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime) const
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long msJiange) const
 {
-    if (printCount < ten) {
-        for (int i = 0; i < ten - printCount; i++) {
-            long long msJiange = 100;
+    if (printCount < numb) {
+        for (int i = 0; i < numb - printCount; i++) {
             msStartTime += msJiange;
             printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
     }
 }
 
-void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
+void ProfilerFPS::PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const
+{
+    int conversionFps = 1000000;
+    int conversionTime = 1000;
+    int fpsNum = 0;
+    if (msCount == 0) {
+        fpsNum = 0;
+    } else {
+        fpsNum = msCount - 1;
+    }
+    long long timeN = (currTimeLast - currTimeStart) / conversionTime;
+    long long fpsSections = (fpsNum * conversionFps) / timeN;
+    if (fpsSections > 120) {
+        fpsSections = 120;
+    }
+    printf("sectionsFps:%lld|%lld\n", fpsSections, currLastTime);
+}
+
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int num) const
 {
     int msCount = 0;
-    long long msJiange = 100000000;
+    long long msJiange = msClear / num;
     long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
     long long currLastTime = lastCurrTime;
-    long long harTime = 100;
+    long long harTime = msJiange / 1000000;
     int printCount = 0;
     uint32_t count = 0;
+    long long currTimeStart = 0;
+    long long currTimeLast = 0;
     for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
         long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
+            if (msCount == 0) {
+                currTimeLast = currTime;
+            }
+            currTimeLast = currTime;
             msCount++;
         } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             msCount = 1;
+            if (msCount == 1) {
+                currTimeLast = currTime;
+            }
+            currTimeLast = currTime;
             msStartTime += msJiange;
             currLastTime += harTime;
             printCount++;
         } else {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             printCount++;
             msCount = 0;
             msStartTime += msJiange;
             currLastTime += harTime;
+            currTimeLast = currTime;
             count--;
         }
-        uint32_t size = fpsInfoResult.currTimeStamps.size();
-        if (size <= 1) {
-            return;
-        }
-        if (i == (size - 1)) {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+        if (i == (static_cast<int>(fpsInfoResult.currTimeStamps.size()) - 1)) {
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
+            currTimeLast = currTime;
             printCount++;
-            GetSectionsPrint(printCount, currLastTime);
+            GetSectionsPrint(printCount, currLastTime, num, msJiange);
         }
         count++;
     }

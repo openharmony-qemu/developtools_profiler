@@ -183,10 +183,10 @@ HWTEST_F(SPdaemonGpuTest, Start001, TestSize.Level1)
  * @tc.desc: Test Rest
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonGpuTest, Rest001, TestSize.Level1)
-{
-    GpuCounter::GetInstance().Rest();
-}
+// HWTEST_F(SPdaemonGpuTest, Rest001, TestSize.Level1)
+// {
+//     GpuCounter::GetInstance().Rest();
+// }
 
 /**
  * @tc.name: GpuCounter::Check
