@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 import { TIndexInfo } from '../common/entity/DatabaseEntity';
-import { showFloatWindow, hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
+import { initFloatWindow, showFloatWindow, hideFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
 import { getCpuCoreInfo} from '../common/utils/SystemUtils';
 import FloatWindowConstant from '../common/ui/floatwindow/FloatWindowConstant';
 import CommonEvent from '@ohos.commonEvent';
@@ -50,6 +50,7 @@ struct TitleWindowPage {
   offsetX: number = -1
   offsetY: number = -1
   cpuCoreArr: Array<Number>
+  @State isInitFloatWindow: boolean = false
   aboutToAppear() {
 
     this.cpuCoreArr = getCpuCoreInfo().map(Number).sort()
@@ -107,6 +108,10 @@ struct TitleWindowPage {
   }
 
   floatWindowEvent(floatName: string, flag: number) {
+    if (!this.isInitFloatWindow) {
+      initFloatWindow()
+      this.isInitFloatWindow = true
+    }
     if (this.data[flag]) {
       hideFloatWindow(floatName)
       this.data[flag] = false

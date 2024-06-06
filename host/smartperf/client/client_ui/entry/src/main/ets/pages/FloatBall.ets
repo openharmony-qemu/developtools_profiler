@@ -15,7 +15,7 @@
 import { secToTime } from '../common/utils/TimeUtils';
 import { TaskStatus } from '../common/profiler/base/ProfilerConstant';
 import { ProfilerTask } from '../common/profiler/ProfilerTask';
-import { initFloatWindow, destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
+import { destoryAllFloatWindow } from '../common/ui/floatwindow/utils/FloatWindowUtils';
 import WorkerHandler from '../common/profiler/WorkerHandler';
 import worker from '@ohos.worker';
 let mainWorker = globalThis.MainWorker
@@ -47,7 +47,6 @@ struct FloatBall {
     globalThis.CreateTitleWindow()
     console.log('cm-floatBall-CreateTitleWindow2')
     globalThis.task_status = TaskStatus.task_init
-    initFloatWindow()
     console.log('cm-floatBall-CreateTitleWindow3')
   }
 
@@ -61,20 +60,16 @@ struct FloatBall {
         mainWorker.postMessage({'catchTraceStart':true})
       }
       globalThis.collectIntervalCollect = setInterval(() => {
-        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskStart()
           this.timerNum++
         }
-        console.log('collectIntervalCollect running status::' + this.playerState + 'cm-timerNum' + this.timerNum);
       }, 1000)
 
       globalThis.collectPowerCollect = setInterval(() => {
-        console.log('collectIntervalCollect running....');
         if (this.playerState == TaskStatus.task_running) {
           ProfilerTask.getInstance().taskSingleItemStart(CollectorType.TYPE_POWER)
         }
-        console.log('collectIntervalCollect running status::' + this.playerState);
       }, 250)
     }
     globalThis.task_status = TaskStatus.task_running
