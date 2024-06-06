@@ -231,7 +231,8 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
 
 static bool IsPidChanged(void);
 
-void* MallocHookStart(void* disableHookCallback) {
+void* MallocHookStart(void* disableHookCallback) 
+{
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_miStart = mallinfo2();
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
