@@ -68,6 +68,7 @@ ohos_source_set("native_hook_source") {
     public_deps = [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
   }
   external_deps = [
+    "ffrt:libffrt",
     "hitrace:libhitracechain",
     "init:libbegetutil",
   ]
