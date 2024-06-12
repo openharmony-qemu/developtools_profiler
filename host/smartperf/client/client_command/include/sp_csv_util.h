@@ -30,7 +30,7 @@ public:
     static void WriteCsv(const std::string &path, std::vector<SPData> vmap)
     {
         std::ofstream outFile;
-        outFile.open(path.c_str(), std::ios::out);
+        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
         int i = 0;
         std::string title = "";
         for (SPData spdata : vmap) {
@@ -54,7 +54,7 @@ public:
     static void WriteCsvH(const std::string &path, std::map<std::string, std::string> vmap)
     {
         std::ofstream outFile;
-        outFile.open(path.c_str(), std::ios::out);
+        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
         for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
             outFile << iter->first + "," + iter->second << std::endl;
         }

@@ -159,11 +159,11 @@ void ProfilerFPS::GetTimeDiff()
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
-void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long msJiange) const
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const
 {
     if (printCount < numb) {
         for (int i = 0; i < numb - printCount; i++) {
-            msStartTime += msJiange;
+            msStartTime += harTime;
             printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
     }
@@ -182,6 +182,9 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
         fpsNums = msCount - 1;
     }
     long long timeN = (currTimeLast - currTimeStart) / conversionTime;
+    if (timeN == 0) {
+        return;
+    }
     long long fpsSections = (fpsNums * conversionFps) / timeN;
     if (fpsSections > times) {
         fpsSections = times;

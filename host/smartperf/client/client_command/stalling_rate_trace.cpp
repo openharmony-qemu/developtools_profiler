@@ -120,9 +120,9 @@ void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &sig
 
 void StallingRateTrace::CalculateRoundTime()
 {
+    double kadunNum = 1.5;
     if (nowFrameRate != 0) {
-        roundTime = 1 / nowFrameRate;
-        LOGI("roundTime=====: %s", std::to_string(roundTime).c_str());
+        roundTime = (1 / nowFrameRate) * kadunNum;
     }
 }
 void StallingRateTrace::GetScreenInfo(std::string line)
