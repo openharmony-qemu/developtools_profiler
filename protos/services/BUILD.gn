@@ -148,8 +148,8 @@ action("profiler_service_interface_gen") {
   args += rebase_path(sources, root_build_dir)
   deps = [
     ":all_type_gen",
-    "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(//build/toolchain/linux:clang_x64)",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(//build/toolchain/linux:clang_x64)",
+    "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(//build/toolchain/linux:clang_${host_cpu})",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(//build/toolchain/linux:clang_${host_cpu})",
   ]
 }
 
