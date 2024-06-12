@@ -67,6 +67,7 @@ public:
     void HelpCommand(CommandHelp type) const;
     void HandleCommand(std::string argStr, const std::string &argStr1);
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
+    void printfExecCommand(const std::map<std::string, std::string> data);
     // 采集次数
     int num = 0;
     // 包名
