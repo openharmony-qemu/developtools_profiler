@@ -30,12 +30,7 @@ public:
     static void WriteCsv(const std::string &path, std::vector<SPData> vmap)
     {
         std::ofstream outFile;
-        char realPath[PATH_MAX] = {0x00};
-        if ((realpath(path.c_str(), realPath) == nullptr)) {
-            std::cout << "Error: Unable to get real path" << std::endl;
-            return;
-        }
-        outFile.open(path.c_str(), std::ios::out);
+        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
         int i = 0;
         std::string title = "";
         for (SPData spdata : vmap) {
@@ -59,12 +54,7 @@ public:
     static void WriteCsvH(const std::string &path, std::map<std::string, std::string> vmap)
     {
         std::ofstream outFile;
-        char realPath[PATH_MAX] = {0x00};
-        if ((realpath(path.c_str(), realPath) == nullptr)) {
-            std::cout << "Error: Unable to get real path" << std::endl;
-            return;
-        }
-        outFile.open(path.c_str(), std::ios::out);
+        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
         for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
             outFile << iter->first + "," + iter->second << std::endl;
         }

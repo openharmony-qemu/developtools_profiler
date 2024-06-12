@@ -173,12 +173,12 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 
 std::string SmartPerfCommand::ExecCommand()
 {
-    LOGI("SmartPerfCommand::ExecCommand start num(%d)", num);
     int rc = 0;
     int index = 0;
     bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
     const long long freq = 1000;
+    num = num + 1;
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -192,12 +192,16 @@ std::string SmartPerfCommand::ExecCommand()
         std::cout << std::endl;
         int i = 0;
         for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+            if (index != 0) {
+                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+            }
         }
         std::cout << std::endl;
         SPData spdata;
-        spdata.values.insert(spMap.cbegin(), spMap.cend());
-        vmap.push_back(spdata);
+        if (index != 0) {
+            spdata.values.insert(spMap.cbegin(), spMap.cend());
+            vmap.push_back(spdata);
+        }
         long long nextTime = SPUtils::GetCurTime();
         long long costTime = nextTime - lastTime;
         if (costTime < freq) {
@@ -205,14 +209,9 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
-
     if (callGpuCounterResult) {
-        int i = 0;
         const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        for (auto a = data.cbegin(); a != data.cend(); ++a) {
-            printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
-        }
-
+        printfExecCommand(data);
         SPData spdata;
         spdata.values.insert(data.begin(), data.end());
         vmap.push_back(spdata);
@@ -220,6 +219,13 @@ std::string SmartPerfCommand::ExecCommand()
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
     return std::string("command exec finished!");
+}
+void SmartPerfCommand::printfExecCommand(const std::map<std::string, std::string> data)
+{
+    int i = 0;
+    for (auto a = data.cbegin(); a != data.cend(); ++a) {
+        printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
+    }
 }
 
 void SmartPerfCommand::InitSomething()

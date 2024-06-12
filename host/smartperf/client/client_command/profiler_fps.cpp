@@ -159,11 +159,11 @@ void ProfilerFPS::GetTimeDiff()
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
-void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long msJiange) const
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const
 {
     if (printCount < numb) {
         for (int i = 0; i < numb - printCount; i++) {
-            msStartTime += msJiange;
+            msStartTime += harTime;
             printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
     }
@@ -182,6 +182,9 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
         fpsNums = msCount - 1;
     }
     long long timeN = (currTimeLast - currTimeStart) / conversionTime;
+    if (timeN == 0) {
+        return;
+    }
     long long fpsSections = (fpsNums * conversionFps) / timeN;
     if (fpsSections > times) {
         fpsSections = times;
@@ -207,7 +210,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
         long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             if (msCount == 0) {
-                currTimeLast = currTime;
+                currTimeStart = currTime;
             }
             currTimeLast = currTime;
             msCount++;
@@ -215,7 +218,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             msCount = 1;
             if (msCount == 1) {
-                currTimeLast = currTime;
+                currTimeStart = currTime;
             }
             currTimeLast = currTime;
             msStartTime += msJiange;
@@ -234,7 +237,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             currTimeLast = currTime;
             printCount++;
-            GetSectionsPrint(printCount, currLastTime, num, msJiange);
+            GetSectionsPrint(printCount, currLastTime, nums, msJiange);
         }
         count++;
     }
@@ -355,7 +358,7 @@ void ProfilerFPS::GetSameTimeNums()
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0) {
+            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
                 jitter = frameReadyTime - lastFrameReadyTime;
                 fpsInfo.jitters.push_back(jitter);
             }
