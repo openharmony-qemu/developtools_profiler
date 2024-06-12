@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <sstream>
+#include <iomanip>
 #include "include/sp_utils.h"
 #include "include/Power.h"
 #include "include/sp_log.h"
@@ -22,7 +24,17 @@ std::map<std::string, std::string> Power::ItemData()
 {
     std::map<std::string, std::string> result;
     std::string currentNow;
-    SPUtils::LoadFile(currentNowPath, currentNow);
+    double avgCurrent = 0.0;
+    SPUtils::LoadFile(currentNowPath, curAvgCurrent);
+    const double number = 3.6;
+    if (lastAvgCurrent != "0") {
+        int diffAvgCurrent = std::stoi(curAvgCurrent) - std::stoi(lastAvgCurrent);
+        avgCurrent = diffAvgCurrent * number;
+    }
+    std::stringstream ss;
+    ss << std::fixed << std::setprecision(1) << avgCurrent;
+    currentNow = ss.str();
+    lastAvgCurrent = curAvgCurrent;
     std::string voltageNow;
     SPUtils::LoadFile(voltageNowPath, voltageNow);
     result["currentNow"] = currentNow;

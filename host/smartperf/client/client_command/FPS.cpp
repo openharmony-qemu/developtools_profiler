@@ -219,7 +219,7 @@ void FPS::GetSameTimeNums()
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0) {
+            if (lastFrameReadyTime != 0 && && (frameReadyTime - lastFrameReadyTime) < mod) {
                 jitter = frameReadyTime - lastFrameReadyTime;
                 fpsInfo.jitters.push_back(jitter);
             }

@@ -179,6 +179,7 @@ std::string SmartPerfCommand::ExecCommand()
     bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
     const long long freq = 1000;
+    num = num + 1;
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -192,12 +193,16 @@ std::string SmartPerfCommand::ExecCommand()
         std::cout << std::endl;
         int i = 0;
         for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+            if (index != 0) {
+                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+            }
         }
         std::cout << std::endl;
         SPData spdata;
-        spdata.values.insert(spMap.cbegin(), spMap.cend());
-        vmap.push_back(spdata);
+        if (index != 0) {
+            spdata.values.insert(spMap.cbegin(), spMap.cend());
+            vmap.push_back(spdata);
+        }
         long long nextTime = SPUtils::GetCurTime();
         long long costTime = nextTime - lastTime;
         if (costTime < freq) {

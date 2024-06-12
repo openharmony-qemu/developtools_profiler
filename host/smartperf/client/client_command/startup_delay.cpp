@@ -32,9 +32,9 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     std::string result;
     std::string cmdString;
     if (SPUtils::IsHmKernel()) {
-        cmdString = "hitrace -t 5 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 5 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace -t 5 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 5 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);
@@ -148,8 +148,7 @@ void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fil
 {
     char realPath[PATH_MAX] = {0x00};
     if ((realpath(fileName.c_str(), realPath) == nullptr)) {
-        std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        std::cout << "" << std::endl;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";
@@ -198,8 +197,7 @@ void StartUpDelay::InitXY(const std::string &curAppName, const std::string &file
 {
     char realPath[PATH_MAX] = {0x00};
     if ((realpath(fileName.c_str(), realPath) == nullptr)) {
-        std::cout << "Error: Unable to get real path" << std::endl;
-        return;
+        std::cout << "" << std::endl;
     }
     std::ifstream file(realPath, std::ios::in);
     std::string strLine = "";

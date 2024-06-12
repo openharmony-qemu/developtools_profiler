@@ -36,9 +36,9 @@ void ByTrace::ThreadGetTrace() const
     std::string result;
     std::string cmdString;
     if (SPUtils::IsHmKernel()) {
-        cmdString = "hitrace -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
