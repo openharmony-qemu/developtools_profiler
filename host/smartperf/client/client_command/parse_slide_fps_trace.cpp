@@ -25,7 +25,7 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
 {
     double fps = -1.0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
+    if ((realpath(file.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     infile.open(realPath);
@@ -33,9 +33,9 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
-    } else {
-        fps = SmartPerf::ParseSlideFpsTrace::CalculateTime();
     }
+    fps = SmartPerf::ParseSlideFpsTrace::CalculateTime();
+    infile.close();
     return fps;
 }
 

@@ -30,7 +30,7 @@ double ParseStartTraceNoh::ParseStartTraceNohe(std::string file)
 {
     double codeTime = -1.0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
+    if ((realpath(file.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     infile.open(realPath);
@@ -38,9 +38,9 @@ double ParseStartTraceNoh::ParseStartTraceNohe(std::string file)
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseStartTraceNoh open file(%s) failed ", file.c_str());
         return codeTime;
-    } else {
-        codeTime = SmartPerf::ParseStartTraceNoh::CalculateTime();
     }
+    codeTime = SmartPerf::ParseStartTraceNoh::CalculateTime();
+    infile.close();
     return codeTime;
 }
 double ParseStartTraceNoh::CalculateTime()

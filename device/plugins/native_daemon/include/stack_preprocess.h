@@ -56,6 +56,7 @@ public:
     void SetWriter(const WriterStructPtr& writer);
     bool StartTakeResults();
     bool StopTakeResults();
+    void FinishTraceFile();
     bool FlushRecordStatistics();
     void FlushRecordApplyAndReleaseMatchData();
     inline void SetPid(int32_t pid)

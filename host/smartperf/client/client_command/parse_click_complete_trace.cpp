@@ -29,7 +29,7 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
 {
     int conversion = 1000;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(fileNamePath.c_str(), realPath) == nullptr) {
+    if ((realpath(fileNamePath.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     infile.open(realPath);
@@ -38,9 +38,8 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
                   << "open fail" << std::endl;
         LOGE("ParseClickCompleteTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
-    } else {
-        completeTime = SmartPerf::ParseClickCompleteTrace::GetLineTime();
     }
+    completeTime = SmartPerf::ParseClickCompleteTrace::GetLineTime();
     infile.close();
     return completeTime * conversion;
 }

@@ -25,6 +25,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "dfx_regs_get.h"
+#include "c/executor_task.h"
 #include "common.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
@@ -231,7 +232,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
 
 static bool IsPidChanged(void);
 
-bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
+void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_miStart = mallinfo2();
@@ -241,19 +242,32 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     g_hookClient.reset();
     if (g_hookClient != nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "hook already started");
-        return true;
+        return nullptr;
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler, disableHookCallback);
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
+                                                          reinterpret_cast<void (*)()>(disableHookCallback));
     }
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
+    return nullptr;
+}
+
+bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
+{
+    pthread_t threadStart;
+    if (pthread_create(&threadStart, nullptr, MallocHookStart,
+                       reinterpret_cast<void *>(disableHookCallback))) {
+        PROFILER_LOG_INFO(LOG_CORE, "create MallocHookStart fail");
+        return false;
+    }
+    pthread_detach(threadStart);
     pthread_key_create(&g_disableHookFlag, nullptr);
     pthread_setspecific(g_disableHookFlag, nullptr);
     pthread_key_create(&g_hookTid, nullptr);
     pthread_setspecific(g_hookTid, nullptr);
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
@@ -265,8 +279,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
             g_maxSize = max > 0 ? max : INT_MAX;
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
-        PROFILER_LOG_INFO(LOG_CORE, "persist.hiviewdfx.profiler.mem.filter %s, min %d, max %d",
-                          paramOutBuf, g_ClientConfig.filterSize, g_maxSize);
     }
     return true;
 }
@@ -412,9 +424,15 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
+        void* stackAddr = nullptr;
+        size_t coroutineStackSize = 0;
+        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+            stackSize = coroutineStackSize;
+        } else {
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+        }
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
@@ -453,6 +471,109 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (g_mallocTimes % PRINT_INTERVAL == 0) {
         PROFILER_LOG_ERROR(LOG_CORE,
             "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
+    return ret;
+}
+
+void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
+{
+    void* ret = nullptr;
+    if (fn) {
+        ret = fn(align, len);
+    }
+    if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+        return ret;
+    }
+    if (!ohos_set_filter_size(len, ret)) {
+        return ret;
+    }
+
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
+    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(len) == 0) {  //0 not sampling
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
+        return ret;
+    }
+
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return ret;
+    }
+    if (!UpdateThreadName(holder)) {
+        return ret;
+    }
+    StackRawData rawdata = {{{{0}}}};
+    const char* stackptr = nullptr;
+    const char* stackendptr = nullptr;
+    int stackSize = 0;
+    int fpStackDepth = 0;
+    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+
+    if (g_ClientConfig.fpunwind) {
+#ifdef __aarch64__
+        void* stackAddr = nullptr;
+        size_t coroutineStackSize = 0;
+        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+            stackSize = coroutineStackSize;
+        } else {
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+        }
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
+        stackSize = 0;
+        rawdata.jsChainId = getJsChainId();
+#endif
+    } else {
+        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
+        GetLocalRegs(regs);
+        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        if (stackendptr == nullptr) {
+            stackSize = 0;
+        }
+    }
+    rawdata.type = MALLOC_MSG;
+    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
+    rawdata.mallocSize = len;
+    rawdata.addr = ret;
+    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        Addr2Bitpool(ret);
+    }
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    g_mallocTimes++;
+#ifdef PERFORMANCE_DEBUG
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    g_dataCounts += stackSize;
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
             g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
     }
 #endif
@@ -509,9 +630,15 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
+        void* stackAddr = nullptr;
+        size_t coroutineStackSize = 0;
+        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+            stackSize = coroutineStackSize;
+        } else {
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+        }
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
@@ -611,9 +738,15 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
+        void* stackAddr = nullptr;
+        size_t coroutineStackSize = 0;
+        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+            stackSize = coroutineStackSize;
+        } else {
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+        }
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         if (g_ClientConfig.freeStackData) {
@@ -737,9 +870,15 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.freeStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
+            void* stackAddr = nullptr;
+            size_t coroutineStackSize = 0;
+            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+                stackSize = coroutineStackSize;
+            } else {
+                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+                stackSize = stackendptr - stackptr;
+            }
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
@@ -848,9 +987,15 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
+        void* stackAddr = nullptr;
+        size_t coroutineStackSize = 0;
+        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+            stackSize = coroutineStackSize;
+        } else {
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+        }
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
@@ -944,9 +1089,15 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
+            void* stackAddr = nullptr;
+            size_t coroutineStackSize = 0;
+            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+                stackSize = coroutineStackSize;
+            } else {
+                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+                stackSize = stackendptr - stackptr;
+            }
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
@@ -1059,9 +1210,15 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (isUsing) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
+            void* stackAddr = nullptr;
+            size_t coroutineStackSize = 0;
+            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+                stackSize = coroutineStackSize;
+            } else {
+                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+                stackSize = stackendptr - stackptr;
+            }
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
@@ -1157,14 +1314,6 @@ void ohos_malloc_hook_free(void* p)
     __set_hook_flag(true);
 }
 
-void* ohos_malloc_hook_memalign(size_t alignment, size_t bytes)
-{
-    __set_hook_flag(false);
-    void* ret = hook_memalign(GetDispatch()->memalign, alignment, bytes);
-    __set_hook_flag(true);
-    return ret;
-}
-
 size_t ohos_malloc_hook_malloc_usable_size(void* mem)
 {
     __set_hook_flag(false);
@@ -1210,6 +1359,14 @@ void ohos_malloc_hook_memtrace(void* addr, size_t size, const char* tag, bool is
     __set_hook_flag(false);
     hook_memtrace(addr, size, tag, isUsing);
     __set_hook_flag(true);
+}
+
+void* ohos_malloc_hook_aligned_alloc(size_t align, size_t len)
+{
+    __set_hook_flag(false);
+    void* ret = hook_aligned_alloc(GetDispatch()->aligned_alloc, align, len);
+    __set_hook_flag(true);
+    return ret;
 }
 
 int  ohos_malloc_hook_prctl(int option, unsigned long arg2, unsigned long arg3,

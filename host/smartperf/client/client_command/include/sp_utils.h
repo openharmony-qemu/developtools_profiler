@@ -127,6 +127,7 @@ bool VeriyKey(std::set<std::string>& keys, std::map<std::string, std::string>& m
 bool VerifyValueStr(std::map<std::string, std::string>& mapInfo, std::string& errorInfo);
 bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
     std::string &errorInfo);
+bool IsHmKernel();
 };
 }
 }

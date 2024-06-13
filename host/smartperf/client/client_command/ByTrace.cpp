@@ -28,18 +28,17 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     threshold = mThreshold;
     lowfps = mLowfps;
     curNum = mCurNum;
-    LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%ll) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
+    LOGI("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%lld) mLowfps(%d) mCurNum(%d)", mSum, mInterval,
         mThreshold, mLowfps, mCurNum);
 }
 void ByTrace::ThreadGetTrace() const
 {
-    isTaskCompleted = true;
     std::string result;
     std::string cmdString;
-    if (access("/sys/kernel/tracing/hongmeng", F_OK) != -1) {
-        cmdString = "hitrace -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+    if (SPUtils::IsHmKernel()) {
+        cmdString = "hitrace --trace_clock mono -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
@@ -48,7 +47,6 @@ void ByTrace::ThreadGetTrace() const
     SPUtils::LoadCmd(traceCmdExe, result);
     std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
-    isTaskCompleted = false;
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
 {
@@ -74,19 +72,26 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
 }
 void ByTrace::TriggerCatch(long long curTime) const
 {
-    int oneHundred = 100;
-    if ((curTime - lastTriggerTime) / 1e3 > interval) {
-        if (isTaskCompleted) {
-            while (isTaskCompleted) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(oneHundred));
-            }
-        }
+    if ((curTime - lastTriggerTime) / 1e3 > interval && !CheckHitraceId()) {
         std::thread tStart(&ByTrace::ThreadGetTrace, this);
         currentTrigger = 1;
         lastTriggerTime = curTime;
         curNum++;
         tStart.detach();
     }
+}
+
+bool ByTrace::CheckHitraceId() const
+{
+    std::string result;
+    SPUtils::LoadCmd("ps -ef |grep hitrace |grep -v grep", result);
+    if (result.empty()) {
+        return false;
+    }
+    if (result.find("-t") != std::string::npos) {
+        return true;
+    }
+    return false;
 }
 }
 }

@@ -30,7 +30,6 @@
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
 
-
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
@@ -95,8 +94,8 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
         printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
     }
     lastFpsInfoResult = fpsInfoResult;
-    if (sectionsNum == ten && fpsInfoResult.fps != 0) {
-        GetSectionsFps(fpsInfoResult);
+    if (sectionsNum != 0 && fpsInfoResult.fps != 0) {
+        GetSectionsFps(fpsInfoResult, sectionsNum);
     }
     time_t now = time(nullptr);
     if (now == -1) {
@@ -160,52 +159,85 @@ void ProfilerFPS::GetTimeDiff()
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
-void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime) const
+void ProfilerFPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const
 {
-    if (printCount < ten) {
-        for (int i = 0; i < ten - printCount; i++) {
-            long long msJiange = 100;
-            msStartTime += msJiange;
+    if (printCount < numb) {
+        for (int i = 0; i < numb - printCount; i++) {
+            msStartTime += harTime;
             printf("sectionsFps:%d|%lld\n", 0, msStartTime);
         }
     }
 }
 
-void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult) const
+void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
+                                long long currTimeStart, long long currLastTime) const
+{
+    int conversionFps = 1000000;
+    int conversionTime = 1000;
+    long long times = 120;
+    int fpsNums = 0;
+    if (msCount == 0) {
+        fpsNums = 0;
+    } else {
+        fpsNums = msCount - 1;
+    }
+    long long timeN = (currTimeLast - currTimeStart) / conversionTime;
+    if (timeN == 0) {
+        return;
+    }
+    long long fpsSections = (fpsNums * conversionFps) / timeN;
+    if (fpsSections > times) {
+        fpsSections = times;
+    }
+    printf("sectionsFps:%lld|%lld\n", fpsSections, currLastTime);
+}
+
+void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
 {
     int msCount = 0;
-    long long msJiange = 100000000;
+    long long msJiange = 0;
+    if (nums != 0) {
+        msJiange = msClear / nums;
+    }
     long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
     long long currLastTime = lastCurrTime;
-    long long harTime = 100;
+    long long harTime = msJiange / 1000000;
     int printCount = 0;
     uint32_t count = 0;
+    long long currTimeStart = 0;
+    long long currTimeLast = 0;
     for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
         long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
+            if (msCount == 0) {
+                currTimeStart = currTime;
+            }
+            currTimeLast = currTime;
             msCount++;
         } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             msCount = 1;
+            if (msCount == 1) {
+                currTimeStart = currTime;
+            }
+            currTimeLast = currTime;
             msStartTime += msJiange;
             currLastTime += harTime;
             printCount++;
         } else {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             printCount++;
             msCount = 0;
             msStartTime += msJiange;
             currLastTime += harTime;
+            currTimeLast = currTime;
             count--;
         }
-        uint32_t size = fpsInfoResult.currTimeStamps.size();
-        if (size <= 1) {
-            return;
-        }
-        if (i == (size - 1)) {
-            printf("sectionsFps:%d|%lld\n", msCount * ten, currLastTime);
+        if (i == (static_cast<uint32_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
+            currTimeLast = currTime;
             printCount++;
-            GetSectionsPrint(printCount, currLastTime);
+            GetSectionsPrint(printCount, currLastTime, nums, msJiange);
         }
         count++;
     }
@@ -228,7 +260,6 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
     }
     printf("SP_daemon exec finished!\n");
 }
-
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
@@ -327,7 +358,7 @@ void ProfilerFPS::GetSameTimeNums()
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0) {
+            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
                 jitter = frameReadyTime - lastFrameReadyTime;
                 fpsInfo.jitters.push_back(jitter);
             }
@@ -336,6 +367,7 @@ void ProfilerFPS::GetSameTimeNums()
         lastFrameReadyTime = frameReadyTime;
     }
 }
+
 bool ProfilerFPS::IsForeGround()
 {
     const std::string cmd = "aa dump -l";

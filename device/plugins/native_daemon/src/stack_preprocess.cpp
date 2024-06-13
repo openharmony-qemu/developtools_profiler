@@ -126,7 +126,6 @@ StackPreprocess::~StackPreprocess()
     }
     runtime_instance = nullptr;
     fpHookData_ = nullptr;
-
     if (isSaService_) {
         std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
         tfPtr->SetDurationTime();
@@ -151,6 +150,15 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
         return;
     }
     stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
+}
+
+void StackPreprocess::FinishTraceFile()
+{
+    if (isSaService_) {
+        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+        tfPtr->SetDurationTime();
+        tfPtr->Finish();
+    }
 }
 
 bool StackPreprocess::StartTakeResults()
@@ -1442,6 +1450,10 @@ void StackPreprocess::FinishReport()
     profilerPluginData_.set_tv_nsec(ts.tv_nsec);
 
     int32_t len = profilerPluginData_.Finish();
+    if (writer_ == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: the writer is nullptr!", __func__);
+        return;
+    }
     writer_->FinishReport(len);
 }
 

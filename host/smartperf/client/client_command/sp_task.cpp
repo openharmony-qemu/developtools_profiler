@@ -38,7 +38,9 @@ namespace OHOS {
 namespace SmartPerf {
 const long long RM_0 = 0;
 const long long RM_5000 = 5000;
+const long long RM_1000 = 1000;
 const long long RM_1000000 = 1000000;
+const long long END_WAITING_TIME = 8; // End waiting time,unit seconds
 // init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
 static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
 {
@@ -236,8 +238,6 @@ void SPTask::StopTask()
     LOGI("SPTask::StopTask start");
     isRunning = false;
     if (isInit) {
-        KillHiperfCmd();
-
         std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
         if (!SPUtils::FileAccess(thisBasePath)) {
             std::string cmdResult;
@@ -280,6 +280,8 @@ void SPTask::StopTask()
         thread.join();
     }
 
+    KillHiperfCmd();
+
     LOGI("SPTask::StopTask complete");
 }
 
@@ -291,24 +293,23 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
     }
 
     FpsCurrentFpsTime fcf = FPS::GetInstance().GetFpsCurrentFpsTime();
+    long long nowTime = SPUtils::GetCurTime();
     long long curframeTime = fcf.currentFpsTime / RM_1000000; // Convert to milliseconds
     std::cout << "start::" << startCaptuerTime << std::endl;
+
+    if (startCaptuerTime > 0) {
+        long long diff =
+            startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) : (nowTime - startCaptuerTime);
+        if (diff > RM_5000 && (!CheckCounterId())) {
+            startCaptuerTime = RM_0;
+        }
+    }
+
     if (curTaskInfo.stuckInfo.fps > fcf.fps || curTaskInfo.stuckInfo.frameTime < curframeTime) {
-        if (!isCaptureTrace) {
-            isCaptureTrace = true;
-            startCaptuerTime = SPUtils::GetCurTime();
+        if (startCaptuerTime == 0) {
+            startCaptuerTime = nowTime;
             std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
             ThreadGetHiperf(startCaptuerTime);
-        } else {
-            long long nowTime = SPUtils::GetCurTime();
-            long long diff = startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) :
-                (nowTime - startCaptuerTime);
-            std::cout << "else::" << startCaptuerTime << std::endl;
-            if (diff > RM_5000 && (!CheckCounterId())) {
-                isCaptureTrace = false;
-                startCaptuerTime = RM_0;
-            }
-            std::cout << "end::" << startCaptuerTime << std::endl;
         }
     }
     templateMap["fpsWarn"] = std::to_string(fcf.fps);
@@ -332,9 +333,9 @@ bool SPTask::CheckCounterId()
 
     return false;
 }
-std::thread SPTask::ThreadGetHiperf(long long ts)
+std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
-    std::thread thGetTrace(&SPTask::GetHiperf, this, std::to_string(ts));
+    std::thread thGetTrace(&SPTask::GetHiperf, this, std::to_string(timeStamp));
     thGetTrace.detach();
     return thGetTrace;
 }
@@ -344,7 +345,8 @@ void SPTask::GetHiperf(const std::string &traceName)
     std::string result;
     std::string tmp = SetHiperf(traceName);
     std::cout << tmp << std::endl;
-    LOGI("hiprofiler exec (%s)", tmp.c_str());
+    LOGD("hiprofiler exec (%s)", tmp.c_str());
+    LOGI("hiprofiler exec trace name(%s)", traceName.c_str());
     SPUtils::LoadCmd(tmp, result);
     LOGI("hiprofiler exec end (%s)", result.c_str());
 }
@@ -367,14 +369,36 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 
 void SPTask::KillHiperfCmd()
 {
+    long long now = 0;
+    long long runTime = 0;
     std::string killCmd = "kill -9 ";
     std::string result;
     std::vector<std::string> out;
 
-    std::cout << "pidof hiprofiler_cmd=" << killCmd << std::endl;
+    if (startCaptuerTime <= 0) {
+        return;
+    }
+
+    now = SPUtils::GetCurTime();
+    runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
+    runTime = runTime / RM_1000; // Convert to seconds
+
+    LOGI("Preparing to exit run time(%lld)", runTime);
+    do {
+        out.clear();
+        SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
+        SPUtils::StrSplit(result, " ", out);
+        if (out.empty()) {
+            break;
+        }
+
+        sleep(1);
+    } while (END_WAITING_TIME - runTime++ > 0);
+
+    out.clear();
     SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
     SPUtils::StrSplit(result, " ", out);
-
+    LOGI("pidof hiprofiler_cmd size(%u)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);

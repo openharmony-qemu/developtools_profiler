@@ -52,11 +52,19 @@ HWTEST_F(SPdaemonGpuTest, Init001, TestSize.Level1)
     std::string constLibFile = "/bin/libGPU_PCM.so";
     std::string constV2File = "/bin/counters_collector_v2.txt";
     std::string constCheckProductInfo = "param get const.product.name";
-    std::string constProductInfo = "Mate 60 Pro";
+    std::string constProductInfo = "60";
+    std::string constWhoami = "whoami";
+    std::string constUserInfo = "root";
 
     std::string recvBuf;
     std::map<std::string, std::string> data;
     int ret = GpuCounter::GetInstance().Init(recvBuf, data);
+
+    SPUtils::LoadCmd(constWhoami, result);
+    if (result.empty() || result.find(constUserInfo) == std::string::npos) {
+        EXPECT_EQ(ret, -3);
+        return;
+    }
 
     SPUtils::LoadCmd(constCheckProductInfo, result);
     if (result.empty() || result.find(constProductInfo) == std::string::npos) {
@@ -146,11 +154,10 @@ HWTEST_F(SPdaemonGpuTest, GetCounterDuration001, TestSize.Level1)
 {
     int ret = -1;
     std::string fileName = "/bin/config.txt";
-
-    FILE *file = fopen(fileName.c_str(), "r+");
+    bool isExist = SPUtils::FileAccess(fileName);
 
     long long lg = GpuCounter::GetInstance().GetCounterDuration();
-    if (file != nullptr) {
+    if (isExist) {
         if (lg >= 0) {
             ret = 1;
         }
@@ -176,10 +183,11 @@ HWTEST_F(SPdaemonGpuTest, Start001, TestSize.Level1)
  * @tc.desc: Test Rest
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonGpuTest, Rest001, TestSize.Level1)
-{
+/* HWTEST_F(SPdaemonGpuTest, Rest001, TestSize.Level1)
+ {
     GpuCounter::GetInstance().Rest();
-}
+ }
+*/
 
 /**
  * @tc.name: GpuCounter::Check

@@ -23,6 +23,7 @@
 #include <climits>
 #include <cctype>
 #include <climits>
+#include <sys/utsname.h>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -61,7 +62,7 @@ bool SPUtils::Cmp(const std::string &a, const std::string &b)
 bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
 {
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(filePath.c_str(), realPath) == nullptr) {
+    if ((realpath(filePath.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     std::ifstream file(realPath);
@@ -321,6 +322,7 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
         }
         policyFiles.push_back(IncludePathDelimiter(basePath) + clusterName);
     }
+    closedir(dir);
     for (size_t i = 0; i < policyFiles.size(); i++) {
         std::string cpus;
         LoadFile(policyFiles[i] + "/affected_cpus", cpus);
@@ -395,7 +397,7 @@ void SPUtils::RemoveSpace(std::string &str)
 
 bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
 {
-    unsigned int dest = 0;
+    uint64_t dest = 0;
     bool isValid = false;
 
     if (str.empty()) {
@@ -575,7 +577,19 @@ bool SPUtils::IntegerValueVerification(std::set<std::string> &keys, std::map<std
             }
         }
     }
+
     return true;
+}
+
+bool SPUtils::IsHmKernel()
+{
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("hmkernel") != std::string::npos;
+    }
+    return isHM;
 }
 }
 }

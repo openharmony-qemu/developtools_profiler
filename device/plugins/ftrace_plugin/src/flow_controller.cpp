@@ -28,6 +28,7 @@
 #include "ftrace_field_parser.h"
 #include "ftrace_fs_ops.h"
 #include "logging.h"
+#include "parameters.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
@@ -51,6 +52,8 @@ using namespace OHOS::Developtools::Profiler;
     constexpr uint32_t SAVED_CMDLINE_SIZE_LARGE = 4096; // save cmdline sizes for cpu num no less than 8
     constexpr int OCTA_CORE_CPU = 8; // 8 core
     constexpr unsigned int RMQ_ENTRY_ALIGN_MASK = (1U << 2) - 1;
+    const std::string TRACE_PROPERTY = "debug.hitrace.tags.enableflags";
+    const std::string BGSRV_PROPERTY = "5456538433239656448";
 } // namespace
 
 FTRACE_NS_BEGIN
@@ -100,7 +103,7 @@ int FlowController::SetWriter(const WriterStructPtr& writer)
 
 bool FlowController::CreateRawDataReaders()
 {
-    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         auto reader = std::make_unique<FtraceDataReader>(FtraceFsOps::GetInstance().GetHmRawTracePath());
         CHECK_NOTNULL(reader, false, "create hm raw trace reader FAILED!");
         ftraceReaders_.emplace_back(std::move(reader));
@@ -134,7 +137,7 @@ bool FlowController::CreatePagedMemoryPool()
         pagesPerBlock = MAX_BLOCK_SIZE_PAGES;
     }
 
-    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         memPool_ = std::make_unique<PagedMemPool>(bufferSizePages, 1);
     } else {
         memPool_ = std::make_unique<PagedMemPool>(pagesPerBlock, platformCpuNum_);
@@ -146,7 +149,7 @@ bool FlowController::CreatePagedMemoryPool()
 bool FlowController::CreateRawDataBuffers()
 {
     int num = platformCpuNum_;
-    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         num = 1;
     }
     for (int i = 0; i < num; i++) {
@@ -269,7 +272,10 @@ int FlowController::StartCapture(void)
     // clear old trace
     FtraceFsOps::GetInstance().ClearTraceBuffer();
     // recover the hitrace
-    traceCollector_->Recover();
+    std::string param = OHOS::system::GetParameter(TRACE_PROPERTY, "");
+    if (param != "0" && param != BGSRV_PROPERTY) {
+        traceCollector_->Recover();
+    }
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
     if (!FtraceFsOps::GetInstance().SetSavedCmdLinesSize(savedCmdlinesSize)) {
@@ -405,7 +411,7 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
 
 void FlowController::CaptureWorkOnNomalMode()
 {
-    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         HmCaptureWorkOnNomalModeInner();
     } else {
         CaptureWorkOnNomalModeInner();
@@ -811,7 +817,7 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
 void FlowController::SetupTraceBufferSize(uint32_t sizeKb)
 {
     uint32_t maxBufferSizeKb = MAX_BUFFER_SIZE_KB;
-    if (FtraceFsOps::GetInstance().GetHmTraceDir() != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         maxBufferSizeKb = HM_MAX_BUFFER_SIZE_KB;
     }
     if (sizeKb < MIN_BUFFER_SIZE_KB) {

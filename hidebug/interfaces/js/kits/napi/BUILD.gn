@@ -24,6 +24,7 @@ ohos_shared_library("hidebug") {
 
   sources = [
     "napi_hidebug.cpp",
+    "napi_hidebug_gc.cpp",
     "napi_hidebug_init.cpp",
   ]
 

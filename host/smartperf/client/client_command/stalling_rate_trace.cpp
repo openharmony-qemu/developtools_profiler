@@ -26,16 +26,17 @@ double StallingRateTrace::StallingRateResult(std::string file)
 {
     double stalligRate = 0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
+    if ((realpath(file.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     infile.open(realPath);
     if (infile.fail()) {
         std::cout << "file open fail:" << file << std::endl;
         LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());
-    } else {
-        stalligRate = SmartPerf::StallingRateTrace::CalculateTime();
+        return stalligRate;
     }
+    stalligRate = SmartPerf::StallingRateTrace::CalculateTime();
+    infile.close();
     return stalligRate;
 }
 
@@ -119,9 +120,9 @@ void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &sig
 
 void StallingRateTrace::CalculateRoundTime()
 {
+    double kadunNum = 1.5;
     if (nowFrameRate != 0) {
-        roundTime = 1 / nowFrameRate;
-        LOGI("roundTime=====: %s", std::to_string(roundTime).c_str());
+        roundTime = (1 / nowFrameRate) * kadunNum;
     }
 }
 void StallingRateTrace::GetScreenInfo(std::string line)

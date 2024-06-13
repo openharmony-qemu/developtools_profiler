@@ -11,5 +11,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-hiviewdfx.hiprofiler.=hiprofiler:shell:0777
+hiviewdfx.hiprofiler.=hiprofiler:shell:0775
 libc.hook_mode.=root:shell:0775

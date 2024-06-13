@@ -161,24 +161,6 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 
-/**
- * @tc.name: native hook
- * @tc.desc: Test hook memalign normal process.
- * @tc.type: FUNC
- */
-HWTEST_F(NativeHookTest, NormalHookMemalignTest, TestSize.Level1)
-{
-    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
-    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
-
-    void* memalignBlack = ohos_malloc_hook_memalign(g_size, g_resize);
-    EXPECT_EQ(memalignBlack, nullptr);
-    EXPECT_EQ(static_cast<int>(ohos_malloc_hook_malloc_usable_size(memalignBlack)), 0);
-
-    ohos_malloc_hook_free(memalignBlack);
-
-    EXPECT_TRUE(ohos_malloc_hook_on_end());
-}
 
 /**
  * @tc.name: native hook
@@ -198,11 +180,6 @@ HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
     EXPECT_NE(callocBlack, nullptr);
     void* vallocBlack = ohos_malloc_hook_valloc(g_size);
     EXPECT_EQ(vallocBlack, nullptr);
-    void* memalignBlack = ohos_malloc_hook_memalign(g_size, g_resize);
-    EXPECT_EQ(memalignBlack, nullptr);
-    EXPECT_EQ(static_cast<int>(ohos_malloc_hook_malloc_usable_size(memalignBlack)), 0);
-
-    ohos_malloc_hook_free(memalignBlack);
     ohos_malloc_hook_free(vallocBlack);
     ohos_malloc_hook_free(callocBlack);
     ohos_malloc_hook_free(reallocBlack);

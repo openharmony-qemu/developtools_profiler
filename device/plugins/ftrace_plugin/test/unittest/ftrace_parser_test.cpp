@@ -163,7 +163,7 @@ HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level1)
 {
     std::vector<uint8_t> buffer(PAGE_SIZE, 0);
     std::string traceRaw;
-    if (FtraceFsOps::GetInstance().hmTraceDir_ != "") {
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
         traceRaw = FtraceFsOps::GetInstance().GetHmRawTracePath();
     } else {
         traceRaw = FtraceFsOps::GetInstance().GetRawTracePath(0);

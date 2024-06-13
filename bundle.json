@@ -55,7 +55,8 @@
         "grpc",
         "cJSON",
         "storage_service",
-        "abseil-cpp"
+        "abseil-cpp",
+        "soc_perf"
       ],
       "third_party": [
         "bounds_checking_function",

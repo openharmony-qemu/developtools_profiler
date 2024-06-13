@@ -24,7 +24,7 @@ double ParsePageFpsTrace::PageFpsTrace(std::string file)
 {
     double fps = -1.0;
     char realPath[PATH_MAX] = {0x00};
-    if (realpath(file.c_str(), realPath) == nullptr) {
+    if ((realpath(file.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }
     infile.open(realPath);
@@ -32,9 +32,9 @@ double ParsePageFpsTrace::PageFpsTrace(std::string file)
         std::cout << "file open fail:" << file << std::endl;
         LOGE("ParsePageFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
-    } else {
-        fps = SmartPerf::ParsePageFpsTrace::CalculateTime();
     }
+    fps = SmartPerf::ParsePageFpsTrace::CalculateTime();
+    infile.close();
     return fps;
 }
 double ParsePageFpsTrace::CalculateTime()

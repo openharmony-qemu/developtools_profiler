@@ -41,7 +41,13 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetFpsInfo();
         prevResultFpsInfo = fpsInfoResult;
     }
-    result["refreshrate"] = GetScreenInfo();
+    if (screen == "0") {
+        result["refreshrate"] = GetScreenInfo();
+        screen = GetScreenInfo();
+    } else {
+        result["refreshrate"] = screen;
+        screen = GetScreenInfo();
+    }
     if (processFlag) {
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
@@ -213,7 +219,7 @@ void FPS::GetSameTimeNums()
             jitter = frameReadyTime - lastTime;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0) {
+            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
                 jitter = frameReadyTime - lastFrameReadyTime;
                 fpsInfo.jitters.push_back(jitter);
             }

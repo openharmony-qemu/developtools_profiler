@@ -32,6 +32,7 @@ public:
     TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps) const;
     // 触发trace
     void TriggerCatch(long long curTime) const;
+    bool CheckHitraceId() const;
 
 private:
     ByTrace() {};
@@ -54,7 +55,6 @@ private:
     mutable int lowfps = -1;
     // 前2秒采的不准
     mutable int times = 0;
-    mutable bool isTaskCompleted = false;
 };
 }
 }

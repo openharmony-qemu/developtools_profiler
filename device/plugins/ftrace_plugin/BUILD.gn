@@ -55,6 +55,7 @@ ohos_source_set("ftrace_plugin_source") {
       "hilog:libhilog",
       "hiview:libucollection_client",
       "protobuf:protobuf_lite",
+      "init:libbegetutil",
     ]
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -70,6 +71,7 @@ ohos_shared_library("ftrace_plugin") {
     external_deps = [
       "hilog:libhilog",
       "hiview:libucollection_client",
+      "init:libbegetutil",
     ]
   }
   install_enable = true
