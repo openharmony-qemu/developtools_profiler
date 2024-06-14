@@ -455,4 +455,23 @@ describe("HidebugJsTest", function () {
             expect(error.message === "Invalid parameter, unknown property.").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_019
+     * @tc.desc: setAppResourceLimit正常测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_019', 0, function () {
+        console.info("---------------------------HidebugJsTest_019----------------------------------");
+        try {
+            let type = "js_heap";
+            let value = 85;
+            let enabledDebugLog = false;
+            hidebug.setAppResourceLimit(type, value, enabledDebugLog);
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
 })
