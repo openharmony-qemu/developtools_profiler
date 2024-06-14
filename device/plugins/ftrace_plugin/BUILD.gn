@@ -54,8 +54,8 @@ ohos_source_set("ftrace_plugin_source") {
       "bounds_checking_function:libsec_static",
       "hilog:libhilog",
       "hiview:libucollection_client",
-      "protobuf:protobuf_lite",
       "init:libbegetutil",
+      "protobuf:protobuf_lite",
     ]
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
