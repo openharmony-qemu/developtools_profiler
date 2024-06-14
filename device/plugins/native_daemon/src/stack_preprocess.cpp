@@ -578,9 +578,13 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
     callStack_.clear();
     bool isNapi = false;
     if (rawStack->stackConext->type == MEMORY_USING_MSG && hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
-        callStack_.reserve(callFrames.size() + 1); // 1 : insert a frame
-        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
-        isNapi = true;
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        if (tagName.find("napi") != std::string::npos) {
+            callStack_.reserve(callFrames.size() + 1);  // 1 : insert a frame
+            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            isNapi = true;
+        }
     } else {
         callStack_.reserve(callFrames.size());
     }
@@ -701,9 +705,13 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::
     callStack_.clear();
     bool isNapi = false;
     if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
-        callStack_.reserve(callFrames.size() + FRAME_DEPTH);
-        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
-        isNapi = true;
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        if (tagName.find("napi") != std::string::npos) {
+            callStack_.reserve(callFrames.size() + FRAME_DEPTH);  // insert a frame
+            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            isNapi = true;
+        }
     } else {
         callStack_.reserve(callFrames.size() + 1);
     }
