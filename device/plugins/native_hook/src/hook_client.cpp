@@ -1069,10 +1069,10 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
-    if (!fn) {
-        return;
-    }
     int ret = -1;
+    if (!fn) {
+        return ret;
+    }
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
         ret = fn(addr, length);
         return ret;
