@@ -825,7 +825,7 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 void hook_free(void (*free_func)(void*), void* p)
 {
     if (!free_func) {
-        free_func(p);
+        return;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         free_func(p);
