@@ -176,7 +176,7 @@ private:
     void FillDwarfErrorStack();
     void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
-    std::chrono::steady_clock time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};
