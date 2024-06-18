@@ -303,8 +303,14 @@ bool ohos_malloc_hook_on_end(void)
     {
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
-            g_hookClient->SendNmdInfo();
+            if (g_hookClient->GetNmdType() == 1) {
+                PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
+                g_hookClient->SendNmdInfo();
+            }
+            g_hookClient->SendEndMsg();
             g_hookClient->Flush();
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
         }
     }
     pthread_t threadEnd;

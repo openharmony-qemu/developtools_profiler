@@ -150,7 +150,6 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
     if (memcpy_s(buffer.get(), metaSize, &ts, sizeof(ts)) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
-    ASSERT_EQ(hookClient.nmdFd_, -1);
     ASSERT_FALSE(hookClient.SendNmdInfo());
 }
 } // namespace

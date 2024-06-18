@@ -72,6 +72,8 @@ enum {
     THREAD_NAME_MSG,
     PR_SET_VMA_MSG,
     JS_STACK_MSG,
+    NMD_MSG,
+    END_MSG,
 };
 
 struct alignas(8) MmapFileRawData { // 8 is 8 bit
@@ -145,6 +147,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memtraceEnable = false;
         responseLibraryMode = false;
         freeEventOnlyAddrEnable = false;
+        printNmd = false;
+        nmdType = -1;
         arktsConfig.jsStackReport = 0;
         arktsConfig.maxJsStackDepth = 0;
         arktsConfig.jsFpunwind = false;
@@ -181,6 +185,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool memtraceEnable = false;
     bool responseLibraryMode = false;
     bool freeEventOnlyAddrEnable = false;
+    bool printNmd = false;
+    int nmdType = -1;
     ArkTsClientConfig arktsConfig = {0};
 };
 #endif // HOOK_COMMON_H

@@ -143,13 +143,6 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
         return;
     }
 
-    if (config->hookMgr->GetPid() > 0) {
-        std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
-        if (nmdPidType_.find(config->hookMgr->GetPid()) != nmdPidType_.end()) {
-            config->hookMgr->SetNmdInfo(nmdPidType_[config->hookMgr->GetPid()]);
-        }
-    }
-
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
     if (timeout) {
@@ -208,6 +201,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     hook->RegisterWriter(writeFile);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, false);
+    if (config->pid_ > 0) {
+        std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
+        if (nmdPidType_.find(config->pid_) != nmdPidType_.end()) {
+            hook->SetNmdInfo(nmdPidType_[config->pid_]);
+        }
+    }
     if (hook->CreatePluginSession() != RET_OK) {
         return RET_ERR;
     }
@@ -339,11 +338,8 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
 
     std::lock_guard<std::mutex> guard(mtx_);
     if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
-        std::vector<int> vec = iter->second->hookMgr->GetFds(peerConfig, bundleName);
+        auto [eventFd, smbFd] = iter->second->hookMgr->GetFds(peerConfig, bundleName);
         iter->second->hookMgr->SetPid(peerConfig);
-        auto eventFd = vec[0];
-        auto smbFd = vec[1];
-        auto nmdFd = vec[2];
         if (eventFd == smbFd) {
             PROFILER_LOG_ERROR(LOG_CORE,
                                "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
@@ -360,7 +356,6 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
         context.SendFileDescriptor(smbFd);
         context.SendFileDescriptor(eventFd);
-        context.SendFileDescriptor(nmdFd);
         iter->second->hookMgr->ResetStartupParam();
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");

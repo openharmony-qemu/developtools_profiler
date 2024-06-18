@@ -33,6 +33,7 @@
 #include "native_hook_result.pb.h"
 #include "native_hook_result.pbencoder.h"
 #include "safe_map.h"
+#include "schedule_task_manager.h"
 
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 class StackPreprocess {
@@ -59,6 +60,7 @@ public:
     void FinishTraceFile();
     bool FlushRecordStatistics();
     void FlushRecordApplyAndReleaseMatchData();
+    void ForceStop();
     inline void SetPid(int32_t pid)
     {
         pid_ = pid;
@@ -70,6 +72,10 @@ public:
     void ReportBasicData();
     void WriteHookConfig();
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
+    void SetNmdFd(uint32_t fd)
+    {
+        nmdFd_ = fd;
+    }
     void SetFlushSize(uint64_t size)
     {
         double tenth = static_cast<double>(size) / 10.0;
@@ -228,6 +234,8 @@ private:
     std::vector<std::string> prctlPeriodTags_; // applyAndReleaseMatchInterval mode used
     std::vector<std::string> fpJsCallStacks_;
     std::atomic<uint64_t> napiIndex_{1};
+    ScheduleTaskManager scheduleTaskManager_;
+    uint32_t nmdFd_ = 0;
 };
 
 #endif // STACK_PREPROCESS_H

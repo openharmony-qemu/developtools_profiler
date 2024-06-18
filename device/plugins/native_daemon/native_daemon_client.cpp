@@ -164,11 +164,8 @@ int32_t main(int32_t argc, char* argv[])
             close(fd);
         } else if (config->printNmd_) {
             uint32_t fdFirst = TestDumpFile(std::to_string(0));
-            uint32_t fdSecond = TestDumpFile(std::to_string(1));
             NativeMemoryProfilerSaClientManager::GetMallocStats(fdFirst, config->pid_, 0);
-            NativeMemoryProfilerSaClientManager::GetMallocStats(fdSecond, config->pid_, 1);
             close(fdFirst);
-            close(fdSecond);
         } else {
             NativeMemoryProfilerSaClientManager::Start(config);
         }
