@@ -123,7 +123,7 @@ public:
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
 
 private:
-    int pid_ = -1;
+    int pid_ = -1; // for SA mode
     bool printMallocNmd_ = false;
     bool CheckProcess();
     bool CheckProcessName();
