@@ -25,8 +25,8 @@
 #include "socket_context.h"
 
 namespace OHOS::Developtools::NativeDaemon {
-HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook)
-    : clientConfig_(clientConfig), hookMgr_(hook)
+HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook, bool multipleProcesses)
+    : clientConfig_(clientConfig), hookMgr_(hook), multipleProcesses_(multipleProcesses)
 {
     serviceName_ = "HookService";
     if (getuid() == 0) {
@@ -84,10 +84,10 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     }
 
     std::lock_guard<std::mutex> lock(mtx_);
-    if (!firstProcess) {
+    if ((!firstProcess_) && (!multipleProcesses_)) {
         return false;
     }
-    firstProcess = false;
+    firstProcess_ = false;
     auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
         PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);

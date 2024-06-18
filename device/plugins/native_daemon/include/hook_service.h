@@ -26,7 +26,7 @@ namespace OHOS::Developtools::NativeDaemon {
 class HookManager;
 class HookService : public ServiceBase {
 public:
-    HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook);
+    HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook, bool multipleProcesses = false);
     ~HookService();
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
 private:
@@ -37,7 +37,8 @@ private:
     ClientConfig clientConfig_;
     std::shared_ptr<HookManager> hookMgr_{nullptr};
     std::mutex mtx_;
-    bool firstProcess = true;
+    bool firstProcess_ = true;
+    bool multipleProcesses_ = false;
 };
 }
 #endif // HOOK_SERVICE_H
