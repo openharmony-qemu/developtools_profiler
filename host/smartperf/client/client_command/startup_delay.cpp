@@ -34,7 +34,7 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     if (SPUtils::IsHmKernel()) {
         cmdString = "hitrace --trace_clock mono -t 5 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace --trace_clock mono -t 5 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 5 -b 204800 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);

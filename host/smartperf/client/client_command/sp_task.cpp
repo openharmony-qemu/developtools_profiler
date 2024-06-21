@@ -228,6 +228,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
                 std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
             }
         }
+        if (!isRunning) {
+            vmap.clear();
+        }
     });
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
