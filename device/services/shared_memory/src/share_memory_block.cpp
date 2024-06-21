@@ -423,7 +423,6 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
                     return false;
                 }
                 pthread_mutex_unlock(&header_->info.mutex_);
-                PROFILER_LOG_DEBUG(LOG_CORE, "%s:%d block", __FUNCTION__, __LINE__);
                 usleep(WAIT_RELEASE_TIMEOUT_US);
                 pthread_mutex_lock(&header_->info.mutex_);
                 rawMemory = GetFreeMemory(headerSize + payloadSize);
