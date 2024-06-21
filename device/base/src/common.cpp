@@ -438,6 +438,37 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     return true;
 }
 
+const char* RealPath(std::string &filePath)
+{
+    if (filePath.size() > 0 && (filePath.back() == '/' || filePath.back() == '.')) {
+        return nullptr;
+    }
+    if (filePath.find('.') == -1) {
+        return filePath.c_str();
+    }
+    std::vector<std::string> paths;
+    SplitString(filePath, "/", paths);
+    std::vector<std::string> validPaths;
+    for (std::string& pathName: paths) {
+        if (pathName == "..") {
+            if (validPaths.size() == 0) {
+                return nullptr;
+            } else {
+                validPaths.pop_back();
+            }
+        } else {
+            validPaths.emplace_back(pathName);
+        }
+    }
+    filePath = "/";
+    for (std::string &pathName : validPaths) {
+        filePath += pathName;
+        filePath += "/";
+    }
+    filePath.pop_back();
+    return filePath.c_str();
+}
+
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
 {
     if (validPaths.size() == 0) {
@@ -454,11 +485,11 @@ bool VerifyPath(const std::string& filePath, const std::vector<std::string>& val
 
 bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)
 {
-    char* realFilePath = realpath(filePath.c_str(), nullptr);
+    std::string pathName = filePath;
+    const char* realFilePath = RealPath(pathName);
     CHECK_NOTNULL(realFilePath, false, "Fail to realPath: %s", filePath.c_str());
 
     std::string realFilePathStr(realFilePath);
-    free(realFilePath);
     CHECK_TRUE(VerifyPath(realFilePathStr, validPaths), false, "Fail to VerifyPath: %s", realFilePathStr.c_str());
 
     std::ifstream fileStream(realFilePathStr, std::ios::in);
