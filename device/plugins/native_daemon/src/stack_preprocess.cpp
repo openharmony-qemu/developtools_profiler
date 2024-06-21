@@ -206,11 +206,10 @@ inline void StackPreprocess::IntervalFlushRecordStatistics()
 {
     // interval reporting statistics
     if (hookConfig_.statistics_interval() > 0) {
-        static auto lastStatisticsTime = std::chrono::steady_clock::now();
         auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime);
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime_);
         if (elapsedTime >= statisticsInterval_) {
-            lastStatisticsTime = currentTime;
+            lastStatisticsTime_ = currentTime;
             FlushRecordStatistics();
         }
     }

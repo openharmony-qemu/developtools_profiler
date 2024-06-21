@@ -670,6 +670,7 @@ void HookManager::StartPluginSession()
         if (!noDataQueue_) {
             item->stackPreprocess->StartTakeResults();
         }
+        item->stackPreprocess->InitStatisticsTime();
         if (item->pid > 0) {
             PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
