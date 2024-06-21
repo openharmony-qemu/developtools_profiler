@@ -95,7 +95,6 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     
     if (SPUtils::FileAccess(savePath)) {
         std::cout << "" << std::endl;
-        return;
     }
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
