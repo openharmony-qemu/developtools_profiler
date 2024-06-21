@@ -45,7 +45,6 @@ export class ProfilerTask {
     for (var key of keys) {
       if (globalThis.collectConfigs[key]) {
         let typeCollect = ProfilerFactory.getProfilerByConfig(key.toString());
-        SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask initModule: ' + typeCollect);
         if (typeCollect == null) {
           continue;
         } else {
@@ -102,7 +101,6 @@ export class ProfilerTask {
   }
 
   taskStart() {
-    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask taskStart call');
     var gpDataArr: GPData[] = [];
     this.collectItems.forEach((moduleName) => {
       let typeCollect = ProfilerFactory.getProfilerByConfig(moduleName.toString());
@@ -112,7 +110,6 @@ export class ProfilerTask {
           gpDataArr.push(typeCollect.readCPULoad());
         }
         gpDataArr.push(gpData);
-        SPLogger.DEBUG(ProfilerTask.name, 'profiler ProfilerTask:curData:' + gpData);
       }
     });
 
@@ -124,13 +121,9 @@ export class ProfilerTask {
       CommonEvent.publish('event', { code: 0, data: JSON.stringify(tTndex) }, (err) => {});
     }
     globalThis.collectIntervalNum++;
-    SPLogger.DEBUG(ProfilerTask.name, 'profiler globalThis.collectIntervalNum ' + globalThis.collectIntervalNum);
-
-    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask taskStart called');
   }
 
   taskSingleItemStart(collectorType: CollectorType) {
-    SPLogger.ERROR('ProfilerTaskTest', 'ProfilerTask taskStart call collectorType' + collectorType.toString());
     let typeCollect = ProfilerFactory.getProfilerByConfig(collectorType.toString());
     if (typeCollect instanceof Power) {
       typeCollect.readFourTimesData();
@@ -146,10 +139,12 @@ export class ProfilerTask {
         database.insertData('t_index_info', globalThis.dbTime, tTndex);
       }
     }
+    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask insertData success');
     createFilePath(
       globalThis.abilityContext.getApplicationContext().filesDir + '/' + globalThis.dbTime + '/t_index_info.csv',
     csvTIndexInfo(globalThis.tTndexs)
     );
+    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask createFilePath index_info success');
     // t_general_info  入库
     globalThis.endTime = new Date().getTime();
     let tGeneralInfo = new TGeneralInfo(
@@ -168,7 +163,9 @@ export class ProfilerTask {
     tGeneralInfo.brand = deviceInfo.brand;
     tGeneralInfo.version = deviceInfo.displayVersion;
     tGeneralInfo.sn = deviceInfo.serial;
+    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask insertGeneraData');
     database.insertGeneraData('t_general_info', tGeneralInfo);
+    SPLogger.DEBUG(ProfilerTask.name, 'ProfilerTask insertGeneraData success');
     createFilePath(
       globalThis.abilityContext.getApplicationContext().filesDir + '/' + globalThis.dbTime + '/t_general_info.csv',
     csvGeneralInfo(tGeneralInfo)

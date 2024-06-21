@@ -88,7 +88,6 @@ export function travelFile(path: string, regexp: string): Array<String> {
       }
       let name: String = dirent.name;
       if (name.match(regexp)) {
-        SPLogger.DEBUG(TAG, 'travelFile get name:' + dirent.name);
         fileNames.push(name);
       }
       if (regexp == '') {

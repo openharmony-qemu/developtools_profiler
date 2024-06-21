@@ -48,7 +48,6 @@ export class DDR extends BaseProfiler {
     const path = DdrConfig.DDR_BASE;
     let ddr = fileOpen(path);
     this.ddrMap.set('ddrFreq', ddr);
-    SPLogger.DEBUG(DDR.name, 'profile_readDDR' + ddr);
     return createGPData('DDR', this.ddrMap);
   }
 }
