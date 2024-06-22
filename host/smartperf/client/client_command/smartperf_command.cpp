@@ -222,7 +222,7 @@ std::string SmartPerfCommand::ExecCommand()
     LOGI("SmartPerfCommand::WriteCsv finish");
     return std::string("command exec finished!");
 }
-void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const;
+void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
 {
     int i = 0;
     for (auto a = data.cbegin(); a != data.cend(); ++a) {
