@@ -183,6 +183,7 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
     }
     long long timeN = (currTimeLast - currTimeStart) / conversionTime;
     if (timeN == 0) {
+        printf("sectionsFps:%d|%lld\n", 0, currLastTime);
         return;
     }
     long long fpsSections = (fpsNums * conversionFps) / timeN;
@@ -237,7 +238,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             currTimeLast = currTime;
             printCount++;
-            GetSectionsPrint(printCount, currLastTime, nums, msJiange);
+            GetSectionsPrint(printCount, currLastTime, nums, harTime);
         }
         count++;
     }

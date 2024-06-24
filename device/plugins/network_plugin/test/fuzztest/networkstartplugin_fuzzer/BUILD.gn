@@ -30,9 +30,9 @@ ohos_fuzztest("NetworkStartPluginFuzzTest") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "hilog:libhilog",
     "protobuf:protobuf_lite",
   ]

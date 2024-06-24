@@ -211,16 +211,18 @@ std::string SmartPerfCommand::ExecCommand()
     }
     if (callGpuCounterResult) {
         const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        printfExecCommand(data);
+        PrintfExecCommand(data);
         SPData spdata;
         spdata.values.insert(data.begin(), data.end());
         vmap.push_back(spdata);
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
+    LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
+    LOGI("SmartPerfCommand::WriteCsv finish");
     return std::string("command exec finished!");
 }
-void SmartPerfCommand::printfExecCommand(const std::map<std::string, std::string> data)
+void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
 {
     int i = 0;
     for (auto a = data.cbegin(); a != data.cend(); ++a) {

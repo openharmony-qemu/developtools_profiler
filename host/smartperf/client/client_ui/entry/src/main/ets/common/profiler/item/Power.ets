@@ -45,10 +45,6 @@ export class Power extends BaseProfiler {
         }
       });
     });
-    SPLogger.DEBUG(
-    Power.name,
-      'pathNodes init length:' + pathNodes.length + 'support items:' + JSON.stringify(this.supportItemKey)
-    );
     return CollectorType.TYPE_POWER;
   }
 
@@ -83,13 +79,11 @@ export class Power extends BaseProfiler {
         if (powerKey == 'current_now') {
           let powerValue = fileOpen(PowerConfig.POWER_PATH + '/' + powerKey);
           globalThis.powerCurArr.push(powerValue);
-          console.error('last CurrentNow-->push' + powerValue);
         }
 
         if (powerKey == 'voltage_now') {
           let powerValue = fileOpen(PowerConfig.POWER_PATH + '/' + powerKey);
           globalThis.powerVoltArr.push(powerValue);
-          console.error('last VoltageNow-->push' + powerValue);
         }
       }
     }
@@ -101,10 +95,8 @@ export class Power extends BaseProfiler {
     let lastValue = 0;
     while (powerQueue.length >= 4) {
       lastValue += StringUtils.s2L(powerQueue.pop().toString());
-      console.error('last CurrentNow-->pop' + lastValue);
     }
     let avgCurrentNum = (lastValue / 4).toString();
-    console.error('last CurrentNowAVG-->' + avgCurrentNum);
     return avgCurrentNum;
   }
 
@@ -114,10 +106,8 @@ export class Power extends BaseProfiler {
     let lastValue = 0;
     while (powerQueue.length >= 4) {
       lastValue += StringUtils.s2L(powerQueue.pop().toString());
-      console.error('last VoltageNow-->pop' + lastValue);
     }
     let avgCurrentNum = (lastValue / 4).toString();
-    console.error('last VoltageNowAVG-->' + avgCurrentNum);
     return avgCurrentNum;
   }
 }

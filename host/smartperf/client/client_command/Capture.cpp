@@ -82,6 +82,9 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
 
 void Capture::ThreadGetCatchSocket(const std::string &curTime) const
 {
+    if (curTime.empty()) {
+        return;
+    }
     auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
@@ -89,12 +92,11 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("/data/local/tmp/capture created! \n");
         LOGI("/data/local/tmp/capture created!");
     };
-    char resolvedPath[PATH_MAX] = {0x00};
-    if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
-        std::cout << "Error: Unable to get resolved path." << std::endl;
-        return;
+    
+    if (SPUtils::FileAccess(savePath)) {
+        std::cout << "" << std::endl;
     }
-    auto fd = open(resolvedPath, O_RDWR | O_CREAT, 0644);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
     (void)close(fd);
 }

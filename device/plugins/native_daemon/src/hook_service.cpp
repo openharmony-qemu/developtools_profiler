@@ -88,10 +88,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
     firstProcess = false;
-    std::vector<int> vec = hookMgr_->GetFds(peerConfig, procName);
-    auto eventFd = vec[0];
-    auto smbFd = vec[1];
-    auto nmdFd = vec[2];
+    auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
         PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
         return false;
@@ -102,7 +99,6 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
     context.SendFileDescriptor(smbFd);
     context.SendFileDescriptor(eventFd);
-    context.SendFileDescriptor(nmdFd);
     hookMgr_->ResetStartupParam();
     return true;
 }

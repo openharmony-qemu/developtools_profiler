@@ -31,7 +31,7 @@ ohos_fuzztest("HidumpStartPluginFuzzTest") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_data_cpp",
   ]
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "hilog:libhilog",
     "openssl:libcrypto_shared",
     "protobuf:protobuf",

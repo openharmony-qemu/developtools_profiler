@@ -183,19 +183,4 @@ HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
     EXPECT_TRUE(hookManager.CheckProcessName());
 }
 
-/*
- * @tc.name: PrintStat
- * @tc.desc: test PrintStat with false case.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerTest, PrintStat, TestSize.Level1)
-{
-    HookManager hookManager;
-    NativeHookConfig nativeConfig;
-    nativeConfig.set_process_name("HookManagerTest");
-    nativeConfig.set_startup_mode(true);
-    hookManager.SetHookConfig(nativeConfig);
-    hookManager.GetFds(9, "");
-    EXPECT_TRUE((hookManager.shareMemoryNmd_ && hookManager.shareMemoryNmd_->GetName() == "nmd 9"));
-}
 } // namespace

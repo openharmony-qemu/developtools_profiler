@@ -50,7 +50,7 @@ ohos_executable("ebpf_converter") {
 
   sources = [ "src/ebpf_converter.cpp" ]
   include_dirs = [ "./include" ]
-  external_deps = [ "bounds_checking_function:libsec_static" ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

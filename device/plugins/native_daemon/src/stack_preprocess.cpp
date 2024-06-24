@@ -40,6 +40,8 @@ constexpr static uint32_t LG_TINY_MAXCLASS = 3;
 constexpr static uint32_t MAX_MATCH_CNT = 1000;
 constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
+constexpr static uint32_t WAIT_STOP_TIME = 5000;
+constexpr static uint32_t WAIT_TIME_ONCE = 10;
 constexpr static uint32_t MAX_BATCH_CNT = 20;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
@@ -176,15 +178,21 @@ bool StackPreprocess::StartTakeResults()
 bool StackPreprocess::StopTakeResults()
 {
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
+    int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+        std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true, false);
+    if (timerFd == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
+        return false;
+    }
     if (!dataRepeater_) {
-        isStopTakeData_ = true;
+        while (!isStopTakeData_) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_ONCE));
+        }
         return true;
     }
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
     CHECK_TRUE(thread_.get_id() != std::thread::id(), false, "thread invalid");
 
-    isStopTakeData_ = true;
-    dataRepeater_->PutRawStack(nullptr, false);
     PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults Wait thread join");
 
     if (thread_.joinable()) {
@@ -198,11 +206,10 @@ inline void StackPreprocess::IntervalFlushRecordStatistics()
 {
     // interval reporting statistics
     if (hookConfig_.statistics_interval() > 0) {
-        static auto lastStatisticsTime = std::chrono::steady_clock::now();
         auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime);
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime_);
         if (elapsedTime >= statisticsInterval_) {
-            lastStatisticsTime = currentTime;
+            lastStatisticsTime_ = currentTime;
             FlushRecordStatistics();
         }
     }
@@ -243,6 +250,14 @@ bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData)
         return false;
     }
     return true;
+}
+
+void StackPreprocess::ForceStop()
+{
+    isStopTakeData_ = true;
+    if (dataRepeater_ != nullptr) {
+        dataRepeater_->Close();
+    }
 }
 
 void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
@@ -291,6 +306,14 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
                 runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(rawData->stackConext->addr));
+            } else if (rawData->stackConext->type == NMD_MSG) {
+                const char* nmdResult = reinterpret_cast<const char*>(rawData->data);
+                lseek(nmdFd_, 0, SEEK_END);
+                (void)write(nmdFd_, nmdResult, strlen(nmdResult));
+                return true;
+            }  else if (rawData->stackConext->type == END_MSG) {
+                isStopTakeData_ = true;
+                return true;
             }
             {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -341,14 +364,23 @@ void StackPreprocess::TakeResults()
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, start!", gettid());
     while (1) {
         RawStackPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+        if (isStopTakeData_) {
+            break;
+        }
         auto result = dataRepeater_->TakeRawData(hookConfig_.malloc_free_matching_interval(), hookDataClockId_,
             MAX_BATCH_CNT, batchRawStack);
-        if (!result || isStopTakeData_) {
+        if (!result) {
             break;
         }
         for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
             auto rawData = batchRawStack[i];
             if (!rawData || isStopTakeData_) {
+                break;
+            }
+            if (rawData->stackConext->type == NMD_MSG) {
+                continue;
+            } else if (rawData->stackConext->type == END_MSG) {
+                isStopTakeData_ = true;
                 break;
             }
 #ifdef PERFORMANCE_DEBUG
@@ -578,9 +610,13 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
     callStack_.clear();
     bool isNapi = false;
     if (rawStack->stackConext->type == MEMORY_USING_MSG && hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
-        callStack_.reserve(callFrames.size() + 1); // 1 : insert a frame
-        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
-        isNapi = true;
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        if (tagName.find("napi") != std::string::npos) {
+            callStack_.reserve(callFrames.size() + 1);  // 1 : insert a frame
+            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            isNapi = true;
+        }
     } else {
         callStack_.reserve(callFrames.size());
     }
@@ -701,9 +737,13 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::
     callStack_.clear();
     bool isNapi = false;
     if (hookConfig_.js_stack_report() == NAPI_CALL_STACK) {
-        callStack_.reserve(callFrames.size() + FRAME_DEPTH);
-        callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
-        isNapi = true;
+        std::string tagName;
+        GetMemTag(rawStack->stackConext->tagId, tagName);
+        if (tagName.find("napi") != std::string::npos) {
+            callStack_.reserve(callFrames.size() + FRAME_DEPTH);  // insert a frame
+            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            isNapi = true;
+        }
     } else {
         callStack_.reserve(callFrames.size() + 1);
     }

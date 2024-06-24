@@ -48,7 +48,7 @@ ohos_shared_library("cpudataplugin") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "bounds_checking_function:libsec_static",
+      "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
     ]
   }
@@ -70,7 +70,7 @@ ohos_executable("cpudataplugintest") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "bounds_checking_function:libsec_static",
+      "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
       "protobuf:protobuf_lite",
     ]

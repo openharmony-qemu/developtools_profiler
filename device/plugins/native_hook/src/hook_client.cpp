@@ -303,8 +303,14 @@ bool ohos_malloc_hook_on_end(void)
     {
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
-            g_hookClient->SendNmdInfo();
+            if (g_hookClient->GetNmdType() == 1) {
+                PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
+                g_hookClient->SendNmdInfo();
+            }
+            g_hookClient->SendEndMsg();
             g_hookClient->Flush();
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
         }
     }
     pthread_t threadEnd;
@@ -427,7 +433,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         void* stackAddr = nullptr;
         size_t coroutineStackSize = 0;
         if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = coroutineStackSize;
+            stackSize = static_cast<int>(coroutineStackSize);
         } else {
             stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -530,7 +536,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         void* stackAddr = nullptr;
         size_t coroutineStackSize = 0;
         if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = coroutineStackSize;
+            stackSize = static_cast<int>(coroutineStackSize);
         } else {
             stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -633,7 +639,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         void* stackAddr = nullptr;
         size_t coroutineStackSize = 0;
         if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = coroutineStackSize;
+            stackSize = static_cast<int>(coroutineStackSize);
         } else {
             stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -741,7 +747,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         void* stackAddr = nullptr;
         size_t coroutineStackSize = 0;
         if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = coroutineStackSize;
+            stackSize = static_cast<int>(coroutineStackSize);
         } else {
             stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -824,14 +830,16 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
-    if (free_func) {
-        free_func(p);
+    if (!free_func) {
+        return;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+        free_func(p);
         return;
     }
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         if (!IsAddrExist(p)) {
+            free_func(p);
             return;
         }
     }
@@ -873,7 +881,7 @@ void hook_free(void (*free_func)(void*), void* p)
             void* stackAddr = nullptr;
             size_t coroutineStackSize = 0;
             if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = coroutineStackSize;
+                stackSize = static_cast<int>(coroutineStackSize);
             } else {
                 stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
                 GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -911,6 +919,7 @@ void hook_free(void (*free_func)(void*), void* p)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+    free_func(p);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -990,7 +999,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         void* stackAddr = nullptr;
         size_t coroutineStackSize = 0;
         if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = coroutineStackSize;
+            stackSize = static_cast<int>(coroutineStackSize);
         } else {
             stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
             GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -1067,10 +1076,11 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
     int ret = -1;
-    if (fn) {
-        ret = fn(addr, length);
+    if (!fn) {
+        return ret;
     }
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
+        ret = fn(addr, length);
         return ret;
     }
 
@@ -1092,7 +1102,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
             void* stackAddr = nullptr;
             size_t coroutineStackSize = 0;
             if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = coroutineStackSize;
+                stackSize = static_cast<int>(coroutineStackSize);
             } else {
                 stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
                 GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
@@ -1130,6 +1140,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
+    ret = fn(addr, length);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1213,7 +1224,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
             void* stackAddr = nullptr;
             size_t coroutineStackSize = 0;
             if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = coroutineStackSize;
+                stackSize = static_cast<int>(coroutineStackSize);
             } else {
                 stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
                 GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer

@@ -45,7 +45,7 @@ ohos_source_set("hiperfplugin_source") {
       "LITE_PROTO",
     ]
     external_deps = [
-      "bounds_checking_function:libsec_static",
+      "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",

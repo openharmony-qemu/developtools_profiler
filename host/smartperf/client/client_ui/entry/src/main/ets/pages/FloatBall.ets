@@ -102,18 +102,13 @@ struct FloatBall {
 
   longEvent() {
     console.log('cm-floatBall-longEvent')
+    this.playerState = TaskStatus.task_stop
     ProfilerTask.getInstance().taskStop()
-    this.destroyAllWindow()
-    this.clearAllInterVal()
-    var now = new Date();
-    var exitTime = now.getTime() + 1000;
-    while (true) {
-      now = new Date();
-      if (now.getTime() > exitTime) {
-        break;
-      }
-    }
-    ProfilerTask.getInstance().taskGetDubai()
+    setTimeout(() => {
+      this.destroyAllWindow()
+      this.clearAllInterVal()
+      ProfilerTask.getInstance().taskGetDubai()
+    }, 5000)
   }
   async dubai_data_to_disk() {
     mainWorker.postMessage({'setDuBaiDb': true})
@@ -263,6 +258,26 @@ struct FloatBall {
               this.SetWindowPosition(this.offsetX, this.offsetY)
             })
           ))
+      }
+      if (this.playerState == TaskStatus.task_stop) {
+        Circle()
+          .width('90vp')
+          .height('90vp')
+          .fill(Color.White)
+          .fillOpacity(0)
+          .opacity(0.8)
+          .border({ radius: '90vp', width: '0.5vp', color: $r('app.color.colorPrimary') })
+          .linearGradient({
+            angle: 135,
+            direction: GradientDirection.Left,
+            colors: [[$r('app.color.colorPrimary'), 1.0], [$r('app.color.colorPrimary'), 1.0]]
+          })
+        Text('saving..')
+          .fontSize(12)
+          .textAlign(TextAlign.Center)
+          .fontColor($r('app.color.color_fff'))
+          .width('100%')
+          .height('100%')
       }
     }.width('100%').height('100%')
 

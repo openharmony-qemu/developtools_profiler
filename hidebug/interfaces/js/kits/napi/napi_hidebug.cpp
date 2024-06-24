@@ -540,7 +540,7 @@ static napi_value GetServiceDump(napi_env env, napi_callback_info info)
     sptr<IRemoteObject> sa = sam->CheckSystemAbility(serviceAbilityId);
     if (sa == nullptr) {
         HILOG_ERROR(LOG_CORE, "no this system ability.");
-        std::string idErrorMessage = "service id is invalid, system ability is not exist.";
+        std::string idErrorMessage = "ServiceId invalid. The system ability does not exist.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_ABILITY_NOT_FOUND).c_str(), idErrorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -568,7 +568,7 @@ static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
     auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
     if (!cpuUsageOptional.has_value()) {
-        std::string paramErrorMessage = "The status of the system cpu usage is abnormal.";
+        std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -832,14 +832,14 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
     }
     if (ret == HAVA_ALREADY_TRACE) {
-        std::string errorMessage = "Have already capture trace";
+        std::string errorMessage = "Capture trace already enabled.";
         napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
     }
     if (ret == WITHOUT_WRITE_PERMISSON) {
-        std::string errorMessage = "Without write permission on the file";
+        std::string errorMessage = "No write permission on the file.";
         napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
     }
-    std::string errorMessage = "The status of the trace is abnormal";
+    std::string errorMessage = "Abnormal trace status.";
     napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     return CreateUndefined(env);
 }

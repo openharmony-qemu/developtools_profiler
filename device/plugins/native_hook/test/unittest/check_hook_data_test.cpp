@@ -759,6 +759,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
     }
 }
 
@@ -1028,6 +1029,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
     }
 }
 
@@ -1136,6 +1138,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
     }
 }
 }

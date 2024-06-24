@@ -32,7 +32,7 @@ ohos_executable("ffrt_profiler_test_exe") {
   external_deps = []
 
   external_deps += [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "ffrt:libffrt",
     "init:libbegetutil",
   ]

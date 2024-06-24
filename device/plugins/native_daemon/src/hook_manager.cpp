@@ -47,9 +47,6 @@ constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
-constexpr uint32_t SHARED_MEMORY_SIZE = 307200;
-constexpr uint32_t WAIT_TIME = 100;
-constexpr uint32_t MAX_WAIT_TIME = 500;
 }
 
 HookManager::~HookManager()
@@ -234,6 +231,8 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
+    clientConfig.printNmd = printMallocNmd_;
+    clientConfig.nmdType = nmdParamInfo_.type;
     // -1 is save '\0'
     int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
@@ -288,6 +287,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
+        ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
             std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -428,6 +428,16 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                        "memcpy_s raw data failed!");
 
             rawStack->stackConext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
+
+            if (rawStack->stackConext->type == NMD_MSG && printMallocNmd_) {
+                rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
+                const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
+                lseek(nmdParamInfo_.fd, 0, SEEK_END);
+                (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
+                return true;
+            } else if (rawStack->stackConext->type == END_MSG) {
+                return true;
+            }
             rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
             rawStack->reportFlag = true;
             if (rawStack->stackConext->type == MEMORY_TAG || rawStack->stackConext->type == THREAD_NAME_MSG ||
@@ -462,6 +472,16 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         } else if (rawStack->stackConext->type == JS_STACK_MSG) {
             hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackConext->jsChainId,
                                                      reinterpret_cast<char*>(rawStack->data));
+            continue;
+        } else if (rawStack->stackConext->type == END_MSG) {
+            if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
+                break;
+            }
+            if (!hookCtx->stackData->PutRawStack(nullptr, false)) {
+                break;
+            }
+            continue;
+        } else if (rawStack->stackConext->type == NMD_MSG) {
             continue;
         }
         if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
@@ -533,21 +553,6 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             item->stackData->Close();
         }
         item->stackPreprocess->FinishTraceFile();
-    }
-
-    if (printMallocNmd_) {
-        if (nmdParamInfo_.fd == 0) {
-            return false;
-        }
-        if (nmdParamInfo_.type == 0) {
-            PrintStat(nmdParamInfo_.fd, 0);
-        } else if (nmdParamInfo_.type == 1) {
-            uint32_t waitTime = 0;
-            while ((!PrintStat(nmdParamInfo_.fd, 1)) && waitTime < MAX_WAIT_TIME) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME));
-                waitTime += WAIT_TIME;
-            }
-        }
     }
     return true;
 }
@@ -665,6 +670,7 @@ void HookManager::StartPluginSession()
         if (!noDataQueue_) {
             item->stackPreprocess->StartTakeResults();
         }
+        item->stackPreprocess->InitStatisticsTime();
         if (item->pid > 0) {
             PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
@@ -690,35 +696,18 @@ void HookManager::WriteHookConfig()
     }
 }
 
-std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
+std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
-    shareMemoryNmd_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("nmd " + std::to_string(pid),
-                                                                                 SHARED_MEMORY_SIZE);
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
             if (item->pid == -1) {
                 item->pid = pid;
             }
             item->stackPreprocess->SetPid(pid);
-            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor(),
-                    shareMemoryNmd_->GetfileDescriptor()};
+            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor()};
         }
     }
-    return {-1, -1, -1};
-}
-
-bool HookManager::PrintStat(uint32_t fd, int type)
-{
-    CHECK_NOTNULL(shareMemoryNmd_, false, "PrintStat failed, sharedMemoryNmd empty");
-    bool ret = shareMemoryNmd_->TakeData(
-        [&](const int8_t data[], uint32_t size) -> bool {
-            const char* result = reinterpret_cast<const char*>(data);
-            lseek(fd, 0, SEEK_END);
-            (void)write(fd, result, strlen(result));
-            return true;
-        }
-    );
-    return ret;
+    return {-1, -1};
 }
 
 void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)

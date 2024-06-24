@@ -45,7 +45,7 @@ ohos_unittest("shared_memory_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "hilog:libhilog",
     "protobuf:protobuf",

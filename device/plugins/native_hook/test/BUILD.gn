@@ -73,7 +73,7 @@ ohos_unittest("nativehook_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "faultloggerd:libunwinder_static",
     "googletest:gtest",
     "hilog:libhilog",

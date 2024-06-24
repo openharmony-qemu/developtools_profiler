@@ -65,11 +65,9 @@ export class CPU extends BaseProfiler {
     try {
       var fd = -1;
       fd = fileio.openSync(path, 0o0);
-      SPLogger.DEBUG(CPU.name, 'readCPULoad fd:' + fd);
       let buf = new ArrayBuffer(2048);
       fileio.readSync(fd, buf);
       let cpuStr: String = String.fromCharCode.apply(null, new Uint8Array(buf));
-      SPLogger.DEBUG(CPU.name, 'readCPULoad cpuStr:' + cpuStr);
       let cpuStrArr = [];
       cpuStr = cpuStr.substring(0, cpuStr.indexOf('intr'));
       let nextj = 0;

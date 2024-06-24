@@ -51,7 +51,7 @@ ohos_shared_library("diskiodataplugin") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "bounds_checking_function:libsec_static",
+      "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
     ]
   }

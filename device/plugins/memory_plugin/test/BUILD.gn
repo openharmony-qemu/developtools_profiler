@@ -44,7 +44,7 @@ ohos_unittest("memdataplugin_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
@@ -77,7 +77,7 @@ ohos_unittest("smaps_stats_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
-    "bounds_checking_function:libsec_static",
+    "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
