@@ -410,7 +410,7 @@ napi_value DumpHeapData(napi_env env, napi_callback_info info)
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath);
+    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
     return CreateUndefined(env);
 }
 
@@ -439,7 +439,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath);
+    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
     return CreateUndefined(env);
 }
 
