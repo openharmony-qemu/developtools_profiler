@@ -406,7 +406,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         }
         std::string clientConfigStr = clientConfig.ToString();
         PROFILER_LOG_INFO(LOG_CORE, "send hook client config:%s\n", clientConfigStr.c_str());
-        hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this());
+        hookService_ = std::make_shared<HookService>(clientConfig, shared_from_this(), (hookCtx_.size() > 1));
         CHECK_NOTNULL(hookService_, false, "HookService create failed!");
     }
 
