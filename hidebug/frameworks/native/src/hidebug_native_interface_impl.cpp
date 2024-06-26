@@ -223,7 +223,7 @@ std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
 int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
     int32_t value, bool enabledDebugLog)
 {
-    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource");
+    HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource");
     auto memoryCollect = UCollectClient::MemoryCollector::Create();
     if (!memoryCollect) {
         HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, return result");
@@ -240,7 +240,7 @@ int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
             static_cast<int>(result.retCode));
         return MemoryState::MEMORY_FAILED;
     }
-    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
+    HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
     return MemoryState::MEMORY_SUCCESS;
 }
 
