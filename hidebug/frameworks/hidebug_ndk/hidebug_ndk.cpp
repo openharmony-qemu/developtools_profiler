@@ -144,8 +144,8 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
     }
     std::string file;
     auto ret = nativeInterface->StartAppTraceCapture(tags, flag, limitSize, file);
-    if (ret != OHOS::HiviewDFX::TRACE_SUCCESS) {
-        return static_cast<HiDebug_ErrorCode>(ret);
+    if (ret != HIDEBUG_SUCCESS) {
+        return ret;
     }
     if (strcpy_s(fileName, length, file.c_str()) != EOK) {
         nativeInterface->StopAppTraceCapture();
@@ -161,9 +161,5 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
     if (!nativeInterface) {
         return HIDEBUG_TRACE_ABNORMAL;
     }
-    auto ret = nativeInterface->StopAppTraceCapture();
-    if (ret == OHOS::HiviewDFX::TRACE_SUCCESS) {
-        return HIDEBUG_SUCCESS;
-    }
-    return HIDEBUG_TRACE_ABNORMAL;
+    return nativeInterface->StopAppTraceCapture();
 }

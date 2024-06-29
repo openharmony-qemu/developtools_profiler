@@ -251,7 +251,58 @@ HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture1, TestSize.Level1)
         EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_SUCCESS);
     } else {
         EXPECT_EQ(captureResult, HIDEBUG_NO_PERMISSION);
-        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_TRACE_ABNORMAL);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_NO_TRACE_RUNNING);
+    }
+}
+
+/**
+ * @tc.name: OH_HiDebug_StartAppTraceCapture2
+ * @tc.desc: test OH_HiDebug_StartAppTraceCapture. repeat start app capture trace
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture2, TestSize.Level1)
+{
+    uint32_t fileLength = 256;
+    char fileName[256] = {0};
+    HiDebug_TraceFlag flag = HIDEBUG_TRACE_FLAG_MAIN_THREAD;
+    uint64_t tags = HIDEBUG_TRACE_TAG_COMMON_LIBRARY;
+    uint32_t limitSize = 1024 * 1024;
+    const char* targetPath = "/data/storage/el2/log";
+    auto captureResult = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
+    if (std::filesystem::exists(targetPath)) {
+        EXPECT_EQ(captureResult, HIDEBUG_SUCCESS);
+        auto captureResult2 = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
+        EXPECT_EQ(captureResult2, HIDEBUG_TRACE_CAPTURED_ALREADY);
+        EXPECT_GT(sizeof(fileName) / sizeof(fileName[0]), 1);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_SUCCESS);
+    } else {
+        EXPECT_EQ(captureResult, HIDEBUG_NO_PERMISSION);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_NO_TRACE_RUNNING);
+    }
+}
+
+/**
+ * @tc.name: OH_HiDebug_StartAppTraceCapture3
+ * @tc.desc: test OH_HiDebug_StartAppTraceCapture. repeat stop app capture trace
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture3, TestSize.Level1)
+{
+    uint32_t fileLength = 256;
+    char fileName[256] = {0};
+    HiDebug_TraceFlag flag = HIDEBUG_TRACE_FLAG_MAIN_THREAD;
+    uint64_t tags = HIDEBUG_TRACE_TAG_COMMON_LIBRARY;
+    uint32_t limitSize = 1024 * 1024;
+    const char* targetPath = "/data/storage/el2/log";
+    auto captureResult = OH_HiDebug_StartAppTraceCapture(flag, tags, limitSize, fileName, fileLength);
+    if (std::filesystem::exists(targetPath)) {
+        EXPECT_EQ(captureResult, HIDEBUG_SUCCESS);
+        EXPECT_GT(sizeof(fileName) / sizeof(fileName[0]), 1);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_SUCCESS);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_NO_TRACE_RUNNING);
+    } else {
+        EXPECT_EQ(captureResult, HIDEBUG_NO_PERMISSION);
+        EXPECT_EQ(OH_HiDebug_StopAppTraceCapture(), HIDEBUG_NO_TRACE_RUNNING);
     }
 }
 
