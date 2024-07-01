@@ -50,11 +50,16 @@ ohos_shared_library("libhidebug") {
 ohos_static_library("libhidebug_init") {
   public_configs = [ ":hidebug_native_config" ]
 
-  deps = [
-    "//developtools/profiler/hidebug/frameworks/native:libhidebug_init_source",
-  ]
+  defines = [ "HIDEBUG_IN_INIT" ]
 
-  external_deps = [ "init:libinit_module_engine" ]
+  include_dirs = [ "../../interfaces/native/innerkits/include" ]
+
+  sources = [ "../../../frameworks/native/hidebug_base.c" ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "init:libinit_module_engine",
+  ]
 
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
