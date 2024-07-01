@@ -27,7 +27,7 @@ namespace OHOS {
 namespace SmartPerf {
 StartUpDelay::StartUpDelay() {}
 StartUpDelay::~StartUpDelay() {}
-void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &traceName)
+void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &traceName) const
 {
     std::string result;
     std::string cmdString;
@@ -40,9 +40,9 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);
 }
 
-std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName)
+std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName) const
 {
-    std::thread thGetTrace(&StartUpDelay::GetTrace, this, sessionID, traceName);
+    auto thGetTrace = std::thread([this, sessionID, traceName]() { this->GetTrace(sessionID, traceName); });
     return thGetTrace;
 }
 void StartUpDelay::GetLayout()
@@ -52,7 +52,7 @@ void StartUpDelay::GetLayout()
 }
 std::thread StartUpDelay::ThreadGetLayout()
 {
-    std::thread thGetLayout(&StartUpDelay::GetLayout, this);
+    auto thGetLayout = std::thread([this]() { this->GetLayout(); });
     return thGetLayout;
 }
 void StartUpDelay::InputEvent(const std::string &point)
@@ -65,10 +65,10 @@ void StartUpDelay::InputEvent(const std::string &point)
 }
 std::thread StartUpDelay::ThreadInputEvent(const std::string &point)
 {
-    std::thread thInputEvent(&StartUpDelay::InputEvent, this, point);
+    auto thInputEvent = std::thread([this, point]() { this->InputEvent(point); });
     return thInputEvent;
 }
-void StartUpDelay::GetHisysId()
+void StartUpDelay::GetHisysId() const
 {
     int time = 10;
     sleep(time);
@@ -92,7 +92,7 @@ void StartUpDelay::GetHisysId()
     SPUtils::LoadCmd("kill " + secondStr, str);
 }
 
-void StartUpDelay::GetHisysIdAndKill()
+void StartUpDelay::GetHisysIdAndKill() const
 {
     int time = 10;
     sleep(time);
@@ -120,13 +120,13 @@ bool StartUpDelay::GetSpTcp()
 }
 std::thread StartUpDelay::ThreadGetHisysIds()
 {
-    std::thread thGetHisysIds(&StartUpDelay::GetHisysIdAndKill, this);
+    auto thGetHisysIds = std::thread([this]() { this->GetHisysIdAndKill(); });
     return thGetHisysIds;
 }
 
 std::thread StartUpDelay::ThreadGetHisysId()
 {
-    std::thread thGetHisysId(&StartUpDelay::GetHisysId, this);
+    auto thGetHisysId = std::thread([this]() { this->GetHisysId(); });
     return thGetHisysId;
 }
 void StartUpDelay::ChangeToBackground()

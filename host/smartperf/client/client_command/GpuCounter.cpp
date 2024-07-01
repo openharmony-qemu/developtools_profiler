@@ -327,7 +327,7 @@ int GpuCounter::Capture()
 
 std::thread GpuCounter::ThreadCapture()
 {
-    std::thread th(&GpuCounter::Capture, this);
+    auto th = std::thread([this]() { Capture(); });
     th.detach();
     return th;
 }

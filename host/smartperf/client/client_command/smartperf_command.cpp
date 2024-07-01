@@ -40,14 +40,20 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         SpThreadSocket udpThreadSocket;
         SpThreadSocket udpExThreadSocket;
         SpThreadSocket tcpThreadSocket;
-        std::thread tSocket(&SpThreadSocket::Process, tcpThreadSocket, ProtoType::TCP);
+        auto tcpSocket = std::thread([&tcpThreadSocket]() {
+            tcpThreadSocket.Process(ProtoType::TCP);
+        });
         sleep(1);
-        std::thread tSocket1(&SpThreadSocket::Process, udpThreadSocket, ProtoType::UDP);
+        auto udpSocket = std::thread([&udpThreadSocket]() {
+            udpThreadSocket.Process(ProtoType::UDP);
+        });
         sleep(1);
-        std::thread udpexThread(&SpThreadSocket::Process, udpExThreadSocket, ProtoType::UDPEX);
-        tSocket.join();
-        tSocket1.join();
-        udpexThread.join();
+        auto udpexSocket = std::thread([&udpExThreadSocket]() {
+            udpExThreadSocket.Process(ProtoType::UDPEX);
+        });
+        tcpSocket.join();
+        udpSocket.join();
+        udpexSocket.join();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
