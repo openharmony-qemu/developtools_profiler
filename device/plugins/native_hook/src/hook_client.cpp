@@ -1075,11 +1075,12 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
     int ret = -1;
-    if (!fn) {
-        return ret;
+    struct timespec unmapTime = {};
+    clock_gettime(g_ClientConfig.clockId, &unmapTime);
+    if (fn) {
+        ret = fn(addr, length);
     }
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
-        ret = fn(addr, length);
         return ret;
     }
 
@@ -1093,7 +1094,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
     int fpStackDepth = 0;
-    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+    rawdata.ts = unmapTime;
 
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
@@ -1139,7 +1140,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
-    ret = fn(addr, length);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
