@@ -40,7 +40,7 @@ private:
     const int paramNine = 9;
     const int paramTen = 10;
     const int paramEleven = 11;
-    const int paramTwelve = 11;
+    const int paramTwelve = 12;
     const int paramTwo = 2;
     const int paramThree = 3;
     const int paramTwentyFour = 24;

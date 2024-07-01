@@ -79,7 +79,6 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
                 nameStr = line.substr(pos + paramTen, pos2 - pos - paramTwelve);
                 paramStr = "";
             }
-
         }
     }
     pclose(navfd);
@@ -91,44 +90,44 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
     return navInfo;
 }
 
-std::string navigation::GetWinId(std::string processId) const 
+std::string navigation::GetWinId(std::string processId) const
 {
     std::vector<DumpEntity> dumpEntityList;
-    std::string wid = "-1";
+    std::string wid;
     const std::string cmd = "hidumper -s WindowManagerService -a '-a'";
     FILE *fd = popen(cmd.c_str(), "r");
-    if (fd != nullptr) {
-        int lineNum = 0;
-        char buf[1024] = {'\0'};
-        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-            std::string line = buf;
-            if (line.length() == 1) {
-                continue;
-            }
-            if (line[0] == '-' || line[0] == ' ') {
-                continue;
-            }
-            std::vector<std::string> params;
-            SPUtils::StrSplit(line, " ", params);
-            if (params[paramTwo].find("Pid") != std::string::npos &&
-                params[paramThree].find("WinId") != std::string::npos) {
-                continue;
-            }
-            if (params.size() > paramTwentyFour) {
-                DumpEntity dumpEntity { params[2], params[3] };
-                dumpEntityList.push_back(dumpEntity);
-            }
-            lineNum++;
-        }
-        pclose(fd);
+    if (fd == nullptr) {
+        wid = -1;
     }
+    int lineNum = 0;
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line.length() == 1) {
+            continue;
+        }
+        if (line[0] == '-' || line[0] == ' ') {
+            continue;
+        }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params[paramTwo].find("Pid") != std::string::npos &&
+            params[paramThree].find("WinId") != std::string::npos) {
+            continue;
+        }
+        if (params.size() > paramTwentyFour) {
+            DumpEntity dumpEntity { params[2], params[3] };
+            dumpEntityList.push_back(dumpEntity);
+        }
+        lineNum++;
+    }
+    pclose(fd);
     for (size_t i = 0; i < dumpEntityList.size(); i++) {
         DumpEntity dumpItem = dumpEntityList[i];
         if (dumpItem.pid == processId) {
             wid = dumpItem.winId;
             break;
         }
-
     }
     return wid;
 }
