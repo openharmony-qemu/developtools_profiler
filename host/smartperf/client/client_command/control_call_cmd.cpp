@@ -329,9 +329,9 @@ std::string ControlCallCmd::GetAppStartTime() const
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
+    std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
     std::promise<std::string> promRadar;
     std::promise<std::string> promRadarFrame;
-    std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
     std::future<std::string> futureRadar = promRadar.get_future();
     std::thread([promRadar = std::move(promRadar)]() mutable {
         promRadar.set_value(SPUtils::GetRadar());

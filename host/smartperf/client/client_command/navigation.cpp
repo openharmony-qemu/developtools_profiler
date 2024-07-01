@@ -57,9 +57,9 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "no-Navigation";
-    std::sttring paramStr = "";
-    const std::string winIdWitchSpace = " " + winId + " ";
-    const std::string cmd = "hidumper -s WindowManagerService -a '-w" + winIdWitchSpace + "-navigation'";
+    std::string paramStr = "";
+    const std::string winIdWithSpace = " " + winId + " ";
+    const std::string cmd = "hidumper -s WindowManagerService -a '-w" + winIdWithSpace + "-navigation'";
     FILE *navfd = popen(cmd.c_str(), "r");
     if (navfd == nullptr) {
         navInfo["navPathName"] = nameStr;
@@ -72,11 +72,11 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
             size_t pos = line.find("]{ name:");
             size_t pos2 = line.find_last_of("}");
             if (line.find(",") != std::string::npos) {
-                size_t pos1 = line.find_last_of(",");
-                nameStr = line.substr(pos + 10, pos1 - pos - 11);
-                paramStr = line.substr(pos + 9, pos2 - pos1 - 10);
+                size_t pos1 = line.find(",");
+                nameStr = line.substr(pos + paramTen, pos1 - pos - paramEleven);
+                paramStr = line.substr(pos1 + paramNine, pos2 - pos1 - paramTen);
             } else {
-                nameStr = line.substr(pos + 10, pos2 - pos - 12);
+                nameStr = line.substr(pos + paramTen, pos2 - pos - paramTwelve);
                 paramStr = "";
             }
 
@@ -110,10 +110,11 @@ std::string navigation::GetWinId(std::string processId) const
             }
             std::vector<std::string> params;
             SPUtils::StrSplit(line, " ", params);
-            if (params[2].find("Pid") != std::string::npos && params[3].find("WinId") != std::string::npos) {
+            if (params[paramTwo].find("Pid") != std::string::npos &&
+                params[paramThree].find("WinId") != std::string::npos) {
                 continue;
             }
-            if (params.size() > 24) {
+            if (params.size() > paramTwentyFour) {
                 DumpEntity dumpEntity { params[2], params[3] };
                 dumpEntityList.push_back(dumpEntity);
             }
@@ -124,7 +125,7 @@ std::string navigation::GetWinId(std::string processId) const
     for (size_t i = 0; i < dumpEntityList.size(); i++) {
         DumpEntity dumpItem = dumpEntityList[i];
         if (dumpItem.pid == processId) {
-            wid = dumpItem.pid;
+            wid = dumpItem.winId;
             break;
         }
 
