@@ -132,6 +132,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_M:
         case CommandType::CT_HW:
         case CommandType::CT_GC:
+        case CommandType::CT_NAV:
             configs.push_back(argStr);
             break;
         default:
@@ -199,7 +200,9 @@ std::string SmartPerfCommand::ExecCommand()
         int i = 0;
         for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
             if (index != 0) {
-                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+                if (strcmp(iter->first.c_str(), "navPathParam") != 0) {
+                    printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+                }
             }
         }
         std::cout << std::endl;
