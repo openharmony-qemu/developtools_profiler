@@ -90,9 +90,9 @@ std::string ControlCallCmd::TimeDelay()
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("delay", traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
-    std::promise<std::string> promResponse();
-    std::promise<std::string> promComplete();
-    std::promise<std::string> promRadarFrame();
+    std::promise<std::string> promResponse;
+    std::promise<std::string> promComplete;
+    std::promise<std::string> promRadarFrame;
     std::future<std::string> futureResponse = promResponse.get_future();
     std::thread([promResponse = std::move(promResponse)]() mutable {
         promResponse.set_value(SPUtils::GetRadarResponse());
@@ -144,8 +144,8 @@ std::string ControlCallCmd::SlideList()
     } else {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
         std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
-        std::promise<std::string> promResponse();
-        std::promise<std::string> promRadarFrame();
+        std::promise<std::string> promResponse;
+        std::promise<std::string> promRadarFrame;
         std::future<std::string> futureResponse = promResponse.get_future();
         std::thread([promResponse = std::move(promResponse)]() mutable {
             promResponse.set_value(SPUtils::GetRadarResponse());
@@ -328,11 +328,11 @@ std::string ControlCallCmd::GetAppStartTime() const
     OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
-    std::promise<std::string> promRadar();
-    std::promise<std::string> promRadarFrame();
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
+    std::promise<std::string> promRadar;
+    std::promise<std::string> promRadarFrame;
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
-    std::future<std::string> futureRadar = promComplete.get_future();
+    std::future<std::string> futureRadar = promRadar.get_future();
     std::thread([promRadar = std::move(promRadar)]() mutable {
         promRadar.set_value(SPUtils::GetRadar());
     }).detach();
@@ -376,7 +376,7 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
         return noNameType;
     } else {
         if (isOhTest) {
-            std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+            std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
             std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
             sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);

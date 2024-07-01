@@ -118,13 +118,13 @@ bool StartUpDelay::GetSpTcp()
     SPUtils::LoadCmd("kill " + resultProcId, str);
     return false;
 }
-std::thread StartUpDelay::ThreadGetHisysIds()
+std::thread StartUpDelay::ThreadGetHisysIds() const
 {
     auto thGetHisysIds = std::thread([this]() { this->GetHisysIdAndKill(); });
     return thGetHisysIds;
 }
 
-std::thread StartUpDelay::ThreadGetHisysId()
+std::thread StartUpDelay::ThreadGetHisysId() const
 {
     auto thGetHisysId = std::thread([this]() { this->GetHisysId(); });
     return thGetHisysId;
