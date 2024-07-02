@@ -197,14 +197,7 @@ std::string SmartPerfCommand::ExecCommand()
             callGpuCounterResult = true;
         }
         std::cout << std::endl;
-        int i = 0;
-        // for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-        //     if (index != 0) {
-        //         if (strcmp(iter->first.c_str(), "navPathParam") != 0) {
-        //             printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
-        //         }
-        //     }
-        // }
+        PrintMap(spMap, index);
         std::cout << std::endl;
         SPData spdata;
         if (index != 0) {
@@ -239,12 +232,15 @@ void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string
     }
 }
 
-void SmartPerfCommand::PrintfExecCommands(const std::map<std::string, std::string> data) const
+void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
+    decltype(SPUtils::Cmp) *> &spMap, int index)
 {
     int i = 0;
-    if (index != 0) {
-        if (strcmp(iter->first.c_str(), "navPathParam") != 0) {
-            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+    for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
+        if (index != 0) {
+            if (strcmp(iter->first.c_str(), "navPathParam") != 0) {
+                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+            }
         }
     }
 }
