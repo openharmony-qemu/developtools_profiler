@@ -474,4 +474,77 @@ describe("HidebugJsTest", function () {
             expect(error.code === "401").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_020
+     * @tc.desc: StartAppTraceCapture错误传参测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_020', 0, function () {
+        console.info("---------------------------HidebugJsTest_020----------------------------------");
+        try {
+            let tags = [hidebug.tags.ABILITY_MANAGER];
+            let flag = 123;
+            let limitSize = 1024 * 1024;
+            let fileName = hidebug.startAppTraceCapture(tags, flag, limitSize);
+            for (let i = 0; i < 3; i++) {
+                hidebug.getSharedDirty();
+            }
+            hidebug.stopAppTraceCapture();
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_021
+     * @tc.desc: StartAppTraceCapture重复启动测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_021', 0, function () {
+        console.info("---------------------------HidebugJsTest_021----------------------------------");
+        let fileName = "";
+        try {
+            let tags = [hidebug.tags.ABILITY_MANAGER];
+            let flag = hidebug.TraceFlag.MAIN_THREAD;
+            let limitSize = 1024 * 1024;
+            fileName = hidebug.startAppTraceCapture(tags, flag, limitSize);
+            for (let i = 0; i < 3; i++) {
+                hidebug.getSharedDirty();
+            }
+            fileName = hidebug.startAppTraceCapture(tags, flag, limitSize);
+            hidebug.stopAppTraceCapture();
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            if (fileName.length > 0) {
+                hidebug.stopAppTraceCapture();
+            }
+            expect(error.code === "11400102").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_022
+     * @tc.desc: StartAppTraceCapture未启动直接关闭测试
+     * @tc.type: FUNC
+     * @tc.require: issueI5VY8L
+     */
+    it('HidebugJsTest_022', 0, function () {
+        console.info("---------------------------HidebugJsTest_022----------------------------------");
+        try {
+            hidebug.stopAppTraceCapture();
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(error.code === "11400105").assertTrue();
+        }
+    })
 })

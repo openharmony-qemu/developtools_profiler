@@ -823,19 +823,19 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
         return CreateUndefined(env);
     }
     auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
-    if (ret == TRACE_SUCCESS) {
+    if (ret == HIDEBUG_SUCCESS) {
         napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
         return result;
     }
-    if (ret == PARAMETER_ERROR) {
+    if (ret == HIDEBUG_INVALID_ARGUMENT) {
         std::string errorMessage = "Invalid argument";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
     }
-    if (ret == HAVA_ALREADY_TRACE) {
+    if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
         std::string errorMessage = "Capture trace already enabled.";
         napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
     }
-    if (ret == WITHOUT_WRITE_PERMISSON) {
+    if (ret == HIDEBUG_NO_PERMISSION) {
         std::string errorMessage = "No write permission on the file.";
         napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
     }
@@ -851,11 +851,11 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
         return CreateUndefined(env);
     }
     auto ret = nativeInterface->StopAppTraceCapture();
-    if (ret == SYSTEM_STATUS_ABNORMAL) {
+    if (ret == HIDEBUG_TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     }
-    if (ret == NO_CAPTURE_TRACE_RUNNING) {
+    if (ret == HIDEBUG_NO_TRACE_RUNNING) {
         std::string errorMessage = "No capture trace running";
         napi_throw_error(env, std::to_string(ErrorCode::NO_CAPTURE_TRACE_RUNNING).c_str(), errorMessage.c_str());
     }
