@@ -37,7 +37,6 @@ private:
     navigation(const navigation &);
     navigation &operator = (const navigation &);
     std::string packageName = "";
-    const int paramNine = 9;
     const int paramTen = 10;
     const int paramEleven = 11;
     const int paramTwelve = 12;

@@ -232,9 +232,7 @@ void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
     int i = 0;
     for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
         if (index != 0) {
-            if (strcmp(iter->first.c_str(), "navPathParam") != 0) {
-                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
-            }
+            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
         }
     }
 }

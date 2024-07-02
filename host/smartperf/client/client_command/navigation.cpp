@@ -47,8 +47,7 @@ std::map<std::string, std::string> navigation::GetNavInfo() const
     if (winId != "-1") {
         navInfo = GetNavResult(winId);
     } else {
-        navInfo["navPathName"] = "no-Navigation";
-        navInfo["navPathParam"] = "";
+        navInfo["navPathName"] = "No Navigation Info";
     }
     return navInfo;
 }
@@ -56,16 +55,14 @@ std::map<std::string, std::string> navigation::GetNavInfo() const
 std::map<std::string, std::string> navigation::GetNavResult(std::string winId) const
 {
     std::map<std::string, std::string> navInfo;
-    std::string nameStr = "no-Navigation";
-    std::string paramStr = "";
+    std::string nameStr = "No Navigation Info";
     const std::string winIdWithSpace = " " + winId + " ";
     const std::string cmd = "hidumper -s WindowManagerService -a '-w" + winIdWithSpace + "-navigation'";
     FILE *navfd = popen(cmd.c_str(), "r");
     if (navfd == nullptr) {
         navInfo["navPathName"] = nameStr;
-        navInfo["navPathParam"] = "";
     }
-    char buf[1024] = {'\0'};
+    char buf[4096] = {'\0'};
     while ((fgets(buf, sizeof(buf), navfd)) != nullptr) {
         std::string line = buf;
         if (line.find("]{ name:") != std::string::npos) {
@@ -74,19 +71,13 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
             if (line.find(",") != std::string::npos) {
                 size_t pos1 = line.find(",");
                 nameStr = line.substr(pos + paramTen, pos1 - pos - paramEleven);
-                paramStr = line.substr(pos1 + paramNine, pos2 - pos1 - paramTen);
             } else {
                 nameStr = line.substr(pos + paramTen, pos2 - pos - paramTwelve);
-                paramStr = "";
             }
         }
     }
     pclose(navfd);
     navInfo["navPathName"] = nameStr;
-    if (paramStr != "") {
-        replace(paramStr.begin(), paramStr.end(), ',', ';');
-    }
-    navInfo["navPathParam"] = paramStr;
     return navInfo;
 }
 
