@@ -40,17 +40,11 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         SpThreadSocket udpThreadSocket;
         SpThreadSocket udpExThreadSocket;
         SpThreadSocket tcpThreadSocket;
-        auto tcpSocket = std::thread([&tcpThreadSocket]() {
-            tcpThreadSocket.Process(ProtoType::TCP);
-        });
+        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
         sleep(1);
-        auto udpSocket = std::thread([&udpThreadSocket]() {
-            udpThreadSocket.Process(ProtoType::UDP);
-        });
+        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
         sleep(1);
-        auto udpexSocket = std::thread([&udpExThreadSocket]() {
-            udpExThreadSocket.Process(ProtoType::UDPEX);
-        });
+        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
         tcpSocket.join();
         udpSocket.join();
         udpexSocket.join();
