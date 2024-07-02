@@ -88,22 +88,34 @@ std::string ControlCallCmd::TimeDelay()
     OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("delay", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysIds();
-    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
-    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarComplete);
-    std::future<std::string> futureResult3 = std::async(std::launch::async, SPUtils::GetRadarFrame);
-    std::string str = futureResult.get();
-    std::string str2 = futureResult2.get();
-    std::string str3 = futureResult3.get();
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("delay", traceName); });
+    std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
+    std::promise<std::string> promResponse;
+    std::promise<std::string> promComplete;
+    std::promise<std::string> promRadarFrame;
+    std::future<std::string> futureResponse = promResponse.get_future();
+    std::thread([promResponse = std::move(promResponse)]() mutable {
+        promResponse.set_value(SPUtils::GetRadarResponse());
+    }).detach();
+    std::future<std::string> futureComplete = promComplete.get_future();
+    std::thread([promComplete = std::move(promComplete)]() mutable {
+        promComplete.set_value(SPUtils::GetRadarComplete());
+    }).detach();
+    std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
+    std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+        promRadarFrame.set_value(SPUtils::GetRadarFrame());
+    }).detach();
+    std::string responseStr = futureResponse.get();
+    std::string completeStr = futureComplete.get();
+    std::string radarFrameStr = futureRadarFrame.get();
     thGetTrace.join();
     thGetHisysId.join();
-    double strResponseTime = radar.ParseRadarResponse(str);
+    double strResponseTime = radar.ParseRadarResponse(responseStr);
     stream << strResponseTime;
-    double strCompleteTime = radar.ParseRadarComplete(str2);
+    double strCompleteTime = radar.ParseRadarComplete(completeStr);
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
-    std::string maxFrame = radar.ParseRadarMaxFrame(str3);
+    std::string maxFrame = radar.ParseRadarMaxFrame(radarFrameStr);
     std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
@@ -126,21 +138,29 @@ std::string ControlCallCmd::SlideList()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
-        std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
-        std::thread thGetHisysId = sd.ThreadGetHisysIds();
-        std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadarResponse);
-        std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
-        std::string str = futureResult.get();
-        std::string str2 = futureResult2.get();
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
+        std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
+        std::promise<std::string> promResponse;
+        std::promise<std::string> promRadarFrame;
+        std::future<std::string> futureResponse = promResponse.get_future();
+        std::thread([promResponse = std::move(promResponse)]() mutable {
+            promResponse.set_value(SPUtils::GetRadarResponse());
+        }).detach();
+        std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
+        std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+            promRadarFrame.set_value(SPUtils::GetRadarFrame());
+        }).detach();
+        std::string responseStr = futureResponse.get();
+        std::string radarFrameStr = futureRadarFrame.get();
         thGetTrace.join();
         thGetHisysId.join();
-        double responseTime = radar.ParseRadarResponse(str);
+        double responseTime = radar.ParseRadarResponse(responseStr);
         stream << responseTime;
-        std::string maxFrame = radar.ParseRadarMaxFrame(str2);
+        std::string maxFrame = radar.ParseRadarMaxFrame(radarFrameStr);
         std::string responseSlide = "ResponseTime:" + stream.str() + "ms\n";
         double sFps = slideFpsTrace.ParseSlideFpsTraceNoh(traceName);
         std::ostringstream streamFps;
@@ -162,8 +182,8 @@ std::string ControlCallCmd::GetFrame()
     OHOS::SmartPerf::ParseRadar radar;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_frame.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("frame", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysIds();
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("frame", traceName); });
+    std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
     std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
     thGetHisysId.join();
@@ -177,7 +197,7 @@ std::string ControlCallCmd::PageFps()
     std::string cmdResult;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("fps", traceName);
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
     thGetTrace.join();
     double fps = pageFpsTrace.PageFpsTrace(traceName);
     stream << fps;
@@ -193,12 +213,12 @@ double ControlCallCmd::ResponseTime()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("response", traceName); });
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
-        std::thread thGetTrace = sd.ThreadGetTrace("response", traceName);
-        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("response", traceName); });
+        std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
         std::string str = SPUtils::GetRadarResponse();
         thGetTrace.join();
         thGetHisysId.join();
@@ -214,7 +234,7 @@ double ControlCallCmd::ColdStartHM(std::vector<std::string> v) const
     int typePKG = 3;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
     thGetTrace.join();
     std::string pid = sd.GetPidByPkg(v[typePKG]);
     return parseTrace.ParseTraceCold(traceName, pid);
@@ -228,12 +248,12 @@ double ControlCallCmd::CompleteTime()
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("complete", traceName); });
         thGetTrace.join();
         time = pcct.ParseCompleteTrace(traceName);
     } else {
-        std::thread thGetTrace = sd.ThreadGetTrace("complete", traceName);
-        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("complete", traceName); });
+        std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
         std::string str = SPUtils::GetRadarComplete();
         thGetTrace.join();
         thGetHisysId.join();
@@ -258,7 +278,7 @@ std::string ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     std::string pathJson = cmdResult.substr(position + 1, position2 - position + typePKG);
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
     std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
     sleep(1);
     SPUtils::LoadCmd(cmd, cmdResult);
@@ -289,9 +309,9 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
     if (sd.pointXY == "0 0") {
         return noNameType;
     } else {
-        std::thread thGetTrace = sd.ThreadGetTrace("startResponse", traceName);
-        std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
-        std::thread thGetHisysId = sd.ThreadGetHisysId();
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("startResponse", traceName); });
+        std::thread thInputEvent = std::thread([&sd]() { sd.InputEvent(sd.pointXY); });
+        std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
         std::string str = SPUtils::GetRadar();
         thGetTrace.join();
         thInputEvent.join();
@@ -308,18 +328,24 @@ std::string ControlCallCmd::GetAppStartTime() const
     OHOS::SmartPerf::StallingRateTrace srt;
     SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
-    std::thread thGetTrace = sd.ThreadGetTrace("start", traceName);
-    std::thread thGetHisysId = sd.ThreadGetHisysIds();
-    std::future<std::string> futureResult = std::async(std::launch::async, SPUtils::GetRadar);
-    std::future<std::string> futureResult2 = std::async(std::launch::async, SPUtils::GetRadarFrame);
-    std::string str = futureResult.get();
-    std::string str2 = futureResult2.get();
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
+    std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
+    std::promise<std::string> promRadar;
+    std::promise<std::string> promRadarFrame;
+    std::future<std::string> futureRadar = promRadar.get_future();
+    std::thread([promRadar = std::move(promRadar)]() mutable {
+        promRadar.set_value(SPUtils::GetRadar());
+    }).detach();
+    std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
+    std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+        promRadarFrame.set_value(SPUtils::GetRadarFrame());
+    }).detach();
+    std::string radarStr = futureRadar.get();
+    std::string radarFrameStr = futureRadarFrame.get();
     thGetTrace.join();
     thGetHisysId.join();
-    std::string resultStream = radar.ParseRadarAppStrart(str);
-    std::string resultStream2 = radar.ParseRadarMaxFrame(str2);
-    LOGI("resultStream====: %s", resultStream.c_str());
-    LOGI("resultStream2====: %s", resultStream2.c_str());
+    std::string resultStream = radar.ParseRadarAppStrart(radarStr);
+    std::string resultStream2 = radar.ParseRadarMaxFrame(radarFrameStr);
     double stallingRateResult2 = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     int two = 2;
@@ -350,7 +376,7 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
         return noNameType;
     } else {
         if (isOhTest) {
-            std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
+            std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
             std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
             sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);
@@ -359,9 +385,9 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
             thGetTrace.join();
             time = parseTrace.ParseTraceCold(traceName, pid);
         } else {
-            std::thread thGetTrace = sd.ThreadGetTrace("coldStart", traceName);
-            std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
-            std::thread thGetHisysId = sd.ThreadGetHisysId();
+            std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
+            std::thread thInputEvent = std::thread([&sd]() { sd.InputEvent(sd.pointXY); });
+            std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
             sleep(1);
             std::string str = SPUtils::GetRadar();
             thGetTrace.join();
@@ -381,7 +407,7 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     if (isOhTest) {
         SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
         std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
-        std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("hotStart", traceName); });
         thGetTrace.join();
         return parseTrace.ParseTraceHot(traceName);
     } else {
@@ -404,9 +430,9 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
             sd.ChangeToBackground();
             sleep(1);
             std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
-            std::thread thGetTrace = sd.ThreadGetTrace("hotStart", traceName);
-            std::thread thInputEvent = sd.ThreadInputEvent(sd.pointXY);
-            std::thread thGetHisysId = sd.ThreadGetHisysId();
+            std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("hotStart", traceName); });
+            std::thread thInputEvent = std::thread([&sd]() { sd.InputEvent(sd.pointXY); });
+            std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
             sleep(1);
             std::string str = SPUtils::GetRadar();
             thGetTrace.join();

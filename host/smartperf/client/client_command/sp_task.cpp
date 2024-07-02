@@ -130,12 +130,14 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
 
 std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
 {
+    std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string ramConfig : curTaskInfo.taskConfig) {
         if (ramConfig.find("-r") != std::string::npos) {
-            futureResult = std::async(std::launch::async, []() {
-                return RAM::GetInstance().ItemData();
-            });
+            futureResult = p.get_future();
+            std::thread([p = std::move(p)]() mutable {
+                p.set_value(RAM::GetInstance().ItemData());
+            }).detach();
         }
     }
     return futureResult;
@@ -143,12 +145,14 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
 
 std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
 {
+    std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fpsConfig : curTaskInfo.taskConfig) {
         if (fpsConfig.find("-f") != std::string::npos) {
-            futureResult = std::async(std::launch::async, []() {
-                return FPS::GetInstance().ItemData();
-            });
+            futureResult = p.get_future();
+            std::thread([p = std::move(p)]() mutable {
+                p.set_value(FPS::GetInstance().ItemData());
+            }).detach();
         }
     }
     return futureResult;
@@ -338,9 +342,10 @@ bool SPTask::CheckCounterId()
 }
 std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
-    std::thread thGetTrace(&SPTask::GetHiperf, this, std::to_string(timeStamp));
-    thGetTrace.detach();
-    return thGetTrace;
+    auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
+    std::thread spThread(thGetTrace);
+    spThread.detach();
+    return spThread;
 }
 
 void SPTask::GetHiperf(const std::string &traceName)

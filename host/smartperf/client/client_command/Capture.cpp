@@ -34,7 +34,7 @@ std::map<std::string, std::string> Capture::ItemData()
     callNum++;
     std::map<std::string, std::string> result;
     int two = 2;
-    if (callNum % two != 0) {
+    if (callNum % two == 0) {
         long long curTime = SPUtils::GetCurTime();
         if (isSocketMessage) {
             std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
@@ -118,14 +118,18 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
 void Capture::TriggerGetCatch(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
-    std::thread tStart(&Capture::ThreadGetCatch, this, curTimeStr);
+    auto tStart = std::thread([this, curTimeStr]() {
+        this->ThreadGetCatch(curTimeStr);
+    });
     tStart.detach();
 }
 
 void Capture::TriggerGetCatchSocket(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
-    std::thread tStart(&Capture::ThreadGetCatchSocket, this, curTimeStr);
+    auto tStart = std::thread([this, curTimeStr]() {
+        this->ThreadGetCatchSocket(curTimeStr);
+    });
     tStart.detach();
 }
 

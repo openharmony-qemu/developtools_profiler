@@ -29,6 +29,7 @@
 #include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/GpuCounter.h"
+#include "include/navigation.h"
 #include "include/sp_log.h"
 
 
@@ -85,6 +86,8 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
+    navigation &nav = navigation::GetInstance();
+    nav.SetPackageName(pkg);
 }
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
@@ -155,6 +158,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             break;
         case CommandType::CT_NET:
             profiler = &Network::GetInstance();
+            break;
+        case CommandType::CT_NAV:
+            profiler = &navigation::GetInstance();
             break;
         case CommandType::CT_TTRACE:
             ProfilerFPS::GetInstance().SetTraceCatch();

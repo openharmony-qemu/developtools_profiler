@@ -38,7 +38,7 @@ void ByTrace::ThreadGetTrace() const
     if (SPUtils::IsHmKernel()) {
         cmdString = "hitrace --trace_clock mono -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
     } else {
-        cmdString = "hitrace --trace_clock mono -t 10 -b 20480 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = "hitrace --trace_clock mono -t 10 -b 204800 --overwrite idle ace app ohos ability graphic nweb ";
     }
     std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
@@ -54,8 +54,7 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
     int two = 2;
     long long curTime = SPUtils::GetCurTime();
     if (curNum <= sum && currentTrigger < 0 && times > two) {
-        times = 0;
-        for (size_t i = 1; i < jitters.size(); i++) {
+        for (size_t i = 0; i < jitters.size(); i++) {
             long long normalJitter = jitters[i] / 1e6;
             if (normalJitter > threshold || cfps < lowfps) {
                 TriggerCatch(curTime);
@@ -73,7 +72,7 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
 void ByTrace::TriggerCatch(long long curTime) const
 {
     if ((curTime - lastTriggerTime) / 1e3 > interval && !CheckHitraceId()) {
-        std::thread tStart(&ByTrace::ThreadGetTrace, this);
+        std::thread tStart([this] { this->ThreadGetTrace(); });
         currentTrigger = 1;
         lastTriggerTime = curTime;
         curNum++;

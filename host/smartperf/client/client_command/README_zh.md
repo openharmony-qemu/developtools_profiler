@@ -17,6 +17,7 @@
 ├── FPS.cpp                                     # FPS采集代码文件
 ├── GPU.cpp                                     # GPU采集代码文件
 ├── GpuCounter.cpp                              # GpuCounter采集代码文件
+├── MEMORY.cpp                                  # MEMORY细化采集代码文件
 ├── Network.cpp                                 # 网络上下行速率采集代码文件
 ├── Power.cpp                                   # 功耗采集代码文件
 ├── RAM.cpp                                     # 内存采集代码文件

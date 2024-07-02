@@ -399,7 +399,6 @@ bool ProfilerFPS::IsForeGround()
     pclose(fd);
     return tag;
 }
-
 bool ProfilerFPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);

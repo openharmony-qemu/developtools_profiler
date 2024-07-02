@@ -259,7 +259,6 @@ bool FPS::IsForeGround()
     pclose(fd);
     return tag;
 }
-
 bool FPS::IsFindForeGround(std::string line) const
 {
     std::string foreGroundTag = line.substr(line.find("#") + 1);
