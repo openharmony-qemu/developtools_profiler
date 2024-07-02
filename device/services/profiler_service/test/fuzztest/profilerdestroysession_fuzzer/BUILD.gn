@@ -36,7 +36,10 @@ ohos_fuzztest("ProfilerDestroySessionFuzzTest") {
     "../../..:profiler_service",
     "../../../../plugin_service:hiprofiler_plugin_service",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "hilog:libhilog",
+  ]
 }
 
 ###############################################################################
