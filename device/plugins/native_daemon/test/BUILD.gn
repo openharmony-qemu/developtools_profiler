@@ -126,6 +126,7 @@ ohos_unittest("native_daemon_ut") {
     "access_token:libtokensetproc_shared",
     "faultloggerd:libunwinder_static",
     "init:libbegetutil",
+    "safwk:system_ability_fwk",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
