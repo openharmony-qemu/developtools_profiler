@@ -354,12 +354,6 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string ssResult = ss.str();
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;
-    std::promise<std::string> promResponse;
-    std::future<std::string> futureResponse = promResponse.get_future();
-    std::thread([&promResponse = promResponse]() mutable {
-        promResponse.set_value(SPUtils::GetRadarResponse());
-    }).detach();
-    std::string responseStr = futureResponse.get();
     return resultStream;
 }
 double ControlCallCmd::ColdStart(std::vector<std::string> v)
