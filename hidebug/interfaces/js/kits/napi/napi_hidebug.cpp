@@ -410,7 +410,7 @@ napi_value DumpHeapData(napi_env env, napi_callback_info info)
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath);
+    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
     return CreateUndefined(env);
 }
 
@@ -439,7 +439,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath);
+    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
     return CreateUndefined(env);
 }
 
@@ -587,7 +587,7 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     if (argc != REMOVE_NAPI_WRAP_PARAM_COUNT ||
         (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_object) ||
         !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
-        HILOG_ERROR(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
+        HILOG_DEBUG(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -823,19 +823,19 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
         return CreateUndefined(env);
     }
     auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
-    if (ret == TRACE_SUCCESS) {
+    if (ret == HIDEBUG_SUCCESS) {
         napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
         return result;
     }
-    if (ret == PARAMETER_ERROR) {
+    if (ret == HIDEBUG_INVALID_ARGUMENT) {
         std::string errorMessage = "Invalid argument";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
     }
-    if (ret == HAVA_ALREADY_TRACE) {
+    if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
         std::string errorMessage = "Capture trace already enabled.";
         napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
     }
-    if (ret == WITHOUT_WRITE_PERMISSON) {
+    if (ret == HIDEBUG_NO_PERMISSION) {
         std::string errorMessage = "No write permission on the file.";
         napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
     }
@@ -851,11 +851,11 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
         return CreateUndefined(env);
     }
     auto ret = nativeInterface->StopAppTraceCapture();
-    if (ret == SYSTEM_STATUS_ABNORMAL) {
+    if (ret == HIDEBUG_TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     }
-    if (ret == NO_CAPTURE_TRACE_RUNNING) {
+    if (ret == HIDEBUG_NO_TRACE_RUNNING) {
         std::string errorMessage = "No capture trace running";
         napi_throw_error(env, std::to_string(ErrorCode::NO_CAPTURE_TRACE_RUNNING).c_str(), errorMessage.c_str());
     }

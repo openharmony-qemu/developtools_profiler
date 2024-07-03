@@ -21,16 +21,16 @@ class StartUpDelay {
 public:
     StartUpDelay();
     ~StartUpDelay();
-    void GetTrace(const std::string &sessionID, const std::string &traceName);
-    std::thread ThreadGetTrace(const std::string &sessionID, const std::string &traceName);
+    void GetTrace(const std::string &sessionID, const std::string &traceName) const;
+    std::thread ThreadGetTrace(const std::string &sessionID, const std::string &traceName) const;
     void GetLayout();
     std::thread ThreadGetLayout();
     void InputEvent(const std::string &point);
     std::thread ThreadInputEvent(const std::string &point);
-    void GetHisysIdAndKill();
-    std::thread ThreadGetHisysIds();
-    void GetHisysId();
-    std::thread ThreadGetHisysId();
+    void GetHisysIdAndKill() const;
+    std::thread ThreadGetHisysIds() const;
+    void GetHisysId() const;
+    std::thread ThreadGetHisysId() const;
     void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();

@@ -63,7 +63,6 @@ ohos_source_set("plugins_sources") {
       "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
       "openssl:libcrypto_shared",
-      "protobuf:protobuf",
       "protobuf:protobuf_lite",
     ]
   }
@@ -89,7 +88,6 @@ ohos_executable("hiprofiler_plugins") {
       "bounds_checking_function:libsec_shared",
       "hilog:libhilog",
       "openssl:libcrypto_shared",
-      "protobuf:protobuf",
       "protobuf:protobuf_lite",
     ]
   }

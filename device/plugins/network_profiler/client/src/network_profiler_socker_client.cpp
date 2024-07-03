@@ -21,7 +21,6 @@
 namespace {
 std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
-constexpr uint32_t FILTER_SIZE = (1 << 10);
 
 } // namespace
 
@@ -84,10 +83,6 @@ bool NetworkProfilerSocketClient::SendNetworkProfilerData(const void* data, size
         return false;
     } else if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
         DisableHook();
-        return false;
-    }
-    if (payloadSize > FILTER_SIZE) {
-        PROFILER_LOG_ERROR(LOG_CORE, "payloadSize exceeds the maximum of %d bytes", FILTER_SIZE);
         return false;
     }
 

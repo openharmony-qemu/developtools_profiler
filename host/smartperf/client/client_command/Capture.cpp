@@ -34,7 +34,7 @@ std::map<std::string, std::string> Capture::ItemData()
     callNum++;
     std::map<std::string, std::string> result;
     int two = 2;
-    if (callNum % two != 0) {
+    if (callNum % two == 0) {
         long long curTime = SPUtils::GetCurTime();
         if (isSocketMessage) {
             std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
@@ -85,33 +85,51 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     if (curTime.empty()) {
         return;
     }
-    auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".jpeg";
+    std::string captureDir = "/data/local/tmp/capture";
+    std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
     std::string cmdResult;
-    if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
-        SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
-        printf("/data/local/tmp/capture created! \n");
-        LOGI("/data/local/tmp/capture created!");
+    if (!SPUtils::FileAccess(captureDir)) {
+        if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
+            LOGI("%s capture not be created!", captureDir.c_str());
+            return;
+        } else {
+            LOGI("%s created successfully!", captureDir.c_str());
+        }
     };
     
     if (SPUtils::FileAccess(savePath)) {
         std::cout << "" << std::endl;
+        LOGI("%s savePath already exists", savePath.c_str());
     }
+
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
-    SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult);
-    (void)close(fd);
+    if (fd == -1) {
+        printf("Failed to open file: %s\n", savePath.c_str());
+        LOGI("Failed to open file: %s", savePath.c_str());
+    }
+    if (!SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult)) {
+        LOGI("snapshot_display command failed!");
+        close(fd);
+        return;
+    }
+    close(fd);
 }
 
 void Capture::TriggerGetCatch(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
-    std::thread tStart(&Capture::ThreadGetCatch, this, curTimeStr);
+    auto tStart = std::thread([this, curTimeStr]() {
+        this->ThreadGetCatch(curTimeStr);
+    });
     tStart.detach();
 }
 
 void Capture::TriggerGetCatchSocket(long long curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
-    std::thread tStart(&Capture::ThreadGetCatchSocket, this, curTimeStr);
+    auto tStart = std::thread([this, curTimeStr]() {
+        this->ThreadGetCatchSocket(curTimeStr);
+    });
     tStart.detach();
 }
 

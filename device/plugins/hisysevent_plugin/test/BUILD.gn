@@ -43,7 +43,6 @@ ohos_unittest("hisyseventplugin_ut") {
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "hilog:libhilog",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

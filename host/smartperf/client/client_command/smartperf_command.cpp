@@ -40,14 +40,14 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         SpThreadSocket udpThreadSocket;
         SpThreadSocket udpExThreadSocket;
         SpThreadSocket tcpThreadSocket;
-        std::thread tSocket(&SpThreadSocket::Process, tcpThreadSocket, ProtoType::TCP);
+        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
         sleep(1);
-        std::thread tSocket1(&SpThreadSocket::Process, udpThreadSocket, ProtoType::UDP);
+        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
         sleep(1);
-        std::thread udpexThread(&SpThreadSocket::Process, udpExThreadSocket, ProtoType::UDPEX);
-        tSocket.join();
-        tSocket1.join();
-        udpexThread.join();
+        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+        tcpSocket.join();
+        udpSocket.join();
+        udpexSocket.join();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -126,6 +126,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_M:
         case CommandType::CT_HW:
         case CommandType::CT_GC:
+        case CommandType::CT_NAV:
             configs.push_back(argStr);
             break;
         default:
@@ -190,12 +191,7 @@ std::string SmartPerfCommand::ExecCommand()
             callGpuCounterResult = true;
         }
         std::cout << std::endl;
-        int i = 0;
-        for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-            if (index != 0) {
-                printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
-            }
-        }
+        PrintMap(spMap, index);
         std::cout << std::endl;
         SPData spdata;
         if (index != 0) {
@@ -227,6 +223,17 @@ void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string
     int i = 0;
     for (auto a = data.cbegin(); a != data.cend(); ++a) {
         printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
+    }
+}
+
+void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
+    decltype(SPUtils::Cmp) *> &spMap, int index)
+{
+    int i = 0;
+    for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
+        if (index != 0) {
+            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
+        }
     }
 }
 

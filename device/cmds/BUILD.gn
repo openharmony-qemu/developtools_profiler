@@ -60,7 +60,6 @@ ohos_executable("hiprofiler_cmd") {
     "grpc:grpc",
     "grpc:grpcxx",
     "init:libbegetutil",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
 

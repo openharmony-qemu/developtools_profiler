@@ -56,7 +56,6 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "grpc:grpcxx",
     "hilog:libhilog",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

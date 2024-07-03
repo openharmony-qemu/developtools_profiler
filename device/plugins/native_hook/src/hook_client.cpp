@@ -830,16 +830,16 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
-    if (!free_func) {
-        return;
+    struct timespec freeTime = {};
+    clock_gettime(g_ClientConfig.clockId, &freeTime);
+    if (free_func) {
+        free_func(p);
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
-        free_func(p);
         return;
     }
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         if (!IsAddrExist(p)) {
-            free_func(p);
             return;
         }
     }
@@ -873,7 +873,7 @@ void hook_free(void (*free_func)(void*), void* p)
     const char* stackendptr = nullptr;
     int stackSize = 0;
     int fpStackDepth = 0;
-    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+    rawdata.ts = freeTime;
 
     if (g_ClientConfig.freeStackData) {
         if (g_ClientConfig.fpunwind) {
@@ -919,7 +919,6 @@ void hook_free(void (*free_func)(void*), void* p)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
-    free_func(p);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1076,11 +1075,12 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
     int ret = -1;
-    if (!fn) {
-        return ret;
+    struct timespec unmapTime = {};
+    clock_gettime(g_ClientConfig.clockId, &unmapTime);
+    if (fn) {
+        ret = fn(addr, length);
     }
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
-        ret = fn(addr, length);
         return ret;
     }
 
@@ -1094,7 +1094,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
     int fpStackDepth = 0;
-    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+    rawdata.ts = unmapTime;
 
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
@@ -1140,7 +1140,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
         holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     }
-    ret = fn(addr, length);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};

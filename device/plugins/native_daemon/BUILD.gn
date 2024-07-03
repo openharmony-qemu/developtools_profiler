@@ -124,12 +124,11 @@ ohos_executable("native_daemon") {
   external_deps = [
     "ability_base:extractortool",
     "access_token:libaccesstoken_sdk",
-    "access_token:libtoken_setproc",
+    "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
     "init:libbegetutil",
     "ipc:ipc_core",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",

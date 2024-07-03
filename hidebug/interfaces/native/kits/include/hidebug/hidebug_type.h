@@ -57,7 +57,9 @@ typedef enum HiDebug_ErrorCode {
     /** No write permission on the file */
     HIDEBUG_NO_PERMISSION = 11400103,
     /** The status of the trace is abnormal */
-    HIDEBUG_TRACE_ABNORMAL = 11400104
+    HIDEBUG_TRACE_ABNORMAL = 11400104,
+    /** No trace running */
+    HIDEBUG_NO_TRACE_RUNNING = 11400105
 } HiDebug_ErrorCode;
 
 /**

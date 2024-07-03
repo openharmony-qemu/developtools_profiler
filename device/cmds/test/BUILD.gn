@@ -67,7 +67,6 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "grpc:grpcxx",
     "hilog:libhilog",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

@@ -25,15 +25,6 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-enum TraceState {
-    TRACE_SUCCESS = 0,
-    TRACE_INVALID_ARGS = 401,
-    TRACE_CAPTURED_ALREADY = 11400102,
-    TRACE_NO_PERMISSION = 11400103,
-    TRACE_ABNORMAL = 11400104,
-    TRACE_NO_RUNNING = 11400105,
-};
-
 enum MemoryState {
     MEMORY_FAILED = -1,
     MEMORY_SUCCESS = 0,
@@ -53,8 +44,9 @@ public:
 
     virtual double GetCpuUsage() = 0;
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
-    virtual int StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize, std::string &file) = 0;
-    virtual int StopAppTraceCapture() = 0;
+    virtual HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
+        uint32_t limitsize, std::string &file) = 0;
+    virtual HiDebug_ErrorCode StopAppTraceCapture() = 0;
     virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
     virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
     virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() = 0;

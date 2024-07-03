@@ -78,7 +78,6 @@ ohos_unittest("nativehook_ut") {
     "googletest:gtest",
     "hilog:libhilog",
     "init:libbegetutil",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

@@ -49,6 +49,7 @@ ohos_executable("SP_daemon") {
     "client_control.cpp",
     "control_call_cmd.cpp",
     "editor_command.cpp",
+    "navigation.cpp",
     "parse_click_complete_trace.cpp",
     "parse_click_response_trace.cpp",
     "parse_page_fps_trace.cpp",

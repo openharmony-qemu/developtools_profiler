@@ -42,8 +42,9 @@ public:
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
-    int StartAppTraceCapture(uint64_t tags, uint32_t flag, uint32_t limitsize, std::string &file) override;
-    int StopAppTraceCapture() override;
+    HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
+        uint32_t limitsize, std::string &file) override;
+    HiDebug_ErrorCode StopAppTraceCapture() override;
     int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
@@ -91,35 +92,35 @@ std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
     return threadMap;
 }
 
-int HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
+HiDebug_ErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
     uint32_t limitsize, std::string &file)
 {
     auto ret = StartCaptureAppTrace((TraceFlag)flag, tags, limitsize, file);
     if (ret == RET_SUCC) {
-        return TRACE_SUCCESS;
+        return HIDEBUG_SUCCESS;
     }
     if (ret == RET_FAIL_INVALID_ARGS) {
-        return TRACE_INVALID_ARGS;
+        return HIDEBUG_INVALID_ARGUMENT;
     }
     if (ret == RET_STARTED) {
-        return TRACE_CAPTURED_ALREADY;
+        return HIDEBUG_TRACE_CAPTURED_ALREADY;
     }
     if (ret == RET_FAIL_MKDIR || ret == RET_FAIL_SETACL || ret == RET_FAIL_EACCES || ret == RET_FAIL_ENOENT) {
-        return TRACE_NO_PERMISSION;
+        return HIDEBUG_NO_PERMISSION;
     }
-    return TRACE_ABNORMAL;
+    return HIDEBUG_TRACE_ABNORMAL;
 }
 
-int HidebugNativeInterfaceImpl::StopAppTraceCapture()
+HiDebug_ErrorCode HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
     auto ret = StopCaptureAppTrace();
     if (ret == RET_SUCC) {
-        return TRACE_SUCCESS;
+        return HIDEBUG_SUCCESS;
     }
     if (ret == RET_STOPPED) {
-        return TRACE_NO_RUNNING;
+        return HIDEBUG_NO_TRACE_RUNNING;
     }
-    return TRACE_ABNORMAL;
+    return HIDEBUG_TRACE_ABNORMAL;
 }
 
 std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
@@ -223,7 +224,7 @@ std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
 int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
     int32_t value, bool enabledDebugLog)
 {
-    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource");
+    HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource");
     auto memoryCollect = UCollectClient::MemoryCollector::Create();
     if (!memoryCollect) {
         HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, return result");
@@ -240,7 +241,7 @@ int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
             static_cast<int>(result.retCode));
         return MemoryState::MEMORY_FAILED;
     }
-    HILOG_INFO(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
+    HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
     return MemoryState::MEMORY_SUCCESS;
 }
 

@@ -58,12 +58,12 @@ ohos_unittest("profiler_service_ut") {
   }
   external_deps = [
     "abseil-cpp:absl_sync",
+    "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

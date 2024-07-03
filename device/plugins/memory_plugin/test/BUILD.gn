@@ -50,7 +50,6 @@ ohos_unittest("memdataplugin_ut") {
     "googletest:gtest",
     "graphic_2d:librender_service_client",
     "hilog:libhilog",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
@@ -83,7 +82,6 @@ ohos_unittest("smaps_stats_ut") {
     "googletest:gtest",
     "graphic_2d:librender_service_client",
     "hilog:libhilog",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

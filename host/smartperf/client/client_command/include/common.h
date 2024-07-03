@@ -93,6 +93,7 @@ enum class CommandType {
     CT_FTL,     //帧间隔限制值，单位ms
     CT_M,
     CT_GC,
+    CT_NAV,
 };
 enum class CommandHelp {
     HELP,
@@ -123,6 +124,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-m"), CommandType::CT_M },
     { std::string("-gc"), CommandType::CT_GC },
+    { std::string("-nav"), CommandType::CT_NAV },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -148,6 +150,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_FTL, std::string("-ftl") },
     { CommandType::CT_M, std::string("-m") },
     { CommandType::CT_GC, std::string("-gc") },
+    { CommandType::CT_NAV, std::string("-nav") },
 };
 
 

@@ -64,7 +64,6 @@ ohos_unittest("ftrace_plugin_ut") {
     "googletest:gtest",
     "hilog:libhilog",
     "hiview:libucollection_client",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
