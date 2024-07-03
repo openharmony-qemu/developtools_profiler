@@ -41,7 +41,7 @@ private:
     std::string result = "";
     int ohType = 5;
     int typeName = 2;
-    double time = 0.0;
+    mutable double time = 0.0;
     double noNameType = -1.0;
     mutable std::ostringstream stream;
 };
