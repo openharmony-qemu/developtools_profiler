@@ -68,7 +68,7 @@ public:
     void HandleCommand(std::string argStr, const std::string &argStr1);
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;
-    void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index);
+    void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
     // 采集次数
     int num = 0;
     // 包名
