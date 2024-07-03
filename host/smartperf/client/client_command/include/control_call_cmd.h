@@ -43,7 +43,7 @@ private:
     int typeName = 2;
     double time = 0.0;
     double noNameType = -1.0;
-    std::ostringstream stream;
+    mutable std::ostringstream stream;
 };
 }
 }
