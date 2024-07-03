@@ -32,6 +32,7 @@
  * @brief Defines the debug functions of the HiDebug module.
  *
  * @library libohhidebug.so
+ * @kit PerformanceAnalysisKit
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
@@ -47,6 +48,7 @@ extern "C" {
  * @brief Obtains the cpu usage of system.
  *
  * @return Returns the cpu usage of system
+ *         If the result is zero,The possible reason is that get failed.
  * @since 12
  */
 double OH_HiDebug_GetSystemCpuUsage();
@@ -55,6 +57,8 @@ double OH_HiDebug_GetSystemCpuUsage();
  * @brief Obtains the cpu usage percent of a process.
  *
  * @return Returns the cpu usage percent of a process
+ *         If the result is zero.The possbile reason is the current application usage rate is too low
+ *         or acquisition has failed
  * @since 12
  */
 double OH_HiDebug_GetAppCpuUsage();
@@ -62,7 +66,9 @@ double OH_HiDebug_GetAppCpuUsage();
 /**
  * @brief Obtains cpu usage of application's all thread.
  *
- * @return Returns all thread cpu usage. See {@link HiDebug_ThreadCpuUsagePtr}
+ * @return Returns all thread cpu usage. See {@link HiDebug_ThreadCpuUsagePtr}.
+ *         If the HiDebug_ThreadCpuUsagePtr is null.
+ *         The possible reason is that no thread related data was obtained
  * @since 12
  */
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage();
@@ -71,6 +77,7 @@ HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage();
  * @brief Free cpu usage buffer of application's all thread.
  *
  * @param threadCpuUsage Indicates applicatoin's all thread. See {@link HiDebug_ThreadCpuUsagePtr}
+ *        Use the pointer generated through the OH_HiDebug_GetAppThreadCpuUsage().
  * @since 12
  */
 void OH_HiDebug_FreeThreadCpuUsage(HiDebug_ThreadCpuUsagePtr *threadCpuUsage);
@@ -79,6 +86,7 @@ void OH_HiDebug_FreeThreadCpuUsage(HiDebug_ThreadCpuUsagePtr *threadCpuUsage);
  * @brief Obtains the system memory size.
  *
  * @param systemMemInfo Indicates the pointer to {@link HiDebug_SystemMemInfo}.
+ *        If there is no data in structure after the function.The Possible reason is system error.
  * @since 12
  */
 void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo);
@@ -87,6 +95,7 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo);
  * @brief Obtains the memory info of application process.
  *
  * @param nativeMemInfo Indicates the pointer to {@link HiDebug_NativeMemInfo}.
+ *        If there is no data in structure after the function.The Possible reason is system error.
  * @since 12
  */
 void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo);
@@ -95,6 +104,7 @@ void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo);
  * @brief Obtains the memory limit of application process.
  *
  * @param memoryLimit Indicates the pointer to {@link HiDebug_MemoryLimit}
+ *        If there is no data in structure after the function.The Possible reason is system error.
  * @since 12
  */
 void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit);
@@ -107,7 +117,12 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit);
  * @param limitSize Max size of trace file, in bytes, the max is 500MB.
  * @param fileName Output trace file name buffer
  * @param length Output trace file name buffer length
- * @return Returns {@code HIDEBUG_SUCCESS} if successful. See {@link HiDebug_ErrorCode}
+ * @return 0 - Success
+ *         {@link HIDEBUG_INVALID_ARGUMENT} 401 - if the fileName is null or the length is too short or
+ *         limitSize is too small
+ *         11400102 - Have already capture trace
+ *         11400103 - Have no permission to trace
+ *         11400104 - The Possible reason is some error in the system.
  * @since 12
  */
 HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
@@ -116,7 +131,9 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
 /**
  * @brief Stop capture application trace.
  *
- * @return Returns {@code HIDEBUG_SUCCESS} if successful. See {@link HiDebug_ErrorCode}
+ * @return 0 - Success
+ *         11400104 - Maybe no trace is running or some error in the system.
+ *         11400105 - Have no trace running.
  * @since 12
  */
 HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();

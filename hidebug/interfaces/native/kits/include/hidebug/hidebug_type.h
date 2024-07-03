@@ -31,6 +31,7 @@
  *
  * @brief Defines the code of the HiDebug module.
  *
+ * @kit PerformanceAnalysisKit
  * @library libohhidebug.so
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
