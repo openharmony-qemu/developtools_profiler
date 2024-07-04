@@ -165,10 +165,10 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     }
     if (configIter->second->session_mode() == ProfilerSessionConfig::OFFLINE) {
         eventPoller_->AddFileDescriptor(notifier->GetFd(),
-                                        std::bind(&PluginService::ReadShareMemoryOffline, this, *pluginCtx));
+                                        [this, pluginCtx] { this->ReadShareMemoryOffline(*pluginCtx); });
     } else if (configIter->second->session_mode() == ProfilerSessionConfig::ONLINE) {
         eventPoller_->AddFileDescriptor(notifier->GetFd(),
-                                        std::bind(&PluginService::ReadShareMemoryOnline, this, *pluginCtx));
+                                        [this, pluginCtx] { this->ReadShareMemoryOnline(*pluginCtx); });
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession %s done, shmem fd = %d",
                        pluginName.c_str(), smb->GetfileDescriptor());

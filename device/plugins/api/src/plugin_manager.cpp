@@ -301,7 +301,7 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                 PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
                 return false;
             }
-            auto callback = std::bind(&PluginManager::PullResult, this, id, config[idx].is_protobuf_serialize());
+            auto callback = [this, id, config, idx] { this->PullResult(id, config[idx].is_protobuf_serialize()); };
             int32_t timerFd = scheduleTaskManager_.ScheduleTask(callback, config[idx].sample_interval());
             if (timerFd == -1) {
                 PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);

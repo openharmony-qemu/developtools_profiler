@@ -80,7 +80,7 @@ int32_t ScheduleTaskManager::ScheduleTask(const std::function<void(void)>& callb
         time.it_value.tv_nsec = (interval % TIME_BASE) * TIME_BASE * TIME_BASE;
         time.it_interval.tv_sec = 0;
         time.it_interval.tv_nsec = 0;
-        func = std::bind(&ScheduleTaskManager::HandleSingleTask, this, timerFd, callback);
+        func = ([this, timerFd, callback] { this->HandleSingleTask(timerFd, callback); });
     } else {
         time.it_value.tv_sec = 0;
         time.it_value.tv_nsec = FIRST_TIME;
@@ -170,5 +170,5 @@ void ScheduleTaskManager::StartThread()
     evt.events = EPOLLIN;
     epoll_ctl(epollFd_, EPOLL_CTL_ADD, stopFd_, &evt);
 
-    scheduleThread_ = std::thread(&ScheduleTaskManager::ScheduleThread, this);
+    scheduleThread_ = std::thread([this] { this->ScheduleThread(); });
 }

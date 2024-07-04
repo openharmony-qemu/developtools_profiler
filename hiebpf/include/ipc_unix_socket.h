@@ -52,7 +52,7 @@ private:
     int clientFd_ = -1;
     bool isRunning_ = false;
 
-    void handleThreadLoop();
+    void HandleThreadLoop();
 };
 
 class IpcUnixSocketClient {

@@ -284,10 +284,10 @@ int FlowController::StartCapture(void)
     keepRunning_ = true;
 
     if (parseMode_ == TracePluginConfig_ParseMode_NORMAL) {
-        pollThread_ = std::thread(&FlowController::CaptureWorkOnNomalMode, this);
+        pollThread_ = std::thread([this] { this->CaptureWorkOnNomalMode(); });
     } else if (parseMode_ == TracePluginConfig_ParseMode_DELAY_PARSE) {
         CHECK_TRUE(CreateRawDataCaches(), -1, "create raw data caches failed!");
-        pollThread_ = std::thread(&FlowController::CaptureWorkOnDelayMode, this);
+        pollThread_ = std::thread([this] { this->CaptureWorkOnDelayMode(); });
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ParseMode is Illegal parameter!");
         return -1;

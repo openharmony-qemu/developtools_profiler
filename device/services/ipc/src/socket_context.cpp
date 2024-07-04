@@ -147,7 +147,7 @@ void* SocketContext::UnixSocketRecv(void* pp)
 
 bool SocketContext::CreateRecvThread()
 {
-    recvThread_ = std::thread(&SocketContext::UnixSocketRecv, this);
+    recvThread_ = std::thread([this] { this->UnixSocketRecv(this); });
     CHECK_TRUE(recvThread_.get_id() != std::thread::id(), false, "CreateRecvThread FAIL");
     return true;
 }

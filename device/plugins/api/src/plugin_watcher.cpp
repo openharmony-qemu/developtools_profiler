@@ -38,7 +38,7 @@ PluginWatcher::PluginWatcher(const PluginManagerPtr& pluginManager)
     if (inotifyFd_ < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:inotify_init1 failed! inotifyFd_ : %d", __func__, inotifyFd_);
     } else {
-        monitorThread_ = std::thread(&PluginWatcher::Monitor, this);
+        monitorThread_ = std::thread([this] { this->Monitor(); });
     }
 }
 

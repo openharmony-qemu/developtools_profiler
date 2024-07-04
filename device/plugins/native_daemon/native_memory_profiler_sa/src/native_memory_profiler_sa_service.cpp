@@ -214,7 +214,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     hook->StartPluginSession();
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-        std::bind(&NativeMemoryProfilerSaService::StopHook, this, config->pid_, config->processName_, true),
+        [this, config] { this->StopHook(config->pid_, config->processName_, true); },
         config->duration_ * TIME_BASE,
         true);
     if (timerFd == -1) {
