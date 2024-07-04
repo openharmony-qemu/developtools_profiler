@@ -82,9 +82,6 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
 
 void Capture::ThreadGetCatchSocket(const std::string &curTime) const
 {
-    if (curTime.empty()) {
-        return;
-    }
     std::string captureDir = "/data/local/tmp/capture";
     std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
     std::string cmdResult;
@@ -97,12 +94,12 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         }
     };
     
-    if (SPUtils::FileAccess(savePath)) {
+    char resolvedPath[PATH_MAX] = {0x00};
+    if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
         std::cout << "" << std::endl;
-        LOGI("%s savePath already exists", savePath.c_str());
     }
 
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
+    auto fd = open(resolvedPath, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());

@@ -79,7 +79,7 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
     }
     return result;
 }
-std::string ControlCallCmd::TimeDelay()
+std::string ControlCallCmd::TimeDelay() const
 {
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
@@ -94,15 +94,15 @@ std::string ControlCallCmd::TimeDelay()
     std::promise<std::string> promComplete;
     std::promise<std::string> promRadarFrame;
     std::future<std::string> futureResponse = promResponse.get_future();
-    std::thread([promResponse = std::move(promResponse)]() mutable {
+    std::thread([&promResponse = promResponse]() mutable {
         promResponse.set_value(SPUtils::GetRadarResponse());
     }).detach();
     std::future<std::string> futureComplete = promComplete.get_future();
-    std::thread([promComplete = std::move(promComplete)]() mutable {
+    std::thread([&promComplete = promComplete]() mutable {
         promComplete.set_value(SPUtils::GetRadarComplete());
     }).detach();
     std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-    std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+    std::thread([&promRadarFrame = promRadarFrame]() mutable {
         promRadarFrame.set_value(SPUtils::GetRadarFrame());
     }).detach();
     std::string responseStr = futureResponse.get();
@@ -126,7 +126,7 @@ std::string ControlCallCmd::TimeDelay()
     resultTime = resultTime + hitchTimeRate + maxFrame;
     return resultTime;
 }
-std::string ControlCallCmd::SlideList()
+std::string ControlCallCmd::SlideList() const
 {
     OHOS::SmartPerf::ParseClickResponseTrace pcrt;
     OHOS::SmartPerf::StartUpDelay sd;
@@ -147,11 +147,11 @@ std::string ControlCallCmd::SlideList()
         std::promise<std::string> promResponse;
         std::promise<std::string> promRadarFrame;
         std::future<std::string> futureResponse = promResponse.get_future();
-        std::thread([promResponse = std::move(promResponse)]() mutable {
+        std::thread([&promResponse = promResponse]() mutable {
             promResponse.set_value(SPUtils::GetRadarResponse());
         }).detach();
         std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-        std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+        std::thread([&promRadarFrame = promRadarFrame]() mutable {
             promRadarFrame.set_value(SPUtils::GetRadarFrame());
         }).detach();
         std::string responseStr = futureResponse.get();
@@ -330,14 +330,15 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
+
     std::promise<std::string> promRadar;
     std::promise<std::string> promRadarFrame;
     std::future<std::string> futureRadar = promRadar.get_future();
-    std::thread([promRadar = std::move(promRadar)]() mutable {
+    std::thread([&promRadar = promRadar]() mutable {
         promRadar.set_value(SPUtils::GetRadar());
     }).detach();
     std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-    std::thread([promRadarFrame = std::move(promRadarFrame)]() mutable {
+    std::thread([&promRadarFrame = promRadarFrame]() mutable {
         promRadarFrame.set_value(SPUtils::GetRadarFrame());
     }).detach();
     std::string radarStr = futureRadar.get();

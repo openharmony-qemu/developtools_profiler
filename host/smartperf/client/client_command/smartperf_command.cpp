@@ -227,7 +227,7 @@ void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string
 }
 
 void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
-    decltype(SPUtils::Cmp) *> &spMap, int index)
+    decltype(SPUtils::Cmp) *> &spMap, int index) const
 {
     int i = 0;
     for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
