@@ -135,6 +135,15 @@ StackPreprocess::~StackPreprocess()
     }
 }
 
+void StackPreprocess::FinishTraceFile()
+{
+    if (isSaService_) {
+        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+        tfPtr->SetDurationTime();
+        tfPtr->Finish();
+    }
+}
+
 void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
 {
     writer_ = writer;
@@ -152,15 +161,6 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
         return;
     }
     stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
-}
-
-void StackPreprocess::FinishTraceFile()
-{
-    if (isSaService_) {
-        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
-        tfPtr->SetDurationTime();
-        tfPtr->Finish();
-    }
 }
 
 bool StackPreprocess::StartTakeResults()
