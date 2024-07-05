@@ -866,7 +866,6 @@ void hook_free(void (*free_func)(void*), void* p)
                 g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
         }
 #endif
-        free_func(p);
         return;
     }
     StackRawData rawdata = {{{{0}}}};
