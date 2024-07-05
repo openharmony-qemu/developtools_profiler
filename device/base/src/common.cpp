@@ -443,7 +443,7 @@ const char* RealPath(std::string &filePath)
     if (filePath.size() > 0 && (filePath.back() == '/' || filePath.back() == '.')) {
         return nullptr;
     }
-    if (filePath.find('.') == -1) {
+    if (filePath.find('.') == std::string::npos) {
         return filePath.c_str();
     }
     std::vector<std::string> paths;
