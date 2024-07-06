@@ -121,8 +121,7 @@ public:
                 spSocket.Send("start::False");
             }
         } else if (recvStr.find("start::") != std::string::npos) {
-            auto lambdaTask = [&spSocket](const std::string &data) {
-                spSocket.Send(data);
+            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data);
                 LOGI("TCP data:: %s", data.c_str());
             };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);

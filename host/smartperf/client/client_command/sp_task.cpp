@@ -256,26 +256,31 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             msgTask(MapToString(dataMap));
             long long nextTime = SPUtils::GetCurTime();
             long long costTime = nextTime - lastTime;
-            curTaskInfo.freq = 998;
+            long long pTime = 998;
             if (costTime < curTaskInfo.freq) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
+                std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
             }
         }
     });
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
+void SPTask::WritePath()
+{
+    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+    if (!SPUtils::FileAccess(thisBasePath)) {
+        std::string cmdResult;
+        SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
+    }
+}
+
 void SPTask::StopTask()
 {
     bool isTcpMessage = true;
     LOGI("SPTask::StopTask start");
 
     if (isInit) {
-        std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-        if (!SPUtils::FileAccess(thisBasePath)) {
-            std::string cmdResult;
-            SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
-        }
+        WritePath();
         std::string outGeneralPath = thisBasePath + "/t_general_info.csv";
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime = SPUtils::GetCurTime();
@@ -304,7 +309,7 @@ void SPTask::StopTask()
         destMap.insert(cpuInfo.begin(), cpuInfo.end());
         destMap.insert(gpuInfo.begin(), gpuInfo.end());
         OHOS::SmartPerf::SpCsvUtil::WriteCsvH(outGeneralPath, destMap);
-        if(!vmap.empty()){
+        if (!vmap.empty()) {
             vmap.erase(vmap.begin());
         }
         OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);

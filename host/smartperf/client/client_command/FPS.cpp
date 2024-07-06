@@ -46,10 +46,10 @@ std::map<std::string, std::string> FPS::ItemData()
     size_t pos = 0;
     std::string token;
     std::string value;
-    while((pos = screenInfo.find(";")) != std::string::npos) {
+    while ((pos = screenInfo.find(";")) != std::string::npos) {
         token = screenInfo.substr(0, pos);
         screenInfo.erase(0, pos + 1);
-        if(token.find("current_fps:") != std::string::npos) {
+        if (token.find("current_fps:") != std::string::npos) {
             value = token.substr(token.find(":") + 1);
             break;
         }

@@ -79,6 +79,7 @@ public:
     void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
+    void WritePath();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
