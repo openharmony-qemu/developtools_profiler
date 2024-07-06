@@ -49,10 +49,9 @@ public:
         " -screen        get screen resolution \n"
         " -OUT           set csv output path.\n"
         " -d             get device DDR information \n"
-        " -m             get other memory \n"
         "example:\n"
-        "SP_daemon -N 20 -c -g -t -p -r -m -net -snapshot -d \n"
-        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -net -snapshot -d \n"
+        "SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d \n"
+        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d \n"
         "SP_daemon -start -c \n"
         "SP_daemon -stop \n"
         "SP_daemon -screen \n";

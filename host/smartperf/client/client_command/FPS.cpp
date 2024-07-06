@@ -41,13 +41,20 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetFpsInfo();
         prevResultFpsInfo = fpsInfoResult;
     }
-    if (screen == "0") {
-        result["refreshrate"] = GetScreenInfo();
-        screen = GetScreenInfo();
-    } else {
-        result["refreshrate"] = screen;
-        screen = GetScreenInfo();
+    std::string screenInfo;
+    SPUtils::LoadFile(screenPath, screenInfo);
+    size_t pos = 0;
+    std::string token;
+    std::string value;
+    while ((pos = screenInfo.find(";")) != std::string::npos) {
+        token = screenInfo.substr(0, pos);
+        screenInfo.erase(0, pos + 1);
+        if (token.find("current_fps:") != std::string::npos) {
+            value = token.substr(token.find(":") + 1);
+            break;
+        }
     }
+    result["refreshrate"] = value;
     if (processFlag) {
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
@@ -69,15 +76,6 @@ std::map<std::string, std::string> FPS::ItemData()
     }
     LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
-}
-
-std::string FPS::GetScreenInfo() const
-{
-    std::string resultScreen = SPUtils::GetScreen();
-    unsigned int pos = resultScreen.find("=");
-    std::string numStr = resultScreen.substr(pos + 1);
-    LOGI("numStr====: %s", numStr.c_str());
-    return numStr;
 }
 
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)

@@ -34,6 +34,24 @@ using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
+
+std::map<std::string, std::string> procRamInfoLast {
+    {"pss", "NA"},
+    {"gpuPss", "NA"},
+    {"graphicPss", "NA"},
+    {"arktsHeapPss", "NA"},
+    {"nativeHeapPss", "NA"},
+    {"stackPss", "NA"},
+    {"sharedClean", "NA"},
+    {"sharedDirty", "NA"},
+    {"privateClean", "NA"},
+    {"privateDirty", "NA"},
+    {"swap", "NA"},
+    {"swapPss", "NA"},
+    {"heapSize", "NA"},
+    {"heapAlloc", "NA"},
+    {"heapFree", "NA"},
+};
 std::map<std::string, std::string> RAM::ItemData()
 {
     std::map<std::string, std::string> result;
@@ -42,13 +60,27 @@ std::map<std::string, std::string> RAM::ItemData()
         result.insert(*it);
     }
     if (packageName.length() > 0) {
-        std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
-        for (auto it = procRamInfo.begin(); it != procRamInfo.end(); ++it) {
+        RAM::TriggerGetPss();
+        for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
         }
     }
     LOGI("RAM::ItemData map size(%u)", result.size());
     return result;
+}
+
+void RAM::ThreadGetPss() const
+{
+    std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
+    procRamInfoLast = procRamInfo;
+}
+
+void RAM::TriggerGetPss() const
+{
+    auto tStart = std::thread([this]() {
+        this->ThreadGetPss();
+    });
+    tStart.detach();
 }
 
 std::map<std::string, std::string> RAM::GetSysRamInfo() const
@@ -79,15 +111,57 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
     if (processId.size() == 0) {
+        procRamInfo["gpuPss"] = "NA";
+        procRamInfo["graphicPss"] = "NA";
+        procRamInfo["arktsHeapPss"] = "NA";
+        procRamInfo["nativeHeapPss"] = "NA";
+        procRamInfo["stackPss"] = "NA";
         procRamInfo["pss"] = "NA";
+        procRamInfo["sharedClean"] = "NA";
+        procRamInfo["sharedDirty"] = "NA";
+        procRamInfo["privateClean"] = "NA";
+        procRamInfo["privateDirty"] = "NA";
+        procRamInfo["swap"] = "NA";
+        procRamInfo["swapPss"] = "NA";
+        procRamInfo["heapSize"] = "NA";
+        procRamInfo["heapAlloc"] = "NA";
+        procRamInfo["heapFree"] = "NA";
         return procRamInfo;
     }
     std::string cmd = "hidumper --mem " + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
-        procRamInfo["pss"] = "0";
         return procRamInfo;
     }
+    std::vector<std::string> paramsInfo;
+    procRamInfo = GetPssRamInfo(fd, paramsInfo);
+    if (procRamInfo.find("arktsHeapPss") != procRamInfo.end() && procRamInfo["gpuPss"].empty()) {
+        procRamInfo["gpuPss"] = "NA";
+        procRamInfo["graphicPss"] = "NA";
+        procRamInfo["arktsHeapPss"] = "NA";
+        procRamInfo["nativeHeapPss"] = "NA";
+        procRamInfo["stackPss"] = "NA";
+        procRamInfo["pss"] = "NA";
+        procRamInfo["sharedClean"] = "NA";
+        procRamInfo["sharedDirty"] = "NA";
+        procRamInfo["privateClean"] = "NA";
+        procRamInfo["privateDirty"] = "NA";
+        procRamInfo["swap"] = "NA";
+        procRamInfo["swapPss"] = "NA";
+        procRamInfo["heapSize"] = "NA";
+        procRamInfo["heapAlloc"] = "NA";
+        procRamInfo["heapFree"] = "NA";
+    }
+    return procRamInfo;
+}
+std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
+{
+    std::map<std::string, std::string> pssRamInfo;
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
     const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
@@ -97,18 +171,55 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
-            pssValue = params[1];
+        if (params.size() == paramEleven && params[0].find("GL") != std::string::npos) {
+            gpuPssValue = params[1];
         }
-        if (pssValue.size() > 0) {
+        if (params.size() == paramEleven && params[0].find("Graph") != std::string::npos) {
+            graphicPssValue = params[1];
+        }
+        if (params[0].find("ark") != std::string::npos) {
+            arktsHeapPssValue = params[RAM_THIRD];
+        }
+        if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
+            nativeHeapPssValue = params[RAM_SECOND];
+        }
+        if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
+            stackPssValue = params[1];
+        }
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            paramsInfo = params;
+        }
+        if (paramsInfo.size() > 0) {
             break;
         }
     }
     pclose(fd);
-    if (pssValue.size() > 0) {
-        procRamInfo["pss"] = pssValue;
+    std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
+    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
+    pssRamInfo["gpuPss"] = gpuPssValue;
+    pssRamInfo["graphicPss"] = graphicPssValue;
+    pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
+    pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
+    pssRamInfo["stackPss"] = stackPssValue;
+    return pssRamInfo;
+}
+std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
+{
+    std::map<std::string, std::string> sumRamInfo;
+    if (paramsInfo.empty()) {
+        return sumRamInfo;
     }
-    return procRamInfo;
+    sumRamInfo["pss"] = paramsInfo[RAM_ONE];
+    sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
+    sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
+    sumRamInfo["privateClean"] = paramsInfo[RAM_FOURTH];
+    sumRamInfo["privateDirty"] = paramsInfo[RAM_FIFTH];
+    sumRamInfo["swap"] = paramsInfo[RAM_SIXTH];
+    sumRamInfo["swapPss"] = paramsInfo[RAM_SEVENTH];
+    sumRamInfo["heapSize"] = paramsInfo[RAM_EIGHTH];
+    sumRamInfo["heapAlloc"] = paramsInfo[RAM_NINTH];
+    sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(static_cast<int>(paramsInfo[RAM_TENTH].size()) - 1);
+    return sumRamInfo;
 }
 }
 }

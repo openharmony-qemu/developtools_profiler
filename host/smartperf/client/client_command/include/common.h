@@ -91,7 +91,6 @@ enum class CommandType {
     CT_VIEW,
     CT_FL,      //帧率限制值
     CT_FTL,     //帧间隔限制值，单位ms
-    CT_M,
     CT_GC,
     CT_NAV,
 };
@@ -122,7 +121,6 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-VIEW"), CommandType::CT_VIEW },
     { std::string("-fl"), CommandType::CT_FL },
     { std::string("-ftl"), CommandType::CT_FTL },
-    { std::string("-m"), CommandType::CT_M },
     { std::string("-gc"), CommandType::CT_GC },
     { std::string("-nav"), CommandType::CT_NAV },
 };
@@ -148,7 +146,6 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_VIEW, std::string("-VIEW") },
     { CommandType::CT_FL, std::string("-fl") },
     { CommandType::CT_FTL, std::string("-ftl") },
-    { CommandType::CT_M, std::string("-m") },
     { CommandType::CT_GC, std::string("-gc") },
     { CommandType::CT_NAV, std::string("-nav") },
 };

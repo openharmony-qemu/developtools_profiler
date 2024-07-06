@@ -71,11 +71,15 @@ public:
     bool CheckTcpParam(std::string str, std::string &errorInfo);
     std::future<std::map<std::string, std::string>> AsyncCollectRam();
     std::future<std::map<std::string, std::string>> AsyncCollectFps();
+    std::future<std::map<std::string, std::string>> AsyncCollectCpu();
     void CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
         std::map<std::string, std::string> &dataMap);
     void CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
         std::map<std::string, std::string> &dataMap);
+    void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
+        std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
+    void WritePath(std::string thisBasePath);
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);

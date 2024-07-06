@@ -94,16 +94,16 @@ std::string ControlCallCmd::TimeDelay() const
     std::promise<std::string> promComplete;
     std::promise<std::string> promRadarFrame;
     std::future<std::string> futureResponse = promResponse.get_future();
-    std::thread([&promResponse = promResponse]() mutable {
-        promResponse.set_value(SPUtils::GetRadarResponse());
+    std::thread([promiseResponse = std::move(promResponse)]() mutable {
+        promiseResponse.set_value(SPUtils::GetRadarResponse());
     }).detach();
     std::future<std::string> futureComplete = promComplete.get_future();
-    std::thread([&promComplete = promComplete]() mutable {
-        promComplete.set_value(SPUtils::GetRadarComplete());
+    std::thread([promiseComplete = std::move(promComplete)]() mutable {
+        promiseComplete.set_value(SPUtils::GetRadarComplete());
     }).detach();
     std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-    std::thread([&promRadarFrame = promRadarFrame]() mutable {
-        promRadarFrame.set_value(SPUtils::GetRadarFrame());
+    std::thread([promiseRadarFrame = std::move(promRadarFrame)]() mutable {
+        promiseRadarFrame.set_value(SPUtils::GetRadarFrame());
     }).detach();
     std::string responseStr = futureResponse.get();
     std::string completeStr = futureComplete.get();
@@ -147,12 +147,12 @@ std::string ControlCallCmd::SlideList() const
         std::promise<std::string> promResponse;
         std::promise<std::string> promRadarFrame;
         std::future<std::string> futureResponse = promResponse.get_future();
-        std::thread([&promResponse = promResponse]() mutable {
-            promResponse.set_value(SPUtils::GetRadarResponse());
+        std::thread([promiseResponse = std::move(promResponse)]() mutable {
+            promiseResponse.set_value(SPUtils::GetRadarResponse());
         }).detach();
         std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-        std::thread([&promRadarFrame = promRadarFrame]() mutable {
-            promRadarFrame.set_value(SPUtils::GetRadarFrame());
+        std::thread([promiseRadarFrame = std::move(promRadarFrame)]() mutable {
+            promiseRadarFrame.set_value(SPUtils::GetRadarFrame());
         }).detach();
         std::string responseStr = futureResponse.get();
         std::string radarFrameStr = futureRadarFrame.get();
@@ -334,12 +334,12 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::promise<std::string> promRadar;
     std::promise<std::string> promRadarFrame;
     std::future<std::string> futureRadar = promRadar.get_future();
-    std::thread([&promRadar = promRadar]() mutable {
-        promRadar.set_value(SPUtils::GetRadar());
+    std::thread([promiseRadar = std::move(promRadar)]() mutable {
+        promiseRadar.set_value(SPUtils::GetRadar());
     }).detach();
     std::future<std::string> futureRadarFrame = promRadarFrame.get_future();
-    std::thread([&promRadarFrame = promRadarFrame]() mutable {
-        promRadarFrame.set_value(SPUtils::GetRadarFrame());
+    std::thread([promiseRadarFrame = std::move(promRadarFrame)]() mutable {
+        promiseRadarFrame.set_value(SPUtils::GetRadarFrame());
     }).detach();
     std::string radarStr = futureRadar.get();
     std::string radarFrameStr = futureRadarFrame.get();
