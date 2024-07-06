@@ -105,7 +105,6 @@ public:
             spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
         } else if (recvStr.find("start:::") != std::string::npos) {
             if (flagRunning) {
-                LOGI("SP_daemon is running");
                 spSocket.Send("SP_daemon is running");
                 return;
             }
@@ -121,7 +120,8 @@ public:
                 spSocket.Send("start::False");
             }
         } else if (recvStr.find("start::") != std::string::npos) {
-            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data);
+            auto lambdaTask = [&spSocket](const std::string &data) { 
+                spSocket.Send(data);
                 LOGI("TCP data:: %s", data.c_str());
             };
             ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
