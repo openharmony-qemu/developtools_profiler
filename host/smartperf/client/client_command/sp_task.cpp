@@ -267,7 +267,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 }
 void SPTask::WritePath(std::string thisBasePath)
 {
-    thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
     if (!SPUtils::FileAccess(thisBasePath)) {
         std::string cmdResult;
         SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
