@@ -101,7 +101,7 @@ private:
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
-    const std::string screenPath = "/sys/class/graphics/fb0/1cd_fps_scence";
+    const std::string screenPath = "/sys/class/graphics/fb0/lcd_fps_scence";
 };
 }
 }

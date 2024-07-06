@@ -224,12 +224,12 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         LOGW("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;
     }
-    vmap.clear();
     isRunning = true;
     startTime = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
+    vmap.clear();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
             long long lastTime = SPUtils::GetCurTime();
@@ -238,8 +238,8 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
             std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
             std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             GetItemData(dataMap);
+            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             CheckFutureFps(fpsResult, dataMap);
             CheckFutureCpu(cpuResult, dataMap);
             CheckFutureRam(ramResult, dataMap);
@@ -260,9 +260,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             if (costTime < curTaskInfo.freq) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
             }
-        }
-        if (!isRunning) {
-            vmap.clear();
         }
     });
     LOGI("SPTask::StartTask complete");

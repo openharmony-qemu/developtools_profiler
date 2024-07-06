@@ -78,15 +78,6 @@ std::map<std::string, std::string> FPS::ItemData()
     return result;
 }
 
-std::string FPS::GetScreenInfo() const
-{
-    std::string resultScreen = SPUtils::GetScreen();
-    unsigned int pos = resultScreen.find("=");
-    std::string numStr = resultScreen.substr(pos + 1);
-    LOGI("numStr====: %s", numStr.c_str());
-    return numStr;
-}
-
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
 {
     ffTime.fps = fpsInfoResult.fps;

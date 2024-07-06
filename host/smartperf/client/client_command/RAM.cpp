@@ -35,7 +35,7 @@ using namespace OHOS::HiviewDFX::UCollect;
 namespace OHOS {
 namespace SmartPerf {
 
-std::map<std::string, std::string> protRamInfoLast(
+std::map<std::string, std::string> procRamInfoLast {
     {"pss", "NA"},
     {"gpuPss", "NA"},
     {"graphicPss", "NA"},
@@ -51,7 +51,7 @@ std::map<std::string, std::string> protRamInfoLast(
     {"heapSize", "NA"},
     {"heapAlloc", "NA"},
     {"heapFree", "NA"},
-);
+};
 std::map<std::string, std::string> RAM::ItemData()
 {
     std::map<std::string, std::string> result;
@@ -61,7 +61,7 @@ std::map<std::string, std::string> RAM::ItemData()
     }
     if (packageName.length() > 0) {
         RAM::TriggerGetPss();
-        for (auto it = protRamInfoLast.begin(); it != protRamInfoLast.end(); ++it) {
+        for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
         }
     }
@@ -72,7 +72,7 @@ std::map<std::string, std::string> RAM::ItemData()
 void RAM::ThreadGetPss() const
 {
     std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
-    protRamInfoLast = procRamInfo;
+    procRamInfoLast = procRamInfo;
 }
 
 void RAM::TriggerGetPss() const
