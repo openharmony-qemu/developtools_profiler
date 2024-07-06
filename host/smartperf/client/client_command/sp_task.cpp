@@ -265,9 +265,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
-void SPTask::WritePath()
+void SPTask::WritePath(std::string thisBasePath)
 {
-    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+    thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
     if (!SPUtils::FileAccess(thisBasePath)) {
         std::string cmdResult;
         SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
@@ -280,7 +280,8 @@ void SPTask::StopTask()
     LOGI("SPTask::StopTask start");
 
     if (isInit) {
-        WritePath();
+        std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+        WritePath(thisBasePath);
         std::string outGeneralPath = thisBasePath + "/t_general_info.csv";
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime = SPUtils::GetCurTime();
