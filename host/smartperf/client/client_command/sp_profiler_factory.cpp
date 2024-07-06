@@ -19,7 +19,6 @@
 #include "include/FPS.h"
 #include "include/profiler_fps.h"
 #include "include/RAM.h"
-#include "include/MEMORY.h"
 #include "include/Network.h"
 #include "include/Power.h"
 #include "include/Temperature.h"
@@ -50,8 +49,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
         profiler = &DDR::GetInstance();
     } else if (messageType == MessageType::GET_RAM_INFO) {
         profiler = &RAM::GetInstance();
-    } else if (messageType == MessageType::GET_MEMORY_INFO) {
-        profiler = &MEMORY::GetInstance();
     } else if (messageType == MessageType::GET_TEMPERATURE) {
         profiler = &Temperature::GetInstance();
     } else if (messageType == MessageType::GET_POWER) {
@@ -80,8 +77,6 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     fps.SetPackageName(pkg);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
     profilerFps.SetPackageName(pkg);
-    MEMORY &mem = MEMORY::GetInstance();
-    mem.SetPackageName(pkg);
     RAM &ram = RAM::GetInstance();
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
@@ -184,9 +179,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
             }
             break;
         case CommandType::CT_HW:
-            break;
-        case CommandType::CT_M:
-            profiler = &MEMORY::GetInstance();
             break;
         case CommandType::CT_GC:
             if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_INIT) {

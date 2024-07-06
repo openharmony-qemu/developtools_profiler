@@ -68,7 +68,6 @@ public:
     bool IsFindForeGround(std::string line) const;
     void GetSameTimeNums();
     void GetCurrentTime();
-    std::string GetScreenInfo() const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;
@@ -102,7 +101,7 @@ private:
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
-    std::string screen = "0";
+    const std::string screenPath = "/sys/class/graphics/fb0/1cd_fps_scence";
 };
 }
 }
