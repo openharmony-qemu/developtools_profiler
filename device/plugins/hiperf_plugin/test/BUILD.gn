@@ -43,6 +43,7 @@ ohos_unittest("hiperfplugin_ut") {
     "c_utils:utils",
     "googletest:gtest",
     "hilog:libhilog",
+    "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

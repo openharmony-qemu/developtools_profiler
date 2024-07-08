@@ -232,7 +232,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
     clientConfig.printNmd = printMallocNmd_;
-    clientConfig.nmdType = nmdParamInfo_.type;
+    clientConfig.nmdType = static_cast<int>(nmdParamInfo_.type);
     // -1 is save '\0'
     int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());

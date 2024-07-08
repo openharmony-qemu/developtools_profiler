@@ -21,6 +21,7 @@
 #include "include/sp_utils.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
+#include "include/CPU.h"
 #include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
@@ -143,6 +144,21 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
     return futureResult;
 }
 
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
+{
+    std::promise<std::map<std::string, std::string>> p;
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string cpuConfig : curTaskInfo.taskConfig) {
+        if (cpuConfig.find("-c") != std::string::npos) {
+            futureResult = p.get_future();
+            std::thread([p = std::move(p)]() mutable {
+                p.set_value(CPU::GetInstance().ItemData());
+            }).detach();
+        }
+    }
+    return futureResult;
+}
+
 std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
 {
     std::promise<std::map<std::string, std::string>> p;
@@ -163,6 +179,15 @@ void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ram
 {
     if (ramResult.valid()) {
         std::map<std::string, std::string> result = ramResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
+void SPTask::CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (cpuResult.valid()) {
+        std::map<std::string, std::string> result = cpuResult.get();
         dataMap.insert(result.begin(), result.end());
     }
 }
@@ -204,17 +229,20 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
+    vmap.clear();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
             long long lastTime = SPUtils::GetCurTime();
             std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
+            std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
             GetItemData(dataMap);
-            CheckFutureRam(ramResult, dataMap);
+            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
             CheckFutureFps(fpsResult, dataMap);
+            CheckFutureCpu(cpuResult, dataMap);
+            CheckFutureRam(ramResult, dataMap);
             if (curTaskInfo.stuckInfo.isEffective) {
                 std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
                 if (!timeUsedMap.empty()) {
@@ -228,28 +256,31 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             msgTask(MapToString(dataMap));
             long long nextTime = SPUtils::GetCurTime();
             long long costTime = nextTime - lastTime;
+            long long pTime = 998;
             if (costTime < curTaskInfo.freq) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(curTaskInfo.freq - costTime));
+                std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
             }
-        }
-        if (!isRunning) {
-            vmap.clear();
         }
     });
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
+void SPTask::WritePath(std::string thisBasePath)
+{
+    if (!SPUtils::FileAccess(thisBasePath)) {
+        std::string cmdResult;
+        SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
+    }
+}
+
 void SPTask::StopTask()
 {
     bool isTcpMessage = true;
     LOGI("SPTask::StopTask start");
-    isRunning = false;
+
     if (isInit) {
         std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-        if (!SPUtils::FileAccess(thisBasePath)) {
-            std::string cmdResult;
-            SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
-        }
+        WritePath(thisBasePath);
         std::string outGeneralPath = thisBasePath + "/t_general_info.csv";
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime = SPUtils::GetCurTime();
@@ -278,9 +309,12 @@ void SPTask::StopTask()
         destMap.insert(cpuInfo.begin(), cpuInfo.end());
         destMap.insert(gpuInfo.begin(), gpuInfo.end());
         OHOS::SmartPerf::SpCsvUtil::WriteCsvH(outGeneralPath, destMap);
+        if (!vmap.empty()) {
+            vmap.erase(vmap.begin());
+        }
         OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
     }
-
+    isRunning = false;
     isInit = false;
     vmap.clear();
     if (thread.joinable()) {

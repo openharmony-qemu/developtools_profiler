@@ -106,7 +106,7 @@ std::string navigation::GetWinId(std::string processId) const
             params[paramThree].find("WinId") != std::string::npos) {
             continue;
         }
-        if (params.size() > paramTwentyFour) {
+        if (static_cast<int>(params.size()) > paramTwentyFour) {
             DumpEntity dumpEntity { params[2], params[3] };
             dumpEntityList.push_back(dumpEntity);
         }

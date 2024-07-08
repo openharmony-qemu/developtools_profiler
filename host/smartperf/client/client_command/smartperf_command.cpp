@@ -123,7 +123,6 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_NET:
         case CommandType::CT_TTRACE:
         case CommandType::CT_SNAPSHOT:
-        case CommandType::CT_M:
         case CommandType::CT_HW:
         case CommandType::CT_GC:
         case CommandType::CT_NAV:
@@ -227,7 +226,7 @@ void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string
 }
 
 void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
-    decltype(SPUtils::Cmp) *> &spMap, int index)
+    decltype(SPUtils::Cmp) *> &spMap, int index) const
 {
     int i = 0;
     for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {

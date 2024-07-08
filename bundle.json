@@ -53,22 +53,15 @@
         "openssl",
         "zlib",
         "grpc",
-        "cJSON",
         "storage_service",
         "abseil-cpp",
         "soc_perf"
       ],
       "third_party": [
-        "bounds_checking_function",
         "cJSON",
-        "grpc",
         "libbpf",
         "libunwind",
-        "openssl",
-        "protobuf",
-        "zlib",
-        "libpng",
-        "abseil-cpp"
+        "libpng"
       ]
     },
     "build": {

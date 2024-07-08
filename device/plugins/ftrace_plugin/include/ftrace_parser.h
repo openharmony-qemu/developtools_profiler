@@ -140,11 +140,13 @@ private:
         return true;
     }
 
-    template <typename T, typename P> // P: SubEventParser<FtraceEvent>::ParseEventCtx
+    template <typename T, typename P>  // P: SubEventParser<FtraceEvent>::ParseEventCtx
     bool ParseFtraceEvent(T& ftraceEvent, uint8_t data[], size_t dataSize, P& parseEventCtx)
     {
-        CHECK_TRUE(dataSize >= parseEventCtx->format.eventSize, false,
-                   "FtraceParser::ParseFtraceEvent, dataSize not enough!");
+        CHECK_TRUE(
+            dataSize >= parseEventCtx->format.eventSize, false,
+            "FtraceParser::ParseFtraceEvent, dataSize not enough! event name is %s,eventSize is %u, dataSize is %zd",
+            parseEventCtx->format.eventName.c_str(), parseEventCtx->format.eventSize, dataSize);
 
         int pid = 0;
         CHECK_TRUE(ParseFtraceCommonFields(ftraceEvent, data, dataSize, parseEventCtx->format, pid),

@@ -36,7 +36,6 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiperf_data:hiperf_data_cpp",
-    "//third_party/openssl:libcrypto_shared",
   ]
 
   include_dirs = [
@@ -51,6 +50,8 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
   external_deps = [
     "c_utils:utils",
     "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
   ]
 }
 

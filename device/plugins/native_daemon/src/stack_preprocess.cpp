@@ -135,6 +135,15 @@ StackPreprocess::~StackPreprocess()
     }
 }
 
+void StackPreprocess::FinishTraceFile()
+{
+    if (isSaService_) {
+        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+        tfPtr->SetDurationTime();
+        tfPtr->Finish();
+    }
+}
+
 void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
 {
     writer_ = writer;
@@ -152,15 +161,6 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
         return;
     }
     stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
-}
-
-void StackPreprocess::FinishTraceFile()
-{
-    if (isSaService_) {
-        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
-        tfPtr->SetDurationTime();
-        tfPtr->Finish();
-    }
 }
 
 bool StackPreprocess::StartTakeResults()
@@ -207,7 +207,7 @@ inline void StackPreprocess::IntervalFlushRecordStatistics()
     // interval reporting statistics
     if (hookConfig_.statistics_interval() > 0) {
         auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::seconds>(currentTime - lastStatisticsTime_);
+        auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastStatisticsTime_);
         if (elapsedTime >= statisticsInterval_) {
             lastStatisticsTime_ = currentTime;
             FlushRecordStatistics();

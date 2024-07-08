@@ -438,12 +438,26 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     return true;
 }
 
+bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
+{
+    if (validPaths.size() == 0) {
+        return true;
+    }
+
+    for (const std::string& path : validPaths) {
+        if (filePath.rfind(path, 0) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
 const char* RealPath(std::string &filePath)
 {
     if (filePath.size() > 0 && (filePath.back() == '/' || filePath.back() == '.')) {
         return nullptr;
     }
-    if (filePath.find('.') == -1) {
+    if (filePath.find('.') == std::string::npos) {
         return filePath.c_str();
     }
     std::vector<std::string> paths;
@@ -467,20 +481,6 @@ const char* RealPath(std::string &filePath)
     }
     filePath.pop_back();
     return filePath.c_str();
-}
-
-bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
-{
-    if (validPaths.size() == 0) {
-        return true;
-    }
-
-    for (const std::string& path : validPaths) {
-        if (filePath.rfind(path, 0) == 0) {
-            return true;
-        }
-    }
-    return false;
 }
 
 bool ReadFile(const std::string &filePath, const std::vector<std::string>& validPaths, std::string& fileContent)

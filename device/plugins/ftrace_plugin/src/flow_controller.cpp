@@ -128,6 +128,9 @@ bool FlowController::CreateRawDataReaders()
 bool FlowController::CreatePagedMemoryPool()
 {
     PROFILER_LOG_INFO(LOG_CORE, "create memory pool, buffer_size_kb = %u", bufferSizeKb_);
+    if (KB_PER_PAGE == 0 || platformCpuNum_ == 0) {
+        return false;
+    }
     size_t bufferSizePages = bufferSizeKb_ / KB_PER_PAGE;
     size_t pagesPerBlock = bufferSizePages / static_cast<size_t>(platformCpuNum_);
     if (pagesPerBlock < MIN_BLOCK_SIZE_PAGES) {
@@ -178,15 +181,13 @@ bool FlowController::ParseBasicData()
     if (getClockTimes_) {
         if (resultWriter_->isProtobufSerialize) {
             auto traceResult = std::make_unique<TracePluginResult>();
-            CHECK_TRUE(ReportClockTimes(traceResult), -1, "parse clock times FAILED!");
-            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report clock times FAILED!");
+            CHECK_TRUE(ReportClockTimes(traceResult), false, "parse clock times FAILED!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report clock times FAILED!");
         } else {
             auto ctx = resultWriter_->startReport(resultWriter_);
             CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
             auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
-            if (!ReportClockTimes(traceResult)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "report clock times FAILED!");
-            }
+            CHECK_TRUE(ReportClockTimes(traceResult), false, "parse clock times FAILED!");
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
             tansporter_->Report(static_cast<size_t>(msgSize));
@@ -197,15 +198,13 @@ bool FlowController::ParseBasicData()
     if (parseKsyms_) {
         if (resultWriter_->isProtobufSerialize) {
             auto traceResult = std::make_unique<TracePluginResult>();
-            CHECK_TRUE(ParseKernelSymbols(traceResult), -1, "parse kernel symbols FAILED!");
-            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report kernel symbols FAILED!");
+            CHECK_TRUE(ParseKernelSymbols(traceResult), false, "parse kernel symbols FAILED!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report kernel symbols FAILED!");
         } else {
             auto ctx = resultWriter_->startReport(resultWriter_);
             CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
             auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
-            if (!ParseKernelSymbols(traceResult)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "parse kernel symbols FAILED!");
-            }
+            CHECK_TRUE(ParseKernelSymbols(traceResult), false, "parse kernel symbols FAILED!");
             int32_t msgSize = traceResult->Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
             tansporter_->Report(static_cast<size_t>(msgSize));
@@ -215,15 +214,13 @@ bool FlowController::ParseBasicData()
     // parse per cpu stats
     if (resultWriter_->isProtobufSerialize) {
         auto traceResult = std::make_unique<TracePluginResult>();
-        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_START), -1, "parse TRACE_START stats failed!");
-        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report TRACE_START stats failed!");
+        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_START), false, "parse TRACE_START stats failed!");
+        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report TRACE_START stats failed!");
     } else {
         auto ctx = resultWriter_->startReport(resultWriter_);
         CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
         auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
-        if (!ParsePerCpuStatus(traceResult, TRACE_START)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse TRACE_START stats failed!");
-        }
+        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_START), false, "parse TRACE_START stats failed!");
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(static_cast<size_t>(msgSize));
@@ -313,13 +310,10 @@ void FlowController::CaptureWorkOnNomalModeInner()
 {
     pthread_setname_np(pthread_self(), "TraceReader");
     PROFILER_LOG_INFO(LOG_CORE, "FlowController::CaptureWorkOnNomalMode start!");
-
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
     std::vector<long> rawDataBytes(platformCpuNum_, 0);
-
     while (keepRunning_) {
         std::this_thread::sleep_for(tracePeriod);
-
         // read data from percpu trace_pipe_raw, consume kernel ring buffers
         for (size_t i = 0; i < rawDataBytes.size(); i++) {
             if (flushCacheData_ && !keepRunning_) {
@@ -329,10 +323,8 @@ void FlowController::CaptureWorkOnNomalModeInner()
             long nbytes = ReadEventData(i);
             rawDataBytes[i] = nbytes;
         }
-
         // parse ftrace metadata
         ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
-
         // parse ftrace percpu event data
         for (size_t i = 0; i < rawDataBytes.size(); i++) {
             if (flushCacheData_ && !keepRunning_) {
@@ -343,15 +335,15 @@ void FlowController::CaptureWorkOnNomalModeInner()
                 PROFILER_LOG_INFO(LOG_CORE, "Get raw data from CPU%zu is 0 bytes.", i);
                 continue;
             }
-            CHECK_TRUE(ParseEventDataOnNomalMode(i, rawDataBytes[i]), NO_RETVAL, "ParseEventData failed!");
+            if (!ParseEventDataOnNomalMode(i, rawDataBytes[i])) {
+                PROFILER_LOG_ERROR(LOG_CORE, "%s:ParseEventData failed!", __func__);
+            }
         }
-
         if (isReportBasicData_.load()) {
             ParseBasicData();
             isReportBasicData_ = false;
         }
     }
-
     tansporter_->Flush();
     PROFILER_LOG_DEBUG(LOG_CORE, "FlowController::CaptureWorkOnNomalMode done!");
 }
@@ -381,18 +373,14 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
     pthread_setname_np(pthread_self(), "HmTraceReader");
     PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
-
     while (keepRunning_) {
         std::this_thread::sleep_for(tracePeriod);
         if (flushCacheData_ && !keepRunning_) {
             PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
         }
-
         long rawDataBytes = HmReadEventData();
-
         ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
-
         if (flushCacheData_ && !keepRunning_) {
             PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
@@ -401,12 +389,12 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
             PROFILER_LOG_INFO(LOG_CORE, "Get hm raw data is 0 bytes.");
             continue;
         }
-
-        CHECK_TRUE(HmParseEventDataOnNomalMode(rawDataBytes), NO_RETVAL, "HmParseEventData failed!");
+        if (!HmParseEventDataOnNomalMode(rawDataBytes)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HmParseEventData failed!");
+        }
     }
-
     tansporter_->Flush();
-    PROFILER_LOG_DEBUG(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
+    PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
 }
 
 void FlowController::CaptureWorkOnNomalMode()
@@ -462,40 +450,36 @@ static inline int RmqEntryTotalSize(unsigned int size)
 }
 
 template <typename T, typename E>
-bool FlowController::HmParseEventData(T* traceResult, uint8_t* &data, E* ftraceEvent)
+bool FlowController::HmParseEventData(T* traceResult, uint8_t*& data, E* ftraceEvent)
 {
-    struct RmqConsumerData *rmqData = reinterpret_cast<struct RmqConsumerData *>(data);
+    struct RmqConsumerData* rmqData = reinterpret_cast<struct RmqConsumerData*>(data);
     uint64_t timeStampBase = rmqData->timeStamp;
     auto cpuDetailMsg = traceResult->add_ftrace_cpu_detail();
-    struct RmqEntry *event;
-
+    struct RmqEntry* event;
     cpuDetailMsg->set_cpu(rmqData->coreId);
     cpuDetailMsg->set_overwrite(0);
-
     auto curPtr = rmqData->data;
     auto endPtr = rmqData->data + rmqData->length;
     while (curPtr < endPtr) {
-        event = reinterpret_cast<struct RmqEntry *>(curPtr);
+        event = reinterpret_cast<struct RmqEntry*>(curPtr);
         unsigned int evtSize = event->size;
         if (evtSize == 0U) {
             break;
         }
-
-        struct HmTraceHeader *header = reinterpret_cast<struct HmTraceHeader *>(event->data);
-        auto parseEventCtx =
-            SubEventParser<E>::GetInstance().GetParseEventCtx(header->commonType);
+        struct HmTraceHeader* header = reinterpret_cast<struct HmTraceHeader*>(event->data);
+        auto parseEventCtx = SubEventParser<E>::GetInstance().GetParseEventCtx(header->commonType);
         if (parseEventCtx == NULL) {
             curPtr += RmqEntryTotalSize(evtSize);
             continue;
         }
-
         ftraceEvent = cpuDetailMsg->add_event();
         ftraceEvent->set_timestamp(event->timeStampOffset + timeStampBase);
-        CHECK_TRUE(ftraceParser_->HmParseFtraceEvent(*ftraceEvent, reinterpret_cast<uint8_t *>(header),
-            evtSize, parseEventCtx), false, "hm parse event failed!");
+        if (!ftraceParser_->HmParseFtraceEvent(*ftraceEvent, reinterpret_cast<uint8_t*>(header), evtSize,
+                                               parseEventCtx)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "hm parse event failed!");
+        }
         curPtr += RmqEntryTotalSize(evtSize);
     }
-
     data += PAGE_SIZE;
     return true;
 }
@@ -520,9 +504,7 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
             msgPool.Reset();
             traceResult.Reset(ctx, &msgPool);
             ProtoEncoder::FtraceEvent* event = nullptr;
-            if (!HmParseEventData(&traceResult, data, event)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "hm parse raw data failed!");
-            }
+            CHECK_TRUE(HmParseEventData(&traceResult, data, event), false, "hm parse raw data failed!");
             int32_t msgSize = traceResult.Finish();
             resultWriter_->finishReport(resultWriter_, msgSize);
             tansporter_->Report(static_cast<size_t>(msgSize));
@@ -559,9 +541,9 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
 {
     if (resultWriter_->isProtobufSerialize) {
         auto traceResult = std::make_unique<TracePluginResult>();
-        FtraceEvent* event = nullptr; // Used to distinguish between SubEventParser instance types.
-        CHECK_TRUE(ParseFtraceEvent(traceResult.get(), cpuid, page, event), false,
-            "parse raw event for cpu-%d failed!", cpuid);
+        FtraceEvent* event = nullptr;  // Used to distinguish between SubEventParser instance types.
+        CHECK_TRUE(ParseFtraceEvent(traceResult.get(), cpuid, page, event), false, "parse raw event for cpu-%d failed!",
+                   cpuid);
         CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report raw event for cpu-%d failed!", cpuid);
     } else {
         auto ctx = resultWriter_->startReport(resultWriter_);
@@ -570,10 +552,9 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         static ProtoEncoder::TracePluginResult traceResult;
         msgPool.Reset();
         traceResult.Reset(ctx, &msgPool);
-        ProtoEncoder::FtraceEvent* event = nullptr; // Used to distinguish between SubEventParser instance types.
-        if (!ParseFtraceEvent(&traceResult, cpuid, page, event)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse raw event for cpu-%d failed!", cpuid);
-        }
+        ProtoEncoder::FtraceEvent* event = nullptr;  // Used to distinguish between SubEventParser instance types.
+        CHECK_TRUE(ParseFtraceEvent(&traceResult, cpuid, page, event), false, "parse raw event for cpu-%d failed!",
+                   cpuid);
         int32_t msgSize = traceResult.Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(static_cast<size_t>(msgSize));
@@ -586,9 +567,10 @@ bool FlowController::ParseEventDataOnNomalMode(int cpuid, long dataSize)
     CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
     auto buffer = ftraceBuffers_[cpuid].get();
     auto endPtr = buffer + dataSize;
-
     for (auto page = buffer; page < endPtr; page += PAGE_SIZE) {
-        CHECK_TRUE(ParseEventData(cpuid, page), false, "ParseEventData for cpu-%d failed!", cpuid);
+        if (!ParseEventData(cpuid, page)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s:ParseEventData for cpu-%d failed!", __func__, cpuid);
+        }
     }
     return true;
 }
@@ -604,7 +586,9 @@ bool FlowController::ParseEventDataOnDelayMode()
         for (long i = 0; i < dataBytes; i += PAGE_SIZE) {
             uint8_t page[PAGE_SIZE] = {0};
             fread(page, sizeof(uint8_t), PAGE_SIZE, rawDataFile_.get());
-            CHECK_TRUE(ParseEventData(cpuId, page), false, "ParseEventData for cpu-%d failed!", cpuId);
+            if (!ParseEventData(cpuId, page)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "%s:ParseEventData for cpu-%d failed!", __func__, cpuId);
+            }
         }
     }
     return true;
@@ -638,9 +622,7 @@ int FlowController::StopCapture(void)
         auto ctx = resultWriter_->startReport(resultWriter_);
         CHECK_NOTNULL(ctx, -1, "%s: get RandomWriteCtx FAILED!", __func__);
         auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
-        if (!ParsePerCpuStatus(traceResult, TRACE_END)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "parse TRACE_END stats FAILED!");
-        }
+        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
         int32_t msgSize = traceResult->Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(static_cast<size_t>(msgSize));

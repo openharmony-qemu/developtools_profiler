@@ -17,7 +17,6 @@
 ├── FPS.cpp                                     # FPS采集代码文件
 ├── GPU.cpp                                     # GPU采集代码文件
 ├── GpuCounter.cpp                              # GpuCounter采集代码文件
-├── MEMORY.cpp                                  # MEMORY细化采集代码文件
 ├── Network.cpp                                 # 网络上下行速率采集代码文件
 ├── Power.cpp                                   # 功耗采集代码文件
 ├── RAM.cpp                                     # 内存采集代码文件
@@ -55,7 +54,6 @@
 | -VIEW | 设置图层，需要先获取应用图层名                |否|
 | -screen | 采集屏幕分辨率和刷新率               |否|
 | -d    | 采集DDR                 |否|
-| -m  | 采集进程内存信息         |否|
 | -sections| 设置分段采集          |否|
 
 **1.2 启停采集命令参数**
@@ -74,7 +72,6 @@ C:\Users\test>hdc_std shell
 OpenHarmony performance testing tool SmartPerf command-line version
 Usage: SP_daemon <options> <arguments>
 options:
-These are common commands list:
  -N             set the collection times(default value is 0) range[1,2147483647], for example: -N 10
  -PKG           set package name, must add, for example: -PKG ohos.samples.ecg
  -c             get device CPU frequency and CPU usage, process CPU usage and CPU load ..
@@ -93,10 +90,9 @@ These are common commands list:
  -screen        get screen resolution
  -OUT           set csv output path
  -d             get device DDR information
- -m             get other memory
  example:
- SP_daemon -N 20 -c -g -t -p -r -m -d -net -snapshot
- SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -d -net -snapshot
+ SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d
+ SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d
  SP_daemon -start -c
  SP_daemon -stop
  SP_daemon -screen
@@ -104,7 +100,7 @@ These are common commands list:
 command exec finished!
 #
 ```
-2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -m -d -net -snapshot
+2）执行示例命令：SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -d -net -snapshot
 ```
 ----------------------------------Print START------------------------------------
 order:0 timestamp=1710916175201

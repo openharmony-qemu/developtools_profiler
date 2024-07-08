@@ -77,6 +77,9 @@ int GpuDataPlugin::ReadFile()
     file_.seekg(0);
     std::string line;
     std::getline(file_, line);
+    if (line == "") {
+        return RET_FAIL;
+    }
     for (char charac : line) {
         if (!isdigit(charac)) {
             PROFILER_LOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
