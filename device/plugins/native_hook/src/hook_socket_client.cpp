@@ -220,6 +220,7 @@ bool HookSocketClient::SendNmdInfo()
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "SendNmdMsg stackWriter_ is nullptr");
     }
+    free(nmdBuf);
     return true;
 }
 
