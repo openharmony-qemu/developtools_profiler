@@ -446,7 +446,7 @@ public:
     int unwindDepth_ = 0;
     int statisticsInterval_ = 0;
     int sampleInterval_ = 0;
-    bool jsReport_ = false;
+    int jsReport_ = 0;
     int jsMaxDepth_ = 0;
     int mallocFreeMatchingInterval_ = 0;
     bool offlineSymbolization_ = false;
@@ -1090,7 +1090,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
-        jsReport_ = true;
+        jsReport_ = 1;
         jsMaxDepth_ = 10;
         outFileType_ = "js_report_";
         modeIndex_ = i;
