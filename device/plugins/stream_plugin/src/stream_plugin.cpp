@@ -34,7 +34,7 @@ int StreamPlugin::Start(const uint8_t* configData, uint32_t configSize)
     // 启动线程写数据
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;
-    writeThread_ = std::thread(&StreamPlugin::Loop, this);
+    writeThread_ = std::thread([this] { this->Loop(); });
 
     return 0;
 }

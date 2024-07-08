@@ -74,7 +74,7 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_NOTNULL(resultWriter_->flush, -1, "HisyseventPlugin: Writer.flush is no set!!");
     id_ = 1;
     running_ = true;
-    workThread_ = std::thread(&HisyseventPlugin::Run, this);
+    workThread_ = std::thread([this] { this->Run(); });
 
     PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
     return 0;

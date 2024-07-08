@@ -30,7 +30,7 @@ public:
     {
 #if defined(BPF_LOGGER_DEBUG) || defined(BPF_LOGGER_INFO) || defined(BPF_LOGGER_WARN) ||  \
     defined(BPF_LOGGER_ERROR) || defined(BPF_LOGGER_FATAL)
-        worker_ = std::thread(&BPFLogReader::MoveBPFLog, this);
+        worker_ = std::thread([this] { this->MoveBPFLog(); });
 #endif
         return 0;
     }

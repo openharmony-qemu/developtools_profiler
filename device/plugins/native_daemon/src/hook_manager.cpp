@@ -300,7 +300,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
-            std::bind(&HookManager::ReadShareMemory, this, ctx));
+            [this, ctx] { this->ReadShareMemory(ctx); });
     }
     if (isProtobufSerialize_ || isSaService_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);

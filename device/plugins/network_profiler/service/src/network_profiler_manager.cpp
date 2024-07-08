@@ -245,7 +245,7 @@ bool NetworkProfilerManager::HandleNetworkProfilerContext(const std::shared_ptr<
 
     ctx->eventPoller->AddFileDescriptor(
         ctx->eventNotifier->GetFd(),
-        std::bind(&NetworkProfilerManager::ReadShareMemory, this, ctx)
+        [this, ctx] { this->ReadShareMemory(ctx); }
     );
     PROFILER_LOG_DEBUG(LOG_CORE, "network profiler context: pid: %d, processName: %s, eventFd: %d, shmFd: %d",
         ctx->pid, ctx->processName.c_str(), ctx->eventNotifier->GetFd(), ctx->shareMemoryBlock->GetfileDescriptor());

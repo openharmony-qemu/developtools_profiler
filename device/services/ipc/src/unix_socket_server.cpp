@@ -143,7 +143,7 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
                "StartServer FAIL listen ERR : %d", errno);
 
     socketHandle_ = sock;
-    acceptThread_ = std::thread(&UnixSocketServer::UnixSocketAccept, this);
+    acceptThread_ = std::thread([this] { this->UnixSocketAccept(); });
     if (acceptThread_.get_id() == std::thread::id()) {
         close(socketHandle_);
         unlink(addrname.c_str());

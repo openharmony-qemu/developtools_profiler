@@ -244,7 +244,7 @@ bool FfrtProfilerManager::HandleFfrtProfilerContext(const std::shared_ptr<FfrtPr
 
     ctx->eventPoller->AddFileDescriptor(
         ctx->eventNotifier->GetFd(),
-        std::bind(&FfrtProfilerManager::ReadShareMemory, this, ctx)
+        [this, ctx] { this->ReadShareMemory(ctx); }
     );
     PROFILER_LOG_DEBUG(LOG_CORE, "ffrt profiler context: pid: %d, processName: %s, eventFd: %d, shmFd: %d",
         ctx->pid, ctx->processName.c_str(), ctx->eventNotifier->GetFd(), ctx->shareMemoryBlock->GetfileDescriptor());
