@@ -42,15 +42,15 @@ int SpServerSocket::Init(ProtoType type)
         LOGE("SpServerSocket::Init Socket Create Failed");
         return -1;
     }
-    local.sin_family = AF_INET;
-    local.sin_port = htons(sockPort);
-    local.sin_addr.s_addr = htonl(INADDR_ANY);
     int optval = 1;
     if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
         std::cout << "Socket Bind failed:" << sock << std::endl;
         LOGE("SpServerSocket::Init Socket Bind failed prot(%d)", sockPort);
         return -1;
     }
+    local.sin_family = AF_INET;
+    local.sin_port = htons(sockPort);
+    local.sin_addr.s_addr = htonl(INADDR_ANY);
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
         std::cout << "Socket Setsockopt failed: " << sock << std::endl;
         LOGE("SpServerSocket::Init Socket Setsockopt failed prot(%d)", sockPort);
