@@ -31,7 +31,7 @@ message AllocEvent {
     int32 pid = 1;
     int32 tid = 2;
     uint64 addr = 3;
-    uint32 size = 4;
+    uint64 size = 4;
     repeated Frame frame_info = 5;
     uint32 thread_name_id = 6;
     uint32 stack_id = 7;
@@ -51,7 +51,7 @@ message MmapEvent {
     int32 tid = 2;
     uint64 addr = 3;
     string type = 4;
-    uint32 size = 5;
+    uint64 size = 5;
     repeated Frame frame_info = 6;
     uint32 thread_name_id = 7;
     uint32 stack_id = 8;
@@ -61,7 +61,7 @@ message MunmapEvent {
     int32 pid = 1;
     int32 tid = 2;
     uint64 addr = 3;
-    uint32 size = 4;
+    uint64 size = 4;
     repeated Frame frame_info = 5;
     uint32 thread_name_id = 6;
     uint32 stack_id = 7;
@@ -84,7 +84,7 @@ message FrameMap {
 
 message MemTagEvent {
     uint64 addr = 1;
-    uint32 size = 2;
+    uint64 size = 2;
     string tag = 3;
     int32 pid = 4;
 }
