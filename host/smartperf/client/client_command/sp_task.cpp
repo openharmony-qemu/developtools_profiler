@@ -220,6 +220,8 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGI("SPTask::StartTask start ");
+    RAM &ram = RAM::GetInstance();
+    ram.SetFirstFlag();
     if (!isInit) {
         LOGW("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;

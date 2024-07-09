@@ -135,6 +135,7 @@ void StallingRateTrace::GetScreenInfo(std::string line)
             fenceId = GetFenceId(line);
             LOGI("fenceId=====: %s", std::to_string(fenceId).c_str());
         }
+        
         std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
         if (line.find(waitFenceId) != std::string::npos) {
             nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));

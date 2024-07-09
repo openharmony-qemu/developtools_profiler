@@ -36,41 +36,79 @@ namespace OHOS {
 namespace SmartPerf {
 SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 {
-    SpProfiler *profiler = nullptr;
-
-    if (messageType == MessageType::GET_CPU_NUM || messageType == MessageType::GET_CPU_FREQ ||
-        messageType == MessageType::GET_CPU_LOAD) {
-        profiler = &CPU::GetInstance();
-    } else if (messageType == MessageType::GET_FPS_AND_JITTERS) {
-        profiler = &ProfilerFPS::GetInstance();
-    } else if (messageType == MessageType::GET_GPU_FREQ || messageType == MessageType::GET_GPU_LOAD) {
-        profiler = &GPU::GetInstance();
-    } else if (messageType == MessageType::GET_DDR_FREQ) {
-        profiler = &DDR::GetInstance();
-    } else if (messageType == MessageType::GET_RAM_INFO) {
-        profiler = &RAM::GetInstance();
-    } else if (messageType == MessageType::GET_TEMPERATURE) {
-        profiler = &Temperature::GetInstance();
-    } else if (messageType == MessageType::GET_POWER) {
-        profiler = &Power::GetInstance();
-    } else if (messageType == MessageType::CATCH_TRACE_CONFIG) {
-        ProfilerFPS::GetInstance().SetTraceCatch();
-    } else if (messageType == MessageType::GET_CAPTURE) {
-        Capture::GetInstance().SocketMessage();
-        profiler = &Capture::GetInstance();
-    } else if (messageType == MessageType::SET_DUBAI_DB) {
-        Dubai::DumpDubaiBegin();
-        Dubai::DumpDubaiFinish();
-        Dubai::MoveDubaiDb();
-    } else if (messageType == MessageType::GPU_COUNTER_HB_REQ || messageType == MessageType::CATCH_GPU_COUNTER ||
-        messageType == MessageType::GET_GPU_COUNTER_RESULT) {
-        profiler = &GpuCounter::GetInstance();
-    } else if (messageType == MessageType::CATCH_NETWORK_TRAFFIC || messageType == MessageType::GET_NETWORK_TRAFFIC) {
-        profiler = &Network::GetInstance();
+    SpProfiler* profiler = nullptr;
+    switch (messageType) {
+        case MessageType::GET_CPU_NUM:
+        case MessageType::GET_CPU_FREQ:
+        case MessageType::GET_CPU_LOAD:
+            profiler = &CPU::GetInstance();
+            break;
+        case MessageType::GET_FPS_AND_JITTERS:
+        case MessageType::GET_LOW_POWER_FPS:
+        case MessageType::GET_CUR_FPS:
+            profiler = &ProfilerFPS::GetInstance();
+            break;
+        case MessageType::GET_GPU_FREQ:
+        case MessageType::GET_GPU_LOAD:
+            profiler = &GPU::GetInstance();
+            break;
+        case MessageType::GET_DDR_FREQ:
+            profiler = &DDR::GetInstance();
+            break;
+        case MessageType::GET_RAM_INFO:
+            profiler = &RAM::GetInstance();
+            break;
+        default:
+            break;
     }
-
+    if (profiler == nullptr) {
+        profiler = GetProfilerItemContinue(messageType);
+    }
     return profiler;
 }
+
+SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
+{
+    SpProfiler* profiler = nullptr;
+    switch (messageType) {
+        case MessageType::GET_TEMPERATURE:
+            profiler = &Temperature::GetInstance();
+            break;
+        case MessageType::GET_POWER:
+            profiler = &Power::GetInstance();
+            break;
+        case MessageType::CATCH_TRACE_CONFIG:
+            ProfilerFPS::GetInstance().SetTraceCatch();
+            break;
+        case MessageType::GET_CAPTURE:
+            Capture::GetInstance().SocketMessage();
+            profiler = &Capture::GetInstance();
+            break;
+        case MessageType::SET_DUBAI_DB:
+            DumpDubaiAndMoveDb();
+            break;
+        case MessageType::GPU_COUNTER_HB_REQ:
+        case MessageType::CATCH_GPU_COUNTER:
+        case MessageType::GET_GPU_COUNTER_RESULT:
+            profiler = &GpuCounter::GetInstance();
+            break;
+        case MessageType::CATCH_NETWORK_TRAFFIC:
+        case MessageType::GET_NETWORK_TRAFFIC:
+            profiler = &Network::GetInstance();
+            break;
+        default:
+            break;
+    }
+    return profiler;
+}
+
+void SpProfilerFactory::DumpDubaiAndMoveDb()
+{
+    Dubai::DumpDubaiBegin();
+    Dubai::DumpDubaiFinish();
+    Dubai::MoveDubaiDb();
+}
+
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     FPS &fps = FPS::GetInstance();
@@ -81,7 +119,7 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
-    navigation &nav = navigation::GetInstance();
+    Navigation &nav = Navigation::GetInstance();
     nav.SetPackageName(pkg);
 }
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
@@ -155,7 +193,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &Network::GetInstance();
             break;
         case CommandType::CT_NAV:
-            profiler = &navigation::GetInstance();
+            profiler = &Navigation::GetInstance();
             break;
         case CommandType::CT_TTRACE:
             ProfilerFPS::GetInstance().SetTraceCatch();

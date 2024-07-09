@@ -24,6 +24,7 @@
 #include "include/ByTrace.h"
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
+#include "include/RAM.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -145,7 +146,6 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         if (profiler != nullptr) {
             std::map<std::string, std::string> data = profiler->ItemData();
             spMap.insert(data.cbegin(), data.cend());
-            
             auto cit = data.find("gpu_counter");
             if (cit == data.end()) {
                 continue;
@@ -173,6 +173,8 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 
 std::string SmartPerfCommand::ExecCommand()
 {
+    RAM &ram = RAM::GetInstance();
+    ram.SetFirstFlag();
     int rc = 0;
     int index = 0;
     bool callGpuCounterResult = false;

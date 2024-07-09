@@ -20,12 +20,12 @@
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
-class navigation : public SpProfiler {
+class Navigation : public SpProfiler {
 public:
     std::map<std::string, std::string> ItemData() override;
-    static navigation &GetInstance()
+    static Navigation &GetInstance()
     {
-        static navigation instance;
+        static Navigation instance;
         return instance;
     }
     std::map<std::string, std::string> GetNavInfo() const;
@@ -33,9 +33,9 @@ public:
     std::string GetWinId(std::string processId) const;
     std::map<std::string, std::string> GetNavResult(std::string winId) const;
 private:
-    navigation() {};
-    navigation(const navigation &);
-    navigation &operator = (const navigation &);
+    Navigation() {};
+    Navigation(const Navigation &);
+    Navigation &operator = (const Navigation &);
     std::string packageName = "";
     const int paramTen = 10;
     const int paramEleven = 11;
