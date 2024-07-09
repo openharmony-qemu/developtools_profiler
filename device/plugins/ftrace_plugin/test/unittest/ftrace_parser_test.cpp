@@ -147,12 +147,14 @@ HWTEST_F(FtraceParserTest, ParseSavedCmdlines, TestSize.Level1)
  */
 HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level1)
 {
-    FtraceParser parser;
-    PerCpuStats perCpuStats = {};
-    EXPECT_FALSE(parser.ParsePerCpuStatus(perCpuStats, ""));
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        FtraceParser parser;
+        PerCpuStats perCpuStats = {};
+        EXPECT_FALSE(parser.ParsePerCpuStatus(perCpuStats, ""));
 
-    std::string perCpuStatsStr = FtraceFsOps::GetInstance().GetPerCpuStats(0);
-    EXPECT_TRUE(parser.ParsePerCpuStatus(perCpuStats, perCpuStatsStr));
+        std::string perCpuStatsStr = FtraceFsOps::GetInstance().GetPerCpuStats(0);
+        EXPECT_TRUE(parser.ParsePerCpuStatus(perCpuStats, perCpuStatsStr));
+    }
 }
 
 /*

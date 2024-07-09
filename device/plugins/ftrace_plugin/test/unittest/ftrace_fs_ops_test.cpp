@@ -256,8 +256,10 @@ HWTEST_F(FtraceFsOpsTest, GetSavedTgidsFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
 {
-    std::string content = FtraceFsOps::GetInstance().GetPerCpuStats(0);
-    EXPECT_STRNE(content.c_str(), "");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        std::string content = FtraceFsOps::GetInstance().GetPerCpuStats(0);
+        EXPECT_STRNE(content.c_str(), "");
+    }
 }
 
 /*
@@ -267,17 +269,19 @@ HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsFalse, TestSize.Level1)
 {
-    FtraceFsOps ftraceFsOps;
-    std::string content = ftraceFsOps.GetPerCpuStats(-1);
-    EXPECT_STREQ(content.c_str(), "");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        FtraceFsOps ftraceFsOps;
+        std::string content = ftraceFsOps.GetPerCpuStats(-1);
+        EXPECT_STREQ(content.c_str(), "");
 
-    ftraceFsOps.SetFtraceRoot("");
-    content = ftraceFsOps.GetPerCpuStats(0);
-    EXPECT_STREQ(content.c_str(), "");
+        ftraceFsOps.SetFtraceRoot("");
+        content = ftraceFsOps.GetPerCpuStats(0);
+        EXPECT_STREQ(content.c_str(), "");
 
-    ftraceFsOps.SetFtraceRoot("/test_path");
-    content = ftraceFsOps.GetPerCpuStats(0);
-    EXPECT_STREQ(content.c_str(), "");
+        ftraceFsOps.SetFtraceRoot("/test_path");
+        content = ftraceFsOps.GetPerCpuStats(0);
+        EXPECT_STREQ(content.c_str(), "");
+    }
 }
 
 /*
