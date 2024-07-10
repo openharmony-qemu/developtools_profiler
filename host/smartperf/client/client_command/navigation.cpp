@@ -20,23 +20,23 @@
 
 namespace OHOS {
 namespace SmartPerf {
-std::map<std::string, std::string> navigation::ItemData()
+std::map<std::string, std::string> Navigation::ItemData()
 {
     std::map<std::string, std::string> result;
-    std::map<std::string, std::string> navInfo = navigation::GetNavInfo();
+    std::map<std::string, std::string> navInfo = Navigation::GetNavInfo();
     for (auto it = navInfo.begin(); it != navInfo.end(); ++it) {
         result.insert(*it);
     }
-    LOGI("navigation::ItemData map size(%u)", result.size());
+    LOGI("Navigation::ItemData map size(%u)", result.size());
     return result;
 }
 
-void navigation::SetPackageName(const std::string &pName)
+void Navigation::SetPackageName(const std::string &pName)
 {
     packageName = pName;
 }
 
-std::map<std::string, std::string> navigation::GetNavInfo() const
+std::map<std::string, std::string> Navigation::GetNavInfo() const
 {
     std::map<std::string, std::string> navInfo;
     std::string processId = "";
@@ -52,7 +52,7 @@ std::map<std::string, std::string> navigation::GetNavInfo() const
     return navInfo;
 }
 
-std::map<std::string, std::string> navigation::GetNavResult(std::string winId) const
+std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) const
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "No Navigation Info";
@@ -81,7 +81,7 @@ std::map<std::string, std::string> navigation::GetNavResult(std::string winId) c
     return navInfo;
 }
 
-std::string navigation::GetWinId(std::string processId) const
+std::string Navigation::GetWinId(std::string processId) const
 {
     std::vector<DumpEntity> dumpEntityList;
     std::string wid;

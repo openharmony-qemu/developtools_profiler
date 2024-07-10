@@ -28,6 +28,7 @@ namespace SmartPerf {
 class SpThreadSocket {
 public:
     static bool flagRunning;
+    static std::string resultFPS;
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -153,13 +154,19 @@ public:
         vec.push_back(recvStr.substr(j, size - j));
         const int type = 2;
         if (vec[type] == "findAppPage") {
-            std::string cmdResult;
-            SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+            BackDesktop();
         }
         OHOS::SmartPerf::ControlCallCmd controlCallCmd;
         std::string result = controlCallCmd.GetResult(vec);
         spSocket.Send(result);
     }
+
+    void BackDesktop() const
+    {
+        std::string cmdResult;
+        SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+    }
+
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
     {
@@ -176,12 +183,14 @@ public:
                 retCode = SplitMsg(recvBuf);
                 SpProfilerFactory::SetProfilerPkg(retCode);
                 spSocket.Sendto(retCode);
+            } else if (profiler == nullptr && (iterator->first == MessageType::FPS_STOP)) {
+                spSocket.Sendto(resultFPS);
+                resultFPS = "FPS||";
             } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
                 iterator->first == MessageType::CATCH_TRACE_CMD)) {
                 SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
             } else if (profiler == nullptr && (iterator->first == MessageType::BACK_TO_DESKTOP)) {
-                std::string cmdResult;
-                SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+                BackDesktop();
             } else if (profiler == nullptr) {
                 retCode = iterator->second;
                 spSocket.Sendto(retCode);
@@ -204,15 +213,41 @@ public:
                 } else {
                     data = profiler->ItemData();
                 }
-                retCode = MapToString(data);
-                spSocket.Sendto(retCode);
+                HandleUDPMsg(spSocket, data, retCode, profiler, iterator);
             }
             LOGI("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
             break;
         }
     }
+    void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
+        SpProfiler* profiler, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    {
+        std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
+        if (iterator->first == MessageType::GET_LOW_POWER_FPS) {
+            for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
+                if (iter->first != "fpsJitters") {
+                    std::string temp = iter->second + "@@";
+                    resultFPS += std::string(temp.c_str());
+                }
+            }
+        } else if (iterator->first == MessageType::GET_CUR_FPS) {
+            std::string resultfps = "vfps||";
+            for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
+                if (iter->first != "fpsJitters") {
+                    std::string temp = iter->second + "@@";
+                    resultFPS += std::string(temp.c_str());
+                    resultfps += std::string(temp.c_str());
+                }
+            }
+            spSocket.Sendto(resultfps);
+        } else {
+            retCode = MapToString(data);
+            spSocket.Sendto(retCode);
+        }
+    }
 };
 bool SpThreadSocket::flagRunning = false;
+std::string SpThreadSocket::resultFPS = "FPS||";
 }
 }
 #endif
