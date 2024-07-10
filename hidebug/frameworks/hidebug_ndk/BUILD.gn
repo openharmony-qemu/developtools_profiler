@@ -22,8 +22,9 @@ ohos_shared_library("ohhidebug") {
   sources = [ "hidebug_ndk.cpp" ]
 
   deps = [ "../native:hidebug_native" ]
-  public_deps = [ "//third_party/bounds_checking_function:libsec_shared" ]
+
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
