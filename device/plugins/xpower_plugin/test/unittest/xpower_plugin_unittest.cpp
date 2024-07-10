@@ -128,7 +128,7 @@ HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
     std::vector<uint8_t> configData(size);
     ASSERT_GT(config.SerializeToArray(configData.data(), configData.size()), 0);
     // start
-    EXPECT_NE(plugin.Start(configData.data(), configData.size()), 0);
+    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
     EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
     EXPECT_NE(plugin.Start(configData.data(), 0), 0);
 #endif

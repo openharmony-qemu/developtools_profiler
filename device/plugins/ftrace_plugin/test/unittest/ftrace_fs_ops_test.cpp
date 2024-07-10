@@ -424,7 +424,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionNormal, TestSize.Level1)
         EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(false));
         content = FileUtils::ReadFile(path);
         EXPECT_STREQ(content.c_str(), "0\n");
-    } 
+    }
 }
 
 /*
