@@ -250,7 +250,7 @@ describe("HidebugJsTest", function () {
 
         /**
      * @tc.name: HidebugJsTest_009
-     * @tc.desc: GetAppNativeMemInfo的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+     * @tc.desc: getAppNativeMemInfo的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
      * @tc.type: FUNC
      * @tc.require: issueI5VY8L
      */
