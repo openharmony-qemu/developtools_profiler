@@ -57,6 +57,7 @@ constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int ARRAY_INDEX_FIRST = 0;
 constexpr int ARRAY_INDEX_SECOND = 1;
 constexpr int REMOVE_NAPI_WRAP_PARAM_COUNT = 2;
+constexpr int NAME_LEN = 128;
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 constexpr int FIRST_POS = 0;
 constexpr int SECOND_POS = 1;
@@ -609,9 +610,9 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
         for (size_t i = 0; i < nameCount; ++i) {
             napi_value propertyName = nullptr;
             napi_get_element(env, allPropertyNames, i, &propertyName);
-            char name[128] = {0};
+            char name[NAME_LEN] = {0};
             size_t len = 0;
-            napi_get_value_string_utf8(env, propertyName, name, 64, &len);
+            napi_get_value_string_utf8(env, propertyName, name, NAME_LEN, &len);
             napi_value propertyObj = nullptr;
             napi_get_named_property(env, jsObj, name, &propertyObj);
             napi_remove_wrap(env, propertyObj, (void **)&nativePtr);
