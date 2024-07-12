@@ -233,7 +233,6 @@ bool EpollEventPoller::Start()
     std::unique_lock<std::mutex> lock(mutex_);
     CHECK_TRUE(state_ == INITIED, false, "Start FAIL %d", state_.load());
     running_ = true;
-    pollThread_ = std::thread(&EpollEventPoller::Run, this);
     pollThread_ = std::thread([this] { this->Run(); });
     state_ = STARTED;
     return true;
