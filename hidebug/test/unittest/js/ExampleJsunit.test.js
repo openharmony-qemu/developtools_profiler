@@ -547,4 +547,200 @@ describe("HidebugJsTest", function () {
             expect(error.code === "11400105").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_023
+     * @tc.desc: getSharedDirty测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_023', 0, function () {
+        console.info("---------------------------HidebugJsTest_023----------------------------------");
+        try {
+            let sharedDirty = hidebug.getSharedDirty();
+            expect(sharedDirty >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_024
+     * @tc.desc: getPrivateDirty测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_024', 0, function () {
+        console.info("---------------------------HidebugJsTest_024----------------------------------");
+        try {
+            let privateDirty = hidebug.getPrivateDirty();
+            expect(privateDirty >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_025
+     * @tc.desc: getPss测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_025', 0, function () {
+        console.info("---------------------------HidebugJsTest_025----------------------------------");
+        try {
+            let pss = hidebug.getPss();
+            expect(pss >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_026
+     * @tc.desc: getVss测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_026', 0, function () {
+        console.info("---------------------------HidebugJsTest_026----------------------------------");
+        try {
+            let vss = hidebug.getVss();
+            expect(vss >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_027
+     * @tc.desc: getCpuUsage测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_027', 0, function () {
+        console.info("---------------------------HidebugJsTest_027----------------------------------");
+        try {
+            let cpuUsage = hidebug.getCpuUsage();
+            expect(cpuUsage >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_028
+     * @tc.desc: getNativeHeapSize测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_028', 0, function () {
+        console.info("---------------------------HidebugJsTest_028----------------------------------");
+        try {
+            let nativeHeapSize = hidebug.getNativeHeapSize();
+            expect(nativeHeapSize >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_029
+     * @tc.desc: getNativeHeapAllocatedSize测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_029', 0, function () {
+        console.info("---------------------------HidebugJsTest_029----------------------------------");
+        try {
+            let nativeHeapAllocatedSize = hidebug.getNativeHeapAllocatedSize();
+            expect(nativeHeapAllocatedSize >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_030
+     * @tc.desc: getNativeHeapFreeSize测试
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_030', 0, function () {
+        console.info("---------------------------HidebugJsTest_030----------------------------------");
+        try {
+            let nativeHeapFreeSize = hidebug.getNativeHeapFreeSize();
+            expect(nativeHeapFreeSize >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_031
+     * @tc.desc: startProfiling启动两次
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_031', 0, async function () {
+        console.info("---------------------------HidebugJsTest_031----------------------------------");
+        try {
+            let timestamp1 = Date.now();
+            let filename1 = "cpuprofiler_" + timestamp1.toString();
+            hidebug.startProfiling(filename1);
+            await msleep(1000);
+            hidebug.stopProfiling();
+            let path1 = "/proc/self/root/data/storage/el2/base/files/" + filename1 + ".json";
+            expect(fs.accessSync(path1)).assertTrue();
+
+            let timestamp2 = Date.now();
+            let filename2 = "cpuprofiler_" + timestamp2.toString();
+            hidebug.startProfiling(filename2);
+            await msleep(1000);
+            hidebug.stopProfiling();
+            let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
+            expect(fs.accessSync(path2)).assertTrue();
+        } catch (err) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_032
+     * @tc.desc: startJsCpuProfiling启动两次
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_032', 0, async function () {
+        console.info("---------------------------HidebugJsTest_032----------------------------------");
+        try {
+            let timestamp1 = Date.now();
+            let filename1 = "cpuprofiler_" + timestamp1.toString();
+            hidebug.startJsCpuProfiling(filename1);
+            await msleep(1000);
+            hidebug.stopJsCpuProfiling();
+            let path1 = "/proc/self/root/data/storage/el2/base/files/" + filename1 + ".json";
+            expect(fs.accessSync(path1)).assertTrue();
+
+            let timestamp2 = Date.now();
+            let filename2 = "cpuprofiler_" + timestamp2.toString();
+            hidebug.startJsCpuProfiling(filename2);
+            await msleep(1000);
+            hidebug.stopJsCpuProfiling();
+            let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
+            expect(fs.accessSync(path2)).assertTrue();
+        } catch (err) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
 })
