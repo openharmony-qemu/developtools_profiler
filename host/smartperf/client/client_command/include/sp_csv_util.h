@@ -58,7 +58,7 @@ public:
         if (realpath(path.c_str(), realPath) == nullptr) {
             std::cout << "" << std::endl;
         }
-        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
+        outFile.open(realPath, std::ios::out | std::ios::trunc);
         for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
             outFile << iter->first + "," + iter->second << std::endl;
         }
