@@ -71,7 +71,11 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
         LOGI("/data/local/tmp/capture created!");
     };
     std::stringstream errorRecv;
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(savePath.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    auto fd = open(realPath, O_RDWR | O_CREAT, 0666);
     if (!TakeScreenCap(savePath)) {
         std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
         LOGE("Screen Capture Failed!");
@@ -94,12 +98,12 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         }
     };
     
-    char resolvedPath[PATH_MAX] = {0x00};
-    if (realpath(savePath.c_str(), resolvedPath) == nullptr) {
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(savePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
     }
 
-    auto fd = open(resolvedPath, O_RDWR | O_CREAT, 0644);
+    auto fd = open(realPath, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());
@@ -158,7 +162,11 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
         png_destroy_write_struct(&pngStruct, nullptr);
         return false;
     }
-    FILE *fp = fopen(savePath.c_str(), "wb");
+    char realPath[PATH_MAX] = {0x00};
+    if (realpath(savePath.c_str(), realPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    FILE *fp = fopen(realPath, "wb");
     if (fp == nullptr) {
         std::cout << "error: open file error!" << std::endl;
         LOGE("open file error!");

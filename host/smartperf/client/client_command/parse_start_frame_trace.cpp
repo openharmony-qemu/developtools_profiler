@@ -50,7 +50,7 @@ double StartFrameTraceNoh::CalculateTime()
 {
     std::string line;
     std::string screenStr = SPUtils::GetScreen();
-    int pos = screenStr.find("x");
+    size_t pos = screenStr.find("x");
     std::string width = screenStr.substr(twelve, pos - twelve);
     std::string height = screenStr.substr(pos + 1, four);
     while (getline(infile, line)) {

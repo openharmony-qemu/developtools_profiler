@@ -143,9 +143,9 @@ public:
     void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const
     {
         std::vector<std::string> vec;
-        int size = recvStr.size();
-        int j = 0;
-        for (int i = 0; i < size; i++) {
+        size_t size = recvStr.size();
+        size_t j = 0;
+        for (size_t i = 0; i < size; i++) {
             if (recvStr[i] == ' ') {
                 vec.push_back(recvStr.substr(j, i - j));
                 j = i + 1;
@@ -213,14 +213,14 @@ public:
                 } else {
                     data = profiler->ItemData();
                 }
-                HandleUDPMsg(spSocket, data, retCode, profiler, iterator);
+                HandleUDPMsg(spSocket, data, retCode, iterator);
             }
             LOGI("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
             break;
         }
     }
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
-        SpProfiler* profiler, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
         if (iterator->first == MessageType::GET_LOW_POWER_FPS) {

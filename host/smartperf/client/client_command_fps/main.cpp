@@ -274,7 +274,7 @@ static bool LoadCmd(const std::string &cmd, std::string &result)
         return false;
     }
     char buf[1024] = {'\0'};
-    int ret = fread(buf, sizeof(buf), 1, fd);
+    size_t ret = fread(buf, sizeof(buf), 1, fd);
     if (ret >= 0) {
         result = buf;
     }
