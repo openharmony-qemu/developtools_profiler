@@ -42,11 +42,13 @@ int SpServerSocket::Init(ProtoType type)
         LOGE("SpServerSocket::Init Socket Create Failed");
         return -1;
     }
-    int optval = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-        std::cout << "Socket Setsockopt failed: " << sock << std::endl;
-        LOGE("SpServerSocket::Init Socket Setsockopt failed prot(%d)", sockPort);
-        return -1;
+    if (type == ProtoType::TCP) {
+        int optval = 1;
+        if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
+            std::cout << "Socket Setsockopt failed: " << sock << std::endl;
+            LOGE("SpServerSocket::Init Socket Setsockopt failed prot(%d)", sockPort);
+            return -1;
+        }
     }
     local.sin_family = AF_INET;
     local.sin_port = htons(sockPort);

@@ -54,7 +54,11 @@ public:
     static void WriteCsvH(const std::string &path, std::map<std::string, std::string> vmap)
     {
         std::ofstream outFile;
-        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
+        char realPath[PATH_MAX] = {0x00};
+        if (realpath(path.c_str(), realPath) == nullptr) {
+            std::cout << "" << std::endl;
+        }
+        outFile.open(realPath, std::ios::out | std::ios::trunc);
         for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
             outFile << iter->first + "," + iter->second << std::endl;
         }
