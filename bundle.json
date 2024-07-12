@@ -50,8 +50,7 @@
         "window_manager",
         "image_framework",
         "ffrt",
-        "storage_service",
-        "soc_perf"
+        "storage_service"
       ],
       "third_party": [
         "bounds_checking_function",

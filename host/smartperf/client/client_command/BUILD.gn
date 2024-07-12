@@ -79,7 +79,6 @@ ohos_executable("SP_daemon") {
     "hiview:libucollection_utility",
     "image_framework:image_native",
     "init:libbegetutil",
-    "soc_perf:socperf_client",
     "window_manager:libdm",
     "window_manager:libwm",
   ]
