@@ -121,6 +121,7 @@ void* SocketContext::UnixSocketRecv(void* pp)
         }
         
         if (pph->protoSize < head_size) {
+            PROFILER_LOG_ERROR(LOG_CORE, "pph->protoSize is less than head_size!");
             break;
         }
         if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
