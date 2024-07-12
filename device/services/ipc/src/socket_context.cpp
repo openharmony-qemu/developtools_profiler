@@ -119,7 +119,10 @@ void* SocketContext::UnixSocketRecv(void* pp)
             buf.resize(bufferSize);
             pph = (struct ProtocolHead*)buf.data();
         }
-
+        
+        if (pph->protoSize < head_size) {
+            break;
+        }
         if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
             PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
             break;
