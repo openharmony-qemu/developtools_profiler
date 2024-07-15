@@ -53,6 +53,7 @@ const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugin
 const std::string WRITE_FILE = "/data/local/tmp/diskio_write_test.txt";
 const std::string HILOG_RESULT_FILE = "/data/local/tmp/hilog.txt";
 constexpr int ROUND_COUNT = 50;
+constexpr int LOOP_COUNT = 50;
 constexpr int SAMPLE_INTERVAL = 40;
 constexpr int TIMEOUT_US = 3 * 1000 * 1000;
 constexpr int FETCHDATA_TIMEOUT_US = 20 * 1000 * 1000;
@@ -583,8 +584,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread1([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -715,8 +718,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart2 = true;
+    loopCount = 0;
     std::thread keepSessionThread2([&]() {
-        while (sendHeart2) {
+        while (sendHeart2 && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId2);
@@ -816,8 +821,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread1([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -905,8 +912,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart2 = true;
+    loopCount = 0;
     std::thread keepSessionThread2([&]() {
-        while (sendHeart2) {
+        while (sendHeart2 && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId2);
@@ -1048,8 +1057,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -1191,8 +1202,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -1320,8 +1333,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -1392,8 +1407,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart2 = true;
+    loopCount = 0;
     std::thread keepSessionThread2([&]() {
-        while (sendHeart2) {
+        while (sendHeart2 && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId2);
@@ -1458,8 +1475,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
@@ -1614,8 +1633,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | Med
 
     // 开启每隔4s发一次心跳的线程，确保seesionid不会失效
     bool sendHeart = true;
+    int loopCount = 0;
     std::thread keepSessionThread1([&]() {
-        while (sendHeart) {
+        while (sendHeart && loopCount < LOOP_COUNT) {
+            ++loopCount;
             KeepSessionRequest request;
             request.set_request_id(0);
             request.set_session_id(sessionId1);
