@@ -41,6 +41,10 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
+        int fullFrame = 120;
+        if (finalResult.fps > fullFrame) {
+            finalResult.fps = fullFrame;
+        }
         result["fps"] = std::to_string(finalResult.fps);
         LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
         LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());

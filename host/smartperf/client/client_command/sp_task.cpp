@@ -220,6 +220,8 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGI("SPTask::StartTask start ");
+    RAM &ram = RAM::GetInstance();
+    ram.SetFirstFlag();
     if (!isInit) {
         LOGW("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;
@@ -286,7 +288,7 @@ void SPTask::StopTask()
         long long endTime = SPUtils::GetCurTime();
         long long testDuration = (endTime - startTime) / 1000;
         std::string screenStr = SPUtils::GetScreen();
-        int pos3 = screenStr.find("=");
+        size_t pos3 = screenStr.find("=");
         std::string refreshrate = screenStr.substr(pos3 + 1);
         std::map<std::string, std::string> taskInfoMap = {
             { "sessionId", curTaskInfo.sessionId },

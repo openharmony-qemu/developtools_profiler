@@ -107,8 +107,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
 
-    workThread_ = std::thread(&HilogPlugin::Run, this);
-
+    workThread_ = std::thread([this] { this->Run(); });
     return 0;
 }
 

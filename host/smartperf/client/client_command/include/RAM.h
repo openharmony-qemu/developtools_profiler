@@ -47,7 +47,7 @@ public:
     void SetPackageName(const std::string &pName);
     void ThreadGetPss() const;
     void TriggerGetPss() const;
-
+    void SetFirstFlag();
 private:
     RAM() {};
     RAM(const RAM &);

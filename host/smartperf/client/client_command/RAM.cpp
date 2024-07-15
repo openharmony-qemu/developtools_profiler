@@ -34,7 +34,7 @@ using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
-
+bool g_flagFirst = false;
 std::map<std::string, std::string> procRamInfoLast {
     {"pss", "NA"},
     {"gpuPss", "NA"},
@@ -60,7 +60,12 @@ std::map<std::string, std::string> RAM::ItemData()
         result.insert(*it);
     }
     if (packageName.length() > 0) {
-        RAM::TriggerGetPss();
+        if (g_flagFirst) {
+            RAM::TriggerGetPss();
+            g_flagFirst = true;
+        } else {
+            procRamInfoLast = RAM::GetRamInfo();
+        }
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
         }
@@ -81,6 +86,11 @@ void RAM::TriggerGetPss() const
         this->ThreadGetPss();
     });
     tStart.detach();
+}
+
+void RAM::SetFirstFlag()
+{
+    g_flagFirst = false;
 }
 
 std::map<std::string, std::string> RAM::GetSysRamInfo() const

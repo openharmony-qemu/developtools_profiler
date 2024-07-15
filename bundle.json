@@ -54,8 +54,7 @@
         "zlib",
         "grpc",
         "storage_service",
-        "abseil-cpp",
-        "soc_perf"
+        "abseil-cpp"
       ],
       "third_party": [
         "cJSON",

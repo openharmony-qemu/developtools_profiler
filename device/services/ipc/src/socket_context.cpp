@@ -119,7 +119,11 @@ void* SocketContext::UnixSocketRecv(void* pp)
             buf.resize(bufferSize);
             pph = (struct ProtocolHead*)buf.data();
         }
-
+        
+        if (pph->protoSize < head_size) {
+            PROFILER_LOG_ERROR(LOG_CORE, "pph->protoSize is less than head_size!");
+            break;
+        }
         if (!ReceiveData(pssr->socketHandle_, buf.data() + head_size, pph->protoSize - head_size)) {
             PROFILER_LOG_DEBUG(LOG_CORE, "====== IPC LOST CONNECT ======");
             break;
@@ -147,7 +151,7 @@ void* SocketContext::UnixSocketRecv(void* pp)
 
 bool SocketContext::CreateRecvThread()
 {
-    recvThread_ = std::thread(&SocketContext::UnixSocketRecv, this);
+    recvThread_ = std::thread([this] { this->UnixSocketRecv(this); });
     CHECK_TRUE(recvThread_.get_id() != std::thread::id(), false, "CreateRecvThread FAIL");
     return true;
 }

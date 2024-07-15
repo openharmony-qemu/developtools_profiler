@@ -97,7 +97,7 @@ public:
         if (logLevel_ == HHLOG_NONE) {
             return;
         }
-        logSaver_ = std::thread(&HHLogger::SaveLog, this);
+        logSaver_ = std::thread([this] { this->SaveLog(); });
     }
 
     enum SizeConsts:std::size_t {

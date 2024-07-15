@@ -56,8 +56,7 @@ bool IpcUnixSocketServer::Start(const std::string &pathname)
     pathName_ = pathname;
 
     isRunning_ = true;
-    handleThread_ = std::thread(&IpcUnixSocketServer::handleThreadLoop, this);
-
+    handleThread_ = std::thread([this] { this->HandleThreadLoop(); });
     return true;
 }
 
@@ -88,7 +87,7 @@ bool IpcUnixSocketServer::SendMessage(const void *buf, size_t size)
     return true;
 }
 
-void IpcUnixSocketServer::handleThreadLoop()
+void IpcUnixSocketServer::HandleThreadLoop()
 {
     while (isRunning_) {
         struct pollfd pollFd {serverFd_, POLLIN, 0};

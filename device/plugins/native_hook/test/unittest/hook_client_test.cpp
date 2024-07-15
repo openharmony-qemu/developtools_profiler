@@ -161,6 +161,23 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook aligned alloc normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level1)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+
+    void* alignedAllocBlack = ohos_malloc_hook_aligned_alloc(g_size, g_resize);
+    EXPECT_NE(alignedAllocBlack, nullptr);
+
+    ohos_malloc_hook_free(alignedAllocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+}
 
 /**
  * @tc.name: native hook
@@ -180,6 +197,10 @@ HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
     EXPECT_NE(callocBlack, nullptr);
     void* vallocBlack = ohos_malloc_hook_valloc(g_size);
     EXPECT_EQ(vallocBlack, nullptr);
+    void* alignedAllocBlack = ohos_malloc_hook_aligned_alloc(g_size, g_resize);
+    EXPECT_NE(alignedAllocBlack, nullptr);
+
+    ohos_malloc_hook_free(alignedAllocBlack);
     ohos_malloc_hook_free(vallocBlack);
     ohos_malloc_hook_free(callocBlack);
     ohos_malloc_hook_free(reallocBlack);

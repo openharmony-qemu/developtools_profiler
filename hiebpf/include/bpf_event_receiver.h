@@ -163,7 +163,7 @@ public:
 
     inline int Start()
     {
-        workLoop_ = std::thread(&BPFEventReceiver::WorkLoop, this);
+        workLoop_ = std::thread([this] { this->WorkLoop(); });
         return 0;
     }
 

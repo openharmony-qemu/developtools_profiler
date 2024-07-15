@@ -83,8 +83,7 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_NOTNULL(resultWriter_->flush, -1, "HidumpPlugin: Writer.flush is no set!");
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;
-    writeThread_ = std::thread(&HidumpPlugin::Loop, this);
-
+    writeThread_ = std::thread([this] { this->Loop(); });
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: ---> Start success!");
     return 0;
 }

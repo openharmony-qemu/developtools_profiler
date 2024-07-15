@@ -59,6 +59,10 @@ std::map<std::string, std::string> FPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
+        int fullFrame = 120;
+        if (fpsInfoResult.fps > fullFrame) {
+            fpsInfoResult.fps = fullFrame;
+        }
         result["fps"] = std::to_string(fpsInfoResult.fps);
         LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
         LOGI("result.curTime====: %s", std::to_string(fpsInfoResult.curTime).c_str());

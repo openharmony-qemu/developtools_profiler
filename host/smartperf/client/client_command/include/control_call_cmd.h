@@ -33,17 +33,17 @@ public:
     std::string GetResult(std::vector<std::string> v);
     std::string GetFrame();
     std::string GetAppStartTime() const;
-    std::string SlideList() const;
-    std::string TimeDelay() const;
+    std::string SlideList();
+    std::string TimeDelay();
 
 private:
     bool isOhTest = false;
     std::string result = "";
     int ohType = 5;
     int typeName = 2;
-    mutable double time = 0.0;
+    double time = 0.0;
     double noNameType = -1.0;
-    mutable std::ostringstream stream;
+    std::ostringstream stream;
 };
 }
 }
