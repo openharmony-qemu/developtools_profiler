@@ -119,7 +119,6 @@ void* SocketContext::UnixSocketRecv(void* pp)
             buf.resize(bufferSize);
             pph = (struct ProtocolHead*)buf.data();
         }
-        
         if (pph->protoSize < head_size) {
             PROFILER_LOG_ERROR(LOG_CORE, "pph->protoSize is less than head_size!");
             break;

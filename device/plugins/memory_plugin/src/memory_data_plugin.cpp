@@ -795,7 +795,7 @@ template <typename T> void MemoryDataPlugin::SetAshmemInfo(T& ashmemInfo, int ke
             ashmemInfo.set_fd(value);
             break;
         case ASHMEM_ADJ:
-            value = strtoull(word, nullptr, DEC_BASE);
+            value = static_cast<int64_t>(strtoull(word, nullptr, DEC_BASE));
             CHECK_TRUE(value >= 0, NO_RETVAL, "%s:strtoull adj failed", __func__);
             ashmemInfo.set_adj(value);
             break;

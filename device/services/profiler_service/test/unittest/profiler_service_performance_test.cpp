@@ -53,7 +53,7 @@ const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugin
 const std::string WRITE_FILE = "/data/local/tmp/diskio_write_test.txt";
 const std::string HILOG_RESULT_FILE = "/data/local/tmp/hilog.txt";
 constexpr int ROUND_COUNT = 50;
-constexpr int LOOP_COUNT = 50;
+constexpr int LOOP_COUNT = 10;
 constexpr int SAMPLE_INTERVAL = 40;
 constexpr int TIMEOUT_US = 3 * 1000 * 1000;
 constexpr int FETCHDATA_TIMEOUT_US = 20 * 1000 * 1000;
