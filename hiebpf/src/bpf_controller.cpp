@@ -391,11 +391,13 @@ uint64_t BPFController::GetSymOffset(const std::string &path, const std::string 
     CHECK_TRUE(elfFile->shdrs_.find(dynsym) != elfFile->shdrs_.end(), 0, "section dynsym failed to obtain data");
     const auto &sym = elfFile->shdrs_[dynsym];
     const uint8_t *symData = elfFile->GetSectionData(sym->secIndex_);
+    CHECK_NOTNULL(symData, 0, "symData is NULL!");
 
     const std::string dynstr {".dynstr"};
     CHECK_TRUE(elfFile->shdrs_.find(dynstr) != elfFile->shdrs_.end(), 0, "section dynstr failed to obtain data");
     const auto &str = elfFile->shdrs_[dynstr];
     const uint8_t *strData = elfFile->GetSectionData(str->secIndex_);
+    CHECK_NOTNULL(strData, 0, "strData is NULL!");
 
     uint32_t st_name = 0;
     uint64_t stepLength = 0;
