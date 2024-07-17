@@ -123,7 +123,7 @@ bool StartUpDelay::GetSpTcp()
     }
     if (vec.size() > 0) {
         for (size_t i = 0; i < vec.size(); i++) {
-             SPUtils::LoadCmd("kill " + vec[i], str);
+            SPUtils::LoadCmd("kill " + vec[i], str);
         }
     }
     return false;
