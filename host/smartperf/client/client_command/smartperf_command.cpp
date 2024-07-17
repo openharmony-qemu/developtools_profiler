@@ -21,6 +21,7 @@
 #include "include/sp_csv_util.h"
 #include "include/sp_profiler_factory.h"
 #include "include/sp_thread_socket.h"
+#include "include/startup_delay.h"
 #include "include/ByTrace.h"
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
@@ -32,6 +33,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
     LOGI("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
+        sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = "taskset -p f " + pidStr;
         std::string result = "";
@@ -87,6 +89,29 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
         std::cout << result << std::endl;
+    }
+    OHOS::SmartPerf::StartUpDelay sd;
+    if (type == CommandHelp::CLEAR) {
+        sd.GetSpClear();
+    }
+    if (type == CommandHelp::SERVER) {
+        std::string pidStr = sd.GetPidByPkg("SP_daemon");
+        std::string cmdStr = "taskset -p f " + pidStr;
+        std::string result = "";
+        SPUtils::LoadCmd(cmdStr, result);
+        daemon(0, 0);
+        InitSomething();
+        SpThreadSocket udpThreadSocket;
+        SpThreadSocket udpExThreadSocket;
+        SpThreadSocket tcpThreadSocket;
+        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+        sleep(1);
+        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+        sleep(1);
+        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+        tcpSocket.join();
+        udpSocket.join();
+        udpexSocket.join();
     }
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)

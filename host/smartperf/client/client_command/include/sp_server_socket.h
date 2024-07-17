@@ -47,7 +47,7 @@ private:
     int sockPort;
     int connFd = -1;
     const int listenCount = 5;
-    const static int buffSizeRecv = 256;
+    const static int buffSizeRecv = 1024;
     char rbuf[buffSizeRecv] = "";
     const int udpPort = 8283;
     const int tcpPort = 8284;

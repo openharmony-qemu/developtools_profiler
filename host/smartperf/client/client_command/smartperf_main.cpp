@@ -70,6 +70,8 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("start");
     keys.insert("stop");
     keys.insert("screen");
+    keys.insert("clear");
+    keys.insert("server");
     keys.insert("sections");
     keys.insert("deviceinfo");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {

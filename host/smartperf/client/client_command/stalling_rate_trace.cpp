@@ -77,6 +77,10 @@ double StallingRateTrace::CalculateTime()
             GetScreenInfo(line);
         }
     }
+    if (dynamicStartTime > dynamicFinishTime) {
+        LOGI("StallingRateTrace::APP_SWIPER_FLING AND APP_LIST_FLING");
+        dynamicFinishTime = nowTime;
+    }
     if (dynamicStartTime == 0 || dynamicFinishTime == 0) {
         frameLossRate = -1;
     } else {
