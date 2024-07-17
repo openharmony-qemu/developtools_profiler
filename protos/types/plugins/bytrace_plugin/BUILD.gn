@@ -52,7 +52,7 @@ action("bytrace_plugin_protos_protoc") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})" ]
+  external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }
 
 config("bytrace_plugin_protos_config") {
@@ -61,9 +61,9 @@ config("bytrace_plugin_protos_config") {
 
 ohos_source_set("bytrace_plugin_protos_cpp") {
   deps = [ ":bytrace_plugin_protos_protoc" ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]
@@ -74,9 +74,9 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
 
 ohos_source_set("bytrace_plugin_protos_cpp_standard") {
   deps = [ ":bytrace_plugin_protos_protoc" ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
+  external_deps = [
+    "protobuf:protobuf",
+    "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
   public_configs = [ ":bytrace_plugin_protos_config" ]

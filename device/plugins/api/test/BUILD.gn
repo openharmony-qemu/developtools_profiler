@@ -34,13 +34,8 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "${OHOS_PROFILER_DIR}/device/services/plugin_service:hiprofiler_plugin_service",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "../:plugins_sources",
-    "//third_party/googletest:gmock",
-    "//third_party/googletest:gtest",
   ]
-  include_dirs = [
-    "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-  ]
+  include_dirs = [ "${OHOS_PROFILER_DIR}/device/base/include" ]
   sources = [
     "unittest/buffer_write_test.cpp",
     "unittest/command_poller_test.cpp",
@@ -53,8 +48,18 @@ ohos_unittest("hiprofiler_plugins_ut") {
     defines = [ "COVERAGE_TEST" ]
   }
   configs = [ ":cflags_config" ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "abseil-cpp:absl_sync",
+    "googletest:gmock",
+    "googletest:gtest",
+    "grpc:grpc",
+    "grpc:grpcxx",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
+  ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 group("unittest") {

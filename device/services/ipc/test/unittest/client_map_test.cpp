@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 
 #include "client_map.h"
 #include "service_entry.h"

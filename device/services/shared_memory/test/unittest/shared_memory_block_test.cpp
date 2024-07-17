@@ -14,8 +14,7 @@
  */
 
 #include <cstring>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 
 #include "plugin_service_types.pb.h"
 #include "share_memory_block.h"

@@ -14,10 +14,7 @@
  */
 
 #include "plugin_service.h"
-
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "common_types.pb.h"
 #include "plugin_command_builder.h"
 #include "plugin_service.ipc.h"

@@ -28,15 +28,12 @@ ohos_unittest("networkplugin_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
   include_dirs = [
     "../include",
     "../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
@@ -44,7 +41,12 @@ ohos_unittest("networkplugin_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
 
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"

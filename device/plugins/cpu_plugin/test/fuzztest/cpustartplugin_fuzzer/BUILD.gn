@@ -29,9 +29,12 @@ ohos_fuzztest("CpuStartPluginFuzzTest") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/cpu_plugin:cpudataplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "hilog:libhilog",
+    "protobuf:protobuf_lite",
+  ]
   include_dirs = [
     "../../../include",
     "../../../../api/include",

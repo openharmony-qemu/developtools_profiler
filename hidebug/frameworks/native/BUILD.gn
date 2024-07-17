@@ -36,9 +36,11 @@ ohos_source_set("libhidebug_init_source") {
 
   include_dirs = [ "../../interfaces/native/innerkits/include" ]
 
-  external_deps = [ "init:libinit_module_engine" ]
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "init:libinit_module_engine",
+  ]
   sources = [ "hidebug_base.c" ]
-  deps = [ "//third_party/bounds_checking_function:libsec_static" ]
 }
 
 ohos_shared_library("hidebug_native") {

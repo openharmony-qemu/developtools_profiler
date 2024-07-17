@@ -14,9 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "hook_client.h"
 #include "musl_preinit_common.h"
 #include "init_param.h"

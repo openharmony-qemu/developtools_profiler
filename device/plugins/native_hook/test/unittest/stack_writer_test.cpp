@@ -14,8 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <sys/mman.h>
 #include <sys/syscall.h>
 

@@ -60,9 +60,6 @@ common_deps = [
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
   "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
   "../../../base:hiprofiler_base",
-  "//third_party/bounds_checking_function:libsec_static",
-  "//third_party/openssl:libcrypto_shared",
-  "//third_party/zlib:libz",
 ]
 
 config("native_daemon_test_config") {
@@ -70,7 +67,10 @@ config("native_daemon_test_config") {
   ldflags = []
   defines = []
 
-  cflags += [ "-Dprivate=public" ]  # allow test code access private members
+  cflags += [
+    "-Dprivate=public",
+    "-Dprotected=public",
+  ]  # allow test code access private members
   if (native_daemon_test_coverage && is_ohos) {
     defines += [ "TEST_COVERAGE" ]
     cflags += [
@@ -100,8 +100,6 @@ config("native_daemon_test_config") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
     "${native_daemon_path}/test/unittest/common/native/include",
     "${native_daemon_path}/include",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
@@ -124,9 +122,14 @@ ohos_unittest("native_daemon_ut") {
     "ability_base:extractortool",
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
+    "bounds_checking_function:libsec_shared",
     "faultloggerd:libunwinder_static",
+    "googletest:gtest",
     "init:libbegetutil",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
+    "zlib:libz",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {

@@ -13,8 +13,7 @@
  * limitations under the License.
  */
 #include <cinttypes>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <dlfcn.h>
 
 #include "cpu_data_plugin.h"

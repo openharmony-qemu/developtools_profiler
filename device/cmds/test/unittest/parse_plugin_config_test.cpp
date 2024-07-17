@@ -15,9 +15,7 @@
 
 #include <iostream>
 #include <vector>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
-
+#include <gtest/gtest.h>
 #include "google/protobuf/text_format.h"
 #include "parse_plugin_config.h"
 #include "logging.h"

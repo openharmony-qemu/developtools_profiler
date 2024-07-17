@@ -30,8 +30,6 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "unittest/parse_plugin_config_test.cpp",
   ]
   deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_type_source",
@@ -52,21 +50,25 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_profiler:network_profiler_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/process_data:process_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_plugin_config_cpp_standard",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/openssl:libcrypto_shared",
   ]
   include_dirs = [
     "../include",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/openssl/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "abseil-cpp:absl_sync",
+    "bounds_checking_function:libsec_shared",
+    "googletest:gtest",
+    "grpc:grpc",
+    "grpc:grpcxx",
+    "hilog:libhilog",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

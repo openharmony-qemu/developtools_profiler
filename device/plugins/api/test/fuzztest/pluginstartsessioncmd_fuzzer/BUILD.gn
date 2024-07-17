@@ -32,7 +32,10 @@ ohos_fuzztest("PluginStartSessionCmdFuzzTest") {
     #"${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "../../..:plugins_sources",
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "hilog:libhilog",
+    "protobuf:protobuf_lite",
+  ]
   if (is_asan) {
     defines = [ "ASAN_MODE" ]
   }

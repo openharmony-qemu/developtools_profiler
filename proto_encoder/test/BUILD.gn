@@ -51,19 +51,17 @@ action("proto_gen_source") {
     "$protos_root_dir",
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
-    "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})",
-  ]
+  deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+  external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }
 
 ohos_source_set("proto_example_source") {
   deps = [ ":proto_gen_source" ]
   include_dirs = [ "$proto_out_dir" ]
   sources = example_codegen_all
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite_static",
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_static",
+  external_deps = [
+    "protobuf:protobuf_lite_static",
+    "protobuf:protobuf_static",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -82,10 +80,12 @@ ohos_unittest("proto_encoder_ut") {
   include_dirs = [
     "../include",
     "../example",
-    "//third_party/googletest/googletest/include/gtest",
     "$proto_out_dir",
   ]
-
+  external_deps = [
+    "googletest:gtest",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

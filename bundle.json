@@ -50,17 +50,16 @@
         "window_manager",
         "image_framework",
         "ffrt",
-        "storage_service"
+        "openssl",
+        "zlib",
+        "grpc",
+        "storage_service",
+        "abseil-cpp"
       ],
       "third_party": [
-        "bounds_checking_function",
         "cJSON",
-        "grpc",
         "libbpf",
         "libunwind",
-        "openssl",
-        "protobuf",
-        "zlib",
         "libpng"
       ]
     },

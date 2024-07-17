@@ -20,7 +20,6 @@ config("bytraceplugin_config") {
     "../../services/profiler_service/src",
     "../../base/include",
     "include",
-    "//third_party/bounds_checking_function/include",
   ]
 }
 
@@ -31,14 +30,14 @@ ohos_shared_library("bytraceplugin") {
     ":bytraceplugin_config",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config",
   ]
-  public_deps = [
-    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protobuf_lite",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/bytrace_plugin:bytrace_plugin_protos_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
-  ]
+  public_deps = [ "${OHOS_PROFILER_DIR}/protos/types/plugins/bytrace_plugin:bytrace_plugin_protos_cpp" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "hilog:libhilog",
+      "protobuf:protobuf_lite",
+    ]
   }
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

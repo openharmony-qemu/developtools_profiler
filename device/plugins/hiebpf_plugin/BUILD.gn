@@ -26,14 +26,11 @@ ohos_source_set("hiebpfplugin_source") {
     "${OHOS_PROFILER_DIR}/device/base/include",
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
-    "//third_party/bounds_checking_function/include",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/protos/services:common_types_lite_proto",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiebpf_data:hiebpf_data_cpp",
     "../../base:hiprofiler_base",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/openssl:libcrypto_shared",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -41,7 +38,12 @@ ohos_source_set("hiebpfplugin_source") {
       "HAVE_HILOG",
       "LITE_PROTO",
     ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "hilog:libhilog",
+      "openssl:libcrypto_shared",
+      "protobuf:protobuf_lite",
+    ]
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

@@ -15,8 +15,7 @@
 
 #include <dlfcn.h>
 #include <fcntl.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <vector>
 #include <sys/syscall.h>
 #include <sys/mman.h>

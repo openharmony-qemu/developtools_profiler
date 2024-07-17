@@ -14,8 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <sys/types.h>
 
 #include "memory_data_plugin.h"

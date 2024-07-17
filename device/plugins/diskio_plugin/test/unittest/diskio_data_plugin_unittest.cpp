@@ -13,10 +13,8 @@
  * limitations under the License.
  */
 
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 #include <dlfcn.h>
-
 #include "diskio_data_plugin.h"
 #include "plugin_module_api.h"
 

@@ -51,7 +51,6 @@ ohos_unittest("nativehook_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
 
   include_dirs = [
@@ -65,9 +64,7 @@ ohos_unittest("nativehook_ut") {
     "${OHOS_PROFILER_DIR}/device/services/ipc/include",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/include",
-    "//third_party/googletest/googletest/include/gtest",
     "//third_party/musl/include/musl_preinit_common.h",
-    "//third_party/bounds_checking_function/include",
   ]
 
   cflags = [
@@ -76,9 +73,12 @@ ohos_unittest("nativehook_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "faultloggerd:libunwinder_static",
+    "googletest:gtest",
     "hilog:libhilog",
     "init:libbegetutil",
+    "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

@@ -30,13 +30,14 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/memory_plugin:memdataplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "graphic_2d:librender_service_client",
     "hilog:libhilog",
+    "protobuf:protobuf_lite",
   ]
 
   include_dirs = [

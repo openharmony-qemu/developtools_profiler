@@ -29,22 +29,23 @@ ohos_unittest("gpudataplugin_ut") {
     "${OHOS_PROFILER_DIR}/device/plugins/gpu_plugin:gpudataplugin_source",
     "${OHOS_PROFILER_DIR}/device/plugins/gpu_plugin:gpudataplugintest",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_data_cpp",
-    "//third_party/bounds_checking_function:libsec_static",
-    "//third_party/googletest:gtest_main",
   ]
   include_dirs = [
     "../include",
     "../../../memory_plugin/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/googletest/googletest/include/gtest",
-    "//third_party/bounds_checking_function/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
   ]
-  external_deps = [ "hilog:libhilog" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "googletest:gtest",
+    "hilog:libhilog",
+    "protobuf:protobuf_lite",
+  ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"

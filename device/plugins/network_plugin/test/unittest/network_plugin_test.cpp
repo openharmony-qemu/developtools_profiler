@@ -14,8 +14,7 @@
  */
 
 #include <dlfcn.h>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/gtest.h>
 
 #include "network_plugin.h"
 #include "plugin_module_api.h"
