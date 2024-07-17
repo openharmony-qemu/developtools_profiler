@@ -23,6 +23,7 @@
 #include <sstream>
 #include <iomanip>
 #include <regex>
+#include <cmath>
 #include "include/parse_radar.h"
 #include "include/sp_log.h"
 namespace OHOS {
@@ -76,6 +77,7 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
     std::stringstream ss(string);
     std::string segment;
     int maxDelayTime = -1;
+    std::vector<std::string> delayTimeVec;
     while (getline(ss, segment, '}')) {
         if (segment.empty()) {
             continue;
@@ -87,20 +89,23 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
             std::string key = pair.substr(0, pair.find(':'));
             std::string value = pair.substr(pair.find(':') + 1);
             if (key == target) {
-                maxDelayTime = GetMaxDelayTime(delayTime, value);
+                delayTimeVec.push_back(value);
+                maxDelayTime = GetMaxDelayTime(delayTime, delayTimeVec);
             }
         }
     }
     return static_cast<double>(maxDelayTime);
 }
-double ParseRadar::GetMaxDelayTime(const int &delayTime, std::string value) const
+int ParseRadar::GetMaxDelayTime(const int &delayTime, std::vector<std::string> &delayTimeVec) const
 {
-    double initDelayTime = -1;
-    int curValue = stoi(value);
-    if (curValue < delayTime && curValue > initDelayTime) {
-        initDelayTime = curValue;
+    int maxNum = -1;
+    for (size_t i = 0; i < delayTimeVec.size(); i++) {
+        int num = std::stoi(delayTimeVec[i]);
+        if (num < delayTime && num > maxNum) {
+            maxNum = num;
+        }
     }
-    return initDelayTime;
+    return maxNum;
 }
 double ParseRadar::ParseRadarComplete(const std::string &string) const
 {

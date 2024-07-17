@@ -113,11 +113,37 @@ bool StartUpDelay::GetSpTcp()
     std::string resultPid;
     std::string str;
     SPUtils::LoadCmd("pidof SP_daemon", resultPid);
-    size_t splitFlag = resultPid.find(" ");
-    std::string resultProcId = resultPid.substr(0, splitFlag);
-    SPUtils::LoadCmd("kill " + resultProcId, str);
+    std::vector<std::string> vec;
+    std::string token;
+    size_t pos = 0;
+    while ((pos = resultPid.find(' ')) != std::string::npos) {
+        token = resultPid.substr(0, pos);
+        vec.push_back(token);
+        resultPid.erase(0, pos + 1);
+    }
+    if (vec.size() > 0) {
+        for (size_t i = 0; i < vec.size(); i++) {
+            SPUtils::LoadCmd("kill " + vec[i], str);
+        }
+    }
     return false;
 }
+
+bool StartUpDelay::GetSpClear()
+{
+    std::string resultPid;
+    std::string str;
+    SPUtils::LoadCmd("pidof SP_daemon", resultPid);
+    std::string token;
+    size_t pos = 0;
+    while ((pos = resultPid.find(' ')) != std::string::npos) {
+        token = resultPid.substr(0, pos);
+        SPUtils::LoadCmd("kill " + token, str);
+        resultPid.erase(0, pos + 1);
+    }
+    return false;
+}
+
 std::thread StartUpDelay::ThreadGetHisysIds() const
 {
     auto thGetHisysIds = std::thread([this]() { this->GetHisysIdAndKill(); });

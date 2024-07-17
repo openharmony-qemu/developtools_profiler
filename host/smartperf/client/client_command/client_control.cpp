@@ -48,7 +48,7 @@ int ClientControl::SocketStart(const std::string &args)
     } else {
         std::cout << "SP_daemon Collection begins failed" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpTcp();
+        sd.GetSpClear();
     }
     LOGI("ClientControl::SocketStart() OK");
     return 0;
@@ -68,8 +68,8 @@ int ClientControl::SocketStop()
         std::cout << "SP_daemon Collection ended" << std::endl;
         std::cout << "Output Path: data/local/tmp/smartperf/1/t_index_info.csv" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpTcp();
         OHOS::SmartPerf::ClientControl::CloseSocket();
+        sd.GetSpClear();
     } else {
         std::cout << "SP_daemon Collection ended failed" << std::endl;
     }
@@ -90,7 +90,7 @@ int ClientControl::InitSocket()
     if (connect(clientSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) < 0) {
         std::cout << "Failed to connect to server" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpTcp();
+        sd.GetSpClear();
         LOGE("Failed to connect to server");
         return 1;
     }
@@ -100,7 +100,7 @@ int ClientControl::InitSocket()
 void ClientControl::StartSPDaemon() const
 {
     std::string result = "";
-    SPUtils::LoadCmd("SP_daemon", result);
+    SPUtils::LoadCmd("SP_daemon -server", result);
     sleep(1);
     LOGI("ClientControl::StartSPDaemon() OK");
 }
