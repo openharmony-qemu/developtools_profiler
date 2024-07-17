@@ -121,8 +121,8 @@ bool StartUpDelay::GetSpTcp()
         vec.push_back(token);
         resultPid.erase(0, pos + 1);
     }
-    if (vec.size > 0) {
-        for (size_t 1 = 0; i < vec.size(); i++) {
+    if (vec.size() > 0) {
+        for (size_t i = 0; i < vec.size(); i++) {
              SPUtils::LoadCmd("kill " + vec[i], str);
         }
     }

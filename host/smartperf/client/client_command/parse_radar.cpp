@@ -23,7 +23,7 @@
 #include <sstream>
 #include <iomanip>
 #include <regex>
-#include <cmatch>
+#include <cmath>
 #include "include/parse_radar.h"
 #include "include/sp_log.h"
 namespace OHOS {
@@ -99,7 +99,7 @@ double ParseRadar::ParseRadarDelayTime(const std::string &string, const std::str
 int ParseRadar::GetMaxDelayTime(const int &delayTime, std::vector<std::string> &delayTimeVec) const
 {
     int maxNum = -1;
-    for (size_t i = 0; i < delayTimeVec.size(), i++) {
+    for (size_t i = 0; i < delayTimeVec.size(); i++) {
         int num = std::stoi(delayTimeVec[i]);
         if (num < delayTime && num > maxNum) {
             maxNum = num;
