@@ -547,4 +547,21 @@ describe("HidebugJsTest", function () {
             expect(error.code === "11400105").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_023
+     * @tc.desc: isDebugState,未连接调试状态下
+     * @tc.type: FUNC
+     * @tc.require: issueIAC8K0
+     */
+    it('HidebugJsTest_023', 0, function () {
+        console.info("---------------------------HidebugJsTest_023----------------------------------");
+        try {
+            let result = hidebug.isDebugState();
+            expect(result).assertFalse();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+        }
+    })
 })
