@@ -78,7 +78,7 @@ constexpr int MIN_SAMPLER_INTERVAL = 1;
 constexpr int FIRST_HASH = 16;
 constexpr int SECOND_HASH = 13;
 constexpr int THRESHOLD = 256;
-constexpr int DIVIDE_VAL = 32;
+constexpr int DIVIDE_VAL = 64;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
@@ -87,11 +87,11 @@ constexpr int TEMP_IP = 100;
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
-constexpr int MAX_BITPOOL_SIZE = 100 * 1024;
+constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
 struct Bitpool {
-    std::atomic<uint32_t> slot;
+    std::atomic<uint64_t> slot;
 };
-Bitpool g_addressChecker[MAX_BITPOOL_SIZE] = {{0}};
+Bitpool* g_addressChecker = nullptr;
 
 inline static uint32_t AddrHash(uint32_t h)
 {
@@ -105,12 +105,18 @@ inline static uint32_t AddrHash(uint32_t h)
 
 inline void Addr2Bitpool(void* addr)
 {
+    if (!g_addressChecker) {
+        return;
+    }
     uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
     g_addressChecker[val / DIVIDE_VAL].slot |= (0x1 << (val % DIVIDE_VAL));
 }
 
 inline bool IsAddrExist(void* addr)
 {
+    if (!g_addressChecker) {
+        return true;
+    }
     uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
     if (g_addressChecker[val / DIVIDE_VAL].slot.load() & (0x1 << (val % DIVIDE_VAL))) {
         return true;
@@ -235,6 +241,7 @@ static bool IsPidChanged(void);
 void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+    g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_miStart = mallinfo2();
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_hookPid = GetRealPid();
@@ -286,6 +293,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 void* ohos_release_on_end(void*)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+    delete [] g_addressChecker;
     g_hookClient = nullptr;
     pthread_key_delete(g_disableHookFlag);
     pthread_key_delete(g_hookTid);
