@@ -294,6 +294,7 @@ void* ohos_release_on_end(void*)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     delete [] g_addressChecker;
+    g_addressChecker = nullptr;
     g_hookClient = nullptr;
     pthread_key_delete(g_disableHookFlag);
     pthread_key_delete(g_hookTid);
