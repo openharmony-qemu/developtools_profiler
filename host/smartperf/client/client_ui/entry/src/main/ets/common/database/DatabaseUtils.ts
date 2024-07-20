@@ -159,7 +159,7 @@ export default {
       name: dbName,
       securityLevel: relationalStore.SecurityLevel.S1,
     };
-    let results: TGeneralInfo[] = [];
+    let results = Array<TGeneralInfo>();
     try {
       return await relationalStore
         .getRdbStore(globalThis.abilityContext, STORE_CONFIG)
@@ -247,7 +247,6 @@ export default {
       return results;
     }
   },
-
   //查询表( T_INDEX_INFO) 2022-02-23 改为传时间戳
   async queryData(dbPath: string): Promise<Array<TIndexInfo>> {
     const STORE_CONFIG: relationalStore.StoreConfig = {
@@ -711,6 +710,7 @@ export default {
         .then(async (rdbStore) => {
           let strSQL: string =
             'select * ' + 'from task_powersensor_info order by power desc  ';
+
           return rdbStore.querySql(strSQL);
         })
         .then((resultSet) => {
@@ -781,7 +781,7 @@ export default {
           return results;
         });
     } catch (err) {
-        return results;
+      return results;
     }
   },
   //查询表（detailed_applications_gpu）
@@ -860,7 +860,8 @@ export default {
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, ''
+            );
             results.push(tPowerSensorInfo);
           }
           return results;
@@ -1036,8 +1037,7 @@ export default {
     } catch (err) {
       return results;
     }
-  },
-  //查询表（detailed_applications_sensor）
+  }, //查询表（detailed_applications_sensor）
   async query_applications_sensor(
     start_time: String,
     end_time: String,
@@ -1070,7 +1070,8 @@ export default {
             let current = resultSet.getString(
               resultSet.getColumnIndex('current')
             );
-            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, '');
+            let tPowerSensorInfo = new TPowerSensorInfo('', sensor, power, current, ''
+            );
             results.push(tPowerSensorInfo);
           }
           return results;

@@ -20,11 +20,10 @@ import Paint from '../data/Paint';
 import { XAxis } from './XAxis';
 import YAxis from './YAxis';
 import {PathPaint} from '../data/Paint';
-import { CirclePaint, PathFillPaint, TextPaint, LinePaint, ImagePaint} from '../data/Paint'
+import { CirclePaint, PathFillPaint, TextPaint, LinePaint, ImagePaint} from '../data/Paint';
 import LineChartRenderer from '../renderer/LineChartRenderer';
 import LineData from '../data/LineData';
-import Utils from '../utils/Utils'
-import SPLogger from '../../../../utils/SPLogger';
+import Utils from '../utils/Utils';
 
 @Component
 @Preview
@@ -223,18 +222,13 @@ export class PathViewModel extends ScaleMode {
   public onDoubleClick(event: ClickEvent) {
     this.currentXSpace = this.centerX * this.scaleX - this.centerX;
     this.currentYSpace = this.centerY * this.scaleY - this.centerY;
-   // let maxXBefore: number = this.paintArry[this.paintArry.length - 1].x;
-     let maxXBefore: number = 0;
-    try{
-      SPLogger.INFO(PathViewModel.name,'定义maxXBefore===========');
-      if(this.paintArry.length > 0){
-        SPLogger.INFO(PathViewModel.name,'maxXBefore :: this.paintArry.length = ' + this.paintArry.length);
+    let maxXBefore: number = 0;
+    try {
+      if (this.paintArry.length > 0) {
         maxXBefore = this.paintArry[this.paintArry.length - 1].x;
       }
-      SPLogger.INFO(PathViewModel.name,'给maxXBefore赋值成功===========');
     } catch (error) {
       console.log(error);
-      SPLogger.ERROR(PathViewModel.name,'maxXBefore::' + error);
     }
     let maxYBefore: number = Number.MIN_VALUE;
     let minYBefore: number = Number.MAX_VALUE;
@@ -246,25 +240,18 @@ export class PathViewModel extends ScaleMode {
         minYBefore = this.valuePaint[i].y;
       }
     }
-
     this.ondraw();
     let tag: string = 'maxXAfter';
-    // let maxXAfter: number = this.paintArry[this.paintArry.length - 1].x;
     let maxXAfter: number = 0;
     try {
-      SPLogger.INFO(tag,'定义maxXAfter===========');
-      if(this.paintArry.length > 0) {
-        SPLogger.INFO(tag,'this.paintArry.length = ' + this.paintArry.length);
+      if (this.paintArry.length > 0) {
         maxXAfter = this.paintArry[this.paintArry.length - 1].x;
       }
-      SPLogger.INFO(tag,'给maxXAfter赋值成功===========');
-    } catch(error) {
+    } catch (error) {
       console.log(error);
-      SPLogger.ERROR(tag,'maxXAfter::' + error);
     }
     let maxYAfter: number = Number.MIN_VALUE;
     let minYAfter: number = Number.MAX_VALUE;
-
     for (let i = 0; i < this.valuePaint.length; i++) {
       if (maxYAfter < this.valuePaint[i].y) {
         maxYAfter = this.valuePaint[i].y;
@@ -273,7 +260,6 @@ export class PathViewModel extends ScaleMode {
         minYAfter = this.valuePaint[i].y;
       }
     }
-
     this.transX += maxXAfter - maxXBefore;
     this.transMaxY += maxYAfter - maxYBefore;
     this.transMinY += minYAfter - minYBefore;
