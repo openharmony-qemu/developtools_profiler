@@ -28,7 +28,6 @@
 #include "include/parse_click_response_trace.h"
 #include "include/parse_page_fps_trace.h"
 #include "include/parse_start_frame_trace.h"
-#include "include/parse_start_trace_noh.h"
 #include "include/parse_radar.h"
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
