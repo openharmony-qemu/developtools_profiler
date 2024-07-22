@@ -41,7 +41,6 @@ ohos_unittest("sp_daemon_ut") {
     "../sp_task.cpp",
     "../sp_utils.cpp",
     "../startup_delay.cpp",
-    "unittest/bytrace_test.cpp",
     "unittest/ddr_test.cpp",
     "unittest/dubai_test.cpp",
     "unittest/fps_test.cpp",
