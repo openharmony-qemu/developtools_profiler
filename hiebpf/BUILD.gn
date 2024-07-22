@@ -138,7 +138,7 @@ ohos_executable("hiebpf") {
   sources = [ "./src/hiebpf.cpp" ]  # this is main()
 
   deps = [ ":hiebpf_source_common" ]
-
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   output_name = "hiebpf"
