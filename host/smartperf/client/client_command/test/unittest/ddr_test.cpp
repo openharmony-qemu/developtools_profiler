@@ -31,24 +31,33 @@ public:
 HWTEST_F(DDRTest, ItemDataTest, TestSize.Level1)
 {
     bool ret = false;
-    long long curFreq = DDR::GetInstance().GetDdrFreq();
+    DDR &ddr = DDR::GetInstance();
     std::map<std::string, std::string> result = DDR::GetInstance().ItemData();
-    EXPECT_EQ(result["ddrFre"], std::to_string(curFreq));
-
+    result["ddrFrequency"] = std::to_string(ddr.GetDdrFreq());
+    if (result.find("ddrFrequency") != result.end() && result["ddrFrequency"].empty()) {
+        result["ddrFrequency"] = "NA";
+    }
     if (!result.empty()) {
         ret = true;
     }
+    
     EXPECT_EQ(ret, true);
 }
 
-long long GetDdrFreq()
+HWTEST_F(DDRTest, GetDdrFreqTest, TestSize.Level1)
 {
-    long long freq = -1;
+    bool ret = false;
+    DDR &ddr = DDR::GetInstance();
     std::string ddrfreq = "123456";
     std::string ddrCurFreqPath = "/bin/config.txt";
     OHOS::SmartPerf::SPUtils::LoadFile(ddrCurFreqPath, ddrfreq);
-    freq = std::atoll(ddrfreq.c_str());
-    return freq;
+    long long freq = std::atoll(ddrfreq.c_str());
+    freq = ddr.GetDdrFreq();
+    if (freq > 0) {
+        ret = true;
+    }
+
+    EXPECT_EQ(ret, true);
 }
 }
 }

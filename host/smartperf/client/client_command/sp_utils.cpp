@@ -257,14 +257,20 @@ static std::string GetSplitOne(std::string cmd)
 
 std::string SPUtils::GetDeviceInfoMap()
 {
+    size_t len = 2;
     bool isTcpMessage = false;
     std::map<std::string, std::string> deviceInfoMap;
     std::map<std::string, std::string> cpuInfo = GetCpuInfo(isTcpMessage);
     std::map<std::string, std::string> gpuInfo = GetGpuInfo(isTcpMessage);
     std::map<std::string, std::string> deviceInfo = GetDeviceInfo();
+    std::string screenInfos = GetScreen();
+    size_t pos = screenInfos.find(": ");
+    size_t pos1 = screenInfos.find(",");
+    std::string screenSize = screenInfos.substr(pos + len, pos1 - pos - len);
     deviceInfoMap.insert(cpuInfo.begin(), cpuInfo.end());
     deviceInfoMap.insert(gpuInfo.begin(), gpuInfo.end());
     deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
+    deviceInfoMap["activeMode"] = screenSize;
     if (deviceInfoMap.empty()) {
         LOGI("Failed to obtain device information");
     }
