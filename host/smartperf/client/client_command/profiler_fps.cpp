@@ -195,7 +195,7 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
     if (fpsSectionsInt > times) {
         fpsSectionsInt = times;
     }
-    printf("sectionsFps:%lld|%lld\n", fpsSectionsInt, currLastTime);
+    printf("sectionsFps:%d|%lld\n", fpsSectionsInt, currLastTime);
 }
 
 void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
@@ -429,7 +429,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         printf("set num:%d success\n", this->num);
         ohFlag = true;
         int sectionsNum = atoi(v[four].c_str());
-        for (int i = 0; i < this->num; ++i) {
+        for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
     }
