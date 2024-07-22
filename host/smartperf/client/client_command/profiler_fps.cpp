@@ -192,8 +192,8 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
     }
     double fpsSections = (fpsNums * conversionFps) / timeN;
     int fpsSectionsInt = round(fpsSections);
-    if (fpsSectionsInt > times) {
-        fpsSectionsInt = times;
+    if (fpsSectionsInt > static_cast<int>(times)) {
+        fpsSectionsInt = static_cast<int>(times);
     }
     printf("sectionsFps:%d|%lld\n", fpsSectionsInt, currLastTime);
 }
