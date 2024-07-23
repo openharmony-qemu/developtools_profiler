@@ -72,6 +72,7 @@ public:
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
     void GetCurrentTime(int sleepNum);
+    void GetOhFps(std::vector<std::string> v);
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoMax;
     FpsInfoProfiler lastFpsInfoResult;
@@ -112,6 +113,7 @@ private:
     bool isFoundBundleName = false;
     int isCatchTrace = 0;
     bool processFlag = false;
+    bool ohFlag = false;
 };
 }
 }

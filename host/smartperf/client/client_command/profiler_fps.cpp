@@ -185,16 +185,17 @@ void ProfilerFPS::PrintSections(int msCount, long long currTimeLast,
     } else {
         fpsNums = msCount - 1;
     }
-    long long timeN = (currTimeLast - currTimeStart) / conversionTime;
+    double timeN = (currTimeLast - currTimeStart) * 1.0 / conversionTime;
     if (timeN == 0) {
         printf("sectionsFps:%d|%lld\n", 0, currLastTime);
         return;
     }
-    long long fpsSections = (fpsNums * conversionFps) / timeN;
-    if (fpsSections > times) {
-        fpsSections = times;
+    double fpsSections = (fpsNums * conversionFps) / timeN;
+    int fpsSectionsInt = round(fpsSections);
+    if (fpsSectionsInt > static_cast<int>(times)) {
+        fpsSectionsInt = static_cast<int>(times);
     }
-    printf("sectionsFps:%lld|%lld\n", fpsSections, currLastTime);
+    printf("sectionsFps:%d|%lld\n", fpsSectionsInt, currLastTime);
 }
 
 void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
@@ -271,6 +272,9 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     processFlag = false;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
+    if (ohFlag) {
+        uniteLayer = "DisplayNode";
+    }
     if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
         LOGI("ProfilerFPS.pkgName====: %s", pkgName.c_str());
         GetCurrentTime(fifty);
@@ -411,6 +415,25 @@ bool ProfilerFPS::IsFindForeGround(std::string line) const
     } else {
         return false;
     }
+}
+
+void ProfilerFPS::GetOhFps(std::vector<std::string> v)
+{
+    if (v[number] == "") {
+        printf("the args of num must be not-null!\n");
+    } else {
+        this->num = atoi(v[number].c_str());
+        if (this->num < 0) {
+            printf("set num:%d not vaild arg\n", this->num);
+        }
+        printf("set num:%d success\n", this->num);
+        ohFlag = true;
+        int sectionsNum = atoi(v[four].c_str());
+        for (int i = 0; i < this->num; i++) {
+            GetResultFPS(sectionsNum);
+        }
+    }
+    printf("SP_daemon exec finished!\n");
 }
 }
 }
