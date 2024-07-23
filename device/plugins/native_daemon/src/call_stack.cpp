@@ -439,7 +439,7 @@ bool CallStack::DoUnwind(const VirtualThread &thread, std::vector<CallFrame> &ca
 
 bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regsNum,
                                 const u8 *stack, u64 stackSize, std::vector<CallFrame> &callStack,
-                                size_t maxStackLevel, int maxjsDepth)
+                                size_t maxStackLevel, int maxjsDepth, bool jsReport)
 {
     regs_ = regs;
     regsNum_ = regsNum;
@@ -475,7 +475,7 @@ bool CallStack::UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regs
 #if defined(HAVE_LIBUNWIND) && HAVE_LIBUNWIND
         return DoUnwind(thread, callStack, maxStackLevel);
 #else
-        return DoUnwind2(thread, callStack, maxStackLevel, maxjsDepth);
+        return DoUnwind2(thread, callStack, maxStackLevel, maxjsDepth, jsReport);
 #endif
     }
     return true;
@@ -531,9 +531,19 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
 
     dfxcallStack = unwinder->GetFrames();
     callStack.clear();
-    for (auto frame: dfxcallStack) {
-        HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
-        callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
+    if (jsReport) {
+        for (auto frame: dfxcallStack) {
+            HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
+            callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
+        }
+    } else {
+        for (auto frame: dfxcallStack) {
+            if (frame.isJsFrame) {
+                break;
+            }
+            HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
+            callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
+        }
     }
     return true;
 }
