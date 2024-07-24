@@ -259,7 +259,6 @@ bool PluginService::DestroyPluginSession(const std::string& pluginName)
     }
     if (pluginCtx->shareMemoryBlock) {
         ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(pluginName);
-        pluginCtx->shareMemoryBlock = nullptr;
     }
 
     if (pluginCtx->eventNotifier) {
@@ -439,6 +438,7 @@ void PluginService::ReadShareMemoryOffline(PluginContext& context)
     while (true) {
         int retval = 0;
         bool ret = context.shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+            CHECK_NOTNULL(data, false, "memory block data is null!");
             retval = traceWriter_->Write(data, size);
             CHECK_TRUE(retval != -1, false, "need to splite file");
             CHECK_TRUE(retval > 0, false, "write %d bytes failed!", size);
