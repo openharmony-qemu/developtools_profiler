@@ -51,16 +51,16 @@ public:
         }
         outFile.close();
     }
-    static void WriteCsvH(const std::string &path, std::map<std::string, std::string> vmap)
+    static void WriteCsvH(std::map<std::string, std::string> vmap)
     {
-        std::ofstream outFile;
-        char realPath[PATH_MAX] = {0x00};
-        if (realpath(path.c_str(), realPath) == nullptr) {
-            std::cout << "" << std::endl;
+        const std::string outGeneralPath = "/data/local/tmp/smartperf/1/t_general_info.csv";
+        std::ofstream outFile(outGeneralPath, std::ios::out | std::ios::trunc);
+        if (!outFile.is_open()) {
+            std::cout << "Error opening file!" << std::endl;
+            return;
         }
-        outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
-        for (auto iter = vmap.cbegin(); iter != vmap.cend(); ++iter) {
-            outFile << iter->first + "," + iter->second << std::endl;
+        for (const auto& [key, value] : vmap) {
+            outFile << key << "," << value << std::endl;
         }
         outFile.close();
     }
