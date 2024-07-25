@@ -57,7 +57,7 @@ std::map<std::string, std::string> Temperature::ItemData()
                     result[type] = std::to_string(t);
                 } else {
                     result[type] = std::to_string(t / 1e3);
-                }  
+                }
             }
         }
     }
