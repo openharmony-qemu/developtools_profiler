@@ -29,6 +29,7 @@
 #include "Network.h"
 #include "profiler_fps.h"
 #include "navigation.h"
+#include "parse_page_fps_trace.h"
 
 using namespace testing::ext;
 using namespace std;
@@ -62,8 +63,11 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
+    std::map<std::string, std::string> cpuItemData = cpu.ItemData();
     cpu.SetPackageName(packName);
+    std::vector<CpuFreqs> cpuFreqs = cpu.GetCpuFreq();
+    std::vector<CpuUsageInfos> getCpuUsage = cpu.GetCpuUsage();
+    std::map<std::string, std::string> getSysProcessCpuLoad = cpu.GetSysProcessCpuLoad();
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -389,6 +393,28 @@ HWTEST_F(SPdaemonTest, NavigationTestCase, TestSize.Level1)
     EXPECT_EQ(flag, true);
 }
 
+HWTEST_F(SPdaemonTest, ParsePageFpsTraceCase, TestSize.Level1)
+{
+    ParsePageFpsTrace parsePageFpsTrace;
+    double calculateTime = 0.0;
+    double calculateTimeEnd = 0.0;
+    std::string line = "";
+
+    std::string cmd = "SP_daemon -editor pagefps ohos.samples.ecg 设置 ohtest";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("FPS");
+    if ((strOne != result.npos)) {
+        flag = true;
+    }
+
+    calculateTime = parsePageFpsTrace.CalculateTime();
+    calculateTimeEnd = parsePageFpsTrace.CalculateTimeEnd();
+    
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
 
 } // namespace OHOS
 } // namespace SmartPerf

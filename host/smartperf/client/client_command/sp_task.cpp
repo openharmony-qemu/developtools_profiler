@@ -283,7 +283,6 @@ void SPTask::StopTask()
     if (isInit) {
         std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
         WritePath(thisBasePath);
-        std::string outGeneralPath = thisBasePath + "/t_general_info.csv";
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime = SPUtils::GetCurTime();
         long long testDuration = (endTime - startTime) / 1000;
@@ -310,7 +309,7 @@ void SPTask::StopTask()
         destMap.insert(deviceInfo.begin(), deviceInfo.end());
         destMap.insert(cpuInfo.begin(), cpuInfo.end());
         destMap.insert(gpuInfo.begin(), gpuInfo.end());
-        OHOS::SmartPerf::SpCsvUtil::WriteCsvH(outGeneralPath, destMap);
+        OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
         if (!vmap.empty()) {
             vmap.erase(vmap.begin());
         }
