@@ -139,7 +139,6 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 
     pthread_mutexattr_t muAttr;
     pthread_mutexattr_init(&muAttr);
-    pthread_mutexattr_setpshared(&muAttr, PTHREAD_PROCESS_SHARED);
     pthread_mutexattr_settype(&muAttr, PTHREAD_MUTEX_RECURSIVE);
     pthread_mutex_init(&header_->info.mutex_, &muAttr);
     return true;
