@@ -80,6 +80,13 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
 {
+    GPU &gpu = GPU::GetInstance();
+    int getGpuFreq = 0;
+    float getGpuLoad = 0.0;
+    std::map<std::string, std::string> gpuItemData = gpu.ItemData();
+    getGpuFreq = gpu.GetGpuFreq();
+    getGpuLoad = gpu.GetGpuLoad();
+
     std::string cmd = "SP_daemon -N 1 -g";
     std::string result = "";
     bool flag = false;
@@ -89,7 +96,7 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
+
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -376,7 +383,13 @@ HWTEST_F(SPdaemonTest, NavigationTestCase, TestSize.Level1)
 {
     Navigation &navigation = Navigation::GetInstance();
     std::string packName = "ohos.samples.ecg";
-
+    std::string winId = "";
+    std::string processId = "";
+    std::map<std::string, std::string> navItemData = navigation.ItemData();
+    navigation.SetPackageName(packName);
+    std::map<std::string, std::string> navGetNavInfo = navigation.GetNavInfo();
+    std::string getWinId = navigation.GetWinId(processId);
+    std::map<std::string, std::string> navGetNavResult = GetNavResult(winId);
     std::string cmd = "SP_daemon -editor -PKG ohos.samples.ecg -nav";
     std::string result = "";
     bool flag = false;
@@ -386,8 +399,6 @@ HWTEST_F(SPdaemonTest, NavigationTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
-    navigation.SetPackageName(packName);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
