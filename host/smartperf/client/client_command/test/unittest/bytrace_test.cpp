@@ -67,7 +67,7 @@ HWTEST_F(ByTraceTest, ThreadGetTraceTest, TestSize.Level1)
     std::string traceFile = file + time + ".ftrace";
     std::string traceCmdExe = cmdString + cmdStringEnd + traceFile;
     auto ret = SPUtils::LoadCmd(traceCmdExe, result);
-    bytrace.ThreadGetTrace();
+    byTrace.ThreadGetTrace();
 
     EXPECT_EQ(ret, true);
 }

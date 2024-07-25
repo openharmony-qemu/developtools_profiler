@@ -88,7 +88,7 @@ std::string Navigation::GetWinId(std::string processId) const
     const std::string cmd = "hidumper -s WindowManagerService -a '-a'";
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
-        wid = -1;
+        return wid = -1;
     }
     int lineNum = 0;
     char buf[1024] = {'\0'};
