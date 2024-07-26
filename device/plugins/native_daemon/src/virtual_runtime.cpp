@@ -564,8 +564,10 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
         UpdateSymbols(filePath, mapItem);
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
-        auto &thread = UpdateThread(pid, tid);
-        thread.ParseMap(processMaps_, false);
+        if ((!hookConfig_.fp_unwind()) && hookConfig_.startup_mode()) {
+            auto &thread = UpdateThread(pid, tid);
+            thread.ParseMap(processMaps_, false);
+        }
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
         if (curMapsIter != mapsCache_.end()) {
