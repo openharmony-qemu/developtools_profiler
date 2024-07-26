@@ -69,6 +69,7 @@ std::string VirtualRuntime::ReadThreadName(pid_t tid)
 
 VirtualThread &VirtualRuntime::UpdateThread(pid_t pid, pid_t tid, const std::string name)
 {
+    pid_ = pid;
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
 #endif
@@ -274,7 +275,7 @@ void VirtualRuntime::DelSymbolFile(const std::string& fileName)
     symbolsFiles_.erase(fileName);
 }
 
-void VirtualRuntime::UpdateSymbols(std::string fileName)
+void VirtualRuntime::UpdateSymbols(std::string fileName, std::shared_ptr<DfxMap> map)
 {
     HLOGD("try to find symbols for file: %s", fileName.c_str());
 #ifdef HIPERF_DEBUG_TIME
@@ -286,8 +287,8 @@ void VirtualRuntime::UpdateSymbols(std::string fileName)
     }
 
     // found it by name
-    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName);
-
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName, pid_);
+    symbolsFile->SetMapsInfo(map);
     // set sybol path If it exists
     if (symbolsPaths_.size() > 0) {
         symbolsFile->setSymbolsFilePath(symbolsPaths_); // also load from search path
@@ -316,6 +317,7 @@ bool VirtualRuntime::UpdateHapSymbols(std::shared_ptr<DfxMap> map)
         HLOGV("Failed to load CreateSymbolsFile for exec section in hap(%s)", map->name.c_str());
         return false;
     }
+    symbolsFile->SetMapsInfo(map);
     // update maps name if load debuginfo successfully
     if (!symbolsFile->LoadDebugInfo(map)) {
         HLOGV("Failed to load debuginfo for exec section in hap(%s)", map->name.c_str());
@@ -540,9 +542,12 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
     }
 }
 
-void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags,
-                                   uint64_t offset, const std::string& filePath)
+void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
+    uint64_t begin = info[0];
+    uint64_t length = info[1];
+    uint64_t flags = info[2];
+    uint64_t offset = info[3];
     if (!(flags & MAP_FIXED) || mapsCache_.empty()) {
         if (mapsCache_.find(begin) != mapsCache_.end()) {
             return;
@@ -550,9 +555,11 @@ void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t fla
         soBegin_ = begin;
         std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
         auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+        UpdateSymbols(filePath, mapItem);
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
-        UpdateSymbols(filePath);
+        auto &thread = UpdateThread(pid, tid);
+        thread.ParseMap(processMaps_, true);
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
         if (curMapsIter != mapsCache_.end()) {
