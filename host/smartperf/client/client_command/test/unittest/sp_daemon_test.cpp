@@ -389,7 +389,7 @@ HWTEST_F(SPdaemonTest, NavigationTestCase, TestSize.Level1)
     navigation.SetPackageName(packName);
     std::map<std::string, std::string> navGetNavInfo = navigation.GetNavInfo();
     std::string getWinId = navigation.GetWinId(processId);
-    std::map<std::string, std::string> navGetNavResult = GetNavResult(winId);
+    std::map<std::string, std::string> navGetNavResult = navigation.GetNavResult(winId);
     std::string cmd = "SP_daemon -editor -PKG ohos.samples.ecg -nav";
     std::string result = "";
     bool flag = false;
