@@ -533,7 +533,7 @@ int32_t GetProcessPid(const std::string& processName)
 bool IsArkJsFile(const std::string& filepath)
 {
     return (StringEndsWith(filepath, ".hap") || StringEndsWith(filepath, ".hsp") ||
-            StringStartsWith(filepath, "[anon:ArkTS Code"));
+            StringStartsWith(filepath, "[anon:ArkTS Code") || StringEndsWith(filepath, ".abc"));
 }
 } // namespace NativeDaemon
 } // namespace Developtools
