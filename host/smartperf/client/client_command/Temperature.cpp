@@ -53,7 +53,11 @@ std::map<std::string, std::string> Temperature::ItemData()
                 LOGI("type====: %s", type.c_str());
                 float t = std::stof(temp);
                 LOGI("temp====: %s", temp.c_str());
-                result[type] = std::to_string(t / 1e3);
+                if (node == "gpu") {
+                    result[type] = std::to_string(t);
+                } else {
+                    result[type] = std::to_string(t / 1e3);
+                }
             }
         }
     }
