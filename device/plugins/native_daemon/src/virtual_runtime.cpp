@@ -37,6 +37,9 @@ namespace {
 std::atomic<uint64_t> callStackErrCnt = 0;
 constexpr uint32_t CALL_STACK_ERROR_TIMES = 10;
 constexpr uint32_t SYMBOL_FILES_SIZE = 512;
+constexpr uint32_t SECOND_INDEX = 2;
+constexpr uint32_t THIRD_INDEX = 3;
+constexpr uint32_t INFO_SIZE = 4;
 }
 // we unable to access 'swapper' from /proc/0/
 void VirtualRuntime::ClearMaps()
@@ -544,10 +547,13 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
 
 void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
+    if (info.size() != INFO_SIZE) {
+        return;
+    }
     uint64_t begin = info[0];
     uint64_t length = info[1];
-    uint64_t flags = info[2];
-    uint64_t offset = info[3];
+    uint64_t flags = info[SECOND_INDEX];
+    uint64_t offset = info[THIRD_INDEX];
     if (!(flags & MAP_FIXED) || mapsCache_.empty()) {
         if (mapsCache_.find(begin) != mapsCache_.end()) {
             return;
