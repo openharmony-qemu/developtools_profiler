@@ -565,7 +565,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
         auto &thread = UpdateThread(pid, tid);
-        thread.ParseMap(processMaps_, true);
+        thread.ParseMap(processMaps_, false);
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
         if (curMapsIter != mapsCache_.end()) {
