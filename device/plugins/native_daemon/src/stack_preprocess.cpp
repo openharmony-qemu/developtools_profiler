@@ -378,7 +378,7 @@ void StackPreprocess::TakeResults()
         bool isTimeOut = false;
         auto result = dataRepeater_->TakeRawData(during, hookDataClockId_, MAX_BATCH_CNT, batchRawStack,
                                                  hookConfig_.statistics_interval(), isTimeOut);
-        if (hookConfig_.statistics_interval() > 0 && isTimeOut) {  // statistics mode
+        if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {  // statistics mode
             IntervalFlushRecordStatistics();
             continue;
         }
