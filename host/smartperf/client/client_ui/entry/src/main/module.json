@@ -7,7 +7,7 @@
     "mainElement": "MainAbility",
     "deviceTypes": [
       "default",
-      "tablet"
+      "tablet",
     ],
     "deliveryWithInstall": true,
     "installationFree": false,
@@ -62,6 +62,5 @@
         ]
       }
     ]
-
   }
 }
