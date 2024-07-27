@@ -100,9 +100,9 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
 {
     uint32_t rawDataQueueSize = 0;
     std::unique_lock<std::mutex> lock(mutex_);
-    if (statInterval > 0 && itemCondVar_.wait_for(lock, std::chrono::milliseconds(during),
-                                                  [&] { return !rawDataQueue_.empty(); })) {
-        if (rawDataQueue_.empty() && !closed_) {
+    if (statInterval > 0 && rawDataQueue_.empty() && !closed_) {
+        auto ret = itemCondVar_.wait_for(lock, std::chrono::milliseconds(during));
+        if (ret == std::cv_status::timeout) {
             isTimeOut = true;
             lock.unlock();
             slotCondVar_.notify_one();
