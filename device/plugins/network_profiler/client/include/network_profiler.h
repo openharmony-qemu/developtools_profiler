@@ -50,7 +50,7 @@ private:
     void Enable();
     void Disable();
     void NetworkProfilerSendData(const void* src, size_t size, const char* payload = nullptr, size_t payloadSize = 0);
-    void GetThreadName(const void* src);
+    void GetThreadName(const char* src);
 
 private:
     static NetworkProfiler* instance_;
