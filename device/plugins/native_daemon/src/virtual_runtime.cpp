@@ -561,9 +561,9 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
         soBegin_ = begin;
         std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
         auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
-        UpdateSymbols(filePath, mapItem);
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
+        UpdateSymbols(filePath, mapItem);
         if ((!hookConfig_.fp_unwind()) && hookConfig_.startup_mode()) {
             auto &thread = UpdateThread(pid, tid);
             thread.ParseMap(processMaps_, false);
