@@ -96,12 +96,22 @@ bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAcc
 }
 
 RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
-    RawStackPtr batchRawStack[])
+                                           RawStackPtr batchRawStack[], uint32_t statInterval, bool& isTimeOut)
 {
     uint32_t rawDataQueueSize = 0;
     std::unique_lock<std::mutex> lock(mutex_);
-    while (rawDataQueue_.empty() && !closed_) {
-        itemCondVar_.wait(lock);
+    if (statInterval > 0 &&
+        !itemCondVar_.wait_for(lock, std::chrono::milliseconds(during), [&] { return !rawDataQueue_.empty(); })) {
+        if (rawDataQueue_.empty() && !closed_) {
+            isTimeOut = true;
+            lock.unlock();
+            slotCondVar_.notify_one();
+            return nullptr;
+        }
+    } else {
+        while (rawDataQueue_.empty() && !closed_) {
+            itemCondVar_.wait(lock);
+        }
     }
     if (closed_) {
         return nullptr;

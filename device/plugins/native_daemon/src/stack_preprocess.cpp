@@ -367,8 +367,21 @@ void StackPreprocess::TakeResults()
         if (isStopTakeData_) {
             break;
         }
-        auto result = dataRepeater_->TakeRawData(hookConfig_.malloc_free_matching_interval(), hookDataClockId_,
-            MAX_BATCH_CNT, batchRawStack);
+        uint32_t during = 0;
+        if (hookConfig_.statistics_interval() > 0) {
+            auto currentTime = std::chrono::steady_clock::now();
+            auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastStatisticsTime_);
+            int tempDuring =
+                std::chrono::duration_cast<std::chrono::milliseconds>(statisticsInterval_).count() - timeDiff.count();
+            during = tempDuring > 0 ? tempDuring : 0;
+        }
+        bool isTimeOut = false;
+        auto result = dataRepeater_->TakeRawData(during, hookDataClockId_, MAX_BATCH_CNT, batchRawStack,
+                                                 hookConfig_.statistics_interval(), isTimeOut);
+        if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {  // statistics mode
+            IntervalFlushRecordStatistics();
+            continue;
+        }
         if (!result) {
             break;
         }
