@@ -30,7 +30,7 @@ CachedHandle g_cachedHandle;
 
 std::mutex g_mtx;
 std::once_flag g_flag;
-__thread int g_needReportThreadName = 1;
+thread_local std::string g_threadName;
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
 } // namespace
 
@@ -124,6 +124,14 @@ void NetworkProfiler::NetworkProfiling(const uint8_t type, const char* data, siz
     event.tid = getproctid();
     clock_gettime(clockType_, &event.ts);
     GetThreadName(event.threadName);
+    if (g_threadName.size() == 0) {
+        GetThreadName(event.threadName);
+    } else {
+        if (sprintf_s(event.threadName, sizeof(event.threadName), "%s", g_threadName.c_str()) < 0) {
+            PROFILER_LOG_DEBUG(LOG_CORE, "sprintf_s event.threadName failed");
+            return;
+        }
+    }
     NetworkProfilerSendData(reinterpret_cast<const void*>(&event), sizeof(event), data, dataSize);
 }
 
@@ -143,12 +151,10 @@ void NetworkProfiler::NetworkProfilerSendData(const void* src, size_t size, cons
     }
 }
 
-void NetworkProfiler::GetThreadName(const void* src)
+void NetworkProfiler::GetThreadName(const char* src)
 {
-    if (!g_needReportThreadName) {
-        return;
-    }
     prctl(PR_GET_NAME, src);
-    g_needReportThreadName = 0;
+    std::string tmp(src);
+    g_threadName = tmp;
 }
 } // namespace OHOS::Developtools::Profiler
