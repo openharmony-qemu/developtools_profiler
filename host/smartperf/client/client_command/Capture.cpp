@@ -74,13 +74,23 @@ void Capture::ThreadGetCatch(const std::string &curTime) const
     char realPath[PATH_MAX] = {0x00};
     if (realpath(savePath.c_str(), realPath) == nullptr) {
         std::cout << "" << std::endl;
+        return;
+    } else {
+        struct stat st;
+        if (stat(realPath, &st) != 0) {
+            std::cout << "stat error: " << strerror(errno) << std::endl;
+            LOGE("open realPath failed: %s", strerror(errno));
+        } else if (!S_ISDIR(st.st_mode)) {
+            LOGE("capture savePath is not a directory: %s", realPath);
+        } else {
+            auto fd = open(realPath, O_RDWR | O_CREAT, 0666);
+            if (!TakeScreenCap(savePath)) {
+                std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
+                LOGE("Screen Capture Failed!");
+            }
+            close(fd);
+        }
     }
-    auto fd = open(realPath, O_RDWR | O_CREAT, 0666);
-    if (!TakeScreenCap(savePath)) {
-        std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
-        LOGE("Screen Capture Failed!");
-    }
-    (void)close(fd);
 }
 
 
