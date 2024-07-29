@@ -373,7 +373,7 @@ void StackPreprocess::TakeResults()
             auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastStatisticsTime_);
             int tempDuring =
                 std::chrono::duration_cast<std::chrono::milliseconds>(statisticsInterval_).count() - timeDiff.count();
-            during = tempDuring > 0 ? tempDuring : 0;
+            during = tempDuring > 0 ? static_cast<uint32_t>(tempDuring) : 0;
         }
         bool isTimeOut = false;
         auto result = dataRepeater_->TakeRawData(during, hookDataClockId_, MAX_BATCH_CNT, batchRawStack,
