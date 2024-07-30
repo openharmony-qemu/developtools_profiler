@@ -244,7 +244,6 @@ void* MallocHookStart(void* disableHookCallback)
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_miStart = mallinfo2();
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
-    g_hookPid = GetRealPid();
     g_mallocTimes = 0;
     g_hookClient.reset();
     if (g_hookClient != nullptr) {
@@ -269,6 +268,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
         return false;
     }
     pthread_detach(threadStart);
+    g_hookPid = GetRealPid();
     pthread_key_create(&g_disableHookFlag, nullptr);
     pthread_setspecific(g_disableHookFlag, nullptr);
     pthread_key_create(&g_hookTid, nullptr);
