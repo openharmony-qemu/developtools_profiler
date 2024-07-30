@@ -109,7 +109,7 @@ void NetworkProfiler::Enable()
     if (enable_) {
         return;
     }
-    socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this
+    socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this,
     reinterpret_cast<void (*)()>(&ServiceCloseCallback));
     if (!socketClent_->ClientConnectState()) {
         PROFILER_LOG_ERROR(LOG_CORE, "network profiler start failed");
