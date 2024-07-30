@@ -32,6 +32,12 @@ std::mutex g_mtx;
 std::once_flag g_flag;
 thread_local std::string g_threadName;
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
+static std::atomic<bool> g_serverClosing{false};
+static std::atomic<bool> enable_{false};
+static std::shared_ptr<OHOS::Developtools::Profiler::NetworkProfilerSocketClient> socketClent_{nullptr};
+static std::string processName_;
+static int32_t pid_{0};
+static int g_changed{0};
 } // namespace
 
 namespace OHOS::Developtools::Profiler {
@@ -56,8 +62,17 @@ NetworkProfiler::NetworkProfiler()
 
 NetworkProfiler::~NetworkProfiler() {}
 
+void NetworkProfiler::SetEnableFlag(bool flag)
+{
+    enable_ = flag;
+}
+
 bool NetworkProfiler::IsProfilerEnable()
 {
+    if (g_serverClosing) {
+        PROFILER_LOG_ERROR(LOG_CORE, "network profiler server is closing");
+        return false;
+    }
     CheckNetworkProfilerParam();
     return enable_;
 }
@@ -74,7 +89,7 @@ void NetworkProfiler::CheckNetworkProfilerParam()
     const char *paramValue = CachedParameterGetChanged(g_cachedHandle, &changed);
     std::call_once(g_flag, [&]() { changed = 1; });
 
-    if (UNEXPECTANTLY(changed == 1) && paramValue != nullptr) {
+    if ((UNEXPECTANTLY(changed == 1) || g_changed) && paramValue != nullptr) {
         if (!enable_ && strlen(paramValue) > 0) {
             std::vector<std::string> values;
             SplitParamValue(paramValue, ",", values);
@@ -85,8 +100,6 @@ void NetworkProfiler::CheckNetworkProfilerParam()
                     break;
                 }
             }
-        } else if (enable_ && strlen(paramValue) == 0) {
-            Disable();
         }
     }
 }
@@ -96,12 +109,24 @@ void NetworkProfiler::Enable()
     if (enable_) {
         return;
     }
-    socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this, nullptr);
+    socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this
+    reinterpret_cast<void (*)()>(&ServiceCloseCallback));
     if (!socketClent_->ClientConnectState()) {
         PROFILER_LOG_ERROR(LOG_CORE, "network profiler start failed");
         return;
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "network profiler clent start, pid: %d, processName: %s", pid_, processName_.c_str());
+}
+
+void NetworkProfiler::ServiceCloseCallback()
+{
+    bool expected = false;
+    if (g_serverClosing.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
+        g_changed = 1;
+        Disable();
+        g_serverClosing = false;
+        g_changed = 0;
+    }
 }
 
 void NetworkProfiler::Disable()
@@ -110,6 +135,9 @@ void NetworkProfiler::Disable()
         return;
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "network profiler clent stop, pid: %d, processName: %s", pid_, processName_.c_str());
+    if (socketClent_) {
+        socketClent_->Reset();
+    }
     socketClent_ = nullptr;
     enable_ = false;
 }

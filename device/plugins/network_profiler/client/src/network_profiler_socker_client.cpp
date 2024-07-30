@@ -32,7 +32,7 @@ NetworkProfilerSocketClient::NetworkProfilerSocketClient(int pid, NetworkProfile
     eventFd_ = 0;
     unixSocketClient_ = nullptr;
     serviceName_ = "NetworkProfilerService";
-    Connect(NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH);
+    Connect(NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH, disableHookCallback_);
 }
 
 NetworkProfilerSocketClient::~NetworkProfilerSocketClient()
@@ -44,13 +44,13 @@ NetworkProfilerSocketClient::~NetworkProfilerSocketClient()
     writer_ = nullptr;
 }
 
-bool NetworkProfilerSocketClient::Connect(const std::string addrname)
+bool NetworkProfilerSocketClient::Connect(const std::string addrname, void (*disableHookCallback)())
 {
     if (unixSocketClient_ != nullptr) {
         return false;
     }
     unixSocketClient_ = std::make_shared<UnixSocketClient>();
-    if (!unixSocketClient_->Connect(addrname, *this)) {
+    if (!unixSocketClient_->Connect(addrname, *this, disableHookCallback)) {
         unixSocketClient_ = nullptr;
         return false;
     }

@@ -92,7 +92,7 @@ bool SocketContext::ReceiveData(int sock, uint8_t* databuf, uint32_t size)
     return true;
 }
 
-void* SocketContext::UnixSocketRecv(void* pp)
+void* SocketContext::UnixSocketRecv(void* pp, void (*callback)())
 {
     pthread_setname_np(pthread_self(), "UnixSocketRecv");
 
@@ -143,14 +143,17 @@ void* SocketContext::UnixSocketRecv(void* pp)
                 break;
         }
     }
+    if (callback) {
+        callback();
+    }
     pssr->clientState_ = CLIENT_STAT_THREAD_EXITED;
     PROFILER_LOG_DEBUG(LOG_CORE, "UnixSocketRecv thread exit");
     return nullptr;
 }
 
-bool SocketContext::CreateRecvThread()
+bool SocketContext::CreateRecvThread(void (*callback)())
 {
-    recvThread_ = std::thread([this] { this->UnixSocketRecv(this); });
+    recvThread_ = std::thread([this] { this->UnixSocketRecv(this, callback); });
     CHECK_TRUE(recvThread_.get_id() != std::thread::id(), false, "CreateRecvThread FAIL");
     return true;
 }

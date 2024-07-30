@@ -75,7 +75,7 @@ public:
     enum ClientState GetClientState() { return clientState_; }
 protected:
     int socketHandle_;
-    bool CreateRecvThread();
+    bool CreateRecvThread(void (*callback)() = nullptr);
     volatile enum ClientState clientState_;
     uint64_t lastProcMS_;
 
@@ -85,7 +85,7 @@ protected:
 
 private:
     static bool ReceiveData(int sock, uint8_t* databuf, uint32_t size);
-    static void* UnixSocketRecv(void* pp);
+    static void* UnixSocketRecv(void* pp, void (*callback)() = nullptr);
     std::thread recvThread_;
 };
 

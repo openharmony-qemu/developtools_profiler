@@ -28,9 +28,10 @@
 namespace OHOS::Developtools::Profiler {
 class EXPORT_API NetworkProfiler {
 public:
+    static void Disable();
+    static void ServiceCloseCallback();
     static NetworkProfiler* GetInstance();
     virtual ~NetworkProfiler();
-
     bool IsProfilerEnable();
     void NetworkProfiling(const uint8_t type, const char* data, size_t dataSize);
 
@@ -39,10 +40,7 @@ public:
         clockType_ = type;
     }
 
-    void SetEnableFlag(bool flag)
-    {
-        enable_ = flag;
-    }
+    void SetEnableFlag(bool flag);
 
 private:
     NetworkProfiler();
@@ -54,10 +52,6 @@ private:
 
 private:
     static NetworkProfiler* instance_;
-    std::atomic_bool enable_{false};
-    std::string processName_;
-    int32_t pid_{0};
-    std::shared_ptr<NetworkProfilerSocketClient> socketClent_{nullptr};
     int32_t clockType_{0};
 };
 } // OHOS::Developtools::Profiler

@@ -26,7 +26,7 @@ class NetworkProfilerSocketClient : public ServiceBase {
 public:
     NetworkProfilerSocketClient(int pid, NetworkProfiler* profiler, void (*disableHookCallback)());
     ~NetworkProfilerSocketClient();
-    bool Connect(const std::string addrname);
+    bool Connect(const std::string addrname, void (*disableHookCallback)());
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     int GetSmbFd()
     {
@@ -43,6 +43,10 @@ public:
     bool ClientConnectState()
     {
         return unixSocketClient_ == nullptr ? false : true;
+    }
+    void Reset()
+    {
+        writer_ = nullptr;
     }
 
 private:
