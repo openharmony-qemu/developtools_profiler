@@ -23,6 +23,13 @@ template <typename T> void sched_blocked_reason_func(T& msg, uint8_t data[], siz
     msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_caller(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
     msg->set_io_wait(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
+    uint64_t recOffset = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, ++i, data, size);
+    uint64_t recSize = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, ++i, data, size);
+    std::string funcName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
+    std::string modName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
+    std::string caller_str = funcName + "+0x" + std::to_string(recOffset) + "/0x"
+                             + std::to_string(recSize) + "[" + modName + "]";
+    msg->set_caller_str(caller_str);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_blocked_reason,
     [](FtraceEvent& ftraceEvent, uint8_t data[], size_t size, const EventFormat& format) {
