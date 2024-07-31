@@ -328,6 +328,7 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
     if (!g_exitProcessFlag) {
         // waiting for the collection time to end or signal wakeup.
         printf("tracing %u ms....\n", g_sampleDuration);
+        std::cout.flush();
         std::unique_lock<std::mutex> lck(g_sessionMutex);
         g_sessionCv.wait_for(lck, std::chrono::milliseconds(g_sampleDuration));
     }
