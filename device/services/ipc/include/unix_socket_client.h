@@ -24,7 +24,7 @@ public:
     UnixSocketClient();
     ~UnixSocketClient();
 
-    bool Connect(const std::string addrname, ServiceBase& serviceBase);
+    bool Connect(const std::string addrname, ServiceBase& serviceBase, void (*callback)() = nullptr);
 };
 
 #endif

@@ -30,7 +30,7 @@ UnixSocketClient::UnixSocketClient()
 
 UnixSocketClient::~UnixSocketClient() {}
 
-bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceBase)
+bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceBase, void (*callback)())
 {
     PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketClient connect");
     CHECK_TRUE(socketHandle_ == -1, false, "socketHandle_ != -1 Already Connected");
@@ -61,7 +61,7 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
         SendRaw(RAW_PROTOCOL_POINTTO_SERVICE, reinterpret_cast<int8_t*>(&rrs), sizeof(struct RawPointToService), sock),
         close(sock) != 0, "Unix Socket SendRaw FAIL");
     socketHandle_ = sock;
-    CHECK_TRUE(CreateRecvThread(), close(sock) != 0, "Unix Socket Create Recv Thread FAIL");
+    CHECK_TRUE(CreateRecvThread(callback), close(sock) != 0, "Unix Socket Create Recv Thread FAIL");
 
     return true;
 }
