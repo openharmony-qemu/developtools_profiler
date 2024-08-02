@@ -72,8 +72,6 @@ group("ebpf_targets") {
     "tools:ebpf_converter",
   ]
   if (!use_libfuzzer) {
-    deps += [
-      "tools:ebpf_converter(${host_toolchain})",
-    ]
+    deps += [ "tools:ebpf_converter(${host_toolchain})" ]
   }
 }
