@@ -1012,6 +1012,21 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value IsDebugState(napi_env env, napi_callback_info info)
+{
+    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
+    if (engine == nullptr) {
+        return CreateUndefined(env);
+    }
+
+    bool debugState = engine->GetIsDebugModeEnabled() ||
+        HidebugNativeInterface::CreateInstance()->IsDebuggerConnected();
+
+    napi_value result = nullptr;
+    napi_get_boolean(env, debugState, &result);
+    return result;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -1042,6 +1057,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVMRuntimeStats", GetVMRuntimeStats),
         DECLARE_NAPI_FUNCTION("getVMRuntimeStat", GetVMRuntimeStat),
         DECLARE_NAPI_FUNCTION("setAppResourceLimit", SetAppResourceLimit),
+        DECLARE_NAPI_FUNCTION("isDebugState", IsDebugState)
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
