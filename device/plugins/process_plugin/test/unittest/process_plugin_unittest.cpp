@@ -23,11 +23,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH = "/data/local/tmp/resources";
-#if defined(__arm__)
-const std::string SO_PATH = "/system/lib/libprocessplugin.z.so";
-#elif defined(__aarch64__)
-const std::string SO_PATH = "/system/lib64/libprocessplugin.z.so";
-#endif
+const std::string SO_PATH = "libprocessplugin.z.so";
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 const int PERCENT = 100;
 constexpr int PROCESS_NUM = 2;

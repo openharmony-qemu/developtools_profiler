@@ -39,11 +39,6 @@ constexpr uint32_t TRACE_TIME = 3;
 constexpr uint32_t BUFFER_SIZE = 2 * 1024 * 1024;
 RandomWriteCtx g_writeCtx = {};
 std::unique_ptr<uint8_t[]> g_buffer = nullptr;
-#if defined(__LP64__)
-const std::string DEFAULT_TEST_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_TEST_PATH("/system/lib/");
-#endif
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 using ConstVoidPtr = std::unique_ptr<const void>::pointer;
 class FlowControllerTest : public ::testing::Test {
@@ -276,7 +271,7 @@ HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
  */
 HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_TEST_PATH + std::string("libftrace_plugin.z.so");
+    std::string path = std::string("libftrace_plugin.z.so");
     auto handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));

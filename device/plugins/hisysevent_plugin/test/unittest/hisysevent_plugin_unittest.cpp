@@ -27,11 +27,6 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__LP64__)
-const std::string DEFAULT_TEST_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_TEST_PATH("/system/lib/");
-#endif
 const int US_PER_S = 1000000;
 const int DEFAULT_WAIT = 5;
 
@@ -130,7 +125,7 @@ HWTEST_F(HisyseventPluginTest, TestDefaultCmd, TestSize.Level1)
  */
 HWTEST_F(HisyseventPluginTest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_TEST_PATH + std::string("libhisyseventplugin.z.so");
+    std::string path = std::string("libhisyseventplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));

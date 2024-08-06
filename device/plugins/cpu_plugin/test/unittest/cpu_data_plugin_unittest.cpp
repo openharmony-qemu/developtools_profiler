@@ -23,11 +23,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH = "/data/local/tmp/resources";
-#if defined(__LP64__)
-const std::string SO_PATH = "/system/lib64/libcpudataplugin.z.so";
-#else
-const std::string SO_PATH = "/system/lib/libcpudataplugin.z.so";
-#endif
+const std::string SO_PATH = "libcpudataplugin.z.so";
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/cpudataplugintest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 constexpr int TEST_PID = 1;

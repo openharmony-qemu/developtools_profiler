@@ -27,7 +27,7 @@ int main(int agrc, char* agrv[])
 {
     GpuConfig protoConfig;
     PluginModuleStruct* gpuPlugin;
-    void* handle = dlopen("./libgpudataplugin.z.so", RTLD_LAZY);
+    void* handle = dlopen("libgpudataplugin.z.so", RTLD_LAZY);
     if (handle == nullptr) {
         std::cout << "test:dlopen err: " << dlerror() << std::endl;
         return 0;

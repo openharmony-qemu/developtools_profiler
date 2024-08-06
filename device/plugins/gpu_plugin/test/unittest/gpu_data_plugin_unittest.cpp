@@ -23,11 +23,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH = "/data/local/tmp/resource";
-#if defined(__LP64__)
-const std::string SO_PATH = "/system/lib64/libgpudataplugin.z.so";
-#else
-const std::string SO_PATH = "/system/lib/libgpudataplugin.z.so";
-#endif
+const std::string SO_PATH = "libgpudataplugin.z.so";
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/gpudataplugintest");
 
 std::string g_path;

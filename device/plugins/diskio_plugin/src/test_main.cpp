@@ -68,7 +68,7 @@ int main(int agrc, char* agrv[])
     } else {
         DiskioConfig protoConfig;
         PluginModuleStruct* diskioPlugin;
-        void* handle = dlopen("./libdiskiodataplugin.z.so", RTLD_LAZY);
+        void* handle = dlopen("libdiskiodataplugin.z.so", RTLD_LAZY);
         if (handle == nullptr) {
             std::cout << "test:dlopen err: " << dlerror() << std::endl;
             return 0;

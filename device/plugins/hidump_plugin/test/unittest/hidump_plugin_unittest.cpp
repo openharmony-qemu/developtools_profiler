@@ -28,11 +28,6 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__LP64__)
-const std::string DEFAULT_TEST_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_TEST_PATH("/system/lib/");
-#endif
 const std::string DEFAULT_RECORD_FILE("/data/local/tmp/");
 const int DEFAULT_WAIT = 10;
 constexpr int BUF_MAX_LEN = 8;
@@ -87,7 +82,7 @@ bool PluginStart(HidumpPlugin& plugin, HidumpConfig& config)
  */
 HWTEST_F(HidumpPluginUnittest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_TEST_PATH + std::string("libhidumpplugin.z.so");
+    std::string path = std::string("libhidumpplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
