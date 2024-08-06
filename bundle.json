@@ -71,7 +71,6 @@
         "//developtools/profiler/hidebug/frameworks/native:hidebug_native",
         "//developtools/profiler/host/smartperf/client/client_command/:SP_daemon",
         "//developtools/profiler/host/smartperf/client/:SmartPerf",
-        "//developtools/profiler/host/smartperf/client/client_command_fps/:GP_daemon_fps",
         "//developtools/profiler/hiebpf:hiebpf_tool",
         "//developtools/profiler/timestamps:timestamps_tool"
       ],
