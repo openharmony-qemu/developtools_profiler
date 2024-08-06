@@ -42,7 +42,7 @@ constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
 constexpr static uint32_t WAIT_STOP_TIME = 5000;
 constexpr static uint32_t WAIT_TIME_ONCE = 10;
-constexpr static uint32_t MAX_BATCH_CNT = 20;
+constexpr static uint32_t MAX_BATCH_CNT = 40;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
 constexpr static uint32_t RIGHT_MOVE_4 = 4;
@@ -390,6 +390,12 @@ void StackPreprocess::TakeResults()
             if (!rawData || isStopTakeData_) {
                 break;
             }
+            if (rawData->baseStackData == nullptr) {
+                if (rawData->freeData) {
+                    SetFreeStatisticsData(rawData->freeData);
+                }
+                continue;
+            }
             if (rawData->stackConext->type == NMD_MSG) {
                 continue;
             } else if (rawData->stackConext->type == END_MSG) {
@@ -494,6 +500,7 @@ void StackPreprocess::TakeResults()
                     unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
             }
 #endif
+            dataRepeater_->ReturnRawStack(rawData);
         } // for
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;

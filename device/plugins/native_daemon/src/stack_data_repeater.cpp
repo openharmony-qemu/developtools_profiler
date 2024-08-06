@@ -22,6 +22,9 @@ StackDataRepeater::StackDataRepeater(size_t maxSize)
     maxSize_ = maxSize;
     closed_ = false;
     reducedStackCount_ = 0;
+    for (int index = 0; index < CACHE_DATA_SIZE; ++index) {
+        rawDataCacheQueue_.emplace_back(std::make_shared<RawStack>());
+    }
 }
 
 StackDataRepeater::~StackDataRepeater()
@@ -51,6 +54,47 @@ void StackDataRepeater::Close()
     PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
     slotCondVar_.notify_all();
     itemCondVar_.notify_all();
+}
+
+RawStackPtr StackDataRepeater::GetRawStack()
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (!rawDataCacheQueue_.empty()) {
+        RawStackPtr rawStack = rawDataCacheQueue.back();
+        rawDataCacheQueue_.pop_back();
+        return rawStack;
+    }
+    return std::make_shared<RawStack>();
+}
+
+void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
+        rawDataCacheQueue_.push_back(rawStack);
+    }
+}
+
+bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
+        PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray: no need to put nullptr if queue has data");
+        return true;
+    }
+    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
+        slotCondVar_.wait(lock);
+    }
+    if (closed_) {
+        return false;
+    }
+    std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>::iterator iter;
+    for (iter = rawDataArray.begin(); iter != rawDataArray.end(); ++iter) {
+        rawDataQueue_.push_back(*iter);
+    }
+    lock.unlock();
+    itemCondVar_.notify_one();
+    return true;
 }
 
 bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAccurately)
@@ -124,7 +168,7 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
         result = rawDataQueue_.front();
         rawDataQueue_.pop_front();
         batchRawStack[i] = result;
-        if ((result != nullptr) && (result->stackConext->type == MALLOC_MSG)) {
+        if ((result != nullptr) && (result->stackConext != nullptr) && (result->stackConext->type == MALLOC_MSG)) {
             mallocMap_.erase(result->stackConext->addr);
             if (needReduceStack) {
                 result->reduceStackFlag = true;

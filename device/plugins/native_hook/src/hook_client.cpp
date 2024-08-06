@@ -313,18 +313,14 @@ bool ohos_malloc_hook_on_end(void)
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
             if (g_hookClient->GetNmdType() == 1) {
-                PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
                 g_hookClient->SendNmdInfo();
             }
             g_hookClient->SendEndMsg();
             g_hookClient->Flush();
-        } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
         }
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
-        PROFILER_LOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
         return false;
     }
     pthread_detach(threadEnd);
@@ -851,6 +847,28 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
+    if (!g_ClientConfig.freeStackData) {
+        if (free_func) {
+            free_func(p);
+        }
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if ((holder != nullptr) && p) {
+            holder->SendStackWithPayload(p, sizeof(uint64_t), nullptr, 0);
+        }
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
+        return;
+    }
     struct timespec freeTime = {};
     clock_gettime(g_ClientConfig.clockId, &freeTime);
     if (free_func) {
