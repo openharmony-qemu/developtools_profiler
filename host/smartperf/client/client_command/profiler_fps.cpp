@@ -209,10 +209,10 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
     long long currLastTime = lastCurrTime;
     long long harTime = msJiange / 1000000;
     int printCount = 0;
-    uint32_t count = 0;
+    size_t count = 0;
     long long currTimeStart = 0;
     long long currTimeLast = 0;
-    for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
+    for (size_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
         long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             if (msCount == 0) {
@@ -239,7 +239,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             currTimeLast = currTime;
             count--;
         }
-        if (i == (static_cast<uint32_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
+        if (i == (static_cast<size_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             currTimeLast = currTime;
             printCount++;

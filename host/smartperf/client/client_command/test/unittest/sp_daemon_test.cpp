@@ -227,9 +227,9 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     }
 
     capture.SocketMessage();
-    capture.ThreadGetCatch(curTime);
+    capture.ThreadGetCatch();
     capture.ThreadGetCatchSocket(curTime);
-    capture.TriggerGetCatch(catTime);
+    capture.TriggerGetCatch();
     capture.TriggerGetCatchSocket(catTime);
 
     EXPECT_EQ(ret, true);
