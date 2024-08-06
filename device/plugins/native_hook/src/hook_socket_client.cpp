@@ -213,12 +213,9 @@ bool HookSocketClient::SendNmdInfo()
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = NMD_MSG;
     if (stackWriter_) {
-        bool ret = stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                                         reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
-                                                         std::bind(&HookSocketClient::PeerIsConnected, this));
-        PROFILER_LOG_INFO(LOG_CORE, "SendNmdMsg ret val: %d", ret);
-    } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "SendNmdMsg stackWriter_ is nullptr");
+        stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                              reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
+                                              std::bind(&HookSocketClient::PeerIsConnected, this));
     }
     free(nmdBuf);
     return true;
@@ -229,10 +226,7 @@ bool HookSocketClient::SendEndMsg()
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = END_MSG;
     if (stackWriter_) {
-        bool ret = stackWriter_->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
-        PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg ret val: %d", ret);
-    } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "SendEndMsg stackWriter_ is nullptr");
+        stackWriter_->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
     }
     return true;
 }
