@@ -28,11 +28,6 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__LP64__)
-const std::string DEFAULT_TEST_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_TEST_PATH("/system/lib/");
-#endif
 const std::string DEFAULT_RECORD_FILE("/data/local/tmp/");
 const int FILE_NAME_LEN = 5;
 const int US_PER_S = 1000000;
@@ -844,7 +839,7 @@ HWTEST_F(HilogPluginTest, TestStartFail, TestSize.Level1)
  */
 HWTEST_F(HilogPluginTest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_TEST_PATH + std::string("libhilogplugin.z.so");
+    std::string path = std::string("libhilogplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
