@@ -22,7 +22,10 @@
 #include <map>
 #include <mutex>
 #include <climits>
+#include "parameters.h"
 #include "sp_csv_util.h"
+#include "sdk_data_recv.h"
+#include "GPU_Counter.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -80,6 +83,12 @@ public:
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
     void WritePath(std::string thisBasePath);
+    void ConfigDataThread();
+    void StopSdkRecv();
+    void StopGpuCounterRecv();
+    void DeleteSdkVec();
+    void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
+    void StopGetInfo();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -87,6 +96,8 @@ private:
     std::string SetHiperf(const std::string &traceName);
     bool CheckCounterId();
     void KillHiperfCmd();
+    void ConfigureSdkData(std::string itConfig);
+    void RunSdkServer(SdkDataRecv &sdkDataRecv);
 
 private:
     TaskInfo curTaskInfo;
@@ -99,6 +110,10 @@ private:
     const std::string baseOutPath = "/data/local/tmp/smartperf";
     long long startCaptuerTime = 0;
     int requestId = 1;
+    bool sdkData = false;
+    std::thread sdk;
+    std::vector<std::string> sdkvec;
+    GPU_Counter &gpuCounter = GPU_Counter::GetInstance();
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

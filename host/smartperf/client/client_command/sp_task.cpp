@@ -209,11 +209,114 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
+
+        if (itConfig.find("-gc") != std::string::npos || itConfig.find("-o") != std::string::npos) {
+            continue;
+        }
+
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
         if (profiler != nullptr) {
             std::map<std::string, std::string> itemMap = profiler->ItemData();
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
+    }
+}
+
+void SPTask::ConfigDataThread()
+{
+    for (std::string itConfig : curTaskInfo.taskConfig) {
+        if (!sdkData) {
+            ConfigureSdkData(itConfig);
+        }
+
+        if (itConfig.find("-gc") != std::string::npos) {
+            gpuCounter.StartCollect(GPU_Counter::GC_START);
+        }
+    }
+}
+
+void SPTask::ConfigureSdkData(std::string itConfig)
+{
+    if (itConfig.find("-o") != std::string::npos) {
+        sdkData = true;
+        OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
+        SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
+        sdkDataRecv.SetRunningState(true);
+        sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
+    }
+}
+
+void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
+{
+    sdkDataRecv.ServerThread(sdkvec);
+}
+
+void SPTask::StopSdkRecv()
+{
+    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    std::mutex mtx;
+    std::string title = "source,timestamp,eventName,enable,value\r";
+    outFile << title << std::endl;
+    mtx.lock();
+    for (const auto &item : sdkvec) {
+        outFile << item << std::endl;
+    }
+    mtx.unlock();
+    outFile.close();
+    OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
+    sdkData = false;
+    SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
+    sdkDataRecv.SetRunningState(false);
+    int listenFd = sdkDataRecv.GetListenFd();
+    if (listenFd != -1) {
+        close(listenFd);
+        sdkDataRecv.SetListenFd(-1);
+    }
+    if (sdk.joinable()) {
+        sdk.join();
+    }
+}
+
+void SPTask::DeleteSdkVec()
+{
+    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
+    std::ifstream infile(outSdkDataPath.c_str());
+    if (infile.good()) {
+        infile.close();
+        std::remove(outSdkDataPath.c_str());
+    }
+}
+
+void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
+{
+    long long lastTime = SPUtils::GetCurTime();
+    std::lock_guard<std::mutex> lock(mtx);
+    std::map<std::string, std::string> dataMap;
+    dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
+    std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
+    std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
+    GetItemData(dataMap);
+    std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+    CheckFutureFps(fpsResult, dataMap);
+    CheckFutureCpu(cpuResult, dataMap);
+    CheckFutureRam(ramResult, dataMap);
+    if (curTaskInfo.stuckInfo.isEffective) {
+        std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
+        if (!timeUsedMap.empty()) {
+            dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
+        }
+    }
+    SPData spdata;
+    spdata.values.insert(dataMap.begin(), dataMap.end());
+    vmap.push_back(spdata);
+    msgTask(MapToString(dataMap));
+    long long nextTime = SPUtils::GetCurTime();
+    long long costTime = nextTime - lastTime;
+    long long pTime = 998;
+    if (costTime < curTaskInfo.freq) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
     }
 }
 
@@ -232,41 +335,18 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
     vmap.clear();
+    sdkvec.clear();
+    DeleteSdkVec();
+    ConfigDataThread();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
-            long long lastTime = SPUtils::GetCurTime();
-            std::lock_guard<std::mutex> lock(mtx);
-            std::map<std::string, std::string> dataMap;
-            dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-            std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-            std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-            GetItemData(dataMap);
-            std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
-            CheckFutureFps(fpsResult, dataMap);
-            CheckFutureCpu(cpuResult, dataMap);
-            CheckFutureRam(ramResult, dataMap);
-            if (curTaskInfo.stuckInfo.isEffective) {
-                std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
-                if (!timeUsedMap.empty()) {
-                    dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
-                }
-            }
-            SPData spdata;
-            spdata.values.insert(dataMap.begin(), dataMap.end());
-            vmap.push_back(spdata);
-
-            msgTask(MapToString(dataMap));
-            long long nextTime = SPUtils::GetCurTime();
-            long long costTime = nextTime - lastTime;
-            long long pTime = 998;
-            if (costTime < curTaskInfo.freq) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
-            }
+            AsyncGetDataMap(msgTask);
         }
     });
     LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
+
 void SPTask::WritePath(std::string thisBasePath)
 {
     if (!SPUtils::FileAccess(thisBasePath)) {
@@ -275,49 +355,64 @@ void SPTask::WritePath(std::string thisBasePath)
     }
 }
 
-void SPTask::StopTask()
+void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
+    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+    WritePath(thisBasePath);
+    std::string outIndexpath = thisBasePath + "/t_index_info.csv";
+    long long endTime = SPUtils::GetCurTime();
+    long long testDuration = (endTime - startTime) / 1000;
+    std::string screenStr = SPUtils::GetScreen();
+    size_t pos3 = screenStr.find("=");
+    std::string refreshrate = screenStr.substr(pos3 + 1);
+    std::map<std::string, std::string> taskInfoMap = {
+        { "sessionId", curTaskInfo.sessionId },
+        { "taskId", curTaskInfo.sessionId },
+        { "appName", curTaskInfo.packageName },
+        { "packageName", curTaskInfo.packageName },
+        { "startTime", std::to_string(startTime) },
+        { "endTime", std::to_string(endTime) },
+        { "testDuration", std::to_string(testDuration) },
+        { "taskName", "testtask" },
+        { "board", "hw" },
+        { "target_fps", refreshrate },
+    };
+    std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
+    std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
+    std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo(isTcpMessage);
+    std::map<std::string, std::string> destMap;
+    destMap.insert(taskInfoMap.begin(), taskInfoMap.end());
+    destMap.insert(deviceInfo.begin(), deviceInfo.end());
+    destMap.insert(cpuInfo.begin(), cpuInfo.end());
+    destMap.insert(gpuInfo.begin(), gpuInfo.end());
+    OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
+    if (!vmap.empty()) {
+        vmap.erase(vmap.begin());
+    }
+    OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
+}
+void SPTask::StopGpuCounterRecv()
+{
+    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/gpu_counter.csv";
+    gpuCounter.StopCollect(outGpuCounterDataPath);
+}
+void SPTask::StopTask()
+{
     LOGI("SPTask::StopTask start");
 
     if (isInit) {
-        std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-        WritePath(thisBasePath);
-        std::string outIndexpath = thisBasePath + "/t_index_info.csv";
-        long long endTime = SPUtils::GetCurTime();
-        long long testDuration = (endTime - startTime) / 1000;
-        std::string screenStr = SPUtils::GetScreen();
-        size_t pos3 = screenStr.find("=");
-        std::string refreshrate = screenStr.substr(pos3 + 1);
-        std::map<std::string, std::string> taskInfoMap = {
-            { "sessionId", curTaskInfo.sessionId },
-            { "taskId", curTaskInfo.sessionId },
-            { "appName", curTaskInfo.packageName },
-            { "packageName", curTaskInfo.packageName },
-            { "startTime", std::to_string(startTime) },
-            { "endTime", std::to_string(endTime) },
-            { "testDuration", std::to_string(testDuration) },
-            { "taskName", "testtask" },
-            { "board", "hw" },
-            { "target_fps", refreshrate },
-        };
-        std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
-        std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
-        std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo(isTcpMessage);
-        std::map<std::string, std::string> destMap;
-        destMap.insert(taskInfoMap.begin(), taskInfoMap.end());
-        destMap.insert(deviceInfo.begin(), deviceInfo.end());
-        destMap.insert(cpuInfo.begin(), cpuInfo.end());
-        destMap.insert(gpuInfo.begin(), gpuInfo.end());
-        OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-        if (!vmap.empty()) {
-            vmap.erase(vmap.begin());
+        StopGetInfo();
+        if (sdkData) {
+            StopSdkRecv();
         }
-        OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
+        StopGpuCounterRecv();
     }
     isRunning = false;
     isInit = false;
     vmap.clear();
+    sdkvec.clear();
+    gpuCounter.GetGpuCounterData().clear();
     if (thread.joinable()) {
         thread.join();
     }
@@ -400,11 +495,6 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
     std::set<std::string> keys;
     for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
-    }
-
-    auto itr = keys.find("gc"); // editor tcp does not support gc
-    if (keys.end() != itr) {
-        keys.erase(itr);
     }
 
     return SPUtils::VeriyParameter(keys, str, errorInfo);
