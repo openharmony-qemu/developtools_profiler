@@ -23,6 +23,8 @@
 #include "unistd.h"
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
+#include "unistd.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 StartUpDelay::StartUpDelay() {}
@@ -135,13 +137,54 @@ bool StartUpDelay::GetSpClear()
     std::string str;
     SPUtils::LoadCmd("pidof SP_daemon", resultPid);
     std::string token;
-    size_t pos = 0;
-    while ((pos = resultPid.find(' ')) != std::string::npos) {
-        token = resultPid.substr(0, pos);
-        SPUtils::LoadCmd("kill " + token, str);
-        resultPid.erase(0, pos + 1);
+    std::string curPid = std::to_string(getpid());
+    std::stringstream ss(resultPid);
+
+    while (ss >> token) {
+        if (token != curPid) {
+            SPUtils::LoadCmd("kill " + token, str);
+        }
     }
+
     return false;
+}
+
+void StartUpDelay::ClearOldServer()
+{
+    std::string curPid = std::to_string(getpid());
+    std::string commandServer = "ps -ef | grep -v grep | grep 'SP_daemon -server'";
+    std::string resultPidServer;
+    std::string commandEditorServer = "ps -ef | grep -v grep | grep 'SP_daemon -editorServer'";
+    std::string resultPidEditorServer;
+
+    SPUtils::LoadCmdWithLinkBreak(commandServer, false, resultPidServer);
+    SPUtils::LoadCmdWithLinkBreak(commandEditorServer, false, resultPidEditorServer);
+
+    std::istringstream iss(resultPidServer + '\n' + resultPidEditorServer);
+    std::string resultLine;
+    std::string killResult;
+
+    while (std::getline(iss, resultLine)) {
+        if (resultLine.empty() || resultLine.find("sh -c") != std::string::npos) {
+            continue;
+        }
+
+        std::istringstream lineStream(resultLine);
+        std::string token;
+
+        int count = 0;
+        while (lineStream >> token) {
+            if (count == 1) {
+                break;
+            }
+            count++;
+        }
+
+        if (token != curPid) {
+            SPUtils::LoadCmd("kill " + token, killResult);
+            LOGI("Find old server: %s, killed.", token.c_str());
+        }
+    }
 }
 
 std::thread StartUpDelay::ThreadGetHisysIds() const

@@ -84,7 +84,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << smartPerfVersion << std::endl;
+        std::cout << "Version: " << smartPerfVersion << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
@@ -94,12 +94,15 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
     if (type == CommandHelp::CLEAR) {
         sd.GetSpClear();
     }
-    if (type == CommandHelp::SERVER) {
+    if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
+        sd.ClearOldServer();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = "taskset -p f " + pidStr;
         std::string result = "";
         SPUtils::LoadCmd(cmdStr, result);
-        daemon(0, 0);
+        if (type == CommandHelp::SERVER) {
+            daemon(0, 0);
+        }
         InitSomething();
         SpThreadSocket udpThreadSocket;
         SpThreadSocket udpExThreadSocket;
@@ -167,23 +170,15 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 
     for (size_t j = 0; j < configs.size(); j++) {
         std::string curParam = configs[j];
+
+        if (curParam.find("-gc") != std::string::npos) {
+            continue;
+        }
+
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
         if (profiler != nullptr) {
             std::map<std::string, std::string> data = profiler->ItemData();
             spMap.insert(data.cbegin(), data.cend());
-            auto cit = data.find("gpu_counter");
-            if (cit == data.end()) {
-                continue;
-            }
-
-            if (cit->second == "true") {
-                rc = 1;
-            } else {
-                cit = data.find("error");
-                errInfo = "gpu_counter error:";
-                errInfo += (cit != data.end()) ? cit->second : "run failed";
-                break;
-            }
         }
     }
 
@@ -202,10 +197,14 @@ std::string SmartPerfCommand::ExecCommand()
     ram.SetFirstFlag();
     int rc = 0;
     int index = 0;
-    bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
     const long long freq = 1000;
     num = num + 1;
+    for (std::string itConfig : configs) {
+        if (itConfig.find("-gc") != std::string::npos) {
+            gpuCounter.StartCollect(GPU_Counter::GC_START);
+        }
+    }
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -213,8 +212,6 @@ std::string SmartPerfCommand::ExecCommand()
         rc = GetItemInfo(spMap);
         if (rc == -1) {
             break;
-        } else if (rc == 1) {
-            callGpuCounterResult = true;
         }
         std::cout << std::endl;
         PrintMap(spMap, index);
@@ -231,13 +228,8 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
-    if (callGpuCounterResult) {
-        const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        PrintfExecCommand(data);
-        SPData spdata;
-        spdata.values.insert(data.begin(), data.end());
-        vmap.push_back(spdata);
-    }
+    std::string outGpuCounterDataPath = "/data/local/tmp/gpu_counter.csv";
+    gpuCounter.StopCollect(outGpuCounterDataPath);
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
