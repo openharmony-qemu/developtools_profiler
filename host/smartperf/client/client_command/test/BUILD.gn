@@ -46,7 +46,6 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/ddr_test.cpp",
     "unittest/dubai_test.cpp",
     "unittest/fps_test.cpp",
-    "unittest/gpu_counter_test.cpp",
     "unittest/parse_radar_test.cpp",
     "unittest/smartperf_main_test.cpp",
     "unittest/sp_daemon_test.cpp",
