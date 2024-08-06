@@ -29,6 +29,7 @@ ohos_unittest("sp_daemon_ut") {
     "../Dubai.cpp",
     "../FPS.cpp",
     "../GPU.cpp",
+    "../GPU_Counter.cpp",
     "../Network.cpp",
     "../Power.cpp",
     "../RAM.cpp",
