@@ -26,10 +26,8 @@ StackWriter::StackWriter(std::string name,
                          bool blocked)
     : pluginName_(name), blocked_(blocked)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "%s:%s %d [%d] [%d]", __func__, name.c_str(), size, smbFd, eventFd);
     shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
     if (shareMemoryBlock_ == nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:create shareMemoryBlock_ failed!", __func__);
     }
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     lastFlushTime_ = std::chrono::steady_clock::now();
@@ -37,7 +35,6 @@ StackWriter::StackWriter(std::string name,
 
 StackWriter::~StackWriter()
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "%s:destroy eventfd = %d!", __func__, eventNotifier_ ? eventNotifier_->GetFd() : -1);
     eventNotifier_ = nullptr;
     ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
     shareMemoryBlock_ = nullptr;
@@ -45,8 +42,6 @@ StackWriter::~StackWriter()
 
 void StackWriter::Report() const
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "%s:stats B: %" PRIu64 ", P: %d, W:%" PRIu64 ", F: %d", __func__,
-        bytesCount_.load(), bytesPending_.load(), writeCount_.load(), flushCount_.load());
 }
 
 void StackWriter::DoStats(long bytes)
