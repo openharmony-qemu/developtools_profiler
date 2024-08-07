@@ -111,7 +111,7 @@ private:
     static bool CheckAndStepArkFrame(const VirtualThread &thread, uintptr_t& pc, uintptr_t& fp, uintptr_t& sp);
 #endif
     bool DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &callStack, size_t maxStackLevel,
-                   int maxjsDepth = 0, bool jsReport = true);
+                   int maxjsDepth = 0, bool jsReport = false);
     static void DumpTableInfo(UnwindTableInfo &outTableInfo);
     static int FillUnwindTable(SymbolsFile *symbolsFile, std::shared_ptr<DfxMap> map, UnwindInfo *unwindInfoPtr,
                                uintptr_t pc, UnwindTableInfo& outTableInfo);
