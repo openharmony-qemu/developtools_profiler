@@ -11,7 +11,7 @@ const TAG = 'FrameRateTestPage'
 @Component
 struct FrameRateTestPage {
   @State private curAppList:Array<AppInfoItem> = globalThis.appList
-  @State selectApps: Array<String> = new Array<String>()
+  @State selectApps: String[] = []
   @State private collectConfigs: CollectItem[] = []
 
   aboutToAppear() {

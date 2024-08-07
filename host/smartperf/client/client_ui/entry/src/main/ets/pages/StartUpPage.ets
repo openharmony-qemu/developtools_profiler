@@ -15,7 +15,7 @@ const TAG = 'StartUpPage'
 @Component
 struct StartUpPage {
   @State private curAppList:Array<AppInfoItem> = globalThis.appList
-  @State selectApps:Array<String> = new Array<String>()
+  @State selectApps: String[] = []
   @State selectAppIcon: string = ''
   @State customPopup: boolean = true
   @State startType: boolean = false
