@@ -352,6 +352,9 @@ private:
 
         AdjustSymbols();
         HLOGD("%zu symbols loadded from elf '%s'.", symbols_.size(), elfPath.c_str());
+        for (auto& symbol: symbols_) {
+            HLOGD("symbol %s", symbol.ToDebugString().c_str());
+        }
         if (buildId_.empty()) {
             HLOGD("buildId not found from elf '%s'.", elfPath.c_str());
             // dont failed. some time the lib have not got the build id
@@ -730,6 +733,10 @@ public:
         }
         hapExtracted_ = true;
         HLOGD("the symbol file is %s.", filePath_.c_str());
+        if (StringEndsWith(filePath_, ".hap") && map_->IsMapExec()) {
+            HLOGD("map is exec not abc file , the symbol file is:%s", map_->name.c_str());
+            return false;
+        }
         if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")) {
             dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
             if (dfxExtractor_ == nullptr) {
@@ -783,10 +790,10 @@ public:
 
     bool LoadDebugInfo(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
+        HLOGD("map ptr:%p, map name:%s", map.get(), map->name.c_str());
         if (debugInfoLoaded_) {
             return true;
         }
-        debugInfoLoaded_ = true;
         if (!onRecording_) {
             return true;
         }
@@ -794,13 +801,14 @@ public:
         if (!IsHapAbc()) {
             ElfFileSymbols::LoadDebugInfo(map, "");
         }
-
+        debugInfoLoaded_ = true;
         debugInfoLoadResult_ = true;
         return true;
     }
 
     bool LoadSymbols(std::shared_ptr<DfxMap> map, const std::string &symbolFilePath) override
     {
+        HLOGD("map ptr:%p, map name:%s", map.get(), map->name.c_str());
         if (symbolsLoaded_ || !onRecording_) {
             return true;
         }
