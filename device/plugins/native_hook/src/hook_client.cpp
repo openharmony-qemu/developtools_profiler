@@ -196,7 +196,6 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
         ret = client->SendStackWithPayload(&tnameData,
                                            sizeof(BaseStackRawData) + strlen(tnameData.name) + 1, nullptr, 0);
         if (!ret) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "Send thread name failed!");
             return ret;
         }
     }
@@ -226,9 +225,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         StackRawData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
-        }
+        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
@@ -247,7 +244,6 @@ void* MallocHookStart(void* disableHookCallback)
     g_mallocTimes = 0;
     g_hookClient.reset();
     if (g_hookClient != nullptr) {
-        PROFILER_LOG_INFO(LOG_CORE, "hook already started");
         return nullptr;
     } else {
         g_ClientConfig.Reset();
@@ -255,7 +251,6 @@ void* MallocHookStart(void* disableHookCallback)
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start");
     return nullptr;
 }
 
@@ -264,7 +259,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     pthread_t threadStart;
     if (pthread_create(&threadStart, nullptr, MallocHookStart,
                        reinterpret_cast<void *>(disableHookCallback))) {
-        PROFILER_LOG_INFO(LOG_CORE, "create MallocHookStart fail");
         return false;
     }
     pthread_detach(threadStart);
@@ -300,10 +294,6 @@ void* ohos_release_on_end(void*)
     pthread_key_delete(g_hookTid);
     pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end, mallocTimes :%" PRIu64, g_mallocTimes.load());
-    COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
-    struct mallinfo2 miFinal = mallinfo2();
-    COMMON::PrintMallinfoLog("after hook(byte) => ", miFinal);
     return nullptr;
 }
 
@@ -1066,8 +1056,6 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             } else {
                 rawdata.tagId = GetTagId(holder, fileName);
             }
-        } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "Set mmap fd linked file name failed!");
         }
     }
     if (!UpdateThreadName(holder)) {
