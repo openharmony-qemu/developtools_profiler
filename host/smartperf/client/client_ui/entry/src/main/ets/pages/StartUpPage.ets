@@ -5,7 +5,7 @@ import prompt from '@system.prompt';
 import {dateNormal } from  '../common/utils/TimeUtils';
 import promptAction from '@ohos.promptAction'
 
-const TAG = "StartUpPage"
+const TAG = 'StartUpPage'
 
 /*
  *  测试配置页
@@ -16,15 +16,15 @@ const TAG = "StartUpPage"
 struct StartUpPage {
   @State private curAppList:Array<AppInfoItem> = globalThis.appList
   @State selectApps:Array<String> = new Array<String>()
-  @State selectAppIcon: string = ""
+  @State selectAppIcon: string = ''
   @State customPopup: boolean = true
   @State startType: boolean = false
-  @State private collectConfigs: Array<CollectItem> = new Array()
+  @State private collectConfigs: CollectItem[] = []
 
   aboutToAppear() {
     this.collectConfigs.push(
-      new CollectItem("冷启动时延", true, true),
-      new CollectItem("热启动时延", true, false)
+      new CollectItem('冷启动时延', true, true),
+      new CollectItem('热启动时延', true, false)
     )
   }
 
@@ -59,17 +59,17 @@ struct StartUpPage {
                         Radio({ value: 'checkbox1', group: 'checkboxGroup'})
                           .onChange((value: boolean) => {
                             if (value) {
-                              this.selectApps.push(appInfoItem.packageName + ":" + appInfoItem.appName)
+                              this.selectApps.push(appInfoItem.packageName + ':' + appInfoItem.appName)
                             }
                             if(!value) {
-                              this.delItemArray(appInfoItem.packageName + ":" + appInfoItem.appName, this.selectApps)
+                              this.delItemArray(appInfoItem.packageName + ':' + appInfoItem.appName, this.selectApps)
                             }
                           })
                           .width(10)
                           .height(10)
                         Text(appInfoItem.appName).fontSize(12).fontColor('#182431')
                       }
-                      .padding({top:"5vp"})
+                      .padding({top:'5vp'})
                     }
                     .width('70vp')
                     .height('70vp')
@@ -90,14 +90,14 @@ struct StartUpPage {
           .margin({ top: '0vp' })
           .scrollBarColor('#ffffff')
         }
-     }
+      }
       .height('59%')
       .width('94%')
       .backgroundColor('#ffffff')
       .borderRadius('10')
       .padding({ top: '0vp', right: '5vp', bottom: '10vp', left: '5vp'})
       .margin({ top: '12vp', right: 'auto', left: 'auto'})
-    // 冷热启动方式
+      // 冷热启动方式
       Row() {
         Row() {
           Text('冷启动')
@@ -141,51 +141,51 @@ struct StartUpPage {
         .border({ radius: '20vp'})
         .width('80%')
         .height('60vp')
-        .backgroundColor($r("app.color.colorPrimary"))
+        .backgroundColor($r('app.color.colorPrimary'))
         .margin({ top: '30vp' })
         .onClick(() => {
           if( this.selectApps.length == 0) {
-            prompt.showToast({ message: "请选择应用", duration: 1000})
+            prompt.showToast({ message: '请选择应用', duration: 1000})
             return
           }
           if (this.startType == false) {
-            prompt.showToast({ message: "请选择启动类型", duration: 1000})
+            prompt.showToast({ message: '请选择启动类型', duration: 1000})
             return
           }
           if (!globalThis.useDaemon) {
-            prompt.showToast({ message: "请确认daemon服务是否启动", duration: 1000})
+            prompt.showToast({ message: '请确认daemon服务是否启动', duration: 1000})
             return
           }
           globalThis.selectApps = this.selectApps
           let selectAppName = ''
           for (let i = 0; i < globalThis.selectApps.length; i++) {
-            selectAppName = this.selectApps[i].split(":")[1]
+            selectAppName = this.selectApps[i].split(':')[1]
           }
           let message = globalThis.startType == 'hotStart' ? '热启动' : '冷启动'
           promptAction.showDialog({
-            title: "测试方法",
+            title: '测试方法',
             message: `${message}为【自动测试】\n请确认被测应用「${selectAppName}」与SmartPerf应用图标在同一桌面上，否则会导致应用启动失败。`,
             buttons: [
-            {
-              text: '取消',
-              color: '#000000'
-            },
-            {
-              text: '确认',
-              color: '#1890ff'
-            }
+              {
+                text: '取消',
+                color: '#000000'
+              },
+              {
+                text: '确认',
+                color: '#1890ff'
+              }
             ]
           })
-          .then(data => {
-            if (data.index == 1) {
-            globalThis.CreateControlWindow()
-            router.back({ uri: "pages/MainPage"})
-            }
-          })
-          .catch(err =>{})
+            .then(data => {
+              if (data.index == 1) {
+                globalThis.CreateControlWindow()
+                router.back({ uri: 'pages/MainPage'})
+              }
+            })
+            .catch(err =>{})
         })
-        Divider().height('15%').width("80%").visibility(Visibility.Hidden)
-      }
+      Divider().height('15%').width('80%').visibility(Visibility.Hidden)
+    }
     .height('100%')
     .width('100%')
     .backgroundColor('#eeeeee')
@@ -200,6 +200,6 @@ struct StartUpPage {
       }
     }
     let curDate = dateNormal()
-    globalThis.testTaskName = "测试" + curDate
+    globalThis.testTaskName = '测试' + curDate
   }
 }

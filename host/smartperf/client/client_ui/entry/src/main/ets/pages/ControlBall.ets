@@ -21,8 +21,6 @@ struct ControlBall {
     tcp = socket.constructTCPSocketInstance()
     tcp.setExtraOptions({
       keepAlive: true,
-      OOBInline: true,
-      TCPNoDelay: true,
       socketLinger: {on: true, linger: 10},
       receiveBufferSize: 1000,
       sendBufferSize: 1000,
@@ -57,7 +55,7 @@ struct ControlBall {
       })
     }
     globalThis.showFloatingWindow = false
-    destroyFloatWindow("sp_controlWindow")
+    destroyFloatWindow('sp_controlWindow')
   }
 
   onStart() {
@@ -67,7 +65,7 @@ struct ControlBall {
     let timeoutDur = 20000
     for (let i = 0; i < globalThis.selectApps.length; i++) {
       let curApp = globalThis.selectApps[i]
-      let arrStr = curApp.split(":")
+      let arrStr = curApp.split(':')
       if(globalThis.startType == 'coldStart') {
         this.perFromInfo.name = arrStr[1] + '冷启动'
         timeoutDur = 20000
@@ -97,17 +95,17 @@ struct ControlBall {
     this.playerState = TaskStatus.task_stop
     let buffer = value.message
     let dataView = new DataView(buffer)
-    let str = ""
+    let str = ''
     for (let i = 0; i < dataView.byteLength; ++i) {
       str += String.fromCharCode(dataView.getUint8(i))
     }
-    if (str.indexOf(":") > 0) {
-      let arr = str.split(":")
+    if (str.indexOf(':') > 0) {
+      let arr = str.split(':')
       let value = arr[1]
       let date = new Date()
       this.perFromInfo.endTime = date.getTime().toString()
       this.perFromInfo.value = value.toString()
-      database.insertPerformData("t_perform_info", this.perFromInfo)
+      database.insertPerformData('t_perform_info', this.perFromInfo)
     }
     setTimeout(() => {
       this.onTcpClose()
@@ -135,35 +133,35 @@ struct ControlBall {
           .fill(Color.White)
           .fillOpacity(0)
           .opacity(0.8)
-          .border({radius: '90vp', width: '0.5vp', color: $r("app.color.color_333")})
+          .border({radius: '90vp', width: '0.5vp', color: $r('app.color.color_333')})
           .linearGradient({
             angle: 135,
             direction: GradientDirection.Left,
-            colors: [[$r("app.color.color_333"), 1.0], [$r("app.color.color_333"), 1.0]]
+            colors: [[$r('app.color.color_333'), 1.0], [$r('app.color.color_333'), 1.0]]
           })
         Text('初始化..')
           .fontSize(12)
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
           .gesture(
-          GestureGroup(GestureMode.Exclusive,
-          TapGesture({ count: 2})
-          .onAction(()=>{
-          }),
-          PanGesture({})
-          .onActionStart(() =>{
-          })
-          .onActionUpdate((event: GestureEvent) => {
-            this.offsetX = event.offsetX
-            this.offsetY = event.offsetY
-          })
-          .onActionEnd(() => {
-            this.MoveWindow(this.offsetX, this.offsetY)
-            this.SetWindowPosition(this.offsetX, this.offsetY)
-          })
-          ))
+            GestureGroup(GestureMode.Exclusive,
+              TapGesture({ count: 2})
+                .onAction(()=>{
+                }),
+              PanGesture({})
+                .onActionStart(() =>{
+                })
+                .onActionUpdate((event: GestureEvent) => {
+                  this.offsetX = event.offsetX
+                  this.offsetY = event.offsetY
+                })
+                .onActionEnd(() => {
+                  this.MoveWindow(this.offsetX, this.offsetY)
+                  this.SetWindowPosition(this.offsetX, this.offsetY)
+                })
+            ))
       }
       // 测试中
       if (this.playerState == TaskStatus.task_running) {
@@ -173,34 +171,34 @@ struct ControlBall {
           .fill(Color.White)
           .fillOpacity(0)
           .opacity(0.5)
-          .border({radius: '90vp', width: '0.5vp', color: $r("app.color.color_333")})
+          .border({radius: '90vp', width: '0.5vp', color: $r('app.color.color_333')})
           .linearGradient({
             angle: 135,
             direction: GradientDirection.Left,
-            colors: [[$r("app.color.color_333"), 0.7], [$r("app.color.color_333"), 0.7]]
+            colors: [[$r('app.color.color_333'), 0.7], [$r('app.color.color_333'), 0.7]]
           })
         Text('测试中..')
           .fontSize(12)
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
           .gesture(
             GestureGroup(GestureMode.Exclusive,
-            LongPressGesture({ fingers: 1, repeat: false, duration: 1000})
-            .onAction(()=>{
-            }),
-            PanGesture({})
-            .onActionStart(() =>{
-            })
-            .onActionUpdate((event: GestureEvent) => {
-              this.offsetX = event.offsetX
-              this.offsetY = event.offsetY
-            })
-            .onActionEnd(() => {
-              this.MoveWindow(this.offsetX, this.offsetY)
-              this.SetWindowPosition(this.offsetX, this.offsetY)
-            })
+              LongPressGesture({ fingers: 1, repeat: false, duration: 1000})
+                .onAction(()=>{
+                }),
+              PanGesture({})
+                .onActionStart(() =>{
+                })
+                .onActionUpdate((event: GestureEvent) => {
+                  this.offsetX = event.offsetX
+                  this.offsetY = event.offsetY
+                })
+                .onActionEnd(() => {
+                  this.MoveWindow(this.offsetX, this.offsetY)
+                  this.SetWindowPosition(this.offsetX, this.offsetY)
+                })
             )
           )
       }
@@ -211,16 +209,16 @@ struct ControlBall {
           .fill(Color.White)
           .fillOpacity(0)
           .opacity(0.8)
-          .border({radius: '90vp', width: '0.5vp', color: $r("app.color.color_333")})
+          .border({radius: '90vp', width: '0.5vp', color: $r('app.color.color_333')})
           .linearGradient({
             angle: 135,
             direction: GradientDirection.Left,
-            colors: [[$r("app.color.color_333"), 1.0], [$r("app.color.color_333"), 1.0]]
+            colors: [[$r('app.color.color_333'), 1.0], [$r('app.color.color_333'), 1.0]]
           })
         Text('测试完成，保存数据中..')
           .fontSize(12)
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
       }
@@ -231,16 +229,16 @@ struct ControlBall {
           .fill(Color.White)
           .fillOpacity(0)
           .opacity(0.5)
-          .border({radius: '90vp', width: '0.5vp', color: $r("app.color.color_333")})
+          .border({radius: '90vp', width: '0.5vp', color: $r('app.color.color_333')})
           .linearGradient({
             angle: 135,
             direction: GradientDirection.Left,
-            colors: [[$r("app.color.color_333"), 0.7], [$r("app.color.color_333"), 0.7]]
+            colors: [[$r('app.color.color_333'), 0.7], [$r('app.color.color_333'), 0.7]]
           })
         Text('请求超时，请确认daemon服务是否启动')
           .fontSize(12)
           .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+          .fontColor($r('app.color.color_fff'))
           .width('100%')
           .height('100%')
       }

@@ -4,7 +4,7 @@ import { StartTestTitleComponent } from '../common/ui/StartTestTitleComponent';
 import prompt from '@system.prompt';
 import promptAction from '@ohos.promptAction'
 
-const TAG = "FrameRateTestPage"
+const TAG = 'FrameRateTestPage'
 
 
 @Entry
@@ -12,14 +12,14 @@ const TAG = "FrameRateTestPage"
 struct FrameRateTestPage {
   @State private curAppList:Array<AppInfoItem> = globalThis.appList
   @State selectApps: Array<String> = new Array<String>()
-  @State private collectConfigs: Array<CollectItem> = new Array()
+  @State private collectConfigs: CollectItem[] = []
 
   aboutToAppear() {
     this.collectConfigs.push(
-      new CollectItem("启动帧率", true, true),
-      new CollectItem("退出帧率", true, false),
-      new CollectItem("切换帧率", true, false),
-      new CollectItem("滑动帧率", true, false)
+      new CollectItem('启动帧率', true, true),
+      new CollectItem('退出帧率', true, false),
+      new CollectItem('切换帧率', true, false),
+      new CollectItem('滑动帧率', true, false)
     )
   }
 
@@ -54,17 +54,17 @@ struct FrameRateTestPage {
                         Radio({ value: 'Radio1', group: 'radioGroup1'})
                           .onChange((value: boolean) => {
                             if (value) {
-                              this.selectApps.push(appInfoItem.packageName + ":" + appInfoItem.appName)
+                              this.selectApps.push(appInfoItem.packageName + ':' + appInfoItem.appName)
                             }
                             if(!value) {
-                              this.delItemArray(appInfoItem.packageName + ":" + appInfoItem.appName, this.selectApps)
+                              this.delItemArray(appInfoItem.packageName + ':' + appInfoItem.appName, this.selectApps)
                             }
                           })
                           .width(10)
                           .height(10)
                         Text(appInfoItem.appName).fontSize(12).fontColor('#182431')
                       }
-                      .padding({top:"5vp"})
+                      .padding({top:'5vp'})
                     }
                     .width('70vp')
                     .height('70vp')
@@ -85,7 +85,7 @@ struct FrameRateTestPage {
           .margin({ top: '0vp' })
           .scrollBarColor('#ffffff')
         }
-     }
+      }
       .height('59%')
       .width('94%')
       .backgroundColor('#ffffff')
@@ -146,7 +146,7 @@ struct FrameRateTestPage {
           }
           .margin({left:'10vp'})
         }
-         .margin({top:'5vp'})
+        .margin({top:'5vp'})
       }
       .height('80vp')
       .width('94%')
@@ -167,20 +167,20 @@ struct FrameRateTestPage {
         .margin({ top: '30vp' })
         .onClick(() => {
           if( this.selectApps.length == 0) {
-            prompt.showToast({ message: "请选择应用", duration: 1000})
+            prompt.showToast({ message: '请选择应用', duration: 1000})
             return
           }
           if (!globalThis.FrameRateType) {
-            prompt.showToast({ message: "请选择帧率测试类型", duration: 1000})
+            prompt.showToast({ message: '请选择帧率测试类型', duration: 1000})
             return
           }
           if (!globalThis.useDaemon) {
-            prompt.showToast({ message: "请确认daemon服务是否启动", duration: 1000})
+            prompt.showToast({ message: '请确认daemon服务是否启动', duration: 1000})
             return
           }
           globalThis.selectApps = this.selectApps
           for (let i = 0; i < globalThis.selectApps.length; i++) {
-            globalThis.FrameRateName = this.selectApps[i].split(":")[1]
+            globalThis.FrameRateName = this.selectApps[i].split(':')[1]
           }
           let message = ''
           if ( globalThis.FrameRateType === 'startFrame') {
@@ -194,32 +194,32 @@ struct FrameRateTestPage {
           }
           try {
             promptAction.showDialog({
-              title: "测试方法",
+              title: '测试方法',
               message: message,
               buttons: [
-              {
-                text: '取消',
-                color: '#000000'
-              },
-              {
-                text: '确认',
-                color: '#1890ff'
-              }
+                {
+                  text: '取消',
+                  color: '#000000'
+                },
+                {
+                  text: '确认',
+                  color: '#1890ff'
+                }
               ]
             })
-            .then(data => {
-              if (data.index == 1) {
-              globalThis.CreateFrameRateWindow()
-              router.back({ uri: "pages/MainPage"})
-              }
-            })
-            .catch(err =>{})
+              .then(data => {
+                if (data.index == 1) {
+                  globalThis.CreateFrameRateWindow()
+                  router.back({ uri: 'pages/MainPage'})
+                }
+              })
+              .catch(err =>{})
           } catch (error) {
-             console.log(error)
+            console.log(error)
           }
         })
-        Divider().height('15%').width("80%").visibility(Visibility.Hidden)
-      }
+      Divider().height('15%').width('80%').visibility(Visibility.Hidden)
+    }
     .height('100%')
     .width('100%')
     .backgroundColor('#eeeeee')

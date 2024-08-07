@@ -40,8 +40,6 @@ struct FrameRateBall {
     tcp = socket.constructTCPSocketInstance()
     tcp.setExtraOptions({
       keepAlive: true,
-      OOBInline: true,
-      TCPNoDelay: true,
       socketLinger: {on: true, linger: 10},
       receiveBufferSize: 1000,
       sendBufferSize: 1000,
@@ -79,7 +77,7 @@ struct FrameRateBall {
       tcp.off('message')
     }
     globalThis.showFloatingWindow = false
-    destroyFloatWindow("sp_FrameRateWindow")
+    destroyFloatWindow('sp_FrameRateWindow')
   }
 
   onStart() {
@@ -88,7 +86,7 @@ struct FrameRateBall {
     this.frameRateInfo.startTime = date.getTime().toString()
     for (let i = 0; i < globalThis.selectApps.length; i++) {
       let curApp = globalThis.selectApps[i]
-      let arrStr = curApp.split(":")
+      let arrStr = curApp.split(':')
       this.frameRateInfo.name = arrStr[1]
       let commandName = ''
       if(globalThis.FrameRateType == 'startFrame') {
@@ -131,17 +129,17 @@ struct FrameRateBall {
     this.playerState = TaskStatus.task_stop
     let buffer = value.message
     let dataView = new DataView(buffer)
-    let str = ""
+    let str = ''
     for (let i = 0; i < dataView.byteLength; ++i) {
       str += String.fromCharCode(dataView.getUint8(i))
     }
-    if (str.indexOf(":") > 0) {
-      let arr = str.split(":")
+    if (str.indexOf(':') > 0) {
+      let arr = str.split(':')
       let value = arr[1]
       let date = new Date()
       this.frameRateInfo.endTime = date.getTime().toString()
-      this.frameRateInfo.value = Number(value.split("fps")[0]) === -1 ? value.split("fps")[0] : Number(value.split("fps")[0]).toFixed(2)
-      database.insertFrameRateData("t_FrameRate_info", this.frameRateInfo)
+      this.frameRateInfo.value = Number(value.split('fps')[0]) === -1 ? value.split('fps')[0] : Number(value.split('fps')[0]).toFixed(2)
+      database.insertFrameRateData('t_FrameRate_info', this.frameRateInfo)
     }
     setTimeout(() => {
       this.onTcpClose()
@@ -158,30 +156,30 @@ struct FrameRateBall {
         Column() {
           if (globalThis.FrameRateType === 'startFrame') {
             Text('开始测试')
-            .fontSize(12)
-            .fontColor($r("app.color.color_fff"))
+              .fontSize(12)
+              .fontColor($r('app.color.color_fff'))
           } else {
             Text(`请手动打开「${globalThis.FrameRateName}」后，点击开始测试`)
               .fontSize(12)
-              .fontColor($r("app.color.color_fff"))
+              .fontColor($r('app.color.color_fff'))
               .margin({bottom: 2})
             Button('开始测试')
-            .width('80vp')
-            .height('25vp')
-            .fontSize(12)
-            .backgroundColor($r("app.color.colorPrimary"))
-            .fontColor($r("app.color.color_fff"))
-            .gesture(
-              GestureGroup(GestureMode.Exclusive,
-               TapGesture({ count: 1})
-                 .onAction(() => {
-                   if (globalThis.FrameRateType !== 'startFrame') {
-                     this.onStart()
-                     this.countdown()
-                   }
-                 })
-                 )
-            )
+              .width('80vp')
+              .height('25vp')
+              .fontSize(12)
+              .backgroundColor($r('app.color.colorPrimary'))
+              .fontColor($r('app.color.color_fff'))
+              .gesture(
+                GestureGroup(GestureMode.Exclusive,
+                  TapGesture({ count: 1})
+                    .onAction(() => {
+                      if (globalThis.FrameRateType !== 'startFrame') {
+                        this.onStart()
+                        this.countdown()
+                      }
+                    })
+                )
+              )
           }
         }
         .justifyContent(FlexAlign.Center)
@@ -197,40 +195,40 @@ struct FrameRateBall {
             Row() {
               Text('测试中')
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
+                .fontColor($r('app.color.color_fff'))
               Text('0' + this.startTimerNum)
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
-                .backgroundColor($r("app.color.colorPrimary"))
+                .fontColor($r('app.color.color_fff'))
+                .backgroundColor($r('app.color.colorPrimary'))
                 .borderRadius(4)
                 .margin({ left: '2vp'})
                 .padding({ top: '0vp', right: '3vp', bottom: '0vp', left: '3vp'})
             }
           } else {
-            if (globalThis.FrameRateType == "ExitFrame") {
+            if (globalThis.FrameRateType == 'ExitFrame') {
               Text(`请在6s内手动退出「${globalThis.FrameRateName}」`)
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
+                .fontColor($r('app.color.color_fff'))
                 .margin({ bottom: 2})
-            } else if (globalThis.FrameRateType == "SwitchingFrame") {
+            } else if (globalThis.FrameRateType == 'SwitchingFrame') {
               Text(`请在6s内手动切换页面一次`)
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
+                .fontColor($r('app.color.color_fff'))
                 .margin({ bottom: 2})
-            } else if (globalThis.FrameRateType == "SlidingFrame") {
+            } else if (globalThis.FrameRateType == 'SlidingFrame') {
               Text(`请在6s内手动上滑或下滑页面一次`)
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
+                .fontColor($r('app.color.color_fff'))
                 .margin({ bottom: 2})
             }
             Row() {
-              Text("测试中")
+              Text('测试中')
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
+                .fontColor($r('app.color.color_fff'))
               Text('0' + this.timerNum)
                 .fontSize(12)
-                .fontColor($r("app.color.color_fff"))
-                .backgroundColor($r("app.color.colorPrimary"))
+                .fontColor($r('app.color.color_fff'))
+                .backgroundColor($r('app.color.colorPrimary'))
                 .borderRadius(4)
                 .margin({ left: '2vp'})
                 .padding({ top: '0vp', right: '3vp', bottom: '0vp', left: '3vp'})
@@ -239,7 +237,7 @@ struct FrameRateBall {
         }
         .justifyContent(FlexAlign.Center)
         .padding({ right: 10, left: 10, top:6, bottom: 6})
-        .backgroundColor($r("app.color.color_333"))
+        .backgroundColor($r('app.color.color_333'))
         .opacity(0.8)
         .borderRadius(4)
       }
@@ -248,12 +246,12 @@ struct FrameRateBall {
         Column() {
           Text('测试完成，保存数据中..')
             .fontSize(12)
-            .fontColor($r("app.color.color_fff"))
+            .fontColor($r('app.color.color_fff'))
             .textAlign(TextAlign.Center)
         }
         .justifyContent(FlexAlign.Center)
         .padding({ right: 10, left: 10, top:6, bottom: 6})
-        .backgroundColor($r("app.color.color_333"))
+        .backgroundColor($r('app.color.color_333'))
         .opacity(0.8)
         .borderRadius(4)
       }
@@ -261,13 +259,13 @@ struct FrameRateBall {
       if (this.playerState == TaskStatus.task_Timeout) {
         Column() {
           Text('请求超时，请确认daemon服务是否启动')
-          .fontSize(12)
-          .textAlign(TextAlign.Center)
-          .fontColor($r("app.color.color_fff"))
+            .fontSize(12)
+            .textAlign(TextAlign.Center)
+            .fontColor($r('app.color.color_fff'))
         }
         .justifyContent(FlexAlign.Center)
         .padding({ right: 10, left: 10, top:6, bottom: 6})
-        .backgroundColor($r("app.color.color_333"))
+        .backgroundColor($r('app.color.color_333'))
         .opacity(0.8)
         .borderRadius(4)
       }
