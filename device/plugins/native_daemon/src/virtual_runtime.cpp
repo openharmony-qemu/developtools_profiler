@@ -37,6 +37,9 @@ namespace {
 std::atomic<uint64_t> callStackErrCnt = 0;
 constexpr uint32_t CALL_STACK_ERROR_TIMES = 10;
 constexpr uint32_t SYMBOL_FILES_SIZE = 512;
+constexpr uint32_t SECOND_INDEX = 2;
+constexpr uint32_t THIRD_INDEX = 3;
+constexpr uint32_t INFO_SIZE = 4;
 }
 // we unable to access 'swapper' from /proc/0/
 void VirtualRuntime::ClearMaps()
@@ -69,6 +72,7 @@ std::string VirtualRuntime::ReadThreadName(pid_t tid)
 
 VirtualThread &VirtualRuntime::UpdateThread(pid_t pid, pid_t tid, const std::string name)
 {
+    pid_ = pid;
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
 #endif
@@ -274,7 +278,7 @@ void VirtualRuntime::DelSymbolFile(const std::string& fileName)
     symbolsFiles_.erase(fileName);
 }
 
-void VirtualRuntime::UpdateSymbols(std::string fileName)
+void VirtualRuntime::UpdateSymbols(std::string fileName, std::shared_ptr<DfxMap> map)
 {
     HLOGD("try to find symbols for file: %s", fileName.c_str());
 #ifdef HIPERF_DEBUG_TIME
@@ -286,8 +290,8 @@ void VirtualRuntime::UpdateSymbols(std::string fileName)
     }
 
     // found it by name
-    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName);
-
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName, pid_);
+    symbolsFile->SetMapsInfo(map);
     // set sybol path If it exists
     if (symbolsPaths_.size() > 0) {
         symbolsFile->setSymbolsFilePath(symbolsPaths_); // also load from search path
@@ -541,9 +545,15 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
     }
 }
 
-void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags,
-                                   uint64_t offset, const std::string& filePath)
+void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
+    if (info.size() != INFO_SIZE) {
+        return;
+    }
+    uint64_t begin = info[0];
+    uint64_t length = info[1];
+    uint64_t flags = info[SECOND_INDEX];
+    uint64_t offset = info[THIRD_INDEX];
     if (!(flags & MAP_FIXED) || mapsCache_.empty()) {
         if (mapsCache_.find(begin) != mapsCache_.end()) {
             return;
@@ -553,7 +563,11 @@ void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t fla
         auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
-        UpdateSymbols(filePath);
+        UpdateSymbols(filePath, mapItem);
+        if ((!hookConfig_.fp_unwind())) {
+            auto &thread = UpdateThread(pid, tid);
+            thread.ParseMap(processMaps_, false);
+        }
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
         if (curMapsIter != mapsCache_.end()) {

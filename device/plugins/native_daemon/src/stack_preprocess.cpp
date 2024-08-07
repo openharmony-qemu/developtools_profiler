@@ -240,8 +240,9 @@ bool StackPreprocess::HandleNoStackEvent(RawStackPtr& rawData)
                     mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
                     mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
         std::lock_guard<std::mutex> guard(mtx_);
-        runtime_instance->HandleMapInfo(reinterpret_cast<uint64_t>(mmapRawData->addr),
-            mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset, filePath);
+        runtime_instance->HandleMapInfo({reinterpret_cast<uint64_t>(mmapRawData->addr),
+            mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset}, filePath,
+            rawData->stackConext->pid, rawData->stackConext->tid);
         flushBasicData_ = true;
     } else if (rawData->stackConext->type == THREAD_NAME_MSG) {
         std::string threadName = reinterpret_cast<char*>(rawData->data);
