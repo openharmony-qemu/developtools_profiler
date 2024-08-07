@@ -69,6 +69,9 @@ public:
         std::shared_ptr<StackDataRepeater> stackData = nullptr;
         std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
         bool isRecordAccurately = false;
+        std::array<std::shared_ptr<StackDataRepeater::RawStack>, CACHE_ARRAY_SIZE> rawDataArray = {};
+        uint32_t rawStackCount = 0;
+        void FlushStackArray();
     };
     HookManager() = default;
     ~HookManager();
@@ -121,6 +124,8 @@ public:
         return pid_;
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
+    void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
+                            std::shared_ptr<StackDataRepeater::RawStack>& rawStack);
 
 private:
     int pid_ = -1; // for SA mode

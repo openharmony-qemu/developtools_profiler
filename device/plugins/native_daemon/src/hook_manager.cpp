@@ -300,7 +300,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->eventPoller->AddFileDescriptor(
             ctx->eventNotifier->GetFd(),
-            [this, ctx] { this->ReadShareMemory(ctx); });
+            [this, &ctx] { this->ReadShareMemory(ctx); });
     }
     if (isProtobufSerialize_ || isSaService_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
@@ -413,14 +413,42 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     return true;
 }
 
+void HookManager::HookManagerCtx::FlushStackArray()
+{
+    if (rawDataArray.size() > 0) {
+        if (!stackData->PutRawStackArray(rawDataArray)) {
+            PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray error");
+        }
+        rawStackCount = 0;
+        rawDataArray = {};
+    }
+}
+
+void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
+                                     std::shared_ptr<StackDataRepeater::RawStack>& rawStack)
+{
+    hookCtx->rawDataArray[hookCtx->rawStackCount] = rawStack;
+    ++hookCtx->rawStackCount;
+    if (hookCtx->rawStackCount == CACHE_ARRAY_SIZE) {
+        hookCtx->FlushStackArray();
+    }
+}
+
 void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx)
 {
     CHECK_NOTNULL(hookCtx->shareMemoryBlock, NO_RETVAL, "smb is null!");
     hookCtx->eventNotifier->Take();
     int rawRealSize = 0;
     while (true) {
-        auto rawStack = std::make_shared<StackDataRepeater::RawStack>();
+        auto rawStack = hookCtx->stackData->GetRawStack();
         bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+            if (size == sizeof(uint64_t)) {
+                if (data) {
+                    rawStack->freeData = *(reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data)));
+                }
+                rawStack->baseStackData = nullptr;
+                return true;
+            }
             CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
 
             rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
@@ -465,6 +493,10 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         if (!ret) {
             break;
         }
+        if (rawStack->baseStackData == nullptr) {
+            FlushRawStackArray(hookCtx, rawStack);
+            continue;
+        }
         if (rawStack->stackConext->type == MEMORY_TAG) {
             std::string tagName = reinterpret_cast<char*>(rawStack->data);
             hookCtx->stackPreprocess->SaveMemTag(rawStack->stackConext->tagId, tagName);
@@ -484,9 +516,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         } else if (rawStack->stackConext->type == NMD_MSG) {
             continue;
         }
-        if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
-            break;
-        }
+        FlushRawStackArray(hookCtx, rawStack);
     }
 }
 
@@ -540,6 +570,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
+        item->FlushStackArray();
         CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
