@@ -500,7 +500,7 @@ use expendLimit to setup how may frame match is needs
 #if defined(HAVE_LIBUNWINDER) && HAVE_LIBUNWINDER
 
 bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &callStack,
-                          size_t maxStackLevel, int maxjsDepth)
+                          size_t maxStackLevel, int maxjsDepth, bool jsReport)
 {
     UnwindInfo unwindInfo = {
         .thread = thread,
