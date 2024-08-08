@@ -367,7 +367,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_string_compressed(true);
     }
 
-    if (hookConfig_.js_stack_report() > 0 && hookConfig_.max_js_stack_depth() == 0) {
+    if (hookConfig_.js_stack_report() > 0 && hookConfig_.max_js_stack_depth() == 0 && hookConfig_.fp_unwind()) {
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
 
