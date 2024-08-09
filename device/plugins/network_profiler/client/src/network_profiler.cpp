@@ -28,13 +28,13 @@ CachedHandle g_cachedHandle;
 #define EXPECTANTLY(exp) (__builtin_expect(!!(exp), true))
 #define UNEXPECTANTLY(exp) (__builtin_expect(!!(exp), false))
 
-std::mutex g_cacheMtx;
+std::mutex g_cachedMtx;
 std::mutex g_mtx;
 std::once_flag g_flag;
 thread_local std::string g_threadName;
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
 static std::atomic<bool> g_serverClosing{false};
-static bool waitingConnect_{true};
+static std::atomic<bool> waitingConnect_{false};
 static std::vector<OHOS::Developtools::Profiler::NetworkProfiler::CachedData> cachedData_;
 static std::atomic<bool> enable_{false};
 static std::shared_ptr<OHOS::Developtools::Profiler::NetworkProfilerSocketClient> socketClent_{nullptr};
@@ -112,6 +112,7 @@ void NetworkProfiler::Enable()
     if (enable_) {
         return;
     }
+    waitingConnect_ = true;
     socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this,
     reinterpret_cast<void (*)()>(&ServiceCloseCallback));
     if (!socketClent_->ClientConnectState()) {
@@ -129,7 +130,7 @@ void NetworkProfiler::ServiceCloseCallback()
         Disable();
         g_serverClosing = false;
         g_changed = 0;
-        waitingConnect_ = true;
+        waitingConnect_ = false;
         cachedData_.clear();
     }
 }
@@ -155,19 +156,21 @@ void NetworkProfiler::SendCachedData()
                          cachedData_[index].cachedDataSize);
     }
     waitingConnect_ = false;
+    cachedData_.clear();
 }
 
 void NetworkProfiler::NetworkProfiling(const uint8_t type, const char* data, size_t dataSize)
 {
-    if (waitingConnect_) {
-        std::unique_lock<std::mutex> lock(g_cachedMtx);
+    if (EXPECTANTLY((!enable_))) {
         if (waitingConnect_) {
-            cachedData_.push_back({type, data, dataSize});
+            std::unique_lock<std::mutex> lock(g_cachedMtx);
+            if (waitingConnect_) {
+                cachedData_.push_back({type, data, dataSize});
+                return;
+            }
+        } else {
             return;
         }
-    }
-    if (EXPECTANTLY((!enable_))) {
-        return;
     }
     NetworkEvent event;
     event.type = type;
