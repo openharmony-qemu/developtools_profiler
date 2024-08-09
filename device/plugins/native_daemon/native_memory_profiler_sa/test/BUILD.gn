@@ -40,7 +40,7 @@ config("native_memory_profiler_sa_config") {
     "NATIVEDAEMON_USE_CALLSTACK",
   ]
   defines += [ "target_cpu_${target_cpu}" ]
-  if (use_jemalloc) {
+  if (musl_use_jemalloc) {
     defines += [ "USE_JEMALLOC" ]
   }
 
