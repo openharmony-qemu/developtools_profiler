@@ -138,7 +138,7 @@ ohos_executable("native_daemon") {
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
 
   if (hiprofiler_use_libunwinder) {
-    external_deps += [ "faultloggerd:libunwinder_static" ]
+    external_deps += [ "faultloggerd:libunwinder" ]
   }
 
   if (current_toolchain != host_toolchain) {
