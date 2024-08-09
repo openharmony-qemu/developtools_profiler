@@ -28,11 +28,14 @@ CachedHandle g_cachedHandle;
 #define EXPECTANTLY(exp) (__builtin_expect(!!(exp), true))
 #define UNEXPECTANTLY(exp) (__builtin_expect(!!(exp), false))
 
+std::mutex g_cacheMtx;
 std::mutex g_mtx;
 std::once_flag g_flag;
 thread_local std::string g_threadName;
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
 static std::atomic<bool> g_serverClosing{false};
+static bool waitingConnect_{true};
+static std::vector<OHOS::Developtools::Profiler::NetworkProfiler::CachedData> cachedData_;
 static std::atomic<bool> enable_{false};
 static std::shared_ptr<OHOS::Developtools::Profiler::NetworkProfilerSocketClient> socketClent_{nullptr};
 static std::string processName_;
@@ -74,7 +77,7 @@ bool NetworkProfiler::IsProfilerEnable()
         return false;
     }
     CheckNetworkProfilerParam();
-    return enable_;
+    return enable_ || waitingConnect_;
 }
 
 void NetworkProfiler::CheckNetworkProfilerParam()
@@ -126,6 +129,8 @@ void NetworkProfiler::ServiceCloseCallback()
         Disable();
         g_serverClosing = false;
         g_changed = 0;
+        waitingConnect_ = true;
+        cachedData_.clear();
     }
 }
 
@@ -142,8 +147,25 @@ void NetworkProfiler::Disable()
     enable_ = false;
 }
 
+void NetworkProfiler::SendCachedData()
+{
+    std::unique_lock<std::mutex> lock(g_cachedMtx);
+    for (size_t index = 0; index < cachedData_.size(); ++index) {
+        NetworkProfiling(cachedData_[index].cachedType, cachedData_[index].cachedData,
+                         cachedData_[index].cachedDataSize);
+    }
+    waitingConnect_ = false;
+}
+
 void NetworkProfiler::NetworkProfiling(const uint8_t type, const char* data, size_t dataSize)
 {
+    if (waitingConnect_) {
+        std::unique_lock<std::mutex> lock(g_cachedMtx);
+        if (waitingConnect_) {
+            cachedData_.push_back({type, data, dataSize});
+            return;
+        }
+    }
     if (EXPECTANTLY((!enable_))) {
         return;
     }

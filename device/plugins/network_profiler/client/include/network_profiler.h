@@ -28,6 +28,11 @@
 namespace OHOS::Developtools::Profiler {
 class EXPORT_API NetworkProfiler {
 public:
+    struct CachedData {
+        uint8_t cachedType;
+        const char* cachedData;
+        size_t cachedDataSize;
+    };
     static void Disable();
     static void ServiceCloseCallback();
     static NetworkProfiler* GetInstance();
@@ -41,6 +46,7 @@ public:
     }
 
     void SetEnableFlag(bool flag);
+    void SendCachedData();
 
 private:
     NetworkProfiler();
