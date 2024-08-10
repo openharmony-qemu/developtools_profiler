@@ -71,8 +71,9 @@ bool NetworkProfilerSocketClient::ProtocolProc(SocketContext &context, uint32_t 
     std::string smbName = "networkProfilerSmb_" + std::to_string(pid_);
     profiler_->SetClockId(config->clock);
     writer_ = std::make_shared<NetworkProfilerWriter>(smbName, config->shmSize, smbFd_, eventFd_, config->block);
-    profiler_->SendCachedData();
     profiler_->SetEnableFlag(true);
+    profiler_->SetWaitingFlag(false);
+    profiler_->SendCachedData();
     return true;
 }
 

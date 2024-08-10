@@ -70,6 +70,11 @@ void NetworkProfiler::SetEnableFlag(bool flag)
     enable_ = flag;
 }
 
+void NetworkProfiler::SetWaitingFlag(bool flag)
+{
+    waitingConnect_ = flag;
+}
+
 bool NetworkProfiler::IsProfilerEnable()
 {
     if (g_serverClosing) {
@@ -116,6 +121,7 @@ void NetworkProfiler::Enable()
     socketClent_ = std::make_shared<NetworkProfilerSocketClient>(pid_, this,
     reinterpret_cast<void (*)()>(&ServiceCloseCallback));
     if (!socketClent_->ClientConnectState()) {
+        waitingConnect_ = false;
         PROFILER_LOG_ERROR(LOG_CORE, "network profiler start failed");
         return;
     }
@@ -164,13 +170,9 @@ void NetworkProfiler::NetworkProfiling(const uint8_t type, const char* data, siz
     if (EXPECTANTLY((!enable_))) {
         if (waitingConnect_) {
             std::unique_lock<std::mutex> lock(g_cachedMtx);
-            if (waitingConnect_) {
-                cachedData_.push_back({type, data, dataSize});
-                return;
-            }
-        } else {
-            return;
+            cachedData_.push_back({type, data, dataSize});
         }
+        return;
     }
     NetworkEvent event;
     event.type = type;

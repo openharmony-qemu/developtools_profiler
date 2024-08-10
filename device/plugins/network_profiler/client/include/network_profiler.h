@@ -44,7 +44,7 @@ public:
     {
         clockType_ = type;
     }
-
+    void SetWaitingFlag(bool flag);
     void SetEnableFlag(bool flag);
     void SendCachedData();
 
