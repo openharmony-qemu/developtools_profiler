@@ -161,7 +161,6 @@ void NetworkProfiler::SendCachedData()
         NetworkProfiling(cachedData_[index].cachedType, cachedData_[index].cachedData,
                          cachedData_[index].cachedDataSize);
     }
-    waitingConnect_ = false;
     cachedData_.clear();
 }
 
