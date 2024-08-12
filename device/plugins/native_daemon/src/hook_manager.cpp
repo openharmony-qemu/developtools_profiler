@@ -228,6 +228,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
+    clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
