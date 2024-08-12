@@ -82,11 +82,12 @@ public:
     void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
+    void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
     void WritePath(std::string thisBasePath);
     void ConfigDataThread();
     void StopSdkRecv();
     void StopGpuCounterRecv();
-    void DeleteSdkVec();
+    void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
 

@@ -213,6 +213,9 @@ std::string SmartPerfCommand::ExecCommand()
         if (rc == -1) {
             break;
         }
+        std::map<std::string, std::string> gpuCounterDataMap;
+        gpuCounter.GetGpuRealtimeData(gpuCounterDataMap);
+        spMap.insert(gpuCounterDataMap.begin(), gpuCounterDataMap.end());
         std::cout << std::endl;
         PrintMap(spMap, index);
         std::cout << std::endl;

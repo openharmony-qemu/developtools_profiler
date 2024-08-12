@@ -20,6 +20,7 @@
 #include "vector"
 #include "sp_profiler.h"
 #include "thread"
+#include "mutex"
 
 namespace OHOS {
     namespace SmartPerf {
@@ -46,12 +47,17 @@ namespace OHOS {
             void StartCollect(GcCollectType type);
             void StopCollect(std::string path);
             std::vector<std::string> &GetGpuCounterData();
+            std::mutex &GetRealtimeDataLock();
+            std::map<std::string, std::string> &GetGpuCounterRealtimeDataMap();
+            void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
         private:
             GPU_Counter() {};
             GPU_Counter(const GPU_Counter &);
             GPU_Counter &operator = (const GPU_Counter &);
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;    //保存 std::vector<OHOS::GameService::GpuPerfInfo> gpuCounter; 的数据
+            std::mutex realtimeDataLock;
+            std::map<std::string, std::string> gpuCounterRealtimeDataMap;
             void SaveData(std::string path);
         };
     };

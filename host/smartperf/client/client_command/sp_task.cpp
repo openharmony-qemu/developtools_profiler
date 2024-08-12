@@ -256,7 +256,6 @@ void SPTask::StopSdkRecv()
     std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
     std::ofstream outFile;
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
-    std::mutex mtx;
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
     mtx.lock();
@@ -279,13 +278,18 @@ void SPTask::StopSdkRecv()
     }
 }
 
-void SPTask::DeleteSdkVec()
+void SPTask::InitDataFile()
 {
-    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
-    std::ifstream infile(outSdkDataPath.c_str());
-    if (infile.good()) {
-        infile.close();
-        std::remove(outSdkDataPath.c_str());
+    std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
+    std::string filePath;
+    std::ifstream infile;
+    for (const auto &file: files) {
+        filePath = baseOutPath + "/" + curTaskInfo.sessionId + "/" + file;
+        infile = std::ifstream(filePath.c_str());
+        if (infile.good()) {
+            infile.close();
+            std::remove(filePath.c_str());
+        }
     }
 }
 
@@ -311,6 +315,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
     vmap.push_back(spdata);
+    gpuCounter.GetGpuRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
     long long nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
@@ -336,7 +341,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     }
     vmap.clear();
     sdkvec.clear();
-    DeleteSdkVec();
+    InitDataFile();
     ConfigDataThread();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
@@ -363,6 +368,7 @@ void SPTask::StopGetInfo()
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
+    const std::string gpuDataVersion = "1.1";
     std::string screenStr = SPUtils::GetScreen();
     size_t pos3 = screenStr.find("=");
     std::string refreshrate = screenStr.substr(pos3 + 1);
@@ -377,6 +383,7 @@ void SPTask::StopGetInfo()
         { "taskName", "testtask" },
         { "board", "hw" },
         { "target_fps", refreshrate },
+        { "gpuDataVersion", gpuDataVersion },
     };
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);

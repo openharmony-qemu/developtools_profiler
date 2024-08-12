@@ -24,6 +24,9 @@ namespace OHOS {
 namespace SmartPerf {
 class DDRTest : public testing::Test {
 public:
+    static void SetUpTestCase() {}
+    static void TearDownTestCase() {}
+    
     void SetUp() {}
     void TearDown() {}
 };

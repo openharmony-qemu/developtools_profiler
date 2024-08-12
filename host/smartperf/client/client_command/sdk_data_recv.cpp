@@ -146,11 +146,12 @@ namespace OHOS {
             params.serverFd = CreateOhSocketServer(OH_DATA_PORT);
             if (params.serverFd < 0) {
                 LOGE("Create server failed.");
-                exit(0);
+                return;
             }
             if (pipe(params.pipFd) == -1) {
                 LOGE("Create service failed.");
-                exit(0);
+                close(params.serverFd);
+                return;
             }
             listenFd = params.pipFd[1];
             RunServerThread(dataVec, params);
@@ -160,7 +161,7 @@ namespace OHOS {
         {
             while (collectRunring) {
                 SetUpFdSet(params);
-                if (select(maxFd + 1, &readFds, NULL, NULL, NULL) <= 0) {
+                if (select(maxFd + 1, &readFds, nullptr, nullptr, nullptr) <= 0) {
                     continue;
                 }
                 for (int i = 0; i < OH_SOCKET_MAX; i++) {
@@ -200,7 +201,7 @@ namespace OHOS {
                 return;
             }
 
-            int fd = accept(params.serverFd, NULL, NULL);
+            int fd = accept(params.serverFd, nullptr, nullptr);
             if (fd < 0) {
                 return;
             }
