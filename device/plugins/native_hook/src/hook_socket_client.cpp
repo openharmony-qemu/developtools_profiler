@@ -63,7 +63,6 @@ static void NmdWriteStat(void *arg, const char *buf)
     size_t nmdTimeLen = getNmdTime.size();
     if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos,
                   getNmdTime.c_str(), nmdTimeLen) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy time failed");
         return;
     }
     opt->pos += nmdTimeLen;
@@ -73,7 +72,6 @@ static void NmdWriteStat(void *arg, const char *buf)
         return;
     }
     if (strncpy_s(opt->buf + opt->pos, MEMCHECK_DETAILINFO_MAXSIZE - opt->pos, buf, len) != EOK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NmdWriteStat copy failed");
         return;
     }
     opt->pos += len;
@@ -93,7 +91,6 @@ HookSocketClient::~HookSocketClient()
 {
     if (stackWriter_) {
         stackWriter_->Flush();
-        PROFILER_LOG_INFO(LOG_CORE, "~HookSocketClient Flush()");
     }
     unixSocketClient_ = nullptr;
     stackWriter_ = nullptr;
@@ -116,23 +113,21 @@ bool HookSocketClient::Connect(const std::string addrname)
 
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
-    CHECK_TRUE(size == sizeof(ClientConfig), true, "HookSocketClient::config config size not match = %u\n", size);
+    if (size != sizeof(ClientConfig)) {
+        return true;
+    }
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
-    PROFILER_LOG_INFO(LOG_CORE, "recv hook client config:%s\n", configStr.c_str());
     sampler_->InitSampling(config_->sampleInterval);
-    PROFILER_LOG_INFO(LOG_CORE, "%s sample interval %" PRIu64 "", __func__, sampler_->GetSampleInterval());
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
     struct mallinfo2 mi = mallinfo2();
-    COMMON::PrintMallinfoLog("stackWriter init(byte) => ", mi);
     nmdType_ = config_->nmdType;
     if (nmdType_ == 0) {
-        PROFILER_LOG_INFO(LOG_CORE, "sending nmd info before hook");
         SendNmdInfo();
     }
     return true;
@@ -207,7 +202,9 @@ bool HookSocketClient::SendNmdInfo()
         return false;
     }
     void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
-    CHECK_NOTNULL(nmdBuf, false, "HookSocketClient::SendNmdInfo failed, nmdBuf malloc failed");
+    if (nmdBuf == nullptr) {
+        return false;
+    }
     struct OptArg opt = {0, reinterpret_cast<char*>(nmdBuf) };
     malloc_stats_print(NmdWriteStat, &opt, "a");
     StackRawData rawdata = {{{{0}}}};
