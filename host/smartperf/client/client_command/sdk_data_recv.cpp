@@ -129,21 +129,26 @@ namespace OHOS {
             LOGI("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
             receiveBuffer = receiveBuf;
 
-            while (true) {
+            bool processFlag = true;
+            while (processFlag) {
                 size_t start = receiveBuffer.find('{');
                 if (start == std::string::npos) {
-                    break;
+                    processFlag = false;
                 }
 
                 size_t end = receiveBuffer.find('}', start);
                 if (end == std::string::npos) {
-                    break;
+                    processFlag = false;
                 }
 
                 std::string message = receiveBuffer.substr(start + 1, end - start - 1);
                 resStr += ProcessData(message, params);
 
                 receiveBuffer.erase(0, end + 1);
+
+                if (receiveBuffer.size() <= 2) {
+                    processFlag = false;
+                }
             }
 
             if (!resStr.empty() && resStr.back() == '\n') {
