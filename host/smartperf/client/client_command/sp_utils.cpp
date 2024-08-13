@@ -83,7 +83,7 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
 
 bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
-    std::string cmdExc = cmd;
+    const std::string cmdExc = cmd;
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd == nullptr) {
         return false;

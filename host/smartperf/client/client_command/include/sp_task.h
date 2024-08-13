@@ -99,6 +99,7 @@ private:
     void KillHiperfCmd();
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
+    void ResetSdkParam();
 
 private:
     TaskInfo curTaskInfo;

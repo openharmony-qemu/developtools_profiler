@@ -38,6 +38,11 @@
 #include "securec.h"
 namespace OHOS {
     namespace SmartPerf {
+        SdkDataRecv::SdkDataRecv()
+        {
+            FD_ZERO(&readFds);
+        }
+
         std::map<std::string, std::string> SdkDataRecv::ItemData()
         {
             return std::map<std::string, std::string>();
@@ -80,29 +85,9 @@ namespace OHOS {
             LOGD("Listen port %d success, fd is %d", socketFd);
             return socketFd;
         }
-
-        std::string SdkDataRecv::OhDataReceive(int index, ServerParams &params)
+        std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
         {
-            char receiveBuf[MSG_MAX_LEN];
-            int readLen = 0;
-            if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
-                close(params.receiveFd[index]);
-                params.receiveFd[index] = -1;
-                return "";
-            }
-            LOGI("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
-            std::string receiveStr(receiveBuf);
-            size_t pos = receiveStr.find_first_of('{');
-            while (pos != std::string::npos) {
-                receiveStr.erase(pos, 1);
-                pos = receiveStr.find_first_of('{', pos);
-            }
-            pos = receiveStr.find_first_of('}');
-            while (pos != std::string::npos) {
-                receiveStr.erase(pos, 1);
-                pos = receiveStr.find_first_of('}', pos);
-            }
-            std::stringstream ss(receiveStr);
+            std::stringstream ss(message);
             std::string item;
             std::string source;
             std::string timestamp;
@@ -127,8 +112,44 @@ namespace OHOS {
                     value = second;
                 }
             }
-            item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r";
+            item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r\n";
             return item;
+        }
+
+        std::string SdkDataRecv::OhDataReceive(int index, ServerParams &params)
+        {
+            char receiveBuf[MSG_MAX_LEN];
+            std::string resStr;
+            int readLen = 0;
+            if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
+                close(params.receiveFd[index]);
+                params.receiveFd[index] = -1;
+                return "";
+            }
+            LOGI("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
+            receiveBuffer = receiveBuf;
+
+            while (true) {
+                size_t start = receiveBuffer.find('{');
+                if (start == std::string::npos) {
+                    break;
+                }
+
+                size_t end = receiveBuffer.find('}', start);
+                if (end == std::string::npos) {
+                    break;
+                }
+
+                std::string message = receiveBuffer.substr(start + 1, end - start - 1);
+                resStr += ProcessData(message, params);
+
+                receiveBuffer.erase(0, end + 1);
+            }
+
+            if (!resStr.empty() && resStr.back() == '\n') {
+                resStr.pop_back();
+            }
+            return resStr;
         }
 
         void SdkDataRecv::SetRunningState(bool state)

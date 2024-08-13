@@ -53,6 +53,7 @@ namespace OHOS {
             }
             static int CreateOhSocketServer(int basePort);
             std::string OhDataReceive(int index, ServerParams &params);
+            std::string ProcessData(std::string message, ServerParams &params);
             void ServerThread(std::vector<std::string> &dataVec);
 
             void SetRunningState(bool state);
@@ -64,7 +65,7 @@ namespace OHOS {
             void SetUpFdSet(ServerParams &params);
             void CleanUpResources(ServerParams &params);
         private:
-            SdkDataRecv() {};
+            SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);
             SdkDataRecv &operator = (const SdkDataRecv &);
             int listenFd = -1;
@@ -73,6 +74,7 @@ namespace OHOS {
             bool collectRunring  = false;
             int maxFd = 0;
             fd_set readFds;
+            std::string receiveBuffer = "";
         };
     }
 }

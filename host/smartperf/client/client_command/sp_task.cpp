@@ -251,19 +251,8 @@ void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
     sdkDataRecv.ServerThread(sdkvec);
 }
 
-void SPTask::StopSdkRecv()
+void SPTask::ResetSdkParam()
 {
-    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
-    std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
-    std::string title = "source,timestamp,eventName,enable,value\r";
-    outFile << title << std::endl;
-    mtx.lock();
-    for (const auto &item : sdkvec) {
-        outFile << item << std::endl;
-    }
-    mtx.unlock();
-    outFile.close();
     OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
     sdkData = false;
     SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
@@ -276,15 +265,61 @@ void SPTask::StopSdkRecv()
     if (sdk.joinable()) {
         sdk.join();
     }
+};
+
+void SPTask::StopSdkRecv()
+{
+    std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
+    char* outSdkDataDirChar = realpath(outSdkDataDir.c_str(), nullptr);
+    if (outSdkDataDirChar == nullptr) {
+        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
+        ResetSdkParam();
+        return;
+    }
+    std::string outSdkDataPath;
+    outSdkDataPath = outSdkDataDirChar;
+    outSdkDataPath = outSdkDataPath + "/sdk_data.csv";
+    if (fopen(outSdkDataPath.c_str(), "w") == nullptr) {
+        LOGE("data %s open failed", outSdkDataPath.c_str());
+        ResetSdkParam();
+        return;
+    }
+
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    std::string title = "source,timestamp,eventName,enable,value\r";
+    outFile << title << std::endl;
+    mtx.lock();
+    for (const auto &item : sdkvec) {
+        outFile << item << std::endl;
+    }
+    mtx.unlock();
+    outFile.close();
+
+    outSdkDataDirChar = nullptr;
+    ResetSdkParam();
 }
 
 void SPTask::InitDataFile()
 {
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
+    std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
     std::string filePath;
     std::ifstream infile;
+
+    char* fileDirChar = realpath(fileDir.c_str(), nullptr);
+    if (fileDirChar == nullptr) {
+        LOGE("data dir %s is nullptr", fileDir.c_str());
+        return;
+    }
+
     for (const auto &file: files) {
-        filePath = baseOutPath + "/" + curTaskInfo.sessionId + "/" + file;
+        filePath = fileDirChar;
+        filePath = filePath + "/" + file;
+        if (fopen(filePath.c_str(), "w") == nullptr) {
+            LOGE("data %s open failed", filePath.c_str());
+            continue;
+        }
         infile = std::ifstream(filePath.c_str());
         if (infile.good()) {
             infile.close();
