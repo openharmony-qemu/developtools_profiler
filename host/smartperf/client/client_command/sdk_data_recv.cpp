@@ -146,7 +146,8 @@ namespace OHOS {
 
                 receiveBuffer.erase(0, end + 1);
 
-                if (receiveBuffer.size() <= 2) {
+                const int BUFFER_SIZE_CHECK = 2;
+                if (receiveBuffer.size() <= BUFFER_SIZE_CHECK) {
                     processFlag = false;
                 }
             }
