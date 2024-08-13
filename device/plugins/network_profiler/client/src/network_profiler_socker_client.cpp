@@ -19,7 +19,6 @@
 #include "network_profiler.h"
 
 namespace {
-std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
 
 } // namespace
@@ -73,6 +72,8 @@ bool NetworkProfilerSocketClient::ProtocolProc(SocketContext &context, uint32_t 
     profiler_->SetClockId(config->clock);
     writer_ = std::make_shared<NetworkProfilerWriter>(smbName, config->shmSize, smbFd_, eventFd_, config->block);
     profiler_->SetEnableFlag(true);
+    profiler_->SetWaitingFlag(false);
+    profiler_->SendCachedData();
     return true;
 }
 
@@ -96,9 +97,7 @@ bool NetworkProfilerSocketClient::SendNetworkProfilerData(const void* data, size
         DisableHook();
         return false;
     }
-    if (++g_flushCount % flushInterval_ == 0) {
-        writer_->Flush();
-    }
+    writer_->Flush();
     return true;
 }
 
