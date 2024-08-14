@@ -108,8 +108,8 @@ private:
     std::vector<SPData> vmap;
     bool isRunning = false;
     bool isInit = false;
-    std::mutex reatTimeDataMtx;
-    std::mutex reportDataMtx;
+    std::mutex asyncDataMtx;
+    std::mutex sdkDataMtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
     long long startCaptuerTime = 0;
     int requestId = 1;

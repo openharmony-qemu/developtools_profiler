@@ -282,7 +282,7 @@ void SPTask::StopSdkRecv()
         ResetSdkParam();
         return;
     }
-    std::lock_guard<std::mutex> lock(reportDataMtx);
+    std::lock_guard<std::mutex> lock(sdkDataMtx);
     std::ofstream outFile;
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
@@ -326,7 +326,7 @@ void SPTask::InitDataFile()
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    std::lock_guard<std::mutex> lock(reatTimeDataMtx);
+    std::lock_guard<std::mutex> lock(asyncDataMtx);
     std::map<std::string, std::string> dataMap;
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
