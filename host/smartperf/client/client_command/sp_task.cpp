@@ -282,16 +282,14 @@ void SPTask::StopSdkRecv()
         ResetSdkParam();
         return;
     }
-
+    std::lock_guard<std::mutex> lock(mtx);
     std::ofstream outFile;
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
-    mtx.lock();
     for (const auto &item : sdkvec) {
         outFile << item << std::endl;
     }
-    mtx.unlock();
     outFile.close();
 
     ResetSdkParam();
