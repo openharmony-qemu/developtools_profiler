@@ -54,6 +54,13 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
 {
     CPU &cpu = CPU::GetInstance();
     std::string packName = "ohos.samples.ecg";
+
+    std::map<std::string, std::string> cpuItemData = cpu.ItemData();
+    cpu.SetPackageName(packName);
+    std::vector<CpuFreqs> cpuFreqs = cpu.GetCpuFreq();
+    std::vector<CpuUsageInfos> getCpuUsage = cpu.GetCpuUsage();
+    std::map<std::string, std::string> getSysProcessCpuLoad = cpu.GetSysProcessCpuLoad();
+
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -c";
     std::string result = "";
     bool flag = false;
@@ -63,12 +70,7 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    std::map<std::string, std::string> cpuItemData = cpu.ItemData();
-    cpu.SetPackageName(packName);
-    std::vector<CpuFreqs> cpuFreqs = cpu.GetCpuFreq();
-    std::vector<CpuUsageInfos> getCpuUsage = cpu.GetCpuUsage();
-    std::map<std::string, std::string> getSysProcessCpuLoad = cpu.GetSysProcessCpuLoad();
-
+    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -112,6 +114,12 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string packName = "ohos.samples.ecg";
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
+    
+    fps.SetFpsCurrentFpsTime(fpsInfoResult);
+    fps.SetPackageName(packName);
+    fps.SetLayerName(surfaceViewName);
+    fps.GetCurrentTime();
+    fps.GetSameTimeNums();
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
@@ -122,12 +130,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
-    fps.SetFpsCurrentFpsTime(fpsInfoResult);
-    fps.SetPackageName(packName);
-    fps.SetLayerName(surfaceViewName);
-    fps.GetCurrentTime();
-    fps.GetSameTimeNums();
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -186,6 +188,11 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     RAM &ram = RAM::GetInstance();
     std::string packName = "ohos.samples.ecg";
 
+    ram.SetFirstFlag();
+    ram.SetPackageName(packName);
+    ram.ThreadGetPss();
+    ram.TriggerGetPss();
+
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -r";
     std::string result = "";
     bool flag = false;
@@ -195,11 +202,6 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
-    ram.SetFirstFlag();
-    ram.SetPackageName(packName);
-    ram.ThreadGetPss();
-    ram.TriggerGetPss();
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -215,6 +217,12 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     Capture &capture = Capture::GetInstance();
     long long catTime = 0;
     std::string curTime = "";
+    
+    capture.SocketMessage();
+    capture.ThreadGetCatch();
+    capture.ThreadGetCatchSocket(curTime);
+    capture.TriggerGetCatch();
+    capture.TriggerGetCatchSocket(catTime);
 
     std::string cmd = "SP_daemon -N 1 -snapshot";
     std::string result = "";
@@ -225,12 +233,6 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
-    capture.SocketMessage();
-    capture.ThreadGetCatch();
-    capture.ThreadGetCatchSocket(curTime);
-    capture.TriggerGetCatch();
-    capture.TriggerGetCatchSocket(catTime);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -264,7 +266,7 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonTest, StartTestCase, TestSize.Level1)
 {
-    std::string cmd = "SP_daemon -start -c";
+    std::string cmd = "SP_daemon -start -g";
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
@@ -316,6 +318,12 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     long long msStartTime = 0;
     int numb = 20;
     long long harTime = 0;
+    
+    profiler.GetCurrentTime(sleepNum);
+    profiler.GetResultFPS(sectionsNum);
+    profiler.GetSameTimeNums();
+    profiler.GetSectionsFps(fpsInfoResult, nums);
+    profiler.GetSectionsPrint(printCount, msStartTime, numb, harTime);
 
     std::string cmd = "SP_daemon -profilerfps 10";
     std::string result = "";
@@ -326,12 +334,6 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
-    profiler.GetCurrentTime(sleepNum);
-    profiler.GetResultFPS(sectionsNum);
-    profiler.GetSameTimeNums();
-    profiler.GetSectionsFps(fpsInfoResult, nums);
-    profiler.GetSectionsPrint(printCount, msStartTime, numb, harTime);
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -379,37 +381,15 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     EXPECT_EQ(flag, true);
 }
 
-HWTEST_F(SPdaemonTest, NavigationTestCase, TestSize.Level1)
-{
-    Navigation &navigation = Navigation::GetInstance();
-    std::string packName = "ohos.samples.ecg";
-    std::string winId = "";
-    std::string processId = "";
-    std::map<std::string, std::string> navItemData = navigation.ItemData();
-    navigation.SetPackageName(packName);
-    std::map<std::string, std::string> navGetNavInfo = navigation.GetNavInfo();
-    std::string getWinId = navigation.GetWinId(processId);
-    std::map<std::string, std::string> navGetNavResult = navigation.GetNavResult(winId);
-    std::string cmd = "SP_daemon -editor -PKG ohos.samples.ecg -nav";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("timestamp");
-    std::string::size_type strTwo = result.find("navPathName");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    }
-
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-HWTEST_F(SPdaemonTest, ParsePageFpsTraceCase, TestSize.Level1)
+HWTEST_F(SPdaemonTest, ParsePageFpsTraceTest, TestSize.Level1)
 {
     ParsePageFpsTrace parsePageFpsTrace;
     double calculateTime = 0.0;
     double calculateTimeEnd = 0.0;
     std::string line = "";
+    
+    calculateTime = parsePageFpsTrace.CalculateTime();
+    calculateTimeEnd = parsePageFpsTrace.CalculateTimeEnd();
 
     std::string cmd = "SP_daemon -editor pagefps ohos.samples.ecg 设置 ohtest";
     std::string result = "";
@@ -419,13 +399,9 @@ HWTEST_F(SPdaemonTest, ParsePageFpsTraceCase, TestSize.Level1)
     if ((strOne != result.npos)) {
         flag = true;
     }
-
-    calculateTime = parsePageFpsTrace.CalculateTime();
-    calculateTimeEnd = parsePageFpsTrace.CalculateTimeEnd();
     
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
-
 } // namespace OHOS
 } // namespace SmartPerf

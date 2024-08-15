@@ -32,7 +32,24 @@ namespace OHOS {
 
         std::vector<std::string> &GPU_Counter::GetGpuCounterData()
         {
-            return gpuCounterData;
+            static std::vector<std::string> defaultVec;
+            return defaultVec;
+        }
+
+        std::mutex &GPU_Counter::GetRealtimeDataLock()
+        {
+            static std::mutex defaultMutex;
+            return defaultMutex;
+        }
+
+        std::map<std::string, std::string> &GPU_Counter::GetGpuCounterRealtimeDataMap()
+        {
+            static std::map<std::string, std::string> defaultMap;
+            return defaultMap;
+        }
+
+        void GPU_Counter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)
+        {
         }
 
         void GPU_Counter::StopCollect(std::string path)

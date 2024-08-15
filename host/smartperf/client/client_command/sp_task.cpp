@@ -251,20 +251,8 @@ void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
     sdkDataRecv.ServerThread(sdkvec);
 }
 
-void SPTask::StopSdkRecv()
+void SPTask::ResetSdkParam()
 {
-    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
-    std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
-    std::mutex mtx;
-    std::string title = "source,timestamp,eventName,enable,value\r";
-    outFile << title << std::endl;
-    mtx.lock();
-    for (const auto &item : sdkvec) {
-        outFile << item << std::endl;
-    }
-    mtx.unlock();
-    outFile.close();
     OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
     sdkData = false;
     SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
@@ -277,22 +265,68 @@ void SPTask::StopSdkRecv()
     if (sdk.joinable()) {
         sdk.join();
     }
+};
+
+void SPTask::StopSdkRecv()
+{
+    std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
+    char outSdkDataDirChar[PATH_MAX] = {0x00};
+    if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
+        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
+        ResetSdkParam();
+        return;
+    }
+    std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
+    if (fopen(outSdkDataPath.c_str(), "w") == nullptr) {
+        LOGE("data %s open failed", outSdkDataPath.c_str());
+        ResetSdkParam();
+        return;
+    }
+    std::lock_guard<std::mutex> lock(sdkDataMtx);
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    std::string title = "source,timestamp,eventName,enable,value\r";
+    outFile << title << std::endl;
+    for (const auto &item : sdkvec) {
+        outFile << item << std::endl;
+    }
+    outFile.close();
+
+    ResetSdkParam();
 }
 
-void SPTask::DeleteSdkVec()
+void SPTask::InitDataFile()
 {
-    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
-    std::ifstream infile(outSdkDataPath.c_str());
-    if (infile.good()) {
-        infile.close();
-        std::remove(outSdkDataPath.c_str());
+    std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
+    std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
+    std::string filePath;
+    std::ifstream infile;
+
+    char fileDirChar[PATH_MAX] = {0x00};
+    if (realpath(fileDir.c_str(), fileDirChar) == nullptr) {
+        LOGE("data dir %s is nullptr", fileDir.c_str());
+        return;
+    }
+
+    for (const auto &file: files) {
+        filePath = fileDirChar;
+        filePath = filePath + "/" + file;
+        if (fopen(filePath.c_str(), "w") == nullptr) {
+            LOGE("data %s open failed", filePath.c_str());
+            continue;
+        }
+        infile = std::ifstream(filePath.c_str());
+        if (infile.good()) {
+            infile.close();
+            std::remove(filePath.c_str());
+        }
     }
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    std::lock_guard<std::mutex> lock(mtx);
+    std::lock_guard<std::mutex> lock(asyncDataMtx);
     std::map<std::string, std::string> dataMap;
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -311,6 +345,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
     vmap.push_back(spdata);
+    gpuCounter.GetGpuRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
     long long nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
@@ -336,7 +371,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     }
     vmap.clear();
     sdkvec.clear();
-    DeleteSdkVec();
+    InitDataFile();
     ConfigDataThread();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
@@ -363,6 +398,7 @@ void SPTask::StopGetInfo()
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
+    const std::string gpuDataVersion = "1.1";
     std::string screenStr = SPUtils::GetScreen();
     size_t pos3 = screenStr.find("=");
     std::string refreshrate = screenStr.substr(pos3 + 1);
@@ -377,6 +413,7 @@ void SPTask::StopGetInfo()
         { "taskName", "testtask" },
         { "board", "hw" },
         { "target_fps", refreshrate },
+        { "gpuDataVersion", gpuDataVersion },
     };
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);

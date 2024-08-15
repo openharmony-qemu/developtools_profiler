@@ -82,11 +82,12 @@ public:
     void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
+    void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
     void WritePath(std::string thisBasePath);
     void ConfigDataThread();
     void StopSdkRecv();
     void StopGpuCounterRecv();
-    void DeleteSdkVec();
+    void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
 
@@ -98,6 +99,7 @@ private:
     void KillHiperfCmd();
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
+    void ResetSdkParam();
 
 private:
     TaskInfo curTaskInfo;
@@ -106,7 +108,8 @@ private:
     std::vector<SPData> vmap;
     bool isRunning = false;
     bool isInit = false;
-    std::mutex mtx;
+    std::mutex asyncDataMtx;
+    std::mutex sdkDataMtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
     long long startCaptuerTime = 0;
     int requestId = 1;
