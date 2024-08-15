@@ -171,11 +171,11 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
+        LOGI("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
-    refresh = true;
-    lastTime = -1;
+    prevScreenTimestamp = -1;
     LOGI("dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
@@ -188,46 +188,45 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("dump time: %s", str.c_str());
-        frameReadyTime = 0;
+        curScreenTimestamp = 0;
         std::stringstream sstream;
         sstream << tmp;
-        sstream >> frameReadyTime;
-        if (frameReadyTime == 0) {
+        sstream >> curScreenTimestamp;
+        if (curScreenTimestamp == 0) {
             continue;
         }
-        if (lastReadyTime >= frameReadyTime) {
-            lastReadyTime = -1;
-            continue;
-        }
-        GetSameTimeNums();
+        CalcFpsAndJitters();
     }
     pclose(fp);
     LOGI("Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
     return fpsInfo;
 }
 
-void FPS::GetSameTimeNums()
+void FPS::CalcFpsAndJitters()
 {
-    std::string onScreenTime = std::to_string(frameReadyTime / mod);
+    std::string onScreenTime = std::to_string(curScreenTimestamp / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
-        fpsInfo.currTimeStamps.push_back(frameReadyTime);
+        fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
         long long jitter;
-        if (lastTime != -1) {
-            jitter = frameReadyTime - lastTime;
+        if (prevScreenTimestamp != -1) {
+            jitter = curScreenTimestamp - prevScreenTimestamp;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
-                jitter = frameReadyTime - lastFrameReadyTime;
+            if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+                jitter = curScreenTimestamp - prevlastScreenTimestamp;
+                fpsInfo.jitters.push_back(jitter);
+            } else {
+                jitter = curScreenTimestamp - curScreenTimestamp / mod * mod;
                 fpsInfo.jitters.push_back(jitter);
             }
         }
-        lastTime = frameReadyTime;
-        lastFrameReadyTime = frameReadyTime;
+        prevScreenTimestamp = curScreenTimestamp;
+        prevlastScreenTimestamp = curScreenTimestamp;
     }
 }
 

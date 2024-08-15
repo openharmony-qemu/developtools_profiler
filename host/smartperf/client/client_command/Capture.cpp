@@ -65,7 +65,7 @@ void Capture::ThreadGetCatch() const
 {
     const std::string curTime = std::to_string(SPUtils::GetCurTime());
     const std::string captureDir = "/data/local/tmp/capture";
-    const std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
+    const std::string savePath = captureDir + "/screenCap_" + curTime + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
         if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
@@ -92,7 +92,7 @@ void Capture::ThreadGetCatch() const
 void Capture::ThreadGetCatchSocket(const std::string &curTime) const
 {
     std::string captureDir = "/data/local/tmp/capture";
-    std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
+    std::string savePath = captureDir + "/screenCap_" + curTime + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
         if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
