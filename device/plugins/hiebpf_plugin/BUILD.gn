@@ -72,9 +72,6 @@ group("ebpf_targets") {
     "tools:ebpf_converter",
   ]
   if (!use_libfuzzer) {
-    deps += [
-      "tools:ebpf_converter(${host_toolchain})",
-      "tools:ebpf_converter(//build/toolchain/mingw:mingw_x86_64)",
-    ]
+    deps += [ "tools:ebpf_converter(${host_toolchain})" ]
   }
 }
