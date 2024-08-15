@@ -270,7 +270,7 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
 std::string ProfilerFPS::GetSurface()
 {
     std::string cmdResult;
-    std::string cmdStringHidumper = "aa dump -l";
+    std::string cmdStringHidumper = "hidumper -s 10 -a sur";
     std::string cmdStringGrep = "face | grep sur";
     std::string cmdStringFace = "face";
     SPUtils::LoadCmd(cmdStringHidumper + cmdStringGrep + cmdStringFace, cmdResult);
@@ -333,7 +333,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
-        LOGI("Failed to open hidumper file");
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
@@ -391,7 +391,7 @@ void ProfilerFPS::CalcFpsAndJitters()
 
 bool ProfilerFPS::IsForeGround()
 {
-    const std::string cmd = "hidumper -s AbiliytManagerService -a -l";
+    const std::string cmd = "aa dump -l";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

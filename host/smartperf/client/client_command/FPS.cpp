@@ -171,7 +171,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
-        LOGI("Failed to open hidumper file");
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
