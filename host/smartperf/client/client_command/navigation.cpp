@@ -104,9 +104,9 @@ std::string Navigation::GetWinId(std::string processId) const
                 break;
             }
         }
-        pclose(fd);
-        return wid;
     }
+    pclose(fd);
+    return wid;
 }
 }
 }
