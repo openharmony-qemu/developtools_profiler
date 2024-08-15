@@ -121,7 +121,7 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
     fps.GetCurrentTime();
-    fps.GetSameTimeNums();
+    fps.CalcFpsAndJitters();
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
@@ -323,7 +323,7 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     
     profiler.GetCurrentTime(sleepNum);
     profiler.GetResultFPS(sectionsNum);
-    profiler.GetSameTimeNums();
+    profiler.CalcFpsAndJitters();
     profiler.GetSectionsFps(fpsInfoResult, nums);
     profiler.GetSectionsPrint(printCount, msStartTime, numb, harTime);
 
@@ -479,7 +479,7 @@ HWTEST_F(SPdaemonTest, ParseSlideFpsTraceTest, TestSize.Level1)
 
     curString = parseSlideFpsTrace.CutString(line, start, end, offset);
     calculateTime = parseSlideFpsTrace.CalculateTime();
-    ParseSlideFpsTraceNoh = parseSlideFpsTrace.ParseSlideFpsTraceNoh(file);
+    parseSlideFpsTraceNoh = parseSlideFpsTrace.ParseSlideFpsTraceNoh(file);
 
     std::string cmd = "SP_daemon -editor sildeList ohos.samples.ecg 设置 ohtest";
     std::string result = "";
