@@ -59,7 +59,7 @@ ohos_unittest("plugin_module_api_ut") {
     "googletest:gtest",
     "graphic_2d:librender_service_client",
     "hidumper:lib_dump_usage",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

@@ -98,7 +98,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
 
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [ "hilog:libhilog_base" ]
   }
 
   deps = [
