@@ -16,6 +16,7 @@
 #include "hidebug_native_interface.h"
 
 #include <chrono>
+#include <fstream>
 #include <memory>
 #include <vector>
 #include <unistd.h>
@@ -50,6 +51,7 @@ public:
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
     std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() override;
     std::optional<SysMemory> GetSystemMemInfo() override;
+    bool IsDebuggerConnected() override;
 private:
     /**
      * GetElapsedNanoSecondsSinceBoot
@@ -243,6 +245,25 @@ int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
     }
     HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
     return MemoryState::MEMORY_SUCCESS;
+}
+
+bool HidebugNativeInterfaceImpl::IsDebuggerConnected()
+{
+    HILOG_DEBUG(LOG_CORE, "IsDebuggerConnected");
+    std::ifstream file("/proc/self/status");
+    if (!file.is_open()) {
+        HILOG_ERROR(LOG_CORE, "IsDebuggerConnected:: open status file failed!");
+        return false;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find("TracerPid:") != std::string::npos) {
+            std::string pidStr = line.substr(line.find(":") + 1);
+            return std::atoi(pidStr.c_str()) != 0;
+        }
+    }
+    HILOG_ERROR(LOG_CORE, "IsDebuggerConnected:: no find the TracerPid:");
+    return false;
 }
 
 int64_t HidebugNativeInterfaceImpl::GetElapsedNanoSecondsSinceBoot()
