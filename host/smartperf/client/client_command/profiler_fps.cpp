@@ -267,13 +267,26 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
     printf("SP_daemon exec finished!\n");
 }
 
+std::string ProfilerFPS::GetSurface()
+{
+    std::string cmdResult;
+    std::string cmdStringHidumper = "hidumper -s 10 -a sur";
+    std::string cmdStringGrep = "face | grep sur";
+    std::string cmdStringFace = "face";
+    SPUtils::LoadCmd(cmdStringHidumper + cmdStringGrep + cmdStringFace, cmdResult);
+    size_t positionLeft = cmdResult.find("[");
+    size_t positionRight = cmdResult.find("]");
+    size_t num = 1;
+    return cmdResult.substr(positionLeft + num, positionRight - positionLeft - num);
+}
+
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     processFlag = false;
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     if (ohFlag) {
-        uniteLayer = "DisplayNode";
+        uniteLayer = GetSurface();
     }
     if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
         LOGI("ProfilerFPS.pkgName====: %s", pkgName.c_str());
@@ -320,11 +333,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
-    refresh = true;
-    lastTime = -1;
+    prevScreenTimestamp = -1;
     LOGI("ProfilerFPS dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
@@ -334,46 +347,45 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("ProfilerFPS dump time: %s", str.c_str());
-        frameReadyTime = 0;
+        curScreenTimestamp = 0;
         std::stringstream sstream;
         sstream << tmp;
-        sstream >> frameReadyTime;
-        if (frameReadyTime == 0) {
+        sstream >> curScreenTimestamp;
+        if (curScreenTimestamp == 0) {
             continue;
         }
-        if (lastReadyTime >= frameReadyTime) {
-            lastReadyTime = -1;
-            continue;
-        }
-        GetSameTimeNums();
+        CalcFpsAndJitters();
     }
     pclose(fp);
     LOGI("ProfilerFPS Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
     return fpsInfo;
 }
 
-void ProfilerFPS::GetSameTimeNums()
+void ProfilerFPS::CalcFpsAndJitters()
 {
-    std::string onScreenTime = std::to_string(frameReadyTime / mod);
+    std::string onScreenTime = std::to_string(curScreenTimestamp / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
-        fpsInfo.currTimeStamps.push_back(frameReadyTime);
+        fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
         long long jitter;
-        if (lastTime != -1) {
-            jitter = frameReadyTime - lastTime;
+        if (prevScreenTimestamp != -1) {
+            jitter = curScreenTimestamp - prevScreenTimestamp;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
-                jitter = frameReadyTime - lastFrameReadyTime;
+            if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+                jitter = curScreenTimestamp - prevlastScreenTimestamp;
+                fpsInfo.jitters.push_back(jitter);
+            } else {
+                jitter = curScreenTimestamp - curScreenTimestamp / mod * mod;
                 fpsInfo.jitters.push_back(jitter);
             }
         }
-        lastTime = frameReadyTime;
-        lastFrameReadyTime = frameReadyTime;
+        prevScreenTimestamp = curScreenTimestamp;
+        prevlastScreenTimestamp = curScreenTimestamp;
     }
 }
 

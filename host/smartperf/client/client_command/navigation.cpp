@@ -83,43 +83,29 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
 
 std::string Navigation::GetWinId(std::string processId) const
 {
-    std::vector<DumpEntity> dumpEntityList;
     std::string wid;
     const std::string cmd = "hidumper -s WindowManagerService -a '-a'";
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return wid = -1;
     }
-    int lineNum = 0;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
-        if (line.length() == 1) {
-            continue;
-        }
-        if (line[0] == '-' || line[0] == ' ') {
+        if (line.find("---") != std::string::npos || line.length() <= 1 ||
+            line.find("WindowName") != std::string::npos) {
             continue;
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params[paramTwo].find("Pid") != std::string::npos &&
-            params[paramThree].find("WinId") != std::string::npos) {
-            continue;
+        if (static_cast<int>(params.size()) > paramThree) {
+            if (params[paramTwo] == processId) {
+                wid = params[paramThree];
+                break;
+            }
         }
-        if (static_cast<int>(params.size()) > paramTwentyFour) {
-            DumpEntity dumpEntity { params[2], params[3] };
-            dumpEntityList.push_back(dumpEntity);
-        }
-        lineNum++;
     }
     pclose(fd);
-    for (size_t i = 0; i < dumpEntityList.size(); i++) {
-        DumpEntity dumpItem = dumpEntityList[i];
-        if (dumpItem.pid == processId) {
-            wid = dumpItem.winId;
-            break;
-        }
-    }
     return wid;
 }
 }

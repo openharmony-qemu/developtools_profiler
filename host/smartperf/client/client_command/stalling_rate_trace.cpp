@@ -98,7 +98,8 @@ void StallingRateTrace::AppList(std::string line, const std::string &signS, cons
         line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos ||
         line.find("H:APP_TRANSITION_TO_OTHER_APP,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
-        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
+        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos ||
+        line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
         if (animalFlag) {
             dynamicFinishTime = GetTimes(line, signF);
             LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
