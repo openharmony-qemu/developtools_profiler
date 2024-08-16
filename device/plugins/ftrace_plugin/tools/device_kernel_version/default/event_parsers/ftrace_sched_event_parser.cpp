@@ -13,6 +13,14 @@
  * limitations under the License.
  */
 #include "sub_event_parser.h"
+#include <sstream>
+#include <iomanip>
+
+static std::string ConvertToHex(uint64_t num) {
+    std::stringstream ss;
+    ss << std::hex << num;
+    return ss.str();
+}
 
 FTRACE_NS_BEGIN
 namespace {
@@ -27,8 +35,8 @@ template <typename T> void sched_blocked_reason_func(T& msg, uint8_t data[], siz
     uint64_t recSize = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, ++i, data, size);
     std::string funcName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
     std::string modName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
-    std::string caller_str = funcName + "+0x" + std::to_string(recOffset) + "/0x"
-                             + std::to_string(recSize) + "[" + modName + "]";
+    std::string caller_str = funcName + "+0x" + ConvertToHex(recOffset) + "/0x"
+                             + ConvertToHex(recSize) + "[" + modName + "]";
     msg->set_caller_str(caller_str);
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_blocked_reason,
