@@ -269,29 +269,30 @@ void SPTask::ResetSdkParam()
 
 void SPTask::StopSdkRecv()
 {
-    std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    char outSdkDataDirChar[PATH_MAX] = {0x00};
-    if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
+    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
+    char outSdkDataPathChar[PATH_MAX] = {0x00};
+    if (realpath(outSdkDataPath.c_str(), outSdkDataPathChar) == nullptr) {
+        LOGE("data dir %s is nullptr", outSdkDataPath.c_str());
         ResetSdkParam();
         return;
     }
-    std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
-    if (fopen(outSdkDataPath.c_str(), "w") == nullptr) {
-        LOGE("data %s open failed", outSdkDataPath.c_str());
+    FILE *fp = fopen(outSdkDataPathChar, "wb");
+    if (fp == nullptr) {
+        LOGE("data %s open failed", outSdkDataPathChar);
         ResetSdkParam();
         return;
     }
-    std::lock_guard<std::mutex> lock(sdkDataMtx);
+    fclose(fp);
+    sdkDataMtx.lock();
     std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    outFile.open(outSdkDataPathChar, std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
     for (const auto &item : sdkvec) {
         outFile << item << std::endl;
     }
     outFile.close();
-
+    sdkDataMtx.unlock();
     ResetSdkParam();
 }
 
@@ -299,22 +300,22 @@ void SPTask::InitDataFile()
 {
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    std::string filePath;
     std::ifstream infile;
 
-    char fileDirChar[PATH_MAX] = {0x00};
-    if (realpath(fileDir.c_str(), fileDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", fileDir.c_str());
-        return;
-    }
-
     for (const auto &file: files) {
-        filePath = fileDirChar;
-        filePath = filePath + "/" + file;
-        if (fopen(filePath.c_str(), "w") == nullptr) {
+        std::string filePath = fileDir + "/" + file;
+        char filePathChar[PATH_MAX] = {0x00};
+        if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+            LOGE("filePath %s realpath failed", filePath.c_str());
+            continue;
+        }
+
+        FILE *fp = fopen(filePathChar, "wb");
+        if (fp == nullptr) {
             LOGE("data %s open failed", filePath.c_str());
             continue;
         }
+        fclose(fp);
         infile = std::ifstream(filePath.c_str());
         if (infile.good()) {
             infile.close();
@@ -326,7 +327,7 @@ void SPTask::InitDataFile()
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    std::lock_guard<std::mutex> lock(asyncDataMtx);
+    asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -353,6 +354,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
     }
+    asyncDataMtx.unlock();
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
