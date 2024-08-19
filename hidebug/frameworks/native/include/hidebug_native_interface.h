@@ -51,6 +51,7 @@ public:
     virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
     virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() = 0;
     virtual std::optional<SysMemory> GetSystemMemInfo() = 0;
+    virtual bool IsDebuggerConnected() = 0;
 };
 }
 }
