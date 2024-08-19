@@ -16,7 +16,8 @@
 #include <sstream>
 #include <iomanip>
 
-static std::string ConvertToHex(uint64_t num) {
+static std::string ConvertToHex(uint64_t num)
+{
     std::stringstream ss;
     ss << std::hex << num;
     return ss.str();
