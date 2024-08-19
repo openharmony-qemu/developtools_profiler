@@ -186,7 +186,7 @@ static inline std::string StringFormat(const char* fmt, ...)
         if (ptr == nullptr) {                                                                                       \
             std::string str = std::string("CHECK_NOTNULL(") + logging::StringFormat(fmt, ##__VA_ARGS__) +           \
                               ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
-            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                        \
+            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
@@ -197,7 +197,7 @@ static inline std::string StringFormat(const char* fmt, ...)
         if (!(expr)) {                                                                                              \
             std::string str = std::string("CHECK_TRUE(") + logging::StringFormat(fmt, ##__VA_ARGS__) +              \
                               ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
-            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                        \
+            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
