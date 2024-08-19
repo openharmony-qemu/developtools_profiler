@@ -67,7 +67,7 @@ bool NetworkProfilerSocketClient::ProtocolProc(SocketContext &context, uint32_t 
     eventFd_ = context.ReceiveFileDiscriptor();
     PROFILER_LOG_INFO(LOG_CORE, "network profiler client: ProtocolProc: smbFd: %d, eventFd: %d, shmSize: %d",
         smbFd_, eventFd_, config->shmSize);
-    flushInterval_ = config->flushCount;
+    flushInterval_ = static_cast<uint32_t>(config->flushCount);
     std::string smbName = "networkProfilerSmb_" + std::to_string(pid_);
     profiler_->SetClockId(config->clock);
     writer_ = std::make_shared<NetworkProfilerWriter>(smbName, config->shmSize, smbFd_, eventFd_, config->block);
