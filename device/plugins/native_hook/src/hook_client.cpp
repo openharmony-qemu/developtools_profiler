@@ -135,8 +135,9 @@ bool InititalizeIPC()
 }
 void FinalizeIPC() {}
 
-int ConvertPid(char* buf)
+int ConvertPid(char* buf, size_t len)
 {
+    UNUSED_PARAMETER(len);
     int count = 0;
     char pidBuf[11] = {0}; /* 11: 32 bits to the maximum length of a string */
     char *str = buf;
@@ -172,7 +173,7 @@ pid_t GetRealPid(void)
         }
     }
     (void)fclose(fp);
-    return static_cast<pid_t>(ConvertPid(buf));
+    return static_cast<pid_t>(ConvertPid(buf, sizeof(buf)));
 }
 }  // namespace
 
@@ -225,7 +226,9 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         StackRawData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
+        if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Set tag name failed");
+        }
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
