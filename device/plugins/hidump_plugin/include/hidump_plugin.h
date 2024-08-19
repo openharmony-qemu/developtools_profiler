@@ -51,7 +51,7 @@ private:
     static int CustomPclose(FILE* fp);
 
     template <typename T>
-    bool ParseHidumpInfo(T& hidumpInfoProto, char *buf);
+    bool ParseHidumpInfo(T& hidumpInfoProto, char *buf, size_t len);
 
     HidumpConfig protoConfig_;
     std::vector<char> buffer_;

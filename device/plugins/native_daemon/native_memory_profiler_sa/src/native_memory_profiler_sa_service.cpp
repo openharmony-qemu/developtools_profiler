@@ -23,7 +23,7 @@
 #include "init_param.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
-
+#include "common.h"
 #include "logging.h"
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -187,7 +187,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
 
     if (fd == 0) {
-        int fdTemp = open(config->filePath_.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+        auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
+        if (!retFile.first) {
+            PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
+            return RET_ERR;
+        }
+        int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
         fd = static_cast<uint32_t>(fdTemp);
     }

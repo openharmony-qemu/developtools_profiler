@@ -275,14 +275,17 @@ long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
                                                 DataType type)
 {
     CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
-
+    auto retFile = COMMON::CheckNotExistsFilePath(file);
+    if (!retFile.first) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, file.c_str());
+        return 0;
+    }
     std::ifstream fsFile {}; // read data from file
-    fsFile.open(file, std::ios_base::in | std::ios_base::binary);
+    fsFile.open(retFile.second, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", file.c_str(), fsFile.rdstate());
         return 0;
     }
-
     TraceFileHeader header {};
     fsFile.seekg(0, std::ios_base::end);
     uint64_t fileSize = static_cast<uint64_t>(fsFile.tellg());
