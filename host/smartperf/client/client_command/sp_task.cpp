@@ -282,7 +282,7 @@ void SPTask::StopSdkRecv()
         ResetSdkParam();
         return;
     }
-    fclose(fp);
+    (void)fclose(fp);
     sdkDataMtx.lock();
     std::ofstream outFile;
     outFile.open(outSdkDataPathChar, std::ios::out | std::ios::trunc);
@@ -315,7 +315,7 @@ void SPTask::InitDataFile()
             LOGE("data %s open failed", filePath.c_str());
             continue;
         }
-        fclose(fp);
+        (void)fclose(fp);
         infile = std::ifstream(filePath.c_str());
         if (infile.good()) {
             infile.close();
