@@ -35,7 +35,7 @@ ohos_shared_library("xpowerplugin") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }
@@ -67,7 +67,7 @@ ohos_executable("xpowerdecoder") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "cJSON:cjson_static",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]

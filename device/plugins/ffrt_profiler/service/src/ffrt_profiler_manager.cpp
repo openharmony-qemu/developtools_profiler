@@ -183,7 +183,7 @@ void FfrtProfilerManager::StopFfrtProfiler()
 
     for (const auto& item : ffrtCtx_) {
         if (item->eventPoller != nullptr) {
-            HILOG_ERROR(LOG_CORE, "eventPoller unset!");
+            HILOG_BASE_ERROR(LOG_CORE, "eventPoller unset!");
             if (item->eventNotifier != nullptr) {
                 item->eventPoller->RemoveFileDescriptor(item->eventNotifier->GetFd());
             }

@@ -36,7 +36,7 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
     "bounds_checking_function:libsec_shared",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "graphic_2d:librender_service_client",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
 
