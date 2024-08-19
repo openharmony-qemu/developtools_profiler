@@ -109,7 +109,7 @@ size_t ProfilerService::SessionContext::UpdatePluginConfigs(const std::vector<Pr
     for (auto& cfg : newPluginConfigs) {
         auto it = nameIndex.find(cfg.name());
         if (it != nameIndex.end()) {
-            int index = it->second;
+            size_t index = it->second;
             pluginConfigs[index] = cfg;
             updateCount++;
         }

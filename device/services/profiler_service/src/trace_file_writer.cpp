@@ -263,7 +263,7 @@ long TraceFileWriter::Write(const void* data, size_t size)
     CHECK_TRUE(helper_.AddSegment(reinterpret_cast<uint8_t*>(const_cast<void*>(data)), size),
         0, "Add payload for data bytes %zu FAILED!", size);
 
-    long nbytes = sizeof(dataLen) + size;
+    uint64_t nbytes = sizeof(dataLen) + size;
     writeBytes_ += nbytes;
     ++writeCount_;
     return nbytes;
