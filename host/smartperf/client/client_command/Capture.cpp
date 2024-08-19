@@ -35,7 +35,7 @@ std::map<std::string, std::string> Capture::ItemData()
     std::map<std::string, std::string> result;
     int two = 2;
     if (callNum % two == 0) {
-        long long curTime = SPUtils::GetCurTime();
+        curTime = GetCurTimes();
         if (isSocketMessage) {
             std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
             result["capture"] = path;
@@ -61,11 +61,14 @@ void Capture::SocketMessage()
     isSocketMessage = true;
 }
 
-void Capture::ThreadGetCatch() const
+long long Capture::GetCurTimes()
 {
-    const std::string curTime = std::to_string(SPUtils::GetCurTime());
+    return SPUtils::GetCurTime();
+}
+void Capture::ThreadGetCatch()
+{
     const std::string captureDir = "/data/local/tmp/capture";
-    const std::string savePath = captureDir + "/screenCap_" + curTime + ".png";
+    const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
         if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
@@ -121,7 +124,7 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     close(fd);
 }
 
-void Capture::TriggerGetCatch() const
+void Capture::TriggerGetCatch()
 {
     auto tStart = std::thread([this]() {
         this->ThreadGetCatch();

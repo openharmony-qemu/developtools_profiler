@@ -62,9 +62,9 @@ std::map<std::string, std::string> RAM::ItemData()
     if (packageName.length() > 0) {
         if (g_flagFirst) {
             RAM::TriggerGetPss();
-            g_flagFirst = true;
         } else {
             procRamInfoLast = RAM::GetRamInfo();
+            g_flagFirst = true;
         }
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
