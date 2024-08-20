@@ -276,16 +276,13 @@ void SPTask::StopSdkRecv()
         ResetSdkParam();
         return;
     }
-    FILE *fp = fopen(outSdkDataPathChar, "wb");
-    if (fp == nullptr) {
+    sdkDataMtx.lock();
+    std::ofstream outFile(outSdkDataPathChar, std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
         LOGE("data %s open failed", outSdkDataPathChar);
         ResetSdkParam();
         return;
     }
-    (void)fclose(fp);
-    sdkDataMtx.lock();
-    std::ofstream outFile;
-    outFile.open(outSdkDataPathChar, std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
     for (const auto &item : sdkvec) {
@@ -300,7 +297,6 @@ void SPTask::InitDataFile()
 {
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    std::ifstream infile;
 
     for (const auto &file: files) {
         std::string filePath = fileDir + "/" + file;
@@ -309,18 +305,13 @@ void SPTask::InitDataFile()
             LOGE("filePath %s realpath failed", filePath.c_str());
             continue;
         }
-
-        FILE *fp = fopen(filePathChar, "wb");
-        if (fp == nullptr) {
-            LOGE("data %s open failed", filePath.c_str());
+        std::ifstream infile(filePathChar);
+        if (!infile.is_open()) {
+            LOGE("data %s open failed", filePathChar);
             continue;
         }
-        (void)fclose(fp);
-        infile = std::ifstream(filePath.c_str());
-        if (infile.good()) {
-            infile.close();
-            std::remove(filePath.c_str());
-        }
+        std::remove(filePathChar);
+        infile.close();
     }
 }
 
