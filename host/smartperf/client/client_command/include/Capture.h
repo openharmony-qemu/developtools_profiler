@@ -30,7 +30,7 @@ public:
     void ThreadGetCatchSocket(const std::string &curTime) const;
     // 触发线程
     void TriggerGetCatch();
-    void TriggerGetCatchSocket(long long &curTime) const;
+    void TriggerGetCatchSocket(long long captureTime) const;
     bool TakeScreenCap(const std::string &savePath) const;
     void SocketMessage();
     long long GetCurTimes();
