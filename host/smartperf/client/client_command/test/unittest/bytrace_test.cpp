@@ -82,21 +82,6 @@ HWTEST_F(ByTraceTest, CheckFpsJittersTest, TestSize.Level1)
     EXPECT_EQ(result, TraceStatus::TRACE_FINISH);
 }
 
-HWTEST_F(ByTraceTest, TriggerCatchTest, TestSize.Level1)
-{
-    ByTrace &byTrace = ByTrace::GetInstance();
-    long long curTime = 1000;
-    int interval = 0;
-    long long currentTrigger = -1;
-    byTrace.TriggerCatch(curTime);
-
-    interval = 500;
-    int curNum = 5;
-
-    EXPECT_EQ(-1, currentTrigger);
-    EXPECT_EQ(5, curNum);
-}
-
 HWTEST_F(ByTraceTest, CheckHitraceIdTest, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();

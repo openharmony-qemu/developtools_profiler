@@ -132,7 +132,7 @@ void Capture::TriggerGetCatch()
     tStart.detach();
 }
 
-void Capture::TriggerGetCatchSocket(long long curTime) const
+void Capture::TriggerGetCatchSocket(long long &curTime) const
 {
     std::string curTimeStr = std::to_string(curTime);
     auto tStart = std::thread([this, curTimeStr]() {
