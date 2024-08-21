@@ -420,7 +420,7 @@ void SPTask::StopGetInfo()
 }
 void SPTask::StopGpuCounterRecv()
 {
-    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/gpu_counter.csv";
+    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
     gpuCounter.StopCollect(outGpuCounterDataPath);
 }
 void SPTask::StopTask()
