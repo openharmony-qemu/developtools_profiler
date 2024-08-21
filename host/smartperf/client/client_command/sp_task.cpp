@@ -269,17 +269,18 @@ void SPTask::ResetSdkParam()
 
 void SPTask::StopSdkRecv()
 {
-    std::string outSdkDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/sdk_data.csv";
-    char outSdkDataPathChar[PATH_MAX] = {0x00};
-    if (realpath(outSdkDataPath.c_str(), outSdkDataPathChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outSdkDataPath.c_str());
+    std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
+    char outSdkDataDirChar[PATH_MAX] = {0x00};
+    if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
+        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
         ResetSdkParam();
         return;
     }
+    std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
     sdkDataMtx.lock();
-    std::ofstream outFile(outSdkDataPathChar, std::ios::out | std::ios::trunc);
+    std::ofstream outFile(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
-        LOGE("data %s open failed", outSdkDataPathChar);
+        LOGE("data %s open failed", outSdkDataPath.c_str());
         ResetSdkParam();
         return;
     }
@@ -302,7 +303,7 @@ void SPTask::InitDataFile()
         std::string filePath = fileDir + "/" + file;
         char filePathChar[PATH_MAX] = {0x00};
         if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
-            LOGE("filePath %s realpath failed", filePath.c_str());
+            LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
         std::ifstream infile(filePathChar);
