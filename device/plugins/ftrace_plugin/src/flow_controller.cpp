@@ -210,8 +210,10 @@ bool FlowController::ParseBasicData()
             tansporter_->Report(static_cast<size_t>(msgSize));
         }
     }
-
-    // parse per cpu stats
+    if (FtraceFsOps::GetInstance().IsHmKernel()) {
+        return true;
+    }
+    // parse per cpu stats, just for linux kernel
     if (resultWriter_->isProtobufSerialize) {
         auto traceResult = std::make_unique<TracePluginResult>();
         CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_START), false, "parse TRACE_START stats failed!");
@@ -225,7 +227,7 @@ bool FlowController::ParseBasicData()
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(static_cast<size_t>(msgSize));
     }
-    return 0;
+    return true;
 }
 
 std::string FlowController::ReloadTraceArgs()
@@ -259,7 +261,7 @@ int FlowController::StartCapture(void)
     CHECK_NOTNULL(traceCollector_, -1, "create TraceCollector FAILED!");
     CHECK_NOTNULL(resultWriter_, -1, "%s: resultWriter_ nullptr", __func__);
 
-    CHECK_TRUE(ParseBasicData() == 0, -1, "parse basic data failed!");
+    CHECK_TRUE(ParseBasicData(), -1, "parse basic data failed!");
 
     // create memory pool, and raw data readers, buffers, caches.
     CHECK_TRUE(CreatePagedMemoryPool(), -1, "create paged memory pool failed!");
@@ -612,22 +614,22 @@ int FlowController::StopCapture(void)
         pollThread_.join();
         PROFILER_LOG_INFO(LOG_CORE, "join thread  done!\n");
     }
-
-    // parse per cpu stats
-    if (resultWriter_->isProtobufSerialize) {
-        auto traceResult = std::make_unique<TracePluginResult>();
-        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
-        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report TRACE_END stats FAILED!");
-    } else {
-        auto ctx = resultWriter_->startReport(resultWriter_);
-        CHECK_NOTNULL(ctx, -1, "%s: get RandomWriteCtx FAILED!", __func__);
-        auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
-        CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
-        int32_t msgSize = traceResult->Finish();
-        resultWriter_->finishReport(resultWriter_, msgSize);
-        tansporter_->Report(static_cast<size_t>(msgSize));
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        // parse per cpu stats
+        if (resultWriter_->isProtobufSerialize) {
+            auto traceResult = std::make_unique<TracePluginResult>();
+            CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
+            CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), -1, "report TRACE_END stats FAILED!");
+        } else {
+            auto ctx = resultWriter_->startReport(resultWriter_);
+            CHECK_NOTNULL(ctx, -1, "%s: get RandomWriteCtx FAILED!", __func__);
+            auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+            CHECK_TRUE(ParsePerCpuStatus(traceResult, TRACE_END), -1, "parse TRACE_END stats FAILED!");
+            int32_t msgSize = traceResult->Finish();
+            resultWriter_->finishReport(resultWriter_, msgSize);
+            tansporter_->Report(static_cast<size_t>(msgSize));
+        }
     }
-
     // disable userspace trace triggers
     // because trace cmd will read trace buffer,
     // so we to this action after polling thread exit.
