@@ -278,7 +278,8 @@ void SPTask::StopSdkRecv()
     }
     std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
     sdkDataMtx.lock();
-    std::ofstream outFile(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
         LOGE("data %s open failed", outSdkDataPath.c_str());
         ResetSdkParam();
@@ -306,13 +307,7 @@ void SPTask::InitDataFile()
             LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
-        std::ifstream infile(filePathChar);
-        if (!infile.is_open()) {
-            LOGE("data %s open failed", filePathChar);
-            continue;
-        }
         std::remove(filePathChar);
-        infile.close();
     }
 }
 
