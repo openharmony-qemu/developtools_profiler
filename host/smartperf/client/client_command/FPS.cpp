@@ -213,6 +213,10 @@ void FPS::ReadDataFromPipe(int fd)
     LOGI("FPS::fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
     LOGI("FPS::psInfo.currTimeDump: %s", std::to_string(fpsInfo.currTimeDump).c_str());
     FILE *fp = fdopen(fd, "r");
+    if (!fp) {
+        LOGE("FPS::Failed to open file descriptor");
+        return;
+    }
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("FPS::dump time: %s", str.c_str());
@@ -225,7 +229,9 @@ void FPS::ReadDataFromPipe(int fd)
         }
         CalcFpsAndJitters();
     }
-    fclose(fp);
+    if (fclose(fp) == EOF) {
+        LOGE("FPS::Failed to close file descriptor");
+    }
 }
 
 void FPS::CalcFpsAndJitters()

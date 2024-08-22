@@ -247,8 +247,7 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
             return resultPid;
         }
         resultPid = std::string(buf, nread);
-        size_t splitFlag = resultPid.find(" ");
-        resultProcId = resultPid.substr(0, splitFlag.size() - 1);
+        resultProcId = resultPid.substr(0, resultPid.size() - 1);
         close(pipefd[0]);
         waitpid(pid, nullptr, 0);
     }

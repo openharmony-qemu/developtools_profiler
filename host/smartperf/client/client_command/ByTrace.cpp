@@ -39,7 +39,7 @@ void ByTrace::ThreadGetTrace() const
     if (SPUtils::IsHmKernel()) {
         cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_1024);
     } else {
-        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);;
+        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
     std::string time = std::to_string(SPUtils::GetCurTime());
     std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
