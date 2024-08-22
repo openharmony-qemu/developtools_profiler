@@ -115,6 +115,7 @@ namespace OHOS {
                 }
             }
             item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r\n";
+            sdkDataRealtimeData += source + "_" + timestamp + "_" + eventName + "_" + enable + "_" + value + ";";
             return item;
         }
 
@@ -271,6 +272,16 @@ namespace OHOS {
         void SdkDataRecv::SetListenFd(int fd)
         {
             listenFd = fd;
+        }
+
+        void SdkDataRecv::GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap)
+        {
+            if (sdkDataRealtimeData.size() > 0) {
+                std::map<std::string, std::string> sdkDataRealtimeDataMap;
+                sdkDataRealtimeDataMap["sdkData"] = sdkDataRealtimeData;
+                dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
+                sdkDataRealtimeData.clear();
+            }
         }
     }
 }

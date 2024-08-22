@@ -16,6 +16,7 @@
 #include <thread>
 #include <cstring>
 #include "unistd.h"
+#include <fstream>
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
 #include "include/profiler_fps.h"
@@ -76,6 +77,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("deviceinfo");
     keys.insert("ohtestfps");
     keys.insert("editorServer");
+    keys.insert("recordcapacity");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -152,6 +154,18 @@ int main(int argc, char *argv[])
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
+        const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
+        std::ofstream outFile;
+        outFile.open("/data/local/tmp/powerLeftRecord.csv", std::ios::out | std::ios::app);
+        std::string recordPower;
+        auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+        OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
+        outFile << recordTime.c_str() << "," << recordPower.c_str() << std::endl;
+        if(outFile.fail()) {
+            LOGI("recordCapacity write failed: %s", strerror(errno));
+        }
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
