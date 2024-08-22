@@ -211,7 +211,7 @@ long long SPUtils::GetCurTime()
 
 std::string SPUtils::GetTopPkgName()
 {
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperType::DUMPER_HEAD);
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_HEAD);
     std::string curTopPkgStr = "";
     LoadCmd(cmd, curTopPkgStr);
     uint64_t left = curTopPkgStr.find_first_of("[");

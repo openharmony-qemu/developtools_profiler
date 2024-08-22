@@ -278,7 +278,6 @@ const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
 };
 
 enum class HisyseventCmd {
-    HISYSEVENT,
     HISYS_APP_START,
     HISYS_JANK,
     HISYS_RESPONSE,

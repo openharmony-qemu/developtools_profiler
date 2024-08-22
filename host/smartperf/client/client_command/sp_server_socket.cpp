@@ -15,6 +15,7 @@
 #include <sstream>
 #include <cstring>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include "include/sp_server_socket.h"
 #include "include/sp_log.h"
