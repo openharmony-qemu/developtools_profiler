@@ -69,12 +69,6 @@ int main(int argc, char* argv[])
     }
     signal(SIGTERM, SignalSigtermHandler);
     const int connectRetrySeconds = 3;
-    std::string pluginDir(DEFAULT_PLUGIN_PATH);
-    if (argv[1] != nullptr) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "%s:pluginDir = %s", __func__, argv[1]);
-        pluginDir = argv[1];
-    }
-
     auto pluginManager = std::make_shared<PluginManager>();
     CHECK_NOTNULL(pluginManager, 1, "create PluginManager FAILED!");
 
