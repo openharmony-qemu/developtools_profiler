@@ -241,7 +241,7 @@ double ControlCallCmd::ColdStartHM(std::vector<std::string> v) const
     OHOS::SmartPerf::ParseTrace parseTrace;
     std::string cmdResult;
     int typePKG = 3;
-    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) "*" + ".ftrace";
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + "*" + ".ftrace";
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });

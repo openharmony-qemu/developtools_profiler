@@ -83,7 +83,7 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-
+    void ReadDataFromPipe(int fd);
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);

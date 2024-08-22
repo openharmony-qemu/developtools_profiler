@@ -234,7 +234,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
 };
 
-enum class DeviceCommand {
+enum class DeviceCmd {
     SN,
     DEVICET_NAME,
     BRAND,
@@ -244,7 +244,7 @@ enum class DeviceCommand {
     MODEL,
     FULL_NAME,
 };
-const std::unordered_map<DeviceCommand, std::string> DEVICE_CMD_MAP = {
+const std::unordered_map<DeviceCmd, std::string> DEVICE_CMD_MAP = {
     { DeviceCmd::SN, std::string("param get ohos.boot.sn") },
     { DeviceCmd::DEVICET_NAME, std::string("param get ohos.boot.hardware") },
     { DeviceCmd::BRAND, std::string("param get const.product.brand") },
@@ -255,7 +255,7 @@ const std::unordered_map<DeviceCommand, std::string> DEVICE_CMD_MAP = {
     { DeviceCmd::FULL_NAME, std::string("param get const.ohos.fullname") },
 };
 
-enum class HidumperType {
+enum class HidumperCmd {
     DUMPER_DUBAI_B,
     DUMPER_DUBAI_F,
     DUMPER_SURFACE,
@@ -265,7 +265,7 @@ enum class HidumperType {
     DUMPER_NAV,
     DUMPER_MEM,
 };
-const std::unordered_map<HidumperType, std::string> HIDUMPER_CMD_MAP = {
+const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_DUBAI_B, std::string("hidumper -s 1213 -a '-b'") },
     { HidumperCmd::DUMPER_DUBAI_F, std::string("hidumper -s 1213 -a '-f'") },
     { HidumperCmd::DUMPER_SURFACE, std::string("hidumper -s 10 -a surface | grep surface") },
@@ -277,7 +277,7 @@ const std::unordered_map<HidumperType, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_MEM, std::string("hidumper --mem ") },
 };
 
-enum class HisyseventType {
+enum class HisyseventCmd {
     HISYSEVENT,
     HISYS_APP_START,
     HISYS_JANK,
@@ -286,7 +286,7 @@ enum class HisyseventType {
     HISYSEVENT,
     HISYS_PID,
 };
-const std::unordered_map<HidumperType, std::string> HISYSEVENT_CMD_MAP = {
+const std::unordered_map<HisyseventCmd, std::string> HISYSEVENT_CMD_MAP = {
     { HisyseventCmd::HISYS_APP_START, std::string("hisysevent -r -o PERFORMANCE -n APP_START") },
     { HisyseventCmd::HISYS_JANK, std::string("hisysevent -r -o PERFORMANCE -n INTERACTION_JANK") },
     { HisyseventCmd::HISYS_RESPONSE, std::string("hisysevent -r -n INTERACTION_RESPONSE_LATENCY") },

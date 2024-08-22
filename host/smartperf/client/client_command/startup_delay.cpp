@@ -20,12 +20,15 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "unistd.h"
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
 #include "unistd.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
+
 namespace OHOS {
 namespace SmartPerf {
 StartUpDelay::StartUpDelay() {}
