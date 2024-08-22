@@ -79,7 +79,7 @@ public:
     std::map<std::string, std::string> ItemData() override;
     void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
     FpsCurrentFpsTime GetFpsCurrentFpsTime();
-
+    void ReadDataFromPipe(int fd);
 private:
     FPS() {};
     FPS(const FPS &);

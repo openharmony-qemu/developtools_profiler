@@ -22,6 +22,7 @@
 #include "control_call_cmd.h"
 #include "startup_delay.h"
 #include "sp_log.h"
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -163,7 +164,8 @@ public:
     void BackDesktop() const
     {
         std::string cmdResult;
-        SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+        std::string uinput = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_BACK);
+        SPUtils::LoadCmd(uinput, cmdResult);
     }
 
     // UDP

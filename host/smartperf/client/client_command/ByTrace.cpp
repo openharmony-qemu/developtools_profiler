@@ -19,6 +19,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/sp_log.h"
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps, int mCurNum) const
@@ -36,14 +37,13 @@ void ByTrace::ThreadGetTrace() const
     std::string result;
     std::string cmdString;
     if (SPUtils::IsHmKernel()) {
-        cmdString = "hitrace --trace_clock mono -t 10 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_1024);
     } else {
-        cmdString = "hitrace --trace_clock mono -t 10 -b 204800 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
-    std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
     std::string time = std::to_string(SPUtils::GetCurTime());
     std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
-    std::string traceCmdExe = cmdString + cmdStringEnd + traceFile;
+    std::string traceCmdExe = cmdString + traceFile;
     SPUtils::LoadCmd(traceCmdExe, result);
     std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
@@ -83,7 +83,8 @@ void ByTrace::TriggerCatch(long long curTime) const
 bool ByTrace::CheckHitraceId() const
 {
     std::string result;
-    SPUtils::LoadCmd("ps -ef |grep hitrace |grep -v grep", result);
+    std::string hitrace = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_CMD);
+    SPUtils::LoadCmd(hitrace, result);
     if (result.empty()) {
         return false;
     }

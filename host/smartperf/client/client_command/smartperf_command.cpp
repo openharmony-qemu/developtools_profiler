@@ -26,6 +26,7 @@
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
 #include "include/RAM.h"
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -35,9 +36,9 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = "taskset -p f " + pidStr;
+        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
-        SPUtils::LoadCmd(cmdStr, result);
+        SPUtils::LoadCmd(cmdStr + pidStr, result);
         daemon(0, 0);
         InitSomething();
         SpThreadSocket udpThreadSocket;
@@ -97,9 +98,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = "taskset -p f " + pidStr;
+        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
-        SPUtils::LoadCmd(cmdStr, result);
+        SPUtils::LoadCmd(cmdStr + pidStr, result);
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
@@ -261,7 +262,8 @@ void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
 void SmartPerfCommand::InitSomething()
 {
     std::string cmdResult;
-    if (SPUtils::LoadCmd("chmod o+r /proc/stat", cmdResult)) {
+    std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
+    if (SPUtils::LoadCmd(stat, cmdResult)) {
         printf("Privilege escalation! \n");
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };

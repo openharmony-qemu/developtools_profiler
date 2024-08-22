@@ -29,6 +29,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
+#include "common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -138,7 +139,7 @@ void ProfilerFPS::GetTimeDiff()
     long long clockMonotonicRaw = 0;
     int two = 2;
     std::string strRealTime;
-    std::string cmd = "timestamps";
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return;
@@ -259,7 +260,12 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum = atoi(v[four].c_str());
+        int sectionsNum;
+        if (v.size() < four) {
+            sectionsNum = 0;
+        } else {
+            sectionsNum = atoi(v[four].c_str());
+        }
         for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
@@ -270,10 +276,8 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
 std::string ProfilerFPS::GetSurface()
 {
     std::string cmdResult;
-    std::string cmdStringHidumper = "hidumper -s 10 -a sur";
-    std::string cmdStringGrep = "face | grep sur";
-    std::string cmdStringFace = "face";
-    SPUtils::LoadCmd(cmdStringHidumper + cmdStringGrep + cmdStringFace, cmdResult);
+    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t positionLeft = cmdResult.find("[");
     size_t positionRight = cmdResult.find("]");
     size_t num = 1;
@@ -440,7 +444,12 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         }
         printf("set num:%d success\n", this->num);
         ohFlag = true;
-        int sectionsNum = atoi(v[four].c_str());
+        int sectionsNum;
+        if (v.size() < four) {
+            sectionsNum = 0;
+        } else {
+            sectionsNum = atoi(v[four].c_str());
+        }
         for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
