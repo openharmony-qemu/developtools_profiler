@@ -17,7 +17,6 @@
 #include <cmath>
 #include <sstream>
 
-#include "dump_usage.h"
 #include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
@@ -27,6 +26,10 @@ namespace {
 using namespace OHOS::Rosen;
 using namespace OHOS::HDI::Memorytracker::V1_0;
 using namespace OHOS::Developtools::Profiler;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
+using OHOS::HiviewDFX::CollectResult;
+using OHOS::HiviewDFX::GraphicType;
 
 const char* CMD_FORMAT = "memory service meminfo --local ";
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
@@ -1261,6 +1264,26 @@ bool MemoryDataPlugin::GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graph
     return ret;
 }
 
+bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMemory, GraphicType graphicType)
+{
+    std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
+    OHOS::HiviewDFX::CollectResult<int32_t> data;
+    data = collector->GetGraphicUsage(pid, graphicType);
+    if (data.retCode != UcError::SUCCESS) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:collect progress GL or Graph error, ret:%d.", __func__, data.retCode);
+        return false;
+    }
+    if (graphicType == GraphicType::GL) {
+        graphicsMemory.gl = data.data;
+    } else if (graphicType == GraphicType::GRAPH) {
+        graphicsMemory.graph = data.data;
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:graphic type is not support.", __func__);
+        return false;
+    }
+    return true;
+}
+
 template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
 {
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
@@ -1271,26 +1294,7 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
         // refers hidumper
         // https://gitee.com/openharmony/hiviewdfx_hidumper/blob/master/frameworks/native/src/executor/memory/memory_info.cpp#L260
         GraphicsMemory graphicsMemory;
-        std::unique_ptr<OHOS::HiviewDFX::DumpUsage> dumpUsage = std::make_unique<OHOS::HiviewDFX::DumpUsage>();
-        graphicsMemory.graph = dumpUsage->GetDma(pid);
-        if (isRenderService(pid)) {
-            std::vector<MemoryGraphic> memGraphicVec = RSInterfaces::GetInstance().GetMemoryGraphics();
-            uint64_t sumPidsMemGL = 0;
-            for (auto it = memGraphicVec.begin(); it != memGraphicVec.end(); it++) {
-                sumPidsMemGL += it->GetGpuMemorySize();
-            }
-            sumPidsMemGL = static_cast<uint64_t>(sumPidsMemGL / KB_TO_BYTES);
-
-            if (GetRenderServiceGlSize(pid, graphicsMemory)) {
-                graphicsMemory.gl -= sumPidsMemGL;
-                processesInfo->set_gl_pss_kb(graphicsMemory.gl);
-                processesInfo->set_graph_pss_kb(graphicsMemory.graph);
-            }
-        } else {
-            GetRenderServiceGlSize(pid, graphicsMemory);
-            auto& rsClient = RSInterfaces::GetInstance();
-            std::unique_ptr<MemoryGraphic> memGraphic = std::make_unique<MemoryGraphic>(rsClient.GetMemoryGraphic(pid));
-            graphicsMemory.gl += memGraphic->GetGpuMemorySize() / KB_TO_BYTES;
+        if (GetGraphicsMemory(pid, graphicsMemory, GraphicType::GL) && GetGraphicsMemory(pid, graphicsMemory, GraphicType::GRAPH)) {
             processesInfo->set_gl_pss_kb(graphicsMemory.gl);
             processesInfo->set_graph_pss_kb(graphicsMemory.graph);
         }
