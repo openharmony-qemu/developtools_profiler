@@ -1190,7 +1190,7 @@ int hook_prctl(int(*fn)(int, ...),
         rawdata.addr = reinterpret_cast<void*>(arg3);
         size_t tagLen = strlen(reinterpret_cast<char*>(arg5)) + 1;
         if (memcpy_s(rawdata.name, sizeof(rawdata.name), reinterpret_cast<char*>(arg5), tagLen) != EOK) {
-            HILOG_ERROR(LOG_CORE, "memcpy_s tag failed");
+            HILOG_BASE_ERROR(LOG_CORE, "memcpy_s tag failed");
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;

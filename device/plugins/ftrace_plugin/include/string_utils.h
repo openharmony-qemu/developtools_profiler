@@ -23,6 +23,7 @@ public:
     static bool EndsWith(const std::string& str, const std::string& postfix);
     static bool StartsWith(const std::string& str, const std::string& prefix);
     static bool Contains(const std::string& str, const std::string& target);
+    static std::string ConvertToHex(uint64_t num);
     static std::string Strip(const std::string& str);
     static std::string Join(const std::vector<std::string>& strs, const std::string& sep);
     static std::vector<std::string> Split(const std::string& str, const std::string& sep);

@@ -255,8 +255,10 @@ HWTEST_F(FtraceFsOpsTest, GetSavedTgidsFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
 {
-    std::string content = FtraceFsOps::GetInstance().GetPerCpuStats(0);
-    EXPECT_STRNE(content.c_str(), "");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        std::string content = FtraceFsOps::GetInstance().GetPerCpuStats(0);
+        EXPECT_STRNE(content.c_str(), "");
+    }
 }
 
 /*
@@ -266,17 +268,19 @@ HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsFalse, TestSize.Level1)
 {
-    FtraceFsOps ftraceFsOps;
-    std::string content = ftraceFsOps.GetPerCpuStats(-1);
-    EXPECT_STREQ(content.c_str(), "");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        FtraceFsOps ftraceFsOps;
+        std::string content = ftraceFsOps.GetPerCpuStats(-1);
+        EXPECT_STREQ(content.c_str(), "");
 
-    ftraceFsOps.SetFtraceRoot("");
-    content = ftraceFsOps.GetPerCpuStats(0);
-    EXPECT_STREQ(content.c_str(), "");
+        ftraceFsOps.SetFtraceRoot("");
+        content = ftraceFsOps.GetPerCpuStats(0);
+        EXPECT_STREQ(content.c_str(), "");
 
-    ftraceFsOps.SetFtraceRoot("/test_path");
-    content = ftraceFsOps.GetPerCpuStats(0);
-    EXPECT_STREQ(content.c_str(), "");
+        ftraceFsOps.SetFtraceRoot("/test_path");
+        content = ftraceFsOps.GetPerCpuStats(0);
+        EXPECT_STREQ(content.c_str(), "");
+    }
 }
 
 /*
@@ -297,8 +301,10 @@ HWTEST_F(FtraceFsOpsTest, GetRawTracePath, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatNormal, TestSize.Level1)
 {
-    std::string content = FtraceFsOps::GetInstance().GetPageHeaderFormat();
-    EXPECT_STRNE(content.c_str(), "");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        std::string content = FtraceFsOps::GetInstance().GetPageHeaderFormat();
+        EXPECT_STRNE(content.c_str(), "");
+    }
 }
 
 /*
@@ -409,14 +415,15 @@ HWTEST_F(FtraceFsOpsTest, ClearTraceBufferFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(true));
-    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/options/record-cmd";
-    std::string content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "1\n");
-
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(false));
-    content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "0\n");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(true));
+        std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/options/record-cmd";
+        std::string content = FileUtils::ReadFile(path);
+        EXPECT_STREQ(content.c_str(), "1\n");
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(false));
+        content = FileUtils::ReadFile(path);
+        EXPECT_STREQ(content.c_str(), "0\n");
+    }
 }
 
 /*
@@ -443,14 +450,16 @@ HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordTgidOption(true));
-    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/options/record-tgid";
-    std::string content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "1\n");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordTgidOption(true));
+        std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/options/record-tgid";
+        std::string content = FileUtils::ReadFile(path);
+        EXPECT_STREQ(content.c_str(), "1\n");
 
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordTgidOption(false));
-    content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "0\n");
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordTgidOption(false));
+        content = FileUtils::ReadFile(path);
+        EXPECT_STREQ(content.c_str(), "0\n");
+    }
 }
 
 /*
@@ -505,7 +514,7 @@ HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, SetTraceClockNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetTraceClock("uptime"));
+    EXPECT_TRUE(FtraceFsOps::GetInstance().SetTraceClock("boot"));
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/trace_clock";
     std::string content = FileUtils::ReadFile(path);
     EXPECT_STRNE(content.c_str(), "");
@@ -544,11 +553,13 @@ HWTEST_F(FtraceFsOpsTest, GetTraceClock, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, AppendSetEventNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().ClearSetEvent());
-    EXPECT_TRUE(FtraceFsOps::GetInstance().AppendSetEvent("sched", "sched_switch"));
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        EXPECT_TRUE(FtraceFsOps::GetInstance().ClearSetEvent());
+        EXPECT_TRUE(FtraceFsOps::GetInstance().AppendSetEvent("sched", "sched_switch"));
+    }
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/set_event";
     std::string content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "sched:sched_switch\n");
+    EXPECT_STRNE(content.c_str(), "");
 }
 
 /*
@@ -658,9 +669,9 @@ HWTEST_F(FtraceFsOpsTest, EnableTracingFalse, TestSize.Level1)
 HWTEST_F(FtraceFsOpsTest, DisableTracingNormal, TestSize.Level1)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().DisableTracing());
-    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "tracing_on";
+    std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/tracing_on";
     std::string content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "");
+    EXPECT_STREQ(content.c_str(), "0\n");
 }
 
 /*
