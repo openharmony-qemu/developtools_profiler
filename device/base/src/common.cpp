@@ -475,7 +475,7 @@ const char* RealPath(std::string &filePath)
         }
     }
     filePath = "/";
-    for (std::string &pathName : validPaths) {
+    for (const std::string &pathName : validPaths) {
         filePath += pathName;
         filePath += "/";
     }

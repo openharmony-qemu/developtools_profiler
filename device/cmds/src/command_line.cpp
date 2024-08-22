@@ -86,15 +86,13 @@ int CommandLine::CheckParam(const std::string& s1, const std::string& s2)
         }
         switch (p->paramType_) {
             case PARAM_TYPE_SWITCH: {
-                CommandParamSwitch* pswitch = (CommandParamSwitch*)p.get();
-                pswitch->SetValue(true);
+                p->SetValue(true);
                 return USED_PARAM_ONE;
             }
                 break;
             case PARAM_TYPE_TEXT: {
-                CommandParamText* ptext = (CommandParamText*)p.get();
                 if (s2 != "") {
-                    ptext->SetValue(s2);
+                    p->SetValue(s2);
                     return USED_PARAM_TWO;
                 }
                 printf("%s lost content\n", s1.c_str());
