@@ -52,6 +52,26 @@ constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
     : inputPath_(inputPath), outputPath_(outPath) {}
 
+std::pair<bool, std::string> EbpfConverter::CheckNotExistsFilePath(const std::string &filePath)
+{
+    size_t pos = filePath.rfind('/');
+    std::string pathDir = "";
+    if (pos != std::string::npos) {
+        pathDir = filePath.substr(0, pos);
+    } else {
+        pathDir = ".";
+    }
+    std::unique_ptr<char[]> pathDirRealPath = std::make_unique<char[]>(PATH_MAX);
+    if ((pathDir.length() >= PATH_MAX - 1) || (realpath(pathDir.c_str(), pathDirRealPath.get()) == nullptr)) {
+        std::cout << "path is invalid:" << pathDir << std::endl;
+        return {false, ""};
+    }
+    if (access(pathDir.c_str(), F_OK) != 0) {
+        std::cout << "Fail to access path:" << pathDir << std::endl;
+        return {false, ""};
+    }
+    return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
+}
 void EbpfConverter::StartParsing()
 {
     if (access(inputPath_.c_str(), R_OK) != 0) {
@@ -506,7 +526,17 @@ int32_t main(int32_t argc, char* argv[])
             }
         }
     }
-    OHOS::EBPF_TOOLS::EbpfConverter ec(inputPath, outputPath);
+    auto retFileInput = OHOS::EBPF_TOOLS::EbpfConverter::CheckNotExistsFilePath(inputPath);
+    auto retFileOutput = OHOS::EBPF_TOOLS::EbpfConverter::CheckNotExistsFilePath(outputPath);
+    if (!retFileInput.first) {
+        std::cout << "check input file path" << inputPath << " fail!" << std::endl;
+        return 0;
+    }
+    if (!retFileOutput.first) {
+        std::cout << "check output file path" << outputPath << " fail!" << std::endl;
+        return 0;
+    }
+    OHOS::EBPF_TOOLS::EbpfConverter ec(retFileInput.second, retFileOutput.second);
     ec.StartParsing();
     return 0;
 }

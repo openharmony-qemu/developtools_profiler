@@ -29,12 +29,6 @@
 #include "network_profiler_manager.h"
 
 namespace {
-#if defined(__i386__) || defined(__x86_64__)
-const char DEFAULT_PLUGIN_PATH[] = "./";
-#else
-const char DEFAULT_PLUGIN_PATH[] = "/data/local/tmp/";
-#endif
-
 const int SLEEP_ONE_SECOND = 1000;
 
 std::vector<std::string> presetPluginVec = {
