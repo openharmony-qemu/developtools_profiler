@@ -32,6 +32,7 @@
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
 #include "include/stalling_rate_trace.h"
+#include "common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -57,7 +58,8 @@ std::string ControlCallCmd::GetResult(std::vector<std::string> v)
     } else if (v[typeName] == "startFrame") {
         result = SmartPerf::ControlCallCmd::StartFrameFps(v);
     } else if (v[typeName] == "fpsohtest") {
-        SPUtils::LoadCmd("SP_daemon -ohtestfps 10", result);
+        std::string ohTestFps = CMD_COMMAND_MAP.at(CmdCommand::OHTESTFPS);
+        SPUtils::LoadCmd(ohTestFps, result);
     } else if (v[typeName] == "frameLoss") {
         result = SmartPerf::ControlCallCmd::GetFrame();
     } else if (v[typeName] == "appStartTime") {
@@ -85,7 +87,8 @@ std::string ControlCallCmd::TimeDelay()
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
     OHOS::SmartPerf::StallingRateTrace srt;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_delay.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "delay" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("delay", traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
@@ -121,7 +124,6 @@ std::string ControlCallCmd::TimeDelay()
     std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
-    int two = 2;
     ss << std::fixed << std::setprecision(two) << rateResult;
     std::string ssResult = ss.str();
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
@@ -137,7 +139,8 @@ std::string ControlCallCmd::SlideList()
     OHOS::SmartPerf::ParseRadar radar;
     OHOS::SmartPerf::StallingRateTrace srt;
     std::string resultStream = "";
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_fps.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "fps" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     if (isOhTest) {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
@@ -171,7 +174,6 @@ std::string ControlCallCmd::SlideList()
         streamFps << sFps;
         double stallingRateResult = srt.StallingRateResult(traceName);
         std::ostringstream ss;
-        int two = 2;
         ss << std::fixed << std::setprecision(two) << stallingRateResult;
         std::string ssResult = ss.str();
         std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
@@ -184,7 +186,8 @@ std::string ControlCallCmd::GetFrame()
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_frame.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "frame" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("frame", traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
@@ -199,7 +202,8 @@ std::string ControlCallCmd::PageFps()
     OHOS::SmartPerf::StartUpDelay sd;
     OHOS::SmartPerf::ParsePageFpsTrace pageFpsTrace;
     std::string cmdResult;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + "*" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
     thGetTrace.join();
@@ -214,7 +218,8 @@ double ControlCallCmd::ResponseTime()
     OHOS::SmartPerf::StartUpDelay sd;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + "*" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     if (isOhTest) {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("response", traceName); });
@@ -236,7 +241,8 @@ double ControlCallCmd::ColdStartHM(std::vector<std::string> v) const
     OHOS::SmartPerf::ParseTrace parseTrace;
     std::string cmdResult;
     int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) "*" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
     thGetTrace.join();
@@ -249,7 +255,8 @@ double ControlCallCmd::CompleteTime()
     OHOS::SmartPerf::ParseClickCompleteTrace pcct;
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + "*" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     if (isOhTest) {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("complete", traceName); });
@@ -273,9 +280,11 @@ std::string ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE);
+    std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
+    SPUtils::LoadCmd(rmTrace + "*" + ".json", cmdResult);
+    SPUtils::LoadCmd(rmTrace + "*" + ".ftrace", cmdResult);
+    SPUtils::LoadCmd(uitest, cmdResult);
     sleep(1);
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
@@ -283,7 +292,7 @@ std::string ControlCallCmd::StartFrameFps(std::vector<std::string> v)
     sd.InitXY2(v[type], pathJson, v[typePKG]);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "coldStart" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
-    std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_POINT) + sd.pointXY + " -u " + sd.pointXY;
     sleep(1);
     SPUtils::LoadCmd(cmd, cmdResult);
     sleep(1);
@@ -301,9 +310,11 @@ double ControlCallCmd::StartResponse(std::vector<std::string> v)
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE);
+    std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
+    SPUtils::LoadCmd(rmTrace + "*" + ".json", cmdResult);
+    SPUtils::LoadCmd(rmTrace + "*" + ".ftrace", cmdResult);
+    SPUtils::LoadCmd(uitest, cmdResult);
     sleep(1);
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
@@ -330,7 +341,8 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string cmdResult;
     OHOS::SmartPerf::ParseRadar radar;
     OHOS::SmartPerf::StallingRateTrace srt;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/sp_trace_start.ftrace", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "start" + ".ftrace";
+    SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
     std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
@@ -370,9 +382,11 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     std::string cmdResult;
     int type = 4;
     int typePKG = 3;
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-    SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-    SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+    std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE);
+    std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
+    SPUtils::LoadCmd(rmTrace + "*" + ".json", cmdResult);
+    SPUtils::LoadCmd(rmTrace + "*" + ".ftrace", cmdResult);
+    SPUtils::LoadCmd(uitest, cmdResult);
     sleep(1);
     size_t position = cmdResult.find(":");
     size_t position2 = cmdResult.find("json");
@@ -384,7 +398,7 @@ double ControlCallCmd::ColdStart(std::vector<std::string> v)
     } else {
         if (isOhTest) {
             std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("coldStart", traceName); });
-            std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+            std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_POINT) + sd.pointXY + " -u " + sd.pointXY;
             sleep(1);
             SPUtils::LoadCmd(cmd, cmdResult);
             sleep(1);
@@ -412,7 +426,8 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     OHOS::SmartPerf::ParseRadar radar;
     std::string cmdResult;
     if (isOhTest) {
-        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
+        std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + "*" + ".ftrace";
+        SPUtils::LoadCmd(rmTrace, cmdResult);
         std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "hotStart" + ".ftrace";
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("hotStart", traceName); });
         thGetTrace.join();
@@ -420,9 +435,11 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
     } else {
         int type = 4;
         int typePKG = 3;
-        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.json", cmdResult);
-        SPUtils::LoadCmd("rm -rfv /data/local/tmp/*.ftrace", cmdResult);
-        SPUtils::LoadCmd("uitest dumpLayout", cmdResult);
+        std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE);
+        std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
+        SPUtils::LoadCmd(rmTrace + "*" + ".json", cmdResult);
+        SPUtils::LoadCmd(rmTrace + "*" + ".ftrace", cmdResult);
+        SPUtils::LoadCmd(uitest, cmdResult);
         sleep(1);
         size_t position = cmdResult.find(":");
         size_t position2 = cmdResult.find("json");
@@ -431,7 +448,7 @@ double ControlCallCmd::HotStart(std::vector<std::string> v)
         if (sd.pointXY == "0 0") {
             return noNameType;
         } else {
-            std::string cmd = "uinput -T -d " + sd.pointXY + " -u " + sd.pointXY;
+            std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_POINT) + sd.pointXY + " -u " + sd.pointXY;
             SPUtils::LoadCmd(cmd, cmdResult);
             sleep(1);
             sd.ChangeToBackground();

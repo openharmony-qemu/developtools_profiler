@@ -34,6 +34,7 @@
 #include <regex>
 #include "unistd.h"
 #include <future>
+#include "common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -112,9 +113,11 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
-    SPUtils::LoadCmd("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace", result);
+    std::string hiprofiler = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER);
+    SPUtils::LoadCmd(hiprofiler, result);
     result.clear();
-    SPUtils::LoadCmd("rm -f /data/local/tmp/perf_[0-9]*.data", result);
+    std::string perf = CMD_COMMAND_MAP.at(CmdCommand::PERF);
+    SPUtils::LoadCmd(perf, result);
     std::cout << recvStr << std::endl;
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
@@ -386,7 +389,8 @@ void SPTask::WritePath(std::string thisBasePath)
 {
     if (!SPUtils::FileAccess(thisBasePath)) {
         std::string cmdResult;
-        SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
+        std::string writePath = CMD_COMMAND_MAP.at(CmdCommand::WRITE_PATH) + curTaskInfo.sessionId;
+        SPUtils::LoadCmd(writePath, cmdResult);
     }
 }
 
@@ -495,8 +499,8 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 bool SPTask::CheckCounterId()
 {
     std::string result;
-
-    SPUtils::LoadCmd("ps -ef |grep hiprofiler_cmd |grep -v grep", result);
+    std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
+    SPUtils::LoadCmd(hiprofilerCmd, result);
     if (result.empty()) {
         return false;
     }
@@ -541,7 +545,7 @@ void SPTask::KillHiperfCmd()
 {
     long long now = 0;
     long long runTime = 0;
-    std::string killCmd = "kill -9 ";
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD) + "-9 ";
     std::string result;
     std::vector<std::string> out;
 
@@ -556,7 +560,8 @@ void SPTask::KillHiperfCmd()
     LOGI("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
-        SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
+        std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
+        SPUtils::LoadCmd(hiprofilerPid, result);
         SPUtils::StrSplit(result, " ", out);
         if (out.empty()) {
             break;
@@ -566,7 +571,8 @@ void SPTask::KillHiperfCmd()
     } while (END_WAITING_TIME - runTime++ > 0);
 
     out.clear();
-    SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
+    std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
+    SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
     LOGI("pidof hiprofiler_cmd size(%u)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {

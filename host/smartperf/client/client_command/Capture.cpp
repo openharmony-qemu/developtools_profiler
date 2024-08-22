@@ -25,6 +25,7 @@
 #include "wm_common.h"
 #include "png.h"
 #include <filesystem>
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
@@ -71,7 +72,8 @@ void Capture::ThreadGetCatch()
     const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGI("%s capture not be created!", captureDir.c_str());
             return;
         } else {
@@ -98,7 +100,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGI("%s capture not be created!", captureDir.c_str());
             return;
         } else {
@@ -116,7 +119,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());
     }
-    if (!SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult)) {
+    std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
+    if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {
         LOGI("snapshot_display command failed!");
         close(fd);
         return;

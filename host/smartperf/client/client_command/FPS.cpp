@@ -28,6 +28,9 @@
 #include "include/FPS.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "common.h"
+#include <sys/wait.h>
+#include <sys/types.h>
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> FPS::ItemData()
@@ -166,39 +169,57 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     }
     fpsInfo = fpsMap[name];
     fpsInfo.fps = 0;
-    FILE *fp;
-    static char tmp[1024];
-    std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
-    fp = popen(cmd.c_str(), "r");
-    if (fp == nullptr) {
-        LOGE("Failed to open hidumper file");
+    std::string command = "fps " + name;
+    const char* args[] = { "hidumper", "-s", "10", "-a", command.c_str(), nullptr };
+    int pipefd[2];
+    pit_t pid;
+    if (pipe(pipefd) == -1) {
+        LOGE("FPS::Failed to create pipe");
         return fpsInfo;
     }
-    fpsNum = 0;
-    prevScreenTimestamp = -1;
-    LOGI("dump time: start!");
-    struct timespec time1 = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &time1);
-    fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
-    fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("Time-------time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
-    LOGI("Time-------time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
-    LOGI("Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
-    LOGI("Time-------fpsInfo.currTimeDump: %s", std::to_string(fpsInfo.currTimeDump).c_str());
-    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        std::string str(tmp);
-        LOGD("dump time: %s", str.c_str());
-        curScreenTimestamp = 0;
-        std::stringstream sstream;
-        sstream << tmp;
-        sstream >> curScreenTimestamp;
-        if (curScreenTimestamp == 0) {
-            continue;
+    pid = fork();
+    if (pid == -1) {
+        LOGE("FPS::Failed to fork");
+        return fpsInfo;
+    } else if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        if (execvp(args[0])) {
+            LOGE("FPS::Failed to execute hidumper");
+            return fpsInfo;
         }
-        CalcFpsAndJitters();
+    } else {
+        close(pipefd[1]);
+        char tmp[1024];
+        fpsNum = 0;
+        prevScreenTimestamp = -1;
+        LOGI("FPS::dump time: start!");
+        struct timespec time1 = { 0 };
+        clock_gettime(CLOCK_MONOTONIC, &time1);
+        fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
+        fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
+        LOGI("FPS::time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
+        LOGI("FPS::time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
+        LOGI("FPS::fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
+        LOGI("FPS::psInfo.currTimeDump: %s", std::to_string(fpsInfo.currTimeDump).c_str());
+        FILE *fp = fdopen(pipefd[0], "r");
+        while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
+            std::string str(tmp);
+            LOGD("FPS::dump time: %s", str.c_str());
+            curScreenTimestamp = 0;
+            std::stringstream sstream;
+            sstream << tmp;
+            sstream >> curScreenTimestamp;
+            if (curScreenTimestamp == 0) {
+                continue;
+            }
+            CalcFpsAndJitters();
+        }
+        fclose(fp);
+        close(pipefd[0]);
+        waitpid(pid, nullptr, 0);
     }
-    pclose(fp);
-    LOGI("Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
     return fpsInfo;
 }
 
@@ -271,3 +292,4 @@ bool FPS::IsFindForeGround(std::string line) const
 }
 }
 }
+
