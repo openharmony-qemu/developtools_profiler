@@ -157,7 +157,7 @@ int main(int argc, char *argv[])
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
         const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
-        const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv"
+        const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
         std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::app);
         if (!outFile.is_open()) {
             std::cout << "Error opening capacity file!" << std::endl;
@@ -171,7 +171,7 @@ int main(int argc, char *argv[])
         if(outFile.fail()) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
-            LOGE("Error writing capacity failed: %s", strerror_r(errno, buf, bufSize););
+            std::cout << "Error writing capacity failed:" << strerror_r(errno, buf, bufSize) << std::endl;
         }
         outFile.close();
         return 0;
