@@ -53,12 +53,14 @@ namespace OHOS {
             int i = 0;
             int socketFd = 0;
             struct sockaddr_in address;
+            const int reuse = 1;
 
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (socketFd < 0) {
                 LOGE("Create socket error.");
                 return -1;
             }
+            setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
             std::fill_n(reinterpret_cast<char*>(&address), sizeof(address), 0);
             address.sin_family = AF_INET;

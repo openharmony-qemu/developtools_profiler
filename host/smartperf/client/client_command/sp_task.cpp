@@ -277,21 +277,21 @@ void SPTask::StopSdkRecv()
         return;
     }
     std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
-    if (fopen(outSdkDataPath.c_str(), "w") == nullptr) {
+    sdkDataMtx.lock();
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
         LOGE("data %s open failed", outSdkDataPath.c_str());
         ResetSdkParam();
         return;
     }
-    std::lock_guard<std::mutex> lock(sdkDataMtx);
-    std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
     for (const auto &item : sdkvec) {
         outFile << item << std::endl;
     }
     outFile.close();
-
+    sdkDataMtx.unlock();
     ResetSdkParam();
 }
 
@@ -299,34 +299,22 @@ void SPTask::InitDataFile()
 {
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    std::string filePath;
-    std::ifstream infile;
-
-    char fileDirChar[PATH_MAX] = {0x00};
-    if (realpath(fileDir.c_str(), fileDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", fileDir.c_str());
-        return;
-    }
 
     for (const auto &file: files) {
-        filePath = fileDirChar;
-        filePath = filePath + "/" + file;
-        if (fopen(filePath.c_str(), "w") == nullptr) {
-            LOGE("data %s open failed", filePath.c_str());
+        std::string filePath = fileDir + "/" + file;
+        char filePathChar[PATH_MAX] = {0x00};
+        if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+            LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
-        infile = std::ifstream(filePath.c_str());
-        if (infile.good()) {
-            infile.close();
-            std::remove(filePath.c_str());
-        }
+        std::remove(filePathChar);
     }
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    std::lock_guard<std::mutex> lock(asyncDataMtx);
+    asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -353,6 +341,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
     }
+    asyncDataMtx.unlock();
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
@@ -431,7 +420,7 @@ void SPTask::StopGetInfo()
 }
 void SPTask::StopGpuCounterRecv()
 {
-    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/gpu_counter.csv";
+    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
     gpuCounter.StopCollect(outGpuCounterDataPath);
 }
 void SPTask::StopTask()
