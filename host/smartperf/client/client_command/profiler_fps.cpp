@@ -24,12 +24,14 @@
 #include <thread>
 #include <unistd.h>
 #include <sys/time.h>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "include/profiler_fps.h"
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
-#include "common.h"
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {
