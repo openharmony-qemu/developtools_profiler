@@ -760,4 +760,38 @@ describe("HidebugJsTest", function () {
             console.info(error.message);
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_034
+     * @tc.desc: getGraphicsMemory
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_034', 0, async function () {
+        console.info("---------------------------HidebugJsTest_034----------------------------------");
+        try {
+            let graphicMemory = await getGraphicsMemory();
+            expect(graphicMemory >= 0).assertTrue();
+        } catch (err) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_035
+     * @tc.desc: getGraphicsMemorySync
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_035', 0, function () {
+        console.info("---------------------------HidebugJsTest_035----------------------------------");
+        try {
+            let graphicMemory = getGraphicsMemorySync();
+            expect(graphicMemory >= 0).assertTrue();
+        } catch (err) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
 })

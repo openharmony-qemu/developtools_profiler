@@ -54,6 +54,7 @@ ohos_shared_library("hidebug_native") {
   sources = [
     "src/hidebug_app_thread_cpu.cpp",
     "src/hidebug_native_interface_impl.cpp",
+    "src/hidebug_util.cpp",
   ]
 
   external_deps = [
