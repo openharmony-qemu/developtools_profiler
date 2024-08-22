@@ -162,6 +162,7 @@ int main(int argc, char *argv[])
         std::string recordPower;
         auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
         OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
+        std::cout << "recordTime: " << recordTime << std::endl << "recordPower: " << recordPower << std::endl;
         outFile << recordTime.c_str() << "," << recordPower.c_str() << std::endl;
         if(outFile.fail()) {
             LOGI("recordCapacity write failed: %s", strerror(errno));
