@@ -40,9 +40,9 @@ ohos_source_set("memdataplugin_source") {
       "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
-      "graphic_2d:librender_service_client",
       "hidumper:lib_dump_usage",
       "hilog:libhilog_base",
+      "hiview:libucollection_utility",
       "protobuf:protobuf_lite",
     ]
   }
@@ -58,7 +58,6 @@ ohos_shared_library("memdataplugin") {
     external_deps = [
       "c_utils:utils",
       "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
-      "graphic_2d:librender_service_client",
       "hilog:libhilog_base",
     ]
   }

@@ -20,10 +20,8 @@
 #include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
-#include "transaction/rs_interfaces.h"
 
 namespace {
-using namespace OHOS::Rosen;
 using namespace OHOS::HDI::Memorytracker::V1_0;
 using namespace OHOS::Developtools::Profiler;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -1294,8 +1292,10 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
         // refers hidumper
         // https://gitee.com/openharmony/hiviewdfx_hidumper/blob/master/frameworks/native/src/executor/memory/memory_info.cpp#L260
         GraphicsMemory graphicsMemory;
-        if (GetGraphicsMemory(pid, graphicsMemory, GraphicType::GL) && GetGraphicsMemory(pid, graphicsMemory, GraphicType::GRAPH)) {
+        if (GetGraphicsMemory(pid, graphicsMemory, GraphicType::GL)) {
             processesInfo->set_gl_pss_kb(graphicsMemory.gl);
+        }
+        if (GetGraphicsMemory(pid, graphicsMemory, GraphicType::GRAPH)) {
             processesInfo->set_graph_pss_kb(graphicsMemory.graph);
         }
     }
