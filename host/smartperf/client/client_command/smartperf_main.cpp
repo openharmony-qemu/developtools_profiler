@@ -123,7 +123,7 @@ static void RecordCapacity()
         infile.close();
     }
 
-    std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::app);
+    std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
         std::cout << "Error opening capacity file!" << std::endl;
         return;
