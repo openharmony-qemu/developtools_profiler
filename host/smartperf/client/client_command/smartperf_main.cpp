@@ -17,6 +17,7 @@
 #include <cstring>
 #include "unistd.h"
 #include <fstream>
+#include <sstream>
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
 #include "include/profiler_fps.h"
@@ -108,6 +109,39 @@ static void SocketStopCommand()
     cc.SocketStop();
 }
 
+static void RecordCapacity()
+{
+    const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
+    const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
+    std::string capacityString;
+    std::ifstream infile(capacitySavePath.c_str());
+
+    if (infile.is_open()) {
+        std::stringstream buffer;
+        buffer << infile.rdbuf();
+        capacityString = buffer.str();
+        infile.close();
+    }
+
+    std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::app);
+    if (!outFile.is_open()) {
+        std::cout << "Error opening capacity file!" << std::endl;
+        return;
+    }
+    std::string recordPower;
+    auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+    OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
+    std::cout << "recordTime: " << recordTime << std::endl << "recordPower: " << recordPower << std::endl;
+    capacityString += recordTime + "," + recordPower;
+    outFile << capacityString << std::endl;
+    if(outFile.fail()) {
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        std::cout << "Error writing capacity failed:" << strerror_r(errno, buf, bufSize) << std::endl;
+    }
+    outFile.close();
+}
+
 int main(int argc, char *argv[])
 {
     if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
@@ -156,24 +190,7 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
-        const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
-        const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
-        std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::app);
-        if (!outFile.is_open()) {
-            std::cout << "Error opening capacity file!" << std::endl;
-            return 0;
-        }
-        std::string recordPower;
-        auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
-        OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
-        std::cout << "recordTime: " << recordTime << std::endl << "recordPower: " << recordPower << std::endl;
-        outFile << recordTime.c_str() << "," << recordPower.c_str() << std::endl;
-        if(outFile.fail()) {
-            const int bufSize = 256;
-            char buf[bufSize] = { 0 };
-            std::cout << "Error writing capacity failed:" << strerror_r(errno, buf, bufSize) << std::endl;
-        }
-        outFile.close();
+        RecordCapacity();
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
