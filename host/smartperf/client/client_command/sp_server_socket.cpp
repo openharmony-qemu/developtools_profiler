@@ -51,7 +51,6 @@ int SpServerSocket::Init(ProtoType type)
             return -1;
         }
     }
-    std::fill_n(reinterpret_cast<char*>(&local), sizeof(local), 0);
     local.sin_family = AF_INET;
     local.sin_port = htons(sockPort);
     local.sin_addr.s_addr = inet_addr("127.0.0.1");

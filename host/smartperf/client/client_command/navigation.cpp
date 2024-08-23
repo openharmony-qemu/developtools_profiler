@@ -57,7 +57,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "No Navigation Info";
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_NAV) + " -navigation";
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_NAV) + winId + " -navigation'";
     FILE *navfd = popen(cmd.c_str(), "r");
     if (navfd == nullptr) {
         navInfo["navPathName"] = nameStr;
