@@ -437,6 +437,33 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     CHECK_TRUE(uid >= 0, false, "Get %s uid = %d", bundleName.c_str(), uid);
     return true;
 }
+bool checkApplicationEncryped(int pid, const std::string& processName)
+{
+    std::string bundleName;
+    if (pid > 0) {
+        std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
+        if (!LoadStringFromFile(filePath, bundleName)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!");
+            return false;
+        }
+        bundleName.resize(strlen(bundleName.c_str()));
+    } else {
+        bundleName = processName;
+    }
+    CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
+
+    sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
+    sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
+    sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
+    AppExecFwk::ApplicationInfo appInfo;
+    bool ret = proxy->GetApplicationInfo(bundleName, 0, 100, appInfo);
+    CHECK_TRUE(ret, false, "%s:%s GetApplicationInfo failed!", __func__, bundleName.c_str());
+    bool isEncrypted = (appInfo.applicationReservedFlag &
+                        static_cast<uint32_t>(AppExecFwk::ApplicationReservedFlag::ENCRYPTED_APPLICATION)) != 0;
+    return isEncrypted;
+}
 
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
 {
