@@ -123,6 +123,10 @@ public:
     {
         return pid_;
     }
+    void SetSaMode(bool saMode)
+    {
+        saMode_ = saMode;
+    }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<StackDataRepeater::RawStack>& rawStack);
@@ -130,6 +134,7 @@ public:
 private:
     int pid_ = -1; // for SA mode
     bool printMallocNmd_ = false;
+    bool saMode_ = false;
     bool CheckProcess();
     bool CheckProcessName();
     void SetHookData(HookContext& hookContext, struct timespec ts,
