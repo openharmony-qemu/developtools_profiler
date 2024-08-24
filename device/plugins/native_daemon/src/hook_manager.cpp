@@ -316,6 +316,7 @@ void HookManager::CheckHapEncryped()
     for (const auto& pid : hookConfig_.expand_pids()) {
         if (pid > 0 && COMMON::checkApplicationEncryped(pid, "")) {
             hookConfig_.set_js_stack_report(0);
+            hookConfig_.set_max_js_stack_depth(0);
             break;
         }
     }
@@ -323,6 +324,7 @@ void HookManager::CheckHapEncryped()
     if (!processName.empty() && COMMON::checkApplicationEncryped(0, processName)) {
         PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
         hookConfig_.set_js_stack_report(0);
+        hookConfig_.set_max_js_stack_depth(0);
     }
 }
 
