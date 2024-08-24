@@ -458,7 +458,7 @@ bool checkApplicationEncryped(int pid, const std::string& processName)
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
     AppExecFwk::ApplicationInfo appInfo;
-    bool ret = proxy->GetApplicationInfo(bundleName, 0, 100, appInfo);
+    bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO, AppExecFwk::Constants::ANY_USERID, appInfo);
     CHECK_TRUE(ret, false, "%s:%s GetApplicationInfo failed!", __func__, bundleName.c_str());
     bool isEncrypted = (appInfo.applicationReservedFlag &
                         static_cast<uint32_t>(AppExecFwk::ApplicationReservedFlag::ENCRYPTED_APPLICATION)) != 0;
