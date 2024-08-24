@@ -451,17 +451,18 @@ bool checkApplicationEncryped(int pid, const std::string& processName)
         bundleName = processName;
     }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
-
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
     AppExecFwk::ApplicationInfo appInfo;
-    bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO, AppExecFwk::Constants::ANY_USERID, appInfo);
+    bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO,
+                                         AppExecFwk::Constants::ANY_USERID, appInfo);
     CHECK_TRUE(ret, false, "%s:%s GetApplicationInfo failed!", __func__, bundleName.c_str());
     bool isEncrypted = (appInfo.applicationReservedFlag &
                         static_cast<uint32_t>(AppExecFwk::ApplicationReservedFlag::ENCRYPTED_APPLICATION)) != 0;
+    PROFILER_LOG_INFO(LOG_CORE, "%s: check application encryped.%d : %s", __func__, isEncrypted, bundleName.c_str());
     return isEncrypted;
 }
 

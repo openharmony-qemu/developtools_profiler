@@ -313,15 +313,15 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
 void HookManager::CheckHapEncryped()
 {
-     for (const auto& pid : hookConfig_.expand_pids()) {
+    for (const auto& pid : hookConfig_.expand_pids()) {
         if (pid > 0 && COMMON::checkApplicationEncryped(pid, "")) {
             hookConfig_.set_js_stack_report(0);
             break;
         }
     }
-    // 加密应用不回js 栈
     const std::string processName = hookConfig_.process_name();
     if (!processName.empty() && COMMON::checkApplicationEncryped(0, processName)) {
+        PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
         hookConfig_.set_js_stack_report(0);
     }
 }
@@ -347,7 +347,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         return false;
     }
     (void)CheckHapEncryped();
-
     if (hookConfig_.max_stack_depth() < DLOPEN_MIN_UNWIND_DEPTH) {
         // set default max depth
         hookConfig_.set_max_stack_depth(DLOPEN_MIN_UNWIND_DEPTH);
