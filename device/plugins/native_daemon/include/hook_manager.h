@@ -137,6 +137,7 @@ private:
     bool saMode_ = false;
     bool CheckProcess();
     bool CheckProcessName();
+    void CheckHapEncryped();
     void SetHookData(HookContext& hookContext, struct timespec ts,
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
