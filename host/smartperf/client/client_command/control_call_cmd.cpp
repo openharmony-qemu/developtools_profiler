@@ -121,7 +121,7 @@ std::string ControlCallCmd::TimeDelay()
     std::ostringstream streamComplete;
     streamComplete << strCompleteTime;
     std::string maxFrame = radar.ParseRadarMaxFrame(radarFrameStr);
-    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" +"CompleteTime:" + streamComplete.str() + "ms\n";
+    std::string resultTime = "ResponseTime:" + stream.str() + "ms\n" + "CompleteTime:" + streamComplete.str() + "ms\n";
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(two) << rateResult;
