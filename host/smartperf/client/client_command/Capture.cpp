@@ -25,7 +25,7 @@
 #include "wm_common.h"
 #include "png.h"
 #include <filesystem>
-#include "common.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;

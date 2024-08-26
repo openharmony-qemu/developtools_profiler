@@ -29,7 +29,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
-#include "common.h"
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {
