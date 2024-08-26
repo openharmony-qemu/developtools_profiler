@@ -221,6 +221,16 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
 #endif  // HOOK_ENABLE
 }
 
+bool IsUserMode()
+{
+    std::string debugMode = "0";
+    debugMode = OHOS::system::GetParameter("const.debuggable", debugMode);
+    if (debugMode != "0") {
+        PROFILER_LOG_ERROR(LOG_CORE, "It is not user mode!");
+    }
+    return debugMode == "0";
+}
+
 inline int CustomFdClose(int& fd)
 {
     int ret = close(fd);
