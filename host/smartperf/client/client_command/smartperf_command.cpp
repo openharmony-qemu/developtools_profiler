@@ -140,7 +140,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_OUT:
             outPathParam = argStr1;
             if (strcmp(outPathParam.c_str(), "") != 0) {
-                outPath = outPathParam + std::string(".csv");
+                outPath = outPathParam;
             }
             break;
         case CommandType::CT_C:

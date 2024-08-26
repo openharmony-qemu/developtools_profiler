@@ -88,7 +88,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
 std::string Navigation::GetWinId(std::string processId) const
 {
     std::string wid;
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
+    const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return wid = -1;
