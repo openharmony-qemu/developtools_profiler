@@ -42,11 +42,6 @@ private:
     const int paramTwelve = 12;
     const int paramTwo = 2;
     const int paramThree = 3;
-    const int paramTwentyFour = 24;
-};
-struct DumpEntity {
-    const std::string pid;
-    const std::string winId;
 };
 }
 }

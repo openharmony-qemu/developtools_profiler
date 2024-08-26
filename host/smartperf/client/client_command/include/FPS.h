@@ -66,7 +66,7 @@ public:
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
     bool IsForeGround();
     bool IsFindForeGround(std::string line) const;
-    void GetSameTimeNums();
+    void CalcFpsAndJitters();
     void GetCurrentTime();
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
@@ -79,7 +79,7 @@ public:
     std::map<std::string, std::string> ItemData() override;
     void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
     FpsCurrentFpsTime GetFpsCurrentFpsTime();
-
+    void ReadDataFromPipe(int fd);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -89,10 +89,9 @@ private:
     std::string surfaceViewName;
     bool refresh = false;
     long long mod = 1e9;
-    long long lastReadyTime = -1;
-    long long frameReadyTime = 0;
-    long long lastTime = -1;
-    long long lastFrameReadyTime = 0;
+    long long curScreenTimestamp = 0;
+    long long prevScreenTimestamp = -1;
+    long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     unsigned long sleepNowTime = 10000;

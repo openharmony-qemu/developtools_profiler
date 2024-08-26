@@ -22,7 +22,10 @@
 #include <map>
 #include <mutex>
 #include <climits>
+#include "parameters.h"
 #include "sp_csv_util.h"
+#include "sdk_data_recv.h"
+#include "GPU_Counter.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -79,7 +82,14 @@ public:
     void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
+    void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
     void WritePath(std::string thisBasePath);
+    void ConfigDataThread();
+    void StopSdkRecv();
+    void StopGpuCounterRecv();
+    void InitDataFile();
+    void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
+    void StopGetInfo();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -87,6 +97,9 @@ private:
     std::string SetHiperf(const std::string &traceName);
     bool CheckCounterId();
     void KillHiperfCmd();
+    void ConfigureSdkData(std::string itConfig);
+    void RunSdkServer(SdkDataRecv &sdkDataRecv);
+    void ResetSdkParam();
 
 private:
     TaskInfo curTaskInfo;
@@ -95,10 +108,15 @@ private:
     std::vector<SPData> vmap;
     bool isRunning = false;
     bool isInit = false;
-    std::mutex mtx;
+    std::mutex asyncDataMtx;
+    std::mutex sdkDataMtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
     long long startCaptuerTime = 0;
     int requestId = 1;
+    bool sdkData = false;
+    std::thread sdk;
+    std::vector<std::string> sdkvec;
+    GPU_Counter &gpuCounter = GPU_Counter::GetInstance();
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

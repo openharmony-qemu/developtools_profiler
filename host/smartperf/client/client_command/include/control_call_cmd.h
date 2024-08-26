@@ -44,6 +44,7 @@ private:
     double time = 0.0;
     double noNameType = -1.0;
     std::ostringstream stream;
+    int two = 2;
 };
 }
 }

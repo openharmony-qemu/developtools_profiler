@@ -27,6 +27,7 @@
 #include "collect_result.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "common.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -62,9 +63,9 @@ std::map<std::string, std::string> RAM::ItemData()
     if (packageName.length() > 0) {
         if (g_flagFirst) {
             RAM::TriggerGetPss();
-            g_flagFirst = true;
         } else {
             procRamInfoLast = RAM::GetRamInfo();
+            g_flagFirst = true;
         }
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
@@ -138,7 +139,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
         procRamInfo["heapFree"] = "NA";
         return procRamInfo;
     }
-    std::string cmd = "hidumper --mem " + processId;
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;
