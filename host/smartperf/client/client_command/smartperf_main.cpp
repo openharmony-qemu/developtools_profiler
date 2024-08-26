@@ -142,15 +142,15 @@ static void RecordCapacity()
     outFile.close();
 }
 
-int ProcessSpecificParameter(char* parameter)
+int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
 {
-    if (argc > 1 && strcmp(parameter, "-editor") == 0) {
+    if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
-    } else if (argc > 1 && strcmp(parameter, "-profilerfps") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
-    } else if (argc > 1 && strcmp(parameter, "-start") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::ClientControl cc;
         cc.StartSPDaemon();
         std::string result;
@@ -162,19 +162,21 @@ int ProcessSpecificParameter(char* parameter)
         }
         cc.SocketStart(result);
         return 1;
-    } else if (argc > 1 && strcmp(parameter, "-stop") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
         SocketStopCommand();
         return 1;
-    } else if (argc > 1 && strcmp(parameter, "-deviceinfo") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
-    } else if (argc > 1 && strcmp(parameter, "-ohtestfps") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
         return 0;
-    } else if (argc > 1 && strcmp(parameter, "-recordcapacity") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
         RecordCapacity();
         return 0;
     }
+
+    return 1;
 }
 
 int main(int argc, char *argv[])
@@ -199,7 +201,7 @@ int main(int argc, char *argv[])
              "Try `SP_daemon --help' for more options." << std::endl;
         return 0;
     }
-    if (ProcessSpecificParameter(argv[1]) == 0) {
+    if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
