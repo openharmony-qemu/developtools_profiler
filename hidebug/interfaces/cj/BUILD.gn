@@ -25,21 +25,21 @@ ohos_shared_library("cj_hidebug_ffi") {
 
   if (build_ohos_sdk) {
     defines += [ "PREVIEWER" ]
-    sources = [ "hidebug_mock.cpp" ]
+    sources = []
   }
 
   deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]
 
   external_deps = [
     "hidumper:lib_dump_usage",
+    "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
+    "init:libbegetutil",
     "napi:cj_bind_ffi",
     "napi:cj_bind_native",
     "samgr:samgr_proxy",
-    "hilog:libhilog",
     "storage_service:storage_manager_acl",
-    "init:libbegetutil",
   ]
 
   innerapi_tags = [ "platformsdk" ]

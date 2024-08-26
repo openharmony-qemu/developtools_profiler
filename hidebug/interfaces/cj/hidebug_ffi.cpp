@@ -272,7 +272,7 @@ extern "C" {
         }
         std::vector<std::u16string> cargs;
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> strCnv;
-        for(int64_t i = 0; i < args.size; i++) {
+        for (int64_t i = 0; i < args.size; i++) {
             cargs.push_back(strCnv.from_bytes(args.head[i]));
         }
         int dumpResult = sa->Dump(fd, cargs);
@@ -284,10 +284,11 @@ extern "C" {
     {
         std::vector<uint64_t> taglist;
         uint64_t *tagPtr = static_cast<uint64_t *>(tags.head);
-        for(int64_t i = 0; i < tags.size; i++) {
+        for (int64_t i = 0; i < tags.size; i++) {
             taglist.push_back(tagPtr[i]);
         }
-        uint64_t tag = std::accumulate(taglist.begin(), taglist.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
+        uint64_t tag = std::accumulate(taglist.begin(), taglist.end(), 0ull,
+            [](uint64_t a, uint64_t b) { return a | b; });
         std::string file;
         auto nativeInterface = HidebugNativeInterface::CreateInstance();
         if (!nativeInterface) {

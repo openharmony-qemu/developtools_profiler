@@ -51,8 +51,6 @@ extern "C" {
         uint64_t vssLimit;
     };
 
-
-
     FFI_EXPORT uint64_t FfiHidebugGetPss();
     FFI_EXPORT uint64_t FfiHidebugGetVss();
     FFI_EXPORT uint64_t FfiHidebugGetNativeHeapSize();
