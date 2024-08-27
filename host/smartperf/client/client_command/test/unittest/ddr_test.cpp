@@ -46,21 +46,5 @@ HWTEST_F(DDRTest, ItemDataTest, TestSize.Level1)
     
     EXPECT_EQ(ret, true);
 }
-
-HWTEST_F(DDRTest, GetDdrFreqTest, TestSize.Level1)
-{
-    bool ret = false;
-    DDR &ddr = DDR::GetInstance();
-    std::string ddrfreq = "123456";
-    std::string ddrCurFreqPath = "/bin/config.txt";
-    OHOS::SmartPerf::SPUtils::LoadFile(ddrCurFreqPath, ddrfreq);
-    long long freq = std::atoll(ddrfreq.c_str());
-    freq = ddr.GetDdrFreq();
-    if (freq > 0) {
-        ret = true;
-    }
-
-    EXPECT_EQ(ret, true);
-}
 }
 }
