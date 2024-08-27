@@ -25,6 +25,7 @@
 #include "wm_common.h"
 #include "png.h"
 #include <filesystem>
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
@@ -35,7 +36,7 @@ std::map<std::string, std::string> Capture::ItemData()
     std::map<std::string, std::string> result;
     int two = 2;
     if (callNum % two == 0) {
-        long long curTime = SPUtils::GetCurTime();
+        curTime = GetCurTimes();
         if (isSocketMessage) {
             std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
             result["capture"] = path;
@@ -44,7 +45,7 @@ std::map<std::string, std::string> Capture::ItemData()
         } else {
             std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
             result["capture"] = path;
-            Capture::TriggerGetCatch(curTime);
+            Capture::TriggerGetCatch();
             if (result.find("capture") != result.end() && result["capture"].empty()) {
                 result["capture"] = "NA";
             }
@@ -61,36 +62,35 @@ void Capture::SocketMessage()
     isSocketMessage = true;
 }
 
-void Capture::ThreadGetCatch(const std::string &curTime) const
+long long Capture::GetCurTimes()
 {
-    auto savePath = "/data/local/tmp/capture/screenCap_" + curTime + ".png";
-    if (!SPUtils::FileAccess("/data/local/tmp/capture")) {
-        std::string cmdResult;
-        SPUtils::LoadCmd("mkdir /data/local/tmp/capture", cmdResult);
-        printf("/data/local/tmp/capture created! \n");
-        LOGI("/data/local/tmp/capture created!");
-    };
-    std::stringstream errorRecv;
-    char realPath[PATH_MAX] = {0x00};
-    if (realpath(savePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
-        return;
-    } else {
-        struct stat st;
-        if (stat(realPath, &st) != 0) {
-            std::cout << "stat error: " << strerror(errno) << std::endl;
-            LOGE("open realPath failed: %s", strerror(errno));
-        } else if (!S_ISDIR(st.st_mode)) {
-            LOGE("capture savePath is not a directory: %s", realPath);
+    return SPUtils::GetCurTime();
+}
+void Capture::ThreadGetCatch()
+{
+    const std::string captureDir = "/data/local/tmp/capture";
+    const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
+    std::string cmdResult;
+    if (!SPUtils::FileAccess(captureDir)) {
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
+            LOGI("%s capture not be created!", captureDir.c_str());
+            return;
         } else {
-            auto fd = open(realPath, O_RDWR | O_CREAT, 0666);
-            if (!TakeScreenCap(savePath)) {
-                std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
-                LOGE("Screen Capture Failed!");
-            }
-            close(fd);
+            LOGI("%s created successfully!", captureDir.c_str());
         }
+    };
+    std::ostringstream errorRecv;
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
+    if (fd == -1) {
+        printf("Failed to open file: %s\n", savePath.c_str());
+        LOGI("Failed to open file: %s", savePath.c_str());
     }
+    if (!TakeScreenCap(savePath)) {
+        std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
+        LOGE("Screen Capture Failed!");
+    }
+    close(fd);
 }
 
 
@@ -100,7 +100,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        if (!SPUtils::LoadCmd("mkdir -p " + captureDir, cmdResult)) {
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGI("%s capture not be created!", captureDir.c_str());
             return;
         } else {
@@ -118,7 +119,8 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
         printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());
     }
-    if (!SPUtils::LoadCmd("snapshot_display -f " + savePath, cmdResult)) {
+    std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
+    if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {
         LOGI("snapshot_display command failed!");
         close(fd);
         return;
@@ -126,18 +128,17 @@ void Capture::ThreadGetCatchSocket(const std::string &curTime) const
     close(fd);
 }
 
-void Capture::TriggerGetCatch(long long curTime) const
+void Capture::TriggerGetCatch()
 {
-    std::string curTimeStr = std::to_string(curTime);
-    auto tStart = std::thread([this, curTimeStr]() {
-        this->ThreadGetCatch(curTimeStr);
+    auto tStart = std::thread([this]() {
+        this->ThreadGetCatch();
     });
     tStart.detach();
 }
 
-void Capture::TriggerGetCatchSocket(long long curTime) const
+void Capture::TriggerGetCatchSocket(long long captureTime) const
 {
-    std::string curTimeStr = std::to_string(curTime);
+    std::string curTimeStr = std::to_string(captureTime);
     auto tStart = std::thread([this, curTimeStr]() {
         this->ThreadGetCatchSocket(curTimeStr);
     });

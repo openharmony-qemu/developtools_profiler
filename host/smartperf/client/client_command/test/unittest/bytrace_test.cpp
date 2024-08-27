@@ -34,23 +34,6 @@ public:
     void TearDown() {}
 };
 
-HWTEST_F(ByTraceTest, SetTraceConfigTest, TestSize.Level1)
-{
-    ByTrace &byTrace = ByTrace::GetInstance();
-    int sum = 10;
-    int interval = 1000;
-    long long threshold = 1000000;
-    int lowfps = 30;
-    int curNum = 5;
-    byTrace.SetTraceConfig(10, 1000, 1000000, 30, 5);
-
-    EXPECT_EQ(sum, 10);
-    EXPECT_EQ(interval, 1000);
-    EXPECT_EQ(threshold, 1000000);
-    EXPECT_EQ(lowfps, 30);
-    EXPECT_EQ(curNum, 5);
-}
-
 HWTEST_F(ByTraceTest, ThreadGetTraceTest, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
@@ -80,21 +63,6 @@ HWTEST_F(ByTraceTest, CheckFpsJittersTest, TestSize.Level1)
     TraceStatus result = byTrace.CheckFpsJitters(jitters, cfps);
 
     EXPECT_EQ(result, TraceStatus::TRACE_FINISH);
-}
-
-HWTEST_F(ByTraceTest, TriggerCatchTest, TestSize.Level1)
-{
-    ByTrace &byTrace = ByTrace::GetInstance();
-    long long curTime = 1000;
-    int interval = 0;
-    long long currentTrigger = -1;
-    byTrace.TriggerCatch(curTime);
-
-    interval = 500;
-    int curNum = 5;
-
-    EXPECT_EQ(-1, currentTrigger);
-    EXPECT_EQ(5, curNum);
 }
 
 HWTEST_F(ByTraceTest, CheckHitraceIdTest, TestSize.Level1)

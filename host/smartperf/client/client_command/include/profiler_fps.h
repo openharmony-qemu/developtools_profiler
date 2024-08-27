@@ -65,7 +65,7 @@ public:
     FpsInfoProfiler GetFpsInfo();
     bool IsForeGround();
     bool IsFindForeGround(std::string line) const;
-    void GetSameTimeNums();
+    void CalcFpsAndJitters();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
@@ -73,6 +73,7 @@ public:
     void GetTimeDiff();
     void GetCurrentTime(int sleepNum);
     void GetOhFps(std::vector<std::string> v);
+    std::string GetSurface();
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoMax;
     FpsInfoProfiler lastFpsInfoResult;
@@ -82,7 +83,6 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
@@ -93,10 +93,9 @@ private:
     int number = 2;
     bool refresh = false;
     long long mod = 1e9;
-    long long lastReadyTime = -1;
-    long long frameReadyTime = 0;
-    long long lastTime = -1;
-    long long lastFrameReadyTime = 0;
+    long long curScreenTimestamp = 0;
+    long long prevScreenTimestamp = -1;
+    long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     bool isFirstResult = false;
     long oneSec = 1000000;

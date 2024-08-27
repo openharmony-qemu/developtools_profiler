@@ -50,7 +50,9 @@ double StallingRateTrace::CalculateTime()
     while (getline(infile, line)) {
         AppList(line, signS, signF);
         AppSwiperScroll(line, signS);
-        if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
+        if (line.find("H:APP_SWIPER_FLING,") != std::string::npos ||
+            line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
+            line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
             if (swiperFlingFlag == 1) {
                 dynamicFinishTime = GetTimes(line, signF);
                 animalFlag = false;
@@ -98,7 +100,10 @@ void StallingRateTrace::AppList(std::string line, const std::string &signS, cons
         line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos ||
         line.find("H:APP_TRANSITION_TO_OTHER_APP,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
-        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
+        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos ||
+        line.find("H:APP_TABS_NO_ANIMATION_SWITCH") != std::string::npos ||
+        line.find("H:APP_TABS_FRAME_ANIMATION") != std::string::npos ||
+        line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
         if (animalFlag) {
             dynamicFinishTime = GetTimes(line, signF);
             LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
@@ -115,7 +120,9 @@ void StallingRateTrace::AppList(std::string line, const std::string &signS, cons
 
 void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &signS)
 {
-    if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
+    if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos ||
+        line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
+        line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
         if (swiperScrollFlag == 0) {
             dynamicStartTime = GetTimes(line, signS);
             frameLossTime = 0;

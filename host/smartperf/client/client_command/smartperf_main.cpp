@@ -75,6 +75,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("sections");
     keys.insert("deviceinfo");
     keys.insert("ohtestfps");
+    keys.insert("editorServer");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -99,12 +100,21 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     return OHOS::SmartPerf::SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 
+static void SocketStopCommand()
+{
+    OHOS::SmartPerf::ClientControl cc;
+    cc.SocketStop();
+}
 
 int main(int argc, char *argv[])
 {
     if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
         std::cout << "Not a development mode state" << std::endl;
         return 0;
+    }
+    if (argc < 0) {
+        std::cout << "Invalid argument count" << std::endl;
+        return -1;
     }
     std::string errorInfo;
     std::vector<std::string> vec;
@@ -116,10 +126,8 @@ int main(int argc, char *argv[])
         std::cout << "SP_daemon:" << errorInfo << std::endl <<
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;
-
         return 0;
     }
-
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
@@ -138,12 +146,11 @@ int main(int argc, char *argv[])
         }
         cc.SocketStart(result);
     } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
-        OHOS::SmartPerf::ClientControl cc;
-        cc.SocketStop();
+        SocketStopCommand();
     } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
-    } else if (argc > 1 && strcmp(argv[1], "ohtestfps") == 0) {
+    } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
         return 0;
     }

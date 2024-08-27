@@ -15,6 +15,7 @@
 #include <sstream>
 #include <cstring>
 #include <sys/socket.h>
+#include <arpa/inet.h>
 #include <unistd.h>
 #include "include/sp_server_socket.h"
 #include "include/sp_log.h"
@@ -52,7 +53,7 @@ int SpServerSocket::Init(ProtoType type)
     }
     local.sin_family = AF_INET;
     local.sin_port = htons(sockPort);
-    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    local.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
         std::cout << "Socket Bind failed:" << sock << std::endl;
         LOGE("SpServerSocket::Init Socket Bind failed prot(%d)", sockPort);
@@ -100,7 +101,7 @@ void SpServerSocket::Close()
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
     local.sin_family = AF_INET;
     local.sin_port = htons(sockPort);
-    local.sin_addr.s_addr = htonl(INADDR_ANY);
+    local.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
         std::cout << "Socket Bind failed:" << sock << std::endl;
         LOGI("SpServerSocket::Init Socket Bind failed");

@@ -28,6 +28,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
+#include "common.h"
 
 
 namespace OHOS {
@@ -81,9 +82,9 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     return true;
 }
 
-bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
+bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
-    std::string cmdExc = cmd;
+    const std::string cmdExc = cmd;
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd == nullptr) {
         return false;
@@ -96,9 +97,18 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
     if (pclose(fd) == -1) {
         std::cout << "" << std::endl;
     }
-    // remove '' \n\r
-    ReplaceString(result);
+
+    if (isClearLinkBreak) {
+        // remove '' \n\r
+        ReplaceString(result);
+    }
+
     return ret >= 0 ? true : false;
+}
+
+bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
+{
+    return LoadCmdWithLinkBreak(cmd, true, result);
 }
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)
@@ -201,7 +211,7 @@ long long SPUtils::GetCurTime()
 
 std::string SPUtils::GetTopPkgName()
 {
-    std::string cmd = "hidumper -s AbilityManagerService -a '-a' | grep 'bundle name' | head -n 1";
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_HEAD);
     std::string curTopPkgStr = "";
     LoadCmd(cmd, curTopPkgStr);
     uint64_t left = curTopPkgStr.find_first_of("[");
@@ -212,14 +222,14 @@ std::string SPUtils::GetTopPkgName()
 
 std::string SPUtils::GetRadar()
 {
-    std::string cmd = "hisysevent -r -o PERFORMANCE -n APP_START";
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_APP_START);
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
 std::string SPUtils::GetScreen()
 {
-    std::string cmd = "hidumper -s 10 -a screen";
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN);
     std::string screenStr = "";
     LoadCmd(cmd, screenStr);
     uint64_t left = screenStr.find("activeMode");
@@ -229,21 +239,21 @@ std::string SPUtils::GetScreen()
 }
 std::string SPUtils::GetRadarFrame()
 {
-    std::string cmd = "hisysevent -r -o PERFORMANCE -n INTERACTION_JANK";
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_JANK);
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
 std::string SPUtils::GetRadarResponse()
 {
-    std::string cmd = "hisysevent -r -n INTERACTION_RESPONSE_LATENCY";
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_RESPONSE);
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
 std::string SPUtils::GetRadarComplete()
 {
-    std::string cmd = "hisysevent -r -n INTERACTION_COMPLETED_LATENCY";
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_COMPLETED);
     std::string curRadar = "";
     LoadCmd(cmd, curRadar);
     return curRadar;
@@ -284,14 +294,14 @@ std::string SPUtils::GetDeviceInfoMap()
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
-    std::string sn = GetSplitOne("param get ohos.boot.sn");
-    std::string deviceTypeName = GetSplitOne("param get ohos.boot.hardware");
-    std::string brand = GetSplitOne("param get const.product.brand");
-    std::string version = GetSplitOne("param get const.product.software.version");
-    std::string abilist = GetSplitOne("param get const.product.cpu.abilist");
-    std::string name = GetSplitOne("param get const.product.name");
-    std::string model = GetSplitOne("param get const.product.model");
-    std::string fullname = GetSplitOne("param get const.ohos.fullname");
+    std::string sn = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::SN));
+    std::string deviceTypeName = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME));
+    std::string brand = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    std::string version = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::VERSION));
+    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
+    std::string name = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::NAME));
+    std::string model = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::MODEL));
+    std::string fullname = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME));
     resultMap["sn"] = sn;
     resultMap["deviceTypeName"] = deviceTypeName;
     resultMap["brand"] = brand;
