@@ -26,7 +26,7 @@
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
 #include "include/RAM.h"
-#include "common.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -140,7 +140,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_OUT:
             outPathParam = argStr1;
             if (strcmp(outPathParam.c_str(), "") != 0) {
-                outPath = outPathParam + std::string(".csv");
+                outPath = outPathParam;
             }
             break;
         case CommandType::CT_C:

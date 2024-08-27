@@ -29,7 +29,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
-#include "common.h"
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -261,7 +261,7 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
         }
         printf("set num:%d success\n", this->num);
         int sectionsNum;
-        if (v.size() < four) {
+        if (static_cast<int>(v.size()) < four) {
             sectionsNum = 0;
         } else {
             sectionsNum = atoi(v[four].c_str());
@@ -445,7 +445,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         printf("set num:%d success\n", this->num);
         ohFlag = true;
         int sectionsNum;
-        if (v.size() < four) {
+        if (static_cast<int>(v.size()) < four) {
             sectionsNum = 0;
         } else {
             sectionsNum = atoi(v[four].c_str());

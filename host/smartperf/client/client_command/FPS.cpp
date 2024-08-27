@@ -28,7 +28,7 @@
 #include "include/FPS.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
 #include <sys/wait.h>
 #include <sys/types.h>
 namespace OHOS {

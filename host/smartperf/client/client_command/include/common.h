@@ -216,7 +216,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::UITEST_DUMPLAYOUT, std::string("uitest dumpLayout") },
     { CmdCommand::UINPUT_POINT, std::string("uinput -T -d ") },
     { CmdCommand::DUBAI_CP, std::string(
-        "cp /data/system_ce/0/dubai/dubai.db /data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
+        "cp /data/service/el2/100/xpower/dubai.db /data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
     { CmdCommand::DUBAI_CHMOD, std::string(
         "chmod 777 /data/app/el2/100/database/com.ohos.smartperf/entry/rdb/dubai.db") },
     { CmdCommand::TASKSET, std::string("taskset -p f ") },

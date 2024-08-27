@@ -34,7 +34,7 @@
 #include <regex>
 #include "unistd.h"
 #include <future>
-#include "common.h"
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {

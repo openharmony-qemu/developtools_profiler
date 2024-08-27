@@ -22,7 +22,7 @@
 #include "include/sp_utils.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 int ClientControl::SocketStart(const std::string &args)
