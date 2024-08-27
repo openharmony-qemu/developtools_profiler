@@ -225,7 +225,9 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         StackRawData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
+        if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
+            return 0;
+        }
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
