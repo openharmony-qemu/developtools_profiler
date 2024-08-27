@@ -15,7 +15,7 @@
 #include <gtest/gtest.h>
 #include "DDR.h"
 #include "sp_utils.h"
-#include "include/common.h"
+#include "common.h"
 
 using namespace testing::ext;
 using namespace std;

@@ -23,7 +23,7 @@
 #include <cstdio>
 #include <functional>
 #include "sp_utils.h"
-#include "include/common.h"
+#include "common.h"
 
 using namespace testing::ext;
 using namespace std;
