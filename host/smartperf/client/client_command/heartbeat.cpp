@@ -27,17 +27,17 @@ namespace SmartPerf {
 void Heartbeat::HeartbeatRule()
 {
     int checkTimeJitter = 300;
-    while (isrunning){
+    while (isrunning) {
         auto end = std::chrono::steady_clock::now();
         LOGI("endTime: %lld", std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count());
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
-        LOGI("ListeningTimeJitter: %lld",duration);
-        if (duration > timeout){
+        LOGI("ListeningTimeJitter: %lld", duration);
+        if (duration > timeout) {
             LOGI("editor connect timeout have Disconnected successfully!");
-            exit(0);  
+            exit(0); 
         }
-        sleep(checkTimeJitter); 
-    } 
+        sleep(checkTimeJitter);
+    }
 }
 
 void Heartbeat::UpdatestartTime()

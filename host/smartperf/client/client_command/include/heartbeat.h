@@ -24,7 +24,7 @@
 #include <atomic>
 namespace OHOS {
 namespace SmartPerf {
-class Heartbeat{
+class Heartbeat {
 public:
     void HeartbeatRule();
     void UpdatestartTime();
@@ -42,7 +42,7 @@ private:
     std::atomic<bool> isrunning = true;
     int timeout = 1800;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
-    std::chrono::steady_clock::time_point updateStart; 
+    std::chrono::steady_clock::time_point updateStart;
 };
 }
 }
