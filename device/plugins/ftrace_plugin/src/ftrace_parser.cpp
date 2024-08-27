@@ -156,48 +156,6 @@ bool FtraceParser::ParseEventFormat(const std::string& formatDesc, EventFormat& 
     return true;
 }
 
-static std::string GetName(const std::map<int, std::string>& nameMap, int type)
-{
-    auto it = nameMap.find(type);
-    if (it != nameMap.end()) {
-        return it->second;
-    }
-    return "";
-}
-
-static std::string GetFieldTypeName(EventFieldType type)
-{
-    static std::map<int, std::string> toNames = {
-#define VALUE_NAME(x) {x, #x}
-        VALUE_NAME(FIELD_TYPE_INVALID),   VALUE_NAME(FIELD_TYPE_BOOL),         VALUE_NAME(FIELD_TYPE_INT8),
-        VALUE_NAME(FIELD_TYPE_UINT8),     VALUE_NAME(FIELD_TYPE_INT16),        VALUE_NAME(FIELD_TYPE_UINT16),
-        VALUE_NAME(FIELD_TYPE_INT32),     VALUE_NAME(FIELD_TYPE_UINT32),       VALUE_NAME(FIELD_TYPE_INT64),
-        VALUE_NAME(FIELD_TYPE_UINT64),    VALUE_NAME(FIELD_TYPE_FIXEDCSTRING), VALUE_NAME(FIELD_TYPE_CSTRING),
-        VALUE_NAME(FIELD_TYPE_STRINGPTR), VALUE_NAME(FIELD_TYPE_INODE32),      VALUE_NAME(FIELD_TYPE_INODE64),
-        VALUE_NAME(FIELD_TYPE_PID32),     VALUE_NAME(FIELD_TYPE_COMMONPID32),  VALUE_NAME(FIELD_TYPE_DEVID32),
-        VALUE_NAME(FIELD_TYPE_DEVID64),   VALUE_NAME(FIELD_TYPE_DATALOC),      VALUE_NAME(FIELD_TYPE_SYMADDR32),
-        VALUE_NAME(FIELD_TYPE_SYMADDR64),
-#undef VALUE_NAME
-    };
-    return GetName(toNames, type);
-}
-
-static std::string GetProtoTypeName(ProtoFieldType type)
-{
-    static std::map<int, std::string> toNames = {
-#define VALUE_NAME(x) {x, #x}
-        VALUE_NAME(PROTO_TYPE_UNKNOWN),  VALUE_NAME(PROTO_TYPE_DOUBLE),   VALUE_NAME(PROTO_TYPE_FLOAT),
-        VALUE_NAME(PROTO_TYPE_INT64),    VALUE_NAME(PROTO_TYPE_UINT64),   VALUE_NAME(PROTO_TYPE_INT32),
-        VALUE_NAME(PROTO_TYPE_FIXED64),  VALUE_NAME(PROTO_TYPE_FIXED32),  VALUE_NAME(PROTO_TYPE_BOOL),
-        VALUE_NAME(PROTO_TYPE_STRING),   VALUE_NAME(PROTO_TYPE_GROUP),    VALUE_NAME(PROTO_TYPE_MESSAGE),
-        VALUE_NAME(PROTO_TYPE_BYTES),    VALUE_NAME(PROTO_TYPE_UINT32),   VALUE_NAME(PROTO_TYPE_ENUM),
-        VALUE_NAME(PROTO_TYPE_SFIXED32), VALUE_NAME(PROTO_TYPE_SFIXED64), VALUE_NAME(PROTO_TYPE_SINT32),
-        VALUE_NAME(PROTO_TYPE_SINT64),   VALUE_NAME(PROTO_TYPE_MAX),
-#undef VALUE_NAME
-    };
-    return GetName(toNames, type);
-}
-
 static std::string SplitNameFromTypeName(const std::string& typeName)
 {
     std::string name;
