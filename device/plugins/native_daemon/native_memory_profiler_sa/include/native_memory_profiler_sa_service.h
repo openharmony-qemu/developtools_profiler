@@ -77,7 +77,7 @@ private:
     std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
 
 private:
-    static sptr<NativeMemoryProfilerSaService> instance = nullptr;
+    static sptr<NativeMemoryProfilerSaService> instance_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

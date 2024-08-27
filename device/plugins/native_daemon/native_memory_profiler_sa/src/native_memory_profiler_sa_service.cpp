@@ -59,7 +59,7 @@ NativeMemoryProfilerSaService::instance_(new NativeMemoryProfilerSaService);
 
 sptr<NativeMemoryProfilerSaService> NativeMemoryProfilerSaService::GetInstance()
 {
-    return instance;
+    return instance_;
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
