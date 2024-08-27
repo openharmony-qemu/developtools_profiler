@@ -12,6 +12,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+#ifndef HEARTBEAT_H
+#define HEARTBEAT_H
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -19,8 +22,6 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
-
-
 namespace OHOS {
 namespace SmartPerf {
 class Heartbeat{
