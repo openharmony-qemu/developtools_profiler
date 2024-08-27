@@ -206,7 +206,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr) {
+    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
         return 0;
     }
     uint32_t tagId = 0;
@@ -225,9 +225,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         StackRawData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        if (strcpy_s(tagData.name, PATH_MAX + 1, tagName) != 0) {
-            return 0;
-        }
+        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
