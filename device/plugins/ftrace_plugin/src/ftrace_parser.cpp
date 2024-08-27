@@ -121,10 +121,6 @@ bool FtraceParser::ParseHeaderPageFormat(const std::string& formatDesc)
         }
     }
 
-    PROFILER_LOG_INFO(LOG_CORE, "page header info:");
-    PrintFieldInfo(pageHeaderFormat_.timestamp);
-    PrintFieldInfo(pageHeaderFormat_.commit);
-    PrintFieldInfo(pageHeaderFormat_.overwrite);
     CHECK_TRUE(commitFound, false, "commit field not found!");
     return true;
 }
@@ -154,7 +150,7 @@ bool FtraceParser::ParseEventFormat(const std::string& formatDesc, EventFormat& 
             format.eventId = static_cast<uint32_t>(atoi(idStr.c_str()));
         }
     }
-    CHECK_TRUE(format.fields.size() > 0, false, "ParseEventFormat from %s failed!", formatDesc.c_str());
+    CHECK_TRUE(format.fields.size() > 0, false, "ParseEventFormat failed!");
     size_t lastFiledIndex = format.fields.size() > 1 ? format.fields.size() - 1 : 0;
     format.eventSize = format.fields[lastFiledIndex].offset + format.fields[lastFiledIndex].size;
     return true;
@@ -200,16 +196,6 @@ static std::string GetProtoTypeName(ProtoFieldType type)
 #undef VALUE_NAME
     };
     return GetName(toNames, type);
-}
-
-void FtraceParser::PrintFieldInfo(const FieldFormat& info)
-{
-    UNUSED_PARAMETER(GetProtoTypeName);
-    UNUSED_PARAMETER(GetFieldTypeName);
-    PROFILER_LOG_INFO(LOG_CORE,
-        "FieldFormat { offset: %u, size:%u, sign: %u fieldType: %s, protoType:%s, typeName: %s, name: %s}",
-        info.offset, info.size, info.isSigned, GetFieldTypeName(info.filedType).c_str(),
-        GetProtoTypeName(info.protoType).c_str(), info.typeName.c_str(), info.name.c_str());
 }
 
 static std::string SplitNameFromTypeName(const std::string& typeName)
