@@ -33,6 +33,7 @@ public:
     void CalculateRoundTime();
     void AppList(std::string line, const std::string &signS, const std::string &signF);
     void AppSwiperScroll(std::string line, const std::string &signS);
+    void FinalizeCalculation();
 private:
     std::ifstream infile;
     double nowFrameRate = 0;
