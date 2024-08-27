@@ -34,7 +34,7 @@ void Heartbeat::HeartbeatRule()
         LOGI("ListeningTimeJitter: %lld", duration);
         if (duration > timeout) {
             LOGI("editor connect timeout have Disconnected successfully!");
-            exit(0); 
+            exit (0);
         }
         sleep(checkTimeJitter);
     }
