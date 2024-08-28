@@ -25,7 +25,7 @@
 namespace OHOS {
 namespace SmartPerf {
 void Heartbeat::HeartbeatRule()
-{ 
+{
     while (isrunning) {
         auto end = std::chrono::steady_clock::now();
         LOGI("endTime: %lld", std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count());
