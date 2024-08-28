@@ -41,7 +41,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         std::string result = "";
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         daemon(0, 0);
-        SocketThread();
+        CreateSocketThread();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -94,11 +94,11 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
-        SocketThread();
+        CreateSocketThread();
     }
 }
 
-void SmartPerfCommand::SocketThread() const
+void SmartPerfCommand::CreateSocketThread() const
 {
     InitSomething();
     SpThreadSocket udpThreadSocket;

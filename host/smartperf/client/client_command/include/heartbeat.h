@@ -40,7 +40,8 @@ private:
     Heartbeat &operator = (const Heartbeat &);
 private:
     std::atomic<bool> isrunning = true;
-    int timeout = 1800;
+    const int timeout = 1800;
+    const int checkMessageTime = 300;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point updateStart;
 };

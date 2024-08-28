@@ -21,12 +21,11 @@
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"
 #include "sp_log.h"
-
+#include <mutex>
 namespace OHOS {
 namespace SmartPerf {
 void Heartbeat::HeartbeatRule()
-{
-    int checkTimeJitter = 300;
+{ 
     while (isrunning) {
         auto end = std::chrono::steady_clock::now();
         LOGI("endTime: %lld", std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count());
@@ -36,13 +35,16 @@ void Heartbeat::HeartbeatRule()
             LOGI("editor connect timeout have Disconnected successfully!");
             exit (0);
         }
-        sleep(checkTimeJitter);
+        sleep(checkMessageTime);
     }
 }
 
 void Heartbeat::UpdatestartTime()
 {
+    std::mutex mtx;
+    mtx.lock();
     updateStart = std::chrono::steady_clock::now();
+    mtx.unlock();
     LOGI("Listening to messages from edtior or device");
 }
 }
