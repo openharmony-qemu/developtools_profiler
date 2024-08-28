@@ -318,6 +318,10 @@ template <typename T> bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t 
     std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(fullCmd.c_str(), "r"), pclose);
     CHECK_TRUE(fp, false, "%s:popen error", __func__);
 
+    if (buffer == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "buffer is empty!");
+        return false;
+    }
     size_t ret = fread(buffer.get(), 1, BUF_MAX_LEN, fp.get());
     if (ret == 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:fread failed", __func__);
@@ -541,7 +545,9 @@ DIR* MemoryDataPlugin::OpenDestDir(const char* dirPath)
 
 int32_t MemoryDataPlugin::GetValidPid(DIR* dirp)
 {
-    if (!dirp) return 0;
+    if (!dirp) {
+        return 0;
+    }
     while (struct dirent* dirEnt = readdir(dirp)) {
         if (dirEnt->d_type != DT_DIR) {
             continue;

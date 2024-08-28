@@ -311,6 +311,19 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     return fdopen(fds[WRITE], "w");
 }
 
+bool IsInt(const std::string& str) {
+    std::istringstream iss(str);
+    int number;
+    char trailingCharacter;
+    if (!(iss >> number)) {
+        return false;
+    }
+    if (iss >> trailingCharacter) {
+        return false;
+    }
+    return true;
+}
+
 int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
@@ -334,10 +347,18 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
     if (needUnblock) {
         if (fileno(fp) == fds[READ]) {
             fds[READ] = -1;
-            CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, -1, "CustomFdClose failed!");
+            if (CustomFdClose(fds[WRITE]) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
+                CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
+                return -1;
+            }
         } else if (fileno(fp) == fds[WRITE]) {
             fds[WRITE] = -1;
-            CHECK_TRUE(CustomFdClose(fds[READ]) == 0, -1, "CustomFdClose failed!");
+            if (CustomFdClose(fds[READ]) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
+                CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
+                return -1;
+            }
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "%s: Can't find fp in fds[READ/WRITE].", __func__);
         }
