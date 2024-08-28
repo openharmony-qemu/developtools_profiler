@@ -79,6 +79,12 @@ double StallingRateTrace::CalculateTime()
             GetScreenInfo(line);
         }
     }
+    FinalizeCalculation();
+    return frameLossRate;
+}
+
+void StallingRateTrace::FinalizeCalculation()
+{
     if (dynamicStartTime > dynamicFinishTime) {
         LOGI("StallingRateTrace::APP_SWIPER_FLING AND APP_LIST_FLING");
         dynamicFinishTime = nowTime;
@@ -86,12 +92,14 @@ double StallingRateTrace::CalculateTime()
     if (dynamicStartTime == 0 || dynamicFinishTime == 0) {
         frameLossRate = -1;
     } else {
-        frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
+        if (frameLossTime == 0) {
+            frameLossRate = 0;
+        } else {
+            frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
+        }
         LOGI("frameLossRate=====: %s", std::to_string(frameLossRate).c_str());
     }
-    return frameLossRate;
 }
-
 void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
