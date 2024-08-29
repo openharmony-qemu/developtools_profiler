@@ -167,7 +167,12 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 {
     int rc = 0;
     std::string errInfo;
-
+    if (!pkgName.empty()) {
+        std::string processId = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        processId = sp.GetPidByPkg(pkgName);
+        SpProfilerFactory::SetProfilerPidByPkg(processId);
+    }
     for (size_t j = 0; j < configs.size(); j++) {
         std::string curParam = configs[j];
 

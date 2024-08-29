@@ -32,18 +32,15 @@ std::map<std::string, std::string> Navigation::ItemData()
     return result;
 }
 
-void Navigation::SetPackageName(const std::string &pName)
+void Navigation::SetProcessId(const std::string &pid)
 {
-    packageName = pName;
+    processId = pid;
 }
 
 std::map<std::string, std::string> Navigation::GetNavInfo() const
 {
     std::map<std::string, std::string> navInfo;
-    std::string processId = "";
     std::string winId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
     winId = GetWinId(processId);
     if (winId != "-1") {
         navInfo = GetNavResult(winId);

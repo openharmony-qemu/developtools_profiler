@@ -108,13 +108,24 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     fps.SetPackageName(pkg);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
     profilerFps.SetPackageName(pkg);
-    RAM &ram = RAM::GetInstance();
-    ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
-    Navigation &nav = Navigation::GetInstance();
-    nav.SetPackageName(pkg);
 }
+
+void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
+{
+    FPS &fps = FPS::GetInstance();
+    fps.SetProcessId(pid);
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetProcessId(pid);
+    RAM &ram = RAM::GetInstance();
+    ram.SetProcessId(pid);
+    CPU &cpu = CPU::GetInstance();
+    cpu.SetProcessId(pid);
+    Navigation &nav = Navigation::GetInstance();
+    nav.SetProcessId(pid);
+}
+
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
     FPS &fps = FPS::GetInstance();
