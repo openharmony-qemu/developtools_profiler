@@ -337,6 +337,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     spdata.values.insert(dataMap.begin(), dataMap.end());
     vmap.push_back(spdata);
     gpuCounter.GetGpuRealtimeData(dataMap);
+    SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
     long long nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
