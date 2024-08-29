@@ -311,7 +311,8 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     return fdopen(fds[WRITE], "w");
 }
 
-bool IsInt(const std::string& str) {
+bool IsInt(const std::string& str)
+{
     std::istringstream iss(str);
     int number;
     char trailingCharacter;
