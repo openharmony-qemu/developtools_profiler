@@ -18,10 +18,12 @@
 #include <chrono>
 #include <cstdlib>
 #include <unistd.h>
+#include <mutex>
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"
 #include "sp_log.h"
-#include <mutex>
+#include "include/startup_delay.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 void Heartbeat::KillSpId()
@@ -62,11 +64,10 @@ void Heartbeat::HeartbeatRule()
 
 void Heartbeat::UpdatestartTime()
 {
-    std::mutex mtx;
-    mtx.lock();
+    std::unique_lock<std::mutex> lock(mtx);
     updateStart = std::chrono::steady_clock::now();
-    mtx.unlock();
     LOGI("Listening to messages from edtior or device");
+    lock.unlock();
 }
 }
 }
