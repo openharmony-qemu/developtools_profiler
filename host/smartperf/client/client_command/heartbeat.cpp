@@ -24,6 +24,27 @@
 #include <mutex>
 namespace OHOS {
 namespace SmartPerf {
+void Heartbeat::KillSpId()
+{
+    std::string str;
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
+    SPUtils::LoadCmd(cmd, resultPid);
+    std::vector<std::string> vec;
+    std::string token;
+    size_t pos = resultPid.find(' ');
+    do{
+        token = resultPid.substr(0, pos);
+        vec.push_back(token);
+        resultPid.erase(0, pos + 1);
+    }while ((pos = resultPid.find(' ')) != std::string::npos);
+    if (vec.size() > 0) {
+        std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
+        for (size_t i = 0; i < vec.size(); i++) {
+            SPUtils::LoadCmd(killCmd + vec[i], str);
+        }
+    }
+}
+
 void Heartbeat::HeartbeatRule()
 {
     while (isrunning) {
@@ -33,7 +54,7 @@ void Heartbeat::HeartbeatRule()
         LOGI("ListeningTimeJitter: %lld", duration);
         if (duration > timeout) {
             LOGI("editor connect timeout have Disconnected successfully!");
-            exit (0);
+            illSpId();
         }
         sleep(checkMessageTime);
     }
