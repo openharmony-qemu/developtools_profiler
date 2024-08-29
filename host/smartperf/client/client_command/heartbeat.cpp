@@ -34,7 +34,7 @@ void Heartbeat::KillSpId()
     std::vector<std::string> vec;
     std::string token;
     size_t pos = resultPid.find(' ');
-    do{
+    do {
         token = resultPid.substr(0, pos);
         vec.push_back(token);
         resultPid.erase(0, pos + 1);
