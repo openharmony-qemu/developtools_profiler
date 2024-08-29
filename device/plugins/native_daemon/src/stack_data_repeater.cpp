@@ -71,11 +71,12 @@ void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
 {
     std::unique_lock<std::mutex> lock(cacheMutex_);
     if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
+        rawStack->Reset();
         rawDataCacheQueue_.push_back(rawStack);
     }
 }
 
-bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray)
+bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount)
 {
     std::unique_lock<std::mutex> lock(mutex_);
     if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
@@ -88,9 +89,8 @@ bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, C
     if (closed_) {
         return false;
     }
-    std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>::iterator iter;
-    for (iter = rawDataArray.begin(); iter != rawDataArray.end(); ++iter) {
-        rawDataQueue_.push_back(*iter);
+    for (uint32_t i = 0; i < batchCount; i++) {
+        rawDataQueue_.push_back(rawDataArray[i]);
     }
     lock.unlock();
     itemCondVar_.notify_one();
