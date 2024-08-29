@@ -178,7 +178,7 @@ ohos_executable("native_daemon_client") {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog_base" ]
   }
-
+  install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
