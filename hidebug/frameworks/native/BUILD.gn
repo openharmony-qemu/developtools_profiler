@@ -18,7 +18,9 @@ ohos_source_set("libhidebug_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   include_dirs = [ "../../interfaces/native/innerkits/include" ]
-
+  if (build_variant == "root") {
+    defines = [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
+  }
   sources = [ "hidebug_base.c" ]
 
   external_deps = [
@@ -35,7 +37,9 @@ ohos_source_set("libhidebug_init_source") {
   defines = [ "HIDEBUG_IN_INIT" ]
 
   include_dirs = [ "../../interfaces/native/innerkits/include" ]
-
+  if (build_variant == "root") {
+    defines += [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
+  }
   external_deps = [
     "bounds_checking_function:libsec_static",
     "init:libinit_module_engine",
