@@ -29,6 +29,7 @@ namespace SmartPerf {
 void Heartbeat::KillSpId()
 {
     std::string str;
+    std::string resultPid;
     std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
     SPUtils::LoadCmd(cmd, resultPid);
     std::vector<std::string> vec;
@@ -38,7 +39,7 @@ void Heartbeat::KillSpId()
         token = resultPid.substr(0, pos);
         vec.push_back(token);
         resultPid.erase(0, pos + 1);
-    }while ((pos = resultPid.find(' ')) != std::string::npos);
+    } while ((pos = resultPid.find(' ')) != std::string::npos);
     if (vec.size() > 0) {
         std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
         for (size_t i = 0; i < vec.size(); i++) {
