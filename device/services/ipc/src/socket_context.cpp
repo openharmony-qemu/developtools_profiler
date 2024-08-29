@@ -79,15 +79,19 @@ bool SocketContext::ReceiveData(int sock, uint8_t* databuf, uint32_t size)
     if (size == 0) {
         return false;
     }
+    const uint32_t timesToTry = 2; // try 2 times
+    uint32_t nTimes = 0;
     while (p < size) {
         int ret = recv(sock, &databuf[p], size - p, 0);
-        if (ret <= 0) {
-            if (ret == -1 && errno == EAGAIN) {
-                continue;
+        if (ret > 0) {
+            p += ret;
+        } else if (ret == -1 && errno == EAGAIN) {
+            if (++nTimes >= timesToTry) {
+                return false;
             }
+        } else {
             return false;
         }
-        p += ret;
     }
     return true;
 }
