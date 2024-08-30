@@ -46,7 +46,6 @@ private:
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     void DelayedShutdown(bool cancel);
-    static sptr<NativeMemoryProfilerSaService> GetInstance();
 
 private:
     struct TaskConfig {
@@ -75,9 +74,6 @@ private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     int32_t delayedShutdownTimerFd_{-1};
     std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
-
-private:
-    static sptr<NativeMemoryProfilerSaService> instance_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 
