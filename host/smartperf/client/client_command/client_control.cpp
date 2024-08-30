@@ -22,6 +22,7 @@
 #include "include/sp_utils.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 int ClientControl::SocketStart(const std::string &args)
@@ -100,7 +101,8 @@ int ClientControl::InitSocket()
 void ClientControl::StartSPDaemon() const
 {
     std::string result = "";
-    SPUtils::LoadCmd("SP_daemon -server", result);
+    std::string server = CMD_COMMAND_MAP.at(CmdCommand::SERVER);
+    SPUtils::LoadCmd(server, result);
     sleep(1);
     LOGI("ClientControl::StartSPDaemon() OK");
 }

@@ -34,6 +34,7 @@
 #include <regex>
 #include "unistd.h"
 #include <future>
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -112,9 +113,11 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
-    SPUtils::LoadCmd("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace", result);
+    std::string hiprofiler = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER);
+    SPUtils::LoadCmd(hiprofiler, result);
     result.clear();
-    SPUtils::LoadCmd("rm -f /data/local/tmp/perf_[0-9]*.data", result);
+    std::string perf = CMD_COMMAND_MAP.at(CmdCommand::PERF);
+    SPUtils::LoadCmd(perf, result);
     std::cout << recvStr << std::endl;
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
@@ -277,21 +280,21 @@ void SPTask::StopSdkRecv()
         return;
     }
     std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
-    if (fopen(outSdkDataPath.c_str(), "w") == nullptr) {
+    sdkDataMtx.lock();
+    std::ofstream outFile;
+    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
         LOGE("data %s open failed", outSdkDataPath.c_str());
         ResetSdkParam();
         return;
     }
-    std::lock_guard<std::mutex> lock(sdkDataMtx);
-    std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     std::string title = "source,timestamp,eventName,enable,value\r";
     outFile << title << std::endl;
     for (const auto &item : sdkvec) {
         outFile << item << std::endl;
     }
     outFile.close();
-
+    sdkDataMtx.unlock();
     ResetSdkParam();
 }
 
@@ -299,34 +302,22 @@ void SPTask::InitDataFile()
 {
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    std::string filePath;
-    std::ifstream infile;
-
-    char fileDirChar[PATH_MAX] = {0x00};
-    if (realpath(fileDir.c_str(), fileDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", fileDir.c_str());
-        return;
-    }
 
     for (const auto &file: files) {
-        filePath = fileDirChar;
-        filePath = filePath + "/" + file;
-        if (fopen(filePath.c_str(), "w") == nullptr) {
-            LOGE("data %s open failed", filePath.c_str());
+        std::string filePath = fileDir + "/" + file;
+        char filePathChar[PATH_MAX] = {0x00};
+        if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+            LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
-        infile = std::ifstream(filePath.c_str());
-        if (infile.good()) {
-            infile.close();
-            std::remove(filePath.c_str());
-        }
+        std::remove(filePathChar);
     }
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    std::lock_guard<std::mutex> lock(asyncDataMtx);
+    asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -346,6 +337,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     spdata.values.insert(dataMap.begin(), dataMap.end());
     vmap.push_back(spdata);
     gpuCounter.GetGpuRealtimeData(dataMap);
+    SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
     long long nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
@@ -353,6 +345,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
     }
+    asyncDataMtx.unlock();
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
@@ -386,7 +379,8 @@ void SPTask::WritePath(std::string thisBasePath)
 {
     if (!SPUtils::FileAccess(thisBasePath)) {
         std::string cmdResult;
-        SPUtils::LoadCmd("mkdir -p " + thisBasePath, cmdResult);
+        std::string writePath = CMD_COMMAND_MAP.at(CmdCommand::WRITE_PATH) + curTaskInfo.sessionId;
+        SPUtils::LoadCmd(writePath, cmdResult);
     }
 }
 
@@ -431,7 +425,7 @@ void SPTask::StopGetInfo()
 }
 void SPTask::StopGpuCounterRecv()
 {
-    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId + "/gpu_counter.csv";
+    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
     gpuCounter.StopCollect(outGpuCounterDataPath);
 }
 void SPTask::StopTask()
@@ -495,8 +489,8 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 bool SPTask::CheckCounterId()
 {
     std::string result;
-
-    SPUtils::LoadCmd("ps -ef |grep hiprofiler_cmd |grep -v grep", result);
+    std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
+    SPUtils::LoadCmd(hiprofilerCmd, result);
     if (result.empty()) {
         return false;
     }
@@ -541,7 +535,7 @@ void SPTask::KillHiperfCmd()
 {
     long long now = 0;
     long long runTime = 0;
-    std::string killCmd = "kill -9 ";
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD) + "-9 ";
     std::string result;
     std::vector<std::string> out;
 
@@ -556,7 +550,8 @@ void SPTask::KillHiperfCmd()
     LOGI("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
-        SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
+        std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
+        SPUtils::LoadCmd(hiprofilerPid, result);
         SPUtils::StrSplit(result, " ", out);
         if (out.empty()) {
             break;
@@ -566,7 +561,8 @@ void SPTask::KillHiperfCmd()
     } while (END_WAITING_TIME - runTime++ > 0);
 
     out.clear();
-    SPUtils::LoadCmd("pidof hiprofiler_cmd", result);
+    std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
+    SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
     LOGI("pidof hiprofiler_cmd size(%u)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {

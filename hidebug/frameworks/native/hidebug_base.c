@@ -233,6 +233,17 @@ bool InitEnvironmentParam(const char *inputName)
 #ifndef HIDEBUG_IN_INIT
     InitHicheckerParamWrapper(serviceName);
 #endif
+
+#ifdef HAS_MUSL_STARTUP_MALLOC_HOOK_INTF
+    setup_malloc_hook_mode();
+#else
+    SetupMallocHookAtStartup(serviceName);
+#endif
+
+#ifndef HIDEBUG_BUILD_VARIANT_ROOT
+    return true;
+#endif
+
     errno_t err = 0;
     char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
     char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
@@ -247,11 +258,6 @@ bool InitEnvironmentParam(const char *inputName)
         return false;
     }
 
-#ifdef HAS_MUSL_STARTUP_MALLOC_HOOK_INTF
-    setup_malloc_hook_mode();
-#else
-    SetupMallocHookAtStartup(serviceName);
-#endif
     if (QueryParams(onceName) == 0 && QueryParams(persistName) == 0) {
         return false;
     }

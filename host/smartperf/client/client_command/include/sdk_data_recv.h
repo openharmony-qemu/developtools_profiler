@@ -64,6 +64,7 @@ namespace OHOS {
             void HandleServerFd(ServerParams &params);
             void SetUpFdSet(ServerParams &params);
             void CleanUpResources(ServerParams &params);
+            void GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap);
         private:
             SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);
@@ -75,6 +76,7 @@ namespace OHOS {
             int maxFd = 0;
             fd_set readFds;
             std::string receiveBuffer = "";
+            std::string sdkDataRealtimeData = "";
         };
     }
 }

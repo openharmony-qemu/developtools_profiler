@@ -22,6 +22,8 @@
 #include "control_call_cmd.h"
 #include "startup_delay.h"
 #include "sp_log.h"
+#include "common.h"
+#include "heartbeat.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -63,6 +65,7 @@ public:
         }
         if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
             LOGI("Socket UDP Init called! type(%d)", static_cast<int>(type));
+            SocketHeartbeat();
             while (1) {
                 spSocket.Recvfrom();
                 HandleMsg(spSocket);
@@ -74,6 +77,7 @@ public:
     }
     void TypeTcp(SpServerSocket &spSocket) const
     {
+        SocketHeartbeat();
         while (1) {
             int procFd = spSocket.Accept();
             std::cout << "Socket TCP procFd: " << procFd << std::endl;
@@ -92,6 +96,7 @@ public:
     // TCP
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
+        SocketHeartbeat();
         if (recvStr.find("init::") != std::string::npos) {
             std::string errorInfo;
             std::string checkStr = recvStr.substr(std::string("init::").length());
@@ -163,7 +168,8 @@ public:
     void BackDesktop() const
     {
         std::string cmdResult;
-        SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", cmdResult);
+        std::string uinput = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_BACK);
+        SPUtils::LoadCmd(uinput, cmdResult);
     }
 
     // UDP
@@ -173,6 +179,10 @@ public:
         auto iterator = MESSAGE_MAP.begin();
         while (iterator != MESSAGE_MAP.end()) {
             std::string recvBuf = spSocket.RecvBuf();
+            if (recvBuf.size() != 0) {
+                Heartbeat &heartbeat = Heartbeat::GetInstance();
+                heartbeat.UpdatestartTime();
+            }
             if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
                 ++iterator;
                 continue;
@@ -235,6 +245,11 @@ public:
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
         }
+    }
+    void SocketHeartbeat() const
+    {
+        Heartbeat &heartbeat = Heartbeat::GetInstance();
+        heartbeat.UpdatestartTime();
     }
 };
 bool SpThreadSocket::flagRunning = false;

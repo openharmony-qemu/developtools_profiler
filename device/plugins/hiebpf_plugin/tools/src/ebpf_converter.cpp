@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <memory>
 #include <securec.h>
+#include <climits>
 
 #define CHK(expr) \
     do { \

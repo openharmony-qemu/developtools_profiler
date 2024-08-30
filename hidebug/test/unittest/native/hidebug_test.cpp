@@ -306,4 +306,15 @@ HWTEST_F(HidebugTest, OH_HiDebug_StartAppTraceCapture3, TestSize.Level1)
     }
 }
 
+/**
+ * @tc.name: OH_HiDebug_GetGraphicsMemory
+ * @tc.desc: test OH_HiDebug_GetGraphicsMemory. get graphics memory.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemory, TestSize.Level1)
+{
+    uint32_t value = 0;
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemory(&value), HIDEBUG_SUCCESS);
+    EXPECT_GE(value, 0);
+}
 } // namespace

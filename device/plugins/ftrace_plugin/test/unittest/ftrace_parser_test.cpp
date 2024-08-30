@@ -146,12 +146,14 @@ HWTEST_F(FtraceParserTest, ParseSavedCmdlines, TestSize.Level1)
  */
 HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level1)
 {
-    FtraceParser parser;
-    PerCpuStats perCpuStats = {};
-    EXPECT_FALSE(parser.ParsePerCpuStatus(perCpuStats, ""));
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        FtraceParser parser;
+        PerCpuStats perCpuStats = {};
+        EXPECT_FALSE(parser.ParsePerCpuStatus(perCpuStats, ""));
 
-    std::string perCpuStatsStr = FtraceFsOps::GetInstance().GetPerCpuStats(0);
-    EXPECT_TRUE(parser.ParsePerCpuStatus(perCpuStats, perCpuStatsStr));
+        std::string perCpuStatsStr = FtraceFsOps::GetInstance().GetPerCpuStats(0);
+        EXPECT_TRUE(parser.ParsePerCpuStatus(perCpuStats, perCpuStatsStr));
+    }
 }
 
 /*
@@ -178,11 +180,13 @@ HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level1)
     EXPECT_EQ(read(fd, buffer.data(), buffer.size()), PAGE_SIZE);
     EXPECT_TRUE(FtraceFsOps::GetInstance().DisableTracing());
 
-    FtraceCpuDetailMsg cpuDetailMsg = {};
-    FtraceParser parser;
-    FtraceEvent* event = nullptr;
-    parser.Init();
-    EXPECT_TRUE(parser.ParsePage(cpuDetailMsg, buffer.data(), buffer.size(), event));
-    EXPECT_EQ(close(fd), 0);
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        FtraceCpuDetailMsg cpuDetailMsg = {};
+        FtraceParser parser;
+        FtraceEvent* event = nullptr;
+        parser.Init();
+        EXPECT_TRUE(parser.ParsePage(cpuDetailMsg, buffer.data(), buffer.size(), event));
+        EXPECT_EQ(close(fd), 0);
+    }
 }
 } // namespace

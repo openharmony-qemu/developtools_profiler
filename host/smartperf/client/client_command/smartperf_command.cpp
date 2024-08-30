@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iterator>
 #include "unistd.h"
+#include "include/heartbeat.h"
 #include "include/sp_utils.h"
 #include "include/sp_csv_util.h"
 #include "include/sp_profiler_factory.h"
@@ -26,6 +27,7 @@
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
 #include "include/RAM.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -35,22 +37,11 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = "taskset -p f " + pidStr;
+        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
-        SPUtils::LoadCmd(cmdStr, result);
+        SPUtils::LoadCmd(cmdStr + pidStr, result);
         daemon(0, 0);
-        InitSomething();
-        SpThreadSocket udpThreadSocket;
-        SpThreadSocket udpExThreadSocket;
-        SpThreadSocket tcpThreadSocket;
-        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
-        sleep(1);
-        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
-        sleep(1);
-        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-        tcpSocket.join();
-        udpSocket.join();
-        udpexSocket.join();
+        CreateSocketThread();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -97,25 +88,34 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = "taskset -p f " + pidStr;
+        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
-        SPUtils::LoadCmd(cmdStr, result);
+        SPUtils::LoadCmd(cmdStr + pidStr, result);
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
-        InitSomething();
-        SpThreadSocket udpThreadSocket;
-        SpThreadSocket udpExThreadSocket;
-        SpThreadSocket tcpThreadSocket;
-        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
-        sleep(1);
-        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
-        sleep(1);
-        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-        tcpSocket.join();
-        udpSocket.join();
-        udpexSocket.join();
+        CreateSocketThread();
     }
+}
+
+void SmartPerfCommand::CreateSocketThread() const
+{
+    InitSomething();
+    SpThreadSocket udpThreadSocket;
+    SpThreadSocket udpExThreadSocket;
+    SpThreadSocket tcpThreadSocket;
+    auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+    sleep(1);
+    auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+    sleep(1);
+    auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+    Heartbeat &heartbeat = Heartbeat::GetInstance();
+    heartbeat.UpdatestartTime();
+    std::thread threadHeartbeat([&heartbeat]() {heartbeat.HeartbeatRule(); });
+    threadHeartbeat.detach();
+    tcpSocket.join();
+    udpSocket.join();
+    udpexSocket.join();
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
@@ -139,7 +139,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_OUT:
             outPathParam = argStr1;
             if (strcmp(outPathParam.c_str(), "") != 0) {
-                outPath = outPathParam + std::string(".csv");
+                outPath = outPathParam;
             }
             break;
         case CommandType::CT_C:
@@ -231,7 +231,7 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
-    std::string outGpuCounterDataPath = "/data/local/tmp/gpu_counter.csv";
+    std::string outGpuCounterDataPath = "/data/local/tmp";
     gpuCounter.StopCollect(outGpuCounterDataPath);
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
@@ -261,7 +261,8 @@ void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
 void SmartPerfCommand::InitSomething()
 {
     std::string cmdResult;
-    if (SPUtils::LoadCmd("chmod o+r /proc/stat", cmdResult)) {
+    std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
+    if (SPUtils::LoadCmd(stat, cmdResult)) {
         printf("Privilege escalation! \n");
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };

@@ -134,7 +134,7 @@ ohos_unittest("native_daemon_ut") {
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog" ]
+    external_deps += [ "hilog:libhilog_base" ]
   }
 }
 

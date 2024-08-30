@@ -311,6 +311,23 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     return true;
 }
 
+void HookManager::CheckHapEncryped()
+{
+    for (const auto& pid : hookConfig_.expand_pids()) {
+        if (pid > 0 && COMMON::CheckApplicationEncryped(pid, "")) {
+            hookConfig_.set_js_stack_report(0);
+            hookConfig_.set_max_js_stack_depth(0);
+            break;
+        }
+    }
+    const std::string processName = hookConfig_.process_name();
+    if (!processName.empty() && COMMON::CheckApplicationEncryped(0, processName)) {
+        PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
+        hookConfig_.set_js_stack_report(0);
+        hookConfig_.set_max_js_stack_depth(0);
+    }
+}
+
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession");
@@ -322,7 +339,11 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-
+    if ((!saMode_) && (!COMMON::IsBetaVersion())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
     if (hookConfig_.filter_size() > uShortMax) {
         PROFILER_LOG_WARN(LOG_CORE, "%s: filter size invalid(size exceed 65535), reset to 65535!", __func__);
@@ -331,7 +352,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (!CheckProcess()) { // Check and initialize the context for the target process.
         return false;
     }
-
+    (void)CheckHapEncryped();
     if (hookConfig_.max_stack_depth() < DLOPEN_MIN_UNWIND_DEPTH) {
         // set default max depth
         hookConfig_.set_max_stack_depth(DLOPEN_MIN_UNWIND_DEPTH);
@@ -528,6 +549,11 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 {
+    if ((!saMode_) && (!COMMON::IsBetaVersion())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     for (const auto& item : hookCtx_) {
         if (item->eventPoller != nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset!");
@@ -555,6 +581,11 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     if (hookCtx_.empty()) {
         return false;
     }
+    if ((!saMode_) && (!COMMON::IsBetaVersion())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     StartPluginSession();
     return true;
 }
@@ -563,6 +594,11 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
     if (hookCtx_.empty()) {
         return false;
+    }
+    if ((!saMode_) && (!COMMON::IsBetaVersion())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
     }
     for (const auto& item : hookCtx_) {
         if (item->pid > 0) {

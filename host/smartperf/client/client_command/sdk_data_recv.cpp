@@ -53,12 +53,14 @@ namespace OHOS {
             int i = 0;
             int socketFd = 0;
             struct sockaddr_in address;
+            const int reuse = 1;
 
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (socketFd < 0) {
                 LOGE("Create socket error.");
                 return -1;
             }
+            setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
 
             std::fill_n(reinterpret_cast<char*>(&address), sizeof(address), 0);
             address.sin_family = AF_INET;
@@ -113,6 +115,7 @@ namespace OHOS {
                 }
             }
             item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r\n";
+            sdkDataRealtimeData += source + "_" + timestamp + "_" + eventName + "_" + enable + "_" + value + ";";
             return item;
         }
 
@@ -269,6 +272,16 @@ namespace OHOS {
         void SdkDataRecv::SetListenFd(int fd)
         {
             listenFd = fd;
+        }
+
+        void SdkDataRecv::GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap)
+        {
+            if (sdkDataRealtimeData.size() > 0) {
+                std::map<std::string, std::string> sdkDataRealtimeDataMap;
+                sdkDataRealtimeDataMap["sdkData"] = sdkDataRealtimeData;
+                dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
+                sdkDataRealtimeData.clear();
+            }
         }
     }
 }

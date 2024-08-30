@@ -17,8 +17,8 @@ import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("hidebug") {
   include_dirs = [
+    "util",
     "$hidebug_path/frameworks/native/include",
-    ".",
     "$hidebug_path/interfaces/native/kits/include",
   ]
 
@@ -26,6 +26,7 @@ ohos_shared_library("hidebug") {
     "napi_hidebug.cpp",
     "napi_hidebug_gc.cpp",
     "napi_hidebug_init.cpp",
+    "util/napi_util.cpp",
   ]
 
   deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]

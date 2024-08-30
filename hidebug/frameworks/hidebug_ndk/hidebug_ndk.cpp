@@ -163,3 +163,20 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
     }
     return nativeInterface->StopAppTraceCapture();
 }
+
+HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
+{
+    if (value == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
+    if (!nativeInterface) {
+        return HIDEBUG_TRACE_ABNORMAL;
+    }
+    std::optional<int32_t> ret = nativeInterface->GetGraphicsMemory();
+    if (!ret.has_value() || ret < 0) {
+        return HIDEBUG_TRACE_ABNORMAL;
+    }
+    *value = static_cast<uint32_t>(ret.value());
+    return HIDEBUG_SUCCESS;
+}
