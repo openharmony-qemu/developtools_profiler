@@ -70,7 +70,7 @@ std::map<std::string, std::string> RAM::ItemData()
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
             result.insert(*it);
         }
-    } else {
+    } else if (!packageName.empty() && processId.empty()) {
         std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
         for (auto it = procMemInfo.begin(); it != procMemInfo.end(); ++it) {
             result.insert(*it);
@@ -133,6 +133,11 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
     return sysRamInfo;
+}
+
+void RAM::SetPackageName(const std::string &pName)
+{
+    packageName = pName;
 }
 
 void RAM::SetProcessId(const std::string &pid)
