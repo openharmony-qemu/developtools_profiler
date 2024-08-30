@@ -224,7 +224,9 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
 bool GetDeveloperMode()
 {
     bool developerMode = OHOS::system::GetBoolParameter("const.security.developermode.state", true);
-    PROFILER_LOG_INFO("GetDeveloperMode: developerMode is %d", developerMode);
+    if (!developerMode) {
+        PROFILER_LOG_INFO(LOG_CORE, "It is not developer mode!");
+    }
     return developerMode;
 }
 
