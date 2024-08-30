@@ -28,10 +28,9 @@ const std::string DEFAULT_SERVICE_LISTEN_URI = "0.0.0.0:";
 int main(int argc, char* argv[])
 {
     int lockFileFd = -1;
-    if (COMMON::IsProcessRunning(lockFileFd)) { // process is running
+    if ((!COMMON::GetDeveloperMode()) || COMMON::IsProcessRunning(lockFileFd)) { // process is running
         return 0;
     }
-
     gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
     grpc::EnableDefaultHealthCheckService(true);
 

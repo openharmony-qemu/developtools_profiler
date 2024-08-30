@@ -221,6 +221,13 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
 #endif  // HOOK_ENABLE
 }
 
+bool GetDeveloperMode()
+{
+    bool developerMode = OHOS::system::GetBoolParameter("const.security.developermode.state", true);
+    PROFILER_LOG_INFO("GetDeveloperMode: developerMode is %d", developerMode);
+    return developerMode;
+}
+
 inline int CustomFdClose(int& fd)
 {
     int ret = close(fd);
