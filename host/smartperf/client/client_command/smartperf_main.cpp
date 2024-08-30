@@ -118,9 +118,23 @@ static void RecordCapacity()
 
     if (infile.is_open()) {
         std::stringstream buffer;
+        int capacityLine = 0;
+        std::string line;
+        const int MAX_RECORD_COUNT = 100;
         buffer << infile.rdbuf();
         capacityString = buffer.str();
         infile.close();
+
+        while (std::getline(buffer, line)) {
+            capacityLine ++;
+        }
+        if (capacityLine == MAX_RECORD_COUNT) {
+            std::size_t pos = capacityString.find('\n');
+
+            if (pos != std::string::npos) {
+                capacityString = capacityString.substr(pos + 1);
+            }
+        }
     }
 
     std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::trunc);
