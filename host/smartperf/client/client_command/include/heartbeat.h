@@ -22,12 +22,14 @@
 #include <chrono>
 #include <thread>
 #include <atomic>
+#include <mutex>
 namespace OHOS {
 namespace SmartPerf {
 class Heartbeat {
 public:
     void HeartbeatRule();
     void UpdatestartTime();
+    void KillSpId();
     static Heartbeat &GetInstance()
     {
         static Heartbeat instance;
@@ -44,6 +46,7 @@ private:
     const int checkMessageTime = 300;
     std::chrono::steady_clock::time_point start = std::chrono::steady_clock::now();
     std::chrono::steady_clock::time_point updateStart;
+    std::mutex mtx;
 };
 }
 }
