@@ -241,7 +241,7 @@ void EbpfConverter::SymbolInfoParsing()
     SymbolInfo info = {};
     CHK(Read(reinterpret_cast<void*>(&info), EVENT_SYM_FIXED_SIZE));
 
-    info.strTab = new char[info.strTabLen + 1];
+    info.strTab = std::make_unique<char[]>(info.strTabLen + 1);
     if (memset_s(info.strTab, info.strTabLen + 1, 0, info.strTabLen + 1) != EOK) {
         std::cout << "memset string table failed" << std::endl;
         return;
@@ -253,7 +253,7 @@ void EbpfConverter::SymbolInfoParsing()
         }
         CHK(Read(reinterpret_cast<void*>(info.strTab), info.strTabLen));
     }
-    info.symTab = new char[info.symTabLen + 1];
+    info.symTab = std::make_unique<char[]>(info.symTabLen + 1);
     if (memset_s(info.symTab, info.symTabLen + 1, 0, info.symTabLen + 1) != EOK) {
         std::cout << "memset symbol table failed" << std::endl;
         return;
