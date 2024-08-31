@@ -130,7 +130,6 @@ static void RecordCapacity()
         }
         if (capacityLine == MAX_RECORD_COUNT) {
             std::size_t pos = capacityString.find('\n');
-
             if (pos != std::string::npos) {
                 capacityString = capacityString.substr(pos + 1);
             }
