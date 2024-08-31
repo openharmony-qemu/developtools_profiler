@@ -59,7 +59,7 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
     sptr<ISystemAbilityManager> serviceManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
     
-    static sptr<NativeMemoryProfilerSaService> native = new NativeMemoryProfilerSaService();
+    static sptr<NativeMemoryProfilerSaService> native(new NativeMemoryProfilerSaService());
     CHECK_NOTNULL(native, false, "native is nullptr");
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
