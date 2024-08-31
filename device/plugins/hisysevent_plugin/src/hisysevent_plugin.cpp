@@ -123,6 +123,9 @@ void HisyseventPlugin::Run(void)
         if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_STRING_LEN, fp_.get()) != nullptr) {
             cptr = reinterpret_cast<char*>(buffer.get());
         }
+        if (cptr == nullptr) {
+            continue;
+        }
         if (resultWriter_->isProtobufSerialize) {
             if (!ParseSyseventLineInfo(cptr, strlen(cptr), dataProto.get())) {
                 continue;
