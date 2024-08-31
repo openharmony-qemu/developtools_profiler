@@ -125,11 +125,11 @@ ohos_source_set("hiebpf_source_common") {
     "./src/utilities.cpp",
   ]
 
-  public_deps = [
-    ":gen_bpf_skeleton",
-    "//third_party/libbpf:libbpf",
+  public_deps = [ ":gen_bpf_skeleton" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "libbpf:libbpf",
   ]
-  external_deps = [ "bounds_checking_function:libsec_shared" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
