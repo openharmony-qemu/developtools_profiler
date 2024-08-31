@@ -36,8 +36,6 @@ constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 constexpr int FILE_MODE = 0644;
 }
 
-static sptr<NativeMemoryProfilerSaService> instance_ = nullptr;
-
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
 {
     serviceName_ = "HookService";
@@ -60,12 +58,10 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
 {
     sptr<ISystemAbilityManager> serviceManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
-
-    if (instance_ == nullptr) {
-        instance_ = new NativeMemoryProfilerSaService();
-    }
-    CHECK_NOTNULL(instance_, false, "instance is nullptr");
-    int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, instance_);
+    
+    static sptr<NativeMemoryProfilerSaService> native = new NativeMemoryProfilerSaService();
+    CHECK_NOTNULL(native, false, "native is nullptr");
+    int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Service native memory failed to start");
         return false;
