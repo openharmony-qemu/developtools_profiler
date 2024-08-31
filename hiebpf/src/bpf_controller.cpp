@@ -196,7 +196,9 @@ void BPFController::FilterFsGroup()
     if (selectEventGroups_.find(FS_GROUP_ALL) != selectEventGroups_.end()) {
         return;
     }
-
+    if (skel_ == nullptr) {
+        return;
+    }
     if (selectEventGroups_.find(FS_GROUP_OPEN) == selectEventGroups_.end()) {
         bpf_program__set_autoload(skel_->progs.do_sys_openat2_entry, false);
         bpf_program__set_autoload(skel_->progs.do_sys_openat2_exit, false);
