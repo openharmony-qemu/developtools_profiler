@@ -101,26 +101,38 @@ static void SplitParams(char *input)
     }
 }
 
-static int QueryParams(const char *queryName)
+static int QueryParams(const char *queryName, char *result)
+{
+    if (result == NULL) {
+        return false;
+    }
+#ifdef HIDEBUG_IN_INIT
+    uint32_t size = PARAM_BUF_LEN;
+    int retLen = SystemReadParam(queryName, result, &size);
+    if (retLen != 0 || size <= 0 || size > PARAM_BUF_LEN - 1) {
+        HIDEBUG_LOGE("failed to read param system param");
+        return false;
+    }
+    result[size] = '\0';
+#else
+    char defStrValue[PARAM_BUF_LEN] = { 0 };
+    int retLen = GetParameter(queryName, defStrValue, result, PARAM_BUF_LEN);
+    if (retLen <= 0 || retLen > PARAM_BUF_LEN - 1) {
+        HIDEBUG_LOGE("failed to read param system param");
+        return false;
+    }
+    result[retLen] = '\0';
+#endif
+    return true;
+}
+
+static int QueryHiDebugEnvParams(const char *queryName)
 {
     g_paramCnt = 0;
     char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-#ifdef HIDEBUG_IN_INIT
-    uint32_t size = PARAM_BUF_LEN;
-    int retLen = SystemReadParam(queryName, paramOutBuf, &size);
-    if (retLen != 0 || size <= 0 || size > PARAM_BUF_LEN - 1) {
-        return 0;
+    if (QueryParams(queryName, paramOutBuf)) {
+        SplitParams(paramOutBuf);
     }
-    retLen = (int)size;
-#else
-    char defStrValue[PARAM_BUF_LEN] = { 0 };
-    int retLen = GetParameter(queryName, defStrValue, paramOutBuf, PARAM_BUF_LEN);
-    if (retLen == 0 || retLen > PARAM_BUF_LEN - 1) {
-        return 0;
-    }
-#endif
-    paramOutBuf[retLen] = '\0';
-    SplitParams(paramOutBuf);
     return g_paramCnt;
 }
 
@@ -240,10 +252,10 @@ bool InitEnvironmentParam(const char *inputName)
     SetupMallocHookAtStartup(serviceName);
 #endif
 
-#ifndef HIDEBUG_BUILD_VARIANT_ROOT
-    return true;
-#endif
-
+    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
+    if (!QueryParams("const.debuggable", paramOutBuf) || strcmp(paramOutBuf, "1") != 0) {
+        return false;
+    }
     errno_t err = 0;
     char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
     char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
@@ -258,7 +270,7 @@ bool InitEnvironmentParam(const char *inputName)
         return false;
     }
 
-    if (QueryParams(onceName) == 0 && QueryParams(persistName) == 0) {
+    if (QueryHiDebugEnvParams(onceName) == 0 && QueryHiDebugEnvParams(persistName) == 0) {
         return false;
     }
     for (int i = 0; i < g_paramCnt; ++i) {
