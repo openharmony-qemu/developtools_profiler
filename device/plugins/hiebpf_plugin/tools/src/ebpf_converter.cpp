@@ -55,8 +55,7 @@ EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& ou
 EbpfConverter::~EbpfConverter()
 {
     std::map<std::string, SymbolInfo>::iterator iter;
-    for (iter = symbolInfo_.begin(); iter != symbolInfo_.end(); iter++)
-    {
+    for (iter = symbolInfo_.begin(); iter != symbolInfo_.end(); iter++) {
         if (iter->second.symTab != nullptr) {
             delete[] iter->second.symTab;
             iter->second.symTab = nullptr;
