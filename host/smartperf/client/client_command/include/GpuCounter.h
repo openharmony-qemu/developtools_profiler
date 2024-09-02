@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef GpuCounter_H
-#define GpuCounter_H
+#ifndef GPU_COUNTER_H
+#define GPU_COUNTER_H
 
 #include "string"
 #include "vector"
