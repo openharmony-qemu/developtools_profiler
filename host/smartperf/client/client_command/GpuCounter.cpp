@@ -1,0 +1,157 @@
+/*
+ * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "chrono"
+#include "string"
+#include "thread"
+#include "fstream"
+#include <iostream>
+#include <dlfcn.h>
+#include "include/sp_log.h"
+#include "include/GpuCounter.h"
+#include "include/GpuCounterCallback.h"
+
+namespace OHOS {
+    namespace SmartPerf {
+        std::map<std::string, std::string> GpuCounter::ItemData()
+        {
+            return std::map<std::string, std::string>();
+        }
+
+        void GpuCounter::StartCollect(GcCollectType type)
+        {
+            std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallback>();
+
+            const int duration = 1000;
+
+            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            if (!handle) {
+                LOGI("open GpuCounterCallbackPlugin so file error.");
+                return;
+            }
+
+            typedef GpuCounterCallbackPlugin *(*GetGpuCounterCallbackPlugin)();
+            GetGpuCounterCallbackPlugin startGetGpuPerfInfo = (GetGpuCounterCallbackPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+
+            if (type == GC_START && gcStatus == GC_INIT) {
+                gpuCounterData.clear();
+                gpuCounterRealtimeDataMap.clear();
+                int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                if (ret == 0) {
+                    gcStatus = GC_RUNNING;
+                    LOGI("GpuCounter collect start.");
+                } else {
+                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                }
+            } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
+                int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                if (ret == 0) {
+                    LOGI("GpuCounter recollect start.");
+                } else {
+                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                }
+            } else {
+                LOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
+            }
+        }
+
+        void GpuCounter::SaveData(std::string path)
+        {
+            LOGI("GpuCounter collect stop.");
+            char gpuCounterDataDirChar[PATH_MAX] = {0x00};
+            if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
+                LOGE("data dir %s is nullptr", path.c_str());
+                return;
+            }
+            std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/GpuCounter.csv";
+            std::ofstream outFile;
+            std::mutex mtx;
+            mtx.lock();
+            outFile.open(gpuCounterDataPath.c_str(), std::ios::out | std::ios::trunc);
+            if (!outFile.is_open()) {
+                LOGE("open GpuCounter data file failed.");
+                return;
+            }
+            std::string title = "startTime,"
+                                "duration,"
+                                "gpuActive,"
+                                "drawCalls,"
+                                "primitives,"
+                                "vertexCounts,"
+                                "totalInstruments,"
+                                "gpuLoadPercentage,"
+                                "vertexLoadPercentage,"
+                                "fragmentLoadPercentage,"
+                                "computeLoadPercentage,"
+                                "textureLoadPercentage,"
+                                "memoryReadBandwidth,"
+                                "memoryWriteBandwidth,"
+                                "memoryBandwidthPercentage\r";
+            outFile << title << std::endl;
+            for (unsigned int i = 0; i < gpuCounterData.size() - 1; i++) {
+                outFile << gpuCounterData[i] << std::endl;
+            }
+            outFile.close();
+            mtx.unlock();
+        }
+
+        std::vector<std::string> &GpuCounter::GetGpuCounterData()
+        {
+            return gpuCounterData;
+        }
+
+        std::mutex &GpuCounter::GetRealtimeDataLock()
+        {
+            return realtimeDataLock;
+        }
+
+        std::map<std::string, std::string> &GpuCounter::GetGpuCounterRealtimeDataMap()
+        {
+            return gpuCounterRealtimeDataMap;
+        }
+
+        void GpuCounter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)
+        {
+            if (gpuCounterRealtimeDataMap.size() > 0) {
+                std::lock_guard<std::mutex> lock(realtimeDataLock);
+                dataMap.insert(gpuCounterRealtimeDataMap.begin(), gpuCounterRealtimeDataMap.end());
+                gpuCounterRealtimeDataMap.clear();
+            }
+        }
+
+        void GpuCounter::StopCollect(std::string path)
+        {
+            if (gcStatus != GC_RUNNING) {
+                return;
+            }
+
+            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            if (!handle) {
+                LOGI("open GpuCounterCallbackPlugin so file error.");
+                return;
+            }
+
+            typedef GpuCounterCallbackPlugin *(*GetGpuCounterCallbackPlugin)();
+            GetGpuCounterCallbackPlugin startGetGpuPerfInfo = (GetGpuCounterCallbackPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+
+            int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
+            if (ret == 0) {
+                SaveData(path);
+                gcStatus = GC_INIT;
+                LOGI("GpuCounter collect finish.");
+            }
+        }
+    }
+}

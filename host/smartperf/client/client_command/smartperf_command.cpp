@@ -202,7 +202,7 @@ std::string SmartPerfCommand::ExecCommand()
     num = num + 1;
     for (std::string itConfig : configs) {
         if (itConfig.find("-gc") != std::string::npos) {
-            gpuCounter.StartCollect(GPU_Counter::GC_START);
+            gpuCounter.StartCollect(GpuCounter::GC_START);
         }
     }
     while (index < num) {

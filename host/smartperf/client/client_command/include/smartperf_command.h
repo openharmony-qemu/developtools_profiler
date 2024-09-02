@@ -20,7 +20,7 @@
 #include <vector>
 #include "common.h"
 #include "sp_utils.h"
-#include "GPU_Counter.h"
+#include "GpuCounter.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -84,7 +84,7 @@ public:
     std::string pid = "";
     // 采集配置项
     std::vector<std::string> configs;
-    GPU_Counter &gpuCounter = GPU_Counter::GetInstance();
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
 };
 }
 }
