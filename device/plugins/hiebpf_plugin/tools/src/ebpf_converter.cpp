@@ -52,6 +52,22 @@ constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
     : inputPath_(inputPath), outputPath_(outPath) {}
 
+EbpfConverter::~EbpfConverter()
+{
+    std::map<std::string, SymbolInfo>::iterator iter;
+    for (iter = symbolInfo_.begin(); iter != symbolInfo_.end(); iter++)
+    {
+        if (iter->second.symTab != nullptr) {
+            delete[] iter->second.symTab;
+            iter->second.symTab = nullptr;
+        }
+        if (iter->second.strTab != nullptr) {
+            delete[] iter->second.strTab;
+            iter->second.strTab = nullptr;
+        }
+    }
+}
+
 void EbpfConverter::StartParsing()
 {
     if (access(inputPath_.c_str(), R_OK) != 0) {
@@ -283,7 +299,14 @@ void EbpfConverter::SymbolInfoParsing()
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (info.fileNameSize > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
-        CHK(Read(reinterpret_cast<void*>(&fileName), dataLen));
+        if (!Read(reinterpret_cast<void*>(&fileName), dataLen)) {
+            std::cout << "read file name failed" << std::endl;
+            delete[] info.symTab;
+            info.symTab = nullptr;
+            delete[] info.strTab;
+            info.strTab = nullptr;
+            return;
+        }
         info.fileName = fileName;
     }
     record_[std::string(fileName)] = Record(fileName, symAddr, strAddr);
