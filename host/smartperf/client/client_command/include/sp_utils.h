@@ -136,6 +136,7 @@ bool VerifyValueStr(std::map<std::string, std::string>& mapInfo, std::string& er
 bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
     std::string &errorInfo);
 bool IsHmKernel();
+std::string GetCpuNum();
 };
 }
 }

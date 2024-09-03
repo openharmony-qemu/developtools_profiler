@@ -188,25 +188,8 @@ public:
                 continue;
             }
             SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
-            if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
-                retCode = SplitMsg(recvBuf);
-                SpProfilerFactory::SetProfilerPkg(retCode);
-                spSocket.Sendto(retCode);
-                std::string processId = "";
-                OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(retCode);
-                SpProfilerFactory::SetProfilerPidByPkg(processId);
-            } else if (profiler == nullptr && (iterator->first == MessageType::FPS_STOP)) {
-                spSocket.Sendto(resultFPS);
-                resultFPS = "FPS||";
-            } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
-                iterator->first == MessageType::CATCH_TRACE_CMD)) {
-                SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
-            } else if (profiler == nullptr && (iterator->first == MessageType::BACK_TO_DESKTOP)) {
-                BackDesktop();
-            } else if (profiler == nullptr) {
-                retCode = iterator->second;
-                spSocket.Sendto(retCode);
+            if (profiler == nullptr) {
+                HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
             } else {
                 std::map<std::string, std::string> data;
                 if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
@@ -245,6 +228,8 @@ public:
                 }
             }
             spSocket.Sendto(resultfps);
+        } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
+            FetchCpuStats(spSocket, data);
         } else {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
@@ -254,6 +239,59 @@ public:
     {
         Heartbeat &heartbeat = Heartbeat::GetInstance();
         heartbeat.UpdatestartTime();
+    }
+    void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const
+    {
+        std::string resultCpuFrequency = "";
+        std::string resultCpuUsage = "";
+        std::string resultCpu = "";
+        int cpuFrequencyNum = 0;
+        int cpuUsageNum = 0;
+        int cpuFlag = 1;
+        while (cpuFlag) {
+            resultCpuFrequency = "cpu" + std::to_string(cpuFrequencyNum) + "Frequency";
+            resultCpuUsage = "cpu" + std::to_string(cpuUsageNum) + "Usage";
+            auto iterCpuFrequency = data.find(resultCpuFrequency);
+            auto iterCpuUsage = data.find(resultCpuUsage);
+            if (iterCpuFrequency != data.end()) {
+                resultCpuFrequency += "||" + iterCpuFrequency->second;
+                resultCpu += "$$" + resultCpuFrequency;
+                cpuFrequencyNum++;
+            } else {
+                cpuFlag = 0;
+            }
+            if (iterCpuUsage != data.end()) {
+                resultCpuUsage += "||" + iterCpuUsage->second;
+                resultCpu += "$$" + resultCpuUsage;
+                cpuUsageNum++;
+            } else {
+                cpuFlag = 0;
+            }
+        }
+        spSocket.Sendto(resultCpu);
+    }
+    void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    {
+        if (iterator->first == MessageType::SET_PKG_NAME) {
+            retCode = SplitMsg(recvBuf);
+            SpProfilerFactory::SetProfilerPkg(retCode);
+            spSocket.Sendto(retCode);
+        } else if (iterator->first == MessageType::FPS_STOP) {
+            spSocket.Sendto(resultFPS);
+            resultFPS = "FPS||";
+        } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
+            iterator->first == MessageType::CATCH_TRACE_CMD) {
+            SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+        } else if (iterator->first == MessageType::GET_CPU_NUM) {
+            retCode = SPUtils::GetCpuNum();
+            spSocket.Sendto(retCode);
+        } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
+            BackDesktop();
+        } else {
+            retCode = iterator->second;
+            spSocket.Sendto(retCode);
+        }
     }
 };
 bool SpThreadSocket::flagRunning = false;
