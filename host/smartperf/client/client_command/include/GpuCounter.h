@@ -25,7 +25,7 @@
 
 namespace OHOS {
     namespace SmartPerf {
-        class GpuCounterCallbackPlugin {
+        class GpuCounterPlugin {
         public:
             uint32_t version;
             const char *pluginName;

@@ -38,12 +38,12 @@ namespace OHOS {
 
             void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
             if (!handle) {
-                LOGI("open GpuCounterCallbackPlugin so file error.");
+                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 
-            typedef GpuCounterCallbackPlugin *(*GetGpuCounterCallbackPlugin)();
-            GetGpuCounterCallbackPlugin startGetGpuPerfInfo = (GetGpuCounterCallbackPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
@@ -139,12 +139,12 @@ namespace OHOS {
 
             void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
             if (!handle) {
-                LOGI("open GpuCounterCallbackPlugin so file error.");
+                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 
-            typedef GpuCounterCallbackPlugin *(*GetGpuCounterCallbackPlugin)();
-            GetGpuCounterCallbackPlugin startGetGpuPerfInfo = (GetGpuCounterCallbackPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {
