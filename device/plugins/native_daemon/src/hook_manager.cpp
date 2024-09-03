@@ -529,6 +529,11 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     if (hookCtx_.empty()) {
         return false;
     }
+    if ((!saMode_) && (COMMON::IsUserMode())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     StartPluginSession();
     return true;
 }
@@ -677,11 +682,6 @@ int32_t HookManager::CreatePluginSession()
 
 void HookManager::StartPluginSession()
 {
-    if ((!saMode_) && (COMMON::IsUserMode())) {
-        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
-            return false;
-        }
-    }
     for (const auto& item : hookCtx_) {
         if (item->stackPreprocess == nullptr) {
             continue;
