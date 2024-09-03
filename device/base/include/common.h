@@ -48,6 +48,7 @@ void AdaptSandboxPath(std::string& filePath, int pid);
 int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);
 bool IsInt(const std::string& str);
+bool GetDeveloperMode();
 bool IsBetaVersion();
 } // COMMON
 #endif // COMMON_H

@@ -260,7 +260,8 @@ void EbpfConverter::SymbolInfoParsing()
     info.strTab = new char[info.strTabLen + 1];
     if (memset_s(info.strTab, info.strTabLen + 1, 0, info.strTabLen + 1) != EOK) {
         std::cout << "memset string table failed" << std::endl;
-        delete [] info.strTab;
+        delete[] info.strTab;
+        info.strTab = nullptr;
         return;
     }
     if (info.strTabLen > 0) {
@@ -268,14 +269,18 @@ void EbpfConverter::SymbolInfoParsing()
         if (ret >= 0) {
             strAddr = (uint64_t)ret;
         }
-        if (!Read(reinterpret_cast<void*>(info.strTab), info.strTabLen)) {
-            delete [] info.strTab;
+        if (!Read(reinterpret_cast<void *>(info.strTab), info.strTabLen)) {
+            std::cout << "read string table failed" << std::endl;
+            delete[] info.strTab;
+            info.strTab = nullptr;
+            return;
         }
     }
     info.symTab = new char[info.symTabLen + 1];
     if (memset_s(info.symTab, info.symTabLen + 1, 0, info.symTabLen + 1) != EOK) {
         std::cout << "memset symbol table failed" << std::endl;
-        delete [] info.strTab;
+        delete[] info.symTab;
+        info.symTab = nullptr;
         return;
     }
     if (info.symTabLen > 0) {
@@ -283,8 +288,11 @@ void EbpfConverter::SymbolInfoParsing()
         if (ret >= 0) {
             symAddr = (uint64_t)ret;
         }
-        if (!Read(reinterpret_cast<void*>(info.symTab), info.symTabLen)) {
-            delete [] info.strTab;
+        if (!Read(reinterpret_cast<void *>(info.symTab), info.symTabLen)) {
+            std::cout << "read symbol table failed" << std::endl;
+            delete[] info.symTab;
+            info.symTab = nullptr;
+            return;
         }
     }
     char fileName[info.fileNameSize + 1];

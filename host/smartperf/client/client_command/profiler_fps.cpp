@@ -76,6 +76,11 @@ void ProfilerFPS::SetPackageName(std::string pName)
     pkgName = std::move(pName);
 }
 
+void ProfilerFPS::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
+
 void ProfilerFPS::GetResultFPS(int sectionsNum)
 {
     struct timeval start;
@@ -303,10 +308,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
             GetCurrentTime(fifty);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
-            std::string processId = "";
-            OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(pkgName);
-            LOGI("ProfilerFPS::processId -- %s", processId.c_str());
             if (processId.empty()) {
                 processFlag = true;
                 fpsInfoMax.Clear();

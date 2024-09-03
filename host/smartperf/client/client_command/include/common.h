@@ -20,8 +20,7 @@ namespace OHOS {
 namespace SmartPerf {
 enum class MessageType {
     GET_CPU_NUM,
-    GET_CPU_FREQ,
-    GET_CPU_LOAD,
+    GET_CPU_FREQ_LOAD,
     SET_PKG_NAME,
     SET_PROCESS_ID,
     GET_FPS_AND_JITTERS,
@@ -46,8 +45,7 @@ enum class MessageType {
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CPU_NUM, std::string("get_cpu_num") },
-    { MessageType::GET_CPU_FREQ, std::string("get_cpu_freq") },
-    { MessageType::GET_CPU_LOAD, std::string("get_cpu_load") },
+    { MessageType::GET_CPU_FREQ_LOAD, std::string("get_cpu_freq_load") },
     { MessageType::SET_PKG_NAME, std::string("set_pkgName") },
     { MessageType::SET_PROCESS_ID, std::string("set_pid") },
     { MessageType::GET_FPS_AND_JITTERS, std::string("get_fps_and_jitters") },

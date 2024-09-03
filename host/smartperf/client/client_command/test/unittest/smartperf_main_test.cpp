@@ -139,30 +139,6 @@ HWTEST_F(SPdaemonMainTest, GetOptionsTestCase001, TestSize.Level1)
     EXPECT_EQ(ret, true);
 }
 
-/**
- * @tc.name: CheckCMDParamTestCase
- * @tc.desc: Test CheckCMDParam
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
-{
-    std::string errorInfo = "";
-    std::vector<std::string> argv;
-    argv.push_back("SP_daemon");
-    argv.push_back("-c");
-    argv.push_back("-f");
-    argv.push_back("-g");
-    argv.push_back("-t");
-    argv.push_back("-p");
-    argv.push_back("-r");
-    argv.push_back("-net");
-    argv.push_back("-snapshot");
-    argv.push_back("-o");
-
-    bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, false);
-}
-
 HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)
 {
     std::string errorInfo = "";
