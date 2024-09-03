@@ -247,15 +247,13 @@ int ProcessUtils::Execute(const ExecuteArgs& args, std::string& output)
 
     output = ReceiveOutputAndSigchld(pipeFds[RD], sigChldHandler);
     auto lines = StringUtils::Split(output, "\n");
-    PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): output %zuB, %zuLn", cmdline.c_str(), output.size(), lines.size());
 
     int retval = GetProcessExitCode(pid);
 
     // close pipe fds
     CHECK_TRUE(close(pipeFds[RD]) != -1, -1, "close pipe[RD] failed, %d", errno);
     if (retval != 0 && cmdline != "hitrace -l") {
-        PROFILER_LOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, hitrace output is %s", cmdline.c_str(),
-            retval, output.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
     }

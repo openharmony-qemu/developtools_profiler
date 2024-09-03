@@ -98,7 +98,6 @@ private:
     bool ParseEventFormat(const std::string& formatDesc, EventFormat& format);
     bool ParseFieldFormat(const std::string& fieldLine, EventFormat& format);
     bool ParseFieldType(const std::string& type, FieldFormat& field);
-    void PrintFieldInfo(const FieldFormat& info);
     static void ParseProtoType(FieldFormat& field);
 
     bool ParsePageHeader();
