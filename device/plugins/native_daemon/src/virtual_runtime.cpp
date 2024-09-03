@@ -555,10 +555,10 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
     uint64_t length = info[1];
     uint64_t flags = info[SECOND_INDEX];
     uint64_t offset = info[THIRD_INDEX];
-    if (!(flags & MAP_FIXED) || mapsCache_.empty()) {
-        if (mapsCache_.find(begin) != mapsCache_.end()) {
-            return;
-        }
+    if (!(flags & MAP_FIXED)) {
+        return;
+    }
+    if (offset == 0 && mapsCache_.find(begin) == mapsCache_.end()) {
         soBegin_ = begin;
         std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
         auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
