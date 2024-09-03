@@ -280,7 +280,8 @@ public:
         } else if (iterator->first == MessageType::FPS_STOP) {
             spSocket.Sendto(resultFPS);
             resultFPS = "FPS||";
-        } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG || iterator->first == MessageType::CATCH_TRACE_CMD) {
+        } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
+            iterator->first == MessageType::CATCH_TRACE_CMD) {
             SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
         } else if (iterator->first == MessageType::GET_CPU_NUM) {
             retCode = SPUtils::GetCpuNum();
