@@ -1013,7 +1013,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
                 cpuDataVec2[i-1].thread_info(0).thread_cpu_time_ms());
         }
     }
-#ifdef __aarch64__
+#endif
 
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);
