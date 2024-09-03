@@ -957,8 +957,9 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
     }
     if (flags & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
-        curRawdata.name[0] = '\0';
-        holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + 1, nullptr, 0);
+        size_t len = strlen(filePath.c_str()) + 1;
+        (void)strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len);
+        holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
     } else {
         size_t len = strlen(filePath.c_str()) + 1;
         (void)strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len);
