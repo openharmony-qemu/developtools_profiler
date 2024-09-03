@@ -261,6 +261,9 @@ int main(int argc, char* argv[])
     if (argc > 1) {
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
             if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
+                if (lockFileFd > 0) {
+                    close(lockFileFd);
+                }
                 return 0;
             }
             while (true) {
@@ -269,6 +272,9 @@ int main(int argc, char* argv[])
         } else {
             if (!COMMON::IsBetaVersion()) {
                 printf("memory profiler only support in beta version\n");
+                if (lockFileFd > 0) {
+                    close(lockFileFd);
+                }
                 return 0;
             }
             std::vector<std::string> args;
@@ -301,15 +307,36 @@ int main(int argc, char* argv[])
                 <-mfm mallocFreeMatchingInterval_>
                 )";
                 printf("%s\n", help.c_str());
+                if (lockFileFd > 0) {
+                    close(lockFileFd);
+                }
                 return 0;
             }
         }
     } else {
         auto hookManager = std::make_shared<HookManager>();
-        CHECK_NOTNULL(hookManager, 1, "create PluginManager FAILED!");
+        if (hookManager == nullptr) {
+            if (lockFileFd > 0) {
+                close(lockFileFd);
+                PROFILER_LOG_INFO(LOG_CORE, "create PluginManager FAILED!");
+                return 1;
+            }
+        }
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
-        CHECK_NOTNULL(commandPoller, 1, "create CommandPoller FAILED!");
-        CHECK_TRUE(commandPoller->OnConnect(), 1, "connect FAILED");
+        if (commandPoller == nullptr) {
+            if (lockFileFd > 0) {
+                close(lockFileFd);
+                PROFILER_LOG_INFO(LOG_CORE, "create CommandPoller FAILED!");
+                return 1;
+            }
+        }
+        if (!commandPoller->OnConnect()) {
+            if (lockFileFd > 0) {
+                close(lockFileFd);
+                PROFILER_LOG_INFO(LOG_CORE, "connect FAILED");
+                return 1;
+            }
+        }
         hookManager->SetCommandPoller(commandPoller);
         hookManager->RegisterAgentPlugin("nativehook");
 
@@ -317,6 +344,8 @@ int main(int argc, char* argv[])
             std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
         }
     }
-    close(lockFileFd);
+    if (lockFileFd > 0) {
+        close(lockFileFd);
+    }
     return 0;
 }

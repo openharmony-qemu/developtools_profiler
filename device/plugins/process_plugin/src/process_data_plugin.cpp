@@ -114,7 +114,9 @@ DIR* ProcessDataPlugin::OpenDestDir(const char* dirPath)
 
 int32_t ProcessDataPlugin::GetValidPid(DIR* dirp)
 {
-    if (!dirp) return 0;
+    if (!dirp) {
+        return 0;
+    }
     while (struct dirent* dirEnt = readdir(dirp)) {
         if (dirEnt->d_type != DT_DIR) {
             continue;

@@ -289,8 +289,6 @@ template <typename T> void MemoryDataPlugin::WriteVmstat(T& memoryData)
         vmeminfo->set_key(static_cast<SysVMeminfoType>(counter_id));
         vmeminfo->set_value(value);
     } while (totalbuffer.NextLine());
-
-    return;
 }
 
 template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInfo, SmapsStats& smapInfo)

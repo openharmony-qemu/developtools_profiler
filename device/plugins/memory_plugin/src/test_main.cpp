@@ -48,6 +48,7 @@ int main(int agrc, char* agrv[])
         cache.emplace(cache.begin() + i - 1, buf);
     }
     while (true) {};
+    free(buf);
     return 0;
 }
 

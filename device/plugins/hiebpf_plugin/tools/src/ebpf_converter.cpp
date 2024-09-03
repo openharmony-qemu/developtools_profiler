@@ -48,9 +48,18 @@ constexpr uint8_t EVENT_SYM_FIXED_SIZE = 36;
 constexpr uint8_t EVENT_MEM_FIXED_SIZE = 88;
 constexpr uint8_t EVENT_STR_FIXED_SIZE = 40;
 constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
+constexpr uint8_t SHIFT = 32;
 } // namespace
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
     : inputPath_(inputPath), outputPath_(outPath) {}
+
+EbpfConverter::~EbpfConverter()
+{
+    for (auto item : symbolInfo_)
+    {
+        delete item.second;
+    }
+}
 
 void EbpfConverter::StartParsing()
 {
@@ -118,7 +127,9 @@ void EbpfConverter::StartParsing()
             }
             default: {
                 std::cout << "Invalid type: " << type << std::endl;
-                close(fd_);
+                if (fd_ != -1) {
+                    close(fd_);
+                }
                 fd_ = -1;
                 fileSize_ = 0;
                 fclose(file);
@@ -126,7 +137,9 @@ void EbpfConverter::StartParsing()
             }
         }
     }
-    close(fd_);
+    if (fd_ != -1) {
+        close(fd_);
+    }
     fd_ = -1;
     fileSize_ = 0;
     std::cout << "Data read successfully, output..." << std::endl;
@@ -142,6 +155,9 @@ void EbpfConverter::StartParsing()
 
 bool EbpfConverter::Read(void* buffer, size_t size)
 {
+    if (fd_ == -1) {
+        return false;
+    }
     ssize_t ret = read(fd_, buffer, size);
     if (ret <= 0) {
         close(fd_);
@@ -244,6 +260,7 @@ void EbpfConverter::SymbolInfoParsing()
     info.strTab = new char[info.strTabLen + 1];
     if (memset_s(info.strTab, info.strTabLen + 1, 0, info.strTabLen + 1) != EOK) {
         std::cout << "memset string table failed" << std::endl;
+        delete [] info.strTab;
         return;
     }
     if (info.strTabLen > 0) {
@@ -251,11 +268,14 @@ void EbpfConverter::SymbolInfoParsing()
         if (ret >= 0) {
             strAddr = (uint64_t)ret;
         }
-        CHK(Read(reinterpret_cast<void*>(info.strTab), info.strTabLen));
+        if (!Read(reinterpret_cast<void*>(info.strTab), info.strTabLen)) {
+            delete [] info.strTab;
+        }
     }
     info.symTab = new char[info.symTabLen + 1];
     if (memset_s(info.symTab, info.symTabLen + 1, 0, info.symTabLen + 1) != EOK) {
         std::cout << "memset symbol table failed" << std::endl;
+        delete [] info.strTab;
         return;
     }
     if (info.symTabLen > 0) {
@@ -263,13 +283,17 @@ void EbpfConverter::SymbolInfoParsing()
         if (ret >= 0) {
             symAddr = (uint64_t)ret;
         }
-        CHK(Read(reinterpret_cast<void*>(info.symTab), info.symTabLen));
+        if (!Read(reinterpret_cast<void*>(info.symTab), info.symTabLen)) {
+            delete [] info.strTab;
+        }
     }
     char fileName[info.fileNameSize + 1];
     (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
     if (info.fileNameSize > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
-        CHK(Read(reinterpret_cast<void*>(&fileName), dataLen));
+        if (!Read(reinterpret_cast<void*>(&fileName), dataLen)) {
+            delete [] info.strTab;
+        }
         info.fileName = fileName;
     }
     record_[std::string(fileName)] = Record(fileName, symAddr, strAddr);
@@ -343,7 +367,7 @@ void EbpfConverter::EventStrParsing()
         str.fileName = fileName;
     }
     str_.push_back(str);
-    int32_t newPos = static_cast<int32_t>(str.len - 32 - str.strLen);
+    int32_t newPos = static_cast<int32_t>(str.len - SHIFT - str.strLen);
     fileSize_ = lseek(fd_, lseek(fd_, 0, SEEK_CUR) + newPos, SEEK_SET);
 
     outData_ << "\nEventStr:\n"
