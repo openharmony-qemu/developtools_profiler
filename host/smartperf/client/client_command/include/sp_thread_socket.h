@@ -189,7 +189,7 @@ public:
             }
             SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
             if (profiler == nullptr) {
-                HandleNullMsg(spSocket, profiler, retCode, RecvBuf, iterator);
+                HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
             } else {
                 std::map<std::string, std::string> data;
                 if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
