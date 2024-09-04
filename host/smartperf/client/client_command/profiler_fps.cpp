@@ -40,7 +40,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     if (isGameLayer == "1") {
         std::cout << " isGameLayer == 1 " << std::endl;
         std::string gameLayer = GetGameLayer();
-        if(!gameLayer.empty()) {
+        if (!gameLayer.empty()) {
             finalResult = selfRerderLayers(gameLayer);
         }
     } else {
@@ -492,19 +492,20 @@ std::string ProfilerFPS::GetGameLayer()
     }
     std::string cmdResult;
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
-    SPUtils::LoadCmd(dumperSurface,cmdResult);
+    SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t pos = cmdResult.find("NodeId[");
     size_t pos1 = cmdResult.find("] LayerId");
     std::cout << " cmdResult: " << cmdResult << std::endl;
     std::string nodeIdStr = cmdResult.substr(pos + /, pos1 - pos - /);
     std::cout << " nodeIdStr: " << nodeIdStr << std::endl;
     uint64_t nodeId;
+    const int kShiftAmount = 32; 
     if (!nodeIdStr.empty()) {
         nodeId = std::stoll(nodeIdStr);
         std::cout << " uint64_t nodeId: " << nodeId << std::endl;
-        nodeId = nodeId >> 32;
+        nodeId = nodeId >> kShiftAmount;
         std::cout << " YOUYI nodeId: " << nodeId << std::endl;
-        if (std::to_string(nodeId) == processId){
+        if (std::to_string(nodeId) == processId) {
             size_t pos2 = cmdResult.find("[");
             size_t pos3 = cmdResult.find("]");
             gameLayer = cmdResult.substr(pos2 + 1, pos3 - pos2 - 1);
