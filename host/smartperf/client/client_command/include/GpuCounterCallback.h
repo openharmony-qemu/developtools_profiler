@@ -40,7 +40,14 @@ namespace OHOS {
 
         class GpuCounterCallback{
         public:
-            GpuCounterCallback();
+            GpuCounterCallback() = default;
+            virtual ~GpuCounterCallback() = default;
+            virtual int OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos) = 0;
+        };
+
+        class GpuCounterCallbackImpl  : public GpuCounterCallback{
+        public:
+            GpuCounterCallbackImpl();
             int OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos);
 
         private:

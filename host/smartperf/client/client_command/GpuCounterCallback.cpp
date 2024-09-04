@@ -43,7 +43,7 @@ namespace OHOS {
         macro(textureLoadPercentage, "textureLoadPercentage"); \
         macro(memoryBandwidthPercentage, "memoryBandwidthPercentage"); \
     } while (0)
-        GpuCounterCallback::GpuCounterCallback()
+        GpuCounterCallbackImpl::GpuCounterCallbackImpl()
         {
             GpuPerfInfo firstData;
             firstData.startTime = SPUtils::GetCurTime();
@@ -66,7 +66,7 @@ namespace OHOS {
             gpuCounter.push_back(firstData);
         }
 
-        void GpuCounterCallback::JoinSocketData(GpuPerfInfo *newData)
+        void GpuCounterCallbackImpl::JoinSocketData(GpuPerfInfo *newData)
         {
 #define JOIN_PERCENTAGE(field, fieldString) \
     do { \
@@ -84,7 +84,7 @@ namespace OHOS {
             DO_FOR_ALL_PERCENTAGE(JOIN_PERCENTAGE);
             realtimeGpuPerfInfoData.duration += newData->duration;
         }
-        void GpuCounterCallback::SplitSocketData()
+        void GpuCounterCallbackImpl::SplitSocketData()
         {
             int32_t interval = realtimeGpuPerfInfoData.duration - MAX_DURATION;
             GpuCounter &GpuCounter = GpuCounter::GetInstance();
@@ -111,7 +111,7 @@ namespace OHOS {
             GpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(MAX_DURATION);
         }
 
-        void GpuCounterCallback::GetRealTime(GpuPerfInfo *newData)
+        void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
             GpuCounter &GpuCounter = GpuCounter::GetInstance();
 
@@ -126,7 +126,7 @@ namespace OHOS {
             }
         }
 
-        int GpuCounterCallback::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
+        int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
             GpuCounter &GpuCounter = GpuCounter::GetInstance();
 

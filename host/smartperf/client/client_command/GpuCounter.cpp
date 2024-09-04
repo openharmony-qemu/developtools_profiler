@@ -32,7 +32,7 @@ namespace OHOS {
 
         void GpuCounter::StartCollect(GcCollectType type)
         {
-            std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallback>();
+            std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
             const int duration = 1000;
 

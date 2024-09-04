@@ -155,7 +155,7 @@ static void RecordCapacity()
     outFile.close();
 }
 
-int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
+static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
 {
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
         OHOS::SmartPerf::EditorCommand(argc, vec);
