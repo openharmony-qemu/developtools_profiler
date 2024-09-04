@@ -199,6 +199,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     hook->RegisterWriter(writeFile);
+    hook->SetSaMode(true);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, false);
     if (config->pid_ > 0) {

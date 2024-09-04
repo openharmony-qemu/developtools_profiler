@@ -30,6 +30,7 @@ int KillProcess(int pid);
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi);
 inline int CustomFdClose(int& fd);
 inline int CustomFdFclose(FILE** fp);
+bool IsUserMode();
 FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
                   volatile pid_t& childPid, bool needUnblock = false);
 int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock = false);
