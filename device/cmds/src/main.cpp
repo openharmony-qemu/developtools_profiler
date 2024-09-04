@@ -301,7 +301,7 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         return false;
     }
     
-    if (!COMMON::IsInt(keepSecond)) {
+    if (!COMMON::IsNumeric(keepSecond)) {
         printf("please input a valid time value");
         return false;
     }
