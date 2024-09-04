@@ -443,9 +443,14 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
-    int uid = proxy->GetUidByDebugBundleName(bundleName, Constants::ANY_USERID);
-    CHECK_TRUE(uid >= 0, false, "Get %s uid = %d", bundleName.c_str(), uid);
-    return true;
+    AppExecFwk::ApplicationInfo appInfo;
+    bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::GET_APPLICATION_INFO_WITH_DISABLE,
+                                         AppExecFwk::Constants::ANY_USERID, appInfo);
+    if (!ret) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetApplicationInfo failed!");
+        return false;
+    }
+    return appInfo.appProvisionType == Constants::APP_PROVISION_TYPE_DEBUG;
 }
 
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)
