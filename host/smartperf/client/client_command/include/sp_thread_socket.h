@@ -281,9 +281,9 @@ public:
             spSocket.Sendto(resultFPS);
             resultFPS = "FPS||";
         } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
-        	retCode = SplitMsg(recvBuf);
+            retCode = SplitMsg(recvBuf);
             SpProfilerFactory::SetProfilerGameLayer(retCode);
-		} else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
+        } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
             iterator->first == MessageType::CATCH_TRACE_CMD) {
             SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
         } else if (iterator->first == MessageType::GET_CPU_NUM) {
