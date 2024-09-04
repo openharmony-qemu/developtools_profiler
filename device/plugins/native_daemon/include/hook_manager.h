@@ -128,8 +128,8 @@ public:
 
 private:
     int pid_ = -1; // for SA mode
-    bool saMode_ = false;
     bool printMallocNmd_ = false;
+    bool saMode_ = false;
     bool CheckProcess();
     bool CheckProcessName();
     void CheckHapEncryped();
