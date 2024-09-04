@@ -23,6 +23,7 @@
 
 namespace OHOS {
     namespace SmartPerf {
+
 #define DO_FOR_ALL_VALUE(macro) \
     do { \
         macro(gpuActive, "gpuActive"); \
@@ -92,14 +93,14 @@ namespace OHOS {
         unsigned long long targetValue = (unsigned long long)realtimeGpuPerfInfoData.field * \
             (unsigned long long)interval / \
             (unsigned long long)realtimeGpuPerfInfoData.duration; \
-       GpuCounter.GetGpuCounterRealtimeDataMap()[fieldString] = \
+       gpuCounter.GetGpuCounterRealtimeDataMap()[fieldString] = \
        std::to_string(realtimeGpuPerfInfoData.field - targetValue); \
        realtimeGpuPerfInfoData.field = targetValue; \
     } while (0)
 
 #define COPY_PERCENTAGE(field, fieldString) \
     do { \
-        GpuCounter.GetGpuCounterRealtimeDataMap()[fieldString] = std::to_string(realtimeGpuPerfInfoData.field); \
+        gpuCounter.GetGpuCounterRealtimeDataMap()[fieldString] = std::to_string(realtimeGpuPerfInfoData.field); \
     } while (0)
             if ((interval == 0) || (realtimeGpuPerfInfoData.duration < interval)) {
                 return;
@@ -107,7 +108,7 @@ namespace OHOS {
             DO_FOR_ALL_VALUE(SPLIT_VALUE);
             DO_FOR_ALL_PERCENTAGE(COPY_PERCENTAGE);
             realtimeGpuPerfInfoData.duration = interval;
-            GpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(maxDuration);
+            gpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(maxDuration);
         }
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
@@ -118,8 +119,8 @@ namespace OHOS {
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 return;
             }
-            std::lock_guard<std::mutex> lock(GpuCounter.GetRealtimeDataLock());
-            if (GpuCounter.GetGpuCounterRealtimeDataMap().size() == 0 && \
+            std::lock_guard<std::mutex> lock(gpuCounter.GetRealtimeDataLock());
+            if (gpuCounter.GetGpuCounterRealtimeDataMap().size() == 0 && \
             realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
