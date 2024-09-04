@@ -481,8 +481,6 @@ FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
 std::string ProfilerFPS::GetGameLayer()
 {
     std::string gameLayer = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(pkgName);
     if (processId.empty()) {
         return gameLayer;
     }
