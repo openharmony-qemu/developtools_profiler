@@ -26,6 +26,7 @@
 #include "network_profiler_socker_client.h"
 
 namespace OHOS::Developtools::Profiler {
+
 class EXPORT_API NetworkProfiler {
 public:
     struct CachedData {
@@ -37,6 +38,7 @@ public:
     static void ServiceCloseCallback();
     static NetworkProfiler* GetInstance();
     virtual ~NetworkProfiler();
+
     bool IsProfilerEnable();
     void NetworkProfiling(const uint8_t type, const char* data, size_t dataSize);
 

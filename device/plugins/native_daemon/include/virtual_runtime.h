@@ -84,7 +84,7 @@ public:
                        bool onlyjs = false);
     void ClearMaps();
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
-    void HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags, uint64_t offset, const std::string& filePath);
+    void HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid);
     void RemoveMaps(uint64_t addr);
       // threads
     VirtualThread &UpdateThread(pid_t pid, pid_t tid, const std::string name = "");
@@ -121,7 +121,7 @@ public:
     std::chrono::microseconds updateThreadTimes_ = std::chrono::microseconds::zero();
 #endif
     const bool loadSymboleWhenNeeded_ = true; // thie is a feature config
-    void UpdateSymbols(std::string filename);
+    void UpdateSymbols(std::string filename, std::shared_ptr<DfxMap> map);
     // we don't know whether hap vma mapping is stand for a so
     // thus we need try to parse it first
     bool UpdateHapSymbols(std::shared_ptr<DfxMap> map);
@@ -171,6 +171,7 @@ private:
     CallStack callstack_;
 #endif
     // pid map with user space thread
+    pid_t pid_ = 0;
     pthread_mutex_t threadMapsLock_;
     std::map<pid_t, VirtualThread> userSpaceThreadMap_;
     // not pid , just map

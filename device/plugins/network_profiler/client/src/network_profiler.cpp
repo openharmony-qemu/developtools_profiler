@@ -150,7 +150,6 @@ void NetworkProfiler::Disable()
     if (socketClent_) {
         socketClent_->Reset();
     }
-    socketClent_ = nullptr;
     enable_ = false;
 }
 

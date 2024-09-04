@@ -347,9 +347,7 @@ private:
     {
         symbols_.clear();
         HLOGD("%zu symbols loadded from symbolsTable.", symbolsTable.size());
-
         symbols_.swap(symbolsTable);
-
         AdjustSymbols();
         HLOGD("%zu symbols loadded from elf '%s'.", symbols_.size(), elfPath.c_str());
         for (auto& symbol: symbols_) {

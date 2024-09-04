@@ -62,6 +62,5 @@ bool UnixSocketClient::Connect(const std::string addrname, ServiceBase& serviceB
         close(sock) != 0, "Unix Socket SendRaw FAIL");
     socketHandle_ = sock;
     CHECK_TRUE(CreateRecvThread(callback), close(sock) != 0, "Unix Socket Create Recv Thread FAIL");
-
     return true;
 }
