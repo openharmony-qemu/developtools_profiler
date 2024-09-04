@@ -29,6 +29,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
+#include "common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -138,7 +139,7 @@ void ProfilerFPS::GetTimeDiff()
     long long clockMonotonicRaw = 0;
     int two = 2;
     std::string strRealTime;
-    std::string cmd = "timestamps";
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return;
@@ -209,10 +210,10 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
     long long currLastTime = lastCurrTime;
     long long harTime = msJiange / 1000000;
     int printCount = 0;
-    uint32_t count = 0;
+    size_t count = 0;
     long long currTimeStart = 0;
     long long currTimeLast = 0;
-    for (uint32_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
+    for (size_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
         long long currTime = fpsInfoResult.currTimeStamps[i];
         if (currTime <= msStartTime) {
             if (msCount == 0) {
@@ -239,7 +240,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             currTimeLast = currTime;
             count--;
         }
-        if (i == (static_cast<uint32_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
+        if (i == (static_cast<size_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
             currTimeLast = currTime;
             printCount++;
@@ -259,12 +260,28 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum = atoi(v[four].c_str());
+        int sectionsNum;
+        if (static_cast<int>(v.size()) < four) {
+            sectionsNum = 0;
+        } else {
+            sectionsNum = atoi(v[four].c_str());
+        }
         for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }
     }
     printf("SP_daemon exec finished!\n");
+}
+
+std::string ProfilerFPS::GetSurface()
+{
+    std::string cmdResult;
+    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    SPUtils::LoadCmd(dumperSurface, cmdResult);
+    size_t positionLeft = cmdResult.find("[");
+    size_t positionRight = cmdResult.find("]");
+    size_t num = 1;
+    return cmdResult.substr(positionLeft + num, positionRight - positionLeft - num);
 }
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
@@ -273,7 +290,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     fpsInfoMax.fps = 0;
     std::string uniteLayer = "UniRender";
     if (ohFlag) {
-        uniteLayer = "DisplayNode";
+        uniteLayer = GetSurface();
     }
     if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
         LOGI("ProfilerFPS.pkgName====: %s", pkgName.c_str());
@@ -320,11 +337,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
-    refresh = true;
-    lastTime = -1;
+    prevScreenTimestamp = -1;
     LOGI("ProfilerFPS dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
@@ -334,46 +351,45 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("ProfilerFPS dump time: %s", str.c_str());
-        frameReadyTime = 0;
+        curScreenTimestamp = 0;
         std::stringstream sstream;
         sstream << tmp;
-        sstream >> frameReadyTime;
-        if (frameReadyTime == 0) {
+        sstream >> curScreenTimestamp;
+        if (curScreenTimestamp == 0) {
             continue;
         }
-        if (lastReadyTime >= frameReadyTime) {
-            lastReadyTime = -1;
-            continue;
-        }
-        GetSameTimeNums();
+        CalcFpsAndJitters();
     }
     pclose(fp);
     LOGI("ProfilerFPS Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
     return fpsInfo;
 }
 
-void ProfilerFPS::GetSameTimeNums()
+void ProfilerFPS::CalcFpsAndJitters()
 {
-    std::string onScreenTime = std::to_string(frameReadyTime / mod);
+    std::string onScreenTime = std::to_string(curScreenTimestamp / mod);
     std::string fpsCurTime = std::to_string(fpsInfo.curTime);
     if (onScreenTime.find(fpsCurTime) != std::string::npos) {
         fpsNum++;
-        fpsInfo.currTimeStamps.push_back(frameReadyTime);
+        fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
     }
     fpsInfo.fps = fpsNum;
     if (onScreenTime == fpsCurTime) {
         long long jitter;
-        if (lastTime != -1) {
-            jitter = frameReadyTime - lastTime;
+        if (prevScreenTimestamp != -1) {
+            jitter = curScreenTimestamp - prevScreenTimestamp;
             fpsInfo.jitters.push_back(jitter);
         } else {
-            if (lastFrameReadyTime != 0 && (frameReadyTime - lastFrameReadyTime) < mod) {
-                jitter = frameReadyTime - lastFrameReadyTime;
+            if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+                jitter = curScreenTimestamp - prevlastScreenTimestamp;
+                fpsInfo.jitters.push_back(jitter);
+            } else {
+                jitter = curScreenTimestamp - curScreenTimestamp / mod * mod;
                 fpsInfo.jitters.push_back(jitter);
             }
         }
-        lastTime = frameReadyTime;
-        lastFrameReadyTime = frameReadyTime;
+        prevScreenTimestamp = curScreenTimestamp;
+        prevlastScreenTimestamp = curScreenTimestamp;
     }
 }
 
@@ -428,7 +444,12 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         }
         printf("set num:%d success\n", this->num);
         ohFlag = true;
-        int sectionsNum = atoi(v[four].c_str());
+        int sectionsNum;
+        if (static_cast<int>(v.size()) < four) {
+            sectionsNum = 0;
+        } else {
+            sectionsNum = atoi(v[four].c_str());
+        }
         for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);
         }

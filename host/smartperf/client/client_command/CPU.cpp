@@ -91,18 +91,18 @@ void CPU::SetPackageName(const std::string &pName)
 std::vector<CpuFreqs> CPU::GetCpuFreq()
 {
     OHOS::SmartPerf::CpuFreqs cpuFreqs;
-    std::vector<CpuFreqs> cpuFreqs2;
+    std::vector<CpuFreqs> cpuFrequency;
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
     std::vector<CpuFreq> &cpufreq = result.data;
     for (size_t i = 0; i < cpufreq.size(); i++) {
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;
-        cpuFreqs2.push_back(cpuFreqs);
+        cpuFrequency.push_back(cpuFreqs);
         LOGI("cpuFreqs.cpuId: %s", std::to_string(cpufreq[i].cpuId).c_str());
         LOGI("cpuFreqs.curFreq: %s", std::to_string(cpufreq[i].curFreq).c_str());
     }
-    return cpuFreqs2;
+    return cpuFrequency;
 }
 
 std::vector<CpuUsageInfos> CPU::GetCpuUsage()

@@ -26,20 +26,21 @@ public:
         return instance;
     }
     // 截图线程
-    void ThreadGetCatch(const std::string &curTime) const;
+    void ThreadGetCatch();
     void ThreadGetCatchSocket(const std::string &curTime) const;
     // 触发线程
-    void TriggerGetCatch(long long curTime) const;
-    void TriggerGetCatchSocket(long long curTime) const;
+    void TriggerGetCatch();
+    void TriggerGetCatchSocket(long long captureTime) const;
     bool TakeScreenCap(const std::string &savePath) const;
     void SocketMessage();
-
+    long long GetCurTimes();
 private:
     Capture() {};
     Capture(const Capture &);
     Capture &operator = (const Capture &);
     bool isSocketMessage = false;
     int callNum = 0;
+    long long curTime = 0.0;
 };
 }
 }

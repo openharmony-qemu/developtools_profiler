@@ -310,6 +310,23 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     return true;
 }
 
+void HookManager::CheckHapEncryped()
+{
+    for (const auto& pid : hookConfig_.expand_pids()) {
+        if (pid > 0 && COMMON::CheckApplicationEncryped(pid, "")) {
+            hookConfig_.set_js_stack_report(0);
+            hookConfig_.set_max_js_stack_depth(0);
+            break;
+        }
+    }
+    const std::string processName = hookConfig_.process_name();
+    if (!processName.empty() && COMMON::CheckApplicationEncryped(0, processName)) {
+        PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
+        hookConfig_.set_js_stack_report(0);
+        hookConfig_.set_max_js_stack_depth(0);
+    }
+}
+
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession");
@@ -335,7 +352,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (!CheckProcess()) { // Check and initialize the context for the target process.
         return false;
     }
-
+    (void)CheckHapEncryped();
     if (hookConfig_.max_stack_depth() < DLOPEN_MIN_UNWIND_DEPTH) {
         // set default max depth
         hookConfig_.set_max_stack_depth(DLOPEN_MIN_UNWIND_DEPTH);
