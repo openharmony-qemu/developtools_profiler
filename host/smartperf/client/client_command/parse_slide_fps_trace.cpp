@@ -61,6 +61,7 @@ double ParseSlideFpsTrace::CalculateTime()
             if (listFlag == two) {
                 completeTime = doCompositionTime;
                 frameNum = frameNow;
+                break;
             }
         }
         AppSwiperScroll(line);

@@ -38,7 +38,6 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     std::map<std::string, std::string> result;
     FpsInfoProfiler finalResult;
     if (isGameLayer == "1") {
-        std::cout << " isGameLayer == 1 " << std::endl;
         std::string gameLayer = GetGameLayer();
         if (!gameLayer.empty()) {
             finalResult = selfRerderLayers(gameLayer);
@@ -481,12 +480,7 @@ FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
 
 std::string ProfilerFPS::GetGameLayer()
 {
-    std::cout << " pkgName: " << pkgName << std::endl;
-    std::string processId = "";
     std::string gameLayer = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(pkgName);
-    std::cout << " procssId: " << processId << std::endl;
     if (processId.empty()) {
         return gameLayer;
     }
@@ -494,24 +488,19 @@ std::string ProfilerFPS::GetGameLayer()
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t pos = cmdResult.find("NodeId[");
-    size_t pos1 = cmdResult.find("] LayerId");
-    std::cout << " cmdResult: " << cmdResult << std::endl;
-    std::string nodeIdStr = cmdResult.substr(pos + "/", pos1 - pos - "/");
-    std::cout << " nodeIdStr: " << nodeIdStr << std::endl;
+    size_t posLayerId = cmdResult.find("] LayerId");
+    std::string nodeIdStr = cmdResult.substr(pos + 1, posLayerId - pos - 1);
     uint64_t nodeId;
     const int kShiftAmount = 32; 
     if (!nodeIdStr.empty()) {
         nodeId = std::stoll(nodeIdStr);
-        std::cout << " uint64_t nodeId: " << nodeId << std::endl;
         nodeId = nodeId >> kShiftAmount;
-        std::cout << " YOUYI nodeId: " << nodeId << std::endl;
         if (std::to_string(nodeId) == processId) {
-            size_t pos2 = cmdResult.find("[");
-            size_t pos3 = cmdResult.find("]");
-            gameLayer = cmdResult.substr(pos2 + 1, pos3 - pos2 - 1);
+            size_t posLeft = cmdResult.find("[");
+            size_t posRight = cmdResult.find("]");
+            gameLayer = cmdResult.substr(posLeft + 1, posRight - posLeft - 1);
         }
     }
-    std::cout << "gameLayer: " << gameLayer << std::endl;
     return gameLayer;
 }
 }
