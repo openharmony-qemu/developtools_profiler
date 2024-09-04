@@ -30,7 +30,7 @@ public:
     }
     std::map<std::string, std::string> GetNavInfo() const;
     void SetPackageName(const std::string &pName);
-    std::string GetWinId(std::string processId) const;
+    std::string GetWinId(std::string PID) const;
     std::map<std::string, std::string> GetNavResult(std::string winId) const;
     void SetProcessId(const std::string &pid);
 private:

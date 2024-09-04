@@ -82,7 +82,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
     return navInfo;
 }
 
-std::string Navigation::GetWinId(std::string processId) const
+std::string Navigation::GetWinId(std::string PID) const
 {
     std::string wid;
     const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
@@ -100,7 +100,7 @@ std::string Navigation::GetWinId(std::string processId) const
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
         if (static_cast<int>(params.size()) > paramThree) {
-            if (params[paramTwo] == processId) {
+            if (params[paramTwo] == PID) {
                 wid = params[paramThree];
                 break;
             }
