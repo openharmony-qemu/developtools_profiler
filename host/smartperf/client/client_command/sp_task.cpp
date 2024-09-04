@@ -319,6 +319,10 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     long long lastTime = SPUtils::GetCurTime();
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
+    std::string processId = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(curTaskInfo.packageName);
+    SpProfilerFactory::SetProfilerPidByPkg(processId);
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
@@ -337,6 +341,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     spdata.values.insert(dataMap.begin(), dataMap.end());
     vmap.push_back(spdata);
     gpuCounter.GetGpuRealtimeData(dataMap);
+    SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
     long long nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;

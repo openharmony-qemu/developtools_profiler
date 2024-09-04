@@ -88,6 +88,11 @@ void CPU::SetPackageName(const std::string &pName)
     LOGI("CPU SetPackageName name(%s)", pName.c_str());
 }
 
+void CPU::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
+
 std::vector<CpuFreqs> CPU::GetCpuFreq()
 {
     OHOS::SmartPerf::CpuFreqs cpuFreqs;
@@ -139,10 +144,6 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
 
 std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
 {
-    std::string processId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
-    LOGI("CPU::processId -- %s", processId.c_str());
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (processId.length() > 0) {
@@ -172,12 +173,12 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcSCpuUsage"] = "NA";
     }
     if (processCpuInfo.find("ProcAppName") != processCpuInfo.end() && processCpuInfo["ProcAppName"].empty()) {
-        processCpuInfo["ProcId"] = "NA";
+        processCpuInfo["ProcId"] = "0";
         processCpuInfo["ProcAppName"] = packageName;
-        processCpuInfo["ProcCpuLoad"] = "NA";
-        processCpuInfo["ProcCpuUsage"] = "NA";
-        processCpuInfo["ProcUCpuUsage"] = "NA";
-        processCpuInfo["ProcSCpuUsage"] = "NA";
+        processCpuInfo["ProcCpuLoad"] = "0";
+        processCpuInfo["ProcCpuUsage"] = "0";
+        processCpuInfo["ProcUCpuUsage"] = "0";
+        processCpuInfo["ProcSCpuUsage"] = "0";
     }
     return processCpuInfo;
 }

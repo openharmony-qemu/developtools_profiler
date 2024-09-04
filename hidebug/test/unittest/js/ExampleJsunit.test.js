@@ -769,7 +769,7 @@ describe("HidebugJsTest", function () {
     it('HidebugJsTest_034', 0, async function () {
         console.info("---------------------------HidebugJsTest_034----------------------------------");
         try {
-            let graphicMemory = await getGraphicsMemory();
+            let graphicMemory = await hidebug.getGraphicsMemory();
             expect(graphicMemory >= 0).assertTrue();
         } catch (err) {
             console.info(error.code);
@@ -786,7 +786,7 @@ describe("HidebugJsTest", function () {
     it('HidebugJsTest_035', 0, function () {
         console.info("---------------------------HidebugJsTest_035----------------------------------");
         try {
-            let graphicMemory = getGraphicsMemorySync();
+            let graphicMemory = hidebug.getGraphicsMemorySync();
             expect(graphicMemory >= 0).assertTrue();
         } catch (err) {
             console.info(error.code);
