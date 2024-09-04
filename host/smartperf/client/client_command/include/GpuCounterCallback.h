@@ -55,10 +55,10 @@ namespace OHOS {
             void JoinSocketData(GpuPerfInfo *newData);
             void SplitSocketData();
             std::vector<GpuPerfInfo> gpuCounter;
-            const long long COLLECT_INTERVAL = 50;
-            const int64_t MAX_TIME = 10800000;
-            const int64_t RESTART_TIME = 300000;
-            const int32_t MAX_DURATION = 1000;
+            const long long collectInterval = 50;
+            const int64_t maxTime = 10800000;
+            const int64_t restartTime = 300000;
+            const int32_t maxDuration = 1000;
             GpuPerfInfo realtimeGpuPerfInfoData;
         };
     }

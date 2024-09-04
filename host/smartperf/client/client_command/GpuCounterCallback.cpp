@@ -23,7 +23,6 @@
 
 namespace OHOS {
     namespace SmartPerf {
-
 #define DO_FOR_ALL_VALUE(macro) \
     do { \
         macro(gpuActive, "gpuActive"); \
@@ -61,7 +60,7 @@ namespace OHOS {
             firstData.memoryReadBandwidth = 0;
             firstData.memoryWriteBandwidth = 0;
             firstData.memoryBandwidthPercentage = 0;
-            firstData.remainTime = MAX_TIME;
+            firstData.remainTime = maxTime;
             realtimeGpuPerfInfoData = firstData;
             gpuCounter.push_back(firstData);
         }
@@ -86,8 +85,8 @@ namespace OHOS {
         }
         void GpuCounterCallbackImpl::SplitSocketData()
         {
-            int32_t interval = realtimeGpuPerfInfoData.duration - MAX_DURATION;
-            GpuCounter &GpuCounter = GpuCounter::GetInstance();
+            int32_t interval = realtimeGpuPerfInfoData.duration - maxDuration;
+            GpuCounter &gpuCounter = GpuCounter::GetInstance();
 #define SPLIT_VALUE(field, fieldString) \
     do {                   \
         unsigned long long targetValue = (unsigned long long)realtimeGpuPerfInfoData.field * \
@@ -108,12 +107,12 @@ namespace OHOS {
             DO_FOR_ALL_VALUE(SPLIT_VALUE);
             DO_FOR_ALL_PERCENTAGE(COPY_PERCENTAGE);
             realtimeGpuPerfInfoData.duration = interval;
-            GpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(MAX_DURATION);
+            GpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(maxDuration);
         }
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
-            GpuCounter &GpuCounter = GpuCounter::GetInstance();
+            GpuCounter &gpuCounter = GpuCounter::GetInstance();
 
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
@@ -121,14 +120,14 @@ namespace OHOS {
             }
             std::lock_guard<std::mutex> lock(GpuCounter.GetRealtimeDataLock());
             if (GpuCounter.GetGpuCounterRealtimeDataMap().size() == 0 && \
-            realtimeGpuPerfInfoData.duration >= MAX_DURATION) {
+            realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
         }
 
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
-            GpuCounter &GpuCounter = GpuCounter::GetInstance();
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             for (auto gpuPerfInfo : gpuPerfInfos) {
                 unsigned int gpuCounterBackSize = gpuCounter.size();
@@ -143,7 +142,7 @@ namespace OHOS {
                 long long durationTime = newData->startTime - backData->startTime;
 
                 // 如果两次数据间隔过短，则舍弃新数据
-                if (durationTime < COLLECT_INTERVAL) {
+                if (durationTime < collectInterval) {
                     LOGE("Start time(%lld, %lld) make duration time(%lld) too short",
                          newData->startTime, backData->startTime, durationTime);
                     gpuCounter.pop_back();
@@ -168,14 +167,14 @@ namespace OHOS {
                     << backData->memoryReadBandwidth << ","
                     << backData->memoryWriteBandwidth << ","
                     << backData->memoryBandwidthPercentage << ",";
-                GpuCounter.GetGpuCounterData().push_back(oss.str());
+                gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
 
                 GetRealTime(backData);
             }
 
-            if (gpuPerfInfos[0].remainTime <= RESTART_TIME) {
+            if (gpuPerfInfos[0].remainTime <= restartTime) {
                 LOGI("remain time to restart");
-                GpuCounter.StartCollect(GpuCounter::GC_RESTART);
+                gpuCounterInstance.StartCollect(GpuCounter::GC_RESTART);
             }
             return 0;
         }
