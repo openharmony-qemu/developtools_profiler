@@ -496,7 +496,7 @@ std::string ProfilerFPS::GetGameLayer()
     size_t pos = cmdResult.find("NodeId[");
     size_t pos1 = cmdResult.find("] LayerId");
     std::cout << " cmdResult: " << cmdResult << std::endl;
-    std::string nodeIdStr = cmdResult.substr(pos + /, pos1 - pos - /);
+    std::string nodeIdStr = cmdResult.substr(pos + "/", pos1 - pos - "/");
     std::cout << " nodeIdStr: " << nodeIdStr << std::endl;
     uint64_t nodeId;
     const int kShiftAmount = 32; 
