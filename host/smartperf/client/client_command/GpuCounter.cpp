@@ -75,7 +75,7 @@ namespace OHOS {
                 LOGE("data dir %s is nullptr", path.c_str());
                 return;
             }
-            std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/GpuCounter.csv";
+            std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/gpu_counter.csv";
             std::ofstream outFile;
             std::mutex mtx;
             mtx.lock();

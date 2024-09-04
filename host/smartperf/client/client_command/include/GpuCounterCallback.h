@@ -52,7 +52,13 @@ namespace OHOS {
 
         private:
             void GetRealTime(GpuPerfInfo *newData);
+            void JoinSocketDataValue(GpuPerfInfo *newData);
+            unsigned long long JoinSocketDataPercentFunction(uint32_t itemFirst, int32_t durationFirst,
+                uint32_t itemSecond, int32_t durationSecond);
+            void JoinSocketDataPercent(GpuPerfInfo *newData);
             void JoinSocketData(GpuPerfInfo *newData);
+            void SplitSocketDataValue(int32_t interval);
+            void SplitSocketDataPercent();
             void SplitSocketData();
             std::vector<GpuPerfInfo> gpuCounter;
             const long long collectInterval = 50;
