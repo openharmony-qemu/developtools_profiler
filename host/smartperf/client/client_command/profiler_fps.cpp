@@ -481,6 +481,8 @@ FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
 std::string ProfilerFPS::GetGameLayer()
 {
     std::string gameLayer = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(pkgName);
     if (processId.empty()) {
         return gameLayer;
     }
@@ -489,7 +491,7 @@ std::string ProfilerFPS::GetGameLayer()
     SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t pos = cmdResult.find("NodeId[");
     size_t posLayerId = cmdResult.find("] LayerId");
-    std::string nodeIdStr = cmdResult.substr(pos + 1, posLayerId - pos - 1);
+    std::string nodeIdStr = cmdResult.substr(pos + 7, posLayerId - pos - 7);
     uint64_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
