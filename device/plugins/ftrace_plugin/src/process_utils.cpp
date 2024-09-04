@@ -134,29 +134,36 @@ static bool ExecuteProcess(const std::string& bin,
     int outFd = nullFd;
     int errFd = nullFd;
     CHECK_TRUE(inFd >= 0, false, "open /dev/null failed, %d", errno);
-    CHECK_TRUE(dup2(inFd, STDIN_FILENO) != -1, false, "dup nullFD to stdin failed, %d", errno);
-
+    if (dup2(inFd, STDIN_FILENO) == -1) {
+        close(nullFd);
+        PROFILER_LOG_INFO(LOG_CORE, "dup nullFD to stdin failed, %d", errno);
+        return false;
+    }
     // redirect outFd to stdout
     if (out2pipe) {
         outFd = pipeFd;
     }
-    CHECK_TRUE(dup2(outFd, STDOUT_FILENO) != -1, false, "dup fd %d to stdout failed, %d", outFd, errno);
-
+    if (dup2(outFd, STDOUT_FILENO) == -1) {
+        close(nullFd);
+        PROFILER_LOG_INFO(LOG_CORE, "dup fd %d to stdout failed, %d", outFd, errno);
+        return false;
+    }
     // redirect errFd to stderr
     if (err2pipe) {
         errFd = pipeFd;
     }
-    CHECK_TRUE(dup2(errFd, STDERR_FILENO) != -1, false, "dup fd %d to stderr failed, %d", errFd, errno);
-
+    if (dup2(errFd, STDERR_FILENO) == -1) {
+        close(nullFd);
+        PROFILER_LOG_INFO(LOG_CORE, "dup fd %d to stderr failed, %d", errFd, errno);
+        return false;
+    }
     CHECK_TRUE(close(nullFd) != -1, false, "close nullFd failed, %d", errno);
     CHECK_TRUE(close(pipeFd) != -1, false, "close pipeFd failed, %d", errno);
-
     std::vector<char*> argv;
     for (size_t i = 0; i < args.size(); i++) {
         argv.push_back(const_cast<char*>(args[i].c_str()));
     }
     argv.push_back(nullptr); // last item in argv must be NULL
-
     int retval = execv(bin.c_str(), argv.data());
     std::string cmdline = StringUtils::Join(args, " ");
     CHECK_TRUE(retval != -1, false, "execv %s failed, %d!", cmdline.c_str(), errno);
@@ -240,15 +247,13 @@ int ProcessUtils::Execute(const ExecuteArgs& args, std::string& output)
 
     output = ReceiveOutputAndSigchld(pipeFds[RD], sigChldHandler);
     auto lines = StringUtils::Split(output, "\n");
-    PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): output %zuB, %zuLn", cmdline.c_str(), output.size(), lines.size());
 
     int retval = GetProcessExitCode(pid);
 
     // close pipe fds
     CHECK_TRUE(close(pipeFds[RD]) != -1, -1, "close pipe[RD] failed, %d", errno);
     if (retval != 0 && cmdline != "hitrace -l") {
-        PROFILER_LOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d, hitrace output is %s", cmdline.c_str(),
-            retval, output.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "ExecuteCommand(%s): exit with %d", cmdline.c_str(), retval);
     }

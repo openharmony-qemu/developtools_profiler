@@ -206,7 +206,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr) {
+    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
         return 0;
     }
     uint32_t tagId = 0;
@@ -837,15 +837,16 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
-    if (!g_ClientConfig.freeStackData) {
-        if (free_func) {
-            free_func(p);
+    if (g_ClientConfig.statisticsInterval > 0) {
+        if (!free_func) {
+            return;
         }
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
             holder->SendStackWithPayload(p, sizeof(uint64_t), nullptr, 0);
         }
+        free_func(p);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -954,15 +955,14 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
     if (prot & PROT_EXEC) {
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
+    size_t len = strlen(filePath.c_str()) + 1;
+    if (strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len) != EOK) {
+        return;
+    }
     if (flags & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
-        curRawdata.name[0] = '\0';
-        holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + 1, nullptr, 0);
-    } else {
-        size_t len = strlen(filePath.c_str()) + 1;
-        (void)strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len);
-        holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
     }
+    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
 }
 
 void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
@@ -1105,7 +1105,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     const char* stackendptr = nullptr;
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
-
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
@@ -1190,7 +1189,7 @@ int hook_prctl(int(*fn)(int, ...),
         rawdata.addr = reinterpret_cast<void*>(arg3);
         size_t tagLen = strlen(reinterpret_cast<char*>(arg5)) + 1;
         if (memcpy_s(rawdata.name, sizeof(rawdata.name), reinterpret_cast<char*>(arg5), tagLen) != EOK) {
-            HILOG_ERROR(LOG_CORE, "memcpy_s tag failed");
+            HILOG_BASE_ERROR(LOG_CORE, "memcpy_s tag failed");
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;

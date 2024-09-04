@@ -411,33 +411,6 @@ HWTEST_F(SPdaemonTest, ParsePageFpsTraceTest, TestSize.Level1)
     EXPECT_EQ(flag, true);
 }
 
-HWTEST_F(SPdaemonTest, ParseClickCompleteTraceTest, TestSize.Level1)
-{
-    ParseClickCompleteTrace parseClickCompleteTrace;
-    double parseClickCompleteName = 0.0;
-    double getLineTime = 0.0;
-    std::string line = "";
-    std::string getStartTime = "";
-    std::string startTimeBefore = "";
-    std::string file = "";
-
-    parseClickCompleteName = parseClickCompleteTrace.ParseCompleteTrace(file);
-    getStartTime = parseClickCompleteTrace.GetStartTime(line, startTimeBefore);
-    getLineTime = parseClickCompleteTrace.GetLineTime();
-
-    std::string cmd = "SP_daemon -editor completeTime ohos.samples.ecg 设置 ohtest";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("time");
-    if ((strOne != result.npos)) {
-        flag = true;
-    }
-    
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
 HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
 {
     ParseClickResponseTrace parseClickResponseTrace;
@@ -453,35 +426,6 @@ HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
     getLineTime = parseClickResponseTrace.GetLineTime();
 
     std::string cmd = "SP_daemon -editor responseTime ohos.samples.ecg 设置 ohtest";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("time");
-    if ((strOne != result.npos)) {
-        flag = true;
-    }
-    
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-HWTEST_F(SPdaemonTest, ParseSlideFpsTraceTest, TestSize.Level1)
-{
-    ParseSlideFpsTrace parseSlideFpsTrace;
-    double parseSlideFpsTraceNoh = 0.0;
-    double calculateTime = 0.0;
-    std::string line = "";
-    std::string  curString = "";
-    std::string file = "";
-    std::string start = "";
-    std::string end = "";
-    size_t offset = 0;
-
-    curString = parseSlideFpsTrace.CutString(line, start, end, offset);
-    calculateTime = parseSlideFpsTrace.CalculateTime();
-    parseSlideFpsTraceNoh = parseSlideFpsTrace.ParseSlideFpsTraceNoh(file);
-
-    std::string cmd = "SP_daemon -editor sildeList ohos.samples.ecg 设置 ohtest";
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);

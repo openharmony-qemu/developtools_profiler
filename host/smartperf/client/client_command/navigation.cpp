@@ -17,6 +17,7 @@
 #include "include/sp_utils.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -31,18 +32,15 @@ std::map<std::string, std::string> Navigation::ItemData()
     return result;
 }
 
-void Navigation::SetPackageName(const std::string &pName)
+void Navigation::SetProcessId(const std::string &pid)
 {
-    packageName = pName;
+    processId = pid;
 }
 
 std::map<std::string, std::string> Navigation::GetNavInfo() const
 {
     std::map<std::string, std::string> navInfo;
-    std::string processId = "";
     std::string winId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
     winId = GetWinId(processId);
     if (winId != "-1") {
         navInfo = GetNavResult(winId);
@@ -56,8 +54,11 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "No Navigation Info";
-    const std::string winIdWithSpace = " " + winId + " ";
-    const std::string cmd = "hidumper -s WindowManagerService -a '-w" + winIdWithSpace + "-navigation'";
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_NAV) + winId + " -navigation'";
+    if (cmd.empty()) {
+        navInfo["navPathName"] = nameStr;
+        return navInfo;
+    }
     FILE *navfd = popen(cmd.c_str(), "r");
     if (navfd == nullptr) {
         navInfo["navPathName"] = nameStr;
@@ -84,7 +85,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
 std::string Navigation::GetWinId(std::string processId) const
 {
     std::string wid;
-    const std::string cmd = "hidumper -s WindowManagerService -a '-a'";
+    const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return wid = -1;

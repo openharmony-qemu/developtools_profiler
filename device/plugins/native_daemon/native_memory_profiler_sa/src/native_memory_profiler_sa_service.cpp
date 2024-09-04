@@ -58,8 +58,8 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
 {
     sptr<ISystemAbilityManager> serviceManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     CHECK_NOTNULL(serviceManager, false, "serviceManager is nullptr");
-
-    auto native = new NativeMemoryProfilerSaService();
+    
+    static sptr<NativeMemoryProfilerSaService> native(new NativeMemoryProfilerSaService());
     CHECK_NOTNULL(native, false, "native is nullptr");
     int32_t result = serviceManager->AddSystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, native);
     if (result != 0) {
@@ -199,6 +199,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     hook->RegisterWriter(writeFile);
+    hook->SetSaMode(true);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, false);
     if (config->pid_ > 0) {

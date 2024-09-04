@@ -89,8 +89,7 @@ std::string FtraceFieldParser::ParseStrField(const FieldFormat& format, uint8_t 
             break;
         case FIELD_TYPE_STRINGPTR:
             strSize = std::min(static_cast<size_t>(format.size), sizeof(strPtr));
-            CHECK_TRUE(memcpy_s(&strPtr, sizeof(strPtr), start, strSize) == EOK, "",
-                       "parse STRINGPTR at %" PRIx64 " with %zu size FAILED!", strPtr, strSize);
+            CHECK_TRUE(memcpy_s(&strPtr, sizeof(strPtr), start, strSize) == EOK, "", "parse STRINGPTR FAILED!");
             retval = PrintkFormatsParser::GetInstance().GetSymbol(strPtr);
             break;
         case FIELD_TYPE_DATALOC:

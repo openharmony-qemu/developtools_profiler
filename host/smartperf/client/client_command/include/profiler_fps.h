@@ -83,7 +83,7 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-
+    void SetProcessId(const std::string &pid);
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
@@ -114,6 +114,7 @@ private:
     int isCatchTrace = 0;
     bool processFlag = false;
     bool ohFlag = false;
+    std::string processId = "";
 };
 }
 }

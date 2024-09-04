@@ -17,29 +17,31 @@
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
 #include "include/sp_log.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 void Dubai::DumpDubaiBegin()
 {
     std::string result;
-    SPUtils::LoadCmd("hidumper -s 1213 -a '-b'", result);
+    std::string dumpBubaiB = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_B);
+    SPUtils::LoadCmd(dumpBubaiB, result);
     LOGI("Dubai::DumpDubaiBegin");
 }
 void Dubai::DumpDubaiFinish()
 {
     std::string result;
-    SPUtils::LoadCmd("hidumper -s 1213 -a '-f'", result);
+    std::string dumpBubaiF = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_F);
+    SPUtils::LoadCmd(dumpBubaiF, result);
     LOGI("Dubai::DumpDubaiFinish");
 }
 
 void Dubai::MoveDubaiDb()
 {
     std::string result;
-    const std::string dubaiName = "dubai.db";
-    const std::string dubaiPath = "/data/system_ce/0/dubai/" + dubaiName;
-    const std::string devicePath = "/data/app/el2/100/database/com.ohos.smartperf/entry/rdb";
-    SPUtils::LoadCmd("cp " + dubaiPath + " " + devicePath, result);
-    SPUtils::LoadCmd("chmod 777 " + devicePath + "/" + dubaiName, result);
+    std::string cpdubaiPath = CMD_COMMAND_MAP.at(CmdCommand::DUBAI_CP);
+    std::string cpdubaiPathChmod = CMD_COMMAND_MAP.at(CmdCommand::DUBAI_CHMOD);
+    SPUtils::LoadCmd(cpdubaiPath, result);
+    SPUtils::LoadCmd(cpdubaiPathChmod, result);
 }
 }
 }

@@ -27,6 +27,7 @@
 #include "collect_result.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/common.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -59,14 +60,19 @@ std::map<std::string, std::string> RAM::ItemData()
     for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
         result.insert(*it);
     }
-    if (packageName.length() > 0) {
+    if (!processId.empty()) {
         if (g_flagFirst) {
             RAM::TriggerGetPss();
-            g_flagFirst = true;
         } else {
             procRamInfoLast = RAM::GetRamInfo();
+            g_flagFirst = true;
         }
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
+            result.insert(*it);
+        }
+    } else if (!packageName.empty() && processId.empty()) {
+        std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
+        for (auto it = procMemInfo.begin(); it != procMemInfo.end(); ++it) {
             result.insert(*it);
         }
     }
@@ -93,6 +99,27 @@ void RAM::SetFirstFlag()
     g_flagFirst = false;
 }
 
+std::map<std::string, std::string> RAM::ProcMemNaInfo() const
+{
+    std::map<std::string, std::string> procMemInfo;
+    procMemInfo["arktsHeapPss"] = "NA";
+    procMemInfo["gpuPss"] = "NA";
+    procMemInfo["graphicPss"] = "NA";
+    procMemInfo["heapAlloc"] = "NA";
+    procMemInfo["heapFree"] = "NA";
+    procMemInfo["heapSize"] = "NA";
+    procMemInfo["nativeHeapPss"] = "NA";
+    procMemInfo["privateClean"] = "NA";
+    procMemInfo["privateDirty"] = "NA";
+    procMemInfo["pss"] = "NA";
+    procMemInfo["sharedClean"] = "NA";
+    procMemInfo["sharedDirty"] = "NA";
+    procMemInfo["stackPss"] = "NA";
+    procMemInfo["swap"] = "NA";
+    procMemInfo["swapPss"] = "NA";
+    return procMemInfo;
+}
+
 std::map<std::string, std::string> RAM::GetSysRamInfo() const
 {
     std::map<std::string, std::string> sysRamInfo;
@@ -113,54 +140,26 @@ void RAM::SetPackageName(const std::string &pName)
     packageName = pName;
 }
 
+void RAM::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
+
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
-    std::string processId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
     std::map<std::string, std::string> procRamInfo;
     std::string pssValue = "";
-    if (processId.size() == 0) {
-        procRamInfo["gpuPss"] = "NA";
-        procRamInfo["graphicPss"] = "NA";
-        procRamInfo["arktsHeapPss"] = "NA";
-        procRamInfo["nativeHeapPss"] = "NA";
-        procRamInfo["stackPss"] = "NA";
-        procRamInfo["pss"] = "NA";
-        procRamInfo["sharedClean"] = "NA";
-        procRamInfo["sharedDirty"] = "NA";
-        procRamInfo["privateClean"] = "NA";
-        procRamInfo["privateDirty"] = "NA";
-        procRamInfo["swap"] = "NA";
-        procRamInfo["swapPss"] = "NA";
-        procRamInfo["heapSize"] = "NA";
-        procRamInfo["heapAlloc"] = "NA";
-        procRamInfo["heapFree"] = "NA";
-        return procRamInfo;
-    }
-    std::string cmd = "hidumper --mem " + processId;
+    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return procRamInfo;
     }
     std::vector<std::string> paramsInfo;
     procRamInfo = GetPssRamInfo(fd, paramsInfo);
-    if (procRamInfo.find("arktsHeapPss") != procRamInfo.end() && procRamInfo["gpuPss"].empty()) {
-        procRamInfo["gpuPss"] = "NA";
-        procRamInfo["graphicPss"] = "NA";
-        procRamInfo["arktsHeapPss"] = "NA";
-        procRamInfo["nativeHeapPss"] = "NA";
-        procRamInfo["stackPss"] = "NA";
-        procRamInfo["pss"] = "NA";
-        procRamInfo["sharedClean"] = "NA";
-        procRamInfo["sharedDirty"] = "NA";
-        procRamInfo["privateClean"] = "NA";
-        procRamInfo["privateDirty"] = "NA";
-        procRamInfo["swap"] = "NA";
-        procRamInfo["swapPss"] = "NA";
-        procRamInfo["heapSize"] = "NA";
-        procRamInfo["heapAlloc"] = "NA";
-        procRamInfo["heapFree"] = "NA";
+    for (const auto& value : paramsInfo) {
+        if (procRamInfo[value].empty()) {
+            procRamInfo[value] = "0";
+        }
     }
     return procRamInfo;
 }

@@ -20,11 +20,15 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include <sys/wait.h>
+#include <sys/types.h>
 #include "unistd.h"
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
 #include "unistd.h"
 #include "include/sp_log.h"
+#include "include/common.h"
+
 namespace OHOS {
 namespace SmartPerf {
 StartUpDelay::StartUpDelay() {}
@@ -34,12 +38,11 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     std::string result;
     std::string cmdString;
     if (SPUtils::IsHmKernel()) {
-        cmdString = "hitrace --trace_clock mono -t 5 -b 102400 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_1024);
     } else {
-        cmdString = "hitrace --trace_clock mono -t 5 -b 204800 --overwrite idle ace app ohos ability graphic nweb ";
+        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
-    std::string cmdStringEnd { "sched freq sync workq multimodalinput > " };
-    SPUtils::LoadCmd(cmdString + cmdStringEnd + traceName, result);
+    SPUtils::LoadCmd(cmdString + traceName, result);
 }
 
 std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName) const
@@ -50,7 +53,8 @@ std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std
 void StartUpDelay::GetLayout()
 {
     std::string result;
-    SPUtils::LoadCmd("uitest dumpLayout", result);
+    std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
+    SPUtils::LoadCmd(uitest, result);
 }
 std::thread StartUpDelay::ThreadGetLayout()
 {
@@ -62,7 +66,7 @@ void StartUpDelay::InputEvent(const std::string &point)
     std::string cmdResult = "";
     int time = 4;
     sleep(time);
-    std::string cmd = "uinput -T -d " + point + " -u" + point;
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_POINT) + point + " -u" + point;
     SPUtils::LoadCmd(cmd, cmdResult);
 }
 std::thread StartUpDelay::ThreadInputEvent(const std::string &point)
@@ -75,7 +79,8 @@ void StartUpDelay::GetHisysId() const
     int time = 10;
     sleep(time);
     std::string str = "";
-    SPUtils::LoadCmd("ps -ef |grep hisysevent", str);
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYSEVENT);
+    SPUtils::LoadCmd(cmd, str);
     std::stringstream ss(str);
     std::string line = "";
     getline(ss, line);
@@ -91,7 +96,8 @@ void StartUpDelay::GetHisysId() const
             break;
         }
     }
-    SPUtils::LoadCmd("kill " + secondStr, str);
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
+    SPUtils::LoadCmd(killCmd + secondStr, str);
 }
 
 void StartUpDelay::GetHisysIdAndKill() const
@@ -99,22 +105,25 @@ void StartUpDelay::GetHisysIdAndKill() const
     int time = 10;
     sleep(time);
     std::string str = "";
-    SPUtils::LoadCmd("pidof hisysevent", str);
+    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_PID);
+    SPUtils::LoadCmd(cmd, str);
     std::stringstream ss(str);
     std::vector<std::string> hisysIdVec;
     std::string singleId;
     while (ss >> singleId) {
         hisysIdVec.push_back(singleId);
     }
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
     for (size_t i = 0; i < hisysIdVec.size(); i++) {
-        SPUtils::LoadCmd("kill " + hisysIdVec[i], str);
+        SPUtils::LoadCmd(killCmd + hisysIdVec[i], str);
     }
 }
 bool StartUpDelay::GetSpTcp()
 {
     std::string resultPid;
     std::string str;
-    SPUtils::LoadCmd("pidof SP_daemon", resultPid);
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
+    SPUtils::LoadCmd(cmd, resultPid);
     std::vector<std::string> vec;
     std::string token;
     size_t pos = 0;
@@ -124,8 +133,9 @@ bool StartUpDelay::GetSpTcp()
         resultPid.erase(0, pos + 1);
     }
     if (vec.size() > 0) {
+        std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
         for (size_t i = 0; i < vec.size(); i++) {
-            SPUtils::LoadCmd("kill " + vec[i], str);
+            SPUtils::LoadCmd(killCmd + vec[i], str);
         }
     }
     return false;
@@ -135,11 +145,12 @@ bool StartUpDelay::GetSpClear()
 {
     std::string resultPid;
     std::string str;
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
     SPUtils::LoadCmd("pidof SP_daemon", resultPid);
     std::string token;
     std::string curPid = std::to_string(getpid());
     std::stringstream ss(resultPid);
-
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
     while (ss >> token) {
         if (token != curPid) {
             SPUtils::LoadCmd("kill " + token, str);
@@ -152,9 +163,9 @@ bool StartUpDelay::GetSpClear()
 void StartUpDelay::ClearOldServer()
 {
     std::string curPid = std::to_string(getpid());
-    std::string commandServer = "ps -ef | grep -v grep | grep 'SP_daemon -server'";
+    std::string commandServer = CMD_COMMAND_MAP.at(CmdCommand::SERVER_GREP);
     std::string resultPidServer;
-    std::string commandEditorServer = "ps -ef | grep -v grep | grep 'SP_daemon -editorServer'";
+    std::string commandEditorServer = CMD_COMMAND_MAP.at(CmdCommand::EDITOR_SERVER_GREP);
     std::string resultPidEditorServer;
 
     SPUtils::LoadCmdWithLinkBreak(commandServer, false, resultPidServer);
@@ -163,7 +174,7 @@ void StartUpDelay::ClearOldServer()
     std::istringstream iss(resultPidServer + '\n' + resultPidEditorServer);
     std::string resultLine;
     std::string killResult;
-
+    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
     while (std::getline(iss, resultLine)) {
         if (resultLine.empty() || resultLine.find("sh -c") != std::string::npos) {
             continue;
@@ -181,7 +192,7 @@ void StartUpDelay::ClearOldServer()
         }
 
         if (token != curPid) {
-            SPUtils::LoadCmd("kill " + token, killResult);
+            SPUtils::LoadCmd(killCmd + token, killResult);
             LOGI("Find old server: %s, killed.", token.c_str());
         }
     }
@@ -202,15 +213,44 @@ void StartUpDelay::ChangeToBackground()
 {
     std::string result;
     sleep(1);
-    SPUtils::LoadCmd("uinput -T -m 600 2760 600 1300 200", result);
+    std::string uinput = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_BACK);
+    SPUtils::LoadCmd(uinput, result);
     sleep(1);
 }
 std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 {
-    std::string resultPid;
-    SPUtils::LoadCmd("pidof " + curPkgName, resultPid);
-    size_t splitFlag = resultPid.find(" ");
-    std::string resultProcId = resultPid.substr(0, splitFlag);
+    std::string resultPid = "";
+    std::string resultProcId = "";
+    const char* args[] = { "pidof", curPkgName.c_str(), nullptr };
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        LOGE("startup_delay::Failed to create pipe");
+        return resultPid;
+    }
+    pid_t pid = fork();
+    if (pid == -1) {
+        LOGE("startup_delay::Failed to fork");
+        return resultPid;
+    } else if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        if (execvp(args[0], const_cast<char *const*>(args)) == -1) {
+            LOGE("startup_delay::Failed to execute pid");
+            return resultPid;
+        }
+    } else {
+        close(pipefd[1]);
+        char buf[1024];
+        ssize_t nread = read(pipefd[0], buf, sizeof(buf));
+        if (nread == -1) {
+            return resultPid;
+        }
+        resultPid = std::string(buf, nread);
+        resultProcId = resultPid.substr(0, resultPid.size() - 1);
+        close(pipefd[0]);
+        waitpid(pid, nullptr, 0);
+    }
     return resultProcId;
 }
 void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)

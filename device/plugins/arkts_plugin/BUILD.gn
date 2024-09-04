@@ -41,7 +41,7 @@ ohos_source_set("arkts_source") {
     defines += [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]
@@ -59,7 +59,7 @@ ohos_shared_library("arktsplugin") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "openssl:libcrypto_shared",
     ]
   }

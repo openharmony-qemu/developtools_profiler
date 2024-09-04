@@ -23,6 +23,7 @@ public:
     static SpProfiler *GetProfilerItem(MessageType messageType);
     static SpProfiler *GetProfilerItemContinue(MessageType messageType);
     static void SetProfilerPkg(const std::string &pkg);
+    static void SetProfilerPidByPkg(std::string &pid);
     static void SetProfilerLayer(const std::string &layer);
     static void SetByTrace(std::string message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);

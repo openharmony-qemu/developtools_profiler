@@ -37,6 +37,7 @@ int CustomPUnblock(int fds[]);
 int GetServicePort();
 void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
 bool CheckApplicationPermission(int pid, const std::string& processName);
+bool checkApplicationEncryped(int pid, const std::string& processName);
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
 bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
 std::string GetErrorMsg();
@@ -46,6 +47,7 @@ std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
 int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);
+bool GetDeveloperMode();
 bool IsBetaVersion();
 } // COMMON
 #endif // COMMON_H
