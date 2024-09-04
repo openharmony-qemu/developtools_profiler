@@ -542,19 +542,29 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
     }
 }
 
-void VirtualRuntime::HandleMapInfo(uint64_t begin, uint64_t length, uint32_t flags,
-                                   uint64_t offset, const std::string& filePath)
+void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
-    if (!(flags & MAP_FIXED) || mapsCache_.empty()) {
-        if (mapsCache_.find(begin) != mapsCache_.end()) {
-            return;
-        }
+    if (info.size() != INFO_SIZE) {
+        return;
+    }
+    uint64_t begin = info[0];
+    uint64_t length = info[1];
+    uint64_t flags = info[SECOND_INDEX];
+    uint64_t offset = info[THIRD_INDEX];
+    if (!(flags & MAP_FIXED)) {
+        return;
+    }
+    if (offset == 0 && mapsCache_.find(begin) == mapsCache_.end()) {
         soBegin_ = begin;
         std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
         auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
-        UpdateSymbols(filePath);
+        UpdateSymbols(filePath, mapItem);
+        if ((!hookConfig_.fp_unwind())) {
+            auto &thread = UpdateThread(pid, tid);
+            thread.ParseMap(processMaps_, false);
+        }
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
         if (curMapsIter != mapsCache_.end()) {
