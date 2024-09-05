@@ -17,7 +17,7 @@
 
 #include "string_ex.h"
 #include "logging.h"
-
+#include <sys/stat.h>
 #include <unistd.h>
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -75,12 +75,19 @@ int32_t NativeMemoryProfilerSaStub::StubStopName(MessageParcel &data, MessagePar
 
 int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessageParcel &reply)
 {
-    uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config)) {
-        close(fd);
         return RET_ERR;
     }
+    if (config->pid_ > 0) {
+        struct stat statBuf;
+        std::string pidPath = "/proc/" + std::to_string(config->pid_) + "/status";
+        if (stat(pidPath.c_str(), &statBuf) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFile hook process does not exist");
+            return false;
+        }
+    }
+    uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
     return DumpData(fd, config);
 }
 } // namespace OHOS::Developtools::NativeDaemon
