@@ -216,10 +216,9 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::UITEST_DUMPLAYOUT, std::string("uitest dumpLayout") },
     { CmdCommand::UINPUT_POINT, std::string("uinput -T -d ") },
     { CmdCommand::DUBAI_CP, std::string(
-        "cp /data/service/el2/100/xpower/dubai.db" +
-        "/data/app/el2/100/database/com.huawei.hmsapp.hismartperf/entry/rdb") },
+        "cp /data/service/el2/100/xpower/dubai.db/data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
     { CmdCommand::DUBAI_CHMOD, std::string(
-        "chmod 777 /data/app/el2/100/database/com.huawei.hmsapp.hismartperf/entry/rdb/dubai.db") },
+        "chmod 777 /data/app/el2/100/database/com.ohos.smartperf/entry/rdb/dubai.db") },
     { CmdCommand::TASKSET, std::string("taskset -p f ") },
     { CmdCommand::PROC_STAT, std::string("chmod o+r /proc/stat") },
     { CmdCommand::HIPROFILER, std::string("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace") },
