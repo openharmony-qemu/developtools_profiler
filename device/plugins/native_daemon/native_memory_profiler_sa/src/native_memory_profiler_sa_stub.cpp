@@ -17,7 +17,7 @@
 
 #include "string_ex.h"
 #include "logging.h"
-
+#include <sys/stat.h>
 #include <unistd.h>
 
 namespace OHOS::Developtools::NativeDaemon {
