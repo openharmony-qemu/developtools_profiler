@@ -198,7 +198,7 @@ public:
                 spSocket.Sendto(retCode);
             } else {
                 std::map<std::string, std::string> data;
-                if(iterator->first == MessageType::GPU_COUNTER_HB_REQ) {
+                if (iterator->first == MessageType::GPU_COUNTER_HB_REQ) {
                     GpuCounter::GetInstance().Check();
                     break; // No need to return
                 } else if (iterator->first == MessageType::CATCH_GPU_COUNTER) {
