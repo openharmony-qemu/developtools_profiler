@@ -175,7 +175,6 @@ HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level1)
     EXPECT_NE(alignedAllocBlack, nullptr);
 
     ohos_malloc_hook_free(alignedAllocBlack);
-
     EXPECT_TRUE(ohos_malloc_hook_on_end());
 }
 

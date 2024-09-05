@@ -43,8 +43,7 @@ public:
     ~CallStack();
     bool UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regsNum,
                          const u8 *stack, u64 stackSize, std::vector<CallFrame> &,
-                         size_t maxStackLevel = MAX_CALL_FRAME_UNWIND_SIZE, int maxjsDepth = 0,
-                         bool jsReport = true);
+                         size_t maxStackLevel = MAX_CALL_FRAME_UNWIND_SIZE, int maxjsDepth = 0, bool jsReport = true);
     size_t ExpendCallStack(pid_t tid, std::vector<CallFrame> &callFrames, size_t expendLimit = 1u);
 
 private:

@@ -27,7 +27,7 @@ template <typename T> void sched_blocked_reason_func(T& msg, uint8_t data[], siz
     uint64_t recSize = FtraceFieldParser::ParseIntField<uint64_t>(format.fields, ++i, data, size);
     std::string funcName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
     std::string modName = FtraceFieldParser::ParseStrField(format.fields, ++i, data, size);
-    std::string caller_str = funcName + "+0x" + std::to_string(recOffset) + "/0x"
+    std::string caller_str = funcName + "+" + std::to_string(recOffset) + "/"
                              + std::to_string(recSize) + "[" + modName + "]";
     msg->set_caller_str(caller_str);
 }

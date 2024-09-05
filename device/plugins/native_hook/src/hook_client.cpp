@@ -239,8 +239,6 @@ void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
-    g_miStart = mallinfo2();
-    COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_mallocTimes = 0;
     g_hookClient.reset();
     if (g_hookClient != nullptr) {
@@ -303,18 +301,14 @@ bool ohos_malloc_hook_on_end(void)
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
             if (g_hookClient->GetNmdType() == 1) {
-                PROFILER_LOG_INFO(LOG_CORE, "sending nmd info after hook");
                 g_hookClient->SendNmdInfo();
             }
             g_hookClient->SendEndMsg();
             g_hookClient->Flush();
-        } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "ohos_malloc_hook_on_end, g_hookClient is nullptr");
         }
     }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
-        PROFILER_LOG_INFO(LOG_CORE, "create ohos_release_on_end fail");
         return false;
     }
     pthread_detach(threadEnd);
@@ -514,8 +508,9 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
         if (g_mallocTimes % PRINT_INTERVAL == 0) {
             PROFILER_LOG_ERROR(LOG_CORE,
-                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %"
+                PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(),
+                g_timeCost.load() / g_mallocTimes.load());
         }
 #endif
         return ret;
@@ -586,8 +581,9 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     g_dataCounts += stackSize;
     if (g_mallocTimes % PRINT_INTERVAL == 0) {
         PROFILER_LOG_ERROR(LOG_CORE,
-            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %"
+            PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(),
+            g_timeCost.load() / g_mallocTimes.load());
     }
 #endif
     return ret;
@@ -879,6 +875,7 @@ void hook_free(void (*free_func)(void*), void* p)
 #endif
         return;
     }
+
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;

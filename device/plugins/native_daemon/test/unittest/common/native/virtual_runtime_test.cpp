@@ -105,7 +105,7 @@ HWTEST_F(VirtualRuntimeTest, SetSymbolsPaths, TestSize.Level1)
 HWTEST_F(VirtualRuntimeTest, GetSymbolsFiles, TestSize.Level1)
 {
     EXPECT_EQ(runtime_->GetSymbolsFiles().size(), 0u);
-    runtime_->UpdateSymbols(TEST_FILE_ELF_FULL_PATH);
+    runtime_->UpdateSymbols(TEST_FILE_ELF_FULL_PATH, nullptr);
     EXPECT_EQ(runtime_->GetSymbolsFiles().size(), 1u);
 }
 
