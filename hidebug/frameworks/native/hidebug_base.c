@@ -101,24 +101,21 @@ static void SplitParams(char *input)
     }
 }
 
-static int QueryParams(const char *queryName, char *result)
+static bool QueryParams(const char *queryName, char *result, const uint32_t size)
 {
-    if (result == NULL) {
+    if (result == NULL || size > PARAM_BUF_LEN) {
         return false;
     }
 #ifdef HIDEBUG_IN_INIT
-    uint32_t size = PARAM_BUF_LEN;
-    int retLen = SystemReadParam(queryName, result, &size);
-    if (retLen != 0 || size <= 0 || size > PARAM_BUF_LEN - 1) {
-        HIDEBUG_LOGE("failed to read param system param");
+    uint32_t bufferSize = size;
+    int retLen = SystemReadParam(queryName, result, &bufferSize);
+    if (retLen != 0 || bufferSize <= 0 || bufferSize > PARAM_BUF_LEN - 1) {
         return false;
     }
-    result[size] = '\0';
+    result[bufferSize] = '\0';
 #else
-    char defStrValue[PARAM_BUF_LEN] = { 0 };
-    int retLen = GetParameter(queryName, defStrValue, result, PARAM_BUF_LEN);
+    int retLen = GetParameter(queryName, NULL, result, size);
     if (retLen <= 0 || retLen > PARAM_BUF_LEN - 1) {
-        HIDEBUG_LOGE("failed to read param system param");
         return false;
     }
     result[retLen] = '\0';
@@ -130,7 +127,7 @@ static int QueryHiDebugEnvParams(const char *queryName)
 {
     g_paramCnt = 0;
     char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-    if (QueryParams(queryName, paramOutBuf)) {
+    if (QueryParams(queryName, paramOutBuf, PARAM_BUF_LEN)) {
         SplitParams(paramOutBuf);
     }
     return g_paramCnt;
@@ -253,7 +250,7 @@ bool InitEnvironmentParam(const char *inputName)
 #endif
 
     char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-    if (!QueryParams("const.debuggable", paramOutBuf) || strcmp(paramOutBuf, "1") != 0) {
+    if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
         return false;
     }
     errno_t err = 0;
