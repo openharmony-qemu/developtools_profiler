@@ -619,7 +619,7 @@ std::string SPUtils::GetCpuNum()
     std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
     CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
     std::vector<CpuFreq> &cpufreq = result.data;
-    int cpuNum = cpufreq.size();
+    size_t cpuNum = cpufreq.size();
     cpuCores += std::to_string(cpuNum);
     if (cpuNum == 0) {
         std::cout << "CPU frequency collection failed." << std::endl;
