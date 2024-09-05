@@ -122,9 +122,9 @@ bool ScheduleTaskManager::UnscheduleTaskLockless(const int32_t timerFd)
 bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
 {
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
+        tasks_.erase(timerFd);
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
         close(timerFd);
-        tasks_.erase(timerFd);
         return true;
     }
     return false;
