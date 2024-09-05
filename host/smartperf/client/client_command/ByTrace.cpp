@@ -19,7 +19,7 @@
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/sp_log.h"
-#include "include/common.h"
+#include "common.h"
 namespace OHOS {
 namespace SmartPerf {
 void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps, int mCurNum) const

@@ -34,8 +34,7 @@
 #include <regex>
 #include "unistd.h"
 #include <future>
-#include <mutex>
-#include "include/common.h"
+#include "common.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -223,14 +222,14 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
-    LOGI("SPTask::StartTask start");
+    LOGI("SPTask::StartTask start ");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     if (!isInit) {
         LOGW("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;
     }
-    isRunning =true;
+    isRunning = true;
     startTime = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
@@ -239,7 +238,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
             long long lastTime = SPUtils::GetCurTime();
-            std::lock_guard<std::mutex> lock(sdkDataMtx);
+            std::lock_guard<std::mutex> lock(mtx);
             std::map<std::string, std::string> dataMap;
             dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
             std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -292,7 +291,6 @@ void SPTask::StopTask()
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
         long long endTime = SPUtils::GetCurTime();
         long long testDuration = (endTime - startTime) / 1000;
-        const std::string gpuDataVersion = "1.1";
         std::string screenStr = SPUtils::GetScreen();
         size_t pos3 = screenStr.find("=");
         std::string refreshrate = screenStr.substr(pos3 + 1);
@@ -407,9 +405,9 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
 
-    auto iter = keys.find("gc"); // editor tcp does not support gc
-    if (keys.end() != iter) {
-        keys.erase(iter);
+    auto itr = keys.find("gc"); // editor tcp does not support gc
+    if (keys.end() != itr) {
+        keys.erase(itr);
     }
     
     return SPUtils::VeriyParameter(keys, str, errorInfo);

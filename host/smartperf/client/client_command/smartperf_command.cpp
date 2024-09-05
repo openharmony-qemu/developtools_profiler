@@ -17,7 +17,6 @@
 #include <cstring>
 #include <iterator>
 #include "unistd.h"
-#include "include/heartbeat.h"
 #include "include/sp_utils.h"
 #include "include/sp_csv_util.h"
 #include "include/sp_profiler_factory.h"
@@ -27,7 +26,7 @@
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
 #include "include/RAM.h"
-#include "include/common.h"
+#include "common.h"
 #include "GpuCounter.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -42,7 +41,18 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         std::string result = "";
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         daemon(0, 0);
-        CreateSocketThread();
+        InitSomething();
+        SpThreadSocket udpThreadSocket;
+        SpThreadSocket udpExThreadSocket;
+        SpThreadSocket tcpThreadSocket;
+        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+        sleep(1);
+        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+        sleep(1);
+        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+        tcpSocket.join();
+        udpSocket.join();
+        udpexSocket.join();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -94,29 +104,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
-        CreateSocketThread();
     }
 }
 
-void SmartPerfCommand::CreateSocketThread() const
-{
-    InitSomething();
-    SpThreadSocket udpThreadSocket;
-    SpThreadSocket udpExThreadSocket;
-    SpThreadSocket tcpThreadSocket;
-    auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
-    sleep(1);
-    auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
-    sleep(1);
-    auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-    Heartbeat &heartbeat = Heartbeat::GetInstance();
-    heartbeat.UpdatestartTime();
-    std::thread threadHeartbeat([&heartbeat]() {heartbeat.HeartbeatRule(); });
-    threadHeartbeat.detach();
-    tcpSocket.join();
-    udpSocket.join();
-    udpexSocket.join();
-}
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());

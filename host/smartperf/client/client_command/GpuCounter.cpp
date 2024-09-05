@@ -43,7 +43,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
 {
     std::map<std::string, std::string> result;
 
-    if (initCheckPath == "/data/local/tmp" && (gcStatus == GC_START || gcStatus == GC_INIT) && (!initMap.empty())) {
+    if (initCheckPath == "/data/local/tmp/" && (gcStatus == GC_START || gcStatus == GC_INIT) && (!initMap.empty())) {
         result.insert(initMap.begin(), initMap.end());
         initMap.clear();
         return result;
@@ -59,7 +59,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
         std::string outStr;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(SPUtils::GetCurTime()) + ".csv";
         std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
-        LOGI("ItemData new file name(%S)", newFileName.c_str());
+        LOGI("ItemData new file name(%s)", newFileName.c_str());
         if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
             SetPerm(EP_PERMISSIVE);
             SPUtils::LoadCmd(mvCmd, outStr);
@@ -76,7 +76,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
     std::string content = "";
     for (auto it = fileList.begin(); it != fileList.end(); ++it) {
         content += *it;
-        content += ",";
+        content += ',';
     }
     if (!content.empty()) {
         content.pop_back();
@@ -106,15 +106,15 @@ int GpuCounter::CheckResources(const std::string &packageName, std::string &erro
     }
     if ((!SPUtils::FileAccess(constV2File)) || (!SPUtils::FileAccess(constExecFile)) ||
         (!SPUtils::FileAccess(constConfigFile)) || (!SPUtils::FileAccess(constLibFile))) {
-            errorInfo = "Missing dependency files such as counters_collector";
-            return -1;
+        errorInfo = "Missing dependency files such as counters_collector";
+        return -1;
     }
     if (packageName.empty()) {
         errorInfo = "package name is empty";
         return ERROR_CODE_NEGATIVE_TWO;
     }
 
-    if (packageName == "/data/local/tmp") {
+    if (packageName == "/data/local/tmp/") {
         sandBoxPath = packageName;
     } else {
         sandBoxPath = constSandBoxPath + packageName + constSandBoxFile;
@@ -134,7 +134,7 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
         retMap["gpu_counter"] = "false";
         retMap["error"] = errorInfo;
         initMap.insert(retMap.begin(), retMap.end());
-        LOGI("%s", errorInfo.c_str());
+        LOGE("%s", errorInfo.c_str());
         return ret;
     }
 
@@ -190,6 +190,7 @@ int GpuCounter::Start()
     GetCounterId(pidList);
     if (pidList.empty()) {
         LOGE("counters_collector run failed ret(%d)", ret);
+        return -1;
     }
     startCaptureTime = SPUtils::GetCurTime();
     LOGI("GpuCounter Started ret(%d)", ret);
@@ -209,18 +210,17 @@ void GpuCounter::Check()
     if (diff < captureDuration) {
         return;
     }
-
     LOGI("GpuCounter::Check diff(%lld)", diff);
     std::vector<std::string> pidList;
     GetCounterId(pidList);
-    if (!pidList.empty()) { //GPU process did not exit
+    if (!pidList.empty()) { // GPU process did not exit
         return;
     }
 
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
         std::string result;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(nowTime) + ".csv";
-        std::string mvCmd = constMvFile + constOutSourCVSFile + " " + sandBoxPath + newFileName;
+        std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
 
         if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
             SetPerm(EP_PERMISSIVE);
@@ -284,7 +284,7 @@ long long GpuCounter::GetCounterDuration()
 {
     bool startFlag = false;
     long long ret = -1;
-    char realPath[PATH_MAX] = {0X00};
+    char realPath[PATH_MAX] = {0x00};
     if ((realpath(constConfigFile.c_str(), realPath) == nullptr)) {
         std::cout << "" << std::endl;
     }

@@ -82,30 +82,6 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     return true;
 }
 
-bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
-{
-    const std::string cmdExc = cmd;
-    FILE *fd = popen(cmdExc.c_str(), "r");
-    if (fd == nullptr) {
-        return false;
-    }
-    char buf[4096] = {'\0'};
-    size_t ret = fread(buf, sizeof(buf), 1, fd);
-    if (ret >= 0) {
-        result = buf;
-    }
-    if (pclose(fd) == -1) {
-        std::cout << "" << std::endl;
-    }
-
-    if (isClearLinkBreak) {
-        // remove '' \n\r
-        ReplaceString(result);
-    }
-
-    return ret >= 0 ? true : false;
-}
-
 bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
 {
     std::string cmdExc = cmd;

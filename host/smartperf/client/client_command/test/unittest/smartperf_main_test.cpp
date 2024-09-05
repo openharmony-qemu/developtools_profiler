@@ -93,6 +93,10 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     if (keys.end() != itr) {
         keys.erase(itr);
     }
+    itr = keys.find("ftl");
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
     return OHOS::SmartPerf::SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 
@@ -141,7 +145,7 @@ HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
     argv.push_back("-snapshot");
 
     bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ret, false);
 }
 
 HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)

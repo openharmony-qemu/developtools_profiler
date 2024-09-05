@@ -84,15 +84,15 @@ private:
 private:
     const long long constDefaultCaptureDuration = 5000; // Unit ms
     const std::string constMvFile = "mv -f ";
-    const std::string constKillProcess = "kill -9 ";
+    const std::string constKillProcess = "kill -9  ";
     const std::string constGetCounterId = "pidof counters_collector";
-    const std::string constRmCsv = "rm /data/local/tmp/gpu_couonter.csv";
+    const std::string constRmCsv = "rm /data/local/tmp/gpu_counter.csv";
     const std::string constAddPermissionsCounter = "chmod 777 /bin/counters_collector";
     const std::string constCmd =
         "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt >/dev/null 2>&1";
 
     const std::string constSandBoxFile = "/files/";
-    const std::string constSandBoxPath = "/data/app/el2/100/base";
+    const std::string constSandBoxPath = "/data/app/el2/100/base/";
     const std::string constOutDestCVSPrefix = "gpu_counter";
     const std::string constOutSourCVSFile = "/data/local/tmp/gpu_counter.csv";
 

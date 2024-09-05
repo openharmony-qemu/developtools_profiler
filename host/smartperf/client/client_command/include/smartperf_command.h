@@ -20,8 +20,6 @@
 #include <vector>
 #include "common.h"
 #include "sp_utils.h"
-#include "GpuCounter.h"
-
 namespace OHOS {
 namespace SmartPerf {
 class SmartPerfCommand {
@@ -70,7 +68,6 @@ public:
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
-    void CreateSocketThread() const;
     // 采集次数
     int num = 0;
     // 包名
@@ -86,7 +83,6 @@ public:
     std::string pid = "";
     // 采集配置项
     std::vector<std::string> configs;
-    GpuCounter &gpuCounter = GpuCounter::GetInstance();
 };
 }
 }

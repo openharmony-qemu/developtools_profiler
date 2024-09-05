@@ -19,16 +19,16 @@ SpParseFPS::SpParseFPS()
     pidPattern = std::regex("\\|(\\d+)\\|");
 }
 SpParseFPS::~SpParseFPS() {}
-void SpParseFPS::StrSplit(const SpSrting &content, const SpSrting &sp, std::vector<SpSrting> &out) const
+void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vector<SpSrting> &out) const
 {
     size_t index = 0;
-    while (index != SpSrting::npos) {
+    while (index != SpString::npos) {
         size_t tEnd = content.find_first_of(sp, index);
         SpSrting tmp = content.substr(index, tEnd - index);
         if (tmp != "" && tmp != " ") {
             out.push_back(tmp);
         }
-        if (tEnd == SpSrting::npos) {
+        if (tEnd == SpString::npos) {
             break;
         }
         index = tEnd + 1;
@@ -54,7 +54,7 @@ unsigned int SpParseFPS::GetTouchEventNum(Line &line, TouchEvent &touchEvent) co
     if (line.empty()) {
         return 0;
     }
-    if (line.find(TOUCHEVENT_FLAG) != SpString::npos || line.find(HTOUCHEVENT_FLAG) != SpSrting::npos) {
+    if (line.find(TOUCHEVENT_FLAG) != SpString::npos || line.find(HTOUCHEVENT_FLAG) != SpString::npos) {
         ++touchEvent.tEventDisNum;
     }
     return touchEvent.tEventDisNum;
@@ -92,9 +92,9 @@ const FpsResult SpParseFPS::ParseBranch(FilePath &filePath, PackageName &pN, Pag
     return fps;
 }
 
-FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &PackageName)
+FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &packageName)
 {
-    if (filePath.empty() || PackageName.empty()) {
+    if (filePath.empty() || packageName.empty()) {
         return PARAMS_EMPTY;
     }
     FpsResult fps;
@@ -110,7 +110,7 @@ FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &PackageNam
             }
             this->GetAndSetPageType(lineClient, pageTypeClient);
         }
-        fps = this->ParseBranch(filePath, PackageName, pageTypeClient, touchEventClient);
+        fps = this->ParseBranch(filePath, packageName, pageTypeClient, touchEventClient);
     }
     return "FPS:" + fps + "fps";
 }
@@ -176,7 +176,7 @@ bool SpParseFPS::CountRsEndTime(Line &line, float staticTime, SpString uiPoint)
             beQueue.push(line);
         }
         if (line.find("E|" + pid + "|") != SpString::npos && line.find("-" + pid) != SpString::npos) {
-            beQueue.pop(line);
+            beQueue.pop;
         }
         if (!beQueue.empty()) {
             return false;
@@ -213,7 +213,7 @@ FpsResult SpParseFPS::PraseFPSTrace(FilePath &filePath, float staticTime, SpStri
     }
     FileSteamPtr inFile(new std::ifstream());
     inFile->open(filePath);
-    if (inFile->fail) {
+    if (inFile->fail()) {
         std::cout << "File: " << filePath << " open failed!" << std::endl;
         return FILE_OPEN_FAILED;
     } else {

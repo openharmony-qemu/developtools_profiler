@@ -28,6 +28,18 @@ using FilePath = const SpString;
 using PackageName = const SpString;
 using FileSteamPtr = std::shared_ptr<std::ifstream>;
 using Line = SpString;
+typedef enum {
+    VIDEO,
+    WEB,
+    LARGE
+} PageType;
+#define PARAMS_EMPTY "params invalided!"
+#define FILE_OPEN_FAILED "file open failed!"
+#define TOUCHEVENT_FLAG "H:touchEventDispatch"
+#define HTOUCHEVENT_FLAG "H:TouchEventDispatch"
+#define ROSENRENDERWEB "H:RosenRenderWeb"
+#define ROSENRENDERTEXTURE "H:RosenRenderTexture:"
+#define FLING "fling"
 class SpParseFPS {
 public:
     SpParseFPS();
