@@ -15,7 +15,6 @@
 
 #include <string>
 #include <sstream>
-#include <mutex>
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
 #include "include/GpuCounter.h"
@@ -47,8 +46,8 @@ namespace OHOS {
         }
 
 
-        unsigned long long GpuCounterCallbackImpl::JoinSocketDataPercentFunction(uint32_t itemFirst, int32_t durationFirst,
-            uint32_t itemSecond, int32_t durationSecond)
+        unsigned long long GpuCounterCallbackImpl::JoinSocketDataPercentFunction(uint32_t itemFirst,
+            int32_t durationFirst, uint32_t itemSecond, int32_t durationSecond)
         {
             return (((unsigned long long)itemFirst * (unsigned long long)durationFirst) +
                 ((unsigned long long)itemSecond * (unsigned long long)durationSecond)) /
@@ -57,37 +56,35 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::JoinSocketDataValue(GpuPerfInfo *newData)
         {
-            realtimeGpuPerfInfoData.gpuActive = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.gpuActive, realtimeGpuPerfInfoData.duration,
-                newData->gpuActive, newData->duration);
-            realtimeGpuPerfInfoData.drawCalls = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.drawCalls, realtimeGpuPerfInfoData.duration,
-                newData->drawCalls, newData->duration);
-            realtimeGpuPerfInfoData.primitives = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.primitives, realtimeGpuPerfInfoData.duration,
-                newData->primitives, newData->duration);
-            realtimeGpuPerfInfoData.vertexCounts = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.vertexCounts, realtimeGpuPerfInfoData.duration,
-                newData->vertexCounts, newData->duration);
-            realtimeGpuPerfInfoData.totalInstruments = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.totalInstruments, realtimeGpuPerfInfoData.duration,
-                newData->totalInstruments, newData->duration);
-            realtimeGpuPerfInfoData.memoryReadBandwidth = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.memoryReadBandwidth, realtimeGpuPerfInfoData.duration,
-                newData->memoryReadBandwidth, newData->duration);
-            realtimeGpuPerfInfoData.memoryWriteBandwidth = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.memoryWriteBandwidth, realtimeGpuPerfInfoData.duration,
-                newData->memoryWriteBandwidth, newData->duration);
+            realtimeGpuPerfInfoData.gpuActive += newData->gpuActive;
+            realtimeGpuPerfInfoData.drawCalls += newData->drawCalls;
+            realtimeGpuPerfInfoData.primitives += newData->primitives;
+            realtimeGpuPerfInfoData.vertexCounts += newData->vertexCounts;
+            realtimeGpuPerfInfoData.totalInstruments += newData->totalInstruments;
+            realtimeGpuPerfInfoData.memoryReadBandwidth += newData->memoryReadBandwidth;
+            realtimeGpuPerfInfoData.memoryWriteBandwidth += newData->memoryWriteBandwidth;
         }
 
         void GpuCounterCallbackImpl::JoinSocketDataPercent(GpuPerfInfo *newData)
         {
-            realtimeGpuPerfInfoData.gpuLoadPercentage += newData->gpuLoadPercentage;
-            realtimeGpuPerfInfoData.vertexLoadPercentage += newData->vertexLoadPercentage;
-            realtimeGpuPerfInfoData.fragmentLoadPercentage += newData->fragmentLoadPercentage;
-            realtimeGpuPerfInfoData.computeLoadPercentage += newData->computeLoadPercentage;
-            realtimeGpuPerfInfoData.textureLoadPercentage += newData->textureLoadPercentage;
-            realtimeGpuPerfInfoData.memoryBandwidthPercentage += newData->memoryBandwidthPercentage;
+            realtimeGpuPerfInfoData.gpuLoadPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.gpuLoadPercentage, realtimeGpuPerfInfoData.duration,
+                newData->gpuLoadPercentage, newData->duration);
+            realtimeGpuPerfInfoData.vertexLoadPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.vertexLoadPercentage, realtimeGpuPerfInfoData.duration,
+                newData->vertexLoadPercentage, newData->duration);
+            realtimeGpuPerfInfoData.fragmentLoadPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.fragmentLoadPercentage, realtimeGpuPerfInfoData.duration,
+                newData->fragmentLoadPercentage, newData->duration);
+            realtimeGpuPerfInfoData.computeLoadPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.computeLoadPercentage, realtimeGpuPerfInfoData.duration,
+                newData->computeLoadPercentage, newData->duration);
+            realtimeGpuPerfInfoData.textureLoadPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.textureLoadPercentage, realtimeGpuPerfInfoData.duration,
+                newData->textureLoadPercentage, newData->duration);
+            realtimeGpuPerfInfoData.memoryBandwidthPercentage = JoinSocketDataPercentFunction(
+                realtimeGpuPerfInfoData.memoryBandwidthPercentage, realtimeGpuPerfInfoData.duration,
+                newData->memoryBandwidthPercentage, newData->duration);
         }
 
         void GpuCounterCallbackImpl::JoinSocketData(GpuPerfInfo *newData)
@@ -171,13 +168,11 @@ namespace OHOS {
             int32_t interval = realtimeGpuPerfInfoData.duration - maxDuration;
             GpuCounter &gpuCounter = GpuCounter::GetInstance();
 
-            SplitSocketDataValue(interval);
-            SplitSocketDataPercent();
-
             if ((interval == 0) || (realtimeGpuPerfInfoData.duration < interval)) {
                 return;
             }
-
+            SplitSocketDataValue(interval);
+            SplitSocketDataPercent();
             realtimeGpuPerfInfoData.duration = interval;
             gpuCounter.GetGpuCounterRealtimeDataMap()["duration"] = std::to_string(maxDuration);
         }
@@ -185,16 +180,16 @@ namespace OHOS {
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
             GpuCounter &gpuCounter = GpuCounter::GetInstance();
-
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 return;
             }
-            std::lock_guard<std::mutex> lock(gpuCounter.GetRealtimeDataLock());
+            gpuCounter.GetRealtimeDataLock().lock();
             if (gpuCounter.GetGpuCounterRealtimeDataMap().size() == 0 && \
             realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
+            gpuCounter.GetRealtimeDataLock().unlock();
         }
 
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
