@@ -28,7 +28,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
 
 
 namespace OHOS {
@@ -108,7 +108,22 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
 
 bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
 {
-    return LoadCmdWithLinkBreak(cmd, true, result);
+    std::string cmdExc = cmd;
+    FILE *fd = popen(cmdExc.c_str(), "r");
+    if (fd == nullptr) {
+        return false;
+    }
+    char buf[4096] = {'\0'};
+    size_t ret = fread(buf, sizeof(buf), 1, fd);
+    if (ret >= 0) {
+        result.assign(buf);
+    }
+    if (pclose(fd) == -1) {
+        std::cout << "" << std::endl;
+    }
+    // remove '' \n\r
+    ReplaceString(result);
+    return ret >= 0 ? true : false;
 }
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)

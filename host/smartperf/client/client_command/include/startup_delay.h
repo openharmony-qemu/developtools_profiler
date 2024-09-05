@@ -36,7 +36,6 @@ public:
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();
     bool GetSpClear();
-    void ClearOldServer();
     void InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName);
     void InitXY(const std::string &curAppName, const std::string &fileName);
     std::string pointXY = "0 0";

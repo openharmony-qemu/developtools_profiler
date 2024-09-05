@@ -20,14 +20,14 @@
 #include <vector>
 #include "common.h"
 #include "sp_utils.h"
-#include "GPU_Counter.h"
+#include "GpuCounter.h"
 
 namespace OHOS {
 namespace SmartPerf {
 class SmartPerfCommand {
 public:
     const std::string smartPerfExeName = "SP_daemon";
-    const std::string smartPerfVersion = "1.0.3\n";
+    const std::string smartPerfVersion = "1.0.2\n";
     const std::string smartPerfMsgErr = "error input!\n use command '--help' get more information\n";
     const std::string smartPerfMsg = "OpenHarmony performance testing tool SmartPerf command-line version\n"
         "Usage: SP_daemon [options] [arguments]\n\n"
@@ -50,9 +50,10 @@ public:
         " -screen        get screen resolution \n"
         " -OUT           set csv output path.\n"
         " -d             get device DDR information \n"
+        " -nav           get page navigation info \n"
         "example:\n"
         "SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d \n"
-        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d \n"
+        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d -nav \n"
         "SP_daemon -start -c \n"
         "SP_daemon -stop \n"
         "SP_daemon -screen \n";
@@ -69,6 +70,7 @@ public:
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
+    void CreateSocketThread() const;
     // 采集次数
     int num = 0;
     // 包名
@@ -84,7 +86,7 @@ public:
     std::string pid = "";
     // 采集配置项
     std::vector<std::string> configs;
-    GPU_Counter &gpuCounter = GPU_Counter::GetInstance();
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
 };
 }
 }

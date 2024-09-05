@@ -36,6 +36,9 @@ enum class MessageType {
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
     SET_DUBAI_DB,
+    GPU_COUNTER_HB_REQ,
+    CATCH_GPU_COUNTER,      // 请求抓取GPU counter信息
+    GET_GPU_COUNTER_RESULT, // 获取GPU counter信息
     CATCH_NETWORK_TRAFFIC,
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,

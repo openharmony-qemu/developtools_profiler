@@ -25,7 +25,7 @@
 #include "wm_common.h"
 #include "png.h"
 #include <filesystem>
-#include "common.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
@@ -94,10 +94,10 @@ void Capture::ThreadGetCatch()
 }
 
 
-void Capture::ThreadGetCatchSocket(const std::string &curTime) const
+void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
 {
     std::string captureDir = "/data/local/tmp/capture";
-    std::string savePath = captureDir + "/screenCap_" + curTime + ".jpeg";
+    std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
         std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);

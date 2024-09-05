@@ -57,14 +57,6 @@ bool LoadFile(const std::string &filePath, std::string &content);
  * @return true
  * @return false
  */
-bool LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result);
-/**
- * @brief
- *
- * @param path
- * @return std::string
- */
-
 bool LoadCmd(const std::string &cmd, std::string &result);
 /**
  * @brief
@@ -118,6 +110,7 @@ long long GetCurTime();
  * @brief get top pkg
  *
  */
+bool LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result);
 std::string GetTopPkgName();
 std::string GetRadar();
 std::string GetRadarResponse();

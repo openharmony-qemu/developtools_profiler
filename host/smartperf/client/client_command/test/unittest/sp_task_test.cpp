@@ -25,7 +25,6 @@
 #include "sp_utils.h"
 #include "sp_log.h"
 #include "sp_task.h"
-#include "parameters.h"
 using namespace testing::ext;
 using namespace std;
 
@@ -46,7 +45,7 @@ public:
  */
 HWTEST_F(SPdaemonTaskTest, CheckTcpParamTestCase001, TestSize.Level1)
 {
-    std::string str = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -o";
+    std::string str = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r";
     std::string errorInfo = "";
     SPTask &spTask = SPTask::GetInstance();
     bool flag = spTask.CheckTcpParam(str, errorInfo);
@@ -80,7 +79,7 @@ HWTEST_F(SPdaemonTaskTest, DetectionAndGrabTestCase001, TestSize.Level1)
 {
     bool ret = false;
     std::map<std::string, std::string> templateMap;
-    std::string recvStr = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -o";
+    std::string recvStr = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r";
     SPTask::GetInstance().InitTask(recvStr);
     templateMap = SPTask::GetInstance().DetectionAndGrab();
 

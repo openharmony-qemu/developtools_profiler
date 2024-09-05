@@ -138,6 +138,28 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
 }
 
 /**
+ * @tc.name: TemperatureTestCase
+ * @tc.desc: Test Temperature
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
+{
+    std::string cmd = "SP_daemon -N 1 -t";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("timestamp");
+    std::string::size_type strTwo = result.find("gpu");
+    if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    }
+
+
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
+
+/**
  * @tc.name: PowerTestCase
  * @tc.desc: Test Power
  * @tc.type: FUNC
@@ -246,7 +268,7 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonTest, StartTestCase, TestSize.Level1)
 {
-    std::string cmd = "SP_daemon -start -g";
+    std::string cmd = "SP_daemon -start -c";
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
@@ -381,6 +403,33 @@ HWTEST_F(SPdaemonTest, ParsePageFpsTraceTest, TestSize.Level1)
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("FPS");
+    if ((strOne != result.npos)) {
+        flag = true;
+    }
+    
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
+
+HWTEST_F(SPdaemonTest, ParseClickCompleteTraceTest, TestSize.Level1)
+{
+    ParseClickCompleteTrace parseClickCompleteTrace;
+    double parseClickCompleteName = 0.0;
+    double getLineTime = 0.0;
+    std::string line = "";
+    std::string getStartTime = "";
+    std::string startTimeBefore = "";
+    std::string file = "";
+
+    parseClickCompleteName = parseClickCompleteTrace.ParseCompleteTrace(file);
+    getStartTime = parseClickCompleteTrace.GetStartTime(line, startTimeBefore);
+    getLineTime = parseClickCompleteTrace.GetLineTime();
+
+    std::string cmd = "SP_daemon -editor completeTime ohos.samples.ecg 设置 ohtest";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("time");
     if ((strOne != result.npos)) {
         flag = true;
     }

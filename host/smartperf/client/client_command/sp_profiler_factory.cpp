@@ -27,6 +27,7 @@
 #include "include/sp_profiler_factory.h"
 #include "include/Dubai.h"
 #include "include/Capture.h"
+#include "include/GpuCounter.h"
 #include "include/navigation.h"
 #include "include/sp_log.h"
 
@@ -84,6 +85,11 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             break;
         case MessageType::SET_DUBAI_DB:
             DumpDubaiAndMoveDb();
+            break;
+        case MessageType::GPU_COUNTER_HB_REQ:
+        case MessageType::CATCH_GPU_COUNTER:
+        case MessageType::GET_GPU_COUNTER_RESULT:
+            profiler = &GpuCounter::GetInstance();
             break;
         case MessageType::CATCH_NETWORK_TRAFFIC:
         case MessageType::GET_NETWORK_TRAFFIC:
@@ -207,6 +213,17 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         case CommandType::CT_SNAPSHOT:
             if (cmdFlag) {
                 profiler = &Capture::GetInstance();
+            }
+            break;
+        case CommandType::CT_HW:
+            break;
+        case CommandType::CT_GC:
+            if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_INIT) {
+                std::map<std::string, std::string> retMap;
+                GpuCounter::GetInstance().Init("/data/local/tmp/", retMap);
+                profiler = &GpuCounter::GetInstance();
+            } else if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_START) {
+                GpuCounter::GetInstance().Check();
             }
             break;
         default:
