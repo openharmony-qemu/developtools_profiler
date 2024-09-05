@@ -43,7 +43,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
 {
     std::map<std::string, std::string> result;
 
-    if(initCheckPath == "/data/local/tmp" && (gcStatus == GC_START || gcStatus == GC_INIT) && (!initMap.empty())) {
+    if (initCheckPath == "/data/local/tmp" && (gcStatus == GC_START || gcStatus == GC_INIT) && (!initMap.empty())) {
         result.insert(initMap.begin(), initMap.end());
         initMap.clear();
         return result;
@@ -59,7 +59,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
         std::string outStr;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(SPUtils::GetCurTime()) + ".csv";
         std::string mvCmd = constMvFile + constOutSourCVSFile + "  " + sandBoxPath + newFileName;
-        LOGI("ItemData new file name(%S)",newFileName.c_str());
+        LOGI("ItemData new file name(%S)", newFileName.c_str());
         if (sandBoxPath != "/data/local/tmp/" && (!isSandBoxWrite)) {
             SetPerm(EP_PERMISSIVE);
             SPUtils::LoadCmd(mvCmd, outStr);
@@ -130,7 +130,7 @@ int GpuCounter::Init(const std::string &packageName, std::map<std::string, std::
     std::string errorInfo;
     Rest();
     ret = CheckResources(packageName, errorInfo);
-    if (ret !=0) {
+    if (ret != 0) {
         retMap["gpu_counter"] = "false";
         retMap["error"] = errorInfo;
         initMap.insert(retMap.begin(), retMap.end());
