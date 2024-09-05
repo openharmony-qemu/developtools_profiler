@@ -275,6 +275,10 @@ public:
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
+            std::string processId = "";
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(retCode);
+            SpProfilerFactory::SetProfilerPidByPkg(processId);
             SpProfilerFactory::SetProfilerPkg(retCode);
             spSocket.Sendto(retCode);
         } else if (iterator->first == MessageType::FPS_STOP) {
@@ -282,12 +286,7 @@ public:
             resultFPS = "FPS||";
         } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
             retCode = SplitMsg(recvBuf);
-            SpProfilerFactory::SetProfilerPkg(retCode);
-            spSocket.Sendto(retCode);
-            std::string processId = "";
-            OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(retCode);
-            SpProfilerFactory::SetProfilerPidByPkg(processId);
+            SpProfilerFactory::SetProfilerGameLayer(retCode);
         } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
             iterator->first == MessageType::CATCH_TRACE_CMD) {
             SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));

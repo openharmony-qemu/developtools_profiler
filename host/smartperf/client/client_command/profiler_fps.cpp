@@ -487,18 +487,24 @@ std::string ProfilerFPS::GetGameLayer()
     std::string cmdResult;
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     SPUtils::LoadCmd(dumperSurface, cmdResult);
-    size_t pos = cmdResult.find("NodeId[");
-    size_t posLayerId = cmdResult.find("] LayerId");
-    std::string nodeIdStr = cmdResult.substr(pos + 7, posLayerId - pos - 7);
+    std::string start = "NodeId[";
+    std::string end = "]";
+    size_t startPos = cmdResult.find(start) + start.length();
+    size_t endPos = cmdResult.find(end, startPos);
+    std::string nodeIdStr = cmdResult.substr(startPos, endPos - startPos);
     uint64_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
         nodeId = std::stoll(nodeIdStr);
         nodeId = nodeId >> kShiftAmount;
         if (std::to_string(nodeId) == processId) {
-            size_t posLeft = cmdResult.find("[");
-            size_t posRight = cmdResult.find("]");
-            gameLayer = cmdResult.substr(posLeft + 1, posRight - posLeft - 1);
+            size_t layerStartPos = cmdResult.find("[");
+            size_t layerEndPos = cmdResult.find("]");
+            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+                return gameLayer;
+            }
+            layerStartPos += 1;
+            gameLayer = cmdResult.substr(layerStartPos, layerEndPos - layerStartPos);
         }
     }
     return gameLayer;
