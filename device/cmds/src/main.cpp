@@ -530,6 +530,9 @@ void SignalHandler(int signal)
 
 int main(int argc, char* argv[])
 {
+    if (!COMMON::GetDeveloperMode()) {
+        return -1;
+    }
     signal(SIGINT, SignalHandler);
 
     std::string config = "";

@@ -382,9 +382,11 @@ static void WriteMmap(const char* data)
 {
     // 建立映射
     char* pMap = CreateMmap();
+    if (data == nullptr || strlen(data) == 0) {
+        return;
+    }
     // 写入
     MmapWriteFile(pMap, strlen(data), data);
-
     // 关闭映射
     RemoveMmap(pMap);
 }

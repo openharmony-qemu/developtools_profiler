@@ -443,7 +443,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
 void HookManager::HookManagerCtx::FlushStackArray()
 {
     if (rawDataArray.size() > 0) {
-        if (!stackData->PutRawStackArray(rawDataArray)) {
+        if (!stackData->PutRawStackArray(rawDataArray, rawStackCount)) {
             PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray error");
         }
         rawStackCount = 0;

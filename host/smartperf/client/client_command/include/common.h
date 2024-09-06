@@ -20,8 +20,7 @@ namespace OHOS {
 namespace SmartPerf {
 enum class MessageType {
     GET_CPU_NUM,
-    GET_CPU_FREQ,
-    GET_CPU_LOAD,
+    GET_CPU_FREQ_LOAD,
     SET_PKG_NAME,
     SET_PROCESS_ID,
     GET_FPS_AND_JITTERS,
@@ -42,12 +41,12 @@ enum class MessageType {
     GET_CUR_FPS,
     GET_LOW_POWER_FPS,
     FPS_STOP,
+    SET_GAME_VIEW,
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CPU_NUM, std::string("get_cpu_num") },
-    { MessageType::GET_CPU_FREQ, std::string("get_cpu_freq") },
-    { MessageType::GET_CPU_LOAD, std::string("get_cpu_load") },
+    { MessageType::GET_CPU_FREQ_LOAD, std::string("get_cpu_freq_load") },
     { MessageType::SET_PKG_NAME, std::string("set_pkgName") },
     { MessageType::SET_PROCESS_ID, std::string("set_pid") },
     { MessageType::GET_FPS_AND_JITTERS, std::string("get_fps_and_jitters") },
@@ -68,6 +67,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_LOW_POWER_FPS, std::string("get_low_power_fps") },
     { MessageType::GET_CUR_FPS, std::string("get_cur_fps") },
     { MessageType::FPS_STOP, std::string("fps_stop") },
+    { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
 };
 
 enum class CommandType {
@@ -216,7 +216,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::UITEST_DUMPLAYOUT, std::string("uitest dumpLayout") },
     { CmdCommand::UINPUT_POINT, std::string("uinput -T -d ") },
     { CmdCommand::DUBAI_CP, std::string(
-        "cp /data/service/el2/100/xpower/dubai.db /data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
+        "cp /data/service/el2/100/xpower/dubai.db/data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
     { CmdCommand::DUBAI_CHMOD, std::string(
         "chmod 777 /data/app/el2/100/database/com.ohos.smartperf/entry/rdb/dubai.db") },
     { CmdCommand::TASKSET, std::string("taskset -p f ") },

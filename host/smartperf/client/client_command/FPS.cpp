@@ -103,6 +103,12 @@ void FPS::SetPackageName(std::string pName)
 {
     pkgName = std::move(pName);
 }
+
+void FPS::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
+
 void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
@@ -142,10 +148,6 @@ FpsInfo FPS::GetFpsInfo()
         GetCurrentTime();
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        std::string processId = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(pkgName);
-        LOGI("FPS::processId -- %s", processId.c_str());
         if (processId.empty()) {
             processFlag = true;
             fpsInfoMax.Clear();

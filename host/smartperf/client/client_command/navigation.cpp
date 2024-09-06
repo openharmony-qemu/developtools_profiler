@@ -32,18 +32,15 @@ std::map<std::string, std::string> Navigation::ItemData()
     return result;
 }
 
-void Navigation::SetPackageName(const std::string &pName)
+void Navigation::SetProcessId(const std::string &pid)
 {
-    packageName = pName;
+    processId = pid;
 }
 
 std::map<std::string, std::string> Navigation::GetNavInfo() const
 {
     std::map<std::string, std::string> navInfo;
-    std::string processId = "";
     std::string winId = "";
-    OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(packageName);
     winId = GetWinId(processId);
     if (winId != "-1") {
         navInfo = GetNavResult(winId);
@@ -85,7 +82,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
     return navInfo;
 }
 
-std::string Navigation::GetWinId(std::string processId) const
+std::string Navigation::GetWinId(std::string navPid) const
 {
     std::string wid;
     const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_A_A);
@@ -103,7 +100,7 @@ std::string Navigation::GetWinId(std::string processId) const
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
         if (static_cast<int>(params.size()) > paramThree) {
-            if (params[paramTwo] == processId) {
+            if (params[paramTwo] == navPid) {
                 wid = params[paramThree];
                 break;
             }

@@ -36,7 +36,15 @@ namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfoProfiler finalResult = GetFpsInfo();
+    FpsInfoProfiler finalResult;
+    if (isGameLayer == "1") {
+        std::string gameLayer = GetGameLayer();
+        if (!gameLayer.empty()) {
+            finalResult = selfRerderLayers(gameLayer);
+        }
+    } else {
+        finalResult = GetFpsInfo();
+    }
     lastFpsInfoResult = finalResult;
     if (processFlag) {
         result["fps"] = "NA";
@@ -74,6 +82,11 @@ void ProfilerFPS::SetTraceCatch()
 void ProfilerFPS::SetPackageName(std::string pName)
 {
     pkgName = std::move(pName);
+}
+
+void ProfilerFPS::SetProcessId(const std::string &pid)
+{
+    processId = pid;
 }
 
 void ProfilerFPS::GetResultFPS(int sectionsNum)
@@ -303,10 +316,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
             GetCurrentTime(fifty);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
-            std::string processId = "";
-            OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(pkgName);
-            LOGI("ProfilerFPS::processId -- %s", processId.c_str());
             if (processId.empty()) {
                 processFlag = true;
                 fpsInfoMax.Clear();
@@ -455,6 +464,50 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         }
     }
     printf("SP_daemon exec finished!\n");
+}
+
+void ProfilerFPS::SetGameLayer(std::string isGameView)
+{
+    isGameLayer = std::move(isGameView);
+}
+
+FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
+{
+    GetCurrentTime(fifty);
+    fpsInfoMax = GetSurfaceFrame(gameLayer);
+    return fpsInfoMax;
+}
+
+std::string ProfilerFPS::GetGameLayer()
+{
+    std::string gameLayer = "";
+    if (processId.empty()) {
+        return gameLayer;
+    }
+    std::string cmdResult;
+    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    SPUtils::LoadCmd(dumperSurface, cmdResult);
+    std::string start = "NodeId[";
+    std::string end = "]";
+    size_t startPos = cmdResult.find(start) + start.length();
+    size_t endPos = cmdResult.find(end, startPos);
+    std::string nodeIdStr = cmdResult.substr(startPos, endPos - startPos);
+    uint64_t nodeId;
+    const int kShiftAmount = 32;
+    if (!nodeIdStr.empty()) {
+        nodeId = std::stoll(nodeIdStr);
+        nodeId = nodeId >> kShiftAmount;
+        if (std::to_string(nodeId) == processId) {
+            size_t layerStartPos = cmdResult.find("[");
+            size_t layerEndPos = cmdResult.find("]");
+            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+                return gameLayer;
+            }
+            layerStartPos += 1;
+            gameLayer = cmdResult.substr(layerStartPos, layerEndPos - layerStartPos);
+        }
+    }
+    return gameLayer;
 }
 }
 }

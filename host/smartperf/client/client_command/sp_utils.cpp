@@ -29,7 +29,12 @@
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+#include "cpu_collector.h"
+#include "collect_result.h"
 
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
@@ -606,6 +611,21 @@ bool SPUtils::IsHmKernel()
         isHM = osRelease.find("HongMeng") != std::string::npos;
     }
     return isHM;
+}
+
+std::string SPUtils::GetCpuNum()
+{
+    std::string cpuCores = "cpuCores||";
+    std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
+    CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
+    std::vector<CpuFreq> &cpufreq = result.data;
+    size_t cpuNum = cpufreq.size();
+    cpuCores += std::to_string(cpuNum);
+    if (cpuNum == 0) {
+        std::cout << "CPU frequency collection failed." << std::endl;
+        LOGI("CPU frequency collection failed.");
+    }
+    return cpuCores;
 }
 }
 }

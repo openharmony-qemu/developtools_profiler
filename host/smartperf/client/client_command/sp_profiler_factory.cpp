@@ -36,9 +36,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 {
     SpProfiler* profiler = nullptr;
     switch (messageType) {
-        case MessageType::GET_CPU_NUM:
-        case MessageType::GET_CPU_FREQ:
-        case MessageType::GET_CPU_LOAD:
+        case MessageType::GET_CPU_FREQ_LOAD:
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
@@ -112,13 +110,32 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
-    Navigation &nav = Navigation::GetInstance();
-    nav.SetPackageName(pkg);
 }
+
+void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
+{
+    FPS &fps = FPS::GetInstance();
+    fps.SetProcessId(pid);
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetProcessId(pid);
+    RAM &ram = RAM::GetInstance();
+    ram.SetProcessId(pid);
+    CPU &cpu = CPU::GetInstance();
+    cpu.SetProcessId(pid);
+    Navigation &nav = Navigation::GetInstance();
+    nav.SetProcessId(pid);
+}
+
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetLayerName(layer);
+}
+
+void SpProfilerFactory::SetProfilerGameLayer(const std::string &isGameView)
+{
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetGameLayer(isGameView);
 }
 
 void SpProfilerFactory::SetByTrace(std::string message)

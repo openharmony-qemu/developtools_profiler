@@ -26,7 +26,7 @@ namespace EBPF_TOOLS {
 class EbpfConverter {
 public:
     EbpfConverter(const std::string& inputPath, const std::string& outPath);
-    virtual ~EbpfConverter() = default;
+    virtual ~EbpfConverter();
     void StartParsing();
 
 private:

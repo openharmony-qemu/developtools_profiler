@@ -80,6 +80,7 @@ public:
     void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
     FpsCurrentFpsTime GetFpsCurrentFpsTime();
     void ReadDataFromPipe(int fd);
+    void SetProcessId(const std::string &pid);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -101,6 +102,7 @@ private:
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
     const std::string screenPath = "/sys/class/graphics/fb0/lcd_fps_scence";
+    std::string processId = "";
 };
 }
 }

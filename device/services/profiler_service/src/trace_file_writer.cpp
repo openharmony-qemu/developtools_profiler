@@ -100,10 +100,6 @@ TraceFileWriter::~TraceFileWriter()
     if (fileMapAddr_ != MMAP_FAILED) {
         munmap(fileMapAddr_, fileLength_);
     }
-
-    if (fd_ != -1) {
-        close(fd_);
-    }
 }
 
 std::string TraceFileWriter::Path() const

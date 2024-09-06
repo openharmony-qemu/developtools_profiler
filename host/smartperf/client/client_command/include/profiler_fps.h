@@ -59,10 +59,13 @@ struct FpsInfoProfiler {
 class ProfilerFPS : public SpProfiler {
 public:
     void SetTraceCatch();
+    void SetGameLayer(std::string isGameView);
+    std::string GetGameLayer();
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
+    FpsInfoProfiler selfRerderLayers(const std::string &gameLayer);
     bool IsForeGround();
     bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
@@ -83,6 +86,7 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
+    void SetProcessId(const std::string &pid);
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
@@ -111,8 +115,11 @@ private:
     bool isFoundAppName = false;
     bool isFoundBundleName = false;
     int isCatchTrace = 0;
+    std::string isGameLayer = "";
     bool processFlag = false;
+    std::string gameLayer = "";
     bool ohFlag = false;
+    std::string processId = "";
 };
 }
 }

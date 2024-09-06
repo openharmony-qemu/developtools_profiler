@@ -51,11 +51,12 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
         PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed to write descriptor");
         return RET_ERR;
     }
+
+    CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
     if (!data.WriteFileDescriptor(fd)) {
         PROFILER_LOG_ERROR(LOG_CORE, "DumpData failed to write fd");
         return RET_ERR;
     }
-    CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
 
     MessageParcel reply;
     MessageOption option;
