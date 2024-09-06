@@ -47,7 +47,7 @@ static std::string GetOptions(const std::vector<std::string> &argv)
     return str;
 }
 
-static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
+static bool GCheckCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
     for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
-    if (!g_checkCmdParam(vec, errorInfo)) {
+    if (!GCheckCmdParam(vec, errorInfo)) {
         std::cout << "SP_daemon:" << errorInfo << std::endl <<
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;
