@@ -371,6 +371,9 @@ template <typename T> bool ProcessDataPlugin::WriteCpuUsageData(int pid, T& cpuI
     if (bootTime - prevBootTime == 0 || bootTime == 0) {
         return false;
     }
+    if (cpuTime < prevCpuTime) {
+        return false;
+    }
     if (prevCpuTime == 0) {
         usage = static_cast<double>(cpuTime) / (bootTime);
     } else {

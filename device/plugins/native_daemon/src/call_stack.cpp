@@ -48,7 +48,7 @@ bool CallStack::ReadVirtualThreadMemory(UnwindInfo &unwindInfoPtr, ADDR_TYPE add
         }
     }
 
-    if (unwindInfoPtr.thread.ReadRoMemory(addr, (uint8_t *)data, sizeof(ADDR_TYPE))) {
+    if (unwindInfoPtr.thread.ReadRoMemory(addr, reinterpret_cast<uint8_t *>(data), sizeof(ADDR_TYPE))) {
         unwindInfoPtr.callStack.porcessMemoryMap_[unwindInfoPtr.thread.pid_][addr] = *data;
         return true;
     } else {
@@ -521,7 +521,7 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
     regs->SetRegsData(tempRegs);
 #else
     std::shared_ptr<DfxRegs> regs = std::make_shared<DfxRegsArm64>();
-    regs->SetRegsData((uintptr_t*)regs_, regsNum_);
+    regs->SetRegsData(reinterpret_cast<uintptr_t*>(regs_), regsNum_);
 #endif
 
     unwinder->SetRegs(regs);

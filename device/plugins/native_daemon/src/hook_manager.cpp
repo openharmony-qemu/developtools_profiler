@@ -314,14 +314,14 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 void HookManager::CheckHapEncryped()
 {
     for (const auto& pid : hookConfig_.expand_pids()) {
-        if (pid > 0 && COMMON::checkApplicationEncryped(pid, "")) {
+        if (pid > 0 && COMMON::CheckApplicationEncryped(pid, "")) {
             hookConfig_.set_js_stack_report(0);
             hookConfig_.set_max_js_stack_depth(0);
             break;
         }
     }
     const std::string processName = hookConfig_.process_name();
-    if (!processName.empty() && COMMON::checkApplicationEncryped(0, processName)) {
+    if (!processName.empty() && COMMON::CheckApplicationEncryped(0, processName)) {
         PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
         hookConfig_.set_js_stack_report(0);
         hookConfig_.set_max_js_stack_depth(0);
@@ -398,7 +398,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         return false;
     }
     if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
-        fpHookData_ = fopen(hookConfig_.file_name().c_str(), "wb+");
+        auto retFile = COMMON::CheckNotExistsFilePath(hookConfig_.file_name());
+        if (!retFile.first) {
+            PROFILER_LOG_INFO(LOG_CORE, "check file path %s fail", hookConfig_.file_name().c_str());
+            return false;
+        }
+        fpHookData_ = fopen(retFile.second.c_str(), "wb+");
         if (fpHookData_ == nullptr) {
             PROFILER_LOG_INFO(LOG_CORE, "fopen file %s fail", hookConfig_.file_name().c_str());
             return false;

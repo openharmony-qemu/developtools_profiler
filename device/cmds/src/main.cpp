@@ -104,10 +104,6 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
                                                         const std::string& outputFile)
 {
     auto request = std::make_unique<CreateSessionRequest>();
-    if (!request) {
-        return nullptr;
-    }
-
     std::string content = config;
     if (content.empty()) {
         printf("config file empty!");

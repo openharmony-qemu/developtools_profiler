@@ -252,7 +252,7 @@ static void TestMemoryMap()
 {
     constexpr int smallSize = 4096;
     constexpr int bigSize = 8192;
-    int fd = open("/bin/hiebpf", O_RDWR | O_CREAT, S_IRWXU | S_IRWXG | S_IRWXO);
+    int fd = open("/bin/hiebpf", O_RDWR | O_CREAT, S_IRWXU | S_IRGRP | S_IROTH);
     if (fd < 0) {
         printf("open %s failed\n", "/bin/hiebpf");
         return;
