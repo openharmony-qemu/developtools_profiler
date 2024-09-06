@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "trace_file_reader.h"
-
+#include "common.h"
 #include "logging.h"
 
 using CharPtr = std::unique_ptr<char>::pointer;
@@ -39,13 +39,19 @@ bool TraceFileReader::ValidateHeader()
 
 bool TraceFileReader::Open(const std::string& path)
 {
-    stream_.open(path, std::ios_base::in | std::ios_base::binary);
-    CHECK_TRUE(stream_.is_open(), false, "open %s failed, %d!", path.c_str(), errno);
+    auto retFile = COMMON::CheckNotExistsFilePath(path);
+    if (!retFile.first) {
+        PROFILER_LOG_INFO(LOG_CORE, "check file path %s fail", path.c_str());
+        return false;
+    }
+    std::string realPath = retFile.second;
+    stream_.open(realPath, std::ios_base::in | std::ios_base::binary);
+    CHECK_TRUE(stream_.is_open(), false, "open %s failed, %d!", realPath.c_str(), errno);
 
     stream_.read(reinterpret_cast<CharPtr>(&header_), sizeof(header_));
-    CHECK_TRUE(stream_, false, "read header from %s failed!", path_.c_str());
+    CHECK_TRUE(stream_, false, "read header from %s failed!", realPath.c_str());
 
-    path_ = path;
+    path_ = realPath;
     return true;
 }
 

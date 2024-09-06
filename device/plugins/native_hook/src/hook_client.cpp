@@ -135,8 +135,9 @@ bool InititalizeIPC()
 }
 void FinalizeIPC() {}
 
-int ConvertPid(char* buf)
+int ConvertPid(char* buf, size_t len)
 {
+    UNUSED_PARAMETER(len);
     int count = 0;
     char pidBuf[11] = {0}; /* 11: 32 bits to the maximum length of a string */
     char *str = buf;
@@ -172,7 +173,7 @@ pid_t GetRealPid(void)
         }
     }
     (void)fclose(fp);
-    return static_cast<pid_t>(ConvertPid(buf));
+    return static_cast<pid_t>(ConvertPid(buf, sizeof(buf)));
 }
 }  // namespace
 
@@ -277,7 +278,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
         int min = 0;
         int max = 0;
         if (sscanf_s(paramOutBuf, "%d,%d", &min, &max) == 2) { // 2: two parameters.
-            g_maxSize = max > 0 ? max : INT_MAX;
+            g_maxSize = max > 0 ? static_cast<uint32_t>(max) : INT_MAX;
             g_ClientConfig.filterSize = min > 0 ? min : 0;
         }
     }

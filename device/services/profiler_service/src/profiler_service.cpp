@@ -109,7 +109,7 @@ size_t ProfilerService::SessionContext::UpdatePluginConfigs(const std::vector<Pr
     for (auto& cfg : newPluginConfigs) {
         auto it = nameIndex.find(cfg.name());
         if (it != nameIndex.end()) {
-            int index = it->second;
+            size_t index = it->second;
             pluginConfigs[index] = cfg;
             updateCount++;
         }
@@ -392,16 +392,24 @@ void ProfilerService::MergeStandaloneFile(const std::string& resultFile, const s
                            pluginName.c_str(), outputFile.c_str());
         return;
     }
-
+    auto retFile = COMMON::CheckNotExistsFilePath(outputFile);
+    if (!retFile.first) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, outputFile.c_str());
+        return;
+    }
     std::ifstream fsFile {}; // read from output file
-    fsFile.open(outputFile, std::ios_base::in | std::ios_base::binary);
+    fsFile.open(retFile.second, std::ios_base::in | std::ios_base::binary);
     if (!fsFile.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", outputFile.c_str(), fsFile.rdstate());
         return;
     }
-
+    auto targetFile = COMMON::CheckNotExistsFilePath(resultFile);
+    if (!targetFile.first) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, resultFile.c_str());
+        return;
+    }
     std::ofstream fsTarget {}; // write to profiler ouput file
-    fsTarget.open(resultFile, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
+    fsTarget.open(targetFile.second, std::ios_base::in | std::ios_base::out | std::ios_base::binary);
     if (!fsTarget.good()) {
         PROFILER_LOG_ERROR(LOG_CORE, "open file(%s) failed: %d", resultFile.c_str(), fsTarget.rdstate());
         return;
