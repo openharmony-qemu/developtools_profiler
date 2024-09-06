@@ -31,6 +31,7 @@
 #include "include/navigation.h"
 #include "include/sp_log.h"
 
+
 namespace OHOS {
 namespace SmartPerf {
 SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)

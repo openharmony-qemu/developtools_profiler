@@ -17,7 +17,6 @@
 #include <thread>
 #include <vector>
 #include <gtest/gtest.h>
-
 #include "sp_utils.h"
 #include "RAM.h"
 #include "GPU.h"

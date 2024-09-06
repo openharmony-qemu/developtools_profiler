@@ -20,6 +20,7 @@
 #include <vector>
 #include "common.h"
 #include "sp_utils.h"
+
 namespace OHOS {
 namespace SmartPerf {
 class SmartPerfCommand {

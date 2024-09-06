@@ -28,7 +28,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
-#include "include/common.h"
+#include "common.h"
 
 
 namespace OHOS {

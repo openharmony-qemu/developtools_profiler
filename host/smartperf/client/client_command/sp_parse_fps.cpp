@@ -19,12 +19,12 @@ SpParseFPS::SpParseFPS()
     pidPattern = std::regex("\\|(\\d+)\\|");
 }
 SpParseFPS::~SpParseFPS() {}
-void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vector<SpSrting> &out) const
+void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out) const
 {
     size_t index = 0;
     while (index != SpString::npos) {
         size_t tEnd = content.find_first_of(sp, index);
-        SpSrting tmp = content.substr(index, tEnd - index);
+        SpString tmp = content.substr(index, tEnd - index);
         if (tmp != "" && tmp != " ") {
             out.push_back(tmp);
         }
@@ -34,7 +34,6 @@ void SpParseFPS::StrSplit(const SpString &content, const SpString &sp, std::vect
         index = tEnd + 1;
     }
 }
-
 void SpParseFPS::GetAndSetPageType(Line &line, PageType &pageType) const
 {
     if (line.empty()) {
@@ -48,7 +47,6 @@ void SpParseFPS::GetAndSetPageType(Line &line, PageType &pageType) const
         pageType = LARGE;
     }
 }
-
 unsigned int SpParseFPS::GetTouchEventNum(Line &line, TouchEvent &touchEvent) const
 {
     if (line.empty()) {
@@ -59,7 +57,6 @@ unsigned int SpParseFPS::GetTouchEventNum(Line &line, TouchEvent &touchEvent) co
     }
     return touchEvent.tEventDisNum;
 }
-
 const FpsResult SpParseFPS::ParseBranch(FilePath &filePath, PackageName &pN, PageType &pT, TouchEvent &tE)
 {
     FpsResult fps = "0";
@@ -91,7 +88,6 @@ const FpsResult SpParseFPS::ParseBranch(FilePath &filePath, PackageName &pN, Pag
     }
     return fps;
 }
-
 FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &packageName)
 {
     if (filePath.empty() || packageName.empty()) {
@@ -114,7 +110,6 @@ FpsResult SpParseFPS::ParseTraceFile(FilePath &filePath, PackageName &packageNam
     }
     return "FPS:" + fps + "fps";
 }
-
 void SpParseFPS::StaticHandoffStartTime(Line &line)
 {
     if (line.empty()) {
@@ -136,7 +131,6 @@ void SpParseFPS::StaticHandoffStartTime(Line &line)
         }
     }
 }
-
 void SpParseFPS::DecHandOffTime(Line &line)
 {
     if (line.empty()) {
@@ -161,7 +155,6 @@ void SpParseFPS::DecHandOffTime(Line &line)
         rfV.isAddFrame = true;
     }
 }
-
 bool SpParseFPS::CountRsEndTime(Line &line, float staticTime, SpString uiPoint)
 {
     if (line.empty()) {
@@ -205,7 +198,6 @@ bool SpParseFPS::CountRsEndTime(Line &line, float staticTime, SpString uiPoint)
     }
     return false;
 }
-
 FpsResult SpParseFPS::PraseFPSTrace(FilePath &filePath, float staticTime, SpString uiPoint)
 {
     if (!this->lineClient.empty()) {

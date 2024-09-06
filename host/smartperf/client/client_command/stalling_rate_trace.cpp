@@ -91,6 +91,7 @@ double StallingRateTrace::CalculateTime()
     }
     return frameLossRate;
 }
+
 void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||

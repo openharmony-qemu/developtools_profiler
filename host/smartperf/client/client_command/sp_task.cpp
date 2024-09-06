@@ -267,10 +267,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             }
         }
     });
-        LOGI("SPTask::StartTask complete");
-        return ErrCode::OK;
+    LOGI("SPTask::StartTask complete");
+    return ErrCode::OK;
 }
-
 void SPTask::WritePath(std::string thisBasePath)
 {
     if (!SPUtils::FileAccess(thisBasePath)) {
@@ -326,6 +325,7 @@ void SPTask::StopTask()
     if (thread.joinable()) {
         thread.join();
     }
+
     KillHiperfCmd();
 
     LOGI("SPTask::StopTask complete");
@@ -398,6 +398,7 @@ void SPTask::GetHiperf(const std::string &traceName)
     LOGI("hiprofiler exec end (%s)", result.c_str());
 }
 
+
 bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 {
     std::set<std::string> keys;
@@ -409,7 +410,7 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
     if (keys.end() != itr) {
         keys.erase(itr);
     }
-    
+
     return SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 

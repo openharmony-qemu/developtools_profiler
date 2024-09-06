@@ -156,7 +156,6 @@ bool StartUpDelay::GetSpClear()
             SPUtils::LoadCmd("kill " + token, str);
         }
     }
-
     return false;
 }
 

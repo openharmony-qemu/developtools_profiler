@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Huawei Device Co., Ltd.
+ * Copyright (C) 2021 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "include/GpuCounter.h"
 #include <iostream>
 #include <fstream>
@@ -54,7 +53,7 @@ std::map<std::string, std::string> GpuCounter::ItemData()
 
     std::this_thread::sleep_for(std::chrono::microseconds(WAIT_EXIT_TIME));
 
-    // After 'kill -9', CSV file will also be generated
+    // After 'kill -9', a CSV file will also be generated
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
         std::string outStr;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(SPUtils::GetCurTime()) + ".csv";
@@ -189,7 +188,7 @@ int GpuCounter::Start()
     std::vector<std::string> pidList;
     GetCounterId(pidList);
     if (pidList.empty()) {
-        LOGE("counters_collector run failed ret(%d)", ret);
+        LOGE("counters_collector run failed  ret(%d)", ret);
         return -1;
     }
     startCaptureTime = SPUtils::GetCurTime();
@@ -205,18 +204,17 @@ void GpuCounter::Check()
 
     long long diff = 0;
     long long nowTime = SPUtils::GetCurTime();
-    
     diff = startCaptureTime > nowTime ? (LLONG_MAX - startCaptureTime + nowTime) : (nowTime - startCaptureTime);
     if (diff < captureDuration) {
         return;
     }
+    
     LOGI("GpuCounter::Check diff(%lld)", diff);
     std::vector<std::string> pidList;
     GetCounterId(pidList);
     if (!pidList.empty()) { // GPU process did not exit
         return;
     }
-
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
         std::string result;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(nowTime) + ".csv";
@@ -267,7 +265,7 @@ void GpuCounter::KillCounter()
 bool GpuCounter::IsNum(const std::string value)
 {
     bool isNum = false;
-    for (size_t i = 0 ; i < value.length(); i++) {
+    for (size_t i = 0; i < value.length(); i++) {
         if (value[i] == ' ') {
             continue;
         } else if (value[i] >= '0' && value[i] <= '9') {
@@ -350,7 +348,6 @@ void GpuCounter::SetPerm(ExecutePermissions code)
     if (!(code == EP_ENFORCING || code == EP_PERMISSIVE)) {
         return;
     }
-    
     if (originalEP == EP_PERMISSIVE) {
         return;
     }

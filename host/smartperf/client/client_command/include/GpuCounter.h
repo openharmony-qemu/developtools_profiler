@@ -30,13 +30,13 @@ public:
         GC_INIT = 0,
         GC_START,
         GC_STOP,
-        };
+    };
 
     enum ExecutePermissions {
         EP_INVALID = -1,
         EP_PERMISSIVE = 0,
         EP_ENFORCING = 1,
-        };
+    };
 
 public:
     std::map<std::string, std::string> ItemData() override;
@@ -54,7 +54,7 @@ public:
 
     int Init(const std::string &packageName, std::map<std::string, std::string> &retMap);
     void Rest();
-    //0 ok,-1 run failed
+    // 0 ok,-1 run failed
     int Start();
     void Check();
     long long GetCounterDuration();

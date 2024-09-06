@@ -287,7 +287,7 @@ export default class LegendRenderer extends Renderer {
           default:
               break;
         }
-        switch ( 
+        switch (
         orientation // "HORIZONTAL"
         ) {
           case LegendOrientation.HORIZONTAL: {
@@ -383,7 +383,7 @@ export default class LegendRenderer extends Renderer {
                       x1 = posX;
                       y1 = posY;
                       console.log(
-                          '3.1 i(' + i +') drawForm <==> posX=' + posX + '; posY(' + posY + ')+formYOffset(' + formYOffset + ')'
+                          '3.1 i(' + i + ') drawForm <==> posX=' + posX + '; posY(' + posY + ')+formYOffset(' + formYOffset + ')'
                       );
                       paints.push(this.drawForm(posX, posY, e, this.mLegend));
                       if (direction == LegendDirection.LEFT_TO_RIGHT) {
@@ -430,7 +430,7 @@ export default class LegendRenderer extends Renderer {
                       );
                       posX += direction == LegendDirection.RIGHT_TO_LEFT ? -xEntrySpace : xEntrySpace;
                   } else posX += direction == LegendDirection.RIGHT_TO_LEFT ? -stackSpace : stackSpace;
-                  datas.push(new Point(x1, y1, x2, y2))
+                  datas.push(new Point(x1, y1, x2, y2));
               }
               break;
           }
@@ -446,7 +446,7 @@ export default class LegendRenderer extends Renderer {
                     break;
                 }
                 case LegendVerticalAlignment.BOTTOM: {
-                    posY = 
+                    posY =
                         horizontalAlignment == LegendHorizontalAlignment.CENTER
                             ? this.mViewPortHandler.getChartHeight()
                             : this.mViewPortHandler.contentBottom();
@@ -536,6 +536,7 @@ export default class LegendRenderer extends Renderer {
         if (form == LegendForm.DEFAULT) {
             form = legend.getForm();
         }
+
         let formSize: number = Utils.convertDpToPixel(Number.isNaN(entry.formSize) ?
         legend.getFormSize() : entry.formSize);
         let half: number = formSize / 2;
@@ -548,6 +549,7 @@ export default class LegendRenderer extends Renderer {
           // Do not draw, but keep space for the form
               break;
           case LegendForm.DEFAULT:
+
           case LegendForm.CIRCLE: {
               let circlePaint: CirclePaint = new CirclePaint(); //= this.mLegendFormPaint as CirclePaint;
               circlePaint.setColor(entry.formColor);
@@ -596,8 +598,8 @@ export default class LegendRenderer extends Renderer {
      * @param y
      * @param label the label to draw
      */
-    protected drawLabel(x : number, y : number, label : string): Paint {
-        let textPaint : TextPaint = new TextPaint(this.mLegendLabelPaint as TextPaint);
+    protected drawLabel(x: number, y: number, label: string): Paint {
+        let textPaint: TextPaint = new TextPaint(this.mLegendLabelPaint as TextPaint);
         textPaint.setText(label);
         textPaint.setX(x);
         textPaint.setY(y);

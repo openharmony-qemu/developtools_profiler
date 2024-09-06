@@ -37,7 +37,7 @@ typedef enum {
 #define FILE_OPEN_FAILED "file open failed!"
 #define TOUCHEVENT_FLAG "H:touchEventDispatch"
 #define HTOUCHEVENT_FLAG "H:TouchEventDispatch"
-#define ROSENRENDERWEB "H:RosenRenderWeb"
+#define ROSENRENDERWEB "H:RosenRenderWeb:"
 #define ROSENRENDERTEXTURE "H:RosenRenderTexture:"
 #define FLING "fling"
 class SpParseFPS {
@@ -57,6 +57,8 @@ private:
         // the last touchDis point's time
         SpString lastTouchEventTime = "0";
         // After the first frame after the hand is left to start rendering add, the end of the add is terminated
+        bool isAddFrame = false;
+        // DoComposition has the dot corresponding to the package name under the calculation end time
         bool isHasUI = false;
         // Start fetching the start point of the hand
         bool isStaticsLeaveTime = false;
@@ -70,17 +72,17 @@ private:
         {
             tEventDisNum = 0;
             touchFlag = false;
-            unsigned int tEventDisNum;
-            bool touchFlag;
         }
+        unsigned int tEventDisNum;
+        bool touchFlag;
     };
 
 public:
-    FpsResult ParseTraceFile(FilePath &filePath, PackageName &PackageName);
+    FpsResult ParseTraceFile(FilePath &filePath, PackageName &packageName);
 
 private:
     inline unsigned int GetTouchEventNum(Line &line, TouchEvent &touchEvent) const;
-    inline void StrSplit(const Spstring &content, const SpString &sp, std::vector<SpString> &out) const;
+    inline void StrSplit(const SpString &content, const SpString &sp, std::vector<SpString> &out) const;
     inline void GetAndSetPageType(Line &line, PageType &pageType) const;
     inline const FpsResult ParseBranch(FilePath &filePath, PackageName &pN, PageType &pT, TouchEvent &tE);
     inline FpsResult PraseFPSTrace(FilePath &filePath, float staticTime, SpString uiPoint);

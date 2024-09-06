@@ -25,6 +25,7 @@
 #include "sp_utils.h"
 #include "sp_log.h"
 #include "sp_task.h"
+
 using namespace testing::ext;
 using namespace std;
 
@@ -89,5 +90,6 @@ HWTEST_F(SPdaemonTaskTest, DetectionAndGrabTestCase001, TestSize.Level1)
 
     EXPECT_EQ(ret, true);
 }
+
 }
 }

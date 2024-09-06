@@ -104,6 +104,18 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
+        InitSomething();
+        SpThreadSocket udpThreadSocket;
+        SpThreadSocket udpExThreadSocket;
+        SpThreadSocket tcpThreadSocket;
+        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+        sleep(1);
+        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+        sleep(1);
+        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+        tcpSocket.join();
+        udpSocket.join();
+        udpexSocket.join();
     }
 }
 
@@ -168,6 +180,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
             if (cit == data.end()) {
                 continue;
             }
+            
             if (cit->second == "true") {
                 rc = 1;
             } else {
