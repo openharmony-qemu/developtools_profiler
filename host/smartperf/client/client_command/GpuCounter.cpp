@@ -208,13 +208,14 @@ void GpuCounter::Check()
     if (diff < captureDuration) {
         return;
     }
-    
+
     LOGI("GpuCounter::Check diff(%lld)", diff);
     std::vector<std::string> pidList;
     GetCounterId(pidList);
     if (!pidList.empty()) { // GPU process did not exit
         return;
     }
+
     if (SPUtils::FileAccess(constOutSourCVSFile)) {
         std::string result;
         std::string newFileName = constOutDestCVSPrefix + "_" + std::to_string(nowTime) + ".csv";
@@ -235,6 +236,7 @@ void GpuCounter::Check()
 
     return;
 }
+
 
 void GpuCounter::GetCounterId(std::vector<std::string> &pidList)
 {
@@ -348,6 +350,7 @@ void GpuCounter::SetPerm(ExecutePermissions code)
     if (!(code == EP_ENFORCING || code == EP_PERMISSIVE)) {
         return;
     }
+
     if (originalEP == EP_PERMISSIVE) {
         return;
     }

@@ -169,7 +169,7 @@ bool SpParseFPS::CountRsEndTime(Line &line, float staticTime, SpString uiPoint)
             beQueue.push(line);
         }
         if (line.find("E|" + pid + "|") != SpString::npos && line.find("-" + pid) != SpString::npos) {
-            beQueue.pop;
+            beQueue.pop();
         }
         if (!beQueue.empty()) {
             return false;

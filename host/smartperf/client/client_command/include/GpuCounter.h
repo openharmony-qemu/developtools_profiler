@@ -54,13 +54,13 @@ public:
 
     int Init(const std::string &packageName, std::map<std::string, std::string> &retMap);
     void Rest();
-    // 0 ok,-1 run failed
+    // 0 ok, -1 run failed
     int Start();
     void Check();
     long long GetCounterDuration();
 
 private:
-    //0 succed,-1 dependency file not detected, -2 package name error, -3 non root users, -4 NonHisilicon chips
+    // 0 succed, -1 dependency file not detected, -2 package name error, -3 non root users, -4 NonHisilicon chips
     int CheckResources(const std::string &packageName, std::string &errorInfo);
     void GetCounterId(std::vector<std::string> &pidList);
     void KillCounter();

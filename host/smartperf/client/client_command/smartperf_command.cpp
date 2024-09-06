@@ -118,7 +118,6 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         udpexSocket.join();
     }
 }
-
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
@@ -180,7 +179,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
             if (cit == data.end()) {
                 continue;
             }
-            
+
             if (cit->second == "true") {
                 rc = 1;
             } else {
