@@ -52,10 +52,6 @@ ohos_static_library("libhidebug_init") {
 
   defines = [ "HIDEBUG_IN_INIT" ]
 
-  if (build_variant == "root") {
-    defines += [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
-  }
-
   include_dirs = [ "../../interfaces/native/innerkits/include" ]
 
   sources = [ "../../../frameworks/native/hidebug_base.c" ]

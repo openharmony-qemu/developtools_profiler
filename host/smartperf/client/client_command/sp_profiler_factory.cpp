@@ -132,6 +132,12 @@ void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
     fps.SetLayerName(layer);
 }
 
+void SpProfilerFactory::SetProfilerGameLayer(const std::string &isGameView)
+{
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetGameLayer(isGameView);
+}
+
 void SpProfilerFactory::SetByTrace(std::string message)
 {
     std::vector<std::string> values;

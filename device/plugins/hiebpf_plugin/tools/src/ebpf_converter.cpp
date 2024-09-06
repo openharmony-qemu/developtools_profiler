@@ -55,9 +55,16 @@ EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& ou
 
 EbpfConverter::~EbpfConverter()
 {
-    for (auto item : symbolInfo_)
-    {
-        delete item.second;
+    std::map<std::string, SymbolInfo>::iterator iter;
+    for (iter = symbolInfo_.begin(); iter != symbolInfo_.end(); iter++) {
+        if (iter->second.symTab != nullptr) {
+            delete[] iter->second.symTab;
+            iter->second.symTab = nullptr;
+        }
+        if (iter->second.strTab != nullptr) {
+            delete[] iter->second.strTab;
+            iter->second.strTab = nullptr;
+        }
     }
 }
 
@@ -300,7 +307,12 @@ void EbpfConverter::SymbolInfoParsing()
     if (info.fileNameSize > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         if (!Read(reinterpret_cast<void*>(&fileName), dataLen)) {
-            delete [] info.strTab;
+            std::cout << "read file name failed" << std::endl;
+            delete[] info.symTab;
+            info.symTab = nullptr;
+            delete[] info.strTab;
+            info.strTab = nullptr;
+            return;
         }
         info.fileName = fileName;
     }

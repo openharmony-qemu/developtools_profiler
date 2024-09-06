@@ -19,12 +19,22 @@
 #include "string"
 #include "vector"
 #include "sp_profiler.h"
+#include "GpuCounterCallback.h"
 #include "thread"
 #include "mutex"
 
 namespace OHOS {
     namespace SmartPerf {
-        class GPU_Counter : public SpProfiler {
+        class GpuCounterPlugin {
+        public:
+            uint32_t version;
+            const char *pluginName;
+
+            virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
+            virtual int32_t StopGetGpuPerfInfo() = 0;
+        };
+
+        class GpuCounter : public SpProfiler {
         public:
             enum GcStatus {
                 GC_INIT = 0,
@@ -39,9 +49,9 @@ namespace OHOS {
         public:
             std::map<std::string, std::string> ItemData() override;
 
-            static GPU_Counter &GetInstance()
+            static GpuCounter &GetInstance()
             {
-                static GPU_Counter instance;
+                static GpuCounter instance;
                 return instance;
             }
             void StartCollect(GcCollectType type);
@@ -51,14 +61,16 @@ namespace OHOS {
             std::map<std::string, std::string> &GetGpuCounterRealtimeDataMap();
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
         private:
-            GPU_Counter() {};
-            GPU_Counter(const GPU_Counter &);
-            GPU_Counter &operator = (const GPU_Counter &);
+            GpuCounter() {};
+            GpuCounter(const GpuCounter &);
+            GpuCounter &operator = (const GpuCounter &);
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;    //保存 std::vector<OHOS::GameService::GpuPerfInfo> gpuCounter; 的数据
             std::mutex realtimeDataLock;
             std::map<std::string, std::string> gpuCounterRealtimeDataMap;
             void SaveData(std::string path);
+            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_plugin.z.so";
+            const std::string CREATE_PLUGIN = "onCreatePlugin";
         };
     };
 }
