@@ -26,7 +26,7 @@
 #include <memory>
 #include <string>
 #include <sys/mman.h>
-
+#include "common.h"
 #include "logging.h"
 #include "memory_plugin_result.pb.h"
 
@@ -331,8 +331,13 @@ private:
                 findMapHead = true;
                 if (isReportSmaps) {
                     smapsInfo = processMemoryInfo.add_smapinfo();
-                    smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
-                    smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+                    if (!COMMON::IsUserMode()) {
+                        smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
+                        smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+                    } else {
+                        smapsInfo->set_start_addr("");
+                        smapsInfo->set_end_addr("");
+                    }
                     smapsInfo->set_permission(smapsHeadInfo.permission);
                     smapsInfo->set_path(smapsHeadInfo.path);
                     smapsInfo->set_category(ParseCategory(smapsHeadInfo));

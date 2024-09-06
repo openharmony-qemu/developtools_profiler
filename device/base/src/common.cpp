@@ -543,6 +543,16 @@ bool ReadFile(const std::string &filePath, const std::vector<std::string>& valid
     return true;
 }
 
+bool IsUserMode()
+{
+    std::string debugMode = "0";
+    debugMode = OHOS::system::GetParameter("const.debuggable", debugMode);
+    if (debugMode != "0") {
+        PROFILER_LOG_INFO(LOG_CORE, "It is not user mode!");
+    }
+    return debugMode == "0";
+}
+
 std::string GetErrorMsg()
 {
     const int bufSize = 256;
