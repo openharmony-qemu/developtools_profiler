@@ -242,7 +242,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
                 updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
             }
             if (updateNormalSymbol) {
-                virtualruntime_->UpdateSymbols(memMapItem->name);
+                virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
             }
             prevMap = memMapItem;
         } else if (!virtualruntime_->IsSymbolExist(memMapItem->name)) {
@@ -256,7 +256,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
                 updateNormalSymbol = !virtualruntime_->UpdateHapSymbols(memMapItem);
             }
             if (updateNormalSymbol) {
-                virtualruntime_->UpdateSymbols(memMapItem->name);
+                virtualruntime_->UpdateSymbols(memMapItem->name, memMapItem);
             }
             prevMap = memMapItem;
         }

@@ -338,6 +338,11 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
+    if ((!saMode_) && (COMMON::IsUserMode())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
 
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
     if (hookConfig_.filter_size() > uShortMax) {
@@ -509,6 +514,11 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 {
+    if ((!saMode_) && (COMMON::IsUserMode())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     for (const auto& item : hookCtx_) {
         if (item->eventPoller != nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset!");
@@ -536,6 +546,11 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     if (hookCtx_.empty()) {
         return false;
     }
+    if ((!saMode_) && (COMMON::IsUserMode())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
+    }
     StartPluginSession();
     return true;
 }
@@ -544,6 +559,11 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
 {
     if (hookCtx_.empty()) {
         return false;
+    }
+    if ((!saMode_) && (COMMON::IsUserMode())) {
+        if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
+            return false;
+        }
     }
     for (const auto& item : hookCtx_) {
         if (item->pid > 0) {

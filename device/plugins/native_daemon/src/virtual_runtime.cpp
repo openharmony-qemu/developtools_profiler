@@ -37,6 +37,9 @@ namespace {
 std::atomic<uint64_t> callStackErrCnt = 0;
 constexpr uint32_t CALL_STACK_ERROR_TIMES = 10;
 constexpr uint32_t SYMBOL_FILES_SIZE = 512;
+constexpr uint32_t SECOND_INDEX = 2;
+constexpr uint32_t THIRD_INDEX = 3;
+constexpr uint32_t INFO_SIZE = 4;
 }
 // we unable to access 'swapper' from /proc/0/
 void VirtualRuntime::ClearMaps()
@@ -69,6 +72,7 @@ std::string VirtualRuntime::ReadThreadName(pid_t tid)
 
 VirtualThread &VirtualRuntime::UpdateThread(pid_t pid, pid_t tid, const std::string name)
 {
+    pid_ = pid;
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
 #endif
@@ -275,7 +279,7 @@ void VirtualRuntime::DelSymbolFile(const std::string& fileName)
     symbolsFiles_.erase(fileName);
 }
 
-void VirtualRuntime::UpdateSymbols(std::string fileName)
+void VirtualRuntime::UpdateSymbols(std::string fileName, std::shared_ptr<DfxMap> map)
 {
     HLOGD("try to find symbols for file: %s", fileName.c_str());
 #ifdef HIPERF_DEBUG_TIME
@@ -287,8 +291,8 @@ void VirtualRuntime::UpdateSymbols(std::string fileName)
     }
 
     // found it by name
-    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName);
-
+    auto symbolsFile = SymbolsFile::CreateSymbolsFile(fileName, pid_);
+    symbolsFile->SetMapsInfo(map);
     // set sybol path If it exists
     if (symbolsPaths_.size() > 0) {
         symbolsFile->setSymbolsFilePath(symbolsPaths_); // also load from search path
