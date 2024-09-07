@@ -280,8 +280,8 @@ std::string ProfilerFPS::GetSurface()
     SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t positionLeft = cmdResult.find("[");
     size_t positionRight = cmdResult.find("]");
-    size_t num = 1;
-    return cmdResult.substr(positionLeft + num, positionRight - positionLeft - num);
+    size_t positionNum = 1;
+    return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
@@ -395,7 +395,7 @@ void ProfilerFPS::CalcFpsAndJitters()
 
 bool ProfilerFPS::IsForeGround()
 {
-    const std::string cmd = "aa dump -l";
+    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkgName;
     std::string bundleLine = "bundle name [" + pkgName;

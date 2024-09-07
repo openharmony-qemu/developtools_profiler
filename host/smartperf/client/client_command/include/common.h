@@ -36,6 +36,9 @@ enum class MessageType {
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
     SET_DUBAI_DB,
+    GPU_COUNTER_HB_REQ,
+    CATCH_GPU_COUNTER,      // 请求抓取GPU counter信息
+    GET_GPU_COUNTER_RESULT, // 获取GPU counter信息
     CATCH_NETWORK_TRAFFIC,
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,
@@ -62,6 +65,9 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
+    { MessageType::GPU_COUNTER_HB_REQ, std::string("gpu_counter_hb_req") },
+    { MessageType::CATCH_GPU_COUNTER, std::string("catch_gpu_counter") },
+    { MessageType::GET_GPU_COUNTER_RESULT, std::string("get_gpu_counter_result") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
     { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
@@ -93,7 +99,6 @@ enum class CommandType {
     CT_FTL,     //帧间隔限制值，单位ms
     CT_GC,
     CT_NAV,
-    CT_O,
 };
 enum class CommandHelp {
     HELP,
@@ -101,7 +106,6 @@ enum class CommandHelp {
     SCREEN,
     CLEAR,
     SERVER,
-    EDITORSERVER,
 };
 
 const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
@@ -127,7 +131,6 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-gc"), CommandType::CT_GC },
     { std::string("-nav"), CommandType::CT_NAV },
-    { std::string("-o"), CommandType::CT_O },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -153,7 +156,6 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_FTL, std::string("-ftl") },
     { CommandType::CT_GC, std::string("-gc") },
     { CommandType::CT_NAV, std::string("-nav") },
-    { CommandType::CT_O, std::string("-o") },
 };
 
 
@@ -163,7 +165,6 @@ const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::SCREEN, std::string("-screen") },
     { CommandHelp::CLEAR, std::string("-clear") },
     { CommandHelp::SERVER, std::string("-server") },
-    { CommandHelp::EDITORSERVER, std::string("-editorServer") },
 };
 
 enum class TraceStatus {

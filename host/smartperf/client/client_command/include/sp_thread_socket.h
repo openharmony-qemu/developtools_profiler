@@ -23,6 +23,7 @@
 #include "startup_delay.h"
 #include "sp_log.h"
 #include "common.h"
+#include "GpuCounter.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -197,7 +198,15 @@ public:
                 spSocket.Sendto(retCode);
             } else {
                 std::map<std::string, std::string> data;
-                if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
+                if (iterator->first == MessageType::GPU_COUNTER_HB_REQ) {
+                    GpuCounter::GetInstance().Check();
+                    break; // No need to return
+                } else if (iterator->first == MessageType::CATCH_GPU_COUNTER) {
+                    std::string curPkgName = SplitMsg(recvBuf);
+                    GpuCounter::GetInstance().Init(curPkgName, data);
+                } else if (iterator->first == MessageType::GET_GPU_COUNTER_RESULT) {
+                    data = profiler->ItemData();
+                } else if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
                     profiler->ItemData(); // record the collection point for the first time,no need to return
                     data["network_traffic"] = "true";
                 } else if (iterator->first == MessageType::GET_NETWORK_TRAFFIC) {

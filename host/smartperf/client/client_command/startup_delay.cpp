@@ -156,46 +156,7 @@ bool StartUpDelay::GetSpClear()
             SPUtils::LoadCmd("kill " + token, str);
         }
     }
-
     return false;
-}
-
-void StartUpDelay::ClearOldServer()
-{
-    std::string curPid = std::to_string(getpid());
-    std::string commandServer = CMD_COMMAND_MAP.at(CmdCommand::SERVER_GREP);
-    std::string resultPidServer;
-    std::string commandEditorServer = CMD_COMMAND_MAP.at(CmdCommand::EDITOR_SERVER_GREP);
-    std::string resultPidEditorServer;
-
-    SPUtils::LoadCmdWithLinkBreak(commandServer, false, resultPidServer);
-    SPUtils::LoadCmdWithLinkBreak(commandEditorServer, false, resultPidEditorServer);
-
-    std::istringstream iss(resultPidServer + '\n' + resultPidEditorServer);
-    std::string resultLine;
-    std::string killResult;
-    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
-    while (std::getline(iss, resultLine)) {
-        if (resultLine.empty() || resultLine.find("sh -c") != std::string::npos) {
-            continue;
-        }
-
-        std::istringstream lineStream(resultLine);
-        std::string token;
-
-        int count = 0;
-        while (lineStream >> token) {
-            if (count == 1) {
-                break;
-            }
-            count++;
-        }
-
-        if (token != curPid) {
-            SPUtils::LoadCmd(killCmd + token, killResult);
-            LOGI("Find old server: %s, killed.", token.c_str());
-        }
-    }
 }
 
 std::thread StartUpDelay::ThreadGetHisysIds() const

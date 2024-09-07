@@ -15,7 +15,6 @@
 #ifndef STARTUP_DELAY_H
 #define STARTUP_DELAY_H
 #include <thread>
-
 namespace OHOS {
 namespace SmartPerf {
 class StartUpDelay {
@@ -36,7 +35,6 @@ public:
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();
     bool GetSpClear();
-    void ClearOldServer();
     void InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName);
     void InitXY(const std::string &curAppName, const std::string &fileName);
     std::string pointXY = "0 0";

@@ -48,22 +48,27 @@ std::map<std::string, std::string> Temperature::ItemData()
         std::string temp;
         SPUtils::LoadFile(dirType, type);
         SPUtils::LoadFile(dirTemp, temp);
-        for (auto node : collectNodes) {
-            if (type.find(node) != std::string::npos) {
-                LOGI("type====: %s", type.c_str());
-                float t = std::stof(temp);
-                LOGI("temp====: %s", temp.c_str());
-                if (node == "gpu") {
-                    result[type] = std::to_string(t);
-                } else {
-                    result[type] = std::to_string(t / 1e3);
-                }
-            }
-        }
+        GetTempInfos(result, type, temp);
     }
 
     LOGI("Temperature::ItemData map size(%u)", result.size());
     return result;
+}
+
+void Temperature::GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp)
+{
+    for (auto node : collectNodes) {
+        if (type.find(node) != std::string::npos) {
+            LOGI("type: %s", type.c_str());
+            float t = std::stof(temp);
+            LOGI("temp: %s", temp.c_str());
+            if (node == "gpu") {
+                result[type] = std::to_string(t);
+            } else {
+                result[type] = std::to_string(t / 1e3);
+            }
+        }
+    }
 }
 }
 }
