@@ -67,10 +67,10 @@ action("all_type_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
-  external_deps = [
-    "grpc:grpc_cpp_plugin(${host_toolchain})",
-    "protobuf:protoc(${host_toolchain})",
+  deps = [
+    "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(${host_toolchain})",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(${host_toolchain})",
+    "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})",
   ]
 }
 
@@ -146,10 +146,10 @@ action("profiler_service_interface_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
-  deps = [ ":all_type_gen" ]
-  external_deps = [
-    "grpc:grpc_cpp_plugin(//build/toolchain/linux:clang_${host_cpu})",
-    "protobuf:protoc(//build/toolchain/linux:clang_${host_cpu})",
+  deps = [
+    ":all_type_gen",
+    "${OHOS_PROFILER_3RDPARTY_GRPC_DIR}:grpc_cpp_plugin(//build/toolchain/linux:clang_x64)",
+    "${OHOS_PROFILER_3RDPARTY_PROTOBUF_DIR}:protoc(//build/toolchain/linux:clang_x64)",
   ]
 }
 
