@@ -7,6 +7,7 @@
 
 * hiebpf is dual licensed: you can use it either under the terms of
 * the GPL V2, or the BSD3 license, at your option.
+* See the LICENSE file in the root of this repository for complete details.
 */
 
 /* This line is generated to truncate the original file */
