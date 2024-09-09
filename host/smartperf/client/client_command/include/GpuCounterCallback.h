@@ -57,6 +57,7 @@ namespace OHOS {
                 uint32_t itemSecond, int32_t durationSecond);
             void JoinSocketDataPercent(GpuPerfInfo *newData);
             void JoinSocketData(GpuPerfInfo *newData);
+            unsigned long long SplitSocketDataValueFunction(uint32_t value, int32_t interval, int32_t duration);
             void SplitSocketDataValue(int32_t interval);
             void SplitSocketDataPercent();
             void SplitSocketData();
