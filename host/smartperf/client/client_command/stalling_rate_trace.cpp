@@ -106,7 +106,6 @@ void StallingRateTrace::CalcFrameRate()
 
 void StallingRateTrace::JudgFrameRate()
 {
-
     auto hasDynamic = [](bool finishTime, bool startTime) {
         return finishTime != 0 || startTime != 0;
     };
