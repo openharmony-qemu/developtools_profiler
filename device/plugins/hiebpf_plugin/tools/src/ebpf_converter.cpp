@@ -23,6 +23,7 @@
 #include <unistd.h>
 #include <memory>
 #include <securec.h>
+#include <climits>
 
 #define CHK(expr) \
     do { \
@@ -53,11 +54,39 @@ constexpr uint8_t SHIFT = 32;
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
     : inputPath_(inputPath), outputPath_(outPath) {}
 
+std::pair<bool, std::string> EbpfConverter::CheckNotExistsFilePath(const std::string &filePath)
+{
+    size_t pos = filePath.rfind('/');
+    std::string pathDir = "";
+    if (pos != std::string::npos) {
+        pathDir = filePath.substr(0, pos);
+    } else {
+        pathDir = ".";
+    }
+    std::unique_ptr<char[]> pathDirRealPath = std::make_unique<char[]>(PATH_MAX);
+    if ((pathDir.length() >= PATH_MAX - 1) || (realpath(pathDir.c_str(), pathDirRealPath.get()) == nullptr)) {
+        std::cout << "path is invalid:" << pathDir << std::endl;
+        return {false, ""};
+    }
+    if (access(pathDir.c_str(), F_OK) != 0) {
+        std::cout << "Fail to access path:" << pathDir << std::endl;
+        return {false, ""};
+    }
+    return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
+}
+
 EbpfConverter::~EbpfConverter()
 {
-    for (auto item : symbolInfo_)
-    {
-        delete item.second;
+    std::map<std::string, SymbolInfo>::iterator iter;
+    for (iter = symbolInfo_.begin(); iter != symbolInfo_.end(); iter++) {
+        if (iter->second.symTab != nullptr) {
+            delete[] iter->second.symTab;
+            iter->second.symTab = nullptr;
+        }
+        if (iter->second.strTab != nullptr) {
+            delete[] iter->second.strTab;
+            iter->second.strTab = nullptr;
+        }
     }
 }
 
@@ -300,7 +329,12 @@ void EbpfConverter::SymbolInfoParsing()
     if (info.fileNameSize > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         if (!Read(reinterpret_cast<void*>(&fileName), dataLen)) {
-            delete [] info.strTab;
+            std::cout << "read file name failed" << std::endl;
+            delete[] info.symTab;
+            info.symTab = nullptr;
+            delete[] info.strTab;
+            info.strTab = nullptr;
+            return;
         }
         info.fileName = fileName;
     }
@@ -538,7 +572,17 @@ int32_t main(int32_t argc, char* argv[])
             }
         }
     }
-    OHOS::EBPF_TOOLS::EbpfConverter ec(inputPath, outputPath);
+    auto retFileInput = OHOS::EBPF_TOOLS::EbpfConverter::CheckNotExistsFilePath(inputPath);
+    auto retFileOutput = OHOS::EBPF_TOOLS::EbpfConverter::CheckNotExistsFilePath(outputPath);
+    if (!retFileInput.first) {
+        std::cout << "check input file path" << inputPath << " fail!" << std::endl;
+        return 0;
+    }
+    if (!retFileOutput.first) {
+        std::cout << "check output file path" << outputPath << " fail!" << std::endl;
+        return 0;
+    }
+    OHOS::EBPF_TOOLS::EbpfConverter ec(retFileInput.second, retFileOutput.second);
     ec.StartParsing();
     return 0;
 }

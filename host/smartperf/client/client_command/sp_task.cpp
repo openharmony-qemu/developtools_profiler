@@ -233,7 +233,7 @@ void SPTask::ConfigDataThread()
         }
 
         if (itConfig.find("-gc") != std::string::npos) {
-            gpuCounter.StartCollect(GPU_Counter::GC_START);
+            gpuCounter.StartCollect(GpuCounter::GC_START);
         }
     }
 }

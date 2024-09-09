@@ -26,7 +26,7 @@ namespace EBPF_TOOLS {
 class EbpfConverter {
 public:
     EbpfConverter(const std::string& inputPath, const std::string& outPath);
-    virtual ~EbpfConverter() = default;
+    virtual ~EbpfConverter();
     void StartParsing();
 
 private:
@@ -38,6 +38,8 @@ private:
     void EventStrParsing();
     void EventBIOParsing();
     std::pair<std::string, std::vector<std::string>> GetSymbolInfo(uint64_t pid, uint64_t ip);
+public:
+    static std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 
 private:
     std::stringstream outData_;

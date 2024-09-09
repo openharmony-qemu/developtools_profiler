@@ -194,6 +194,9 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     if (protoConfig_.pid().size() > 0) {
         for (int i = 0; i < protoConfig_.pid().size(); i++) {
             int32_t pid = protoConfig_.pid(i);
+            if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+                continue;
+            }
             pidFds_.emplace(pid, OpenProcPidFiles(pid));
         }
     }
@@ -346,6 +349,9 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
 
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
         int32_t pid = protoConfig_.pid(i);
+        if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+            continue;
+        }
         auto* processinfo = memoryDataProto.add_processesinfo();
         if (protoConfig_.report_process_mem_info()) {
             WriteProcinfoByPidfds(*processinfo, pid);
@@ -433,6 +439,9 @@ int MemoryDataPlugin::Stop()
 
 template <typename T> void MemoryDataPlugin::WriteProcinfoByPidfds(T& processMemoryInfo, int32_t pid)
 {
+    if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+        return;
+    }
     char* end = nullptr;
     int32_t readSize;
 
@@ -1290,6 +1299,9 @@ template <typename T> void MemoryDataPlugin::WriteDumpProcessInfo(T& dataProto)
 {
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
         int32_t pid = protoConfig_.pid(i);
+        if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+            continue;
+        }
         auto* processesInfo = dataProto.add_processesinfo();
         processesInfo->set_pid(pid);
 
@@ -1365,6 +1377,10 @@ template <typename T> void MemoryDataPlugin::WriteManagerServiceInfo(T& dataProt
 template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
 {
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
+        int32_t pid = protoConfig_.pid(i);
+        if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+            continue;
+        }
         std::string file = "";
         if (!protoConfig_.report_fake_data()) {
             if (strcmp(testpath_, "/proc") == 0) {

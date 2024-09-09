@@ -159,7 +159,7 @@ bool ParsePluginConfig::SetSerializeCpuConfig(const std::string& pluginName, Pro
         printf("cpu serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -177,7 +177,7 @@ bool ParsePluginConfig::SetSerializeDiskioConfig(const std::string& pluginName, 
         printf("diskio serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -196,7 +196,7 @@ bool ParsePluginConfig::SetSerializeFtraceConfig(const std::string& pluginName, 
         return false;
     }
 
-    pluginConfig.set_config_data((const void*)configNoLiteDataVec.data(), configNoLiteDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configNoLiteDataVec.data()), configNoLiteDataVec.size());
     return true;
 }
 
@@ -214,7 +214,7 @@ bool ParsePluginConfig::SetSerializeHidumpConfig(const std::string& pluginName, 
         printf("hidump serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -257,7 +257,7 @@ bool ParsePluginConfig::SetSerializeHilogConfig(const std::string& pluginName, P
         printf("hilog serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -275,7 +275,7 @@ bool ParsePluginConfig::SetSerializeMemoryConfig(const std::string& pluginName, 
         printf("memory serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -293,7 +293,7 @@ bool ParsePluginConfig::SetSerializeHookConfig(const std::string& pluginName, Pr
         printf("nativedaemon serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -311,7 +311,7 @@ bool ParsePluginConfig::SetSerializeNetworkConfig(const std::string& pluginName,
         printf("network serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -329,7 +329,7 @@ bool ParsePluginConfig::SetSerializeProcessConfig(const std::string& pluginName,
         printf("process serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -347,7 +347,7 @@ bool ParsePluginConfig::SetSerializeHiperfConfig(const std::string& pluginName, 
         printf("hiperf config failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -365,7 +365,7 @@ bool ParsePluginConfig::SetSerializeHisyseventConfig(const std::string& pluginNa
         printf("NODE hisysevent serialize failed!\n");
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -381,7 +381,7 @@ bool ParsePluginConfig::SetSerializeArkTSConfig(const std::string& pluginName, P
     if (arkTSConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -397,7 +397,7 @@ bool ParsePluginConfig::SetSerializeXpowerConfig(const std::string& pluginName, 
     if (xpowerConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -413,7 +413,7 @@ bool ParsePluginConfig::SetSerializeGpuConfig(const std::string& pluginName, Pro
     if (gpuConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -430,7 +430,7 @@ bool ParsePluginConfig::SetSerializeFfrtProfilerConfig(const std::string& plugin
     if (ffrtConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }
 
@@ -447,6 +447,6 @@ bool ParsePluginConfig::SetSerializeNetworkProfilerConfig(const std::string& plu
     if (networkConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
-    pluginConfig.set_config_data((const void*)configDataVec.data(), configDataVec.size());
+    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
     return true;
 }

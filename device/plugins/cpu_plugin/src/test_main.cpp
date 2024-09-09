@@ -89,7 +89,7 @@ int main(int agrc, char* agrv[])
             return 0;
         }
 
-        PluginModuleStruct* cpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
+        PluginModuleStruct* cpuPlugin = static_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
         if (cpuPlugin == nullptr) {
             dlclose(handle);
             return 0;

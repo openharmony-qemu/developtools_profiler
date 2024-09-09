@@ -135,7 +135,7 @@ void HidumpPlugin::Loop(void)
         }
         if (resultWriter_->isProtobufSerialize) {
             HidumpInfo dataProto;
-            if (!ParseHidumpInfo(dataProto, buf)) {
+            if (!ParseHidumpInfo(dataProto, buf, sizeof(buf))) {
                 continue;
             }
             if (dataProto.ByteSizeLong() > 0) {
@@ -146,7 +146,7 @@ void HidumpPlugin::Loop(void)
             }
         } else {
             ProtoEncoder::HidumpInfo hidumpInfo(resultWriter_->startReport(resultWriter_));
-            if (!ParseHidumpInfo(hidumpInfo, buf)) {
+            if (!ParseHidumpInfo(hidumpInfo, buf, sizeof(buf))) {
                 PROFILER_LOG_ERROR(LOG_CORE, "parse hidump info failed!");
             }
             int messageLen = hidumpInfo.Finish();
@@ -159,8 +159,9 @@ void HidumpPlugin::Loop(void)
 }
 
 template <typename T>
-bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf)
+bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf, size_t len)
 {
+    UNUSED_PARAMETER(len);
     // format: fps:123|1501960484673
     if (strncmp(buf, "fps:", strlen("fps:")) != 0 && strncmp(buf, "sectionsFps:", strlen("sectionsFps:")) != 0) {
         if (strstr(buf, "inaccessible or not found") != nullptr) {

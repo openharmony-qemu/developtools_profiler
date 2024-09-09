@@ -25,7 +25,7 @@
 #include "parameters.h"
 #include "sp_csv_util.h"
 #include "sdk_data_recv.h"
-#include "GPU_Counter.h"
+#include "GpuCounter.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -116,7 +116,7 @@ private:
     bool sdkData = false;
     std::thread sdk;
     std::vector<std::string> sdkvec;
-    GPU_Counter &gpuCounter = GPU_Counter::GetInstance();
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

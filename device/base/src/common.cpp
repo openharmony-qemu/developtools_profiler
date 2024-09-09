@@ -473,7 +473,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     }
     return appInfo.appProvisionType == Constants::APP_PROVISION_TYPE_DEBUG;
 }
-bool checkApplicationEncryped(int pid, const std::string& processName)
+bool CheckApplicationEncryped(int pid, const std::string& processName)
 {
     std::string bundleName;
     if (pid > 0) {
@@ -539,7 +539,7 @@ const char* RealPath(std::string &filePath)
         }
     }
     filePath = "/";
-    for (std::string &pathName : validPaths) {
+    for (const std::string &pathName : validPaths) {
         filePath += pathName;
         filePath += "/";
     }
@@ -563,6 +563,16 @@ bool ReadFile(const std::string &filePath, const std::vector<std::string>& valid
     std::string content(firstIt, {});
     fileContent = content;
     return true;
+}
+
+bool IsUserMode()
+{
+    std::string debugMode = "0";
+    debugMode = OHOS::system::GetParameter("const.debuggable", debugMode);
+    if (debugMode != "0") {
+        PROFILER_LOG_INFO(LOG_CORE, "It is not user mode!");
+    }
+    return debugMode == "0";
 }
 
 std::string GetErrorMsg()
@@ -673,5 +683,26 @@ bool IsBetaVersion()
     std::string userType = OHOS::system::GetParameter(KEY_HIVIEW_USER_TYPE, "");
     PROFILER_LOG_INFO(LOG_CORE, "user type is:%s", userType.c_str());
     return userType == "beta";
+}
+
+std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
+{
+    size_t pos = filePath.rfind('/');
+    std::string pathDir = "";
+    if (pos != std::string::npos) {
+        pathDir = filePath.substr(0, pos);
+    } else {
+        pathDir = ".";
+    }
+    std::unique_ptr<char[]> pathDirRealPath = std::make_unique<char[]>(PATH_MAX);
+    if ((pathDir.length() >= PATH_MAX - 1) || (realpath(pathDir.c_str(), pathDirRealPath.get()) == nullptr)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, pathDir.c_str(), errno);
+        return {false, ""};
+    }
+    if (access(pathDir.c_str(), F_OK) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:Fail to access path: %s", __func__, pathDir.c_str());
+        return {false, ""};
+    }
+    return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
 }
 } // namespace COMMON
