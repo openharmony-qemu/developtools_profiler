@@ -106,33 +106,29 @@ void StallingRateTrace::CalcFrameRate()
 
 void StallingRateTrace::JudgFrameRate()
 {
-    if (appListDynamicFinishTime == 0 || appListDynamicStartTime == 0) {
+
+    auto hasDynamic = [](bool finishTime, bool startTime) {
+        return finishTime != 0 || startTime != 0;
+    };
+
+    bool appListDynamicExists = hasDynamic(appListDynamicFinishTime, appListDynamicStartTime);
+    bool swiperDynamicExists = hasDynamic(swiperDynamicFinishTime, swiperDynamicStartTime);
+    bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
+
+    if (!appListDynamicExists) {
         LOGI("no app list Dynamic");
-        if (swiperDynamicFinishTime != 0 || swiperDynamicStartTime != 0) {
-            frameLossRate = swiperFrameLossRate;
-        } else if (appTabsDynamicFinishTime != 0 || appTabsDynamicStartTime != 0) {
-            frameLossRate = tabsFrameLossRate;
-        } else {
-            frameLossRate = -1;
-        }
-    } else if (swiperDynamicFinishTime == 0 || swiperDynamicStartTime == 0) {
+        frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
+                        tabsDynamicExists ? tabsFrameLossRate : -1;
+    } else if (!swiperDynamicExists) {
         LOGI("no swiper Dynamic");
-        if (appListDynamicStartTime != 0 || appListDynamicFinishTime != 0) {
-            frameLossRate = appFrameLossRate;
-        } else if (appTabsDynamicFinishTime != 0 || appTabsDynamicStartTime != 0) {
-            frameLossRate = tabsFrameLossRate;
-        } else {
-            frameLossRate = -1;
-        }
-    } else if (appTabsDynamicFinishTime == 0 || appTabsDynamicStartTime == 0) {
+        frameLossRate = appListDynamicExists ? appFrameLossRate :
+                        tabsDynamicExists ? tabsFrameLossRate : -1;
+    } else if (!tabsDynamicExists) {
         LOGI("no tabs Dynamic");
-        if (appListDynamicFinishTime != 0 || appListDynamicStartTime != 0) {
-            frameLossRate = appFrameLossRate;
-        } else if (swiperDynamicFinishTime != 0 || swiperDynamicStartTime != 0) {
-            frameLossRate = swiperFrameLossRate;
-        } else {
-            frameLossRate = -1;
-        }
+        frameLossRate = appListDynamicExists ? appFrameLossRate :
+                        swiperDynamicExists ? swiperFrameLossRate : -1;
+    } else {
+        frameLossRate = -1;
     }
 }
 
