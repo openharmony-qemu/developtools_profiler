@@ -49,9 +49,9 @@ namespace OHOS {
         unsigned long long GpuCounterCallbackImpl::JoinSocketDataPercentFunction(uint32_t itemFirst,
             int32_t durationFirst, uint32_t itemSecond, int32_t durationSecond)
         {
-            return (((unsigned long long)itemFirst * (unsigned long long)durationFirst) +
-                ((unsigned long long)itemSecond * (unsigned long long)durationSecond)) /
-                ((unsigned long long)durationFirst + (unsigned long long)durationSecond);
+            return (static_cast<unsigned long long>(itemFirst) * static_cast<unsigned long long>(durationFirst) +
+                static_cast<unsigned long long>(itemSecond) * static_cast<unsigned long long>(durationSecond)) /
+                (static_cast<unsigned long long>(durationFirst) + static_cast<unsigned long long>(durationSecond));
         }
 
         void GpuCounterCallbackImpl::JoinSocketDataValue(GpuPerfInfo *newData)
@@ -100,26 +100,33 @@ namespace OHOS {
             GpuCounter &gpuCounter = GpuCounter::GetInstance();
 
             unsigned long long gpuActiveTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.gpuActive *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.gpuActive) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long drawCallsTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.drawCalls *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.drawCalls) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long primitivesTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.primitives *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.primitives) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long vertexCountsTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.vertexCounts *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.vertexCounts) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long totalInstrumentsTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.totalInstruments *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.totalInstruments) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long memoryReadBandwidthTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.memoryReadBandwidth *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.memoryReadBandwidth) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
             unsigned long long memoryWriteBandwidthTargetValue =
-                (unsigned long long)realtimeGpuPerfInfoData.memoryWriteBandwidth *
-                (unsigned long long)interval / (unsigned long long)realtimeGpuPerfInfoData.duration;
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.memoryWriteBandwidth) *
+                static_cast<unsigned long long>(interval) /
+                static_cast<unsigned long long>(realtimeGpuPerfInfoData.duration);
 
             gpuCounter.GetGpuCounterRealtimeDataMap()["gpuActive"] =
                 std::to_string(realtimeGpuPerfInfoData.gpuActive - gpuActiveTargetValue);
