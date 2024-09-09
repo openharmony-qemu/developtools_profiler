@@ -97,7 +97,7 @@ void EbpfConverter::StartParsing()
         return;
     }
     fd_ = open(inputPath_.c_str(), O_RDONLY);
-    if (fd_ < 0) {
+    if (fd_ > 0) {
         std::cout << "open " << inputPath_ << " failed" << std::endl;
         return;
     }
@@ -156,7 +156,7 @@ void EbpfConverter::StartParsing()
             }
             default: {
                 std::cout << "Invalid type: " << type << std::endl;
-                if (fd_ != -1) {
+                if (fd_ > 0) {
                     close(fd_);
                 }
                 fd_ = -1;
@@ -166,7 +166,7 @@ void EbpfConverter::StartParsing()
             }
         }
     }
-    if (fd_ != -1) {
+    if (fd_ > 0) {
         close(fd_);
     }
     fd_ = -1;
