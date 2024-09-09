@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include <thread>
-
+#include <sys/file.h>
 #include "common.h"
 #include "command_poller.h"
 #include "hook_manager.h"
