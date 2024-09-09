@@ -495,8 +495,13 @@ std::string ProfilerFPS::GetGameLayer()
     size_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
-        nodeId = std::stoll(nodeIdStr);
+        std::stringstream ss(nodeIdStr);
+        ss >> nodeId;
+        if (ss.fail() || !ss.eof()) {
+            return gameLayer;
+        }
         nodeId = nodeId >> kShiftAmount;
+        
         if (std::to_string(nodeId) == processId) {
             size_t layerStartPos = cmdResult.find("[");
             size_t layerEndPos = cmdResult.find("]");
