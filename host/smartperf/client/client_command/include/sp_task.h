@@ -90,6 +90,7 @@ public:
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
+    bool recordState = false;
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
