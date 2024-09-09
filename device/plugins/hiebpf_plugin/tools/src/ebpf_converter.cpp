@@ -184,7 +184,7 @@ void EbpfConverter::StartParsing()
 
 bool EbpfConverter::Read(void* buffer, size_t size)
 {
-    if (fd_ == -1) {
+    if (fd_ < 0) {
         return false;
     }
     ssize_t ret = read(fd_, buffer, size);
