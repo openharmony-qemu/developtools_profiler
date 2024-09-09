@@ -262,6 +262,7 @@ int main(int argc, char* argv[])
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
             if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
                 if (lockFileFd > 0) {
+                    flock(lockFileFd, LOCK_UN);
                     close(lockFileFd);
                 }
                 return 0;
@@ -273,6 +274,7 @@ int main(int argc, char* argv[])
             if (!COMMON::IsBetaVersion()) {
                 printf("memory profiler only support in beta version\n");
                 if (lockFileFd > 0) {
+                    flock(lockFileFd, LOCK_UN);
                     close(lockFileFd);
                 }
                 return 0;
@@ -308,6 +310,7 @@ int main(int argc, char* argv[])
                 )";
                 printf("%s\n", help.c_str());
                 if (lockFileFd > 0) {
+                    flock(lockFileFd, LOCK_UN);
                     close(lockFileFd);
                 }
                 return 0;
@@ -317,6 +320,7 @@ int main(int argc, char* argv[])
         auto hookManager = std::make_shared<HookManager>();
         if (hookManager == nullptr) {
             if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
                 close(lockFileFd);
                 PROFILER_LOG_INFO(LOG_CORE, "create PluginManager FAILED!");
                 return 1;
@@ -325,6 +329,7 @@ int main(int argc, char* argv[])
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
         if (commandPoller == nullptr) {
             if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
                 close(lockFileFd);
                 PROFILER_LOG_INFO(LOG_CORE, "create CommandPoller FAILED!");
                 return 1;
@@ -332,6 +337,7 @@ int main(int argc, char* argv[])
         }
         if (!commandPoller->OnConnect()) {
             if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
                 close(lockFileFd);
                 PROFILER_LOG_INFO(LOG_CORE, "connect FAILED");
                 return 1;
@@ -345,6 +351,7 @@ int main(int argc, char* argv[])
         }
     }
     if (lockFileFd > 0) {
+        flock(lockFileFd, LOCK_UN);
         close(lockFileFd);
     }
     return 0;
