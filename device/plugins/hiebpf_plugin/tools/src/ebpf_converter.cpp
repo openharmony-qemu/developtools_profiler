@@ -68,7 +68,7 @@ void EbpfConverter::StartParsing()
         return;
     }
     fd_ = open(inputPath_.c_str(), O_RDONLY);
-    if (fd_ == -1) {
+    if (fd_ < 0) {
         std::cout << "open " << inputPath_ << " failed" << std::endl;
         return;
     }
