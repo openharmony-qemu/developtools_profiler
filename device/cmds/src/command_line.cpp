@@ -113,7 +113,8 @@ int CommandLine::AnalyzeParam(std::vector<std::string> argv)
 {
     size_t i = 1;
     while (i < argv.size()) {
-        i += CheckParam(argv[i], (i + 1 < argv.size()) ? argv[i + 1] : "");
+        int ret = CheckParam(argv[i], (i + 1 < argv.size()) ? argv[i + 1] : "");
+        i += static_cast<size_t>(ret);
     }
     if (i >= USED_PARAM_ERR) {
         return -1;

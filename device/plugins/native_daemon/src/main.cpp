@@ -32,9 +32,9 @@ const int VC_ARG_TWAIN = 2;
 const int VC_ARG_STEP_SIZE = 2;
 const int SMBSIZE_BASE = 4096;
 
-bool ProcessExist(std::string pid)
+bool ProcessExist(const std::string pid)
 {
-    std::string pid_path = std::string();
+    std::string pid_path = "";
     struct stat stat_buf;
     if (pid.size() == 0) {
         return false;
@@ -46,7 +46,7 @@ bool ProcessExist(std::string pid)
     return true;
 }
 
-bool ParseCommand(std::vector<std::string> args, HookData& hookData)
+bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
 {
     size_t idx = 0;
     while (idx < args.size()) {
@@ -191,7 +191,7 @@ bool ParseCommand(std::vector<std::string> args, HookData& hookData)
     return true;
 }
 
-bool VerifyCommand(std::vector<std::string> args, HookData& hookData)
+bool VerifyCommand(const std::vector<std::string>& args, HookData& hookData)
 {
     if ((args.size() % VC_ARG_TWAIN) != 0) {
         return false;

@@ -25,6 +25,7 @@ config("module_private_config") {
 ohos_unittest("plugin_module_api_ut") {
   module_out_path = module_output_path
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/memory_data:memory_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/sample_data:sample_data_cpp",

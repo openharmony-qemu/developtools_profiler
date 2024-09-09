@@ -48,7 +48,7 @@ long FileCache::Write(char* bytes, int32_t len)
     while (writedLen < dataLen) {
         size_t len = fwrite(bytes, sizeof(char), dataLen - writedLen, fp_);
         CHECK_TRUE(len >= 0, -1, "FileCache: write failed, error(%d)!", errno);
-        writedLen += len;
+        writedLen += static_cast<int32_t>(len);
     }
 
     return dataLen;

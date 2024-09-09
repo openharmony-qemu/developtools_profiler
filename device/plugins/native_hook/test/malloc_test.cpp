@@ -165,7 +165,7 @@ static void ApplyForRealloc(int mallocSize)
     clock_t timerStart = 0;
     clock_t timerStop = 0;
     double duration = 0;
-    char* p = (char*)malloc(mallocSize);
+    char* p = static_cast<char*>(malloc(mallocSize));
     if (!p) {
         printf("malloc failure\n");
         return;
@@ -284,7 +284,7 @@ static char* CreateMmap(void)
     lseek(g_fd, size + 1, SEEK_SET);
     write(g_fd, "", 1);
 
-    char* pMap = (char*)mmap(nullptr, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, g_fd, 0);
+    char* pMap = static_cast<char*>(mmap(nullptr, PAGE_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, g_fd, 0));
 
 #ifdef HOOK_ENABLE
     const char *tag = "memtesttag";
@@ -320,7 +320,7 @@ static char* MmapReadFile(const char* pMap, int length)
         printf("fail:malloc %d memory", length);
         return nullptr;
     }
-    char* data = (char*)malloc(length + 1);
+    char* data = static_cast<char*>(malloc(length + 1));
     if (data != nullptr) {
         memcpy_s(data, length, pMap, length);
         data[length] = '\0';
@@ -358,7 +358,7 @@ static char* RandString(int maxLength)
         printf("fail:malloc %d memory", strLength);
         return nullptr;
     }
-    char* data = (char*)malloc(strLength + 1);
+    char* data = static_cast<char*>(malloc(strLength + 1));
     if (data != nullptr) {
         for (int i = 0; i < strLength; i++) {
             data[i] = RandChar();
@@ -506,7 +506,7 @@ int main(int argc, char* argv[])
         typeNum++;
     }
 
-    pthread_t** thrArrayList = (pthread_t**)malloc(sizeof(pthread_t*) * typeNum);
+    pthread_t** thrArrayList = static_cast<pthread_t**>(malloc(sizeof(pthread_t*) * typeNum));
     if (thrArrayList == nullptr) {
         printf("malloc thrArrayList fail\n");
         return 0;
@@ -519,7 +519,7 @@ int main(int argc, char* argv[])
         pid_t pid = getpid();
         printf("Process pid %d, Test start %d thread, malloc %d size\n", pid, threadNum, mallocSize);
 
-        thrArrayList[type] = (pthread_t*)malloc(sizeof(pthread_t) * threadNum);
+        thrArrayList[type] = static_cast<pthread_t*>(malloc(sizeof(pthread_t) * threadNum));
         // pthread_t* thrArray
         if (thrArrayList[type] == nullptr) {
             printf("new thread failed.\n");
@@ -540,7 +540,7 @@ int main(int argc, char* argv[])
         // 初始化
         MmapInit();
 
-        thrArrayList[type] = (pthread_t*)malloc(sizeof(pthread_t) * threadNum);
+        thrArrayList[type] = static_cast<pthread_t*>(malloc(sizeof(pthread_t) * threadNum));
         if (thrArrayList[type] == nullptr) {
             printf("new thread failed.\n");
         }

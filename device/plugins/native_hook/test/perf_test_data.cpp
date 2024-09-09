@@ -52,7 +52,7 @@ void* UserThread(void* param)
             break;
         }
         clock_gettime(CLOCK_REALTIME, &beginTimeMalloc);
-        char* mem = (char *)malloc(g_memSize);
+        char* mem = static_cast<char *>(malloc(g_memSize));
         if (mem == nullptr) {
             printf("Error: malloc mem memory failed.\n");
             return nullptr;
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
         Usage();
         return 1;
     }
-    pthread_t* thrArray = (pthread_t*)malloc(sizeof(pthread_t) * threadNum);
+    pthread_t* thrArray = static_cast<pthread_t*>(malloc(sizeof(pthread_t) * threadNum));
     if (thrArray == nullptr) {
         printf("malloc thrArray memory failed.\n");
         return 1;
