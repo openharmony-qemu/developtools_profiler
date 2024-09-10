@@ -442,7 +442,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
 
 void HookManager::HookManagerCtx::FlushStackArray()
 {
-    if (rawDataArray.size() > 0) {
+    if (rawDataArray.size() > 0 && stackData != nullptr) {
         if (!stackData->PutRawStackArray(rawDataArray, rawStackCount)) {
             PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray error");
         }
@@ -454,6 +454,9 @@ void HookManager::HookManagerCtx::FlushStackArray()
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<StackDataRepeater::RawStack>& rawStack)
 {
+    if (hookCtx == nullptr || rawStack == nullptr) {
+        return;
+    }
     hookCtx->rawDataArray[hookCtx->rawStackCount] = rawStack;
     ++hookCtx->rawStackCount;
     if (hookCtx->rawStackCount == CACHE_ARRAY_SIZE) {
