@@ -345,7 +345,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     }
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
-    if(GetRecordState()) {
+    if (GetRecordState()) {
         vmap.push_back(spdata);
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
