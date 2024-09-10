@@ -3,9 +3,6 @@
 
 * The hiebpf_types.h is dual licensed: you can use it either under the terms of
 * the GPL V2, or the 3-Clause BSD license, at your option.
-
-* hiebpf_types.h is dual licensed: you can use it either under the terms of
-* the GPL V2, or the BSD3 license, at your option.
 * See the LICENSE file in the root of this repository for complete details.
 */
 
