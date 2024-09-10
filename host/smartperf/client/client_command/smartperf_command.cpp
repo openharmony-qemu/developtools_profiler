@@ -237,7 +237,8 @@ std::string SmartPerfCommand::ExecCommand()
         index++;
     }
     std::string outGpuCounterDataPath = "/data/local/tmp";
-    gpuCounter.StopCollect(outGpuCounterDataPath);
+    gpuCounter.SaveData(outGpuCounterDataPath);
+    gpuCounter.StopCollect();
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);

@@ -92,6 +92,7 @@ public:
     void StopGetInfo();
     void StartRecord();
     void StopRecord();
+    bool GetRecordState();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -102,7 +103,6 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
-    bool GetRecordState();
 
 private:
     TaskInfo curTaskInfo;

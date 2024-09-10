@@ -97,7 +97,7 @@ public:
     void InitRecv(std::string recvStr, SpServerSocket &spSocket) const
     {
         std::string errorInfo;
-        std::string checkStr = recvStr.substr(std:string("init::").length());
+        std::string checkStr = recvStr.substr(std::string("init::").length());
         if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
             LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
             spSocket.Send("init::False,\"error\":" + errorInfo);

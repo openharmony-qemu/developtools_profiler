@@ -61,6 +61,7 @@ namespace OHOS {
             std::mutex &GetRealtimeDataLock();
             std::map<std::string, std::string> &GetGpuCounterRealtimeDataMap();
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
+            void SaveData(std::string path);
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
@@ -70,7 +71,6 @@ namespace OHOS {
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::map<std::string, std::string> gpuCounterRealtimeDataMap;
-            void SaveData(std::string path);
             const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
             const std::string CREATE_PLUGIN = "onCreatePlugin";
         };

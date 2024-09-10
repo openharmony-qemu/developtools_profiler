@@ -301,7 +301,12 @@ void SPTask::InitDataFile()
     sdkvec.clear();
     gpuCounter.GetGpuCounterSaveReportData().clear();
     startTime = SPUtils::GetCurTime();
-    std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
+    std::vector<std::string> files = {
+        "sdk_data.csv",
+        "gpu_counter.csv",
+        "t_general_info.csv",
+        "t_index_info.csv",
+    };
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
 
     for (const auto &file: files) {
@@ -368,6 +373,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
+    InitDataFile();
     ConfigDataThread();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
