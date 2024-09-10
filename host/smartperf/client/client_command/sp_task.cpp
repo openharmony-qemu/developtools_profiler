@@ -276,7 +276,6 @@ void SPTask::StopSdkRecv()
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
         LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
-        ResetSdkParam();
         return;
     }
     std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
@@ -285,7 +284,6 @@ void SPTask::StopSdkRecv()
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
         LOGE("data %s open failed", outSdkDataPath.c_str());
-        ResetSdkParam();
         return;
     }
     std::string title = "source,timestamp,eventName,enable,value\r";
@@ -295,11 +293,14 @@ void SPTask::StopSdkRecv()
     }
     outFile.close();
     sdkDataMtx.unlock();
-    ResetSdkParam();
 }
 
 void SPTask::InitDataFile()
 {
+    vmap.clear();
+    sdkvec.clear();
+    gpuCounter.GetGpuCounterSaveReportData().clear();
+    startTime = SPUtils::GetCurTime();
     std::vector<std::string> files = {"sdk_data.csv", "gpu_counter.csv"};
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
 
@@ -339,7 +340,9 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     }
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
-    vmap.push_back(spdata);
+    if(GetRecordState()) {
+        vmap.push_back(spdata);
+    }
     gpuCounter.GetGpuRealtimeData(dataMap);
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
@@ -362,13 +365,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         return ErrCode::FAILED;
     }
     isRunning = true;
-    startTime = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
-    vmap.clear();
-    sdkvec.clear();
-    InitDataFile();
     ConfigDataThread();
     thread = std::thread([this, msgTask]() {
         while (isRunning) {
@@ -430,24 +429,32 @@ void SPTask::StopGetInfo()
 void SPTask::StopGpuCounterRecv()
 {
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
-    gpuCounter.StopCollect(outGpuCounterDataPath);
+
+    if (GetRecordState()) {
+        gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
+    }
 }
 void SPTask::StopTask()
 {
     LOGI("SPTask::StopTask start");
 
-    if (isInit) {
+    if (GetRecordState()) {
         StopGetInfo();
-        if (sdkData) {
-            StopSdkRecv();
-        }
+        StopSdkRecv();
         StopGpuCounterRecv();
+
+        vmap.clear();
+        sdkvec.clear();
+        gpuCounter.GetGpuCounterData().clear();
+        recordState = false;
     }
+
+    ResetSdkParam();
+    gpuCounter.StopCollect();
+
     isRunning = false;
     isInit = false;
-    vmap.clear();
-    sdkvec.clear();
-    gpuCounter.GetGpuCounterData().clear();
+
     if (thread.joinable()) {
         thread.join();
     }
@@ -586,6 +593,38 @@ std::string SPTask::SetHiperf(const std::string &traceName)
         strFour + "\n" + strFive + hiPrefix + traceName + strSix + "\n" + strNine + strEleven + "\n" + strSeven +
         dataPrefix + traceName + strEight + strTen + "\n" + conFig;
     return trtmp;
+}
+
+bool SPTask::GetRecordState()
+{
+    return recordState;
+}
+void SPTask::StartRecord()
+{
+    LOGI("SPTask::StartRecord");
+    startTime = SPUtils::GetCurTime();
+    InitDataFile();
+    recordState = true;
+}
+
+void SPTask::StopRecord()
+{
+    LOGI("SPTask::StopRecord");
+    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
+
+    if (isInit) {
+        StopGetInfo();
+        if (sdkData) {
+            StopSdkRecv();
+        }
+        gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
+    }
+
+    vmap.clear();
+    sdkvec.clear();
+    gpuCounter.GetGpuCounterData().clear();
+
+    recordState = false;
 }
 }
 }

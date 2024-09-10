@@ -221,7 +221,9 @@ namespace OHOS {
         {
             if (params.receiveFd[i] >= 0 && FD_ISSET(params.receiveFd[i], &readFds)) {
                 std::string data = OhDataReceive(i, params);
-                dataVec.push_back(data);
+                if (SPTask::GetInstance().GetRecordState()) {
+                    dataVec.push_back(data);
+                }
             }
         }
 

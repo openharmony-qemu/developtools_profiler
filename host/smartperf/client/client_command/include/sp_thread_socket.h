@@ -97,7 +97,7 @@ public:
     void InitRecv(std::string recvStr, SpServerSocket &spSocket) const
     {
         std::string errorInfo;
-        std::string checkStr = recvStr.substr(std::string("init::").length());
+        std::string checkStr = recvStr.substr(std:string("init::").length());
         if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
             LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
             spSocket.Send("init::False,\"error\":" + errorInfo);
@@ -148,16 +148,16 @@ public:
     void StartRecvRecord(SpServerSocket &spSocket) const
     {
         LOGI("startRecord::True");
-        SPTask::GetInstance().recordState = true;
+        SPTask::GetInstance().StartRecord();
 
         spSocket.Send("startRecord::True");
     }
     void StopRecvRecord(SpServerSocket &spSocket) const
     {
         LOGI("stopRecord::True");
-        SPTask::GetInstance().recordState = false;
+        SPTask::GetInstance().StopRecord();
 
-        spSocket.Send("stop::True");
+        spSocket.Send("stopRecord::True");
     }
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {

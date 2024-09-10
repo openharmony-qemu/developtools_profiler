@@ -55,8 +55,9 @@ namespace OHOS {
                 return instance;
             }
             void StartCollect(GcCollectType type);
-            void StopCollect(std::string path);
+            void StopCollect();
             std::vector<std::string> &GetGpuCounterData();
+            std::vector<std::string> &GetGpuCounterSaveReportData();
             std::mutex &GetRealtimeDataLock();
             std::map<std::string, std::string> &GetGpuCounterRealtimeDataMap();
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
@@ -66,6 +67,7 @@ namespace OHOS {
             GpuCounter &operator = (const GpuCounter &);
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;
+            std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::map<std::string, std::string> gpuCounterRealtimeDataMap;
             void SaveData(std::string path);

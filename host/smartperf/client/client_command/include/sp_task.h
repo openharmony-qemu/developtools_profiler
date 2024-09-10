@@ -90,7 +90,8 @@ public:
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
-    bool recordState = false;
+    void StartRecord();
+    void StopRecord();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -101,6 +102,7 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
+    bool GetRecordState();
 
 private:
     TaskInfo curTaskInfo;
@@ -118,6 +120,7 @@ private:
     std::thread sdk;
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    bool recordState = false;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

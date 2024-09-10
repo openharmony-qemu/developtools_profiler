@@ -85,20 +85,20 @@ namespace OHOS {
                 return;
             }
             std::string title = "startTime,"
-                                "duration,"
-                                "gpuActive,"
-                                "drawCalls,"
-                                "primitives,"
-                                "vertexCounts,"
-                                "totalInstruments,"
-                                "gpuLoadPercentage,"
-                                "vertexLoadPercentage,"
-                                "fragmentLoadPercentage,"
-                                "computeLoadPercentage,"
-                                "textureLoadPercentage,"
-                                "memoryReadBandwidth,"
-                                "memoryWriteBandwidth,"
-                                "memoryBandwidthPercentage\r";
+                "duration,"
+                "gpuActive,"
+                "drawCalls,"
+                "primitives,"
+                "vertexCounts,"
+                "totalInstruments,"
+                "gpuLoadPercentage,"
+                "vertexLoadPercentage,"
+                "fragmentLoadPercentage,"
+                "computeLoadPercentage,"
+                "textureLoadPercentage,"
+                "memoryReadBandwidth,"
+                "memoryWriteBandwidth,"
+                "memoryBandwidthPercentage\r";
             outFile << title << std::endl;
             for (unsigned int i = 0; i < gpuCounterData.size() - 1; i++) {
                 outFile << gpuCounterData[i] << std::endl;
@@ -110,6 +110,11 @@ namespace OHOS {
         std::vector<std::string> &GpuCounter::GetGpuCounterData()
         {
             return gpuCounterData;
+        }
+
+        std::vector<std::string> &GpuCounter::GetGpuCounterSaveReportData()
+        {
+            return gpuCounterSaveReportData;
         }
 
         std::mutex &GpuCounter::GetRealtimeDataLock()
@@ -131,7 +136,7 @@ namespace OHOS {
             }
         }
 
-        void GpuCounter::StopCollect(std::string path)
+        void GpuCounter::StopCollect()
         {
             if (gcStatus != GC_RUNNING) {
                 return;
@@ -148,7 +153,6 @@ namespace OHOS {
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {
-                SaveData(path);
                 gcStatus = GC_INIT;
                 LOGI("GpuCounter collect finish.");
             }
