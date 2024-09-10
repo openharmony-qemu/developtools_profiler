@@ -1,11 +1,10 @@
 /*
 * Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 
-* The hiebpf subdirectories are licensed under Apache License, Version 2.0.
 * The hiebpf.bpf.c is dual licensed: you can use it either under the terms of
 * the GPL V2, or the 3-Clause BSD license, at your option.
 
-* hiebpf is dual licensed: you can use it either under the terms of
+* hiebpf.bpf.c is dual licensed: you can use it either under the terms of
 * the GPL V2, or the BSD3 license, at your option.
 * See the LICENSE file in the root of this repository for complete details.
 */
