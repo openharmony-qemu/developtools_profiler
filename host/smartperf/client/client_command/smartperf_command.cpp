@@ -205,9 +205,11 @@ std::string SmartPerfCommand::ExecCommand()
     std::vector<SPData> vmap;
     const long long freq = 1000;
     num = num + 1;
+    bool gcFlag = false;
     for (std::string itConfig : configs) {
         if (itConfig.find("-gc") != std::string::npos) {
             gpuCounter.StartCollect(GpuCounter::GC_START);
+            gcFlag = true;
         }
     }
     while (index < num) {
@@ -236,9 +238,11 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
-    std::string outGpuCounterDataPath = "/data/local/tmp";
-    gpuCounter.SaveData(outGpuCounterDataPath);
-    gpuCounter.StopCollect();
+    if (gcFlag) {
+        std::string outGpuCounterDataPath = "/data/local/tmp";
+        gpuCounter.SaveData(outGpuCounterDataPath);
+        gpuCounter.StopCollect();
+    }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
