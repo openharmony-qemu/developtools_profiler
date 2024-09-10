@@ -296,7 +296,11 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
     if (g_exitProcessFlag) {
         return false;
     }
-
+    
+    if (!COMMON::IsNumeric(keepSecond)) {
+        printf("please input a valid time value");
+        return false;
+    }
     uint32_t sessionId = CreateSession(profilerStub, config, keepSecond, outputFile);
     if (sessionId == 0) {
         printf("Create session returns Id 0\n");

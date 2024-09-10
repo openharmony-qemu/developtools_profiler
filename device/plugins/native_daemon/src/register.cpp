@@ -247,6 +247,9 @@ ArchType GetDeviceArch()
 
 void UpdateRegForABI(ArchType arch, u64 *regs)
 {
+    if (regs == nullptr) {
+        return;
+    }
     if (deviceArchType == ArchType::ARCH_ARM64 and arch == ArchType::ARCH_ARM) {
         // arm in arm64
         regs[PERF_REG_ARM_PC] = regs[PERF_REG_ARM64_PC];
