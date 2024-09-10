@@ -44,6 +44,11 @@ double StallingRateTrace::CalculateTime()
 {
     frameLossRate = 0;
     frameLossTime = 0;
+    swiperFrameLossRate = 0;
+    appFrameLossRate = 0;
+    tabsFrameLossRate = 0;
+    frameLossSwiperTime = 0;
+    frameLossTabsTime = 0;
     std::string signS = "S|";
     std::string signF = "F|";
     std::string line;
@@ -54,52 +59,136 @@ double StallingRateTrace::CalculateTime()
             line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
             line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
             if (swiperFlingFlag == 1) {
-                dynamicFinishTime = GetTimes(line, signF);
-                animalFlag = false;
+                LOGI("AppSwiper FinishTime line: (%s)", line.c_str());
+                swiperDynamicFinishTime = GetTimes(line, signF);
+                LOGI("swiperDynamicFinishTime: (%s)", std::to_string(swiperDynamicFinishTime).c_str());
+                swiperFlag = false;
             }
-            if (dynamicFinishTime == 0) {
+            if (swiperDynamicFinishTime == 0) {
                 swiperFlingFlag = 0;
-            } else if (dynamicStartTime != 0) {
+            } else if (swiperDynamicFinishTime != 0) {
                 break;
             }
             swiperFlingFlag++;
         }
-        if (animalFlag) {
-            if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
-                upperScreenFlag = true;
-                nowFrameRate = GetFrameRate(line);
-                LOGI("nowFrameRate1=====: %s", std::to_string(nowFrameRate).c_str());
-                CalculateRoundTime();
-            } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
-                upperScreenFlag = true;
-                nowFrameRate = GetFrameRate(line);
-                LOGI("nowFrameRate2=====: %s", std::to_string(nowFrameRate).c_str());
-                CalculateRoundTime();
-            }
-            GetScreenInfo(line);
-        }
+        AppSwiperFrameRate(line);
+        APPTabs(line, signS, signF);
     }
-    FinalizeCalculation();
+    CalcFrameRate();
+    JudgFrameRate();
+    MultiLaneFrameRate();
     return frameLossRate;
 }
 
-void StallingRateTrace::FinalizeCalculation()
+void StallingRateTrace::CalcFrameRate()
 {
-    if (dynamicStartTime > dynamicFinishTime) {
-        LOGI("StallingRateTrace::APP_SWIPER_FLING AND APP_LIST_FLING");
-        dynamicFinishTime = nowTime;
-    }
-    if (dynamicStartTime == 0 || dynamicFinishTime == 0) {
-        frameLossRate = -1;
+    if (appListDynamicStartTime != 0 && appListDynamicFinishTime != 0) {
+        appFrameLossRate = (frameLossTime / (appListDynamicFinishTime - appListDynamicStartTime) * oneThousand);
     } else {
-        if (frameLossTime == 0) {
-            frameLossRate = 0;
-        } else {
-            frameLossRate = (frameLossTime / (dynamicFinishTime - dynamicStartTime) * oneThousand);
-        }
-        LOGI("frameLossRate=====: %s", std::to_string(frameLossRate).c_str());
+        appFrameLossRate = -1;
+    }
+    LOGI("result.appFrameLossRate: (%s)", std::to_string(appFrameLossRate).c_str());
+
+    if (swiperDynamicFinishTime != 0 && swiperDynamicStartTime != 0) {
+        swiperFrameLossRate = (frameLossSwiperTime / (swiperDynamicFinishTime - swiperDynamicStartTime) * oneThousand);
+    } else {
+        swiperFrameLossRate = -1;
+    }
+    LOGI("result.swiperFrameLossRate: (%s)", std::to_string(swiperFrameLossRate).c_str());
+
+    if (appTabsDynamicStartTime != 0 && appTabsDynamicFinishTime != 0) {
+        tabsFrameLossRate = (frameLossTabsTime / (appTabsDynamicFinishTime - appTabsDynamicStartTime) * oneThousand);
+    } else {
+        tabsFrameLossRate = -1;
+    }
+    LOGI("result.tabsFrameLossRate: (%s)", std::to_string(tabsFrameLossRate).c_str());
+}
+
+void StallingRateTrace::JudgFrameRate()
+{
+    auto hasDynamic = [](bool finishTime, bool startTime) {
+        return finishTime != 0 || startTime != 0;
+    };
+
+    bool appListDynamicExists = hasDynamic(appListDynamicFinishTime, appListDynamicStartTime);
+    bool swiperDynamicExists = hasDynamic(swiperDynamicFinishTime, swiperDynamicStartTime);
+    bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
+
+    if (!appListDynamicExists) {
+        LOGI("no app list Dynamic");
+        frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
+                        tabsDynamicExists ? tabsFrameLossRate : -1;
+    } else if (!swiperDynamicExists) {
+        LOGI("no swiper Dynamic");
+        frameLossRate = appListDynamicExists ? appFrameLossRate :
+                        tabsDynamicExists ? tabsFrameLossRate : -1;
+    } else if (!tabsDynamicExists) {
+        LOGI("no tabs Dynamic");
+        frameLossRate = appListDynamicExists ? appFrameLossRate :
+                        swiperDynamicExists ? swiperFrameLossRate : -1;
+    } else {
+        frameLossRate = -1;
     }
 }
+
+void StallingRateTrace::MultiLaneFrameRate()
+{
+    if (appFrameLossRate == 0) {
+        LOGI("no app list hitchTime");
+        if (swiperFrameLossRate > 0) {
+            frameLossRate = swiperFrameLossRate;
+        } else if (tabsFrameLossRate > 0) {
+            frameLossRate = tabsFrameLossRate;
+        } else {
+            frameLossRate = 0;
+        }
+    } else if (swiperFrameLossRate == 0) {
+        LOGI("no swiper list hitchTime");
+        if (appFrameLossRate > 0) {
+            frameLossRate = appFrameLossRate;
+        } else if (tabsFrameLossRate > 0) {
+            frameLossRate = tabsFrameLossRate;
+        } else {
+            frameLossRate = 0;
+        }
+    } else if (tabsFrameLossRate == 0) {
+        LOGI("no tabs list hitchTime");
+        if (appFrameLossRate > 0) {
+            frameLossRate = appFrameLossRate;
+        } else if (swiperFrameLossRate > 0) {
+            frameLossRate = swiperFrameLossRate;
+        }
+    }
+    AddMultiLaneFrameRate();
+}
+
+void StallingRateTrace::AddMultiLaneFrameRate()
+{
+    if (appFrameLossRate > 0 && swiperFrameLossRate > 0) {
+        //app and swiper hitchTime 1
+        if (appListDynamicStartTime < swiperDynamicStartTime) {
+            frameLossRate = appFrameLossRate;
+        } else {
+            frameLossRate = swiperFrameLossRate;
+        }
+    } else if (appFrameLossRate > 0 && tabsFrameLossRate > 0) {
+        //app and tabs hitchTime 2
+        if (appListDynamicStartTime < appTabsDynamicStartTime) {
+            frameLossRate = appFrameLossRate;
+        } else {
+            frameLossRate = appTabsDynamicStartTime;
+        }
+    } else if (tabsFrameLossRate > 0 && swiperFrameLossRate > 0) {
+        //tabs and swiper hitchTime 3
+        if (appTabsDynamicStartTime < swiperDynamicStartTime) {
+            frameLossRate = tabsFrameLossRate;
+        } else {
+            frameLossRate = swiperFrameLossRate;
+        }
+    }
+}
+
+
 void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
@@ -108,64 +197,180 @@ void StallingRateTrace::AppList(std::string line, const std::string &signS, cons
         line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos ||
         line.find("H:APP_TRANSITION_TO_OTHER_APP,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
-        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos ||
-        line.find("H:APP_TABS_NO_ANIMATION_SWITCH") != std::string::npos ||
-        line.find("H:APP_TABS_FRAME_ANIMATION") != std::string::npos ||
-        line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
-        if (animalFlag) {
-            dynamicFinishTime = GetTimes(line, signF);
-            LOGI("dynamicFinishTime=====: %s", std::to_string(dynamicFinishTime).c_str());
-            animalFlag = false;
+        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
+        if (listFlag) {
+            appListDynamicFinishTime = GetTimes(line, signF);
+            LOGI("appListDynamicFinishTime: (%s)", std::to_string(appListDynamicFinishTime).c_str());
+            listFlag = false;
         } else {
-            dynamicStartTime = GetTimes(line, signS);
-            LOGI("dynamicStartTime=====: %s", std::to_string(dynamicStartTime).c_str());
-            animalFlag = true;
-            swiperScrollFlag = 0;
+            appListDynamicStartTime = GetTimes(line, signS);
+            LOGI("appListDynamicStartTime: (%s)", std::to_string(appListDynamicStartTime).c_str());
+            listFlag = true;
             frameLossTime = 0;
+        }
+    }
+    if (listFlag) {
+        GetRsHardWareRate(nowFrameRate, line, SWIM_APPLIST);
+        if (upperScreenFlag) {
+            if (line.find("|H:Present Fence ") != std::string::npos) {
+                fenceId = GetFenceId(line);
+                LOGI("fenceId: (%d)", fenceId);
+            }
+            std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
+            if (line.find(waitFenceId) != std::string::npos) {
+                nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                GetFrameLossTime(nowTime, lastTime, roundTime, frameLossTime);
+                LOGI("frameLossTime: (%s)", std::to_string(frameLossTime).c_str());
+                lastTime = nowTime;
+                upperScreenFlag = false;
+            }
+        }
+    }
+}
+
+void StallingRateTrace::GetFrameLossTime(double curTime, double prevTime, double drawTime, double &totalFrameLossTime)
+{
+    if ((curTime - prevTime) > drawTime && prevTime != 0) {
+        double diffTime = (curTime - prevTime) - drawTime;
+        LOGI("diffTime: (%s)", std::to_string(diffTime).c_str());
+        totalFrameLossTime += diffTime;
+        LOGI("totalFrameLossTime: (%s)", std::to_string(totalFrameLossTime).c_str());
+    }
+}
+
+void StallingRateTrace::GetRsHardWareRate(double curFrameRate, std::string line, SWIM_TYPE type)
+{
+    if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
+        switch (type) {
+            case SWIM_APPLIST:
+                upperScreenFlag = true;
+                break;
+            case SWIM_APPSWIPER:
+                upperScreenSwiperFlag = true;
+                break;
+            case SWIM_APPTABS:
+                upperScreenTabsFlag = true;
+                break;
+            default:
+                break;
+        }
+        curFrameRate = GetFrameRate(line);
+        LOGI("curFrameRate1: (%s)", std::to_string(curFrameRate).c_str());
+        if (curFrameRate != 0) {
+            UpdateRoundTime(curFrameRate, type);
+        }
+    } else if (line.find("H:RSHardwareThread::PerformSetActiveMode setting active mode") != std::string::npos) {
+        switch (type) {
+            case SWIM_APPLIST:
+                upperScreenFlag = true;
+                break;
+            case SWIM_APPSWIPER:
+                upperScreenSwiperFlag = true;
+                break;
+            case SWIM_APPTABS:
+                upperScreenTabsFlag = true;
+                break;
+            default:
+                break;
+        }
+        curFrameRate = GetFrameRate(line);
+        LOGI("curFrameRate2: (%s)", std::to_string(curFrameRate).c_str());
+        if (curFrameRate != 0) {
+            UpdateRoundTime(curFrameRate, type);
+        }
+    }
+}
+
+void StallingRateTrace::UpdateRoundTime(double curFrameRate, SWIM_TYPE type)
+{
+    const double kadunNum = 1.5;
+    const double num = 1;
+    if (curFrameRate != 0) {
+        switch (type) {
+            case SWIM_APPLIST:
+                roundTime = (num / curFrameRate) * kadunNum;
+                break;
+            case SWIM_APPSWIPER:
+                roundSwiperTime = (num / curFrameRate) * kadunNum;
+                break;
+            case SWIM_APPTABS:
+                roundTabsTime = (num / curFrameRate) * kadunNum;
+                break;
+            default:
+                break;
         }
     }
 }
 
 void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &signS)
 {
-    if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos ||
-        line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
-        line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
+    if (line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
+        line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos ||
+        line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
-            dynamicStartTime = GetTimes(line, signS);
-            frameLossTime = 0;
+            swiperDynamicStartTime = GetTimes(line, signS);
+            LOGI("swiperDynamicStartTime: (%s)", std::to_string(swiperDynamicStartTime).c_str());
+            frameLossSwiperTime = 0;
             swiperScrollFlag = 1;
-            animalFlag = true;
+        }
+    }
+}
+void StallingRateTrace::AppSwiperFrameRate(std::string line)
+{
+    if (swiperFlag) {
+        GetRsHardWareRate(nowSwiperFrameRate, line, SWIM_APPSWIPER);
+        if (upperScreenSwiperFlag) {
+            if (line.find("|H:Present Fence ") != std::string::npos) {
+                fenceIdSwiper = GetFenceId(line);
+                LOGI("fenceIdSwiper: (%d)", fenceIdSwiper);
+            }
+            std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdSwiper);
+            if (line.find(waitFenceId) != std::string::npos) {
+                nowSwiperTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                LOGI("nowSwiperTime: (%s)", std::to_string(nowSwiperTime).c_str());
+                GetFrameLossTime(nowSwiperTime, lastSwiperTime, roundSwiperTime, frameLossSwiperTime);
+                LOGI("frameLossSwiperTime: (%s)", std::to_string(frameLossSwiperTime).c_str());
+                lastSwiperTime = nowSwiperTime;
+                upperScreenSwiperFlag = false;
+            }
         }
     }
 }
 
-void StallingRateTrace::CalculateRoundTime()
+void StallingRateTrace::APPTabs(std::string line, const std::string &signS, const std::string &signF)
 {
-    double kadunNum = 1.5;
-    if (nowFrameRate != 0) {
-        roundTime = (1 / nowFrameRate) * kadunNum;
-    }
-}
-void StallingRateTrace::GetScreenInfo(std::string line)
-{
-    if (upperScreenFlag) {
-        if (line.find("|H:Present Fence ") != std::string::npos) {
-            fenceId = GetFenceId(line);
-            LOGI("fenceId=====: %s", std::to_string(fenceId).c_str());
+    if (line.find("H:APP_TABS_NO_ANIMATION_SWITCH") != std::string::npos ||
+        line.find("H:APP_TABS_FRAME_ANIMATION") != std::string::npos ||
+        line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
+        if (tabsFlag) {
+            appTabsDynamicFinishTime = GetTimes(line, signF);
+            LOGI("appTabsDynamicFinishTime: (%s)", std::to_string(appTabsDynamicFinishTime).c_str());
+            tabsFlag = false;
+        } else {
+            appTabsDynamicStartTime = GetTimes(line, signS);
+            LOGI("appTabsDynamicStartTime: (%s)", std::to_string(appTabsDynamicStartTime).c_str());
+            tabsFlag = true;
+            frameLossTabsTime = 0;
         }
-        
-        std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
-        if (line.find(waitFenceId) != std::string::npos) {
-            nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
-            LOGI("nowTime=====: %s", std::to_string(nowTime).c_str());
-            if ((nowTime - lastTime) > roundTime && lastTime != 0) {
-                double diffTime = (nowTime - lastTime) - roundTime;
-                frameLossTime += diffTime;
-                LOGI("frameLossTime=====: %s", std::to_string(frameLossTime).c_str());
+    }
+    if (tabsFlag) {
+        GetRsHardWareRate(nowTabsFrameRate, line, SWIM_APPTABS);
+        if (upperScreenTabsFlag) {
+            if (line.find("|H:Present Fence ") != std::string::npos) {
+                fenceIdTabs = GetFenceId(line);
+                LOGI("fenceIdTabs: (%s)", std::to_string(fenceIdTabs).c_str());
             }
-            lastTime = nowTime;
-            upperScreenFlag = false;
+            std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
+            if (line.find(waitFenceId) != std::string::npos) {
+                nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                LOGI("nowTabsTime: (%s)", std::to_string(nowTabsTime).c_str());
+                LOGI("lastTabsTime: (%s)", std::to_string(lastTabsTime).c_str());
+                LOGI("roundTabsTime: (%s)", std::to_string(roundTabsTime).c_str());
+                GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
+                LOGI("app tabs frameLossTabsTime: (%s)", std::to_string(frameLossTabsTime).c_str());
+                lastTabsTime = nowTabsTime;
+                upperScreenTabsFlag = false;
+            }
         }
     }
 }

@@ -38,9 +38,9 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     std::map<std::string, std::string> result;
     FpsInfoProfiler finalResult;
     if (isGameLayer == "1") {
-        std::string gameLayer = GetGameLayer();
-        if (!gameLayer.empty()) {
-            finalResult = selfRerderLayers(gameLayer);
+        std::string gameLayerName = GetGameLayer();
+        if (!gameLayerName.empty()) {
+            finalResult = selfRerderLayers(gameLayerName);
         }
     } else {
         finalResult = GetFpsInfo();
@@ -495,8 +495,13 @@ std::string ProfilerFPS::GetGameLayer()
     uint64_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
-        nodeId = std::stoll(nodeIdStr);
+        std::stringstream ss(nodeIdStr);
+        ss >> nodeId;
+        if (ss.fail() || !ss.eof()) {
+            return gameLayer;
+        }
         nodeId = nodeId >> kShiftAmount;
+
         if (std::to_string(nodeId) == processId) {
             size_t layerStartPos = cmdResult.find("[");
             size_t layerEndPos = cmdResult.find("]");
