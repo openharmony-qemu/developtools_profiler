@@ -32,6 +32,9 @@
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 const std::string TEST_PROC_NAME = "hiview";
+constexpr uint32_t SECOND_CHECK = 2;
+constexpr uint32_t THIRD_CHECK = 3;
+constexpr uint32_t FOURTH_CHECK = 4;
 }
 
 namespace OHOS {
@@ -49,13 +52,13 @@ bool FuzzNativeDaemonSa(const uint8_t* data, size_t size)
     if (size >= 1) {
         pid = static_cast<uint32_t>(data[0]);
     }
-    if (size >= 2) {
+    if (size >= SECOND_CHECK) {
         duration = static_cast<uint32_t>(data[1]);
     }
-    if (size >= 3) {
+    if (size >= THIRD_CHECK) {
         sampleInterval = static_cast<uint32_t>(data[2]);
     }
-    if (size >= 4) {
+    if (size >= FOURTH_CHECK) {
         stopPid = static_cast<uint32_t>(data[3]);
     }
     NativeMemoryProfilerSaClientManager::Start(
