@@ -196,6 +196,13 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     return rc;
 }
 
+void SmartPerfCommand::SaveGpuCounter() const
+{
+    std::string outGpuCounterDataPath = "/data/local/tmp";
+    gpuCounter.SaveData(outGpuCounterDataPath);
+    gpuCounter.StopCollect();
+}
+
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
@@ -239,9 +246,7 @@ std::string SmartPerfCommand::ExecCommand()
         index++;
     }
     if (gcFlag) {
-        std::string outGpuCounterDataPath = "/data/local/tmp";
-        gpuCounter.SaveData(outGpuCounterDataPath);
-        gpuCounter.StopCollect();
+        SaveGpuCounter();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
