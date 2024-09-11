@@ -35,6 +35,7 @@ const std::string TEST_PROC_NAME = "hiview";
 constexpr uint32_t SECOND_CHECK = 2;
 constexpr uint32_t THIRD_CHECK = 3;
 constexpr uint32_t FOURTH_CHECK = 4;
+constexpr uint32_t SLEEP_TIME = 10;
 }
 
 namespace OHOS {
@@ -49,7 +50,7 @@ bool FuzzNativeDaemonSa(const uint8_t* data, size_t size)
     uint32_t pid = 0;
     uint32_t duration = 0;
     uint32_t sampleInterval = 0;
-    uint32_t stopPid= 0;
+    uint32_t stopPid = 0;
     if (size >= 1) {
         pid = static_cast<uint32_t>(data[0]);
     }
@@ -57,14 +58,15 @@ bool FuzzNativeDaemonSa(const uint8_t* data, size_t size)
         duration = static_cast<uint32_t>(data[1]);
     }
     if (size >= THIRD_CHECK) {
-        sampleInterval = static_cast<uint32_t>(data[2]);
+        sampleInterval = static_cast<uint32_t>(data[SECOND_CHECK]);
     }
     if (size >= FOURTH_CHECK) {
-        stopPid = static_cast<uint32_t>(data[3]);
+        stopPid = static_cast<uint32_t>(data[THIRD_CHECK]);
     }
     NativeMemoryProfilerSaClientManager::Start(
-        NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK, pid, duration, sampleInterval);
-    sleep(10);
+        NativeMemoryProfilerSaClientManager::NativeMemProfilerType::MEM_PROFILER_CALL_STACK, pid, duration,
+        sampleInterval);
+    sleep(SLEEP_TIME);
     NativeMemoryProfilerSaClientManager::Stop(stopPid);
     return true;
 }
