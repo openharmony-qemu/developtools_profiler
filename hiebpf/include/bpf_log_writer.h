@@ -1,7 +1,7 @@
 /*
 * Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
 
-* The bpf_log_write.h is dual licensed: you can use it either under the terms of
+* The bpf_log_writer.h is dual licensed: you can use it either under the terms of
 * the GPL V2, or the 3-Clause BSD license, at your option.
 * See the LICENSE file in the root of this repository for complete details.
 */
