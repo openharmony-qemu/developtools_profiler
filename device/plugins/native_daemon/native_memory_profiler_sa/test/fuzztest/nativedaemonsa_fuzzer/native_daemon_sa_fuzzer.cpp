@@ -44,6 +44,7 @@ bool FuzzNativeDaemonSa(const uint8_t* data, size_t size)
     using namespace OHOS::Security::AccessToken;
     AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
     SetSelfTokenID(tokenID);
+    SystemSetParameter(NATIVE_PARAM.c_str(), "2");
     sleep(1);
     uint32_t pid = 0;
     uint32_t duration = 0;
