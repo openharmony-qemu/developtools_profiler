@@ -206,8 +206,7 @@ static bool MatchMallocHookStartupProp(const char *thisName)
     }
 
     const int targetProcNameSize = strlen(targetProcName);
-    if (strncmp(targetProcName, "init", targetProcNameSize) == 0 ||
-        strncmp(targetProcName, "appspawn", targetProcNameSize) == 0) {
+    if (strncmp(targetProcName, "init", targetProcNameSize) == 0) {
         HIDEBUG_LOGI("malloc hook: this target proc '%" LOG_PRIV_PUBLIC "s' no hook", targetProcName);
         return false;
     }
