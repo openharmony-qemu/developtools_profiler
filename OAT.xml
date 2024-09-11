@@ -97,6 +97,11 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="host/smartperf/trace_streamer/.gitignore" desc="gitignore file, no license header"/>
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_comm" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_tgid" desc="test resource file, no license header"/>
+                <filteritem type="filepath" name="LICENSE" desc="license file"/>
+                <filteritem type="filepath" name="hiebpf/src/hiebpf.bpf.c" desc="The hiebpf.bpf.c is dual licensed"/>
+                <filteritem type="filepath" name="hiebpf/include/bpf_log_writer.h" desc="The bpf_log_write.h is dual licensed"/>
+                <filteritem type="filepath" name="hiebpf/include/fstrace_progs.h" desc="The fstrace_progs.h is dual licensed"/>
+                <filteritem type="filepath" name="hiebpf/include/hiebpf_types.h" desc="The hiebpf_types.h is dual licensed"/>
             </filefilter>
             <filefilter name="copyrightPolicyFilter" desc="Filters for copyright header policies" >
                 <filteritem type="filepath" name="device/plugins/memory_plugin/test/utresources/proc/.*" desc="test resource file, no copyright header"/>
