@@ -128,11 +128,6 @@ StackPreprocess::~StackPreprocess()
     }
     runtime_instance = nullptr;
     fpHookData_ = nullptr;
-    if (isSaService_) {
-        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
-        tfPtr->SetDurationTime();
-        tfPtr->Finish();
-    }
 }
 
 void StackPreprocess::FinishTraceFile()
