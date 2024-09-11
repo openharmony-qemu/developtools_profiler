@@ -76,6 +76,7 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="device/plugins/cpu_plugin/test/fuzztest/cpustartplugin_fuzzer/corpus/init" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/plugins/diskio_plugin/test/fuzztest/diskiostartplugin_fuzzer/corpus/init" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/corpus/init" desc="test resource file, no license header"/>
+                <filteritem type="filepath" name="device/plugins/native_daemon/native_memory_profiler_sa/test/fuzztest/nativedaemonsa_fuzzer/corpus/init" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/plugins/network_plugin/test/fuzztest/networkstartplugin_fuzzer/corpus/init" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/corpus/init" desc="test resource file, no license header"/>
                 <filteritem type="filepath" name="device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/corpus/init" desc="test resource file, no license header"/>
@@ -111,6 +112,7 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="device/plugins/cpu_plugin/test/fuzztest/cpustartplugin_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
                 <filteritem type="filepath" name="device/plugins/diskio_plugin/test/fuzztest/diskiostartplugin_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
                 <filteritem type="filepath" name="device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
+                <filteritem type="filepath" name="device/plugins/native_daemon/native_memory_profiler_sa/test/fuzztest/nativedaemonsa_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
                 <filteritem type="filepath" name="device/plugins/network_plugin/test/fuzztest/networkstartplugin_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
                 <filteritem type="filepath" name="device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
                 <filteritem type="filepath" name="device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/corpus/init" desc="test resource file, no copyright header"/>
