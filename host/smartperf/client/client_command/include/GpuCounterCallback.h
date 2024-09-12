@@ -17,7 +17,6 @@
 #define GPU_COUNTER_CALLBACK_H
 #include "vector"
 
-#include "GpuCounter.h"
 namespace OHOS {
     namespace SmartPerf {
         struct GpuPerfInfo {
