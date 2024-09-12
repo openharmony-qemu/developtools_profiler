@@ -58,8 +58,8 @@ namespace OHOS {
                 uint32_t itemSecond, int32_t durationSecond) const;
             void JoinSocketDataPercent(GpuPerfInfo *newData);
             void JoinSocketData(GpuPerfInfo *newData);
-            unsigned long long SplitSocketDataValueFunction(uint32_t value, int32_t interval, int32_t duration);
-            void SplitSocketDataValue(int32_t interval) const;
+            unsigned long long SplitSocketDataValueFunction(uint32_t value, int32_t interval, int32_t duration) const;
+            void SplitSocketDataValue(int32_t interval);
             void SplitSocketDataPercent();
             void SplitSocketData();
             std::vector<GpuPerfInfo> gpuCounter;
@@ -68,7 +68,6 @@ namespace OHOS {
             const int64_t restartTime = 300000;
             const int32_t maxDuration = 1000;
             GpuPerfInfo realtimeGpuPerfInfoData;
-            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
         };
     }
 }

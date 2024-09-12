@@ -105,6 +105,8 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::SplitSocketDataValue(int32_t interval)
         {
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
+
             unsigned long long gpuActiveTargetValue = SplitSocketDataValueFunction(
                 realtimeGpuPerfInfoData.gpuActive, interval,
                 realtimeGpuPerfInfoData.duration);
@@ -153,6 +155,8 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::SplitSocketDataPercent()
         {
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
+
             gpuCounterInstance.GetGpuCounterRealtimeDataMap()["gpuLoadPercentage"] =
                 std::to_string(realtimeGpuPerfInfoData.gpuLoadPercentage);
             gpuCounterInstance.GetGpuCounterRealtimeDataMap()["vertexLoadPercentage"] =
@@ -170,6 +174,7 @@ namespace OHOS {
         void GpuCounterCallbackImpl::SplitSocketData()
         {
             int32_t interval = realtimeGpuPerfInfoData.duration - maxDuration;
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             if ((interval == 0) || (realtimeGpuPerfInfoData.duration < interval)) {
                 return;
@@ -182,12 +187,14 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
+
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 return;
             }
             gpuCounterInstance.GetRealtimeDataLock().lock();
-            if (gpuCounter.GetGpuCounterRealtimeDataMap().size() == 0 && \
+            if (gpuCounterInstance.GetGpuCounterRealtimeDataMap().size() == 0 && \
             realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
@@ -196,6 +203,8 @@ namespace OHOS {
 
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
+            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
+
             for (auto gpuPerfInfo : gpuPerfInfos) {
                 unsigned int gpuCounterBackSize = gpuCounter.size();
                 gpuCounter.push_back(gpuPerfInfo);
