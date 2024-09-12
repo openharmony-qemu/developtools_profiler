@@ -272,6 +272,10 @@ void SPTask::ResetSdkParam()
 
 void SPTask::StopSdkRecv()
 {
+    if (!sdkData || sdkvec.size() <= 0) {
+        return;
+    }
+
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
