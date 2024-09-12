@@ -36,18 +36,20 @@ std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
 
 void RunCmd(std::string& cmd)
 {
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (pipe == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HiebpfPlugin::RunCmd: create popen FAILED!");
-        return;
+    if (getuid() == 0) {
+        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
+        if (pipe == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HiebpfPlugin::RunCmd: create popen FAILED!");
+            return;
+        }
+        constexpr uint32_t readBufferSize = 4096;
+        std::array<char, readBufferSize> buffer;
+        std::string result;
+        while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+            result += buffer.data();
+        }
+        PROFILER_LOG_INFO(LOG_CORE, "HiebpfPlugin::run command result: %s", result.c_str());
     }
-    constexpr uint32_t readBufferSize = 4096;
-    std::array<char, readBufferSize> buffer;
-    std::string result;
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    PROFILER_LOG_INFO(LOG_CORE, "HiebpfPlugin::run command result: %s", result.c_str());
 }
 } // namespace
 

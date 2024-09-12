@@ -66,15 +66,6 @@ void ParseConfig(const BytracePluginConfig& config)
 bool RunCommand(const std::string& cmd)
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:start running commond: %s", __func__, cmd.c_str());
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.data(), "r"), pclose);
-    CHECK_TRUE(pipe, false, "BytraceCall::RunCommand: create popen FAILED!");
-
-    std::array<char, READ_BUFFER_SIZE> buffer;
-    std::string result;
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-        result += buffer.data();
-    }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:runCommand result: %s", __func__, result.data());
     return true;
 }
 

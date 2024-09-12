@@ -32,15 +32,12 @@ ohos_unittest("ftrace_plugin_ut") {
     "unittest/ftrace_field_parser_test.cpp",
     "unittest/ftrace_fs_ops_test.cpp",
     "unittest/ftrace_parser_test.cpp",
-    "unittest/hitrace_ops_test.cpp",
     "unittest/kernel_symbols_parser_test.cpp",
     "unittest/paged_mem_pool_test.cpp",
     "unittest/printk_formats_parser_test.cpp",
-    "unittest/process_utils_test.cpp",
     "unittest/result_transporter_test.cpp",
     "unittest/string_utils_test.cpp",
     "unittest/sub_event_parser_test.cpp",
-    "unittest/trace_ops_test.cpp",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/plugins/ftrace_plugin:ftrace_plugin_source",

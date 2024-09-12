@@ -92,7 +92,7 @@ HWTEST_F(CommonTest, StartAndKillProcess, TestSize.Level1)
     argvVec.push_back(const_cast<char*>(profilerProcName.c_str()));
     int lockFileFd = -1;
     EXPECT_FALSE(COMMON::IsProcessRunning(lockFileFd));
-    int procPid = COMMON::StartProcess(profilerProcName, argvVec);
+    int procPid = COMMON::StartProcess("/system/bin/hiprofilerd", argvVec);
     EXPECT_NE(procPid, 0);
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     EXPECT_NE(COMMON::KillProcess(procPid), -1);
