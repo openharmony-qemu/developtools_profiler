@@ -69,6 +69,9 @@ namespace OHOS {
 
         void GpuCounter::SaveData(std::string path)
         {
+            if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0) {
+                return;
+            }
             LOGI("GpuCounter collect stop.");
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {

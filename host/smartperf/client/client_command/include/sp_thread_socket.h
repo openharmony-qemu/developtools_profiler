@@ -118,6 +118,7 @@ public:
             std::cout << data << std::endl;
         };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+        SPTask::GetInstance().StartRecord();
         LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
