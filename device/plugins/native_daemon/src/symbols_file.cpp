@@ -521,6 +521,7 @@ public:
     bool LoadKernelSyms()
     {
         if (!IsRoot()) {
+            HLOGE("only root mode can access kernel symbols");
             return false;
         }
         HLOGD("try read /proc/kallsyms");
