@@ -304,6 +304,7 @@ void SPTask::InitDataFile()
     vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterSaveReportData().clear();
+    SdkDataRecv::GetInstance().SetStartRecordTime();
     startTime = SPUtils::GetCurTime();
     std::vector<std::string> files = {
         "sdk_data.csv",

@@ -168,7 +168,6 @@ namespace OHOS {
 
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
-            ServerParams params;
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 params.receiveFd[i] = -1;
             }
@@ -284,6 +283,11 @@ namespace OHOS {
                 dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
                 sdkDataRealtimeData.clear();
             }
+        }
+
+        void SdkDataRecv::SetStartRecordTime()
+        {
+            params.startTime = SPUtils::GetCurTime();
         }
     }
 }
