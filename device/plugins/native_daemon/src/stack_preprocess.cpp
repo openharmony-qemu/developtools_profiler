@@ -162,7 +162,12 @@ bool StackPreprocess::StartTakeResults()
 {
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
 
-    std::thread demuxer([this] { this->TakeResults(); });
+    std::weak_ptr<StackPreprocess> weakPtr(shared_from_this());
+    std::thread demuxer([weakPtr] {
+        if (auto ptr = weakPtr.lock(); ptr != nullptr) {
+            ptr->TakeResults();
+        }
+    });
     CHECK_TRUE(demuxer.get_id() != std::thread::id(), false, "demuxer thread invalid");
 
     thread_ = std::move(demuxer);
