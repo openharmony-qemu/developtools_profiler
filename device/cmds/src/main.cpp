@@ -400,7 +400,7 @@ bool StartDependentProcess()
             // need start hiprofilerd
             std::vector<char*> argvVec;
             argvVec.push_back(const_cast<char*>(HIPROFILERD_NAME.c_str()));
-            g_hiprofilerdPid = COMMON::StartProcess(HIPROFILERD_NAME, argvVec);
+            g_hiprofilerdPid = COMMON::StartProcess("/system/bin/hiprofilerd", argvVec);
             // Wait for the hiprofilerd to start
             std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
         }
@@ -409,7 +409,7 @@ bool StartDependentProcess()
             // need start hiprofiler_plugins
             std::vector<char*> argvVec;
             argvVec.push_back(const_cast<char*>(HIPROFILER_PLUGINS_NAME.c_str()));
-            g_hiprofilerPluginsPid = COMMON::StartProcess(HIPROFILER_PLUGINS_NAME, argvVec);
+            g_hiprofilerPluginsPid = COMMON::StartProcess("/system/bin/hiprofiler_plugins", argvVec);
             // Wait for the hiprofiler_plugins add preset plugin
             std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
         }
@@ -418,7 +418,7 @@ bool StartDependentProcess()
             // need start native_daemon
             std::vector<char*> argvVec;
             argvVec.push_back(const_cast<char*>(NATIVE_DAEMON_NAME.c_str()));
-            g_nativeDaemonPid = COMMON::StartProcess(NATIVE_DAEMON_NAME, argvVec);
+            g_nativeDaemonPid = COMMON::StartProcess("/system/bin/native_daemon", argvVec);
             // Wait for the native_daemon to start
             std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
         }

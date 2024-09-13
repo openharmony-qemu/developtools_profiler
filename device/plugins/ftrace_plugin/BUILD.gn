@@ -24,14 +24,11 @@ ohos_source_set("ftrace_plugin_source") {
     "src/ftrace_fs_ops.cpp",
     "src/ftrace_module.cpp",
     "src/ftrace_parser.cpp",
-    "src/hitrace_ops.cpp",
     "src/kernel_symbols_parser.cpp",
     "src/paged_mem_pool.cpp",
     "src/printk_formats_parser.cpp",
-    "src/process_utils.cpp",
     "src/result_transporter.cpp",
     "src/string_utils.cpp",
-    "src/trace_ops.cpp",
   ]
   defines = [ "_GNU_SOURCE" ]
   include_dirs = [

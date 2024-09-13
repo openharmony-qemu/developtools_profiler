@@ -52,5 +52,7 @@ bool IsUserMode();
 bool GetDeveloperMode();
 bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
+bool CheckWhiteList(const std::string& cmdPath);
+bool CheckCmdLineArgValid(const std::string& cmdLine);
 } // COMMON
 #endif // COMMON_H
