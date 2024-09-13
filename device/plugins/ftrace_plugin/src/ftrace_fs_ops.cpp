@@ -112,7 +112,8 @@ bool SetKptrRestrict(const std::string& value)
 
 std::string FtraceFsOps::GetKernelSymbols() const
 {
-    if (!COMMON::IsRoot()) {
+    if (COMMON::IsUserMode()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetKernelSymbols failed, only root mode can access kernel symbols");
         return "";
     }
     std::string restrictValue = GetKptrRestrict();

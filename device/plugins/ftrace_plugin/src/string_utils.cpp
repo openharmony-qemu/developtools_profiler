@@ -32,16 +32,16 @@ bool StringUtils::StartsWith(const std::string& str, const std::string& prefix)
     return str.compare(0, prefix.size(), prefix) == 0;
 }
 
-bool StringUtils::Contains(const std::string& str, const std::string& target)
-{
-    return str.find(target) != std::string::npos;
-}
-
 std::string StringUtils::ConvertToHex(uint64_t num)
 {
     std::stringstream ss;
     ss << std::hex << num;
     return ss.str();
+}
+
+bool StringUtils::Contains(const std::string& str, const std::string& target)
+{
+    return str.find(target) != std::string::npos;
 }
 
 std::string StringUtils::Strip(const std::string& str)
