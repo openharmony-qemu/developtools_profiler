@@ -27,9 +27,7 @@ ohos_fuzztest("NativeDaemonSaFuzzTest") {
     "-DFUZZ_TEST",
   ]
 
-  sources = [
-    "native_daemon_sa_fuzzer.cpp",
-  ]
+  sources = [ "native_daemon_sa_fuzzer.cpp" ]
 
   deps = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
