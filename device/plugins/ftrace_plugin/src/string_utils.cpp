@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include "string_utils.h"
+#include <sstream>
+#include <iomanip>
 
 bool StringUtils::EndsWith(const std::string& str, const std::string& postfix)
 {
@@ -33,6 +35,13 @@ bool StringUtils::StartsWith(const std::string& str, const std::string& prefix)
 bool StringUtils::Contains(const std::string& str, const std::string& target)
 {
     return str.find(target) != std::string::npos;
+}
+
+std::string StringUtils::ConvertToHex(uint64_t num)
+{
+    std::stringstream ss;
+    ss << std::hex << num;
+    return ss.str();
 }
 
 std::string StringUtils::Strip(const std::string& str)

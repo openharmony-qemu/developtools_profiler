@@ -20,7 +20,7 @@
 #include <sys/types.h>
 #include <sys/utsname.h>
 #include <unistd.h>
-
+#include "common.h"
 #include "file_utils.h"
 #include "logging.h"
 
@@ -112,6 +112,9 @@ bool SetKptrRestrict(const std::string& value)
 
 std::string FtraceFsOps::GetKernelSymbols() const
 {
+    if (!COMMON::IsRoot()) {
+        return "";
+    }
     std::string restrictValue = GetKptrRestrict();
     CHECK_TRUE(restrictValue.size() > 0, "", "read kptr_restrict failed!");
 
