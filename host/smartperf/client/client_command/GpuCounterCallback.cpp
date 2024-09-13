@@ -244,6 +244,7 @@ namespace OHOS {
                     << backData->memoryWriteBandwidth << ","
                     << backData->memoryBandwidthPercentage << ",";
                 gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
+                gpuCounterInstance.GetGpuCounterSaveReportData().push_back(oss.str());
 
                 GetRealTime(backData);
             }

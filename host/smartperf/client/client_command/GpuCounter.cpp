@@ -103,8 +103,8 @@ namespace OHOS {
                 "memoryWriteBandwidth,"
                 "memoryBandwidthPercentage\r";
             outFile << title << std::endl;
-            for (unsigned int i = 0; i < gpuCounterData.size() - 1; i++) {
-                outFile << gpuCounterData[i] << std::endl;
+            for (unsigned int i = 0; i < gpuCounterSaveReportData.size() - 1; i++) {
+                outFile << gpuCounterSaveReportData[i] << std::endl;
             }
             outFile.close();
             mtx.unlock();
