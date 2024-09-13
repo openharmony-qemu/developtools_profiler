@@ -126,7 +126,7 @@ static void RecordCapacity()
         infile.close();
 
         while (std::getline(buffer, line)) {
-            capacityLine ++;
+            capacityLine++;
         }
         if (capacityLine == MAX_RECORD_COUNT) {
             std::size_t pos = capacityString.find('\n');
