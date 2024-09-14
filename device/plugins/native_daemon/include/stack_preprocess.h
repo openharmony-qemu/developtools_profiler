@@ -36,7 +36,7 @@
 #include "schedule_task_manager.h"
 
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
-class StackPreprocess {
+class StackPreprocess : public std::enable_shared_from_this<StackPreprocess> {
 public:
     struct RecordStatistic {
         uint32_t pid {0};
