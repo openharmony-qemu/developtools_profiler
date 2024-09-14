@@ -128,20 +128,21 @@ namespace OHOS {
             unsigned long long memoryWriteBandwidthTargetValue = SplitSocketDataValueFunction(
                 realtimeGpuPerfInfoData.memoryWriteBandwidth, interval,
                 realtimeGpuPerfInfoData.duration);
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.gpuActive - gpuActiveTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.drawCalls - drawCallsTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.primitives - primitivesTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.vertexCounts - vertexCountsTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.totalInstruments - totalInstrumentsTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.memoryReadBandwidth - memoryReadBandwidthTargetValue) + "_"
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
-                std::to_string(realtimeGpuPerfInfoData.memoryWriteBandwidth - memoryWriteBandwidthTargetValue) + "_"
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.gpuActive - gpuActiveTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.drawCalls - drawCallsTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.primitives - primitivesTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.vertexCounts - vertexCountsTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.totalInstruments - totalInstrumentsTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.memoryReadBandwidth - memoryReadBandwidthTargetValue) + "_";
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
+                std::to_string(realtimeGpuPerfInfoData.memoryWriteBandwidth - memoryWriteBandwidthTargetValue)
+                + "_";
 
             realtimeGpuPerfInfoData.gpuActive = gpuActiveTargetValue;
             realtimeGpuPerfInfoData.drawCalls = drawCallsTargetValue;
@@ -156,17 +157,17 @@ namespace OHOS {
         {
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.gpuLoadPercentage) + "_";
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.vertexLoadPercentage) + "_";
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.fragmentLoadPercentage) + "_";
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.computeLoadPercentage) + "_";
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.textureLoadPercentage) + "_";
-            gpuCounterInstance.GetGpuCounterRealtimeData +=
+            gpuCounterInstance.GetGpuCounterRealtimeData() +=
                 std::to_string(realtimeGpuPerfInfoData.memoryBandwidthPercentage) + "_";
         }
 
@@ -181,7 +182,7 @@ namespace OHOS {
             SplitSocketDataValue(interval);
             SplitSocketDataPercent();
             realtimeGpuPerfInfoData.duration = interval;
-            gpuCounterInstance.GetGpuCounterRealtimeData += std::to_string(maxDuration) + ";";
+            gpuCounterInstance.GetGpuCounterRealtimeData() += std::to_string(maxDuration) + ";";
         }
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
