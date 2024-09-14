@@ -45,35 +45,6 @@ void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &tra
     SPUtils::LoadCmd(cmdString + traceName, result);
 }
 
-std::thread StartUpDelay::ThreadGetTrace(const std::string &sessionID, const std::string &traceName) const
-{
-    auto thGetTrace = std::thread([this, sessionID, traceName]() { this->GetTrace(sessionID, traceName); });
-    return thGetTrace;
-}
-void StartUpDelay::GetLayout()
-{
-    std::string result;
-    std::string uitest = CMD_COMMAND_MAP.at(CmdCommand::UITEST_DUMPLAYOUT);
-    SPUtils::LoadCmd(uitest, result);
-}
-std::thread StartUpDelay::ThreadGetLayout()
-{
-    auto thGetLayout = std::thread([this]() { this->GetLayout(); });
-    return thGetLayout;
-}
-void StartUpDelay::InputEvent(const std::string &point)
-{
-    std::string cmdResult = "";
-    int time = 4;
-    sleep(time);
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_POINT) + point + " -u" + point;
-    SPUtils::LoadCmd(cmd, cmdResult);
-}
-std::thread StartUpDelay::ThreadInputEvent(const std::string &point)
-{
-    auto thInputEvent = std::thread([this, point]() { this->InputEvent(point); });
-    return thInputEvent;
-}
 void StartUpDelay::GetHisysId() const
 {
     int time = 10;
@@ -198,25 +169,6 @@ void StartUpDelay::ClearOldServer()
     }
 }
 
-std::thread StartUpDelay::ThreadGetHisysIds() const
-{
-    auto thGetHisysIds = std::thread([this]() { this->GetHisysIdAndKill(); });
-    return thGetHisysIds;
-}
-
-std::thread StartUpDelay::ThreadGetHisysId() const
-{
-    auto thGetHisysId = std::thread([this]() { this->GetHisysId(); });
-    return thGetHisysId;
-}
-void StartUpDelay::ChangeToBackground()
-{
-    std::string result;
-    sleep(1);
-    std::string uinput = CMD_COMMAND_MAP.at(CmdCommand::UINPUT_BACK);
-    SPUtils::LoadCmd(uinput, result);
-    sleep(1);
-}
 std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 {
     std::string resultPid = "";
@@ -252,99 +204,6 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
         waitpid(pid, nullptr, 0);
     }
     return resultProcId;
-}
-void StartUpDelay::InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName)
-{
-    char realPath[PATH_MAX] = {0x00};
-    if ((realpath(fileName.c_str(), realPath) == nullptr)) {
-        std::cout << "" << std::endl;
-    }
-    std::ifstream file(realPath, std::ios::in);
-    std::string strLine = "";
-    std::regex pattern("\\d+");
-    size_t findIndex = std::string::npos;
-    while (getline(file, strLine)) {
-        size_t appPkgIndex = strLine.find("AppName_text_" + appPkgName);
-        size_t appIndex = strLine.find(curAppName);
-        if (appIndex != std::string::npos) {
-            findIndex = appIndex;
-        } else {
-            findIndex = appPkgIndex;
-        }
-        if (findIndex == std::string::npos) {
-            break;
-        }
-        size_t bounds = strLine.rfind("bounds", findIndex);
-        if (bounds > 0) {
-            std::string boundStr = strLine.substr(bounds, 30);
-            std::smatch result;
-            std::string::const_iterator iterStart = boundStr.begin();
-            std::string::const_iterator iterEnd = boundStr.end();
-            std::vector<std::string> pointVector;
-            while (std::regex_search(iterStart, iterEnd, result, pattern)) {
-                std::string startX = result[0];
-                iterStart = result[0].second;
-                pointVector.push_back(startX);
-            }
-            size_t num = 3;
-            if (pointVector.size() > num) {
-                int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
-                int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
-                pointXY = std::to_string(x) + " " + std::to_string(y);
-            } else {
-                size_t leftStart = boundStr.find_first_of("[");
-                size_t leftEnd = boundStr.find_first_of("]");
-                int pointXYlength = static_cast<int>(leftEnd - leftStart);
-                pointXY = boundStr.substr(leftStart + 1, pointXYlength - 1);
-                pointXY = pointXY.replace(pointXY.find(","), 1, " ");
-            }
-            break;
-        }
-    }
-}
-void StartUpDelay::InitXY(const std::string &curAppName, const std::string &fileName)
-{
-    char realPath[PATH_MAX] = {0x00};
-    if ((realpath(fileName.c_str(), realPath) == nullptr)) {
-        std::cout << "" << std::endl;
-    }
-    std::ifstream file(realPath, std::ios::in);
-    std::string strLine = "";
-    std::regex pattern("\\d+");
-    size_t appIndex = -1;
-    while (getline(file, strLine)) {
-        appIndex = strLine.find(curAppName);
-        if (appIndex <= 0) {
-            break;
-        }
-        size_t bounds = strLine.rfind("bounds", appIndex);
-        if (bounds > 0) {
-            std::string boundStr = strLine.substr(bounds, 30);
-            std::smatch result;
-            std::string::const_iterator iterStart = boundStr.begin();
-            std::string::const_iterator iterEnd = boundStr.end();
-            std::vector<std::string> pointVector;
-            while (std::regex_search(iterStart, iterEnd, result, pattern)) {
-                std::string startX = result[0];
-                iterStart = result[0].second;
-                pointVector.push_back(startX);
-            }
-            size_t num = 3;
-            size_t pointNum = pointVector.size();
-            if (pointNum > num) {
-                int x = (std::atoi(pointVector[2].c_str()) + std::atoi(pointVector[0].c_str())) / 2;
-                int y = (std::atoi(pointVector[3].c_str()) + std::atoi(pointVector[1].c_str())) / 2;
-                pointXY = std::to_string(x) + " " + std::to_string(y);
-            } else {
-                size_t leftStart = boundStr.find_first_of("[");
-                size_t leftEnd = boundStr.find_first_of("]");
-                int pointXYlength = static_cast<int>(leftEnd - leftStart);
-                pointXY = boundStr.substr(leftStart + 1, pointXYlength - 1);
-                pointXY = pointXY.replace(pointXY.find(","), 1, " ");
-            }
-            break;
-        }
-    }
 }
 }
 }

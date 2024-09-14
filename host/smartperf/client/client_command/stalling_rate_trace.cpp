@@ -31,7 +31,6 @@ double StallingRateTrace::StallingRateResult(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        std::cout << "file open fail:" << file << std::endl;
         LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());
         return stalligRate;
     }

@@ -23,11 +23,7 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Navigation::ItemData()
 {
-    std::map<std::string, std::string> result;
-    std::map<std::string, std::string> navInfo = Navigation::GetNavInfo();
-    for (auto it = navInfo.begin(); it != navInfo.end(); ++it) {
-        result.insert(*it);
-    }
+    std::map<std::string, std::string> result = Navigation::GetNavInfo();
     LOGI("Navigation::ItemData map size(%u)", result.size());
     return result;
 }
