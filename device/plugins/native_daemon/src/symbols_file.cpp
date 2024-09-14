@@ -519,6 +519,10 @@ public:
 
     bool LoadKernelSyms()
     {
+        if (!IsRoot()) {
+            HLOGE("only root mode can access kernel symbols");
+            return false;
+        }
         HLOGD("try read /proc/kallsyms");
         if (access("/proc/kallsyms", R_OK) != 0) {
             printf("No vmlinux path is given, and kallsyms cannot be opened\n");
