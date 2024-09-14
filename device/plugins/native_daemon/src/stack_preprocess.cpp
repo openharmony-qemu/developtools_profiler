@@ -162,9 +162,9 @@ bool StackPreprocess::StartTakeResults()
 {
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
 
-    std::weak_ptr<StackPreprocess> weakPtr(shared_from_this());
-    std::thread demuxer([weakPtr] {
-        if (auto ptr = weakPtr.lock(); ptr != nullptr) {
+    std::weak_ptr<StackPreprocess> stackPreprocessPtr(shared_from_this());
+    std::thread demuxer([stackPreprocessPtr] {
+        if (auto ptr = stackPreprocessPtr.lock(); ptr != nullptr) {
             ptr->TakeResults();
         }
     });
