@@ -47,7 +47,7 @@ namespace OHOS {
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
-                gpuCounterRealtimeDataMap.clear();
+                gpuCounterRealtimeData.clear();
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
@@ -125,9 +125,13 @@ namespace OHOS {
             return realtimeDataLock;
         }
 
-        std::map<std::string, std::string> &GpuCounter::GetGpuCounterRealtimeData()
+        std::string &GpuCounter::GetGpuCounterRealtimeData()
         {
             return gpuCounterRealtimeData;
+        }
+        void GpuCounter::AddGpuCounterRealtimeData(std::string dataString)
+        {
+            gpuCounterRealtimeData += dataString;
         }
 
         void GpuCounter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)

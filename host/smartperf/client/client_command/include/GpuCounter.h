@@ -59,7 +59,8 @@ namespace OHOS {
             std::vector<std::string> &GetGpuCounterData();
             std::vector<std::string> &GetGpuCounterSaveReportData();
             std::mutex &GetRealtimeDataLock();
-            std::map<std::string, std::string> &GetGpuCounterRealtimeData();
+            std::string &GetGpuCounterRealtimeData();
+            void AddGpuCounterRealtimeData(std::string dataString);
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
             void SaveData(std::string path);
         private:
