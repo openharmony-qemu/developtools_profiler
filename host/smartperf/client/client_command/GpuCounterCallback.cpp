@@ -82,9 +82,6 @@ namespace OHOS {
             realtimeGpuPerfInfoData.textureLoadPercentage = JoinSocketDataPercentFunction(
                 realtimeGpuPerfInfoData.textureLoadPercentage, realtimeGpuPerfInfoData.duration,
                 newData->textureLoadPercentage, newData->duration);
-            realtimeGpuPerfInfoData.memoryBandwidthPercentage = JoinSocketDataPercentFunction(
-                realtimeGpuPerfInfoData.memoryBandwidthPercentage, realtimeGpuPerfInfoData.duration,
-                newData->memoryBandwidthPercentage, newData->duration);
         }
 
         void GpuCounterCallbackImpl::JoinSocketData(GpuPerfInfo *newData)
@@ -165,15 +162,12 @@ namespace OHOS {
             gpuCounterInstance.AddGpuCounterRealtimeData(
                 std::to_string(realtimeGpuPerfInfoData.computeLoadPercentage) + "_");
             gpuCounterInstance.AddGpuCounterRealtimeData(
-                std::to_string(realtimeGpuPerfInfoData.textureLoadPercentage) + "_");
-            gpuCounterInstance.AddGpuCounterRealtimeData(
-                std::to_string(realtimeGpuPerfInfoData.memoryBandwidthPercentage) + "_");
+                std::to_string(realtimeGpuPerfInfoData.textureLoadPercentage) + ";");
         }
 
         void GpuCounterCallbackImpl::SplitSocketData()
         {
             int32_t interval = realtimeGpuPerfInfoData.duration - maxDuration;
-            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             if ((interval == 0) || (realtimeGpuPerfInfoData.duration < interval)) {
                 return;
@@ -181,7 +175,6 @@ namespace OHOS {
             SplitSocketDataValue(interval);
             SplitSocketDataPercent();
             realtimeGpuPerfInfoData.duration = interval;
-            gpuCounterInstance.AddGpuCounterRealtimeData(std::to_string(maxDuration) + ";");
         }
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
