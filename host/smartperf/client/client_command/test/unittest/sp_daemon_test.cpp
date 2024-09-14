@@ -118,7 +118,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.GetCurrentTime();
     fps.CalcFpsAndJitters();
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
@@ -310,7 +309,6 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
 {
     ProfilerFPS &profiler = ProfilerFPS::GetInstance();
     std::string packName = "ohos.samples.ecg";
-    int sleepNum = 100;
     int sectionsNum = 10;
     FpsInfoProfiler fpsInfoResult;
     int nums = 10;
@@ -318,8 +316,7 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     long long msStartTime = 0;
     int numb = 20;
     long long harTime = 0;
-    
-    profiler.GetCurrentTime(sleepNum);
+
     profiler.GetResultFPS(sectionsNum);
     profiler.CalcFpsAndJitters();
     profiler.GetSectionsFps(fpsInfoResult, nums);
