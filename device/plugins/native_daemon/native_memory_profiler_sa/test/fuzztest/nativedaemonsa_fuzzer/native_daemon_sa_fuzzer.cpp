@@ -25,7 +25,6 @@
 
 #include "init_param.h"
 #include "native_memory_profiler_sa_client_manager.h"
-#include "utilities.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
 

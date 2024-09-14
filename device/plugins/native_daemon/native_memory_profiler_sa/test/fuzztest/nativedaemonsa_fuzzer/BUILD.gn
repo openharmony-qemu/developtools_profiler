@@ -19,7 +19,6 @@ import("../../../../../../base/config.gni")
 ohos_fuzztest("NativeDaemonSaFuzzTest") {
   module_out_path = hiprofiler_fuzz_output_path
   fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/test/fuzztest/nativedaemonsa_fuzzer"
-  configs = [ "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/test:native_memory_profiler_sa_config" ]
   cflags = [
     "-g",
     "-O0",
@@ -28,36 +27,11 @@ ohos_fuzztest("NativeDaemonSaFuzzTest") {
     "-DFUZZ_TEST",
   ]
 
-  sources = [
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
-    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
-    "../../../../../api/src/buffer_writer.cpp",
-    "../../../../../api/src/command_poller.cpp",
-    "../../../../../api/src/writer_adapter.cpp",
-    "../../../../src/call_stack.cpp",
-    "../../../../src/debug_logger.cpp",
-    "../../../../src/dwarf_encoding.cpp",
-    "../../../../src/get_thread_id.cpp",
-    "../../../../src/hook_manager.cpp",
-    "../../../../src/hook_service.cpp",
-    "../../../../src/register.cpp",
-    "../../../../src/stack_data_repeater.cpp",
-    "../../../../src/stack_preprocess.cpp",
-    "../../../../src/symbols_file.cpp",
-    "../../../../src/utilities.cpp",
-    "../../../../src/virtual_runtime.cpp",
-    "../../../../src/virtual_thread.cpp",
-    "native_daemon_sa_fuzzer.cpp",
-  ]
+  sources = [ "native_daemon_sa_fuzzer.cpp" ]
 
   deps = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:libnative_daemon_client",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
@@ -82,6 +56,7 @@ ohos_fuzztest("NativeDaemonSaFuzzTest") {
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "googletest:gtest",
+    "hilog:libhilog",
     "init:libbegetutil",
     "ipc:ipc_core",
     "openssl:libcrypto_shared",
