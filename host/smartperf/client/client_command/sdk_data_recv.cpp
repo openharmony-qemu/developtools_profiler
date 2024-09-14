@@ -280,7 +280,9 @@ namespace OHOS {
             if (sdkDataRealtimeData.size() > 0) {
                 std::map<std::string, std::string> sdkDataRealtimeDataMap;
                 sdkDataRealtimeDataMap["sdkData"] = sdkDataRealtimeData;
+                realtimeDataLock.lock();
                 dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
+                realtimeDataLock.unlock();
                 sdkDataRealtimeData.clear();
             }
         }

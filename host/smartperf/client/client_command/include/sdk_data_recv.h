@@ -79,6 +79,7 @@ namespace OHOS {
             std::string receiveBuffer = "";
             std::string sdkDataRealtimeData = "";
             ServerParams params;
+            std::mutex realtimeDataLock;
         };
     }
 }

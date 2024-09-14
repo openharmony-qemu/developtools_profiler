@@ -125,17 +125,20 @@ namespace OHOS {
             return realtimeDataLock;
         }
 
-        std::map<std::string, std::string> &GpuCounter::GetGpuCounterRealtimeDataMap()
+        std::map<std::string, std::string> &GpuCounter::GetGpuCounterRealtimeData()
         {
-            return gpuCounterRealtimeDataMap;
+            return gpuCounterRealtimeData;
         }
 
         void GpuCounter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)
         {
-            if (gpuCounterRealtimeDataMap.size() > 0) {
-                std::lock_guard<std::mutex> lock(realtimeDataLock);
+            if (gpuCounterRealtimeData.size() > 0) {
+                std::map<std::string, std::string> gpuCounterRealtimeDataMap;
+                gpuCounterRealtimeDataMap["gpuCounterData"] = gpuCounterRealtimeData;
+                realtimeDataLock.lock();
                 dataMap.insert(gpuCounterRealtimeDataMap.begin(), gpuCounterRealtimeDataMap.end());
-                gpuCounterRealtimeDataMap.clear();
+                realtimeDataLock.unlock();
+                gpuCounterRealtimeData.clear();
             }
         }
 
