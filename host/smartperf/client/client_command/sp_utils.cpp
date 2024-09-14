@@ -655,7 +655,7 @@ bool SPUtils::IsForeGround(std::string &pkg)
     }
     bool tag = false;
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line =buf;
+        std::string line = buf;
         if (line.find(appLine) != std::string::npos) {
             isFoundAppName = true;
         }

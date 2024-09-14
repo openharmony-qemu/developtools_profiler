@@ -220,7 +220,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             currTimeLast = currTime;
             msCount++;
         } else {
-            while(currTime > msStartTime) {
+            while (currTime > msStartTime) {
                 PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
                 printCount++;
                 msCount = 1;
