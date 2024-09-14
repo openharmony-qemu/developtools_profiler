@@ -69,7 +69,7 @@ void SignalSigtermHandler(int sig)
 int main(int argc, char* argv[])
 {
     int lockFileFd = -1;
-    if (COMMON::IsProcessRunning(lockFileFd)) { // process is running
+    if ((!COMMON::GetDeveloperMode()) || COMMON::IsProcessRunning(lockFileFd)) { // process is running
         return 0;
     }
     signal(SIGTERM, SignalSigtermHandler);

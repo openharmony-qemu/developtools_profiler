@@ -231,6 +231,15 @@ bool IsUserMode()
     return debugMode == "0";
 }
 
+bool GetDeveloperMode()
+{
+    bool developerMode = OHOS::system::GetBoolParameter("const.security.developermode.state", true);
+    if (!developerMode) {
+        PROFILER_LOG_INFO(LOG_CORE, "It is not developer mode!");
+    }
+    return developerMode;
+}
+
 inline int CustomFdClose(int& fd)
 {
     int ret = close(fd);
