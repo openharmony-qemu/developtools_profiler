@@ -34,8 +34,6 @@ double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        std::cout << "File "
-                  << "open fail" << std::endl;
         LOGE("ParseClickResponseTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }

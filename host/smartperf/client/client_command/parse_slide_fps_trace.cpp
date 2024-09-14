@@ -30,7 +30,6 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
     }

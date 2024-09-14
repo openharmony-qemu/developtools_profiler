@@ -268,7 +268,6 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
     if (SPUtils::LoadCmd(stat, cmdResult)) {
-        printf("Privilege escalation! \n");
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };
 }

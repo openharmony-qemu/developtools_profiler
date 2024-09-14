@@ -64,10 +64,7 @@ public:
     void SetLayerName(std::string sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    bool IsForeGround();
-    bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
-    void GetCurrentTime();
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;
@@ -95,9 +92,6 @@ private:
     long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
-    unsigned long sleepNowTime = 10000;
-    bool isFoundAppName = false;
-    bool isFoundBundleName = false;
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;

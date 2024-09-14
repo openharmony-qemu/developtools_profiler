@@ -81,7 +81,6 @@ int ClientControl::InitSocket()
 {
     clientSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (clientSocket == -1) {
-        std::cout << "Faild to create socket" << std::endl;
         LOGE("Faild to create socket");
         return -1;
     }
@@ -89,7 +88,6 @@ int ClientControl::InitSocket()
     serverAddress.sin_addr.s_addr = inet_addr("127.0.0.1");
     serverAddress.sin_port = htons(protNumber);
     if (connect(clientSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) < 0) {
-        std::cout << "Failed to connect to server" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpClear();
         LOGE("Failed to connect to server");

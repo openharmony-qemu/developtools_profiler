@@ -23,23 +23,12 @@ public:
     StartUpDelay();
     ~StartUpDelay();
     void GetTrace(const std::string &sessionID, const std::string &traceName) const;
-    std::thread ThreadGetTrace(const std::string &sessionID, const std::string &traceName) const;
-    void GetLayout();
-    std::thread ThreadGetLayout();
-    void InputEvent(const std::string &point);
-    std::thread ThreadInputEvent(const std::string &point);
     void GetHisysIdAndKill() const;
-    std::thread ThreadGetHisysIds() const;
     void GetHisysId() const;
-    std::thread ThreadGetHisysId() const;
-    void ChangeToBackground();
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();
     bool GetSpClear();
     void ClearOldServer();
-    void InitXY2(const std::string &curAppName, const std::string &fileName, const std::string &appPkgName);
-    void InitXY(const std::string &curAppName, const std::string &fileName);
-    std::string pointXY = "0 0";
 };
 }
 }
