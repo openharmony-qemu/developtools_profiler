@@ -38,10 +38,16 @@ void Dubai::DumpDubaiFinish()
 void Dubai::MoveDubaiDb()
 {
     std::string result;
-    std::string cpdubaiPath = CMD_COMMAND_MAP.at(CmdCommand::DUBAI_CP);
-    std::string cpdubaiPathChmod = CMD_COMMAND_MAP.at(CmdCommand::DUBAI_CHMOD);
-    SPUtils::LoadCmd(cpdubaiPath, result);
-    SPUtils::LoadCmd(cpdubaiPathChmod, result);
+    const std::string dubaiXpower = "/data/service/el2/100/xpower";
+    const std::string dubaiXpowerDb = "/dubai.db";
+    const std::string dubaiDatabase = "/data/app/el2/100/database/";
+    const std::string dubaiPkgEntry = "/entry/rdb";
+    const std::string cpDubai = "cp " + dubaiXpower + dubaiXpowerDb + " " + dubaiDatabase + dubaiPkgName + dubaiPkgEntry;
+    const std::string dubaiPathChmod = "chmod 777 " + dubaiDatabase + dubaiPkgName + dubaiPkgEntry + dubaiXpowerDb;
+    LOGI("cpDubai: (%s)", cpDubai.c_str());
+    LOGI("dubaiPathChmod: (%s)", dubaiPathChmod.c_str());
+    SPUtils::LoadCmd(cpDubai, result);
+    SPUtils::LoadCmd(dubaiPathChmod, result);
 }
 }
 }
