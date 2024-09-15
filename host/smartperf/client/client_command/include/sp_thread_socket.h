@@ -276,7 +276,7 @@ public:
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::nops) {
+            if (retCode.find("smartperf") != std::string::npos) {
                 OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
             }
             std::string processId = "";
