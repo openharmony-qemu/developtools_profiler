@@ -1274,9 +1274,9 @@ bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMe
         return false;
     }
     if (graphicType == GraphicType::GL) {
-        graphicsMemory.gl = data.data;
+        graphicsMemory.gl = static_cast<uint64_t>(data.data);
     } else if (graphicType == GraphicType::GRAPH) {
-        graphicsMemory.graph = data.data;
+        graphicsMemory.graph = static_cast<uint64_t>(data.data);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:graphic type is not support.", __func__);
         return false;
