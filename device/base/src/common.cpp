@@ -200,10 +200,9 @@ int StartProcess(const std::string& processBin, std::vector<char*>& argv)
     }
     int pid = fork();
     if (pid == 0) {
-        char* const envp[] = {nullptr};
         CloseStdio();
         argv.push_back(nullptr); // last item in argv must be NULL
-        int retval = execve(processBin.data(), argv.data(), envp);
+        int retval = execv(processBin.data(), argv.data());
         if (retval == -1 && errno == EXECVP_ERRNO) {
             printf("warning: %s does not exist!\n", processBin.c_str());
             PROFILER_LOG_WARN(LOG_CORE, "warning: %s does not exist!", processBin.c_str());
@@ -305,7 +304,6 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     }
 
     if (pid == 0) {
-        char* const envp[] = {nullptr};
         // execve : the last argv must be nullptr.
         std::vector<char*> argv(command.size() + 1, nullptr);
         for (size_t i = 0, cmdSize = command.size(); i < cmdSize; i++) {
@@ -324,8 +322,8 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
 
         setpgid(pid, pid);
         // exe path = argv[0]; exe name = argv[1]
-        if (execve(argv[0], &argv[1], envp) == -1) {
-            PROFILER_LOG_ERROR(LOG_CORE, "execve failed {%s:%s}", __func__, strerror(errno));
+        if (execv(argv[0], &argv[1]) == -1) {
+            PROFILER_LOG_ERROR(LOG_CORE, "execv failed {%s:%s}", __func__, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
