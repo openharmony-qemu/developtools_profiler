@@ -146,12 +146,15 @@ namespace OHOS {
                     break;
                 }
 
-                if (start + 1 >= receiveBuffer.size() || end <= start + 1 || end > receiveBuffer.size()) {
+                std::size_t startPosition = start + 1;
+                std::size_t length = end - start - 1;
+
+                if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
                     processFlag = false;
                     break;
                 }
 
-                std::string message = receiveBuffer.substr(start + 1, end - start - 1);
+                std::string message = receiveBuffer.substr(startPosition, length);
                 resStr += ProcessData(message, params);
 
                 receiveBuffer.erase(0, end + 1);
