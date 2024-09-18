@@ -33,7 +33,7 @@ namespace OHOS {
 namespace SmartPerf {
 StartUpDelay::StartUpDelay() {}
 StartUpDelay::~StartUpDelay() {}
-void StartUpDelay::GetTrace(const std::string &sessionID, const std::string &traceName) const
+void StartUpDelay::GetTrace(const std::string &traceName) const
 {
     std::string result;
     std::string cmdString;
