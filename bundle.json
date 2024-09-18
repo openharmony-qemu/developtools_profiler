@@ -72,7 +72,8 @@
         "//developtools/profiler/host/smartperf/client/client_command/:SP_daemon",
         "//developtools/profiler/host/smartperf/client/:SmartPerf",
         "//developtools/profiler/hiebpf:hiebpf_tool",
-        "//developtools/profiler/timestamps:timestamps_tool"
+        "//developtools/profiler/timestamps:timestamps_tool",
+        "//developtools/profiler/tools/pagemap_parse:pagemap_tool"
       ],
       "inner_kits": [
         {
