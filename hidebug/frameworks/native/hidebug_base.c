@@ -109,7 +109,7 @@ static bool QueryParams(const char *queryName, char *result, const uint32_t size
 #ifdef HIDEBUG_IN_INIT
     uint32_t bufferSize = size;
     int retLen = SystemReadParam(queryName, result, &bufferSize);
-    if (retLen != 0 || bufferSize <= 0 || bufferSize > PARAM_BUF_LEN - 1) {
+    if (retLen != 0 || bufferSize == 0 || bufferSize > PARAM_BUF_LEN - 1) {
         return false;
     }
     result[bufferSize] = '\0';
