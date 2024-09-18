@@ -60,8 +60,8 @@ public:
 
     void TearDown()
     {
-        pluginService_ = nullptr;
         usleep(END_WAIT);
+        pluginService_ = nullptr;
     }
 
 public:
