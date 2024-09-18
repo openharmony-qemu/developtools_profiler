@@ -168,10 +168,6 @@ namespace OHOS {
         void GpuCounterCallbackImpl::SplitSocketData()
         {
             int32_t interval = realtimeGpuPerfInfoData.duration - maxDuration;
-
-            if ((interval == 0) || (realtimeGpuPerfInfoData.duration < interval)) {
-                return;
-            }
             SplitSocketDataValue(interval);
             SplitSocketDataPercent();
             realtimeGpuPerfInfoData.duration = interval;
@@ -186,7 +182,7 @@ namespace OHOS {
                 return;
             }
             gpuCounterInstance.GetRealtimeDataLock().lock();
-            while (realtimeGpuPerfInfoData.duration > maxDuration) {
+            while (realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
             gpuCounterInstance.GetRealtimeDataLock().unlock();
