@@ -149,7 +149,8 @@ namespace OHOS {
                 std::size_t startPosition = start + 1;
                 std::size_t length = end - start - 1;
 
-                if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
+                if (length < 0 || startPosition >= receiveBuffer.size() ||
+                    length > receiveBuffer.size() - startPosition) {
                     processFlag = false;
                     break;
                 }
