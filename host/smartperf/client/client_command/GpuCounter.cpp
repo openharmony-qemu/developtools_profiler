@@ -29,16 +29,30 @@ namespace OHOS {
         {
             return std::map<std::string, std::string>();
         }
+        void* GpuCounter::GetSoHandle()
+        {
+            char soFilePathChar[PATH_MAX] = {0x00};
+            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
+                LOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+                return nullptr;
+            }
 
+            void* handle = dlopen(soFilePathChar, RTLD_LAZY);
+            if (!handle) {
+                LOGI("open GpuCounterPlugin so file error.");
+                return nullptr;
+            }
+
+            return handle;
+        }
         void GpuCounter::StartCollect(GcCollectType type)
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
             const int duration = 1000;
 
-            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            void* handle = GetSoHandle();
             if (!handle) {
-                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 
@@ -152,9 +166,8 @@ namespace OHOS {
                 return;
             }
 
-            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            void* handle = GetSoHandle();
             if (!handle) {
-                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 

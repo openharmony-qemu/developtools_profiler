@@ -137,11 +137,18 @@ namespace OHOS {
                 size_t start = receiveBuffer.find('{');
                 if (start == std::string::npos) {
                     processFlag = false;
+                    break;
                 }
 
                 size_t end = receiveBuffer.find('}', start);
                 if (end == std::string::npos) {
                     processFlag = false;
+                    break;
+                }
+
+                if (start + 1 >= receiveBuffer.size() || end <= start + 1 || end > receiveBuffer.size()) {
+                    processFlag = false;
+                    break;
                 }
 
                 std::string message = receiveBuffer.substr(start + 1, end - start - 1);

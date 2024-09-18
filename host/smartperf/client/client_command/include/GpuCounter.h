@@ -67,6 +67,7 @@ namespace OHOS {
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
+            void* GetSoHandle();
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;
             std::vector<std::string> gpuCounterSaveReportData;
