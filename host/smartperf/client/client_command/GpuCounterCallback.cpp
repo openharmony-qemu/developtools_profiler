@@ -186,7 +186,7 @@ namespace OHOS {
                 return;
             }
             gpuCounterInstance.GetRealtimeDataLock().lock();
-            while (realtimeGpuPerfInfoData.duration >= maxDuration) {
+            while (realtimeGpuPerfInfoData.duration > maxDuration) {
                 SplitSocketData();
             }
             gpuCounterInstance.GetRealtimeDataLock().unlock();
