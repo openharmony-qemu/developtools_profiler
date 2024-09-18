@@ -249,14 +249,13 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum;
-        if (static_cast<int>(v.size()) < four || static_cast<int>(v.size()) > ten) {
-            sectionsNum = 0;
+        int sectionsNum = (static_cast<int>(v.size()) >= four) ? atoi(v[four].c_str()) : 0;
+        if (sectionsNum > ten) {
+            printf("set sectionsNum:%d not valid arg \n", sectionsNum);
         } else {
-            sectionsNum = atoi(v[four].c_str());
-        }
-        for (int i = 0; i < this->num; i++) {
-            GetResultFPS(sectionsNum);
+            for (int i = 0; i < this->num; i++) {
+                GetResultFPS(sectionsNum);
+            }
         }
     }
     printf("SP_daemon exec finished!\n");

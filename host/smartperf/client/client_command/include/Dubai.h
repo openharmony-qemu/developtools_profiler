@@ -29,7 +29,7 @@ public:
     static void DumpDubaiBegin();
     // dubai -f
     static void DumpDubaiFinish();
-
+    static inline std::string dubaiPkgName = " ";
 private:
     Dubai() {};
     Dubai(const Dubai &);

@@ -22,13 +22,13 @@ class StartUpDelay {
 public:
     StartUpDelay();
     ~StartUpDelay();
-    void GetTrace(const std::string &sessionID, const std::string &traceName) const;
+    void GetTrace(const std::string &traceName) const;
     void GetHisysIdAndKill() const;
     void GetHisysId() const;
     std::string GetPidByPkg(const std::string &curPkgName);
     bool GetSpTcp();
-    bool GetSpClear();
-    void ClearOldServer();
+    bool GetSpClear() const;
+    void ClearOldServer() const;
 };
 }
 }

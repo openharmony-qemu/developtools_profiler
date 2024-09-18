@@ -24,6 +24,7 @@
 #include "sp_log.h"
 #include "common.h"
 #include "heartbeat.h"
+#include "Dubai.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -275,6 +276,9 @@ public:
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
+            if (retCode.find("smartperf") != std::string::npos) {
+                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
+            }
             std::string processId = "";
             OHOS::SmartPerf::StartUpDelay sp;
             processId = sp.GetPidByPkg(retCode);
