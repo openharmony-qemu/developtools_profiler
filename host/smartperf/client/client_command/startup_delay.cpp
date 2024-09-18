@@ -112,7 +112,7 @@ bool StartUpDelay::GetSpTcp()
     return false;
 }
 
-bool StartUpDelay::GetSpClear()
+bool StartUpDelay::GetSpClear() const
 {
     std::string resultPid;
     std::string str;
@@ -131,7 +131,7 @@ bool StartUpDelay::GetSpClear()
     return false;
 }
 
-void StartUpDelay::ClearOldServer()
+void StartUpDelay::ClearOldServer() const
 {
     std::string curPid = std::to_string(getpid());
     std::string commandServer = CMD_COMMAND_MAP.at(CmdCommand::SERVER_GREP);

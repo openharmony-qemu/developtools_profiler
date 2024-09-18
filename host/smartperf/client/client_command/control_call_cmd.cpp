@@ -74,7 +74,7 @@ std::string ControlCallCmd::TimeDelay()
     std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "delay" + ".ftrace";
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "delay" + ".ftrace";
-    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("delay", traceName); });
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
     std::promise<std::string> promResponse;
     std::promise<std::string> promComplete;
@@ -127,11 +127,11 @@ std::string ControlCallCmd::SlideList()
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "fps" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("fps", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
         std::promise<std::string> promResponse;
         std::promise<std::string> promRadarFrame;
@@ -173,7 +173,7 @@ std::string ControlCallCmd::GetFrame()
     std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "frame" + ".ftrace";
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "frame" + ".ftrace";
-    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("frame", traceName); });
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
     std::string str = SPUtils::GetRadarFrame();
     thGetTrace.join();
@@ -191,11 +191,11 @@ double ControlCallCmd::ResponseTime()
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("response", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         thGetTrace.join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("response", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
         std::string str = SPUtils::GetRadarResponse();
         thGetTrace.join();
@@ -214,11 +214,11 @@ double ControlCallCmd::CompleteTime()
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("complete", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         thGetTrace.join();
         time = pcct.ParseCompleteTrace(traceName);
     } else {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("complete", traceName); });
+        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
         std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysId(); });
         std::string str = SPUtils::GetRadarComplete();
         thGetTrace.join();
@@ -236,7 +236,7 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string rmTrace = CMD_COMMAND_MAP.at(CmdCommand::RM_FILE) + std::string("sp_trace_") + "start" + ".ftrace";
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "start" + ".ftrace";
-    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace("start", traceName); });
+    std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
     std::thread thGetHisysId = std::thread([&sd]() { sd.GetHisysIdAndKill(); });
 
     std::promise<std::string> promRadar;
