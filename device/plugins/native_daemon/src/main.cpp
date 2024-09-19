@@ -268,7 +268,7 @@ int main(int argc, char* argv[])
             }
         } else {
             if (!COMMON::GetDeveloperMode()) {
-                return -1;
+                return 0;
             }
             if (!COMMON::IsBetaVersion()) {
                 printf("memory profiler only support in beta version\n");
@@ -309,7 +309,7 @@ int main(int argc, char* argv[])
         }
     } else {
         if (!COMMON::GetDeveloperMode()) {
-            return -1;
+            return 0;
         }
         auto hookManager = std::make_shared<HookManager>();
         CHECK_NOTNULL(hookManager, 1, "create PluginManager FAILED!");
