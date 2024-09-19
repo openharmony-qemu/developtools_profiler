@@ -39,7 +39,7 @@ ohos_executable("ffrt_profiler_test_exe") {
 
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
+    external_deps += [ "hilog:libhilog" ]
   }
 
   install_enable = false
@@ -90,7 +90,7 @@ ohos_unittest("ffrt_profiler_ut") {
 
   external_deps = [
     "googletest:gtest",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "init:libbegetutil",
     "protobuf:protobuf_lite",
   ]

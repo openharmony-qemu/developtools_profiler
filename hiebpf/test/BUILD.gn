@@ -53,7 +53,7 @@ ohos_unittest("hiebpf_ut") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

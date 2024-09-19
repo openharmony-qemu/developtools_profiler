@@ -32,7 +32,7 @@ ohos_fuzztest("HilogStartPluginFuzzTest") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [

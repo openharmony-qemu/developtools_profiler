@@ -34,7 +34,7 @@
 #endif
 
 #ifdef HAVE_HILOG
-#include "hilog_base/log_base.h"
+#include "hilog/log.h"
 #include <string>
 #else // HAVE_HILOG
 #include <mutex>

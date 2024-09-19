@@ -61,7 +61,7 @@ ohos_source_set("plugins_sources") {
   if (current_toolchain != host_toolchain) {
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
+      "hilog:libhilog",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]
@@ -86,7 +86,7 @@ ohos_executable("hiprofiler_plugins") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
+      "hilog:libhilog",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]

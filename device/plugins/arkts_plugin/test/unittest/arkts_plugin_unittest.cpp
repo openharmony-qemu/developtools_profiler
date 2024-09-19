@@ -37,7 +37,7 @@ public:
         sleep(SLEEP_TIME); // Wait for the application to start successfully.
         const std::string processName = "cn.openharmony.rebound_project";
         COMMON::IsProcessExist(processName, pid_);
-        HILOG_BASE_INFO(LOG_CORE, "ArkTSPluginTest pid: %d", pid_);
+        HILOG_INFO(LOG_CORE, "ArkTSPluginTest pid: %d", pid_);
     }
     ~ArkTSPluginTest() {}
     static void SetUpTestCase() {}

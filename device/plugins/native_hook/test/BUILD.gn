@@ -76,7 +76,7 @@ ohos_unittest("nativehook_ut") {
     "bounds_checking_function:libsec_shared",
     "faultloggerd:libunwinder",
     "googletest:gtest",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "init:libbegetutil",
     "protobuf:protobuf_lite",
   ]

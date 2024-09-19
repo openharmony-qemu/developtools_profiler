@@ -37,7 +37,7 @@ ohos_source_set("diskiodataplugin_source") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "hilog:libhilog_base",
+      "hilog:libhilog",
       "protobuf:protobuf_lite",
     ]
   }
@@ -52,7 +52,7 @@ ohos_shared_library("diskiodataplugin") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
+      "hilog:libhilog",
     ]
   }
   install_enable = true
@@ -75,7 +75,7 @@ ohos_executable("diskiodataplugintest") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "hilog:libhilog_base",
+      "hilog:libhilog",
       "protobuf:protobuf_lite",
     ]
   }
