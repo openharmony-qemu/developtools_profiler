@@ -488,6 +488,10 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     } else {
         bundleName = processName;
     }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
+    }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
 
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -516,6 +520,10 @@ bool CheckApplicationEncryped(int pid, const std::string& processName)
         bundleName.resize(strlen(bundleName.c_str()));
     } else {
         bundleName = processName;
+    }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
     }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
