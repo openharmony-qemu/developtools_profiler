@@ -267,6 +267,9 @@ int main(int argc, char* argv[])
                 std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
             }
         } else {
+            if (!COMMON::GetDeveloperMode()) {
+                return -1;
+            }
             if (!COMMON::IsBetaVersion()) {
                 printf("memory profiler only support in beta version\n");
                 return 0;
@@ -305,6 +308,9 @@ int main(int argc, char* argv[])
             }
         }
     } else {
+        if (!COMMON::GetDeveloperMode()) {
+            return -1;
+        }
         auto hookManager = std::make_shared<HookManager>();
         CHECK_NOTNULL(hookManager, 1, "create PluginManager FAILED!");
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
