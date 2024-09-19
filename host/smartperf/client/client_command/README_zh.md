@@ -94,11 +94,15 @@ options:
  -deviceinfo     get device information
  -server         start a process to listen to the socket message of the start and stop commands
  -clear          clear the process ID
- -ohtestfps      used by the vilidator to obtain the fps
+ -ohtestfps      used by the vilidator to obtain the fps, the collection times can be set 
  -editorServer   start a process to listen to the socket message of the editor
  -recordcapacity get the battery level difference
  --version       get version
  --help          get help
+ -editor         scenario-based collection identifier, parameter configuration items can be added later
+ responseTime   get the page response delay after an application is operated
+ completeTime   get the page completion delay after an application is operated
+ fpsohtest      used by the vilidator to obtain the fps
  example1:
  SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d
  SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d
@@ -112,6 +116,10 @@ options:
  SP_daemon -ohtestfps
  SP_daemon -editorServer
  SP_daemon -recordcapacity
+ example3: These parameters need to be used separately
+ SP_daemon -editor responseTime ohos.samples.ecg app name
+ SP_daemon -editor completeTime ohos.samples.ecg app name
+ SP_daemon -editor fpsohtest
 
 command exec finished!
 #

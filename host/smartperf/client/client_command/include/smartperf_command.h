@@ -53,11 +53,15 @@ public:
         " -deviceinfo     get device information \n"
         " -server         start a process to listen to the socket message of the start and stop commands \n"
         " -clear          clear the process ID \n"
-        " -ohtestfps      used by the vilidator to obtain the fps \n"
+        " -ohtestfps      used by the vilidator to obtain the fps, the collection times can be set \n"
         " -editorServer   start a process to listen to the socket message of the editor \n"
         " -recordcapacity get the battery level difference \n"
         " --version       get version \n"
         " --help          get help \n"
+        " -editor         scenario-based collection identifier, parameter configuration items can be added later \n"
+        " responseTime   get the page response delay after an application is operated \n"
+        " completeTime   get the page completion delay after an application is operated \n"
+        " fpsohtest      used by the vilidator to obtain the fps \n"
         "example1:\n"
         "SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d \n"
         "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d \n"
@@ -68,9 +72,13 @@ public:
         "SP_daemon -deviceinfo \n"
         "SP_daemon -server \n"
         "SP_daemon -clear \n"
-        "SP_daemon -ohtestfps \n"
+        "SP_daemon -ohtestfps 10 \n"
         "SP_daemon -editorServer \n"
-        "SP_daemon -recordcapacity \n";
+        "SP_daemon -recordcapacity \n"
+        "example3: These parameters need to be used separately \n"
+        "SP_daemon -editor responseTime ohos.samples.ecg app name \n"
+        "SP_daemon -editor completeTime ohos.samples.ecg app name \n"
+        "SP_daemon -editor fpsohtest \n";
 
     const size_t oneParam = 1;
     const size_t twoParam = 2;

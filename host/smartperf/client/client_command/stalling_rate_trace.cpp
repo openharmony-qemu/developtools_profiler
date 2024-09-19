@@ -181,12 +181,12 @@ void StallingRateTrace::AppList(std::string line, const std::string &signS, cons
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
         if (listFlag) {
-            LOGI("AppList finishTime line: (%s)", line.c_str());
+            LOGI("AppList line start: (%s)", line.c_str());
             appListDynamicFinishTime = GetTimes(line, signF);
             LOGI("appListDynamicFinishTime: (%s)", std::to_string(appListDynamicFinishTime).c_str());
             listFlag = false;
         } else {
-            LOGI("AppList startTime line: (%s)", line.c_str());
+            LOGI("AppList line finish: (%s)", line.c_str());
             appListDynamicStartTime = GetTimes(line, signS);
             LOGI("appListDynamicStartTime: (%s)", std::to_string(appListDynamicStartTime).c_str());
             listFlag = true;
@@ -292,7 +292,7 @@ void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &sig
         line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos ||
         line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
-            LOGI("AppSwiperScroll startTime line: (%s)", line.c_str());
+            LOGI("AppSwiperScroll line start: (%s)", line.c_str());
             swiperDynamicStartTime = GetTimes(line, signS);
             LOGI("swiperDynamicStartTime: (%s)", std::to_string(swiperDynamicStartTime).c_str());
             frameLossSwiperTime = 0;
@@ -304,7 +304,7 @@ void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &sig
         line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
         line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
         if (swiperFlingFlag == 1) {
-            LOGI("AppSwiperScroll finishTime line: (%s)", line.c_str());
+            LOGI("AppSwiper FinishTime line: (%s)", line.c_str());
             swiperDynamicFinishTime = GetTimes(line, signF);
             LOGI("swiperDynamicFinishTime: (%s)", std::to_string(swiperDynamicFinishTime).c_str());
             swiperFlag = false;
@@ -340,12 +340,12 @@ void StallingRateTrace::APPTabs(std::string line, const std::string &signS, cons
         line.find("H:APP_TABS_FRAME_ANIMATION") != std::string::npos ||
         line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
         if (tabsFlag) {
-            LOGI("APPTabs finishTime line: (%s)", line.c_str());
+            LOGI("APPTabs line start: (%s)", line.c_str());
             appTabsDynamicFinishTime = GetTimes(line, signF);
             LOGI("appTabsDynamicFinishTime: (%s)", std::to_string(appTabsDynamicFinishTime).c_str());
             tabsFlag = false;
         } else {
-            LOGI("APPTabs startTime line: (%s)", line.c_str());
+            LOGI("APPTabs line finish: (%s)", line.c_str());
             appTabsDynamicStartTime = GetTimes(line, signS);
             LOGI("appTabsDynamicStartTime: (%s)", std::to_string(appTabsDynamicStartTime).c_str());
             tabsFlag = true;
