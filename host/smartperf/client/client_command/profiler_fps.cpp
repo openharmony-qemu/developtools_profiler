@@ -138,7 +138,7 @@ void ProfilerFPS::GetTimeDiff()
     long long clockMonotonicRaw = 0;
     int two = 2;
     std::string strRealTime;
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
+    const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return;
@@ -319,6 +319,10 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     static char tmp[1024];
     GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
+    if (cmd.empty()) {
+        LOGE("cmd is null");
+        return fpsInfo;
+    }
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         LOGE("Failed to open hidumper file");
