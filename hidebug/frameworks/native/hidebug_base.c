@@ -57,16 +57,14 @@
 #define SLASH_CHR '/'
 const char * const LIBC_HOOK_PARAM = "libc.hook_mode";
 
-static struct Params {
+struct Params {
     char key[MAX_PARA_LEN];
     char value[MAX_PARA_LEN];
-} g_params[MAX_PARA_CNT];
+};
 
-int g_paramCnt = 0;
-
-static void ParseKeyValue(const char *input)
+static void ParseKeyValue(const char *input, uint32_t *paramCnt, struct Params *result, const uint32_t paramSize)
 {
-    if (g_paramCnt >= MAX_PARA_CNT) {
+    if (*paramCnt >= paramSize) {
         HIDEBUG_LOGE("Parameters is Full.");
         return;
     }
@@ -75,30 +73,31 @@ static void ParseKeyValue(const char *input)
         HIDEBUG_LOGE("params is illegal.");
         return;
     }
-    errno_t err = strncpy_s(g_params[g_paramCnt].key, MAX_PARA_LEN, input, colonPos - input);
+    errno_t err = strncpy_s(result[*paramCnt].key, MAX_PARA_LEN, input, colonPos - input);
     if (err != EOK) {
         HIDEBUG_LOGE("strncpy_s copy key strings failed.");
         return;
     }
-    err = strncpy_s(g_params[g_paramCnt].value, MAX_PARA_LEN, colonPos + 1, strlen(colonPos + 1));
+    err = strncpy_s(result[*paramCnt].value, MAX_PARA_LEN, colonPos + 1, strlen(colonPos + 1));
     if (err != EOK) {
         HIDEBUG_LOGE("strncpy_s copy value strings failed.");
         return;
     }
-    g_paramCnt++;
+    (*paramCnt)++;
 }
 
-static void SplitParams(char *input)
+static uint32_t SplitParams(char *input, struct Params *result, const uint32_t paramSize)
 {
-    g_paramCnt = 0;
+    uint32_t paramCnt = 0;
     const char space[] = " ";
     char *param;
     char *next = NULL;
     param = strtok_s(input, space, &next);
     while (param != NULL) {
-        ParseKeyValue(param);
+        ParseKeyValue(param, &paramCnt, result, paramSize);
         param = strtok_s(NULL, space, &next);
     }
+    return paramCnt;
 }
 
 static bool QueryParams(const char *queryName, char *result, const uint32_t size)
@@ -109,7 +108,7 @@ static bool QueryParams(const char *queryName, char *result, const uint32_t size
 #ifdef HIDEBUG_IN_INIT
     uint32_t bufferSize = size;
     int retLen = SystemReadParam(queryName, result, &bufferSize);
-    if (retLen != 0 || bufferSize <= 0 || bufferSize > PARAM_BUF_LEN - 1) {
+    if (retLen != 0 || bufferSize == 0 || bufferSize > PARAM_BUF_LEN - 1) {
         return false;
     }
     result[bufferSize] = '\0';
@@ -123,14 +122,29 @@ static bool QueryParams(const char *queryName, char *result, const uint32_t size
     return true;
 }
 
-static int QueryHiDebugEnvParams(const char *queryName)
+static bool ConcatenateParamName(char* queryName, const size_t size, const char* serviceName)
 {
-    g_paramCnt = 0;
-    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-    if (QueryParams(queryName, paramOutBuf, PARAM_BUF_LEN)) {
-        SplitParams(paramOutBuf);
+    if (strcat_s(queryName, size, serviceName) != EOK) {
+        HIDEBUG_LOGE("strcat_s query name failed.");
+        return false;
     }
-    return g_paramCnt;
+    return true;
+}
+
+static bool InitHiDebugEnvParams(const char *queryName)
+{
+    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
+    if (!QueryParams(queryName, paramOutBuf, PARAM_BUF_LEN)) {
+        return false;
+    }
+    struct Params params[MAX_PARA_CNT];
+    uint32_t paramsCnt = SplitParams(paramOutBuf, params, MAX_PARA_CNT);
+    for (uint32_t i = 0; i < paramsCnt; ++i) {
+        if (setenv(params[i].key, params[i].value, 1) != 0) { // 1 : overwrite
+            HIDEBUG_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
+        }
+    }
+    return paramsCnt > 0;
 }
 
 static const char* FilterServiceName(const char *inputName)
@@ -252,27 +266,13 @@ bool InitEnvironmentParam(const char *inputName)
     if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
         return false;
     }
-    errno_t err = 0;
-    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
     char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
-    err = strcat_s(onceName, sizeof(onceName), serviceName);
-    if (err != EOK) {
-        HIDEBUG_LOGE("strcat_s query name failed.");
+    if (!ConcatenateParamName(onceName, sizeof(onceName), serviceName)) {
         return false;
     }
-    err = strcat_s(persistName, sizeof(persistName), serviceName);
-    if (err != EOK) {
-        HIDEBUG_LOGE("strcat_s persist query name failed.");
-        return false;
+    if (InitHiDebugEnvParams(onceName)) {
+        return true;
     }
-
-    if (QueryHiDebugEnvParams(onceName) == 0 && QueryHiDebugEnvParams(persistName) == 0) {
-        return false;
-    }
-    for (int i = 0; i < g_paramCnt; ++i) {
-        if (setenv(g_params[i].key, g_params[i].value, 1) != 0) { // 1 : overwrite
-            HIDEBUG_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
-        }
-    }
-    return true;
+    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
+    return ConcatenateParamName(persistName, sizeof(onceName), serviceName) && InitHiDebugEnvParams(persistName);
 }
