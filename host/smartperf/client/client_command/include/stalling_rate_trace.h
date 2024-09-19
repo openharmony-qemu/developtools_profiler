@@ -37,8 +37,7 @@ public:
     double GetTimes(std::string line, const std::string &sign) const;
     void AppList(std::string line, const std::string &signS, const std::string &signF);
     void APPTabs(std::string line, const std::string &signS, const std::string &signF);
-    void AppSwiperScroll(std::string line, const std::string &signS);
-    void AppSwiperFrameRate(std::string line);
+    void AppSwiperScroll(std::string line, const std::string &signS, const std::string &signF);
     void GetRsHardWareRate(double curFrameRate, std::string line, SWIM_TYPE type);
     void GetFrameLossTime(double curTime, double prevTime, double drawTime, double &totalFrameLossTime);
     void CalcFrameRate();
