@@ -62,6 +62,9 @@ bool NetworkProfilerManager::CheckConfig()
     std::set<int32_t> pidCache;
     for (const auto& pid : config_.pid()) {
         if (pid > 0) {
+            if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
+                continue;
+            }
             struct stat statBuf;
             std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
             if (stat(pidPath.c_str(), &statBuf) != 0) {
