@@ -29,16 +29,30 @@ namespace OHOS {
         {
             return std::map<std::string, std::string>();
         }
+        void* GpuCounter::GetSoHandle()
+        {
+            char soFilePathChar[PATH_MAX] = {0x00};
+            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
+                LOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+                return nullptr;
+            }
 
+            void* handle = dlopen(soFilePathChar, RTLD_LAZY);
+            if (!handle) {
+                LOGI("open GpuCounterPlugin so file error.");
+                return nullptr;
+            }
+
+            return handle;
+        }
         void GpuCounter::StartCollect(GcCollectType type)
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
             const int duration = 1000;
 
-            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            void* handle = GetSoHandle();
             if (!handle) {
-                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 
@@ -47,7 +61,7 @@ namespace OHOS {
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
-                gpuCounterRealtimeDataMap.clear();
+                gpuCounterRealtimeData.clear();
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
@@ -69,6 +83,9 @@ namespace OHOS {
 
         void GpuCounter::SaveData(std::string path)
         {
+            if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0) {
+                return;
+            }
             LOGI("GpuCounter collect stop.");
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
@@ -85,23 +102,23 @@ namespace OHOS {
                 return;
             }
             std::string title = "startTime,"
-                                "duration,"
-                                "gpuActive,"
-                                "drawCalls,"
-                                "primitives,"
-                                "vertexCounts,"
-                                "totalInstruments,"
-                                "gpuLoadPercentage,"
-                                "vertexLoadPercentage,"
-                                "fragmentLoadPercentage,"
-                                "computeLoadPercentage,"
-                                "textureLoadPercentage,"
-                                "memoryReadBandwidth,"
-                                "memoryWriteBandwidth,"
-                                "memoryBandwidthPercentage\r";
+                "duration,"
+                "gpuActive,"
+                "drawCalls,"
+                "primitives,"
+                "vertexCounts,"
+                "totalInstruments,"
+                "gpuLoadPercentage,"
+                "vertexLoadPercentage,"
+                "fragmentLoadPercentage,"
+                "computeLoadPercentage,"
+                "textureLoadPercentage,"
+                "memoryReadBandwidth,"
+                "memoryWriteBandwidth,"
+                "memoryBandwidthPercentage\r";
             outFile << title << std::endl;
-            for (unsigned int i = 0; i < gpuCounterData.size() - 1; i++) {
-                outFile << gpuCounterData[i] << std::endl;
+            for (unsigned int i = 0; i < gpuCounterSaveReportData.size() - 1; i++) {
+                outFile << gpuCounterSaveReportData[i] << std::endl;
             }
             outFile.close();
             mtx.unlock();
@@ -112,34 +129,45 @@ namespace OHOS {
             return gpuCounterData;
         }
 
+        std::vector<std::string> &GpuCounter::GetGpuCounterSaveReportData()
+        {
+            return gpuCounterSaveReportData;
+        }
+
         std::mutex &GpuCounter::GetRealtimeDataLock()
         {
             return realtimeDataLock;
         }
 
-        std::map<std::string, std::string> &GpuCounter::GetGpuCounterRealtimeDataMap()
+        std::string &GpuCounter::GetGpuCounterRealtimeData()
         {
-            return gpuCounterRealtimeDataMap;
+            return gpuCounterRealtimeData;
+        }
+        void GpuCounter::AddGpuCounterRealtimeData(std::string dataString)
+        {
+            gpuCounterRealtimeData += dataString;
         }
 
         void GpuCounter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)
         {
-            if (gpuCounterRealtimeDataMap.size() > 0) {
-                std::lock_guard<std::mutex> lock(realtimeDataLock);
+            if (gpuCounterRealtimeData.size() > 0) {
+                std::map<std::string, std::string> gpuCounterRealtimeDataMap;
+                gpuCounterRealtimeDataMap["gpuCounterData"] = gpuCounterRealtimeData;
+                realtimeDataLock.lock();
                 dataMap.insert(gpuCounterRealtimeDataMap.begin(), gpuCounterRealtimeDataMap.end());
-                gpuCounterRealtimeDataMap.clear();
+                realtimeDataLock.unlock();
+                gpuCounterRealtimeData.clear();
             }
         }
 
-        void GpuCounter::StopCollect(std::string path)
+        void GpuCounter::StopCollect()
         {
             if (gcStatus != GC_RUNNING) {
                 return;
             }
 
-            void* handle = dlopen(PLUGIN_SO_PATH.c_str(), RTLD_LAZY);
+            void* handle = GetSoHandle();
             if (!handle) {
-                LOGI("open GpuCounterPlugin so file error.");
                 return;
             }
 
@@ -148,7 +176,6 @@ namespace OHOS {
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {
-                SaveData(path);
                 gcStatus = GC_INIT;
                 LOGI("GpuCounter collect finish.");
             }

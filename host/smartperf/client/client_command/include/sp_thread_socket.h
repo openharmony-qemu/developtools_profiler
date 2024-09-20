@@ -95,52 +95,87 @@ public:
         }
     }
     // TCP
+    void InitRecv(std::string recvStr, SpServerSocket &spSocket) const
+    {
+        std::string errorInfo;
+        std::string checkStr = recvStr.substr(std::string("init::").length());
+        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
+            LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
+            spSocket.Send("init::False,\"error\":" + errorInfo);
+            return;
+        }
+        ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
+        LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
+        spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+    }
+    void StartRecv(SpServerSocket &spSocket) const
+    {
+        if (flagRunning) {
+            LOGI("SP_daemon is running");
+            spSocket.Send("SP_daemon is running");
+            return;
+        }
+        auto lambdaTask = [](const std::string &data) {
+            std::cout << data << std::endl;
+        };
+        ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+        SPTask::GetInstance().StartRecord();
+        LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
+        if (code == ErrCode::OK) {
+            spSocket.Send("start::True");
+            flagRunning = true;
+        } else if (code == ErrCode::FAILED) {
+            spSocket.Send("start::False");
+        }
+    }
+    void StartRecvRealtime(SpServerSocket &spSocket) const
+    {
+        auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
+        ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+        LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
+        if (code == ErrCode::OK) {
+            spSocket.Send("start::True");
+        } else if (code == ErrCode::FAILED) {
+            spSocket.Send("start::False");
+        }
+    }
+    void StopRecvRealtime(SpServerSocket &spSocket) const
+    {
+        SPTask::GetInstance().StopTask();
+        LOGI("stop::True");
+        spSocket.Send("stop::True");
+        flagRunning = false;
+        spSocket.Close();
+    }
+    void StartRecvRecord(SpServerSocket &spSocket) const
+    {
+        LOGI("startRecord::True");
+        SPTask::GetInstance().StartRecord();
+
+        spSocket.Send("startRecord::True");
+    }
+    void StopRecvRecord(SpServerSocket &spSocket) const
+    {
+        LOGI("stopRecord::True");
+        SPTask::GetInstance().StopRecord();
+
+        spSocket.Send("stopRecord::True");
+    }
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
         SocketHeartbeat();
         if (recvStr.find("init::") != std::string::npos) {
-            std::string errorInfo;
-            std::string checkStr = recvStr.substr(std::string("init::").length());
-            if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
-                LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
-                spSocket.Send("init::False,\"error\":" + errorInfo);
-                return;
-            }
-            ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
-            LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
-            spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+            InitRecv(recvStr, spSocket);
         } else if (recvStr.find("start:::") != std::string::npos) {
-            if (flagRunning) {
-                LOGI("SP_daemon is running");
-                spSocket.Send("SP_daemon is running");
-                return;
-            }
-            auto lambdaTask = [](const std::string &data) {
-                std::cout << data << std::endl;
-            };
-            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-            LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
-            if (code == ErrCode::OK) {
-                spSocket.Send("start::True");
-                flagRunning = true;
-            } else if (code == ErrCode::FAILED) {
-                spSocket.Send("start::False");
-            }
+            StartRecv(spSocket);
         } else if (recvStr.find("start::") != std::string::npos) {
-            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
-            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-            LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
-            if (code == ErrCode::OK) {
-                spSocket.Send("start::True");
-            } else if (code == ErrCode::FAILED) {
-                spSocket.Send("start::False");
-            }
+            StartRecvRealtime(spSocket);
         } else if (recvStr.find("stop::") != std::string::npos) {
-            SPTask::GetInstance().StopTask();
-            LOGI("stop::True");
-            spSocket.Send("stop::True");
-            flagRunning = false;
-            spSocket.Close();
+            StopRecvRealtime(spSocket);
+        } else if (recvStr.find("startRecord::") != std::string::npos) {
+            StartRecvRecord(spSocket);
+        } else if (recvStr.find("stopRecord::") != std::string::npos) {
+            StopRecvRecord(spSocket);
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
             EditorRecv(recvStr, spSocket);
         }

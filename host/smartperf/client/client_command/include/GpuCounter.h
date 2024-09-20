@@ -55,21 +55,25 @@ namespace OHOS {
                 return instance;
             }
             void StartCollect(GcCollectType type);
-            void StopCollect(std::string path);
+            void StopCollect();
             std::vector<std::string> &GetGpuCounterData();
+            std::vector<std::string> &GetGpuCounterSaveReportData();
             std::mutex &GetRealtimeDataLock();
-            std::map<std::string, std::string> &GetGpuCounterRealtimeDataMap();
+            std::string &GetGpuCounterRealtimeData();
+            void AddGpuCounterRealtimeData(std::string dataString);
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
+            void SaveData(std::string path);
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
+            void* GetSoHandle();
             GcStatus gcStatus = GC_INIT;
-            std::vector<std::string> gpuCounterData;    //保存 std::vector<OHOS::GameService::GpuPerfInfo> gpuCounter; 的数据
+            std::vector<std::string> gpuCounterData;
+            std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
-            std::map<std::string, std::string> gpuCounterRealtimeDataMap;
-            void SaveData(std::string path);
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_plugin.z.so";
+            std::string gpuCounterRealtimeData;
+            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
             const std::string CREATE_PLUGIN = "onCreatePlugin";
         };
     };
