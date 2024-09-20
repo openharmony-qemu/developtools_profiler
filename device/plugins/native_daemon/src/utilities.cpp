@@ -175,7 +175,7 @@ std::string StdoutRecord::Stop()
 
 bool IsDigits(const std::string &str)
 {
-    if (str.empty()) {
+    if (str.empty() || str.size() >= COMMON::INT_MAX_LEN) {
         return false;
     } else {
         return std::all_of(str.begin(), str.end(), ::isdigit);
@@ -305,7 +305,7 @@ bool ReadIntFromProcFile(const std::string &path, int &value)
     if (s.empty()) {
         return false;
     }
-    value = std::stoi(s);
+    value = IsDigits(s) ? std::stoi(s) : 0;
     return true;
 }
 

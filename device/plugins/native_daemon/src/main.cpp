@@ -70,12 +70,12 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
         } else if (args[idx] == "-n") {
             hookData.processName = args[idx + 1];
         } else if (args[idx] == "-s") {
-            hookData.smbSize = std::stoi(args[idx + 1], nullptr);
+            hookData.smbSize = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.smbSize) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-f") {
-            hookData.filterSize = std::stoi(args[idx + 1], nullptr);
+            hookData.filterSize = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.filterSize) != args[idx + 1]) {
                 return false;
             }
@@ -83,7 +83,7 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
                 printf("set max depth = %d\n", MAX_UNWIND_DEPTH);
             }
         } else if (args[idx] == "-d") {
-            hookData.maxStackDepth = std::stoi(args[idx + 1], nullptr);
+            hookData.maxStackDepth = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.maxStackDepth) != args[idx + 1]) {
                 return false;
             }
@@ -106,12 +106,12 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
             }
             printf("set unwind mode:%s\n", unwind.c_str());
         } else if (args[idx] == "-S") {
-            hookData.statisticsInterval = std::stoi(args[idx + 1], nullptr);
+            hookData.statisticsInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.statisticsInterval) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-i") {
-            hookData.sampleInterval = std::stoi(args[idx + 1], nullptr);
+            hookData.sampleInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.sampleInterval) != args[idx + 1]) {
                 return false;
             }
@@ -166,19 +166,19 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
             }
             printf("set responseLibraryMode mode:%s\n", rawString.c_str());
         } else if (args[idx] == "-js") {
-            hookData.jsStackReport = std::stoi(args[idx + 1], nullptr);
+            hookData.jsStackReport = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.jsStackReport) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-jsd") {
-            hookData.maxJsStackdepth = std::stoi(args[idx + 1], nullptr);
+            hookData.maxJsStackdepth = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.maxJsStackdepth) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-jn") {
             hookData.filterNapiName = args[idx + 1];
         } else if (args[idx] == "-mfm") {
-            hookData.mallocFreeMatchingInterval = std::stoi(args[idx + 1], nullptr);
+            hookData.mallocFreeMatchingInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
             if (std::to_string(hookData.mallocFreeMatchingInterval) != args[idx + 1]) {
                 return false;
             }
@@ -325,6 +325,7 @@ int main(int argc, char* argv[])
                 PROFILER_LOG_INFO(LOG_CORE, "create PluginManager FAILED!");
                 return 1;
             }
+            return 0;
         }
         auto commandPoller = std::make_shared<CommandPoller>(hookManager);
         if (commandPoller == nullptr) {
@@ -334,6 +335,7 @@ int main(int argc, char* argv[])
                 PROFILER_LOG_INFO(LOG_CORE, "create CommandPoller FAILED!");
                 return 1;
             }
+            return 0;
         }
         if (!commandPoller->OnConnect()) {
             if (lockFileFd > 0) {
@@ -342,6 +344,7 @@ int main(int argc, char* argv[])
                 PROFILER_LOG_INFO(LOG_CORE, "connect FAILED");
                 return 1;
             }
+            return 0;
         }
         hookManager->SetCommandPoller(commandPoller);
         hookManager->RegisterAgentPlugin("nativehook");

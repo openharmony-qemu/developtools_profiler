@@ -44,6 +44,7 @@ ohos_source_set("ftrace_plugin_source") {
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
+    "../../base:hiprofiler_base",
     "tools/device_kernel_version/${device_kernel_version}/event_parsers:ftrace_event_parsers",
   ]
   if (current_toolchain != host_toolchain) {

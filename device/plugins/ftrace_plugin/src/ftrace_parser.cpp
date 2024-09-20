@@ -25,6 +25,7 @@
 #include <sstream>
 #include <unistd.h>
 
+#include "common.h"
 #include "file_utils.h"
 #include "securec.h"
 #include "string_utils.h"
@@ -501,8 +502,9 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
     while (std::getline(sin, line)) {
         // kernel format with: "%d %s\n"
         auto pos = line.find(' ');
-        if (pos != std::string::npos) {
-            pid = std::stoi(line.substr(0, pos));
+        if (pos != std::string::npos && pos < COMMON::INT_MAX_LEN) {
+            auto pidStr = line.substr(0, pos);
+            pid = COMMON::IsNumeric(pidStr) ? std::stoi(pidStr) : 0;
             comm = line.substr(pos + 1);
             commDict_[pid] = comm;
             retval = true;

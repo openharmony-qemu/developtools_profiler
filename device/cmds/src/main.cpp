@@ -121,8 +121,8 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
     }
 
     request->set_request_id(1);
-    if (!keepSecond.empty()) {
-        int ks = std::stoi(keepSecond);
+    if (!keepSecond.empty() && keepSecond.size() < COMMON::INT_MAX_LEN) {
+        int ks = COMMON::IsNumeric(keepSecond) ? std::stoi(keepSecond) : 0;
         if (ks > 0) {
             sessionConfig->set_sample_duration(ks * MS_PER_S);
         }
