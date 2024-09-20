@@ -85,6 +85,9 @@ bool NetworkProfilerManager::CheckConfig()
         if (name.empty()) {
             continue;
         }
+        if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(0, name))) {
+            continue;
+        }
         int pidValue = -1;
         bool isExist = COMMON::IsProcessExist(name, pidValue);
         if (isExist) {
@@ -100,7 +103,9 @@ bool NetworkProfilerManager::CheckConfig()
         if (name.empty()) {
             continue;
         }
-
+        if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(0, name))) {
+            continue;
+        }
         int pidValue = -1;
         bool isExist = COMMON::IsProcessExist(name, pidValue);
         if (isExist) {
