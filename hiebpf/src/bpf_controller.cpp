@@ -411,6 +411,7 @@ uint64_t BPFController::GetSymOffset(const std::string &path, const std::string 
         if (name != nullptr && std::string(reinterpret_cast<char*>(name)).compare(symbol) == 0) {
             int32_t valueOffset = sym->secEntrySize_ == sizeof(Elf64_Sym) ? SYM_64_VALUE_OFFSET : SYM_32_VALUE_OFFSET;
             int32_t valueSize = valueOffset == SYM_64_VALUE_OFFSET ? sizeof(uint64_t) : sizeof(uint32_t);
+            CHECK_TRUE(stepLength + valueOffset < sym->secSize_, 0, "invalid symbol offset");
             ret = memcpy_s(&vaddr, sizeof(uint64_t), symData + stepLength + valueOffset, valueSize);
             CHECK_TRUE(ret == EOK, 0, "failed to memcpy symData");
             break;

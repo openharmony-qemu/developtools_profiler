@@ -240,6 +240,10 @@ void BPFEventReceiver::WriteSymbolInfo(const std::string &fileName)
         sym->symEntLen = symbolInfo.symEntSize_;
         char* tmp = reinterpret_cast<char*>(dest);
         size_t pos = 0;
+        if (sizeof(FixedSymbolTLVItem) + sym->strTabLen + sym->symTabLen > size) {
+            HHLOGE(true, "invalid symbol info");
+            return;
+        }
         pos += sizeof(FixedSymbolTLVItem);
         if (memcpy_s(tmp + pos, size - pos, symbolInfo.strTable_.data(), sym->strTabLen) != EOK) {
             HHLOGE(true, "memcpy_s failed");
