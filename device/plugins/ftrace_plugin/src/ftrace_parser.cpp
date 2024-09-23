@@ -49,6 +49,7 @@ constexpr unsigned COL_IDX_NAME = 0;
 constexpr unsigned COL_IDX_VALUE = 1;
 
 constexpr unsigned TS_EXT_SHIFT = 27;
+constexpr uint32_t INT_MAX_LEN = 10;
 
 inline uint64_t GetTimestampIncrements(uint64_t ext)
 {
@@ -502,7 +503,7 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
     while (std::getline(sin, line)) {
         // kernel format with: "%d %s\n"
         auto pos = line.find(' ');
-        if (pos != std::string::npos && pos < COMMON::INT_MAX_LEN) {
+        if (pos != std::string::npos && pos < INT_MAX_LEN) {
             auto pidStr = line.substr(0, pos);
             pid = COMMON::IsNumeric(pidStr) ? std::stoi(pidStr) : 0;
             comm = line.substr(pos + 1);

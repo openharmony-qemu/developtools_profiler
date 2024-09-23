@@ -24,6 +24,8 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+constexpr uint32_t INT_MAX_LEN = 10;
+
 uint32_t RoundUp(uint32_t x, const int align)
 {
     return (((x) + (align) >= 1 ? (x) + (align) - 1 : 0) / (align)) * (align);
@@ -175,7 +177,7 @@ std::string StdoutRecord::Stop()
 
 bool IsDigits(const std::string &str)
 {
-    if (str.empty() || str.size() >= COMMON::INT_MAX_LEN) {
+    if (str.empty() || str.size() >= INT_MAX_LEN) {
         return false;
     } else {
         return std::all_of(str.begin(), str.end(), ::isdigit);
