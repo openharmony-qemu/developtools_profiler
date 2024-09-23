@@ -69,6 +69,7 @@ constexpr int32_t EC_INVALID_VALUE = -2;
 const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
 const uint32_t MAX_CMD_ARGV = 50;
 const uint32_t MIN_CMD_ARGV = 2;
+const uint32_t INT_MAX_LEN = 10;
 const std::set<std::string> CMD_WHITE_LIST = {
     "/system/bin/hiperf",    "/system/bin/hitrace",     "/system/bin/hisysevent",         "/system/bin/hidumper",
     "/system/bin/SP_daemon", "/system/bin/hiprofilerd", "/system/bin/hiprofiler_plugins", "/system/bin/native_daemon",

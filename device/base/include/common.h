@@ -54,7 +54,5 @@ bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
-
-const unsigned int INT_MAX_LEN = 10;
 } // COMMON
 #endif // COMMON_H
