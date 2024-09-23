@@ -179,21 +179,21 @@ namespace OHOS {
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
-                params.receiveFd[i] = -1;
+                sdkParams.receiveFd[i] = -1;
             }
-            params.startTime = SPUtils::GetCurTime();
-            params.serverFd = CreateOhSocketServer(OH_DATA_PORT);
-            if (params.serverFd < 0) {
+            sdkParams.startTime = SPUtils::GetCurTime();
+            sdkParams.serverFd = CreateOhSocketServer(OH_DATA_PORT);
+            if (sdkParams.serverFd < 0) {
                 LOGE("Create server failed.");
                 return;
             }
-            if (pipe(params.pipFd) == -1) {
+            if (pipe(sdkParams.pipFd) == -1) {
                 LOGE("Create service failed.");
-                close(params.serverFd);
+                close(sdkParams.serverFd);
                 return;
             }
-            listenFd = params.pipFd[1];
-            RunServerThread(dataVec, params);
+            listenFd = sdkParams.pipFd[1];
+            RunServerThread(dataVec, sdkParams);
         }
 
         void SdkDataRecv::RunServerThread(std::vector<std::string> &dataVec, ServerParams &params)
@@ -299,7 +299,7 @@ namespace OHOS {
 
         void SdkDataRecv::SetStartRecordTime()
         {
-            params.startTime = SPUtils::GetCurTime();
+            sdkParams.startTime = SPUtils::GetCurTime();
         }
     }
 }
