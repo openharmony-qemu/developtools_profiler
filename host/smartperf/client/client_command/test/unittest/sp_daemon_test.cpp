@@ -383,7 +383,7 @@ HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
     ParseClickResponseTrace parseClickResponseTrace;
     double parseResponseTrace = 0.0;
     double getLineTime = 0.0;
-    std::string line = "";
+    std::string line = "test line";
     std::string getStartTime = "";
     std::string startTimeBefore = "";
     std::string file = "";
