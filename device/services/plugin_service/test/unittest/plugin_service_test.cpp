@@ -30,6 +30,8 @@ namespace {
 constexpr uint32_t BUFFER_SIZE = 4096;
 constexpr size_t QUEUE_MAX_SIZE = 4096;
 constexpr uint32_t SAMPLE_INTERVAL = 20;
+constexpr uint32_t START_WAIT = 2000000;
+constexpr uint32_t END_WAIT = 1000000;
 
 class PluginClientTest final : public IPluginServiceClient {
 public:
@@ -47,7 +49,7 @@ public:
     void SetUp()
     {
         pluginService_ = std::make_shared<PluginService>();
-        usleep(100000); // sleep for 100000 us.
+        usleep(START_WAIT); // sleep for 2000000 us.
         pluginClient_ = std::make_unique<PluginClientTest>();
         pluginServiceImp_ = std::make_unique<PluginServiceImpl>(*pluginService_);
         commandBuilder_ = std::make_unique<PluginCommandBuilder>();
@@ -56,7 +58,11 @@ public:
         pluginService_->SetPluginSessionManager(pluginSessionMgr_);
     }
 
-    void TearDown() {}
+    void TearDown()
+    {
+        usleep(END_WAIT);
+        pluginService_ = nullptr;
+    }
 
 public:
     std::shared_ptr<PluginService> pluginService_ = nullptr;

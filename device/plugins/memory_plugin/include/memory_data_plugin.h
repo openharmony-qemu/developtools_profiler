@@ -453,9 +453,6 @@ private:
         }
         return done;
     }
-
-    template <typename T> bool GetMemInfoByMemoryService(uint32_t pid, T& processMemoryInfo);
-
     int InitMemVmemFd();
 
     template <typename T, typename S> void WriteMemoryData(T& memoryDataProto, S smapsInfo);

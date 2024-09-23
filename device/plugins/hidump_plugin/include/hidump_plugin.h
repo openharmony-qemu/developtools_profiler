@@ -47,9 +47,6 @@ private:
     const char *GetTestCmd();
     char *testCmd_ = nullptr;
 private:
-    static FILE* CustomPopen(const char* command, const char* type);
-    static int CustomPclose(FILE* fp);
-
     template <typename T>
     bool ParseHidumpInfo(T& hidumpInfoProto, char *buf, size_t len);
 
@@ -59,7 +56,9 @@ private:
     std::mutex mutex_;
     std::thread writeThread_;
     std::atomic<bool> running_ = true;
-    std::unique_ptr<FILE, int (*)(FILE*)> fp_;
+    std::unique_ptr<FILE, std::function<int (FILE*)>> fp_;
+    volatile pid_t childPid_ = -1;
+    int pipeFds_[2] = {-1, -1}; // 2: pipe fds
 };
 
 #endif // HIDUMP_PLUGIN_H

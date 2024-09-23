@@ -45,7 +45,6 @@ void ByTrace::ThreadGetTrace() const
     std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
     std::string traceCmdExe = cmdString + traceFile;
     SPUtils::LoadCmd(traceCmdExe, result);
-    std::cout << "TRACE threadGetTrace >> CMD >>" << traceCmdExe << std::endl;
     LOGI("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
@@ -61,9 +60,6 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
             }
         }
     }
-    std::cout << "TRACE CHECK RUNING >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    std::cout << "TRACE CHECK lastTriggerTime:" << lastTriggerTime << " curTime:" << curTime << " currentTrigger:" <<
-        currentTrigger << std::endl;
     if ((curTime - lastTriggerTime) / 1e3 > interval && currentTrigger == 1) {
         currentTrigger = -1;
     }

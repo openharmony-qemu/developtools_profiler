@@ -218,9 +218,9 @@ HWTEST_F(HisyseventPluginTest, TestCustomPopenClose, TestSize.Level1)
     std::vector<uint8_t> configData(size);
     config.SerializeToArray(configData.data(), configData.size());
     EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
-    EXPECT_EQ(plugin.GetFullCmd(), "/bin/hisysevent hisysevent -rd");
+    EXPECT_EQ(plugin.GetFullCmd(), "/system/bin/hisysevent hisysevent -rd");
     std::vector<std::string> fullCmdTest;
-    fullCmdTest.push_back("/bin/hisysevent");
+    fullCmdTest.push_back("/system/bin/hisysevent");
     fullCmdTest.push_back("hisysevent");
     fullCmdTest.push_back("-rd");
     volatile pid_t childPid = -1;

@@ -137,14 +137,24 @@ namespace OHOS {
                 size_t start = receiveBuffer.find('{');
                 if (start == std::string::npos) {
                     processFlag = false;
+                    break;
                 }
 
                 size_t end = receiveBuffer.find('}', start);
                 if (end == std::string::npos) {
                     processFlag = false;
+                    break;
                 }
 
-                std::string message = receiveBuffer.substr(start + 1, end - start - 1);
+                std::size_t startPosition = start + 1;
+                std::size_t length = end > start ? end - start - 1 : 0;
+
+                if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
+                    processFlag = false;
+                    break;
+                }
+
+                std::string message = receiveBuffer.substr(startPosition, length);
                 resStr += ProcessData(message, params);
 
                 receiveBuffer.erase(0, end + 1);
@@ -168,7 +178,6 @@ namespace OHOS {
 
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
-            ServerParams params;
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 params.receiveFd[i] = -1;
             }
@@ -221,7 +230,9 @@ namespace OHOS {
         {
             if (params.receiveFd[i] >= 0 && FD_ISSET(params.receiveFd[i], &readFds)) {
                 std::string data = OhDataReceive(i, params);
-                dataVec.push_back(data);
+                if (SPTask::GetInstance().GetRecordState()) {
+                    dataVec.push_back(data);
+                }
             }
         }
 
@@ -279,9 +290,16 @@ namespace OHOS {
             if (sdkDataRealtimeData.size() > 0) {
                 std::map<std::string, std::string> sdkDataRealtimeDataMap;
                 sdkDataRealtimeDataMap["sdkData"] = sdkDataRealtimeData;
+                realtimeDataLock.lock();
                 dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
+                realtimeDataLock.unlock();
                 sdkDataRealtimeData.clear();
             }
+        }
+
+        void SdkDataRecv::SetStartRecordTime()
+        {
+            params.startTime = SPUtils::GetCurTime();
         }
     }
 }

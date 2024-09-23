@@ -65,6 +65,7 @@ namespace OHOS {
             void SetUpFdSet(ServerParams &params);
             void CleanUpResources(ServerParams &params);
             void GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap);
+            void SetStartRecordTime();
         private:
             SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);
@@ -77,6 +78,8 @@ namespace OHOS {
             fd_set readFds;
             std::string receiveBuffer = "";
             std::string sdkDataRealtimeData = "";
+            ServerParams params;
+            std::mutex realtimeDataLock;
         };
     }
 }

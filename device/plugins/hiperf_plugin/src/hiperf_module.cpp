@@ -30,6 +30,7 @@
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
+constexpr uint32_t SLEEP_TIME = 250000;
 const std::string SU_ROOT = "su root";
 const std::string HIPERF_CMD = " hiperf";
 const std::string HIPERF_RECORD_CMD = " record";
@@ -114,6 +115,9 @@ bool RunCommand(const std::string& cmd)
 
 int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSize)
 {
+    if (configData == nullptr) {
+        return -1;
+    }
     std::lock_guard<std::mutex> guard(g_taskMutex);
     (void)remove("/data/local/tmp/perf.data");
     bool res = g_config.ParseFromArray(configData, configSize);
@@ -155,7 +159,7 @@ int HiperfPluginSessionStop(void)
     cmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD;
     cmd += HIPERF_RECORD_STOP;
     RunCommand(cmd);
-    usleep(250000); // 250000: wait for perf.data
+    usleep(SLEEP_TIME); // 250000: wait for perf.data
 
     if (!g_config.split_outfile_name().empty()) { // write split file.
         CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);

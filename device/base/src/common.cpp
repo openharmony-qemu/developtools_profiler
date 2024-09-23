@@ -67,7 +67,13 @@ const int BUFFER_SIZE = 1024;
 const int INVALID_PID = -1;
 constexpr int32_t EC_INVALID_VALUE = -2;
 const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
-}
+const uint32_t MAX_CMD_ARGV = 50;
+const uint32_t MIN_CMD_ARGV = 2;
+const std::set<std::string> CMD_WHITE_LIST = {
+    "/system/bin/hiperf",    "/system/bin/hitrace",     "/system/bin/hisysevent",         "/system/bin/hidumper",
+    "/system/bin/SP_daemon", "/system/bin/hiprofilerd", "/system/bin/hiprofiler_plugins", "/system/bin/native_daemon",
+    "/system/bin/hilog"};
+}  // namespace
 
 bool IsProcessRunning(int& lockFileFd)
 {
@@ -176,11 +182,27 @@ static void CloseStdio()
 
 int StartProcess(const std::string& processBin, std::vector<char*>& argv)
 {
+    if (argv.size() > MAX_CMD_ARGV || argv.size() < 1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: param invalid", __func__);
+        return -1;
+    }
+    // check whitelist
+    if (!CheckWhiteList(processBin)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: command not in whitelist!", __func__);
+        return -1;
+    }
+    for (auto& item : argv) {
+        std::string itemStr(item);
+        if (!CheckCmdLineArgValid(itemStr)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: command arg invalid : %s", __func__, itemStr.c_str());
+            return -1;
+        }
+    }
     int pid = fork();
     if (pid == 0) {
         CloseStdio();
         argv.push_back(nullptr); // last item in argv must be NULL
-        int retval = execvp(processBin.c_str(), argv.data());
+        int retval = execv(processBin.data(), argv.data());
         if (retval == -1 && errno == EXECVP_ERRNO) {
             printf("warning: %s does not exist!\n", processBin.c_str());
             PROFILER_LOG_WARN(LOG_CORE, "warning: %s does not exist!", processBin.c_str());
@@ -252,19 +274,29 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
                   volatile pid_t& childPid, bool needUnblock)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
-    if (command.empty() || type == nullptr) {
+    if (command.size() < MIN_CMD_ARGV || command.size() > MAX_CMD_ARGV || type == nullptr || strlen(type) != 1) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s: param invalid", __func__);
         return nullptr;
     }
 
     // only allow "r" or "w"
-    if ((type[0] != 'r' && type[0] != 'w') || type[1] != 0) {
+    if ((type[0] != 'r' && type[0] != 'w')) {
         errno = EINVAL;
         return  nullptr;
     }
-
+    // check whitelist
+    if (!CheckWhiteList(command[0])) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: command not in whitelist!", __func__);
+        return nullptr;
+    }
+    // check cmd arg valid
+    for (auto& item : command) {
+        if (!CheckCmdLineArgValid(item)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: command arg invalid : %s", __func__, item.c_str());
+            return nullptr;
+        }
+    }
     CHECK_TRUE(pipe(fds) == 0, nullptr, "Pipe open failed!");
-
     pid_t pid = fork();
     if (pid == -1) {
         perror("fork");
@@ -272,7 +304,6 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     }
 
     if (pid == 0) {
-        char* const envp[] = {nullptr};
         // execve : the last argv must be nullptr.
         std::vector<char*> argv(command.size() + 1, nullptr);
         for (size_t i = 0, cmdSize = command.size(); i < cmdSize; i++) {
@@ -291,8 +322,8 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
 
         setpgid(pid, pid);
         // exe path = argv[0]; exe name = argv[1]
-        if (execve(argv[0], &argv[1], envp) == -1) {
-            PROFILER_LOG_ERROR(LOG_CORE, "execve failed {%s:%s}", __func__, strerror(errno));
+        if (execv(argv[0], &argv[1]) == -1) {
+            PROFILER_LOG_ERROR(LOG_CORE, "execv failed {%s:%s}", __func__, strerror(errno));
             exit(EXIT_FAILURE);
         }
     }
@@ -320,6 +351,20 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
     return fdopen(fds[WRITE], "w");
 }
 
+bool IsNumeric(const std::string& str)
+{
+    std::istringstream iss(str);
+    int number;
+    char trailingCharacter;
+    if (!(iss >> number)) {
+        return false;
+    }
+    if (iss >> trailingCharacter) {
+        return false;
+    }
+    return true;
+}
+
 int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
@@ -343,10 +388,18 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
     if (needUnblock) {
         if (fileno(fp) == fds[READ]) {
             fds[READ] = -1;
-            CHECK_TRUE(CustomFdClose(fds[WRITE]) == 0, -1, "CustomFdClose failed!");
+            if (CustomFdClose(fds[WRITE]) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
+                CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
+                return -1;
+            }
         } else if (fileno(fp) == fds[WRITE]) {
             fds[WRITE] = -1;
-            CHECK_TRUE(CustomFdClose(fds[READ]) == 0, -1, "CustomFdClose failed!");
+            if (CustomFdClose(fds[READ]) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "CustomFdClose failed!");
+                CHECK_TRUE(CustomFdFclose(&fp) == 0, -1, "CustomFdFclose failed!");
+                return -1;
+            }
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "%s: Can't find fp in fds[READ/WRITE].", __func__);
         }
@@ -435,6 +488,10 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     } else {
         bundleName = processName;
     }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
+    }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
 
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -463,6 +520,10 @@ bool CheckApplicationEncryped(int pid, const std::string& processName)
         bundleName.resize(strlen(bundleName.c_str()));
     } else {
         bundleName = processName;
+    }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
     }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -682,5 +743,34 @@ std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath)
         return {false, ""};
     }
     return {true, std::string(pathDirRealPath.get()) + "/" + filePath.substr(pos + 1)};
+}
+
+bool CheckWhiteList(const std::string& cmdPath)
+{
+    if (cmdPath.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "cmd is empty {%s}", __func__);
+        return false;
+    }
+
+    if (CMD_WHITE_LIST.find(cmdPath) == CMD_WHITE_LIST.end() ||
+        cmdPath.find_first_of("|;&${}<>'\\!\n~?*%[]^") != std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "cmd %s:is illegal {%s}", cmdPath.c_str(), __func__);
+        return false;
+    }
+    return true;
+}
+
+bool CheckCmdLineArgValid(const std::string& cmdLine)
+{
+    if (cmdLine.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "cmdLine is empty {%s}", __func__);
+        return false;
+    }
+
+    if (cmdLine.find_first_of("|;&${}<>'\\!\n~?*%[]^") != std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "cmdLine %s is illegal {%s}", cmdLine.c_str(), __func__);
+        return false;
+    }
+    return true;
 }
 } // namespace COMMON

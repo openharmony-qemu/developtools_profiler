@@ -181,10 +181,6 @@ enum class CmdCommand {
     SERVER,
     OHTESTFPS,
     RM_FILE,
-    UITEST_DUMPLAYOUT,
-    UINPUT_POINT,
-    DUBAI_CP,
-    DUBAI_CHMOD,
     TASKSET,
     PROC_STAT,
     HIPROFILER,
@@ -213,12 +209,6 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::SERVER, std::string("SP_daemon -server") },
     { CmdCommand::OHTESTFPS, std::string("SP_daemon -ohtestfps 10") },
     { CmdCommand::RM_FILE, std::string("rm -rfv /data/local/tmp/") },
-    { CmdCommand::UITEST_DUMPLAYOUT, std::string("uitest dumpLayout") },
-    { CmdCommand::UINPUT_POINT, std::string("uinput -T -d ") },
-    { CmdCommand::DUBAI_CP, std::string(
-        "cp /data/service/el2/100/xpower/dubai.db/data/app/el2/100/database/com.ohos.smartperf/entry/rdb") },
-    { CmdCommand::DUBAI_CHMOD, std::string(
-        "chmod 777 /data/app/el2/100/database/com.ohos.smartperf/entry/rdb/dubai.db") },
     { CmdCommand::TASKSET, std::string("taskset -p f ") },
     { CmdCommand::PROC_STAT, std::string("chmod o+r /proc/stat") },
     { CmdCommand::HIPROFILER, std::string("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace") },

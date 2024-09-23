@@ -47,9 +47,12 @@ std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
 int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);
+bool IsNumeric(const std::string& str);
 bool IsUserMode();
 bool GetDeveloperMode();
 bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
+bool CheckWhiteList(const std::string& cmdPath);
+bool CheckCmdLineArgValid(const std::string& cmdLine);
 } // COMMON
 #endif // COMMON_H

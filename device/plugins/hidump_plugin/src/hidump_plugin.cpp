@@ -26,22 +26,16 @@
 
 #include "hidump_plugin_result.pbencoder.h"
 #include "securec.h"
+#include "common.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
-const int REDIRECT_STDOUT = 1;
-const int REDIRECT_STDERR = 2;
 const int SLEEP_TIME = 50;
 const int BUF_MAX_LEN = 64;
 const int MS_PER_S = 1000;
 const int US_PER_S = 1000000;
 const char *FPS_FORMAT = "SP_daemon -profilerfps 31104000 -sections 10";
 
-static pid_t volatile g_child;
-const int READ = 0;
-const int WRITE = 1;
-const int PIPE_LEN = 2;
-const std::string BIN_COMMAND("/bin/SP_daemon");
 } // namespace
 
 HidumpPlugin::HidumpPlugin() : fp_(nullptr, nullptr) {}
@@ -68,9 +62,17 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
-
-    fp_ = std::unique_ptr<FILE, int (*)(FILE*)>(CustomPopen(std::to_string(protoConfig_.sections()).c_str(), "r"),
-                                                CustomPclose);
+    std::vector<std::string> fullCmd;
+    fullCmd.push_back("/system/bin/SP_daemon");
+    fullCmd.push_back("SP_daemon");
+    fullCmd.push_back("-profilerfps");
+    fullCmd.push_back("31104000");
+    fullCmd.push_back("-sections");
+    fullCmd.push_back(std::to_string(protoConfig_.sections()));
+    fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
+        COMMON::CustomPopen(fullCmd, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
+            return COMMON::CustomPclose(fp, pipeFds_, childPid_, true);
+        });
     if (fp_.get() == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
@@ -195,72 +197,6 @@ bool HidumpPlugin::ParseHidumpInfo(T& hidumpInfoProto, char *buf, size_t len)
     time->set_tv_nsec((time_ms % MS_PER_S) * US_PER_S);
 
     return true;
-}
-
-FILE* HidumpPlugin::CustomPopen(const char* command, const char* type)
-{
-    CHECK_TRUE(command != nullptr && type != nullptr, nullptr, "HidumpPlugin:%s param invalid", __func__);
-
-    int fd[PIPE_LEN];
-    pipe(fd);
-
-    pid_t pid = fork();
-    if (pid == -1) {
-        perror("fork");
-        exit(1);
-    }
-
-    // child process
-    if (pid == 0) {
-        if (!strncmp(type, "r", strlen(type))) {
-            close(fd[READ]);
-            dup2(fd[WRITE], REDIRECT_STDOUT); // Redirect stdout to pipe
-            dup2(fd[WRITE], REDIRECT_STDERR); // Redirect stderr to pipe
-        } else {
-            close(fd[WRITE]);
-            dup2(fd[READ], 0); // Redirect stdin to pipe
-        }
-
-        setpgid(pid, pid);
-        execl(BIN_COMMAND.c_str(), "SP_daemon", "-profilerfps", "31104000", "-sections", command, nullptr);
-        exit(0);
-    } else {
-        if (!strncmp(type, "r", strlen(type))) {
-            // Close the WRITE end of the pipe since parent's fd is read-only
-            close(fd[WRITE]);
-        } else {
-            // Close the READ end of the pipe since parent's fd is write-only
-            close(fd[READ]);
-        }
-    }
-
-    g_child = pid;
-
-    if (!strncmp(type, "r", strlen(type))) {
-        return fdopen(fd[READ], "r");
-    }
-
-    return fdopen(fd[WRITE], "w");
-}
-
-int HidumpPlugin::CustomPclose(FILE* fp)
-{
-    CHECK_NOTNULL(fp, -1, "HidumpPlugin:%s fp is null", __func__);
-    int stat;
-    if (fclose(fp) != 0) {
-        const int bufSize = 256;
-        char buf[bufSize] = { 0 };
-        strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin:%s fclose failed! errno(%d:%s)", __func__, errno, buf);
-        return -1;
-    }
-    kill(g_child, SIGKILL);
-    if (waitpid(g_child, &stat, 0) == -1) {
-        if (errno != EINTR) {
-            stat = errno;
-        }
-    }
-    return stat;
 }
 
 void HidumpPlugin::SetConfig(HidumpConfig& config)

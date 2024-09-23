@@ -48,15 +48,16 @@ namespace OHOS {
         class GpuCounterCallbackImpl  : public GpuCounterCallback {
         public:
             GpuCounterCallbackImpl();
-            int OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos);
+            int OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos) override;
 
         private:
             void GetRealTime(GpuPerfInfo *newData);
             void JoinSocketDataValue(GpuPerfInfo *newData);
             unsigned long long JoinSocketDataPercentFunction(uint32_t itemFirst, int32_t durationFirst,
-                uint32_t itemSecond, int32_t durationSecond);
+                uint32_t itemSecond, int32_t durationSecond) const;
             void JoinSocketDataPercent(GpuPerfInfo *newData);
             void JoinSocketData(GpuPerfInfo *newData);
+            unsigned long long SplitSocketDataValueFunction(uint32_t value, int32_t interval, int32_t duration) const;
             void SplitSocketDataValue(int32_t interval);
             void SplitSocketDataPercent();
             void SplitSocketData();

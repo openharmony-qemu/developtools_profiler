@@ -28,11 +28,9 @@
 #include "Capture.h"
 #include "Network.h"
 #include "profiler_fps.h"
-#include "parse_page_fps_trace.h"
 #include "parse_click_complete_trace.h"
 #include "parse_click_response_trace.h"
 #include "parse_slide_fps_trace.h"
-#include "parse_start_frame_trace.h"
 using namespace testing::ext;
 using namespace std;
 
@@ -120,7 +118,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.GetCurrentTime();
     fps.CalcFpsAndJitters();
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
@@ -312,7 +309,6 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
 {
     ProfilerFPS &profiler = ProfilerFPS::GetInstance();
     std::string packName = "ohos.samples.ecg";
-    int sleepNum = 100;
     int sectionsNum = 10;
     FpsInfoProfiler fpsInfoResult;
     int nums = 10;
@@ -320,8 +316,7 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     long long msStartTime = 0;
     int numb = 20;
     long long harTime = 0;
-    
-    profiler.GetCurrentTime(sleepNum);
+
     profiler.GetResultFPS(sectionsNum);
     profiler.CalcFpsAndJitters();
     profiler.GetSectionsFps(fpsInfoResult, nums);
@@ -383,34 +378,6 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     EXPECT_EQ(flag, true);
 }
 
-HWTEST_F(SPdaemonTest, ParsePageFpsTraceTest, TestSize.Level1)
-{
-    ParsePageFpsTrace parsePageFpsTrace;
-    double calculateTime = 0.0;
-    double calculateTimeEnd = 0.0;
-    std::string line = "";
-    std::string curString = "";
-    std::string start = "";
-    std::string end = "";
-    size_t offset = 0;
-
-    curString = parsePageFpsTrace.CutString(line, start, end, offset);
-    calculateTime = parsePageFpsTrace.CalculateTime();
-    calculateTimeEnd = parsePageFpsTrace.CalculateTimeEnd();
-
-    std::string cmd = "SP_daemon -editor pagefps ohos.samples.ecg 设置 ohtest";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("FPS");
-    if ((strOne != result.npos)) {
-        flag = true;
-    }
-    
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
 HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
 {
     ParseClickResponseTrace parseClickResponseTrace;
@@ -430,40 +397,6 @@ HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("time");
-    if ((strOne != result.npos)) {
-        flag = true;
-    }
-    
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-HWTEST_F(SPdaemonTest, StartFrameTraceNohTest, TestSize.Level1)
-{
-    StartFrameTraceNoh startFrameTraceNoh;
-    double parseStartFrameTraceNoh = 0.0;
-    double calculateTime = 0.0;
-    double getFps = 0.0;
-    std::vector<std::string> split;
-    std::string str = "";
-    std::string  curString = "";
-    std::string pattern = "";
-    std::string file = "";
-    std::string start = "";
-    std::string end = "";
-    size_t offset = 0;
-
-    curString = startFrameTraceNoh.CutString(str, start, end, offset);
-    calculateTime = startFrameTraceNoh.CalculateTime();
-    parseStartFrameTraceNoh = startFrameTraceNoh.ParseStartFrameTraceNoh(file);
-    getFps = startFrameTraceNoh.GetFps();
-    split = startFrameTraceNoh.Split(str, pattern);
-
-    std::string cmd = "SP_daemon -editor startFrame ohos.samples.ecg 设置 ohtest";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("FPS");
     if ((strOne != result.npos)) {
         flag = true;
     }
