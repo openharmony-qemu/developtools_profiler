@@ -137,6 +137,9 @@ bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string,
     std::string &errorInfo);
 bool IsHmKernel();
 std::string GetCpuNum();
+void GetCurrentTime(int num, int prevTime);
+bool IsForeGround(std::string &pkg);
+bool IsFindForeGround(std::string line);
 };
 }
 }

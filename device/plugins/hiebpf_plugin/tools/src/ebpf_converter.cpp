@@ -49,6 +49,7 @@ constexpr uint8_t EVENT_SYM_FIXED_SIZE = 36;
 constexpr uint8_t EVENT_MEM_FIXED_SIZE = 88;
 constexpr uint8_t EVENT_STR_FIXED_SIZE = 40;
 constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
+constexpr uint8_t SHIFT = 32;
 } // namespace
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
     : inputPath_(inputPath), outputPath_(outPath) {}
@@ -96,7 +97,7 @@ void EbpfConverter::StartParsing()
         return;
     }
     fd_ = open(inputPath_.c_str(), O_RDONLY);
-    if (fd_ == -1) {
+    if (fd_ < 0) {
         std::cout << "open " << inputPath_ << " failed" << std::endl;
         return;
     }
@@ -155,7 +156,9 @@ void EbpfConverter::StartParsing()
             }
             default: {
                 std::cout << "Invalid type: " << type << std::endl;
-                close(fd_);
+                if (fd_ >= 0) {
+                    close(fd_);
+                }
                 fd_ = -1;
                 fileSize_ = 0;
                 fclose(file);
@@ -163,7 +166,9 @@ void EbpfConverter::StartParsing()
             }
         }
     }
-    close(fd_);
+    if (fd_ >= 0) {
+        close(fd_);
+    }
     fd_ = -1;
     fileSize_ = 0;
     std::cout << "Data read successfully, output..." << std::endl;
@@ -179,6 +184,9 @@ void EbpfConverter::StartParsing()
 
 bool EbpfConverter::Read(void* buffer, size_t size)
 {
+    if (fd_ < 0) {
+        return false;
+    }
     ssize_t ret = read(fd_, buffer, size);
     if (ret <= 0) {
         close(fd_);
@@ -401,7 +409,7 @@ void EbpfConverter::EventStrParsing()
         str.fileName = fileName;
     }
     str_.push_back(str);
-    int32_t newPos = static_cast<int32_t>(str.len - 32 - str.strLen);
+    int32_t newPos = static_cast<int32_t>(str.len - SHIFT - str.strLen);
     fileSize_ = lseek(fd_, lseek(fd_, 0, SEEK_CUR) + newPos, SEEK_SET);
 
     outData_ << "\nEventStr:\n"

@@ -39,14 +39,12 @@ int SpServerSocket::Init(ProtoType type)
         sockPort = (type == ProtoType::UDP ? udpPort : udpExPort);
     }
     if (sock < 0) {
-        std::cout << "Socket Create Failed:" << sock << std::endl;
         LOGE("SpServerSocket::Init Socket Create Failed");
         return -1;
     }
     if (type == ProtoType::TCP) {
         int optval = 1;
         if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval)) < 0) {
-            std::cout << "Socket Setsockopt failed: " << sock << std::endl;
             LOGE("SpServerSocket::Init Socket Setsockopt failed prot(%d)", sockPort);
             return -1;
         }
@@ -55,13 +53,11 @@ int SpServerSocket::Init(ProtoType type)
     local.sin_port = htons(sockPort);
     local.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
-        std::cout << "Socket Bind failed:" << sock << std::endl;
         LOGE("SpServerSocket::Init Socket Bind failed prot(%d)", sockPort);
         return -1;
     }
     if (type == ProtoType::TCP) {
         if (listen(sock, listenCount) < 0) {
-            std::cout << "Socket Listen failed:" << sock << std::endl;
             LOGE("SpServerSocket::Init Socket Listen failed");
             return -1;
         }
@@ -88,7 +84,6 @@ int SpServerSocket::Send(const std::string &sendBuf) const
 {
     int sendBytes = send(connFd, sendBuf.c_str(), sendBuf.size(), 0);
     if (sendBytes < 0) {
-        std::cout << "Send:Error" << std::endl;
         LOGE("SpServerSocket::Send Error(%d) fd(%d)", sendBytes, connFd);
         return -1;
     }
@@ -103,7 +98,6 @@ void SpServerSocket::Close()
     local.sin_port = htons(sockPort);
     local.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
-        std::cout << "Socket Bind failed:" << sock << std::endl;
         LOGI("SpServerSocket::Init Socket Bind failed");
     }
 }
@@ -127,7 +121,6 @@ int SpServerSocket::Recv()
         std::cout << "Client:" << rbuf << std::endl;
     } else {
         LOGE("SpServerSocket::recv Error(%d) fd(%d)", l, connFd);
-        perror("recv error:");
         return -1;
     }
     return l;

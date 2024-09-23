@@ -73,30 +73,53 @@ C:\Users\test>hdc_std shell
 OpenHarmony performance testing tool SmartPerf command-line version
 Usage: SP_daemon <options> <arguments>
 options:
- -N             set the collection times(default value is 0) range[1,2147483647], for example: -N 10
- -PKG           set package name, must add, for example: -PKG ohos.samples.ecg
- -c             get device CPU frequency and CPU usage, process CPU usage and CPU load ..
- -g             get device GPU frequency and GPU load 
- -f             get app refresh fps(frames per second) and fps jitters and refreshrate
- -profilerfps   get refresh fps and timestamp
- -sections      set collection time period(using with profilerfps)
- -t             get remaining battery power and temperature..
- -p             get battery power consumption and voltage
- -r             get process memory and total memory
- -snapshot      get screen capture
- -net           get uplink and downlink traffic
- -start         collection start command
- -stop          collection stop command
- -VIEW          set layler, for example: -VIEW DisplayNode
- -screen        get screen resolution
- -OUT           set csv output path
- -d             get device DDR information
- example:
+ -N              set the collection times(default value is 0) range[1,2147483647], for example: -N 10
+ -PKG            set package name, must add, for example: -PKG ohos.samples.ecg
+ -c              get device CPU frequency and CPU usage, process CPU usage and CPU load ..
+ -g              get device GPU frequency and GPU load
+ -f              get app refresh fps(frames per second) and fps jitters and refreshrate
+ -profilerfps    get refresh fps and timestamp
+ -sections       set collection time period(using with profilerfps)
+ -t              get remaining battery power and temperature..
+ -p              get battery power consumption and voltage
+ -r              get process memory and total memory
+ -snapshot       get screen capture
+ -net            get uplink and downlink traffic
+ -start          collection start command
+ -stop           collection stop command
+ -VIEW           set layler, for example: -VIEW DisplayNode
+ -OUT            set csv output path.
+ -d              get device DDR information
+ -screen         get screen resolution
+ -deviceinfo     get device information
+ -server         start a process to listen to the socket message of the start and stop commands
+ -clear          clear the process ID
+ -ohtestfps      used by the vilidator to obtain the fps, the collection times can be set 
+ -editorServer   start a process to listen to the socket message of the editor
+ -recordcapacity get the battery level difference
+ --version       get version
+ --help          get help
+ -editor         scenario-based collection identifier, parameter configuration items can be added later
+ responseTime   get the page response delay after an application is operated
+ completeTime   get the page completion delay after an application is operated
+ fpsohtest      used by the vilidator to obtain the fps
+ example1:
  SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d
  SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d
  SP_daemon -start -c
  SP_daemon -stop
- SP_daemon -screen
+ example2: These parameters need to be used separately
+ SP_daemon -screen 
+ SP_daemon -deviceinfo
+ SP_daemon -server
+ SP_daemon -clear
+ SP_daemon -ohtestfps
+ SP_daemon -editorServer
+ SP_daemon -recordcapacity
+ example3: These parameters need to be used separately
+ SP_daemon -editor responseTime ohos.samples.ecg app name
+ SP_daemon -editor completeTime ohos.samples.ecg app name
+ SP_daemon -editor fpsohtest
 
 command exec finished!
 #

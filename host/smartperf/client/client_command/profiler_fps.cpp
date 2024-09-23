@@ -38,9 +38,9 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     std::map<std::string, std::string> result;
     FpsInfoProfiler finalResult;
     if (isGameLayer == "1") {
-        std::string gameLayer = GetGameLayer();
-        if (!gameLayer.empty()) {
-            finalResult = selfRerderLayers(gameLayer);
+        std::string gameLayerName = GetGameLayer();
+        if (!gameLayerName.empty()) {
+            finalResult = selfRerderLayers(gameLayerName);
         }
     } else {
         finalResult = GetFpsInfo();
@@ -55,8 +55,8 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
             finalResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(finalResult.fps);
-        LOGI("ProfilerFPS.result.fps====: %s", std::to_string(finalResult.fps).c_str());
-        LOGI("ProfilerFPS.result.curTime====: %s", std::to_string(finalResult.curTime).c_str());
+        LOGI("ProfilerFPS.result.fps: %s", std::to_string(finalResult.fps).c_str());
+        LOGI("ProfilerFPS.result.curTime: %s", std::to_string(finalResult.curTime).c_str());
         std::string jitterStr = "";
         std::string split = "";
         for (size_t i = 0; i < finalResult.jitters.size(); i++) {
@@ -66,7 +66,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
             jitterStr += split + std::to_string(finalResult.jitters[i]);
         }
         result["fpsJitters"] = jitterStr;
-        LOGI("ProfilerFPS.result.jitters====: %s", jitterStr.c_str());
+        LOGI("ProfilerFPS.result.jitters: %s", jitterStr.c_str());
         if (isCatchTrace > 0) {
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }
@@ -125,25 +125,11 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     fflush(stdout);
     gettimeofday(&end, nullptr);
     runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
-    LOGI("printf time is---runTime: %s", std::to_string(runTime).c_str());
+    LOGI("printf time is runTime: %s", std::to_string(runTime).c_str());
     if (runTime < sleepTime) {
         usleep(sleepTime - runTime);
     }
-    GetCurrentTime(ten);
-}
-
-void ProfilerFPS::GetCurrentTime(int sleepNum)
-{
-    for (int i = 0; i < sleepNum; i++) {
-        struct timespec time1 = { 0 };
-        clock_gettime(CLOCK_MONOTONIC, &time1);
-        int curTimeNow = static_cast<int>(time1.tv_sec - 1);
-        if (curTimeNow == lastFpsInfoResult.curTime) {
-            usleep(sleepNowTime);
-        } else {
-            break;
-        }
-    }
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(ten, lastFpsInfoResult.curTime);
 }
 
 void ProfilerFPS::GetTimeDiff()
@@ -152,7 +138,7 @@ void ProfilerFPS::GetTimeDiff()
     long long clockMonotonicRaw = 0;
     int two = 2;
     std::string strRealTime;
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
+    const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return;
@@ -223,7 +209,6 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
     long long currLastTime = lastCurrTime;
     long long harTime = msJiange / 1000000;
     int printCount = 0;
-    size_t count = 0;
     long long currTimeStart = 0;
     long long currTimeLast = 0;
     for (size_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
@@ -234,24 +219,16 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             }
             currTimeLast = currTime;
             msCount++;
-        } else if (currTime > msStartTime && currTime <= (msStartTime + msJiange)) {
-            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
-            msCount = 1;
-            if (msCount == 1) {
+        } else {
+            while (currTime > msStartTime) {
+                PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
+                printCount++;
+                msCount = 1;
+                msStartTime += msJiange;
+                currLastTime += harTime;
+                currTimeLast = currTime;
                 currTimeStart = currTime;
             }
-            currTimeLast = currTime;
-            msStartTime += msJiange;
-            currLastTime += harTime;
-            printCount++;
-        } else {
-            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
-            printCount++;
-            msCount = 0;
-            msStartTime += msJiange;
-            currLastTime += harTime;
-            currTimeLast = currTime;
-            count--;
         }
         if (i == (static_cast<size_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
             PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
@@ -259,7 +236,6 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
             printCount++;
             GetSectionsPrint(printCount, currLastTime, nums, harTime);
         }
-        count++;
     }
 }
 
@@ -273,14 +249,13 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum;
-        if (static_cast<int>(v.size()) < four) {
-            sectionsNum = 0;
+        int sectionsNum = (static_cast<int>(v.size()) >= four) ? atoi(v[four].c_str()) : 0;
+        if (sectionsNum > ten) {
+            printf("set sectionsNum:%d not valid arg \n", sectionsNum);
         } else {
-            sectionsNum = atoi(v[four].c_str());
-        }
-        for (int i = 0; i < this->num; i++) {
-            GetResultFPS(sectionsNum);
+            for (int i = 0; i < this->num; i++) {
+                GetResultFPS(sectionsNum);
+            }
         }
     }
     printf("SP_daemon exec finished!\n");
@@ -293,8 +268,8 @@ std::string ProfilerFPS::GetSurface()
     SPUtils::LoadCmd(dumperSurface, cmdResult);
     size_t positionLeft = cmdResult.find("[");
     size_t positionRight = cmdResult.find("]");
-    size_t num = 1;
-    return cmdResult.substr(positionLeft + num, positionRight - positionLeft - num);
+    size_t positionNum = 1;
+    return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
@@ -306,16 +281,16 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
         uniteLayer = GetSurface();
     }
     if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
-        LOGI("ProfilerFPS.pkgName====: %s", pkgName.c_str());
-        GetCurrentTime(fifty);
+        LOGI("ProfilerFPS.pkgName: %s", pkgName.c_str());
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        bool onTop = IsForeGround();
+        bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
         if (onTop) {
-            LOGI("ProfilerFPS.onTop===========");
-            GetCurrentTime(fifty);
+            OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
+            LOGI("ProfilerFPS::app is in the background");
             if (processId.empty()) {
                 processFlag = true;
                 fpsInfoMax.Clear();
@@ -344,6 +319,10 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     static char tmp[1024];
     GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
+    if (cmd.empty()) {
+        LOGE("cmd is null");
+        return fpsInfo;
+    }
     fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         LOGE("Failed to open hidumper file");
@@ -356,7 +335,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("ProfilerFPS Time-------fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
+    LOGI("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("ProfilerFPS dump time: %s", str.c_str());
@@ -370,7 +349,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         CalcFpsAndJitters();
     }
     pclose(fp);
-    LOGI("ProfilerFPS Time-------fpsNum: %s", std::to_string(fpsNum).c_str());
+    LOGI("ProfilerFPS fpsNum: %d", fpsNum);
     return fpsInfo;
 }
 
@@ -399,46 +378,6 @@ void ProfilerFPS::CalcFpsAndJitters()
         }
         prevScreenTimestamp = curScreenTimestamp;
         prevlastScreenTimestamp = curScreenTimestamp;
-    }
-}
-
-bool ProfilerFPS::IsForeGround()
-{
-    const std::string cmd = "aa dump -l";
-    char buf[1024] = {'\0'};
-    std::string appLine = "app name [" + pkgName;
-    std::string bundleLine = "bundle name [" + pkgName;
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return false;
-    }
-    bool tag = false;
-    while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line = buf;
-        if (line.find(appLine) != std::string::npos) {
-            isFoundAppName = true;
-        }
-        if (line.find(bundleLine) != std::string::npos) {
-            isFoundBundleName = true;
-        }
-        if (isFoundAppName || isFoundBundleName) {
-            if (line.find("app state") != std::string::npos) {
-                tag = IsFindForeGround(line);
-                isFoundAppName = false;
-                isFoundBundleName = false;
-            }
-        }
-    }
-    pclose(fd);
-    return tag;
-}
-bool ProfilerFPS::IsFindForeGround(std::string line) const
-{
-    std::string foreGroundTag = line.substr(line.find("#") + 1);
-    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
-        return true;
-    } else {
-        return false;
     }
 }
 
@@ -473,7 +412,7 @@ void ProfilerFPS::SetGameLayer(std::string isGameView)
 
 FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
 {
-    GetCurrentTime(fifty);
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
     fpsInfoMax = GetSurfaceFrame(gameLayer);
     return fpsInfoMax;
 }
@@ -495,8 +434,13 @@ std::string ProfilerFPS::GetGameLayer()
     uint64_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
-        nodeId = std::stoll(nodeIdStr);
+        std::stringstream ss(nodeIdStr);
+        ss >> nodeId;
+        if (ss.fail() || !ss.eof()) {
+            return gameLayer;
+        }
         nodeId = nodeId >> kShiftAmount;
+
         if (std::to_string(nodeId) == processId) {
             size_t layerStartPos = cmdResult.find("[");
             size_t layerEndPos = cmdResult.find("]");

@@ -20,6 +20,7 @@
 #include "memory_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "smaps_stats.h"
+#include "common.h"
 
 namespace {
 using namespace OHOS::HDI::Memorytracker::V1_0;
@@ -29,9 +30,7 @@ using namespace OHOS::HiviewDFX::UCollect;
 using OHOS::HiviewDFX::CollectResult;
 using OHOS::HiviewDFX::GraphicType;
 
-const char* CMD_FORMAT = "memory service meminfo --local ";
 constexpr size_t READ_BUFFER_SIZE = 1024 * 16;
-constexpr int BUF_MAX_LEN = 2048;
 constexpr int MAX_ZRAM_DEVICES = 256;
 constexpr int ZRAM_KB = 1024;
 constexpr size_t DEFAULT_READ_SIZE = 4096;
@@ -53,6 +52,8 @@ const std::string MGR_SVC_START_STR = "----------------------------------WindowM
 const std::string MGR_SVC_END_STR = "Focus window";
 const std::string MGR_SVC_INTERVAL_STR = "----------------------------------------------------------";
 const std::string MEM_PROFILE_STR = "Channel:";
+const std::string HIDUMPER_BIN_PATH = "/system/bin/hidumper";
+const int WAIT_HIDUMPER_TIME = 10;
 } // namespace
 
 MemoryDataPlugin::MemoryDataPlugin() : meminfoFd_(-1), vmstatFd_(-1), err_(-1)
@@ -292,8 +293,6 @@ template <typename T> void MemoryDataPlugin::WriteVmstat(T& memoryData)
         vmeminfo->set_key(static_cast<SysVMeminfoType>(counter_id));
         vmeminfo->set_value(value);
     } while (totalbuffer.NextLine());
-
-    return;
 }
 
 template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInfo, SmapsStats& smapInfo)
@@ -311,23 +310,6 @@ template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInf
 int MemoryDataPlugin::ParseNumber(std::string line)
 {
     return atoi(line.substr(line.find_first_of("01234567890")).c_str());
-}
-
-template <typename T> bool MemoryDataPlugin::GetMemInfoByMemoryService(uint32_t pid, T& processMemoryInfo)
-{
-    std::string fullCmd = CMD_FORMAT + std::to_string(pid);
-
-    std::unique_ptr<uint8_t[]> buffer {new (std::nothrow) uint8_t[BUF_MAX_LEN]};
-    std::unique_ptr<FILE, int (*)(FILE*)> fp(popen(fullCmd.c_str(), "r"), pclose);
-    CHECK_TRUE(fp, false, "%s:popen error", __func__);
-
-    size_t ret = fread(buffer.get(), 1, BUF_MAX_LEN, fp.get());
-    if (ret == 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:fread failed", __func__);
-    }
-    buffer.get()[BUF_MAX_LEN - 1] = '\0';
-
-    return ParseMemInfo(reinterpret_cast<char*>(buffer.get()), processMemoryInfo);
 }
 
 template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memoryDataProto, S smapsInfo)
@@ -550,7 +532,9 @@ DIR* MemoryDataPlugin::OpenDestDir(const char* dirPath)
 
 int32_t MemoryDataPlugin::GetValidPid(DIR* dirp)
 {
-    if (!dirp) return 0;
+    if (!dirp) {
+        return 0;
+    }
     while (struct dirent* dirEnt = readdir(dirp)) {
         if (dirEnt->d_type != DT_DIR) {
             continue;
@@ -1052,16 +1036,25 @@ template <typename T> void MemoryDataPlugin::WriteGpuMemInfo(T& dataProto)
 std::string MemoryDataPlugin::RunCommand(const std::string& cmd)
 {
     std::string ret = "";
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
-    if (!pipe) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:popen(%s) error", __func__, cmd.c_str());
+    //check cmd
+    if (!COMMON::CheckCmdLineArgValid(cmd)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:the command is illegal", __func__);
         return ret;
     }
+    std::vector<std::string> cmdArg;
+    COMMON::SplitString(cmd, " ", cmdArg);
+    cmdArg.emplace(cmdArg.begin(), HIDUMPER_BIN_PATH);
 
+    volatile pid_t childPid = -1;
+    int pipeFds[2] = {-1, -1}; // 2: pipe fds
+    FILE* fp = COMMON::CustomPopen(cmdArg, "r", pipeFds, childPid);
+    CHECK_NOTNULL(fp, "", "MemoryDataPlugin::RunCommand CustomPopen FAILED!r");
     std::array<char, READ_BUFFER_SIZE> buffer;
-    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+    usleep(WAIT_HIDUMPER_TIME);
+    while (fgets(buffer.data(), buffer.size(), fp) != nullptr) {
         ret += buffer.data();
     }
+    COMMON::CustomPclose(fp, pipeFds, childPid);
     return ret;
 }
 
@@ -1281,9 +1274,9 @@ bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMe
         return false;
     }
     if (graphicType == GraphicType::GL) {
-        graphicsMemory.gl = data.data;
+        graphicsMemory.gl = static_cast<uint64_t>(data.data);
     } else if (graphicType == GraphicType::GRAPH) {
-        graphicsMemory.graph = data.data;
+        graphicsMemory.graph = static_cast<uint64_t>(data.data);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:graphic type is not support.", __func__);
         return false;

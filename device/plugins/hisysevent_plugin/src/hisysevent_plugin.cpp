@@ -183,7 +183,7 @@ inline bool HisyseventPlugin::InitHisyseventCmd()
         fullCmd_.clear();
     }
 
-    fullCmd_.emplace_back("/bin/hisysevent"); // exe file path
+    fullCmd_.emplace_back("/system/bin/hisysevent"); // exe file path
     fullCmd_.emplace_back("hisysevent"); // exe file name
     fullCmd_.emplace_back("-rd");
 

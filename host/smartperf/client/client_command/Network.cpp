@@ -32,9 +32,7 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
-    std::map<std::string, std::string> result;
-    std::map<std::string, std::string> networkInfo = Network::GetNetworkInfo();
-    result = networkInfo;
+    std::map<std::string, std::string> result = Network::GetNetworkInfo();
     LOGI("Network ItemData map siez=%u", result.size());
     if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
         result["networkUp"] = "NA";

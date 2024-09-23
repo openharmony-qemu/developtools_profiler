@@ -30,7 +30,6 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        std::cout << "file open fail:" << file << std::endl;
         LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
     }
@@ -50,17 +49,21 @@ double ParseSlideFpsTrace::CalculateTime()
                 needTime = true;
                 frameNow = 0;
                 touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+                LOGI("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
                 swiperFlingFlag = 0;
             }
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
             doCompositionTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            LOGI("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
         } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
             line.find("H:APP_LIST_FLING,") != std::string::npos) {
             listFlag++;
             if (listFlag == two) {
                 completeTime = doCompositionTime;
+                LOGI("ParseSlideFpsTrace::completeTime: (%s)", std::to_string(completeTime).c_str());
                 frameNum = frameNow;
+                LOGI("ParseSlideFpsTrace::frameNum: (%d)", frameNum);
                 break;
             }
         }
@@ -69,7 +72,12 @@ double ParseSlideFpsTrace::CalculateTime()
     if (completeTime == 0 || responseTime == 0) {
         return -1;
     } else {
-        double fps = (frameNum - 1) / (completeTime - responseTime);
+        double fps = 0;
+        if ((completeTime - responseTime) > 0) {
+            fps = (frameNum - 1) / (completeTime - responseTime);
+        } else {
+            fps = 0;
+        }
         double flagNum = 120;
         double flagNumb = 121;
         if (fps > flagNum && fps < flagNumb) {
@@ -85,6 +93,7 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
     if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
             touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            LOGI("AppSwiperScroll.touchTime: (%s)", std::to_string(touchTime).c_str());
             needTime = true;
             swiperScrollFlag = 1;
         }
@@ -92,7 +101,9 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
     if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
         if (swiperFlingFlag == 1) {
             completeTime = doCompositionTime;
+            LOGI("AppSwiperScroll.completeTime: (%s)", std::to_string(completeTime).c_str());
             frameNum = frameNow;
+            LOGI("AppSwiperScroll.frameNum: (%d)", frameNum);
         }
         swiperFlingFlag++;
     }
@@ -100,6 +111,7 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
         frameNow = 1;
         needTime = false;
         responseTime = doCompositionTime;
+        LOGI("AppSwiperScroll.responseTime: (%s)", std::to_string(responseTime).c_str());
     }
 }
 

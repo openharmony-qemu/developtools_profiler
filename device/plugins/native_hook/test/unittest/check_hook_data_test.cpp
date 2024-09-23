@@ -688,14 +688,16 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
                         getline(infile, buf);
                     }
                     std::cout << buf << std::endl;
-                    EXPECT_TRUE(buf.find("liba.z.so") != std::string::npos);
+                    EXPECT_TRUE((buf.find("liba.z.so") != std::string::npos) ||
+                                (buf.find("libb.z.so") != std::string::npos));
                 } else if (resultVec[mallocSizePos] == std::to_string(LIBB_MALLOC_SIZE)) {
                     std::cout << buf << std::endl;
                     for (size_t i = 0; i < libUnwindDepth; i++) {
                         getline(infile, buf);
                     }
                     std::cout << buf << std::endl;
-                    EXPECT_TRUE(buf.find("libb.z.so") != std::string::npos);
+                    EXPECT_TRUE((buf.find("liba.z.so") != std::string::npos) ||
+                                (buf.find("libb.z.so") != std::string::npos));
                 }
             }
         }

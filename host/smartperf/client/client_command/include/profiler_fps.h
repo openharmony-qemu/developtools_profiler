@@ -117,7 +117,6 @@ private:
     int isCatchTrace = 0;
     std::string isGameLayer = "";
     bool processFlag = false;
-    std::string gameLayer = "";
     bool ohFlag = false;
     std::string processId = "";
 };

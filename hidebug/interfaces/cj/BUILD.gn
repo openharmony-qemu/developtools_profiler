@@ -1,0 +1,49 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2024. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+import("//build/ohos.gni")
+import("//developtools/profiler/hidebug/hidebug.gni")
+
+ohos_shared_library("cj_hidebug_ffi") {
+  include_dirs = [
+    "$hidebug_path/frameworks/native/include",
+    ".",
+    "$hidebug_path/interfaces/native/kits/include",
+  ]
+
+  sources = [ "hidebug_ffi.cpp" ]
+
+  if (build_ohos_sdk) {
+    defines += [ "PREVIEWER" ]
+    sources = []
+  }
+
+  deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]
+
+  external_deps = [
+    "hidumper:lib_dump_usage",
+    "hilog:libhilog",
+    "hitrace:hitrace_meter",
+    "hiview:libucollection_utility",
+    "init:libbegetutil",
+    "napi:cj_bind_ffi",
+    "napi:cj_bind_native",
+    "samgr:samgr_proxy",
+    "storage_service:storage_manager_acl",
+  ]
+
+  innerapi_tags = [ "platformsdk" ]
+
+  part_name = "hiprofiler"
+  subsystem_name = "developtools"
+}

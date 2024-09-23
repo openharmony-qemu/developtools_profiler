@@ -21,7 +21,7 @@ napi_value CreateErrorMessage(napi_env env, const std::string& msg)
 {
     napi_value result = nullptr;
     napi_value message = nullptr;
-    napi_create_string_utf8(env, (char *)msg.data(), msg.size(), &message);
+    napi_create_string_utf8(env, msg.data(), msg.size(), &message);
     napi_create_error(env, nullptr, message, &result);
     return result;
 }

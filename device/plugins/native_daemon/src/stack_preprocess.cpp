@@ -128,11 +128,6 @@ StackPreprocess::~StackPreprocess()
     }
     runtime_instance = nullptr;
     fpHookData_ = nullptr;
-    if (isSaService_) {
-        std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
-        tfPtr->SetDurationTime();
-        tfPtr->Finish();
-    }
 }
 
 void StackPreprocess::FinishTraceFile()
@@ -167,7 +162,12 @@ bool StackPreprocess::StartTakeResults()
 {
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
 
-    std::thread demuxer([this] { this->TakeResults(); });
+    std::weak_ptr<StackPreprocess> stackPreprocessPtr(shared_from_this());
+    std::thread demuxer([stackPreprocessPtr] {
+        if (auto ptr = stackPreprocessPtr.lock(); ptr != nullptr) {
+            ptr->TakeResults();
+        }
+    });
     CHECK_TRUE(demuxer.get_id() != std::thread::id(), false, "demuxer thread invalid");
 
     thread_ = std::move(demuxer);

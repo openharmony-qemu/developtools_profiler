@@ -27,7 +27,7 @@ public:
     }
     // 截图线程
     void ThreadGetCatch();
-    void ThreadGetCatchSocket(const std::string &curTime) const;
+    void ThreadGetCatchSocket(const std::string &captureTime) const;
     // 触发线程
     void TriggerGetCatch();
     void TriggerGetCatchSocket(long long captureTime) const;
