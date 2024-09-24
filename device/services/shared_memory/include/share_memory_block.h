@@ -21,6 +21,7 @@
 #endif
 #include <cstdint>
 #include <functional>
+#include <securec.h>
 #include <string>
 #include "plugin_module_api.h"
 
