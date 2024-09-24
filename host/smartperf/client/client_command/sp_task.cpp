@@ -374,7 +374,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         return ErrCode::FAILED;
     }
     isRunning = true;
-    realTimeStart = GetStartTime();
+    realTimeStart = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
@@ -638,7 +638,7 @@ void SPTask::StopRecord()
 
     recordState = false;
 }
-time_t &SPTask::GetStartTime()
+time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
 }

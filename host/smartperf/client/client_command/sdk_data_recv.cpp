@@ -96,7 +96,7 @@ namespace OHOS {
             std::string eventName;
             std::string enable;
             std::string value;
-            time_t realTimestamp = SPTask::GetInstance().GetStartTime();
+            std::string realTimestamp;
             while (std::getline(ss, item, ',')) {
                 std::stringstream itemSS(item);
                 std::string first;
@@ -108,6 +108,7 @@ namespace OHOS {
                 } else if (first == "para0") {
                     eventName = second;
                 } else if (first == "time") {
+                    realTimestamp = std::to_string(std::stoll(second) - SPTask::GetInstance().GetRealStartTime());
                     timestamp = std::to_string(std::stoll(second) - params.startTime);
                 } else if (first == "enable") {
                     enable = second;
