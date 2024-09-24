@@ -42,6 +42,7 @@ const std::string THIRD_PARTY_MUSL_ADDR = "/system/lib/ld-musl-aarch64.so.1";
 constexpr int32_t SYM_32_VALUE_OFFSET = 4;
 constexpr int32_t SYM_64_VALUE_OFFSET = 8;
 constexpr int32_t WIDE_SIXTEEN = 16;
+constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
 } // namespace
 
 int BPFController::LIBBPFPrintFunc(enum libbpf_print_level level, const char *format, va_list args)
@@ -148,6 +149,10 @@ int BPFController::SetUpBPF()
     int err = libbpf_get_error(skel_);
     CHECK_TRUE(!err, err, "failed to open BPF skeleton: %s", strerror(-err));
     HHLOGI(true, "BPF skeleton opened");
+    if (config_.maxStackDepth_ > MAX_SIZE) {
+        HHLOGE(true, "SetUpBPF maxStackDepth exceeds max size");
+        return -1;
+    }
     if (config_.unwindStack_) {
         ips_ = new(std::nothrow) __u64[config_.maxStackDepth_];
         CHECK_NOTNULL(ips_, -1, "failed to allocate memory for ips");
