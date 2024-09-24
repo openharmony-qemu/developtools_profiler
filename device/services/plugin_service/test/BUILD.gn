@@ -39,7 +39,7 @@ ohos_unittest("plugin_service_ut") {
     "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]
@@ -64,7 +64,7 @@ ohos_unittest("plugin_service_module_test") {
   external_deps = [
     "abseil-cpp:absl_sync",
     "googletest:gtest",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

@@ -41,7 +41,7 @@ ohos_fuzztest("ProfilerCreateSessionFuzzTest") {
     "bounds_checking_function:libsec_shared",
     "grpc:grpc",
     "grpc:grpcxx",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]

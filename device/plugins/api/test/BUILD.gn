@@ -54,7 +54,7 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "googletest:gtest",
     "grpc:grpc",
     "grpc:grpcxx",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]
