@@ -36,7 +36,7 @@
 #include "memory_plugin_result.pb.h"
 #include "plugin_module_api.h"
 #include "smaps_stats.h"
-#include "memory_collector.h"
+#include "graphic_memory_collector.h"
 
 struct Proto2StrMapping {
     int protobufid;

@@ -43,7 +43,7 @@ ohos_source_set("memdataplugin_source") {
       "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
       "hidumper:lib_dump_usage",
       "hilog:libhilog",
-      "hiview:libucollection_utility",
+      "hiview:libucollection_graphic",
       "protobuf:protobuf_lite",
     ]
   }
