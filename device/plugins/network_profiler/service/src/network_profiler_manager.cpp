@@ -184,7 +184,7 @@ void NetworkProfilerManager::StopNetworkProfiler()
 
     for (const auto& item : networkCtx_) {
         if (item->eventPoller != nullptr) {
-            HILOG_BASE_ERROR(LOG_CORE, "eventPoller unset!");
+            HILOG_ERROR(LOG_CORE, "eventPoller unset!");
             if (item->eventNotifier != nullptr) {
                 item->eventPoller->RemoveFileDescriptor(item->eventNotifier->GetFd());
             }

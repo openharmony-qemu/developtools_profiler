@@ -33,7 +33,7 @@ ohos_fuzztest("PluginStartSessionCmdFuzzTest") {
     "../../..:plugins_sources",
   ]
   external_deps = [
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "protobuf:protobuf_lite",
   ]
   if (is_asan) {

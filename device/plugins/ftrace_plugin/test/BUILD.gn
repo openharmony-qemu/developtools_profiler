@@ -59,7 +59,7 @@ ohos_unittest("ftrace_plugin_ut") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "hiview:libucollection_client",
     "protobuf:protobuf_lite",
   ]

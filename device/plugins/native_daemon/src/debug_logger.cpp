@@ -73,7 +73,7 @@ void DebugLogger::HiLog(std::string &buffer) const
     if (lastLF != std::string::npos) {
         buffer.erase(lastLF, 1);
     }
-    HILOG_BASE_DEBUG(LOG_CORE, "%{public}s", buffer.c_str());
+    HILOG_DEBUG(LOG_CORE, "%{public}s", buffer.c_str());
 }
 #endif
 #endif

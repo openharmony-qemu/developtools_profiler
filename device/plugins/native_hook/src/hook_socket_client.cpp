@@ -184,7 +184,7 @@ void HookSocketClient::DisableHook()
 {
     bool expected = false;
     if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
-        HILOG_BASE_INFO(LOG_CORE, "%s", __func__);
+        HILOG_INFO(LOG_CORE, "%s", __func__);
         if (disableHookCallback_) {
             disableHookCallback_();
         }

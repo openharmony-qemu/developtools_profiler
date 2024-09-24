@@ -37,6 +37,7 @@
 #include "dfx_symbols.h"
 #include "dwarf_encoding.h"
 #include "utilities.h"
+#include "logging.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace std::chrono;

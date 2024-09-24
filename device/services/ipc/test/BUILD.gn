@@ -46,7 +46,7 @@ ohos_unittest("ipc_ut") {
   ]
   external_deps = [
     "googletest:gtest",
-    "hilog:libhilog_base",
+    "hilog:libhilog",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
