@@ -103,6 +103,7 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
+    time_t &GetStartTime();
 
 private:
     TaskInfo curTaskInfo;
@@ -121,6 +122,7 @@ private:
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     bool recordState = false;
+    time_t realTimeStart = 0;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
