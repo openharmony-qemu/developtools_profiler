@@ -119,7 +119,7 @@ public:
         while (iterator != messageMap.end()) {
             std::string recvBuf = spSocket.RecvBuf();
             if (SPUtils::IsSubString(recvBuf, iterator->second)) {
-                HandleProfile(spSocket, recvBuf, iterator)
+                HandleProfile(spSocket, recvBuf, iterator);
                 break;
             }
             ++iterator;
