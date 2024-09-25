@@ -397,6 +397,10 @@ void StackPreprocess::TakeResults()
                 }
                 continue;
             }
+            if (rawData->stackConext == nullptr) {
+                PROFILER_LOG_ERROR(LOG_CORE, "StackPreprocess take results rawData->stackConext is nullptr");
+                continue;
+            }
             if (rawData->stackConext->type == NMD_MSG) {
                 continue;
             } else if (rawData->stackConext->type == END_MSG) {
