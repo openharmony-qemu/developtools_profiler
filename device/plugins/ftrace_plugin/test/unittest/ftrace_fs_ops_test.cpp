@@ -486,10 +486,18 @@ HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().SetBufferSizeKb(1024));
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetBufferSizeKb(4000));
+    } else {
+        EXPECT_TRUE(FtraceFsOps::GetInstance().SetBufferSizeKb(1024));
+    }
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/buffer_size_kb";
     std::string content = FileUtils::ReadFile(path);
-    EXPECT_STREQ(content.c_str(), "1024\n");
+    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
+        EXPECT_STREQ(content.c_str(), "4000\n");
+    } else {
+        EXPECT_STREQ(content.c_str(), "1024\n");
+    }
 }
 
 /*

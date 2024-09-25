@@ -53,11 +53,15 @@ constexpr int FREE_GET_DATA_SIZE = 2;
 constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
-const std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
-const std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
+
+#ifdef __aarch64__
+const std::string DEFAULT_LIBA_PATH("/system/lib64/liba.z.so");
+const std::string DEFAULT_LIBB_PATH("/system/lib64/libb.z.so");
 const std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
 const int LIBA_MALLOC_SIZE = 888;
 const int LIBB_MALLOC_SIZE = 666;
+#endif
+
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
 typedef void (*DepthFreeSo)(int depth, char *p);
 
@@ -69,7 +73,6 @@ class CheckHookDataTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
-
     void StartDaemonProcessArgs()
     {
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
@@ -242,6 +245,7 @@ public:
         DepthFree(depth, p);
     }
 
+#ifdef __aarch64__
     void DlopenAndCloseSo(std::string filePath, int size, int depth)
     {
         char *ptr = nullptr;
@@ -268,6 +272,7 @@ public:
             dlclose(handle);
         }
     }
+#endif
 
     void StartMallocProcess()
     {
@@ -285,6 +290,7 @@ public:
         }
     }
 
+#ifdef __aarch64__
     void StartDlopenProcess()
     {
         if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
@@ -305,6 +311,7 @@ public:
             hookPid_ = processNum;
         }
     }
+#endif
 
     char* DepthCalloc(int depth, int callocSize)
     {
@@ -660,9 +667,10 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
 
 /**
  * @tc.name: native hook
- * @tc.desc: Test hook dlopen normal process.
+ * @tc.desc: Test hook dlopen normal process. just for arm64
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
     for (size_t i = 1; i < 2; ++i) {
@@ -703,6 +711,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         }
     }
 }
+#endif
 
 /**
  * @tc.name: native hook

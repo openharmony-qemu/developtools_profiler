@@ -281,9 +281,8 @@ HWTEST_F(CpuDataPluginTest, TestPluginInfo, TestSize.Level1)
 {
     CpuDataPlugin cpuPlugin;
     CpuData cpuData;
-    cpuPlugin.SetFreqPath(g_path);
-    g_path = g_testPath + "/proc/";
-    cpuPlugin.SetPath(g_path);
+    cpuPlugin.SetFreqPath(DEFAULT_TEST_PATH);
+    cpuPlugin.SetPath(DEFAULT_TEST_PATH + "/proc/");
     EXPECT_TRUE(PluginCpuinfoStub(cpuPlugin, cpuData, 1872, true, false));
 
     TestCpuUsage cpuUsage;
@@ -305,7 +304,6 @@ HWTEST_F(CpuDataPluginTest, TestPluginInfo, TestSize.Level1)
     EXPECT_FLOAT_EQ(cpuData.user_load(), cpuUsage.userLoad);
     EXPECT_FLOAT_EQ(cpuData.sys_load(), cpuUsage.sysLoad);
     EXPECT_FLOAT_EQ(cpuData.total_load(), cpuUsage.totalLoad);
-
     ASSERT_EQ(cpuUsageInfo.cores_size(), 6);
     for (int i = 1; i <= CORE_NUM; i++) {
         CpuCoreUsageInfo cpuCoreUsageInfo = cpuUsageInfo.cores()[i - 1];
