@@ -49,6 +49,7 @@ constexpr uint8_t EVENT_SYM_FIXED_SIZE = 36;
 constexpr uint8_t EVENT_MEM_FIXED_SIZE = 88;
 constexpr uint8_t EVENT_STR_FIXED_SIZE = 40;
 constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
+constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
 constexpr uint8_t SHIFT = 32;
 } // namespace
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)
@@ -285,7 +286,10 @@ void EbpfConverter::SymbolInfoParsing()
     uint64_t symAddr = 0;
     SymbolInfo info = {};
     CHK(Read(reinterpret_cast<void*>(&info), EVENT_SYM_FIXED_SIZE));
-
+    if (info.strTabLen + 1 >= MAX_SIZE) {
+        std::cout << "info size exceeds max size" << std::endl;
+        return;
+    }
     info.strTab = new char[info.strTabLen + 1];
     if (memset_s(info.strTab, info.strTabLen + 1, 0, info.strTabLen + 1) != EOK) {
         std::cout << "memset string table failed" << std::endl;
@@ -304,6 +308,10 @@ void EbpfConverter::SymbolInfoParsing()
             info.strTab = nullptr;
             return;
         }
+    }
+    if (info.symTabLen + 1 >= MAX_SIZE) {
+        std::cout << "info size exceeds max size" << std::endl;
+        return;
     }
     info.symTab = new char[info.symTabLen + 1];
     if (memset_s(info.symTab, info.symTabLen + 1, 0, info.symTabLen + 1) != EOK) {
