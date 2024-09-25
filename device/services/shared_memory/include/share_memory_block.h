@@ -21,9 +21,11 @@
 #endif
 #include <cstdint>
 #include <functional>
+#include <securec.h>
 #include <string>
-#include "logging.h"
 #include "plugin_module_api.h"
+
+#define EXPORT_API __attribute__((visibility("default")))
 
 class EXPORT_API ShareMemoryBlock {
 public:

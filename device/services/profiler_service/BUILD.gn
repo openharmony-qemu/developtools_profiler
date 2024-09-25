@@ -59,7 +59,7 @@ ohos_source_set("profiler_service") {
     "protobuf:protobuf_lite",
   ]
   if (current_toolchain != host_toolchain) {
-    external_deps += [ "hilog:libhilog" ]
+    external_deps += [ "hilog:libhilog_base" ]
   }
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
 }
@@ -102,7 +102,7 @@ ohos_executable("hiprofilerd") {
       "grpc:gpr",
       "grpc:grpc",
       "grpc:grpcxx",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]

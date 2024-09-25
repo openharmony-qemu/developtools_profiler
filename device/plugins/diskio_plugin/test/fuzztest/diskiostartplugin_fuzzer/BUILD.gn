@@ -32,7 +32,7 @@ ohos_fuzztest("DiskioStartPluginFuzzTest") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [

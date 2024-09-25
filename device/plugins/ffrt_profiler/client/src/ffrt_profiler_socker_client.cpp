@@ -17,6 +17,7 @@
 
 #include "ffrt_profiler_common.h"
 #include "ffrt_profiler.h"
+#include "logging.h"
 
 namespace {
 std::atomic<uint64_t> g_flushCount = 0;
