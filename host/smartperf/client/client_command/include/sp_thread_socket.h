@@ -126,7 +126,8 @@ public:
         }
     }
 
-    void HandleProfile(SpServerSocket &spSocket, std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    void HandleProfile(SpServerSocket &spSocket, std::string recvBuf, 
+                       std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
