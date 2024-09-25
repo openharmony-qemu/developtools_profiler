@@ -105,6 +105,20 @@ function initLog() {
   return log4js.getLogger('smartPerf');
 }
 
+function buildMultiPlatform() {
+  const outPath = path.normalize(path.join(__dirname, '/', 'dist'));
+  const serverSrc = path.normalize(path.join(__dirname, '/server/main.go'));
+  for (const platform of supportPlatform) {
+    const generateFile = platform === 'windows' ?
+      path.normalize(path.join(outPath, '/', `main.exe`)) :
+      path.normalize(path.join(outPath, '/', `main_${platform}`));
+    const setEnv = `go env -w CGO_ENABLED=0 && go env -w GOOS=${platform} && go env -w GOARCH=amd64`;
+    const buildCmd = `${setEnv} && go build -o ${generateFile} ${serverSrc}`;
+    console.log(`compile ${platform} server ...`);
+    childProcess.execSync(buildCmd);
+  }
+}
+
 function main() {
   log = initLog();
   if (!checkEnvironment()) {
@@ -113,37 +127,31 @@ function main() {
   // clean outDir
   let outPath = path.normalize(path.join(__dirname, '/', outDir));
   if (checkDirExist(outPath)) {
-    log.info('delete the last compilation result');
     removeDir(outPath);
     log.info('delete the last compilation success');
   }
   // run tsc compile
-  log.info('start compiling typeScript code');
   let rootPath = path.join(__dirname, '/');
-  childProcess.execSync('tsc -p ' + rootPath, {
-    encoding: 'utf-8',
-  });
+  childProcess.execSync('tsc -p ' + rootPath, { encoding: 'utf-8' });
   log.info('compiling typeScript code success');
   // run cp to mv all staticFile
   staticFiles.forEach((value) => {
-    let filePath = path.join(__dirname, value);
     let distFile;
     if (value.startsWith('/src')) {
       distFile = path.join(__dirname, outDir, value.substring(4, value.length + 1));
     } else if (value.startsWith('/server')) {
       distFile = path.join(__dirname, outDir, value.substring(7, value.length + 1));
     }
-    cpFile(filePath, distFile);
+    cpFile(path.join(__dirname, value), distFile);
   });
   staticPath.forEach((value) => {
-    let pa = path.join(__dirname, value);
     let distPath;
     if (value.startsWith('/src')) {
       distPath = path.join(__dirname, outDir, value.substring(4, value.length + 1));
     } else if (value.startsWith('/server')) {
       distPath = path.join(__dirname, outDir, value.substring(7, value.length + 1));
     }
-    copyDirectory(pa, distPath);
+    copyDirectory(path.join(__dirname, value), distPath);
   });
   thirdParty.forEach((value) => {
     let thirdFile = path.join(__dirname, value.srcFilePath);
@@ -151,49 +159,17 @@ function main() {
     cpFile(thirdFile, thirdDistFile);
   });
   let traceStreamer = path.normalize(path.join(__dirname, '/bin'));
-  if (checkDirExist(traceStreamer)) {
-    let dest = path.normalize(path.join(__dirname, outDir, '/bin'));
-    copyDirectory(traceStreamer, dest);
-    // to mv traceStream Wasm and js
-    cpFile(
-      traceStreamer + '/trace_streamer_builtin.js',
-      rootPath + outDir + '/trace/database/trace_streamer_builtin.js'
-    );
-    cpFile(
-      traceStreamer + '/trace_streamer_builtin.wasm',
-      rootPath + outDir + '/trace/database/trace_streamer_builtin.wasm'
-    );
-    if (sdkWams.length > 0) {
-      sdkWams.forEach((fileName) => {
-        cpFile(traceStreamer + '/' + fileName, rootPath + outDir + '/trace/database/' + fileName);
-      });
-    }
-  } else {
+  if (!checkDirExist(traceStreamer)) {
     log.error('traceStreamer dir is not Exits');
     return;
   }
+  // to mv traceStream Wasm and js
+  let oriStr = traceStreamer + '/trace_streamer_builtin.';
+  let destStr = rootPath + outDir + '/trace/database/trace_streamer_builtin.';
+  cpFile(oriStr + 'js', destStr + 'js');
+  cpFile(oriStr + 'wasm', destStr + 'wasm');
   // compile server
-  if (compileServer) {
-    log.log('start compile server');
-    let serverSrc = path.normalize(path.join(__dirname, '/server/main.go'));
-    let rs;
-    if (os.type() === 'Windows_NT') {
-      rs = childProcess.spawnSync('go', ['build', '-o', outPath, serverSrc], {
-        encoding: 'utf-8',
-      });
-    } else {
-      rs = childProcess.spawnSync('go', ['build', '-o', outPath + '/main', serverSrc], {
-        encoding: 'utf-8',
-      });
-    }
-    if (rs.status == 0) {
-      log.log('compile server success');
-    } else {
-      log.error('compile server failed', rs);
-    }
-  } else {
-    log.warn('skip compile server');
-  }
+  buildMultiPlatform();
   log.log('smartPerf compile success');
 }
 
