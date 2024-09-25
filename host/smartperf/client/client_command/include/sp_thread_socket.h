@@ -148,7 +148,6 @@ public:
             std::string sendData = MapToString(data);
             spSocket.Sendto(sendData);
         }
-    
     }
 };
 }
