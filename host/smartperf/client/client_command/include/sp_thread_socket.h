@@ -125,7 +125,7 @@ public:
             ++iterator;
         }
     }
-    
+
     void HandleProfile(SpServerSocket &spSocket, std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
@@ -138,17 +138,18 @@ public:
                 SpProfilerFactory::SetProfilerPid(pidResult);
             }
             spSocket.Sendto(curPkgName);
-            } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
+        } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
                 SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));
-            } else if (profiler == nullptr) {
+        } else if (profiler == nullptr) {
                 std::string returnStr = iterator->second;
                 spSocket.Sendto(returnStr);
-            } else {
-                std::map<std::string, std::string> data = profiler->ItemData();
-                std::string sendData = MapToString(data);
-                spSocket.Sendto(sendData);
-            }
-     }
+        } else {
+            std::map<std::string, std::string> data = profiler->ItemData();
+            std::string sendData = MapToString(data);
+            spSocket.Sendto(sendData);
+        }
+    
+    }
 };
 }
 }
