@@ -33,7 +33,6 @@ using namespace OHOS::Rosen;
 std::map<std::string, std::string> Capture::ItemData()
 {
     std::map<std::string, std::string> result;
-    int two = 2;
     const int two = 2;
     const int modResult = callNum % two;
     callNum++;
@@ -55,7 +54,7 @@ std::map<std::string, std::string> Capture::ItemData()
         }
     }
     result["capture"] = path;
-    
+
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }
