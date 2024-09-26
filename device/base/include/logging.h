@@ -34,7 +34,7 @@
 #endif
 
 #ifdef HAVE_HILOG
-#include "hilog/log.h"
+#include "hilog_base/log_base.h"
 #include <string>
 #else // HAVE_HILOG
 #include <mutex>
@@ -107,10 +107,10 @@ static inline int HiLogPrint(int type, int prio, int domain, ConstCharPtr tag, C
 #define LOG_CORE 0
 #endif
 
-#define HILOG_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
-#define HILOG_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_BASE_DEBUG(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_BASE_INFO(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_INFO, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_BASE_WARN(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_WARN, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
+#define HILOG_BASE_ERROR(LOG_CORE, fmt, ...) HiLogPrint(LOG_CORE, LOG_ERROR, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
 
 #endif // HAVE_HILOG
 
@@ -153,13 +153,13 @@ static inline std::string StringFormat(const char* fmt, ...)
 
 #ifdef HAVE_HILOG
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
-    HILOG_DEBUG(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    HILOG_BASE_DEBUG(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_INFO(type, fmt, ...) \
-    HILOG_INFO(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    HILOG_BASE_INFO(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_WARN(type, fmt, ...) \
-    HILOG_WARN(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    HILOG_BASE_WARN(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_ERROR(type, fmt, ...) \
-    HILOG_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    HILOG_BASE_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #else
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
     HiLogPrint(type, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
@@ -186,7 +186,7 @@ static inline std::string StringFormat(const char* fmt, ...)
         if (ptr == nullptr) {                                                                                       \
             std::string str = std::string("CHECK_NOTNULL(") + logging::StringFormat(fmt, ##__VA_ARGS__) +           \
                               ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
-            HILOG_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
+            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
@@ -197,7 +197,7 @@ static inline std::string StringFormat(const char* fmt, ...)
         if (!(expr)) {                                                                                              \
             std::string str = std::string("CHECK_TRUE(") + logging::StringFormat(fmt, ##__VA_ARGS__) +              \
                               ") in " + __func__ + ":" + std::to_string(__LINE__) + "FAILED";                       \
-            HILOG_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
+            HILOG_BASE_WARN(LOG_CORE, "%{public}s", str.c_str());                                                   \
             return retval;                                                                                          \
         }                                                                                                           \
     } while (0)
@@ -213,7 +213,7 @@ static inline std::string StringFormat(const char* fmt, ...)
 #define RETURN_IF(expr, retval, fmt, ...)             \
     do {                                              \
         if ((expr)) {                                 \
-            HILOG_WARN(LOG_CORE, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str()); \
+            HILOG_BASE_WARN(LOG_CORE, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str()); \
             return retval;                            \
         }                                             \
     } while (0)

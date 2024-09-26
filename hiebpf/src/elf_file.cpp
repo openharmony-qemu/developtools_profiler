@@ -19,6 +19,9 @@
 namespace OHOS {
 namespace Developtools {
 namespace Hiebpf {
+
+constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
+
 ElfFile::ElfFile(const std::string &filename)
 {
     fd_ = open(filename.c_str(), O_RDONLY);
@@ -92,6 +95,10 @@ bool ElfFile::ParsePrgHeaders()
     if (ret != static_cast<int64_t>(phdrOffset)) {
         return false;
     }
+    if (phdrSize * numPhdrs > MAX_SIZE) {
+        HHLOGE(true, "ParsePrgHeaders size exceeds max size");
+        return false;
+    }
     char *phdrsBuf = new (std::nothrow) char[phdrSize * numPhdrs];
     CHECK_NOTNULL(phdrsBuf, false, "Error in ELF::ElfFile::ParsePrgHeaders(): new failed");
 
@@ -128,7 +135,10 @@ bool ElfFile::ParseSecNamesStr()
     if (ret != static_cast<int64_t>(shdrOffset)) {
         return false;
     }
-
+    if (shdrSize > MAX_SIZE) {
+        HHLOGE(true, "ParseSecNamesStr size exceeds max size");
+        return false;
+    }
     char *shdrBuf = new (std::nothrow) char[shdrSize];
     CHECK_NOTNULL(shdrBuf, false, "Error in ElfFile::ParseSecNamesStr(): new failed");
 
@@ -156,6 +166,10 @@ bool ElfFile::ParseSecNamesStr()
     if (ret != static_cast<int64_t>(secOffset)) {
         return false;
     }
+    if (secSize > MAX_SIZE) {
+        HHLOGE(true, "ParseSecNamesStr size exceeds max size");
+        return false;
+    }
     char *secNamesBuf = new (std::nothrow) char[secSize];
     CHECK_NOTNULL(secNamesBuf, false, "Error in ElfFile::ParseSecNamesStr(): new secNamesBuf failed");
     ret = ReadFile(secNamesBuf, secSize);
@@ -177,6 +191,10 @@ bool ElfFile::ParseSecHeaders()
     uint64_t shdrOffset = ehdr_->shdrOffset_;
     int64_t ret = lseek(fd_, shdrOffset, SEEK_SET);
     if (ret != static_cast<int64_t>(shdrOffset)) {
+        return false;
+    }
+    if (shdrSize * numShdrs > MAX_SIZE) {
+        HHLOGE(true, "ParseSecHeaders size exceeds max size");
         return false;
     }
     char *shdrsBuf = new (std::nothrow) char[shdrSize * numShdrs];

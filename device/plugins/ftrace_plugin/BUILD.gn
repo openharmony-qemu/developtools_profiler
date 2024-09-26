@@ -44,13 +44,14 @@ ohos_source_set("ftrace_plugin_source") {
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_data_encoder",
+    "../../base:hiprofiler_base",
     "tools/device_kernel_version/${device_kernel_version}/event_parsers:ftrace_event_parsers",
   ]
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "hiview:libucollection_client",
       "init:libbegetutil",
       "protobuf:protobuf_lite",
@@ -67,7 +68,7 @@ ohos_shared_library("ftrace_plugin") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "hiview:libucollection_client",
       "init:libbegetutil",
     ]

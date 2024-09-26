@@ -47,6 +47,7 @@ constexpr int MS_PER_S = 1000;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
 constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
 constexpr int DEFAULT_SESSION_TIME_S = 10;
+constexpr uint32_t INT_MAX_LEN = 10;
 const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
 const std::string HIPROFILERD_NAME("hiprofilerd");
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
@@ -121,8 +122,8 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
     }
 
     request->set_request_id(1);
-    if (!keepSecond.empty()) {
-        int ks = std::stoi(keepSecond);
+    if (!keepSecond.empty() && keepSecond.size() < INT_MAX_LEN) {
+        int ks = COMMON::IsNumeric(keepSecond) ? std::stoi(keepSecond) : 0;
         if (ks > 0) {
             sessionConfig->set_sample_duration(ks * MS_PER_S);
         }

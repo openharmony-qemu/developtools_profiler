@@ -59,7 +59,7 @@ ohos_unittest("plugin_module_api_ut") {
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
     "hidumper:lib_dump_usage",
-    "hilog:libhilog",
+    "hilog:libhilog_base",
     "hiview:libucollection_graphic",
     "protobuf:protobuf_lite",
   ]

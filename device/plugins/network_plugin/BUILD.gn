@@ -38,7 +38,7 @@ ohos_source_set("networkplugin_source") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog",
+      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }
@@ -50,7 +50,7 @@ ohos_shared_library("networkplugin") {
   deps = [ ":networkplugin_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog" ]
+    external_deps = [ "hilog:libhilog_base" ]
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

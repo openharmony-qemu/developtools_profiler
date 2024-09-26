@@ -22,7 +22,7 @@
 #include "profiler_service.h"
 
 namespace {
-const std::string DEFAULT_SERVICE_LISTEN_URI = "0.0.0.0:";
+const std::string DEFAULT_SERVICE_LISTEN_URI = "127.0.0.1:";
 }
 
 int main(int argc, char* argv[])
