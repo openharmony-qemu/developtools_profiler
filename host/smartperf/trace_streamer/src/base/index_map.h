@@ -39,212 +39,88 @@ public:
     void FilterId(unsigned char op, sqlite3_value* argv);
     void FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<InternalTime>& times);
     template <class T>
-    void MixRange(unsigned char op, T value, const std::deque<T>& dataQueue)
+    void ProcessData(const std::deque<T>& dataQueue,
+                     bool remove,
+                     std::function<bool(TableRowId)> firstCheck,
+                     std::function<bool(TableRowId)> scondCheck)
+    {
+        if (remove) {
+            bool changed = false;
+            for (const auto& val : rowIndex_) {
+                if (!firstCheck(val)) {
+                    changed = true;
+                    rowIndexBak_.push_back(val);
+                }
+            }
+            if (changed) {
+                rowIndex_ = rowIndexBak_;
+            }
+        } else {
+            for (auto i = 0; i < dataQueue.size(); i++) {
+                if (scondCheck(i)) {
+                    rowIndex_.push_back(i);
+                }
+            }
+        }
+        indexType_ = INDEX_TYPE_OUTER_INDEX;
+        FixSize();
+    }
+    void PrepMixRange(bool& remove)
     {
         filters_++;
-        auto invalidValue = std::numeric_limits<T>::max();
-        bool remove = false;
         if (HasData()) {
-            CovertToIndexMap();
+            ConvertToIndexMap();
             remove = true;
         }
-        auto size = dataQueue.size();
         rowIndexBak_.clear();
-        bool changed = false;
+    }
+    template <class T>
+    void MixRange(unsigned char op, T value, const std::deque<T>& dataQueue)
+    {
+        auto invalidValue = std::numeric_limits<T>::max();
+        bool remove = false;
+        PrepMixRange(remove);
         switch (op) {
             case SQLITE_INDEX_CONSTRAINT_EQ:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] != value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] == value) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] == value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_NE:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] == value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] != value) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] != value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_ISNULL:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] != invalidValue) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] == invalidValue) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_ISNOTNULL:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] == invalidValue) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] != invalidValue) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] == invalidValue; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] != invalidValue; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_GT:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] <= value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] > value) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] <= value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] > value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_GE:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] < value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] >= invalidValue) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] < value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] >= value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_LE:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] > value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] < invalidValue) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] > value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] <= value; });
                 break;
             case SQLITE_INDEX_CONSTRAINT_LT:
-                if (remove) {
-                    for (auto i = rowIndex_.begin(); i != rowIndex_.end();) {
-                        if (dataQueue[*i] >= value) {
-                            i++;
-                        } else {
-                            changed = true;
-                            rowIndexBak_.push_back(*i);
-                            i++;
-                        }
-                    }
-                    if (changed) {
-                        rowIndex_ = rowIndexBak_;
-                    }
-                } else {
-                    for (auto i = 0; i < size; i++) {
-                        if (dataQueue[i] < invalidValue) {
-                            rowIndex_.push_back(i);
-                        }
-                    }
-                }
-                indexType_ = INDEX_TYPE_OUTER_INDEX;
-                FixSize();
+                ProcessData(
+                    dataQueue, remove, [&](TableRowId id) -> bool { return dataQueue[id] >= value; },
+                    [&](TableRowId id) -> bool { return dataQueue[id] < value; });
                 break;
-
             default:
                 break;
         } // end of switch (op)
@@ -331,11 +207,12 @@ public:
             }
         } else {
             auto size = rows.size();
-            for (auto i = 0; i < size; i++) {
+            for (size_t i = 0; i < size; i++) {
                 if (rows[i] != invalidValue) {
                     rowIndex_.push_back(i);
                 }
             }
+            empty_ = false;
         }
         indexType_ = INDEX_TYPE_OUTER_INDEX;
         FixSize();
@@ -346,6 +223,9 @@ public:
     std::vector<TableRowId> rowIndexBak_ = {};
 
 private:
+    bool MergeIndexTypeId(IndexMap* other);
+
+private:
     TableRowId end_ = INVALID_INT32;
     TableRowId current_ = 0;
     TableRowId start_ = 0;
@@ -354,11 +234,8 @@ private:
         INDEX_TYPE_OUTER_INDEX,
     };
     FindIndexType indexType_ = INDEX_TYPE_ID;
-    uint32_t indexSize_ = 0;
-    uint32_t index_ = 0;
 
     enum IndexType { COMPACT, SPARSE };
-    uint8_t type_ = COMPACT;
     bool empty_ = true;
     bool desc_ = false;
     bool converted_ = false;

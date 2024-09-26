@@ -21,7 +21,7 @@
 
 namespace SysTuning {
 namespace TraceStreamer {
-IndexMap::IndexMap(TableRowId start, TableRowId end) : end_(end), current_(start), start_(start), type_(COMPACT) {}
+IndexMap::IndexMap(TableRowId start, TableRowId end) : end_(end), current_(start), start_(start) {}
 
 void IndexMap::CovertToIndexMap()
 {
@@ -44,9 +44,9 @@ void IndexMap::CovertToIndexMap()
 void IndexMap::Print()
 {
     for (auto itor = rowIndex_.begin(); itor != rowIndex_.end(); itor++) {
-        fprintf(stdout, "%d,", *itor);
+        (void)fprintf(stdout, "%d,", *itor);
     }
-    fflush(stdout);
+    (void)fflush(stdout);
 }
 void IndexMap::Sort() {}
 
@@ -146,12 +146,14 @@ void IndexMap::FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<
             break;
         case SQLITE_INDEX_CONSTRAINT_GT:
             v++;
+            [[fallthrough]];
         case SQLITE_INDEX_CONSTRAINT_GE: {
             IntersectGreaterEqual(times, v, getValue);
             break;
         }
         case SQLITE_INDEX_CONSTRAINT_LE:
             v++;
+            [[fallthrough]];
         case SQLITE_INDEX_CONSTRAINT_LT:
             IntersectLessEqual(times, v, getValue);
             break;
@@ -163,35 +165,42 @@ void IndexMap::FilterTS(unsigned char op, sqlite3_value* argv, const std::deque<
             break;
     } // end of switch (op)
 }
+bool IndexMap::MergeIndexTypeId(IndexMap* other)
+{
+    if (indexType_ != INDEX_TYPE_ID && other->indexType_ != INDEX_TYPE_ID) {
+        return false;
+    }
+    if ((other->start_ >= start_ && other->start_ <= end_) || (start_ >= other->start_ && start_ <= other->end_)) {
+        start_ = std::min(start_, other->start_);
+        end_ = std::max(end_, other->end_);
+    } else if (start_ > other->start_) {
+        this->CovertToIndexMap();
+        other->CovertToIndexMap();
+        const std::vector<TableRowId> b = other->rowIndex_;
+        uint32_t bIndex = 0;
+        uint32_t bSize = b.size();
+        while (bIndex != bSize) {
+            rowIndex_.push_back(b[bIndex]);
+        }
+        start_ = current_ = 0;
+        end_ = rowIndex_.size();
+    } else {
+        this->CovertToIndexMap();
+        other->CovertToIndexMap();
+        std::vector<TableRowId> c = other->rowIndex_;
+        uint32_t aIndex = 0;
+        uint32_t aSize = rowIndex_.size();
+        while (aIndex != aSize) {
+            c.push_back(rowIndex_[aIndex]);
+        }
+        start_ = current_ = 0;
+        end_ = rowIndex_.size();
+    }
+    return true;
+}
 void IndexMap::Merge(IndexMap* other)
 {
-    if (indexType_ == INDEX_TYPE_ID && other->indexType_ == INDEX_TYPE_ID) {
-        if ((other->start_ >= start_ && other->start_ <= end_) || (start_ >= other->start_ && start_ <= other->end_)) {
-            start_ = std::min(start_, other->start_);
-            end_ = std::max(end_, other->end_);
-        } else if (start_ > other->start_) {
-            this->CovertToIndexMap();
-            other->CovertToIndexMap();
-            const std::vector<TableRowId> b = other->rowIndex_;
-            uint32_t bIndex = 0;
-            uint32_t bSize = b.size();
-            while (bIndex != bSize) {
-                rowIndex_.push_back(b[bIndex]);
-            }
-            start_ = current_ = 0;
-            end_ = rowIndex_.size();
-        } else {
-            this->CovertToIndexMap();
-            other->CovertToIndexMap();
-            std::vector<TableRowId> c = other->rowIndex_;
-            uint32_t aIndex = 0;
-            uint32_t aSize = rowIndex_.size();
-            while (aIndex != aSize) {
-                c.push_back(rowIndex_[aIndex]);
-            }
-            start_ = current_ = 0;
-            end_ = rowIndex_.size();
-        }
+    if (MergeIndexTypeId(other)) {
         return;
     }
     this->CovertToIndexMap();
