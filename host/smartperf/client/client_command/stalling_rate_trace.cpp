@@ -343,59 +343,38 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
     if (line.find(appTabsNoAnimation) != std::string::npos ||
         line.find(appTabsFrameAnimation) != std::string::npos ||
         line.find(appTabsScroll) != std::string::npos) {
-        LogAPPTabsLine(line);
-        ProcessTabsTime(line, signS, signF);
-        UpdateCurrentFrameRate(line);
-        if (upperScreenTabsFlag) {
-            HandleFence(line);
+        if (tabsFlag) {
+            LOGI("APPTabs line start: (%s)", line.c_str());
+            appTabsDynamicFinishTime = GetTimes(line, signF);
+            LOGI("appTabsDynamicFinishTime: (%s)", std::to_string(appTabsDynamicFinishTime).c_str());
+            tabsFlag = false;
+        } else {
+            LOGI("APPTabs line finish: (%s)", line.c_str());
+            appTabsDynamicStartTime = GetTimes(line, signS);
+            LOGI("appTabsDynamicStartTime: (%s)", std::to_string(appTabsDynamicStartTime).c_str());
+            tabsFlag = true;
+            frameLossTabsTime = 0;
         }
     }
-    
-}
-
-void StallingRateTrace::LogAPPTabsLine(const std::string &line)
-{
-    LOGI(tabsFlag ? "APPTabs line start: (%s)" : "APPTabs line finish: (%s)", line.c_str());
-}
-
-void StallingRateTrace::ProcessTabsTime(const std::string &line, const std::string &signS, const std::string &signF)
-{
     if (tabsFlag) {
-        appTabsDynamicFinishTime = GetTimes(line, signF);
-        LOGI("appTabsDynamicFinishTime: (%s)", std::to_string(appTabsDynamicFinishTime).c_str());
-    } else {
-        appTabsDynamicStartTime = GetTimes(line, signS);
-        LOGI("appTabsDynamicStartTime: (%s)", std::to_string(appTabsDynamicStartTime).c_str());
-        frameLossTabsTime = 0; // Reset frame loss time
-    }
-    tabsFlag = !tabsFlag;
-}
-
-void StallingRateTrace::UpdateFrameRate(const std::string &line)
-{
-    GetRsHardWareRate(nowTabsFrameRate, line, SWIM_APPTABS);
-}
-
-void StallingRateTrace::HandleFence(const std::string &line)
-{
-    static const std::string presentFence = "|H:Present Fence ";
-    if (line.find(presentFence) != std::string::npos) {
-        fenceIdTabs = GetFenceId(line);
-        LOGI("fenceIdTabs: (%s)", std::to_string(fenceIdTabs).c_str());
-    }
-    
-    const std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
-    if (line.find(waitFenceId) != std::string::npos) {
-        nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
-        LOGI("nowTabsTime: (%s)", std::to_string(nowTabsTime).c_str());
-        LOGI("lastTabsTime: (%s)", std::to_string(lastTabsTime).c_str());
-        LOGI("roundTabsTime: (%s)", std::to_string(roundTabsTime).c_str());
-
-        GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
-        LOGI("app tabs frameLossTabsTime: (%s)", std::to_string(frameLossTabsTime).c_str());
-
-        lastTabsTime = nowTabsTime;
-        upperScreenTabsFlag = false;
+        GetRsHardWareRate(nowTabsFrameRate, line, SWIM_APPTABS);
+        if (upperScreenTabsFlag) {
+            if (line.find("|H:Present Fence ") != std::string::npos) {
+                fenceIdTabs = GetFenceId(line);
+                LOGI("fenceIdTabs: (%s)", std::to_string(fenceIdTabs).c_str());
+            }
+            std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
+            if (line.find(waitFenceId) != std::string::npos) {
+                nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                LOGI("nowTabsTime: (%s)", std::to_string(nowTabsTime).c_str());
+                LOGI("lastTabsTime: (%s)", std::to_string(lastTabsTime).c_str());
+                LOGI("roundTabsTime: (%s)", std::to_string(roundTabsTime).c_str());
+                GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
+                LOGI("app tabs frameLossTabsTime: (%s)", std::to_string(frameLossTabsTime).c_str());
+                lastTabsTime = nowTabsTime;
+                upperScreenTabsFlag = false;
+            }
+        }
     }
 }
 
@@ -440,14 +419,16 @@ std::string StallingRateTrace::GetOnScreenTimeStart(const std::string &line) con
 
 double StallingRateTrace::GetTimes(const std::string &line, const std::string &sign) const
 {
-    double signTime = 0;
     size_t position1 = line.find("....");
     size_t position2 = line.find(":");
-    if (line.find(sign) != std::string::npos) {
-        size_t subNum = 7;
-        signTime = std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
+    
+    if (position1 != std::string::npos && position2 != std::string::npos) {
+        if (line.find(sign) != std::string::npos) {
+            size_t subNum = 7;
+            return std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
+        }
     }
-    return signTime;
+    return 0.0;
 }
 }
 }

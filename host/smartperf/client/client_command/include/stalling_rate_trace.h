@@ -45,11 +45,6 @@ public:
     void MultiLaneFrameRate();
     void AddMultiLaneFrameRate();
     void UpdateRoundTime(double curFrameRate, SWIM_TYPE type);
-
-    void LogAPPTabsLine(const std::string &line);
-    void ProcessTabsTime(const std::string &line, const std::string &signS, const std::string &signF);
-    void UpdateFrameRate(const std::string &line);
-    void HandleFence(const std::string &line);
 private:
     std::ifstream infile;
     double nowFrameRate = 0;
