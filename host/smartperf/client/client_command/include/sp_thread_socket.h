@@ -119,29 +119,35 @@ public:
         while (iterator != messageMap.end()) {
             std::string recvBuf = spSocket.RecvBuf();
             if (SPUtils::IsSubString(recvBuf, iterator->second)) {
-                SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
-                if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
-                    std::string curPkgName = SplitMsg(recvBuf);
-                    SpProfilerFactory::SetProfilerPkg(curPkgName);
-                    std::string pidCmd = "pidof " + curPkgName;
-                    std::string pidResult;
-                    if (SPUtils::LoadCmd(pidCmd, pidResult)) {
-                        SpProfilerFactory::SetProfilerPid(pidResult);
-                    }
-                    spSocket.Sendto(curPkgName);
-                } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
-                    SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));
-                } else if (profiler == nullptr) {
-                    std::string returnStr = iterator->second;
-                    spSocket.Sendto(returnStr);
-                } else {
-                    std::map<std::string, std::string> data = profiler->ItemData();
-                    std::string sendData = MapToString(data);
-                    spSocket.Sendto(sendData);
-                }
+                HandleProfile(spSocket, recvBuf, iterator);
                 break;
             }
             ++iterator;
+        }
+    }
+
+    void HandleProfile(SpServerSocket &spSocket, std::string recvBuf,
+                       std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    {
+        SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
+        if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
+            std::string curPkgName = SplitMsg(recvBuf);
+            SpProfilerFactory::SetProfilerPkg(curPkgName);
+            std::string pidCmd = "pidof " + curPkgName;
+            std::string pidResult;
+            if (SPUtils::LoadCmd(pidCmd, pidResult)) {
+                SpProfilerFactory::SetProfilerPid(pidResult);
+            }
+            spSocket.Sendto(curPkgName);
+        } else if (profiler == nullptr && (iterator->first == MessageType::SET_PROCESS_ID)) {
+                SpProfilerFactory::SetProfilerPid(SplitMsg(recvBuf));
+        } else if (profiler == nullptr) {
+                std::string returnStr = iterator->second;
+                spSocket.Sendto(returnStr);
+        } else {
+            std::map<std::string, std::string> data = profiler->ItemData();
+            std::string sendData = MapToString(data);
+            spSocket.Sendto(sendData);
         }
     }
 };
