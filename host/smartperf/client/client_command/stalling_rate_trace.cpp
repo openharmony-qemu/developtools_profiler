@@ -19,7 +19,7 @@
 #include <cmath>
 #include "include/stalling_rate_trace.h"
 #include "include/sp_log.h"
-
+#include <string_view>
 namespace OHOS {
 namespace SmartPerf {
 double StallingRateTrace::StallingRateResult(std::string file)
@@ -411,21 +411,25 @@ std::string StallingRateTrace::GetOnScreenTimeStart(const std::string &line) con
 {
     std::string startTime = "0";
     size_t subNum = 7;
-    size_t position1 = line.find("....");
-    size_t position2 = line.find(":");
-    startTime = line.substr(position1 + subNum, position2 - position1 - subNum);
+    size_t positionFirst = line.find("....");
+    size_t positionSecond = line.find(":");
+    startTime = line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum);
     return startTime;
 }
 
 double StallingRateTrace::GetTimes(const std::string &line, const std::string &sign) const
 {
-    size_t position1 = line.find("....");
-    size_t position2 = line.find(":");
-    
-    if (position1 != std::string::npos && position2 != std::string::npos) {
-        if (line.find(sign) != std::string::npos) {
+    std::string_view lineView(line);
+
+    size_t positionFirst = lineView.find("....");
+    size_t positionSecond = lineView.find(":");
+
+    if (positionFirst != std::string_view::npos && positionSecond != std::string_view::npos) {
+        if (lineView.find(sign) != std::string_view::npos) {
             size_t subNum = 7;
-            return std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
+            // 使用 string_view 直接计算并转换为 double
+            std::string_view timeStr = lineView.substr(positionFirst + subNum, positionSecond - positionFirst - subNum);
+            return std::stod(std::string(timeStr)); // 转换为 string 再进行 stod
         }
     }
     return 0.0;
