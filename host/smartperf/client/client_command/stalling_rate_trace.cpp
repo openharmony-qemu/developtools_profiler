@@ -421,7 +421,6 @@ double StallingRateTrace::GetTimes(const std::string &line, const std::string &s
 {
     size_t positionFirst = line.find("....");
     size_t positionSecond = line.find(":");
-    
     if (positionFirst != std::string::npos && positionSecond != std::string::npos) {
         if (line.find(sign) != std::string::npos) {
             size_t subNum = 7;
