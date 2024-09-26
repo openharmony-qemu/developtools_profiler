@@ -511,6 +511,7 @@ void StackPreprocess::TakeResults()
             if (!rawData) {
                 break;
             }
+            batchRawStack[i] = nullptr;
             dataRepeater_->ReturnRawStack(rawData);
         }
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
