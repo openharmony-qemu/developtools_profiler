@@ -20,7 +20,7 @@ namespace OHOS {
 namespace Developtools {
 namespace Hiebpf {
 
-constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
+constexpr uint32_t MAX_SIZE = INT_MAX;
 
 ElfFile::ElfFile(const std::string &filename)
 {
