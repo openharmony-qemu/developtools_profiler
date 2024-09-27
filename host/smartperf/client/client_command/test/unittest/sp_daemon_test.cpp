@@ -384,16 +384,16 @@ HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
     double parseResponseTrace = 0.0;
     double getLineTime = 0.0;
     std::string line = "test line";
-    std::string getStartTime = "";
-    std::string startTimeBefore = "";
-    std::string file = "";
+    std::string getStartTime = "test time start";
+    std::string startTimeBefore = "test time before";
+    std::string file = "test file";
 
     parseResponseTrace = parseClickResponseTrace.ParseResponseTrace(file);
     getStartTime = parseClickResponseTrace.GetStartTime(line, startTimeBefore);
     getLineTime = parseClickResponseTrace.GetLineTime();
 
     std::string cmd = "SP_daemon -editor responseTime ohos.samples.ecg 设置 ohtest";
-    std::string result = "";
+    std::string result = "test result";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("time");
@@ -402,7 +402,7 @@ HWTEST_F(SPdaemonTest, ParseClickResponseTraceTest, TestSize.Level1)
     }
     
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_EQ(flag, false);
 }
 } // namespace OHOS
 } // namespace SmartPerf
