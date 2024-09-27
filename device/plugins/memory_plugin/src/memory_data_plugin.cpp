@@ -1266,7 +1266,7 @@ bool MemoryDataPlugin::GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graph
 
 bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMemory, GraphicType graphicType)
 {
-    std::shared_ptr<MemoryCollector> collector = MemoryCollector::Create();
+    std::shared_ptr<GraphicMemoryCollector> collector = GraphicMemoryCollector::Create();
     OHOS::HiviewDFX::CollectResult<int32_t> data;
     data = collector->GetGraphicUsage(pid, graphicType);
     if (data.retCode != UcError::SUCCESS) {
