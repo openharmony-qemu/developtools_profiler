@@ -505,8 +505,13 @@ void StackPreprocess::TakeResults()
                     unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
             }
 #endif
-            dataRepeater_->ReturnRawStack(rawData);
         } // for
+        for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
+            if (!batchRawStack[i]) {
+                break;
+            }
+            dataRepeater_->ReturnRawStack(std::move(batchRawStack[i]));
+        }
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }

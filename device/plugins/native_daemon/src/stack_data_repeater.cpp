@@ -49,6 +49,7 @@ void StackDataRepeater::Close()
     {
         std::unique_lock<std::mutex> lock(mutex_);
         rawDataQueue_.clear();
+        rawDataCacheQueue_.clear();
         closed_ = true;
     }
     PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
