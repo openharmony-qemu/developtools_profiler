@@ -42,7 +42,7 @@ const std::string THIRD_PARTY_MUSL_ADDR = "/system/lib/ld-musl-aarch64.so.1";
 constexpr int32_t SYM_32_VALUE_OFFSET = 4;
 constexpr int32_t SYM_64_VALUE_OFFSET = 8;
 constexpr int32_t WIDE_SIXTEEN = 16;
-constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
+constexpr uint32_t MAX_SIZE = INT_MAX;
 } // namespace
 
 int BPFController::LIBBPFPrintFunc(enum libbpf_print_level level, const char *format, va_list args)
