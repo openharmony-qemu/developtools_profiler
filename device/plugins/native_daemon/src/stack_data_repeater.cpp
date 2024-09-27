@@ -61,8 +61,8 @@ RawStackPtr StackDataRepeater::GetRawStack()
 {
     std::unique_lock<std::mutex> lock(cacheMutex_);
     if (!rawDataCacheQueue_.empty()) {
-        RawStackPtr rawStack = rawDataCacheQueue_.back();
-        rawDataCacheQueue_.pop_back();
+        RawStackPtr rawStack = rawDataCacheQueue_.front();
+        rawDataCacheQueue_.pop_front();
         return rawStack;
     }
     return std::make_shared<RawStack>();
