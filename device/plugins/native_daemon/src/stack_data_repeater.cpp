@@ -49,7 +49,7 @@ void StackDataRepeater::Close()
     {
         std::unique_lock<std::mutex> lock(mutex_);
         rawDataQueue_.clear();
-        rawDataCacheQueue_.clear();
+        rawDataCacheQueue_.clear()
         closed_ = true;
     }
     PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
@@ -61,8 +61,8 @@ RawStackPtr StackDataRepeater::GetRawStack()
 {
     std::unique_lock<std::mutex> lock(cacheMutex_);
     if (!rawDataCacheQueue_.empty()) {
-        RawStackPtr rawStack = rawDataCacheQueue_.front();
-        rawDataCacheQueue_.pop_front();
+        RawStackPtr rawStack = rawDataCacheQueue_.back();
+        rawDataCacheQueue_.pop_back();
         return rawStack;
     }
     return std::make_shared<RawStack>();

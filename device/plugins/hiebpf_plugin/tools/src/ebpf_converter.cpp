@@ -49,7 +49,7 @@ constexpr uint8_t EVENT_SYM_FIXED_SIZE = 36;
 constexpr uint8_t EVENT_MEM_FIXED_SIZE = 88;
 constexpr uint8_t EVENT_STR_FIXED_SIZE = 40;
 constexpr uint8_t EVENT_BIO_FIXED_SIZE = 88;
-constexpr uint32_t MAX_SIZE = INT_MAX;
+constexpr uint32_t MAX_SIZE = 2 * 1024 * 1024 * 1024;
 constexpr uint8_t SHIFT = 32;
 } // namespace
 EbpfConverter::EbpfConverter(const std::string& inputPath, const std::string& outPath)

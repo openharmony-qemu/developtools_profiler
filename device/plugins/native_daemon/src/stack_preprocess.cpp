@@ -507,12 +507,10 @@ void StackPreprocess::TakeResults()
 #endif
         } // for
         for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
-            auto rawData = batchRawStack[i];
-            if (!rawData) {
+            if (!batchRawStack[i]) {
                 break;
             }
-            batchRawStack[i] = nullptr;
-            dataRepeater_->ReturnRawStack(rawData);
+            dataRepeater_->ReturnRawStack(std::move(batchRawStack[i]));
         }
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;

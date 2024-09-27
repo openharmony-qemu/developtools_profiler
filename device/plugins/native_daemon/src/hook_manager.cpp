@@ -62,6 +62,9 @@ HookManager::~HookManager()
         if (item->stackPreprocess != nullptr) {
             item->stackPreprocess = nullptr;
         }
+        if (item->stackData != nullptr) {
+            item->stackData = nullptr;
+        }
     }
 }
 
