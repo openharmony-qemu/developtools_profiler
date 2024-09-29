@@ -95,7 +95,7 @@ int ParseMapsLine(const string& line, MapInfo& mapping)
         return -1;
     }
     // 读取文件路径
-    if (!(iss >> mapping.pathname)) {
+    if (getline(iss, mapping.pathname)) {
         mapping.pathname = "[anno]";
     };
     return 0;
