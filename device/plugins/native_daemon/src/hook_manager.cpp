@@ -536,6 +536,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                                                      reinterpret_cast<char*>(rawStack->data));
             continue;
         } else if (rawStack->stackConext->type == END_MSG) {
+            hookCtx->FlushStackArray();
             if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
                 break;
             }
@@ -568,6 +569,9 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         }
         if (item->shareMemoryBlock != nullptr) {
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
+        }
+        if (item->stackData != nullptr) {
+            item->stackData->ClearCache();
         }
     }
     if (fpHookData_) {
@@ -615,7 +619,6 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
-        item->FlushStackArray();
         CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
