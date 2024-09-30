@@ -24,7 +24,7 @@
 using namespace std;
 
 constexpr uint64_t PFN_MASK = ((1ULL << 55) - 1);
-constexpr long PAGE_SIZE = 1024 * 4;
+constexpr uint64_t PAGE_SIZE = 1024 * 4;
 constexpr int ARG_MINIMUM = 2;
 constexpr int IN_RAM_OFFSET = 63;
 constexpr int IN_SWAP_OFFSET = 54;
