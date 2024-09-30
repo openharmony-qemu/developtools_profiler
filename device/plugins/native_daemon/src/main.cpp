@@ -70,12 +70,12 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
         } else if (args[idx] == "-n") {
             hookData.processName = args[idx + 1];
         } else if (args[idx] == "-s") {
-            hookData.smbSize = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.smbSize = static_cast<uint32_t>(IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.smbSize) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-f") {
-            hookData.filterSize = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.filterSize = static_cast<uint32_t>(IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.filterSize) != args[idx + 1]) {
                 return false;
             }
@@ -83,7 +83,7 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
                 printf("set max depth = %d\n", MAX_UNWIND_DEPTH);
             }
         } else if (args[idx] == "-d") {
-            hookData.maxStackDepth = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.maxStackDepth = static_cast<uint32_t>(IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.maxStackDepth) != args[idx + 1]) {
                 return false;
             }
@@ -106,12 +106,13 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
             }
             printf("set unwind mode:%s\n", unwind.c_str());
         } else if (args[idx] == "-S") {
-            hookData.statisticsInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.statisticsInterval = static_cast<uint32_t>(IsDigits(args[idx + 1]) ?
+                                                                std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.statisticsInterval) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-i") {
-            hookData.sampleInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.sampleInterval = static_cast<uint32_t>(IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.sampleInterval) != args[idx + 1]) {
                 return false;
             }
@@ -171,14 +172,15 @@ bool ParseCommand(const std::vector<std::string>& args, HookData& hookData)
                 return false;
             }
         } else if (args[idx] == "-jsd") {
-            hookData.maxJsStackdepth = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.maxJsStackdepth = static_cast<uint32_t>(IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.maxJsStackdepth) != args[idx + 1]) {
                 return false;
             }
         } else if (args[idx] == "-jn") {
             hookData.filterNapiName = args[idx + 1];
         } else if (args[idx] == "-mfm") {
-            hookData.mallocFreeMatchingInterval = IsDigits(args[idx + 1]) ? std::stoi(args[idx + 1]) : 0;
+            hookData.mallocFreeMatchingInterval = static_cast<uint32_t>(IsDigits(args[idx + 1]) ?
+                                                                        std::stoi(args[idx + 1]) : 0);
             if (std::to_string(hookData.mallocFreeMatchingInterval) != args[idx + 1]) {
                 return false;
             }
