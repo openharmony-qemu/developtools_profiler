@@ -27,5 +27,13 @@ int64_t GetElapsedNanoSecondsSinceBoot()
     constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
 }
+
+int64_t GetNanoSecondsTimestamp()
+{
+    struct timespec times = {0, 0};
+    clock_gettime(CLOCK_REALTIME, &times);
+    constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
+    return times.tv_sec * secondToNanosecond + times.tv_nsec;
+}
 }
 }

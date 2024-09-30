@@ -33,6 +33,7 @@
 #include "directory_ex.h"
 #include "dump_usage.h"
 #include "file_ex.h"
+#include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
@@ -313,20 +314,25 @@ static bool GetTraceParam(napi_env env, napi_callback_info info,
 
 napi_value StartProfiling(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("startProfiling");
     std::string fileName = GetFileNameParam(env, info);
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "Get ApplicationContext failed.");
     }
     std::string filesDir = context->GetFilesDir();
     if (filesDir.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "Get App files dir failed.");
     }
     std::string filePath = filesDir + SLASH_STR + fileName + JSON_FILE;
     if (!IsLegalPath(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "input fileName is illegal.");
     }
     if (!CreateFile(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
@@ -336,8 +342,10 @@ napi_value StartProfiling(napi_env env, napi_callback_info info)
 
 napi_value StartJsCpuProfiling(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
     std::string fileName;
     if (!GetTheOnlyStringParam(env, info, fileName)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -345,17 +353,21 @@ napi_value StartJsCpuProfiling(napi_env env, napi_callback_info info)
     HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "Get ApplicationContext failed.");
     }
     std::string filesDir = context->GetFilesDir();
     if (filesDir.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "Get App files dir failed.");
     }
     std::string filePath = filesDir + SLASH_STR + fileName + JSON_FILE;
     if (!IsLegalPath(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "input fileName is illegal.");
     }
     if (!CreateFile(filePath)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
@@ -365,6 +377,7 @@ napi_value StartJsCpuProfiling(napi_env env, napi_callback_info info)
 
 napi_value StopProfiling(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("stopProfiling");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     engine->StopCpuProfiler();
     return CreateUndefined(env);
@@ -372,6 +385,7 @@ napi_value StopProfiling(napi_env env, napi_callback_info info)
 
 napi_value StopJsCpuProfiling(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     engine->StopCpuProfiler();
     return CreateUndefined(env);
@@ -379,6 +393,7 @@ napi_value StopJsCpuProfiling(napi_env env, napi_callback_info info)
 
 napi_value DumpHeapData(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("dumpHeapData");
     std::string fileName = GetFileNameParam(env, info);
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
@@ -402,6 +417,7 @@ napi_value DumpHeapData(napi_env env, napi_callback_info info)
 
 napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
     std::string fileName;
     if (!GetTheOnlyStringParam(env, info, fileName)) {
         std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
@@ -431,6 +447,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 
 napi_value GetPss(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getPss");
     napi_value pss;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (collector != nullptr) {
@@ -446,6 +463,7 @@ napi_value GetPss(napi_env env, napi_callback_info info)
 
 napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getSharedDirty");
     napi_value sharedDirty;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (collector != nullptr) {
@@ -461,6 +479,7 @@ napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 
 napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getPrivateDirty");
     napi_value privateDirtyValue;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (collector != nullptr) {
@@ -476,6 +495,7 @@ napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 
 napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getCpuUsage");
     napi_value cpuUsageValue;
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
     pid_t pid = getprocpid();
@@ -486,6 +506,7 @@ napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 
 napi_value GetNativeHeapSize(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getNativeHeapSize");
     struct mallinfo mi = mallinfo();
     napi_value nativeHeapSize;
     napi_create_bigint_uint64(env, uint64_t(mi.uordblks + mi.fordblks), &nativeHeapSize);
@@ -494,6 +515,7 @@ napi_value GetNativeHeapSize(napi_env env, napi_callback_info info)
 
 napi_value GetNativeHeapAllocatedSize(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getNativeHeapAllocatedSize");
     struct mallinfo mi = mallinfo();
     napi_value nativeHeapAllocatedSize;
     napi_create_bigint_uint64(env, uint64_t(mi.uordblks), &nativeHeapAllocatedSize);
@@ -502,6 +524,7 @@ napi_value GetNativeHeapAllocatedSize(napi_env env, napi_callback_info info)
 
 napi_value GetNativeHeapFreeSize(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getNativeHeapFreeSize");
     struct mallinfo mi = mallinfo();
     napi_value nativeHeapFreeSize;
     napi_create_bigint_uint64(env, uint64_t(mi.fordblks), &nativeHeapFreeSize);
@@ -510,6 +533,7 @@ napi_value GetNativeHeapFreeSize(napi_env env, napi_callback_info info)
 
 static napi_value GetServiceDump(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getServiceDump");
     int serviceAbilityId = 0;
     int fd = 0;
     std::vector<std::u16string> args;
@@ -537,6 +561,7 @@ static napi_value GetServiceDump(napi_env env, napi_callback_info info)
 
 napi_value GetVss(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getVss");
     napi_value vss;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (collector != nullptr) {
@@ -552,6 +577,7 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
     auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
     if (!cpuUsageOptional.has_value()) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
@@ -565,6 +591,7 @@ static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 
 static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("removeNapiWrap");
     size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
     napi_value argv[REMOVE_NAPI_WRAP_PARAM_COUNT] = {nullptr};
     napi_value thisVar = nullptr;
@@ -575,6 +602,7 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
         !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
         HILOG_DEBUG(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -608,8 +636,10 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 
 napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     if (engine == nullptr) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
 
@@ -664,6 +694,7 @@ static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const
 
 napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result;
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
@@ -676,6 +707,7 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 
 napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
     napi_value appMemoryLimit;
     napi_create_object(env, &appMemoryLimit);
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
@@ -716,6 +748,7 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
 
 napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
         return CreateUndefined(env);
@@ -762,13 +795,16 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
 
     auto systemMemInfo = nativeInterface->GetSystemMemInfo();
     if (!systemMemInfo) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
 
@@ -786,18 +822,19 @@ napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
     napi_value availableMem;
     napi_create_bigint_uint64(env, systemMemInfo->memAvailable, &availableMem);
     napi_set_named_property(env, sysMemInfo, "availableMem", availableMem);
-
     return sysMemInfo;
 }
 
 napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("startAppTraceCapture");
     napi_value result;
     uint32_t traceFlag = 0;
     uint32_t limitSize = 0;
     std::vector<uint64_t> tags;
     if (!GetTraceParam(env, info, traceFlag, limitSize, tags)) {
         std::string paramErrorMessage = "Invalid argument";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
     }
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
@@ -805,6 +842,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
         std::string errorMessage = "The status of the trace is abnormal";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -815,23 +853,28 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     }
     if (ret == HIDEBUG_INVALID_ARGUMENT) {
         std::string errorMessage = "Invalid argument";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
     }
     if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
         std::string errorMessage = "Capture trace already enabled.";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::HAVA_ALREADY_TRACE);
         napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
     }
     if (ret == HIDEBUG_NO_PERMISSION) {
         std::string errorMessage = "No write permission on the file.";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::WITHOUT_WRITE_PERMISSON);
         napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
     }
     std::string errorMessage = "Abnormal trace status.";
+    apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
     napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     return CreateUndefined(env);
 }
 
 napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
     auto nativeInterface = HidebugNativeInterface::CreateInstance();
     if (!nativeInterface) {
         return CreateUndefined(env);
@@ -839,10 +882,12 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
     auto ret = nativeInterface->StopAppTraceCapture();
     if (ret == HIDEBUG_TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     }
     if (ret == HIDEBUG_NO_TRACE_RUNNING) {
         std::string errorMessage = "No capture trace running";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::NO_CAPTURE_TRACE_RUNNING);
         napi_throw_error(env, std::to_string(ErrorCode::NO_CAPTURE_TRACE_RUNNING).c_str(), errorMessage.c_str());
     }
     return CreateUndefined(env);
@@ -850,6 +895,7 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
 
 napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStats");
     napi_value vmRunTimeStats;
     napi_create_object(env, &vmRunTimeStats);
     for (const auto &[k, v] : GC::vmGcMap_) {
@@ -860,15 +906,18 @@ napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info)
 
 napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
     std::string param;
     if (!GetTheOnlyStringParam(env, info, param)) {
         std::string paramErrorMessage = "Invalid parameter, a string parameter required.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return CreateUndefined(env);
     }
     if (GC::vmGcMap_.find(param) == GC::vmGcMap_.end()) {
         std::string paramErrorMessage = "Invalid parameter, unknown property.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return CreateUndefined(env);
     }
     return GC::vmGcMap_.at(param)(env);
@@ -963,15 +1012,18 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
     if (!CheckVersionType("beta", KEY_HIVIEW_USER_TYPE) &&
         !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
+        apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);
         return CreateUndefined(env);
     }
     std::string type = "";
     int32_t value = 0;
     bool enabledDebugLog = false;
     if (!GetAppResourceLimitParam(env, info, type, value, enabledDebugLog)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return CreateUndefined(env);
     }
     if (type == "js_heap") { // js_heap set value
@@ -980,6 +1032,7 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
     }
     auto abilityManager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
     if (!abilityManager) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_ABILITY_NOT_FOUND);
         return CreateUndefined(env);
     }
     sptr<IRemoteObject> remoteObject = abilityManager->CheckSystemAbility(DFX_SYS_HIVIEW_ABILITY_ID);
@@ -987,10 +1040,12 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. No this system ability.");
         std::string idErrorMessage = "system ability is not exist.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), idErrorMessage.c_str());
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
     auto result = HidebugNativeInterface::CreateInstance()->GetMemoryLeakResource(type, value, enabledDebugLog);
     if (result == MemoryState::MEMORY_FAILED) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
     CreateSanBoxDir();
@@ -999,8 +1054,10 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 
 napi_value IsDebugState(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("isDebugState");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     if (engine == nullptr) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
 
@@ -1015,7 +1072,7 @@ napi_value IsDebugState(napi_env env, napi_callback_info info)
 
 class GraphicAsyncTask : public AsyncTask {
 public:
-    GraphicAsyncTask() : AsyncTask("graphicAsyncTask") {}
+    GraphicAsyncTask() : AsyncTask("graphicAsyncTask"), apiInvokeRecorder_("getGraphicsMemory") {}
 
 protected:
     void Work(napi_env env) override
@@ -1031,6 +1088,7 @@ protected:
             napi_resolve_deferred(env, deferred_, ret);
         } else {
             constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+            apiInvokeRecorder_.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
             napi_reject_deferred(env, deferred_,
                 CreateErrorMessage(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL), errMsg));
         }
@@ -1038,6 +1096,7 @@ protected:
 
 private:
     std::optional<int> result_{};
+    ApiInvokeRecorder apiInvokeRecorder_;
 };
 
 napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
@@ -1047,6 +1106,7 @@ napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
 
 napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
 {
+    ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
     std::optional<int32_t> result = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
     if (result.has_value()) {
         napi_value ret;
@@ -1055,6 +1115,7 @@ napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
     }
     constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
     napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errMsg);
+    apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
     return CreateUndefined(env);
 }
 
