@@ -17,7 +17,7 @@
 
 #include <ctime>
 #include <vector>
-
+#include <sstream>
 #include "cpu_plugin_result.pbencoder.h"
 #include "buffer_splitter.h"
 
@@ -72,10 +72,11 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     buffer_ = malloc(READ_BUFFER_SIZE);
     CHECK_NOTNULL(buffer_, RET_FAIL, "%s:malloc buffer_ failed!", __func__);
-
+    if (memset_s(buffer_, READ_BUFFER_SIZE, 0, READ_BUFFER_SIZE) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:memset_s error!", __func__);
+    }
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
-
     if (protoConfig_.pid() > 0) {
         pid_ = protoConfig_.pid();
     } else if (protoConfig_.report_process_info()) {
@@ -206,6 +207,9 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
         close(fd);
         return RET_FAIL;
     }
+    if (memset_s(buffer_, READ_BUFFER_SIZE, 0, READ_BUFFER_SIZE) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:memset_s error!", __func__);
+    }
     bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
     if (bytesRead <= 0) {
         close(fd);
@@ -292,6 +296,13 @@ int32_t CpuDataPlugin::GetCpuFrequency(std::string fileName)
     int32_t ret = ReadFile(fileName);
     if (ret != RET_FAIL) {
         std::string tempStr(static_cast<char*>(buffer_));
+        // 去掉首尾特殊字符
+        size_t start = tempStr.find_first_not_of(" \t\n\r");
+        if (start == std::string::npos) {
+            return frequency;
+        }
+        size_t end = tempStr.find_last_not_of(" \t\n\r");
+        tempStr = tempStr.substr(start, end - start + 1);
         if (std::all_of(tempStr.begin(), tempStr.end(), ::isdigit)) {
             frequency = atoi(static_cast<char*>(buffer_));
         }
@@ -402,11 +413,12 @@ bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuT
 template <typename T>
 void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadData, const char* pFile, uint32_t fileLen)
 {
-    BufferSplitter totalbuffer(const_cast<char*>(pFile), fileLen + 1);
     std::vector<std::string> cpuUsageVec;
     size_t cpuLength = strlen("cpu");
-
-    do {
+    std::stringstream ss(pFile);
+    std::string line;
+    while (std::getline(ss, line)) {
+        BufferSplitter totalbuffer(const_cast<char*>(line.c_str()), line.length());
         totalbuffer.NextWord(' ');
         if (!totalbuffer.CurWord() || strncmp(totalbuffer.CurWord(), "cpu", cpuLength) != 0) {
             return;
@@ -475,7 +487,7 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
         }
 
         cpuUsageVec.clear();
-    } while (totalbuffer.NextLine());
+    }
 }
 
 template <typename T, typename I> void CpuDataPlugin::WriteCpuUsageInfo(T& cpuData, I cpuUsageInfo)
