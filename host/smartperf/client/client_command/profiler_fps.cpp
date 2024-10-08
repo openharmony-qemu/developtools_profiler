@@ -39,6 +39,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
     FpsInfoProfiler finalResult;
     if (isGameLayer == "1") {
         std::string gameLayerName = GetGameLayer();
+        LOGI("ProfilerFPS::gameLayerName: (%s)", gameLayerName.c_str());
         if (!gameLayerName.empty()) {
             finalResult = selfRerderLayers(gameLayerName);
         }
@@ -426,11 +427,13 @@ std::string ProfilerFPS::GetGameLayer()
     std::string cmdResult;
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     SPUtils::LoadCmd(dumperSurface, cmdResult);
+    LOGI("ProfilerFPS::cmdResult: (%s)", cmdResult.c_str());
     std::string start = "NodeId[";
     std::string end = "]";
     size_t startPos = cmdResult.find(start) + start.length();
     size_t endPos = cmdResult.find(end, startPos);
     std::string nodeIdStr = cmdResult.substr(startPos, endPos - startPos);
+    LOGI("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
     uint64_t nodeId;
     const int kShiftAmount = 32;
     if (!nodeIdStr.empty()) {
@@ -440,7 +443,7 @@ std::string ProfilerFPS::GetGameLayer()
             return gameLayer;
         }
         nodeId = nodeId >> kShiftAmount;
-
+        LOGI("ProfilerFPS::nodeId: (%s)", nodeId.c_str());
         if (std::to_string(nodeId) == processId) {
             size_t layerStartPos = cmdResult.find("[");
             size_t layerEndPos = cmdResult.find("]");
@@ -451,6 +454,7 @@ std::string ProfilerFPS::GetGameLayer()
             gameLayer = cmdResult.substr(layerStartPos, layerEndPos - layerStartPos);
         }
     }
+    LOGI("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
 }
 }
