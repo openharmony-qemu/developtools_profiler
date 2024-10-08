@@ -58,6 +58,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
     FILE *navfd = popen(cmd.c_str(), "r");
     if (navfd == nullptr) {
         navInfo["navPathName"] = nameStr;
+        return navInfo;
     }
     char buf[4096] = {'\0'};
     while ((fgets(buf, sizeof(buf), navfd)) != nullptr) {
