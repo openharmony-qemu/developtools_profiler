@@ -443,7 +443,7 @@ std::string ProfilerFPS::GetGameLayer()
             return gameLayer;
         }
         nodeId = nodeId >> kShiftAmount;
-        LOGI("ProfilerFPS::nodeId: (%s)", nodeId.c_str());
+        LOGI("ProfilerFPS::nodeId: (%d)", nodeId);
         if (std::to_string(nodeId) == processId) {
             size_t layerStartPos = cmdResult.find("[");
             size_t layerEndPos = cmdResult.find("]");
