@@ -18,6 +18,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <parameters.h>
 
 #include "common.h"
 #include "hiebpf_plugin_config.pb.h"
@@ -36,7 +37,9 @@ std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
 
 void RunCmd(std::string& cmd)
 {
-    if (getuid() == 0) {
+    std::string debugMode = "0";
+    debugMode = OHOS::system::GetParameter("const.debuggable", debugMode);
+    if (debugMode == "1") {
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
         if (pipe == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "HiebpfPlugin::RunCmd: create popen FAILED!");
