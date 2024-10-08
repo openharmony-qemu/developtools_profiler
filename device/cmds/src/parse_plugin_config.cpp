@@ -23,7 +23,6 @@
 #include "hilog_plugin_config_standard.pb.h"
 #include "hiperf_plugin_config_standard.pb.h"
 #include "hisysevent_plugin_config_standard.pb.h"
-#include "arkts_plugin_config_standard.pb.h"
 #include "memory_plugin_common_standard.pb.h"
 #include "memory_plugin_config_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
@@ -128,8 +127,6 @@ bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName,
         ret = SetSerializeHiperfConfig(pluginName, pluginConfig);
     } else if (pluginName == "hisysevent-plugin") {
         ret = SetSerializeHisyseventConfig(pluginName, pluginConfig);
-    } else if (pluginName == "arkts-plugin") {
-        ret = SetSerializeArkTSConfig(pluginName, pluginConfig);
     } else if (pluginName == "xpower-plugin") {
         ret = SetSerializeXpowerConfig(pluginName, pluginConfig);
     } else if (pluginName == "gpu-plugin") {
@@ -363,22 +360,6 @@ bool ParsePluginConfig::SetSerializeHisyseventConfig(const std::string& pluginNa
     std::vector<uint8_t> configDataVec(hisyseventConfigNolite->ByteSizeLong());
     if (hisyseventConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         printf("NODE hisysevent serialize failed!\n");
-        return false;
-    }
-    pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());
-    return true;
-}
-
-bool ParsePluginConfig::SetSerializeArkTSConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
-{
-    std::string configData = pluginConfigMap[pluginName];
-    auto arkTSConfigNolite = std::make_unique<ForStandard::ArkTSConfig>();
-    if (!parser_.ParseFromString(configData, arkTSConfigNolite.get())) {
-        return false;
-    }
-
-    std::vector<uint8_t> configDataVec(arkTSConfigNolite->ByteSizeLong());
-    if (arkTSConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         return false;
     }
     pluginConfig.set_config_data(static_cast<const void*>(configDataVec.data()), configDataVec.size());

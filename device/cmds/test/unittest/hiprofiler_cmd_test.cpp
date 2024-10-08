@@ -368,36 +368,6 @@ public:
         return cmdStr;
     }
 
-    std::string CreateSplitArktsCommand(const std::string &outFile, const std::string &arktsSplitFile, int time) const
-    {
-        std::string cmdStr =
-            "hiprofiler_cmd -s -k \\\n"
-            "-c - \\\n";
-        cmdStr += "-o " + outFile + " \\\n";
-        cmdStr += "-t " + std::to_string(time) + " \\\n"
-            "<<CONFIG\n"
-            "request_id: 1\n"
-            "session_config {\n"
-            "  buffers {\n"
-            "    pages: 16384\n"
-            "  }\n"
-            "  split_file: true\n"
-            "}\n"
-            "plugin_configs {\n"
-            "  plugin_name: \"arkts-plugin\"\n"
-            "  config_data {\n"
-            "    pid: 1\n"
-            "    capture_numeric_value: true\n"
-            "    track_allocations: false\n"
-            "    enable_cpu_profiler: true\n"
-            "    cpu_profiler_interval: 1000\n"
-            "    split_outfile_name: \"" + arktsSplitFile + "\"\n"
-            "  }\n"
-            "}\n"
-            "CONFIG\n";
-        return cmdStr;
-    }
-
     std::string CreateSplitHiperfCommand(const std::string &outFile, const std::string &perfFile,
                                     const std::string &perfSplitFile, int time) const
     {
@@ -779,31 +749,6 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
     system(cmd.c_str());
 }
 
-/**
- * @tc.name: hiprofiler_cmd
- * @tc.desc: Test hiprofiler_cmd with split arkts file.
- * @tc.type: FUNC
- */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
-{
-    std::string outFileName = "split_arkts";
-    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
-    std::string arktsSplitFile = "/data/local/tmp/split_arkts_data.htrace";
-    std::string content = "";
-    int time = 10;
-    std::string cmd = CreateSplitArktsCommand(outFile, arktsSplitFile, time);
-    EXPECT_TRUE(RunCommand(cmd, content));
-
-    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
-
-    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
-    EXPECT_TRUE(RunCommand(cmd, content));
-    EXPECT_STRNE(content.c_str(), "");
-
-    EXPECT_EQ(access(arktsSplitFile.c_str(), F_OK), 0);
-    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace";
-    system(cmd.c_str());
-}
 /**
  * @tc.name: hiprofiler_cmd
  * @tc.desc: Test hiprofiler_cmd with split hiperf file.

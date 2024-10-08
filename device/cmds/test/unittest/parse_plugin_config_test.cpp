@@ -81,7 +81,6 @@ HWTEST_F(ParsePluginConfigTest, TestParsePluginConfig, TestSize.Level1)
         "hiperf-plugin",
         "hisysevent-plugin",
         "hiebpf-plugin",
-        "arkts-plugin",
         "invalid-plugin",
     };
     for (const std::string &pluginName : pluginNames) {

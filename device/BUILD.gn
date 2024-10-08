@@ -18,7 +18,6 @@ group("hiprofiler_targets") {
     deps = [
       "cmds:hiprofiler_cmd",
       "plugins/api:hiprofiler_plugins",
-      "plugins/arkts_plugin:arktsplugin",
       "plugins/cpu_plugin:cpudataplugin",
       "plugins/diskio_plugin:diskiodataplugin",
       "plugins/ffrt_profiler/client:libffrt_profiler",
@@ -62,7 +61,6 @@ group("unittest") {
     "base/test:unittest",
     "cmds/test:unittest",
     "plugins/api/test:unittest",
-    "plugins/arkts_plugin/test:unittest",
     "plugins/cpu_plugin/test:unittest",
     "plugins/diskio_plugin/test:unittest",
     "plugins/ffrt_profiler/test:unittest",
