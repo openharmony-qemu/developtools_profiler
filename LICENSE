@@ -1,3 +1,13 @@
+Copyright (c) 2024 Huawei Device Co., Ltd. All rights reserved.
+
+Because of hiebpf.bpf.c,bpf_log_write.h,fstrace_progs.h,hiebpf_types.h is run at kernel mode, other files
+under hiebpf subdirectories is run at user mode, so other files under hiebpf subdirectories use Apache License.
+The hiebpf.bpf.c,bpf_log_write.h,fstrace_progs.h,hiebpf_types.h is dual licensed: you can use it
+either under the terms of the GPL V2, or the 3-Clause BSD license, at your option.
+
+hiebpf is dual licensed: you can use it either under the terms of
+the GPL V2, or the BSD3 license, at your option.
+
 
                                  Apache License
                            Version 2.0, January 2004
