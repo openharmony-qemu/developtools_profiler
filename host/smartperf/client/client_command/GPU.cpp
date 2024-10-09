@@ -30,7 +30,7 @@ std::map<std::string, std::string> GPU::ItemData()
     std::map<std::string, std::string> result;
     int32_t freq;
     float load;
-    if (!rkFalg) {
+    if (!rkFlag) {
         freq = GetGpuFreq();
         load = GetGpuLoad();
     } else {

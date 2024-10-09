@@ -20,8 +20,8 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Power::ItemData()
 {
-    if (!rkFalg) {
-        std::map<std::string, std::string> result;
+    std::map<std::string, std::string> result;
+    if (!rkFlag) {
         std::string currentNow;
         SPUtils::LoadFile(currentNowPath, currentNow);
         std::string voltageNow;
@@ -37,15 +37,12 @@ std::map<std::string, std::string> Power::ItemData()
         LOGI("currentNow: %s", currentNow.c_str());
         LOGI("voltageNow: %s", voltageNow.c_str());
         LOGI("Power::ItemData map size(%u)", result.size());
-        return result;
     } else {
-        result["sorry"] = "RK does not support power acquisition";
-        LOGI("RK does not support power acquisition");
-        return result;
+        result["failed"] = "RK does not support power acquisition";
+        LOGI("failed:RK does not support power acquisition");
     }
-
+    return result;
 }
-
 void Power::SetRkFlag()
 {
     rkFlag = true;

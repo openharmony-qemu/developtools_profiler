@@ -31,7 +31,6 @@
 #include "include/FPS.h"
 #include "include/GPU.h"
 #include "include/Power.h"
-#include "include/profiler_fps.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -295,8 +294,6 @@ void SmartPerfCommand::IsFindDeviceType()
         fps.SetRkFlag();
         Power &power = Power::GetInstance();
         power.SetRkFlag();
-        ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
-        profilerFPS.SetRkFlag();
         GPU &gpu = GPU::GetInstance();
         gpu.SetRkFlag();
     }

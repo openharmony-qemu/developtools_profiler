@@ -26,7 +26,6 @@ public:
         static Power instance;
         return instance;
     }
-
     void SetRkFlag();
 
 private:
