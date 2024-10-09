@@ -31,14 +31,14 @@ public:
 public:
     double StallingRateResult(std::string file);
     double CalculateTime();
-    double GetFrameRate(const std::string &line) const;
-    int GetFenceId(const std::string &line) const;
-    std::string GetOnScreenTimeStart(const std::string &line) const;
-    double GetTimes(const std::string &line, const std::string &sign) const;
-    void AppList(const std::string &line, const std::string &signS, const std::string &signF);
-    void APPTabs(const std::string &line, const std::string &signS, const std::string &signF);
-    void AppSwiperScroll(const std::string &line, const std::string &signS, const std::string &signF);
-    void GetRsHardWareRate(double curFrameRate, const std::string &line, SWIM_TYPE type);
+    double GetFrameRate(std::string line) const;
+    int GetFenceId(std::string line) const;
+    std::string GetOnScreenTimeStart(std::string line) const;
+    double GetTimes(std::string line, const std::string &sign) const;
+    void AppList(std::string line, const std::string &signS, const std::string &signF);
+    void APPTabs(std::string line, const std::string &signS, const std::string &signF);
+    void AppSwiperScroll(std::string line, const std::string &signS, const std::string &signF);
+    void GetRsHardWareRate(double curFrameRate, std::string line, SWIM_TYPE type);
     void GetFrameLossTime(double curTime, double prevTime, double drawTime, double &totalFrameLossTime);
     void CalcFrameRate();
     void JudgFrameRate();

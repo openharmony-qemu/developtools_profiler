@@ -76,6 +76,7 @@ public:
     void GetTimeDiff();
     void GetCurrentTime(int sleepNum);
     void GetOhFps(std::vector<std::string> v);
+    void SetRkFlag();
     std::string GetSurface();
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoMax;
@@ -119,6 +120,7 @@ private:
     bool processFlag = false;
     bool ohFlag = false;
     std::string processId = "";
+    bool rkFlag = false;
 };
 }
 }

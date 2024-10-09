@@ -32,29 +32,28 @@ using namespace OHOS::Media;
 using namespace OHOS::Rosen;
 std::map<std::string, std::string> Capture::ItemData()
 {
-    std::map<std::string, std::string> result;
-    const int two = 2;
-    const int modResult = callNum % two;
     callNum++;
-    curTime = GetCurTimes();
-    std::string screenCapPath = "data/local/tmp/capture/screenCap_" + std::to_string(curTime);
-    std::string path = "NA";
-    if (isSocketMessage) {
-        if (modResult == 0) {
-            path = screenCapPath + ".jpeg";
+    std::map<std::string, std::string> result;
+    int two = 2;
+    if (callNum % two == 0) {
+        curTime = GetCurTimes();
+        std::string screenCapPath = "data/local/tmp/capture/screenCap_" + std::to_string(curTime);
+        if (isSocketMessage) {
+            std::string path = screenCapPath + ".jpeg";
             result["capture"] = path;
-            TriggerGetCatchSocket(curTime);
+            Capture::TriggerGetCatchSocket(curTime);
             isSocketMessage = false;
+        } else {
+            std::string path = screenCapPath + ".png";
+            result["capture"] = path;
+            Capture::TriggerGetCatch();
+            if (result.find("capture") != result.end() && result["capture"].empty()) {
+                result["capture"] = "NA";
+            }
         }
     } else {
-        if (modResult == 1) {
-            path = screenCapPath + ".png";
-            result["capture"] = path;
-            TriggerGetCatch();
-        }
+        result["capture"] = "NA";
     }
-    result["capture"] = path;
-
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }

@@ -171,7 +171,7 @@ void StallingRateTrace::AddMultiLaneFrameRate()
 }
 
 
-void StallingRateTrace::AppList(const std::string &line, const std::string &signS, const std::string &signF)
+void StallingRateTrace::AppList(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
         line.find("H:APP_LIST_FLING,") != std::string::npos ||
@@ -222,7 +222,7 @@ void StallingRateTrace::GetFrameLossTime(double curTime, double prevTime, double
     }
 }
 
-void StallingRateTrace::GetRsHardWareRate(double curFrameRate, const std::string &line, SWIM_TYPE type)
+void StallingRateTrace::GetRsHardWareRate(double curFrameRate, std::string line, SWIM_TYPE type)
 {
     if (line.find("H:RSHardwareThread::CommitAndReleaseLayers") != std::string::npos) {
         switch (type) {
@@ -286,7 +286,7 @@ void StallingRateTrace::UpdateRoundTime(double curFrameRate, SWIM_TYPE type)
     }
 }
 
-void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::string &signS, const std::string &signF)
+void StallingRateTrace::AppSwiperScroll(std::string line, const std::string &signS, const std::string &signF)
 {
     if (line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
         line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos ||
@@ -334,15 +334,11 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
     }
 }
 
-void StallingRateTrace::APPTabs(const std::string &line, const std::string &signS, const std::string &signF)
+void StallingRateTrace::APPTabs(std::string line, const std::string &signS, const std::string &signF)
 {
-    static const std::string appTabsNoAnimation = "H:APP_TABS_NO_ANIMATION_SWITCH";
-    static const std::string appTabsFrameAnimation = "H:APP_TABS_FRAME_ANIMATION";
-    static const std::string appTabsScroll = "H:APP_TABS_SCROLL,";
-
-    if (line.find(appTabsNoAnimation) != std::string::npos ||
-        line.find(appTabsFrameAnimation) != std::string::npos ||
-        line.find(appTabsScroll) != std::string::npos) {
+    if (line.find("H:APP_TABS_NO_ANIMATION_SWITCH") != std::string::npos ||
+        line.find("H:APP_TABS_FRAME_ANIMATION") != std::string::npos ||
+        line.find("H:APP_TABS_SCROLL,") != std::string::npos) {
         if (tabsFlag) {
             LOGI("APPTabs line start: (%s)", line.c_str());
             appTabsDynamicFinishTime = GetTimes(line, signF);
@@ -378,7 +374,7 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
     }
 }
 
-double StallingRateTrace::GetFrameRate(const std::string &line) const
+double StallingRateTrace::GetFrameRate(std::string line) const
 {
     double rate = 0;
     std::string delimiter = "rate: ";
@@ -398,7 +394,7 @@ double StallingRateTrace::GetFrameRate(const std::string &line) const
     return rate;
 }
 
-int StallingRateTrace::GetFenceId(const std::string &line) const
+int StallingRateTrace::GetFenceId(std::string line) const
 {
     std::string delimiter = "H:Present Fence ";
     size_t pos = line.find(delimiter);
@@ -407,27 +403,26 @@ int StallingRateTrace::GetFenceId(const std::string &line) const
     return presentFenceId;
 }
 
-std::string StallingRateTrace::GetOnScreenTimeStart(const std::string &line) const
+std::string StallingRateTrace::GetOnScreenTimeStart(std::string line) const
 {
     std::string startTime = "0";
     size_t subNum = 7;
-    size_t positionFirst = line.find("....");
-    size_t positionSecond = line.find(":");
-    startTime = line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum);
+    size_t position1 = line.find("....");
+    size_t position2 = line.find(":");
+    startTime = line.substr(position1 + subNum, position2 - position1 - subNum);
     return startTime;
 }
 
-double StallingRateTrace::GetTimes(const std::string &line, const std::string &sign) const
+double StallingRateTrace::GetTimes(std::string line, const std::string &sign) const
 {
-    size_t positionFirst = line.find("....");
-    size_t positionSecond = line.find(":");
-    if (positionFirst != std::string::npos && positionSecond != std::string::npos) {
-        if (line.find(sign) != std::string::npos) {
-            size_t subNum = 7;
-            return std::stod(line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum));
-        }
+    double signTime = 0;
+    size_t position1 = line.find("....");
+    size_t position2 = line.find(":");
+    if (line.find(sign) != std::string::npos) {
+        size_t subNum = 7;
+        signTime = std::stod(line.substr(position1 + subNum, position2 - position1 - subNum));
     }
-    return 0.0;
+    return signTime;
 }
 }
 }

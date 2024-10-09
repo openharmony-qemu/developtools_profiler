@@ -29,11 +29,15 @@ public:
     }
     int GetGpuFreq();
     float GetGpuLoad();
+    int32_t GetRkGpuFreq();
+    float GetRkGpuLoad();
+    void SetRkFlag();
 
 private:
     GPU() {};
     GPU(const GPU &);
     GPU &operator = (const GPU &);
+    bool rkFlag = false;
 };
 }
 }
