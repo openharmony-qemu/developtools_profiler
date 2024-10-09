@@ -54,7 +54,7 @@ struct PageInfo {
     uint64_t address;
 };
 
-
+namespace {
 void PrintUsage(const string& program)
 {
     cout << "Usage: " << program << " pid" <<endl;
@@ -95,7 +95,7 @@ int ParseMapsLine(const string& line, MapInfo& mapping)
         return -1;
     }
     // 读取文件路径
-    if (getline(iss, mapping.pathname)) {
+    if (!getline(iss, mapping.pathname)) {
         mapping.pathname = "[anno]";
     };
     return 0;
@@ -115,7 +115,7 @@ void PrintPage(const MapInfo& mapping, const PageInfo& page)
 {
     cout << hex << page.address << '-' << hex << (page.address + PAGE_SIZE) << " ";
     cout << mapping.read << mapping.write << mapping.execute << mapping.shared << " ";
-    if (page.inSwap) {
+    if (page.inRam) {
         cout << hex << page.pfn;
     } else if (page.inSwap) {
         cout << "[in swap]";
@@ -135,6 +135,7 @@ bool IsValidPid(const string& pid_str)
     });
     return ret;
 }
+} // namespace
 
 int main(int argc, char* argv[])
 {
@@ -172,7 +173,7 @@ int main(int argc, char* argv[])
         }
         for (uint64_t tmpAddr = mapping.startAddr; tmpAddr < mapping.endAddr; tmpAddr += PAGE_SIZE) {
             // 计算文件中要读取的偏移量
-            off_t offset = (tmpAddr / PAGE_SIZE) * sizeof(unsigned long long);
+            uint64_t offset = (tmpAddr / PAGE_SIZE) * sizeof(unsigned long long);
             uint64_t entry;
             if (pread(pagemapFd, &entry, sizeof(entry), offset) != sizeof(entry)) {
                 perror("pread");
