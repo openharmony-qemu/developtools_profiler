@@ -29,6 +29,7 @@
 using namespace testing::ext;
 
 namespace {
+const std::string DEFAULT_LIB("libhiperfplugin.z.so");
 const std::string DEFAULT_OUT_PATH("/data/local/tmp/perf.data");
 const int DEFAULT_WAIT = 2;
 
