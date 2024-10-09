@@ -206,7 +206,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr) {
+    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
         return 0;
     }
     uint32_t tagId = 0;
