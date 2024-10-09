@@ -242,10 +242,6 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
 
 void ProfilerFPS::GetFPS(std::vector<std::string> v)
 {
-    bool FindAbilistResult = SPUtils::IsFindAbilist();
-    if (!FindAbilistResult) {
-        SetRkFlag();
-    }
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
