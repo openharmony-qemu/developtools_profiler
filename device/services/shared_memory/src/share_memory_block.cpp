@@ -348,7 +348,8 @@ bool ShareMemoryBlock::TakeData(const DataHandler& func, bool isProtobufSerializ
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
     auto size = GetDataSize();
-    if (size == 0) {
+    if (size == 0 || size > header_->info.memorySize_) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid size [%d]", size);
         return false;
     }
     auto ptr = GetDataPoint();
