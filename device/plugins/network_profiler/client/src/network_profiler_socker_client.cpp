@@ -114,7 +114,6 @@ void NetworkProfilerSocketClient::DisableHook()
 {
     bool expected = false;
     if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
-        HILOG_BASE_INFO(LOG_CORE, "%s %p", __func__, disableHookCallback_);
         if (disableHookCallback_ != nullptr) {
             disableHookCallback_();
         }
