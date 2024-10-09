@@ -30,7 +30,6 @@ using namespace testing::ext;
 
 namespace {
 #if defined(__LP64__)
-const std::string DEFAULT_TEST_PATH("/system/lib64/");
 const int US_PER_S = 1000000;
 const int DEFAULT_WAIT = 9;
 std::vector<OptimizeReport> g_protoXpower;
@@ -74,7 +73,7 @@ public:
 HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
 {
 #if defined(__LP64__)
-    std::string path = DEFAULT_TEST_PATH + std::string("libxpowerplugin.z.so");
+    std::string path = std::string("libxpowerplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));

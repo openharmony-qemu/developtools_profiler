@@ -22,11 +22,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH = "/data/local/tmp/resources";
-#if defined(__LP64__)
-const std::string SO_PATH = "/system/lib64/libdiskiodataplugin.z.so";
-#else
-const std::string SO_PATH = "/system/lib/libdiskiodataplugin.z.so";
-#endif
+const std::string SO_PATH = "libdiskiodataplugin.z.so";
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/diskiodataplugintest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 constexpr int WRITE_KB = 1000;

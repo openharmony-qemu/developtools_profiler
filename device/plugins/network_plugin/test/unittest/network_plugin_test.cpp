@@ -22,11 +22,6 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__LP64__)
-const std::string DEFAULT_SO_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_SO_PATH("/system/lib/");
-#endif
 const std::string DEFAULT_TEST_PATH("/data/local/tmp/");
 const std::string DEFAULT_NET_PATH("/proc/net/xt_qtaguid/stats");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
@@ -250,7 +245,7 @@ bool FlushFunc(WriterStruct* writer)
  */
 HWTEST_F(NetworkPluginTest, TestRegister, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libnetworkplugin.z.so");
+    std::string path = std::string("libnetworkplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
@@ -279,7 +274,7 @@ HWTEST_F(NetworkPluginTest, TestRegister, TestSize.Level1)
  */
 HWTEST_F(NetworkPluginTest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libnetworkplugin.z.so");
+    std::string path = std::string("libnetworkplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
@@ -313,7 +308,7 @@ HWTEST_F(NetworkPluginTest, TestFramework, TestSize.Level1)
  */
 HWTEST_F(NetworkPluginTest, TestSystemData, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libnetworkplugin.z.so");
+    std::string path = std::string("libnetworkplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));

@@ -103,7 +103,7 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 bool XpowerPlugin::StartPowerManager(std::uint32_t messageType, std::string &bundleName)
 {
     if (powerClientHandle_ == nullptr) {
-        powerClientHandle_ = dlopen("/system/lib64/libxpower_manager_client.z.so", RTLD_LAZY);
+        powerClientHandle_ = dlopen("libxpower_manager_client.z.so", RTLD_LAZY);
     }
     if (powerClientHandle_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s :fail to open libxpower_manager_client.z.so", __func__);
