@@ -40,7 +40,7 @@ public:
 
 std::string &g_getOptions(std::vector<std::string> &argv)
 {
-    std::string str = "";
+    std::string str = "test str";
     std::string strFlag;
     bool isFill = false;
     for (std::size_t i = 0; i < argv.size(); i++) {
@@ -135,7 +135,6 @@ HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
     std::string errorInfo = "";
     std::vector<std::string> argv;
     argv.push_back("SP_daemon");
-    argv.push_back("-start");
     argv.push_back("-c");
     argv.push_back("-g");
     argv.push_back("-t");
@@ -166,10 +165,10 @@ HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase003, TestSize.Level1)
     std::string errorInfo = "";
     std::vector<std::string> argv;
     argv.push_back("SP_daemon");
-    argv.push_back("");
+    argv.push_back(" ");
 
     bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, true);
+    EXPECT_EQ(ret, false);
 }
 
 }
