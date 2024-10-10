@@ -259,7 +259,6 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string resultStream2 = radar.ParseRadarMaxFrame(radarFrameStr);
     double stallingRateResult2 = srt.StallingRateResult(traceName);
     std::ostringstream ss;
-    int two = 2;
     ss << std::fixed << std::setprecision(two) << stallingRateResult2;
     std::string ssResult = ss.str();
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";

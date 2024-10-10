@@ -93,7 +93,7 @@ public:
     void StartRecord();
     void StopRecord();
     bool GetRecordState();
-
+    time_t GetRealStartTime() const;
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
     void GetHiperf(const std::string &traceName);
@@ -122,6 +122,7 @@ private:
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     bool recordState = false;
 
+    time_t realTimeStart = 0;
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
   -o /data/local/tmp/)";
