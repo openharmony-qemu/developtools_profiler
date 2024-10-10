@@ -137,7 +137,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
   ]
 
   if (hiprofiler_use_libunwinder) {
-    external_deps += [ "faultloggerd:libunwinder_static" ]
+    external_deps += [ "faultloggerd:libunwinder" ]
   }
 
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

@@ -33,16 +33,12 @@ std::string PluginModule::ComputeSha256()
 
 bool PluginModule::Load()
 {
-    char realPath[PATH_MAX + 1] = {0};
     if (handle_ != nullptr) {
         PROFILER_LOG_DEBUG(LOG_CORE, "%s:already open", __func__);
         return false;
     }
-    CHECK_TRUE((path_.length() < PATH_MAX) && (realpath(path_.c_str(), realPath) != nullptr), false,
-               "%s:so filename invalid, errno=%d", __func__, errno);
 
-    std::string rpath = realPath; // for SC warning
-    handle_ = dlopen(rpath.c_str(), RTLD_NODELETE);
+    handle_ = dlopen(path_.c_str(), RTLD_NODELETE);
     if (handle_ == nullptr) {
         PROFILER_LOG_DEBUG(LOG_CORE, "%s:dlopen err:%s.", __func__, dlerror());
         return false;

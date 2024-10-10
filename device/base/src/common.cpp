@@ -231,6 +231,15 @@ bool IsUserMode()
     return debugMode == "0";
 }
 
+bool GetDeveloperMode()
+{
+    bool developerMode = OHOS::system::GetBoolParameter("const.security.developermode.state", true);
+    if (!developerMode) {
+        PROFILER_LOG_INFO(LOG_CORE, "It is not developer mode!");
+    }
+    return developerMode;
+}
+
 inline int CustomFdClose(int& fd)
 {
     int ret = close(fd);
@@ -436,6 +445,10 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     } else {
         bundleName = processName;
     }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
+    }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
 
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
@@ -464,6 +477,10 @@ bool CheckApplicationEncryped(int pid, const std::string& processName)
         bundleName.resize(strlen(bundleName.c_str()));
     } else {
         bundleName = processName;
+    }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
     }
     CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
     sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();

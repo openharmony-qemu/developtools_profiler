@@ -44,6 +44,18 @@ public:
         uint8_t fpDepth = 0; // fp mode fpDepth is ip depth, dwarf mode is invalid
         bool reportFlag = false;
         bool reduceStackFlag = false;
+        void Reset()
+        {
+            baseStackData = nullptr;
+            stackConext = nullptr;
+            data = nullptr;
+            stackData = nullptr;
+            freeData = 0;
+            stackSize = 0;
+            fpDepth = 0;
+            reportFlag = false;
+            reduceStackFlag = false;
+        }
     };
 
     explicit StackDataRepeater(size_t maxSize);

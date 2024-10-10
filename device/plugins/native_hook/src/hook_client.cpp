@@ -837,15 +837,16 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
-    if (!g_ClientConfig.freeStackData) {
-        if (free_func) {
-            free_func(p);
+    if (g_ClientConfig.statisticsInterval > 0) {
+        if (!free_func) {
+            return;
         }
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
             holder->SendStackWithPayload(p, sizeof(uint64_t), nullptr, 0);
         }
+        free_func(p);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -876,6 +877,7 @@ void hook_free(void (*free_func)(void*), void* p)
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
+
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -1104,7 +1106,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     const char* stackendptr = nullptr;
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
-
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__

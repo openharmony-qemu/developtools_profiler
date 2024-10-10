@@ -137,6 +137,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         shareMemorySize = 0;
         clockId = CLOCK_REALTIME;
         maxStackDepth = 0;
+        statisticsInterval = 0;
         sampleInterval = 0;
         mallocDisable = false;
         mmapDisable = false;
@@ -174,6 +175,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     int32_t filterSize = -1;
     uint32_t shareMemorySize = 0;
     uint32_t sampleInterval = 0;
+    uint32_t statisticsInterval = 0;
     clockid_t clockId = CLOCK_REALTIME;
     uint8_t maxStackDepth = 0;
     bool mallocDisable = false;

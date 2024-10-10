@@ -228,6 +228,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
+    clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
@@ -343,7 +344,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-
     int32_t uShortMax = (std::numeric_limits<unsigned short>::max)();
     if (hookConfig_.filter_size() > uShortMax) {
         PROFILER_LOG_WARN(LOG_CORE, "%s: filter size invalid(size exceed 65535), reset to 65535!", __func__);
@@ -449,6 +449,9 @@ void HookManager::HookManagerCtx::FlushStackArray()
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<StackDataRepeater::RawStack>& rawStack)
 {
+    if (hookCtx == nullptr || rawStack == nullptr) {
+        return;
+    }
     hookCtx->rawDataArray[hookCtx->rawStackCount] = rawStack;
     ++hookCtx->rawStackCount;
     if (hookCtx->rawStackCount == CACHE_ARRAY_SIZE) {
@@ -471,6 +474,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                 rawStack->baseStackData = nullptr;
                 return true;
             }
+            rawStack->freeData = 0;
             CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
 
             rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
