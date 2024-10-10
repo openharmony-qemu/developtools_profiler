@@ -637,6 +637,7 @@ void SPTask::StopRecord()
     vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
+    
     recordState = false;
 }
 
