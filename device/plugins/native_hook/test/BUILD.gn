@@ -87,5 +87,8 @@ ohos_unittest("nativehook_ut") {
 }
 group("unittest") {
   testonly = true
-  deps = [ ":nativehook_ut" ]
+  deps = [
+    ":nativehook_ut",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:nativetest_so",
+  ]
 }
