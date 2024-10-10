@@ -38,6 +38,7 @@ public:
     std::map<std::string, std::string> GetRamInfo() const;
     std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo) const;
+    std::map<std::string, std::string> ProcMemNaInfo() const;
     static RAM &GetInstance()
     {
         static RAM instance;
@@ -48,11 +49,13 @@ public:
     void ThreadGetPss() const;
     void TriggerGetPss() const;
     void SetFirstFlag();
+    void SetProcessId(const std::string &pid);
 private:
     RAM() {};
     RAM(const RAM &);
     RAM &operator = (const RAM &);
     std::string packageName = "";
+    std::string processId = "";
 };
 }
 }

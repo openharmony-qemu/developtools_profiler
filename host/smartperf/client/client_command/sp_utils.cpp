@@ -28,8 +28,13 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
+#include "cpu_collector.h"
+#include "collect_result.h"
 
+using namespace OHOS::HiviewDFX;
+using namespace OHOS::HiviewDFX::UCollectUtil;
+using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
@@ -82,9 +87,9 @@ bool SPUtils::LoadFile(const std::string &filePath, std::string &content)
     return true;
 }
 
-bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
+bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result)
 {
-    std::string cmdExc = cmd;
+    const std::string cmdExc = cmd;
     FILE *fd = popen(cmdExc.c_str(), "r");
     if (fd == nullptr) {
         return false;
@@ -92,14 +97,23 @@ bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
     char buf[4096] = {'\0'};
     size_t ret = fread(buf, sizeof(buf), 1, fd);
     if (ret >= 0) {
-        result.assign(buf);
+        result = buf;
     }
     if (pclose(fd) == -1) {
         std::cout << "" << std::endl;
     }
-    // remove '' \n\r
-    ReplaceString(result);
+
+    if (isClearLinkBreak) {
+        // remove '' \n\r
+        ReplaceString(result);
+    }
+
     return ret >= 0 ? true : false;
+}
+
+bool SPUtils::LoadCmd(const std::string &cmd, std::string &result)
+{
+    return LoadCmdWithLinkBreak(cmd, true, result);
 }
 
 std::string SPUtils::IncludePathDelimiter(const std::string &path)
@@ -597,6 +611,85 @@ bool SPUtils::IsHmKernel()
         isHM = osRelease.find("HongMeng") != std::string::npos;
     }
     return isHM;
+}
+
+std::string SPUtils::GetCpuNum()
+{
+    std::string cpuCores = "cpuCores||";
+    std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
+    CollectResult<std::vector<CpuFreq>> result = collector->CollectCpuFrequency();
+    std::vector<CpuFreq> &cpufreq = result.data;
+    size_t cpuNum = cpufreq.size();
+    cpuCores += std::to_string(cpuNum);
+    if (cpuNum == 0) {
+        std::cout << "CPU frequency collection failed." << std::endl;
+        LOGI("CPU frequency collection failed.");
+    }
+    return cpuCores;
+}
+void SPUtils::GetCurrentTime(int num, int prevTime)
+{
+    unsigned long sleepNowTime = 10000;
+    for (int i = 0; i < num; i++) {
+        struct timespec time1 = { 0 };
+        clock_gettime(CLOCK_MONOTONIC, &time1);
+        int curTimeNow = static_cast<int>(time1.tv_sec - 1);
+        if (curTimeNow == prevTime) {
+            usleep(sleepNowTime);
+        } else {
+            break;
+        }
+    }
+}
+bool SPUtils::IsForeGround(std::string &pkg)
+{
+    bool isFoundAppName = false;
+    bool isFoundBundleName = false;
+    const std::string cmd = "aa dump -l";
+    char buf[1024] = {'\0'};
+    std::string appLine = "app name [" + pkg;
+    std::string bundleLine = "bundle name [" + pkg;
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return false;
+    }
+    bool tag = false;
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        if (line.find(appLine) != std::string::npos) {
+            isFoundAppName = true;
+        }
+        if (line.find(bundleLine) != std::string::npos) {
+            isFoundBundleName = true;
+        }
+        if (isFoundAppName || isFoundBundleName) {
+            if (line.find("app state") != std::string::npos) {
+                tag = IsFindForeGround(line);
+                isFoundAppName = false;
+                isFoundBundleName = false;
+            }
+        }
+    }
+    pclose(fd);
+    return tag;
+}
+bool SPUtils::IsFindForeGround(std::string line)
+{
+    std::string foreGroundTag = line.substr(line.find("#") + 1);
+    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
+        return true;
+    } else {
+        return false;
+    }
+}
+bool SPUtils::IsFindAbilist()
+{
+    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
+    if (abilist.find("arm") != std::string::npos) {
+        return true;
+    } else {
+        return false;
+    }
 }
 }
 }

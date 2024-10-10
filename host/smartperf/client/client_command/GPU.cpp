@@ -28,8 +28,15 @@ namespace SmartPerf {
 std::map<std::string, std::string> GPU::ItemData()
 {
     std::map<std::string, std::string> result;
-    int32_t freq = GetGpuFreq();
-    float load = GetGpuLoad();
+    int32_t freq;
+    float load;
+    if (!rkFlag) {
+        freq = GetGpuFreq();
+        load = GetGpuLoad();
+    } else {
+        freq = GetRkGpuFreq();
+        load = GetRkGpuLoad();
+    }
     result["gpuFrequency"] = std::to_string(freq);
     result["gpuLoad"] = std::to_string(load);
     if (result.find("gpuFrequency") != result.end() && result["gpuFrequency"].empty()) {
@@ -54,6 +61,31 @@ float GPU::GetGpuLoad()
     CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
     LOGI("SysGpuLoad: %s", std::to_string(result.data.gpuLoad).c_str());
     return float(result.data.gpuLoad);
+}
+
+int32_t GPU::GetRkGpuFreq()
+{
+    const std::string gpuFreqPath = "/sys/class/devfreq/fde60000.gpu/cur_freq";
+    std::string rkFreq;
+    SPUtils::LoadFile(gpuFreqPath, rkFreq);
+    return std::stoi(rkFreq);
+}
+
+float GPU::GetRkGpuLoad()
+{
+    const std::string gpuLoadPath = "/sys/class/devfreq/fde60000.gpu/load";
+    std::string rkLoad;
+    SPUtils::LoadFile(gpuLoadPath, rkLoad);
+    size_t len = rkLoad.length();
+    if (len > 0) {
+        rkLoad = rkLoad.substr(0, len - 1);
+    }
+    return std::stoi(rkLoad);
+}
+
+void GPU::SetRkFlag()
+{
+    rkFlag = true;
 }
 }
 }

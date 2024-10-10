@@ -64,10 +64,7 @@ public:
     void SetLayerName(std::string sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    bool IsForeGround();
-    bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
-    void GetCurrentTime();
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;
@@ -80,6 +77,9 @@ public:
     void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
     FpsCurrentFpsTime GetFpsCurrentFpsTime();
     void ReadDataFromPipe(int fd);
+    void SetProcessId(const std::string &pid);
+    void SetRkFlag();
+    std::string FindFpsRefreshrate();
 private:
     FPS() {};
     FPS(const FPS &);
@@ -94,13 +94,12 @@ private:
     long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
-    unsigned long sleepNowTime = 10000;
-    bool isFoundAppName = false;
-    bool isFoundBundleName = false;
     int fifty = 50;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
+    bool rkFlag = false;
     const std::string screenPath = "/sys/class/graphics/fb0/lcd_fps_scence";
+    std::string processId = "";
 };
 }
 }

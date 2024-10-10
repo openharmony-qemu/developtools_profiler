@@ -16,6 +16,8 @@
 #include <thread>
 #include <cstring>
 #include "unistd.h"
+#include <fstream>
+#include <sstream>
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
 #include "include/profiler_fps.h"
@@ -24,7 +26,9 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
-
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
 
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -47,7 +51,7 @@ static std::string GetOptions(const std::vector<std::string> &argv)
     return str;
 }
 
-static bool GCheckCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
+static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
     std::set<std::string> keys; // Includes three parts "SP_daemon" CommandType and CommandHelp
@@ -75,6 +79,8 @@ static bool GCheckCmdParam(std::vector<std::string> &argv, std::string &errorInf
     keys.insert("sections");
     keys.insert("deviceinfo");
     keys.insert("ohtestfps");
+    keys.insert("editorServer");
+    keys.insert("recordcapacity");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -105,28 +111,54 @@ static void SocketStopCommand()
     cc.SocketStop();
 }
 
-int main(int argc, char *argv[])
+static void RecordCapacity()
 {
-    if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
-        std::cout << "Not a development mode state" << std::endl;
-        return 0;
-    }
-    if (argc < 0) {
-        std::cout << "Invalid argument count" << std::endl;
-        return -1;
-    }
-    std::string errorInfo;
-    std::vector<std::string> vec;
+    const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
+    const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
+    std::string capacityString;
+    std::ifstream infile(capacitySavePath.c_str());
 
-    for (int i = 0; i < argc; i++) {
-        vec.push_back(argv[i]);
+    if (infile.is_open()) {
+        std::stringstream buffer;
+        int capacityLine = 0;
+        std::string line;
+        const int MAX_RECORD_COUNT = 100;
+        buffer << infile.rdbuf();
+        capacityString = buffer.str();
+        infile.close();
+
+        while (std::getline(buffer, line)) {
+            capacityLine++;
+        }
+        if (capacityLine == MAX_RECORD_COUNT) {
+            std::size_t pos = capacityString.find('\n');
+            if (pos != std::string::npos) {
+                capacityString = capacityString.substr(pos + 1);
+            }
+        }
     }
-    if (!GCheckCmdParam(vec, errorInfo)) {
-        std::cout << "SP_daemon:" << errorInfo << std::endl <<
-             "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
-             "Try `SP_daemon --help' for more options." << std::endl;
-        return 0;
+
+    std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::trunc);
+    if (!outFile.is_open()) {
+        std::cout << "Error opening capacity file!" << std::endl;
+        return;
     }
+    std::string recordPower;
+    auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
+    OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
+    std::cout << "recordTime: " << recordTime << std::endl << "recordPower: " << recordPower << std::endl;
+    capacityString += recordTime + "," + recordPower;
+    outFile << capacityString << std::endl;
+    if (outFile.fail()) {
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        std::cout << "Error writing capacity failed:" << strerror_r(errno, buf, bufSize) << std::endl;
+    }
+    outFile.close();
+}
+
+static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
+{
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
@@ -144,13 +176,54 @@ int main(int argc, char *argv[])
             }
         }
         cc.SocketStart(result);
+        return 1;
     } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
         SocketStopCommand();
+        return 1;
     } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
+        RecordCapacity();
+        return 0;
+    }
+
+    return 1;
+}
+
+int main(int argc, char *argv[])
+{
+    if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
+        std::cout << "Not a development mode state" << std::endl;
+        return 0;
+    }
+    if (argc < 0) {
+        std::cout << "Invalid argument count" << std::endl;
+        return -1;
+    }
+    std::string errorInfo;
+    std::vector<std::string> vec;
+    const int maxExpectedArgs = 100;
+    for (int i = 0; i < argc && i < maxExpectedArgs; i++) {
+        vec.push_back(argv[i]);
+    }
+    if (!g_checkCmdParam(vec, errorInfo)) {
+        std::cout << "SP_daemon:" << errorInfo << std::endl <<
+             "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
+             "Try `SP_daemon --help' for more options." << std::endl;
+        return 0;
+    }
+    bool FindAbilistResult = OHOS::SmartPerf::SPUtils::IsFindAbilist();
+    if (!FindAbilistResult) {
+        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
+    }
+    if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
     }
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);

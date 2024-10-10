@@ -34,8 +34,6 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        std::cout << "File "
-                  << "open fail" << std::endl;
         LOGE("ParseClickCompleteTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }

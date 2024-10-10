@@ -15,101 +15,69 @@
 
 #ifndef GPU_COUNTER_H
 #define GPU_COUNTER_H
+
+#include "string"
+#include "vector"
 #include "sp_profiler.h"
-#include <string>
-#include <vector>
-#include <cstdio>
-#include <list>
-#include <cstdlib>
-#include <thread>
+#include "GpuCounterCallback.h"
+#include "thread"
+#include "mutex"
+
 namespace OHOS {
-namespace SmartPerf {
-class GpuCounter : public SpProfiler {
-public:
-    enum GcStatus {
-        GC_INIT = 0,
-        GC_START,
-        GC_STOP,
+    namespace SmartPerf {
+        class GpuCounterPlugin {
+        public:
+            uint32_t version;
+            const char *pluginName;
+
+            virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
+            virtual int32_t StopGetGpuPerfInfo() = 0;
+        };
+
+        class GpuCounter : public SpProfiler {
+        public:
+            enum GcStatus {
+                GC_INIT = 0,
+                GC_RUNNING,
+            };
+
+            enum GcCollectType {
+                GC_START = 0,
+                GC_RESTART,
+            };
+
+        public:
+            std::map<std::string, std::string> ItemData() override;
+
+            static GpuCounter &GetInstance()
+            {
+                static GpuCounter instance;
+                return instance;
+            }
+            void StartCollect(GcCollectType type);
+            void StopCollect();
+            std::vector<std::string> &GetGpuCounterData();
+            std::vector<std::string> &GetGpuCounterSaveReportData();
+            std::mutex &GetRealtimeDataLock();
+            std::string &GetGpuCounterRealtimeData();
+            void AddGpuCounterRealtimeData(std::string dataString);
+            void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
+            void SaveData(std::string path);
+        private:
+            GpuCounter() {};
+            GpuCounter(const GpuCounter &);
+            GpuCounter &operator = (const GpuCounter &);
+            void* GetSoHandle();
+            GcStatus gcStatus = GC_INIT;
+            std::vector<std::string> gpuCounterData;
+            std::vector<std::string> gpuCounterSaveReportData;
+            std::mutex realtimeDataLock;
+            std::string gpuCounterRealtimeData;
+            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
+            const std::string CREATE_PLUGIN = "onCreatePlugin";
+        };
     };
-
-    enum ExecutePermissions {
-        EP_INVALID = -1,
-        EP_PERMISSIVE = 0,
-        EP_ENFORCING = 1,
-    };
-
-public:
-    std::map<std::string, std::string> ItemData() override;
-
-    static GpuCounter &GetInstance()
-    {
-        static GpuCounter instance;
-        return instance;
-    }
-
-    GcStatus GetStatus() const
-    {
-        return gcStatus;
-    }
-
-    int Init(const std::string &packageName, std::map<std::string, std::string> &retMap);
-    void Rest();
-    // 0 ok, -1 run failed
-    int Start();
-    void Check();
-    long long GetCounterDuration();
-
-private:
-    // 0 succed, -1 dependency file not detected, -2 package name error, -3 non root users, -4 NonHisilicon chips
-    int CheckResources(const std::string &packageName, std::string &errorInfo);
-    void GetCounterId(std::vector<std::string> &pidList);
-    void KillCounter();
-    int Capture();
-    std::thread ThreadCapture();
-    void SetPerm(ExecutePermissions code);
-    ExecutePermissions GetPerm();
-    bool IsNum(const std::string value);
-
-private:
-    bool isSandBoxWrite = false;
-    ExecutePermissions originalEP = EP_INVALID;
-    GcStatus gcStatus = GC_INIT;
-    long long startCaptureTime = 0;
-    long long captureDuration = 0;
-    std::vector<std::string> fileList;
-    std::string sandBoxPath;
-    std::string initCheckPath;
-    std::map<std::string, std::string> initMap;
-
-private:
-    const long long constDefaultCaptureDuration = 5000; // Unit ms
-    const std::string constMvFile = "mv -f ";
-    const std::string constKillProcess = "kill -9  ";
-    const std::string constGetCounterId = "pidof counters_collector";
-    const std::string constRmCsv = "rm /data/local/tmp/gpu_counter.csv";
-    const std::string constAddPermissionsCounter = "chmod 777 /bin/counters_collector";
-    const std::string constCmd =
-        "LD_LIBRARY_PATH=/bin/ /bin/counters_collector /bin/config.txt >/dev/null 2>&1";
-
-    const std::string constSandBoxFile = "/files/";
-    const std::string constSandBoxPath = "/data/app/el2/100/base/";
-    const std::string constOutDestCVSPrefix = "gpu_counter";
-    const std::string constOutSourCVSFile = "/data/local/tmp/gpu_counter.csv";
-
-    const std::string constConfigFile = "/bin/config.txt";
-    const std::string constExecFile = "/bin/counters_collector";
-    const std::string constLibFile = "/bin/libGPU_PCM.so";
-    const std::string constV2File = "/bin/counters_collector_v2.txt";
-    const std::string constCheckProductInfo = "param get const.product.name";
-    const std::string constProductInfo = "60";
-    const std::string constWhoami = "whoami";
-    const std::string constUserInfo = "root";
-
-private:
-    GpuCounter();
-    GpuCounter(const GpuCounter &);
-    GpuCounter &operator = (const GpuCounter &);
-};
 }
-}
-#endif // GPU_COUNTER_H
+
+
+#endif

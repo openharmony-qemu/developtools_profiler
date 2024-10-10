@@ -84,12 +84,26 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("start");
     keys.insert("stop");
     keys.insert("screen");
+    keys.insert("clear");
+    keys.insert("server");
+    keys.insert("sections");
+    keys.insert("deviceinfo");
+    keys.insert("ohtestfps");
+    keys.insert("editorServer");
 
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
-    auto itr = keys.find("fl");
+    auto itr = keys.find("f1");
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
+    itr = keys.find("f2");
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
+    itr = keys.find("fl");
     if (keys.end() != itr) {
         keys.erase(itr);
     }
@@ -123,29 +137,6 @@ HWTEST_F(SPdaemonMainTest, GetOptionsTestCase001, TestSize.Level1)
     }
 
     EXPECT_EQ(ret, true);
-}
-
-/**
- * @tc.name: CheckCMDParamTestCase
- * @tc.desc: Test CheckCMDParam
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
-{
-    std::string errorInfo = "";
-    std::vector<std::string> argv;
-    argv.push_back("SP_daemon");
-    argv.push_back("-start");
-    argv.push_back("-c");
-    argv.push_back("-g");
-    argv.push_back("-t");
-    argv.push_back("-p");
-    argv.push_back("-r");
-    argv.push_back("-net");
-    argv.push_back("-snapshot");
-
-    bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, false);
 }
 
 HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)

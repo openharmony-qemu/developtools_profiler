@@ -27,10 +27,8 @@
 #include "include/sp_profiler_factory.h"
 #include "include/Dubai.h"
 #include "include/Capture.h"
-#include "include/GpuCounter.h"
 #include "include/navigation.h"
 #include "include/sp_log.h"
-
 
 namespace OHOS {
 namespace SmartPerf {
@@ -38,9 +36,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 {
     SpProfiler* profiler = nullptr;
     switch (messageType) {
-        case MessageType::GET_CPU_NUM:
-        case MessageType::GET_CPU_FREQ:
-        case MessageType::GET_CPU_LOAD:
+        case MessageType::GET_CPU_FREQ_LOAD:
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
@@ -87,11 +83,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
         case MessageType::SET_DUBAI_DB:
             DumpDubaiAndMoveDb();
             break;
-        case MessageType::GPU_COUNTER_HB_REQ:
-        case MessageType::CATCH_GPU_COUNTER:
-        case MessageType::GET_GPU_COUNTER_RESULT:
-            profiler = &GpuCounter::GetInstance();
-            break;
         case MessageType::CATCH_NETWORK_TRAFFIC:
         case MessageType::GET_NETWORK_TRAFFIC:
             profiler = &Network::GetInstance();
@@ -119,13 +110,32 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
-    Navigation &nav = Navigation::GetInstance();
-    nav.SetPackageName(pkg);
 }
+
+void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
+{
+    FPS &fps = FPS::GetInstance();
+    fps.SetProcessId(pid);
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetProcessId(pid);
+    RAM &ram = RAM::GetInstance();
+    ram.SetProcessId(pid);
+    CPU &cpu = CPU::GetInstance();
+    cpu.SetProcessId(pid);
+    Navigation &nav = Navigation::GetInstance();
+    nav.SetProcessId(pid);
+}
+
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
 {
     FPS &fps = FPS::GetInstance();
     fps.SetLayerName(layer);
+}
+
+void SpProfilerFactory::SetProfilerGameLayer(const std::string &isGameView)
+{
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    profilerFps.SetGameLayer(isGameView);
 }
 
 void SpProfilerFactory::SetByTrace(std::string message)
@@ -214,17 +224,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         case CommandType::CT_SNAPSHOT:
             if (cmdFlag) {
                 profiler = &Capture::GetInstance();
-            }
-            break;
-        case CommandType::CT_HW:
-            break;
-        case CommandType::CT_GC:
-            if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_INIT) {
-                std::map<std::string, std::string> retMap;
-                GpuCounter::GetInstance().Init("/data/local/tmp/", retMap);
-                profiler = &GpuCounter::GetInstance();
-            } else if (GpuCounter::GetInstance().GetStatus() == GpuCounter::GC_START) {
-                GpuCounter::GetInstance().Check();
             }
             break;
         default:

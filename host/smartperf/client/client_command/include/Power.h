@@ -26,6 +26,7 @@ public:
         static Power instance;
         return instance;
     }
+    void SetRkFlag();
 
 private:
     Power() {};
@@ -33,6 +34,7 @@ private:
     Power &operator = (const Power &);
     const std::string currentNowPath = "/sys/class/power_supply/Battery/current_now";
     const std::string voltageNowPath = "/sys/class/power_supply/Battery/voltage_now";
+    bool rkFlag = false;
 };
 }
 }
