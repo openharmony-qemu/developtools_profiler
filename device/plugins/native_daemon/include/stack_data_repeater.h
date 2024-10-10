@@ -61,7 +61,7 @@ public:
     explicit StackDataRepeater(size_t maxSize);
     ~StackDataRepeater();
     bool PutRawStack(const std::shared_ptr<RawStack>& rawData, bool isRecordAccurately);
-    bool PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray);
+    bool PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount);
     std::shared_ptr<RawStack> TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
         std::shared_ptr<RawStack> batchRawStack[], uint32_t statInterval, bool& isTimeOut);
     void Close();
