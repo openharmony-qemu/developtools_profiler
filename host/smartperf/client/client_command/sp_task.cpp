@@ -467,7 +467,8 @@ void SPTask::StopTask()
 
     isRunning = false;
     isInit = false;
-    realTimeStar = 0;
+    realTimeStart = 0;
+
     if (thread.joinable()) {
         thread.join();
     }
@@ -636,13 +637,12 @@ void SPTask::StopRecord()
     vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
-
     recordState = false;
 }
 
 time_t SPTask::GetRealStartTime() const
 {
-    return time_t realTimeStart;
+    return realTimeStart;
 }
 }
 }

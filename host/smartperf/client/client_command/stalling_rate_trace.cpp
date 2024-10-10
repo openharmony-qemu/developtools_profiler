@@ -175,7 +175,7 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
 {
     if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
         line.find("H:APP_LIST_FLING,") != std::string::npos ||
-        line.find("H:WEB_LIST_FLING") != std::string::npos ||
+        line.find("H:WEB_LIST_FLING,") != std::string::npos ||
         line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos ||
         line.find("H:APP_TRANSITION_TO_OTHER_APP,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||

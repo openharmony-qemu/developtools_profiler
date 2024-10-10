@@ -108,7 +108,7 @@ namespace OHOS {
                 } else if (first == "para0") {
                     eventName = second;
                 } else if (first == "time") {
-                    realTimestamp = std::to_string(std::stoll(second)-SPTask::GetInstance().GetRealStartTime());
+                    realTimestamp = std::to_string(std::stoll(second) - SPTask::GetInstance().GetRealStartTime());
                     timestamp = std::to_string(std::stoll(second) - params.startTime);
                 } else if (first == "enable") {
                     enable = second;
@@ -117,7 +117,7 @@ namespace OHOS {
                 }
             }
             item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r\n";
-            sdkDataRealtimeData += source + "_" + timestamp + "_" + eventName + "_" + enable + "_" + value + ";";
+            sdkDataRealtimeData += source + "_" + realTimestamp + "_" + eventName + "_" + enable + "_" + value + ";";
             return item;
         }
 
@@ -150,7 +150,6 @@ namespace OHOS {
 
                 std::size_t startPosition = start + 1;
                 std::size_t length = end > start ? end - start - 1 : 0;
-
                 if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
                     processFlag = false;
                     break;
@@ -160,7 +159,6 @@ namespace OHOS {
                 resStr += ProcessData(message, params);
 
                 receiveBuffer.erase(0, end + 1);
-
                 const int bufferSizeCheck = 2;
                 if (receiveBuffer.size() <= bufferSizeCheck) {
                     processFlag = false;
