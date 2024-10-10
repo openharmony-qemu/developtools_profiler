@@ -40,7 +40,7 @@ public:
         " -profilerfps    get refresh fps and timestamp \n"
         " -sections       set collection time period(using with profilerfps)\n"
         " -t              get remaining battery power and temperature.. \n"
-        " -p              get battery power consumption and voltage \n"
+        " -p              get battery power consumption and voltage(Not supported by some devices) \n"
         " -r              get process memory and total memory \n"
         " -snapshot       get screen capture\n"
         " -net            get uplink and downlink traffic\n"

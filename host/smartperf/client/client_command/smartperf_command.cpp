@@ -28,6 +28,7 @@
 #include "include/sp_log.h"
 #include "include/RAM.h"
 #include "include/common.h"
+
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)

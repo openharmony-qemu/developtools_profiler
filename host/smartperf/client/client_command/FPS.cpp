@@ -27,6 +27,7 @@
 #include "include/Capture.h"
 #include "include/FPS.h"
 #include "include/startup_delay.h"
+#include "include/profiler_fps.h"
 #include "include/sp_log.h"
 #include "include/common.h"
 #include <sys/wait.h>
@@ -43,19 +44,7 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetFpsInfo();
     }
     prevResultFpsInfo = fpsInfoResult;
-    std::string screenInfo;
-    SPUtils::LoadFile(screenPath, screenInfo);
-    size_t pos = 0;
-    std::string token;
-    std::string value;
-    while ((pos = screenInfo.find(";")) != std::string::npos) {
-        token = screenInfo.substr(0, pos);
-        screenInfo.erase(0, pos + 1);
-        if (token.find("current_fps:") != std::string::npos) {
-            value = token.substr(token.find(":") + 1);
-            break;
-        }
-    }
+    std::string value = FindFpsRefreshrate();
     result["refreshrate"] = value;
     if (processFlag) {
         result["fps"] = "NA";
@@ -127,7 +116,13 @@ FpsInfo FPS::GetFpsInfo()
     }
     bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
     if (onTop) {
-        std::string uniteLayer = "UniRender";
+        std::string uniteLayer;
+        if (!rkFlag) {
+            uniteLayer = "UniRender";
+        } else {
+            ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+            uniteLayer = profilerFps.GetSurface();
+        }
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
@@ -244,6 +239,37 @@ void FPS::CalcFpsAndJitters()
         prevScreenTimestamp = curScreenTimestamp;
         prevlastScreenTimestamp = curScreenTimestamp;
     }
+}
+
+void FPS::SetRkFlag()
+{
+    rkFlag = true;
+}
+
+std::string FPS::FindFpsRefreshrate()
+{
+    std::string screenInfo;
+    SPUtils::LoadFile(screenPath, screenInfo);
+    size_t pos = 0;
+    std::string token;
+    std::string value;
+    if (!rkFlag) {
+        while ((pos = screenInfo.find(";")) != std::string::npos) {
+            token = screenInfo.substr(0, pos);
+            screenInfo.erase(0, pos + 1);
+            if (token.find("current_fps:") != std::string::npos) {
+                value = token.substr(token.find(":") + 1);
+                break;
+            }
+        }
+    } else {
+            std::string screen = OHOS::SmartPerf::SPUtils::GetScreen();
+            std::string start = "refreshrate=";
+            size_t startPos = screen.find(start) + start.length();
+            size_t endPos = screen.length();
+            value = screen.substr(startPos, endPos - startPos);
+        }
+    return value;
 }
 }
 }

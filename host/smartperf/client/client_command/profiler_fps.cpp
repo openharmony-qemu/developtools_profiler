@@ -277,7 +277,13 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     processFlag = false;
     fpsInfoMax.fps = 0;
-    std::string uniteLayer = "UniRender";
+    std::string uniteLayer;
+    if (!rkFlag) {
+        uniteLayer = "UniRender";
+    } else {
+        ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+        uniteLayer = profilerFps.GetSurface();
+    }
     if (ohFlag) {
         uniteLayer = GetSurface();
     }
@@ -456,6 +462,10 @@ std::string ProfilerFPS::GetGameLayer()
     }
     LOGI("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
+}
+void ProfilerFPS::SetRkFlag()
+{
+    rkFlag = true;
 }
 }
 }

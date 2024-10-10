@@ -682,5 +682,14 @@ bool SPUtils::IsFindForeGround(std::string line)
         return false;
     }
 }
+bool SPUtils::IsFindAbilist()
+{
+    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
+    if (abilist.find("arm") != std::string::npos) {
+        return true;
+    } else {
+        return false;
+    }
+}
 }
 }

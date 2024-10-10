@@ -21,22 +21,31 @@ namespace SmartPerf {
 std::map<std::string, std::string> Power::ItemData()
 {
     std::map<std::string, std::string> result;
-    std::string currentNow;
-    SPUtils::LoadFile(currentNowPath, currentNow);
-    std::string voltageNow;
-    SPUtils::LoadFile(voltageNowPath, voltageNow);
-    result["currentNow"] = currentNow;
-    result["voltageNow"] = voltageNow;
-    if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {
-        result["currentNow"] = "NA";
+    if (!rkFlag) {
+        std::string currentNow;
+        SPUtils::LoadFile(currentNowPath, currentNow);
+        std::string voltageNow;
+        SPUtils::LoadFile(voltageNowPath, voltageNow);
+        result["currentNow"] = currentNow;
+        result["voltageNow"] = voltageNow;
+        if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {
+            result["currentNow"] = "NA";
+        }
+        if (result.find("voltageNow") != result.end() && result["voltageNow"].empty()) {
+            result["voltageNow"] = "NA";
+        }
+        LOGI("currentNow: %s", currentNow.c_str());
+        LOGI("voltageNow: %s", voltageNow.c_str());
+        LOGI("Power::ItemData map size(%u)", result.size());
+    } else {
+        result["failed"] = "RK does not support power acquisition";
+        LOGI("failed:RK does not support power acquisition");
     }
-    if (result.find("voltageNow") != result.end() && result["voltageNow"].empty()) {
-        result["voltageNow"] = "NA";
-    }
-    LOGI("currentNow: %s", currentNow.c_str());
-    LOGI("voltageNow: %s", voltageNow.c_str());
-    LOGI("Power::ItemData map size(%u)", result.size());
     return result;
+}
+void Power::SetRkFlag()
+{
+    rkFlag = true;
 }
 }
 }
