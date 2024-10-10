@@ -668,7 +668,7 @@ HWTEST_F(FtraceFsOpsTest, EnableTracingFalse, TestSize.Level1)
  */
 HWTEST_F(FtraceFsOpsTest, DisableTracingNormal, TestSize.Level1)
 {
-    EXPECT_TRUE(FtraceFsOps::GetInstance().EnableTracing());
+    EXPECT_TRUE(FtraceFsOps::GetInstance().DisableTracing());
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/tracing_on";
     std::string content = FileUtils::ReadFile(path);
     EXPECT_STREQ(content.c_str(), "0\n");
