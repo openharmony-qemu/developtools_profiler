@@ -27,8 +27,9 @@
 #include "include/Capture.h"
 #include "include/FPS.h"
 #include "include/startup_delay.h"
+#include "include/profiler_fps.h"
 #include "include/sp_log.h"
-#include "common.h"
+#include "include/common.h"
 #include <sys/wait.h>
 #include <sys/types.h>
 namespace OHOS {
@@ -39,24 +40,11 @@ std::map<std::string, std::string> FPS::ItemData()
     FpsInfo fpsInfoResult;
     if (surfaceViewName.length() > 0) {
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
-        prevResultFpsInfo = fpsInfoResult;
     } else {
         fpsInfoResult = GetFpsInfo();
-        prevResultFpsInfo = fpsInfoResult;
     }
-    std::string screenInfo;
-    SPUtils::LoadFile(screenPath, screenInfo);
-    size_t pos = 0;
-    std::string token;
-    std::string value;
-    while ((pos = screenInfo.find(";")) != std::string::npos) {
-        token = screenInfo.substr(0, pos);
-        screenInfo.erase(0, pos + 1);
-        if (token.find("current_fps:") != std::string::npos) {
-            value = token.substr(token.find(":") + 1);
-            break;
-        }
-    }
+    prevResultFpsInfo = fpsInfoResult;
+    std::string value = FindFpsRefreshrate();
     result["refreshrate"] = value;
     if (processFlag) {
         result["fps"] = "NA";
@@ -67,8 +55,8 @@ std::map<std::string, std::string> FPS::ItemData()
             fpsInfoResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(fpsInfoResult.fps);
-        LOGI("result.fps====: %s", std::to_string(fpsInfoResult.fps).c_str());
-        LOGI("result.curTime====: %s", std::to_string(fpsInfoResult.curTime).c_str());
+        LOGI("result.fps: %s", std::to_string(fpsInfoResult.fps).c_str());
+        LOGI("result.curTime: %s", std::to_string(fpsInfoResult.curTime).c_str());
         std::string jitterStr = "";
         std::string split = "";
         for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
@@ -78,10 +66,9 @@ std::map<std::string, std::string> FPS::ItemData()
             jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
         }
         result["fpsJitters"] = jitterStr;
-        LOGI("result.jitters====: %s", jitterStr.c_str());
+        LOGI("result.jitters: %s", jitterStr.c_str());
         SetFpsCurrentFpsTime(fpsInfoResult);
     }
-    LOGI("FPS::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -103,29 +90,21 @@ void FPS::SetPackageName(std::string pName)
 {
     pkgName = std::move(pName);
 }
+
+void FPS::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
+
 void FPS::SetLayerName(std::string sName)
 {
     surfaceViewName = std::move(sName);
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
-    GetCurrentTime();
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
     fpsInfoMax = GetSurfaceFrame(sName);
     return fpsInfoMax;
-}
-
-void FPS::GetCurrentTime()
-{
-    for (int i = 0; i < fifty; i++) {
-        struct timespec time1 = { 0 };
-        clock_gettime(CLOCK_MONOTONIC, &time1);
-        int curTimeNow = static_cast<int>(time1.tv_sec - 1);
-        if (curTimeNow == prevResultFpsInfo.curTime) {
-            usleep(sleepNowTime);
-        } else {
-            break;
-        }
-    }
 }
 
 FpsInfo FPS::GetFpsInfo()
@@ -135,17 +114,19 @@ FpsInfo FPS::GetFpsInfo()
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-    bool onTop = IsForeGround();
+    bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
     if (onTop) {
-        LOGI("onTop===========");
-        std::string uniteLayer = "UniRender";
-        GetCurrentTime();
+        std::string uniteLayer;
+        if (!rkFlag) {
+            uniteLayer = "UniRender";
+        } else {
+            ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+            uniteLayer = profilerFps.GetSurface();
+        }
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        std::string processId = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(pkgName);
-        LOGI("FPS::processId -- %s", processId.c_str());
+        LOGI("FPS:app is in the background");
         if (processId.empty()) {
             processFlag = true;
             fpsInfoMax.Clear();
@@ -208,10 +189,8 @@ void FPS::ReadDataFromPipe(int fd)
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("FPS::time1.tv_sec: %s", std::to_string(time1.tv_sec).c_str());
-    LOGI("FPS::time1.tv_nsec: %s", std::to_string(time1.tv_nsec).c_str());
-    LOGI("FPS::fpsInfo.curTime: %s", std::to_string(fpsInfo.curTime).c_str());
-    LOGI("FPS::psInfo.currTimeDump: %s", std::to_string(fpsInfo.currTimeDump).c_str());
+    LOGI("FPS:fpsInfo.curTime: %d", fpsInfo.curTime);
+    LOGI("FPS:psInfo.currTimeDump: %lld", fpsInfo.currTimeDump);
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
         LOGE("FPS::Failed to open file descriptor");
@@ -262,44 +241,35 @@ void FPS::CalcFpsAndJitters()
     }
 }
 
-bool FPS::IsForeGround()
+void FPS::SetRkFlag()
 {
-    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
-    char buf[1024] = {'\0'};
-    std::string appLine = "app name [" + pkgName;
-    std::string bundleLine = "bundle name [" + pkgName;
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return false;
-    }
-    bool tag = false;
-    while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line = buf;
-        if (line.find(appLine) != std::string::npos) {
-            isFoundAppName = true;
-        }
-        if (line.find(bundleLine) != std::string::npos) {
-            isFoundBundleName = true;
-        }
-        if (isFoundAppName || isFoundBundleName) {
-            if (line.find("app state") != std::string::npos) {
-                tag = IsFindForeGround(line);
-                isFoundAppName = false;
-                isFoundBundleName = false;
+    rkFlag = true;
+}
+
+std::string FPS::FindFpsRefreshrate()
+{
+    std::string screenInfo;
+    SPUtils::LoadFile(screenPath, screenInfo);
+    size_t pos = 0;
+    std::string token;
+    std::string value;
+    if (!rkFlag) {
+        while ((pos = screenInfo.find(";")) != std::string::npos) {
+            token = screenInfo.substr(0, pos);
+            screenInfo.erase(0, pos + 1);
+            if (token.find("current_fps:") != std::string::npos) {
+                value = token.substr(token.find(":") + 1);
+                break;
             }
         }
-    }
-    pclose(fd);
-    return tag;
-}
-bool FPS::IsFindForeGround(std::string line) const
-{
-    std::string foreGroundTag = line.substr(line.find("#") + 1);
-    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
-        return true;
     } else {
-        return false;
-    }
+            std::string screen = OHOS::SmartPerf::SPUtils::GetScreen();
+            std::string start = "refreshrate=";
+            size_t startPos = screen.find(start) + start.length();
+            size_t endPos = screen.length();
+            value = screen.substr(startPos, endPos - startPos);
+        }
+    return value;
 }
 }
 }

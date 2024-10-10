@@ -57,6 +57,14 @@ bool LoadFile(const std::string &filePath, std::string &content);
  * @return true
  * @return false
  */
+bool LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak, std::string &result);
+/**
+ * @brief
+ *
+ * @param path
+ * @return std::string
+ */
+
 bool LoadCmd(const std::string &cmd, std::string &result);
 /**
  * @brief
@@ -128,6 +136,11 @@ bool VerifyValueStr(std::map<std::string, std::string>& mapInfo, std::string& er
 bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
     std::string &errorInfo);
 bool IsHmKernel();
+std::string GetCpuNum();
+void GetCurrentTime(int num, int prevTime);
+bool IsForeGround(std::string &pkg);
+bool IsFindForeGround(std::string line);
+bool IsFindAbilist();
 };
 }
 }

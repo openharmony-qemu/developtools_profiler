@@ -46,12 +46,14 @@ public:
     std::vector<CpuUsageInfos> GetCpuUsage();
     std::map<std::string, std::string> GetSysProcessCpuLoad() const;
     void SetPackageName(const std::string &pName);
+    void SetProcessId(const std::string &pid);
 
 private:
     CPU() {};
     CPU(const CPU &);
     CPU &operator = (const CPU &);
     std::string packageName = "";
+    std::string processId = "";
 };
 }
 }

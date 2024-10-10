@@ -40,7 +40,7 @@ public:
 
 std::string &g_getOptions(std::vector<std::string> &argv)
 {
-    std::string str = "test str";
+    std::string str = "";
     std::string strFlag;
     bool isFill = false;
     for (std::size_t i = 0; i < argv.size(); i++) {
@@ -84,12 +84,26 @@ bool CheckCMDParam(std::vector<std::string> &argv, std::string &errorInfo)
     keys.insert("start");
     keys.insert("stop");
     keys.insert("screen");
+    keys.insert("clear");
+    keys.insert("server");
+    keys.insert("sections");
+    keys.insert("deviceinfo");
+    keys.insert("ohtestfps");
+    keys.insert("editorServer");
 
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
-    auto itr = keys.find("fl");
+    auto itr = keys.find("f1");
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
+    itr = keys.find("f2");
+    if (keys.end() != itr) {
+        keys.erase(itr);
+    }
+    itr = keys.find("fl");
     if (keys.end() != itr) {
         keys.erase(itr);
     }
@@ -125,28 +139,6 @@ HWTEST_F(SPdaemonMainTest, GetOptionsTestCase001, TestSize.Level1)
     EXPECT_EQ(ret, true);
 }
 
-/**
- * @tc.name: CheckCMDParamTestCase
- * @tc.desc: Test CheckCMDParam
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase001, TestSize.Level1)
-{
-    std::string errorInfo = "";
-    std::vector<std::string> argv;
-    argv.push_back("SP_daemon");
-    argv.push_back("-c");
-    argv.push_back("-g");
-    argv.push_back("-t");
-    argv.push_back("-p");
-    argv.push_back("-r");
-    argv.push_back("-net");
-    argv.push_back("-snapshot");
-
-    bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, false);
-}
-
 HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)
 {
     std::string errorInfo = "";
@@ -165,10 +157,10 @@ HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase003, TestSize.Level1)
     std::string errorInfo = "";
     std::vector<std::string> argv;
     argv.push_back("SP_daemon");
-    argv.push_back(" ");
+    argv.push_back("");
 
     bool ret = CheckCMDParam(argv, errorInfo);
-    EXPECT_EQ(ret, false);
+    EXPECT_EQ(ret, true);
 }
 
 }

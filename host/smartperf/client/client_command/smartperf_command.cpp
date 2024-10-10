@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iterator>
 #include "unistd.h"
+#include "include/heartbeat.h"
 #include "include/sp_utils.h"
 #include "include/sp_csv_util.h"
 #include "include/sp_profiler_factory.h"
@@ -26,8 +27,10 @@
 #include "include/smartperf_command.h"
 #include "include/sp_log.h"
 #include "include/RAM.h"
-#include "common.h"
-#include "GpuCounter.h"
+#include "include/common.h"
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -41,18 +44,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         std::string result = "";
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         daemon(0, 0);
-        InitSomething();
-        SpThreadSocket udpThreadSocket;
-        SpThreadSocket udpExThreadSocket;
-        SpThreadSocket tcpThreadSocket;
-        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
-        sleep(1);
-        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
-        sleep(1);
-        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-        tcpSocket.join();
-        udpSocket.join();
-        udpexSocket.join();
+        CreateSocketThread();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -86,7 +78,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << smartPerfVersion << std::endl;
+        std::cout << "Version: " << smartPerfVersion << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
@@ -96,7 +88,8 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
     if (type == CommandHelp::CLEAR) {
         sd.GetSpClear();
     }
-    if (type == CommandHelp::SERVER) {
+    if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
+        sd.ClearOldServer();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
@@ -104,19 +97,28 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         }
-        InitSomething();
-        SpThreadSocket udpThreadSocket;
-        SpThreadSocket udpExThreadSocket;
-        SpThreadSocket tcpThreadSocket;
-        auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
-        sleep(1);
-        auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
-        sleep(1);
-        auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-        tcpSocket.join();
-        udpSocket.join();
-        udpexSocket.join();
+        CreateSocketThread();
     }
+}
+
+void SmartPerfCommand::CreateSocketThread() const
+{
+    InitSomething();
+    SpThreadSocket udpThreadSocket;
+    SpThreadSocket udpExThreadSocket;
+    SpThreadSocket tcpThreadSocket;
+    auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+    sleep(1);
+    auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+    sleep(1);
+    auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
+    Heartbeat &heartbeat = Heartbeat::GetInstance();
+    heartbeat.UpdatestartTime();
+    std::thread threadHeartbeat([&heartbeat]() {heartbeat.HeartbeatRule(); });
+    threadHeartbeat.detach();
+    tcpSocket.join();
+    udpSocket.join();
+    udpexSocket.join();
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
@@ -168,26 +170,23 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 {
     int rc = 0;
     std::string errInfo;
-
+    if (!pkgName.empty()) {
+        std::string processId = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        processId = sp.GetPidByPkg(pkgName);
+        SpProfilerFactory::SetProfilerPidByPkg(processId);
+    }
     for (size_t j = 0; j < configs.size(); j++) {
         std::string curParam = configs[j];
+
+        if (curParam.find("-gc") != std::string::npos) {
+            continue;
+        }
+
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
         if (profiler != nullptr) {
             std::map<std::string, std::string> data = profiler->ItemData();
             spMap.insert(data.cbegin(), data.cend());
-            auto cit = data.find("gpu_counter");
-            if (cit == data.end()) {
-                continue;
-            }
-
-            if (cit->second == "true") {
-                rc = 1;
-            } else {
-                cit = data.find("error");
-                errInfo = "gpu_counter error:";
-                errInfo += (cit != data.end()) ? cit->second : "run failed";
-                break;
-            }
         }
     }
 
@@ -200,16 +199,30 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     return rc;
 }
 
+void SmartPerfCommand::SaveGpuCounter() const
+{
+    std::string outGpuCounterDataPath = "/data/local/tmp";
+    gpuCounter.SaveData(outGpuCounterDataPath);
+    gpuCounter.StopCollect();
+}
+
 std::string SmartPerfCommand::ExecCommand()
 {
+    IsFindDeviceType();
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     int rc = 0;
     int index = 0;
-    bool callGpuCounterResult = false;
     std::vector<SPData> vmap;
     const long long freq = 1000;
     num = num + 1;
+    bool gcFlag = false;
+    for (std::string itConfig : configs) {
+        if (itConfig.find("-gc") != std::string::npos) {
+            gpuCounter.StartCollect(GpuCounter::GC_START);
+            gcFlag = true;
+        }
+    }
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -217,9 +230,10 @@ std::string SmartPerfCommand::ExecCommand()
         rc = GetItemInfo(spMap);
         if (rc == -1) {
             break;
-        } else if (rc == 1) {
-            callGpuCounterResult = true;
         }
+        std::map<std::string, std::string> gpuCounterDataMap;
+        gpuCounter.GetGpuRealtimeData(gpuCounterDataMap);
+        spMap.insert(gpuCounterDataMap.begin(), gpuCounterDataMap.end());
         std::cout << std::endl;
         PrintMap(spMap, index);
         std::cout << std::endl;
@@ -235,12 +249,8 @@ std::string SmartPerfCommand::ExecCommand()
         }
         index++;
     }
-    if (callGpuCounterResult) {
-        const std::map<std::string, std::string> data = GpuCounter::GetInstance().ItemData();
-        PrintfExecCommand(data);
-        SPData spdata;
-        spdata.values.insert(data.begin(), data.end());
-        vmap.push_back(spdata);
+    if (gcFlag) {
+        SaveGpuCounter();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     LOGI("SmartPerfCommand::WriteCsv start");
@@ -272,9 +282,21 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
     if (SPUtils::LoadCmd(stat, cmdResult)) {
-        printf("Privilege escalation! \n");
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };
+}
+
+void SmartPerfCommand::IsFindDeviceType()
+{
+    bool FindAbilistResult = SPUtils::IsFindAbilist();
+    if (!FindAbilistResult) {
+        FPS &fps = FPS::GetInstance();
+        fps.SetRkFlag();
+        Power &power = Power::GetInstance();
+        power.SetRkFlag();
+        GPU &gpu = GPU::GetInstance();
+        gpu.SetRkFlag();
+    }
 }
 }
 }

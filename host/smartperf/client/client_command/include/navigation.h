@@ -30,8 +30,9 @@ public:
     }
     std::map<std::string, std::string> GetNavInfo() const;
     void SetPackageName(const std::string &pName);
-    std::string GetWinId(std::string processId) const;
+    std::string GetWinId(std::string navPid) const;
     std::map<std::string, std::string> GetNavResult(std::string winId) const;
+    void SetProcessId(const std::string &pid);
 private:
     Navigation() {};
     Navigation(const Navigation &);
@@ -42,6 +43,7 @@ private:
     const int paramTwelve = 12;
     const int paramTwo = 2;
     const int paramThree = 3;
+    std::string processId = "";
 };
 }
 }

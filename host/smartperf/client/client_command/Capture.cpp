@@ -25,34 +25,36 @@
 #include "wm_common.h"
 #include "png.h"
 #include <filesystem>
-#include "common.h"
+#include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
 using namespace OHOS::Media;
 using namespace OHOS::Rosen;
 std::map<std::string, std::string> Capture::ItemData()
 {
-    callNum++;
     std::map<std::string, std::string> result;
-    int two = 2;
-    if (callNum % two == 0) {
-        curTime = GetCurTimes();
-        if (isSocketMessage) {
-            std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".jpeg";
+    const int two = 2;
+    const int modResult = callNum % two;
+    callNum++;
+    curTime = GetCurTimes();
+    std::string screenCapPath = "data/local/tmp/capture/screenCap_" + std::to_string(curTime);
+    std::string path = "NA";
+    if (isSocketMessage) {
+        if (modResult == 0) {
+            path = screenCapPath + ".jpeg";
             result["capture"] = path;
-            Capture::TriggerGetCatchSocket(curTime);
+            TriggerGetCatchSocket(curTime);
             isSocketMessage = false;
-        } else {
-            std::string path = "data/local/tmp/capture/screenCap_" + std::to_string(curTime) + ".png";
-            result["capture"] = path;
-            Capture::TriggerGetCatch();
-            if (result.find("capture") != result.end() && result["capture"].empty()) {
-                result["capture"] = "NA";
-            }
         }
     } else {
-        result["capture"] = "NA";
+        if (modResult == 1) {
+            path = screenCapPath + ".png";
+            result["capture"] = path;
+            TriggerGetCatch();
+        }
     }
+    result["capture"] = path;
+
     LOGI("Capture::ItemData map size(%u)", result.size());
     return result;
 }
@@ -83,11 +85,9 @@ void Capture::ThreadGetCatch()
     std::ostringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-        printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());
     }
     if (!TakeScreenCap(savePath)) {
-        std::cout << "Screen Capture Failed:---" << errorRecv.str() << std::endl;
         LOGE("Screen Capture Failed!");
     }
     close(fd);
@@ -116,7 +116,6 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
 
     auto fd = open(realPath, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
-        printf("Failed to open file: %s\n", savePath.c_str());
         LOGI("Failed to open file: %s", savePath.c_str());
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
@@ -147,12 +146,10 @@ void Capture::TriggerGetCatchSocket(long long captureTime) const
 
 bool Capture::TakeScreenCap(const std::string &savePath) const
 {
-    // get PixelMap from DisplayManager API
     Rosen::DisplayManager &displayMgr = Rosen::DisplayManager::GetInstance();
     std::shared_ptr<Media::PixelMap> pixelMap = displayMgr.GetScreenshot(displayMgr.GetDefaultDisplayId());
     static constexpr int bitmapDepth = 8;
     if (pixelMap == nullptr) {
-        std::cout << "Failed to get display pixelMap" << std::endl;
         LOGE("Failed to get display pixelMap");
         return false;
     }
@@ -162,13 +159,11 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     auto stride = static_cast<uint32_t>(pixelMap->GetRowBytes());
     png_structp pngStruct = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if (pngStruct == nullptr) {
-        std::cout << "error: png_create_write_struct nullptr!" << std::endl;
         LOGE("png_create_write_struct nullptr!");
         return false;
     }
     png_infop pngInfo = png_create_info_struct(pngStruct);
     if (pngInfo == nullptr) {
-        std::cout << "error: png_create_info_struct error nullptr!" << std::endl;
         LOGE("png_create_info_struct error nullptr!");
         png_destroy_write_struct(&pngStruct, nullptr);
         return false;
@@ -179,7 +174,6 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     }
     FILE *fp = fopen(realPath, "wb");
     if (fp == nullptr) {
-        std::cout << "error: open file error!" << std::endl;
         LOGE("open file error!");
         png_destroy_write_struct(&pngStruct, &pngInfo);
         return false;

@@ -23,7 +23,8 @@
 #include "startup_delay.h"
 #include "sp_log.h"
 #include "common.h"
-#include "GpuCounter.h"
+#include "heartbeat.h"
+#include "Dubai.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -65,6 +66,7 @@ public:
         }
         if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
             LOGI("Socket UDP Init called! type(%d)", static_cast<int>(type));
+            SocketHeartbeat();
             while (1) {
                 spSocket.Recvfrom();
                 HandleMsg(spSocket);
@@ -76,6 +78,7 @@ public:
     }
     void TypeTcp(SpServerSocket &spSocket) const
     {
+        SocketHeartbeat();
         while (1) {
             int procFd = spSocket.Accept();
             std::cout << "Socket TCP procFd: " << procFd << std::endl;
@@ -92,51 +95,87 @@ public:
         }
     }
     // TCP
+    void InitRecv(std::string recvStr, SpServerSocket &spSocket) const
+    {
+        std::string errorInfo;
+        std::string checkStr = recvStr.substr(std::string("init::").length());
+        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
+            LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
+            spSocket.Send("init::False,\"error\":" + errorInfo);
+            return;
+        }
+        ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
+        LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
+        spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+    }
+    void StartRecv(SpServerSocket &spSocket) const
+    {
+        if (flagRunning) {
+            LOGI("SP_daemon is running");
+            spSocket.Send("SP_daemon is running");
+            return;
+        }
+        auto lambdaTask = [](const std::string &data) {
+            std::cout << data << std::endl;
+        };
+        ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+        SPTask::GetInstance().StartRecord();
+        LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
+        if (code == ErrCode::OK) {
+            spSocket.Send("start::True");
+            flagRunning = true;
+        } else if (code == ErrCode::FAILED) {
+            spSocket.Send("start::False");
+        }
+    }
+    void StartRecvRealtime(SpServerSocket &spSocket) const
+    {
+        auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
+        ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
+        LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
+        if (code == ErrCode::OK) {
+            spSocket.Send("start::True");
+        } else if (code == ErrCode::FAILED) {
+            spSocket.Send("start::False");
+        }
+    }
+    void StopRecvRealtime(SpServerSocket &spSocket) const
+    {
+        SPTask::GetInstance().StopTask();
+        LOGI("stop::True");
+        spSocket.Send("stop::True");
+        flagRunning = false;
+        spSocket.Close();
+    }
+    void StartRecvRecord(SpServerSocket &spSocket) const
+    {
+        LOGI("startRecord::True");
+        SPTask::GetInstance().StartRecord();
+
+        spSocket.Send("startRecord::True");
+    }
+    void StopRecvRecord(SpServerSocket &spSocket) const
+    {
+        LOGI("stopRecord::True");
+        SPTask::GetInstance().StopRecord();
+
+        spSocket.Send("stopRecord::True");
+    }
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
+        SocketHeartbeat();
         if (recvStr.find("init::") != std::string::npos) {
-            std::string errorInfo;
-            std::string checkStr = recvStr.substr(std::string("init::").length());
-            if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
-                LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
-                spSocket.Send("init::False,\"error\":" + errorInfo);
-                return;
-            }
-            ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
-            LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
-            spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+            InitRecv(recvStr, spSocket);
         } else if (recvStr.find("start:::") != std::string::npos) {
-            if (flagRunning) {
-                LOGI("SP_daemon is running");
-                spSocket.Send("SP_daemon is running");
-                return;
-            }
-            auto lambdaTask = [](const std::string &data) {
-                std::cout << data << std::endl;
-            };
-            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-            LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
-            if (code == ErrCode::OK) {
-                spSocket.Send("start::True");
-                flagRunning = true;
-            } else if (code == ErrCode::FAILED) {
-                spSocket.Send("start::False");
-            }
+            StartRecv(spSocket);
         } else if (recvStr.find("start::") != std::string::npos) {
-            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
-            ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-            LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
-            if (code == ErrCode::OK) {
-                spSocket.Send("start::True");
-            } else if (code == ErrCode::FAILED) {
-                spSocket.Send("start::False");
-            }
+            StartRecvRealtime(spSocket);
         } else if (recvStr.find("stop::") != std::string::npos) {
-            SPTask::GetInstance().StopTask();
-            LOGI("stop::True");
-            spSocket.Send("stop::True");
-            flagRunning = false;
-            spSocket.Close();
+            StopRecvRealtime(spSocket);
+        } else if (recvStr.find("startRecord::") != std::string::npos) {
+            StartRecvRecord(spSocket);
+        } else if (recvStr.find("stopRecord::") != std::string::npos) {
+            StopRecvRecord(spSocket);
         } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
             EditorRecv(recvStr, spSocket);
         }
@@ -176,37 +215,20 @@ public:
         auto iterator = MESSAGE_MAP.begin();
         while (iterator != MESSAGE_MAP.end()) {
             std::string recvBuf = spSocket.RecvBuf();
+            if (recvBuf.size() != 0) {
+                Heartbeat &heartbeat = Heartbeat::GetInstance();
+                heartbeat.UpdatestartTime();
+            }
             if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
                 ++iterator;
                 continue;
             }
             SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
-            if (profiler == nullptr && (iterator->first == MessageType::SET_PKG_NAME)) {
-                retCode = SplitMsg(recvBuf);
-                SpProfilerFactory::SetProfilerPkg(retCode);
-                spSocket.Sendto(retCode);
-            } else if (profiler == nullptr && (iterator->first == MessageType::FPS_STOP)) {
-                spSocket.Sendto(resultFPS);
-                resultFPS = "FPS||";
-            } else if (profiler == nullptr && (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
-                iterator->first == MessageType::CATCH_TRACE_CMD)) {
-                SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
-            } else if (profiler == nullptr && (iterator->first == MessageType::BACK_TO_DESKTOP)) {
-                BackDesktop();
-            } else if (profiler == nullptr) {
-                retCode = iterator->second;
-                spSocket.Sendto(retCode);
+            if (profiler == nullptr) {
+                HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
             } else {
                 std::map<std::string, std::string> data;
-                if (iterator->first == MessageType::GPU_COUNTER_HB_REQ) {
-                    GpuCounter::GetInstance().Check();
-                    break; // No need to return
-                } else if (iterator->first == MessageType::CATCH_GPU_COUNTER) {
-                    std::string curPkgName = SplitMsg(recvBuf);
-                    GpuCounter::GetInstance().Init(curPkgName, data);
-                } else if (iterator->first == MessageType::GET_GPU_COUNTER_RESULT) {
-                    data = profiler->ItemData();
-                } else if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
+                if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
                     profiler->ItemData(); // record the collection point for the first time,no need to return
                     data["network_traffic"] = "true";
                 } else if (iterator->first == MessageType::GET_NETWORK_TRAFFIC) {
@@ -242,8 +264,78 @@ public:
                 }
             }
             spSocket.Sendto(resultfps);
+        } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
+            FetchCpuStats(spSocket, data);
         } else {
             retCode = MapToString(data);
+            spSocket.Sendto(retCode);
+        }
+    }
+    void SocketHeartbeat() const
+    {
+        Heartbeat &heartbeat = Heartbeat::GetInstance();
+        heartbeat.UpdatestartTime();
+    }
+    void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const
+    {
+        std::string resultCpuFrequency = "";
+        std::string resultCpuUsage = "";
+        std::string resultCpu = "";
+        int cpuFrequencyNum = 0;
+        int cpuUsageNum = 0;
+        int cpuFlag = 1;
+        while (cpuFlag) {
+            resultCpuFrequency = "cpu" + std::to_string(cpuFrequencyNum) + "Frequency";
+            resultCpuUsage = "cpu" + std::to_string(cpuUsageNum) + "Usage";
+            auto iterCpuFrequency = data.find(resultCpuFrequency);
+            auto iterCpuUsage = data.find(resultCpuUsage);
+            if (iterCpuFrequency != data.end()) {
+                resultCpuFrequency += "||" + iterCpuFrequency->second;
+                resultCpu += "$$" + resultCpuFrequency;
+                cpuFrequencyNum++;
+            } else {
+                cpuFlag = 0;
+            }
+            if (iterCpuUsage != data.end()) {
+                resultCpuUsage += "||" + iterCpuUsage->second;
+                resultCpu += "$$" + resultCpuUsage;
+                cpuUsageNum++;
+            } else {
+                cpuFlag = 0;
+            }
+        }
+        spSocket.Sendto(resultCpu);
+    }
+    void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    {
+        if (iterator->first == MessageType::SET_PKG_NAME) {
+            retCode = SplitMsg(recvBuf);
+            if (retCode.find("smartperf") != std::string::npos) {
+                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
+            }
+            std::string processId = "";
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(retCode);
+            SpProfilerFactory::SetProfilerPidByPkg(processId);
+            SpProfilerFactory::SetProfilerPkg(retCode);
+            spSocket.Sendto(retCode);
+        } else if (iterator->first == MessageType::FPS_STOP) {
+            spSocket.Sendto(resultFPS);
+            resultFPS = "FPS||";
+        } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
+            retCode = SplitMsg(recvBuf);
+            SpProfilerFactory::SetProfilerGameLayer(retCode);
+        } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
+            iterator->first == MessageType::CATCH_TRACE_CMD) {
+            SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+        } else if (iterator->first == MessageType::GET_CPU_NUM) {
+            retCode = SPUtils::GetCpuNum();
+            spSocket.Sendto(retCode);
+        } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
+            BackDesktop();
+        } else {
+            retCode = iterator->second;
             spSocket.Sendto(retCode);
         }
     }
