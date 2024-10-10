@@ -28,9 +28,7 @@
 #include "include/sp_log.h"
 #include "include/RAM.h"
 #include "include/common.h"
-#include "include/FPS.h"
-#include "include/GPU.h"
-#include "include/Power.h"
+
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
@@ -208,7 +206,6 @@ void SmartPerfCommand::SaveGpuCounter() const
 
 std::string SmartPerfCommand::ExecCommand()
 {
-    IsFindDeviceType();
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     int rc = 0;
@@ -284,19 +281,6 @@ void SmartPerfCommand::InitSomething()
     if (SPUtils::LoadCmd(stat, cmdResult)) {
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };
-}
-
-void SmartPerfCommand::IsFindDeviceType()
-{
-    bool FindAbilistResult = SPUtils::IsFindAbilist();
-    if (!FindAbilistResult) {
-        FPS &fps = FPS::GetInstance();
-        fps.SetRkFlag();
-        Power &power = Power::GetInstance();
-        power.SetRkFlag();
-        GPU &gpu = GPU::GetInstance();
-        gpu.SetRkFlag();
-    }
 }
 }
 }

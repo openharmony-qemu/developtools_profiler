@@ -26,7 +26,9 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
-
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
 
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -213,6 +215,13 @@ int main(int argc, char *argv[])
              "Usage: SP_daemon [options] [arguments]" << std::endl << std::endl <<
              "Try `SP_daemon --help' for more options." << std::endl;
         return 0;
+    }
+    bool FindAbilistResult = OHOS::SmartPerf::SPUtils::IsFindAbilist();
+    if (!FindAbilistResult) {
+        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
     }
     if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
