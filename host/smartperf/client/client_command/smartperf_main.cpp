@@ -29,6 +29,7 @@
 #include "include/FPS.h"
 #include "include/GPU.h"
 #include "include/Power.h"
+#include "include/DDR.h"
 
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -222,6 +223,7 @@ int main(int argc, char *argv[])
         OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
         OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
         OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
     }
     if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
