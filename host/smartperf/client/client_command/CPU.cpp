@@ -182,9 +182,5 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
     }
     return processCpuInfo;
 }
-void CPU::IsFindHap()
-{
-    hapFlag = true;
-}
 }
 }

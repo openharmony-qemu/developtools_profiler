@@ -26,15 +26,12 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-    void SetRkFlag();
 
 private:
     DDR() {};
     DDR(const DDR &);
     DDR &operator = (const DDR &);
     std::string ddrCurFreqPath = "/sys/class/devfreq/ddrfreq/cur_freq";
-    std::string ddrCurFreqRkPath = "/sys/class/devfreq/fde60000.gpu/available_frequencies";
-    bool rkFlag = false;
 };
 };
 }
