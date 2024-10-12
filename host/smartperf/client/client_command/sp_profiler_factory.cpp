@@ -175,7 +175,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
     SpProfiler *profiler = nullptr;
     switch (commandType) {
         case CommandType::CT_C:
-            profiler = &CPU::GetInstance();
+            if (cmdFlag) {
+                profiler = &CPU::GetInstance();
+            }
             break;
         case CommandType::CT_G:
             profiler = &GPU::GetInstance();
