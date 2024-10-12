@@ -76,7 +76,7 @@ float GPU::GetRkGpuLoad()
     const std::string gpuLoadPath = "/sys/class/devfreq/fde60000.gpu/load";
     std::string rkLoad;
     SPUtils::LoadFile(gpuLoadPath, rkLoad);
-    int len = rkLoad.length();
+    size_t len = rkLoad.length();
     if (len > 0) {
         rkLoad = rkLoad.substr(0, len - 1);
     }
