@@ -376,6 +376,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         return ErrCode::FAILED;
     }
     isRunning = true;
+    realTimeStart = SPUtils::GetCurTime();
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
@@ -466,6 +467,7 @@ void SPTask::StopTask()
 
     isRunning = false;
     isInit = false;
+    realTimeStart = 0;
 
     if (thread.joinable()) {
         thread.join();
@@ -637,6 +639,10 @@ void SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
 
     recordState = false;
+}
+time_t SPTask::GetRealStartTime() const
+{
+    return realTimeStart;
 }
 }
 }
