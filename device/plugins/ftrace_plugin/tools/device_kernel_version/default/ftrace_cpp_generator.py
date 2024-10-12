@@ -151,8 +151,6 @@ class EventParserCodeGenerator(FtraceEventCodeGenerator):
 
     def generate_parse_functions(self, category, f):
         count = 0
-        if category not in self.grouped_event_formats.keys():
-            return
         for event in self.grouped_event_formats[category]:
             count += 1
             if count > 1:
