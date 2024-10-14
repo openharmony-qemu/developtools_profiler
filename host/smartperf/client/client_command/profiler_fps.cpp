@@ -439,7 +439,7 @@ std::string ProfilerFPS::GetGameLayer()
     }
     std::string start = "NodeId[";
     std::string end = "]";
-    size_t startPos = cmdResult.find(start)
+    size_t startPos = cmdResult.find(start);
     if (startPos == std::string::npos) {
         return gameLayer;
     }
