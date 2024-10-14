@@ -31,6 +31,11 @@
 #include "include/common.h"
 #include "cpu_collector.h"
 #include "collect_result.h"
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
+#include "include/DDR.h"
+#include "include/profiler_fps.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -689,6 +694,17 @@ bool SPUtils::IsFindAbilist()
         return true;
     } else {
         return false;
+    }
+}
+void SPUtils::SetRkFlag()
+{
+    bool FindAbilistResult = IsFindAbilist();
+    if (!FindAbilistResult) {
+        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
     }
 }
 }
