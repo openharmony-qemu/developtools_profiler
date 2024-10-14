@@ -846,7 +846,7 @@ void hook_free(void (*free_func)(void*), void* p)
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
-            holder->SendStackWithPayload(p, sizeof(uint64_t), nullptr, 0);
+            holder->SendStackWithPayload(&p, sizeof(uint64_t), nullptr, 0);
         }
         free_func(p);
 #ifdef PERFORMANCE_DEBUG
