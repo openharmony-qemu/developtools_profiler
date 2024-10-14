@@ -23,11 +23,7 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH = "/data/local/tmp/resources";
-#if defined(__LP64__)
-const std::string SO_PATH = "/system/lib64/libcpudataplugin.z.so";
-#else
-const std::string SO_PATH = "/system/lib/libcpudataplugin.z.so";
-#endif
+const std::string SO_PATH = "libcpudataplugin.z.so";
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/cpudataplugintest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 constexpr int TEST_PID = 1;
@@ -943,9 +939,7 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
 #endif // COVERAGE_TEST
     EXPECT_TRUE(PluginCpuinfoStub(plugin1, cpuData1, static_cast<int>(pid1), false, false));
     EXPECT_TRUE(PluginCpuinfoStub(plugin2, cpuData2, static_cast<int>(pid2), false, false));
-#ifdef __aarch64__
     EXPECT_LT(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());
-#endif
 
     while (waitpid(-1, nullptr, WNOHANG) == 0) {
         kill(pid1, SIGKILL);

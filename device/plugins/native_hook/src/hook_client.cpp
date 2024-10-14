@@ -206,7 +206,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr) {
+    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
         return 0;
     }
     uint32_t tagId = 0;
@@ -837,6 +837,29 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
 
 void hook_free(void (*free_func)(void*), void* p)
 {
+    if (g_ClientConfig.statisticsInterval > 0) {
+        if (!free_func) {
+            return;
+        }
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if ((holder != nullptr) && p) {
+            holder->SendStackWithPayload(&p, sizeof(uint64_t), nullptr, 0);
+        }
+        free_func(p);
+#ifdef PERFORMANCE_DEBUG
+        g_mallocTimes++;
+        struct timespec end = {};
+        clock_gettime(CLOCK_REALTIME, &end);
+        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+        if (g_mallocTimes % PRINT_INTERVAL == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE,
+                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+        }
+#endif
+        return;
+    }
     struct timespec freeTime = {};
     clock_gettime(g_ClientConfig.clockId, &freeTime);
     if (free_func) {
@@ -854,27 +877,6 @@ void hook_free(void (*free_func)(void*), void* p)
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
-
-    if (g_ClientConfig.freeEventOnlyAddrEnable) {
-        uint64_t addr = reinterpret_cast<uint64_t>(p);
-        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-        auto holder = weakClient.lock();
-        if (holder != nullptr) {
-            holder->SendStackWithPayload(&addr, sizeof(addr), nullptr, 0);
-        }
-#ifdef PERFORMANCE_DEBUG
-        g_mallocTimes++;
-        struct timespec end = {};
-        clock_gettime(CLOCK_REALTIME, &end);
-        g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-        if (g_mallocTimes % PRINT_INTERVAL == 0) {
-            PROFILER_LOG_ERROR(LOG_CORE,
-                "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-        }
-#endif
-        return;
-    }
 
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -1104,7 +1106,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     const char* stackendptr = nullptr;
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
-
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__

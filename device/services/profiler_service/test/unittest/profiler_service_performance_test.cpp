@@ -393,11 +393,7 @@ protected:
         if (processNum == 0) {
             // consume cpu
             CpuConfig protoConfig;
-#if defined(__LP64__)
-            void* handle = dlopen("/system/lib64/libcpudataplugin.z.so", RTLD_LAZY);
-#else
-            void* handle = dlopen("/system/lib/libcpudataplugin.z.so", RTLD_LAZY);
-#endif
+            void* handle = dlopen("libcpudataplugin.z.so", RTLD_LAZY);
             if (handle == nullptr) {
                 const int bufSize = 256;
                 char buf[bufSize] = { 0 };
@@ -970,7 +966,6 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
     keepSessionThread2.join();
 
     // 校验进程的cpu占用时间
-#ifdef __aarch64__
     for (int i = 0; i < cpuDataVec1.size() && i < cpuDataVec2.size(); i++) {
         EXPECT_LT(cpuDataVec1[i].cpu_usage_info().process_cpu_time_ms(),
             cpuDataVec2[i].cpu_usage_info().process_cpu_time_ms());
@@ -1013,7 +1008,6 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
                 cpuDataVec2[i-1].thread_info(0).thread_cpu_time_ms());
         }
     }
-#endif
 
     StopProcessStub(hiprofilerPluginsPid_);
     StopProcessStub(hiprofilerdPid_);

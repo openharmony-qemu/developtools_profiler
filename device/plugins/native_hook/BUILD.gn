@@ -71,7 +71,7 @@ ohos_source_set("native_hook_source") {
     "zlib:libz",
   ]
   if (hiprofiler_use_libunwinder) {
-    external_deps += [ "faultloggerd:libunwinder_static" ]
+    external_deps += [ "faultloggerd:libunwinder" ]
   }
 
   if (current_toolchain != host_toolchain) {

@@ -24,11 +24,6 @@ using namespace testing::ext;
 
 namespace {
 const std::string DEFAULT_TEST_PATH("/data/local/tmp/");
-#if defined(__LP64__)
-const std::string DEFAULT_SO_PATH("/system/lib64/");
-#else
-const std::string DEFAULT_SO_PATH("/system/lib/");
-#endif
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/memorytest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 const int US_PER_S = 1000000;
@@ -782,7 +777,7 @@ bool FlushFunc(WriterStruct* writer)
  */
 HWTEST_F(MemoryDataPluginTest, TestRegister, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libmemdataplugin.z.so");
+    std::string path = std::string("libmemdataplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
@@ -833,7 +828,7 @@ HWTEST_F(MemoryDataPluginTest, TestStartFail, TestSize.Level1)
  */
 HWTEST_F(MemoryDataPluginTest, TestFramework, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libmemdataplugin.z.so");
+    std::string path = std::string("libmemdataplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
@@ -874,7 +869,7 @@ void OutputData(uint8_t* data, uint32_t size)
  */
 HWTEST_F(MemoryDataPluginTest, TestProcessTreeRunTime, TestSize.Level1)
 {
-    std::string path = DEFAULT_SO_PATH + std::string("libmemdataplugin.z.so");
+    std::string path = std::string("libmemdataplugin.z.so");
     void* handle = dlopen(path.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));

@@ -29,11 +29,7 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__arm__)
-const std::string DEFAULT_LIB_PATH("/system/lib/libhiperfplugin.z.so");
-#elif defined(__aarch64__)
-const std::string DEFAULT_LIB_PATH("/system/lib64/libhiperfplugin.z.so");
-#endif
+const std::string DEFAULT_LIB("libhiperfplugin.z.so");
 const std::string DEFAULT_OUT_PATH("/data/local/tmp/perf.data");
 const int DEFAULT_WAIT = 2;
 
@@ -70,7 +66,7 @@ bool FlushFunc(WriterStruct* writer)
  */
 HWTEST_F(HiperfPluginUnittest, TestFramework, TestSize.Level1)
 {
-    void* handle = dlopen(DEFAULT_LIB_PATH.c_str(), RTLD_LAZY);
+    void* handle = dlopen(DEFAULT_LIB.c_str(), RTLD_LAZY);
     EXPECT_NE(handle, nullptr);
     PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
     EXPECT_NE(plugin, nullptr);

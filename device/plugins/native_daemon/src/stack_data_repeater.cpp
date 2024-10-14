@@ -22,11 +22,57 @@ StackDataRepeater::StackDataRepeater(size_t maxSize)
     maxSize_ = maxSize;
     closed_ = false;
     reducedStackCount_ = 0;
+    for (int index = 0; index < CACHE_DATA_SIZE; ++index) {
+        rawDataCacheQueue_.emplace_back(std::make_shared<RawStack>());
+    }
 }
 
 StackDataRepeater::~StackDataRepeater()
 {
     Close();
+}
+
+RawStackPtr StackDataRepeater::GetRawStack()
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (!rawDataCacheQueue_.empty()) {
+        RawStackPtr rawStack = rawDataCacheQueue_.back();
+        rawDataCacheQueue_.pop_back();
+        return rawStack;
+    }
+    return std::make_shared<RawStack>();
+}
+
+void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
+        rawStack->Reset();
+        rawDataCacheQueue_.push_back(rawStack);
+    }
+}
+
+bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray,
+                                         uint32_t batchCount)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
+        PROFILER_LOG_INFO(LOG_CORE, "no need put nullptr if queue has data, rawDataQueue_.size() = %zu",
+                          rawDataQueue_.size());
+        return true;
+    }
+    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
+        slotCondVar_.wait(lock);
+    }
+    if (closed_) {
+        return false;
+    }
+    for (uint32_t i = 0; i < batchCount; i++) {
+        rawDataQueue_.push_back(rawDataArray[i]);
+    }
+    lock.unlock();
+    itemCondVar_.notify_one();
+    return true;
 }
 
 size_t StackDataRepeater::Size()
@@ -124,7 +170,7 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
         result = rawDataQueue_.front();
         rawDataQueue_.pop_front();
         batchRawStack[i] = result;
-        if ((result != nullptr) && (result->stackConext->type == MALLOC_MSG)) {
+        if ((result != nullptr) && (result->stackConext != nullptr) && (result->stackConext->type == MALLOC_MSG)) {
             mallocMap_.erase(result->stackConext->addr);
             if (needReduceStack) {
                 result->reduceStackFlag = true;

@@ -26,6 +26,8 @@
 #include "utilities.h"
 
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
+constexpr const int CACHE_DATA_SIZE = 40000;
+constexpr const int32_t CACHE_ARRAY_SIZE = 10;
 
 class StackDataRepeater {
 public:
@@ -37,23 +39,41 @@ public:
             const char* jsStackData = nullptr;
         };
         uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
+        uint64_t freeData = 0;
         uint32_t stackSize = 0;
         uint8_t fpDepth = 0; // fp mode fpDepth is ip depth, dwarf mode is invalid
         bool reportFlag = false;
         bool reduceStackFlag = false;
+        void Reset()
+        {
+            baseStackData = nullptr;
+            stackConext = nullptr;
+            data = nullptr;
+            stackData = nullptr;
+            freeData = 0;
+            stackSize = 0;
+            fpDepth = 0;
+            reportFlag = false;
+            reduceStackFlag = false;
+        }
     };
 
     explicit StackDataRepeater(size_t maxSize);
     ~StackDataRepeater();
     bool PutRawStack(const std::shared_ptr<RawStack>& rawData, bool isRecordAccurately);
+    bool PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount);
     std::shared_ptr<RawStack> TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
         std::shared_ptr<RawStack> batchRawStack[], uint32_t statInterval, bool& isTimeOut);
     void Close();
     void Reset();
+    std::shared_ptr<RawStack> GetRawStack();
+    void ReturnRawStack(std::shared_ptr<RawStack> rawStack);
     size_t Size();
 
 private:
     std::mutex mutex_;
+    std::mutex cacheMutex_;
+    std::deque<std::shared_ptr<RawStack>> rawDataCacheQueue_;
     std::condition_variable slotCondVar_;
     std::condition_variable itemCondVar_;
     std::deque<std::shared_ptr<RawStack>> rawDataQueue_;

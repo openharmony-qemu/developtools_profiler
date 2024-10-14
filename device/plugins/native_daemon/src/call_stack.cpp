@@ -525,19 +525,18 @@ bool CallStack::DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &c
 #endif
 
     unwinder->SetRegs(regs);
-
     unwinder->Unwind(&unwindInfo, maxStackLevel + maxjsDepth);
     std::vector<DfxFrame> dfxcallStack;
 
     dfxcallStack = unwinder->GetFrames();
     callStack.clear();
     if (jsReport) {
-        for (auto frame: dfxcallStack) {
+        for (auto& frame: dfxcallStack) {
             HLOGD("pc 0x%" PRIx64 " sp 0x%" PRIx64 " isJsFrame = %d", frame.pc, frame.sp, frame.isJsFrame);
             callStack.emplace_back(frame.pc, frame.sp, frame.isJsFrame);
         }
     } else {
-        for (auto frame: dfxcallStack) {
+        for (auto& frame: dfxcallStack) {
             if (frame.isJsFrame) {
                 break;
             }

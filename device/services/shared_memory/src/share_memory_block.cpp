@@ -348,7 +348,7 @@ bool ShareMemoryBlock::TakeData(const DataHandler& func, bool isProtobufSerializ
     CHECK_TRUE(static_cast<bool>(func), false, "func invalid!");
 
     auto size = GetDataSize();
-    if (size == 0) {
+    if (size == 0 || size > header_->info.memorySize_) {
         return false;
     }
     auto ptr = GetDataPoint();

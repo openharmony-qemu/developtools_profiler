@@ -36,11 +36,6 @@ const char DEFAULT_PLUGIN_PATH[] = "/data/local/tmp/";
 #endif
 
 const int SLEEP_ONE_SECOND = 1000;
-#if defined(__LP64__)
-const char DEFAULT_LIB_PATH[] = "/system/lib64/";
-#else
-const char DEFAULT_LIB_PATH[] = "/system/lib/";
-#endif
 
 std::vector<std::string> presetPluginVec = {
     "libcpudataplugin.z.so",
@@ -69,7 +64,7 @@ void SignalSigtermHandler(int sig)
 int main(int argc, char* argv[])
 {
     int lockFileFd = -1;
-    if (COMMON::IsProcessRunning(lockFileFd)) { // process is running
+    if ((!COMMON::GetDeveloperMode()) || COMMON::IsProcessRunning(lockFileFd)) { // process is running
         return 0;
     }
     signal(SIGTERM, SignalSigtermHandler);
@@ -97,7 +92,7 @@ int main(int argc, char* argv[])
 
     // add preset plugin
     for (size_t i = 0; i < presetPluginVec.size(); i++) {
-        const std::string pluginPath = DEFAULT_LIB_PATH + presetPluginVec[i];
+        const std::string pluginPath = presetPluginVec[i];
         if (pluginManager->AddPlugin(pluginPath)) {
             PROFILER_LOG_INFO(LOG_CORE, "add preset plugin %s success!", pluginPath.c_str());
         } else {

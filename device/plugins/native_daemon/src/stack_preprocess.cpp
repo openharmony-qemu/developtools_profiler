@@ -42,7 +42,7 @@ constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr static uint32_t LOG_PRINT_TIMES = 10000;
 constexpr static uint32_t WAIT_STOP_TIME = 5000;
 constexpr static uint32_t WAIT_TIME_ONCE = 10;
-constexpr static uint32_t MAX_BATCH_CNT = 20;
+constexpr static uint32_t MAX_BATCH_CNT = 40;
 constexpr static uint32_t RIGHT_MOVE_1 = 1;
 constexpr static uint32_t RIGHT_MOVE_2 = 2;
 constexpr static uint32_t RIGHT_MOVE_4 = 4;
@@ -387,7 +387,15 @@ void StackPreprocess::TakeResults()
             if (!rawData || isStopTakeData_) {
                 break;
             }
+            if (rawData->baseStackData == nullptr) {
+                if (rawData->freeData) {
+                    SetFreeStatisticsData(rawData->freeData);
+                }
+                dataRepeater_->ReturnRawStack(rawData);
+                continue;
+            }
             if (rawData->stackConext->type == NMD_MSG) {
+                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             } else if (rawData->stackConext->type == END_MSG) {
                 isStopTakeData_ = true;
@@ -398,6 +406,7 @@ void StackPreprocess::TakeResults()
             clock_gettime(CLOCK_REALTIME, &start);
 #endif
             if (HandleNoStackEvent(rawData)) {
+                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -410,6 +419,7 @@ void StackPreprocess::TakeResults()
                     PROFILER_LOG_INFO(LOG_CORE, "ignoreCnts_ = %d quene size = %zu\n",
                                       ignoreCnts_, dataRepeater_->Size());
                 }
+                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             }
             eventCnts_++;
@@ -453,6 +463,7 @@ void StackPreprocess::TakeResults()
                     rawData->stackConext->pid, rawData->stackConext->tid, callFrames_, stackDepth);
                     if (!ret) {
                         PROFILER_LOG_ERROR(LOG_CORE, "unwind fatal error");
+                        dataRepeater_->ReturnRawStack(rawData);
                         continue;
                     }
                 }
@@ -491,13 +502,16 @@ void StackPreprocess::TakeResults()
                     unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
             }
 #endif
+            dataRepeater_->ReturnRawStack(rawData);
         } // for
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
-        std::visit([&](auto& stackData) {
-            FlushCheck(stackData);
-            }, stackData_);
+        if (hookConfig_.statistics_interval() == 0) {
+            std::visit([&](auto& stackData) {
+                FlushCheck(stackData);
+                }, stackData_);
+        }
         IntervalFlushRecordStatistics();
         IntervalFlushApplyAndReleaseMatchData();
     } // while
@@ -964,7 +978,6 @@ void StackPreprocess::SetHookData(RawStackPtr rawStack, std::vector<CallFrame>& 
 inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
 {
     // through the addr lookup record
-    std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
     auto addrIter = allocAddrMap_.find(addr);
     if (addrIter != allocAddrMap_.end()) {
         auto& record = addrIter->second.second;
@@ -986,7 +999,6 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
             auto& record = recordIter->second;
             ++record.applyCount;
             record.applySize += rawStack->stackConext->mallocSize;
-            std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
             allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
                 std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
@@ -1022,7 +1034,6 @@ inline void StackPreprocess::SetAllocStatisticsData(const RawStackPtr& rawStack,
         }
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
-        std::lock_guard<std::mutex> guard(allocAddrMapMtx_);
         allocAddrMap_[(uint64_t)rawStack->stackConext->addr] =
             std::pair(rawStack->stackConext->mallocSize, &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;

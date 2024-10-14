@@ -44,7 +44,6 @@ using google::protobuf::TextFormat;
 namespace {
 constexpr int ADDR_BUFFER_SIZE = 128;
 constexpr int MS_PER_S = 1000;
-constexpr int LOOP_COUNT = 128;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
 constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
 constexpr int DEFAULT_SESSION_TIME_S = 10;
@@ -535,6 +534,9 @@ void SignalHandler(int signal)
 
 int main(int argc, char* argv[])
 {
+    if (!COMMON::GetDeveloperMode()) {
+        return -1;
+    }
     signal(SIGINT, SignalHandler);
 
     std::string config = "";
@@ -573,7 +575,7 @@ int main(int argc, char* argv[])
     ParseCmdline(cmdLine, data);
 
     std::vector<std::string> argvVector;
-    for (int i = 0; ((i < argc) && (i <= LOOP_COUNT)); i++) {
+    for (int i = 0; i < argc; i++) {
         if (((i + 1) < argc) && (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config") == 0) &&
             (strcmp(argv[i + 1], "-") == 0)) {
             i++;

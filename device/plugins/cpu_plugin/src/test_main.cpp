@@ -25,11 +25,7 @@ namespace {
 int g_testCount = 100;
 constexpr int CONSUME_CPU_SLEEP_TIME = 500 * 1000;
 constexpr int PROCESS_SLEEP_TIME = 10;
-#if defined(__LP64__)
-const std::string SO_PATH = "/system/lib64/libcpudataplugin.z.so";
-#else
-const std::string SO_PATH = "/system/lib/libcpudataplugin.z.so";
-#endif
+const std::string SO_PATH = "libcpudataplugin.z.so";
 } // namespace
 
 static void Report(PluginModuleStruct*& cpuPlugin, std::vector<uint8_t>& dataBuffer)
