@@ -141,6 +141,7 @@ void GetCurrentTime(int num, int prevTime);
 bool IsForeGround(std::string &pkg);
 bool IsFindForeGround(std::string line);
 bool IsFindAbilist();
+void SetRkFlag();
 };
 }
 }
