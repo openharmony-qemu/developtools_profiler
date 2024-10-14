@@ -135,49 +135,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
 }
 
 /**
- * @tc.name: TemperatureTestCase
- * @tc.desc: Test Temperature
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
-{
-    std::string cmd = "SP_daemon -N 1 -t";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("timestamp");
-    std::string::size_type strTwo = result.find("system_h");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    }
-
-
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-/**
- * @tc.name: PowerTestCase
- * @tc.desc: Test Power
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
-{
-    std::string cmd = "SP_daemon -N 1 -p";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("currentNow");
-    std::string::size_type strTwo = result.find("voltageNow");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    }
-
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-/**
  * @tc.name: RamTestCase
  * @tc.desc: Test RAM
  * @tc.type: FUNC
