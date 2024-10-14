@@ -434,10 +434,20 @@ std::string ProfilerFPS::GetGameLayer()
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     SPUtils::LoadCmd(dumperSurface, cmdResult);
     LOGI("ProfilerFPS::cmdResult: (%s)", cmdResult.c_str());
+    if (cmdResult.empty()) {
+        return gameLayer;
+    }
     std::string start = "NodeId[";
     std::string end = "]";
-    size_t startPos = cmdResult.find(start) + start.length();
+    size_t startPos = cmdResult.find(start)
+    if (startPos == std::string::npos) {
+        return gameLayer;
+    }
+    startPos += start.length();
     size_t endPos = cmdResult.find(end, startPos);
+    if (endPos == std::string::npos) {
+        return gameLayer;
+    }
     std::string nodeIdStr = cmdResult.substr(startPos, endPos - startPos);
     LOGI("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
     uint64_t nodeId;
