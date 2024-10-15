@@ -26,6 +26,7 @@ ohos_shared_library("hidebug") {
     "napi_hidebug.cpp",
     "napi_hidebug_gc.cpp",
     "napi_hidebug_init.cpp",
+    "util/hiappevent_util.cpp",
     "util/napi_util.cpp",
   ]
 
@@ -38,6 +39,7 @@ ohos_shared_library("hidebug") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "hiappevent:hiappevent_innerapi",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
