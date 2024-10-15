@@ -31,9 +31,17 @@ long long DDR::GetDdrFreq()
 {
     long long curFreq = -1;
     std::string ddrfreq;
-    SPUtils::LoadFile(ddrCurFreqPath, ddrfreq);
+    if (!rkFlag) {
+        SPUtils::LoadFile(ddrCurFreqPath, ddrfreq);
+    } else {
+        SPUtils::LoadFile(ddrCurFreqRkPath, ddrfreq);
+    }
     curFreq = std::atoll(ddrfreq.c_str());
     return curFreq;
+}
+void DDR::SetRkFlag()
+{
+    rkFlag = true;
 }
 }
 }
