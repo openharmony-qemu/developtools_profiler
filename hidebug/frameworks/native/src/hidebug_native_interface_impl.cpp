@@ -25,8 +25,8 @@
 #include "hidebug_app_thread_cpu.h"
 #include "hidebug_util.h"
 #include "hilog/log.h"
-#include "client/cpu_collector.h"
-#include "client/memory_collector.h"
+#include "client/cpu_collector_client.h"
+#include "client/memory_collector_client.h"
 #include "utility/memory_collector.h"
 
 namespace OHOS {
