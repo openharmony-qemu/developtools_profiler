@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "dfx_regs_get.h"
-#include "c/executor_task.h"
 #include "common.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
