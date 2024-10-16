@@ -65,7 +65,6 @@ ohos_source_set("native_hook_source") {
   }
   external_deps = [
     "bounds_checking_function:libsec_shared",
-    "ffrt:libffrt",
     "hitrace:libhitracechain",
     "init:libbegetutil",
     "zlib:libz",

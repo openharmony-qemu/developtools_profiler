@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "dfx_regs_get.h"
-#include "c/executor_task.h"
 #include "common.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
@@ -330,8 +329,7 @@ bool FilterStandardSoIp(uint64_t ip)
 }
 
 #if defined(__aarch64__)
-static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t* ip, int stackSize,
-                                                          const char* startPtr, const char* endPtr)
+static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t* ip, int stackSize)
 {
     void** startfp = (void**)__builtin_frame_address(0);
     void** fp = startfp;
@@ -339,9 +337,6 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
     int count = 0;
     uint64_t tempIp = 0;
     while (depth < maxDepth) {
-        if (fp < (void**)startPtr || (fp + 1) >= (void**)endPtr) {
-            break;
-        }
         void** nextFp = (void**)*fp;
         if (nextFp <= fp) {
             break;
@@ -431,18 +426,10 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
 #endif
@@ -536,18 +523,10 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
 #endif
@@ -641,18 +620,10 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
 #endif
@@ -751,18 +722,10 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         if (g_ClientConfig.freeStackData) {
             (void)memcpy_s(freeData.ip, sizeof(freeData.ip) / sizeof(uint64_t),
@@ -889,18 +852,10 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.freeStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
 #endif
@@ -1007,18 +962,10 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+        stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+        stackSize = stackendptr - stackptr;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
         stackSize = 0;
         rawdata.jsChainId = getJsChainId();
 #endif
@@ -1110,18 +1057,10 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
 #endif
@@ -1233,18 +1172,10 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (isUsing) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
+            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
+            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
+            stackSize = stackendptr - stackptr;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize);
             stackSize = 0;
             rawdata.jsChainId = getJsChainId();
 #endif
