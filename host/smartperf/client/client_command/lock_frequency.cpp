@@ -27,7 +27,7 @@ namespace SmartPerf {
     }
     void LockFrequency::LockingThread()
     {
-        const int loopLockTime = 998;
+        const int loopLockTime = 4000;
 
         LOGI("Lock frequency thread create");
         while (isCollecting) {
