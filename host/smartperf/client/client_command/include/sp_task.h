@@ -26,6 +26,7 @@
 #include "sp_csv_util.h"
 #include "sdk_data_recv.h"
 #include "GpuCounter.h"
+#include "lock_frequency.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -119,8 +120,10 @@ private:
     int requestId = 1;
     bool sdkData = false;
     std::thread sdk;
+    std::thread lockFreqThread;
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    LockFrequency &lockFreq = LockFrequency::GetInstance();
     bool recordState = false;
     time_t realTimeStart = 0;
 

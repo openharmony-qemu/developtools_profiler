@@ -212,7 +212,9 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
 
-        if (itConfig.find("-gc") != std::string::npos || itConfig.find("-o") != std::string::npos) {
+        if (itConfig.find("-gc") != std::string::npos ||
+            itConfig.find("-o") != std::string::npos ||
+            itConfig.find("-lockfreq") != std::string::npos) {
             continue;
         }
 
@@ -233,6 +235,11 @@ void SPTask::ConfigDataThread()
 
         if (itConfig.find("-gc") != std::string::npos) {
             gpuCounter.StartCollect(GpuCounter::GC_START);
+        }
+
+        if (itConfig.find("-lockfreq") != std::string::npos) {
+            lockFreq.SetIsCollecting(true);
+            lockFreqThread = std::thread([this]() { this->lockFreq.LockingThread(); });
         }
     }
 }
@@ -464,6 +471,10 @@ void SPTask::StopTask()
 
     ResetSdkParam();
     gpuCounter.StopCollect();
+    lockFreq.SetIsCollecting(false);
+    if (lockFreqThread.joinable()) {
+        lockFreqThread.join();
+    }
 
     isRunning = false;
     isInit = false;
