@@ -19,6 +19,7 @@
 
 #include "app_event.h"
 #include "app_event_processor_mgr.h"
+#include "ffrt.h"
 #include "hidebug_util.h"
 #include "hilog/log.h"
 
@@ -30,25 +31,32 @@ namespace HiviewDFX {
 #undef LOG_TAG
 #define LOG_TAG "HIAPPEVENT_UTIL"
 
+int64_t ApiInvokeRecorder::processId_ = -1;
+
 ApiInvokeRecorder::ApiInvokeRecorder(std::string apiName) : apiName_(std::move(apiName)),
     beginTime_(GetNanoSecondsTimestamp()) {}
 
 ApiInvokeRecorder::~ApiInvokeRecorder()
 {
-    static int64_t processId = AddProcessor();
-    if (processId < 0) {
+    if (processId_ < 0) {
         return;
     }
-    HiAppEvent::Event event("api_diagnostic", "api_exec_end", HiAppEvent::BEHAVIOR);
-    event.AddParam("trans_id", std::string("transId_") + std::to_string(beginTime_));
-    event.AddParam("api_name", apiName_);
-    event.AddParam("sdk_name", std::string("PerformanceAnalysisKit"));
-    constexpr int milliSecondsToNanoseconds = 1000 * 1000;
-    event.AddParam("begin_time", beginTime_ / milliSecondsToNanoseconds);
-    event.AddParam("end_time", GetNanoSecondsTimestamp() / milliSecondsToNanoseconds);
-    event.AddParam("result", static_cast<int>(errorCode_ == 0));
-    event.AddParam("error_code", errorCode_);
-    Write(event);
+    std::string apiName(std::move(apiName_));
+    int64_t beginTime(beginTime_);
+    int errorCode(errorCode_);
+    auto task = [apiName, beginTime, errorCode] {
+        HiAppEvent::Event event("api_diagnostic", "api_exec_end", HiAppEvent::BEHAVIOR);
+        event.AddParam("trans_id", std::string("transId_") + std::to_string(beginTime));
+        event.AddParam("api_name", apiName);
+        event.AddParam("sdk_name", std::string("PerformanceAnalysisKit"));
+        constexpr int milliSecondsToNanoseconds = 1000 * 1000;
+        event.AddParam("begin_time", beginTime / milliSecondsToNanoseconds);
+        event.AddParam("end_time", GetNanoSecondsTimestamp() / milliSecondsToNanoseconds);
+        event.AddParam("result", static_cast<int>(errorCode == 0));
+        event.AddParam("error_code", errorCode);
+        Write(event);
+    };
+    ffrt::submit(task, {}, {});
 }
 
 void ApiInvokeRecorder::SetErrorCode(int errorCode)
@@ -56,7 +64,7 @@ void ApiInvokeRecorder::SetErrorCode(int errorCode)
     errorCode_ = errorCode;
 }
 
-int64_t ApiInvokeRecorder::AddProcessor()
+void ApiInvokeRecorder::InitProcessor()
 {
     using namespace HiAppEvent;
     ReportConfig config;
@@ -83,11 +91,10 @@ int64_t ApiInvokeRecorder::AddProcessor()
         .name = "api_called_stat_cnt",
         .isRealTime = true,
     });
-    int64_t processId = AppEventProcessorMgr::AddProcessor(config);
-    if (processId < 0) {
-        HILOG_ERROR(LOG_CORE, "failed to init processor and ret: %{public}" PRId64, processId);
+    processId_ = AppEventProcessorMgr::AddProcessor(config);
+    if (processId_ < 0) {
+        HILOG_ERROR(LOG_CORE, "failed to init processor and ret: %{public}" PRId64, processId_);
     }
-    return processId;
 }
 }
 }

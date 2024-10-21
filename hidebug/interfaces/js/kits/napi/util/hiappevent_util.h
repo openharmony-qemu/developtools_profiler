@@ -24,11 +24,12 @@ public:
     explicit ApiInvokeRecorder(std::string apiName);
     ~ApiInvokeRecorder();
     void SetErrorCode(int errorCode);
+    static void InitProcessor();
 private:
-    int64_t AddProcessor();
     std::string apiName_;
     int errorCode_{0};
     int64_t beginTime_;
+    static int64_t processId_;
 };
 }
 }
