@@ -29,11 +29,12 @@ public:
     std::string GetAppStartTime() const;
     std::string SlideList();
     std::string TimeDelay();
+    void IsohTest(std::vector<std::string> v);
 
 private:
     bool isOhTest = false;
     std::string result = "";
-    int ohType = 5;
+    int ohType = 4;
     int typeName = 2;
     double time = 0.0;
     double noNameType = -1.0;

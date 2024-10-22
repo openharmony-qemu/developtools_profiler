@@ -35,9 +35,8 @@ namespace OHOS {
 namespace SmartPerf {
 std::string ControlCallCmd::GetResult(std::vector<std::string> v)
 {
-    if (v[ohType] == "ohtest") {
-        isOhTest = true;
-    } else if (v[typeName] == "responseTime") {
+    IsohTest(v);
+    if (v[typeName] == "responseTime") {
         time = SmartPerf::ControlCallCmd::ResponseTime();
     } else if (v[typeName] == "completeTime") {
         time = SmartPerf::ControlCallCmd::CompleteTime();
@@ -265,6 +264,11 @@ std::string ControlCallCmd::GetAppStartTime() const
     std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
     resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
+}
+void ControlCallCmd::IsohTest(std::vector<std::string> v) {
+    if (v[ohType] == "ohtest") {
+        isOhTest = true;
+    }
 }
 }
 }
