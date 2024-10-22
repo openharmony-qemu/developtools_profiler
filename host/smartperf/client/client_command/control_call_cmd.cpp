@@ -265,7 +265,8 @@ std::string ControlCallCmd::GetAppStartTime() const
     resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
 }
-void ControlCallCmd::IsohTest(std::vector<std::string> v) {
+void ControlCallCmd::IsohTest(std::vector<std::string> v)
+{
     if (v[ohType] == "ohtest") {
         isOhTest = true;
     }
