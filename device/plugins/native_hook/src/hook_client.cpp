@@ -843,6 +843,10 @@ void hook_free(void (*free_func)(void*), void* p)
         if (!free_func) {
             return;
         }
+        if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+            free_func(p);
+            return;
+        }
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
