@@ -334,12 +334,14 @@ private:
                     if (!COMMON::IsUserMode()) {
                         smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
                         smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+                        smapsInfo->set_path(smapsHeadInfo.path);
+                        smapsInfo->set_permission(smapsHeadInfo.permission);
                     } else {
                         smapsInfo->set_start_addr("");
                         smapsInfo->set_end_addr("");
+                        smapsInfo->set_path("");
+                        smapsInfo->set_permission("");
                     }
-                    smapsInfo->set_permission(smapsHeadInfo.permission);
-                    smapsInfo->set_path(smapsHeadInfo.path);
                     smapsInfo->set_category(ParseCategory(smapsHeadInfo));
                 }
                 continue;
