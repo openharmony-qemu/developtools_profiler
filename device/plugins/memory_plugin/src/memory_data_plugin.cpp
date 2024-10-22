@@ -1354,7 +1354,6 @@ template <typename T> void MemoryDataPlugin::WriteManagerServiceInfo(T& dataProt
 template <typename T> void MemoryDataPlugin::WriteProfileMemInfo(T& dataProto)
 {
     for (int i = 0; i < protoConfig_.pid().size(); i++) {
-        int32_t pid = protoConfig_.pid(i);
         std::string file = "";
         if (!protoConfig_.report_fake_data()) {
             if (strcmp(testpath_, "/proc") == 0) {
