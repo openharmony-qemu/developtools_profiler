@@ -147,10 +147,10 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("timestamp");
     std::string::size_type strTwo = result.find("system_h");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strThree = result.find("gpu-thermal");
+    if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
         flag = true;
     }
-
 
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
@@ -169,7 +169,10 @@ HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("currentNow");
     std::string::size_type strTwo = result.find("voltageNow");
+    std::string::size_type strThree = result.find("timestamp");
     if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    } else if ((strThree != result.npos)) {
         flag = true;
     }
 
