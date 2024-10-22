@@ -56,6 +56,8 @@ private:
     std::string packageName = "";
     std::string processId = "";
     bool hapFlag = false;
+    const std::string cpustr = "cpu";
+    const std::string totalcpu = "Totalcpu";
 };
 }
 }
