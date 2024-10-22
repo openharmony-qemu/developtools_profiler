@@ -43,6 +43,12 @@ void StartUpDelay::GetTrace(const std::string &traceName) const
         cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
     SPUtils::LoadCmd(cmdString + traceName, result);
+    if (result.find("OpenRecording failed") != std::string::npos) {
+        std::string str;
+        std::string traceFinishStr = "hitrace --trace_finish";
+        SPUtils::LoadCmd(traceFinishStr, str);
+        SPUtils::LoadCmd(cmdString + traceName, result);
+    }
 }
 
 void StartUpDelay::GetHisysId() const
