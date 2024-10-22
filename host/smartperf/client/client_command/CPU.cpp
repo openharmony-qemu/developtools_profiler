@@ -69,7 +69,7 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if (packageName.length() > 0 && !hapFlag) {
+    if (!packageName.empty() && !hapFlag) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
             for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
@@ -146,7 +146,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
 {
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
-    if (processId.length() > 0) {
+    if (!processId.empty()) {
         int32_t procId = 0;
         procId = std::stoi(processId);
         std::shared_ptr<CpuCollector> collector = CpuCollector::Create();

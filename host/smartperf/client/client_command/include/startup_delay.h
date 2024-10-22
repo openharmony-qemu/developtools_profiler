@@ -15,7 +15,9 @@
 #ifndef STARTUP_DELAY_H
 #define STARTUP_DELAY_H
 #include <thread>
-
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 namespace OHOS {
 namespace SmartPerf {
 class StartUpDelay {
@@ -29,6 +31,9 @@ public:
     bool GetSpTcp();
     bool GetSpClear() const;
     void ClearOldServer() const;
+    int CreatePipe(int pipefd[2]);
+    pid_t ForkChildProcess(int pipefd[2], const std::vector<char*> &args);
+    std::string ReadFromPipe(int pipefd[2]);
 };
 }
 }

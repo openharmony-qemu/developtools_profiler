@@ -161,6 +161,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             procRamInfo[value] = "0";
         }
     }
+    pclose(fd);
     return procRamInfo;
 }
 std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
@@ -205,6 +206,11 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
     pclose(fd);
     std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
     pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
+    if (paramsInfo.empty()) {
+        for(auto &pss : pssRamInfo) {
+            pss.second = "0";
+        }
+    }
     pssRamInfo["gpuPss"] = gpuPssValue;
     pssRamInfo["graphicPss"] = graphicPssValue;
     pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
@@ -216,6 +222,10 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
 {
     std::map<std::string, std::string> sumRamInfo;
     if (paramsInfo.empty()) {
+        sumRamInfo = ProcMemNaInfo();
+        for (auto &sumRam : sumRamInfo) {
+            sumRam.second = "0";
+        }
         return sumRamInfo;
     }
     sumRamInfo["pss"] = paramsInfo[RAM_ONE];
