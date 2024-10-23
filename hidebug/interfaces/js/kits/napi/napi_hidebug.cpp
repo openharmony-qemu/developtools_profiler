@@ -447,7 +447,6 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 
 napi_value GetPss(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getPss");
     napi_value pss;
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (collector != nullptr) {
@@ -506,7 +505,6 @@ napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 
 napi_value GetNativeHeapSize(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getNativeHeapSize");
     struct mallinfo mi = mallinfo();
     napi_value nativeHeapSize;
     napi_create_bigint_uint64(env, uint64_t(mi.uordblks + mi.fordblks), &nativeHeapSize);
