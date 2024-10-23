@@ -15,9 +15,6 @@
 #ifndef STARTUP_DELAY_H
 #define STARTUP_DELAY_H
 #include <thread>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
 namespace OHOS {
 namespace SmartPerf {
 class StartUpDelay {

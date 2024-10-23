@@ -22,6 +22,9 @@
 #include <regex>
 #include <sys/wait.h>
 #include <sys/types.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
