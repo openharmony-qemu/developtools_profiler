@@ -31,9 +31,7 @@ public:
     bool GetSpTcp();
     bool GetSpClear() const;
     void ClearOldServer() const;
-    int CreatePipe(int pipefd[2]);
-    pid_t ForkChildProcess(int pipefd[2], const std::vector<char*> &args);
-    std::string ReadFromPipe(int pipefd[2]);
+    std::string ExcuteCommand(const std::string &command, const std::vector<std::string> &args);
 };
 }
 }

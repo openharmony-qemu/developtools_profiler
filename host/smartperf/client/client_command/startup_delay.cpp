@@ -166,83 +166,62 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-
-int StartUpDelay::CreatePipe(int pipefd[2]) {
+std::string StartUpDelay::ExcuteCommand(const std::string &command, const std::vector<std::string> &args)
+{
+    std::string output = "";
+    int pipefd[2];
     if (pipe(pipefd) == -1) {
         LOGE("startup_delay::Failed to create pipe: %s", strerror(errno));
-        return -1;
+        return output;
     }
-    return 0;
-}
-
-pid_t StartUpDelay::ForkChildProcess(int pipefd[2], const std::vector<char*> &args) {
     pid_t pid = fork();
     if (pid == -1) {
         LOGE("startup_delay::Failed to fork: %s", strerror(errno));
         close(pipefd[0]);
         close(pipefd[1]);
-        return -1;
+        return output;
     }
     if (pid == 0) {// 子进程
-        close(pipefd[0]);// 关闭读端
-        dup2(pipefd[1], STDOUT_FILENO);// 将 stdout 重定向到管道
-        close(pipefd[1]);// 关闭写端
-        execvp(args[0], args.data());// 执行命令
-
-        // 如果 exec 失败
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        std::vector<char*> argv(args.size() + 1);
+        for (size_t i = 0; i < args.size(); ++i) {
+            argv[i] = const_cast<char*>(args[i].c_str());
+        }
+        argv[args.size()] = nullptr;
+        execvp(command.c_str(), argv.data());
         LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
         _exit(EXIT_FAILURE); 
     }
     close(pipefd[1]);// 在父进程中关闭写端
-    return pid;
-}
-
-std::string StartUpDelay::ReadFromPipe(int pipefd[2]) {
-    std::string output;
     char buf[1024];
     ssize_t nread;
     while ((nread = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
-        buf[nread] = '\0';// 以 NULL 结束缓冲区
-        output.append(buf);// 追加到输出中
+        if(nread == sizeof(buf) - 1) {
+            LOGE("startup_delay::Buffer overflow: %s", strerror(errno));
+            break;
+        }
+        buf[nread] = '\0';
+        output.append(buf);
+    }
+    if (nread == -1) {
+        LOGE("startup_delay::Failed to read from pipe: %s", strerror(errno));
     }
     close(pipefd[0]);// 关闭读端
-    return output;
-}
-
-std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) {
-    std::string resultProcId;
-    const std::string pidof = "pidof";
-    std::vector<char*> args = { const_cast<char*>(pidof.c_str()), 
-                                const_cast<char*>(curPkgName.c_str()), 
-                                nullptr };
-
-    int pipefd[2];
-    if (CreatePipe(pipefd) == -1) {
-        return resultProcId;
-    }
-    pid_t pid = ForkChildProcess(pipefd, args);
-    if (pid == -1) {
-        return resultProcId;
-    }
-    // 从管道中读取输出
-    resultProcId = ReadFromPipe(pipefd);
-    // 等待子进程结束
     int status;
     if (waitpid(pid, &status, 0) == -1) {
         LOGE("startup_delay::Failed to wait for child process: %s", strerror(errno));
-        return resultProcId;
+        return output;
     }
-    // 检查子进程的退出状态
-    if (WIFEXITED(status)) {
-        int exitStatus = WEXITSTATUS(status);
-        if (exitStatus != 0) {
-            LOGE("startup_delay::Child process exited with status: %d", exitStatus);
-            return resultProcId;
-        }
-    } else {
-        LOGE("startup_delay::Child process did not terminate normally");
-        return resultProcId;
-    }
+    return output;
+}
+
+std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
+{
+    const std::string pidof = "pidof";
+    const std::vector<std::string> args = {pidof, curPkgName};
+    std::string resultProcId = ExcuteCommand(pidof, args);
     // 去除输出末尾的换行符
     if (!resultProcId.empty() && resultProcId.back() == '\n') {
         resultProcId.pop_back();

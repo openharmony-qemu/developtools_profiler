@@ -161,7 +161,6 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             procRamInfo[value] = "0";
         }
     }
-    pclose(fd);
     return procRamInfo;
 }
 std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
@@ -210,13 +209,13 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
         for(auto &pss : pssRamInfo) {
             pss.second = "0";
         }
-    } else {
-        pssRamInfo["gpuPss"] = gpuPssValue;
-        pssRamInfo["graphicPss"] = graphicPssValue;
-        pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
-        pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
-        pssRamInfo["stackPss"] = stackPssValue;
+        return pssRamInfo;
     }
+    pssRamInfo["gpuPss"] = gpuPssValue;
+    pssRamInfo["graphicPss"] = graphicPssValue;
+    pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
+    pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
+    pssRamInfo["stackPss"] = stackPssValue;
     return pssRamInfo;
 }
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
