@@ -166,67 +166,62 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
 
 std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
 {
-    PssValues pssValues;
-    const int paramEleven = 11;
-    char buf[1024] = {'\0'};
-
-    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line = buf;
-        if (line[0] == '-') continue;
-
-        std::vector<std::string> params;
-        SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven) {
-            UpdatePssValues(params, pssValues);
-        }
-        UpdateHeapValues(params, pssValues);
-        
-        if (params[0].find("Total") != std::string::npos) {
-            paramsInfo = params;
-        }
-        if (!paramsInfo.empty()) {
-            break;
-        }
-    }
-    pclose(fd);
+    std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo);
     std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
-    std::map<std::string, std::string> pssRamInfo(sumRamInfo.begin(), sumRamInfo.end());
-
+    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
     if (paramsInfo.empty()) {
         for (auto &pss : pssRamInfo) {
             pss.second = "0";
         }
         return pssRamInfo;
     }
+    return pssRamInfo;
+}
+
+std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
+{
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
+    const int paramEleven = 11;
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line = buf;
+        if (line[0] == '-') {
+            continue;
+        }
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params.size() == paramEleven) {
+            if (params[0].find("GL") != std::string::npos) {
+                gpuPssValue = params[1];
+            } else if (params[0].find("Graph") != std::string::npos) {
+                graphicPssValue = params[1];
+            } else if (params[0].find("stack") != std::string::npos) {
+                stackPssValue = params[1];
+            } else if (params[0].find("Total") != std::string::npos) {
+                paramsInfo = params;
+            }
+        }
+        if (params[0].find("ark") != std::string::npos) {
+            arktsHeapPssValue = params[RAM_THIRD];
+        }
+        if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
+            nativeHeapPssValue = params[RAM_SECOND];
+        }
+        if (!paramsInfo.empty()) {
+            break;
+        }
+    }
+    pclose(fd);
     pssRamInfo["gpuPss"] = pssValues.gpuPssValue;
     pssRamInfo["graphicPss"] = pssValues.graphicPssValue;
     pssRamInfo["arktsHeapPss"] = pssValues.arktsHeapPssValue;
     pssRamInfo["nativeHeapPss"] = pssValues.nativeHeapPssValue;
     pssRamInfo["stackPss"] = pssValues.stackPssValue;
     return pssRamInfo;
-}
-
-void RAM::UpdatePssValues(const std::vector<std::string>& params, PssValues& pssValues) const
-{
-    if (params[0].find("GL") != std::string::npos) {
-        pssValues.gpuPssValue = params[1];
-    }
-    if (params[0].find("Graph") != std::string::npos) {
-        pssValues.graphicPssValue = params[1];
-    }
-    if (params[0].find("stack") != std::string::npos) {
-        pssValues.stackPssValue = params[1];
-    }
-}
-
-void RAM::UpdateHeapValues(const std::vector<std::string>& params, PssValues& pssValues) const
-{
-    if (params[0].find("ark") != std::string::npos) {
-        pssValues.arktsHeapPssValue = params[RAM_THIRD];
-    }
-    if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
-        pssValues.nativeHeapPssValue = params[RAM_SECOND];
-    }
 }
 
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const

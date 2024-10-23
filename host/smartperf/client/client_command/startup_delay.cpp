@@ -169,7 +169,7 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-std::string StartUpDelay::ExcuteCommand(const std::string &command, const std::vector<std::string> &args)
+std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::vector<std::string> &args)
 {
     std::string output = "";
     int pipefd[2];
@@ -224,8 +224,7 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 {
     const std::string pidof = "pidof";
     const std::vector<std::string> args = {pidof, curPkgName};
-    std::string resultProcId = ExcuteCommand(pidof, args);
-    // 去除输出末尾的换行符
+    std::string resultProcId = ExecuteCommand(pidof, args);
     if (!resultProcId.empty() && resultProcId.back() == '\n') {
         resultProcId.pop_back();
         LOGI("startup_delay::output: (%s)", resultProcId.c_str());

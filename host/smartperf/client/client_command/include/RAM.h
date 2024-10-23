@@ -32,18 +32,12 @@ enum {
 
 namespace OHOS {
 namespace SmartPerf {
-struct PssValues {
-    std::string gpuPssValue;
-    std::string graphicPssValue;
-    std::string arktsHeapPssValue;
-    std::string nativeHeapPssValue;
-    std::string stackPssValue;
-};
 class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo() const;
     std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const;
+    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
     static RAM &GetInstance()
@@ -57,8 +51,6 @@ public:
     void TriggerGetPss() const;
     void SetFirstFlag();
     void SetProcessId(const std::string &pid);
-    void UpdatePssValues(const std::vector<std::string>& params, PssValues& pssValues) const;
-    void UpdateHeapValues(const std::vector<std::string>& params, PssValues& pssValues) const;
 private:
     RAM() {};
     RAM(const RAM &);

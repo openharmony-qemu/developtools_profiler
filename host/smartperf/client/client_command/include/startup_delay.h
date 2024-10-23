@@ -28,7 +28,7 @@ public:
     bool GetSpTcp();
     bool GetSpClear() const;
     void ClearOldServer() const;
-    std::string ExcuteCommand(const std::string &command, const std::vector<std::string> &args);
+    std::string ExecuteCommand(const std::string &command, const std::vector<std::string> &args);
 };
 }
 }
