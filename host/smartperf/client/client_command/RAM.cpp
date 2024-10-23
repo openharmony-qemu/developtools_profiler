@@ -180,6 +180,7 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
 
 std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
 {
+    std::map<std::string, std::string> pssRamInfo;
     std::string gpuPssValue = "";
     std::string graphicPssValue = "";
     std::string arktsHeapPssValue = "";
@@ -216,11 +217,11 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         }
     }
     pclose(fd);
-    pssRamInfo["gpuPss"] = pssValues.gpuPssValue;
-    pssRamInfo["graphicPss"] = pssValues.graphicPssValue;
-    pssRamInfo["arktsHeapPss"] = pssValues.arktsHeapPssValue;
-    pssRamInfo["nativeHeapPss"] = pssValues.nativeHeapPssValue;
-    pssRamInfo["stackPss"] = pssValues.stackPssValue;
+    pssRamInfo["gpuPss"] = gpuPssValue;
+    pssRamInfo["graphicPss"] = graphicPssValue;
+    pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
+    pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
+    pssRamInfo["stackPss"] = stackPssValue;
     return pssRamInfo;
 }
 
