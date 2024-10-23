@@ -184,7 +184,7 @@ std::string StartUpDelay::ExcuteCommand(const std::string &command, const std::v
         close(pipefd[1]);
         return output;
     }
-    if (pid == 0) {// 子进程
+    if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
@@ -195,13 +195,13 @@ std::string StartUpDelay::ExcuteCommand(const std::string &command, const std::v
         argv[args.size()] = nullptr;
         execvp(command.c_str(), argv.data());
         LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
-        _exit(EXIT_FAILURE); 
+        _exit(EXIT_FAILURE);
     }
-    close(pipefd[1]);// 在父进程中关闭写端
+    close(pipefd[1]);
     char buf[1024];
     ssize_t nread;
     while ((nread = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
-        if(nread == sizeof(buf) - 1) {
+        if (nread == sizeof(buf) - 1) {
             LOGE("startup_delay::Buffer overflow: %s", strerror(errno));
             break;
         }
@@ -211,7 +211,7 @@ std::string StartUpDelay::ExcuteCommand(const std::string &command, const std::v
     if (nread == -1) {
         LOGE("startup_delay::Failed to read from pipe: %s", strerror(errno));
     }
-    close(pipefd[0]);// 关闭读端
+    close(pipefd[0]);
     int status;
     if (waitpid(pid, &status, 0) == -1) {
         LOGE("startup_delay::Failed to wait for child process: %s", strerror(errno));

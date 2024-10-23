@@ -206,7 +206,7 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
     std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
     pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
     if (paramsInfo.empty()) {
-        for(auto &pss : pssRamInfo) {
+        for (auto &pss : pssRamInfo) {
             pss.second = "0";
         }
         return pssRamInfo;
