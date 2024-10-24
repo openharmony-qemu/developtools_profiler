@@ -195,16 +195,11 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven) {
-            if (params[0].find("GL") != std::string::npos) {
-                gpuPssValue = params[1];
-            } else if (params[0].find("Graph") != std::string::npos) {
-                graphicPssValue = params[1];
-            } else if (params[0].find("stack") != std::string::npos) {
-                stackPssValue = params[1];
-            } else if (params[0].find("Total") != std::string::npos) {
-                paramsInfo = params;
-            }
+        if (params.size() == paramEleven && params[0].find("GL") != std::string::npos) {
+            gpuPssValue = params[1];
+        }
+        if (params.size() == paramEleven && params[0].find("Graph") != std::string::npos) {
+            graphicPssValue = params[1];
         }
         if (params[0].find("ark") != std::string::npos) {
             arktsHeapPssValue = params[RAM_THIRD];
@@ -212,7 +207,13 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
             nativeHeapPssValue = params[RAM_SECOND];
         }
-        if (!paramsInfo.empty()) {
+        if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
+            stackPssValue = params[1];
+        }
+        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+            paramsInfo = params;
+        }
+        if (paramsInfo.size() > 0) {
             break;
         }
     }
