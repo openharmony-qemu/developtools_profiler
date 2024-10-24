@@ -163,14 +163,29 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     }
     return procRamInfo;
 }
+
 std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const
 {
+    std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo);
+    std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
+    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
+    if (paramsInfo.empty()) {
+        for (auto &pss : pssRamInfo) {
+            pss.second = "0";
+        }
+        return pssRamInfo;
+    }
+    return pssRamInfo;
+}
+
+std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
+{
     std::map<std::string, std::string> pssRamInfo;
-    std::string gpuPssValue = "";
-    std::string graphicPssValue = "";
-    std::string arktsHeapPssValue = "";
-    std::string nativeHeapPssValue = "";
-    std::string stackPssValue = "";
+    std::string gpuPssValue = "0";
+    std::string graphicPssValue = "0";
+    std::string arktsHeapPssValue = "0";
+    std::string nativeHeapPssValue = "0";
+    std::string stackPssValue = "0";
     const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
@@ -203,8 +218,6 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
         }
     }
     pclose(fd);
-    std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo);
-    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
     pssRamInfo["gpuPss"] = gpuPssValue;
     pssRamInfo["graphicPss"] = graphicPssValue;
     pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
@@ -212,10 +225,15 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
     pssRamInfo["stackPss"] = stackPssValue;
     return pssRamInfo;
 }
+
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
     if (paramsInfo.empty()) {
+        sumRamInfo = ProcMemNaInfo();
+        for (auto &sumRam : sumRamInfo) {
+            sumRam.second = "0";
+        }
         return sumRamInfo;
     }
     sumRamInfo["pss"] = paramsInfo[RAM_ONE];

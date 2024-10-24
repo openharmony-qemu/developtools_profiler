@@ -337,6 +337,7 @@ public:
         } else {
             retCode = iterator->second;
             spSocket.Sendto(retCode);
+            LOGI("UDP sendData: (%s)", retCode.c_str());
         }
     }
 };

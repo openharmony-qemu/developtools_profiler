@@ -22,10 +22,11 @@
 #include <regex>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "unistd.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
-#include "unistd.h"
 #include "include/sp_log.h"
 #include "include/common.h"
 
@@ -174,40 +175,65 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-
-std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
+std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::vector<std::string> &args)
 {
-    std::string resultPid = "";
-    std::string resultProcId = "";
-    const char* args[] = { "pidof", curPkgName.c_str(), nullptr };
+    std::string output = "";
     int pipefd[2];
     if (pipe(pipefd) == -1) {
-        LOGE("startup_delay::Failed to create pipe");
-        return resultPid;
+        LOGE("startup_delay::Failed to create pipe: %s", strerror(errno));
+        return output;
     }
     pid_t pid = fork();
     if (pid == -1) {
-        LOGE("startup_delay::Failed to fork");
-        return resultPid;
-    } else if (pid == 0) {
+        LOGE("startup_delay::Failed to fork: %s", strerror(errno));
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return output;
+    }
+    if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        if (execvp(args[0], const_cast<char *const*>(args)) == -1) {
-            LOGE("startup_delay::Failed to execute pid");
-            return resultPid;
+        std::vector<char*> argv(args.size() + 1);
+        for (size_t i = 0; i < args.size(); ++i) {
+            argv[i] = const_cast<char*>(args[i].c_str());
         }
-    } else {
-        close(pipefd[1]);
-        char buf[1024];
-        ssize_t nread = read(pipefd[0], buf, sizeof(buf));
-        if (nread == -1) {
-            return resultPid;
+        argv[args.size()] = nullptr;
+        execvp(command.c_str(), argv.data());
+        LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
+        _exit(EXIT_FAILURE);
+    }
+    close(pipefd[1]);
+    char buf[1024];
+    ssize_t nread;
+    while ((nread = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
+        if (nread == sizeof(buf) - 1) {
+            LOGE("startup_delay::Buffer overflow: %s", strerror(errno));
+            break;
         }
-        resultPid = std::string(buf, nread);
-        resultProcId = resultPid.substr(0, resultPid.size() - 1);
-        close(pipefd[0]);
-        waitpid(pid, nullptr, 0);
+        buf[nread] = '\0';
+        output.append(buf);
+    }
+    if (nread == -1) {
+        LOGE("startup_delay::Failed to read from pipe: %s", strerror(errno));
+    }
+    close(pipefd[0]);
+    int status;
+    if (waitpid(pid, &status, 0) == -1) {
+        LOGE("startup_delay::Failed to wait for child process: %s", strerror(errno));
+        return output;
+    }
+    return output;
+}
+
+std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
+{
+    const std::string pidof = "pidof";
+    const std::vector<std::string> args = {pidof, curPkgName};
+    std::string resultProcId = ExecuteCommand(pidof, args);
+    if (!resultProcId.empty() && resultProcId.back() == '\n') {
+        resultProcId.pop_back();
+        LOGI("startup_delay::output: (%s)", resultProcId.c_str());
     }
     return resultProcId;
 }
