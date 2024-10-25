@@ -395,8 +395,8 @@ void SPTask::CreatPath(std::string Path)
 {
     if (!SPUtils::FileAccess(Path)) {
         std::string cmdResult;
-        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
-        SPUtils::LoadCmd(writePath, cmdResult);
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
+        SPUtils::LoadCmd(creatPath, cmdResult);
     }
 }
 
