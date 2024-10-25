@@ -23,6 +23,7 @@
 #include <map>
 #include "common.h"
 #include "sp_data.h"
+#include "sp_utils.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
@@ -31,6 +32,11 @@ public:
     {
         std::ofstream outFile;
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
+        if (outFile.is_open() && path == "/data/local/tmp/data.csv") {
+            std::string cmdResult;
+            std::string cmd = "chmod 777 " + path;
+            SPUtils::LoadCmd(cmd, cmdResult);
+        }
         int i = 0;
         std::string title = "";
         for (SPData spdata : vmap) {
