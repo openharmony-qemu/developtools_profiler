@@ -193,6 +193,7 @@ enum class CmdCommand {
     EDITOR_SERVER_GREP,
     UINPUT_BACK,
     TIMESTAMPS,
+    USER_PERMISSIONS,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -220,6 +221,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::EDITOR_SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -editorServer'") },
     { CmdCommand::UINPUT_BACK, std::string("uinput -T -m 600 2760 600 1300 200") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
+    { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
 };
 
 enum class DeviceCmd {
