@@ -63,7 +63,6 @@ void PrintUsage(const string& program)
 int ParseMapsLine(const string& line, MapInfo& mapping)
 {
     std::istringstream iss(line);
-    std::string token;
     uint64_t start, end;
 
     // 读取起始地址和结束地址
@@ -128,7 +127,7 @@ void PrintPage(const MapInfo& mapping, const PageInfo& page)
 bool IsValidPid(const string& pid_str)
 {
     if (pid_str.empty()) {
-        return -1;
+        return false;
     }
     bool ret = all_of(pid_str.begin(), pid_str.end(), [](char c) {
         return isdigit(c);
