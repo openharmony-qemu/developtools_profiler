@@ -176,7 +176,7 @@ enum class CmdCommand {
     HITRACE_1024,
     HITRACE_2048,
     HITRACE_CMD,
-    CAPTURE_FILE,
+    CREAT_DIR,
     SNAPSHOT,
     SERVER,
     OHTESTFPS,
@@ -185,7 +185,6 @@ enum class CmdCommand {
     PROC_STAT,
     HIPROFILER,
     PERF,
-    WRITE_PATH,
     HIPROFILER_CMD,
     HIPROFILER_PID,
     KILL_CMD,
@@ -194,6 +193,7 @@ enum class CmdCommand {
     EDITOR_SERVER_GREP,
     UINPUT_BACK,
     TIMESTAMPS,
+    USER_PERMISSIONS,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -204,7 +204,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
         "hitrace --trace_clock mono -t 10 -b 204800 --overwrite idle ace app ohos ability graphic "
         "nweb sched freq sync workq multimodalinput > ") },
     { CmdCommand::HITRACE_CMD, std::string("ps -ef |grep hitrace |grep -v grep") },
-    { CmdCommand::CAPTURE_FILE, std::string("mkdir -p /data/local/tmp/capture") },
+    { CmdCommand::CREAT_DIR, std::string("mkdir -m 777 ") },
     { CmdCommand::SNAPSHOT, std::string("snapshot_display -f ") },
     { CmdCommand::SERVER, std::string("SP_daemon -server") },
     { CmdCommand::OHTESTFPS, std::string("SP_daemon -ohtestfps 10") },
@@ -213,7 +213,6 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::PROC_STAT, std::string("chmod o+r /proc/stat") },
     { CmdCommand::HIPROFILER, std::string("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace") },
     { CmdCommand::PERF, std::string("rm -f /data/local/tmp/perf_[0-9]*.data") },
-    { CmdCommand::WRITE_PATH, std::string("mkdir -p /data/local/tmp/smartperf/") },
     { CmdCommand::HIPROFILER_CMD, std::string("ps -ef |grep hiprofiler_cmd |grep -v grep") },
     { CmdCommand::HIPROFILER_PID, std::string("pidof hiprofiler_cmd") },
     { CmdCommand::KILL_CMD, std::string("kill ") },
@@ -222,6 +221,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::EDITOR_SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -editorServer'") },
     { CmdCommand::UINPUT_BACK, std::string("uinput -T -m 600 2760 600 1300 200") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
+    { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
 };
 
 enum class DeviceCmd {

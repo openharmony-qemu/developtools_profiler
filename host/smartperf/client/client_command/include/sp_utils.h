@@ -142,6 +142,7 @@ bool IsForeGround(std::string &pkg);
 bool IsFindForeGround(std::string line);
 bool IsFindAbilist();
 void SetRkFlag();
+bool GetPathPermissions(const std::string &path);
 };
 }
 }

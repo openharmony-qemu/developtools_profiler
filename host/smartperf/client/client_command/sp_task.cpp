@@ -391,20 +391,21 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     return ErrCode::OK;
 }
 
-void SPTask::WritePath(std::string thisBasePath)
+void SPTask::CreatPath(std::string Path)
 {
-    if (!SPUtils::FileAccess(thisBasePath)) {
+    if (!SPUtils::FileAccess(Path)) {
         std::string cmdResult;
-        std::string writePath = CMD_COMMAND_MAP.at(CmdCommand::WRITE_PATH) + curTaskInfo.sessionId;
-        SPUtils::LoadCmd(writePath, cmdResult);
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
+        SPUtils::LoadCmd(creatPath, cmdResult);
     }
 }
 
 void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
+    CreatPath(baseOutPath);
     std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    WritePath(thisBasePath);
+    CreatPath(thisBasePath);
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;

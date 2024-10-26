@@ -83,7 +83,7 @@ public:
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
     void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
-    void WritePath(std::string thisBasePath);
+    void CreatPath(std::string Path);
     void ConfigDataThread();
     void StopSdkRecv();
     void StopGpuCounterRecv();
