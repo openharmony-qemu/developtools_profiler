@@ -707,5 +707,18 @@ void SPUtils::SetRkFlag()
         OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
     }
 }
+bool SPUtils::GetPathPermissions(const std::string &path)
+{
+    if (!path.empty()) {
+        std::string cmdResult;
+        std::string cmd = "ls -l " + path;
+        loadCmd(cmd, cmdResult);
+        std::string result = cmdResult.substr(0, 10);
+        return result == "-rw-r--r--";
+    } else {
+        LOGI("THE path is empty");
+        return false;
+    }
+}
 }
 }

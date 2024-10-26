@@ -34,9 +34,14 @@ public:
         std::string cmdResult;
         SPUtils::LoadCmd(CMD_COMMAND_MAP.at(CmdCommand::USER_PERMISSIONS), cmdResult);
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
-        if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "root") {
+        if (SPUtils::GetPathPermissions(path)) {
             std::string cmd = "chmod 777 " + path;
-            SPUtils::LoadCmd(cmd, cmdResult);
+            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "root") {
+                SPUtils::LoadCmd(cmd, cmdResult);
+            }
+            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "shell") {
+                SPUtils::LoadCmd(cmd, cmdResult);
+            }
         }
         int i = 0;
         std::string title = "";
