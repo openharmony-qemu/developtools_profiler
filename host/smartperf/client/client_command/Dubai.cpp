@@ -52,16 +52,16 @@ void Dubai::MoveDubaiDb()
 
 void Dubai::CallBeginAndFinish()
 {
-    Dubai::DumpDubaiBegin();
-    Dubai::DumpDubaiFinish();
+    DumpDubaiBegin();
+    DumpDubaiFinish();
     LOGI("Dubai::CallBeginAndFinish");
 }
 
 std::string Dubai::CallMoveDubaiDbFinished()
 {
     std::string dubaiMoveFinish;
-    if (Dubai::isDumpDubaiFinish) {
-        Dubai::MoveDubaiDb();
+    if (isDumpDubaiFinish) {
+        MoveDubaiDb();
         LOGI("Dubai::MoveDubaiDbFinished");
     }
     dubaiMoveFinish = "get_dubai_db";
