@@ -95,6 +95,8 @@ public:
     void StopRecord();
     bool GetRecordState();
     time_t GetRealStartTime() const;
+    void SetTcpToken(std::string token);
+    std::string GetTcpToken();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -126,6 +128,7 @@ private:
     LockFrequency &lockFreq = LockFrequency::GetInstance();
     bool recordState = false;
     time_t realTimeStart = 0;
+    std::string tcpToken = "";
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

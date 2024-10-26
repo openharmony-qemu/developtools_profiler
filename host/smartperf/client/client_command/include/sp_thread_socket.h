@@ -76,6 +76,12 @@ public:
         LOGI("Socket Process finished!");
         spSocket.Close();
     }
+    bool CheckToken(std::string recvStr) const
+    {
+        std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
+        return token.find(SPTask::GetInstance().GetTcpToken()) != std::string::npos;
+    }
+
     void TypeTcp(SpServerSocket &spSocket) const
     {
         SocketHeartbeat();
@@ -90,6 +96,12 @@ public:
                 std::string recvStr = spSocket.RecvBuf();
                 std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                 // 解析消息 分发处理
+                if (SPTask::GetInstance().GetTcpToken() != "") {
+                    if (!CheckToken(recvStr)) {
+                        LOGI("Token check failed!");
+                        return;
+                    }
+                }
                 DealMsg(recvStr, spSocket);
             }
         }
@@ -99,7 +111,8 @@ public:
     {
         std::string errorInfo;
         std::string checkStr = recvStr.substr(std::string("init::").length());
-        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
+        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
+            checkStr.find(SPTask::GetInstance().GetTcpToken()) == std::string::npos) {
             LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
             spSocket.Send("init::False,\"error\":" + errorInfo);
             return;

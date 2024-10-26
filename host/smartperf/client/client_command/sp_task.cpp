@@ -655,5 +655,13 @@ time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
 }
+void SPTask::SetTcpToken(std::string token)
+{
+    tcpToken = token;
+}
+std::string SPTask::GetTcpToken()
+{
+    return tcpToken;
+}
 }
 }

@@ -87,7 +87,7 @@ public:
     ~SmartPerfCommand() {};
     static void InitSomething();
     std::string ExecCommand();
-    void HelpCommand(CommandHelp type) const;
+    void HelpCommand(CommandHelp type, std::string token) const;
     void HandleCommand(std::string argStr, const std::string &argStr1);
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;

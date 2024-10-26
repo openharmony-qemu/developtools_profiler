@@ -81,6 +81,9 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.insert("deviceinfo");
     keys.insert("ohtestfps");
     keys.insert("editorServer");
+    if (argv[1].find("editorServer:") != std::string::npos) {
+        keys.insert(argv[1].substr(1).c_str());
+    }
     keys.insert("recordcapacity");
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'

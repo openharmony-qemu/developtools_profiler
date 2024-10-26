@@ -48,8 +48,13 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         auto iterator = COMMAND_HELP_MAP.begin();
         while (iterator != COMMAND_HELP_MAP.end()) {
             if (iterator->second.compare(argv[1]) == 0) {
-                HelpCommand(iterator->first);
+                HelpCommand(iterator->first, "");
                 break;
+            }
+            if (argv[1].find("-editorServer") != std::string::npos){
+                const size_t tokenStartPosition = 14;
+                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
+                HelpCommand(CommandHelp::EDITORSERVER, token);
             }
             ++iterator;
         }
@@ -69,7 +74,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 
     LOGI("SmartPerfCommand::SmartPerfCommand  complete");
 }
-void SmartPerfCommand::HelpCommand(CommandHelp type) const
+void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
     LOGI("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
@@ -94,6 +99,8 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
+        } else {
+            SPTask::GetInstance().SetTcpToken(token);
         }
         CreateSocketThread();
     }
