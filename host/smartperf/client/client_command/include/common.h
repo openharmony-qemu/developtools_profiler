@@ -35,6 +35,7 @@ enum class MessageType {
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
     SET_DUBAI_DB,
+    START_DUBAI_DB,
     CATCH_NETWORK_TRAFFIC,
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,
@@ -61,6 +62,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
+    { MessageType::START_DUBAI_DB, std::string("start_dubai_db") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
     { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },

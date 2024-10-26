@@ -334,6 +334,11 @@ public:
             spSocket.Sendto(retCode);
         } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
             BackDesktop();
+        } else if (iterator->first == MessageType::SET_DUBAI_DB) {
+            Dubai::CallBeginAndFinish();
+            Dubai::isDumpDubaiFinish = true;
+            retCode = Dubai::CallMoveDubaiDbFinished();
+            spSocket.Sendto(retCode);
         } else {
             retCode = iterator->second;
             spSocket.Sendto(retCode);

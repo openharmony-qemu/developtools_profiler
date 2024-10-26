@@ -81,8 +81,8 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
             break;
-        case MessageType::SET_DUBAI_DB:
-            DumpDubaiAndMoveDb();
+        case MessageType::START_DUBAI_DB:
+            Dubai::CallBeginAndFinish();
             break;
         case MessageType::CATCH_NETWORK_TRAFFIC:
         case MessageType::GET_NETWORK_TRAFFIC:
@@ -92,13 +92,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             break;
     }
     return profiler;
-}
-
-void SpProfilerFactory::DumpDubaiAndMoveDb()
-{
-    Dubai::DumpDubaiBegin();
-    Dubai::DumpDubaiFinish();
-    Dubai::MoveDubaiDb();
 }
 
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)

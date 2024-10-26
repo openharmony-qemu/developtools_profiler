@@ -49,5 +49,23 @@ void Dubai::MoveDubaiDb()
     SPUtils::LoadCmd(cpDubai, result);
     SPUtils::LoadCmd(dubaiPathChmod, result);
 }
+
+void Dubai::CallBeginAndFinish()
+{
+    Dubai::DumpDubaiBegin();
+    Dubai::DumpDubaiFinish();
+    LOGI("Dubai::CallBeginAndFinish");
+}
+
+std::string Dubai::CallMoveDubaiDbFinished()
+{
+    std::string dubaiMoveFinish;
+    if (Dubai::isDumpDubaiFinish) {
+        Dubai::MoveDubaiDb();
+        LOGI("Dubai::MoveDubaiDbFinished");
+    }
+    dubaiMoveFinish = "get_dubai_db";
+    return dubaiMoveFinish;
+}
 }
 }
