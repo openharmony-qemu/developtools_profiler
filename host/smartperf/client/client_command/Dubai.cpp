@@ -42,7 +42,7 @@ void Dubai::MoveDubaiDb()
     const std::string XpowerDb = "/dubai.db";
     const std::string Database = "/data/app/el2/100/database/";
     const std::string PkgEntry = "/entry/rdb";
-    const std::string cpDubai = "cp " + dubaiXpower + XpowerDb + " " + Database + dubaiPkgName + PkgEntry;
+    const std::string cpDubai = "cp -r " + dubaiXpower + XpowerDb + " " + Database + dubaiPkgName + PkgEntry;
     const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + XpowerDb;
     LOGI("cpDubai: (%s)", cpDubai.c_str());
     LOGI("dubaiPathChmod: (%s)", dubaiPathChmod.c_str());
