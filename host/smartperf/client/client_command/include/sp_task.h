@@ -69,7 +69,7 @@ public:
     }
     ErrCode InitTask(const std::string &recvStr);
     ErrCode StartTask(std::function<void(std::string data)> msgTask);
-    void StopTask();
+    ErrCode StopTask();
     std::string GetCurrentTimeAsString();
     std::map<std::string, std::string> DetectionAndGrab();
     bool CheckTcpParam(std::string str, std::string &errorInfo);
@@ -91,8 +91,8 @@ public:
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
-    void StartRecord();
-    void StopRecord();
+    ErrCode StartRecord();
+    ErrCode StopRecord();
     bool GetRecordState();
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);

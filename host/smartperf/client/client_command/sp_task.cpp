@@ -454,10 +454,8 @@ void SPTask::StopGpuCounterRecv()
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 }
-void SPTask::StopTask()
+ErrCode SPTask::StopTask()
 {
-    LOGI("SPTask::StopTask start");
-
     if (GetRecordState()) {
         StopGetInfo();
         StopSdkRecv();
@@ -485,8 +483,7 @@ void SPTask::StopTask()
     }
 
     KillHiperfCmd();
-
-    LOGI("SPTask::StopTask complete");
+    return ErrCode::OK;
 }
 
 std::map<std::string, std::string> SPTask::DetectionAndGrab()
@@ -624,15 +621,16 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
-void SPTask::StartRecord()
+ErrCode SPTask::StartRecord()
 {
     LOGI("SPTask::StartRecord");
     startTime = SPUtils::GetCurTime();
     InitDataFile();
     recordState = true;
+    return ErrCode::OK;
 }
 
-void SPTask::StopRecord()
+ErrCode SPTask::StopRecord()
 {
     LOGI("SPTask::StopRecord");
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
@@ -650,6 +648,7 @@ void SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
 
     recordState = false;
+    return ErrCode::OK;
 }
 time_t SPTask::GetRealStartTime() const
 {
