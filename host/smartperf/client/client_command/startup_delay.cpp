@@ -175,7 +175,7 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::vector<std::string> &args)
+std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::vector<std::string> &args) const
 {
     std::string output = "";
     int pipefd[2];
@@ -194,12 +194,12 @@ std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        std::vector<char*> argv(args.size() + 1);
+        std::vector<const char*> argv(args.size() + 1);
         for (size_t i = 0; i < args.size(); ++i) {
-            argv[i] = const_cast<char*>(args[i].c_str());
+            argv[i] = args[i].c_str();
         }
         argv[args.size()] = nullptr;
-        execvp(command.c_str(), argv.data());
+        execvp(command.c_str(), const_cast<char* const*>(argv.data()));
         LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
         _exit(EXIT_FAILURE);
     }
