@@ -36,8 +36,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfoProfiler finalResult;
-    finalResult = GetFpsInfo();
+    FpsInfoProfiler finalResult = GetFpsInfo();
     lastFpsInfoResult = finalResult;
     if (processFlag) {
         result["fps"] = "NA";
