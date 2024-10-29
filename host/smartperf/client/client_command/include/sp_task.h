@@ -93,6 +93,7 @@ public:
     void StartRecord();
     void StopRecord();
     bool GetRecordState();
+    void SaveScreenShot();
     time_t GetRealStartTime() const;
 
 private:
@@ -122,6 +123,7 @@ private:
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     bool recordState = false;
+    bool screenshotFlag = false;
     time_t realTimeStart = 0;
 
     std::string strOne = R"(hiprofiler_cmd \
