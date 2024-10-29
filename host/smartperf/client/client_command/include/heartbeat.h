@@ -30,7 +30,6 @@ public:
     void HeartbeatRule();
     void UpdatestartTime();
     void KillSpId();
-    void HeartbeatRule();
     static Heartbeat &GetInstance()
     {
         static Heartbeat instance;

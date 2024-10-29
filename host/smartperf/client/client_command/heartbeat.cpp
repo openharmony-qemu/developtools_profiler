@@ -56,7 +56,7 @@ void Heartbeat::HeartbeatRule()
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
         LOGI("ListeningTimeJitter: %lld", duration);
         if (duration > timeout) {
-            LOGI("editor connect timeout have Disconnected successfully!");
+            LOGI("connect timeout have Disconnected successfully!");
             KillSpId();
         }
         sleep(checkMessageTime);
@@ -71,19 +71,5 @@ void Heartbeat::UpdatestartTime()
     lock.unlock();
 }
 
-void Heartbeat::HeartbeatRule()
-{
-    while (isrunning) {
-        auto end = std::chrono::steady_clock::now();
-        LOGI("endTime:%lld", std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count);
-        auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
-        LOGI("ListeningTimeJitter: %lld", duration);
-        if (duration > timeout) {
-            LOGI("connect timeout have Disconnected successfully");
-            KillSpId();
-        }
-        sleep(checkMessageTime);
-    }
-}
 }
 }
