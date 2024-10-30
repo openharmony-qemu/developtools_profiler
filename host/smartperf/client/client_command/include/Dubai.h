@@ -29,7 +29,10 @@ public:
     static void DumpDubaiBegin();
     // dubai -f
     static void DumpDubaiFinish();
+    static void CallBeginAndFinish();
+    static std::string CallMoveDubaiDbFinished();
     static inline std::string dubaiPkgName = " ";
+    static inline bool isDumpDubaiFinish = false;
 private:
     Dubai() {};
     Dubai(const Dubai &);

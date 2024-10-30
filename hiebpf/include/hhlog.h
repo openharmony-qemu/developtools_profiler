@@ -122,14 +122,16 @@ private:
     std::thread logSaver_;
 };
 
-#define HHLOG(level, expression, format, ...) {                           \
+#define HHLOG(level, expression, format, ...) {                             \
     if ((expression) and                                                    \
         (!HHLogger::GetInstance().IsStopped()) and                          \
         (HHLogger::GetInstance().GetLogLevel() <= HHLOG_##level)) {         \
         const char prefix[] {" [" #level "] %s %d %s: %s"};                 \
         char buffer[HHLogger::MAX_FORMAT_SIZE];                             \
-        (void)snprintf_s(buffer, sizeof(buffer), sizeof(buffer) -1,         \
-                         prefix, __FILE__, __LINE__, __FUNCTION__, format);  \
+        if (snprintf_s(buffer, sizeof(buffer), sizeof(buffer) -1,            \
+                         prefix, __FILE__, __LINE__, __FUNCTION__, format) < 0) {  \
+            HHLogger::GetInstance().PutLog("snprintf_s error!");                   \
+        }                                                                          \
         HHLogger::GetInstance().PutLog(buffer, ##__VA_ARGS__);              \
     }                                                                       \
 }

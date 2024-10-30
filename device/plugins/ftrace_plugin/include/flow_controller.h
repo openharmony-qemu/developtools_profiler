@@ -23,7 +23,7 @@
 #include "paged_mem_pool.h"
 #include "plugin_module_api.h"
 #include "result_transporter.h"
-#include "trace_collector.h"
+#include "trace_collector_client.h"
 #include "trace_plugin_config.pb.h"
 
 #include <atomic>

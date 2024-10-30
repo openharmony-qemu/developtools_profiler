@@ -56,7 +56,7 @@ void Heartbeat::HeartbeatRule()
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
         LOGI("ListeningTimeJitter: %lld", duration);
         if (duration > timeout) {
-            LOGI("editor connect timeout have Disconnected successfully!");
+            LOGI("connect timeout have Disconnected successfully!");
             KillSpId();
         }
         sleep(checkMessageTime);
@@ -70,5 +70,6 @@ void Heartbeat::UpdatestartTime()
     LOGI("Listening to messages from edtior or device");
     lock.unlock();
 }
+
 }
 }

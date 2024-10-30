@@ -843,10 +843,20 @@ void hook_free(void (*free_func)(void*), void* p)
         if (!free_func) {
             return;
         }
+        if (g_ClientConfig.mallocDisable || IsPidChanged()) {
+            free_func(p);
+            return;
+        }
+        if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+            if (!IsAddrExist(p)) {
+                free_func(p);
+                return;
+            }
+        }
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
-            holder->SendStackWithPayload(p, sizeof(uint64_t), nullptr, 0);
+            holder->SendStackWithPayload(&p, sizeof(uint64_t), nullptr, 0);
         }
         free_func(p);
 #ifdef PERFORMANCE_DEBUG

@@ -74,7 +74,7 @@ void Capture::ThreadGetCatch()
     const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGI("%s capture not be created!", captureDir.c_str());
             return;
@@ -100,7 +100,7 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
     std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGI("%s capture not be created!", captureDir.c_str());
             return;

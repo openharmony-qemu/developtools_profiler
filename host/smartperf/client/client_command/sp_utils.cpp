@@ -31,6 +31,11 @@
 #include "include/common.h"
 #include "cpu_collector.h"
 #include "collect_result.h"
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
+#include "include/DDR.h"
+#include "include/profiler_fps.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -688,6 +693,30 @@ bool SPUtils::IsFindAbilist()
     if (abilist.find("arm") != std::string::npos) {
         return true;
     } else {
+        return false;
+    }
+}
+void SPUtils::SetRkFlag()
+{
+    bool FindAbilistResult = IsFindAbilist();
+    if (!FindAbilistResult) {
+        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
+    }
+}
+bool SPUtils::GetPathPermissions(const std::string &path)
+{
+    if (!path.empty()) {
+        std::string cmdResult;
+        std::string cmd = "ls -l " + path;
+        LoadCmd(cmd, cmdResult);
+        std::string result = cmdResult.substr(0, 10);
+        return result == "-rw-r--r--";
+    } else {
+        LOGI("THE path is empty");
         return false;
     }
 }

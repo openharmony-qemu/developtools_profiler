@@ -206,7 +206,7 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
-        if (itConfig.find("-snapshot") != std::string::npos) {
+        if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -398,20 +398,21 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     return ErrCode::OK;
 }
 
-void SPTask::WritePath(std::string thisBasePath)
+void SPTask::CreatPath(std::string Path)
 {
-    if (!SPUtils::FileAccess(thisBasePath)) {
+    if (!SPUtils::FileAccess(Path)) {
         std::string cmdResult;
-        std::string writePath = CMD_COMMAND_MAP.at(CmdCommand::WRITE_PATH) + curTaskInfo.sessionId;
-        SPUtils::LoadCmd(writePath, cmdResult);
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
+        SPUtils::LoadCmd(creatPath, cmdResult);
     }
 }
 
 void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
+    CreatPath(baseOutPath);
     std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    WritePath(thisBasePath);
+    CreatPath(thisBasePath);
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
@@ -465,6 +466,7 @@ ErrCode SPTask::StopTask()
         sdkvec.clear();
         gpuCounter.GetGpuCounterData().clear();
         recordState = false;
+        screenshotFlag = false;
     }
 
     ResetSdkParam();
@@ -648,7 +650,14 @@ ErrCode SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
 
     recordState = false;
+    screenshotFlag = false;
+
     return ErrCode::OK;
+}
+
+void SPTask::SaveScreenShot()
+{
+    screenshotFlag = true;
 }
 time_t SPTask::GetRealStartTime() const
 {

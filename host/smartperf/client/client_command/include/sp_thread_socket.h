@@ -197,12 +197,16 @@ public:
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
     {
+        LOGI("startRecord::True");
         ErrCode code = SPTask::GetInstance().StartRecord();
         if (code == ErrCode::OK) {
             spSocket.Send("startRecord::True");
         } else {
             spSocket.Send(std::string("error::") + std::to_string(START_RECORD_FAILED));
         }
+        SPTask::GetInstance().SaveScreenShot();
+
+        spSocket.Send("startRecord::True");
     }
     void StopRecvRecord(SpServerSocket &spSocket) const
     {
@@ -386,9 +390,15 @@ public:
             spSocket.Sendto(retCode);
         } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
             BackDesktop();
+        } else if (iterator->first == MessageType::SET_DUBAI_DB) {
+            Dubai::CallBeginAndFinish();
+            Dubai::isDumpDubaiFinish = true;
+            retCode = Dubai::CallMoveDubaiDbFinished();
+            spSocket.Sendto(retCode);
         } else {
             retCode = iterator->second;
             spSocket.Sendto(retCode);
+            LOGI("UDP sendData: (%s)", retCode.c_str());
         }
     }
 };

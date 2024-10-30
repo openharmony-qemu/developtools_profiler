@@ -25,6 +25,8 @@ namespace HiviewDFX {
 
 int64_t GetElapsedNanoSecondsSinceBoot();
 
+int64_t GetNanoSecondsTimestamp();
+
 template<typename T>
 class CachedValue {
 public:
