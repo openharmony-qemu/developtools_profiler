@@ -61,6 +61,7 @@ public:
     void SetTraceCatch();
     void SetGameLayer(std::string isGameView);
     std::string GetGameLayer();
+    std::string GetLayerName(uint64_t &nodeId, std::string &line, size_t &endPos);
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);

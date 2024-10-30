@@ -151,6 +151,7 @@ public:
     {
         LOGI("startRecord::True");
         SPTask::GetInstance().StartRecord();
+        SPTask::GetInstance().SaveScreenShot();
 
         spSocket.Send("startRecord::True");
     }

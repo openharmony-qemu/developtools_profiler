@@ -36,16 +36,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
     std::map<std::string, std::string> result;
-    FpsInfoProfiler finalResult;
-    if (isGameLayer == "1") {
-        std::string gameLayerName = GetGameLayer();
-        LOGI("ProfilerFPS::gameLayerName: (%s)", gameLayerName.c_str());
-        if (!gameLayerName.empty()) {
-            finalResult = selfRerderLayers(gameLayerName);
-        }
-    } else {
-        finalResult = GetFpsInfo();
-    }
+    FpsInfoProfiler finalResult = GetFpsInfo();
     lastFpsInfoResult = finalResult;
     if (processFlag) {
         result["fps"] = "NA";
@@ -278,7 +269,13 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     processFlag = false;
     fpsInfoMax.fps = 0;
     std::string uniteLayer;
-    if (!rkFlag) {
+    bool isGameSurface = false;
+    std::string gameLayerName = GetGameLayer();
+    if (isGameLayer == "1" && !gameLayerName.empty()) {
+        uniteLayer = gameLayerName;
+        isGameSurface = true;
+    } else if (!rkFlag) {
+        LOGI("uniteLayer is UniRender");
         uniteLayer = "UniRender";
     } else {
         ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
@@ -287,7 +284,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     if (ohFlag) {
         uniteLayer = GetSurface();
     }
-    if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
+    if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos || isGameSurface) {
         LOGI("ProfilerFPS.pkgName: %s", pkgName.c_str());
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
@@ -432,37 +429,55 @@ std::string ProfilerFPS::GetGameLayer()
     }
     std::string cmdResult;
     std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
-    SPUtils::LoadCmd(dumperSurface, cmdResult);
-    LOGI("ProfilerFPS::cmdResult: (%s)", cmdResult.c_str());
+    char buf[1024] = {'\0'};
     std::string start = "NodeId[";
-    std::string end = "]";
-    size_t startPos = cmdResult.find(start) + start.length();
-    size_t endPos = cmdResult.find(end, startPos);
-    std::string nodeIdStr = cmdResult.substr(startPos, endPos - startPos);
-    LOGI("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
+    std::string end = "] LayerId";
+    std::string nodeIdStr;
     uint64_t nodeId;
-    const int kShiftAmount = 32;
-    if (!nodeIdStr.empty()) {
-        std::stringstream ss(nodeIdStr);
-        ss >> nodeId;
-        if (ss.fail() || !ss.eof()) {
-            return gameLayer;
+    FILE *fd = popen(dumperSurface.c_str(), "r");
+    if (fd == nullptr) {
+        return gameLayer;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        size_t startPos = line.find(start);
+        size_t endPos = line.find(end);
+        if (startPos != std::string::npos && endPos != std::string::npos) {
+            nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
+            LOGI("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
         }
-        nodeId = nodeId >> kShiftAmount;
-        LOGI("ProfilerFPS::nodeId: (%d)", nodeId);
-        if (std::to_string(nodeId) == processId) {
-            size_t layerStartPos = cmdResult.find("[");
-            size_t layerEndPos = cmdResult.find("]");
-            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+        const int kShiftAmount = 32;
+        if (!nodeIdStr.empty()) {
+            std::stringstream ss(nodeIdStr);
+            ss >> nodeId;
+            if (ss.fail() || !ss.eof()) {
                 return gameLayer;
             }
-            layerStartPos += 1;
-            gameLayer = cmdResult.substr(layerStartPos, layerEndPos - layerStartPos);
+            nodeId = nodeId >> kShiftAmount;
+            LOGI("ProfilerFPS::nodeId: (%d)", nodeId);
+            gameLayer = GetLayerName(nodeId, line, endPos);
         }
     }
+    pclose(fd);
     LOGI("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
 }
+
+std::string ProfilerFPS::GetLayerName(uint64_t &nodeId, std::string &line, size_t &endPos)
+{
+    std::string layerName = "";
+    if (std::to_string(nodeId) == processId) {
+        size_t layerStartPos = line.find("[");
+        size_t layerEndPos = line.find("]");
+        if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+            return layerName;
+        }
+        layerStartPos += 1;
+        layerName = line.substr(layerStartPos, layerEndPos - layerStartPos);
+    }
+    return layerName;
+}
+
 void ProfilerFPS::SetRkFlag()
 {
     rkFlag = true;

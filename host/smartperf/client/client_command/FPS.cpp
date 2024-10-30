@@ -151,7 +151,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     fpsInfo = fpsMap[name];
     fpsInfo.fps = 0;
     std::string command = "fps " + name;
-    const char* args[] = { "hidumper", "-s", "10", "-a", command.c_str(), nullptr };
+    const std::vector<const char*> args = { "hidumper", "-s", "10", "-a", command.c_str(), nullptr };
     int pipefd[2];
     pid_t pid;
     if (pipe(pipefd) == -1) {
@@ -162,20 +162,19 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     if (pid == -1) {
         LOGE("FPS::Failed to fork");
         return fpsInfo;
-    } else if (pid == 0) {
+    }
+    if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        if (execvp(args[0], const_cast<char *const*>(args)) == -1) {
-            LOGE("FPS::Failed to execute hidumper");
-            return fpsInfo;
-        }
-    } else {
-        close(pipefd[1]);
-        ReadDataFromPipe(pipefd[0]);
-        close(pipefd[0]);
-        waitpid(pid, nullptr, 0);
+        execvp(args[0], const_cast<char *const*>(args.data()));
+        LOGE("FPS::Failed to execute hidumper");
+        _exit(EXIT_FAILURE);
     }
+    close(pipefd[1]);
+    ReadDataFromPipe(pipefd[0]);
+    close(pipefd[0]);
+    waitpid(pid, nullptr, 0);
     return fpsInfo;
 }
 
@@ -207,9 +206,6 @@ void FPS::ReadDataFromPipe(int fd)
             continue;
         }
         CalcFpsAndJitters();
-    }
-    if (fclose(fp) == EOF) {
-        LOGE("FPS::Failed to close file descriptor");
     }
 }
 

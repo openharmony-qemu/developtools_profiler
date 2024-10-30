@@ -206,7 +206,7 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
-        if (itConfig.find("-snapshot") != std::string::npos) {
+        if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -461,6 +461,7 @@ void SPTask::StopTask()
         sdkvec.clear();
         gpuCounter.GetGpuCounterData().clear();
         recordState = false;
+        screenshotFlag = false;
     }
 
     ResetSdkParam();
@@ -640,6 +641,12 @@ void SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
 
     recordState = false;
+    screenshotFlag = false;
+}
+
+void SPTask::SaveScreenShot()
+{
+    screenshotFlag = true;
 }
 time_t SPTask::GetRealStartTime() const
 {
