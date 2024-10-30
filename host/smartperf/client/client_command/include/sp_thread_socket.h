@@ -34,7 +34,11 @@ public:
 
     enum socketError{
         NONE,
-        TOKEN_CHECK_FAILED,
+        TOKEN_CHECK_FAILED_INIT,
+        TOKEN_CHECK_FAILED_START,
+        TOKEN_CHECK_FAILED_STARTRECORD,
+        TOKEN_CHECK_FAILED_STOP,
+        TOKEN_CHECK_FAILED_STOPRECORD,
         INIT_FAILED,
         START_FAILED,
         START_RECORD_FAILED,
@@ -87,10 +91,29 @@ public:
         LOGI("Socket Process finished!");
         spSocket.Close();
     }
-    bool CheckToken(std::string recvStr) const
+    bool CheckToken(std::string recvStr, SpServerSocket &spSocket) const
     {
+        socketError errorType;
+        if (recvStr.find("init::") != std::string::npos) {
+            errorType = TOKEN_CHECK_FAILED_INIT;
+        } else if (recvStr.find("start::") != std::string::npos) {
+            errorType = TOKEN_CHECK_FAILED_START;
+        } else if (recvStr.find("startRecord::") != std::string::npos) {
+            errorType = TOKEN_CHECK_FAILED_STARTRECORD;
+        } else if (recvStr.find("stop::") != std::string::npos) {
+            errorType = TOKEN_CHECK_FAILED_STOP;
+        } else if (recvStr.find("stopRecord::") != std::string::npos) {
+            errorType = TOKEN_CHECK_FAILED_STOPRECORD;
+        }
+
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
-        return token.find(SPTask::GetInstance().GetTcpToken()) != std::string::npos;
+        token = token.substr(0, token.find(' '));
+        if (token != SPTask::GetInstance().GetTcpToken()) {
+            spSocket.Send(std::string("error::") + std::to_string(errorType));
+            return false;
+        }
+
+        return true;
     }
 
     void TypeTcp(SpServerSocket &spSocket) const
@@ -107,12 +130,9 @@ public:
                 std::string recvStr = spSocket.RecvBuf();
                 std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                 // 解析消息 分发处理
-                if (SPTask::GetInstance().GetTcpToken() != "") {
-                    if (!CheckToken(recvStr)) {
-                        spSocket.Send(std::string("error::") + std::to_string(TOKEN_CHECK_FAILED));
-                        LOGI("Token check failed!");
-                        return;
-                    }
+                if (!CheckToken(recvStr, spSocket)) {
+                    LOGI("Token check failed!");
+                    continue;
                 }
                 DealMsg(recvStr, spSocket);
             }
