@@ -31,8 +31,11 @@ class SpThreadSocket {
 public:
     static bool flagRunning;
     static std::string resultFPS;
-
-    enum socketError{
+    enum socketType {
+        CMD_SOCKET,
+        EDITOR_SOCKET,
+    };
+    enum socketError {
         NONE,
         TOKEN_CHECK_FAILED_INIT,
         TOKEN_CHECK_FAILED_START,
@@ -139,19 +142,30 @@ public:
         }
     }
     // TCP
-    void InitRecv(std::string recvStr, SpServerSocket &spSocket) const
+    void InitRecv(std::string recvStr, SpServerSocket &spSocket, socketType type) const
     {
         std::string errorInfo;
         std::string checkStr = recvStr.substr(std::string("init::").length());
-        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
-            checkStr.find(SPTask::GetInstance().GetTcpToken()) == std::string::npos) {
+        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
             LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
-            spSocket.Send(std::string("error::") + std::to_string(INIT_FAILED));
+            if (type == CMD_SOCKET) {
+                spSocket.Send("init::False,\"error\":" + errorInfo);
+            } else {
+                spSocket.Send(std::string("error::") + std::to_string(INIT_FAILED));
+            }
             return;
         }
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
         LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
-        spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+        if (type == CMD_SOCKET) {
+            spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+            return;
+        }
+        if (code == ErrCode::OK) {
+            spSocket.Send("init::True");
+        } else {
+            spSocket.Send(std::string("error::") + std::to_string(INIT_FAILED));
+        }
     }
     void StartRecv(SpServerSocket &spSocket) const
     {
@@ -220,10 +234,12 @@ public:
     void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
     {
         SocketHeartbeat();
-        if (recvStr.find("init::") != std::string::npos) {
-            InitRecv(recvStr, spSocket);
+        if (recvStr.find("init:::") != std::string::npos) {
+            InitRecv(recvStr, spSocket, CMD_SOCKET);
         } else if (recvStr.find("start:::") != std::string::npos) {
             StartRecv(spSocket);
+        } else if (recvStr.find("init::") != std::string::npos) {
+            InitRecv(recvStr, spSocket, EDITOR_SOCKET);
         } else if (recvStr.find("start::") != std::string::npos) {
             StartRecvRealtime(spSocket);
         } else if (recvStr.find("stop::") != std::string::npos) {
