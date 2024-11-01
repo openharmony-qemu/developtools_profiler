@@ -675,7 +675,11 @@ bool SPUtils::IsForeGround(std::string &pkg)
             }
         }
     }
-    pclose(fd);
+    int status = pclose(fd);
+    if (status == -1) {
+        LOGE("Error: Failed to close file");
+        return false;
+    }
     return tag;
 }
 bool SPUtils::IsFindForeGround(std::string line)

@@ -43,7 +43,8 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         result["fpsJitters"] = "NA";
     } else {
         int fullFrame = 120;
-        if (finalResult.fps > fullFrame) {
+        int maxFullFrame = 123;
+        if (finalResult.fps > fullFrame && finalResult.fps < maxFullFrame) {
             finalResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(finalResult.fps);
@@ -151,7 +152,11 @@ void ProfilerFPS::GetTimeDiff()
             clockMonotonicRaw = std::stoll(strRealTime);
         }
     }
-    pclose(fd);
+    int status = pclose(fd);
+    if (status == -1) {
+        LOGE("Error: Failed to close file");
+        return;
+    }
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
 }
 
@@ -352,7 +357,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         }
         CalcFpsAndJitters();
     }
-    pclose(fp);
+    int status = pclose(fp);
+    if (status == -1) {
+        LOGE("Error: Failed to close file");
+        return fpsInfo;
+    }
     LOGI("ProfilerFPS fpsNum: %d", fpsNum);
     return fpsInfo;
 }
@@ -434,6 +443,10 @@ std::string ProfilerFPS::GetGameLayer()
     std::string end = "] LayerId";
     std::string nodeIdStr;
     uint64_t nodeId;
+    if (dumperSurface.empty()) {
+        LOGI("ProfilerFPS::DUMPER_SURFACE failed");
+        return gameLayer;
+    }
     FILE *fd = popen(dumperSurface.c_str(), "r");
     if (fd == nullptr) {
         return gameLayer;
@@ -458,7 +471,11 @@ std::string ProfilerFPS::GetGameLayer()
             gameLayer = GetLayerName(nodeId, line, endPos);
         }
     }
-    pclose(fd);
+    int status = pclose(fd);
+    if (status == -1) {
+        LOGE("Error: Failed to close file");
+        return gameLayer;
+    }
     LOGI("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
 }
