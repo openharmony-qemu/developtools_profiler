@@ -31,24 +31,20 @@ class SpThreadSocket {
 public:
     static bool flagRunning;
     static std::string resultFPS;
-    enum socketType {
+    enum socketConnectType {
         CMD_SOCKET,
         EDITOR_SOCKET,
     };
-    enum socketError {
-        NONE,
-        TOKEN_CHECK_FAILED_INIT,
-        TOKEN_CHECK_FAILED_START,
-        TOKEN_CHECK_FAILED_STARTRECORD,
-        TOKEN_CHECK_FAILED_STOP,
-        TOKEN_CHECK_FAILED_STOPRECORD,
+
+    enum socketErrorType {
+        OK,
+        TOKEN_CHECK_FAILED,
         INIT_FAILED,
         START_FAILED,
+        STOP_FAILED,
         START_RECORD_FAILED,
         STOP_RECORD_FAILED,
-        STOP_FAILED,
     };
-
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -94,29 +90,15 @@ public:
         LOGI("Socket Process finished!");
         spSocket.Close();
     }
-    bool CheckToken(std::string recvStr, SpServerSocket &spSocket) const
+    socketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
     {
-        socketError errorType;
-        if (recvStr.find("init::") != std::string::npos) {
-            errorType = TOKEN_CHECK_FAILED_INIT;
-        } else if (recvStr.find("start::") != std::string::npos) {
-            errorType = TOKEN_CHECK_FAILED_START;
-        } else if (recvStr.find("startRecord::") != std::string::npos) {
-            errorType = TOKEN_CHECK_FAILED_STARTRECORD;
-        } else if (recvStr.find("stop::") != std::string::npos) {
-            errorType = TOKEN_CHECK_FAILED_STOP;
-        } else if (recvStr.find("stopRecord::") != std::string::npos) {
-            errorType = TOKEN_CHECK_FAILED_STOPRECORD;
-        }
-
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
         if (token != SPTask::GetInstance().GetTcpToken()) {
-            spSocket.Send(std::string("error::") + std::to_string(errorType));
-            return false;
+            return TOKEN_CHECK_FAILED;
         }
 
-        return true;
+        return OK;
     }
 
     void TypeTcp(SpServerSocket &spSocket) const
@@ -133,25 +115,23 @@ public:
                 std::string recvStr = spSocket.RecvBuf();
                 std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                 // 解析消息 分发处理
-                if (!CheckToken(recvStr, spSocket)) {
-                    LOGI("Token check failed!");
-                    continue;
-                }
-                DealMsg(recvStr, spSocket);
+                const socketErrorType tokenStatus = CheckToken(recvStr, spSocket);
+                DealMsg(recvStr, spSocket, tokenStatus);
             }
         }
     }
     // TCP
-    void InitRecv(std::string recvStr, SpServerSocket &spSocket, socketType type) const
+    void InitRecv(std::string recvStr, SpServerSocket &spSocket, socketConnectType type) const
     {
         std::string errorInfo;
         std::string checkStr = recvStr.substr(std::string("init::").length());
-        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo)) {
+        if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
+            checkStr.find(SPTask::GetInstance().GetTcpToken()) == std::string::npos) {
             LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
             if (type == CMD_SOCKET) {
                 spSocket.Send("init::False,\"error\":" + errorInfo);
             } else {
-                spSocket.Send(std::string("error::") + std::to_string(INIT_FAILED));
+                spSocket.Send(std::string("init::") + std::to_string(INIT_FAILED));
             }
             return;
         }
@@ -164,7 +144,7 @@ public:
         if (code == ErrCode::OK) {
             spSocket.Send("init::True");
         } else {
-            spSocket.Send(std::string("error::") + std::to_string(INIT_FAILED));
+            spSocket.Send(std::string("init::") + std::to_string(INIT_FAILED));
         }
     }
     void StartRecv(SpServerSocket &spSocket) const
@@ -195,7 +175,7 @@ public:
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
         } else if (code == ErrCode::FAILED) {
-            spSocket.Send(std::string("error::") + std::to_string(START_FAILED));
+            spSocket.Send(std::string("start::") + std::to_string(START_FAILED));
         }
     }
     void StopRecvRealtime(SpServerSocket &spSocket) const
@@ -206,7 +186,7 @@ public:
             flagRunning = false;
             spSocket.Close();
         } else if (code == ErrCode::FAILED) {
-            spSocket.Send(std::string("error::") + std::to_string(STOP_FAILED));
+            spSocket.Send(std::string("stop::") + std::to_string(STOP_FAILED));
         }
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
@@ -216,7 +196,7 @@ public:
         if (code == ErrCode::OK) {
             spSocket.Send("startRecord::True");
         } else {
-            spSocket.Send(std::string("error::") + std::to_string(START_RECORD_FAILED));
+            spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
         }
         SPTask::GetInstance().SaveScreenShot();
 
@@ -228,12 +208,37 @@ public:
         if (code == ErrCode::OK) {
             spSocket.Send("stopRecord::True");
         } else {
-            spSocket.Send(std::string("error::") + std::to_string(STOP_RECORD_FAILED));
+            spSocket.Send(std::string("stopRecord::") + std::to_string(STOP_RECORD_FAILED));
         }
     }
-    void DealMsg(std::string recvStr, SpServerSocket &spSocket) const
+    bool SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
+    {
+        if (message.find("init:::") != std::string::npos &&
+            message.find("start:::") != std::string::npos) {
+            return false;
+        }
+        const std::vector<std::string> messageType = {
+            "init::",
+            "start::",
+            "stop::",
+            "startRecord::",
+            "stopRecord::",
+        };
+        for (auto it : messageType) {
+            if(message.find(it) != std::string::npos) {
+                LOGI((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
+                socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
+                return true;
+            }
+        }
+        return false;
+    }
+    void DealMsg(std::string recvStr, SpServerSocket &spSocket, socketErrorType tokenStatus) const
     {
         SocketHeartbeat();
+        if(tokenStatus == TOKEN_CHECK_FAILED && SendTokenFailedMessage(spSocket, recvStr)) {
+            return;
+        }
         if (recvStr.find("init:::") != std::string::npos) {
             InitRecv(recvStr, spSocket, CMD_SOCKET);
         } else if (recvStr.find("start:::") != std::string::npos) {
