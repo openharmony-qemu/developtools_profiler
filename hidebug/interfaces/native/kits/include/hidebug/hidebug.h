@@ -146,7 +146,7 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
  *         {@link HIDEBUG_SUCCESS} Get graphics memory success.
  *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument，value is null.
  *         {@link HIDEBUG_TRACE_ABNORMAL} Failed to get the application memory due to a remote exception.
- * @since 13
+ * @since 14
  */
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
 
