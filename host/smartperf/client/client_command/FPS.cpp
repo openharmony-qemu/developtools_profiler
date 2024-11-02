@@ -51,7 +51,8 @@ std::map<std::string, std::string> FPS::ItemData()
         result["fpsJitters"] = "NA";
     } else {
         int fullFrame = 120;
-        if (fpsInfoResult.fps > fullFrame) {
+        int maxFullFrame = 123;
+        if (fpsInfoResult.fps > fullFrame && fpsInfoResult.fps < maxFullFrame) {
             fpsInfoResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(fpsInfoResult.fps);
