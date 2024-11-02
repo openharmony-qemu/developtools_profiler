@@ -35,7 +35,6 @@ enum class MessageType {
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
     SET_DUBAI_DB,
-    START_DUBAI_DB,
     CATCH_NETWORK_TRAFFIC,
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,
@@ -62,7 +61,6 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
-    { MessageType::START_DUBAI_DB, std::string("start_dubai_db") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
     { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
@@ -96,6 +94,8 @@ enum class CommandType {
     CT_GC,
     CT_NAV,
     CT_O,
+    CT_CLOSEAISCHEDULING,
+    CT_OPENAISCHEDULING,
 };
 enum class CommandHelp {
     HELP,
@@ -130,6 +130,8 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-gc"), CommandType::CT_GC },
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-o"), CommandType::CT_O },
+    { std::string("-CloseAIScheduling"), CommandType::CT_CLOSEAISCHEDULING },
+    { std::string("-OpenAIScheduling"), CommandType::CT_OPENAISCHEDULING },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -156,6 +158,8 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_GC, std::string("-gc") },
     { CommandType::CT_NAV, std::string("-nav") },
     { CommandType::CT_O, std::string("-o") },
+    { CommandType::CT_CLOSEAISCHEDULING, std::string("-CloseAIScheduling") },
+    { CommandType::CT_OPENAISCHEDULING, std::string("-OpenAIScheduling") },
 };
 
 

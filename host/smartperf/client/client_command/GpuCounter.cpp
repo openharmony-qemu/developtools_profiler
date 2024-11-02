@@ -58,6 +58,8 @@ namespace OHOS {
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
             GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            gpuPlugin = startGetGpuPerfInfo;
+            isflugin = true;
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
@@ -178,6 +180,52 @@ namespace OHOS {
             if (ret == 0) {
                 gcStatus = GC_INIT;
                 LOGI("GpuCounter collect finish.");
+            }
+        }
+
+        void AiScheduling::AiSchedulingSwitch()
+        {
+            void* handle = GpuCounter::GetInstance().GetSoHandle();
+            if (!handle) {
+                return;
+            }
+            bool aiFlag = GpuCounter::GetInstance().isflugin;
+            AiPlugin(aiFlag, handle);
+            AiStatusType();
+            if (type == AI_START && aiConfig == AI_INIT) {
+                int ret = setGameDevelopConfig()->SetGameDevelopConfig(aiConfigType, configMap);
+                if (ret == 1) {
+                    LOGI("AiScheduling start");
+                } else {
+                    LOGE("AiScheduling call gameService error, ret = %d", ret);
+                }
+            } else if (type == AI_CLOSE && aiConfig == AI_INIT) {
+                int ret = setGameDevelopConfig()->SetGameDevelopConfig(duration, configMap);
+                if (ret == 0) {
+                    LOGI("AiScheduling close");
+                } else {
+                    LOGE("AiScheduling call gameService error, ret = %d", ret);
+                }
+            } else {
+                LOGE("AiScheduling state error, type: %d, state: %d", type, aiConfig);
+            }
+        }
+
+        void AiScheduling::AiStatusType()
+        {
+            if (configMap["openAISched"] == "0") {
+                type = AI_CLOSE;
+            } else {
+                type = AI_START;
+            }
+        }
+
+        void AiScheduling::AiPlugin(bool flag, void* handle)
+        {
+            if (!flag) {
+                setGameDevelopConfig = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            } else {
+                setGameDevelopConfig = GpuCounter::GetInstance().gpuPlugin;
             }
         }
     }

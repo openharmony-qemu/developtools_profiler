@@ -110,6 +110,8 @@ public:
     // 采集配置项
     std::vector<std::string> configs;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    AiScheduling &aiScheduling = AiScheduling::GetInstance();
+    void IsGpuCounter(bool &flag, std::vector<std::string> cmdConfig);
 };
 }
 }
