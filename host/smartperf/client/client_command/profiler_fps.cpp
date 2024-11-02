@@ -275,8 +275,11 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     fpsInfoMax.fps = 0;
     std::string uniteLayer;
     bool isGameSurface = false;
-    std::string gameLayerName = GetGameLayer();
-    if (isGameLayer == "1" && !gameLayerName.empty()) {
+    std::string gameLayerName;
+    if (isGameLayer == "1") {
+        gameLayerName = GetGameLayer();
+    }
+    if (!gameLayerName.empty()) {
         uniteLayer = gameLayerName;
         isGameSurface = true;
     } else if (!rkFlag) {
