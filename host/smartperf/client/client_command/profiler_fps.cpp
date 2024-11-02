@@ -471,7 +471,7 @@ std::string ProfilerFPS::GetGameLayer()
             }
             nodeId = nodeId >> kShiftAmount;
             LOGI("ProfilerFPS::nodeId: (%d)", nodeId);
-            gameLayer = GetLayerName(nodeId, line, endPos);
+            GetLayerName(gameLayer, nodeId, line, endPos);
         }
     }
     int status = pclose(fd);
@@ -483,19 +483,18 @@ std::string ProfilerFPS::GetGameLayer()
     return gameLayer;
 }
 
-std::string ProfilerFPS::GetLayerName(uint64_t &nodeId, std::string &line, size_t &endPos)
+std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos)
 {
-    std::string layerName = "";
     if (std::to_string(nodeId) == processId) {
         size_t layerStartPos = line.find("[");
         size_t layerEndPos = line.find("]");
         if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
-            return layerName;
+            return gameLayer;
         }
         layerStartPos += 1;
-        layerName = line.substr(layerStartPos, layerEndPos - layerStartPos);
+        gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
     }
-    return layerName;
+    return gameLayer;
 }
 
 void ProfilerFPS::SetRkFlag()
