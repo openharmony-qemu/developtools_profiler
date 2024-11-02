@@ -200,7 +200,7 @@ namespace OHOS {
                     LOGE("AiScheduling call gameService error, ret = %d", ret);
                 }
             } else if (type == AI_CLOSE && aiConfig == AI_INIT) {
-                int ret = setGameDevelopConfig()->SetGameDevelopConfig(duration, configMap);
+                int ret = setGameDevelopConfig()->SetGameDevelopConfig(aiConfigType, configMap);
                 if (ret == 0) {
                     LOGI("AiScheduling close");
                 } else {
