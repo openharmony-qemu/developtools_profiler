@@ -25,7 +25,8 @@ namespace SmartPerf {
 class SPUtilesTye {
 public:
     template<typename T>
-    static T StringToSometype(const std::string& str) {
+    static T StringToSometype(const std::string& str)
+    {
         T result;
         std::stringstream ss;
         ss << str;
