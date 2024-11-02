@@ -318,6 +318,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
     if (name == "") {
         return FpsInfoProfiler();
     }
+    return GetFrameInfoFromMap(name);
+}
+
+FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
+{
     static std::map<std::string, FpsInfoProfiler> fpsMap;
     if (fpsMap.count(name) == 0) {
         FpsInfoProfiler tmp;

@@ -71,6 +71,7 @@ public:
     bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
+    FpsInfoProfiler GetFrameInfoFromMap(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
