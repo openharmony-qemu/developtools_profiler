@@ -23,7 +23,7 @@
 namespace OHOS {
 namespace SmartPerf {
 class SPUtilesTye {
-pubilc:
+public:
     template<typename T>
     static T StringToSometype(const std::string& str) {
         T result;
@@ -32,7 +32,7 @@ pubilc:
         ss >> result;
         return result;
     }
-}
+};
 namespace SPUtils {
 /**
  * @brief Check if the file has permission to access
