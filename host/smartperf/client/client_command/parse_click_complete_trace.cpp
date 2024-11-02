@@ -55,16 +55,16 @@ double ParseClickCompleteTrace::GetLineTime()
             size_t position1 = line.find("....");
             size_t position2 = line.find(":");
             endTime = line.substr(position1 + subNum, position2 - position1 - subNum);
-            int endNum = std::stof(endTime);
-            int endFlagNum = std::stof(endTimeFlag);
-            int startNum = std::stof(startTime);
+            int endNum = SPUtilesTye::StringToSometype<float>(endTime);
+            int endFlagNum = SPUtilesTye::StringToSometype<float>(endTimeFlag);
+            int startNum = SPUtilesTye::StringToSometype<float>(startTime);
             int timeNum = endNum - endFlagNum;
             float interval = 0.3;
             if (timeNum < interval) {
                 endTimeFlag = endTime;
                 continue;
             }
-            if (std::stof(endTimeFlag) == 0) {
+            if (SPUtilesTye::StringToSometype<float>(endTimeFlag) == 0) {
                 endTimeFlag = endTime;
             } else if (endFlagNum != 0 && startNum != 0 && timeNum > interval) {
                 break;
@@ -82,10 +82,10 @@ double ParseClickCompleteTrace::GetTime(std::string endTime)
     float subNum = 2;
     endTime = endTime.substr(point - subNum);
     startTime = startTime.substr(point - subNum);
-    if (std::stof(endTime) == 0 || std::stof(startTime) == 0) {
+    if (SPUtilesTye::StringToSometype<float>(endTime) == 0 || SPUtilesTye::StringToSometype<float>(startTime) == 0) {
     } else {
         double displayTime = 0.032;
-        completeTime = std::stof(endTime) - std::stof(startTime) + displayTime;
+        completeTime = SPUtilesTye::StringToSometype<float>(endTime) - SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
     }
     return completeTime;
 }

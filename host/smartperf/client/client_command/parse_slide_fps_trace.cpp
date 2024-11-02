@@ -18,6 +18,7 @@
 #include <regex>
 #include "include/parse_slide_fps_trace.h"
 #include "include/sp_log.h"
+#include "include/sp_utils.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -48,13 +49,13 @@ double ParseSlideFpsTrace::CalculateTime()
             if (count == four) {
                 needTime = true;
                 frameNow = 0;
-                touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+                touchTime = SPUtilesTye::StringToSometype<double>(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
                 LOGI("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
                 swiperFlingFlag = 0;
             }
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
-            doCompositionTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            doCompositionTime = SPUtilesTye::StringToSometype<double>(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
             LOGI("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
         } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
             line.find("H:APP_LIST_FLING,") != std::string::npos) {
@@ -92,7 +93,7 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
 {
     if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
-            touchTime = std::stod(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
+            touchTime = SPUtilesTye::StringToSometype<double>(SmartPerf::ParseSlideFpsTrace::GetLineTime(line));
             LOGI("AppSwiperScroll.touchTime: (%s)", std::to_string(touchTime).c_str());
             needTime = true;
             swiperScrollFlag = 1;

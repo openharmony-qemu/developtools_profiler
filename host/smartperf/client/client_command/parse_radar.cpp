@@ -26,20 +26,21 @@
 #include <cmath>
 #include "include/parse_radar.h"
 #include "include/sp_log.h"
+#include "include/sp_utils.h"
 namespace OHOS {
 namespace SmartPerf {
 double ParseRadar::ParseRadarStart(const std::string &string) const
 {
     double time = -1;
     std::string target = "\"E2E_LATENCY\":";
-    time = std::stod(ExtractString(string, target));
+    time = SPUtilesTye::StringToSometype<double>(ExtractString(string, target));
     return time;
 }
 double ParseRadar::ParseRadarStartResponse(const std::string &string) const
 {
     double time = -1;
     std::string target = "\"RESPONSE_LATENCY\":";
-    time = std::stod(ExtractString(string, target));
+    time = SPUtilesTye::StringToSometype<double>(ExtractString(string, target));
     return time;
 }
 std::string ParseRadar::ParseRadarAppStrart(const std::string &string) const
@@ -100,7 +101,7 @@ int ParseRadar::GetMaxDelayTime(const int &delayTime, std::vector<std::string> &
 {
     int maxNum = -1;
     for (size_t i = 0; i < delayTimeVec.size(); i++) {
-        int num = std::stoi(delayTimeVec[i]);
+        int num = SPUtilesTye::StringToSometype<int>(delayTimeVec[i]);
         if (num < delayTime && num > maxNum) {
             maxNum = num;
         }

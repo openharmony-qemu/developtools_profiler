@@ -63,8 +63,8 @@ bool SPUtils::Cmp(const std::string &a, const std::string &b)
         if (str1 != str2) {
             return str1 < str2;
         }
-        int num1 = std::stoi(a.substr(str1.length()));
-        int num2 = std::stoi(b.substr(str2.length()));
+        int num1 = SPUtilesTye::StringToSometype<int>(a.substr(str1.length()));
+        int num2 = SPUtilesTye::StringToSometype<int>(b.substr(str2.length()));
         return num1 < num2;
     }
     return false;

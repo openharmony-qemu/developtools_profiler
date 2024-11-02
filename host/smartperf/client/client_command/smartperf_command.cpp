@@ -123,7 +123,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
     LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {
         case CommandType::CT_N:
-            num = atoi(argStr1.c_str());
+            num = SPUtilesTye::StringToSometype<int>(argStr1.c_str());
             break;
         case CommandType::CT_PKG:
             pkgName = argStr1;

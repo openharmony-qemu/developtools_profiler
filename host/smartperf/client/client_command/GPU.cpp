@@ -68,7 +68,7 @@ int32_t GPU::GetRkGpuFreq()
     const std::string gpuFreqPath = "/sys/class/devfreq/fde60000.gpu/cur_freq";
     std::string rkFreq;
     SPUtils::LoadFile(gpuFreqPath, rkFreq);
-    return std::stoi(rkFreq);
+    return SPUtilesTye::StringToSometype<int32_t>(rkFreq);
 }
 
 float GPU::GetRkGpuLoad()
@@ -80,7 +80,7 @@ float GPU::GetRkGpuLoad()
     if (len > 0) {
         rkLoad = rkLoad.substr(0, len - 1);
     }
-    return std::stoi(rkLoad);
+    return SPUtilesTye::StringToSometype<float>(rkLoad);
 }
 
 void GPU::SetRkFlag()

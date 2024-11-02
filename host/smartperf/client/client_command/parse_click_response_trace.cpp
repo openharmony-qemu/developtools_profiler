@@ -57,7 +57,7 @@ double ParseClickResponseTrace::GetLineTime()
             size_t position1 = line.find("....");
             size_t position2 = line.find(":");
             endTime = line.substr(position1 + subNum, position2 - position1 - subNum);
-            if (std::stof(startTime) == 0) {
+            if (SPUtilesTye::StringToSometype<float>(startTime) == 0) {
             } else {
                 break;
             }
@@ -72,10 +72,10 @@ double ParseClickResponseTrace::GetTime(std::string startTime, std::string endTi
     float subNum = 2;
     endTime = endTime.substr(point - subNum);
     startTime = startTime.substr(point - subNum);
-    if (std::stof(endTime) == 0 || std::stof(startTime) == 0) {
+    if (SPUtilesTye::StringToSometype<float>(endTime) == 0 || SPUtilesTye::StringToSometype<float>(startTime) == 0) {
     } else {
         double displayTime = 0.032;
-        completeTime = std::stof(endTime) - std::stof(startTime) + displayTime;
+        completeTime = SPUtilesTye::StringToSometype<float>(endTime) - SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
     }
     return completeTime;
 }
