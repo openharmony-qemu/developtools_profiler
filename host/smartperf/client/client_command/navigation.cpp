@@ -74,8 +74,7 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
             }
         }
     }
-    int status = pclose(navfd);
-    if (status == -1) {
+    if (pclose(navfd) == -1) {
         LOGE("Error: Failed to close file");
         navInfo["navPathName"] = nameStr;
         return navInfo;
@@ -108,8 +107,7 @@ std::string Navigation::GetWinId(std::string navPid) const
             }
         }
     }
-    int status = pclose(fd);
-    if (status == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return wid = -1;
     }

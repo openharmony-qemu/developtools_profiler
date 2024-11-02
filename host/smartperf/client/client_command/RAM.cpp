@@ -217,8 +217,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
             break;
         }
     }
-    int status = pclose(fd);
-    if (status == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return {};
     }

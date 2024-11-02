@@ -105,7 +105,8 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
         result = buf;
     }
     if (pclose(fd) == -1) {
-        std::cout << "" << std::endl;
+        LOGE("Error: Failed to close file");
+        return false;
     }
 
     if (isClearLinkBreak) {
@@ -675,8 +676,7 @@ bool SPUtils::IsForeGround(std::string &pkg)
             }
         }
     }
-    int status = pclose(fd);
-    if (status == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return false;
     }

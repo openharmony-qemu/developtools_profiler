@@ -152,8 +152,7 @@ void ProfilerFPS::GetTimeDiff()
             clockMonotonicRaw = std::stoll(strRealTime);
         }
     }
-    int status = pclose(fd);
-    if (status == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return;
     }
@@ -360,8 +359,7 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
         }
         CalcFpsAndJitters();
     }
-    int status = pclose(fp);
-    if (status == -1) {
+    if (pclose(fp) == -1) {
         LOGE("Error: Failed to close file");
         return fpsInfo;
     }
@@ -474,8 +472,7 @@ std::string ProfilerFPS::GetGameLayer()
             GetLayerName(gameLayer, nodeId, line, endPos);
         }
     }
-    int status = pclose(fd);
-    if (status == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return gameLayer;
     }
