@@ -203,7 +203,7 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowTime = SPUtilesTye::StringToSometype<double>(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
                 GetFrameLossTime(nowTime, lastTime, roundTime, frameLossTime);
                 LOGI("frameLossTime: (%s)", std::to_string(frameLossTime).c_str());
                 lastTime = nowTime;
@@ -324,7 +324,7 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdSwiper);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowSwiperTime = SPUtilesTye::StringToSometype<double>(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowSwiperTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
                 LOGI("nowSwiperTime: (%s)", std::to_string(nowSwiperTime).c_str());
                 GetFrameLossTime(nowSwiperTime, lastSwiperTime, roundSwiperTime, frameLossSwiperTime);
                 LOGI("frameLossSwiperTime: (%s)", std::to_string(frameLossSwiperTime).c_str());
@@ -425,7 +425,8 @@ double StallingRateTrace::GetTimes(const std::string &line, const std::string &s
     if (positionFirst != std::string::npos && positionSecond != std::string::npos) {
         if (line.find(sign) != std::string::npos) {
             size_t subNum = 7;
-            return SPUtilesTye::StringToSometype<double>(line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum));
+            return SPUtilesTye::StringToSometype<double>(line.substr(positionFirst + subNum,
+                    positionSecond - positionFirst - subNum));
         }
     }
     return 0.0;

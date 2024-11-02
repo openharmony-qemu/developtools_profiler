@@ -85,7 +85,8 @@ double ParseClickCompleteTrace::GetTime(std::string endTime)
     if (SPUtilesTye::StringToSometype<float>(endTime) == 0 || SPUtilesTye::StringToSometype<float>(startTime) == 0) {
     } else {
         double displayTime = 0.032;
-        completeTime = SPUtilesTye::StringToSometype<float>(endTime) - SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
+        completeTime = SPUtilesTye::StringToSometype<float>(endTime) -
+                        SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
     }
     return completeTime;
 }

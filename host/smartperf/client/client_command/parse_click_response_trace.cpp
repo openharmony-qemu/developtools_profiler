@@ -50,8 +50,8 @@ double ParseClickResponseTrace::GetLineTime()
     std::string::size_type doComposition;
     size_t subNum = 5;
     while (getline(infile, line)) {
-        appPid = SmartPerf::ParseClickResponseTrace::GetPid(line, "pid", appPid);
-        startTime = SmartPerf::ParseClickResponseTrace::GetStartTime(line, startTime);
+        appPid = ParseClickResponseTrace::GetPid(line, "pid", appPid);
+        startTime = ParseClickResponseTrace::GetStartTime(line, startTime);
         doComposition = line.find("H:RSMainThread::DoComposition");
         if (doComposition != std::string::npos) {
             size_t position1 = line.find("....");
@@ -63,7 +63,7 @@ double ParseClickResponseTrace::GetLineTime()
             }
         }
     }
-    completeTime = SmartPerf::ParseClickResponseTrace::GetTime(startTime, endTime);
+    completeTime = ParseClickResponseTrace::GetTime(startTime, endTime);
     return completeTime;
 }
 double ParseClickResponseTrace::GetTime(std::string startTime, std::string endTime)
@@ -75,7 +75,8 @@ double ParseClickResponseTrace::GetTime(std::string startTime, std::string endTi
     if (SPUtilesTye::StringToSometype<float>(endTime) == 0 || SPUtilesTye::StringToSometype<float>(startTime) == 0) {
     } else {
         double displayTime = 0.032;
-        completeTime = SPUtilesTye::StringToSometype<float>(endTime) - SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
+        completeTime = SPUtilesTye::StringToSometype<float>(endTime) -
+                        SPUtilesTye::StringToSometype<float>(startTime) + displayTime;
     }
     return completeTime;
 }

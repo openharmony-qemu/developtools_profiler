@@ -241,7 +241,8 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum = (static_cast<int>(v.size()) >= four) ? SPUtilesTye::StringToSometype<int>(v[four].c_str()) : 0;
+        int sectionsNum = (static_cast<int>(v.size()) >= four) ?
+                            SPUtilesTye::StringToSometype<int>(v[four].c_str()) : 0;
         if (sectionsNum > ten) {
             printf("set sectionsNum:%d not valid arg \n", sectionsNum);
         } else {
