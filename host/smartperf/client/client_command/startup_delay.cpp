@@ -175,7 +175,7 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::vector<std::string> &args) const
+std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) const
 {
     std::string output = "";
     int pipefd[2];
@@ -194,12 +194,7 @@ std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        std::vector<const char*> argv(args.size() + 1);
-        for (size_t i = 0; i < args.size(); ++i) {
-            argv[i] = args[i].c_str();
-        }
-        argv[args.size()] = nullptr;
-        execvp(command.c_str(), const_cast<char* const*>(argv.data()));
+        execvp(args[0], const_cast<char* const*>(args.data()));
         LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
         _exit(EXIT_FAILURE);
     }
@@ -228,9 +223,8 @@ std::string StartUpDelay::ExecuteCommand(const std::string &command, const std::
 
 std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 {
-    const std::string pidof = "pidof";
-    const std::vector<std::string> args = {pidof, curPkgName};
-    std::string resultProcId = ExecuteCommand(pidof, args);
+    std::vector<const char*> args = {"pidof", curPkgName.c_str(), nullptr};
+    std::string resultProcId = ExecuteCommand(args);
     if (!resultProcId.empty() && resultProcId.back() == '\n') {
         resultProcId.pop_back();
         LOGI("startup_delay::output: (%s)", resultProcId.c_str());
