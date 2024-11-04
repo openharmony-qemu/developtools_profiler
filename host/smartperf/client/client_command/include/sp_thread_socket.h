@@ -31,7 +31,7 @@ class SpThreadSocket {
 public:
     static bool flagRunning;
     static std::string resultFPS;
-    enum socketConnectType {
+    enum SocketConnectType {
         CMD_SOCKET,
         EDITOR_SOCKET,
     };
@@ -121,7 +121,7 @@ public:
         }
     }
     // TCP
-    void InitRecv(std::string recvStr, SpServerSocket &spSocket, socketConnectType type) const
+    void InitRecv(std::string recvStr, SpServerSocket &spSocket, SocketConnectType type) const
     {
         std::string errorInfo;
         std::string checkStr = recvStr.substr(std::string("init::").length());
