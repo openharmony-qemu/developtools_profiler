@@ -97,6 +97,8 @@ enum class CommandType {
     CT_NAV,
     CT_O,
     CT_LF,
+    CT_CLOSEAISCHEDULING,
+    CT_OPENAISCHEDULING,
 };
 enum class CommandHelp {
     HELP,
@@ -132,6 +134,8 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-o"), CommandType::CT_O },
     { std::string("-lockfreq"), CommandType::CT_LF },
+    { std::string("-CloseAIScheduling"), CommandType::CT_CLOSEAISCHEDULING },
+    { std::string("-OpenAIScheduling"), CommandType::CT_OPENAISCHEDULING },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -159,6 +163,8 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_NAV, std::string("-nav") },
     { CommandType::CT_O, std::string("-o") },
     { CommandType::CT_LF, std::string("-lockfreq") },
+    { CommandType::CT_CLOSEAISCHEDULING, std::string("-CloseAIScheduling") },
+    { CommandType::CT_OPENAISCHEDULING, std::string("-OpenAIScheduling") },
 };
 
 
@@ -224,7 +230,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::PIDOF_SP, std::string("pidof SP_daemon") },
     { CmdCommand::SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -server'") },
     { CmdCommand::EDITOR_SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -editorServer'") },
-    { CmdCommand::UINPUT_BACK, std::string("uinput -T -m 600 2760 600 1300 200") },
+    { CmdCommand::UINPUT_BACK, std::string("uinput -K -d 2076 -d 2020") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
     { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
 };

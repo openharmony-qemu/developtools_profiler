@@ -217,7 +217,10 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
             break;
         }
     }
-    pclose(fd);
+    if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
+        return {};
+    }
     pssRamInfo["gpuPss"] = gpuPssValue;
     pssRamInfo["graphicPss"] = graphicPssValue;
     pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;

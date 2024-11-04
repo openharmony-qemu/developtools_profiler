@@ -209,8 +209,8 @@ int main(int argc, char *argv[])
     }
     std::string errorInfo;
     std::vector<std::string> vec;
-
-    for (int i = 0; i < argc; i++) {
+    const int maxExpectedArgs = 100;
+    for (int i = 0; i < argc && i < maxExpectedArgs; i++) {
         vec.push_back(argv[i]);
     }
     if (!g_checkCmdParam(vec, errorInfo)) {
