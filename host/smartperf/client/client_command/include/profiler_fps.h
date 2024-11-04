@@ -61,7 +61,7 @@ public:
     void SetTraceCatch();
     void SetGameLayer(std::string isGameView);
     std::string GetGameLayer();
-    std::string GetLayerName(uint64_t &nodeId, std::string &line, size_t &endPos);
+    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos);
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
@@ -71,6 +71,7 @@ public:
     bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
+    FpsInfoProfiler GetFrameInfoFromMap(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;

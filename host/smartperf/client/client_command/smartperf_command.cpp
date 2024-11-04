@@ -16,6 +16,7 @@
 #include <thread>
 #include <cstring>
 #include <iterator>
+#include <map>
 #include "unistd.h"
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"
@@ -28,6 +29,7 @@
 #include "include/sp_log.h"
 #include "include/RAM.h"
 #include "include/common.h"
+#include "include/GpuCounter.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -163,6 +165,8 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_HW:
         case CommandType::CT_GC:
         case CommandType::CT_NAV:
+        case CommandType::CT_OPENAISCHEDULING:
+        case CommandType::CT_CLOSEAISCHEDULING:
             configs.push_back(argStr);
             break;
         default:
@@ -183,11 +187,11 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     }
     for (size_t j = 0; j < configs.size(); j++) {
         std::string curParam = configs[j];
-
-        if (curParam.find("-gc") != std::string::npos) {
+        if (curParam.find("-gc") != std::string::npos ||
+            curParam.find("-CloseAIScheduling") != std::string::npos ||
+            curParam.find("-OpenAIScheduling") != std::string::npos) {
             continue;
         }
-
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
         if (profiler != nullptr) {
             std::map<std::string, std::string> data = profiler->ItemData();
@@ -200,7 +204,6 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         LOGE("%s", errInfo.c_str());
         return -1;
     }
-
     return rc;
 }
 
@@ -221,12 +224,7 @@ std::string SmartPerfCommand::ExecCommand()
     const long long freq = 1000;
     num = num + 1;
     bool gcFlag = false;
-    for (std::string itConfig : configs) {
-        if (itConfig.find("-gc") != std::string::npos) {
-            gpuCounter.StartCollect(GpuCounter::GC_START);
-            gcFlag = true;
-        }
-    }
+    IsGpuCounter(gcFlag, configs);
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -288,6 +286,30 @@ void SmartPerfCommand::InitSomething()
     if (SPUtils::LoadCmd(stat, cmdResult)) {
         LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
     };
+}
+
+void SmartPerfCommand::IsGpuCounter(bool &flag, std::vector<std::string> cmdConfig)
+{
+    for (std::string itConfig : cmdConfig) {
+        if (itConfig.find("-gc") != std::string::npos) {
+            gpuCounter.StartCollect(GpuCounter::GC_START);
+            flag = true;
+        }
+        if (itConfig.find("-CloseAIScheduling") != std::string::npos) {
+            std::map<std::string, std::string> figMap;
+            figMap["bundleName"] = pkgName;
+            figMap["openAISched"] = "0";
+            aiScheduling.configMap.insert(figMap.begin(), figMap.end());
+            aiScheduling.AiSchedulingSwitch();
+        }
+        if (itConfig.find("-OpenAIScheduling") != std::string::npos) {
+            std::map<std::string, std::string> figMap;
+            figMap["bundleName"] = pkgName;
+            figMap["openAISched"] = "1";
+            aiScheduling.configMap.insert(figMap.begin(), figMap.end());
+            aiScheduling.AiSchedulingSwitch();
+        }
+    }
 }
 }
 }
