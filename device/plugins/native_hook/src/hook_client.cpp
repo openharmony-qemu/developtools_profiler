@@ -245,6 +245,7 @@ void* MallocHookStart(void* disableHookCallback)
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_mallocTimes = 0;
     g_hookClient.reset();
+    GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {

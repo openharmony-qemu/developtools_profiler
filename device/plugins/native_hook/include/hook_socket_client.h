@@ -25,8 +25,7 @@ class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)(),
-                     std::vector<std::pair<uint64_t, uint64_t>>* filterStaLibRange);
+    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)());
     ~HookSocketClient();
     bool Connect(const std::string addrname);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
@@ -61,7 +60,6 @@ private:
     Sampling *sampler_ = nullptr;
     std::shared_ptr<StackWriter> stackWriter_;
     void (*disableHookCallback_)(){nullptr};
-    std::vector<std::pair<uint64_t, uint64_t>>* filterStaLibRange_;
 };
 
 #endif // HOOK_SOCKET_CLIENT

@@ -77,10 +77,8 @@ static void NmdWriteStat(void *arg, const char *buf)
     opt->pos += len;
 }
 
-HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)(),
-                                   std::vector<std::pair<uint64_t, uint64_t>>* filterStaLibRange)
-    : pid_(pid), config_(config), sampler_(sampler), disableHookCallback_(disableHookCallback),
-      filterStaLibRange_(filterStaLibRange)
+HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)())
+    : pid_(pid), config_(config), sampler_(sampler), disableHookCallback_(disableHookCallback)
 {
     smbFd_ = 0;
     eventFd_ = 0;
@@ -125,7 +123,6 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     smbFd_ = context.ReceiveFileDiscriptor();
     eventFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
-    GetMainThreadRuntimeStackRange(*filterStaLibRange_)
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked);
     struct mallinfo2 mi = mallinfo2();
