@@ -51,7 +51,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 HelpCommand(iterator->first, "");
                 break;
             }
-            if (argv[1].find("-editorServer") != std::string::npos){
+            if (argv[1].find("-editorServer") != std::string::npos) {
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);

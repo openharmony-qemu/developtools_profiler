@@ -36,7 +36,7 @@ public:
         EDITOR_SOCKET,
     };
 
-    enum socketErrorType {
+    enum SocketErrorType {
         OK,
         TOKEN_CHECK_FAILED,
         INIT_FAILED,
@@ -90,7 +90,7 @@ public:
         LOGI("Socket Process finished!");
         spSocket.Close();
     }
-    socketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
+    SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
     {
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
@@ -115,7 +115,7 @@ public:
                 std::string recvStr = spSocket.RecvBuf();
                 std::cout << "Socket TCP Recv: " << recvStr << std::endl;
                 // 解析消息 分发处理
-                const socketErrorType tokenStatus = CheckToken(recvStr, spSocket);
+                const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket);
                 DealMsg(recvStr, spSocket, tokenStatus);
             }
         }
@@ -225,7 +225,7 @@ public:
             "stopRecord::",
         };
         for (auto it : messageType) {
-            if(message.find(it) != std::string::npos) {
+            if (message.find(it) != std::string::npos) {
                 LOGI((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
                 socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
                 return true;
@@ -233,10 +233,10 @@ public:
         }
         return false;
     }
-    void DealMsg(std::string recvStr, SpServerSocket &spSocket, socketErrorType tokenStatus) const
+    void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus) const
     {
         SocketHeartbeat();
-        if(tokenStatus == TOKEN_CHECK_FAILED && SendTokenFailedMessage(spSocket, recvStr)) {
+        if (tokenStatus == TOKEN_CHECK_FAILED && SendTokenFailedMessage(spSocket, recvStr)) {
             return;
         }
         if (recvStr.find("init:::") != std::string::npos) {
