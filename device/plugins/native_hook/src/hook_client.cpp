@@ -1237,6 +1237,11 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return;
+    }
     int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -1278,18 +1283,14 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
     rawdata.tagId = isUsing ? GetTagId(holder, tag) : 0;
-    if (holder != nullptr) {
-        int realSize = 0;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-        }
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
