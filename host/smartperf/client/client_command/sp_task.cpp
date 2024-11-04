@@ -64,14 +64,14 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
         if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_SESSIONID)) {
             sessionId = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_INTERVAL)) {
-            interval = std::stoll(args[++i]);
+            interval = SPUtilesTye::StringToSometype<long long>(args[++i]);
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PKG)) {
             pkg = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FL)) { // 获取用户fps的值，并赋给snf.   CT_FL
-            snf.fps = std::stoi(args[++i]);
+            snf.fps = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FTL)) { // 获取frameTime的值      CT_FTL
-            snf.frameTime = std::stoi(args[++i]);
+            snf.frameTime = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else {
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f

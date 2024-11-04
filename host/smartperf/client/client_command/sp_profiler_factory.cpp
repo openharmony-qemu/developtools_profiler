@@ -146,16 +146,16 @@ void SpProfilerFactory::SetByTrace(std::string message)
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
         if (vItems[0] == "traceSum") {
-            mSum = std::stoi(vItems[1]);
+            mSum = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "fpsJitterTime") {
-            mThreshold = std::stoi(vItems[1]);
+            mThreshold = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "catchInterval") {
-            mInterval = std::stoi(vItems[1]);
+            mInterval = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "lowFps") {
-            lowFps = std::stoi(vItems[1]);
+            lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
     }
     const ByTrace &bTrace = ByTrace::GetInstance();

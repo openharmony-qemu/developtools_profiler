@@ -19,6 +19,7 @@
 #include <cmath>
 #include "include/stalling_rate_trace.h"
 #include "include/sp_log.h"
+#include "include/sp_utils.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -202,7 +203,7 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
                 GetFrameLossTime(nowTime, lastTime, roundTime, frameLossTime);
                 LOGI("frameLossTime: (%s)", std::to_string(frameLossTime).c_str());
                 lastTime = nowTime;
@@ -323,7 +324,7 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdSwiper);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowSwiperTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowSwiperTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
                 LOGI("nowSwiperTime: (%s)", std::to_string(nowSwiperTime).c_str());
                 GetFrameLossTime(nowSwiperTime, lastSwiperTime, roundSwiperTime, frameLossSwiperTime);
                 LOGI("frameLossSwiperTime: (%s)", std::to_string(frameLossSwiperTime).c_str());
@@ -388,12 +389,12 @@ double StallingRateTrace::GetFrameRate(const std::string &line) const
         std::string result1 = line.substr(pos1 + delimiter.length());
         size_t pos2 = line.find(delimiter1);
         std::string result2 = result1.substr(0, pos2);
-        rate = std::stod(result2.c_str());
+        rate = SPUtilesTye::StringToSometype<double>(result2.c_str());
     }
     if (line.find("rate:") != std::string::npos) {
         size_t pos = line.find(delimiter);
         std::string result = line.substr(pos + delimiter.length());
-        rate = std::stod(result.c_str());
+        rate = SPUtilesTye::StringToSometype<double>(result.c_str());
     }
     return rate;
 }
@@ -403,7 +404,7 @@ int StallingRateTrace::GetFenceId(const std::string &line) const
     std::string delimiter = "H:Present Fence ";
     size_t pos = line.find(delimiter);
     std::string result = line.substr(pos + delimiter.length());
-    int presentFenceId = std::atoi(result.c_str());
+    int presentFenceId = SPUtilesTye::StringToSometype<int>(result.c_str());
     return presentFenceId;
 }
 
@@ -424,7 +425,8 @@ double StallingRateTrace::GetTimes(const std::string &line, const std::string &s
     if (positionFirst != std::string::npos && positionSecond != std::string::npos) {
         if (line.find(sign) != std::string::npos) {
             size_t subNum = 7;
-            return std::stod(line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum));
+            return SPUtilesTye::StringToSometype<double>(line.substr(
+                positionFirst + subNum, positionSecond - positionFirst - subNum));
         }
     }
     return 0.0;
