@@ -252,8 +252,7 @@ void* MallocHookStart(void* disableHookCallback)
         g_ClientConfig.Reset();
         g_sampler.Reset();
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
-                                                          reinterpret_cast<void (*)()>(disableHookCallback),
-                                                          &g_filterStaLibRange);
+                                                          reinterpret_cast<void (*)()>(disableHookCallback));
     }
     return nullptr;
 }
