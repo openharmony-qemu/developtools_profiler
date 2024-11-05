@@ -50,7 +50,7 @@ DiskioDataPlugin::~DiskioDataPlugin()
 std::string DiskioDataPlugin::GetCmdArgs(DiskioConfig protoConfig)
 {
     std::string args;
-    args = "report_io_stats: " + std::to_string(protoConfig.report_io_stats());
+    args += "report_io_stats: " + std::to_string(protoConfig.report_io_stats());
     return args;
 }
 
@@ -61,7 +61,6 @@ int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
-
     if (protoConfig_.report_io_stats()) {
         ioEntry_ = std::make_shared<IoStats>(protoConfig_.report_io_stats());
     }

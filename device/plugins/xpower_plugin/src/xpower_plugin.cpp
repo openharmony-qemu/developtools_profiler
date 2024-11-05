@@ -50,13 +50,13 @@ XpowerPlugin::~XpowerPlugin()
 
 std::string XpowerPlugin::GetCmdArgs(XpowerConfig traceConfig)
 {
-    std::string args;
+    std::stringstream args;
+    args << "bundle_name: " << traceConfig.bundle_name() << ", ";
 
-    args += "bundle_name: " + traceConfig.bundle_name() + ", ";
     for (const auto& type : traceConfig.message_type()) {
-        args += "type: " + std::to_string(type) + ", ";
+        args << "type: " << std::to_string(type) << ", ";
     }
-    return args;
+    return args.str();
 }
 
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)

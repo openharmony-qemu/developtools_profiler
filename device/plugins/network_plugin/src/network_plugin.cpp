@@ -56,12 +56,12 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
 std::string NetworkPlugin::GetCmdArgs(NetworkConfig traceConfig)
 {
-    std::string args;
+    std::stringstream args;
     for (const auto& p : traceConfig.pid()) {
-        args += "pid: " + std::to_string(p) + ", ";
+        args << "pid: " << std::to_string(p) << ", ";
     }
-    args += "test_file: " + traceConfig.test_file();
-    return args;
+    args << "test_file: " << traceConfig.test_file();
+    return args.str();
 }
 
 template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)

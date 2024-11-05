@@ -37,7 +37,7 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     if (!file_.is_open()) {
         int ret = COMMON::PluginWriteToHisysevent("gpu_plugin", "sh", args, RET_FAIL, "failed");
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), hisysevent report gpu_plugin ret: %d",
-                            __func__, GPU_PATH.c_str(), ret);
+            __func__, GPU_PATH.c_str(), ret);
         return RET_FAIL;
     }
 

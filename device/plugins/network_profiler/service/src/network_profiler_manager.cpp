@@ -15,6 +15,7 @@
 
 #include "network_profiler_manager.h"
 
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -208,22 +209,21 @@ bool NetworkProfilerManager::StartNetworkProfiler()
 
 std::string NetworkProfilerManager::GetCmdArgs(NetworkProfilerConfig traceConfig)
 {
-    std::string args;
+    std::stringstream args;
     for (const auto& p : traceConfig.pid()) {
-        args += "pid: " + std::to_string(p) + ", ";
+        args << "pid: " << std::to_string(p) << ", ";
     }
     for (const auto& name : traceConfig.startup_process_name()) {
-        args += "startup_process_name: " + name + ", ";
+        args << "startup_process_name: " << name << ", ";
     }
     for (const auto& name : traceConfig.restart_process_name()) {
-        args += "restart_process_name: " + name + ", ";
+        args << "restart_process_name: " << name << ", ";
     }
-    args += "clock_id: " + std::to_string(traceConfig.clock_id());
-    args += ", smb_pages: " + std::to_string(traceConfig.smb_pages());
-    args += ", flush_interval: " + std::to_string(traceConfig.flush_interval());
-    args += ", block: ";
-    args += (traceConfig.block() ? "true" : "false");
-    return args;
+    args << "clock_id: " << std::to_string(traceConfig.clock_id()) << ", ";
+    args << "smb_pages: " << std::to_string(traceConfig.smb_pages()) << ", ";
+    args << "flush_interval: " << std::to_string(traceConfig.flush_interval()) << ", ";
+    args << "block: " << (traceConfig.block() ? "true" : "false");
+    return args.str();
 }
 
 void NetworkProfilerManager::StopNetworkProfiler()

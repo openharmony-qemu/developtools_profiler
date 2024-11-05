@@ -115,14 +115,13 @@ bool RunCommand(const std::string& cmd)
 
 std::string GetCmdArgs(HiperfPluginConfig protoConfig)
 {
-    std::string args;
-    args += "is_root: ";
-    args += (protoConfig.is_root() ? "true" : "false");  
-    args += ", outfile_name: " + protoConfig.outfile_name();
-    args += ", record_args: " + protoConfig.record_args();
-    args += ", split_outfile_name: " + protoConfig.split_outfile_name();
-    args += ", log_level: " + std::to_string(protoConfig.log_level());
-    return args;
+    std::stringstream args;
+    args << "is_root: " << (protoConfig.is_root() ? "true" : "false") << ", ";
+    args << "outfile_name: " << protoConfig.outfile_name() << ", ";
+    args << "record_args: " << protoConfig.record_args() << ", ";
+    args << "split_outfile_name: " << protoConfig.split_outfile_name() << ", ";
+    args << "log_level: " << std::to_string(protoConfig.log_level());
+    return args.str();
 }
 } // namespace
 

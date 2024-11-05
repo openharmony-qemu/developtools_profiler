@@ -206,45 +206,34 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 }
 
 
-std::string MemoryDataPlugin::GetCmdArgs(MemoryConfig traceConfig)
+std::string MemoryDataPlugin::GetCmdArgs(MemoryConfig protoConfig)
 {
-    std::string args;
-    args += "report_process_tree: ";
-    args += (traceConfig.report_process_tree() ? "true" : "false");
-    args += ", report_sysmem_mem_info: ";
-    args += (traceConfig.report_sysmem_mem_info() ? "true" : "false");
-    args += ", report_sysmem_vmem_info: ";
-    args += (traceConfig.report_sysmem_vmem_info() ? "true" : "false");
-    args += ", report_process_mem_info: ";
-    args += (traceConfig.report_process_mem_info() ? "true" : "false");
-    args += ", report_app_mem_info: ";
-    args += (traceConfig.report_app_mem_info() ? "true" : "false");
-    args += ", report_app_mem_by_memory_service: ";
-    args += (traceConfig.report_app_mem_by_memory_service() ? "true" : "false");
-    args += ", report_smaps_mem_info: ";
-    args += (traceConfig.report_smaps_mem_info() ? "true" : "false");
-    args += ", report_purgeable_ashmem_info: ";
-    args += (traceConfig.report_purgeable_ashmem_info() ? "true" : "false");
-    args += ", report_dma_mem_info: ";
-    args += (traceConfig.report_dma_mem_info() ? "true" : "false");
-    args += ", report_gpu_mem_info: ";
-    args += (traceConfig.report_gpu_mem_info() ? "true" : "false");
-    args += ", report_gpu_dump_info: ";
-    args += (traceConfig.report_gpu_dump_info() ? "true" : "false");
-    args += ", report_fake_data: ";
-    args += (traceConfig.report_fake_data() ? "true" : "false");
+    std::stringstream args;
+    args << "report_process_tree: " << (protoConfig.report_process_tree() ? "true" : "false") << ", ";
+    args << "report_sysmem_mem_info: " << (protoConfig.report_sysmem_mem_info() ? "true" : "false") << ", ";
+    args << "report_sysmem_vmem_info: " << (protoConfig.report_sysmem_vmem_info() ? "true" : "false") << ", ";
+    args << "report_process_mem_info: " << (protoConfig.report_process_mem_info() ? "true" : "false") << ", ";
+    args << "report_app_mem_info: " << (protoConfig.report_app_mem_info() ? "true" : "false") << ", ";
+    args << "report_app_mem_by_memory_service: " << (protoConfig.report_app_mem_by_memory_service() ?
+                                                    "true" : "false") << ", ";
+    args << "report_smaps_mem_info: " << (protoConfig.report_smaps_mem_info() ? "true" : "false") << ", ";
+    args << "report_purgeable_ashmem_info: " << (protoConfig.report_purgeable_ashmem_info() ?
+                                                "true" : "false") << ", ";
+    args << "report_dma_mem_info: " << (protoConfig.report_dma_mem_info() ? "true" : "false") << ", ";
+    args << "report_gpu_mem_info: " << (protoConfig.report_gpu_mem_info() ? "true" : "false") << ", ";
+    args << "report_gpu_dump_info: " << (protoConfig.report_gpu_dump_info() ? "true" : "false") << ", ";
+    args << "report_fake_data: " << (protoConfig.report_fake_data() ? "true" : "false") << ", ";
 
-    args += ", ";
-    for (const auto& count : traceConfig.sys_meminfo_counters()) {
-        args += "sys_meminfo_counters: " + std::to_string(count) + ", ";
+    for (const auto& count : protoConfig.sys_meminfo_counters()) {
+        args << "sys_meminfo_counters: " << std::to_string(count) << ", ";
     }
-    for (const auto& count : traceConfig.sys_vmeminfo_counters()) {
-        args += "sys_vmeminfo_counters: " + std::to_string(count) + ", ";
+    for (const auto& count : protoConfig.sys_vmeminfo_counters()) {
+        args << "sys_vmeminfo_counters: " << std::to_string(count) << ", ";
     }
-    for (const auto& p : traceConfig.pid()) {
-        args += "pid: " + std::to_string(p) + ", ";
+    for (const auto& p : protoConfig.pid()) {
+        args << "pid: " << std::to_string(p) << ", ";
     }
-    return args;
+    return args.str();
 }
 
 

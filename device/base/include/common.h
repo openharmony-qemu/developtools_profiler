@@ -58,8 +58,9 @@ int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::st
                              std::string errorMessage);
 
 enum ErrorType {
+    RET_NO_PERMISSION,
     RET_NOT_SUPPORT,
-    RET_NULL_ADDR,
+    RET_IVALID_PATH,
     RET_IVALID_PID,
     RET_MSG_EMPTY,
     RET_FAIL = -1,

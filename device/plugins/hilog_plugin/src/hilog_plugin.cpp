@@ -70,13 +70,12 @@ HilogPlugin::~HilogPlugin()
 
 std::string HilogPlugin::GetCmdArgs(HilogConfig protoConfig)
 {
-    std::string args;
-    args += "log_level: " + std::to_string(protoConfig.log_level());
-    args += "pid: " + std::to_string(protoConfig.pid()) + ", need_record: ";
-    args += (protoConfig.need_record() ? "true" : "false");
-    args += ", need_clear: ";
-    args += (protoConfig.need_clear() ? "true" : "false");
-    return args;
+    std::stringstream args;
+    args << "log_level: " << std::to_string(protoConfig.log_level()) << ", ";
+    args << "pid: " << std::to_string(protoConfig.pid()) << ", ";
+    args << "need_record: " << (protoConfig.need_record() ? "true" : "false") << ", ";
+    args << "need_clear: " << (protoConfig.need_clear() ? "true" : "false");
+    return args.str();
 }
 
 int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -94,7 +93,6 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
         CHECK_NOTNULL(fp, -1, "%s:clear hilog error", __func__);
         COMMON::CustomPclose(fp, pipeFds, childPid);
     }
-
     InitHilogCmd();
     fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
         COMMON::CustomPopen(fullCmd_, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {

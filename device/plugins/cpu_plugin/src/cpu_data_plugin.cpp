@@ -72,11 +72,10 @@ CpuDataPlugin::~CpuDataPlugin()
 
 std::string CpuDataPlugin::GetCmdArgs(CpuConfig protoConfig)
 {
-    std::string args;
-    args += "pid: " + std::to_string(protoConfig.pid());
-    args += " report_process_info: ";
-    args += (protoConfig.report_process_info() ? "true" : "false");
-    return args;
+    std::stringstream args;
+    args << "pid: " << std::to_string(protoConfig.pid());
+    args << " report_process_info: " << (protoConfig.report_process_info() ? "true" : "false");
+    return args.str();
 }
 
 int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -95,7 +94,7 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
         PROFILER_LOG_INFO(LOG_CORE, "%s:need report process info", __func__);
     } else {
         int ret = COMMON::PluginWriteToHisysevent("CPU_PLUGIN", "sh", args, RET_FAIL, "failed");
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid pid, record hisysevent result", __func__, ret);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid pid, record hisysevent result. %d", __func__, ret);
         return RET_FAIL;
     }
 

@@ -66,16 +66,12 @@ int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 
 std::string ProcessDataPlugin::GetCmdArgs(ProcessConfig traceConfig)
 {
-    std::string args;
-    args += "report_process_tree: ";
-    args += (traceConfig.report_process_tree() ? "true" : "false");
-    args += ", report_cpu: ";
-    args += (traceConfig.report_cpu() ? "true" : "false");
-    args += ", report_diskio: ";
-    args += (traceConfig.report_diskio() ? "true" : "false");
-    args += ", report_pss: ";
-    args += (traceConfig.report_pss() ? "true" : "false");
-    return args;
+    std::stringstream args;
+    args << "report_process_tree: " << (traceConfig.report_process_tree() ? "true" : "false") << ", ";
+    args << "report_cpu: " << (traceConfig.report_cpu() ? "true" : "false") << ", ";
+    args << "report_diskio: " << (traceConfig.report_diskio() ? "true" : "false") << ", ";
+    args << "report_pss: " << (traceConfig.report_pss() ? "true" : "false");
+    return args.str();
 }
 
 int ProcessDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)

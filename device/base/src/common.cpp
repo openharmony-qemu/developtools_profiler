@@ -775,8 +775,8 @@ bool CheckCmdLineArgValid(const std::string& cmdLine)
     return true;
 }
 
-int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
-                             std::string errorMessage)
+int PluginWriteToHisysevent(std::string pluginName, std::string caller, std::string args, int errorCode,
+                            std::string errorMessage)
 {
     return HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::PROFILER, "HIPROFILER_USAGE",
         OHOS::HiviewDFX::HiSysEvent::EventType::STATISTIC,
