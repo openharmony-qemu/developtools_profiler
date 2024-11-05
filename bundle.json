@@ -56,7 +56,8 @@
         "zlib",
         "grpc",
         "storage_service",
-        "abseil-cpp"
+        "abseil-cpp",
+        "hisysevent"
       ],
       "third_party": [
         "cJSON",
@@ -64,6 +65,9 @@
         "libpng"
       ]
     },
+    "hisysevent_config": [
+      "//developtools/profiler/hiprofiler.yaml"
+    ],
     "build": {
       "sub_component": [
         "//developtools/profiler/device:hiprofiler_targets",

@@ -60,6 +60,7 @@ ohos_unittest("plugin_module_api_ut") {
     "googletest:gtest",
     "hidumper:lib_dump_usage",
     "hilog:libhilog_base",
+    "hisysevent:libhisysevent",
     "hiview:libucollection_graphic",
     "protobuf:protobuf_lite",
   ]

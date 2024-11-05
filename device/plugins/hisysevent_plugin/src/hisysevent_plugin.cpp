@@ -76,8 +76,19 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     running_ = true;
     workThread_ = std::thread([this] { this->Run(); });
 
-    PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
+    int ret = COMMON::PluginWriteToHisysevent("hisysevent_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "END %s: success! hisysevent report hisysevent_plugin result:%d", __func__, ret);
     return 0;
+}
+
+std::string HisyseventPlugin::GetCmdArgs(HisyseventConfig protoConfig)
+{
+    std::string args;
+    args += "msg: " + protoConfig.msg() + ", ";
+    args += "subscribe_domain: " + protoConfig.subscribe_domain() + ", ";
+    args += "subscribe_event: " + protoConfig.subscribe_event();
+    return args;
 }
 
 int HisyseventPlugin::Stop()

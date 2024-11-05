@@ -33,6 +33,7 @@
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
+#include "hisysevent.h"
 #include "iservice_registry.h"
 #include "logging.h"
 #include "system_ability_definition.h"
@@ -772,5 +773,17 @@ bool CheckCmdLineArgValid(const std::string& cmdLine)
         return false;
     }
     return true;
+}
+
+int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
+                             std::string errorMessage)
+{
+    return HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::HIPROFILER, "HIPROFILER_USAGE",
+        OHOS::HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "PLUGIN_NAME", pluginName,
+        "CALLER", caller,
+        "ARGS", args,
+        "ERROR_CODE", errorCode,
+        "ERROR_MESSAFE", errorMessage);
 }
 } // namespace COMMON

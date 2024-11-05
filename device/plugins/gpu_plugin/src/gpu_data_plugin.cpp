@@ -15,6 +15,7 @@
 
 #include "gpu_data_plugin.h"
 #include <ctime>
+#include "common.h"
 #include "gpu_plugin_result.pbencoder.h"
 
 namespace {
@@ -32,12 +33,25 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
 
     file_.open(GPU_PATH);
+    auto args = GetCmdArgs(protoConfig_);
     if (!file_.is_open()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s)", __func__, GPU_PATH.c_str());
+        int ret = COMMON::PluginWriteToHisysevent("gpu_plugin", "sh", args, RET_FAIL, "failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), hisysevent report gpu_plugin ret: %d",
+                            __func__, GPU_PATH.c_str(), ret);
         return RET_FAIL;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
+
+    int ret = COMMON::PluginWriteToHisysevent("gpu_plugin", "sh", args, RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success! hisysevent report gpu_plugin result: %d", __func__, ret);
     return RET_SUCC;
+}
+
+std::string GpuDataPlugin::GetCmdArgs(GpuConfig traceConfig)
+{
+    std::string args;
+    args += "pid: " + std::to_string(traceConfig.pid()) + ", report_gpu_info: ";
+    args += (traceConfig.report_gpu_info() ? "true" : "false");
+    return args;
 }
 
 int GpuDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)

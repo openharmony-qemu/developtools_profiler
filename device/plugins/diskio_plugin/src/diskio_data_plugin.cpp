@@ -18,6 +18,7 @@
 #include <ctime>
 
 #include "buffer_splitter.h"
+#include "common.h"
 #include "diskio_plugin_result.pbencoder.h"
 
 namespace {
@@ -46,6 +47,13 @@ DiskioDataPlugin::~DiskioDataPlugin()
     }
 }
 
+std::string DiskioDataPlugin::GetCmdArgs(DiskioConfig protoConfig)
+{
+    std::string args;
+    args = "report_io_stats: " + std::to_string(protoConfig.report_io_stats());
+    return args;
+}
+
 int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     buffer_ = malloc(READ_BUFFER_SIZE);
@@ -57,7 +65,9 @@ int DiskioDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     if (protoConfig_.report_io_stats()) {
         ioEntry_ = std::make_shared<IoStats>(protoConfig_.report_io_stats());
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
+
+    int ret = COMMON::PluginWriteToHisysevent("diskio_plugin", "sh", GetCmdArgs(protoConfig_), RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success! hisysevent report diskio_plugin result: %d", __func__, ret);
     return RET_SUCC;
 }
 

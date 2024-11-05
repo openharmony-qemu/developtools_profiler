@@ -54,5 +54,16 @@ bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
+int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
+                             std::string errorMessage);
+
+enum ErrorType {
+    RET_NOT_SUPPORT,
+    RET_NULL_ADDR,
+    RET_IVALID_PID,
+    RET_MSG_EMPTY,
+    RET_FAIL = -1,
+    RET_SUCC = 0,
+};
 } // COMMON
 #endif // COMMON_H

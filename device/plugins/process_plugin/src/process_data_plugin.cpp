@@ -20,6 +20,8 @@
 #include <sstream>
 
 #include "buffer_splitter.h"
+#include "common.h"
+#include "hisysevent.h"
 #include "process_plugin_result.pbencoder.h"
 #include "securec.h"
 
@@ -56,8 +58,24 @@ int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
+    int ret = COMMON::PluginWriteToHisysevent("process_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s: success! hisysevent report process_plugin result:%d", __func__, ret);
     return RET_SUCC;
+}
+
+std::string ProcessDataPlugin::GetCmdArgs(ProcessConfig traceConfig)
+{
+    std::string args;
+    args += "report_process_tree: ";
+    args += (traceConfig.report_process_tree() ? "true" : "false");
+    args += ", report_cpu: ";
+    args += (traceConfig.report_cpu() ? "true" : "false");
+    args += ", report_diskio: ";
+    args += (traceConfig.report_diskio() ? "true" : "false");
+    args += ", report_pss: ";
+    args += (traceConfig.report_pss() ? "true" : "false");
+    return args;
 }
 
 int ProcessDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)

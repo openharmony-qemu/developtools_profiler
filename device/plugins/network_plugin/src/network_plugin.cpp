@@ -18,6 +18,7 @@
 #include <sys/stat.h>
 
 #include "buffer_splitter.h"
+#include "common.h"
 #include "network_plugin_result.pbencoder.h"
 #include "securec.h"
 
@@ -47,9 +48,20 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         pidUid_.emplace(pid, GetUid(pid));
     }
 
-    PROFILER_LOG_INFO(LOG_CORE, "%s:NetworkPlugin, start success!", __func__);
-
+    int ret = COMMON::PluginWriteToHisysevent("network_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s: NetworkPlugin success! hisysevent report result:%d", __func__, ret);
     return 0;
+}
+
+std::string NetworkPlugin::GetCmdArgs(NetworkConfig traceConfig)
+{
+    std::string args;
+    for (const auto& p : traceConfig.pid()) {
+        args += "pid: " + std::to_string(p) + ", ";
+    }
+    args += "test_file: " + traceConfig.test_file();
+    return args;
 }
 
 template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)

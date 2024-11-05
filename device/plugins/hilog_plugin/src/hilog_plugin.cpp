@@ -68,6 +68,17 @@ HilogPlugin::~HilogPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
+std::string HilogPlugin::GetCmdArgs(HilogConfig protoConfig)
+{
+    std::string args;
+    args += "log_level: " + std::to_string(protoConfig.log_level());
+    args += "pid: " + std::to_string(protoConfig.pid()) + ", need_record: ";
+    args += (protoConfig.need_record() ? "true" : "false");
+    args += ", need_clear: ";
+    args += (protoConfig.need_clear() ? "true" : "false");
+    return args;
+}
+
 int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HilogPlugin: ParseFromArray failed");
@@ -106,8 +117,11 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, oldPipeSize * PIPE_SIZE_RATIO);
     int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
-
     workThread_ = std::thread([this] { this->Run(); });
+
+    int ret = COMMON::PluginWriteToHisysevent("hidump_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report hilog_plugin result:%d", ret);
     return 0;
 }
 

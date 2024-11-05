@@ -1,0 +1,22 @@
+#  Copyright (c) 2024 Huawei Device Co., Ltd.
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+
+domain: PROFILER
+
+HIPROFILER_USAGE:
+  __BASE: {type: STATISTIC, level: CRITICAL, tag: usageStats, desc: cpu_plugin usage statistics}
+  PLUGIN_NAME: { type: STRING desc: hiprofiler plugin name }
+  CALLER: {type: STRING, desc: hiprofiler caller} sh
+  ARGS: {type: STRING, desc: hiprofiler plugin args}
+  ERROR_CODE: { type: INT32. desc: hiprofiler request error code }
+  ERROR_MESSAGE: { type: STRING, desc: hiprofiler request error message}
