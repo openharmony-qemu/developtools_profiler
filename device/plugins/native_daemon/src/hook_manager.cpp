@@ -779,29 +779,29 @@ std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
     args += ", max_stack_depth: " + std::to_string(traceConfig.max_stack_depth());
     args += ", process_name: " + traceConfig.process_name() + ", malloc_disable: ";  
     args += (traceConfig.malloc_disable() ? "true" : "false");
-    args += ", mmap_disable: "
+    args += ", mmap_disable: ";
     args += (traceConfig.mmap_disable() ? "true" : "false");
-    args += ", free_stack_report: "
+    args += ", free_stack_report: ";
     args += (traceConfig.free_stack_report() ? "true" : "false");
-    args += ", munmap_stack_report: "
+    args += ", munmap_stack_report: ";
     args += (traceConfig.munmap_stack_report() ? "true" : "false");
     args += ", malloc_free_matching_interval: " + std::to_string(traceConfig.malloc_free_matching_interval());
     args += ", malloc_free_matching_cnt: " + std::to_string(traceConfig.malloc_free_matching_cnt());
-    args += ", string_compressed: "
+    args += ", string_compressed: ";
     args += (traceConfig.string_compressed() ? "true" : "false");
-    args += ", fp_unwind: "
+    args += ", fp_unwind: ";
     args += (traceConfig.fp_unwind() ? "true" : "false");
-    args += ", blocked: "
+    args += ", blocked: ";
     args += (traceConfig.blocked() ? "true" : "false");
-    args += ", record_accurately: "
+    args += ", record_accurately: ";
     args += (traceConfig.record_accurately() ? "true" : "false");
-    args += ", startup_mode: "
+    args += ", startup_mode: ";
     args += (traceConfig.startup_mode() ? "true" : "false");
-    args += ", memtrace_enable: "
+    args += ", memtrace_enable: ";
     args += (traceConfig.memtrace_enable() ? "true" : "false");
-    args += ", offline_symbolization: "
+    args += ", offline_symbolization: ";
     args += (traceConfig.offline_symbolization() ? "true" : "false");
-    args += ", callframe_compress: "
+    args += ", callframe_compress: ";
     args += (traceConfig.callframe_compress() ? "true" : "false");
     args += ", statistics_interval: " + std::to_string(traceConfig.statistics_interval());
     args += ", clock: " + traceConfig.clock() + ", sample_interval: ";
@@ -811,7 +811,7 @@ std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
     args += ", max_js_stack_depth: " + std::to_string(traceConfig.max_js_stack_depth());
     args += ", filter_napi_name: " + traceConfig.filter_napi_name() + ", ";
     for (const auto& pid : traceConfig.expand_pids()) {
-        args += "expand_pids: " + std::to_string(p) + ", ";
+        args += "expand_pids: " + std::to_string(pid) + ", ";
     }
     return args;
 }
