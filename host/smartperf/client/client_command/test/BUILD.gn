@@ -31,11 +31,11 @@ ohos_unittest("sp_daemon_ut") {
     "../GPU.cpp",
     "../GpuCounter.cpp",
     "../GpuCounterCallback.cpp",
-    "../lock_frequency.cpp",
     "../Network.cpp",
     "../Power.cpp",
     "../RAM.cpp",
     "../Temperature.cpp",
+    "../lock_frequency.cpp",
     "../parse_click_complete_trace.cpp",
     "../parse_click_response_trace.cpp",
     "../parse_radar.cpp",
@@ -66,6 +66,8 @@ ohos_unittest("sp_daemon_ut") {
     "//third_party/libpng:libpng",
   ]
   external_deps = [
+    "ability_base:want",
+    "arkxtest:test_server_client",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
