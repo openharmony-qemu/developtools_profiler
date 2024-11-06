@@ -72,6 +72,7 @@ group("unittest") {
     "plugins/hisysevent_plugin/test:unittest",
     "plugins/memory_plugin/test:unittest",
     "plugins/network_plugin/test:unittest",
+    "plugins/network_profiler/test:unittest",
     "plugins/process_plugin/test:unittest",
     "plugins/xpower_plugin/test:unittest",
     "services/ipc/test:unittest",

@@ -368,6 +368,35 @@ public:
         return cmdStr;
     }
 
+    std::string CreateSplitNetworkProfilerCommand(const std::string &outFile, int time) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd -s -k \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 16384\n"
+            "  }\n"
+            "  split_file: true\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"network-profiler\"\n"
+            "  config_data {\n"
+            "    clock_id: 1\n"
+            "    smb_pages: 16384\n"
+            "    startup_process_name: \"com.ohos.systemui\"\n"
+            "    block: true\n"
+            "    flush_interval: 5\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+
     std::string CreateSplitHiperfCommand(const std::string &outFile, const std::string &perfFile,
                                     const std::string &perfSplitFile, int time) const
     {
@@ -816,4 +845,28 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
     cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + ebpfFile + " " + ebpfSplitFile;
     system(cmd.c_str());
 #endif
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Level1)
+{
+    std::string outFileName = "split_htrace";
+    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
+    std::string content = "";
+    int time = 10;
+    std::string cmd = CreateSplitNetworkProfilerCommand(outFile, time);
+    EXPECT_TRUE(RunCommand(cmd, content));
+
+    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
+
+    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_STRNE(content.c_str(), "");
+
+    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace";
+    system(cmd.c_str());
 }

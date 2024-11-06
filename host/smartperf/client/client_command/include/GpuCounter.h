@@ -32,7 +32,6 @@ namespace OHOS {
 
             virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
             virtual int32_t StopGetGpuPerfInfo() = 0;
-            virtual int32_t SetGameDevelopConfig(int32_t configType, std::map<std::string, std::string> configMap) = 0;
         };
 
         class GpuCounter : public SpProfiler {
@@ -64,14 +63,11 @@ namespace OHOS {
             void AddGpuCounterRealtimeData(std::string dataString);
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
             void SaveData(std::string path);
-            void* GetSoHandle();
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin gpuPlugin = nullptr;
-            bool isflugin = false;
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
+            void* GetSoHandle();
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;
             std::vector<std::string> gpuCounterSaveReportData;
@@ -80,37 +76,8 @@ namespace OHOS {
             const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
             const std::string CREATE_PLUGIN = "onCreatePlugin";
         };
-        class AiScheduling {
-        public:
-            enum AiConfigType {
-                AI_INIT = 2,
-            };
-            enum AiSchedulingStatus {
-                AI_START = 1,
-                AI_CLOSE = 0,
-            };
-        public:
-            static AiScheduling &GetInstance()
-            {
-                static AiScheduling instance;
-                return instance;
-            }
-            void AiSchedulingSwitch();
-            void AiStatusType();
-            std::map<std::string, std::string> configMap;
-        private:
-            AiScheduling() {};
-            AiScheduling(const AiScheduling &);
-            AiScheduling &operator = (const AiScheduling &);
-            AiConfigType aiConfig = AI_INIT;
-            AiSchedulingStatus type;
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
-            const std::string CREATE_PLUGIN = "onCreatePlugin";
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin setGameDevelopConfig = nullptr;
-            void AiPlugin(bool flag, void* handle);
-            const int32_t aiConfigType = 2;
-        };
     };
 }
+
+
 #endif

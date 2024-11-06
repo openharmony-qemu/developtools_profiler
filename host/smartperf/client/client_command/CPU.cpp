@@ -151,7 +151,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
     const size_t oneHundred = 100;
     if (!processId.empty()) {
         int32_t procId = 0;
-        procId = std::stoi(processId);
+        procId = SPUtilesTye::StringToSometype<int32_t>(processId);
         std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
         auto collectResult = collector->CollectProcessCpuStatInfo(procId, true);
         auto data = collectResult.data;
