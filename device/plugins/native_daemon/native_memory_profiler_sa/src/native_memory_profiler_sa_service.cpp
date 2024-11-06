@@ -256,7 +256,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     if (hook->CreatePluginSession() != RET_OK) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
-                "create pluginsession failed");
+            "create pluginsession failed");
         return RET_ERR;
     }
     hook->WriteHookConfig();
@@ -269,7 +269,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     if (timerFd == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService Start Schedule Task failed");
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
-                "start schedule task failed");
+            "start schedule task failed");
         return RET_ERR;
     }
 
