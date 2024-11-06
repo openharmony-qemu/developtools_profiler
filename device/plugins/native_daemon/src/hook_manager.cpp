@@ -467,9 +467,10 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     while (true) {
         auto rawStack = hookCtx->stackData->GetRawStack();
         bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            if (size == sizeof(uint64_t)) {
+            if (size == sizeof(void*)) {
                 if (data) {
-                    rawStack->freeData = *(reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data)));
+                    CHECK_TRUE(memcpy_s(&rawStack->freeData, sizeof(rawStack->freeData), data, size) == EOK, false,
+                               "memcpy_s freeData failed!");
                 }
                 rawStack->baseStackData = nullptr;
                 return true;
