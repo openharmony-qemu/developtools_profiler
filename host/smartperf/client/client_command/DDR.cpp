@@ -36,7 +36,7 @@ long long DDR::GetDdrFreq()
     } else {
         SPUtils::LoadFile(ddrCurFreqRkPath, ddrfreq);
     }
-    curFreq = std::atoll(ddrfreq.c_str());
+    curFreq = SPUtilesTye::StringToSometype<long long>(ddrfreq.c_str());
     return curFreq;
 }
 void DDR::SetRkFlag()

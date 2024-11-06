@@ -54,7 +54,7 @@ std::map<std::string, std::string> Temperature::ItemData()
         for (auto node : collectNodes) {
             if (type.find(node) != std::string::npos) {
                 LOGI("type====: %s", type.c_str());
-                float t = std::stof(temp);
+                float t = SPUtilesTye::StringToSometype<float>(temp);
                 LOGI("temp====: %s", temp.c_str());
                 if (node == "gpu") {
                     result[type] = std::to_string(t);

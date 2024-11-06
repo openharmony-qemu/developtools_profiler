@@ -144,12 +144,12 @@ void ProfilerFPS::GetTimeDiff()
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockRealTime = std::stoll(strRealTime);
+            clockRealTime = SPUtilesTye::StringToSometype<long long>(strRealTime);
             currRealTime = clockRealTime;
         } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockMonotonicRaw = std::stoll(strRealTime);
+            clockMonotonicRaw = SPUtilesTye::StringToSometype<long long>(strRealTime);
         }
     }
     if (pclose(fd) == -1) {
@@ -240,12 +240,13 @@ void ProfilerFPS::GetFPS(std::vector<std::string> v)
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
-        this->num = atoi(v[number].c_str());
+        this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
         if (this->num < 0) {
             printf("set num:%d not valid arg\n", this->num);
         }
         printf("set num:%d success\n", this->num);
-        int sectionsNum = (static_cast<int>(v.size()) >= four) ? atoi(v[four].c_str()) : 0;
+        int sectionsNum = (static_cast<int>(v.size()) >= four) ?
+                            SPUtilesTye::StringToSometype<int>(v[four].c_str()) : 0;
         if (sectionsNum > ten) {
             printf("set sectionsNum:%d not valid arg \n", sectionsNum);
         } else {
@@ -405,7 +406,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
     } else {
-        this->num = atoi(v[number].c_str());
+        this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
         if (this->num < 0) {
             printf("set num:%d not vaild arg\n", this->num);
         }
@@ -415,7 +416,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
         if (static_cast<int>(v.size()) < four) {
             sectionsNum = 0;
         } else {
-            sectionsNum = atoi(v[four].c_str());
+            sectionsNum = SPUtilesTye::StringToSometype<int>(v[four].c_str());
         }
         for (int i = 0; i < this->num; i++) {
             GetResultFPS(sectionsNum);

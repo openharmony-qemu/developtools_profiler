@@ -19,8 +19,21 @@
 #include <map>
 #include <set>
 #include <string>
+#include <sstream>
 namespace OHOS {
 namespace SmartPerf {
+class SPUtilesTye {
+public:
+    template<typename T>
+    static T StringToSometype(const std::string& str)
+    {
+        T result;
+        std::stringstream ss;
+        ss << str;
+        ss >> result;
+        return result;
+    }
+};
 namespace SPUtils {
 /**
  * @brief Check if the file has permission to access
