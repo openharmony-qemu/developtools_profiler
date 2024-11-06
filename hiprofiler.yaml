@@ -15,8 +15,8 @@ domain: PROFILER
 
 HIPROFILER_USAGE:
   __BASE: {type: STATISTIC, level: CRITICAL, tag: usageStats, desc: cpu_plugin usage statistics}
-  PLUGIN_NAME: {type: STRING desc: hiprofiler plugin name }
+  PLUGIN_NAME: {type: STRING, desc: hiprofiler plugin name}
   CALLER: {type: STRING, desc: hiprofiler caller}
   ARGS: {type: STRING, desc: hiprofiler plugin args}
-  ERROR_CODE: {type: INT32. desc: hiprofiler request error code }
+  ERROR_CODE: {type: INT32, desc: hiprofiler request error code}
   ERROR_MESSAGE: {type: STRING, desc: hiprofiler request error message}
