@@ -42,8 +42,8 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
-        int fullFrame = 120;
-        int maxFullFrame = 123;
+        const int fullFrame = 120;
+        const int maxFullFrame = 123;
         if (finalResult.fps > fullFrame && finalResult.fps < maxFullFrame) {
             finalResult.fps = fullFrame;
         }
@@ -444,7 +444,7 @@ std::string ProfilerFPS::GetGameLayer()
         return gameLayer;
     }
     std::string cmdResult;
-    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     char buf[1024] = {'\0'};
     std::string start = "NodeId[";
     std::string end = "] LayerId";
