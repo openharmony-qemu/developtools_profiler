@@ -771,9 +771,8 @@ void HookManager::StartPluginSession()
 std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
 {
     std::stringstream args;
-    args << "pid: " << std::to_string(traceConfig.pid()) << ", ";
+    args << "pid: " << COMMON::GetProcessNameByPid(traceConfig.pid()) << ", ";
     args << "save_file: " << (traceConfig.save_file() ? "true" : "false") << ", ";
-    args << "file_name: " << traceConfig.file_name() << ", ";
     args << "filter_size: " << std::to_string(traceConfig.filter_size()) << ", ";
     args << "smb_pages: " << std::to_string(traceConfig.smb_pages()) << ", ";
     args << "max_stack_depth: " << std::to_string(traceConfig.max_stack_depth()) << ", ";

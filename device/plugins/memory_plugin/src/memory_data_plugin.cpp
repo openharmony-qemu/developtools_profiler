@@ -231,7 +231,7 @@ std::string MemoryDataPlugin::GetCmdArgs(MemoryConfig protoConfig)
         args << "sys_vmeminfo_counters: " << std::to_string(count) << ", ";
     }
     for (const auto& p : protoConfig.pid()) {
-        args << "pid: " << std::to_string(p) << ", ";
+        args << "pid: " << COMMON::GetProcessNameByPid(p) << ", ";
     }
     return args.str();
 }

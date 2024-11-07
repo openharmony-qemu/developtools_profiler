@@ -58,7 +58,7 @@ std::string NetworkPlugin::GetCmdArgs(NetworkConfig traceConfig)
 {
     std::stringstream args;
     for (const auto& p : traceConfig.pid()) {
-        args << "pid: " << std::to_string(p) << ", ";
+        args << "pid: " << COMMON::GetProcessNameByPid(p) << ", ";
     }
     args << "test_file: " << traceConfig.test_file();
     return args.str();

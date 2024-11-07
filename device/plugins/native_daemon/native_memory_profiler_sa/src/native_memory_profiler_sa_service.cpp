@@ -169,8 +169,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     std::stringstream args;
-    args << "pid: " << std::to_string(config->pid_) << ", ";
-    args << "file_name: " << config->filePath_ << ", ";
+    args << "pid: " << COMMON::GetProcessNameByPid(config->pid_) << ", ";
     args << "filter_size: " << config->filterSize_ << ", ";
     args << "max_stack_depth: " << std::to_string(config->maxStackDepth_) << ", ";
     args << "process_name: " << config->processName_ << ", ";

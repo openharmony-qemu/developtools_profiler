@@ -211,7 +211,7 @@ std::string NetworkProfilerManager::GetCmdArgs(NetworkProfilerConfig traceConfig
 {
     std::stringstream args;
     for (const auto& p : traceConfig.pid()) {
-        args << "pid: " << std::to_string(p) << ", ";
+        args << "pid: " << COMMON::GetProcessNameByPid(p) << ", ";
     }
     for (const auto& name : traceConfig.startup_process_name()) {
         args << "startup_process_name: " << name << ", ";

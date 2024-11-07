@@ -72,7 +72,7 @@ std::string HilogPlugin::GetCmdArgs(HilogConfig protoConfig)
 {
     std::stringstream args;
     args << "log_level: " << std::to_string(protoConfig.log_level()) << ", ";
-    args << "pid: " << std::to_string(protoConfig.pid()) << ", ";
+    args << "pid: " << COMMON::GetProcessNameByPid(protoConfig.pid()) << ", ";
     args << "need_record: " << (protoConfig.need_record() ? "true" : "false") << ", ";
     args << "need_clear: " << (protoConfig.need_clear() ? "true" : "false");
     return args.str();
@@ -117,7 +117,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
     workThread_ = std::thread([this] { this->Run(); });
 
-    int ret = COMMON::PluginWriteToHisysevent("hidump_plugin", "sh", GetCmdArgs(protoConfig_),
+    int ret = COMMON::PluginWriteToHisysevent("hilog_plugin", "sh", GetCmdArgs(protoConfig_),
                                               COMMON::ErrorType::RET_SUCC, "success");
     PROFILER_LOG_INFO(LOG_CORE, "hisysevent report hilog_plugin result:%d", ret);
     return 0;

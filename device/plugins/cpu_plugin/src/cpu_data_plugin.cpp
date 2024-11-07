@@ -73,7 +73,7 @@ CpuDataPlugin::~CpuDataPlugin()
 std::string CpuDataPlugin::GetCmdArgs(CpuConfig protoConfig)
 {
     std::stringstream args;
-    args << "pid: " << std::to_string(protoConfig.pid());
+    args << "pid: " << COMMON::GetProcessNameByPid(protoConfig.pid());
     args << " report_process_info: " << (protoConfig.report_process_info() ? "true" : "false");
     return args.str();
 }
