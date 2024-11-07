@@ -740,7 +740,8 @@ public:
             HLOGD("map is exec not abc file , the symbol file is:%s", map_->name.c_str());
             return false;
         }
-        if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")) {
+        if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")
+            || StringEndsWith(filePath_, ".hqf")) {
             dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
             if (dfxExtractor_ == nullptr) {
                 HLOGD("DfxExtractor create failed.");
