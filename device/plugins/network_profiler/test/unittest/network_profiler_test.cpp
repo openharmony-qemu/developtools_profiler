@@ -87,6 +87,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest002, TestSize.Level1)
     auto ret = networkProfiler->IsProfilerEnable();
     ASSERT_TRUE(ret);
     NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
+    sleep(2);
     ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
     ASSERT_FALSE(ret);
     SocketContext ctx;
