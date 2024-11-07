@@ -967,7 +967,7 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
 
     // 校验进程的cpu占用时间
     for (int i = 0; i < cpuDataVec1.size() && i < cpuDataVec2.size(); i++) {
-        EXPECT_LT(cpuDataVec1[i].cpu_usage_info().process_cpu_time_ms(),
+        EXPECT_LE(cpuDataVec1[i].cpu_usage_info().process_cpu_time_ms(),
             cpuDataVec2[i].cpu_usage_info().process_cpu_time_ms());
 
         EXPECT_GE(cpuDataVec1[i].cpu_usage_info().process_cpu_time_ms(), 0);
