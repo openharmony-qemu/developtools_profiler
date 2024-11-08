@@ -469,9 +469,7 @@ void SPTask::StopTask()
     if (thread.joinable()) {
         thread.join();
     }
-
     KillHiperfCmd();
-
 }
 
 std::map<std::string, std::string> SPTask::DetectionAndGrab()

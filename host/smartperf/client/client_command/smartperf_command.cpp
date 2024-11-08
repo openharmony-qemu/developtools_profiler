@@ -66,7 +66,6 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
         }
     }
-
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type) const
 {
