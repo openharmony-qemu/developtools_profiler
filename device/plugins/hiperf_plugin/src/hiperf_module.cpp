@@ -22,10 +22,11 @@
 #include <unistd.h>
 #include <vector>
 
+#include "common.h"
 #include "hiperf_plugin_config.pb.h"
+#include "hisysevent.h"
 #include "logging.h"
 #include "securec.h"
-#include "common.h"
 #include "trace_file_writer.h"
 
 namespace {
@@ -111,6 +112,16 @@ bool RunCommand(const std::string& cmd)
     CHECK_TRUE(res, false, "HiperfPlugin::RunCommand: execute command FAILED!");
     return true;
 }
+
+std::string GetCmdArgs(HiperfPluginConfig protoConfig)
+{
+    std::stringstream args;
+    args << "is_root: " << (protoConfig.is_root() ? "true" : "false") << ", ";
+    args << "record_args: " << protoConfig.record_args() << ", ";
+    args << "split_outfile_name: " << protoConfig.split_outfile_name() << ", ";
+    args << "log_level: " << std::to_string(protoConfig.log_level());
+    return args.str();
+}
 } // namespace
 
 int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSize)
@@ -141,6 +152,9 @@ int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSiz
         CHECK_TRUE(res, -1, "HiperfPluginSessionStart, RunCommand(%s) FAILED!", cmd.c_str());
     }
 
+    int ret = COMMON::PluginWriteToHisysevent("hiperf_plugin", "sh", GetCmdArgs(g_config),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report hiperf_plugin result:%d", ret);
     return 0;
 }
 

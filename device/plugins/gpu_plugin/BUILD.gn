@@ -38,6 +38,7 @@ ohos_source_set("gpudataplugin_source") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "hilog:libhilog_base",
+      "hisysevent:libhisysevent",
       "protobuf:protobuf_lite",
     ]
   }
@@ -47,7 +48,10 @@ ohos_source_set("gpudataplugin_source") {
 ohos_shared_library("gpudataplugin") {
   output_name = "gpudataplugin"
   version_script = "libgpu_plugin.map"
-  deps = [ ":gpudataplugin_source" ]
+  deps = [
+    ":gpudataplugin_source",
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+  ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps = [ "hilog:libhilog_base" ]

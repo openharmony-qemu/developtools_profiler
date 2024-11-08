@@ -763,6 +763,45 @@ void HookManager::StartPluginSession()
             PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
     }
+    int ret = COMMON::PluginWriteToHisysevent("native_hook_plugin", "sh", GetCmdArgs(hookConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report native_hook_plugin result:%d", ret);
+}
+
+std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
+{
+    std::stringstream args;
+    args << "pid: " << COMMON::GetProcessNameByPid(traceConfig.pid()) << ", ";
+    args << "save_file: " << (traceConfig.save_file() ? "true" : "false") << ", ";
+    args << "filter_size: " << std::to_string(traceConfig.filter_size()) << ", ";
+    args << "smb_pages: " << std::to_string(traceConfig.smb_pages()) << ", ";
+    args << "max_stack_depth: " << std::to_string(traceConfig.max_stack_depth()) << ", ";
+    args << "process_name: " << traceConfig.process_name() << ", ";
+    args << "malloc_disable: " << (traceConfig.malloc_disable() ? "true" : "false") << ", ";
+    args << "mmap_disable: " << (traceConfig.mmap_disable() ? "true" : "false") << ", ";
+    args << "free_stack_report: " << (traceConfig.free_stack_report() ? "true" : "false") << ", ";
+    args << "munmap_stack_report: " << (traceConfig.munmap_stack_report() ? "true" : "false") << ", ";
+    args << "malloc_free_matching_interval: " << std::to_string(traceConfig.malloc_free_matching_interval()) << ", ";
+    args << "malloc_free_matching_cnt: " << std::to_string(traceConfig.malloc_free_matching_cnt()) << ", ";
+    args << "string_compressed: " << (traceConfig.string_compressed() ? "true" : "false") << ", ";
+    args << "fp_unwind: " << (traceConfig.fp_unwind() ? "true" : "false") << ", ";
+    args << "blocked: " << (traceConfig.blocked() ? "true" : "false") << ", ";
+    args << "record_accurately: " << (traceConfig.record_accurately() ? "true" : "false") << ", ";
+    args << "startup_mode: " << (traceConfig.startup_mode() ? "true" : "false") << ", ";
+    args << "memtrace_enable: " << (traceConfig.memtrace_enable() ? "true" : "false") << ", ";
+    args << "offline_symbolization: " << (traceConfig.offline_symbolization() ? "true" : "false") << ", ";
+    args << "callframe_compress: " << (traceConfig.callframe_compress() ? "true" : "false") << ", ";
+    args << "statistics_interval: " << std::to_string(traceConfig.statistics_interval()) << ", ";
+    args << "clock: " << traceConfig.clock() << ", ";
+    args << "sample_interval: " << std::to_string(traceConfig.sample_interval()) << ", ";
+    args << "response_library_mode: " << (traceConfig.response_library_mode() ? "true" : "false") << ", ";
+    args << "js_stack_report: " << std::to_string(traceConfig.js_stack_report()) << ", ";
+    args << "max_js_stack_depth: " << std::to_string(traceConfig.max_js_stack_depth()) << ", ";
+    args << "filter_napi_name: " << traceConfig.filter_napi_name() << ", ";
+    for (const auto& pid : traceConfig.expand_pids()) {
+        args << "expand_pids: " << std::to_string(pid) << ", ";
+    }
+    return args.str();
 }
 
 void HookManager::WriteHookConfig()

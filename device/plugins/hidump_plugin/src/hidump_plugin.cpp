@@ -24,9 +24,10 @@
 #include <sstream>
 #include <sys/wait.h>
 
-#include "hidump_plugin_result.pbencoder.h"
-#include "securec.h"
 #include "common.h"
+#include "hidump_plugin_result.pbencoder.h"
+#include "hisysevent.h"
+#include "securec.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
@@ -58,6 +59,14 @@ HidumpPlugin::~HidumpPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
+std::string HidumpPlugin::GetCmdArgs(HidumpConfig protoConfig)
+{
+    std::string args;
+    args += "sections: " + std::to_string(protoConfig.sections()) + ", report_fps: ";
+    args += (protoConfig.report_fps() ? "true" : "false");
+    return args;
+}
+
 int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
@@ -73,10 +82,12 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
         COMMON::CustomPopen(fullCmd, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
             return COMMON::CustomPclose(fp, pipeFds_, childPid_, true);
         });
+    auto args = GetCmdArgs(protoConfig_);
     if (fp_.get() == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = {0};
         strerror_r(errno, buf, bufSize);
+        COMMON::PluginWriteToHisysevent("hidump_plugin", "sh", args, COMMON::ErrorType::RET_FAIL, "failed");
         PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", FPS_FORMAT, errno, buf);
         return -1;
     }
@@ -86,7 +97,8 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;
     writeThread_ = std::thread([this] { this->Loop(); });
-    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin: ---> Start success!");
+    int ret = COMMON::PluginWriteToHisysevent("hidump_plugin", "sh", args, COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin--> Start success! hisysevent report hidump_plugin result:%d", ret);
     return 0;
 }
 

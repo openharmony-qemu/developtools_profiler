@@ -33,6 +33,7 @@
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
+#include "hisysevent.h"
 #include "iservice_registry.h"
 #include "logging.h"
 #include "system_ability_definition.h"
@@ -772,5 +773,42 @@ bool CheckCmdLineArgValid(const std::string& cmdLine)
         return false;
     }
     return true;
+}
+
+int PluginWriteToHisysevent(std::string pluginName, std::string caller, std::string args, int errorCode,
+                            std::string errorMessage)
+{
+    return HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::PROFILER, "HIPROFILER_USAGE",
+        OHOS::HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        "PLUGIN_NAME", pluginName,
+        "CALLER", caller,
+        "ARGS", args,
+        "ERROR_CODE", errorCode,
+        "ERROR_MESSAGE", errorMessage);
+}
+
+std::string GetProcessNameByPid(int32_t pid)
+{
+    std::string path = "/proc/" + std::to_string(pid) + "/cmdline";
+    std::ifstream cmdlineFile(path);
+    if (!cmdlineFile) {
+        return "";
+    }
+
+    std::string processName;
+    std::getline(cmdlineFile, processName, '\0');
+
+    static constexpr size_t headSize = 2;
+    if (processName.substr(0, headSize) == "./") {
+        processName = processName.substr(headSize);
+    }
+    size_t found = processName.rfind("/");
+    std::string procName;
+    if (found != std::string::npos) {
+        procName = processName.substr(found + 1);
+    } else {
+        procName = processName;
+    }
+    return procName;
 }
 } // namespace COMMON

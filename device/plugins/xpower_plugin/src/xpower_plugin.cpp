@@ -48,6 +48,17 @@ XpowerPlugin::~XpowerPlugin()
     }
 }
 
+std::string XpowerPlugin::GetCmdArgs(XpowerConfig traceConfig)
+{
+    std::stringstream args;
+    args << "bundle_name: " << traceConfig.bundle_name() << ", ";
+
+    for (const auto& type : traceConfig.message_type()) {
+        args << "type: " << std::to_string(type) << ", ";
+    }
+    return args.str();
+}
+
 int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:config data -->configSize=%d", __func__, configSize);
@@ -63,8 +74,11 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
             messageType |= mesType;
         }
     }
+    auto args = GetCmdArgs(protoConfig_);
     if (messageType == 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : messageType is empty!");
+        COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_MSG_EMPTY,
+                                        "messageType is empty");
         return -1;
     }
     PROFILER_LOG_INFO(LOG_CORE, "bundleName is %s,messagetype is %d", bundleName.c_str(), messageType);
@@ -73,12 +87,16 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         (messageType & OptimizeMessageType::MESSAGE_ABNORMAL_EVENTS) != 0) {
         if (bundleName.empty()) {
             PROFILER_LOG_ERROR(LOG_CORE, "XpowerPlugin error : bundle name is empty!");
+            COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_MSG_EMPTY,
+                                            "bundle name is empty");
             return -1;
         }
         // check bundleName
         int32_t uid = COMMON::GetPackageUid(bundleName);
         if (uid < AID_HAP_START || uid > AID_HAP_END) {
             PROFILER_LOG_ERROR(LOG_CORE, "the bundle name %s is not supported", bundleName.c_str());
+            COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_NOT_SUPPORT,
+                                            "bundle name is not supported");
             return -1;
         }
     }
@@ -87,6 +105,8 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         bool isExsit = COMMON::IsProcessExist(bundleName, processId);
         if (!isExsit) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
+            COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_IVALID_PID,
+                                            "the process does not exist");
             return -1;
         }
     }
@@ -94,9 +114,13 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
     // 加载对应so 库文件
     if (!StartPowerManager(messageType, bundleName)) {
         PROFILER_LOG_ERROR(LOG_CORE, "start power manager failed!");
+        COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_FAIL,
+                                        "start power manager failed");
         return -1;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "finish register the callback function:%s", __func__);
+    int ret = COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "finish register the callback function:%s, hisysevent report xpower_plugin ret: %d.",
+                      __func__, ret);
     return 0;
 }
 

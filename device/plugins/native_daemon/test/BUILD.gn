@@ -126,6 +126,7 @@ ohos_unittest("native_daemon_ut") {
     "bounds_checking_function:libsec_shared",
     "faultloggerd:libunwinder",
     "googletest:gtest",
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",

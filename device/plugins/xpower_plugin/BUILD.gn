@@ -36,6 +36,7 @@ ohos_shared_library("xpowerplugin") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "hilog:libhilog_base",
+      "hisysevent:libhisysevent",
       "protobuf:protobuf_lite",
     ]
   }

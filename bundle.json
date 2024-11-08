@@ -37,6 +37,7 @@
         "hichecker",
         "hidumper",
         "hilog",
+        "hisysevent",
         "hitrace",
         "hiview",
         "ipc",

@@ -68,6 +68,16 @@ HilogPlugin::~HilogPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
+std::string HilogPlugin::GetCmdArgs(HilogConfig protoConfig)
+{
+    std::stringstream args;
+    args << "log_level: " << std::to_string(protoConfig.log_level()) << ", ";
+    args << "pid: " << COMMON::GetProcessNameByPid(protoConfig.pid()) << ", ";
+    args << "need_record: " << (protoConfig.need_record() ? "true" : "false") << ", ";
+    args << "need_clear: " << (protoConfig.need_clear() ? "true" : "false");
+    return args.str();
+}
+
 int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HilogPlugin: ParseFromArray failed");
@@ -83,7 +93,6 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
         CHECK_NOTNULL(fp, -1, "%s:clear hilog error", __func__);
         COMMON::CustomPclose(fp, pipeFds, childPid);
     }
-
     InitHilogCmd();
     fp_ = std::unique_ptr<FILE, std::function<int (FILE*)>>(
         COMMON::CustomPopen(fullCmd_, "r", pipeFds_, childPid_, true), [this](FILE* fp) -> int {
@@ -106,8 +115,11 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, oldPipeSize * PIPE_SIZE_RATIO);
     int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, pipeSize=%d, oldPipeSize=%d}", fileno(fp_.get()), pipeSize, oldPipeSize);
-
     workThread_ = std::thread([this] { this->Run(); });
+
+    int ret = COMMON::PluginWriteToHisysevent("hilog_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report hilog_plugin result:%d", ret);
     return 0;
 }
 
