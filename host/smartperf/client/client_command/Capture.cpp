@@ -114,7 +114,7 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
         std::cout << "" << std::endl;
     }
 
-    auto fd = open(savePath, O_RDWR | O_CREAT, 0644);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         LOGE("Failed to open file: %s", savePath.c_str());
     }

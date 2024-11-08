@@ -283,7 +283,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
         uniteLayer = gameLayerName;
         isGameSurface = true;
     } else if (!rkFlag) {
-        LOGI("uniteLayer is UniRender");
         uniteLayer = "UniRender";
     } else {
         ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();

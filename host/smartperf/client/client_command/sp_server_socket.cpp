@@ -108,7 +108,7 @@ int SpServerSocket::Recvfrom()
     socklen_t len = sizeof(sockaddr_in);
     int l = recvfrom(sock, rbuf, sizeof(rbuf) - 1, 0, reinterpret_cast<struct sockaddr *>(&client), &len);
     if (l > 0) {
-        LOGD("SpServerSocket::Recvfrom(%s)", rbuf.c_str());
+        std::cout << "Client:" << rbuf << std::endl;
     } else {
         LOGE("SpServerSocket::Recvfrom Error(%d)", l);
         return -1;
@@ -121,7 +121,7 @@ int SpServerSocket::Recv()
     bzero(rbuf, sizeof(rbuf));
     int l = recv(connFd, rbuf, sizeof(rbuf) - 1, 0);
     if (l > 0) {
-        LOGD("SpServerSocket::Recv(%s)", rbuf.c_str());
+        std::cout << "Client:" << rbuf << std::endl;
     } else {
         LOGE("SpServerSocket::recv Error(%d) fd(%d)", l, connFd);
         return -1;
