@@ -293,7 +293,7 @@ std::string SPUtils::GetDeviceInfoMap()
     deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
     deviceInfoMap["activeMode"] = screenSize;
     if (deviceInfoMap.empty()) {
-        LOGI("Failed to obtain device information");
+        LOGE("Failed to obtain device information");
     }
     for (auto iter = deviceInfoMap.cbegin(); iter != deviceInfoMap.cend(); ++iter) {
         printf("%s: %s\n", iter->first.c_str(), iter->second.c_str());
@@ -629,7 +629,7 @@ std::string SPUtils::GetCpuNum()
     cpuCores += std::to_string(cpuNum);
     if (cpuNum == 0) {
         std::cout << "CPU frequency collection failed." << std::endl;
-        LOGI("CPU frequency collection failed.");
+        LOGE("CPU frequency collection failed.");
     }
     return cpuCores;
 }
@@ -720,7 +720,7 @@ bool SPUtils::GetPathPermissions(const std::string &path)
         std::string result = cmdResult.substr(0, 10);
         return result == "-rw-r--r--";
     } else {
-        LOGI("THE path is empty");
+        LOGE("THE path is empty");
         return false;
     }
 }

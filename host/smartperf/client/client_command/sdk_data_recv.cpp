@@ -132,7 +132,7 @@ namespace OHOS {
                 params.receiveFd[index] = -1;
                 return "";
             }
-            LOGI("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
+            LOGD("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
             receiveBuffer = receiveBuf;
 
             bool processFlag = true;

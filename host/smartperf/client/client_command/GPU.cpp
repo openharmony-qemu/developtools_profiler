@@ -43,7 +43,7 @@ std::map<std::string, std::string> GPU::ItemData()
         result["gpuFrequency"] = "NA";
         result["gpuLoad"] = "NA";
     }
-    LOGI("GPU::ItemData map size(%u)", result.size());
+    LOGD("GPU::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -51,7 +51,7 @@ int GPU::GetGpuFreq()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<GpuFreq> result = collector->CollectGpuFrequency();
-    LOGI("GpuFrequency: %s", std::to_string(result.data.curFeq).c_str());
+    LOGD("GpuFrequency: %s", std::to_string(result.data.curFeq).c_str());
     return result.data.curFeq;
 }
 
@@ -59,7 +59,7 @@ float GPU::GetGpuLoad()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
-    LOGI("SysGpuLoad: %s", std::to_string(result.data.gpuLoad).c_str());
+    LOGD("SysGpuLoad: %s", std::to_string(result.data.gpuLoad).c_str());
     return float(result.data.gpuLoad);
 }
 

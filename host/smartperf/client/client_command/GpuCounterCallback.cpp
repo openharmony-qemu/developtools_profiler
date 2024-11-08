@@ -237,7 +237,6 @@ namespace OHOS {
             }
 
             if (gpuPerfInfos[0].remainTime <= restartTime) {
-                LOGI("remain time to restart");
                 gpuCounterInstance.StartCollect(GpuCounter::GC_RESTART);
             }
             return 0;
