@@ -30,7 +30,7 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     lowfps = mLowfps;
     curNum = mCurNum;
     LOGD("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%lld) mLowfps(%d) mCurNum(%d)",
-        mSum, mInterval,mThreshold, mLowfps, mCurNum);
+        mSum, mInterval, mThreshold, mLowfps, mCurNum);
 }
 void ByTrace::ThreadGetTrace() const
 {

@@ -446,7 +446,6 @@ void SPTask::StopGpuCounterRecv()
 }
 void SPTask::StopTask()
 {
-
     if (GetRecordState()) {
         StopGetInfo();
         StopSdkRecv();
