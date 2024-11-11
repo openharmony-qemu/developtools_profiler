@@ -81,14 +81,14 @@ std::map<std::string, std::string> CPU::ItemData()
         }
     }
 
-    LOGI("CPU::ItemData map size(%u)", result.size());
+    LOGD("CPU::ItemData map size(%u)", result.size());
     return result;
 }
 
 void CPU::SetPackageName(const std::string &pName)
 {
     packageName = pName;
-    LOGI("CPU SetPackageName name(%s)", pName.c_str());
+    LOGD("CPU SetPackageName name(%s)", pName.c_str());
 }
 
 void CPU::SetProcessId(const std::string &pid)
@@ -107,8 +107,8 @@ std::vector<CpuFreqs> CPU::GetCpuFreq()
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;
         cpuFrequency.push_back(cpuFreqs);
-        LOGI("cpuFreqs.cpuId: %s", std::to_string(cpufreq[i].cpuId).c_str());
-        LOGI("cpuFreqs.curFreq: %s", std::to_string(cpufreq[i].curFreq).c_str());
+        LOGD("cpuFreqs.cpuId: %s, cpuFreqs.curFreq: %s",
+            std::to_string(cpufreq[i].cpuId).c_str(), std::to_string(cpufreq[i].curFreq).c_str());
     }
     return cpuFrequency;
 }
@@ -133,14 +133,12 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
         cpuUsageInfos.irqUsage = cpuInfo.irqUsage;
         cpuUsageInfos.softIrqUsage = cpuInfo.softIrqUsage;
         workload.push_back(cpuUsageInfos);
-        LOGI("UsageCpuId: %s", cpuInfo.cpuId.c_str());
-        LOGI("userUsage: %s", std::to_string(cpuInfo.userUsage).c_str());
-        LOGI("niceUsage: %s", std::to_string(cpuInfo.niceUsage).c_str());
-        LOGI("systemUsage: %s", std::to_string(cpuInfo.systemUsage).c_str());
-        LOGI("idleUsage: %s", std::to_string(cpuInfo.idleUsage).c_str());
-        LOGI("ioWaitUsage: %s", std::to_string(cpuInfo.ioWaitUsage).c_str());
-        LOGI("irqUsage: %s", std::to_string(cpuInfo.irqUsage).c_str());
-        LOGI("softIrqUsage: %s", std::to_string(cpuInfo.softIrqUsage).c_str());
+        LOGD("UsageCpuId: %s, userUsage: %s, niceUsage: %s, systemUsage: %s",
+            "idleUsage: %s, ioWaitUsage: %s, irqUsage: %s, softIrqUsage: %s",
+            cpuInfo.cpuId.c_str(), std::to_string(cpuInfo.userUsage).c_str(),
+            std::to_string(cpuInfo.niceUsage).c_str(), std::to_string(cpuInfo.systemUsage).c_str(),
+            std::to_string(cpuInfo.idleUsage).c_str(), std::to_string(cpuInfo.ioWaitUsage).c_str(),
+            std::to_string(cpuInfo.irqUsage).c_str(), std::to_string(cpuInfo.softIrqUsage).c_str());
     }
     return workload;
 }
@@ -161,12 +159,10 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
         processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
         processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
-        LOGI("ProcId: %s", std::to_string(data.pid).c_str());
-        LOGI("ProcAppName: %s", data.procName.c_str());
-        LOGI("ProcCpuLoad: %s", std::to_string(data.cpuLoad).c_str());
-        LOGI("ProcCpuUsage: %s", std::to_string(data.cpuUsage).c_str());
-        LOGI("ProcUCpuUsage: %s", std::to_string(data.uCpuUsage).c_str());
-        LOGI("ProcSCpuUsage: %s", std::to_string(data.sCpuUsage).c_str());
+        LOGD("ProcId: %s, ProcAppName: %s, ProcCpuLoad: %s, ProcCpuUsage: %s, ProcUCpuUsage: %s, ProcSCpuUsage: %s",
+            std::to_string(data.pid).c_str(), data.procName.c_str(), std::to_string(data.cpuLoad).c_str(),
+            std::to_string(data.cpuUsage).c_str(), std::to_string(data.uCpuUsage).c_str(),
+            std::to_string(data.sCpuUsage).c_str());
     } else {
         processCpuInfo["ProcId"] = "NA";
         processCpuInfo["ProcAppName"] = packageName;

@@ -63,7 +63,6 @@ std::string ParseRadar::ParseRadarAppStrart(const std::string &string) const
         "ms\n"
         "CompleteTime:" +
         streamComplete.str() + "ms\n";
-    LOGI("Radar.result====: %s", result.c_str());
     return result;
 }
 double ParseRadar::ParseRadarResponse(const std::string &string) const
@@ -149,7 +148,6 @@ std::string ParseRadar::ParseRadarFrame(const std::string &string) const
 }
 std::string ParseRadar::ExtractString(const std::string &str, const std::string &target) const
 {
-    LOGI("Radar.str: %s", str.c_str());
     size_t pos = str.find(target);
     if (pos != std::string::npos) {
         pos += target.length();

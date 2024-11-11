@@ -25,7 +25,7 @@ std::map<std::string, std::string> Temperature::ItemData()
     struct dirent *dirp;
     std::vector<std::string> dirs;
     if (dp == nullptr) {
-        std::cout << "Open directory failed!" << std::endl;
+        LOGE("Open directory failed!");
     }
     while ((dirp = readdir(dp)) != nullptr) {
         if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {
@@ -39,9 +39,7 @@ std::map<std::string, std::string> Temperature::ItemData()
     std::map<std::string, std::string> result;
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
-        LOGI("dirType====: %s", dirType.c_str());
         std::string dirTemp = dir + "/temp";
-        LOGI("dirTemp====: %s", dirTemp.c_str());
 
         if (!SPUtils::FileAccess(dirType)) {
             continue;
@@ -53,9 +51,7 @@ std::map<std::string, std::string> Temperature::ItemData()
         SPUtils::LoadFile(dirTemp, temp);
         for (auto node : collectNodes) {
             if (type.find(node) != std::string::npos) {
-                LOGI("type====: %s", type.c_str());
                 float t = SPUtilesTye::StringToSometype<float>(temp);
-                LOGI("temp====: %s", temp.c_str());
                 if (node == "gpu") {
                     result[type] = std::to_string(t);
                 } else {
@@ -65,7 +61,7 @@ std::map<std::string, std::string> Temperature::ItemData()
         }
     }
 
-    LOGI("Temperature::ItemData map size(%u)", result.size());
+    LOGD("Temperature::ItemData map size(%u)", result.size());
     return result;
 }
 }
