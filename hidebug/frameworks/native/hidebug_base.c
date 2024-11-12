@@ -49,13 +49,15 @@
 #define LOG_PRIV_PUBLIC "{public}"
 #endif
 
-#define MAX_PARA_LEN 50
-#define MAX_PARA_CNT 20
 #define PARAM_BUF_LEN 128
-#define QUERYNAME_LEN 80
-#define COLON_CHR ':'
 #define SLASH_CHR '/'
 const char * const LIBC_HOOK_PARAM = "libc.hook_mode";
+
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
+#define MAX_PARA_LEN 50
+#define MAX_PARA_CNT 20
+#define QUERYNAME_LEN 80
+#define COLON_CHR ':'
 
 struct Params {
     char key[MAX_PARA_LEN];
@@ -146,6 +148,24 @@ static bool InitHiDebugEnvParams(const char *queryName)
     }
     return paramsCnt > 0;
 }
+
+static bool InitEnvParam(const char *serviceName)
+{
+    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
+    if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
+        return false;
+    }
+    char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
+    if (!ConcatenateParamName(onceName, sizeof(onceName), serviceName)) {
+        return false;
+    }
+    if (InitHiDebugEnvParams(onceName)) {
+        return true;
+    }
+    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
+    return ConcatenateParamName(persistName, sizeof(onceName), serviceName) && InitHiDebugEnvParams(persistName);
+}
+#endif
 
 static const char* FilterServiceName(const char *inputName)
 {
@@ -262,17 +282,9 @@ bool InitEnvironmentParam(const char *inputName)
     SetupMallocHookAtStartup(serviceName);
 #endif
 
-    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-    if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
-        return false;
-    }
-    char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
-    if (!ConcatenateParamName(onceName, sizeof(onceName), serviceName)) {
-        return false;
-    }
-    if (InitHiDebugEnvParams(onceName)) {
-        return true;
-    }
-    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
-    return ConcatenateParamName(persistName, sizeof(onceName), serviceName) && InitHiDebugEnvParams(persistName);
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
+    return InitEnvParam(serviceName);
+#else
+    return true;
+#endif
 }
