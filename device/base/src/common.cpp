@@ -779,7 +779,7 @@ int PluginWriteToHisysevent(std::string pluginName, std::string caller, std::str
                             std::string errorMessage)
 {
     return HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::PROFILER, "HIPROFILER_USAGE",
-        OHOS::HiviewDFX::HiSysEvent::EventType::STATISTIC,
+        OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
         "PLUGIN_NAME", pluginName,
         "CALLER", caller,
         "ARGS", args,
