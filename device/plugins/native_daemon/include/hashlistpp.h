@@ -779,6 +779,9 @@ void HashList<Key, Val>::pop_back()
         return;
     }
     LinkNode<Key, Val>* pnode = LinkNode<Key, Val>::GetLinkNode(dataHead_.prev_);
+    if (pnode == nullptr) {
+        return;
+    }
     valueTab_.erase(pnode->key_);
     ReclaimNode(pnode);
 }
@@ -890,6 +893,9 @@ auto HashList<Key, Val>::AllocateNode(const Key &key)
         pop_back();
     }
     LinkNode<Key, Val> * pnode = LinkNode<Key, Val>::GetLinkNode(freeHead_.next_);
+    if (pnode == nullptr) {
+        return nullptr;
+    }
     freeHead_.next_ = freeHead_.next_->next_;
     pnode->link_.next_ = nullptr;
     pnode->link_.prev_ = nullptr;

@@ -411,10 +411,11 @@ static void* ThreadMmap(void* param)
     while (g_runing != 0) {
         // 获取随机字符
         char* randString = RandString(PAGE_SIZE);
-
+        if (randString == nullptr) {
+            continue;
+        }
         // 写入映射
         WriteMmap(randString);
-
         // 从映射中读取
         char* outchar = ReadMmap(strlen(randString));
         printf("thread %ld : Mmap test OK! \n", syscall(SYS_gettid));
