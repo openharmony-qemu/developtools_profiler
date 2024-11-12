@@ -55,6 +55,7 @@ private:
     bool FindFirstNum(char** p);
     bool RemoveSpaces(char** p);
     bool FindFirstSpace(char** p);
+    std::string GetCmdArgs(HilogConfig protoConfig);
 
     bool StringToL(const char* word, long& value);
     // for ut

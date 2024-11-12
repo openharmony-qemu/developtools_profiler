@@ -76,6 +76,7 @@ private:
     void EnableTraceEvents(void);
     void DisableTraceEvents(void);
     void DisableAllCategories(void);
+    std::string GetCmdArgs(TracePluginConfig traceConfig);
 
     template <typename T> bool ReportClockTimes(T& tracePluginResult);
 

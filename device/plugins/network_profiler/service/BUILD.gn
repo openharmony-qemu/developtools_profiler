@@ -49,6 +49,7 @@ ohos_source_set("network_profiler_service") {
   ]
 
   external_deps = [
+    "hisysevent:libhisysevent",
     "init:libbegetutil",
     "protobuf:protobuf_lite",
   ]

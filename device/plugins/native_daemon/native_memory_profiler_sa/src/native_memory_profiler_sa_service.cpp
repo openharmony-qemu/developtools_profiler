@@ -166,9 +166,45 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
     }
 }
 
+std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    std::stringstream args;
+    args << "pid: " << COMMON::GetProcessNameByPid(config->pid_) << ", ";
+    args << "filter_size: " << config->filterSize_ << ", ";
+    args << "max_stack_depth: " << std::to_string(config->maxStackDepth_) << ", ";
+    args << "process_name: " << config->processName_ << ", ";
+    args << "malloc_disable: " << (config->mallocDisable_ ? "true" : "false") << ", ";
+    args << "mmap_disable: " << (config->mmapDisable_ ? "true" : "false") << ", ";
+    args << "free_stack_report: " << (config->freeStackData_ ? "true" : "false") << ", ";
+    args << "munmap_stack_report: " << (config->munmapStackData_ ? "true" : "false") << ", ";
+    args << "malloc_free_matching_interval: " << std::to_string(config->mallocFreeMatchingInterval_) << ", ";
+    args << "malloc_free_matching_cnt: " << std::to_string(config->mallocFreeMatchingCnt_) << ", ";
+    args << "string_compressed: " << (config->stringCompressed_ ? "true" : "false") << ", ";
+    args << "fp_unwind: " << (config->fpUnwind_ ? "true" : "false") << ", ";
+    args << "blocked: " << (config->blocked_ ? "true" : "false") << ", ";
+    args << "record_accurately: " << (config->recordAccurately_ ? "true" : "false") << ", ";
+    args << "startup_mode: " << (config->startupMode_ ? "true" : "false") << ", ";
+    args << "memtrace_enable: " << (config->memtraceEnable_ ? "true" : "false") << ", ";
+    args << "offline_symbolization: " << (config->offlineSymbolization_ ? "true" : "false") << ", ";
+    args << "callframe_compress: " << (config->callframeCompress_ ? "true" : "false") << ", ";
+    args << "statistics_interval: " << std::to_string(config->statisticsInterval_) << ", ";
+    args << "clock: " << std::to_string(config->clockId_) << ", ";
+    args << "sample_interval: " << std::to_string(config->sampleInterval_) << ", ";
+    args << "response_library_mode: " << (config->responseLibraryMode_ ? "true" : "false") << ", ";
+    args << "js_stack_report: " << std::to_string(config->jsStackReport_) << ", ";
+    args << "max_js_stack_depth: " << std::to_string(config->maxJsStackDepth_) << ", ";
+    args << "filter_napi_name: " << config->filterNapiName_ << ", ";
+    args << "nmd_pid: " << std::to_string(config->nmdPid_) << ", ";
+    args << "nmd_type: " << std::to_string(config->nmdType_) << ", ";
+    return args.str();
+}
+
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
+    auto args = GetCmdArgs(config);
     if (!HasProfilingPermission()) {
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
         PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
         return RET_ERR;
     }
@@ -183,6 +219,8 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     PROFILER_LOG_INFO(LOG_CORE, "file path: %s", config->filePath_.c_str());
 
     if (!CheckConfig(config, fd)) {
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_MSG_EMPTY,
+            "check config failed");
         return RET_ERR;
     }
 
@@ -190,6 +228,8 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
+            COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_IVALID_PATH,
+                "check file path failed");
             return RET_ERR;
         }
         int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
@@ -214,6 +254,8 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         }
     }
     if (hook->CreatePluginSession() != RET_OK) {
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
+            "create pluginsession failed");
         return RET_ERR;
     }
     hook->WriteHookConfig();
@@ -225,6 +267,8 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         true);
     if (timerFd == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService Start Schedule Task failed");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
+            "start schedule task failed");
         return RET_ERR;
     }
 
@@ -248,6 +292,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     ++taskNum_;
     DelayedShutdown(true);
+    COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_SUCC, "success");
     return RET_OK;
 }
 

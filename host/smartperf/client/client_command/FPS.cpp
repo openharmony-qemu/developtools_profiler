@@ -50,14 +50,12 @@ std::map<std::string, std::string> FPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
-        int fullFrame = 120;
-        int maxFullFrame = 123;
+        const int fullFrame = 120;
+        const int maxFullFrame = 123;
         if (fpsInfoResult.fps > fullFrame && fpsInfoResult.fps < maxFullFrame) {
             fpsInfoResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(fpsInfoResult.fps);
-        LOGI("result.fps: %s", std::to_string(fpsInfoResult.fps).c_str());
-        LOGI("result.curTime: %s", std::to_string(fpsInfoResult.curTime).c_str());
         std::string jitterStr = "";
         std::string split = "";
         for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
@@ -67,7 +65,10 @@ std::map<std::string, std::string> FPS::ItemData()
             jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
         }
         result["fpsJitters"] = jitterStr;
-        LOGI("result.jitters: %s", jitterStr.c_str());
+        LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
+            std::to_string(fpsInfoResult.fps).c_str(),
+            std::to_string(fpsInfoResult.curTime).c_str(),
+            jitterStr.c_str());
         SetFpsCurrentFpsTime(fpsInfoResult);
     }
     return result;
@@ -127,7 +128,7 @@ FpsInfo FPS::GetFpsInfo()
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
-        LOGI("FPS:app is in the background");
+        LOGE("FPS:app is in the background");
         if (processId.empty()) {
             processFlag = true;
             fpsInfoMax.Clear();
@@ -184,13 +185,12 @@ void FPS::ReadDataFromPipe(int fd)
     char tmp[1024];
     fpsNum = 0;
     prevScreenTimestamp = -1;
-    LOGI("FPS::dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("FPS:fpsInfo.curTime: %d", fpsInfo.curTime);
-    LOGI("FPS:psInfo.currTimeDump: %lld", fpsInfo.currTimeDump);
+    LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld",
+        fpsInfo.curTime, fpsInfo.currTimeDump);
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
         LOGE("FPS::Failed to open file descriptor");

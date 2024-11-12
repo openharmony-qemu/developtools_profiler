@@ -25,14 +25,12 @@ void Dubai::DumpDubaiBegin()
     std::string result;
     std::string dumpBubaiB = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_B);
     SPUtils::LoadCmd(dumpBubaiB, result);
-    LOGI("Dubai::DumpDubaiBegin");
 }
 void Dubai::DumpDubaiFinish()
 {
     std::string result;
     std::string dumpBubaiF = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_F);
     SPUtils::LoadCmd(dumpBubaiF, result);
-    LOGI("Dubai::DumpDubaiFinish");
 }
 
 void Dubai::MoveDubaiDb()
@@ -44,8 +42,8 @@ void Dubai::MoveDubaiDb()
     const std::string PkgEntry = "/entry/rdb";
     const std::string cpDubai = "cp -r " + dubaiXpower + XpowerDb + " " + Database + dubaiPkgName + PkgEntry;
     const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + XpowerDb;
-    LOGI("cpDubai: (%s)", cpDubai.c_str());
-    LOGI("dubaiPathChmod: (%s)", dubaiPathChmod.c_str());
+    LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
+        cpDubai.c_str(), dubaiPathChmod.c_str());
     SPUtils::LoadCmd(cpDubai, result);
     SPUtils::LoadCmd(dubaiPathChmod, result);
 }
@@ -54,7 +52,6 @@ void Dubai::CallBeginAndFinish()
 {
     DumpDubaiBegin();
     DumpDubaiFinish();
-    LOGI("Dubai::CallBeginAndFinish");
 }
 
 std::string Dubai::CallMoveDubaiDbFinished()
@@ -62,7 +59,6 @@ std::string Dubai::CallMoveDubaiDbFinished()
     std::string dubaiMoveFinish;
     if (isDumpDubaiFinish) {
         MoveDubaiDb();
-        LOGI("Dubai::MoveDubaiDbFinished");
     }
     dubaiMoveFinish = "get_dubai_db";
     return dubaiMoveFinish;

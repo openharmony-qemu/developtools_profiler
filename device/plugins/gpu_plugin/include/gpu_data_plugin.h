@@ -45,6 +45,7 @@ public:
 
 private:
     int ReadFile();
+    std::string GetCmdArgs(GpuConfig traceConfig);
     template <typename T> void WriteGpuDataInfo(T& gpuData);
 
 private:

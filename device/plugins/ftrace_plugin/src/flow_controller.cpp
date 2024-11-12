@@ -19,11 +19,13 @@
 #include <algorithm>
 #include <cinttypes>
 #include <set>
+#include <sstream>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <regex>
 
+#include "common.h"
 #include "file_utils.h"
 #include "ftrace_field_parser.h"
 #include "ftrace_fs_ops.h"
@@ -746,6 +748,33 @@ bool FlowController::AddPlatformEventsToParser(void)
     return true;
 }
 
+std::string FlowController::GetCmdArgs(TracePluginConfig traceConfig)
+{
+    std::stringstream args;
+    for (const auto& event : traceConfig.ftrace_events()) {
+        args << "ftrace_events: " << event << ", ";
+    }
+    for (const auto& category : traceConfig.hitrace_categories()) {
+        args << "hitrace_categories: " << category << ", ";
+    }
+    for (const auto& app : traceConfig.hitrace_apps()) {
+        args << "hitrace_apps: " << app << ", ";
+    }
+    args << "buffer_size_kb: " << std::to_string(traceConfig.buffer_size_kb()) << ", ";
+    args << "flush_interval_ms: " << std::to_string(traceConfig.flush_interval_ms()) << ", ";
+    args << "flush_threshold_kb: " << std::to_string(traceConfig.flush_threshold_kb()) << ", ";
+    args << "trace_period_ms: " << std::to_string(traceConfig.trace_period_ms()) << ", ";
+    args << "trace_duration_ms: " << std::to_string(traceConfig.trace_duration_ms()) << ", ";
+    args << "hitrace_time: " << std::to_string(traceConfig.hitrace_time()) << ", ";
+    args << "parse_ksyms: " << (traceConfig.parse_ksyms() ? "true" : "false") << ", ";
+    args << "clock: " << traceConfig.clock() << ", ";
+    args << "raw_data_prefix: " << traceConfig.raw_data_prefix() << ", ";
+    args << "debug_on: " << (traceConfig.debug_on() ? "true" : "false") << ", ";
+    args << "discard_cache_data: " << (traceConfig.discard_cache_data() ? "true" : "false") << ", ";
+    args << "parse_mode: " << std::to_string(traceConfig.parse_mode());
+    return args.str();
+}
+
 int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
 {
     CHECK_TRUE(size > 0, -1, "config data size is zero!");
@@ -790,6 +819,10 @@ int FlowController::LoadConfig(const uint8_t configData[], uint32_t size)
     SetupTraceReadPeriod(traceConfig.trace_period_ms());
     flushCacheData_ = traceConfig.discard_cache_data();
     hitraceTime_ = traceConfig.hitrace_time();
+
+    int ret = COMMON::PluginWriteToHisysevent("ftrace_plugin", "sh", GetCmdArgs(traceConfig),
+        COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report ftrace_plugin result: %d", ret);
     return 0;
 }
 

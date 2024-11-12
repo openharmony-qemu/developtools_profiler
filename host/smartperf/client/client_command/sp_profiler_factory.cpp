@@ -25,7 +25,6 @@
 #include "include/ByTrace.h"
 #include "include/sp_utils.h"
 #include "include/sp_profiler_factory.h"
-#include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/navigation.h"
 #include "include/sp_log.h"
@@ -80,9 +79,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
         case MessageType::GET_CAPTURE:
             Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
-            break;
-        case MessageType::START_DUBAI_DB:
-            Dubai::CallBeginAndFinish();
             break;
         case MessageType::CATCH_NETWORK_TRAFFIC:
         case MessageType::GET_NETWORK_TRAFFIC:

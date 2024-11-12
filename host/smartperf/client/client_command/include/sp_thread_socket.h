@@ -70,16 +70,13 @@ public:
     void Process(ProtoType type) const
     {
         std::cout << "Socket Process called!" << std::endl;
-        LOGI("Socket Process called!");
         SpServerSocket spSocket;
         spSocket.Init(type);
         if (type == ProtoType::TCP) {
             std::cout << "Socket TCP Init called!" << std::endl;
-            LOGI("Socket TCP Init called!");
             TypeTcp(spSocket);
         }
         if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
-            LOGI("Socket UDP Init called! type(%d)", static_cast<int>(type));
             SocketHeartbeat();
             while (1) {
                 spSocket.Recvfrom();
@@ -87,7 +84,6 @@ public:
             }
         }
         std::cout << "Socket Process finished!" << std::endl;
-        LOGI("Socket Process finished!");
         spSocket.Close();
     }
     SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
@@ -154,7 +150,6 @@ public:
     void StartRecv(SpServerSocket &spSocket) const
     {
         if (flagRunning) {
-            LOGI("SP_daemon is running");
             spSocket.Send("SP_daemon is running");
             return;
         }
@@ -163,7 +158,7 @@ public:
         };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
         SPTask::GetInstance().StartRecord();
-        LOGI("start:::%s", (code == ErrCode::OK) ? "True" : "False");
+        LOGD("start:::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
             flagRunning = true;
@@ -175,7 +170,7 @@ public:
     {
         auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-        LOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
+        LOGD("start::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
         } else if (code == ErrCode::FAILED) {
@@ -320,7 +315,7 @@ public:
                 }
                 HandleUDPMsg(spSocket, data, retCode, iterator);
             }
-            LOGI("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
+            LOGD("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
             break;
         }
     }
@@ -415,6 +410,8 @@ public:
             spSocket.Sendto(retCode);
         } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
             BackDesktop();
+        } else if (iterator->first == MessageType::START_DUBAI_DB) {
+            Dubai::CallBeginAndFinish();
         } else if (iterator->first == MessageType::SET_DUBAI_DB) {
             Dubai::CallBeginAndFinish();
             Dubai::isDumpDubaiFinish = true;
@@ -423,7 +420,7 @@ public:
         } else {
             retCode = iterator->second;
             spSocket.Sendto(retCode);
-            LOGI("UDP sendData: (%s)", retCode.c_str());
+            LOGD("UDP sendData: (%s)", retCode.c_str());
         }
     }
 };

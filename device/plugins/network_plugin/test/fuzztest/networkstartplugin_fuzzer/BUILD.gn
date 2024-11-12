@@ -28,6 +28,7 @@ ohos_fuzztest("NetworkStartPluginFuzzTest") {
   ]
   sources = [ "networkstartplugin_fuzzer.cpp" ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_data_cpp",
   ]

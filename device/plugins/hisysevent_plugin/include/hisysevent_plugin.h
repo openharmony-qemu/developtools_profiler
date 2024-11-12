@@ -40,6 +40,7 @@ public:
 private:
     std::string GetFullCmd();
     bool InitHisyseventCmd();
+    std::string GetCmdArgs(HisyseventConfig protoConfig);
 
     template <typename T> bool ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto);
 

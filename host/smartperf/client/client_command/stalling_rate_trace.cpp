@@ -32,7 +32,7 @@ double StallingRateTrace::StallingRateResult(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        LOGI("StallingRateTrace open file(%s) fialed ", file.c_str());
+        LOGE("StallingRateTrace open file(%s) fialed ", file.c_str());
         return stalligRate;
     }
     stalligRate = SmartPerf::StallingRateTrace::CalculateTime();
@@ -70,21 +70,22 @@ void StallingRateTrace::CalcFrameRate()
     } else {
         appFrameLossRate = -1;
     }
-    LOGI("result.appFrameLossRate: (%s)", std::to_string(appFrameLossRate).c_str());
 
     if (swiperDynamicFinishTime != 0 && swiperDynamicStartTime != 0) {
         swiperFrameLossRate = (frameLossSwiperTime / (swiperDynamicFinishTime - swiperDynamicStartTime) * oneThousand);
     } else {
         swiperFrameLossRate = -1;
     }
-    LOGI("result.swiperFrameLossRate: (%s)", std::to_string(swiperFrameLossRate).c_str());
 
     if (appTabsDynamicStartTime != 0 && appTabsDynamicFinishTime != 0) {
         tabsFrameLossRate = (frameLossTabsTime / (appTabsDynamicFinishTime - appTabsDynamicStartTime) * oneThousand);
     } else {
         tabsFrameLossRate = -1;
     }
-    LOGI("result.tabsFrameLossRate: (%s)", std::to_string(tabsFrameLossRate).c_str());
+    LOGD("result.appFrameLossRate: (%s), result.swiperFrameLossRate: (%s), result.tabsFrameLossRate: (%s)",
+        std::to_string(appFrameLossRate).c_str(),
+        std::to_string(swiperFrameLossRate).c_str(),
+        std::to_string(tabsFrameLossRate).c_str());
 }
 
 void StallingRateTrace::JudgFrameRate()
@@ -98,15 +99,12 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
-        LOGI("no app list Dynamic");
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
-        LOGI("no swiper Dynamic");
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!tabsDynamicExists) {
-        LOGI("no tabs Dynamic");
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         swiperDynamicExists ? swiperFrameLossRate : -1;
     } else {
@@ -117,7 +115,6 @@ void StallingRateTrace::JudgFrameRate()
 void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
-        LOGI("no app list hitchTime");
         if (swiperFrameLossRate > 0) {
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -126,7 +123,6 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (swiperFrameLossRate == 0) {
-        LOGI("no swiper list hitchTime");
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -135,7 +131,6 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (tabsFrameLossRate == 0) {
-        LOGI("no tabs list hitchTime");
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (swiperFrameLossRate > 0) {
@@ -182,14 +177,14 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
         line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
         if (listFlag) {
-            LOGI("AppList line start: (%s)", line.c_str());
             appListDynamicFinishTime = GetTimes(line, signF);
-            LOGI("appListDynamicFinishTime: (%s)", std::to_string(appListDynamicFinishTime).c_str());
+            LOGD("AppList line start: (%s), appListDynamicFinishTime: (%s)",
+                line.c_str(), std::to_string(appListDynamicFinishTime).c_str());
             listFlag = false;
         } else {
-            LOGI("AppList line finish: (%s)", line.c_str());
             appListDynamicStartTime = GetTimes(line, signS);
-            LOGI("appListDynamicStartTime: (%s)", std::to_string(appListDynamicStartTime).c_str());
+            LOGD("AppList line finish: (%s), appListDynamicStartTime: (%s)",
+                line.c_str(), std::to_string(appListDynamicStartTime).c_str());
             listFlag = true;
             frameLossTime = 0;
         }
@@ -199,13 +194,12 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
         if (upperScreenFlag) {
             if (line.find("|H:Present Fence ") != std::string::npos) {
                 fenceId = GetFenceId(line);
-                LOGI("fenceId: (%d)", fenceId);
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
             if (line.find(waitFenceId) != std::string::npos) {
                 nowTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
                 GetFrameLossTime(nowTime, lastTime, roundTime, frameLossTime);
-                LOGI("frameLossTime: (%s)", std::to_string(frameLossTime).c_str());
+                LOGD("frameLossTime: (%s)", std::to_string(frameLossTime).c_str());
                 lastTime = nowTime;
                 upperScreenFlag = false;
             }
@@ -217,9 +211,9 @@ void StallingRateTrace::GetFrameLossTime(double curTime, double prevTime, double
 {
     if ((curTime - prevTime) > drawTime && prevTime != 0) {
         double diffTime = (curTime - prevTime) - drawTime;
-        LOGI("diffTime: (%s)", std::to_string(diffTime).c_str());
         totalFrameLossTime += diffTime;
-        LOGI("totalFrameLossTime: (%s)", std::to_string(totalFrameLossTime).c_str());
+        LOGD("diffTime: (%s), totalFrameLossTime: (%s)",
+            std::to_string(diffTime).c_str(), std::to_string(totalFrameLossTime).c_str());
     }
 }
 
@@ -240,7 +234,6 @@ void StallingRateTrace::GetRsHardWareRate(double curFrameRate, const std::string
                 break;
         }
         curFrameRate = GetFrameRate(line);
-        LOGI("curFrameRate1: (%s)", std::to_string(curFrameRate).c_str());
         if (curFrameRate != 0) {
             UpdateRoundTime(curFrameRate, type);
         }
@@ -259,7 +252,6 @@ void StallingRateTrace::GetRsHardWareRate(double curFrameRate, const std::string
                 break;
         }
         curFrameRate = GetFrameRate(line);
-        LOGI("curFrameRate2: (%s)", std::to_string(curFrameRate).c_str());
         if (curFrameRate != 0) {
             UpdateRoundTime(curFrameRate, type);
         }
@@ -293,9 +285,9 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
         line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos ||
         line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
-            LOGI("AppSwiperScroll line start: (%s)", line.c_str());
             swiperDynamicStartTime = GetTimes(line, signS);
-            LOGI("swiperDynamicStartTime: (%s)", std::to_string(swiperDynamicStartTime).c_str());
+            LOGD("AppSwiperScroll line start: (%s), swiperDynamicStartTime: (%s)",
+                line.c_str(), std::to_string(swiperDynamicStartTime).c_str());
             frameLossSwiperTime = 0;
             swiperScrollFlag = 1;
             swiperFlag = true;
@@ -305,9 +297,9 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
         line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
         line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
         if (swiperFlingFlag == 1) {
-            LOGI("AppSwiper FinishTime line: (%s)", line.c_str());
             swiperDynamicFinishTime = GetTimes(line, signF);
-            LOGI("swiperDynamicFinishTime: (%s)", std::to_string(swiperDynamicFinishTime).c_str());
+            LOGD("AppSwiper FinishTime line: (%s), swiperDynamicFinishTime: (%s)",
+                line.c_str(), std::to_string(swiperDynamicFinishTime).c_str());
             swiperFlag = false;
         }
         if (swiperDynamicFinishTime == 0) {
@@ -320,14 +312,13 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
         if (upperScreenSwiperFlag) {
             if (line.find("|H:Present Fence ") != std::string::npos) {
                 fenceIdSwiper = GetFenceId(line);
-                LOGI("fenceIdSwiper: (%d)", fenceIdSwiper);
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdSwiper);
             if (line.find(waitFenceId) != std::string::npos) {
                 nowSwiperTime = SPUtilesTye::StringToSometype<double>(StallingRateTrace::GetOnScreenTimeStart(line));
-                LOGI("nowSwiperTime: (%s)", std::to_string(nowSwiperTime).c_str());
                 GetFrameLossTime(nowSwiperTime, lastSwiperTime, roundSwiperTime, frameLossSwiperTime);
-                LOGI("frameLossSwiperTime: (%s)", std::to_string(frameLossSwiperTime).c_str());
+                LOGD("nowSwiperTime: (%s), frameLossSwiperTime: (%s)",
+                    std::to_string(nowSwiperTime).c_str(), std::to_string(frameLossSwiperTime).c_str());
                 lastSwiperTime = nowSwiperTime;
                 upperScreenSwiperFlag = false;
             }
@@ -345,14 +336,14 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
         line.find(appTabsFrameAnimation) != std::string::npos ||
         line.find(appTabsScroll) != std::string::npos) {
         if (tabsFlag) {
-            LOGI("APPTabs line start: (%s)", line.c_str());
             appTabsDynamicFinishTime = GetTimes(line, signF);
-            LOGI("appTabsDynamicFinishTime: (%s)", std::to_string(appTabsDynamicFinishTime).c_str());
+            LOGD("APPTabs line start: (%s), appTabsDynamicFinishTime: (%s)",
+                line.c_str(), std::to_string(appTabsDynamicFinishTime).c_str());
             tabsFlag = false;
         } else {
-            LOGI("APPTabs line finish: (%s)", line.c_str());
             appTabsDynamicStartTime = GetTimes(line, signS);
-            LOGI("appTabsDynamicStartTime: (%s)", std::to_string(appTabsDynamicStartTime).c_str());
+            LOGD("APPTabs line finish: (%s), appTabsDynamicStartTime: (%s)",
+                line.c_str(), std::to_string(appTabsDynamicStartTime).c_str());
             tabsFlag = true;
             frameLossTabsTime = 0;
         }
@@ -362,16 +353,11 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
         if (upperScreenTabsFlag) {
             if (line.find("|H:Present Fence ") != std::string::npos) {
                 fenceIdTabs = GetFenceId(line);
-                LOGI("fenceIdTabs: (%s)", std::to_string(fenceIdTabs).c_str());
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
             if (line.find(waitFenceId) != std::string::npos) {
                 nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
-                LOGI("nowTabsTime: (%s)", std::to_string(nowTabsTime).c_str());
-                LOGI("lastTabsTime: (%s)", std::to_string(lastTabsTime).c_str());
-                LOGI("roundTabsTime: (%s)", std::to_string(roundTabsTime).c_str());
                 GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
-                LOGI("app tabs frameLossTabsTime: (%s)", std::to_string(frameLossTabsTime).c_str());
                 lastTabsTime = nowTabsTime;
                 upperScreenTabsFlag = false;
             }

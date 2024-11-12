@@ -42,14 +42,14 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
-        int fullFrame = 120;
-        int maxFullFrame = 123;
+        const int fullFrame = 120;
+        const int maxFullFrame = 123;
         if (finalResult.fps > fullFrame && finalResult.fps < maxFullFrame) {
             finalResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(finalResult.fps);
-        LOGI("ProfilerFPS.result.fps: %s", std::to_string(finalResult.fps).c_str());
-        LOGI("ProfilerFPS.result.curTime: %s", std::to_string(finalResult.curTime).c_str());
+        LOGD("ProfilerFPS.result.fps: %s, ProfilerFPS.result.curTime: %s",
+            std::to_string(finalResult.fps).c_str(), std::to_string(finalResult.curTime).c_str());
         std::string jitterStr = "";
         std::string split = "";
         for (size_t i = 0; i < finalResult.jitters.size(); i++) {
@@ -59,7 +59,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
             jitterStr += split + std::to_string(finalResult.jitters[i]);
         }
         result["fpsJitters"] = jitterStr;
-        LOGI("ProfilerFPS.result.jitters: %s", jitterStr.c_str());
+        LOGD("ProfilerFPS.result.jitters: %s", jitterStr.c_str());
         if (isCatchTrace > 0) {
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }
@@ -110,15 +110,15 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     }
     time_t now = time(nullptr);
     if (now == -1) {
-        LOGI("Failed to get current time.");
+        LOGE("Failed to get current time.");
         return;
     }
     char *dt = ctime(&now);
-    LOGI("printf time is: %s", dt);
+    LOGD("printf time is: %s", dt);
     fflush(stdout);
     gettimeofday(&end, nullptr);
     runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
-    LOGI("printf time is runTime: %s", std::to_string(runTime).c_str());
+    LOGD("printf time is runTime: %s", std::to_string(runTime).c_str());
     if (runTime < sleepTime) {
         usleep(sleepTime - runTime);
     }
@@ -283,7 +283,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
         uniteLayer = gameLayerName;
         isGameSurface = true;
     } else if (!rkFlag) {
-        LOGI("uniteLayer is UniRender");
         uniteLayer = "UniRender";
     } else {
         ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
@@ -293,7 +292,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
         uniteLayer = GetSurface();
     }
     if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos || isGameSurface) {
-        LOGI("ProfilerFPS.pkgName: %s", pkgName.c_str());
+        LOGD("ProfilerFPS.pkgName: %s", pkgName.c_str());
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
     } else {
@@ -302,7 +301,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
             OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
-            LOGI("ProfilerFPS::app is in the background");
             if (processId.empty()) {
                 processFlag = true;
                 fpsInfoMax.Clear();
@@ -347,12 +345,11 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     }
     fpsNum = 0;
     prevScreenTimestamp = -1;
-    LOGI("ProfilerFPS dump time: start!");
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGI("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
+    LOGD("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         std::string str(tmp);
         LOGD("ProfilerFPS dump time: %s", str.c_str());
@@ -369,7 +366,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
         LOGE("Error: Failed to close file");
         return fpsInfo;
     }
-    LOGI("ProfilerFPS fpsNum: %d", fpsNum);
+    LOGD("ProfilerFPS fpsNum: %d", fpsNum);
     return fpsInfo;
 }
 
@@ -444,14 +441,14 @@ std::string ProfilerFPS::GetGameLayer()
         return gameLayer;
     }
     std::string cmdResult;
-    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     char buf[1024] = {'\0'};
     std::string start = "NodeId[";
     std::string end = "] LayerId";
     std::string nodeIdStr;
     uint64_t nodeId;
     if (dumperSurface.empty()) {
-        LOGI("ProfilerFPS::DUMPER_SURFACE failed");
+        LOGE("ProfilerFPS::DUMPER_SURFACE failed");
         return gameLayer;
     }
     FILE *fd = popen(dumperSurface.c_str(), "r");
@@ -464,7 +461,7 @@ std::string ProfilerFPS::GetGameLayer()
         size_t endPos = line.find(end);
         if (startPos != std::string::npos && endPos != std::string::npos) {
             nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
-            LOGI("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
+            LOGD("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
         }
         const int kShiftAmount = 32;
         if (!nodeIdStr.empty()) {
@@ -474,7 +471,7 @@ std::string ProfilerFPS::GetGameLayer()
                 return gameLayer;
             }
             nodeId = nodeId >> kShiftAmount;
-            LOGI("ProfilerFPS::nodeId: (%d)", nodeId);
+            LOGD("ProfilerFPS::nodeId: (%d)", nodeId);
             GetLayerName(gameLayer, nodeId, line, endPos);
         }
     }
@@ -482,7 +479,7 @@ std::string ProfilerFPS::GetGameLayer()
         LOGE("Error: Failed to close file");
         return gameLayer;
     }
-    LOGI("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
+    LOGD("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
 }
 

@@ -18,6 +18,8 @@
 #include <ctime>
 #include <vector>
 #include <sstream>
+
+#include "common.h"
 #include "cpu_plugin_result.pbencoder.h"
 #include "buffer_splitter.h"
 
@@ -68,6 +70,14 @@ CpuDataPlugin::~CpuDataPlugin()
     minFrequencyVec_.clear();
 }
 
+std::string CpuDataPlugin::GetCmdArgs(CpuConfig protoConfig)
+{
+    std::stringstream args;
+    args << "pid: " << COMMON::GetProcessNameByPid(protoConfig.pid());
+    args << " report_process_info: " << (protoConfig.report_process_info() ? "true" : "false");
+    return args.str();
+}
+
 int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     buffer_ = malloc(READ_BUFFER_SIZE);
@@ -77,15 +87,19 @@ int CpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, RET_FAIL,
                "%s:parseFromArray failed!", __func__);
+    auto args = GetCmdArgs(protoConfig_);
     if (protoConfig_.pid() > 0) {
         pid_ = protoConfig_.pid();
     } else if (protoConfig_.report_process_info()) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:need report process info", __func__);
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid pid", __func__);
+        int ret = COMMON::PluginWriteToHisysevent("CPU_PLUGIN", "sh", args, RET_FAIL, "failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:invalid pid, record hisysevent result. %d", __func__, ret);
         return RET_FAIL;
     }
-    PROFILER_LOG_INFO(LOG_CORE, "%s:start success!", __func__);
+
+    int ret = COMMON::PluginWriteToHisysevent("cpu_plugin", "sh", args, RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s:start success! hisysevent report cpu_plugin result: %d", __func__, ret);
     return RET_SUCC;
 }
 

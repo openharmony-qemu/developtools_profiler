@@ -33,7 +33,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
     std::map<std::string, std::string> result = Network::GetNetworkInfo();
-    LOGI("Network ItemData map siez=%u", result.size());
+    LOGD("Network ItemData map siez=%u", result.size());
     if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
         result["networkUp"] = "NA";
     }

@@ -99,6 +99,7 @@ private:
     DIR* OpenDestDir(std::string& dirPath);
     int32_t GetValidTid(DIR* dirp);
     ThreadState GetThreadState(const char threadState);
+    std::string GetCmdArgs(CpuConfig protoConfig);
 
     template <typename T> void WriteThread(T& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid);
 

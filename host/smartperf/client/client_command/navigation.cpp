@@ -24,7 +24,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Navigation::ItemData()
 {
     std::map<std::string, std::string> result = Navigation::GetNavInfo();
-    LOGI("Navigation::ItemData map size(%u)", result.size());
+    LOGD("Navigation::ItemData map size(%u)", result.size());
     return result;
 }
 

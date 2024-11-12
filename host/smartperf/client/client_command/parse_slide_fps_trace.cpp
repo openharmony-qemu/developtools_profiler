@@ -50,21 +50,21 @@ double ParseSlideFpsTrace::CalculateTime()
                 needTime = true;
                 frameNow = 0;
                 touchTime = SPUtilesTye::StringToSometype<double>(ParseSlideFpsTrace::GetLineTime(line));
-                LOGI("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
+                LOGD("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
                 swiperFlingFlag = 0;
             }
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
             doCompositionTime = SPUtilesTye::StringToSometype<double>(ParseSlideFpsTrace::GetLineTime(line));
-            LOGI("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
+            LOGD("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
         } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
             line.find("H:APP_LIST_FLING,") != std::string::npos) {
             listFlag++;
             if (listFlag == two) {
                 completeTime = doCompositionTime;
-                LOGI("ParseSlideFpsTrace::completeTime: (%s)", std::to_string(completeTime).c_str());
                 frameNum = frameNow;
-                LOGI("ParseSlideFpsTrace::frameNum: (%d)", frameNum);
+                LOGD("ParseSlideFpsTrace::completeTime: (%s), ParseSlideFpsTrace::frameNum: (%d)",
+                    std::to_string(completeTime).c_str(), frameNum);
                 break;
             }
         }
@@ -94,7 +94,7 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
     if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
             touchTime = SPUtilesTye::StringToSometype<double>(ParseSlideFpsTrace::GetLineTime(line));
-            LOGI("AppSwiperScroll.touchTime: (%s)", std::to_string(touchTime).c_str());
+            LOGD("AppSwiperScroll.touchTime: (%s)", std::to_string(touchTime).c_str());
             needTime = true;
             swiperScrollFlag = 1;
         }
@@ -102,9 +102,9 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
     if (line.find("H:APP_SWIPER_FLING,") != std::string::npos) {
         if (swiperFlingFlag == 1) {
             completeTime = doCompositionTime;
-            LOGI("AppSwiperScroll.completeTime: (%s)", std::to_string(completeTime).c_str());
             frameNum = frameNow;
-            LOGI("AppSwiperScroll.frameNum: (%d)", frameNum);
+            LOGD("AppSwiperScroll.completeTime: (%s), AppSwiperScroll.frameNum: (%d)",
+                std::to_string(completeTime).c_str(), frameNum);
         }
         swiperFlingFlag++;
     }
@@ -112,7 +112,7 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
         frameNow = 1;
         needTime = false;
         responseTime = doCompositionTime;
-        LOGI("AppSwiperScroll.responseTime: (%s)", std::to_string(responseTime).c_str());
+        LOGD("AppSwiperScroll.responseTime: (%s)", std::to_string(responseTime).c_str());
     }
 }
 

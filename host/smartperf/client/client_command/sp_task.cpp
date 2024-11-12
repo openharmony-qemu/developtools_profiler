@@ -111,7 +111,6 @@ static std::string MapToString(std::map<std::string, std::string> myMap)
 
 ErrCode SPTask::InitTask(const std::string &recvStr)
 {
-    LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
     std::string hiprofiler = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER);
     SPUtils::LoadCmd(hiprofiler, result);
@@ -122,12 +121,11 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
         isInit = true;
-        LOGI("SPTask::InitTask Ok");
         return ErrCode::OK;
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    LOGI("SPTask::InitTask error(%s)", errInfo.c_str());
+    LOGE("SPTask::InitTask error(%s)", errInfo.c_str());
     return ErrCode::FAILED;
 }
 
@@ -375,11 +373,10 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
-    LOGI("SPTask::StartTask start ");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     if (!isInit) {
-        LOGW("SPTask::StartTask initialization failed");
+        LOGE("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;
     }
     isRunning = true;
@@ -394,7 +391,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             AsyncGetDataMap(msgTask);
         }
     });
-    LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
 
@@ -483,7 +479,6 @@ ErrCode SPTask::StopTask()
     if (thread.joinable()) {
         thread.join();
     }
-
     KillHiperfCmd();
     return ErrCode::OK;
 }
@@ -549,10 +544,9 @@ void SPTask::GetHiperf(const std::string &traceName)
     std::string result;
     std::string tmp = SetHiperf(traceName);
     std::cout << tmp << std::endl;
-    LOGD("hiprofiler exec (%s)", tmp.c_str());
-    LOGI("hiprofiler exec trace name(%s)", traceName.c_str());
     SPUtils::LoadCmd(tmp, result);
-    LOGI("hiprofiler exec end (%s)", result.c_str());
+    LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
+        tmp.c_str(), traceName.c_str(), result.c_str());
 }
 
 
@@ -582,7 +576,6 @@ void SPTask::KillHiperfCmd()
     runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
     runTime = runTime / RM_1000; // Convert to seconds
 
-    LOGI("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
         std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
@@ -599,7 +592,6 @@ void SPTask::KillHiperfCmd()
     std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
     SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
-    LOGI("pidof hiprofiler_cmd size(%u)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
@@ -625,7 +617,6 @@ bool SPTask::GetRecordState()
 }
 ErrCode SPTask::StartRecord()
 {
-    LOGI("SPTask::StartRecord");
     startTime = SPUtils::GetCurTime();
     InitDataFile();
     recordState = true;
@@ -634,7 +625,6 @@ ErrCode SPTask::StartRecord()
 
 ErrCode SPTask::StopRecord()
 {
-    LOGI("SPTask::StopRecord");
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (isInit) {

@@ -15,6 +15,7 @@
 
 #include "network_profiler_manager.h"
 
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -57,9 +58,8 @@ void NetworkProfilerManager::Init()
     RegisterAgentPlugin("network-profiler");
 }
 
-bool NetworkProfilerManager::CheckConfig()
+bool NetworkProfilerManager::CheckConfigPid(std::set<int32_t>& pidCache)
 {
-    std::set<int32_t> pidCache;
     for (const auto& pid : config_.pid()) {
         if (pid > 0) {
             if (COMMON::IsUserMode() && (!COMMON::CheckApplicationPermission(pid, ""))) {
@@ -70,17 +70,19 @@ bool NetworkProfilerManager::CheckConfig()
             if (stat(pidPath.c_str(), &statBuf) != 0) {
                 PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
                 return false;
-            } else {
-                auto [iter, ret] = pidCache.emplace(pid);
-                if (ret) {
-                    networkCtx_.emplace_back(std::make_shared<NetworkProfilerCtx>(pid));
-                    paramValue_ += std::to_string(pid) + ",";
-                }
-                continue;
+            }
+            auto [iter, ret] = pidCache.emplace(pid);
+            if (ret) {
+                networkCtx_.emplace_back(std::make_shared<NetworkProfilerCtx>(pid));
+                paramValue_ += std::to_string(pid) + ",";
             }
         }
     }
+    return true;
+}
 
+bool NetworkProfilerManager::CheckStartupProcessName()
+{
     for (const auto& name : config_.startup_process_name()) {
         if (name.empty()) {
             continue;
@@ -98,7 +100,11 @@ bool NetworkProfilerManager::CheckConfig()
             networkCtx_.emplace_back(std::make_shared<NetworkProfilerCtx>(name));
         }
     }
+    return true;
+}
 
+bool NetworkProfilerManager::CheckRestartProcessName(std::set<int32_t>& pidCache)
+{
     for (const auto& name : config_.restart_process_name()) {
         if (name.empty()) {
             continue;
@@ -122,6 +128,21 @@ bool NetworkProfilerManager::CheckConfig()
             PROFILER_LOG_ERROR(LOG_CORE, "NetworkProfilerManager Process %s does not exist", name.c_str());
             return false;
         }
+    }
+    return true;
+}
+
+bool NetworkProfilerManager::CheckConfig()
+{
+    std::set<int32_t> pidCache;
+    if (!CheckConfigPid(pidCache)) {
+        return false;
+    }
+    if (!CheckStartupProcessName()) {
+        return false;
+    }
+    if (!CheckRestartProcessName(pidCache)) {
+        return false;
     }
 
     if (config_.flush_interval() == 0) {
@@ -170,13 +191,39 @@ bool NetworkProfilerManager::StartNetworkProfiler()
 
     int ret = SystemSetParameter(PARAM_KAY.c_str(), paramValue_.c_str());
     PROFILER_LOG_INFO(LOG_CORE, "StartNetworkProfiler parameter: %s", paramValue_.c_str());
+
+    auto args = GetCmdArgs(config_);
     if (ret < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "StartNetworkProfiler set parameter failed");
+        COMMON::PluginWriteToHisysevent("network_profiler_plugin", "sh", args, COMMON::ErrorType::RET_FAIL,
+                                        "set param failed");
         return false;
     } else {
         PROFILER_LOG_INFO(LOG_CORE, "StartNetworkProfiler set parameter success");
     }
+
+    int res = COMMON::PluginWriteToHisysevent("memory_plugin", "sh", args, COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report network_profiler_plugin ret: %d.", res);
     return true;
+}
+
+std::string NetworkProfilerManager::GetCmdArgs(NetworkProfilerConfig traceConfig)
+{
+    std::stringstream args;
+    for (const auto& p : traceConfig.pid()) {
+        args << "pid: " << COMMON::GetProcessNameByPid(p) << ", ";
+    }
+    for (const auto& name : traceConfig.startup_process_name()) {
+        args << "startup_process_name: " << name << ", ";
+    }
+    for (const auto& name : traceConfig.restart_process_name()) {
+        args << "restart_process_name: " << name << ", ";
+    }
+    args << "clock_id: " << std::to_string(traceConfig.clock_id()) << ", ";
+    args << "smb_pages: " << std::to_string(traceConfig.smb_pages()) << ", ";
+    args << "flush_interval: " << std::to_string(traceConfig.flush_interval()) << ", ";
+    args << "block: " << (traceConfig.block() ? "true" : "false");
+    return args.str();
 }
 
 void NetworkProfilerManager::StopNetworkProfiler()

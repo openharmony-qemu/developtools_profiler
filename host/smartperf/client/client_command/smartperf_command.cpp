@@ -33,7 +33,7 @@ namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
-    LOGI("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
+    LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
@@ -71,12 +71,10 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
         }
     }
-
-    LOGI("SmartPerfCommand::SmartPerfCommand  complete");
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
-    LOGI("SmartPerfCommand::HelpCommand  type(%d)", type);
+    LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }
@@ -127,7 +125,7 @@ void SmartPerfCommand::CreateSocketThread() const
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
-    LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
+    LOGD("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {
         case CommandType::CT_N:
             num = SPUtilesTye::StringToSometype<int>(argStr1.c_str());
@@ -257,9 +255,7 @@ std::string SmartPerfCommand::ExecCommand()
         SaveGpuCounter();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
-    LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
-    LOGI("SmartPerfCommand::WriteCsv finish");
     return std::string("command exec finished!");
 }
 void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
@@ -286,7 +282,7 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
     if (SPUtils::LoadCmd(stat, cmdResult)) {
-        LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
+        LOGE("SmartPerfCommand::InitSomething Privilege escalation!");
     };
 }
 }

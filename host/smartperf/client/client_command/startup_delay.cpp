@@ -171,7 +171,7 @@ void StartUpDelay::ClearOldServer() const
 
         if (token != curPid) {
             SPUtils::LoadCmd(killCmd + token, killResult);
-            LOGI("Find old server: %s, killed.", token.c_str());
+            LOGD("Find old server: %s, killed.", token.c_str());
         }
     }
 }
@@ -227,7 +227,7 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
     std::string resultProcId = ExecuteCommand(args);
     if (!resultProcId.empty() && resultProcId.back() == '\n') {
         resultProcId.pop_back();
-        LOGI("startup_delay::output: (%s)", resultProcId.c_str());
+        LOGD("startup_delay::output: (%s)", resultProcId.c_str());
     }
     return resultProcId;
 }

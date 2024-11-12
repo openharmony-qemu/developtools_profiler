@@ -26,6 +26,7 @@ ohos_unittest("networkplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/network_plugin_test.cpp" ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/plugins/network_plugin:networkplugin_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/network_data:network_data_cpp",
   ]

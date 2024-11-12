@@ -29,6 +29,7 @@ ohos_unittest("cpudataplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/cpu_data_plugin_unittest.cpp" ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/plugins/cpu_plugin:cpudataplugin_source",
     "${OHOS_PROFILER_DIR}/device/plugins/cpu_plugin:cpudataplugintest",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_data_cpp",
