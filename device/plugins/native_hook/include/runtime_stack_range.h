@@ -22,11 +22,8 @@
 extern "C" {
 #endif
 
-constexpr int INIT_LINE_SIZE = 1000;
-constexpr int INC_LINE_SIZE = 100;
-
-void GetRuntimeStackEnd(const char* stackptr, const char** end, pid_t pid, pid_t tid);
-void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
+bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
+bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread);
 
 #ifdef __cplusplus
 }
