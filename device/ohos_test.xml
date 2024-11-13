@@ -126,6 +126,8 @@
         <preparer>
             <option name="shell" value="remount"/>
             <option name="push" value="developtools/hiprofiler/libnativetest_so.z.so -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/malloctest -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/hookDecoder -> /data/local/tmp/" src="out"/>
         </preparer>
     </target>
     <target name="processplugin_ut">
