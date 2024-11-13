@@ -28,8 +28,6 @@ group("hiprofiler_targets") {
       "plugins/hiperf_plugin:hiperfplugin",
       "plugins/hisysevent_plugin:hisyseventplugin",
       "plugins/memory_plugin:memdataplugin",
-      "plugins/native_hook:hookDecoder",
-      "plugins/native_hook:malloctest",
       "plugins/native_hook:malloctest_cpp",
       "plugins/native_hook:nativetest_c",
       "plugins/native_hook:nativetest_cpp",
