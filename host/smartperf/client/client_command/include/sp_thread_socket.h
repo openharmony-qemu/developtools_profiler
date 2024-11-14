@@ -91,7 +91,7 @@ public:
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
         std::string tcpToken = SPTask::GetInstance().GetTcpToken();
-        if(tcpToken == "" && token == "-SESSIONID") {
+        if (tcpToken == "" && token == "-SESSIONID") {
             return OK;
         }
         if (token != tcpToken) {
