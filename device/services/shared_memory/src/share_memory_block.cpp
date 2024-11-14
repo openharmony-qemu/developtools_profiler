@@ -129,7 +129,9 @@ bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 
     memoryName_ = name;
     header_ = reinterpret_cast<BlockHeader*>(ptr);
-
+    if (header_ == nullptr) {
+        return false;
+    }
     // initialize header infos
     header_->info.readOffset_ = 0;
     header_->info.writeOffset_ = 0;
