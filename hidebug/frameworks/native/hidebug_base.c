@@ -49,13 +49,15 @@
 #define LOG_PRIV_PUBLIC "{public}"
 #endif
 
-#define MAX_PARA_LEN 50
-#define MAX_PARA_CNT 20
 #define PARAM_BUF_LEN 128
-#define QUERYNAME_LEN 80
-#define COLON_CHR ':'
 #define SLASH_CHR '/'
 const char * const LIBC_HOOK_PARAM = "libc.hook_mode";
+
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
+#define MAX_PARA_LEN 50
+#define MAX_PARA_CNT 20
+#define QUERYNAME_LEN 80
+#define COLON_CHR ':'
 
 static struct Params {
     char key[MAX_PARA_LEN];
@@ -132,6 +134,38 @@ static int QueryHiDebugEnvParams(const char *queryName)
     }
     return g_paramCnt;
 }
+
+static bool InitEnvParam(const char *serviceName)
+{
+    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
+    if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
+        return false;
+    }
+    errno_t err = 0;
+    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
+    char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
+    err = strcat_s(onceName, sizeof(onceName), serviceName);
+    if (err != EOK) {
+        HIDEBUG_LOGE("strcat_s query name failed.");
+        return false;
+    }
+    err = strcat_s(persistName, sizeof(persistName), serviceName);
+    if (err != EOK) {
+        HIDEBUG_LOGE("strcat_s persist query name failed.");
+        return false;
+    }
+
+    if (QueryHiDebugEnvParams(onceName) == 0 && QueryHiDebugEnvParams(persistName) == 0) {
+        return false;
+    }
+    for (int i = 0; i < g_paramCnt; ++i) {
+        if (setenv(g_params[i].key, g_params[i].value, 1) != 0) { // 1 : overwrite
+            HIDEBUG_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
+        }
+    }
+    return true;
+}
+#endif
 
 static const char* FilterServiceName(const char *inputName)
 {
@@ -249,31 +283,9 @@ bool InitEnvironmentParam(const char *inputName)
     SetupMallocHookAtStartup(serviceName);
 #endif
 
-    char paramOutBuf[PARAM_BUF_LEN] = { 0 };
-    if (!QueryParams("const.debuggable", paramOutBuf, PARAM_BUF_LEN) || strcmp(paramOutBuf, "1") != 0) {
-        return false;
-    }
-    errno_t err = 0;
-    char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
-    char onceName[QUERYNAME_LEN] = "hiviewdfx.debugenv.";
-    err = strcat_s(onceName, sizeof(onceName), serviceName);
-    if (err != EOK) {
-        HIDEBUG_LOGE("strcat_s query name failed.");
-        return false;
-    }
-    err = strcat_s(persistName, sizeof(persistName), serviceName);
-    if (err != EOK) {
-        HIDEBUG_LOGE("strcat_s persist query name failed.");
-        return false;
-    }
-
-    if (QueryHiDebugEnvParams(onceName) == 0 && QueryHiDebugEnvParams(persistName) == 0) {
-        return false;
-    }
-    for (int i = 0; i < g_paramCnt; ++i) {
-        if (setenv(g_params[i].key, g_params[i].value, 1) != 0) { // 1 : overwrite
-            HIDEBUG_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
-        }
-    }
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
+    return InitEnvParam(serviceName);
+#else
     return true;
+#endif
 }
