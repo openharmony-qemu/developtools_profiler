@@ -383,7 +383,6 @@ static void WriteMmap(const char* data)
     // 建立映射
     char* pMap = CreateMmap();
     if (data == nullptr || strlen(data) == 0) {
-        RemoveMmap(pMap);
         return;
     }
     // 写入
