@@ -136,7 +136,7 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
         config->pid_ = static_cast<int32_t>(pid);
         config->duration_ = NMD_DURATION;
         config->mallocDisable_ = true;
-        config->mmapDisable = true;
+        config->mmapDisable_ = true;
     }
     config->nmdPid_ = static_cast<uint32_t>(pid);
     config->nmdType_ = static_cast<uint32_t>(type);
