@@ -135,7 +135,7 @@ public:
             }
             return;
         }
-        if (recvStr.find("-lockfreq") != recvStr.end() &&
+        if (recvStr.find("-lockfreq") != std::string::npos &&
             SPTask::GetInstance().GetTcpToken() == "") {
             LOGE("lockfreq must have token");
             return;
