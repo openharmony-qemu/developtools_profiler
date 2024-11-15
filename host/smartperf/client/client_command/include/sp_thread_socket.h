@@ -138,7 +138,7 @@ public:
         if (recvStr.find("-lockfreq") != recvStr.end() &&
             SPTask::GetInstance().GetTcpToken() == "") {
             LOGE("lockfreq must have token");
-            return ;
+            return;
         }
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
         LOGD("init::%s", (code == ErrCode::OK) ? "True" : "False");
