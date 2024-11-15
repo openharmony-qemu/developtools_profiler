@@ -120,6 +120,10 @@ std::string FtraceFsOps::GetKernelSymbols() const
     CHECK_TRUE(restrictValue.size() > 0, "", "read kptr_restrict failed!");
 
     bool valueChanged = false;
+    if (!COMMON::IsNumeric(restrictValue)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "not numeric string");
+        return "";
+    }
     if (std::stoi(restrictValue) == 0) {
         SetKptrRestrict("1");
         valueChanged = true;
