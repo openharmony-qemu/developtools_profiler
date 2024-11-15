@@ -37,12 +37,14 @@ group("hiprofiler_targets") {
       "plugins/network_plugin:networkplugin",
       "plugins/process_plugin:processplugin",
       "plugins/sample_plugin:sampleplugin",
-      "plugins/stream_plugin:streamplugin",
       "plugins/xpower_plugin:xpowerplugin",
       "services/profiler_service:hiprofilerd",
       "services/shared_memory:shared_memory",
     ]
-    if (target_cpu == "arm64") {
+    if (build_variant == "root") {
+      deps += [ "plugins/stream_plugin:streamplugin" ]
+    }
+    if (target_cpu == "arm64" && build_variant == "root") {
       deps += [ "plugins/hiebpf_plugin:ebpf_targets" ]
     }
     if (is_ohos && use_musl && !is_asan) {
