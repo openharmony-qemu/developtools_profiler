@@ -132,7 +132,7 @@ StackPreprocess::~StackPreprocess()
 
 void StackPreprocess::FinishTraceFile()
 {
-    if (isSaService_) {
+    if (isSaService_ && (writer_ != nullptr)) {
         std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
         tfPtr->SetDurationTime();
         tfPtr->Finish();
@@ -149,6 +149,9 @@ void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
 
 void StackPreprocess::SetWriter(const WriterStructPtr& writer)
 {
+    if (writer == nullptr) {
+        return;
+    }
     resultWriter_ = writer;
     auto ctx = resultWriter_->startReport(resultWriter_);
     if (ctx == nullptr) {
@@ -1277,7 +1280,7 @@ void StackPreprocess::FlushData(ProtoEncoder::BatchNativeHookData& stackData)
 
     int messageLen = stackData.Finish();
     RandomWriteCtx* ctx = nullptr;
-    if (!isSaService_) {
+    if ((!isSaService_) && (resultWriter_ != nullptr)) {
         resultWriter_->finishReport(resultWriter_, messageLen);
         resultWriter_->flush(resultWriter_);
         ctx = resultWriter_->startReport(resultWriter_);
@@ -1482,9 +1485,10 @@ void StackPreprocess::WriteHookConfig()
     const size_t configSize = hookConfig_.ByteSizeLong();
     auto buffer = std::make_unique<uint8_t[]>(configSize);
     hookConfig_.SerializeToArray(buffer.get(), configSize);
-
-    writer_->ResetPos();
-    profilerPluginData_.Reset(writer_->GetCtx());
+    if (writer_ != nullptr) {
+        writer_->ResetPos();
+        profilerPluginData_.Reset(writer_->GetCtx());
+    }
     profilerPluginData_.set_name("nativehook_config");
     profilerPluginData_.set_version("1.02");
     profilerPluginData_.set_status(0);
@@ -1502,8 +1506,10 @@ void StackPreprocess::WriteHookConfig()
 
 RandomWriteCtx* StackPreprocess::StartReport()
 {
-    writer_->ResetPos();
-    profilerPluginData_.Reset(writer_->GetCtx());
+    if (writer_ != nullptr) {
+        writer_->ResetPos();
+        profilerPluginData_.Reset(writer_->GetCtx());
+    }
     profilerPluginData_.set_name("nativehook");
     profilerPluginData_.set_version("1.02");
     profilerPluginData_.set_status(0);

@@ -23,6 +23,8 @@ namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr uint32_t LIB_SMS = 4096;
 constexpr uint32_t CALL_STACK_SMS = 16384;
+constexpr uint32_t NMD_DURATION = 5;
+constexpr int ONLY_NMD = 2;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -119,13 +121,24 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
     return true;
 }
 
-int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type)
+int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int type, bool printNmdOnly)
 {
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats fd is 0");
     CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats invalid pid");
-    CHECK_TRUE(type == 0 || type == 1, RET_ERR, "NativeMemoryProfilerSaClientManager: type is invalid");
+    CHECK_TRUE(type == 0 || type == 1 || type == ONLY_NMD, RET_ERR,
+               "NativeMemoryProfilerSaClientManager: type is invalid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+    CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     config->printNmd_ = true;
+    config->printNmdOnly_ = printNmdOnly;
+    if (config->printNmdOnly_) {
+        config->pid_ = static_cast<int32_t>(pid);
+        config->duration_ = NMD_DURATION;
+        config->mallocDisable_ = true;
+        config->memtraceEnable_ = false;
+        config->mmapDisable = true;
+    }
     config->nmdPid_ = static_cast<uint32_t>(pid);
     config->nmdType_ = static_cast<uint32_t>(type);
     auto service = GetRemoteService();

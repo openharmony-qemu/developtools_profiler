@@ -1187,7 +1187,7 @@ int hook_prctl(int(*fn)(int, ...),
     if (fn) {
         ret = fn(option, arg2, arg3, arg4, arg5);
     }
-    if (reinterpret_cast<char*>(arg5) == nullptr || IsPidChanged()) {
+    if (reinterpret_cast<char*>(arg5) == nullptr || IsPidChanged() || g_ClientConfig.mmapDisable) {
         return ret;
     }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;

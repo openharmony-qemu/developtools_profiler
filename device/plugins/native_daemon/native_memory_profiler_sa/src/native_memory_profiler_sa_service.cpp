@@ -113,7 +113,9 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     if (config->printNmd_) {
         std::lock_guard<std::mutex> guard(nmdMtx_);
         nmdPidType_[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
-        return RET_OK;
+        if (!config->printNmdOnly_) {
+            return RET_OK;
+        }
     }
     if (StartHook(config, fd) == RET_ERR) {
         close(fd);
@@ -223,23 +225,24 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
             "check config failed");
         return RET_ERR;
     }
-
-    if (fd == 0) {
-        auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
-        if (!retFile.first) {
-            PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
-            COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_IVALID_PATH,
-                "check file path failed");
-            return RET_ERR;
+    std::shared_ptr<TraceFileWriter> writeFile = nullptr;
+    if (!config->printNmdOnly_) {
+        if (fd == 0) {
+            auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
+            if (!retFile.first) {
+                PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
+                COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_IVALID_PATH,
+                    "check file path failed");
+                return RET_ERR;
+            }
+            int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+            CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
+            fd = static_cast<uint32_t>(fdTemp);
         }
-        int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
-        CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
-        fd = static_cast<uint32_t>(fdTemp);
+        std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
+        CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
+        writeFile->SetTimeSource();
     }
-
-    std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
-    CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
-    writeFile->SetTimeSource();
 
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
