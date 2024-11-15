@@ -101,6 +101,14 @@ public:
         return OK;
     }
 
+    bool CheckFreqToken(std::string &recvStr) const {
+        if (recvStr.find("-lockfreq") && SPTask::GetInstance().GetTcpToken() == "") {
+                return false;
+        }
+
+        return true;
+    }
+
     void TypeTcp(SpServerSocket &spSocket) const
     {
         SocketHeartbeat();
@@ -135,8 +143,12 @@ public:
             }
             return;
         }
+        if (!CheckFreqToken(recvStr)) {
+            LOGE("lockfreq must have token");
+            return;
+        }
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
-        LOGI("init::%s", (code == ErrCode::OK) ? "True" : "False");
+        LOGD("init::%s", (code == ErrCode::OK) ? "True" : "False");
         if (type == CMD_SOCKET) {
             spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
             return;
