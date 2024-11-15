@@ -1,0 +1,16 @@
+ request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "network-profiler"
+  sample_interval: 1000
+  config_data {
+   startup_process_name : "com.tencent.mtthm"
+   flush_interval : 1
+   smb_pages: 16384
+   clock_id : 1
+  }
+ }
