@@ -34,6 +34,7 @@ using namespace testing::ext;
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 const std::string TEST_PROC_NAME = "hiview";
+const int NMD_ONLY_TYPE = 2;
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -119,6 +120,22 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(pid), RET_OK);
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
     sleep(1);
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest003
+ * @tc.desc: Test nmd-only mode
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest003, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    using namespace OHOS::Security::AccessToken;
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
+    SetSelfTokenID(tokenID);
+
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, 0, NMD_ONLY_TYPE, true), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, 0, 1), RET_ERR);
 }
 
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
