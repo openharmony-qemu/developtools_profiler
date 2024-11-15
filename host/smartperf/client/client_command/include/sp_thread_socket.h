@@ -210,11 +210,11 @@ public:
             spSocket.Send(std::string("stopRecord::") + std::to_string(STOP_RECORD_FAILED));
         }
     }
-    bool SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
+    void SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
     {
-        if (message.find("init:::") != std::string::npos &&
+        if (message.find("init:::") != std::string::npos ||
             message.find("start:::") != std::string::npos) {
-            return false;
+            return;
         }
         const std::vector<std::string> messageType = {
             "init::",
@@ -227,15 +227,15 @@ public:
             if (message.find(it) != std::string::npos) {
                 LOGI((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
                 socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
-                return true;
+                return;
             }
         }
-        return false;
     }
     void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus) const
     {
         SocketHeartbeat();
-        if (tokenStatus == TOKEN_CHECK_FAILED && SendTokenFailedMessage(spSocket, recvStr)) {
+        if (tokenStatus == TOKEN_CHECK_FAILED) {
+            SendTokenFailedMessage(spSocket, recvStr);
             return;
         }
         if (recvStr.find("init:::") != std::string::npos) {
