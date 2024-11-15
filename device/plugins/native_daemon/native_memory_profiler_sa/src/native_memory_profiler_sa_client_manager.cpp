@@ -24,6 +24,7 @@ namespace {
 constexpr uint32_t LIB_SMS = 4096;
 constexpr uint32_t CALL_STACK_SMS = 16384;
 constexpr uint32_t NMD_DURATION = 5;
+constexpr uint32_t NMD_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
 }
 
@@ -128,8 +129,6 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
     CHECK_TRUE(type == 0 || type == 1 || type == ONLY_NMD, RET_ERR,
                "NativeMemoryProfilerSaClientManager: type is invalid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
-    CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     config->printNmd_ = true;
     config->printNmdOnly_ = printNmdOnly;
     if (config->printNmdOnly_) {
@@ -137,9 +136,12 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
         config->duration_ = NMD_DURATION;
         config->mallocDisable_ = true;
         config->mmapDisable_ = true;
+        config->shareMemorySize_ = NMD_SHMEM;
     }
     config->nmdPid_ = static_cast<uint32_t>(pid);
     config->nmdType_ = static_cast<uint32_t>(type);
+    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+    CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     auto service = GetRemoteService();
     if (service == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");

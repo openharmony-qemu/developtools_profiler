@@ -1482,6 +1482,9 @@ size_t StackPreprocess::ComputeAlign(size_t size)
 
 void StackPreprocess::WriteHookConfig()
 {
+    if (nmdOnly_) {
+        return;
+    }
     const size_t configSize = hookConfig_.ByteSizeLong();
     auto buffer = std::make_unique<uint8_t[]>(configSize);
     hookConfig_.SerializeToArray(buffer.get(), configSize);
