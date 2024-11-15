@@ -239,7 +239,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
             CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
             fd = static_cast<uint32_t>(fdTemp);
         }
-        std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
+        writeFile = std::make_shared<TraceFileWriter>(fd);
         CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
         writeFile->SetTimeSource();
     }
