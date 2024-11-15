@@ -230,7 +230,7 @@ public:
         };
         for (auto it : messageType) {
             if (message.find(it) != std::string::npos) {
-                LOGI((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
+                LOGD((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
                 socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
                 return;
             }
