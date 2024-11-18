@@ -65,10 +65,6 @@ public:
     {
         pid_ = pid;
     }
-    inline void SetNmdOnly(bool nmdOnly)
-    {
-        nmdOnly_ = nmdOnly;
-    }
     inline void InitStatisticsTime()
     {
         lastStatisticsTime_ = std::chrono::steady_clock::now();
@@ -245,7 +241,6 @@ private:
     std::atomic<uint64_t> napiIndex_{1};
     ScheduleTaskManager scheduleTaskManager_;
     uint32_t nmdFd_ = 0;
-    bool nmdOnly_ = false;
 };
 
 #endif // STACK_PREPROCESS_H

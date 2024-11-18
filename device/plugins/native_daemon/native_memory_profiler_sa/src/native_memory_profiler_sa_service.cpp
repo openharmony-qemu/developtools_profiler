@@ -264,7 +264,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
             "create pluginsession failed");
         return RET_ERR;
     }
-    hook->WriteHookConfig();
+    if (!config->printNmdOnly_) {
+        hook->WriteHookConfig();
+    }
     hook->StartPluginSession();
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(

@@ -308,7 +308,6 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
-    ctx->stackPreprocess->SetNmdOnly(nmdOnly_)
     return true;
 }
 
@@ -731,7 +730,6 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     printMallocNmd_ = config->printNmd_;
-    nmdOnly_ = config->printNmdOnly_;
 }
 
 int32_t HookManager::CreatePluginSession()

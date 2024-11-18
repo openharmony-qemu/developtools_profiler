@@ -135,7 +135,6 @@ public:
 private:
     int pid_ = -1; // for SA mode
     bool printMallocNmd_ = false;
-    bool nmdOnly_ = false;
     bool saMode_ = false;
     bool CheckProcess();
     bool CheckProcessName();
