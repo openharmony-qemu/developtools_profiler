@@ -26,6 +26,7 @@
 #include "sp_csv_util.h"
 #include "sdk_data_recv.h"
 #include "GpuCounter.h"
+#include "lock_frequency.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -68,7 +69,7 @@ public:
     }
     ErrCode InitTask(const std::string &recvStr);
     ErrCode StartTask(std::function<void(std::string data)> msgTask);
-    void StopTask();
+    ErrCode StopTask();
     std::string GetCurrentTimeAsString();
     std::map<std::string, std::string> DetectionAndGrab();
     bool CheckTcpParam(std::string str, std::string &errorInfo);
@@ -90,11 +91,13 @@ public:
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void StopGetInfo();
-    void StartRecord();
-    void StopRecord();
+    ErrCode StartRecord();
+    ErrCode StopRecord();
     bool GetRecordState();
     void SaveScreenShot();
     time_t GetRealStartTime() const;
+    void SetTcpToken(std::string token);
+    std::string GetTcpToken();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -120,11 +123,14 @@ private:
     int requestId = 1;
     bool sdkData = false;
     std::thread sdk;
+    std::thread lockFreqThread;
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    LockFrequency &lockFreq = LockFrequency::GetInstance();
     bool recordState = false;
     bool screenshotFlag = false;
     time_t realTimeStart = 0;
+    std::string tcpToken = "";
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

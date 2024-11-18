@@ -210,7 +210,9 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
 
-        if (itConfig.find("-gc") != std::string::npos || itConfig.find("-o") != std::string::npos) {
+        if (itConfig.find("-gc") != std::string::npos ||
+            itConfig.find("-o") != std::string::npos ||
+            itConfig.find("-lockfreq") != std::string::npos) {
             continue;
         }
 
@@ -231,6 +233,11 @@ void SPTask::ConfigDataThread()
 
         if (itConfig.find("-gc") != std::string::npos) {
             gpuCounter.StartCollect(GpuCounter::GC_START);
+        }
+
+        if (itConfig.find("-lockfreq") != std::string::npos) {
+            lockFreq.SetIsCollecting(true);
+            lockFreqThread = std::thread([this]() { this->lockFreq.LockingThread(); });
         }
     }
 }
@@ -444,7 +451,7 @@ void SPTask::StopGpuCounterRecv()
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 }
-void SPTask::StopTask()
+ErrCode SPTask::StopTask()
 {
     if (GetRecordState()) {
         StopGetInfo();
@@ -460,6 +467,10 @@ void SPTask::StopTask()
 
     ResetSdkParam();
     gpuCounter.StopCollect();
+    lockFreq.SetIsCollecting(false);
+    if (lockFreqThread.joinable()) {
+        lockFreqThread.join();
+    }
 
     isRunning = false;
     isInit = false;
@@ -469,6 +480,7 @@ void SPTask::StopTask()
         thread.join();
     }
     KillHiperfCmd();
+    return ErrCode::OK;
 }
 
 std::map<std::string, std::string> SPTask::DetectionAndGrab()
@@ -603,14 +615,15 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
-void SPTask::StartRecord()
+ErrCode SPTask::StartRecord()
 {
     startTime = SPUtils::GetCurTime();
     InitDataFile();
     recordState = true;
+    return ErrCode::OK;
 }
 
-void SPTask::StopRecord()
+ErrCode SPTask::StopRecord()
 {
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
@@ -628,6 +641,8 @@ void SPTask::StopRecord()
 
     recordState = false;
     screenshotFlag = false;
+
+    return ErrCode::OK;
 }
 
 void SPTask::SaveScreenShot()
@@ -637,6 +652,14 @@ void SPTask::SaveScreenShot()
 time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
+}
+void SPTask::SetTcpToken(std::string token)
+{
+    tcpToken = token;
+}
+std::string SPTask::GetTcpToken()
+{
+    return tcpToken;
 }
 }
 }

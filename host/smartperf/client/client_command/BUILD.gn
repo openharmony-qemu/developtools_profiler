@@ -50,6 +50,7 @@ ohos_executable("SP_daemon") {
     "control_call_cmd.cpp",
     "editor_command.cpp",
     "heartbeat.cpp",
+    "lock_frequency.cpp",
     "navigation.cpp",
     "parse_click_complete_trace.cpp",
     "parse_click_response_trace.cpp",
@@ -73,6 +74,8 @@ ohos_executable("SP_daemon") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
+    "ability_base:want",
+    "arkxtest:test_server_client",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
