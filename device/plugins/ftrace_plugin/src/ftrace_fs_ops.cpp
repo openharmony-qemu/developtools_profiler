@@ -16,6 +16,7 @@
 
 #include <fcntl.h>
 #include <set>
+#include <string>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/utsname.h>
@@ -120,6 +121,11 @@ std::string FtraceFsOps::GetKernelSymbols() const
     CHECK_TRUE(restrictValue.size() > 0, "", "read kptr_restrict failed!");
 
     bool valueChanged = false;
+    if (restrictValue.find("0") == std::string::npos && restrictValue.find("1") == std::string::npos
+        && restrictValue.find("2") == std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "not value string");
+        return "";
+    }
     if (std::stoi(restrictValue) == 0) {
         SetKptrRestrict("1");
         valueChanged = true;
