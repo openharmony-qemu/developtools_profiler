@@ -240,9 +240,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     std::shared_ptr<TraceFileWriter> writeFile = nullptr;
     if (config->printNmdOnly_) {
-        std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(0);
+        writeFile = std::make_shared<TraceFileWriter>(0);
     } else {
-        std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
+        writeFile = std::make_shared<TraceFileWriter>(fd);
     }
     CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
     writeFile->SetTimeSource();
