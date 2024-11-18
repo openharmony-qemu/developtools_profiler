@@ -23,7 +23,11 @@ namespace HiviewDFX {
 int64_t GetElapsedNanoSecondsSinceBoot()
 {
     struct timespec times = {0, 0};
-    clock_gettime(CLOCK_BOOTTIME, &times);
+    int res = clock_gettime(CLOCK_BOOTTIME, &times);
+    if (res != 0) {
+        perror("clock_gettime failed.");
+        return -1;
+    }
     constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
 }
@@ -31,7 +35,10 @@ int64_t GetElapsedNanoSecondsSinceBoot()
 int64_t GetNanoSecondsTimestamp()
 {
     struct timespec times = {0, 0};
-    clock_gettime(CLOCK_REALTIME, &times);
+    int res = clock_gettime(CLOCK_REALTIME, &times);
+    if (res != 0) {
+        perror("clock_gettime failed.");
+    }
     constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
 }
