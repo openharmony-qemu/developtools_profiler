@@ -1,0 +1,15 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "hiperf-plugin"
+  sample_interval: 5000
+  config_data {
+   is_root: true
+   outfile_name: "/data/local/tmp/perf.data"
+   record_args: "-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking --call-stack dwarf --clockid monotonic --offcpu --kernel-callchain -m 256"
+  }
+ }

@@ -1,0 +1,13 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "hisysevent-plugin"
+  config_data {
+   msg: "hisysevent-plugin",
+   subscribe_domain: "KERNEL_VENDOR"
+  }
+ }
