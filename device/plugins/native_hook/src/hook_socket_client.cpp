@@ -31,6 +31,7 @@
 
 namespace {
 constexpr int FLUSH_FLAG = 20;
+constexpr int ONLY_NMD_TYPE = 2;
 std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
@@ -127,7 +128,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         smbFd_, eventFd_, config_->isBlocked);
     struct mallinfo2 mi = mallinfo2();
     nmdType_ = config_->nmdType;
-    if (nmdType_ == 0) {
+    if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();
     }
     return true;

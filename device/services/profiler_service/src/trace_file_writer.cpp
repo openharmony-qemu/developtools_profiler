@@ -46,6 +46,7 @@ TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path
 
 TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "only-nmd mode, no need to use TraceFileWriter");
     if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
         PROFILER_LOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
     }
@@ -93,6 +94,7 @@ TraceFileWriter::TraceFileWriter(const std::string& path, bool splitFile, uint32
 
 TraceFileWriter::~TraceFileWriter()
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "only-nmd mode, no need to use TraceFileWriter");
     (void)FlushStream();
     if (stream_.is_open()) {
         stream_.close();
@@ -109,6 +111,7 @@ std::string TraceFileWriter::Path() const
 
 bool TraceFileWriter::SetPluginConfig(const void* data, size_t size)
 {
+    CHECK_TRUE(fd_ != 0, false, "SetPluginConfig, nmd mode no need to use TraceFileWriter");
     if (isSplitFile_) {
         std::vector<char> configVec;
         auto configData = reinterpret_cast<ConstCharPtr>(data);
@@ -125,6 +128,7 @@ void TraceFileWriter::WriteStandalonePluginData(
     const std::string &pluginName, const std::string &data,
     const std::string &pluginVersion)
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "WriteStandalonePluginData, nmd mode no need to use TraceFileWriter");
     LITE::ProfilerPluginData pluginData;
     pluginData.set_name(pluginName);
     pluginData.set_data(data);
@@ -150,6 +154,7 @@ void TraceFileWriter::WriteStandalonePluginData(
 
 void TraceFileWriter::SetTimeStamp()
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "SetTimeStamp, nmd mode no need to use TraceFileWriter");
     header_.data_.boottime = headerDataTime_.boottime;
     header_.data_.realtime = headerDataTime_.realtime;
     header_.data_.realtimeCoarse = headerDataTime_.realtimeCoarse;
@@ -161,6 +166,7 @@ void TraceFileWriter::SetTimeStamp()
 
 void TraceFileWriter::SetTimeSource()
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "SetTimeSource, nmd mode no need to use TraceFileWriter");
     constexpr uint64_t nanoSeconds = 1000000000;
     struct timespec ts;
     clock_gettime(CLOCK_BOOTTIME, &ts);
@@ -185,6 +191,7 @@ void TraceFileWriter::SetTimeSource()
 
 void TraceFileWriter::SetDurationTime()
 {
+    CHECK_TRUE(fd_ != 0, NO_RETVAL, "SetDurationTime, nmd mode no need to use TraceFileWriter");
     struct timespec ts;
     clock_gettime(CLOCK_BOOTTIME, &ts);
     constexpr uint64_t nanoSeconds = 1000000000;
@@ -194,6 +201,7 @@ void TraceFileWriter::SetDurationTime()
 
 bool TraceFileWriter::WriteHeader()
 {
+    CHECK_TRUE(fd_ != 0, false, "WriteHeader, nmd-only mode no need to use TraceFileWriter");
     LogDiskUsage();
     if (isSplitFile_) {
         std::string timeStr = COMMON::GetTimeStr();
@@ -237,6 +245,7 @@ void TraceFileWriter::DeleteOldSplitFile()
 
 long TraceFileWriter::Write(const void* data, size_t size)
 {
+    CHECK_TRUE(fd_ != 0, 0, "Write, nmd-only mode no need to use TraceFileWriter");
     if (isSplitFile_ && !isStop_) {
         if (IsSplitFile(size)) {
             return -1;
@@ -270,6 +279,7 @@ long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
                                                 const std::string &version,
                                                 DataType type)
 {
+    CHECK_TRUE(fd_ != 0, 0, "WriteStandalonePluginFile, no need to use TraceFileWriter");
     CHECK_TRUE(stream_.is_open(), 0, "binary file %s not open or open failed!", path_.c_str());
     auto retFile = COMMON::CheckNotExistsFilePath(file);
     if (!retFile.first) {
@@ -326,6 +336,7 @@ long TraceFileWriter::WriteStandalonePluginFile(const std::string &file,
 
 bool TraceFileWriter::IsSplitFile(uint32_t size)
 {
+    CHECK_TRUE(fd_ != 0, false, "IsSplitFile, nmd-only mode no need to use TraceFileWriter");
     dataSize_ += sizeof(uint32_t) + size;
     if (dataSize_ >= splitFileMaxSize_) {
         PROFILER_LOG_INFO(LOG_CORE, "need to split the file(%s), data size:%d, size: %d, splitFileMaxSize_:%d",
@@ -357,6 +368,7 @@ bool TraceFileWriter::IsSplitFile(uint32_t size)
 
 long TraceFileWriter::Write(const MessageLite& message)
 {
+    CHECK_TRUE(fd_ != 0, 0, "Write, nmd-only mode no need to use TraceFileWriter");
     auto size = message.ByteSizeLong();
     if (isSplitFile_ && !isStop_) {
         if (IsSplitFile(size)) {
@@ -373,6 +385,7 @@ long TraceFileWriter::Write(const MessageLite& message)
 
 bool TraceFileWriter::Finish()
 {
+    CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
     // update header info
     helper_.Update(header_);
     SetTimeStamp(); // add timestamp in header
@@ -408,6 +421,7 @@ bool TraceFileWriter::Finish()
 
 bool TraceFileWriter::Flush()
 {
+    CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
     return FlushStream();
 }
 

@@ -56,6 +56,7 @@ public:
     uint32_t sampleInterval_{0};
     bool responseLibraryMode_{false};
     bool printNmd_{false};
+    bool printNmdOnly_{false};
     uint32_t nmdPid_{0};
     uint32_t nmdType_{0};
     int32_t jsStackReport_{0};

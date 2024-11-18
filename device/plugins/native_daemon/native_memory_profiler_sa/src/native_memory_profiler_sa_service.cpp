@@ -113,7 +113,9 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     if (config->printNmd_) {
         std::lock_guard<std::mutex> guard(nmdMtx_);
         nmdPidType_[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
-        return RET_OK;
+        if (!config->printNmdOnly_) {
+            return RET_OK;
+        }
     }
     if (StartHook(config, fd) == RET_ERR) {
         close(fd);
@@ -236,8 +238,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
         fd = static_cast<uint32_t>(fdTemp);
     }
-
-    std::shared_ptr<TraceFileWriter> writeFile = std::make_shared<TraceFileWriter>(fd);
+    std::shared_ptr<TraceFileWriter> writeFile = nullptr;
+    if (config->printNmdOnly_) {
+        writeFile = std::make_shared<TraceFileWriter>(0);
+    } else {
+        writeFile = std::make_shared<TraceFileWriter>(fd);
+    }
     CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
     writeFile->SetTimeSource();
 
@@ -258,7 +264,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
             "create pluginsession failed");
         return RET_ERR;
     }
-    hook->WriteHookConfig();
+    if (!config->printNmdOnly_) {
+        hook->WriteHookConfig();
+    }
     hook->StartPluginSession();
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
