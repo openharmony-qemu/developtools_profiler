@@ -989,7 +989,7 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
 
 static bool CreateSanBoxDir()
 {
-    constexpr mode_t defaultLogDirMode = 0x0770;
+    constexpr mode_t defaultLogDirMode = 0770;
     const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
     if (!OHOS::FileExists(reourceLimitDir)) {
         OHOS::ForceCreateDirectory(reourceLimitDir);
