@@ -395,11 +395,13 @@ public:
             if (retCode.find("smartperf") != std::string::npos) {
                 OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
             }
-            std::string processId = "";
-            OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(retCode);
-            SpProfilerFactory::SetProfilerPidByPkg(processId);
-            SpProfilerFactory::SetProfilerPkg(retCode);
+            if (!SpProfilerFactory::editorFlag) {
+                std::string processId = "";
+                OHOS::SmartPerf::StartUpDelay sp;
+                processId = sp.GetPidByPkg(retCode);
+                SpProfilerFactory::SetProfilerPidByPkg(processId);
+                SpProfilerFactory::SetProfilerPkg(retCode);
+            }
             spSocket.Sendto(retCode);
         } else if (iterator->first == MessageType::FPS_STOP) {
             spSocket.Sendto(resultFPS);

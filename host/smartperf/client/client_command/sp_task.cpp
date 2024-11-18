@@ -335,6 +335,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
+        SpProfilerFactory::editorFlag = true;
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;
         processId = sp.GetPidByPkg(curTaskInfo.packageName);
@@ -480,6 +481,7 @@ ErrCode SPTask::StopTask()
         thread.join();
     }
     KillHiperfCmd();
+    SpProfilerFactory::editorFlag = false;
     return ErrCode::OK;
 }
 

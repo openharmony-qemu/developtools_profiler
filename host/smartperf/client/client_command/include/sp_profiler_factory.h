@@ -29,6 +29,7 @@ public:
     static void SetByTrace(std::string message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);
     static SpProfiler *GetCmdProfilerItemContinue(CommandType commandType, bool cmdFlag);
+    static inline bool editorFlag = false;
 };
 }
 }
