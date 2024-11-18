@@ -57,6 +57,7 @@ ohos_unittest("xpowerplugin_ut") {
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "hilog:libhilog_base",
+    "hisysevent:libhisysevent",
     "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]

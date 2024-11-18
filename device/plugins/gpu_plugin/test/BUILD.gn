@@ -26,6 +26,7 @@ ohos_unittest("gpudataplugin_ut") {
   module_out_path = module_output_path
   sources = [ "unittest/gpu_data_plugin_unittest.cpp" ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/plugins/gpu_plugin:gpudataplugin_source",
     "${OHOS_PROFILER_DIR}/device/plugins/gpu_plugin:gpudataplugintest",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_data_cpp",
