@@ -26,7 +26,7 @@ int64_t GetElapsedNanoSecondsSinceBoot()
     int res = clock_gettime(CLOCK_BOOTTIME, &times);
     if (res != 0) {
         perror("clock_gettime failed.");
-        return -1;
+        return 0;
     }
     constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
@@ -38,6 +38,7 @@ int64_t GetNanoSecondsTimestamp()
     int res = clock_gettime(CLOCK_REALTIME, &times);
     if (res != 0) {
         perror("clock_gettime failed.");
+        return 0;
     }
     constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
