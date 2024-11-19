@@ -13,22 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
+import sqlite3
 import subprocess
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
-import sqlite3
+sys.path.append("..")
+from tools.utils import MID_FILE_EXPECTED_SIZE, SMALL_FILE_EXPECTED_SIZE_2
+
 
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf.txt -o /data/local/tmp/test_hiperf.htrace -t 10 -s -k"')
 
+
 def task2():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf2.txt -o /data/local/tmp/test_hiperf2.htrace -t 10 -s -k"')
 
+
 def task3():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf3.txt -o /data/local/tmp/test_hiperf3.htrace -t 10 -s -k"')
+
 
 class TestHiprofilerhiperfPlugin:
 
@@ -36,9 +41,9 @@ class TestHiprofilerhiperfPlugin:
     def test_hiperf_plugin(self):
         subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 
@@ -75,9 +80,9 @@ class TestHiprofilerhiperfPlugin:
         # # 抓特定进程1
         subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf2.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task2, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task2, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf2.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 
@@ -116,9 +121,9 @@ class TestHiprofilerhiperfPlugin:
         # # 参数设置为false
         subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf3.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task3, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task3, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf3.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 

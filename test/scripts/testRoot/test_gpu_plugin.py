@@ -13,16 +13,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
+import sqlite3
 import subprocess
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
-import sqlite3
+sys.path.append("..")
+from tools.utils import SMALL_FILE_EXPECTED_SIZE, SMALL_FILE_EXPECTED_SIZE_2
+
 
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu.txt -o /data/local/tmp/test_gpu.htrace -t 10 -s -k"')
+
 
 class TestHiprofilerGpuPlugin:
 
@@ -30,9 +33,9 @@ class TestHiprofilerGpuPlugin:
     def test_gpu_plugin(self):
         subprocess.run(r'hdc file send ..\inputfiles\config_gpu.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_gpu.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 

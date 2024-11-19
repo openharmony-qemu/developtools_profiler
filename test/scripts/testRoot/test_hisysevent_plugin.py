@@ -13,23 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
+import sqlite3
 import subprocess
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
-import sqlite3
+sys.path.append("..")
+from tools.utils import SMALL_FILE_EXPECTED_SIZE
+
 
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent.txt -o /data/local/tmp/test_hisysevent.htrace -t 20 -s -k"')
+
 
 def task2():
     subprocess.check_output(f'hdc shell "echo 11 > /sys/devices/platform/modem_power/state"')
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent2.txt -o /data/local/tmp/test_hisysevent2.htrace -t 15 -s -k"')
 
+
 def task3():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent3.txt -o /data/local/tmp/test_hisysevent3.htrace -t 30 -s -k"')
+
 
 class TestHiprofilerHisyseventPlugin:
 
@@ -38,9 +43,9 @@ class TestHiprofilerHisyseventPlugin:
         subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
 
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
         subprocess.run(
@@ -71,9 +76,9 @@ class TestHiprofilerHisyseventPlugin:
         # # 抓特定进程1
         subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent2.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task2, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task2, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent2.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
         subprocess.run(
@@ -105,9 +110,9 @@ class TestHiprofilerHisyseventPlugin:
         # # 参数设置为false
         subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent3.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task3, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task3, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent3.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 

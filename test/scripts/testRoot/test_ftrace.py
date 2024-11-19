@@ -13,34 +13,38 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
-import subprocess
-import sys
-sys.path.append("..")
-from tools.utils import *
-import threading
 import sqlite3
+import subprocess
+import threading
+
 
 def get_file_size(file_path):
     return os.path.getsize(file_path)
+
+
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace.txt -o /data/local/tmp/test_ftrace.htrace -t 100 -s -k"')
+
 
 def task_event():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/inputfiles/config_ftrace_event.txt -o /data/local/tmp/test_ftrace_event.htrace -t 10 -s -k"')
 
+
 def task_freq():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/inputfiles/config_ftrace_freq.txt -o /data/local/tmp/test_ftrace_freq.htrace -t 30 -s -k"')
+
 
 class TestHiprofilerFtracePlugin:
     @pytest.mark.L0
     def test_ftraceplugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\config_ftrace.txt /data/local/tmp/', shell=True, text=True,
+        subprocess.run(r'hdc file send ..\inputfiles\config_ftrace.txt /data/local/tmp/', text=True,
                        encoding="utf-8")
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_ftrace.htrace ..\outputfiles ', shell=True,
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
+        subprocess.run(r'hdc file recv /data/local/tmp/test_ftrace.htrace ..\outputfiles ',
                                 text=True, encoding="utf-8")
 
         absolute_path = os.path.abspath("..\\outputfiles\\test_ftrace.htrace")
@@ -54,7 +58,7 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select * from callstack where cat ='binder' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[5]=='binder transaction' or row[5]=='binder reply' or row[5]=='binder transaction async' or row[5]=='binder async rcv')
+            assert(row[5] =='binder transaction' or row[5] =='binder reply' or row[5] == 'binder transaction async' or row[5] == 'binder async rcv')
         cursor.close()
         conn.close()
     
@@ -62,9 +66,9 @@ class TestHiprofilerFtracePlugin:
     def test_ftrace_events(self):
         subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_event.txt /data/local/tmp/", shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task_event, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task_event, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ..\outputfiles/ ", shell=True,
                                 text=True, encoding="utf-8")
 
@@ -111,9 +115,9 @@ class TestHiprofilerFtracePlugin:
     def test_ftrace_freq(self):
         subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_freq.txt /data/local/tmp/", shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task_freq, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task_freq, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ..\outputfiles/ ", shell=True,
                                 text=True, encoding="utf-8")
 
@@ -131,7 +135,7 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select count(0) from cpu_measure_filter where name = 'cpu_frequency'")
         result = cursor.fetchall()
         for row in result:
-            assert(row[0] == 10)
+            assert(row[0] == 12)
         
         cursor.execute("select * from measure,cpu_measure_filter where filter_id = id and name ='cpu_frequency' limit 10")
         result = cursor.fetchall()

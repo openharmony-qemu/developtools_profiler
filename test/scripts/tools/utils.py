@@ -26,6 +26,7 @@ SMALL_FILE_EXPECTED_SIZE = 1 * 1024
 SMALL_FILE_EXPECTED_SIZE_2 = 5 * 1024
 MID_FILE_EXPECTED_SIZE = 100 * 1024
 
+
 def get_path_by_attribute(tree, key, value):
     attributes = tree['attributes']
     if attributes is None:
@@ -86,6 +87,7 @@ def get_pid(name):
             if line.split()[PID_INDEX] == name:
                 return line.split()[1]
     return 0
+
 
 def get_pid_by_process_name(process_name):
     pid = None

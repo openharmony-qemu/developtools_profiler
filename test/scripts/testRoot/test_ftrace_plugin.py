@@ -15,11 +15,9 @@
 
 import pytest
 import subprocess
-import re
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
+import time
 
 OUTPUT_PATH = "testModule/output"
 LIB_PATH = "/system/lib"

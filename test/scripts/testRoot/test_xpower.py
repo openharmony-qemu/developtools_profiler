@@ -13,13 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
-import subprocess
-import sys
-sys.path.append("..")
-from tools.utils import *
-import threading
 import sqlite3
+import subprocess
+import threading
+
 
 def get_file_size(file_path):
     size = os.path.getsize(file_path)
@@ -33,14 +32,14 @@ def task_total():
 class TestHiprofilerXPowerPlugin:
     @pytest.mark.L0
     def test_xpowerplugin_app(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\xpower\\config_xpower.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\\inputfiles\\xpower\\config_xpower.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=True, 
+        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", 
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower.htrace ../outputfiles/ ", shell=True,
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_xpower.htrace")
@@ -76,16 +75,16 @@ class TestHiprofilerXPowerPlugin:
 
     @pytest.mark.L0
     def test_xpowerplugin_total(self):
-        subprocess.check_output(f"hdc file send ..\inputfiles\\xpower\\config_xpower_total.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\inputfiles\\xpower\\config_xpower_total.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task_total, args=())
-        taskThread.start()
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=True, 
+        task_thread = threading.Thread(target=task_total, args=())
+        task_thread.start()
+        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", 
                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.photos.MainAbility -b com.huawei.hmos.photos", shell=True, 
+        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.photos.MainAbility -b com.huawei.hmos.photos", 
                                 text=True, encoding="utf-8")
-        taskThread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower_total.htrace ../outputfiles/ ", shell=True,
+        task_thread.join()
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower_total.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_xpower_total.htrace")

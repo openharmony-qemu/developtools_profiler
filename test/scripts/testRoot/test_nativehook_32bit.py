@@ -13,27 +13,61 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
 import subprocess
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
-import sqlite3
+import time
 from string import Template
+sys.path.append("..")
+from tools.utils import get_pid_by_process_name
+
+
+file_content = Template('request_id: 1                       \n'
+                        'session_config {                    \n'
+                        ' buffers {                          \n'
+                        '  pages: 16384                      \n'
+                        ' }                                  \n'
+                        '}                                   \n'
+                        'plugin_configs {                    \n'
+                        ' plugin_name: "nativehook"          \n'
+                        ' sample_interval: 5000              \n'
+                        ' config_data {                      \n'
+                        '  save_file: false                  \n'
+                        '  smb_pages: 16384                  \n'
+                        '  max_stack_depth: 8               \n'
+                        '  process_name: "${s2}"             \n'
+                        '  string_compressed: true           \n'
+                        '  fp_unwind: false                  \n'
+                        '  blocked: true                     \n'
+                        '  callframe_compress: true          \n'
+                        '  record_accurately: true           \n'
+                        '  offline_symbolization: false      \n'
+                        '  statistics_interval: ${s1}        \n'
+                        '  startup_mode: true                \n'
+                        '  js_stack_report: 1                \n'
+                        '  max_js_stack_depth: 2             \n'
+                        ' }                                  \n'
+                        '}                                   \n')
+
 
 def get_file_size(file_path):
     size = os.path.getsize(file_path)
     return size
 
+
 def task_nativehook_dwarf():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_nativehook_dwarf.txt -o /data/local/tmp/test_nativehook_dwarf.htrace -t 60 -s -k"')
+
 
 def write_str_file(file_path, large_string):
     lines = large_string.split('\n')
     with open(file_path, 'w') as file:
+        os.chmod(file_path, 0o600)
         for line in lines:
             file.write(line + '\n')
+
 
 #检查进程是否离线
 def check_process_offline():
@@ -48,68 +82,43 @@ def check_process_offline():
         time.sleep(10)
         count = count + 1
 
-def nativehook_dwarf(statisticsInt, abilityName, bundleName):
-    #获得该应用的进程PID com.huawei.hmos.settings
-    pid_text = subprocess.run(f"hdc shell pidof '{bundleName}'", stdout=subprocess.PIPE, text=True,check=True)
+
+def nativehook_dwarf(statistics_int, ability_name, bundle_name):
+    #获得该应用的进程PID
+    pid_text = subprocess.run(f"hdc shell pidof '{bundle_name}'", stdout=subprocess.PIPE, text=True, check=True)
     pidinfo = pid_text.stdout
     if pidinfo.strip() != "":
-        subprocess.check_output(f"hdc shell kill " + pidinfo.strip(), shell=True, text=True, encoding="utf-8")
+        subprocess.check_output(f"hdc shell kill " + pidinfo.strip(), text=True, encoding="utf-8")
     #删除cppcrash
-    subprocess.check_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", shell=True, text=True, encoding="utf-8")
+    subprocess.check_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", text=True, encoding="utf-8")
     #dwarf 统计模式
-    file_content = Template('request_id: 1                       \n'
-                            'session_config {                    \n'
-                            ' buffers {                          \n'
-                            '  pages: 16384                      \n'
-                            ' }                                  \n'
-                            '}                                   \n'
-                            'plugin_configs {                    \n'
-                            ' plugin_name: "nativehook"          \n'
-                            ' sample_interval: 5000              \n'
-                            ' config_data {                      \n'
-                            '  save_file: false                  \n'
-                            '  smb_pages: 16384                  \n'
-                            '  max_stack_depth: 8               \n'
-                            '  process_name: "${s2}"             \n'
-                            '  string_compressed: true           \n'
-                            '  fp_unwind: false                  \n'
-                            '  blocked: true                     \n'
-                            '  callframe_compress: true          \n'
-                            '  record_accurately: true           \n'
-                            '  offline_symbolization: false      \n'
-                            '  statistics_interval: ${s1}        \n'
-                            '  startup_mode: true                \n'
-                            '  js_stack_report: 1                \n'
-                            '  max_js_stack_depth: 2             \n'
-                            ' }                                  \n'
-                            '}                                   \n')
-    vmfile = file_content.safe_substitute(s1=statisticsInt, s2=bundleName)
+    vmfile = file_content.safe_substitute(s1=statistics_int, s2=bundle_name)
     #写入文件
     write_str_file("./../inputfiles/config_nativehook_dwarf.txt", vmfile)
 
-    subprocess.check_output(f"hdc file send ..\\inputfiles\\native_hook_32bit\\config_nativehook_dwarf.txt /data/local/tmp/", shell=True,
+    subprocess.check_output(f"hdc file send ..\\inputfiles\\native_hook_32bit\\config_nativehook_dwarf.txt /data/local/tmp/",
                             text=True, encoding="utf-8")
-    taskThread = threading.Thread(target=task_nativehook_dwarf, args=())
-    taskThread.start()
+    task_thread = threading.Thread(target=task_nativehook_dwarf, args=())
+    task_thread.start()
     time.sleep(2)
     checkThread = threading.Thread(target=check_process_offline, args=())
     checkThread.start()
     #打开系统设置的应用com.ohos.settings.MainAbility  com.ohos.settings
-    subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=True, 
+    subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", 
                                 text=True, encoding="utf-8")
     time.sleep(1)
-    subprocess.check_output(f"hdc shell aa start -a {abilityName} -b {bundleName}", shell=True, 
+    subprocess.check_output(f"hdc shell aa start -a {ability_name} -b {bundle_name}", 
                                 text=True, encoding="utf-8")
     time.sleep(2)
-    taskThread.join()
-    subprocess.run(f'hdc file recv /data/local/tmp/test_nativehook_dwarf.htrace ../outputfiles/', shell=True,
+    task_thread.join()
+    subprocess.run(f'hdc file recv /data/local/tmp/test_nativehook_dwarf.htrace ../outputfiles/',
                      text=True, encoding="utf-8")
     # 检查文件大小
     file_size = get_file_size(f"..\\outputfiles\\test_nativehook_dwarf.htrace")
     assert (file_size > 1024)
 
     #检查是否存在crash
-    output_text = subprocess.run(f'hdc shell "ls /data/log/faultlog/faultlogger"', stdout=subprocess.PIPE, text=True,check=True)
+    output_text = subprocess.run(f'hdc shell "ls /data/log/faultlog/faultlogger"', stdout=subprocess.PIPE, text=True, check=True)
     process_info = output_text.stdout
     lines = process_info.strip().split('\n')
     check_crash = False
@@ -119,12 +128,13 @@ def nativehook_dwarf(statisticsInt, abilityName, bundleName):
             break
     assert (check_crash == False)
 
+
 class TestHiprofilerMemoryPlugin:
     # 检查32位是否正常
     @pytest.mark.L0
     def test_nativehook_dwarf(self):
         #获得32位还是64位   
-        sys_bit = subprocess.run(f"hdc shell getconf LONG_BIT", stdout=subprocess.PIPE, text=True,check=True)
+        sys_bit = subprocess.run(f"hdc shell getconf LONG_BIT", stdout=subprocess.PIPE, text=True, check=True)
         sysinfo = sys_bit.stdout
         if sysinfo.strip() == "32":
             #非统计模式

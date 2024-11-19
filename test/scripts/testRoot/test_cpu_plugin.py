@@ -13,22 +13,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import pytest
+import sqlite3
 import subprocess
 import sys
-sys.path.append("..")
-from tools.utils import *
 import threading
-import sqlite3
+sys.path.append("..")
+from tools.utils import MID_FILE_EXPECTED_SIZE
+
 
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu.txt -o /data/local/tmp/test_cpu.htrace -t 10 -s -k"')
 
+
 def task_invalid_pid():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_invalid_pid.txt -o /data/local/tmp/test_cpu2.htrace -t 10 -s -k"')
 
+
 def task_no_pid():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_no_pid.txt -o /data/local/tmp/test_cpu3.htrace -t 10 -s -k"')
+
 
 class TestHiprofilerCpuPlugin:
 
@@ -36,9 +41,9 @@ class TestHiprofilerCpuPlugin:
     def test_cpu_plugin(self):
         subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_cpu.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 
@@ -68,9 +73,9 @@ class TestHiprofilerCpuPlugin:
     def test_cpu_plugin_2(self):
         subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_invalid_pid.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task_invalid_pid, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task_invalid_pid, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_cpu2.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 
@@ -101,9 +106,9 @@ class TestHiprofilerCpuPlugin:
     def test_cpu_plugin_3(self):
         subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_no_pid.txt /data/local/tmp', shell=True,
                                 text=True, encoding="utf-8")
-        taskThread = threading.Thread(target=task_no_pid, args=())
-        taskThread.start()
-        taskThread.join()
+        task_thread = threading.Thread(target=task_no_pid, args=())
+        task_thread.start()
+        task_thread.join()
         subprocess.run(r'hdc file recv /data/local/tmp/test_cpu3.htrace ..\outputfiles', shell=True,
                          text=True, encoding="utf-8")
 
