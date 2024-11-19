@@ -39,11 +39,7 @@ constexpr uint32_t STOP_BASELINE = (1U << 22); // need to stop take data size wi
 PluginService::PluginService()
 {
     pluginIdCounter_ = 0;
-    if (getuid() == 0) {
-        StartService(DEFAULT_UNIX_SOCKET_FULL_PATH);
-    } else {
-        StartService(DEFAULT_UNIX_SOCKET_PATH);
-    }
+    StartService(DEFAULT_UNIX_SOCKET_PATH);
 
     pluginCommandBuilder_ = std::make_shared<PluginCommandBuilder>();
 

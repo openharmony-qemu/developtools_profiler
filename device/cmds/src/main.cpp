@@ -54,9 +54,6 @@ const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 const std::string NATIVE_DAEMON_NAME("native_daemon");
 
 uint32_t g_sampleDuration = 0;
-int g_hiprofilerdPid = -1;
-int g_hiprofilerPluginsPid = -1;
-int g_nativeDaemonPid = -1;
 std::condition_variable g_sessionCv;
 std::condition_variable g_keepSessionCv;
 bool g_exitProcessFlag = false;
@@ -396,45 +393,16 @@ bool StartDependentProcess()
     constexpr int waitProcMills = 300;
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-    if (getuid() == 0) {
-        if (!COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid)) {
-            // need start hiprofilerd
-            std::vector<char*> argvVec;
-            argvVec.push_back(const_cast<char*>(HIPROFILERD_NAME.c_str()));
-            g_hiprofilerdPid = COMMON::StartProcess("/system/bin/hiprofilerd", argvVec);
-            // Wait for the hiprofilerd to start
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-        }
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
 
-        if (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid)) {
-            // need start hiprofiler_plugins
-            std::vector<char*> argvVec;
-            argvVec.push_back(const_cast<char*>(HIPROFILER_PLUGINS_NAME.c_str()));
-            g_hiprofilerPluginsPid = COMMON::StartProcess("/system/bin/hiprofiler_plugins", argvVec);
-            // Wait for the hiprofiler_plugins add preset plugin
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-        }
-
-        if (!COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid)) {
-            // need start native_daemon
-            std::vector<char*> argvVec;
-            argvVec.push_back(const_cast<char*>(NATIVE_DAEMON_NAME.c_str()));
-            g_nativeDaemonPid = COMMON::StartProcess("/system/bin/native_daemon", argvVec);
-            // Wait for the native_daemon to start
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-        }
-    } else {
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
-
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
-        std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
-        std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "1");
-        std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-    }
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "1");
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
 
     std::string content = "";
     GetCapabilities(content, true);
@@ -446,60 +414,14 @@ bool StartDependentProcess()
     return true;
 }
 
-bool CheckProcessExit(const std::string& processName, int& pid)
-{
-    int nCount = 5; // 5: try 5 times
-    constexpr int waitExitMills = 1000;
-    while (nCount > 0) {
-        if (COMMON::IsProcessExist(processName, pid)) {
-            nCount--;
-            std::this_thread::sleep_for(std::chrono::milliseconds(waitExitMills));
-        } else {
-            break;
-        }
-    }
-    return nCount > 0;
-}
-
 void KillDependentProcess()
 {
     constexpr int waitProcMills = 300;
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-    if (getuid() == 0) {
-        // if pid is equal to -1, need to get pid first.
-        if (g_nativeDaemonPid == -1) {
-            COMMON::IsProcessExist(NATIVE_DAEMON_NAME, g_nativeDaemonPid);
-        }
-        if (g_hiprofilerPluginsPid == -1) {
-            COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid);
-        }
-        if (g_hiprofilerdPid == -1) {
-            COMMON::IsProcessExist(HIPROFILERD_NAME, g_hiprofilerdPid);
-        }
-        COMMON::KillProcess(g_nativeDaemonPid);
-        if (CheckProcessExit(NATIVE_DAEMON_NAME, g_nativeDaemonPid)) {
-            printf("process native_daemon exits successfully\n");
-        } else {
-            printf("process native_daemon exits failed\n");
-        }
-        COMMON::KillProcess(g_hiprofilerPluginsPid);
-        if (CheckProcessExit(HIPROFILER_PLUGINS_NAME, g_hiprofilerPluginsPid)) {
-            printf("process hiprofiler_plugins exits successfully\n");
-        } else {
-            printf("process hiprofiler_plugins exits failed\n");
-        }
-        COMMON::KillProcess(g_hiprofilerdPid);
-        if (CheckProcessExit(HIPROFILERD_NAME, g_hiprofilerdPid)) {
-            printf("process hiprofilerd exits successfully\n");
-        } else {
-            printf("process hiprofilerd exits failed\n");
-        }
-    } else {
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
-    }
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
 }
 
 bool ParseConfig(const std::string& configFile, std::string& config)

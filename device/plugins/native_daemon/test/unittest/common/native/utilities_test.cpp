@@ -597,20 +597,6 @@ HWTEST_F(UtilitiesTest, Percentage, TestSize.Level1)
 }
 
 /**
- * @tc.name: IsRoot
- * @tc.desc:
- * @tc.type: FUNC
- */
-HWTEST_F(UtilitiesTest, IsRoot, TestSize.Level1)
-{
-    bool isRoot = true;
-#if is_linux || is_ohos
-    isRoot = (getuid() == 0);
-#endif
-    EXPECT_EQ(IsRoot(), isRoot);
-}
-
-/**
  * @tc.name: PowerOfTwo
  * @tc.desc:
  * @tc.type: FUNC
