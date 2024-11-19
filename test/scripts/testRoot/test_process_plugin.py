@@ -22,6 +22,7 @@ import threading
 sys.path.append("..")
 from tools.utils import SMALL_FILE_EXPECTED_SIZE, SMALL_FILE_EXPECTED_SIZE2, MID_FILE_EXPECTED_SIZE
 
+
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process.txt -o /data/local/tmp/test_process.htrace -t 10 -s -k"')
 

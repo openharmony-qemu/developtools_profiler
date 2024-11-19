@@ -58,18 +58,18 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select * from callstack where cat ='binder' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[5] =='binder transaction' or row[5] =='binder reply' or row[5] == 'binder transaction async' or row[5] == 'binder async rcv')
+            assert(row[5] == 'binder transaction' or row[5] == 'binder reply' or row[5] == 'binder transaction async' or row[5] == 'binder async rcv')
         cursor.close()
         conn.close()
     
     @pytest.mark.L0
     def test_ftrace_events(self):
-        subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_event.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_event.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_event, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ..\outputfiles/ ", shell=True,
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ..\outputfiles/ ",
                                 text=True, encoding="utf-8")
 
         file_size = get_file_size(f"..\outputfiles/test_ftrace_event.htrace")
@@ -113,12 +113,12 @@ class TestHiprofilerFtracePlugin:
     
     @pytest.mark.L0
     def test_ftrace_freq(self):
-        subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_freq.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\inputfiles/config_ftrace_freq.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_freq, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ..\outputfiles/ ", shell=True,
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ..\outputfiles/ ",
                                 text=True, encoding="utf-8")
 
         file_size = get_file_size(f"..\outputfiles/test_ftrace_freq.htrace")

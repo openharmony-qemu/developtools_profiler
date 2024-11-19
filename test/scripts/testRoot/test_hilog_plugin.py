@@ -39,12 +39,12 @@ class TestHiprofilerHilogPlugin:
 
     @pytest.mark.L0
     def test_hilog_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -74,12 +74,12 @@ class TestHiprofilerHilogPlugin:
     def test_hilog_plugin2(self):
 
         # # 抓特定进程1
-        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog2.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog2.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task2, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog2.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog2.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -109,12 +109,12 @@ class TestHiprofilerHilogPlugin:
     def test_hilog_plugin3(self):
 
         # # 参数设置为false
-        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog3.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hilog_plugin\config_hilog3.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task3, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog3.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hilog3.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(

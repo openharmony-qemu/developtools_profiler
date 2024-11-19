@@ -141,10 +141,10 @@ class TestHiprofilerHidumpPlugin:
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         time.sleep(2)
-        taskCheck = threading.Thread(target=check_process, args=())
-        taskCheck.start()
+        task_check = threading.Thread(target=check_process, args=())
+        task_check.start()
         task_thread.join()
-        taskCheck.join()
+        task_check.join()
         #检查结束后，子进程是否结束
         output_text = subprocess.run(f'hdc shell "ps -ef | grep SP_daemon"', stdout=subprocess.PIPE, text=True, check=True)
         process_info = output_text.stdout

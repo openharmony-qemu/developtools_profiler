@@ -63,8 +63,7 @@ def task_nativehook_dwarf():
 
 def write_str_file(file_path, large_string):
     lines = large_string.split('\n')
-    with open(file_path, 'w') as file:
-        os.chmod(file_path, 0o600)
+    with os.fdopen(os.open(file_path, os.O_RDWR | os.O_CREAT), 'w') as file:
         for line in lines:
             file.write(line + '\n')
 
@@ -101,8 +100,8 @@ def nativehook_dwarf(statistics_int, ability_name, bundle_name):
     task_thread = threading.Thread(target=task_nativehook_dwarf, args=())
     task_thread.start()
     time.sleep(2)
-    checkThread = threading.Thread(target=check_process_offline, args=())
-    checkThread.start()
+    check_thread = threading.Thread(target=check_process_offline, args=())
+    check_thread.start()
     #打开系统设置的应用com.ohos.settings.MainAbility  com.ohos.settings
     subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", 
                                 text=True, encoding="utf-8")

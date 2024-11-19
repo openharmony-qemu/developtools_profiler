@@ -40,13 +40,13 @@ class TestHiprofilerHisyseventPlugin:
 
     @pytest.mark.L0
     def test_hisysevent_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
 
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
         subprocess.run(
             r'..\inputfiles\trace_streamer_db.exe ..\outputfiles\test_hisysevent.htrace -e ..\outputfiles\test_hisysevent.db')
@@ -74,12 +74,12 @@ class TestHiprofilerHisyseventPlugin:
     def test_hisysevent_plugin2(self):
 
         # # 抓特定进程1
-        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent2.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent2.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task2, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent2.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent2.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
         subprocess.run(
             r'..\inputfiles\trace_streamer_db.exe ..\outputfiles\test_hisysevent2.htrace -e ..\outputfiles\test_hisysevent2.db')
@@ -108,12 +108,12 @@ class TestHiprofilerHisyseventPlugin:
     def test_hisysevent_plugin3(self):
 
         # # 参数设置为false
-        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent3.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hisysevent_plugin\config_hisysevent3.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task3, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent3.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hisysevent3.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(

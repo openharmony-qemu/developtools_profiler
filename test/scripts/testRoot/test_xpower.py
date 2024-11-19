@@ -23,11 +23,15 @@ import threading
 def get_file_size(file_path):
     size = os.path.getsize(file_path)
     return size
+
+
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower.txt -o /data/local/tmp/test_xpower.htrace -t 30 -s -k"')
 
+
 def task_total():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower_total.txt -o /data/local/tmp/test_xpower_total.htrace -t 35 -s -k"')
+
 
 class TestHiprofilerXPowerPlugin:
     @pytest.mark.L0

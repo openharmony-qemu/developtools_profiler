@@ -31,13 +31,11 @@ class TestHiprofilerGpuPlugin:
 
     @pytest.mark.L0
     def test_gpu_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\config_gpu.txt /data/local/tmp', shell=True,
-                                text=True, encoding="utf-8")
+        subprocess.run(r'hdc file send ..\inputfiles\config_gpu.txt /data/local/tmp', text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_gpu.htrace ..\outputfiles', shell=True,
-                         text=True, encoding="utf-8")
+        subprocess.run(r'hdc file recv /data/local/tmp/test_gpu.htrace ..\outputfiles', text=True, encoding="utf-8")
 
         subprocess.run(
             r'..\inputfiles\trace_streamer_db.exe ..\outputfiles\test_gpu.htrace -e ..\outputfiles\test_gpu.db')

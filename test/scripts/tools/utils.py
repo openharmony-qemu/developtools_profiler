@@ -93,7 +93,7 @@ def get_pid_by_process_name(process_name):
     pid = None
     cmd = f"hdc shell \"pidof {process_name}\""
     try:
-        pid = subprocess.check_output(cmd, shell=True, encoding="utf-8", text=True)
+        pid = subprocess.check_output(cmd, encoding="utf-8", text=True)
         pid = int(pid.strip())
     except subprocess.CalledProcessError as e:
         print(f"Command failed: {cmd}\nError: {e}")

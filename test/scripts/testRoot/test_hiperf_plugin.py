@@ -39,12 +39,12 @@ class TestHiprofilerhiperfPlugin:
 
     @pytest.mark.L0
     def test_hiperf_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -78,12 +78,12 @@ class TestHiprofilerhiperfPlugin:
     @pytest.mark.L0
     def test_hiperf_plugin2(self):
         # # 抓特定进程1
-        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf2.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf2.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task2, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf2.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf2.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -119,12 +119,12 @@ class TestHiprofilerhiperfPlugin:
     def test_hiperf_plugin3(self):
 
         # # 参数设置为false
-        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf3.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\hiperf_plugin\config_hiperf3.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task3, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf3.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_hiperf3.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
