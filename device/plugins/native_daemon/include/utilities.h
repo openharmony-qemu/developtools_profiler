@@ -296,7 +296,6 @@ float Percentage(const T &a, const T &b)
     return static_cast<float>(a) / static_cast<float>(b) * FULL_PERCENTAGE;
 }
 
-bool IsRoot();
 bool PowerOfTwo(int n);
 
 #define INDENT_ONE_LEVEL (indent + 1)
