@@ -39,12 +39,12 @@ class TestHiprofilerCpuPlugin:
 
     @pytest.mark.L0
     def test_cpu_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -71,12 +71,12 @@ class TestHiprofilerCpuPlugin:
 
     @pytest.mark.L0
     def test_cpu_plugin_2(self):
-        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_invalid_pid.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_invalid_pid.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_invalid_pid, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu2.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu2.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(
@@ -104,12 +104,12 @@ class TestHiprofilerCpuPlugin:
 
     @pytest.mark.L0
     def test_cpu_plugin_3(self):
-        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_no_pid.txt /data/local/tmp', shell=True,
+        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu_no_pid.txt /data/local/tmp',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_no_pid, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu3.htrace ..\outputfiles', shell=True,
+        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu3.htrace ..\outputfiles',
                          text=True, encoding="utf-8")
 
         subprocess.run(

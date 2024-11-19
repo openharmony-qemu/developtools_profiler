@@ -63,7 +63,7 @@ def task_nativehook_dwarf():
 
 def write_str_file(file_path, large_string):
     lines = large_string.split('\n')
-    with os.fdopen(os.open(file_path, os.O_RDWR | os.O_CREAT), 'w') as file:
+    with os.fdopen(os.open(file_path, os.O_RDWR | os.O_CREAT, 0o600), 'w') as file:
         for line in lines:
             file.write(line + '\n')
 
