@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(signal_deliver) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(signal_deliver) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -48,6 +53,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.code(), msg.comm().c_str(), msg.pid(), msg.group(), msg.result());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(signal_generate) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(signal_generate) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

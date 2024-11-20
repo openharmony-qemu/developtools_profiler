@@ -37,6 +37,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_shrink_slab_end) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_shrink_slab_end) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -112,6 +117,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_shrink_slab_start) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_shrink_slab_start) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -184,6 +194,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(mm_vmscan_direct_reclaim_begin) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_direct_reclaim_begin) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -199,6 +214,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(mm_vmscan_direct_reclaim_end) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_direct_reclaim_end) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -212,6 +232,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_vmscan_kswapd_sleep) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_kswapd_sleep) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -227,6 +252,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_vmscan_kswapd_wake) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_kswapd_wake) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -247,6 +277,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_vmscan_lru_isolate) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_lru_isolate) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -270,6 +305,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(mm_vmscan_lru_shrink_inactive) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_lru_shrink_inactive) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -343,6 +383,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_vmscan_wakeup_kswapd) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_wakeup_kswapd) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -361,6 +406,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_vmscan_writepage) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_vmscan_writepage) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kfree) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kfree) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -105,6 +110,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmalloc) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kmalloc) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -179,6 +189,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmalloc_node) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kmalloc_node) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -250,6 +265,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmem_cache_alloc) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kmem_cache_alloc) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -326,6 +346,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(kmem_cache_alloc_node) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kmem_cache_alloc_node) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -339,6 +364,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "kmem_cache_free: call_site=%p ptr=%p", msg.call_site(), msg.ptr());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(kmem_cache_free) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(kmem_cache_free) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -412,6 +442,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_page_alloc) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_alloc) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -431,6 +466,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_page_alloc_extfrag) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_alloc_extfrag) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -447,6 +487,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(mm_page_alloc_zone_locked) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_alloc_zone_locked) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -460,6 +505,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "0000000000000000", msg.pfn(), msg.order());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(mm_page_free) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_free) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -475,6 +525,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_page_free_batched) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_free_batched) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -492,6 +547,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(mm_page_pcpu_drain) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(mm_page_pcpu_drain) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -506,6 +566,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.mm_id(), msg.curr(), msg.member(), msg.size());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rss_stat) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(rss_stat) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

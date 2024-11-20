@@ -32,6 +32,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ipi_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -44,6 +49,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "ipi_exit: (%s)", msg.reason().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ipi_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -58,6 +68,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.target_cpus(), msg.reason().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(ipi_raise) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ipi_raise) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

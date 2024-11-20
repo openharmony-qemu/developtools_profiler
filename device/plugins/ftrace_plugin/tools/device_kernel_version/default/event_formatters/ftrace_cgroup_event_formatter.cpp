@@ -35,6 +35,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_attach_task) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_attach_task) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -49,6 +54,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_destroy_root) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_destroy_root) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -65,6 +75,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_freeze) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_freeze) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -79,6 +94,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_mkdir) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_mkdir) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -96,6 +116,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_notify_frozen) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_notify_frozen) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -112,6 +137,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_notify_populated) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_notify_populated) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -126,6 +156,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_release) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_release) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -142,6 +177,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_remount) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_remount) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -156,6 +196,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_rename) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_rename) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -172,6 +217,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_rmdir) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_rmdir) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -186,6 +236,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_setup_root) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_setup_root) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -203,6 +258,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(cgroup_transfer_tasks) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_transfer_tasks) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -217,6 +277,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cgroup_unfreeze) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cgroup_unfreeze) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

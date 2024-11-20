@@ -41,6 +41,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(balance_dirty_pages) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(balance_dirty_pages) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -60,6 +65,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(bdi_dirty_ratelimit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(bdi_dirty_ratelimit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -77,6 +87,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(global_dirty_state) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(global_dirty_state) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -96,6 +111,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(wbc_writepage) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(wbc_writepage) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -111,6 +131,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_bdi_register) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_bdi_register) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -125,6 +150,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_congestion_wait) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_congestion_wait) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -147,6 +177,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_dirty_inode) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_inode) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -167,6 +202,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_dirty_inode_enqueue) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_inode_enqueue) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -189,6 +229,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_dirty_inode_start) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_inode_start) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -204,6 +249,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_dirty_page) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_dirty_page) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -226,6 +276,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_exec) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_exec) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -246,6 +301,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_lazytime) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_lazytime) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -268,6 +328,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_lazytime_iput) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_lazytime_iput) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -289,6 +354,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_mark_inode_dirty) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_mark_inode_dirty) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -302,6 +372,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_pages_written) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_pages_written) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -324,6 +399,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_queue) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_queue) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -342,6 +422,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_queue_io) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_queue_io) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -363,6 +448,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_sb_inodes_requeue) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_sb_inodes_requeue) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -386,6 +476,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_single_inode) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_single_inode) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -408,6 +503,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_single_inode_start) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_single_inode_start) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -428,6 +528,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_start) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -450,6 +555,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_wait) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_wait) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -465,6 +575,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_wait_iff_congested) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_wait_iff_congested) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -479,6 +594,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_wake_background) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_wake_background) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -496,6 +616,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(writeback_write_inode) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_write_inode) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -511,6 +636,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(writeback_write_inode_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_write_inode_start) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -532,6 +662,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.cgroup_ino());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(writeback_written) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(writeback_written) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

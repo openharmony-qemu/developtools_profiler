@@ -33,6 +33,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_cancel) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_cancel) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -61,6 +65,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(hrtimer_expire_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_expire_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -74,6 +82,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(hrtimer_expire_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_expire_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -94,6 +106,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {HRTIMER_MODE_ABS_PINNED_SOFT, "ABS|PINNED|SOFT"}, {HRTIMER_MODE_REL_PINNED_SOFT, "REL|PINNED|SOFT"}));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_init) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_init) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -132,6 +148,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_start) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(hrtimer_start) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -145,6 +165,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.which(), (int)msg.pid(), msg.now());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(itimer_expire) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(itimer_expire) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -161,6 +185,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(itimer_state) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(itimer_state) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -173,6 +201,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "timer_cancel: timer=%p", msg.timer());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_cancel) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_cancel) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -201,6 +233,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(timer_expire_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_expire_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -214,6 +250,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_expire_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_expire_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -226,6 +266,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "timer_init: timer=%p", msg.timer());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_init) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_init) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -259,6 +303,10 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(timer_start) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

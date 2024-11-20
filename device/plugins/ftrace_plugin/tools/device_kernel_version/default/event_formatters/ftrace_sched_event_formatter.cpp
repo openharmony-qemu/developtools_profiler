@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_blocked_reason) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_blocked_reason) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -49,6 +54,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_kthread_stop) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_kthread_stop) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -62,6 +72,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_kthread_stop_ret) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_kthread_stop_ret) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -79,6 +94,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_migrate_task) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_migrate_task) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -93,6 +113,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.tgid(), msg.ngid(), msg.src_cpu(), msg.src_nid(), msg.dst_cpu(), msg.dst_nid());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_move_numa) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_move_numa) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -109,6 +134,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_pi_setprio) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_pi_setprio) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -124,6 +154,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_process_exec) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_process_exec) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -138,6 +173,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_process_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_process_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -155,6 +195,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_process_fork) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_process_fork) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -169,6 +214,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_process_free) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_process_free) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -185,6 +235,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_process_wait) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_process_wait) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -200,6 +255,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_stat_blocked) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stat_blocked) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -213,6 +273,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "sched_stat_iowait: comm=%s pid=%d delay=%" PRIu64 " [ns]", msg.comm().c_str(), msg.pid(), msg.delay());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_stat_iowait) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stat_iowait) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -230,6 +295,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(sched_stat_runtime) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stat_runtime) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -244,6 +314,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_stat_sleep) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stat_sleep) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -257,6 +332,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "sched_stat_wait: comm=%s pid=%d delay=%" PRIu64 " [ns]", msg.comm().c_str(), msg.pid(), msg.delay());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_stat_wait) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stat_wait) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -275,6 +355,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_stick_numa) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_stick_numa) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -291,6 +376,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.dst_ngid(), msg.dst_cpu(), msg.dst_nid());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_swap_numa) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_swap_numa) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -330,6 +420,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_switch) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_switch) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -344,6 +439,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_wait_task) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_wait_task) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -357,6 +457,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(sched_wake_idle_without_ipi) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_wake_idle_without_ipi) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -373,6 +478,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_wakeup) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_wakeup) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -388,6 +498,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_wakeup_new) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_wakeup_new) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -402,6 +517,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.comm().c_str(), msg.pid(), msg.prio(), msg.target_cpu());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(sched_waking) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(sched_waking) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

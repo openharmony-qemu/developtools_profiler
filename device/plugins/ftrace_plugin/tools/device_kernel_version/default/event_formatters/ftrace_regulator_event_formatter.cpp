@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(regulator_bypass_disable) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_disable) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -48,6 +53,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_bypass_disable_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_disable_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -64,6 +74,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(regulator_bypass_enable) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_enable) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -79,6 +94,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_bypass_enable_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_bypass_enable_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -91,6 +111,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_disable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(regulator_disable) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_disable) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -107,6 +132,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_disable_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_disable_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -119,6 +149,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "regulator_enable: name=%s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(regulator_enable) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_enable) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -135,6 +170,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_enable_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_enable_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -149,6 +189,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(regulator_enable_delay) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_enable_delay) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -165,6 +210,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(regulator_set_voltage) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_set_voltage) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -179,6 +229,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(regulator_set_voltage_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(regulator_set_voltage_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
