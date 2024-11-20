@@ -261,10 +261,10 @@ bool ElfHeader::Init(unsigned char * const ehdrBuf, const std::size_t bufSize)
     CHECK_TRUE(magicStr.compare(elfMagic) == 0, false, "elf magic not found");
     std::copy(ehdrBuf, ehdrBuf + EI_NIDENT, ehdrIdent_);
 
-    if (ehdrBuf[EI_CLASS] == ELFCLASS32 and ParseElf32Header(ehdrBuf, bufSize)) {
+    if (ehdrBuf[EI_CLASS] == ELFCLASS32 && ParseElf32Header(ehdrBuf, bufSize)) {
         return true;
     }
-    if (ehdrBuf[EI_CLASS] == ELFCLASS64 and ParseElf64Header(ehdrBuf, bufSize)) {
+    if (ehdrBuf[EI_CLASS] == ELFCLASS64 && ParseElf64Header(ehdrBuf, bufSize)) {
         return true;
     }
     HHLOGE(true, "init elf header failed, elf header buffer dumped");

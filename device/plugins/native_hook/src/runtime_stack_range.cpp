@@ -134,9 +134,9 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
 
 static bool IsLegalSoName(const std::string &fileName)
 {
-    if (fileName.front() == '[' or fileName.back() == ']' or
-        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 or
-        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 or
+    if (fileName.front() == '[' || fileName.back() == ']' ||
+        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 ||
+        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 ||
         std::strncmp(fileName.c_str(), "//anon", sizeof("//anon")) == 0) {
         return false;
     }

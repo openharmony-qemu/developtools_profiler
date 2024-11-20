@@ -103,7 +103,6 @@ uint32_t KernelSymbolInfo::GetSymbolData(std::vector<uint8_t> &buf)
         }
         prevSymbol = currSymbol;
     }
-    file.close();
     if (prevSymbol.type_ == 'T') {
         symbolItems.emplace_back(prevSymbol);
         strTabLen += prevSymbol.name_.size() + 1;

@@ -469,7 +469,7 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
     } else if (GetSymbolCache(callFrame.ip_, symbol, GetThread(pid, tid))) {
         return symbol;
     }
-    if (context == PERF_CONTEXT_USER or (context == PERF_CONTEXT_MAX and !symbol.IsValid())) {
+    if (context == PERF_CONTEXT_USER || (context == PERF_CONTEXT_MAX && !symbol.IsValid())) {
         // check userspace memmap
         symbol = GetUserSymbol(callFrame.ip_, GetThread(pid, tid));
         if (symbol.IsValid()) {

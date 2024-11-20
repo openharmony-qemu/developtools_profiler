@@ -403,7 +403,7 @@ int BPFEventReceiver::EncodeSTRTraceEvent(
     item->srcTracer_ = cmplt_event->start_event.stracer;
     item->srcType_ = cmplt_event->start_event.type;
     item->strLen_ = cmplt_event->len;
-    if (item->strLen_ and item->strLen_ <= MAX_FILENAME_LEN) {
+    if (item->strLen_ && item->strLen_ <= MAX_FILENAME_LEN) {
         char *filename = reinterpret_cast<char*>(tlvItem);
         filename += sizeof(struct FixedSTRTraceTLVItem);
         CHECK_TRUE(strncpy_s(filename, MAX_FILENAME_LEN, cmplt_event->filename, item->strLen_) == EOK, -1,
