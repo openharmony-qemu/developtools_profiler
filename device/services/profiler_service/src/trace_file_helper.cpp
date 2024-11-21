@@ -64,5 +64,4 @@ bool TraceFileHelper::Validate(const TraceFileHeader& header)
 {
     CHECK_TRUE(Finish(), false, "Finish FAILED!");
     return memcmp(&header_, &header, sizeof(header_)) == 0;
-    return true;
 }

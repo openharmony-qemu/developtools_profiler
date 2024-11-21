@@ -194,6 +194,7 @@ int main(int argc, char* argv[])
         return 0;
     }
 
+    int32_t globalFd = -1;
     // fork() must be precede BPFController::MakeUnique(),
     // otherwise ring_buffer__poll() will crash. why?
     if (FLAGS_start) {
@@ -203,6 +204,7 @@ int main(int argc, char* argv[])
             return -1;
         } else if (pid == 0) { // child process
             int32_t nullFd = open("/dev/null", O_WRONLY);
+            globalFd = nullFd;
             (void)dup2(nullFd, STDOUT_FILENO); // redirect stdout to /dev/null
             g_ipcServer.SetHandleCallback(HandleIpcMessage);
             if (!g_ipcServer.Start()) {
@@ -229,6 +231,9 @@ int main(int argc, char* argv[])
     }
 
     if (g_interrupted) {
+        if (globalFd != -1) {
+            close(globalFd);
+        }
         return 0;
     }
 
@@ -243,6 +248,9 @@ int main(int argc, char* argv[])
 
     if (FLAGS_start) {
         g_ipcServer.Stop();
+        if (globalFd != -1) {
+            close(globalFd);
+        }
     }
 
     return 0;

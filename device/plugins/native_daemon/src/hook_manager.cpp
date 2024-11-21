@@ -31,8 +31,6 @@
 #include "share_memory_allocator.h"
 #include "utilities.h"
 #include "virtual_runtime.h"
-#include "hook_common.h"
-#include "common.h"
 #include "native_memory_profiler_sa_service.h"
 
 namespace OHOS::Developtools::NativeDaemon {

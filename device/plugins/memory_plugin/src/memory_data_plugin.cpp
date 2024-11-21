@@ -67,8 +67,6 @@ MemoryDataPlugin::~MemoryDataPlugin()
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:~MemoryDataPlugin!", __func__);
 
-    buffer_ = nullptr;
-
     if (meminfoFd_ > 0) {
         close(meminfoFd_);
         meminfoFd_ = -1;

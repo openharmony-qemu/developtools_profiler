@@ -319,6 +319,7 @@ int RingBuffer::Resize()
         return -1;
     }
     if (buffer_ == nullptr) {
+        delete[] newBuf;
         return -1;
     }
     // copy data to the new buffer
