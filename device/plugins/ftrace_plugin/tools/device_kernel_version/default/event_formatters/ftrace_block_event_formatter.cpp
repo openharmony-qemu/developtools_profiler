@@ -36,6 +36,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_backmerge) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_backmerge) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -52,6 +57,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_bio_bounce) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_bounce) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -67,6 +77,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -85,6 +100,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_bio_frontmerge) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_frontmerge) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -100,6 +120,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_bio_queue) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_queue) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -119,6 +144,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_bio_remap) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_bio_remap) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -134,6 +164,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_dirty_buffer) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_dirty_buffer) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -151,6 +186,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_getrq) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_getrq) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -163,6 +203,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "block_plug: [%s]", msg.comm().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(block_plug) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_plug) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -181,6 +226,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_rq_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_rq_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -198,6 +248,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_rq_insert) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_rq_insert) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -214,6 +269,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_rq_issue) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_rq_issue) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -233,6 +293,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_rq_remap) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_rq_remap) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -250,6 +315,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_rq_requeue) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_rq_requeue) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -265,6 +335,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_sleeprq) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_sleeprq) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -283,6 +358,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_split) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_split) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -299,6 +379,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(block_touch_buffer) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_touch_buffer) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -313,6 +398,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(block_unplug) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(block_unplug) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

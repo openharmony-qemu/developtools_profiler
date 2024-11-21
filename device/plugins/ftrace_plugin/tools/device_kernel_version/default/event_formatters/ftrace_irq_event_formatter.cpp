@@ -33,6 +33,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(irq_handler_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(irq_handler_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -46,6 +51,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.ret() ? "handled" : "unhandled");
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(irq_handler_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(irq_handler_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -62,6 +72,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(softirq_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(softirq_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -77,6 +92,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(softirq_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(softirq_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -91,6 +111,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {5, "IRQ_POLL"}, {6, "TASKLET"}, {7, "SCHED"}, {8, "HRTIMER"}, {9, "RCU"}));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(softirq_raise) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(softirq_raise) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

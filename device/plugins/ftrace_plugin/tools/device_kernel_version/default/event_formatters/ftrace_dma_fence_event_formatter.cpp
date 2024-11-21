@@ -35,6 +35,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(dma_fence_destroy) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_destroy) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -50,6 +55,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(dma_fence_emit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_emit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -67,6 +77,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(dma_fence_enable_signal) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_enable_signal) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -82,6 +97,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(dma_fence_init) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_init) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -99,6 +119,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(dma_fence_signaled) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_signaled) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -115,6 +140,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(dma_fence_wait_end) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_wait_end) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -130,6 +160,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(dma_fence_wait_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(dma_fence_wait_start) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

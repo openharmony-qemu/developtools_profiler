@@ -41,6 +41,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(break_lease_block) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(break_lease_block) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -63,6 +68,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(break_lease_noblock) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(break_lease_noblock) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -87,6 +97,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(break_lease_unblock) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(break_lease_unblock) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -107,6 +122,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             __print_symbolic(msg.fl_type(), {0, "F_RDLCK"}, {1, "F_WRLCK"}, {2, "F_UNLCK"}));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(generic_add_lease) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(generic_add_lease) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -131,6 +151,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(generic_delete_lease) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(generic_delete_lease) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -152,6 +177,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.fl_downgrade_time());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(time_out_leases) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(time_out_leases) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

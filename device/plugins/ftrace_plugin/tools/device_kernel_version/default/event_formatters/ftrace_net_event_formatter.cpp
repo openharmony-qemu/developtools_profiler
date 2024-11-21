@@ -39,6 +39,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(napi_gro_frags_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(napi_gro_frags_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -59,6 +64,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(napi_gro_receive_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(napi_gro_receive_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -72,6 +82,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.name().c_str(), msg.skbaddr(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(net_dev_queue) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(net_dev_queue) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -94,6 +109,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(net_dev_start_xmit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(net_dev_start_xmit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -108,6 +128,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(net_dev_xmit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(net_dev_xmit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -121,6 +146,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.name().c_str(), msg.skbaddr(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(netif_receive_skb) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(netif_receive_skb) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -142,6 +172,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(netif_receive_skb_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(netif_receive_skb_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -155,6 +190,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.name().c_str(), msg.skbaddr(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(netif_rx) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(netif_rx) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -175,6 +215,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(netif_rx_entry) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(netif_rx_entry) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -193,6 +238,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.truesize(), msg.mac_header_valid(), msg.mac_header(), msg.nr_frags(), msg.gso_size(), msg.gso_type());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(netif_rx_ni_entry) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(netif_rx_ni_entry) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(workqueue_activate_work) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(workqueue_activate_work) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -47,6 +52,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(workqueue_execute_end) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(workqueue_execute_end) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -73,6 +83,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(workqueue_execute_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(workqueue_execute_start) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -101,6 +116,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(workqueue_queue_work) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(workqueue_queue_work) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

@@ -32,6 +32,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(rcu_utilization) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(rcu_utilization) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 } // namespace
