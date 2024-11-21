@@ -203,7 +203,7 @@ void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uin
     }
     uint64_t soStart = reinterpret_cast<uint64_t>(curRawData.addr);
     uint64_t soEnd = soStart + static_cast<uint64_t>(curRawData.mallocSize);
-    auto [iter, success] = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+    auto [iter, success] = g_stdLib.try_emplace(filePath, StandardLibrary(soStart, soEnd, filePath));
     if (!success) {
         if (iter->second.soBegin_ > soStart) {
             iter->second.soBegin_ = soStart;
