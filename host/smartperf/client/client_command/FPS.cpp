@@ -210,9 +210,9 @@ void FPS::ReadDataFromPipe(int fd)
 
 void FPS::CalcFpsAndJitters()
 {
-    const long long prevlastScreenTimestamp = 0;
-    long long onScreenTime = std::to_string(curScreenTimestamp / mod);
-    long long fpsCurTime = std::to_string(fpsInfo.curTime);
+    long long prevlastScreenTimestamp = 0;
+    long long onScreenTime = curScreenTimestamp / mod;
+    long long fpsCurTime = fpsInfo.curTime;
     if (onScreenTime == fpsCurTime) {
         fpsNum++;
         fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
