@@ -91,7 +91,6 @@ private:
     long long mod = 1e9;
     long long curScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
-    long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     int fifty = 50;
