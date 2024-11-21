@@ -625,6 +625,14 @@ class TestNativehook:
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
+    def test_response_library_startup_statistics(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
+
+    @pytest.mark.L0
+    def test_response_library_startup_nonstatistics(self):
+        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
+
+    @pytest.mark.L0
     def test_online_nonstatistics_match_filter(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, 1, MATCH_INTERVAL, False)
 

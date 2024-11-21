@@ -64,6 +64,7 @@ using OHOS::Developtools::NativeDaemon::buildArchType;
 static std::shared_ptr<HookSocketClient> g_hookClient {nullptr};
 static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
+std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
@@ -245,6 +246,7 @@ void* MallocHookStart(void* disableHookCallback)
     COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_mallocTimes = 0;
     g_hookClient.reset();
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
         return nullptr;
@@ -321,6 +323,7 @@ bool ohos_malloc_hook_on_end(void)
 
 bool FilterStandardSoIp(uint64_t ip)
 {
+    std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
     for (auto [soBegin, soEnd_]: g_filterStaLibRange) {
         if (ip >= soBegin && ip < soEnd_) {
             return true;
@@ -971,6 +974,11 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
     size_t len = strlen(filePath.c_str()) + 1;
+    if ((flags & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) && (IsLegalSoName(filePath)) &&
+        (filePath.find("ld-musl") != std::string::npos || filePath.find("libc++") != std::string::npos)) {
+        std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
+        ParseEvent(filePath, g_filterStaLibRange, curRawdata);
+    }
     if (strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len) != EOK) {
         return;
     }

@@ -132,7 +132,7 @@ static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
     } while (1);
 }
 
-static bool IsLegalSoName(const std::string &fileName)
+bool IsLegalSoName(const std::string &fileName)
 {
     if (fileName.front() == '[' or fileName.back() == ']' or
         std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 or
@@ -192,6 +192,37 @@ void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& 
     }
     for (const auto& [soName, stdLibrary]: g_stdLib) {
         filterStaLibRange.emplace_back(stdLibrary.soBegin_, stdLibrary.soEnd_);
+    }
+}
+
+void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
+                const StackRawData& curRawData)
+{
+    if (curRawData.addr == nullptr) {
+        return;
+    }
+    uint64_t soStart = reinterpret_cast<uint64_t>(curRawData.addr);
+    uint64_t soEnd = soStart + static_cast<uint64_t>(curRawData.mallocSize);
+    auto [iter, success] = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+    if (!success) {
+        if (iter->second.soBegin_ > soStart) {
+            iter->second.soBegin_ = soStart;
+        } else if (iter->second.soEnd_ < soEnd) {
+            iter->second.soEnd_ = soEnd;
+        }
+    }
+
+    auto it = filterStaLibRange.begin();
+    for (; it != filterStaLibRange.end(); ++it) {
+        if (it->first == iter->second.soBegin_) {
+            break;
+        }
+    }
+
+    if (it == filterStaLibRange.end()) {
+        filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
+    } else {
+        it->second = iter->second.soEnd_;
     }
 }
 
