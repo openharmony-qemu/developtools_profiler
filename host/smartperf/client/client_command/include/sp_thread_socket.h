@@ -88,6 +88,13 @@ public:
     }
     SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
     {
+        if (recvStr.find_last_of(":") == std::string::npos) {
+            if (recvStr.find("SP_daemon -editor") != std::string::npos) {
+                return OK;
+            } else {
+                return TOKEN_CHECK_FAILED;
+            }
+        }
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
         std::string tcpToken = SPTask::GetInstance().GetTcpToken();
