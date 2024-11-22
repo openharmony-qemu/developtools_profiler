@@ -163,7 +163,7 @@ static bool InitEnvParam(const char *serviceName)
         return true;
     }
     char persistName[QUERYNAME_LEN] = "persist.hiviewdfx.debugenv.";
-    return ConcatenateParamName(persistName, sizeof(onceName), serviceName) && InitHiDebugEnvParams(persistName);
+    return ConcatenateParamName(persistName, sizeof(persistName), serviceName) && InitHiDebugEnvParams(persistName);
 }
 #endif
 
