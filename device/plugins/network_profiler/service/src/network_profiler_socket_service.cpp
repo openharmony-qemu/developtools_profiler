@@ -27,11 +27,7 @@ NetworkProfilerSocketService::NetworkProfilerSocketService(std::shared_ptr<Netwo
     : networkMgr_(networkMgr)
 {
     serviceName_ = "NetworkProfilerService";
-    if (getuid() == 0) {
-        StartService(NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH);
-    } else {
-        StartService(NETWORK_PROFILER_UNIX_SOCKET_PATH);
-    }
+    StartService(NETWORK_PROFILER_UNIX_SOCKET_PATH);
 }
 
 NetworkProfilerSocketService::~NetworkProfilerSocketService()
