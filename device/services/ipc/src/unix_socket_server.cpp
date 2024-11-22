@@ -86,13 +86,14 @@ void UnixSocketServer::UnixSocketAccept()
         for (int32_t i = 0; i < nfds; ++i) {
             if (events[i].events & EPOLLIN) {
                 int clientSocket = accept(socketHandle_, nullptr, nullptr);
+                CHECK_TRUE(clientSocket != -1, NO_RETVAL, "Accept Failed");
                 PROFILER_LOG_INFO(LOG_CORE, "Accept A Client %d", clientSocket);
 
                 struct epoll_event clientEvt;
                 clientEvt.data.fd = clientSocket;
                 clientEvt.events = EPOLLHUP;
-                epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt);
-
+                CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt) != -1,
+                    NO_RETVAL, "Unix Socket Server Exit");
                 if (socketClients_.find(clientSocket) == socketClients_.end()) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
                                        socketClients_.size());

@@ -47,7 +47,7 @@ protected:
     bool OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response) override;
 
 private:
-    uint32_t requestIdAutoIncrease_;
+    std::atomic<uint32_t> requestIdAutoIncrease_;
     std::weak_ptr<ManagerInterface> pluginManager_;
 };
 
