@@ -49,8 +49,10 @@ static int NetworkPluginReportResultOptimize(RandomWriteCtx* randomWrite)
 static int NetworkPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    g_plugin->Stop();
-    g_plugin = nullptr;
+    if (g_plugin != nullptr) {
+        g_plugin->Stop();
+        g_plugin = nullptr;
+    }
     return 0;
 }
 

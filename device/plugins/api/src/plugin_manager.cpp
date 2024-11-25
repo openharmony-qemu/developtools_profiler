@@ -49,6 +49,10 @@ std::string ComputeFileSha256(const std::string& path)
         return "";
     }
     std::unique_ptr<FILE, decltype(fclose)*> fptr(fopen(realPath, "rb"), fclose);
+    if (fptr == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "fopen path: %s failed, errno = %d", realPath, errno);
+        return "";
+    }
     while ((nbytes = fread(buffer, 1, sizeof(buffer), fptr.get())) > 0) {
         SHA256_Update(&sha, buffer, nbytes);
     }
@@ -293,7 +297,7 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
         }
 
         if (plugin->GetSampleMode() == PluginModule::SampleMode::POLLING) {
-            if (idx > config.size()) {
+            if (idx >= config.size()) {
                 PROFILER_LOG_WARN(LOG_CORE, "%s:idx %zu out of size %zu", __func__, idx, config.size());
                 return false;
             }

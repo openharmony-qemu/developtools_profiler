@@ -73,7 +73,6 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
       isProtobufSerialize_(isProtobufSerialize)
 {
     runtime_instance = std::make_shared<VirtualRuntime>(hookConfig_);
-
     if (hookConfig_.malloc_free_matching_interval() > MAX_MATCH_INTERVAL) {
         PROFILER_LOG_INFO(LOG_CORE, "Not support set %d", hookConfig_.malloc_free_matching_interval());
         hookConfig_.set_malloc_free_matching_interval(MAX_MATCH_INTERVAL);
