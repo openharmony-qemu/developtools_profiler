@@ -57,9 +57,9 @@ ohos_unittest("plugin_module_api_ut") {
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
-    "graphic_2d:librender_service_client",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "hiview:libucollection_graphic",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
