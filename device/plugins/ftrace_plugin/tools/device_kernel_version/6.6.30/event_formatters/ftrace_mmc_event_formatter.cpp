@@ -23,19 +23,16 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    mmc_request_done, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mmc_request_done_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    mmc_request_done, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mmc_request_done_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.mmc_request_done_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
-            "mmc_request_done: %s: end struct mmc_request[%p]: cmd_opcode=%u "
-            "cmd_err=%d cmd_resp=0x%x 0x%x 0x%x 0x%x cmd_retries=%u "
-            "stop_opcode=%u stop_err=%d stop_resp=0x%x 0x%x 0x%x 0x%x "
-            "stop_retries=%u sbc_opcode=%u sbc_err=%d sbc_resp=0x%x 0x%x 0x%x "
-            "0x%x sbc_retries=%u bytes_xfered=%u data_err=%d tag=%d "
-            "can_retune=%u doing_retune=%u retune_now=%u need_retune=%d "
-            "hold_retune=%d retune_period=%u",
+            "mmc_request_done: %s: end struct mmc_request[%p]: cmd_opcode=%u cmd_err=%d cmd_resp=0x%x 0x%x 0x%x 0x%x "
+            "cmd_retries=%u stop_opcode=%u stop_err=%d stop_resp=0x%x 0x%x 0x%x 0x%x stop_retries=%u sbc_opcode=%u "
+            "sbc_err=%d sbc_resp=0x%x 0x%x 0x%x 0x%x sbc_retries=%u bytes_xfered=%u data_err=%d tag=%d can_retune=%u "
+            "doing_retune=%u retune_now=%u need_retune=%d hold_retune=%d retune_period=%u",
             msg.name().c_str(), msg.mrq(), msg.cmd_opcode(), msg.cmd_err(), msg.cmd_resp()[0], msg.cmd_resp()[1],
             msg.cmd_resp()[2], msg.cmd_resp()[3], msg.cmd_retries(), msg.stop_opcode(), msg.stop_err(),
             msg.stop_resp()[0], msg.stop_resp()[1], msg.stop_resp()[2], msg.stop_resp()[3], msg.stop_retries(),
@@ -44,35 +41,39 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.retune_now(), msg.need_retune(), msg.hold_retune(), msg.retune_period());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mmc_request_done) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(mmc_request_done) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mmc_request_done) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mmc_request_start,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mmc_request_start_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mmc_request_start_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.mmc_request_start_format();
-        char buffer[BUFFER_SIZE];
-        int len =
-            snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
-                       "mmc_request_start: %s: start struct mmc_request[%p]: cmd_opcode=%u "
-                       "cmd_arg=0x%x cmd_flags=0x%x cmd_retries=%u stop_opcode=%u "
-                       "stop_arg=0x%x stop_flags=0x%x stop_retries=%u sbc_opcode=%u "
-                       "sbc_arg=0x%x sbc_flags=0x%x sbc_retires=%u blocks=%u block_size=%u "
-                       "blk_addr=%u data_flags=0x%x tag=%d can_retune=%u doing_retune=%u "
-                       "retune_now=%u need_retune=%d hold_retune=%d retune_period=%u",
-                       msg.name().c_str(), msg.mrq(), msg.cmd_opcode(), msg.cmd_arg(), msg.cmd_flags(),
-                       msg.cmd_retries(), msg.stop_opcode(), msg.stop_arg(), msg.stop_flags(), msg.stop_retries(),
-                       msg.sbc_opcode(), msg.sbc_arg(), msg.sbc_flags(), msg.sbc_retries(), msg.blocks(), msg.blksz(),
-                       msg.blk_addr(), msg.data_flags(), msg.tag(), msg.can_retune(), msg.doing_retune(),
-                       msg.retune_now(), msg.need_retune(), msg.hold_retune(), msg.retune_period());
+        char buffer[BUFFER_SIZE] = {0};
+        int len = snprintf_s(
+            buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
+            "mmc_request_start: %s: start struct mmc_request[%p]: cmd_opcode=%u cmd_arg=0x%x cmd_flags=0x%x "
+            "cmd_retries=%u stop_opcode=%u stop_arg=0x%x stop_flags=0x%x stop_retries=%u sbc_opcode=%u sbc_arg=0x%x "
+            "sbc_flags=0x%x sbc_retires=%u blocks=%u block_size=%u blk_addr=%u data_flags=0x%x tag=%d can_retune=%u "
+            "doing_retune=%u retune_now=%u need_retune=%d hold_retune=%d retune_period=%u",
+            msg.name().c_str(), msg.mrq(), msg.cmd_opcode(), msg.cmd_arg(), msg.cmd_flags(), msg.cmd_retries(),
+            msg.stop_opcode(), msg.stop_arg(), msg.stop_flags(), msg.stop_retries(), msg.sbc_opcode(), msg.sbc_arg(),
+            msg.sbc_flags(), msg.sbc_retries(), msg.blocks(), msg.blksz(), msg.blk_addr(), msg.data_flags(), msg.tag(),
+            msg.can_retune(), msg.doing_retune(), msg.retune_now(), msg.need_retune(), msg.hold_retune(),
+            msg.retune_period());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mmc_request_start) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(mmc_request_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mmc_request_start) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

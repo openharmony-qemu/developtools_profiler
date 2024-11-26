@@ -25,35 +25,37 @@ const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     f2fs_sync_file_enter,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_f2fs_sync_file_enter_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_f2fs_sync_file_enter_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.f2fs_sync_file_enter_format();
-        char buffer[BUFFER_SIZE];
-        int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
-                             "f2fs_sync_file_enter: dev = (%d,%d), ino = %lu, pino = "
-                    "%lu, i_mode = 0x%x, i_size = %" PRIu64 ", i_nlink = %u, i_blocks = %" PRIu64
-                    ", i_advise = 0x%x",
-                             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
-                             (unsigned long)msg.ino(), (unsigned long)msg.pino(), msg.mode(), msg.size(),
-                             (unsigned int)msg.nlink(), msg.blocks(), (unsigned char)msg.advise());
+        char buffer[BUFFER_SIZE] = {0};
+        int len =
+            snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
+                       "f2fs_sync_file_enter: dev = (%d,%d), ino = %lu, pino = %lu, i_mode = 0x%x, i_size = %" PRIu64
+                    ", i_nlink = %u, i_blocks = %" PRIu64 ", i_advise = 0x%x",
+                       ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
+                       (unsigned long)msg.ino(), (unsigned long)msg.pino(), msg.mode(), msg.size(),
+                       (unsigned int)msg.nlink(), msg.blocks(), (unsigned char)msg.advise());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(f2fs_sync_file_enter) msg had "
-                              "be cut off in outfile");
+                              "maybe, the contents of print event(f2fs_sync_file_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(f2fs_sync_file_enter) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     f2fs_sync_file_exit,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_f2fs_sync_file_exit_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_f2fs_sync_file_exit_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.f2fs_sync_file_exit_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
-            "f2fs_sync_file_exit: dev = (%d,%d), ino = %lu, cp_reason: %s, "
-            "datasync = %d, ret = %d",
+            "f2fs_sync_file_exit: dev = (%d,%d), ino = %lu, cp_reason: %s, datasync = %d, ret = %d",
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
             (unsigned long)msg.ino(),
             __print_symbolic(msg.cp_reason(), {CP_NO_NEEDED, "no needed"}, {CP_NON_REGULAR, "non regular"},
@@ -64,42 +66,51 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.datasync(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(f2fs_sync_file_exit) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(f2fs_sync_file_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(f2fs_sync_file_exit) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    f2fs_write_begin, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_f2fs_write_begin_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    f2fs_write_begin, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_f2fs_write_begin_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.f2fs_write_begin_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "f2fs_write_begin: dev = (%d,%d), ino = %lu, pos = %" PRIu64 ", len = %u",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                              (unsigned long)msg.ino(), msg.pos(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(f2fs_write_begin) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(f2fs_write_begin) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(f2fs_write_begin) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    f2fs_write_end, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_f2fs_write_end_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    f2fs_write_end, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_f2fs_write_end_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.f2fs_write_end_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "f2fs_write_end: dev = (%d,%d), ino = %lu, pos = %" PRIu64 ", len = %u, copied = %u",
                              ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))),
                              (unsigned long)msg.ino(), msg.pos(), msg.len(), msg.copied());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(f2fs_write_end) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(f2fs_write_end) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(f2fs_write_end) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

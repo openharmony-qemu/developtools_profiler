@@ -25,38 +25,46 @@ const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_compaction_isolate_freepages,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_compaction_isolate_freepages_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_compaction_isolate_freepages_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.mm_compaction_isolate_freepages_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mm_compaction_isolate_freepages: range=(0x%" PRIx64 " ~ 0x%" PRIx64
-                                ") nr_scanned==0x%" PRIu64 " nr_taken==0x%" PRIu64 "",
+                             ") nr_scanned==0x%" PRIu64 " nr_taken==0x%" PRIu64 "",
                              msg.start_pfn(), msg.end_pfn(), msg.nr_scanned(), msg.nr_taken());
         if (len >= BUFFER_SIZE - 1) {
+            PROFILER_LOG_WARN(
+                LOG_CORE,
+                "maybe, the contents of print event(mm_compaction_isolate_freepages) msg had be cut off in outfile");
+        }
+        if (len < 0) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print "
-                              "event(mm_compaction_isolate_freepages) "
-                              "msg had be cut off in outfile");
+                              "the contents of event(mm_compaction_isolate_freepages) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_compaction_isolate_migratepages,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_compaction_isolate_migratepages_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_compaction_isolate_migratepages_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.mm_compaction_isolate_migratepages_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mm_compaction_isolate_migratepages: range=(0x%" PRIx64 " ~ 0x%" PRIx64
-                    ") nr_scanned==0x%" PRIu64 " nr_taken==0x%" PRIu64 "",
+                             ") nr_scanned==0x%" PRIu64 " nr_taken==0x%" PRIu64 "",
                              msg.start_pfn(), msg.end_pfn(), msg.nr_scanned(), msg.nr_taken());
         if (len >= BUFFER_SIZE - 1) {
+            PROFILER_LOG_WARN(
+                LOG_CORE,
+                "maybe, the contents of print event(mm_compaction_isolate_migratepages) msg had be cut off in outfile");
+        }
+        if (len < 0) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print "
-                              "event(mm_compaction_isolate_migratepages) "
-                              "msg had be cut off in outfile");
+                              "the contents of event(mm_compaction_isolate_migratepages) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

@@ -300,7 +300,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
             f.write("},")  # end of check function
             f.write("[] {} {{\n".format(Common.format_function_args))
             f.write("    auto msg = event.{}_format();\n".format(str.lower(event.name)))
-            f.write("    char buffer[BUFFER_SIZE];\n")
+            f.write("    char buffer[BUFFER_SIZE] = {0};\n")
             event.print_fmt = '"{}: {}'.format(event.name, event.print_fmt[2:])
             event.print_fmt = str.replace(event.print_fmt, "%zu", '%" PRIu64 "')
             event.print_fmt = str.replace(event.print_fmt, "%zd", '%" PRIu64 "')
@@ -401,7 +401,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                     "msg.src_cpu(), msg.src_nid(), msg.pid(), msg.tgid(), msg.ngid(), msg.dst_cpu(), msg.dst_nid()"
                 )
             elif event.name == "workqueue_execute_end":
-                event.print_fmt = '"workqueue_execute_end: work struct %p", msg.work()'
+                event.print_fmt = '"workqueue_execute_end: work struct 0x%" PRIx64 "", msg.work()'
             elif event.name == "workqueue_queue_work":
                 event.print_fmt = str.replace(
                     event.print_fmt, "REC->workqueue", "msg.workqueue()"
@@ -592,7 +592,7 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                 event.name == "mm_filemap_delete_from_page_cache"
             ):
                 event.print_fmt = (
-                    '"{}: dev %" PRIu64 ":%" PRIu64 " ino %p page=%s pfn=%" PRIu64 " '
+                    '"{}: dev %" PRIu64 ":%" PRIu64 " ino 0x%" PRIx64 " page=%s pfn=%" PRIu64 " '
                     'ofs=%" PRIu64 "", (((msg.s_dev()) >> 20)), (((msg.s_dev()) & ((1U << 20) - 1))), '
                     'msg.i_ino(), "0000000000000000", msg.pfn(), msg.index() << 12'.format(
                         event.name
@@ -606,22 +606,22 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                     event.print_fmt, "__get_bitmask(target_cpus)", "msg.target_cpus()"
                 )
             elif event.name == "mm_page_alloc":
-                print_fmt = (event.print_fmt[:78], event.print_fmt[3783:])
+                print_fmt = (event.print_fmt[:80], event.print_fmt[630:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "mm_page_alloc_extfrag":
-                print_fmt = (event.print_fmt[:181], event.print_fmt[3853:])
+                print_fmt = (event.print_fmt[:183], event.print_fmt[700:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "mm_page_alloc_zone_locked":
-                print_fmt = (event.print_fmt[:94], event.print_fmt[3799:])
+                print_fmt = (event.print_fmt[:96], event.print_fmt[646:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "mm_page_free":
-                print_fmt = (event.print_fmt[:49], event.print_fmt[3721:])
+                print_fmt = (event.print_fmt[:51], event.print_fmt[568:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "mm_page_free_batched":
-                print_fmt = (event.print_fmt[:56], event.print_fmt[3728:])
+                print_fmt = (event.print_fmt[:58], event.print_fmt[575:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "mm_page_pcpu_drain":
-                print_fmt = (event.print_fmt[:70], event.print_fmt[3742:])
+                print_fmt = (event.print_fmt[:72], event.print_fmt[589:])
                 event.print_fmt = page_str.join(print_fmt)
             elif event.name == "xprt_transmit":
                 event.print_fmt = (
@@ -730,6 +730,13 @@ class EventFormatterCodeGenerator(FtraceEventCodeGenerator):
                 '      PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event({}) msg had be cut off '
                 'in outfile");\n'.format(event.name)
             )
+            f.write("    }\n")
+            f.write("    if (len < 0) {\n")
+            f.write(
+                '      PROFILER_LOG_WARN(LOG_CORE, "the contents of event({}) msg snprintf_s format error '
+                '");\n'.format(event.name)
+            )
+            f.write("      return \"\";\n")
             f.write("    }\n")
             f.write("    return std::string(buffer);\n")
             f.write("});\n")  # end of format function
