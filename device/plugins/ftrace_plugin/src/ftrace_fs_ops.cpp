@@ -44,7 +44,7 @@ FtraceFsOps::~FtraceFsOps()
 
 std::string FtraceFsOps::GetFtraceRoot()
 {
-    std::vector<std::string> testRootPath = {"/sys/kernel/tracing", "/sys/kernel/debug/tracing"};
+    const std::vector<std::string> testRootPath = {"/sys/kernel/tracing", "/sys/kernel/debug/tracing"};
     for (auto iter = testRootPath.begin(); iter != testRootPath.end(); ++iter) {
         auto path = *iter + "/events";
         struct stat s;

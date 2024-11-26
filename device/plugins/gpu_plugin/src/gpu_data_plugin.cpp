@@ -112,7 +112,11 @@ template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 
     constexpr uint64_t nanoSeconds = 1000000000;
     struct timespec ts;
-    clock_gettime(CLOCK_BOOTTIME, &ts);
+    ret = clock_gettime(CLOCK_BOOTTIME, &ts);
+    if (ret == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "clock_gettime failed");
+        return;
+    }
     uint64_t boottime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
         static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
     gpuData.set_boottime(boottime);

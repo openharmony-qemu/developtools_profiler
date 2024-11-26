@@ -34,16 +34,11 @@ uint32_t RoundUp(uint32_t x, const int align)
 std::string StringReplace(std::string source, const std::string &from, const std::string &to)
 {
     size_t pos = 0;
-    std::string result;
-    // find
     while ((pos = source.find(from)) != std::string::npos) {
         // replace
-        result.append(source.substr(0, pos) + to);
-        source.erase(0, pos + from.length());
+        source.replace(pos, from.length(), to);
     }
-    // add last token
-    result.append(source);
-    return result;
+    return source;
 }
 
 size_t SubStringCount(const std::string &source, const std::string &sub)
