@@ -43,9 +43,10 @@
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
 
-static pthread_key_t g_disableHookFlag;
+static pthread_key_t g_disableHookFlag = 10000;
 static pthread_key_t g_hookTid;
-static pthread_key_t g_updateThreadNameCount;
+static pthread_key_t g_updateThreadNameCount = 10000;
+static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 
@@ -257,6 +258,34 @@ void* MallocHookStart(void* disableHookCallback)
     return nullptr;
 }
 
+void InitHookTidKey()
+{
+    if (pthread_key_create(&g_hookTid, nullptr) != 0) {
+        return;
+    }
+    pthread_setspecific(g_hookTid, nullptr);
+}
+
+bool InitTheadKey()
+{
+    if (g_disableHookFlag != 10000) { // 10000: initial value
+        pthread_key_delete(g_disableHookFlag);
+    }
+    if (pthread_key_create(&g_disableHookFlag, nullptr) != 0) {
+        return false;
+    }
+    pthread_setspecific(g_disableHookFlag, nullptr);
+    pthread_once(&g_onceFlag, InitHookTidKey);
+    if (g_updateThreadNameCount != 10000) { // 10000: initial value
+        pthread_key_delete(g_updateThreadNameCount);
+    }
+    if (pthread_key_create(&g_updateThreadNameCount, nullptr) != 0) {
+        return false;
+    }
+    pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
+    return true;
+}
+
 bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 {
     pthread_t threadStart;
@@ -266,12 +295,9 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     }
     pthread_detach(threadStart);
     g_hookPid = GetRealPid();
-    pthread_key_create(&g_disableHookFlag, nullptr);
-    pthread_setspecific(g_disableHookFlag, nullptr);
-    pthread_key_create(&g_hookTid, nullptr);
-    pthread_setspecific(g_hookTid, nullptr);
-    pthread_key_create(&g_updateThreadNameCount, nullptr);
-    pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
+    if (!InitTheadKey()) {
+        return false;
+    }
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
     int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
@@ -292,9 +318,6 @@ void* ohos_release_on_end(void*)
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
-    pthread_key_delete(g_disableHookFlag);
-    pthread_key_delete(g_hookTid);
-    pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
     return nullptr;
 }
