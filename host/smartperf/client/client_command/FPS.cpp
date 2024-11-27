@@ -196,46 +196,41 @@ void FPS::ReadDataFromPipe(int fd)
         LOGE("FPS::Failed to open file descriptor");
         return;
     }
+    std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        std::string str(tmp);
-        LOGD("FPS::dump time: %s", str.c_str());
-        curScreenTimestamp = 0;
-        std::stringstream sstream;
-        sstream << tmp;
+        LOGD("FPS::dump time: %s", tmp);
+        sstream.clear();
+        sstream.str(tmp);
         sstream >> curScreenTimestamp;
-        if (curScreenTimestamp == 0) {
-            continue;
+        if (curScreenTimestamp != 0) {
+            CalcFpsAndJitters();
         }
-        CalcFpsAndJitters();
     }
 }
 
 void FPS::CalcFpsAndJitters()
 {
-    std::string onScreenTime = std::to_string(curScreenTimestamp / mod);
-    std::string fpsCurTime = std::to_string(fpsInfo.curTime);
-    if (onScreenTime.find(fpsCurTime) != std::string::npos) {
+    long long prevlastScreenTimestamp = 0;
+    long long onScreenTime = curScreenTimestamp / mod;
+    long long fpsCurTime = fpsInfo.curTime;
+    if (onScreenTime == fpsCurTime) {
         fpsNum++;
         fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-    }
-    fpsInfo.fps = fpsNum;
-    if (onScreenTime == fpsCurTime) {
         long long jitter;
         if (prevScreenTimestamp != -1) {
             jitter = curScreenTimestamp - prevScreenTimestamp;
-            fpsInfo.jitters.push_back(jitter);
         } else {
             if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
                 jitter = curScreenTimestamp - prevlastScreenTimestamp;
-                fpsInfo.jitters.push_back(jitter);
             } else {
-                jitter = curScreenTimestamp - curScreenTimestamp / mod * mod;
-                fpsInfo.jitters.push_back(jitter);
+                jitter = curScreenTimestamp % mod;
             }
         }
+        fpsInfo.jitters.push_back(jitter);
         prevScreenTimestamp = curScreenTimestamp;
         prevlastScreenTimestamp = curScreenTimestamp;
     }
+    fpsInfo.fps = fpsNum;
 }
 
 void FPS::SetRkFlag()
