@@ -40,7 +40,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
-        case MessageType::GET_LOW_POWER_FPS:
         case MessageType::GET_CUR_FPS:
             profiler = &ProfilerFPS::GetInstance();
             break;
