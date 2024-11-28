@@ -67,13 +67,13 @@ public:
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
     void CalcFpsAndJitters();
+    long long CalculateJitter();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     FpsInfoProfiler GetFrameInfoFromMap(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
-    void GetCurrentTime(int sleepNum);
     void GetOhFps(std::vector<std::string> v);
     void SetRkFlag();
     std::string GetSurface();

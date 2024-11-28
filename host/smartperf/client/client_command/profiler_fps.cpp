@@ -149,7 +149,7 @@ void ProfilerFPS::GetTimeDiff()
         } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockMonotonicRaw =std::stoll(strRealTime);
+            clockMonotonicRaw = std::stoll(strRealTime);
         }
     }
     if (pclose(fd) == -1) {
@@ -376,21 +376,27 @@ void ProfilerFPS::CalcFpsAndJitters()
         } else {
             fpsInfo.fps = fpsNum;
             fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-            long long jitter;
-            if (prevScreenTimestamp != -1) {
-                jitter = curScreenTimestamp - prevScreenTimestamp;
-            } else {
-                if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
-                    jitter = curScreenTimestamp - prevlastScreenTimestamp;
-                } else {
-                    jitter = curScreenTimestamp % mod;
-                }
-            }
+            long long jitter = CalculateJitter();
             fpsInfo.jitters.push_back(jitter);
             prevScreenTimestamp = curScreenTimestamp;
             prevlastScreenTimestamp = curScreenTimestamp;
         }
     }
+}
+
+long long ProfilerFPS::CalculateJitter()
+{
+    long long jitter;
+    if (prevScreenTimestamp == -1) {
+        if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+            jitter = curScreenTimestamp - prevlastScreenTimestamp;
+        } else {
+            jitter = curScreenTimestamp % mod;
+        }
+    } else {
+        jitter = curScreenTimestamp - prevScreenTimestamp;
+    }
+    return jitter;
 }
 
 void ProfilerFPS::GetOhFps(std::vector<std::string> v)
