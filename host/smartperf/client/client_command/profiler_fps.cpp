@@ -353,15 +353,12 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        long long NewScreenTimestamp = 0;
-        if (sscanf(tmp, "%lld", &NewScreenTimestamp) != 1 || NewScreenTimestamp == 0) {
+        long long curScreenTimestamp = 0;
+        if (sscanf(tmp, "%lld", &curScreenTimestamp) != 1 || curScreenTimestamp == 0) {
             continue;
         }
-        LOGD("ProfilerFPS dump time: %lld", NewScreenTimestamp);
-        if (curScreenTimestamp != newScreenTimestamp) {
-            curScreenTimestamp = newScreenTimestamp;
-            CalcFpsAndJitters(curScreenTimestamp);
-        }
+        LOGD("ProfilerFPS dump time: %lld", curScreenTimestamp);
+        CalcFpsAndJitters(curScreenTimestamp);
     }
     if (pclose(fp) == -1) {
         LOGE("Error: Failed to close file");
@@ -371,7 +368,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     return fpsInfo;
 }
 
-void ProfilerFPS::CalcFpsAndJitters()
+void ProfilerFPS::CalcFpsAndJitters(long long curScreenTimestamp)
 {
     long long prevlastScreenTimestamp = 0;
     long long onScreenTime = curScreenTimestamp / mod;
