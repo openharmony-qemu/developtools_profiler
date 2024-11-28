@@ -216,6 +216,7 @@ void FPS::CalcFpsAndJitters()
     long long fpsCurTime = fpsInfo.curTime;
     if (onScreenTime == fpsCurTime) {
         fpsNum++;
+        fpsInfo.fps = fpsNum;
         fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
         long long jitter;
         if (prevScreenTimestamp != -1) {
@@ -231,7 +232,6 @@ void FPS::CalcFpsAndJitters()
         prevScreenTimestamp = curScreenTimestamp;
         prevlastScreenTimestamp = curScreenTimestamp;
     }
-    fpsInfo.fps = fpsNum;
 }
 
 void FPS::SetRkFlag()
