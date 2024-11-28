@@ -23,33 +23,37 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    sys_enter, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_sys_enter_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    sys_enter, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_sys_enter_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.sys_enter_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "sys_enter: NR %" PRIu64 " (%" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ", %" PRIx64 ")",
             msg.id(), msg.args()[0], msg.args()[1], msg.args()[2], msg.args()[3], msg.args()[4], msg.args()[5]);
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(sys_enter) msg "
-                              "had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(sys_enter) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    sys_exit, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_sys_exit_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    sys_exit, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_sys_exit_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.sys_exit_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "sys_exit: NR %" PRIu64 " = %" PRIu64 "", msg.id(),
                              msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(sys_exit) msg "
-                              "had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(sys_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(sys_exit) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

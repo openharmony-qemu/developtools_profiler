@@ -23,13 +23,13 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    cpuhp_enter, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_cpuhp_enter_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    cpuhp_enter, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_cpuhp_enter_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.cpuhp_enter_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = 0;
         std::string functionStr = "";
-        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.fun()) > 0) {
             functionStr = kernelSymbols[msg.fun()];
         }
@@ -42,37 +42,42 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cpuhp_enter) msg "
-                              "had be cut off in outfile");
+                              "maybe, the contents of print event(cpuhp_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(cpuhp_enter) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    cpuhp_exit, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_cpuhp_exit_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    cpuhp_exit, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_cpuhp_exit_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.cpuhp_exit_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "cpuhp_exit:  cpu: %04u  state: %3d step: %3d ret: %d",
                        msg.cpu(), msg.state(), msg.idx(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cpuhp_exit) msg "
-                              "had be cut off in outfile");
+            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(cpuhp_exit) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     cpuhp_multi_enter,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_cpuhp_multi_enter_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_cpuhp_multi_enter_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.cpuhp_multi_enter_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = 0;
         std::string functionStr = "";
-        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.fun()) > 0) {
             functionStr = kernelSymbols[msg.fun()];
         }
@@ -87,8 +92,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(cpuhp_multi_enter) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(cpuhp_multi_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(cpuhp_multi_enter) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

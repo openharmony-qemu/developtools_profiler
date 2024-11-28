@@ -23,15 +23,18 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    rcu_utilization, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_rcu_utilization_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    rcu_utilization, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_rcu_utilization_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.rcu_utilization_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "rcu_utilization: %s", msg.s().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(rcu_utilization) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(rcu_utilization) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(rcu_utilization) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });

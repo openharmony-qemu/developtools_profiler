@@ -24,117 +24,138 @@ const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     dma_fence_destroy,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_destroy_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_destroy_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_destroy_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_destroy: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_destroy) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_destroy) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_destroy) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    dma_fence_emit, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_emit_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    dma_fence_emit, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_emit_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_emit_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_emit: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_emit) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_emit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_emit) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     dma_fence_enable_signal,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_enable_signal_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_enable_signal_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_enable_signal_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_enable_signal: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_enable_signal) msg "
-                              "had be cut off in outfile");
+            PROFILER_LOG_WARN(
+                LOG_CORE, "maybe, the contents of print event(dma_fence_enable_signal) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_enable_signal) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    dma_fence_init, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_init_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    dma_fence_init, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_init_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_init_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_init: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_init) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_init) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_init) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     dma_fence_signaled,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_signaled_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_signaled_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_signaled_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_signaled: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_signaled) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_signaled) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_signaled) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     dma_fence_wait_end,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_wait_end_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_wait_end_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_wait_end_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_wait_end: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_wait_end) "
-                              "msg had be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_wait_end) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_wait_end) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     dma_fence_wait_start,
-    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_dma_fence_wait_start_format(); },
-    [](const ForStandard::FtraceEvent &event) -> std::string {
+    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_dma_fence_wait_start_format(); },
+    [](const ForStandard::FtraceEvent& event) -> std::string {
         auto msg = event.dma_fence_wait_start_format();
-        char buffer[BUFFER_SIZE];
+        char buffer[BUFFER_SIZE] = {0};
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "dma_fence_wait_start: driver=%s timeline=%s context=%u seqno=%u", msg.driver().c_str(),
                              msg.timeline().c_str(), msg.context(), msg.seqno());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(dma_fence_wait_start) msg had "
-                              "be cut off in outfile");
+                              "maybe, the contents of print event(dma_fence_wait_start) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(dma_fence_wait_start) msg snprintf_s format error ");
+            return "";
         }
         return std::string(buffer);
     });
