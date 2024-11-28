@@ -202,9 +202,10 @@ void FPS::ReadDataFromPipe(int fd)
         sstream.clear();
         sstream.str(tmp);
         sstream >> curScreenTimestamp;
-        if (curScreenTimestamp != 0) {
-            CalcFpsAndJitters();
+        if (curScreenTimestamp == 0) {
+            continue;
         }
+        CalcFpsAndJitters();
     }
 }
 
