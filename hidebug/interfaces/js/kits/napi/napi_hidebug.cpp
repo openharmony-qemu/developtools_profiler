@@ -932,7 +932,7 @@ static bool JudgeValueRange(const std::string &type, int32_t value)
     return false;
 }
 
-static bool GetAndCheckFilenameParamLength(napi_env &env, napi_value *argv, size_t &bufLen)
+static bool CheckFilenameParamLength(napi_env &env, napi_value *argv, size_t &bufLen)
 {
     napi_status status = napi_get_value_string_utf8(env, argv[FIRST_POS], nullptr, 0, &bufLen);
     if (status != napi_ok) {
@@ -947,7 +947,7 @@ static bool GetAndCheckFilenameParamLength(napi_env &env, napi_value *argv, size
     return true;
 }
 
-static bool GetAndCheckResourceType(napi_env &env, napi_value *argv, size_t &bufLen, std::string &type)
+static bool CheckResourceType(napi_env &env, napi_value *argv, size_t &bufLen, std::string &type)
 {
     std::vector<char> buf(bufLen + 1, 0);
     napi_get_value_string_utf8(env, argv[FIRST_POS], buf.data(), bufLen + 1, &bufLen);
@@ -964,7 +964,7 @@ static bool GetAndCheckResourceType(napi_env &env, napi_value *argv, size_t &buf
     return true;
 }
 
-static bool GetAndCheckInputValue(napi_env &env, napi_value *argv, std::string &type, int32_t &value)
+static bool CheckInputValue(napi_env &env, napi_value *argv, std::string &type, int32_t &value)
 {
     if (napi_get_value_int32(env, argv[SECOND_POS], &value) != napi_ok || value < 0) {
         HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
@@ -995,13 +995,13 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
         return false;
     }
     size_t bufLen = 0;
-    if (!GetAndCheckFilenameParamLength(env, argv, bufLen)) {
+    if (!CheckFilenameParamLength(env, argv, bufLen)) {
         return false;
     }
-    if (!GetAndCheckResourceType(env, argv, bufLen, type)) {
+    if (!CheckResourceType(env, argv, bufLen, type)) {
         return false;
     }
-    if (!GetAndCheckInputValue(env, argv, type, value)) {
+    if (!CheckInputValue(env, argv, type, value)) {
         return false;
     }
     if (napi_get_value_bool(env, argv[THIRD_POS], &enabledDebugLog) != napi_ok) {
