@@ -97,6 +97,7 @@ private:
     int number = 2;
     bool refresh = false;
     long long mod = 1e9;
+    long long prevlastScreenTimestamp = 0;
     long long curScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
     int fpsNum = 0;
