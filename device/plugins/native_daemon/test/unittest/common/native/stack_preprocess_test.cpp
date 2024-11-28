@@ -24,9 +24,8 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
-    constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
-    constexpr static uint32_t MAX_MATCH_CNT = 1000;
-}
+constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
+constexpr static uint32_t MAX_MATCH_CNT = 1000;
 
 class StackPreprocessTest : public testing::Test {
 public:
@@ -49,23 +48,6 @@ void StackPreprocessTest::SetUp(void)
 
 void StackPreprocessTest::TearDown(void)
 {
-}
-
-long WriteFunc(WriterStruct* writer, const void* data, size_t size)
-{
-    if (writer == nullptr || data == nullptr || size <= 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-bool FlushFunc(WriterStruct* writer)
-{
-    if (writer == nullptr) {
-        return false;
-    }
-    return true;
 }
 
 /*
@@ -106,4 +88,5 @@ HWTEST_F(StackPreprocessTest, StackPreprocessTest003, TestSize.Level1)
     FILE* fpHookData = nullptr;
     StackPreprocess preprocess(nullptr, hookConfig, 0, fpHookData);
     ASSERT_TRUE(hookConfig.save_file() && fpHookData == nullptr);
+}
 }

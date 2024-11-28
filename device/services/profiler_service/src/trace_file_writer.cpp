@@ -39,7 +39,7 @@ constexpr int GB_TO_BYTE = (1024 * 1024 * 1024);
 constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
 constexpr size_t DEFULT_PAGES = 64 * 256; // 64M
-const int PIECE_HEAD_LEN = 4;
+constexpr int PIECE_HEAD_LEN = 4;
 } // namespace
 
 TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0) {}

@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <malloc.h>
 #include "hook_socket_client.h"
 
 #include "common.h"
@@ -26,6 +25,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 
