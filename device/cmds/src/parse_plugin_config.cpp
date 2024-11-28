@@ -97,7 +97,7 @@ std::string ParsePluginConfig::GetPluginsConfig(std::string& content)
 bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
     bool ret = false;
-    if (pluginConfigMap.count(pluginName) == 0) {
+    if (pluginConfigMap.find(pluginName) == pluginConfigMap.end()) {
         printf("unknown plugin: %s\n", pluginName.c_str());
         return ret;
     }
