@@ -72,7 +72,7 @@ std::string Dubai::CallMoveDubaiDbFinished()
     return dubaiMoveFinish;
 }
 
-bool IsFileAccessible(const std::string &filename)
+bool Dubai::IsFileAccessible(const std::string &filename)
 {
     std::ifstream file(filename);
     return file.good();
