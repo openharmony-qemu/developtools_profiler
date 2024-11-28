@@ -663,7 +663,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             isFoundAppName = true;
         }
         if (isFoundAppName && strstr(buf, "app state")) {
-            tag = IsFindForeGround(line);
+            tag = IsFindForeGround(std::string(buf));
             isFoundAppName = false;
             break;
         }
