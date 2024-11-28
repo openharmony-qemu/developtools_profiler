@@ -34,6 +34,7 @@ public:
     bool TakeScreenCap(const std::string &savePath) const;
     void SocketMessage();
     long long GetCurTimes();
+    void SetCollectionNum();
 private:
     Capture() {};
     Capture(const Capture &);

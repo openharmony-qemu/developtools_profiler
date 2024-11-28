@@ -210,7 +210,6 @@ public:
         } else {
             spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
         }
-        SPTask::GetInstance().SaveScreenShot();
 
         spSocket.Send("startRecord::True");
     }

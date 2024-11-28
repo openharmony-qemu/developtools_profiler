@@ -192,5 +192,9 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     (void)fclose(fp);
     return true;
 }
+void Capture::SetCollectionNum()
+{
+    callNum = 0;
+}
 }
 }

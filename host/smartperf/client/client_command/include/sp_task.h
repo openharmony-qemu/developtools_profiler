@@ -94,7 +94,6 @@ public:
     ErrCode StartRecord();
     ErrCode StopRecord();
     bool GetRecordState();
-    void SaveScreenShot();
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);
     std::string GetTcpToken();
@@ -131,6 +130,7 @@ private:
     bool screenshotFlag = false;
     time_t realTimeStart = 0;
     std::string tcpToken = "";
+    long long nextTime = 0;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
