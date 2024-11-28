@@ -317,7 +317,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     task_thread.join()
 
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     if response_library:
         return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
@@ -383,7 +383,7 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
         i += 1
     task_thread.join()
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
     
     first_process = False
     if response_library:
@@ -478,7 +478,7 @@ def check_sa_result():
 
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0)
 
