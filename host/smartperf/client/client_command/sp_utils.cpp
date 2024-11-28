@@ -647,7 +647,7 @@ void SPUtils::GetCurrentTime(int num, int prevTime)
         }
     }
 }
-bool SPUtils::IsForeGround(const std::string &pkg)
+bool SPUtils::IsForeGround(std::string &pkg)
 {
     bool isFoundAppName = false;
     const std::string cmd = "aa dump -l";
@@ -659,13 +659,16 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     }
     bool tag = false;
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        if (!isFoundAppName && strstr(buf, appLine.c_str())) {
+        std::string line(buf);
+        if (line.find(appLine) != std::string::npos) {
             isFoundAppName = true;
         }
-        if (isFoundAppName && strstr(buf, "app state")) {
-            tag = IsFindForeGround(std::string(buf));
-            isFoundAppName = false;
-            break;
+        if (isFoundAppName) {
+            if (line.find("app state") != std::string::npos) {
+                tag = IsFindForeGround(line);
+                isFoundAppName = false;
+                break;
+            }
         }
     }
     if (pclose(fd) == -1) {

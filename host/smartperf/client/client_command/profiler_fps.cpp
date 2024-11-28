@@ -129,7 +129,7 @@ void ProfilerFPS::GetTimeDiff()
 {
     long long clockRealTime = 0;
     long long clockMonotonicRaw = 0;
-    int two = 2;
+    const int two = 2;
     std::string strRealTime;
     const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
@@ -137,23 +137,19 @@ void ProfilerFPS::GetTimeDiff()
         return;
     }
     char buf[1024] = {'\0'};
+    std::vector<std::string> params;
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
-        size_t posRealTime = line.find("CLOCK_REALTIME");
-        size_t posMonotonicRaw = line.find("CLOCK_MONOTONIC_RAW");
-        if (posRealTime != std::string::npos && clockRealTime == 0) {
-            auto realTimeStr = line.substr(line.find(' ') + 1);
-            realTimeStr.erase(realTimeStr.find('.'));
-            clockRealTime = std::stoll(realTimeStr);
+        SPUtils::StrSplit(line, " ", params);
+        if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockRealTime = std::stoll(strRealTime);
             currRealTime = clockRealTime;
-        } else if (posMonotonicRaw != std::string::npos && clockMonotonicRaw == 0) {
-            auto monotonicRawStr = line.substr(line.find(' ') + 1);
-            monotonicRawStr.erase(monotonicRawStr.find('.'));
-            clockMonotonicRaw = std::stoll(monotonicRawStr);
-        }
-
-        if (clockRealTime != 0 && clockMonotonicRaw != 0) {
-            break;
+        } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockMonotonicRaw =std::stoll(strRealTime);
         }
     }
     if (pclose(fd) == -1) {
@@ -333,7 +329,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     tmpFps.fps = 0;
     fpsInfo = tmpFps;
     FILE *fp;
-    static char tmp[1024];
+    char tmp[1024];
     GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     if (cmd.empty()) {
@@ -352,12 +348,14 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
+    std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        long long curScreenTimestamp = 0;
-        if (sscanf(tmp, "%lld", &curScreenTimestamp) != 1 || curScreenTimestamp == 0) {
+        sstream.clear();
+        sstream.str(tmp);
+        sstream >> curScreenTimestamp;
+        if (curScreenTimestamp == 0) {
             continue;
         }
-        LOGD("ProfilerFPS dump time: %lld", curScreenTimestamp);
         CalcFpsAndJitters(curScreenTimestamp);
     }
     if (pclose(fp) == -1) {
@@ -368,7 +366,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     return fpsInfo;
 }
 
-void ProfilerFPS::CalcFpsAndJitters(const long long &curScreenTimestamp)
+void ProfilerFPS::CalcFpsAndJitters()
 {
     long long prevlastScreenTimestamp = 0;
     long long onScreenTime = curScreenTimestamp / mod;
@@ -378,6 +376,8 @@ void ProfilerFPS::CalcFpsAndJitters(const long long &curScreenTimestamp)
         if (isLowCurFps) {
             fpsInfo.fps = fpsNum;
         } else {
+            fpsInfo.fps = fpsNum;
+            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter;
             if (prevScreenTimestamp != -1) {
                 jitter = curScreenTimestamp - prevScreenTimestamp;
@@ -388,10 +388,7 @@ void ProfilerFPS::CalcFpsAndJitters(const long long &curScreenTimestamp)
                     jitter = curScreenTimestamp % mod;
                 }
             }
-            fpsInfo.fps = fpsNum;
             fpsInfo.jitters.push_back(jitter);
-            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-
             prevScreenTimestamp = curScreenTimestamp;
             prevlastScreenTimestamp = curScreenTimestamp;
         }

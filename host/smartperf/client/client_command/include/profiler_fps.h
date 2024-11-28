@@ -66,7 +66,7 @@ public:
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
-    void CalcFpsAndJitters(const long long &curScreenTimestamp);
+    void CalcFpsAndJitters();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     FpsInfoProfiler GetFrameInfoFromMap(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
@@ -97,6 +97,7 @@ private:
     int number = 2;
     bool refresh = false;
     long long mod = 1e9;
+    long long curScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
     int fpsNum = 0;
     bool isFirstResult = false;

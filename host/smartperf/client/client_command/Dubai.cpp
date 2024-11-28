@@ -14,6 +14,8 @@
  */
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <unistd.h>
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
 #include "include/sp_log.h"

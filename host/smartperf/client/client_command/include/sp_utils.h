@@ -151,7 +151,7 @@ bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string,
 bool IsHmKernel();
 std::string GetCpuNum();
 void GetCurrentTime(int num, int prevTime);
-bool IsForeGround(const std::string &pkg);
+bool IsForeGround(std::string &pkg);
 bool IsFindForeGround(const std::string &line);
 bool IsFindAbilist();
 void SetRkFlag();
