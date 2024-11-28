@@ -368,7 +368,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     return fpsInfo;
 }
 
-void ProfilerFPS::CalcFpsAndJitters(long long curScreenTimestamp)
+void ProfilerFPS::CalcFpsAndJitters(const long long &curScreenTimestamp)
 {
     long long prevlastScreenTimestamp = 0;
     long long onScreenTime = curScreenTimestamp / mod;
