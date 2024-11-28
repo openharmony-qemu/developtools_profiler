@@ -292,9 +292,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     if (ohFlag) {
         uniteLayer = GetSurface();
     }
-    bool isSceneboardPkg = pkgName.find("sceneboard") != std::string::npos;
-    bool isGameSurfaceOrSceneboard = isGameSurface || isSceneboardPkg; 
-    if (pkgName.empty() || isGameSurfaceOrSceneboard) {
+    if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos || isGameSurface) {
         LOGD("ProfilerFPS.pkgName: %s", pkgName.c_str());
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
         fpsInfoMax = GetSurfaceFrame(uniteLayer);
@@ -356,7 +354,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
         if (curScreenTimestamp == 0) {
             continue;
         }
-        CalcFpsAndJitters(curScreenTimestamp);
+        CalcFpsAndJitters();
     }
     if (pclose(fp) == -1) {
         LOGE("Error: Failed to close file");
