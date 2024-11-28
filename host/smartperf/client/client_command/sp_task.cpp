@@ -439,9 +439,6 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-    if (!vmap.empty()) {
-        vmap.erase(vmap.begin());
-    }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 }
 void SPTask::StopGpuCounterRecv()
