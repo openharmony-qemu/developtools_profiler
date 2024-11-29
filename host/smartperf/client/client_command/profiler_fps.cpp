@@ -129,7 +129,7 @@ void ProfilerFPS::GetTimeDiff()
 {
     long long clockRealTime = 0;
     long long clockMonotonicRaw = 0;
-    int two = 2;
+    const int two = 2;
     std::string strRealTime;
     const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
     FILE *fd = popen(cmd.c_str(), "r");
@@ -137,19 +137,19 @@ void ProfilerFPS::GetTimeDiff()
         return;
     }
     char buf[1024] = {'\0'};
+    std::vector<std::string> params;
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line = buf;
-        std::vector<std::string> params;
+        std::string line(buf);
         SPUtils::StrSplit(line, " ", params);
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockRealTime = SPUtilesTye::StringToSometype<long long>(strRealTime);
+            clockRealTime = std::stoll(strRealTime);
             currRealTime = clockRealTime;
         } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockMonotonicRaw = SPUtilesTye::StringToSometype<long long>(strRealTime);
+            clockMonotonicRaw = std::stoll(strRealTime);
         }
     }
     if (pclose(fd) == -1) {
@@ -271,6 +271,7 @@ std::string ProfilerFPS::GetSurface()
 
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
+    FpsInfoProfiler fpsInfoMax;
     processFlag = false;
     fpsInfoMax.fps = 0;
     std::string uniteLayer;
@@ -322,16 +323,11 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(std::string name)
 
 FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
 {
-    static std::map<std::string, FpsInfoProfiler> fpsMap;
-    if (fpsMap.count(name) == 0) {
-        FpsInfoProfiler tmp;
-        tmp.fps = 0;
-        fpsMap[name] = tmp;
-    }
-    fpsInfo = fpsMap[name];
-    fpsInfo.fps = 0;
+    FpsInfoProfiler tmpFps;
+    tmpFps.fps = 0;
+    fpsInfo = tmpFps;
     FILE *fp;
-    static char tmp[1024];
+    char tmp[1024];
     GetTimeDiff();
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     if (cmd.empty()) {
@@ -350,12 +346,10 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("ProfilerFPS fpsInfo.curTime: %d", fpsInfo.curTime);
+    std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        std::string str(tmp);
-        LOGD("ProfilerFPS dump time: %s", str.c_str());
-        curScreenTimestamp = 0;
-        std::stringstream sstream;
-        sstream << tmp;
+        sstream.clear();
+        sstream.str(tmp);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -372,30 +366,36 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(std::string name)
 
 void ProfilerFPS::CalcFpsAndJitters()
 {
-    std::string onScreenTime = std::to_string(curScreenTimestamp / mod);
-    std::string fpsCurTime = std::to_string(fpsInfo.curTime);
-    if (onScreenTime.find(fpsCurTime) != std::string::npos) {
-        fpsNum++;
-        fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-    }
-    fpsInfo.fps = fpsNum;
+    long long onScreenTime = curScreenTimestamp / mod;
+    long long fpsCurTime = fpsInfo.curTime;
     if (onScreenTime == fpsCurTime) {
-        long long jitter;
-        if (prevScreenTimestamp != -1) {
-            jitter = curScreenTimestamp - prevScreenTimestamp;
-            fpsInfo.jitters.push_back(jitter);
+        fpsNum++;
+        if (isLowCurFps) {
+            fpsInfo.fps = fpsNum;
         } else {
-            if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
-                jitter = curScreenTimestamp - prevlastScreenTimestamp;
-                fpsInfo.jitters.push_back(jitter);
-            } else {
-                jitter = curScreenTimestamp - curScreenTimestamp / mod * mod;
-                fpsInfo.jitters.push_back(jitter);
-            }
+            fpsInfo.fps = fpsNum;
+            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
+            long long jitter = CalculateJitter();
+            fpsInfo.jitters.push_back(jitter);
+            prevScreenTimestamp = curScreenTimestamp;
+            prevlastScreenTimestamp = curScreenTimestamp;
         }
-        prevScreenTimestamp = curScreenTimestamp;
-        prevlastScreenTimestamp = curScreenTimestamp;
     }
+}
+
+long long ProfilerFPS::CalculateJitter()
+{
+    long long jitter;
+    if (prevScreenTimestamp == -1) {
+        if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+            jitter = curScreenTimestamp - prevlastScreenTimestamp;
+        } else {
+            jitter = curScreenTimestamp % mod;
+        }
+    } else {
+        jitter = curScreenTimestamp - prevScreenTimestamp;
+    }
+    return jitter;
 }
 
 void ProfilerFPS::GetOhFps(std::vector<std::string> v)
@@ -425,13 +425,6 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
 void ProfilerFPS::SetGameLayer(std::string isGameView)
 {
     isGameLayer = std::move(isGameView);
-}
-
-FpsInfoProfiler ProfilerFPS::selfRerderLayers(const std::string &gameLayer)
-{
-    OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
-    fpsInfoMax = GetSurfaceFrame(gameLayer);
-    return fpsInfoMax;
 }
 
 std::string ProfilerFPS::GetGameLayer()

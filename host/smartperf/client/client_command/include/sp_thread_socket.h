@@ -21,6 +21,7 @@
 #include "sp_task.h"
 #include "control_call_cmd.h"
 #include "startup_delay.h"
+#include "profiler_fps.h"
 #include "sp_log.h"
 #include "common.h"
 #include "heartbeat.h"
@@ -30,7 +31,6 @@ namespace SmartPerf {
 class SpThreadSocket {
 public:
     static bool flagRunning;
-    static std::string resultFPS;
     enum SocketConnectType {
         CMD_SOCKET,
         EDITOR_SOCKET,
@@ -209,7 +209,6 @@ public:
         } else {
             spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
         }
-        SPTask::GetInstance().SaveScreenShot();
 
         spSocket.Send("startRecord::True");
     }
@@ -335,19 +334,12 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
-        if (iterator->first == MessageType::GET_LOW_POWER_FPS) {
-            for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
-                if (iter->first != "fpsJitters") {
-                    std::string temp = iter->second + "@@";
-                    resultFPS += std::string(temp.c_str());
-                }
-            }
-        } else if (iterator->first == MessageType::GET_CUR_FPS) {
+        if (iterator->first == MessageType::GET_CUR_FPS) {
+            ProfilerFPS::isLowCurFps = true;
             std::string resultfps = "vfps||";
             for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
                 if (iter->first != "fpsJitters") {
                     std::string temp = iter->second + "@@";
-                    resultFPS += std::string(temp.c_str());
                     resultfps += std::string(temp.c_str());
                 }
             }
@@ -410,9 +402,6 @@ public:
                 SpProfilerFactory::SetProfilerPkg(retCode);
             }
             spSocket.Sendto(retCode);
-        } else if (iterator->first == MessageType::FPS_STOP) {
-            spSocket.Sendto(resultFPS);
-            resultFPS = "FPS||";
         } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
             retCode = SplitMsg(recvBuf);
             SpProfilerFactory::SetProfilerGameLayer(retCode);
@@ -439,7 +428,6 @@ public:
     }
 };
 bool SpThreadSocket::flagRunning = false;
-std::string SpThreadSocket::resultFPS = "FPS||";
 }
 }
 #endif

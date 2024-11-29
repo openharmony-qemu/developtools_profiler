@@ -363,7 +363,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     gpuCounter.GetGpuRealtimeData(dataMap);
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
-    long long nextTime = SPUtils::GetCurTime();
+    nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
     if (costTime < curTaskInfo.freq) {
@@ -439,9 +439,6 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-    if (!vmap.empty()) {
-        vmap.erase(vmap.begin());
-    }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 }
 void SPTask::StopGpuCounterRecv()
@@ -620,13 +617,23 @@ bool SPTask::GetRecordState()
 ErrCode SPTask::StartRecord()
 {
     startTime = SPUtils::GetCurTime();
+    while (startTime > nextTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     InitDataFile();
+    screenshotFlag = true;
     recordState = true;
     return ErrCode::OK;
 }
 
 ErrCode SPTask::StopRecord()
 {
+    long long stopRecordTime = SPUtils::GetCurTime();
+    while (stopRecordTime > nextTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    screenshotFlag = false;
+    recordState = false;
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (isInit) {
@@ -640,16 +647,9 @@ ErrCode SPTask::StopRecord()
     vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
-
-    recordState = false;
-    screenshotFlag = false;
+    Capture::GetInstance().SetCollectionNum();
 
     return ErrCode::OK;
-}
-
-void SPTask::SaveScreenShot()
-{
-    screenshotFlag = true;
 }
 time_t SPTask::GetRealStartTime() const
 {

@@ -31,6 +31,7 @@ public:
     static void DumpDubaiFinish();
     static void CallBeginAndFinish();
     static std::string CallMoveDubaiDbFinished();
+    static bool IsFileAccessible(const std::string &filename);
     static inline std::string dubaiPkgName = " ";
     static inline bool isDumpDubaiFinish = false;
 private:

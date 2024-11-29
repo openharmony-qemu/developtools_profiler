@@ -650,29 +650,24 @@ void SPUtils::GetCurrentTime(int num, int prevTime)
 bool SPUtils::IsForeGround(std::string &pkg)
 {
     bool isFoundAppName = false;
-    bool isFoundBundleName = false;
     const std::string cmd = "aa dump -l";
     char buf[1024] = {'\0'};
     std::string appLine = "app name [" + pkg;
-    std::string bundleLine = "bundle name [" + pkg;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return false;
     }
     bool tag = false;
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line = buf;
+        std::string line(buf);
         if (line.find(appLine) != std::string::npos) {
             isFoundAppName = true;
         }
-        if (line.find(bundleLine) != std::string::npos) {
-            isFoundBundleName = true;
-        }
-        if (isFoundAppName || isFoundBundleName) {
+        if (isFoundAppName) {
             if (line.find("app state") != std::string::npos) {
                 tag = IsFindForeGround(line);
                 isFoundAppName = false;
-                isFoundBundleName = false;
+                break;
             }
         }
     }
@@ -684,12 +679,7 @@ bool SPUtils::IsForeGround(std::string &pkg)
 }
 bool SPUtils::IsFindForeGround(std::string line)
 {
-    std::string foreGroundTag = line.substr(line.find("#") + 1);
-    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
-        return true;
-    } else {
-        return false;
-    }
+    return line.find("FOREGROUND") != std::string::npos;
 }
 bool SPUtils::IsFindAbilist()
 {

@@ -40,8 +40,6 @@ enum class MessageType {
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,
     GET_CUR_FPS,
-    GET_LOW_POWER_FPS,
-    FPS_STOP,
     SET_GAME_VIEW,
 };
 
@@ -66,9 +64,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
     { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
-    { MessageType::GET_LOW_POWER_FPS, std::string("get_low_power_fps") },
     { MessageType::GET_CUR_FPS, std::string("get_cur_fps") },
-    { MessageType::FPS_STOP, std::string("fps_stop") },
     { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
 };
 

@@ -66,22 +66,18 @@ public:
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
-    FpsInfoProfiler selfRerderLayers(const std::string &gameLayer);
-    bool IsForeGround();
-    bool IsFindForeGround(std::string line) const;
     void CalcFpsAndJitters();
+    long long CalculateJitter();
     FpsInfoProfiler GetSurfaceFrame(std::string name);
     FpsInfoProfiler GetFrameInfoFromMap(std::string name);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
-    void GetCurrentTime(int sleepNum);
     void GetOhFps(std::vector<std::string> v);
     void SetRkFlag();
     std::string GetSurface();
     FpsInfoProfiler fpsInfo;
-    FpsInfoProfiler fpsInfoMax;
     FpsInfoProfiler lastFpsInfoResult;
     static ProfilerFPS &GetInstance()
     {
@@ -90,6 +86,7 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     void SetProcessId(const std::string &pid);
+    static inline bool isLowCurFps = false;
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
@@ -100,9 +97,9 @@ private:
     int number = 2;
     bool refresh = false;
     long long mod = 1e9;
+    long long prevlastScreenTimestamp = 0;
     long long curScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
-    long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     bool isFirstResult = false;
     long oneSec = 1000000;

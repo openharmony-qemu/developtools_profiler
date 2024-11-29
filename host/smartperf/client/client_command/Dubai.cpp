@@ -14,6 +14,8 @@
  */
 #include <iostream>
 #include <sstream>
+#include <fstream>
+#include <unistd.h>
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
 #include "include/sp_log.h"
@@ -36,16 +38,22 @@ void Dubai::DumpDubaiFinish()
 void Dubai::MoveDubaiDb()
 {
     std::string result;
-    const std::string dubaiXpower = "/data/service/el2/100/xpower";
-    const std::string XpowerDb = "/dubai.db";
+    const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
     const std::string Database = "/data/app/el2/100/database/";
     const std::string PkgEntry = "/entry/rdb";
-    const std::string cpDubai = "cp -r " + dubaiXpower + XpowerDb + " " + Database + dubaiPkgName + PkgEntry;
-    const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + XpowerDb;
+    const std::string cpDubai = "cp " + dubaiXpower + " " + Database + dubaiPkgName + PkgEntry;
+    const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + "/dubai.db";
     LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
         cpDubai.c_str(), dubaiPathChmod.c_str());
+    if (!IsFileAccessible(dubaiXpower)) {
+        sleep(1);
+    }
     SPUtils::LoadCmd(cpDubai, result);
-    SPUtils::LoadCmd(dubaiPathChmod, result);
+    if (result.empty()) {
+        LOGE("Dubai::Copy dubai.db failed");
+    } else {
+        SPUtils::LoadCmd(dubaiPathChmod, result);
+    }
 }
 
 void Dubai::CallBeginAndFinish()
@@ -62,6 +70,12 @@ std::string Dubai::CallMoveDubaiDbFinished()
     }
     dubaiMoveFinish = "get_dubai_db";
     return dubaiMoveFinish;
+}
+
+bool Dubai::IsFileAccessible(const std::string &filename)
+{
+    std::ifstream file(filename);
+    return file.good();
 }
 }
 }
