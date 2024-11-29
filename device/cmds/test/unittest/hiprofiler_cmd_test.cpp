@@ -39,7 +39,6 @@ const std::string DEFAULT_SO_PATH("/system/lib/");
 const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
 const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugins");
 const std::string DEFAULT_HIPROFILERD_NAME("hiprofilerd");
-const std::string DEFAULT_HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 
 const std::string DEFAULT_HIPROFILER_CMD_PATH("/system/bin/hiprofiler_cmd");
 const std::string FTRACE_PLUGIN_PATH("/data/local/tmp/libftrace_plugin.z.so");
@@ -49,7 +48,6 @@ constexpr uint32_t READ_BUFFER_SIZE = 1024;
 constexpr int SLEEP_TIME = 3;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
-
 
 
 class HiprofilerCmdTest : public ::testing::Test {
@@ -71,10 +69,10 @@ public:
     void StopProcessStub(const std::string name)
     {
         if (DEFAULT_HIPROFILERD_PATH == name) {
-            // stop running hiprofilerd
+            // start running hiprofilerd
             OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
         } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
-            // stop running hiprofiler_plugins
+            // start running hiprofiler_plugins
             OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
         }
     }
@@ -466,9 +464,9 @@ public:
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level1)
 {
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
-    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -h";
@@ -489,7 +487,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
     EXPECT_TRUE(RunCommand(cmd, content));
     destStr = "OK";
     EXPECT_EQ(strncmp(content.c_str(), destStr.c_str(), strlen(destStr.c_str())), 0);
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
 }
 
@@ -500,9 +498,9 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
 {
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
-    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     sleep(1);
 
     // 测试不存在的config文件
@@ -583,9 +581,9 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
 {
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
-    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l -k";
@@ -602,8 +600,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level1)
 {
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
-    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -l -k";
     std::string content = "";
@@ -617,8 +617,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level1)
 {
-    StopProcessStub(DEFAULT_HIPROFILERD_NAME);
-    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
     std::string content = "";
