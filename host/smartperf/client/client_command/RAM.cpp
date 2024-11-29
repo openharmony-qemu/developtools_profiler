@@ -189,8 +189,9 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
         if (params.size() > ramFour && params[0].find("ark") != std::string::npos) {
             arktsHeapPssValue = params[RAM_THIRD];
         }
-        if (params.size() > ramThird && params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
-            nativeHeapPssValue = params[RAM_SECOND];
+        if (params.size() > ramThird && params[0].find("native") != std::string::npos &&
+                    params[1].find("heap") != std::string::npos) {
+                    nativeHeapPssValue = params[RAM_SECOND];
         }
         if (params.size() > ramTow && params[0].find("stack") != std::string::npos) {
             stackPssValue = params[1];
