@@ -56,6 +56,9 @@ private:
     RAM &operator = (const RAM &);
     std::string packageName = "";
     std::string processId = "";
+    const int ramTow = 2;
+    const int ramThird = 3;
+    const int ramFour = 4;
 };
 }
 }
