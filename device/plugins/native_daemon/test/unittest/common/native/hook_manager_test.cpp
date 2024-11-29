@@ -14,24 +14,21 @@
  */
 
 #include <gtest/gtest.h>
+#include "command_poller.h"
 #include "hook_manager.h"
 #include "hook_service.h"
 #include "hook_socket_client.h"
+#include "parameters.h"
 #include "socket_context.h"
-#include "command_poller.h"
 
 using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
-
 namespace {
-const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
-int g_hiprofilerdProcessNum = -1;
-
 class HookManagerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
     {
-        StartServerStub(DEFAULT_HIPROFILERD_PATH);
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
 #ifdef COVERAGE_TEST
         const int coverageSleepTime = 5; // sleep 5s
         sleep(coverageSleepTime);
@@ -41,32 +38,7 @@ public:
     }
     static void TearDownTestCase()
     {
-        StopServerStub(g_hiprofilerdProcessNum);
-    }
-
-    static void StartServerStub(std::string name)
-    {
-        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-            return;
-        }
-        int processNum = fork();
-        PROFILER_LOG_INFO(LOG_CORE, "processNum : %d", processNum);
-        if (processNum == 0) {
-            if (DEFAULT_HIPROFILERD_PATH == name) {
-                // start running hiprofilerd
-                execl(name.c_str(), nullptr, nullptr);
-            }
-            _exit(1);
-        } else if (DEFAULT_HIPROFILERD_PATH == name) {
-            g_hiprofilerdProcessNum = processNum;
-        }
-    }
-
-    static void StopServerStub(int processNum)
-    {
-        std::string stopCmd = "kill " + std::to_string(processNum);
-        PROFILER_LOG_INFO(LOG_CORE, "stop command : %s", stopCmd.c_str());
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     }
 };
 
