@@ -171,7 +171,6 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
     std::string arktsHeapPssValue = "";
     std::string nativeHeapPssValue = "";
     std::string stackPssValue = "";
-    const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
