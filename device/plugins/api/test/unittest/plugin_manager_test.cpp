@@ -21,6 +21,7 @@
 #include "command_poller.h"
 #include "grpc/impl/codegen/log.h"
 #include "logging.h"
+#include "parameters.h"
 #include "plugin_manager.h"
 #include "plugin_service.h"
 #include "plugin_service.ipc.h"
@@ -39,26 +40,13 @@ std::string g_testPluginDir("/system/lib64/");
 #else
 std::string g_testPluginDir("/system/lib/");
 #endif
-int g_hiprofilerProcessNum = -1;
-const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
 
 class PluginManagerTest : public ::testing::Test {
 protected:
     static constexpr auto TEMP_DELAY = std::chrono::milliseconds(20);
     static void SetUpTestCase()
     {
-        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-            return;
-        }
-        int processNum = fork();
-        if (processNum == 0) {
-            // start running hiprofilerd
-            execl(DEFAULT_HIPROFILERD_PATH.c_str(), nullptr, nullptr);
-            _exit(1);
-        } else {
-            g_hiprofilerProcessNum = processNum;
-        }
-
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
 #ifdef COVERAGE_TEST
         const int coverageSleepTime = DEFAULT_SLEEP_TIME * 5; // sleep 5s
         std::this_thread::sleep_for(std::chrono::milliseconds(coverageSleepTime));
@@ -69,8 +57,7 @@ protected:
 
     static void TearDownTestCase()
     {
-        std::string stopCmd = "kill " + std::to_string(g_hiprofilerProcessNum);
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     }
 };
 

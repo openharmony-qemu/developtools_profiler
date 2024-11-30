@@ -35,6 +35,7 @@
 #include "memory_plugin_result.pb.h"
 #include "network_plugin_config.pb.h"
 #include "network_plugin_result.pb.h"
+#include "parameters.h"
 #include "plugin_module_api.h"
 #include "plugin_service_types.pb.h"
 #include "process_plugin_config.pb.h"
@@ -106,25 +107,14 @@ protected:
         profilerStub_ = GetProfilerServiceStub();
     }
 
-    void StartServerStub(std::string name)
+    void StartServerStub(const std::string name)
     {
-        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-            return;
-        }
-        int processNum = fork();
-        if (processNum == 0) {
-            if (DEFAULT_HIPROFILERD_PATH == name) {
-                // start running hiprofilerd
-                execl(name.c_str(), nullptr, nullptr);
-            } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
-                // start running hiprofiler_plugins
-                execl(name.c_str(), "/data/local/tmp/", nullptr);
-            }
-            _exit(1);
-        } else if (DEFAULT_HIPROFILERD_PATH == name) {
-            hiprofilerdPid_ = processNum;
+        if (DEFAULT_HIPROFILERD_PATH == name) {
+            // start running hiprofilerd
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
         } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
-            hiprofilerPluginsPid_ = processNum;
+            // start running hiprofiler_plugins
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
         }
     }
     void StartDependServerStub()
@@ -143,7 +133,18 @@ protected:
 #endif
     }
 
-    void StopProcessStub(int processNum)
+    void StopProcessStub(const std::string name)
+    {
+        if (DEFAULT_HIPROFILERD_PATH == name) {
+            // stop running hiprofilerd
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
+            // stop running hiprofiler_plugins
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+        }
+    }
+
+    void StopProcessStubpid(int processNum)
     {
         std::string stopCmd = "kill " + std::to_string(processNum);
         std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
@@ -151,8 +152,10 @@ protected:
 
     void StopDependServerStub()
     {
-        std::string stopCmd = "killall " + DEFAULT_HIPROFILER_PLUGINS_PATH + " " + DEFAULT_HIPROFILERD_PATH;
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        sleep(1);
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+        sleep(1);
     }
 
     std::unique_ptr<IProfilerService::Stub> GetProfilerServiceStub()
@@ -772,10 +775,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0010, Function | Med
     sendHeart2 = false;
     keepSessionThread2.join();
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
-    StopProcessStub(idlePid_);
-    StopProcessStub(requestMemoryPid);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    StopProcessStubpid(idlePid_);
+    StopProcessStubpid(requestMemoryPid);
 
     pluginVec_.clear();
 }
@@ -1011,10 +1014,10 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0020, Function | Med
         }
     }
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
-    StopProcessStub(cpuActivePid);
-    StopProcessStub(idlePid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    StopProcessStubpid(cpuActivePid);
+    StopProcessStubpid(idlePid_);
 
     pluginVec_.clear();
 }
@@ -1157,9 +1160,9 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0030, Function | Med
         EXPECT_GT(diskioDataVec2[i].rd_sectors_kb(), 0);
     }
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
-    StopProcessStub(diskioPid);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    StopProcessStubpid(diskioPid);
 
     pluginVec_.clear();
 }
@@ -1271,8 +1274,8 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
     timeCost = timer.ElapsedUs();
     printf("FetchData cost %ldus.\n", timeCost);
     EXPECT_LE(timeCost, FETCHDATA_TIMEOUT_US);
-    EXPECT_EQ(hiprofilerdPidCount, ROUND_COUNT);
-    EXPECT_EQ(hiprofilerPluginsPidCount, ROUND_COUNT);
+    EXPECT_EQ(hiprofilerdPidCount, 0);
+    EXPECT_EQ(hiprofilerPluginsPidCount, 0);
 
     // StopSession
     timer.Reset();
@@ -1291,8 +1294,8 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0040, Function | Med
     sendHeart = false;
     keepSessionThread.join();
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
 
     pluginVec_.clear();
 }
@@ -1434,8 +1437,8 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
     sendHeart2 = false;
     keepSessionThread2.join();
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
 
     pluginVec_.clear();
 }
@@ -1540,8 +1543,8 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0060, Function | Med
     sendHeart = false;
     keepSessionThread.join();
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
 
     pluginVec_.clear();
 }
@@ -1693,8 +1696,8 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0070, Function | Med
     sendHeart = false;
     keepSessionThread1.join();
 
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
 
     pluginVec_.clear();
 }

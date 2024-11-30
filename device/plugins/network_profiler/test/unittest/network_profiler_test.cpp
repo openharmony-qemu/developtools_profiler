@@ -82,27 +82,17 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest001, TestSize.Level1)
  */
 HWTEST_F(NetworkProfilerTest, NetworkProfilerTest002, TestSize.Level1)
 {
-    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
-    auto networkProfilerService = std::make_unique<NetworkProfilerSocketService>(networkProfilerMgr);
-    ASSERT_TRUE(networkProfilerService != nullptr);
-    networkProfilerMgr->Init();
-    SystemSetParameter(PARAM_KAY.c_str(), std::to_string(getpid()).c_str());
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
     auto networkProfiler = NetworkProfiler::GetInstance();
-    auto ret = networkProfiler->IsProfilerEnable();
-    ASSERT_TRUE(ret);
-    networkProfiler->SetWaitingFlag(true);
-    networkProfiler->SetEnableFlag(true);
-    const char* data = "test";
-    networkProfiler->NetworkProfiling(1, data, sizeof(data));
-
     NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
     sleep(2);
-    ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
+    auto ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
     ASSERT_FALSE(ret);
     NetworkConfig config;
     SocketContext ctx;
     ret = client.ProtocolProc(ctx, 0, reinterpret_cast<int8_t*>(&config), sizeof(config));
     ASSERT_TRUE(ret);
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
 }
 
 /**
