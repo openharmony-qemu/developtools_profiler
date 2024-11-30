@@ -180,7 +180,7 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() > ramTow paramEleven && params[0].find("GL") != std::string::npos) {
+        if (params.size() > ramTow && params[0].find("GL") != std::string::npos) {
             gpuPssValue = params[1];
         }
         if (params.size() > ramTow && params[0].find("Graph") != std::string::npos) {
