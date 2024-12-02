@@ -932,6 +932,51 @@ static bool JudgeValueRange(const std::string &type, int32_t value)
     return false;
 }
 
+static bool CheckFilenameParamLength(napi_env &env, napi_value *argv, size_t &bufLen)
+{
+    napi_status status = napi_get_value_string_utf8(env, argv[FIRST_POS], nullptr, 0, &bufLen);
+    if (status != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input filename param length failed.");
+        return false;
+    }
+    const int bufMax = 128;
+    if (bufLen > bufMax || bufLen == 0) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. input filename param length is illegal.");
+        return false;
+    }
+    return true;
+}
+
+static bool CheckResourceType(napi_env &env, napi_value *argv, size_t &bufLen, std::string &type)
+{
+    std::vector<char> buf(bufLen + 1, 0);
+    napi_get_value_string_utf8(env, argv[FIRST_POS], buf.data(), bufLen + 1, &bufLen);
+    type = std::string(buf.data());
+    if (type.empty()) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
+        return false;
+    }
+    auto findType = std::find(RESOURCE_TYPE_LIST.begin(), RESOURCE_TYPE_LIST.end(), type);
+    if (findType == RESOURCE_TYPE_LIST.end()) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
+        return false;
+    }
+    return true;
+}
+
+static bool CheckInputValue(napi_env &env, napi_value *argv, std::string &type, int32_t &value)
+{
+    if (napi_get_value_int32(env, argv[SECOND_POS], &value) != napi_ok || value < 0) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
+        return false;
+    }
+    if (!JudgeValueRange(type, value)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. The value range is invalid.");
+        return false;
+    }
+    return true;
+}
+
 static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std::string& type,
     int32_t& value, bool& enabledDebugLog)
 {
@@ -950,34 +995,13 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
         return false;
     }
     size_t bufLen = 0;
-    napi_status status = napi_get_value_string_utf8(env, argv[FIRST_POS], nullptr, 0, &bufLen);
-    if (status != napi_ok) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input filename param length failed.");
+    if (!CheckFilenameParamLength(env, argv, bufLen)) {
         return false;
     }
-    const int bufMax = 128;
-    if (bufLen > bufMax || bufLen == 0) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. input filename param length is illegal.");
+    if (!CheckResourceType(env, argv, bufLen, type)) {
         return false;
     }
-    std::vector<char> buf(bufLen + 1, 0);
-    napi_get_value_string_utf8(env, argv[FIRST_POS], buf.data(), bufLen + 1, &bufLen);
-    type = std::string(buf.data());
-    if (type.empty()) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
-        return false;
-    }
-    auto findType = std::find(RESOURCE_TYPE_LIST.begin(), RESOURCE_TYPE_LIST.end(), type);
-    if (findType == RESOURCE_TYPE_LIST.end()) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
-        return false;
-    }
-    if (napi_get_value_int32(env, argv[SECOND_POS], &value) != napi_ok || value < 0) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
-        return false;
-    }
-    if (!JudgeValueRange(type, value)) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. The value range is invalid.");
+    if (!CheckInputValue(env, argv, type, value)) {
         return false;
     }
     if (napi_get_value_bool(env, argv[THIRD_POS], &enabledDebugLog) != napi_ok) {
