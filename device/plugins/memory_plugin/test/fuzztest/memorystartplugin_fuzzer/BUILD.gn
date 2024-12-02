@@ -45,7 +45,6 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
     "../../../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/bounds_checking_function/include",
   ]
 }
 

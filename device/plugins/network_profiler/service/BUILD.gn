@@ -49,6 +49,7 @@ ohos_source_set("network_profiler_service") {
   ]
 
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "protobuf:protobuf_lite",
