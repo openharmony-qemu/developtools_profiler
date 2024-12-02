@@ -240,8 +240,8 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
     }
     std::vector<std::string> sumRamKeys = {"pss", "sharedClean", "sharedDirty", "privateClean",
     "privateDirty", "swap", "swapPss", "heapSize", "heapAlloc", "heapFree"};
-    for (int i = 0; i < paramsInfo.size() - 1 && i < sumRamKeys.size(); i++) {
-        if (i = RAM_NINTH) {
+    for (size_t i = 0; i < paramsInfo.size() - 1 && i < sumRamKeys.size(); i++) {
+        if (i == RAM_NINTH) {
             sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(static_cast<int>(paramsInfo[RAM_TENTH].size()) - 1);
             break;
         }

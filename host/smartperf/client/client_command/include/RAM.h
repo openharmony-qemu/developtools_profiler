@@ -37,7 +37,7 @@ public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo() const;
     std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const;
-    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
+    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
     static RAM &GetInstance()
