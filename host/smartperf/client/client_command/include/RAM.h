@@ -37,6 +37,7 @@ public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo() const;
     std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const;
+    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
     static RAM &GetInstance()
@@ -56,9 +57,6 @@ private:
     RAM &operator = (const RAM &);
     std::string packageName = "";
     std::string processId = "";
-    size_t ramTow = 2;
-    size_t ramThird = 3;
-    size_t ramFour = 4;
 };
 }
 }
