@@ -258,7 +258,7 @@ void* MallocHookStart(void* disableHookCallback)
     return nullptr;
 }
 
-void InitHookTidKey()
+static void InitHookTidKey()
 {
     if (pthread_key_create(&g_hookTid, nullptr) != 0) {
         return;
@@ -266,7 +266,7 @@ void InitHookTidKey()
     pthread_setspecific(g_hookTid, nullptr);
 }
 
-bool InitTheadKey()
+static bool InitTheadKey()
 {
     if (g_disableHookFlag != 10000) { // 10000: initial value
         pthread_key_delete(g_disableHookFlag);
