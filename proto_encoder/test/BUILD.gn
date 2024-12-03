@@ -83,6 +83,7 @@ ohos_unittest("proto_encoder_ut") {
     "$proto_out_dir",
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "protobuf:protobuf_lite",
   ]

@@ -40,7 +40,6 @@ config("common_config") {
   include_dirs = [
     "$skel_out_dir",
     "./include",
-    "//third_party/libbpf/src",
   ]
 }
 
@@ -80,6 +79,7 @@ ohos_source_set("hiebpf.bpf") {
     ":common_config",
     ":kern_common_config",
   ]
+  external_deps = [ "libbpf:libbpf" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   output_name = "hiebpf.bpf.o"
@@ -138,7 +138,10 @@ ohos_executable("hiebpf") {
   sources = [ "./src/hiebpf.cpp" ]  # this is main()
 
   deps = [ ":hiebpf_source_common" ]
-  external_deps = [ "bounds_checking_function:libsec_shared" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "libbpf:libbpf",
+  ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   output_name = "hiebpf"
