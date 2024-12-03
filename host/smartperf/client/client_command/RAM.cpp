@@ -185,11 +185,11 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std:
 std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const
 {
     std::map<std::string, std::string> pssRamInfo;
-    std::string gpuPssValue = "0";
-    std::string graphicPssValue = "0";
-    std::string arktsHeapPssValue = "0";
-    std::string nativeHeapPssValue = "0";
-    std::string stackPssValue = "0";
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
