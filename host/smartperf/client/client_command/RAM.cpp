@@ -161,6 +161,10 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             procRamInfo[value] = "0";
         }
     }
+    if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
+        return {};
+    }
     return procRamInfo;
 }
 
@@ -186,7 +190,6 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     std::string arktsHeapPssValue = "0";
     std::string nativeHeapPssValue = "0";
     std::string stackPssValue = "0";
-    const int paramEleven = 11;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line = buf;
@@ -195,31 +198,28 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() == paramEleven && params[0].find("GL") != std::string::npos) {
+        if (params.size() > RAM_SECOND && params[0].find("GL") != std::string::npos) {
             gpuPssValue = params[1];
         }
-        if (params.size() == paramEleven && params[0].find("Graph") != std::string::npos) {
+        if (params.size() > RAM_SECOND && params[0].find("Graph") != std::string::npos) {
             graphicPssValue = params[1];
         }
-        if (params[0].find("ark") != std::string::npos) {
+        if (params.size() > RAM_FOURTH && params[0].find("ark") != std::string::npos) {
             arktsHeapPssValue = params[RAM_THIRD];
         }
-        if (params[0].find("native") != std::string::npos && params[1].find("heap") != std::string::npos) {
-            nativeHeapPssValue = params[RAM_SECOND];
+        if (params.size() > RAM_THIRD && params[0].find("native") != std::string::npos &&
+                    params[1].find("heap") != std::string::npos) {
+                    nativeHeapPssValue = params[RAM_SECOND];
         }
-        if (params.size() == paramEleven && params[0].find("stack") != std::string::npos) {
+        if (params.size() > RAM_SECOND && params[0].find("stack") != std::string::npos) {
             stackPssValue = params[1];
         }
-        if (params.size() == paramEleven && params[0].find("Total") != std::string::npos) {
+        if (!gpuPssValue.empty() && params.size() > 0 && params[0].find("Total") != std::string::npos) {
             paramsInfo = params;
         }
         if (paramsInfo.size() > 0) {
             break;
         }
-    }
-    if (pclose(fd) == -1) {
-        LOGE("Error: Failed to close file");
-        return {};
     }
     pssRamInfo["gpuPss"] = gpuPssValue;
     pssRamInfo["graphicPss"] = graphicPssValue;
@@ -228,7 +228,6 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     pssRamInfo["stackPss"] = stackPssValue;
     return pssRamInfo;
 }
-
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
 {
     std::map<std::string, std::string> sumRamInfo;
@@ -239,16 +238,15 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
         }
         return sumRamInfo;
     }
-    sumRamInfo["pss"] = paramsInfo[RAM_ONE];
-    sumRamInfo["sharedClean"] = paramsInfo[RAM_SECOND];
-    sumRamInfo["sharedDirty"] = paramsInfo[RAM_THIRD];
-    sumRamInfo["privateClean"] = paramsInfo[RAM_FOURTH];
-    sumRamInfo["privateDirty"] = paramsInfo[RAM_FIFTH];
-    sumRamInfo["swap"] = paramsInfo[RAM_SIXTH];
-    sumRamInfo["swapPss"] = paramsInfo[RAM_SEVENTH];
-    sumRamInfo["heapSize"] = paramsInfo[RAM_EIGHTH];
-    sumRamInfo["heapAlloc"] = paramsInfo[RAM_NINTH];
-    sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(static_cast<int>(paramsInfo[RAM_TENTH].size()) - 1);
+    std::vector<std::string> sumRamKeys = {"pss", "sharedClean", "sharedDirty", "privateClean",
+    "privateDirty", "swap", "swapPss", "heapSize", "heapAlloc", "heapFree"};
+    for (size_t i = 0; i < paramsInfo.size() - 1 && i < sumRamKeys.size(); i++) {
+        if (i == RAM_NINTH) {
+            sumRamInfo["heapFree"] = paramsInfo[RAM_TENTH].erase(static_cast<int>(paramsInfo[RAM_TENTH].size()) - 1);
+            break;
+        }
+        sumRamInfo[sumRamKeys[i]] = paramsInfo[i + 1];
+    }
     return sumRamInfo;
 }
 }
