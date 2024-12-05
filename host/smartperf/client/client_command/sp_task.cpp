@@ -615,7 +615,7 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
-std::string SPTask::GetCurrentBattary()
+int SPTask::GetCurrentBattary()
 {
     std::string content;
     const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
