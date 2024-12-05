@@ -37,7 +37,7 @@ private:
 
     bool isCollecting = false;
     const std::string pluginSoPath = "system/lib64/libtest_server_client.z.so";
-    const std::string lockFunction = "FrequencyLock";
+    const std::string lockFunction = "FrequencyLockPlugin";
 };
 }
 }
