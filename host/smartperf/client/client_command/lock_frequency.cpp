@@ -30,8 +30,8 @@ namespace SmartPerf {
         LOGI("Lock frequency thread create");
         const int loopLockTime = 4000;
         char soFilePathChar[PATH_MAX] = {0x00};
-        if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
-            LOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+        if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
+            LOGE("%s is not exist.", pluginSoPath.c_str());
             return;
         }
         void* handle = dlopen(soFilePathChar, RTLD_LAZY);
@@ -40,7 +40,7 @@ namespace SmartPerf {
             return;
         }
         typedef int32_t (*GetLockFreq)();
-        GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, LOCK_FUNCTION.c_str());
+        GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
         if (!testServerPlugin) {
             LOGE("Error loading symbol");
             return;
