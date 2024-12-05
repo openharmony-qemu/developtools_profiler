@@ -429,6 +429,7 @@ void SPTask::StopGetInfo()
         { "board", "hw" },
         { "target_fps", refreshrate },
         { "gpuDataVersion", gpuDataVersion },
+        { "battery_change", std::to_string(battaryEnd - battaryStart) },
     };
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
@@ -614,8 +615,17 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
+std::string SPTask::GetCurrentBattary()
+{
+    std::string content;
+    const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
+    SPUtils::LoadCmd(cmd, content);
+    content = content.substr(content.find(':') + 1);
+    return std::stoi(content);
+}
 ErrCode SPTask::StartRecord()
 {
+    battaryStart = GetCurrentBattary();
     startTime = SPUtils::GetCurTime();
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
@@ -628,6 +638,7 @@ ErrCode SPTask::StartRecord()
 
 ErrCode SPTask::StopRecord()
 {
+    battaryEnd = GetCurrentBattary();
     long long stopRecordTime = SPUtils::GetCurTime();
     while (stopRecordTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));

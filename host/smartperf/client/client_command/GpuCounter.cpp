@@ -58,6 +58,10 @@ namespace OHOS {
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
             GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            if (!startGetGpuPerfInfo) {
+                LOGE("Error loading symbol");
+                return;
+            }
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();

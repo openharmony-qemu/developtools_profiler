@@ -66,8 +66,6 @@ ohos_unittest("sp_daemon_ut") {
     "//third_party/libpng:libpng",
   ]
   external_deps = [
-    "ability_base:want",
-    "arkxtest:test_server_client",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",

@@ -25,7 +25,6 @@
     "ram": "2000KB",
     "deps": {
       "components": [
-        "arkxtest",
         "ability_runtime",
         "ability_base",
         "access_token",
