@@ -107,6 +107,7 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
+    int GetCurrentBattary();
 
 private:
     TaskInfo curTaskInfo;
@@ -131,6 +132,8 @@ private:
     time_t realTimeStart = 0;
     std::string tcpToken = "";
     long long nextTime = 0;
+    int battaryStart = 0;
+    int battaryEnd = 0;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

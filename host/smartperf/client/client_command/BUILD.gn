@@ -74,8 +74,6 @@ ohos_executable("SP_daemon") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
-    "ability_base:want",
-    "arkxtest:test_server_client",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
