@@ -112,8 +112,8 @@ template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
 
     constexpr uint64_t nanoSeconds = 1000000000;
     struct timespec ts;
-    ret = clock_gettime(CLOCK_BOOTTIME, &ts);
-    if (ret == -1) {
+    int result = clock_gettime(CLOCK_BOOTTIME, &ts);
+    if (result == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "clock_gettime failed");
         return;
     }
