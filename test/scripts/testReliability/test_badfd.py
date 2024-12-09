@@ -74,7 +74,7 @@ class TestHiprofilerReliability:
 
         subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         process = subprocess.Popen(['hdc', 'shell', 'dmesg -w | grep avc > /data/local/tmp/avc.txt'])
-        process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep BADFD > /data/local/tmp/daemon.txt'])
+        process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep BADFD > /data/local/tmp/daemonhilog.txt'])
         time.sleep(1)
         touch_button("模板测试")
         time.sleep(1)
@@ -92,11 +92,19 @@ class TestHiprofilerReliability:
         process.terminate()
         process_hilog.terminate()
         subprocess.check_output(f"hdc file recv /data/local/tmp/avc.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        subprocess.check_output(f"hdc file recv /data/local/tmp/daemonhilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = True
         with open(r'.\..\outputfiles\avc.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
                 if "BADFD" in line:
                     if "pid=" + str(daemon_pid) + " tid=" in line:
-                        check = False 
+                        check = False
+
+        with open(r'.\..\outputfiles\daemonhilog.txt', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "BADFD" in line:
+                    if "pid=" + str(daemon_pid) + " tid=" in line:
+                        check = False
         assert check == True
