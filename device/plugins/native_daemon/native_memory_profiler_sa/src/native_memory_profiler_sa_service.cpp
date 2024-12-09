@@ -156,7 +156,6 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
     nameAndFilePathCtx_.erase(config->filePath);
     pidCtx_.erase(config->pid);
     if (nmdPidType_.find(config->pid) != nmdPidType_.end()) {
-        close(nmdPidType_[config->pid].first);
         nmdPidType_.erase(config->pid);
     }
     if (config->isStartupMode) {
