@@ -43,8 +43,7 @@ public:
     ~CallStack();
     bool UnwindCallStack(const VirtualThread &thread, u64 *regs, u64 regsNum,
                          const u8 *stack, u64 stackSize, std::vector<CallFrame> &,
-                         size_t maxStackLevel = MAX_CALL_FRAME_UNWIND_SIZE, int maxjsDepth = 0,
-                         bool jsReport = true);
+                         size_t maxStackLevel = MAX_CALL_FRAME_UNWIND_SIZE, int maxjsDepth = 0, bool jsReport = false);
     size_t ExpendCallStack(pid_t tid, std::vector<CallFrame> &callFrames, size_t expendLimit = 1u);
 
 private:
@@ -111,7 +110,7 @@ private:
     static bool CheckAndStepArkFrame(const VirtualThread &thread, uintptr_t& pc, uintptr_t& fp, uintptr_t& sp);
 #endif
     bool DoUnwind2(const VirtualThread &thread, std::vector<CallFrame> &callStack, size_t maxStackLevel,
-                   int maxjsDepth = 0, bool jsReport = true);
+                   int maxjsDepth = 0, bool jsReport = false);
     static void DumpTableInfo(UnwindTableInfo &outTableInfo);
     static int FillUnwindTable(SymbolsFile *symbolsFile, std::shared_ptr<DfxMap> map, UnwindInfo *unwindInfoPtr,
                                uintptr_t pc, UnwindTableInfo& outTableInfo);

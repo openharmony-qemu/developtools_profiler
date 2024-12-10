@@ -27,8 +27,6 @@ StackWriter::StackWriter(std::string name,
     : pluginName_(name), blocked_(blocked)
 {
     shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
-    if (shareMemoryBlock_ == nullptr) {
-    }
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     lastFlushTime_ = std::chrono::steady_clock::now();
 }
