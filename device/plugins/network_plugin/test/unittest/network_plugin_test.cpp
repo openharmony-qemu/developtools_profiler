@@ -80,16 +80,14 @@ string Getexepath()
     return buf;
 }
 
-bool SetConfig(std::vector<int> pidList, NetworkConfig& config)
+
+std::string GetFullPath(std::string path)
 {
-    CHECK_TRUE(pidList.size() > 0, false, "ut: %s failed!\n", __func__);
-
-    for (size_t i = 0; i < pidList.size(); i++) {
-        config.add_pid(pidList.at(i));
+    if (path.size() > 0 && path[0] != '/') {
+        return Getexepath() + path;
     }
-    return true;
+    return path;
 }
-
 
 void NetworkPluginTest::SetUpTestCase()
 {
