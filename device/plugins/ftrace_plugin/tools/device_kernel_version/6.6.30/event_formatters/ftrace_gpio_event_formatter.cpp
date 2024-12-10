@@ -23,36 +23,31 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    gpio_direction, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_gpio_direction_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    gpio_direction, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_gpio_direction_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.gpio_direction_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "gpio_direction: %u %3s (%d)", msg.gpio(),
                              msg.in() ? "in" : "out", msg.err());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(gpio_direction) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(gpio_direction) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(gpio_direction) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    gpio_value, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_gpio_value_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    gpio_value, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_gpio_value_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.gpio_value_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "gpio_value: %u %3s %d", msg.gpio(),
                              msg.get() ? "get" : "set", msg.value());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(gpio_value) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(gpio_value) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(gpio_value) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });

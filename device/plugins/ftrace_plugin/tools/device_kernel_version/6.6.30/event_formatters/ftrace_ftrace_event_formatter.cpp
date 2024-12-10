@@ -23,13 +23,13 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    bputs, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_bputs_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    bputs, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_bputs_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.bputs_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string functionStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.ip()) > 0) {
             functionStr = kernelSymbols[msg.ip()];
         }
@@ -37,62 +37,56 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "bputs: %s: %s", functionStr.c_str(),
                              msg.str().c_str());
         } else {
-            len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "bputs: %p: %s", (void*)msg.ip(), msg.str().c_str());
+            len =
+                snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "bputs: %p: %s", (void *)msg.ip(), msg.str().c_str());
         }
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(bputs) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(bputs) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(bputs) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    branch, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_branch_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    branch, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_branch_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.branch_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "branch: %u:%s:%s (%u)%s", msg.line(),
                              msg.func().c_str(), msg.file().c_str(), msg.correct(), msg.constant() ? " CONSTANT" : "");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(branch) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(branch) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(branch) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    context_switch, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_context_switch_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    context_switch, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_context_switch_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.context_switch_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "context_switch: %u:%u:%u  ==> %u:%u:%u [%03u]",
                              msg.prev_pid(), msg.prev_prio(), msg.prev_state(), msg.next_pid(), msg.next_prio(),
                              msg.next_state(), msg.next_cpu());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(context_switch) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(context_switch) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(context_switch) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    funcgraph_entry, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_funcgraph_entry_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    funcgraph_entry, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_funcgraph_entry_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.funcgraph_entry_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string functionStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.func()) > 0) {
             functionStr = kernelSymbols[msg.func()];
         }
@@ -100,28 +94,25 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "funcgraph_entry: --> %s (%d)", functionStr.c_str(),
                              msg.depth());
         } else {
-            len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "funcgraph_entry: --> %p (%d)", (void*)msg.func(),
+            len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "funcgraph_entry: --> %p (%d)", (void *)msg.func(),
                              msg.depth());
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(funcgraph_entry) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(funcgraph_entry) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(funcgraph_entry) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    funcgraph_exit, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_funcgraph_exit_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    funcgraph_exit, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_funcgraph_exit_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.funcgraph_exit_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string functionStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.func()) > 0) {
             functionStr = kernelSymbols[msg.func()];
         }
@@ -132,55 +123,50 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         } else {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "funcgraph_exit: <-- %p (%d) (start: %" PRIx64 "  end: %" PRIx64 ") over: %d",
-                             (void*)msg.func(), msg.depth(), msg.calltime(), msg.rettime(), msg.depth());
+                             (void *)msg.func(), msg.depth(), msg.calltime(), msg.rettime(), msg.depth());
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(funcgraph_exit) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(funcgraph_exit) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(funcgraph_exit) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    function, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_function_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    function, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_function_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.function_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string functionStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.ip()) > 0) {
             functionStr = kernelSymbols[msg.ip()];
         }
         if (functionStr != "") {
             len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "function:  %s <-- %s", functionStr.c_str(),
-                             (void*)msg.parent_ip());
+                             (void *)msg.parent_ip());
         } else {
-            len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "function:  %p <-- %p", (void*)msg.ip(),
-                             (void*)msg.parent_ip());
+            len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "function:  %p <-- %p", (void *)msg.ip(),
+                             (void *)msg.parent_ip());
         }
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(function) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(function) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(function) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    kernel_stack, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_kernel_stack_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    kernel_stack, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_kernel_stack_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.kernel_stack_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string kernelSymbolsStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.caller()[0]) > 0) {
             kernelSymbolsStr = kernelSymbols[msg.caller()[0]];
         }
@@ -198,87 +184,76 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              "kernel_stack: \t=> %p\n\t=> %p\n\t=> %p\n"
                              "\t=> %p\n\t=> %p\n\t=> %p\n"
                              "\t=> %p\n\t=> %p\n",
-                             (void*)msg.caller()[0], (void*)msg.caller()[1], (void*)msg.caller()[2],
-                             (void*)msg.caller()[3], (void*)msg.caller()[4], (void*)msg.caller()[5],
-                             (void*)msg.caller()[6], (void*)msg.caller()[7]);
+                             (void *)msg.caller()[0], (void *)msg.caller()[1], (void *)msg.caller()[2],
+                             (void *)msg.caller()[3], (void *)msg.caller()[4], (void *)msg.caller()[5],
+                             (void *)msg.caller()[6], (void *)msg.caller()[7]);
         }
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(kernel_stack) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(kernel_stack) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(kernel_stack) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    mmiotrace_map, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mmiotrace_map_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    mmiotrace_map, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mmiotrace_map_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mmiotrace_map_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mmiotrace_map: %" PRIx64 " %" PRIx64 " %" PRIx64 " %d %x",
                        msg.phys(), msg.virt(), msg.len(), msg.map_id(), msg.opcode());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mmiotrace_map) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mmiotrace_map) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mmiotrace_map) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    mmiotrace_rw, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mmiotrace_rw_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    mmiotrace_rw, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mmiotrace_rw_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mmiotrace_rw_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mmiotrace_rw: %" PRIx64 " %" PRIx64 " %" PRIx64 " %d %x %x", msg.phys(), msg.value(),
                              msg.pc(), msg.map_id(), msg.opcode(), msg.width());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mmiotrace_rw) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mmiotrace_rw) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mmiotrace_rw) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    print, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_print_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    print, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_print_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.print_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         std::string fieldBuf = msg.buf();
         if (fieldBuf.size() > 1 && fieldBuf[fieldBuf.size() - 1] == '\n') {
             fieldBuf = fieldBuf.substr(0, fieldBuf.size() - 1);
         }
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "print: %s", fieldBuf.c_str());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(print) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(print) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(print) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    user_stack, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_user_stack_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    user_stack, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_user_stack_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.user_stack_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = 0;
         std::string kernelSymbolsStr = "";
-        auto& kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
+        auto &kernelSymbols = EventFormatter::GetInstance().kernelSymbols_;
         if (kernelSymbols.count(msg.caller()[0]) > 0) {
             kernelSymbolsStr = kernelSymbols[msg.caller()[0]];
         }
@@ -296,34 +271,30 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              "user_stack: \t=> %p\n\t=> %p\n\t=> %p\n"
                              "\t=> %p\n\t=> %p\n\t=> %p\n"
                              "\t=> %p\n\t=> %p\n",
-                             (void*)msg.caller()[0], (void*)msg.caller()[1], (void*)msg.caller()[2],
-                             (void*)msg.caller()[3], (void*)msg.caller()[4], (void*)msg.caller()[5],
-                             (void*)msg.caller()[6], (void*)msg.caller()[7]);
+                             (void *)msg.caller()[0], (void *)msg.caller()[1], (void *)msg.caller()[2],
+                             (void *)msg.caller()[3], (void *)msg.caller()[4], (void *)msg.caller()[5],
+                             (void *)msg.caller()[6], (void *)msg.caller()[7]);
         }
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(user_stack) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(user_stack) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(user_stack) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    wakeup, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_wakeup_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    wakeup, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_wakeup_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.wakeup_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "wakeup: %u:%u:%u  ==+ %u:%u:%u [%03u]",
                              msg.prev_pid(), msg.prev_prio(), msg.prev_state(), msg.next_pid(), msg.next_prio(),
                              msg.next_state(), msg.next_cpu());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(wakeup) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(wakeup) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(wakeup) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });

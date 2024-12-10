@@ -23,28 +23,25 @@ namespace {
 const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    mm_lru_activate, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_lru_activate_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    mm_lru_activate, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_lru_activate_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_lru_activate_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_lru_activate: folio=%p pfn=0x%" PRIx64 "",
                              msg.folio(), msg.pfn());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mm_lru_activate) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_lru_activate) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_lru_activate) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
-    mm_lru_insertion, [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_lru_insertion_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    mm_lru_insertion, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_lru_insertion_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_lru_insertion_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mm_lru_insertion: folio=%p pfn=0x%" PRIx64 " lru=%d flags=%s%s%s%s%s%s", msg.folio(),
                              msg.pfn(), msg.lru(), msg.flags() & 0x0001u ? "M" : " ", msg.flags() & 0x0002u ? "a" : "f",
@@ -52,11 +49,8 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              msg.flags() & 0x0020u ? "d" : " ", msg.flags() & 0x0040u ? "B" : " ");
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mm_lru_insertion) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_lru_insertion) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_lru_insertion) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });

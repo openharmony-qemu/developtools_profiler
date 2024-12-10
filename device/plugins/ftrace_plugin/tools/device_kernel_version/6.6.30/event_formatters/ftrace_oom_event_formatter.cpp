@@ -24,20 +24,17 @@ const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     oom_score_adj_update,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_oom_score_adj_update_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_oom_score_adj_update_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.oom_score_adj_update_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "oom_score_adj_update: pid=%d comm=%s oom_score_adj=%" PRId32 "", msg.pid(),
                              msg.comm().c_str(), msg.oom_score_adj());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(oom_score_adj_update) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(oom_score_adj_update) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(oom_score_adj_update) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });

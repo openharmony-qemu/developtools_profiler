@@ -25,10 +25,10 @@ const int BUFFER_SIZE = 512;
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_shrink_slab_end,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_shrink_slab_end_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_shrink_slab_end_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_shrink_slab_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mm_shrink_slab_end: %p %p: nid: %d unused scan count %" PRIu64 " new scan count %" PRIu64
                         " total_scan %" PRIu64 " last shrinker return val %d",
@@ -36,21 +36,18 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                              msg.retval());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mm_shrink_slab_end) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_shrink_slab_end) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_shrink_slab_end) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_shrink_slab_start,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_shrink_slab_start_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_shrink_slab_start_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_shrink_slab_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "mm_shrink_slab_start: %p %p: nid: %d objects to shrink %" PRIu64 " gfp_flags %s cache items %" PRIu64
@@ -117,21 +114,18 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.cache_items(), msg.delta(), msg.total_scan(), msg.priority());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "maybe, the contents of print event(mm_shrink_slab_start) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_shrink_slab_start) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_shrink_slab_start) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_direct_reclaim_begin,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_direct_reclaim_begin_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_direct_reclaim_begin_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_direct_reclaim_begin_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_vmscan_direct_reclaim_begin: order=%d gfp_flags=%s", msg.order(),
             (msg.gfp_flags())
@@ -193,106 +187,89 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                       {(unsigned long)((gfp_t)0x800000u), "__GFP_ZEROTAGS"})
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE,
-                "maybe, the contents of print event(mm_vmscan_direct_reclaim_begin) msg had be cut off in outfile");
-        }
-        if (len < 0) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(mm_vmscan_direct_reclaim_begin) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print "
+                              "event(mm_vmscan_direct_reclaim_begin) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_direct_reclaim_end,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_direct_reclaim_end_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_direct_reclaim_end_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_direct_reclaim_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "mm_vmscan_direct_reclaim_end: nr_reclaimed=%" PRIu64 "", msg.nr_reclaimed());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE,
-                "maybe, the contents of print event(mm_vmscan_direct_reclaim_end) msg had be cut off in outfile");
-        }
-        if (len < 0) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(mm_vmscan_direct_reclaim_end) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_vmscan_direct_reclaim_end) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_kswapd_sleep,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_kswapd_sleep_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_kswapd_sleep_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_kswapd_sleep_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_vmscan_kswapd_sleep: nid=%d", msg.nid());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(mm_vmscan_kswapd_sleep) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_vmscan_kswapd_sleep) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(mm_vmscan_kswapd_sleep) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_kswapd_wake,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_kswapd_wake_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_kswapd_wake_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_kswapd_wake_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_vmscan_kswapd_wake: nid=%d order=%d", msg.nid(),
                              msg.order());
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(mm_vmscan_kswapd_wake) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_vmscan_kswapd_wake) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(mm_vmscan_kswapd_wake) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_lru_isolate,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_lru_isolate_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_lru_isolate_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_lru_isolate_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
-                             "mm_vmscan_lru_isolate: isolate_mode=%d classzone=%d order=%d nr_requested=%" PRIu64
-                        " nr_scanned=%" PRIu64 " nr_skipped=%" PRIu64 " nr_taken=%" PRIu64 " lru=%s",
+                             "mm_vmscan_lru_isolate: isolate_mode=%d classzone=%d "
+                    "order=%d nr_requested=%" PRIu64 " nr_scanned=%" PRIu64 " nr_skipped=%" PRIu64
+                    " nr_taken=%" PRIu64 " lru=%s",
                              msg.isolate_mode(), msg.classzone_idx(), msg.order(), msg.nr_requested(), msg.nr_scanned(),
                              msg.nr_skipped(), msg.nr_taken(),
                              __print_symbolic(msg.lru(), {0, "inactive_anon"}, {1, "active_anon"}, {2, "inactive_file"},
                                               {3, "active_file"}, {6, "unevictable"}));
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(mm_vmscan_lru_isolate) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_vmscan_lru_isolate) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(mm_vmscan_lru_isolate) msg had "
+                              "be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_lru_shrink_inactive,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_lru_shrink_inactive_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_lru_shrink_inactive_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_lru_shrink_inactive_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
             "mm_vmscan_lru_shrink_inactive: nid=%d nr_scanned=%" PRIu64 " nr_reclaimed=%" PRIu64 " nr_dirty=%" PRIu64
@@ -305,24 +282,19 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                                                   {0x0004u, "RECLAIM_WB_SYNC"}, {0x0008u, "RECLAIM_WB_ASYNC"})
                                   : "RECLAIM_WB_NONE");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE,
-                "maybe, the contents of print event(mm_vmscan_lru_shrink_inactive) msg had be cut off in outfile");
-        }
-        if (len < 0) {
             PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(mm_vmscan_lru_shrink_inactive) msg snprintf_s format error ");
-            return "";
+                              "maybe, the contents of print event(mm_vmscan_lru_shrink_inactive) "
+                              "msg had be cut off in outfile");
         }
         return std::string(buffer);
     });
 
 REGISTER_FTRACE_EVENT_FORMATTER(
     mm_vmscan_wakeup_kswapd,
-    [](const ForStandard::FtraceEvent& event) -> bool { return event.has_mm_vmscan_wakeup_kswapd_format(); },
-    [](const ForStandard::FtraceEvent& event) -> std::string {
+    [](const ForStandard::FtraceEvent &event) -> bool { return event.has_mm_vmscan_wakeup_kswapd_format(); },
+    [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.mm_vmscan_wakeup_kswapd_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(
             buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "mm_vmscan_wakeup_kswapd: nid=%d order=%d gfp_flags=%s", msg.nid(),
             msg.order(),
@@ -385,12 +357,9 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                       {(unsigned long)((gfp_t)0x800000u), "__GFP_ZEROTAGS"})
                 : "none");
         if (len >= BUFFER_SIZE - 1) {
-            PROFILER_LOG_WARN(
-                LOG_CORE, "maybe, the contents of print event(mm_vmscan_wakeup_kswapd) msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(mm_vmscan_wakeup_kswapd) msg snprintf_s format error ");
-            return "";
+            PROFILER_LOG_WARN(LOG_CORE,
+                              "maybe, the contents of print event(mm_vmscan_wakeup_kswapd) msg "
+                              "had be cut off in outfile");
         }
         return std::string(buffer);
     });

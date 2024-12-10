@@ -28,19 +28,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_alloc_lru_end_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_alloc_lru_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_alloc_lru_end: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_alloc_lru_end) msg had "
                               "be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_alloc_lru_end) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -50,19 +44,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_alloc_lru_start_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_alloc_lru_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_alloc_lru_start: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_alloc_lru_start) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_alloc_lru_start) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -72,19 +60,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_alloc_page_end_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_alloc_page_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_alloc_page_end: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_alloc_page_end) msg had "
                               "be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_alloc_page_end) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -94,19 +76,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_alloc_page_start_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_alloc_page_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_alloc_page_start: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_alloc_page_start) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_alloc_page_start) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -115,18 +91,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_command, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_command_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_command_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_command: cmd=0x%x", msg.cmd());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_command) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_command) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -136,19 +106,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_free_lru_end_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_free_lru_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_free_lru_end: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_free_lru_end) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_free_lru_end) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -158,19 +122,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_free_lru_start_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_free_lru_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_free_lru_start: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_free_lru_start) msg had "
                               "be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_free_lru_start) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -179,17 +137,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_ioctl, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_ioctl_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_ioctl_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_ioctl: cmd=0x%x arg=0x%" PRIx64 "",
                              msg.cmd(), msg.arg());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_ioctl) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(binder_ioctl) msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -199,18 +153,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_ioctl_done_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_ioctl_done_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_ioctl_done: ret=%d", msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_ioctl_done) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_ioctl_done) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -219,16 +167,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_lock, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_lock_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_lock_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_lock: tag=%s", msg.tag().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_lock) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "the contents of event(binder_lock) msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -237,18 +181,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_locked, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_locked_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_locked_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_locked: tag=%s", msg.tag().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_locked) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_locked) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -257,18 +195,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_read_done, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_read_done_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_read_done_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_read_done: ret=%d", msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_read_done) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_read_done) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -277,18 +209,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_return, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_return_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_return_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_return: cmd=0x%x", msg.cmd());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_return) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_return) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -298,7 +224,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_transaction: transaction=%d dest_node=%d dest_proc=%d "
                              "dest_thread=%d reply=%d flags=0x%x code=0x%x",
@@ -309,12 +235,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "maybe, the contents of print event(binder_transaction) "
                               "msg had be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction) "
-                              "msg snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -323,21 +243,15 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_alloc_buf_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_alloc_buf_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_transaction_alloc_buf: transaction=%d data_size=%" PRIu64 " offsets_size=%" PRIu64
-                        " extra_buffers_size=%" PRIu64 "",
+                                " extra_buffers_size=%" PRIu64 "",
                              msg.debug_id(), msg.data_size(), msg.offsets_size(), msg.extra_buffers_size());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_transaction_alloc_buf) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_alloc_buf) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -347,22 +261,16 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_buffer_release_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_buffer_release_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_transaction_buffer_release: transaction=%d data_size=%" PRIu64
-                        " offsets_size=%" PRIu64 " extra_buffers_size=%" PRIu64 "",
+                                " offsets_size=%" PRIu64 " extra_buffers_size=%" PRIu64 "",
                              msg.debug_id(), msg.data_size(), msg.offsets_size(), msg.extra_buffers_size());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print "
                               "event(binder_transaction_buffer_release) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_buffer_release) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -374,7 +282,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_failed_buffer_release_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_transaction_failed_buffer_release: transaction=%d "
                              "data_size=%" PRIu64 " offsets_size=%" PRIu64 " extra_buffers_size=%" PRIu64 "",
@@ -385,12 +293,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "event(binder_transaction_failed_buffer_"
                               "release) msg had be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_failed_buffer_release) "
-                              "msg snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -399,7 +301,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_node_to_ref_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_node_to_ref_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                        "binder_transaction_node_to_ref: transaction=%d node=%d "
@@ -411,12 +313,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "event(binder_transaction_node_to_ref) msg "
                               "had be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_node_to_ref) "
-                              "msg snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -425,19 +321,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_received_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_received_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_transaction_received: transaction=%d",
                              msg.debug_id());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_transaction_received) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_received) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -447,7 +337,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_ref_to_node_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_ref_to_node_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len =
             snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                        "binder_transaction_ref_to_node: transaction=%d node=%d "
@@ -459,12 +349,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "event(binder_transaction_ref_to_node) msg "
                               "had be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_ref_to_node) "
-                              "msg snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -473,7 +357,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_transaction_ref_to_ref_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_transaction_ref_to_ref_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_transaction_ref_to_ref: transaction=%d node=%d src_ref=%d "
                              "src_desc=%d ==> dest_ref=%d dest_desc=%d",
@@ -484,12 +368,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "maybe, the contents of print event(binder_transaction_ref_to_ref) "
                               "msg had be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_transaction_ref_to_ref) "
-                              "msg snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -497,18 +375,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     binder_unlock, [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_unlock_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_unlock_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_unlock: tag=%s", msg.tag().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_unlock) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_unlock) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -518,19 +390,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_unmap_kernel_end_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_unmap_kernel_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_unmap_kernel_end: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_unmap_kernel_end) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_unmap_kernel_end) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -540,19 +406,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_unmap_kernel_start_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_unmap_kernel_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_unmap_kernel_start: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_unmap_kernel_start) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_unmap_kernel_start) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -562,19 +422,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_unmap_user_end_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_unmap_user_end_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_unmap_user_end: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_unmap_user_end) msg had "
                               "be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_unmap_user_end) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -584,19 +438,13 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_unmap_user_start_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_unmap_user_start_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_unmap_user_start: proc=%d page_index=%" PRIu64 "", msg.proc(), msg.page_index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_unmap_user_start) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_unmap_user_start) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -606,7 +454,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_update_page_range_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_update_page_range_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_update_page_range: proc=%d allocate=%d offset=%" PRIu64 " size=%" PRIu64 "",
                              msg.proc(), msg.allocate(), msg.offset(), msg.size());
@@ -614,12 +462,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_update_page_range) msg "
                               "had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_update_page_range) msg "
-                              "snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
@@ -629,7 +471,7 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_wait_for_work_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_wait_for_work_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1,
                              "binder_wait_for_work: proc_work=%d "
                              "transaction_stack=%d thread_todo=%d",
@@ -639,12 +481,6 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                               "maybe, the contents of print event(binder_wait_for_work) msg had "
                               "be cut off in outfile");
         }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_wait_for_work) msg "
-                              "snprintf_s format error ");
-            return "";
-        }
         return std::string(buffer);
     });
 
@@ -653,18 +489,12 @@ REGISTER_FTRACE_EVENT_FORMATTER(
     [](const ForStandard::FtraceEvent &event) -> bool { return event.has_binder_write_done_format(); },
     [](const ForStandard::FtraceEvent &event) -> std::string {
         auto msg = event.binder_write_done_format();
-        char buffer[BUFFER_SIZE] = {0};
+        char buffer[BUFFER_SIZE];
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "binder_write_done: ret=%d", msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(binder_write_done) "
                               "msg had be cut off in outfile");
-        }
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE,
-                              "the contents of event(binder_write_done) "
-                              "msg snprintf_s format error ");
-            return "";
         }
         return std::string(buffer);
     });
