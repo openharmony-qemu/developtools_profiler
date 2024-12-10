@@ -41,6 +41,14 @@ ohos_source_set("networkplugin_source") {
       "hilog:libhilog_base",
       "hisysevent:libhisysevent",
       "protobuf:protobuf_lite",
+      "netmanager_base:net_stats_manager_if",
+      "c_utils:utils",
+      "init:libbegetutil",
+      "ipc:ipc_core",
+      "os_account:os_account_innerkits",
+      "samgr:samgr_proxy",
+      "bundle_framework:appexecfwk_base",
+      "bundle_framework:appexecfwk_core",
     ]
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]

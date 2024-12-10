@@ -36,6 +36,7 @@ ohos_fuzztest("NetworkStartPluginFuzzTest") {
     "bounds_checking_function:libsec_shared",
     "hilog:libhilog_base",
     "protobuf:protobuf_lite",
+    "netmanager_base:net_stats_manager_if",
   ]
   include_dirs = [
     "../../../include",
