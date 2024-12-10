@@ -337,7 +337,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-    if ((!saMode_) && (COMMON::IsUserMode()) {
+    if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
         }
@@ -553,7 +553,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
 {
-    if ((!saMode_) && (COMMON::IsUserMode()) {
+    if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
         }
@@ -588,7 +588,7 @@ bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     if (hookCtx_.empty()) {
         return false;
     }
-    if ((!saMode_) && (COMMON::IsUserMode()) {
+    if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
         }
@@ -602,7 +602,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     if (hookCtx_.empty()) {
         return false;
     }
-    if ((!saMode_) && (COMMON::IsUserMode()) {
+    if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
         }
