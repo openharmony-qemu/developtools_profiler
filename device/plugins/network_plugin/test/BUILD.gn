@@ -46,8 +46,8 @@ ohos_unittest("networkplugin_ut") {
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "hilog:libhilog_base",
-    "protobuf:protobuf_lite",
     "netmanager_base:net_stats_manager_if",
+    "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
