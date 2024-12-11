@@ -56,6 +56,7 @@ public:
     bool RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool HandleData(NetFlowData present, NetFlowData &difference);
     void Record(NetFlowData &newData);
+    std::string GetCmdArgs(const NetworkConfig &traceConfig);
 
 private:
     NetworkConfig protoConfig_;

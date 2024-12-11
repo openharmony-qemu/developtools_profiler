@@ -23,6 +23,7 @@
 #include "system_ability_definition.h"
 #include "os_account_info.h"
 #include "os_account_manager.h"
+#include "common.h"
 
 using namespace OHOS::Developtools::Profiler;
 using namespace OHOS;
@@ -40,9 +41,17 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         uid_= GetUid(pid_);
         CHECK_TRUE(uid_ != -1, -1, "%s:get uid failed", __func__);
     }
-
-    PROFILER_LOG_INFO(LOG_CORE, "%s: NetworkPlugin success!", __func__);
+    int ret = COMMON::PluginWriteToHisysevent("network_plugin", "sh", GetCmdArgs(protoConfig_),
+                                              COMMON::ErrorType::RET_SUCC, "success");
+    PROFILER_LOG_INFO(LOG_CORE, "%s: NetworkPlugin success! hisysevent report result:%d", __func__, ret);
     return 0;
+}
+
+std::string NetworkPlugin::GetCmdArgs(const int &traceConfig)
+{
+    std::stringstream args;
+    args << "pid: " << traceConfig.pid();
+    return args.str();
 }
 
 int NetworkPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
@@ -78,8 +87,7 @@ int NetworkPlugin::Stop()
 template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
 {
     std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
-    int res = OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos);
-    if (res != 0) {
+    if (OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "GetAllStatsInfo failed ret:%d", res);
     }
     NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
@@ -225,8 +233,7 @@ int32_t NetworkPlugin::GetUid(int32_t pid)
     bundleName.resize(strlen(bundleName.c_str()));
     int32_t userId = 0;
     std::vector<int32_t> activeIds;
-    int32_t ret = AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
-    if (ret != 0) {
+    if (AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
         return -1;
     }
