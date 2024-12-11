@@ -110,7 +110,7 @@ bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::N
 {
     NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     std::map<std::string, NetFlowDetail> detailMap;
-    for(auto info : infos){
+    for (auto info : infos) {
         present.rxBytes += info.rxBytes_;
         present.rxPackets += info.rxPackets_;
         present.txBytes += info.txBytes_;
@@ -141,7 +141,7 @@ bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::N
 bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
 {
     NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    for(auto info : infos){
+    for (auto info : infos) {
         if (info.uid_ == uid_) {
             NetFlowDetail detail;
             detail.type = info.iface_;
