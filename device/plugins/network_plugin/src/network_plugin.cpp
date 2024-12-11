@@ -14,6 +14,7 @@
  */
 #include "network_plugin.h"
 
+#include <sstream>
 #include "network_plugin_result.pbencoder.h"
 #include "securec.h"
 #include "application_info.h"
