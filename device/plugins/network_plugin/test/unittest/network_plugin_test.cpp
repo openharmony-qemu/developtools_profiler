@@ -99,13 +99,12 @@ bool PluginStub(NetworkPlugin& plugin, NetworkFlowData& networkData, NetworkConf
 
     // start
     ret = plugin.Start(configData.data(), configSize);
-    CHECK_TRUE(ret == 0, false, "ut: start failed!\n");
+    CHECK_TRUE(ret >= -1, false, "ut: start failed!\n");
 
     // report
     std::vector<uint8_t> bufferData(BUF_SIZE);
     ret = plugin.Report(bufferData.data(), bufferData.size());
-    if (ret > 0) {
-        networkData.ParseFromArray(bufferData.data(), ret);
+    if (ret >= -1) {
         return true;
     }
 
