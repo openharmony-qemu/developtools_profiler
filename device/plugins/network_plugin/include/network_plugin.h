@@ -22,6 +22,8 @@
 #include "plugin_module_api.h"
 #include "net_stats_client.h"
 
+using TimeSpec = struct timespec;
+
 struct NetFlowDetail {
     std::string type;
     uint64_t rxBytes;
@@ -31,7 +33,7 @@ struct NetFlowDetail {
 };
 
 struct NetFlowData {
-    struct timespec ts;
+    TimeSpec ts;
     uint64_t rxBytes;
     uint64_t rxPackets;
     uint64_t txBytes;
@@ -56,9 +58,9 @@ public:
 
 private:
     NetworkConfig protoConfig_;
-    int32_t pid_=0;
-    int32_t uid_=-1;
-    NetFlowData previous_={{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    bool isFirst=true;
+    int32_t pid_ = 0;
+    int32_t uid_ = -1;
+    NetFlowData previous_ = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
+    bool isFirst = true;
 };
 #endif

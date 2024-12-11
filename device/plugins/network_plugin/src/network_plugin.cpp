@@ -34,11 +34,11 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:NetworkPlugin, parseFromArray failed!", __func__);
         return -1;
     }
-    pid_=protoConfig_.pid();
-    CHECK_TRUE(pid_>=0, -1, "%s:invalid pid", __func__);
-    if(pid_>0){
+    pid_ = protoConfig_.pid();
+    CHECK_TRUE(pid_> = 0, -1, "%s:invalid pid", __func__);
+    if (pid_>0) {
         uid_= GetUid(pid_);
-        CHECK_TRUE(uid_!=-1, -1, "%s:get uid failed", __func__);
+        CHECK_TRUE(uid_! = -1, -1, "%s:get uid failed", __func__);
     }
 
     PROFILER_LOG_INFO(LOG_CORE, "%s: NetworkPlugin success!", __func__);
@@ -78,14 +78,14 @@ int NetworkPlugin::Stop()
 template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
 {
     std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
-    int res=OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos);
-    if(res!=0){
+    int res = OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos);
+    if (res != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "GetAllStatsInfo failed ret:%d", res);
     }
-    NetFlowData netFlowData={{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    if(pid_>0){
+    NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
+    if (pid_ > 0) {
         ScreenNetworkStatByUid(infos, netFlowData);
-    } else{
+    } else {
         RetainAllNetworkStat(infos, netFlowData);
     }
     networkDatasProto.set_pid(pid_);
@@ -95,8 +95,8 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
     networkDatasProto.set_rx_packets(netFlowData.rxPackets);
     networkDatasProto.set_tx_bytes(netFlowData.txBytes);
     networkDatasProto.set_tx_packets(netFlowData.txPackets);
-    for(auto& it:netFlowData.details){
-        auto* data=networkDatasProto.add_details();
+    for (auto& it:netFlowData.details) {
+        auto* data = networkDatasProto.add_details();
         data->set_type(it.type);
         data->set_rx_bytes(it.rxBytes);
         data->set_rx_packets(it.rxPackets);
@@ -108,30 +108,30 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
 
 bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
 {
-    NetFlowData present={{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
+    NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     std::map<std::string, NetFlowDetail> detailMap;
-    for(auto info:infos){
-        present.rxBytes+=info.rxBytes_;
-        present.rxPackets+=info.rxPackets_;
-        present.txBytes+=info.txBytes_;
-        present.txPackets+=info.txPackets_;
-        std::string type=info.iface_;
-        if(detailMap.find(type)!=detailMap.end()){
-            detailMap[type].rxBytes+=info.rxBytes_;
-            detailMap[type].rxPackets+=info.rxPackets_;
-            detailMap[type].txBytes+=info.txBytes_;
-            detailMap[type].txPackets+=info.txPackets_;
-        } else{
+    for(auto info : infos){
+        present.rxBytes += info.rxBytes_;
+        present.rxPackets += info.rxPackets_;
+        present.txBytes += info.txBytes_;
+        present.txPackets += info.txPackets_;
+        std::string type = info.iface_;
+        if (detailMap.find(type) != detailMap.end()) {
+            detailMap[type].rxBytes += info.rxBytes_;
+            detailMap[type].rxPackets += info.rxPackets_;
+            detailMap[type].txBytes += info.txBytes_;
+            detailMap[type].txPackets += info.txPackets_;
+        } else {
             NetFlowDetail detail;
-            detail.type=info.iface_;
-            detail.rxBytes=info.rxBytes_;
-            detail.rxPackets=info.rxPackets_;
-            detail.txBytes=info.txBytes_;
-            detail.txPackets=info.txPackets_;
-            detailMap[type]=detail;
+            detail.type = info.iface_;
+            detail.rxBytes = info.rxBytes_;
+            detail.rxPackets = info.rxPackets_;
+            detail.txBytes = info.txBytes_;
+            detail.txPackets = info.txPackets_;
+            detailMap[type] = detail;
         }
     }
-    for(auto it:detailMap){
+    for (auto it : detailMap) {
         present.details.push_back(it.second);
     }
     HandleData(present, data);
@@ -140,20 +140,20 @@ bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::N
 
 bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
 {
-    NetFlowData present={{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    for(auto info:infos){
-        if(info.uid_==uid_){
+    NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
+    for(auto info : infos){
+        if (info.uid_ == uid_) {
             NetFlowDetail detail;
-            detail.type=info.iface_;
-            detail.rxBytes=info.rxBytes_;
-            detail.rxPackets=info.rxPackets_;
-            detail.txBytes=info.txBytes_;
-            detail.txPackets=info.txPackets_;
+            detail.type = info.iface_;
+            detail.rxBytes = info.rxBytes_;
+            detail.rxPackets = info.rxPackets_;
+            detail.txBytes = info.txBytes_;
+            detail.txPackets = info.txPackets_;
             present.details.push_back(detail);
-            present.rxBytes+=info.rxBytes_;
-            present.rxPackets+=info.rxPackets_;
-            present.txBytes+=info.txBytes_;
-            present.txPackets+=info.txPackets_;
+            present.rxBytes += info.rxBytes_;
+            present.rxPackets += info.rxPackets_;
+            present.txBytes += info.txBytes_;
+            present.txPackets += info.txPackets_;
         }
     }
     HandleData(present, data);
@@ -162,49 +162,49 @@ bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard:
 
 bool NetworkPlugin::HandleData(NetFlowData present, NetFlowData &difference)
 {
-    if(!isFirst){
+    if (!isFirst) {
         (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
-        difference.rxBytes=present.rxBytes-previous_.rxBytes;
-        difference.rxPackets=present.rxPackets-previous_.rxPackets;
-        difference.txBytes=present.txBytes-previous_.txBytes;
-        difference.txPackets=present.txPackets-previous_.txPackets;
-        for(auto presentDetail:present.details){
+        difference.rxBytes = present.rxBytes-previous_.rxBytes;
+        difference.rxPackets = present.rxPackets-previous_.rxPackets;
+        difference.txBytes = present.txBytes-previous_.txBytes;
+        difference.txPackets = present.txPackets-previous_.txPackets;
+        for (auto presentDetail : present.details) {
             NetFlowDetail detail;
-            bool havePrevious= false;
-            for(auto previousDetail:previous_.details){
-                if(previousDetail.type==presentDetail.type){
-                    detail.type=presentDetail.type;
-                    detail.rxBytes=presentDetail.rxBytes-previousDetail.rxBytes;
-                    detail.rxPackets=presentDetail.rxPackets-previousDetail.rxPackets;
-                    detail.txBytes=presentDetail.txBytes-previousDetail.txBytes;
-                    detail.txPackets=presentDetail.txPackets-previousDetail.txPackets;
-                    havePrevious= true;
+            bool havePrevious = false;
+            for (auto previousDetail : previous_.details) {
+                if (previousDetail.type == presentDetail.type) {
+                    detail.type = presentDetail.type;
+                    detail.rxBytes = presentDetail.rxBytes - previousDetail.rxBytes;
+                    detail.rxPackets = presentDetail.rxPackets - previousDetail.rxPackets;
+                    detail.txBytes = presentDetail.txBytes - previousDetail.txBytes;
+                    detail.txPackets = presentDetail.txPackets - previousDetail.txPackets;
+                    havePrevious = true;
                     break;
                 }
             }
-            if(!havePrevious){
-                detail.type=presentDetail.type;
-                detail.rxBytes=presentDetail.rxBytes;
-                detail.rxPackets=presentDetail.rxPackets;
-                detail.txBytes=presentDetail.txBytes;
-                detail.txPackets=presentDetail.txPackets;
+            if (!havePrevious) {
+                detail.type = presentDetail.type;
+                detail.rxBytes = presentDetail.rxBytes;
+                detail.rxPackets = presentDetail.rxPackets;
+                detail.txBytes = presentDetail.txBytes;
+                detail.txPackets = presentDetail.txPackets;
             }
             difference.details.push_back(detail);
         }
-    } else{
+    } else {
         (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
-        difference.rxBytes=0;
-        difference.rxPackets=0;
-        difference.txBytes=0;
-        difference.txPackets=0;
+        difference.rxBytes = 0;
+        difference.rxPackets = 0;
+        difference.txBytes = 0;
+        difference.txPackets = 0;
         isFirst= false;
     }
-    previous_.rxBytes=present.rxBytes;
-    previous_.rxPackets=present.rxPackets;
-    previous_.txBytes=present.txBytes;
-    previous_.txPackets=present.txPackets;
+    previous_.rxBytes = present.rxBytes;
+    previous_.rxPackets = present.rxPackets;
+    previous_.txBytes = present.txBytes;
+    previous_.txPackets = present.txPackets;
     previous_.details.clear();
-    for(auto detail:present.details){
+    for (auto detail : present.details) {
         previous_.details.push_back(detail);
     }
     return true;
@@ -212,36 +212,36 @@ bool NetworkPlugin::HandleData(NetFlowData present, NetFlowData &difference)
 int32_t NetworkPlugin::GetUid(int32_t pid)
 {
     std::string bundleName;
-    std::string filePath="/proc/"+std::to_string(pid)+"/cmdline";
+    std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
     LoadStringFromFile(filePath, bundleName);
     bundleName.resize(strlen(bundleName.c_str()));
-    int32_t userId=0;
+    int32_t userId = 0;
     std::vector<int32_t> activeIds;
-    int32_t ret=AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
-    if(ret!=0){
+    int32_t ret = AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds);
+    if (ret != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
         return -1;
     }
-    if(activeIds.empty()){
+    if (activeIds.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "active id is empty");
         return -1;
     }
-    userId=activeIds[0];
-    auto manager=SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
-    if(manager== nullptr){
+    userId = activeIds[0];
+    auto manager = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    if (manager == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "SystemAbilityManager is nullptr");
         return -1;
     }
-    sptr<IRemoteObject> remoteObject=manager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
-    if(remoteObject== nullptr){
+    sptr<IRemoteObject> remoteObject = manager->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    if (remoteObject == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "SystemAbility is nullptr");
         return -1;
     }
-    sptr<AppExecFwk::IBundleMgr> mgr=iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
-    if(mgr== nullptr){
+    sptr<AppExecFwk::IBundleMgr> mgr = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    if (mgr == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "mgr is nullptr");
         return -1;
     }
-    int32_t uid=mgr->GetUidByBundleName(bundleName, userId);
+    int32_t uid = mgr->GetUidByBundleName(bundleName, userId);
     return uid;
 }
