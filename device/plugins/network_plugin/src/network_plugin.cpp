@@ -162,22 +162,22 @@ bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard:
 
 bool NetworkPlugin::HandleData(NetFlowData present, NetFlowData &difference)
 {
-    if(isFirst){
+    if (isFirst) {
         (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
         difference.rxBytes = 0;
         difference.rxPackets = 0;
         difference.txBytes = 0;
         difference.txPackets = 0;
-        isFirst= false;
+        isFirst = false;
         Record(present);
         return true;
     }
-    
+
     (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
-    difference.rxBytes = present.rxBytes-previous_.rxBytes;
-    difference.rxPackets = present.rxPackets-previous_.rxPackets;
-    difference.txBytes = present.txBytes-previous_.txBytes;
-    difference.txPackets = present.txPackets-previous_.txPackets;
+    difference.rxBytes = present.rxBytes - previous_.rxBytes;
+    difference.rxPackets = present.rxPackets - previous_.rxPackets;
+    difference.txBytes = present.txBytes - previous_.txBytes;
+    difference.txPackets = present.txPackets - previous_.txPackets;
     for (auto presentDetail : present.details) {
         NetFlowDetail detail;
         bool havePrevious = false;
