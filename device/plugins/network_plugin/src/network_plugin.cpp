@@ -89,7 +89,7 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
 {
     std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
     if (OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetAllStatsInfo failed ret:%d", res);
+        PROFILER_LOG_ERROR(LOG_CORE, "GetAllStatsInfo failed");
     }
     NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     if (pid_ > 0) {
@@ -240,7 +240,7 @@ int32_t NetworkPlugin::GetUid(int32_t pid)
     int32_t userId = 0;
     std::vector<int32_t> activeIds;
     if (AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed ret:%d", ret);
+        PROFILER_LOG_ERROR(LOG_CORE, "QueryActiveOsAccountIds failed");
         return -1;
     }
     if (activeIds.empty()) {
