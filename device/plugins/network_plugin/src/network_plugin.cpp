@@ -212,7 +212,7 @@ bool NetworkPlugin::HandleData(NetFlowData present, NetFlowData &difference)
 int32_t NetworkPlugin::GetUid(int32_t pid)
 {
     std::string bundleName;
-    std::string filePath="/proc"+std::to_string(pid)+"/cmdline";
+    std::string filePath="/proc/"+std::to_string(pid)+"/cmdline";
     LoadStringFromFile(filePath, bundleName);
     bundleName.resize(strlen(bundleName.c_str()));
     int32_t userId=0;
