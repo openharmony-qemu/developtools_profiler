@@ -35,10 +35,10 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         return -1;
     }
     pid_ = protoConfig_.pid();
-    CHECK_TRUE(pid_> = 0, -1, "%s:invalid pid", __func__);
+    CHECK_TRUE(pid_ >= 0, -1, "%s:invalid pid", __func__);
     if (pid_>0) {
         uid_= GetUid(pid_);
-        CHECK_TRUE(uid_! = -1, -1, "%s:get uid failed", __func__);
+        CHECK_TRUE(uid_ != -1, -1, "%s:get uid failed", __func__);
     }
 
     PROFILER_LOG_INFO(LOG_CORE, "%s: NetworkPlugin success!", __func__);
