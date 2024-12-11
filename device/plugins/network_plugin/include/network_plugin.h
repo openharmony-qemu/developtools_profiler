@@ -55,6 +55,7 @@ public:
     bool ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool HandleData(NetFlowData present, NetFlowData &difference);
+    void Record(NetFlowData &newData);
 
 private:
     NetworkConfig protoConfig_;

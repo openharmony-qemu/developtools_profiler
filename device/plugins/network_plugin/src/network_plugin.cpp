@@ -162,53 +162,61 @@ bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard:
 
 bool NetworkPlugin::HandleData(NetFlowData present, NetFlowData &difference)
 {
-    if (!isFirst) {
-        (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
-        difference.rxBytes = present.rxBytes-previous_.rxBytes;
-        difference.rxPackets = present.rxPackets-previous_.rxPackets;
-        difference.txBytes = present.txBytes-previous_.txBytes;
-        difference.txPackets = present.txPackets-previous_.txPackets;
-        for (auto presentDetail : present.details) {
-            NetFlowDetail detail;
-            bool havePrevious = false;
-            for (auto previousDetail : previous_.details) {
-                if (previousDetail.type == presentDetail.type) {
-                    detail.type = presentDetail.type;
-                    detail.rxBytes = presentDetail.rxBytes - previousDetail.rxBytes;
-                    detail.rxPackets = presentDetail.rxPackets - previousDetail.rxPackets;
-                    detail.txBytes = presentDetail.txBytes - previousDetail.txBytes;
-                    detail.txPackets = presentDetail.txPackets - previousDetail.txPackets;
-                    havePrevious = true;
-                    break;
-                }
-            }
-            if (!havePrevious) {
-                detail.type = presentDetail.type;
-                detail.rxBytes = presentDetail.rxBytes;
-                detail.rxPackets = presentDetail.rxPackets;
-                detail.txBytes = presentDetail.txBytes;
-                detail.txPackets = presentDetail.txPackets;
-            }
-            difference.details.push_back(detail);
-        }
-    } else {
+    if(isFirst){
         (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
         difference.rxBytes = 0;
         difference.rxPackets = 0;
         difference.txBytes = 0;
         difference.txPackets = 0;
         isFirst= false;
+        Record(present);
+        return true;
     }
-    previous_.rxBytes = present.rxBytes;
-    previous_.rxPackets = present.rxPackets;
-    previous_.txBytes = present.txBytes;
-    previous_.txPackets = present.txPackets;
-    previous_.details.clear();
-    for (auto detail : present.details) {
-        previous_.details.push_back(detail);
+    
+    (void)clock_gettime(CLOCK_REALTIME, &(difference.ts));
+    difference.rxBytes = present.rxBytes-previous_.rxBytes;
+    difference.rxPackets = present.rxPackets-previous_.rxPackets;
+    difference.txBytes = present.txBytes-previous_.txBytes;
+    difference.txPackets = present.txPackets-previous_.txPackets;
+    for (auto presentDetail : present.details) {
+        NetFlowDetail detail;
+        bool havePrevious = false;
+        for (auto previousDetail : previous_.details) {
+            if (previousDetail.type == presentDetail.type) {
+                detail.type = presentDetail.type;
+                detail.rxBytes = presentDetail.rxBytes - previousDetail.rxBytes;
+                detail.rxPackets = presentDetail.rxPackets - previousDetail.rxPackets;
+                detail.txBytes = presentDetail.txBytes - previousDetail.txBytes;
+                detail.txPackets = presentDetail.txPackets - previousDetail.txPackets;
+                havePrevious = true;
+                break;
+            }
+        }
+        if (!havePrevious) {
+            detail.type = presentDetail.type;
+            detail.rxBytes = presentDetail.rxBytes;
+            detail.rxPackets = presentDetail.rxPackets;
+            detail.txBytes = presentDetail.txBytes;
+            detail.txPackets = presentDetail.txPackets;
+        }
+        difference.details.push_back(detail);
     }
+    Record(present);
     return true;
 }
+
+void NetworkPlugin::Record(NetFlowData &newData)
+{
+    previous_.rxBytes = newData.rxBytes;
+    previous_.rxPackets = newData.rxPackets;
+    previous_.txBytes = newData.txBytes;
+    previous_.txPackets = newData.txPackets;
+    previous_.details.clear();
+    for (auto detail : newData.details) {
+        previous_.details.push_back(detail);
+    }
+}
+
 int32_t NetworkPlugin::GetUid(int32_t pid)
 {
     std::string bundleName;
