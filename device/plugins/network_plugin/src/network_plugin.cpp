@@ -47,7 +47,7 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return 0;
 }
 
-std::string NetworkPlugin::GetCmdArgs(const int &traceConfig)
+std::string NetworkPlugin::GetCmdArgs(const NetworkConfig &traceConfig)
 {
     std::stringstream args;
     args << "pid: " << traceConfig.pid();
@@ -96,6 +96,12 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
     } else {
         RetainAllNetworkStat(infos, netFlowData);
     }
+    WriteData(networkDatasProto, netFlowData);
+    return true;
+}
+
+template <typename T> void NetworkPlugin::WriteData(T &networkDatasProto, NetFlowData &netFlowData)
+{
     networkDatasProto.set_pid(pid_);
     networkDatasProto.set_tv_sec(netFlowData.ts.tv_sec);
     networkDatasProto.set_tv_nsec(netFlowData.ts.tv_nsec);
@@ -111,7 +117,6 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
         data->set_tx_bytes(it.txBytes);
         data->set_tx_packets(it.txPackets);
     }
-    return true;
 }
 
 bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
