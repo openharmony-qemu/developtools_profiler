@@ -66,6 +66,26 @@ message AppDetail {
   AppDetailGPU gpu = 2;         //指定应用的gpu调优信息
   AppDetailWifi wifi = 3;       //指定应用的wifi调优信息
   AppDetailDisplay display = 4; //指定应用的display调优信息
+  AppDetailModem modem = 5;     //5.0新增：指定应用的modem调优信息
+  AppDetailDisplayExt display_ext = 6;//5.1新增：应用显示相关数据
+}
+
+message AppDetailDisplayExt {
+  RenderServiceSkip rs_skip = 1;     //RS空跑相关信息
+  GpuRedraw gpu_redraw = 2;          //GPU重复渲染
+}
+
+message RenderServiceSkip {
+    int32 skip_num = 1;              //RS空跑帧数
+}
+
+message GpuRedraw {
+    ReasonInfo background_alpha = 1; //背景颜色带透明度
+    ReasonInfo filter_rect = 2;      //应用内filter与自绘制节点有交集
+}
+
+message ReasonInfo {
+    int32 frame_num = 1;             //帧数
 }
 
 message AppDetailCPU {
@@ -88,6 +108,13 @@ message AppDetailWifi {
   int64 rx_packets = 2;   //wifi接受数据包
   int64 tx_bytes = 3;     //wifi传输字节数
   int64 rx_bytes = 4;     //wifi接受字节数
+}
+
+message AppDetailModem {
+  int64 tx_packets = 1;   //5.0新增：modem传输数据包
+  int64 rx_packets = 2;   //5.0新增：modem接受数据包
+  int64 tx_bytes = 3;     //5.0新增：modem传输字节数
+  int64 rx_bytes = 4;     //5.0新增：modem接受字节数
 }
 
 message AppDetailDisplay {
