@@ -14,30 +14,35 @@
  */
 #include "profiler_data_repeater.h"
 
-ProfilerDataRepeater::ProfilerDataRepeater(size_t maxSize)
+template <typename T>
+ProfilerDataRepeater<T>::ProfilerDataRepeater(size_t maxSize)
 {
     maxSize_ = maxSize;
     closed_ = false;
 }
 
-ProfilerDataRepeater::~ProfilerDataRepeater()
+template <typename T>
+ProfilerDataRepeater<T>::~ProfilerDataRepeater()
 {
     Close();
 }
 
-size_t ProfilerDataRepeater::Size()
+template <typename T>
+size_t ProfilerDataRepeater<T>::Size()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     return dataQueue_.size();
 }
 
-void ProfilerDataRepeater::Reset()
+template <typename T>
+void ProfilerDataRepeater<T>::Reset()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     closed_ = false;
 }
 
-void ProfilerDataRepeater::Close()
+template <typename T>
+void ProfilerDataRepeater<T>::Close()
 {
     {
         std::unique_lock<std::mutex> lock(mutex_);
@@ -48,7 +53,8 @@ void ProfilerDataRepeater::Close()
     itemCondVar_.notify_all();
 }
 
-bool ProfilerDataRepeater::PutPluginData(const ProfilerPluginDataPtr& pluginData)
+template <typename T>
+bool ProfilerDataRepeater<T>::PutPluginData(const std::shared_ptr<T>& pluginData)
 {
     std::unique_lock<std::mutex> lock(mutex_);
 
@@ -72,7 +78,8 @@ bool ProfilerDataRepeater::PutPluginData(const ProfilerPluginDataPtr& pluginData
     return true;
 }
 
-ProfilerPluginDataPtr ProfilerDataRepeater::TakePluginData()
+template <typename T>
+std::shared_ptr<T> ProfilerDataRepeater<T>::TakePluginData()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     while (dataQueue_.empty() && !closed_) {
@@ -90,7 +97,8 @@ ProfilerPluginDataPtr ProfilerDataRepeater::TakePluginData()
     return result;
 }
 
-int ProfilerDataRepeater::TakePluginData(std::vector<ProfilerPluginDataPtr>& pluginDataVec)
+template <typename T>
+int ProfilerDataRepeater<T>::TakePluginData(std::vector<std::shared_ptr<T>>& pluginDataVec)
 {
     std::unique_lock<std::mutex> lock(mutex_);
     while (dataQueue_.empty() && !closed_) {
@@ -113,7 +121,8 @@ int ProfilerDataRepeater::TakePluginData(std::vector<ProfilerPluginDataPtr>& plu
     return count;
 }
 
-void ProfilerDataRepeater::ClearQueue()
+template <typename T>
+void ProfilerDataRepeater<T>::ClearQueue()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     dataQueue_.clear();

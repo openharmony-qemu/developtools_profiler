@@ -99,6 +99,20 @@ message FetchDataResponse {
     repeated ProfilerPluginData plugin_data = 4;
 }
 
+// for SubscribeProfilerEvtData
+message SubscribeProfilerEvtRequest {
+    uint32 request_id = 1;
+    uint32 session_id = 2;
+    bytes addtion_data = 3;
+}
+
+message SubscribeProfilerEvtResponse {
+    uint32 status = 1;
+    uint32 response_id = 2;
+    bool has_more = 3;
+    repeated ProfilerPluginState plugin_state = 4;
+}
+
 // for StopSession
 message StopSessionRequest {
     uint32 request_id = 1;

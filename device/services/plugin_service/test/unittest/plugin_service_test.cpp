@@ -21,6 +21,7 @@
 #include "plugin_service_impl.h"
 #include "plugin_session_manager.h"
 #include "profiler_data_repeater.h"
+#include "profiler_data_repeater.cpp"
 #include "profiler_service_types.pb.h"
 #include "socket_context.h"
 
@@ -108,7 +109,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     ppc.set_name("abc1.so");
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
     plugin.name = "abc1.so";
     plugin.bufferSizeHint = 0;
@@ -131,7 +134,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     ProfilerSessionConfig::BufferConfig bc;
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
     plugin.name = "abc2.so";
     plugin.bufferSizeHint = 0;
@@ -144,7 +149,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession2, TestSize.Level1)
     pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     TraceFileWriterPtr traceWriter = std::make_shared<TraceFileWriter>("/data/local/tmp/tracewrite.trace");
     pluginService_->SetTraceWriter(traceWriter);
-    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc,
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     uint32_t pluginId = pluginService_->GetPluginIdByName("abc2.so");
     PluginContextPtr pluginCtx = pluginService_->GetPluginContextById(pluginId);
     pluginService_->ReadShareMemoryOffline(*pluginCtx);
@@ -349,7 +356,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession12, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -368,7 +377,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession22, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -492,7 +503,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession13, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -511,7 +524,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession23, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -640,7 +655,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession14, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -659,7 +676,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession24, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -783,7 +802,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession15, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -802,7 +823,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession25, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -1006,8 +1029,9 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSession, TestSize.Lev
     psc.set_session_mode(ProfilerSessionConfig::OFFLINE);
     std::vector<string> names = {"testsample.so"};
     pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
-    EXPECT_TRUE(pluginSessionMgr_->CreatePluginSession(
-                    ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)) != nullptr);
+    EXPECT_TRUE(pluginSessionMgr_->CreatePluginSession(ppc, bc,
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 /**
  * @tc.name: PluginSessionManager
@@ -1039,7 +1063,8 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_CreateSessions, TestSize.Le
     std::vector<string> names = {"testsample1.so"};
     pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
     EXPECT_TRUE(pluginSessionMgr_->CreatePluginSessions(vecConfig, vecBuf,
-                                                        std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     std::vector<std::string> nameList{"testsample.so", "testsample1.so"};
     EXPECT_TRUE(pluginSessionMgr_->InvalidatePluginSessions(nameList));
     std::vector<PluginSession::State> vecRet = pluginSessionMgr_->GetStatus(nameList);
@@ -1072,7 +1097,9 @@ HWTEST_F(UnitTestPluginService, PluginService_CreatePluginSession_Online, TestSi
     psc.set_session_mode(ProfilerSessionConfig::ONLINE);
     std::vector<string> names = {"abconline.so"};
     pluginService_->SetProfilerSessionConfig(std::make_shared<ProfilerSessionConfig>(psc), names);
-    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    EXPECT_TRUE(pluginService_->CreatePluginSession(ppc, bc,
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     uint32_t pluginId = pluginService_->GetPluginIdByName("abconline.so");
     PluginContextPtr pluginCtx = pluginService_->GetPluginContextById(pluginId);
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);

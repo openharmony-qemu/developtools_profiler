@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 #include "logging.h"
 #include "profiler_data_repeater.h"
+#include "profiler_data_repeater.cpp"
 
 using namespace testing::ext;
 
@@ -40,7 +41,7 @@ protected:
 HWTEST_F(ProfilerDataRepeaterTest, PutPluginData, TestSize.Level1)
 {
     const int bufferSize = 10;
-    auto dataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto dataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(dataRepeater, nullptr);
 
     for (int i = 0; i < bufferSize; i++) {
@@ -59,10 +60,10 @@ HWTEST_F(ProfilerDataRepeaterTest, TakePluginData, TestSize.Level1)
 {
     const int bufferSize = 10;
     const int itemCounts = 10000;
-    auto inDataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto inDataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(inDataRepeater, nullptr);
 
-    auto outDataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto outDataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(outDataRepeater, nullptr);
 
     auto f = [](int x) { return 2 * x + 1; };
@@ -108,10 +109,10 @@ HWTEST_F(ProfilerDataRepeaterTest, TakePluginDataVec, TestSize.Level1)
 {
     const int itemCounts = 10000;
     const int bufferSize = itemCounts;
-    auto inDataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto inDataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(inDataRepeater, nullptr);
 
-    auto outDataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto outDataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(outDataRepeater, nullptr);
 
     auto f = [](int x) { return 2 * x + 1; };
@@ -160,7 +161,7 @@ HWTEST_F(ProfilerDataRepeaterTest, TakePluginDataVec, TestSize.Level1)
 HWTEST_F(ProfilerDataRepeaterTest, Close, TestSize.Level1)
 {
     const int bufferSize = 10;
-    auto dataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto dataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(dataRepeater, nullptr);
 
     dataRepeater->Close();
@@ -174,7 +175,7 @@ HWTEST_F(ProfilerDataRepeaterTest, Close, TestSize.Level1)
 HWTEST_F(ProfilerDataRepeaterTest, Reset, TestSize.Level1)
 {
     const int bufferSize = 10;
-    auto dataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto dataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(dataRepeater, nullptr);
 
     dataRepeater->Reset();
@@ -189,7 +190,7 @@ HWTEST_F(ProfilerDataRepeaterTest, CloseWithFastProducer, TestSize.Level1)
 {
     const int bufferSize = 10;
     const int numProducts = 20;
-    auto dataRepeater = std::make_shared<ProfilerDataRepeater>(bufferSize);
+    auto dataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(bufferSize);
     ASSERT_NE(dataRepeater, nullptr);
 
     std::thread producer([=]() {

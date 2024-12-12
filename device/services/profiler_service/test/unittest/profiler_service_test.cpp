@@ -25,6 +25,7 @@
 #include "plugin_service.h"
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
+#include "profiler_data_repeater.cpp"
 #include "profiler_service.h"
 #include "schedule_task_manager.h"
 #include "common.h"
@@ -1197,6 +1198,249 @@ HWTEST_F(ProfilerServiceTest, FetchDataInvalidContext, TestSize.Level1)
     }
 
     status = service_->FetchData(nullptr, &request, writer.get());
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+}
+
+
+class FakeSubscribeWriter : public ::grpc::ServerWriter<::SubscribeProfilerEvtResponse> {
+public:
+    FakeSubscribeWriter(::grpc::internal::Call* call, grpc::ServerContext* ctx)
+        : ::grpc::ServerWriter<::SubscribeProfilerEvtResponse>(call, ctx)
+    {
+    }
+    ~FakeSubscribeWriter() = default;
+
+    uint32_t GetDataCount() const
+    {
+        return dataCount_;
+    }
+
+    using grpc::internal::WriterInterface<::SubscribeProfilerEvtResponse>::Write;
+    bool Write(const ::SubscribeProfilerEvtResponse& msg, ::grpc::WriteOptions options) override
+    {
+        if (msg.plugin_state_size() > 0) {
+            dataCount_ += msg.plugin_state_size();
+        }
+        return true;
+    }
+
+private:
+    std::atomic<uint32_t> dataCount_ = 0;
+};
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler with invalid session id.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtInvalidSessionId, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    SubscribeProfilerEvtRequest request;
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+
+    request.set_session_id(0); // invalid session id
+    request.set_request_id(++requestCounter);
+    auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler with offline.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtOffline, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOfflineSession();
+    EXPECT_NE(sessionId, 0);
+    {
+        auto status = StartSession(sessionId);
+        EXPECT_EQ(status.error_code(), grpc::StatusCode::OK);
+    }
+
+    SubscribeProfilerEvtRequest request;
+    request.set_session_id(sessionId);
+    request.set_request_id(++requestCounter);
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+    auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+    EXPECT_EQ(status.error_code(), grpc::StatusCode::OK);
+
+    EXPECT_EQ(StopSession(sessionId).error_code(), grpc::StatusCode::OK);
+    EXPECT_EQ(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler online.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtOnline, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    uint32_t sessionId = CreateOnlineSession();
+    StartSession(sessionId);
+
+    auto sessionCtx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(sessionCtx->stateRepeater, nullptr);
+    {
+        auto data = std::make_shared<ProfilerPluginState>();
+        ASSERT_NE(data, nullptr);
+        data->set_name(pluginInfo.name);
+        sessionCtx->stateRepeater->PutPluginData(data);
+    }
+
+    SubscribeProfilerEvtRequest request;
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+    request.set_session_id(sessionId);
+    request.set_request_id(++requestCounter);
+    std::thread bgThread([&] {
+        auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+        EXPECT_EQ(status.error_code(), grpc::StatusCode::OK);
+    });
+
+    usleep(FETCH_DATA_DELAY_US);
+    sessionCtx->stateRepeater->Close();
+    bgThread.join();
+
+    EXPECT_EQ(StopSession(sessionId).error_code(), grpc::StatusCode::OK);
+    EXPECT_EQ(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+
+    EXPECT_GE(writer->GetDataCount(), 1);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler online batch test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtBatchTest, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+
+    uint32_t sessionId = CreateOnlineSession();
+    StartSession(sessionId);
+
+    auto sessionCtx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(sessionCtx->stateRepeater, nullptr);
+
+    // 只能存入小于maxsize的数据才能确保dataProducer线程正常退出
+    int size = ProfilerService::DEFAULT_REPEATER_BUFFER_SIZE - 1;
+    std::thread dataProducer([&]() {
+        for (int i = 0; i < size; i++) {
+            auto data = std::make_shared<ProfilerPluginState>();
+            ASSERT_NE(data, nullptr);
+            data->set_name(pluginInfo.name);
+            sessionCtx->stateRepeater->PutPluginData(data);
+        }
+    });
+    dataProducer.join();
+
+    std::thread closeStateRepeater([&]() {
+        while (1) {
+            if (sessionCtx->stateRepeater->Size() == 0) {
+                sessionCtx->stateRepeater->Close();
+                break;
+            }
+        }
+    });
+
+    Timer timer = {};
+    std::thread dataConsumer([&]() {
+        SubscribeProfilerEvtRequest request;
+        request.set_session_id(sessionId);
+        request.set_request_id(++requestCounter);
+        auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+        EXPECT_EQ(status.error_code(), grpc::StatusCode::OK);
+    });
+
+    dataConsumer.join();
+    auto timeCost = timer.ElapsedUs();
+    printf("SubscribeProfilerEvt %d time, cost %ldus.\n", size, timeCost);
+    EXPECT_LE(timeCost, TIMEOUT_US);
+
+    EXPECT_EQ(StopSession(sessionId).error_code(), grpc::StatusCode::OK);
+    EXPECT_EQ(DestroySession(sessionId).error_code(), grpc::StatusCode::OK);
+
+    EXPECT_EQ(writer->GetDataCount(), size);
+    closeStateRepeater.join();
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler with invalid arguments.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtInvalidArguments, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    SubscribeProfilerEvtRequest request;
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+    request.set_request_id(++requestCounter);
+    auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+
+    uint32_t sessionId = CreateOnlineSession();
+
+    auto sessionCtx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(sessionCtx->stateRepeater, nullptr);
+    {
+        auto data = std::make_shared<ProfilerPluginState>();
+        ASSERT_NE(data, nullptr);
+        data->set_name(pluginInfo.name);
+        sessionCtx->stateRepeater->PutPluginData(data);
+    }
+
+    status = service_->SubscribeProfilerEvt(context_.get(), nullptr, writer.get());
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+
+    status = service_->SubscribeProfilerEvt(context_.get(), &request, nullptr);
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+
+    status = service_->SubscribeProfilerEvt(context_.get(), nullptr, nullptr);
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+}
+
+/**
+ * @tc.name: server
+ * @tc.desc: subscribe profiler with invalid context.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtInvalidContext, TestSize.Level1)
+{
+    ASSERT_NE(service_, nullptr);
+    ASSERT_NE(context_, nullptr);
+
+    SubscribeProfilerEvtRequest request;
+    auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
+    request.set_request_id(++requestCounter);
+    auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
+    EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
+
+    uint32_t sessionId = CreateOnlineSession();
+
+    auto sessionCtx = service_->GetSessionContext(sessionId);
+    ASSERT_NE(sessionCtx->stateRepeater, nullptr);
+    {
+        auto data = std::make_shared<ProfilerPluginState>();
+        ASSERT_NE(data, nullptr);
+        data->set_name(pluginInfo.name);
+        sessionCtx->stateRepeater->PutPluginData(data);
+    }
+
+    status = service_->SubscribeProfilerEvt(nullptr, &request, writer.get());
     EXPECT_NE(status.error_code(), grpc::StatusCode::OK);
 }
 

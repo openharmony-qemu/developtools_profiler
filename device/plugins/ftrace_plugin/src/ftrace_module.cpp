@@ -77,12 +77,18 @@ int TracePluginStopSession()
     return result;
 }
 
+bool TraceReportState()
+{
+    return g_mainController->IsDataReady();
+}
+
 static PluginModuleCallbacks moduleCallbacks = {
     .onPluginSessionStart = TracePluginStartSession,
     .onPluginReportResult = 0,
     .onPluginSessionStop = TracePluginStopSession,
     .onRegisterWriterStruct = TracePluginRegisterWriter,
     .onReportBasicDataCallback = TracePluginReportBasicData, // report ftrace_plugin basic data
+    .onReportStateCallback = TraceReportState,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {
