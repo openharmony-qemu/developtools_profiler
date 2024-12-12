@@ -17,6 +17,5 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
 message NetworkConfig {
-    repeated int32 pid = 1;
-    string test_file = 2;
+    int32 pid = 1;
 }

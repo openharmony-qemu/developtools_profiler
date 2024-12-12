@@ -38,9 +38,17 @@ ohos_source_set("networkplugin_source") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
+      "bundle_framework:appexecfwk_base",
+      "bundle_framework:appexecfwk_core",
+      "c_utils:utils",
       "hilog:libhilog_base",
       "hisysevent:libhisysevent",
+      "init:libbegetutil",
+      "ipc:ipc_core",
+      "netmanager_base:net_stats_manager_if",
+      "os_account:os_account_innerkits",
       "protobuf:protobuf_lite",
+      "samgr:samgr_proxy",
     ]
   }
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]

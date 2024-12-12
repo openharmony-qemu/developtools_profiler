@@ -268,7 +268,7 @@ protected:
         ppc->set_name("network-plugin");
         ppc->set_sample_interval(SAMPLE_INTERVAL);
         NetworkConfig nc;
-        nc.add_pid(1);
+        nc.set_pid(1);
         std::vector<uint8_t> configData(nc.ByteSizeLong());
         nc.SerializeToArray(configData.data(), configData.size());
         ppc->set_config_data((const void*)configData.data(), configData.size());
