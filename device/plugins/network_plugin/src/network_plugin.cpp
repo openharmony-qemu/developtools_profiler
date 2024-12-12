@@ -38,8 +38,8 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
     }
     pid_ = protoConfig_.pid();
     CHECK_TRUE(pid_ >= 0, -1, "%s:invalid pid", __func__);
-    if (pid_>0) {
-        uid_= GetUid(pid_);
+    if (pid_ > 0) {
+        uid_ = GetUid(pid_);
         CHECK_TRUE(uid_ != -1, -1, "%s:get uid failed", __func__);
     }
     int ret = COMMON::PluginWriteToHisysevent("network_plugin", "sh", GetCmdArgs(protoConfig_),
@@ -90,6 +90,7 @@ template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
     std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
     if (OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "GetAllStatsInfo failed");
+        return false;
     }
     NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     if (pid_ > 0) {
@@ -120,7 +121,8 @@ template <typename T> void NetworkPlugin::WriteData(T &networkDatasProto, NetFlo
     }
 }
 
-bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
+bool NetworkPlugin::RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos,
+                                         NetFlowData &data)
 {
     NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     std::map<std::string, NetFlowDetail> detailMap;
@@ -152,7 +154,8 @@ bool NetworkPlugin::RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::N
     return true;
 }
 
-bool NetworkPlugin::ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data)
+bool NetworkPlugin::ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos,
+                                           NetFlowData &data)
 {
     NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     for (auto info : infos) {

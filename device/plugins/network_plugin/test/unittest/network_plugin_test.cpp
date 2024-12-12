@@ -103,8 +103,7 @@ bool PluginStub(NetworkPlugin& plugin, NetworkFlowData& networkData, NetworkConf
 
     // report
     std::vector<uint8_t> bufferData(BUF_SIZE);
-    ret = plugin.Report(bufferData.data(), bufferData.size());
-    if (ret >= -1) {
+    if (plugin.Report(bufferData.data(), bufferData.size()) >= -1) {
         return true;
     }
 

@@ -53,8 +53,8 @@ public:
     template <typename T> bool WriteNetWorkData(T& networkDatasProto);
     template <typename T> void WriteData(T& networkDatasProto, NetFlowData &netFlowData);
     int32_t GetUid(int32_t pid);
-    bool ScreenNetworkStatByUid(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
-    bool RetainAllNetworkStat(std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
+    bool ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
+    bool RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool HandleData(NetFlowData present, NetFlowData &difference);
     void Record(NetFlowData &newData);
     std::string GetCmdArgs(const NetworkConfig &traceConfig);
