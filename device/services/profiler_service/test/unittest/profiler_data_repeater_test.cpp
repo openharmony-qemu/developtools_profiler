@@ -19,7 +19,6 @@
 #include <gtest/gtest.h>
 #include "logging.h"
 #include "profiler_data_repeater.h"
-#include "profiler_data_repeater.cpp"
 
 using namespace testing::ext;
 

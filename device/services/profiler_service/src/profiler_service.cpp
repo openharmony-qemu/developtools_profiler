@@ -24,7 +24,6 @@
 #include "plugin_session_manager.h"
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
-#include "profiler_data_repeater.cpp"
 #include "trace_file_writer.h"
 #include <cinttypes>
 
@@ -394,7 +393,7 @@ void ProfilerService::CheckClientStatus()
         CHECK_NOTNULL(stateRepeater_, NO_RETVAL, "cannot push event, stateRepeater is null!");
         stateRepeater_->PutPluginData(std::make_shared<ProfilerPluginState>(pluginState));
         if (heartbeatFd_ != -1) {
-            scheduleTaskManager_.UnscheduleTask(heartbeatFd_);
+            checkStatusManager_.UnscheduleTask(heartbeatFd_);
         }
     }
 }
@@ -563,7 +562,7 @@ Status ProfilerService::StartSession(ServerContext* context,
     PROFILER_LOG_INFO(LOG_CORE, "StartSession %d %u done!", request->request_id(), sessionId);
     if (heartbeatFd_ == -1) {
         auto callback = [this] { this->CheckClientStatus(); };
-        heartbeatFd_ = scheduleTaskManager_.ScheduleTask(callback, CHECK_HEARTBEAT_INTERVAL);
+        heartbeatFd_ = checkStatusManager_.ScheduleTask(callback, CHECK_HEARTBEAT_INTERVAL);
         if (heartbeatFd_ == -1) {
             PROFILER_LOG_INFO(LOG_CORE, "schedule task failed for heartbeat check");
         }

@@ -21,7 +21,6 @@
 #include "plugin_service_impl.h"
 #include "plugin_session_manager.h"
 #include "profiler_data_repeater.h"
-#include "profiler_data_repeater.cpp"
 #include "profiler_service_types.pb.h"
 #include "socket_context.h"
 

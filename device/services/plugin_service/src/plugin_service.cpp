@@ -25,7 +25,6 @@
 #include "plugin_session_manager.h"
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
-#include "profiler_data_repeater.cpp"
 #include "securec.h"
 #include "share_memory_allocator.h"
 #include "socket_context.h"
@@ -570,7 +569,7 @@ bool PluginService::AppendResult(NotifyResultRequest& request)
             PluginContextPtr pluginCtx = GetPluginContextById(pluginId);
             CHECK_NOTNULL(pluginCtx, false, "plugin id %u not found!", pluginId);
             if (pluginCtx->profilerStateRepeater == nullptr) {
-                PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult profilerStateRepeater==nullptr %s %d",
+                PROFILER_LOG_ERROR(LOG_CORE, "AppendResult profilerStateRepeater==nullptr %s %d",
                                    pr.status().name().c_str(), pluginId);
                 return false;
             }

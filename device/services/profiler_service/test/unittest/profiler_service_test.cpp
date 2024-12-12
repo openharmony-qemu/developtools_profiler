@@ -25,7 +25,6 @@
 #include "plugin_service.h"
 #include "profiler_capability_manager.h"
 #include "profiler_data_repeater.h"
-#include "profiler_data_repeater.cpp"
 #include "profiler_service.h"
 #include "schedule_task_manager.h"
 #include "common.h"

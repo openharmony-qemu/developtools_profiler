@@ -143,7 +143,7 @@ private:
     std::map<uint32_t, SessionContextPtr> sessionContext_ = {};
     std::unique_ptr<grpc::Server> server_ = nullptr;
     ScheduleTaskManager removeTask_;
-    ScheduleTaskManager scheduleTaskManager_;
+    ScheduleTaskManager checkStatusManager_;
     std::atomic<int32_t> heartbeatFd_ = -1;
     std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater_ = nullptr;
 
