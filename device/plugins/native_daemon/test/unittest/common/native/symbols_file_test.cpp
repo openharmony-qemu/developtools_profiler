@@ -17,6 +17,7 @@
 #include <gtest/gtest.h>
 #include <random>
 #include <unistd.h>
+#include "common.h"
 
 using namespace testing::ext;
 using namespace std;
@@ -391,7 +392,7 @@ HWTEST_F(SymbolsFileTest, GetSymbolWithVaddr, TestSize.Level1)
 {
     auto symbols = SymbolsFile::CreateSymbolsFile(SYMBOL_KERNEL_FILE);
 
-    if ((getuid() == 0)) {
+    if (!COMMON::IsUserMode()) {
         HLOGD("in root mode");
         EXPECT_EQ(symbols->LoadSymbols(), true);
         CheckSymbols(symbols);

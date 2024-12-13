@@ -27,11 +27,7 @@ FfrtProfilerSocketService::FfrtProfilerSocketService(std::shared_ptr<FfrtProfile
     : ffrtMgr_(ffrtMgr)
 {
     serviceName_ = "FfrtProfilerService";
-    if (getuid() == 0) {
-        StartService(FFRT_PROFILER_UNIX_SOCKET_FULL_PATH);
-    } else {
-        StartService(FFRT_PROFILER_UNIX_SOCKET_PATH);
-    }
+    StartService(FFRT_PROFILER_UNIX_SOCKET_PATH);
 }
 
 FfrtProfilerSocketService::~FfrtProfilerSocketService()

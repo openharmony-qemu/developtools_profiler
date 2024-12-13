@@ -32,6 +32,7 @@
 
 #include <cstdlib>
 #include <unistd.h>
+#include "common.h"
 #include "dfx_ark.h"
 #include "dfx_extractor_utils.h"
 #include "dfx_symbols.h"
@@ -520,7 +521,7 @@ public:
 
     bool LoadKernelSyms()
     {
-        if (!IsRoot()) {
+        if (COMMON::IsUserMode()) {
             HLOGE("only root mode can access kernel symbols");
             return false;
         }

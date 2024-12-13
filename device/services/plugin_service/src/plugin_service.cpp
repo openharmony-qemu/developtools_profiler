@@ -40,11 +40,7 @@ const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 PluginService::PluginService()
 {
     pluginIdCounter_ = 0;
-    if (getuid() == 0) {
-        StartService(DEFAULT_UNIX_SOCKET_FULL_PATH);
-    } else {
-        StartService(DEFAULT_UNIX_SOCKET_PATH);
-    }
+    StartService(DEFAULT_UNIX_SOCKET_PATH);
 
     pluginCommandBuilder_ = std::make_shared<PluginCommandBuilder>();
 

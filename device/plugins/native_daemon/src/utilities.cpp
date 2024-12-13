@@ -286,16 +286,6 @@ bool WriteStringToFile(const std::string &fileName, const std::string &value)
     return output.good();
 }
 
-bool IsRoot()
-{
-#if is_linux || is_ohos
-    static bool isRoot = (getuid() == 0);
-    return isRoot;
-#else
-    return true;
-#endif
-}
-
 bool PowerOfTwo(int n)
 {
     return n && (!(n & (n - 1)));
