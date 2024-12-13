@@ -536,6 +536,7 @@ bool PluginManager::PullState(uint32_t pluginId)
     pluginModules_[pluginId]->GetBufferSizeHint(size);
     pluginModules_[pluginId]->GetPluginName(name);
     std::string pluginName = name;
+    CHECK_TRUE(size > 0, false, "PullState failed! size is 0");
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
     CHECK_NOTNULL(buffer, false, "%s:buffer new failed!", __func__);
     if ((loadedPlugins_.find(pluginName) == loadedPlugins_.end()) && it->second->CheckDataReady()) {
