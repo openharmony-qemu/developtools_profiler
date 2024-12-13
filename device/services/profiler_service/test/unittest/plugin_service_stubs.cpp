@@ -141,7 +141,8 @@ void PluginService::SetProfilerSessionConfig(const std::shared_ptr<ProfilerSessi
 }
 
 bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
-                                        const ProfilerDataRepeaterPtr& dataRepeater)
+                                        const ProfilerDataRepeaterPtr& dataRepeater,
+                                        const ProfilerStateRepeaterPtr& stateRepeater)
 {
     uint32_t pluginId = 0;
     PluginContextPtr pluginCtx = nullptr;
@@ -150,6 +151,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     CHECK_NOTNULL(pluginCtx, false, "create PluginContext failed!");
 
     pluginCtx->profilerDataRepeater = dataRepeater;
+    pluginCtx->profilerStateRepeater = stateRepeater;
     pluginCtx->shareMemoryBlock = nullptr;
 
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
@@ -160,9 +162,10 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
 bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
                                         const ProfilerSessionConfig::BufferConfig& bufferConfig,
-                                        const ProfilerDataRepeaterPtr& dataRepeater)
+                                        const ProfilerDataRepeaterPtr& dataRepeater,
+                                        const ProfilerStateRepeaterPtr& stateRepeater)
 {
-    return CreatePluginSession(pluginConfig, dataRepeater);
+    return CreatePluginSession(pluginConfig, dataRepeater, stateRepeater);
 }
 
 bool PluginService::StartPluginSession(const ProfilerPluginConfig& pluginConfig)

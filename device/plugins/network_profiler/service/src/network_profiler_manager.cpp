@@ -312,6 +312,17 @@ void NetworkProfilerManager::ReadShareMemory(std::shared_ptr<NetworkProfilerCtx>
     ctx->eventNotifier->Take();
     while (true) {
         bool ret = ctx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+            if (firstData_ && firstPluginId_ != 0) {
+                firstData_ = false;
+                ProfilerPluginState pluginState;
+                pluginState.set_version(COMMON::STATE_VERSION);
+                pluginState.set_event_detail("Report data success: network-profiler get data!");
+                pluginState.set_event(ProfilerPluginState::DATA_READY);
+                pluginState.set_name("network-profiler");
+                if (commandPoller_ != nullptr) {
+                    commandPoller_->PushResult(pluginState, firstPluginId_);
+                }
+            }
             ctx->handle->SerializeData(data, size);
             return true;
         });
@@ -371,7 +382,23 @@ bool NetworkProfilerManager::DestroyPluginSession(const std::vector<uint32_t>& p
 bool NetworkProfilerManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
     const std::vector<ProfilerPluginConfig>& config, PluginResult& result)
 {
-    return StartNetworkProfiler();
+    bool isStarted = StartNetworkProfiler();
+    if (pluginIds.size() > 0) {
+        ProfilerPluginState pluginState;
+        pluginState.set_version(COMMON::STATE_VERSION);
+        pluginState.set_name("network-profiler");
+        if (isStarted) {
+            pluginState.set_event_detail("network profiler plugin load success");
+            pluginState.set_event(ProfilerPluginState::PLUGIN_LOAD_SUCC);
+        } else {
+            pluginState.set_event_detail("plugin load failed: network-profiler");
+            pluginState.set_event(ProfilerPluginState::PLUGIN_ERR);
+        }
+        CHECK_NOTNULL(commandPoller_, false, "command poller is invalid, send state info failed!");
+        firstPluginId_ = pluginIds[0];
+        commandPoller_->PushResult(pluginState, firstPluginId_);
+    }
+    return isStarted;
 }
 
 bool NetworkProfilerManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)

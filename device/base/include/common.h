@@ -27,6 +27,7 @@ bool IsProcessRunning(int& lockFileFd); // add file lock, only one process can r
 bool IsProcessExist(const std::string& processName, int& pid); // Check if the process exists and get PID
 int StartProcess(const std::string& processBin, std::vector<char*>& argv);
 int KillProcess(int pid);
+bool CheckSubscribeVersion(const std::string& version);
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi);
 inline int CustomFdClose(int& fd);
 inline int CustomFdFclose(FILE** fp);
@@ -58,6 +59,7 @@ int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::st
                              std::string errorMessage);
 std::string GetProcessNameByPid(int32_t pid);
 
+static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
     RET_NO_PERMISSION,
     RET_NOT_SUPPORT,

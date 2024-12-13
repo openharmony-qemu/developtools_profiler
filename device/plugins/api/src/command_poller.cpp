@@ -135,6 +135,17 @@ bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
     return true;
 }
 
+void CommandPoller::PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId)
+{
+    std::lock_guard<std::recursive_timed_mutex> guard(reportMutex_);
+    NotifyResultRequest nrr;
+    PluginResult* pr = nrr.add_result();
+    pr->set_plugin_id(pluginId);
+    ProfilerPluginState* status = pr->mutable_status();
+    *status = pluginState;
+    NotifyResult(nrr);
+}
+
 bool CommandPoller::OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "%s:proc", __func__);

@@ -510,6 +510,9 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
             tansporter_->Report(static_cast<size_t>(msgSize));
         }
     }
+    if (!dataReady_) {
+        dataReady_ = true;
+    }
 
     return true;
 }
@@ -558,6 +561,9 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         int32_t msgSize = traceResult.Finish();
         resultWriter_->finishReport(resultWriter_, msgSize);
         tansporter_->Report(static_cast<size_t>(msgSize));
+    }
+    if (!dataReady_) {
+        dataReady_ = true;
     }
     return true;
 }
