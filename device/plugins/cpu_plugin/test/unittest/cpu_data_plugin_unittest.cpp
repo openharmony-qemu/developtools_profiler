@@ -940,6 +940,7 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
 #ifdef __aarch64__
     EXPECT_LT(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());
 #endif
+
     while (waitpid(-1, nullptr, WNOHANG) == 0) {
         kill(pid1, SIGKILL);
         kill(pid2, SIGKILL);
