@@ -1293,7 +1293,7 @@ bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMe
 {
     std::shared_ptr<GraphicMemoryCollector> collector = GraphicMemoryCollector::Create();
     OHOS::HiviewDFX::CollectResult<int32_t> data;
-    data = collector->GetGraphicUsage(pid, graphicType);
+    data = collector->GetGraphicUsage(pid, graphicType, true);
     if (data.retCode != UcError::SUCCESS) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:collect progress GL or Graph error, ret:%d.", __func__, data.retCode);
         return false;
