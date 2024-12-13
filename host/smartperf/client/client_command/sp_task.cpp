@@ -621,6 +621,9 @@ int SPTask::GetCurrentBattary()
     const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
     SPUtils::LoadCmd(cmd, content);
     content = content.substr(content.find(':') + 1);
+    if(content == "") {
+        return 0;
+    }
     return std::stoi(content);
 }
 ErrCode SPTask::StartRecord()

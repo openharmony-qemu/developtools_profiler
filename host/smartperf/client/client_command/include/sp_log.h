@@ -37,6 +37,21 @@ void SpLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define LOGE(fmt, ...) \
     SpLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
+void EditorLog(SpLogLevel logLevel, const char *fmt, ...);
+
+#define ELOGD(fmt, ...) \
+    EditorLog(SP_LOG_DEBUG, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
+#define ELOGI(fmt, ...) \
+    EditorLog(SP_LOG_INFO, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
+#define ELOGW(fmt, ...) \
+    EditorLog(SP_LOG_WARN, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
+#define ELOGE(fmt, ...) \
+    EditorLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
