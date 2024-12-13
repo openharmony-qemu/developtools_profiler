@@ -18,7 +18,13 @@ import("../protos.gni")
 proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
-grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
+if (ohos_indep_compiler_enable) {
+  grpc_binary_dir = rebase_path("//binarys/third_party")
+  grpc_cpp_plugin = "$grpc_binary_dir/grpc/innerapis/grpc_cpp_plugin/clang_x64/libs/grpc_cpp_plugin"
+} else {
+  grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
+}
+
 ipc_cpp_plugin = "$proto_gen_ipc_dir/protoc_gen_ipc"
 
 config("public_configs") {
@@ -67,6 +73,7 @@ action("all_type_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
   external_deps = [
     "grpc:grpc_cpp_plugin(${host_toolchain})",
@@ -146,6 +153,7 @@ action("profiler_service_interface_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   deps = [ ":all_type_gen" ]
   external_deps = [
     "grpc:grpc_cpp_plugin(//build/toolchain/linux:clang_${host_cpu})",
@@ -218,6 +226,7 @@ action("plugin_service_interface_proto_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   deps = [
     ":all_type_gen",
     "${OHOS_PROFILER_DIR}/device/services/ipc:protoc_gen_ipc(${host_toolchain})",

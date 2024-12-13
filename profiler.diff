@@ -1,0 +1,931 @@
+diff --git a/build/protoc.sh b/build/protoc.sh
+index b66f35f5..e48a5465 100755
+--- a/build/protoc.sh
++++ b/build/protoc.sh
+@@ -20,7 +20,18 @@ PROJECT_TOP=$(realpath $THIS_DIR/../../..)
+ OHOS_X64_OUT=$PROJECT_TOP/$2/
+ LIBCXX_X64_OUT=$PROJECT_TOP/$1/ndk/libcxx/linux_x86_64
+ SUBSYS_X64_OUT=$PROJECT_TOP/$2/developtools/hiprofiler
+-PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
++
++NUM_ARGS=$#
++# 获取最后一个参数的索引
++LAST_ARG_INDEX=$(($NUM_ARGS))
++# 获取最后一个参数
++INDEP_COMPLIER=${!LAST_ARG_INDEX}
++if [[ "$INDEP_COMPLIER" == true ]]; then
++  PROTOC=$PROJECT_TOP/binarys/third_party/protobuf/innerapis/protoc/clang_x64/libs/protoc
++else
++  PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
++fi
++
+ OPT_PLUGIN_PATH=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
+ OPT_PLUGIN=--plugin=protoc-gen-opt=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
+ OPT_OUT=--opt_out
+@@ -28,7 +39,6 @@ OPT_OUT=--opt_out
+ PYTHON_SHELL=$THIS_DIR/make_proto.py # shell path
+ TMP=$2
+ PROTO_OUT_DIR="$PROJECT_TOP/${TMP%/*}/$3" # path of the new proto file
+-
+ echo "1 = $1"
+ echo "2 = $2"
+ PARAMS=$*
+@@ -36,6 +46,14 @@ PARAMS_FILTER="$1 $2 $3"
+ # for python : copy and change source .proto file
+ TARFLAG="--proto_path"
+ PARAMS_SOURCE_TMP="${PARAMS#*${TARFLAG}}" # get source proto file path
++IFS=' ' read -ra ADDR <<< "$PARAMS_SOURCE_TMP"
++PARAMS_SOURCE_TMP_JOIN=""
++# 遍历数组
++for (( i=0; i<${#ADDR[@]} -1 ; i++ ))
++do
++    PARAMS_SOURCE_TMP_JOIN="${PARAMS_SOURCE_TMP_JOIN} ${ADDR[$i]}"
++done
++PARAMS_SOURCE_TMP="${PARAMS_SOURCE_TMP_JOIN}"
+ PARAMS_SOURCES=""
+ NUM=0
+ for ITM in ${PARAMS_SOURCE_TMP[@]} # filter the TARGLAG
+@@ -45,6 +63,7 @@ do
+   fi
+   NUM=$[$NUM + 1]
+ done
++
+ PARAMS_PRINT="$PROTO_OUT_DIR $PARAMS_SOURCES" # splice the python args
+ echo "EXEC: python $PYTHON_SHELL $PARAMS_PRINT"
+ python $PYTHON_SHELL $PARAMS_PRINT
+@@ -52,6 +71,15 @@ python $PYTHON_SHELL $PARAMS_PRINT
+ 
+ # creat pb file
+ PARAMS_SRC=${PARAMS:${#PARAMS_FILTER}}
++IFS=' ' read -ra PARAMS_ARR <<< "$PARAMS_SRC"
++PARAMS_SRC_JOIN=""
++# 遍历数组
++for (( i=0; i<${#PARAMS_ARR[@]} -1 ; i++ ))
++do
++    PARAMS_SRC_JOIN="${PARAMS_SRC_JOIN} ${PARAMS_ARR[$i]}"
++done
++PARAMS_SRC="${PARAMS_SRC_JOIN}"
++
+ PARAMS_REPLACE=${PARAMS_SOURCES//.proto/_standard.proto} # make the new proto file name. like "_standard.proto"
+ PARAMS_STANDARD=" --proto_path $PROTO_OUT_DIR " # add proto_path，$PROTO_OUT_DIR is the pb file path
+ for VAR in ${PARAMS_REPLACE[@]}
+@@ -60,8 +88,10 @@ do
+ done
+ PARAMS_ALL="$PARAMS_SRC $PARAMS_STANDARD" # add new argument list to old argument list
+ 
++
+ PARAMS_LITE_REPLACE=${PARAMS_SOURCES//.proto/_lite.proto} # make the new proto file name. like "_lite.proto"
+ PARAMS_LITE=" --proto_path $PROTO_OUT_DIR " # add proto_path，$PROTO_OUT_DIR is the pb file path
++
+ for VAR in ${PARAMS_LITE_REPLACE[@]}
+ do
+   PARAMS_LITE="$PARAMS_LITE$PROTO_OUT_DIR/${VAR##*/} " # add .proto file name to args
+@@ -78,4 +108,4 @@ if [[ "$4" != --plugin* ]]; then
+ fi
+ 
+ echo "EXEC: LD_LIBRARY_PATH=$LIBCXX_X64_OUT:$SUBSYS_X64_OUT $PROTOC $PARAMS_ALL"
+-LD_LIBRARY_PATH=$LIBCXX_X64_OUT:$SUBSYS_X64_OUT exec $PROTOC $PARAMS_ALL
+\ No newline at end of file
++LD_LIBRARY_PATH=$LIBCXX_X64_OUT:$SUBSYS_X64_OUT exec $PROTOC $PARAMS_ALL
+diff --git a/device/base/BUILD.gn b/device/base/BUILD.gn
+index fba47fa6..f8b6fa15 100644
+--- a/device/base/BUILD.gn
++++ b/device/base/BUILD.gn
+@@ -76,6 +76,7 @@ ohos_source_set("hiprofiler_base") {
+     "bundle_framework:appexecfwk_base",
+     "bundle_framework:appexecfwk_core",
+     "c_utils:utils",
++    "hisysevent:libhisysevent",
+     "init:libbegetutil",
+     "ipc:ipc_core",
+     "os_account:os_account_innerkits",
+diff --git a/device/base/test/BUILD.gn b/device/base/test/BUILD.gn
+index 5c47a853..fb4152c9 100644
+--- a/device/base/test/BUILD.gn
++++ b/device/base/test/BUILD.gn
+@@ -38,6 +38,7 @@ ohos_unittest("hiprofiler_base_ut") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gtest",
+     "hilog:libhilog_base",
+   ]
+diff --git a/device/plugins/api/BUILD.gn b/device/plugins/api/BUILD.gn
+index c3e140eb..4cb35130 100644
+--- a/device/plugins/api/BUILD.gn
++++ b/device/plugins/api/BUILD.gn
+@@ -61,6 +61,7 @@ ohos_source_set("plugins_sources") {
+   if (current_toolchain != host_toolchain) {
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "openssl:libcrypto_shared",
+       "protobuf:protobuf_lite",
+@@ -86,6 +87,7 @@ ohos_executable("hiprofiler_plugins") {
+     defines = [ "HAVE_HILOG" ]
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "openssl:libcrypto_shared",
+       "protobuf:protobuf_lite",
+diff --git a/device/plugins/api/test/BUILD.gn b/device/plugins/api/test/BUILD.gn
+index 28ee6b9b..d68b07eb 100644
+--- a/device/plugins/api/test/BUILD.gn
++++ b/device/plugins/api/test/BUILD.gn
+@@ -51,6 +51,7 @@ ohos_unittest("hiprofiler_plugins_ut") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gmock",
+     "googletest:gtest",
+     "grpc:grpc",
+diff --git a/device/plugins/api/test/fuzztest/plugincreatesessioncmd_fuzzer/BUILD.gn b/device/plugins/api/test/fuzztest/plugincreatesessioncmd_fuzzer/BUILD.gn
+index 1eaf4e6b..28c31596 100644
+--- a/device/plugins/api/test/fuzztest/plugincreatesessioncmd_fuzzer/BUILD.gn
++++ b/device/plugins/api/test/fuzztest/plugincreatesessioncmd_fuzzer/BUILD.gn
+@@ -34,6 +34,7 @@ ohos_fuzztest("PluginCreateSessionCmdFuzzTest") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hilog:libhilog_base",
+     "protobuf:protobuf_lite",
+   ]
+diff --git a/device/plugins/api/test/fuzztest/plugindestroysessioncmd_fuzzer/BUILD.gn b/device/plugins/api/test/fuzztest/plugindestroysessioncmd_fuzzer/BUILD.gn
+index 9c4f3f28..97109caf 100644
+--- a/device/plugins/api/test/fuzztest/plugindestroysessioncmd_fuzzer/BUILD.gn
++++ b/device/plugins/api/test/fuzztest/plugindestroysessioncmd_fuzzer/BUILD.gn
+@@ -34,6 +34,7 @@ ohos_fuzztest("PluginDestroySessionCmdFuzzTest") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hilog:libhilog_base",
+     "protobuf:protobuf_lite",
+   ]
+diff --git a/device/plugins/api/test/fuzztest/pluginstartsessioncmd_fuzzer/BUILD.gn b/device/plugins/api/test/fuzztest/pluginstartsessioncmd_fuzzer/BUILD.gn
+index 8e8c2256..3af6deb5 100644
+--- a/device/plugins/api/test/fuzztest/pluginstartsessioncmd_fuzzer/BUILD.gn
++++ b/device/plugins/api/test/fuzztest/pluginstartsessioncmd_fuzzer/BUILD.gn
+@@ -34,6 +34,7 @@ ohos_fuzztest("PluginStartSessionCmdFuzzTest") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hilog:libhilog_base",
+     "protobuf:protobuf_lite",
+   ]
+diff --git a/device/plugins/api/test/fuzztest/pluginstopsessioncmd_fuzzer/BUILD.gn b/device/plugins/api/test/fuzztest/pluginstopsessioncmd_fuzzer/BUILD.gn
+index a21bb13a..7d2f7e25 100644
+--- a/device/plugins/api/test/fuzztest/pluginstopsessioncmd_fuzzer/BUILD.gn
++++ b/device/plugins/api/test/fuzztest/pluginstopsessioncmd_fuzzer/BUILD.gn
+@@ -34,6 +34,7 @@ ohos_fuzztest("PluginStopSessionCmdFuzzTest") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hilog:libhilog_base",
+     "protobuf:protobuf_lite",
+   ]
+diff --git a/device/plugins/ffrt_profiler/client/BUILD.gn b/device/plugins/ffrt_profiler/client/BUILD.gn
+index 28476c28..d9bb492a 100644
+--- a/device/plugins/ffrt_profiler/client/BUILD.gn
++++ b/device/plugins/ffrt_profiler/client/BUILD.gn
+@@ -58,6 +58,7 @@ ohos_shared_library("libffrt_profiler") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "init:libbegetutil",
+   ]
+ 
+diff --git a/device/plugins/ffrt_profiler/service/BUILD.gn b/device/plugins/ffrt_profiler/service/BUILD.gn
+index 606baf1f..1dbef415 100644
+--- a/device/plugins/ffrt_profiler/service/BUILD.gn
++++ b/device/plugins/ffrt_profiler/service/BUILD.gn
+@@ -50,6 +50,7 @@ ohos_source_set("ffrt_profiler_service") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "init:libbegetutil",
+     "protobuf:protobuf_lite",
+   ]
+diff --git a/device/plugins/ffrt_profiler/test/BUILD.gn b/device/plugins/ffrt_profiler/test/BUILD.gn
+index 11bd38d8..7906d813 100644
+--- a/device/plugins/ffrt_profiler/test/BUILD.gn
++++ b/device/plugins/ffrt_profiler/test/BUILD.gn
+@@ -90,6 +90,7 @@ ohos_unittest("ffrt_profiler_ut") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gtest",
+     "hilog:libhilog_base",
+     "init:libbegetutil",
+diff --git a/device/plugins/ftrace_plugin/BUILD.gn b/device/plugins/ftrace_plugin/BUILD.gn
+index f42a4a3b..36d99036 100644
+--- a/device/plugins/ftrace_plugin/BUILD.gn
++++ b/device/plugins/ftrace_plugin/BUILD.gn
+@@ -51,6 +51,7 @@ ohos_source_set("ftrace_plugin_source") {
+     defines += [ "HAVE_HILOG" ]
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "hisysevent:libhisysevent",
+       "hiview:libucollection_client",
+diff --git a/device/plugins/ftrace_plugin/tools/device_kernel_version/6.6.30/event_parsers/BUILD.gn b/device/plugins/ftrace_plugin/tools/device_kernel_version/6.6.30/event_parsers/BUILD.gn
+index 5a444914..d1851727 100644
+--- a/device/plugins/ftrace_plugin/tools/device_kernel_version/6.6.30/event_parsers/BUILD.gn
++++ b/device/plugins/ftrace_plugin/tools/device_kernel_version/6.6.30/event_parsers/BUILD.gn
+@@ -32,6 +32,7 @@ ohos_source_set("ftrace_event_parsers") {
+     defines = [ "HAVE_HILOG" ]
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "protobuf:protobuf_lite",
+     ]
+diff --git a/device/plugins/hiperf_plugin/BUILD.gn b/device/plugins/hiperf_plugin/BUILD.gn
+index f1584e33..3b30e2bf 100644
+--- a/device/plugins/hiperf_plugin/BUILD.gn
++++ b/device/plugins/hiperf_plugin/BUILD.gn
+@@ -46,6 +46,7 @@ ohos_source_set("hiperfplugin_source") {
+     ]
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "hisysevent:libhisysevent",
+       "openssl:libcrypto_shared",
+diff --git a/device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/BUILD.gn b/device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/BUILD.gn
+index 24a1840b..5f80d55c 100644
+--- a/device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/BUILD.gn
++++ b/device/plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer/BUILD.gn
+@@ -34,6 +34,7 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
+     "hilog:libhilog_base",
+     "hiview:libucollection_utility",
+diff --git a/device/plugins/native_daemon/BUILD.gn b/device/plugins/native_daemon/BUILD.gn
+index a6f33f30..00039bda 100644
+--- a/device/plugins/native_daemon/BUILD.gn
++++ b/device/plugins/native_daemon/BUILD.gn
+@@ -126,6 +126,7 @@ ohos_executable("native_daemon") {
+     "access_token:libaccesstoken_sdk",
+     "access_token:libtokensetproc_shared",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hisysevent:libhisysevent",
+     "init:libbegetutil",
+     "ipc:ipc_core",
+@@ -144,7 +145,7 @@ ohos_executable("native_daemon") {
+ 
+   if (current_toolchain != host_toolchain) {
+     defines += [ "HAVE_HILOG" ]
+-    external_deps += [ "hilog:libhilog_base" ]
++    external_deps += [ "hilog:libhilog" ]
+   }
+   use_exceptions = true
+   install_enable = true
+@@ -169,6 +170,7 @@ ohos_executable("native_daemon_client") {
+ 
+   external_deps = [
+     "c_utils:utils",
++    "hisysevent:libhisysevent",
+     "init:libbegetutil",
+     "ipc:ipc_core",
+     "safwk:system_ability_fwk",
+diff --git a/device/plugins/native_daemon/native_memory_profiler_sa/test/BUILD.gn b/device/plugins/native_daemon/native_memory_profiler_sa/test/BUILD.gn
+index 20c462c8..9d326998 100644
+--- a/device/plugins/native_daemon/native_memory_profiler_sa/test/BUILD.gn
++++ b/device/plugins/native_daemon/native_memory_profiler_sa/test/BUILD.gn
+@@ -98,7 +98,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
+ 
+   if (current_toolchain != host_toolchain) {
+     defines += [ "HAVE_HILOG" ]
+-    external_deps = [ "hilog:libhilog_base" ]
++    external_deps = [ "hilog:libhilog" ]
+   }
+ 
+   deps = [
+diff --git a/device/plugins/native_daemon/test/BUILD.gn b/device/plugins/native_daemon/test/BUILD.gn
+index 46c02d14..92306fdc 100644
+--- a/device/plugins/native_daemon/test/BUILD.gn
++++ b/device/plugins/native_daemon/test/BUILD.gn
+@@ -125,19 +125,22 @@ ohos_unittest("native_daemon_ut") {
+     "access_token:libaccesstoken_sdk",
+     "access_token:libtokensetproc_shared",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "faultloggerd:libunwinder",
+     "googletest:gtest",
+     "hisysevent:libhisysevent",
+     "init:libbegetutil",
++    "ipc:ipc_core",
+     "openssl:libcrypto_shared",
+     "protobuf:protobuf_lite",
+     "safwk:system_ability_fwk",
++    "samgr:samgr_proxy",
+     "zlib:libz",
+   ]
+   defines = [ "ENABLE_HAP_EXTRACTOR" ]
+   if (current_toolchain != host_toolchain) {
+     defines += [ "HAVE_HILOG" ]
+-    external_deps += [ "hilog:libhilog_base" ]
++    external_deps += [ "hilog:libhilog" ]
+   }
+ }
+ 
+diff --git a/device/plugins/native_hook/BUILD.gn b/device/plugins/native_hook/BUILD.gn
+index cfdb2b99..c8d9dc6a 100644
+--- a/device/plugins/native_hook/BUILD.gn
++++ b/device/plugins/native_hook/BUILD.gn
+@@ -65,6 +65,7 @@ ohos_source_set("native_hook_source") {
+   }
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "ffrt:libffrt",
+     "hitrace:libhitracechain",
+     "init:libbegetutil",
+@@ -175,7 +176,10 @@ ohos_executable("malloctest_cpp") {
+     "-Wno-error=inline-asm",
+     "-O3",
+   ]
+-  external_deps += [ "bounds_checking_function:libsec_shared" ]
++  external_deps += [ 
++    "bounds_checking_function:libsec_shared",
++    "hisysevent:libhisysevent",
++ ]
+   ldflags = [ "-rdynamic" ]
+   install_enable = false
+   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+diff --git a/device/plugins/native_hook/src/hook_socket_client.cpp b/device/plugins/native_hook/src/hook_socket_client.cpp
+index 880ecc6e..704faf05 100644
+--- a/device/plugins/native_hook/src/hook_socket_client.cpp
++++ b/device/plugins/native_hook/src/hook_socket_client.cpp
+@@ -126,6 +126,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
+     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
+     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
+         smbFd_, eventFd_, config_->isBlocked);
++    g_disableHook = false;
+     nmdType_ = config_->nmdType;
+     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
+         SendNmdInfo();
+diff --git a/device/plugins/native_hook/test/BUILD.gn b/device/plugins/native_hook/test/BUILD.gn
+index a74b8f18..6a639869 100644
+--- a/device/plugins/native_hook/test/BUILD.gn
++++ b/device/plugins/native_hook/test/BUILD.gn
+@@ -72,6 +72,7 @@ ohos_unittest("nativehook_ut") {
+   ]
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "faultloggerd:libunwinder",
+     "googletest:gtest",
+     "hilog:libhilog_base",
+diff --git a/device/plugins/network_profiler/client/BUILD.gn b/device/plugins/network_profiler/client/BUILD.gn
+index c775c121..f1e15fa8 100644
+--- a/device/plugins/network_profiler/client/BUILD.gn
++++ b/device/plugins/network_profiler/client/BUILD.gn
+@@ -59,6 +59,7 @@ ohos_shared_library("libnetwork_profiler") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "init:libbegetutil",
+   ]
+ 
+diff --git a/device/plugins/network_profiler/service/BUILD.gn b/device/plugins/network_profiler/service/BUILD.gn
+index e48385e7..557587ef 100644
+--- a/device/plugins/network_profiler/service/BUILD.gn
++++ b/device/plugins/network_profiler/service/BUILD.gn
+@@ -50,6 +50,7 @@ ohos_source_set("network_profiler_service") {
+ 
+   external_deps = [
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "hisysevent:libhisysevent",
+     "init:libbegetutil",
+     "protobuf:protobuf_lite",
+diff --git a/device/plugins/network_profiler/test/BUILD.gn b/device/plugins/network_profiler/test/BUILD.gn
+index 064991c5..b6d16a9d 100644
+--- a/device/plugins/network_profiler/test/BUILD.gn
++++ b/device/plugins/network_profiler/test/BUILD.gn
+@@ -38,6 +38,7 @@ ohos_unittest("networkprofiler_ut") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gtest",
+     "grpc:grpc",
+     "grpc:grpcxx",
+diff --git a/device/services/ipc/src/unix_socket_server.cpp b/device/services/ipc/src/unix_socket_server.cpp
+index 03cbfd88..0852d824 100644
+--- a/device/services/ipc/src/unix_socket_server.cpp
++++ b/device/services/ipc/src/unix_socket_server.cpp
+@@ -133,7 +133,6 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
+         socketHandle_ = -1;
+         return false;
+     }
+-
+     serviceEntry_ = &p;
+     sAddrName_ = addrname;
+     return true;
+diff --git a/device/services/plugin_service/BUILD.gn b/device/services/plugin_service/BUILD.gn
+index 276adabd..0221f6c3 100644
+--- a/device/services/plugin_service/BUILD.gn
++++ b/device/services/plugin_service/BUILD.gn
+@@ -41,6 +41,7 @@ ohos_source_set("hiprofiler_plugin_service") {
+   if (current_toolchain != host_toolchain) {
+     external_deps = [
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "hilog:libhilog_base",
+       "openssl:libcrypto_shared",
+       "protobuf:protobuf_lite",
+diff --git a/device/services/plugin_service/test/BUILD.gn b/device/services/plugin_service/test/BUILD.gn
+index 9098b7fa..f7db4198 100644
+--- a/device/services/plugin_service/test/BUILD.gn
++++ b/device/services/plugin_service/test/BUILD.gn
+@@ -38,6 +38,7 @@ ohos_unittest("plugin_service_ut") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gtest",
+     "hilog:libhilog_base",
+     "openssl:libcrypto_shared",
+diff --git a/device/services/profiler_service/BUILD.gn b/device/services/profiler_service/BUILD.gn
+index 5a02547b..d3573e2c 100644
+--- a/device/services/profiler_service/BUILD.gn
++++ b/device/services/profiler_service/BUILD.gn
+@@ -53,6 +53,7 @@ ohos_source_set("profiler_service") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "openssl:libcrypto_shared",
+@@ -100,6 +101,7 @@ ohos_executable("hiprofilerd") {
+     external_deps = [
+       "abseil-cpp:absl_sync",
+       "bounds_checking_function:libsec_shared",
++      "c_utils:utils",
+       "grpc:gpr",
+       "grpc:grpc",
+       "grpc:grpcxx",
+diff --git a/device/services/profiler_service/test/BUILD.gn b/device/services/profiler_service/test/BUILD.gn
+index 3043361b..55136992 100644
+--- a/device/services/profiler_service/test/BUILD.gn
++++ b/device/services/profiler_service/test/BUILD.gn
+@@ -59,6 +59,7 @@ ohos_unittest("profiler_service_ut") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "googletest:gtest",
+     "grpc:grpc",
+     "grpc:grpcxx",
+diff --git a/device/services/profiler_service/test/fuzztest/profilercreatesession_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilercreatesession_fuzzer/BUILD.gn
+index 70e0fcdc..9e31d55c 100644
+--- a/device/services/profiler_service/test/fuzztest/profilercreatesession_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilercreatesession_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerCreateSessionFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilerdestroysession_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilerdestroysession_fuzzer/BUILD.gn
+index 871c3ce9..3713cc7e 100644
+--- a/device/services/profiler_service/test/fuzztest/profilerdestroysession_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilerdestroysession_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerDestroySessionFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilerfetchdata_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilerfetchdata_fuzzer/BUILD.gn
+index d0ea226c..bd661573 100644
+--- a/device/services/profiler_service/test/fuzztest/profilerfetchdata_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilerfetchdata_fuzzer/BUILD.gn
+@@ -40,6 +40,7 @@ ohos_fuzztest("ProfilerFetchDataFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilergetcapabilities_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilergetcapabilities_fuzzer/BUILD.gn
+index d83d0df3..16c7c5bd 100644
+--- a/device/services/profiler_service/test/fuzztest/profilergetcapabilities_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilergetcapabilities_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerGetCapabilitiesFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/BUILD.gn
+index c62ca02e..ecc0eabb 100644
+--- a/device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerKeepSessionFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilerstartsession_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilerstartsession_fuzzer/BUILD.gn
+index 04298591..1a343f77 100644
+--- a/device/services/profiler_service/test/fuzztest/profilerstartsession_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilerstartsession_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerStartSessionFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/BUILD.gn b/device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/BUILD.gn
+index e0b9b9a7..bc1514de 100644
+--- a/device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/BUILD.gn
++++ b/device/services/profiler_service/test/fuzztest/profilerstopsession_fuzzer/BUILD.gn
+@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerStopSessionFuzzTest") {
+   external_deps = [
+     "abseil-cpp:absl_sync",
+     "bounds_checking_function:libsec_shared",
++    "c_utils:utils",
+     "grpc:grpc",
+     "grpc:grpcxx",
+     "hilog:libhilog_base",
+diff --git a/host/smartperf/client/client_command/BUILD.gn b/host/smartperf/client/client_command/BUILD.gn
+index edc89b83..4d97529e 100644
+--- a/host/smartperf/client/client_command/BUILD.gn
++++ b/host/smartperf/client/client_command/BUILD.gn
+@@ -78,6 +78,7 @@ ohos_executable("SP_daemon") {
+     "hilog:libhilog",
+     "hiview:libucollection_utility",
+     "image_framework:image_native",
++    "ipc:ipc_core",
+     "init:libbegetutil",
+     "window_manager:libdm",
+     "window_manager:libwm",
+diff --git a/host/smartperf/client/client_command/test/BUILD.gn b/host/smartperf/client/client_command/test/BUILD.gn
+index bdc5cba8..4ff89020 100644
+--- a/host/smartperf/client/client_command/test/BUILD.gn
++++ b/host/smartperf/client/client_command/test/BUILD.gn
+@@ -70,6 +70,7 @@ ohos_unittest("sp_daemon_ut") {
+     "hilog:libhilog",
+     "hiview:libucollection_utility",
+     "image_framework:image_native",
++    "ipc:ipc_core",
+     "init:libbegetutil",
+     "window_manager:libdm",
+     "window_manager:libwm",
+diff --git a/proto_encoder/test/BUILD.gn b/proto_encoder/test/BUILD.gn
+index e608a22f..ffaed6e1 100644
+--- a/proto_encoder/test/BUILD.gn
++++ b/proto_encoder/test/BUILD.gn
+@@ -51,6 +51,7 @@ action("proto_gen_source") {
+     "$protos_root_dir",
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/services/BUILD.gn b/protos/services/BUILD.gn
+index edcef6e5..ed95de0f 100644
+--- a/protos/services/BUILD.gn
++++ b/protos/services/BUILD.gn
+@@ -18,7 +18,13 @@ import("../protos.gni")
+ proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
+ proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
+ 
+-grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
++if (ohos_indep_compiler_enable) {
++  grpc_binary_dir = rebase_path("//binarys/third_party")
++  grpc_cpp_plugin = "$grpc_binary_dir/grpc/innerapis/grpc_cpp_plugin/clang_x64/libs/grpc_cpp_plugin"
++} else {
++  grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
++}
++
+ ipc_cpp_plugin = "$proto_gen_ipc_dir/protoc_gen_ipc"
+ 
+ config("public_configs") {
+@@ -67,6 +73,7 @@ action("all_type_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [
+     "grpc:grpc_cpp_plugin(${host_toolchain})",
+@@ -146,6 +153,7 @@ action("profiler_service_interface_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ ":all_type_gen" ]
+   external_deps = [
+     "grpc:grpc_cpp_plugin(//build/toolchain/linux:clang_${host_cpu})",
+@@ -218,6 +226,7 @@ action("plugin_service_interface_proto_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [
+     ":all_type_gen",
+     "${OHOS_PROFILER_DIR}/device/services/ipc:protoc_gen_ipc(${host_toolchain})",
+diff --git a/protos/types/plugins/agent_data/BUILD.gn b/protos/types/plugins/agent_data/BUILD.gn
+index 4afdae5c..5d362877 100644
+--- a/protos/types/plugins/agent_data/BUILD.gn
++++ b/protos/types/plugins/agent_data/BUILD.gn
+@@ -60,9 +60,10 @@ action("agent_data_cpp_gen") {
+     "--cpp_out",
+     "$proto_rel_out_dir",
+     "--proto_path",
+-    rebase_path(".", root_build_dir),
++    rebase_path(".", root_build_dir),    
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 
+diff --git a/protos/types/plugins/bytrace_plugin/BUILD.gn b/protos/types/plugins/bytrace_plugin/BUILD.gn
+index c9f71425..61347d23 100644
+--- a/protos/types/plugins/bytrace_plugin/BUILD.gn
++++ b/protos/types/plugins/bytrace_plugin/BUILD.gn
+@@ -52,6 +52,7 @@ action("bytrace_plugin_protos_protoc") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 
+diff --git a/protos/types/plugins/cpu_data/BUILD.gn b/protos/types/plugins/cpu_data/BUILD.gn
+index 9d0190cd..6f659a2e 100644
+--- a/protos/types/plugins/cpu_data/BUILD.gn
++++ b/protos/types/plugins/cpu_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("cpu_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/diskio_data/BUILD.gn b/protos/types/plugins/diskio_data/BUILD.gn
+index 496b0b25..5ca638e7 100644
+--- a/protos/types/plugins/diskio_data/BUILD.gn
++++ b/protos/types/plugins/diskio_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("diskio_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/ffrt_profiler/BUILD.gn b/protos/types/plugins/ffrt_profiler/BUILD.gn
+index 7449dfe2..408f19ba 100644
+--- a/protos/types/plugins/ffrt_profiler/BUILD.gn
++++ b/protos/types/plugins/ffrt_profiler/BUILD.gn
+@@ -65,9 +65,8 @@ action("ffrt_profiler_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
+-
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+-
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 
+diff --git a/protos/types/plugins/ftrace_data/6.6.30/BUILD.gn b/protos/types/plugins/ftrace_data/6.6.30/BUILD.gn
+index cb751d71..3dd4a447 100644
+--- a/protos/types/plugins/ftrace_data/6.6.30/BUILD.gn
++++ b/protos/types/plugins/ftrace_data/6.6.30/BUILD.gn
+@@ -73,6 +73,7 @@ action("all_proto_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/ftrace_data/default/BUILD.gn b/protos/types/plugins/ftrace_data/default/BUILD.gn
+index cb751d71..3dd4a447 100644
+--- a/protos/types/plugins/ftrace_data/default/BUILD.gn
++++ b/protos/types/plugins/ftrace_data/default/BUILD.gn
+@@ -73,6 +73,7 @@ action("all_proto_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/gpu_data/BUILD.gn b/protos/types/plugins/gpu_data/BUILD.gn
+index 1b42370d..4fe3986a 100644
+--- a/protos/types/plugins/gpu_data/BUILD.gn
++++ b/protos/types/plugins/gpu_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("gpu_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/hidump_data/BUILD.gn b/protos/types/plugins/hidump_data/BUILD.gn
+index a1655ff8..9f1ce852 100644
+--- a/protos/types/plugins/hidump_data/BUILD.gn
++++ b/protos/types/plugins/hidump_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("hidump_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/hiebpf_data/BUILD.gn b/protos/types/plugins/hiebpf_data/BUILD.gn
+index e2005e3c..29533f91 100644
+--- a/protos/types/plugins/hiebpf_data/BUILD.gn
++++ b/protos/types/plugins/hiebpf_data/BUILD.gn
+@@ -58,6 +58,7 @@ action("hiebpf_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 
+diff --git a/protos/types/plugins/hilog_data/BUILD.gn b/protos/types/plugins/hilog_data/BUILD.gn
+index cb42f581..f8614778 100644
+--- a/protos/types/plugins/hilog_data/BUILD.gn
++++ b/protos/types/plugins/hilog_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("hilog_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/hiperf_data/BUILD.gn b/protos/types/plugins/hiperf_data/BUILD.gn
+index 8bbe1b79..9dd5d3f1 100644
+--- a/protos/types/plugins/hiperf_data/BUILD.gn
++++ b/protos/types/plugins/hiperf_data/BUILD.gn
+@@ -52,6 +52,7 @@ action("hiperf_data_protos_protoc") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 
+diff --git a/protos/types/plugins/hisysevent_data/BUILD.gn b/protos/types/plugins/hisysevent_data/BUILD.gn
+index 7f27c90a..738ecfb3 100644
+--- a/protos/types/plugins/hisysevent_data/BUILD.gn
++++ b/protos/types/plugins/hisysevent_data/BUILD.gn
+@@ -77,6 +77,7 @@ action("hisysevent_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/memory_data/BUILD.gn b/protos/types/plugins/memory_data/BUILD.gn
+index 12a58b8f..ec602727 100644
+--- a/protos/types/plugins/memory_data/BUILD.gn
++++ b/protos/types/plugins/memory_data/BUILD.gn
+@@ -80,6 +80,7 @@ action("memory_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/native_hook/BUILD.gn b/protos/types/plugins/native_hook/BUILD.gn
+index ee82b66b..da11ea87 100644
+--- a/protos/types/plugins/native_hook/BUILD.gn
++++ b/protos/types/plugins/native_hook/BUILD.gn
+@@ -75,6 +75,7 @@ action("native_hook_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/network_data/BUILD.gn b/protos/types/plugins/network_data/BUILD.gn
+index 29ba67e3..ef5e4309 100644
+--- a/protos/types/plugins/network_data/BUILD.gn
++++ b/protos/types/plugins/network_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("network_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/network_profiler/BUILD.gn b/protos/types/plugins/network_profiler/BUILD.gn
+index 2bd1be25..3ab5dc93 100644
+--- a/protos/types/plugins/network_profiler/BUILD.gn
++++ b/protos/types/plugins/network_profiler/BUILD.gn
+@@ -65,7 +65,7 @@ action("network_profiler_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
+-
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+ 
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+diff --git a/protos/types/plugins/process_data/BUILD.gn b/protos/types/plugins/process_data/BUILD.gn
+index 26009d65..cdb654eb 100644
+--- a/protos/types/plugins/process_data/BUILD.gn
++++ b/protos/types/plugins/process_data/BUILD.gn
+@@ -75,6 +75,7 @@ action("process_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/sample_data/BUILD.gn b/protos/types/plugins/sample_data/BUILD.gn
+index 90c7190a..d9c2bd0d 100644
+--- a/protos/types/plugins/sample_data/BUILD.gn
++++ b/protos/types/plugins/sample_data/BUILD.gn
+@@ -65,6 +65,7 @@ action("sample_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/stream_data/BUILD.gn b/protos/types/plugins/stream_data/BUILD.gn
+index a3626c25..60397b1b 100644
+--- a/protos/types/plugins/stream_data/BUILD.gn
++++ b/protos/types/plugins/stream_data/BUILD.gn
+@@ -65,6 +65,7 @@ action("stream_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+diff --git a/protos/types/plugins/xpower_data/BUILD.gn b/protos/types/plugins/xpower_data/BUILD.gn
+index e1f2ac9c..13e7d8f3 100644
+--- a/protos/types/plugins/xpower_data/BUILD.gn
++++ b/protos/types/plugins/xpower_data/BUILD.gn
+@@ -9,7 +9,7 @@
+ # distributed under the License is distributed on an "AS IS" BASIS,
+ # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ # See the License for the specific language governing permissions and
+-# limitations under the License.
++# limitations under the License.
+ 
+ import("//build/ohos.gni")
+ import("../../../protos.gni")
+@@ -69,6 +69,7 @@ action("xpower_data_cpp_gen") {
+     rebase_path(".", root_build_dir),
+   ]
+   args += rebase_path(sources, root_build_dir)
++  args += ["$ohos_indep_compiler_enable"]
+   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
+ }
+ 

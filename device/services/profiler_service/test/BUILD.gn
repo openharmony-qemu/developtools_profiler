@@ -59,6 +59,7 @@ ohos_unittest("profiler_service_ut") {
   external_deps = [
     "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "googletest:gtest",
     "grpc:grpc",
     "grpc:grpcxx",
