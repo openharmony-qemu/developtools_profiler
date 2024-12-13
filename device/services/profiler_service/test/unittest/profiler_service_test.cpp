@@ -1300,7 +1300,7 @@ HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtOnline, TestSize.Level1)
     auto writer = std::make_unique<FakeSubscribeWriter>(nullptr, context_.get());
     request.set_session_id(sessionId);
     request.set_request_id(++requestCounter);
-    std::thread bgThread([&] {
+    std::thread bgThread([this, &request, &writer] {
         auto status = service_->SubscribeProfilerEvt(context_.get(), &request, writer.get());
         EXPECT_EQ(status.error_code(), grpc::StatusCode::OK);
     });
@@ -1335,7 +1335,7 @@ HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtBatchTest, TestSize.Level1)
 
     // 只能存入小于maxsize的数据才能确保dataProducer线程正常退出
     int size = ProfilerService::DEFAULT_REPEATER_BUFFER_SIZE - 1;
-    std::thread dataProducer([&]() {
+    std::thread dataProducer([this, &sessionCtx, &size]() {
         for (int i = 0; i < size; i++) {
             auto data = std::make_shared<ProfilerPluginState>();
             ASSERT_NE(data, nullptr);
@@ -1345,7 +1345,7 @@ HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtBatchTest, TestSize.Level1)
     });
     dataProducer.join();
 
-    std::thread closeStateRepeater([&]() {
+    std::thread closeStateRepeater([&sessionCtx]() {
         while (1) {
             if (sessionCtx->stateRepeater->Size() == 0) {
                 sessionCtx->stateRepeater->Close();
@@ -1355,7 +1355,7 @@ HWTEST_F(ProfilerServiceTest, SubscribeProfilerEvtBatchTest, TestSize.Level1)
     });
 
     Timer timer = {};
-    std::thread dataConsumer([&]() {
+    std::thread dataConsumer([this, &sessionId, &writer]() {
         SubscribeProfilerEvtRequest request;
         request.set_session_id(sessionId);
         request.set_request_id(++requestCounter);
