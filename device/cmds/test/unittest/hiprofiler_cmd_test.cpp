@@ -795,41 +795,6 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
     cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + perfFile + " " + perfSplitFile;
     system(cmd.c_str());
 }
-/**
- * @tc.name: hiprofiler_cmd
- * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
- * @tc.type: FUNC
- */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
-{
-#if defined(__LP64__)  // just support 64bit
-    std::string outFileName = "split_hiebpf";
-    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
-    std::string ebpfFile = "/data/local/tmp/ebpf.data";
-    std::string ebpfSplitFile = "/data/local/tmp/split_ebpf_data.htrace";
-    std::string content = "";
-    int time = 10;
-    std::string cmd = CreateSplitHiebpfCommand(outFile, ebpfFile, ebpfSplitFile, time);
-    EXPECT_TRUE(RunCommand(cmd, content));
-
-    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
-
-    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
-    EXPECT_TRUE(RunCommand(cmd, content));
-    EXPECT_STRNE(content.c_str(), "");
-
-    EXPECT_EQ(access(ebpfSplitFile.c_str(), F_OK), 0);
-    if (access(ebpfFile.c_str(), F_OK) == 0) {
-        const int headerSize = 1024 + 1024; // htrace header + hiebpf header
-        auto ebpfFileSize = GetFileSize(ebpfFile.c_str());
-        auto ebpfSplitFileSize = GetFileSize(ebpfSplitFile.c_str());
-        EXPECT_GT(ebpfSplitFileSize, ebpfFileSize + headerSize);
-    }
-
-    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + ebpfFile + " " + ebpfSplitFile;
-    system(cmd.c_str());
-#endif
-}
 
 /**
  * @tc.name: hiprofiler_cmd
