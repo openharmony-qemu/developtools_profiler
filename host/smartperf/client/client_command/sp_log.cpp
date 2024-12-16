@@ -357,12 +357,16 @@ void SpLog(SpLogLevel logLevel, const char *fmt, bool isEditorLog, ...)
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
     va_list arg;
-
+    ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
+    if (ret != 0) {
+        SpLogOut(logLevel, "SP log memset_s error.");
+        return;
+    }
     va_start(arg, fmt);
-    ret = LogCheck(logLevel, fmt, &arg, logBuf, sizeof(logBuf));
+    ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
     va_end(arg);
-
     if (ret < 0) {
+        SpLogOut(logLevel, "SP log length error.");
         return;
     }
     SpLogOut(logLevel, logBuf);
