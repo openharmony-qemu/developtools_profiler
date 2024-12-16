@@ -537,13 +537,10 @@ void SPTask::StopGetInfo()
     destMap.insert(deviceInfo.begin(), deviceInfo.end());
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
-    if (!OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap)) {
-        ELOGE("Failed to write CSV header.");
-    }
+    OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
+    OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 
-    if (!OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap)) {
-        ELOGE("Failed to write CSV data to file: %s", outIndexpath.c_str());
-    }
+    ELOGI("Write CSV header done.");
 }
 void SPTask::StopGpuCounterRecv()
 {
@@ -821,7 +818,7 @@ ErrCode SPTask::StartRecord()
     battaryStart = GetCurrentBattary();
     if (battaryStart == 0) {
         ELOGE("StartRecord failed: Battery level is 0. Cannot start recording.");
-        return ErrCode::FAIL;
+        return ErrCode::FAILED;
     }
 
     startTime = SPUtils::GetCurTime();
@@ -844,7 +841,7 @@ ErrCode SPTask::StopRecord()
     battaryEnd = GetCurrentBattary();
     if (battaryEnd == 0) {
         ELOGE("StopRecord failed: Battery level is 0. Cannot stop recording.");
-        return ErrCode::FAIL;
+        return ErrCode::FAILED;
     }
 
     long long stopRecordTime = SPUtils::GetCurTime();

@@ -226,7 +226,7 @@ public:
     void StartRecvRecord(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StartRecord();
-        ELOGI("startRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(START_RECORD_FAILED));
+        ELOGI("startRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(START_RECORD_FAILED).c_str());
         if (code == ErrCode::OK) {
             spSocket.Send("startRecord::True");
         } else {
@@ -236,7 +236,7 @@ public:
     void StopRecvRecord(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StopRecord();
-        ELOGI("stopRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(STOP_RECORD_FAILED));
+        ELOGI("stopRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(STOP_RECORD_FAILED).c_str());
         if (code == ErrCode::OK) {
             spSocket.Send("stopRecord::True");
         } else {

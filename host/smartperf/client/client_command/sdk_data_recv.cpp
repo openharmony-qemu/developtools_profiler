@@ -180,7 +180,7 @@ namespace OHOS {
             if (!resStr.empty() && resStr.back() == '\n') {
                 resStr.pop_back();
             }
-            ELOGD("Processed data: %s", resStr);
+            ELOGD("Processed data: %s", resStr.c_str());
             return resStr;
         }
 
