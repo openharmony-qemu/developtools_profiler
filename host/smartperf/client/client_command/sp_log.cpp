@@ -317,21 +317,6 @@ int LogCheck(SpLogLevel level, const char *format, va_list *argList, char *buffe
     return 0;
 }
 
-void SpLog(SpLogLevel logLevel, const char *fmt, ...)
-{
-    char logBuf[LOG_MAX_LEN] = {0};
-    int32_t ret = 0;
-    va_list arg;
-
-    va_start(arg, fmt);
-    ret = LogCheck(logLevel, fmt, &arg, logBuf, sizeof(logBuf));
-    va_end(arg);
-
-    if (ret < 0) {
-        return;
-    }
-    SpLogOut(logLevel, logBuf);
-}
 inline void WriteMessage(SpLogLevel logLevel, char* logMessage)
 {
     // 如果文件不存在则需要在创建后提权
@@ -366,7 +351,8 @@ inline void WriteMessage(SpLogLevel logLevel, char* logMessage)
 
     return;
 }
-void EditorLog(SpLogLevel logLevel, const char* fmt, ...)
+
+void SpLog(SpLogLevel logLevel, const char *fmt, bool isEditorLog, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
@@ -379,27 +365,26 @@ void EditorLog(SpLogLevel logLevel, const char* fmt, ...)
     if (ret < 0) {
         return;
     }
+    SpLogOut(logLevel, logBuf);
 
-    // 多线程锁
+    if(!isEditorLog) {
+        return;
+    }
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    // 日志文件夹路径是否设置
     if (LOG_FILE_DIR.empty()) {
         LOGE("Log file dir not set.");
         return;
     }
 
-    // 确保日志文件夹存在
     if (!EnsureLogDirectoryExists()) {
         return;
     }
 
-    // 获取日志文件路径
     if (!GetLogFilePath()) {
         return;
     }
 
-    // 写入日志
     WriteMessage(logLevel, logBuf);
 
     return;
