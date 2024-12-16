@@ -33,13 +33,13 @@ namespace OHOS {
         {
             char soFilePathChar[PATH_MAX] = {0x00};
             if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
-                LOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+                ELOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
                 return nullptr;
             }
 
             void* handle = dlopen(soFilePathChar, RTLD_LAZY);
             if (!handle) {
-                LOGE("open GpuCounterPlugin so file error.");
+                ELOGE("open GpuCounterPlugin so file error.");
                 return nullptr;
             }
 
@@ -59,7 +59,7 @@ namespace OHOS {
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
             GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
             if (!startGetGpuPerfInfo) {
-                LOGE("Error loading symbol");
+                ELOGE("Error loading symbol");
                 return;
             }
 
@@ -70,15 +70,15 @@ namespace OHOS {
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
-                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                    ELOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret != 0) {
-                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                    ELOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else {
-                LOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
+                ELOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
             }
         }
 
