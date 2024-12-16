@@ -352,7 +352,7 @@ inline void WriteMessage(SpLogLevel logLevel, char* logMessage)
     return;
 }
 
-void SpLog(SpLogLevel logLevel, const char *fmt, bool isEditorLog, ...)
+void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
