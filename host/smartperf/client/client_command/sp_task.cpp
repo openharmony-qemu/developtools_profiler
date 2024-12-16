@@ -129,7 +129,6 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    LOGE("SPTask::InitTask error(%s)", errInfo.c_str());
     ELOGE("SPTask::InitTask error(%s)", errInfo.c_str());
     return ErrCode::FAILED;
 }
@@ -321,7 +320,6 @@ void SPTask::StopSdkRecv()
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
         ELOGE("data dir %s is nullptr", outSdkDataDir.c_str());
         return;
     }
@@ -330,7 +328,6 @@ void SPTask::StopSdkRecv()
     std::ofstream outFile;
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
-        LOGE("data %s open failed", outSdkDataPath.c_str());
         ELOGE("data %s open failed", outSdkDataPath.c_str());
         sdkDataMtx.unlock();
         return;
@@ -399,7 +396,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
     ELOGI("AsyncGetDataMap: FPS data collection initiated.");
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    LOGI("AsyncGetDataMap: CPU data collection initiated.");
+    ELOGI("AsyncGetDataMap: CPU data collection initiated.");
     GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
     ELOGI("AsyncGetDataMap: RAM data collection initiated.");
@@ -444,7 +441,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     ram.SetFirstFlag();
     ELOGI("SPTask::StartTask: RAM first flag set.");
     if (!isInit) {
-        LOGE("SPTask::StartTask: Initialization failed.");
         ELOGE("SPTask::StartTask: Initialization failed.");
         return ErrCode::FAILED;
     }
@@ -458,9 +454,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         ELOGW("SPTask::StartTask: No package name provided for profiler.");
     }
     InitDataFile();
-    LOGI("SPTask::StartTask: Data files initialized.");
+    ELOGI("SPTask::StartTask: Data files initialized.");
     ConfigDataThread();
-    LOGI("SPTask::StartTask: Data collection thread configuration completed.");
+    ELOGI("SPTask::StartTask: Data collection thread configuration completed.");
     thread = std::thread([this, msgTask]() {
         ELOGI("SPTask::StartTask: Starting data collection thread.");
         while (isRunning) {
@@ -699,8 +695,6 @@ void SPTask::GetHiperf(const std::string &traceName)
 
     std::cout << tmp << std::endl;
     SPUtils::LoadCmd(tmp, result);
-    LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
-        tmp.c_str(), traceName.c_str(), result.c_str());
     ELOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
         tmp.c_str(), traceName.c_str(), result.c_str());
 }

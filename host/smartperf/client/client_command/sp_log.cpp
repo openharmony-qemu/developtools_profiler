@@ -29,11 +29,9 @@
 #include <mutex>
 #include <ctime>
 #include <cstring>
-#include <iostream>
 #include <fstream>
 #include <sstream>
 #include <vector>
-#include <string>
 #include <filesystem>
 #include <iomanip>
 #include <chrono>
@@ -102,14 +100,11 @@ inline bool CreateDir(const std::string& dirPath)
     if (!std::__fs::filesystem::exists(dirPath)) {
         LOGD("Try create dir: %s", dirPath.c_str());
         try {
-            // 尝试创建目录
             if (mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
-                // 如果 mkdir 失败，打印具体的错误信息
                 LOGE("Failed to create log directory: %s", strerror(errno));
                 return false;
             }
 
-            // 检查目录是否成功创建
             if (!std::__fs::filesystem::exists(dirPath)) {
                 LOGE("Failed to create log directory.");
                 return false;
@@ -145,12 +140,15 @@ inline std::string GetCurrentLogFilePath(int maxLogNumber)
     std::time_t time = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&time);
 
+    std::string sanitizedDate = g_currentDate;
+    std::replace(sanitizedDate.begin(), sanitizedDate.end(), ':', '-');  // 例如替换 ':' 为 '-'
+
     std::ostringstream oss;
     oss << LOG_FILE_DIR
         << "log."
         << maxLogNumber
         << "."
-        << g_currentDate
+        << sanitizedDate
         << "-"
         << std::put_time(&tm, "%H%M%S");
     return oss.str();
@@ -246,6 +244,7 @@ inline void TarFile(const std::string& sourceFileName)
 
 inline bool GetLogFilePath()
 {
+    std::lock_guard<std::mutex> lock(g_mtx);
     std::string date = GetCurrentDate();
 
     if ((date == g_currentDate) && IsFilePathValid(g_currentLogFilePath)) {
@@ -374,18 +373,10 @@ void SpLog(SpLogLevel logLevel, const char *fmt, bool isEditorLog, ...)
     if(!isEditorLog) {
         return;
     }
+
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    if (LOG_FILE_DIR.empty()) {
-        LOGE("Log file dir not set.");
-        return;
-    }
-
-    if (!EnsureLogDirectoryExists()) {
-        return;
-    }
-
-    if (!GetLogFilePath()) {
+    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath()) {
         return;
     }
 

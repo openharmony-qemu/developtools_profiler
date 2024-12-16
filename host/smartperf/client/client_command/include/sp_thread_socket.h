@@ -153,22 +153,18 @@ public:
                 spSocket.Send("init::False,\"error\":" + errorInfo);
             } else {
                 spSocket.Send(std::string("init::") + std::to_string(INIT_FAILED));
-                ELOGI("Sent init:: failure");
+                ELOGE("EDITOR_SOCKET sent init:: failure");
             }
             return;
         }
         if (recvStr.find("-lockfreq") != std::string::npos &&
             SPTask::GetInstance().GetTcpToken() == "") {
-            LOGE("lockfreq must have token");
             ELOGE("'-lockfreq' must have a valid token.");
             return;
         }
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
-        LOGD("init::%s", (code == ErrCode::OK) ? "True" : "False");
-        ELOGD("init::%s", (code == ErrCode::OK) ? "True" : "False");
         if (type == CMD_SOCKET) {
             spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
-            ELOGI("Sent init response: %s", (code == ErrCode::OK) ? "True" : "False");
             return;
         }
         if (code == ErrCode::OK) {
@@ -182,19 +178,14 @@ public:
     void StartRecv(SpServerSocket &spSocket) const
     {
         if (flagRunning) {
-            LOGD("SP_daemon is already running, skipping start.");
-            ELOGD("SP_daemon is already running, skipping start.");
             spSocket.Send("SP_daemon is running");
             return;
         }
         auto lambdaTask = [](const std::string &data) {
             std::cout << data << std::endl;
         };
-        LOGD("Starting task and record...");
-        ELOGD("Starting task and record...");
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
         SPTask::GetInstance().StartRecord();
-        LOGD("start:::%s", (code == ErrCode::OK) ? "True" : "False");
         ELOGD("start:::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
@@ -211,8 +202,7 @@ public:
     {
         auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-        LOGD("start::%s", (code == ErrCode::OK) ? "True" : "False");
-        ELOGD("start::%s", (code == ErrCode::OK) ? "True" : "False");
+        ELOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
         } else if (code == ErrCode::FAILED) {
@@ -222,25 +212,21 @@ public:
     void StopRecvRealtime(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StopTask();
-        LOGD("stop::%s", (code == ErrCode::OK) ? "True" : "False");
-        ELOGD("stop::%s", (code == ErrCode::OK) ? "True" : "False");
+        ELOGI("stop::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("stop::True");
             flagRunning = false;
             spSocket.Close();
 
-            LOGD("Socket closed after stop.");
-            ELOGD("Socket closed after stop.");
+            ELOGI("Socket closed after stop.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("stop::") + std::to_string(STOP_FAILED));
         }
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
     {
-        LOGI("startRecord::True");
         ErrCode code = SPTask::GetInstance().StartRecord();
-        LOGD("startRecord::%s", (code == ErrCode::OK) ? "True" : "False");
-        ELOGD("startRecord::%s", (code == ErrCode::OK) ? "True" : "False");
+        ELOGI("startRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(START_RECORD_FAILED));
         if (code == ErrCode::OK) {
             spSocket.Send("startRecord::True");
         } else {
@@ -250,8 +236,7 @@ public:
     void StopRecvRecord(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StopRecord();
-        LOGD("stopRecord::%s", (code == ErrCode::OK) ? "True" : "False");
-        ELOGD("stopRecord::%s", (code == ErrCode::OK) ? "True" : "False");
+        ELOGI("stopRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(STOP_RECORD_FAILED));
         if (code == ErrCode::OK) {
             spSocket.Send("stopRecord::True");
         } else {
@@ -274,8 +259,7 @@ public:
         };
         for (auto it : messageType) {
             if (message.find(it) != std::string::npos) {
-                ELOGI("Sending token check failed message for command: %s", it.c_str());
-                LOGD((it + std::to_string(TOKEN_CHECK_FAILED)).c_str());
+                ELOGD("Sending token check failed message for command: %s", it.c_str());
                 socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
                 return;
             }
