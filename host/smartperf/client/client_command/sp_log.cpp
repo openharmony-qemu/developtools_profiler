@@ -49,7 +49,7 @@ namespace SmartPerf {
 const int32_t LOG_MAX_LEN = 10000;
 static const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 static const int MAX_FILE_COUNT = 256;
-static const std::string LOG_FILE_DIR = "/data/app/el2/100/base/com.huawei.hmsapp.hismartperf/files/SP_daemon/";
+static const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
 static std::mutex g_mtx;
 static std::string g_currentLogFilePath;
 static std::string g_currentDate;
@@ -244,7 +244,6 @@ inline void TarFile(const std::string& sourceFileName)
 
 inline bool GetLogFilePath()
 {
-    std::lock_guard<std::mutex> lock(g_mtx);
     std::string date = GetCurrentDate();
 
     if ((date == g_currentDate) && IsFilePathValid(g_currentLogFilePath)) {

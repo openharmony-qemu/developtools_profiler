@@ -222,6 +222,7 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
+    std::string foundConfig;
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
             ELOGI("GetItemData: Snapshot flag is set, capturing screenshot for config: %s", itConfig.c_str());
@@ -239,13 +240,12 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
         if (profiler != nullptr) {
-            ELOGI("GetItemData: Retrieved profiler for config: %s", itConfig.c_str());
+            foundConfig += itConfig + " ";
             std::map<std::string, std::string> itemMap = profiler->ItemData();
             dataMap.insert(itemMap.begin(), itemMap.end());
-        } else {
-            ELOGW("GetItemData: Profiler not found for config: %s", itConfig.c_str());
         }
     }
+    ELOGI("GetItemData: Retrieved profiler for config: %s", foundConfig.c_str());
 }
 
 void SPTask::ConfigDataThread()
