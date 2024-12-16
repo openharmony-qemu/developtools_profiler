@@ -48,8 +48,12 @@ class TestHiprofilerReliability:
     def test_appfreeze_sceneboard_sa(self):
         subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace", text=True, encoding="utf-8")
         subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+        try:
+            subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
+            subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            pass
         subprocess.check_output("hdc target mount", text=True, encoding="utf-8")
         subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit_reliability.json /data/local/tmp/", text=True, encoding="utf-8")
         subprocess.check_output(f"hdc shell mv /data/local/tmp/process_resource_limit_reliability.json /data/local/tmp/process_resource_limit.json", text=True, encoding="utf-8")
