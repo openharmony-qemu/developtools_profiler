@@ -36,6 +36,7 @@
 #include "memory_plugin_result.pb.h"
 #include "plugin_module_api.h"
 #include "smaps_stats.h"
+#include "graphic_memory_collector.h"
 
 struct Proto2StrMapping {
     int protobufid;
@@ -464,6 +465,8 @@ private:
     uint64_t SizeToBytes(const std::string& sizeStr, const std::string& type);
     bool isRenderService(int pid);
     bool GetRenderServiceGlSize(int32_t pid, GraphicsMemory& graphicsMemory);
+
+    bool GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMemory, OHOS::HiviewDFX::GraphicType graphicType);
 
     template <typename T> void WriteAshmemInfo(T& dataProto);
     template <typename T> void WriteDmaInfo(T& dataProto);
