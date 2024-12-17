@@ -108,6 +108,8 @@ private:
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
     int GetCurrentBattary();
+    void SetProfilerPid();
+    std::map<std::string, std::string> SetTaskInfo();
 
 private:
     TaskInfo curTaskInfo;

@@ -95,7 +95,7 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 #endif
 }
 
-inline bool CreateDir(const std::string& dirPath)
+static bool CreateDir(const std::string& dirPath)
 {
     if (!std::__fs::filesystem::exists(dirPath)) {
         LOGD("Try create dir: %s", dirPath.c_str());
@@ -118,12 +118,12 @@ inline bool CreateDir(const std::string& dirPath)
     return true;
 }
 
-inline bool EnsureLogDirectoryExists()
+static bool EnsureLogDirectoryExists()
 {
     return CreateDir(LOG_FILE_DIR);
 }
 
-inline std::string GetCurrentDate()
+static std::string GetCurrentDate()
 {
     auto now = std::chrono::system_clock::now();
     std::time_t time = std::chrono::system_clock::to_time_t(now);
@@ -133,7 +133,7 @@ inline std::string GetCurrentDate()
     oss << std::put_time(&tm, "%Y%m%d");
     return oss.str();
 }
-inline std::string GetCurrentLogFilePath(int maxLogNumber)
+static std::string GetCurrentLogFilePath(int maxLogNumber)
 {
     // 获取当前时分秒字符串
     auto now = std::chrono::system_clock::now();
@@ -153,7 +153,7 @@ inline std::string GetCurrentLogFilePath(int maxLogNumber)
         << std::put_time(&tm, "%H%M%S");
     return oss.str();
 }
-inline bool IsFilePathValid(const std::string& filePath)
+static bool IsFilePathValid(const std::string& filePath)
 {
     std::ifstream file(filePath, std::ios::binary | std::ios::ate);
     if (file.is_open()) {
@@ -162,31 +162,25 @@ inline bool IsFilePathValid(const std::string& filePath)
     return false;
 }
 
-inline int CheckFileNameAndGetNumber(const std::string& fileName, const std::string& date, bool* currentDateFlag)
+static int CheckFileNameAndGetNumber(const std::string& fileName, const std::string& date, bool* currentDateFlag)
 {
-    // 定义正则表达式，匹配类似 log.23.20241129-160850 的格式
     std::regex pattern(R"(^log\.(\d+)\.(\d{8})-\d{6}$)");
-
-    // 使用正则表达式匹配文件名
     std::smatch matches;
+
     if (std::regex_match(fileName, matches, pattern)) {
-        // 提取文件名中的日期部分
         std::string fileDate = matches[2].str();
 
-        // 判断日期是否匹配
         if (fileDate == date) {
             *currentDateFlag = true;
         }
 
-        // 如果日期匹配，返回提取出的编号
         return std::stoi(matches[1].str());
     }
 
-    // 如果文件名不符合规定格式，返回 0
     return 0;
 }
 
-inline bool Chmod(const std::string& sourceFilePath, mode_t mode)
+static bool Chmod(const std::string& sourceFilePath, mode_t mode)
 {
     int retCode = chmod(sourceFilePath.c_str(), mode);
     if (retCode != 0) {
@@ -197,23 +191,13 @@ inline bool Chmod(const std::string& sourceFilePath, mode_t mode)
     return true;
 }
 
-#define CHMOD_FILE(path) Chmod((path), 0777)
-inline void TarFile(const std::string& sourceFileName)
+static void TarFile(const std::string& sourceFileName)
 {
-    // 创建压缩文件名（添加.tar.gz后缀）
     std::ostringstream compressedFilePath;
-    compressedFilePath << LOG_FILE_DIR
-                       << sourceFileName
-                       << ".tar.gz";
+    compressedFilePath << LOG_FILE_DIR << sourceFileName << ".tar.gz";
 
-    // 使用系统命令行工具tar进行文件压缩
     std::ostringstream tarCommand;
-    tarCommand << "tar -czf "
-               << compressedFilePath.str()
-               << " -C "
-               << LOG_FILE_DIR
-               << " "
-               << sourceFileName;
+    tarCommand << "tar -czf " << compressedFilePath.str() << " -C " << LOG_FILE_DIR << " " << sourceFileName;
     LOGD("Running tar command: %s", tarCommand.str().c_str());
 
     int tarResult = system(tarCommand.str().c_str());
@@ -222,13 +206,10 @@ inline void TarFile(const std::string& sourceFileName)
         return;
     }
 
-    CHMOD_FILE(compressedFilePath.str());
+    Chmod(compressedFilePath.str(), 0777);
 
-    // 删除原文件
     std::ostringstream deleteCommand;
-    deleteCommand << "rm "
-                  << LOG_FILE_DIR
-                  << sourceFileName;
+    deleteCommand << "rm " << LOG_FILE_DIR << sourceFileName;
     LOGD("Running delete command: %s", deleteCommand.str().c_str());
 
     int deleteResult = system(deleteCommand.str().c_str());
@@ -241,8 +222,7 @@ inline void TarFile(const std::string& sourceFileName)
     return;
 }
 
-
-inline bool GetLogFilePath()
+static bool GetLogFilePath()
 {
     std::string date = GetCurrentDate();
 
@@ -296,26 +276,7 @@ inline bool GetLogFilePath()
     return true;
 }
 
-int LogCheck(SpLogLevel level, const char *format, va_list *argList, char *buffer, size_t bufSize)
-{
-    int ret = 0;
-
-    ret = memset_s(argList, sizeof(va_list), 0, sizeof(va_list));
-    if (ret != 0) {
-        SpLogOut(level, "SP log memset_s error.");
-        return -1;
-    }
-
-    ret = vsprintf_s(buffer, bufSize, format, *argList);
-    if (ret < 0) {
-        SpLogOut(level, "SP log length error.");
-        return -1;
-    }
-
-    return 0;
-}
-
-inline void WriteMessage(SpLogLevel logLevel, char* logMessage)
+static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 {
     // 如果文件不存在则需要在创建后提权
     bool chmodFlag = !std::__fs::filesystem::exists(g_currentLogFilePath);
@@ -325,7 +286,7 @@ inline void WriteMessage(SpLogLevel logLevel, char* logMessage)
     if (logFile.is_open()) {
         if (chmodFlag) {
             LOGD("Create log file %s.", g_currentLogFilePath.c_str());
-            if (!CHMOD_FILE(g_currentLogFilePath)) {
+            if (!Chmod(g_currentLogFilePath, 0777)) {
                 logFile.close();
                 return;
             }
@@ -369,7 +330,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
     }
     SpLogOut(logLevel, logBuf);
 
-    if(!isEditorLog) {
+    if (!isEditorLog) {
         return;
     }
 

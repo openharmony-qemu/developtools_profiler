@@ -136,7 +136,7 @@ namespace OHOS {
             if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
                 close(params.receiveFd[index]);
                 params.receiveFd[index] = -1;
-                ELOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);  // Log read failure
+                ELOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
 

@@ -264,9 +264,9 @@ void SPTask::ConfigDataThread()
         if (itConfig.find("-lockfreq") != std::string::npos) {
             ELOGI("ConfigDataThread: Lock frequency collection enabled for config: %s", itConfig.c_str());
             lockFreq.SetIsCollecting(true);
-            lockFreqThread = std::thread([this]() { 
+            lockFreqThread = std::thread([this]() {
                 ELOGI("ConfigDataThread: Starting lock frequency locking thread");
-                this->lockFreq.LockingThread(); 
+                this->lockFreq.LockingThread();
             });
         }
     }
@@ -377,6 +377,18 @@ void SPTask::InitDataFile()
     ELOGI("InitDataFile: Data file initialization completed.");
     return;
 }
+
+void SPTask::SetProfilerPid()
+{
+    SpProfilerFactory::editorFlag = true;
+    std::string processId = "";
+    OHOS::SmartPerf::StartUpDelay sp;
+    processId = sp.GetPidByPkg(curTaskInfo.packageName);
+    SpProfilerFactory::SetProfilerPidByPkg(processId);
+    ELOGI("AsyncGetDataMap: Set process ID for package: %s, process ID: %s",
+          curTaskInfo.packageName.c_str(), processId.c_str());
+}
+
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
@@ -384,12 +396,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
-        SpProfilerFactory::editorFlag = true;
-        std::string processId = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(curTaskInfo.packageName);
-        SpProfilerFactory::SetProfilerPidByPkg(processId);
-        ELOGI("AsyncGetDataMap: Set process ID for package: %s, process ID: %s", curTaskInfo.packageName.c_str(), processId.c_str());
+        SetProfilerPid();
     }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     ELOGI("AsyncGetDataMap: Timestamp added to dataMap: %lld", lastTime);
@@ -485,27 +492,22 @@ void SPTask::CreatPath(std::string Path)
     }
 }
 
-void SPTask::StopGetInfo()
+std::map<std::string, std::string> SPTask::SetTaskInfo()
 {
-    bool isTcpMessage = true;
-    ELOGI("Creating base output path: %s", baseOutPath.c_str());
-    CreatPath(baseOutPath);
-    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    ELOGI("Creating session path: %s", thisBasePath.c_str());
-    CreatPath(thisBasePath);
-    std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
+    std::string refreshrate;
     ELOGI("Test duration: %lld seconds", testDuration);
     const std::string gpuDataVersion = "1.1";
     std::string screenStr = SPUtils::GetScreen();
     size_t pos3 = screenStr.find("=");
     if (pos3 != std::string::npos) {
-        std::string refreshrate = screenStr.substr(pos3 + 1);
+        refreshrate = screenStr.substr(pos3 + 1);
         ELOGI("Screen refresh rate: %s", refreshrate.c_str());
     } else {
         ELOGW("Failed to extract refresh rate from screen string: %s", screenStr.c_str());
     }
+
     std::map<std::string, std::string> taskInfoMap = {
         { "sessionId", curTaskInfo.sessionId },
         { "taskId", curTaskInfo.sessionId },
@@ -520,6 +522,20 @@ void SPTask::StopGetInfo()
         { "gpuDataVersion", gpuDataVersion },
         { "battery_change", std::to_string(battaryEnd - battaryStart) },
     };
+    return taskInfoMap;
+}
+
+void SPTask::StopGetInfo()
+{
+    bool isTcpMessage = true;
+    ELOGI("Creating base output path: %s", baseOutPath.c_str());
+    CreatPath(baseOutPath);
+    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+    ELOGI("Creating session path: %s", thisBasePath.c_str());
+    CreatPath(thisBasePath);
+    std::string outIndexpath = thisBasePath + "/t_index_info.csv";
+
+    std::map<std::string, std::string> taskInfoMap = SetTaskInfo();
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     if (deviceInfo.empty()) {
         ELOGW("Failed to get device info.");
@@ -734,7 +750,8 @@ void SPTask::KillHiperfCmd()
     runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
     runTime = runTime / RM_1000; // Convert to seconds
 
-    ELOGI("Starting KillHiperfCmd. Capture time: %lld, Current time: %lld, Runtime: %lld seconds.", startCaptuerTime, now, runTime);
+    ELOGI("Starting KillHiperfCmd. Capture time: %lld, Current time: %lld, Runtime: %lld seconds.",
+        startCaptuerTime, now, runTime);
 
     do {
         out.clear();
@@ -806,7 +823,7 @@ int SPTask::GetCurrentBattary()
     }
 
     content = content.substr(content.find(':') + 1);
-    if(content == "") {
+    if (content == "") {
         ELOGE("Battery capacity parsing failed: No valid data after colon.");
         return 0;
     }
