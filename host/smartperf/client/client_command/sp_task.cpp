@@ -124,12 +124,12 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
         isInit = true;
-        ELOGI("SPTask::InitTask success, task initialized.");
+        ELOGI("InitTask success, task initialized.");
         return ErrCode::OK;
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    ELOGE("SPTask::InitTask error(%s)", errInfo.c_str());
+    ELOGE("InitTask error(%s)", errInfo.c_str());
     return ErrCode::FAILED;
 }
 
@@ -443,52 +443,51 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
-    ELOGI("SPTask::StartTask: Task starting...");
+    ELOGI("Task starting...");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    ELOGI("SPTask::StartTask: RAM first flag set.");
+    ELOGI("RAM first flag set.");
     if (!isInit) {
-        ELOGE("SPTask::StartTask: Initialization failed.");
+        ELOGE("Initialization failed.");
         return ErrCode::FAILED;
     }
     isRunning = true;
     realTimeStart = SPUtils::GetCurTime();
-    ELOGI("SPTask::StartTask: Task initialized, realTimeStart = %lld", realTimeStart);
+    ELOGI("Task initialized, realTimeStart = %lld", realTimeStart);
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
-        ELOGI("SPTask::StartTask: Profiler package name set to: %s", curTaskInfo.packageName.c_str());
+        ELOGI("Profiler package name set to: %s", curTaskInfo.packageName.c_str());
     } else {
-        ELOGW("SPTask::StartTask: No package name provided for profiler.");
+        ELOGW("No package name provided for profiler.");
     }
     InitDataFile();
-    ELOGI("SPTask::StartTask: Data files initialized.");
+    ELOGI("Data files initialized.");
     ConfigDataThread();
-    ELOGI("SPTask::StartTask: Data collection thread configuration completed.");
+    ELOGI("Data collection thread configuration completed.");
     thread = std::thread([this, msgTask]() {
-        ELOGI("SPTask::StartTask: Starting data collection thread.");
+        ELOGI("Starting data collection thread.");
         while (isRunning) {
             AsyncGetDataMap(msgTask);
         }
-        ELOGI("SPTask::StartTask: Data collection thread exiting.");
+        ELOGI("Data collection thread exiting.");
     });
     return ErrCode::OK;
 }
 
 void SPTask::CreatPath(std::string Path)
 {
-    ELOGI("SPTask::CreatPath: Checking if path exists: %s", Path.c_str());   
     if (!SPUtils::FileAccess(Path)) {
-        ELOGW("SPTask::CreatPath: Path does not exist, attempting to create: %s", Path.c_str());
+        ELOGW("Path does not exist, attempting to create: %s", Path.c_str());
         std::string cmdResult;
         std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
         bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
         if (cmdSuccess) {
-            ELOGI("SPTask::CreatPath: Path created successfully: %s", Path.c_str());
+            ELOGI("Path created successfully: %s", Path.c_str());
         } else {
-            ELOGE("SPTask::CreatPath: Failed to create path: %s. Command result: %s", Path.c_str(), cmdResult.c_str());
+            ELOGE("Failed to create path: %s. Command result: %s", Path.c_str(), cmdResult.c_str());
         }
     } else {
-        ELOGI("SPTask::CreatPath: Path already exists: %s", Path.c_str());
+        ELOGI("Path already exists: %s", Path.c_str());
     }
 }
 
@@ -520,7 +519,7 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
         { "board", "hw" },
         { "target_fps", refreshrate },
         { "gpuDataVersion", gpuDataVersion },
-        { "battery_change", std::to_string(battaryEnd - battaryStart) },
+        { "battery_change", std::to_string(battaryStart - battaryEnd) },
     };
     return taskInfoMap;
 }
@@ -686,10 +685,7 @@ std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
     ELOGI("Starting new thread with timestamp: %lld", timeStamp);
 
-    auto thGetTrace = [this, timeStamp]() { 
-        ELOGI("Executing GetHiperf with timestamp: %lld", timeStamp);
-        this->GetHiperf(std::to_string(timeStamp)); 
-    };
+    auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
 
     std::thread spThread(thGetTrace);
 
@@ -721,15 +717,12 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
     for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
-
     bool isValid = SPUtils::VeriyParameter(keys, str, errorInfo);
-
     if (isValid) {
         ELOGI("TCP parameter validation successful for: %s", str.c_str());
     } else {
         ELOGE("TCP parameter validation failed for: %s, Error: %s", str.c_str(), errorInfo.c_str());
     }
-
     return isValid;
 }
 

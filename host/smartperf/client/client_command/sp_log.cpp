@@ -53,6 +53,7 @@ static const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
 static std::mutex g_mtx;
 static std::string g_currentLogFilePath;
 static std::string g_currentDate;
+const mode_t logFileMode = 0777;
 
 static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 {
@@ -169,11 +170,9 @@ static int CheckFileNameAndGetNumber(const std::string& fileName, const std::str
 
     if (std::regex_match(fileName, matches, pattern)) {
         std::string fileDate = matches[2].str();
-
         if (fileDate == date) {
             *currentDateFlag = true;
         }
-
         return std::stoi(matches[1].str());
     }
 
@@ -206,7 +205,7 @@ static void TarFile(const std::string& sourceFileName)
         return;
     }
 
-    Chmod(compressedFilePath.str(), 0777);
+    Chmod(compressedFilePath.str(), logFileMode);
 
     std::ostringstream deleteCommand;
     deleteCommand << "rm " << LOG_FILE_DIR << sourceFileName;
@@ -225,14 +224,11 @@ static void TarFile(const std::string& sourceFileName)
 static bool GetLogFilePath()
 {
     std::string date = GetCurrentDate();
-
     if ((date == g_currentDate) && IsFilePathValid(g_currentLogFilePath)) {
         return true;
     }
     LOGE("Current log file path invalid: %s", g_currentLogFilePath.c_str());
-
     g_currentDate = date;
-
     std::string fileName;
     bool currentDateFlag = false;
     int fileNumber = 0;
@@ -286,7 +282,7 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
     if (logFile.is_open()) {
         if (chmodFlag) {
             LOGD("Create log file %s.", g_currentLogFilePath.c_str());
-            if (!Chmod(g_currentLogFilePath, 0777)) {
+            if (!Chmod(g_currentLogFilePath, logFileMode)) {
                 logFile.close();
                 return;
             }
