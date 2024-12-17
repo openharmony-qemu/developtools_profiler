@@ -39,7 +39,7 @@ public:
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
 
 private:
-    void StopHook(uint32_t pid, std::string name = "", bool timeout = false);
+    void StopHook(uint32_t pid, std::string name = "");
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     struct TaskConfig;
     bool CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
