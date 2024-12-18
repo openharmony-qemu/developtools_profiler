@@ -47,7 +47,7 @@ static std::string GetOptions(const std::vector<std::string> &argv)
     }
     return str;
 }
-static void keyInsert(std::set<std::string> &keysMap)
+static void KeyInsert(std::set<std::string> &keysMap)
 {
     keysMap.insert("editor");
     keysMap.insert("profilerfps");
@@ -80,7 +80,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
             return true;
         }
     }
-    keyInsert(keys);
+    KeyInsert(keys);
     if (argv[1].find("editorServer:") != std::string::npos) {
         keys.insert(argv[1].substr(1).c_str());
     }

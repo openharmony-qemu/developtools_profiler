@@ -116,25 +116,68 @@ FpsInfo FPS::GetFpsInfo()
     if (pkgName.empty()) {
         return fpsInfoMax;
     }
-    bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
-    if (onTop) {
-        std::string uniteLayer;
-        if (!rkFlag) {
-            uniteLayer = "UniRender";
-        } else {
-            ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
-            uniteLayer = profilerFps.GetSurface();
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    if (isGameApp) {
+        if (firstDump) {
+            gameLayerName = profilerFps.GetGameLayer();
+            if (gameLayerName.empty()) {
+                firstDump = true;
+                fpsInfoMax.Clear();
+                return fpsInfoMax;
+            } else {
+                firstDump = false;
+            }
         }
         OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
-        fpsInfoMax = GetSurfaceFrame(uniteLayer);
+        fpsInfoMax = GetSurfaceFrame(gameLayerName);
+        if (fpsInfoMax.fps == 0) {
+            return GetChangedLayerFps();
+        } else {
+            return fpsInfoMax;
+        }
     } else {
-        LOGE("FPS:app is in the background");
+        bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
+        if (onTop) {
+            std::string uniteLayer;
+            if (!rkFlag && !isOtherDevice) {
+                uniteLayer = "UniRender";
+            } else if (isOtherDevice) {
+                uniteLayer = profilerFps.GetSurface();
+            } else {
+                uniteLayer = profilerFps.GetSurface();
+            }
+            OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
+            fpsInfoMax = GetSurfaceFrame(uniteLayer);
+        } else {
+            LOGE("FPS:app is in the background");
+            if (processId.empty()) {
+                processFlag = true;
+                fpsInfoMax.Clear();
+            } else {
+                fpsInfoMax.Clear();
+            }
+        }
+    }
+    return fpsInfoMax;
+}
+
+bool FPS::SetOtherDeviceFlag()
+{
+    isOtherDevice = true;
+    return isOtherDevice;
+}
+
+FpsInfo FPS::GetChangedLayerFps()
+{
+    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    gameLayerName = profilerFps.GetGameLayer();
+    if (gameLayerName.empty()) {
         if (processId.empty()) {
             processFlag = true;
-            fpsInfoMax.Clear();
-        } else {
-            fpsInfoMax.Clear();
         }
+        fpsInfoMax.Clear();
+    } else {
+        fpsInfoMax = GetSurfaceFrame(gameLayerName);
     }
     return fpsInfoMax;
 }
@@ -182,9 +225,11 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
 
 void FPS::ReadDataFromPipe(int fd)
 {
+    fpsInfo.currTimeStamps.clear();
     char tmp[1024];
     fpsNum = 0;
     prevScreenTimestamp = -1;
+    bool isBreak = false;
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
@@ -198,40 +243,74 @@ void FPS::ReadDataFromPipe(int fd)
     }
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGD("FPS::dump time: %s", tmp);
+        LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
+        curScreenTimestamp = 0;
         sstream.clear();
         sstream.str(tmp);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
         }
-        CalcFpsAndJitters();
+        if (CalcFpsAndJitters(isBreak)) {
+            break;
+        }
     }
+    CalcJitters();
 }
 
-void FPS::CalcFpsAndJitters()
+bool FPS::CalcFpsAndJitters(bool isBreak)
 {
-    long long prevlastScreenTimestamp = 0;
     long long onScreenTime = curScreenTimestamp / mod;
-    long long fpsCurTime = fpsInfo.curTime;
-    if (onScreenTime == fpsCurTime) {
+    bool findFpsCurTime = (onScreenTime == fpsInfo.curTime);
+    if (findFpsCurTime) {
+        isBreak = true;
         fpsNum++;
+        fpsInfo.fps = fpsNum;
         fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-        long long jitter;
-        if (prevScreenTimestamp != -1) {
-            jitter = curScreenTimestamp - prevScreenTimestamp;
-        } else {
-            if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
-                jitter = curScreenTimestamp - prevlastScreenTimestamp;
-            } else {
-                jitter = curScreenTimestamp % mod;
-            }
-        }
-        fpsInfo.jitters.push_back(jitter);
-        prevScreenTimestamp = curScreenTimestamp;
-        prevlastScreenTimestamp = curScreenTimestamp;
+    } else {
+        findFpsCurTime = false;
     }
-    fpsInfo.fps = fpsNum;
+    return isBreak && !findFpsCurTime;
+}
+
+void FPS::CalcJitters()
+{
+    bool isOrder = true;
+    if (fpsInfo.currTimeStamps.size() > 1) {
+        isOrder = fpsInfo.currTimeStamps[1] - fpsInfo.currTimeStamps[0] > 0;
+    }
+    if (isOrder) {
+        for (size_t i = 0; i < fpsInfo.currTimeStamps.size(); i++) {
+            curScreenTimestamp = fpsInfo.currTimeStamps[i];
+            long long jitter = CalculateJitter();
+            fpsInfo.jitters.push_back(jitter);
+            prevlastScreenTimestamp = curScreenTimestamp;
+            prevScreenTimestamp = curScreenTimestamp;
+        }
+    } else {
+        for (size_t i = fpsInfo.currTimeStamps.size(); i > 0 ; i--) {
+            curScreenTimestamp = fpsInfo.currTimeStamps[i - 1];
+            long long jitter = CalculateJitter();
+            fpsInfo.jitters.push_back(jitter);
+            prevlastScreenTimestamp = curScreenTimestamp;
+            prevScreenTimestamp = curScreenTimestamp;
+        }
+    }
+}
+        
+long long FPS::CalculateJitter()
+{
+    long long jitter;
+    if (prevScreenTimestamp == -1) {
+        if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
+            jitter = curScreenTimestamp - prevlastScreenTimestamp;
+        } else {
+            jitter = curScreenTimestamp % mod;
+        }
+    } else {
+        jitter = curScreenTimestamp - prevScreenTimestamp;
+    }
+    return jitter;
 }
 
 void FPS::SetRkFlag()
@@ -241,11 +320,12 @@ void FPS::SetRkFlag()
 
 std::string FPS::FindFpsRefreshrate()
 {
+    std::string value;
     std::string screenInfo;
     SPUtils::LoadFile(screenPath, screenInfo);
+    value = GetHardenRefreshrate(screenInfo);
     size_t pos = 0;
     std::string token;
-    std::string value;
     if (!rkFlag) {
         while ((pos = screenInfo.find(";")) != std::string::npos) {
             token = screenInfo.substr(0, pos);
@@ -262,6 +342,27 @@ std::string FPS::FindFpsRefreshrate()
             size_t endPos = screen.length();
             value = screen.substr(startPos, endPos - startPos);
         }
+    return value;
+}
+
+std::string FPS::GetHardenRefreshrate(std::string &screenInfo)
+{
+    if (screenInfo.empty()) {
+        SPUtils::LoadCmd(HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN), screenInfo);
+    }
+    std::string value = "";
+    std::string refreshrate = "refreshrate=";
+    size_t activeModePos = screenInfo.find("activeMode:");
+    if (activeModePos != std::string::npos) {
+        size_t refreshRatePos = screenInfo.find(refreshrate, activeModePos);
+        if (refreshRatePos != std::string::npos) {
+            size_t endPos = screenInfo.find(" ", refreshRatePos);
+            if (endPos != std::string::npos) {
+                value = screenInfo.substr(refreshRatePos + refreshrate.length(),
+                endPos - refreshRatePos - refreshrate.length());
+            }
+        }
+    }
     return value;
 }
 }

@@ -125,6 +125,7 @@ namespace OHOS {
             unsigned long long memoryWriteBandwidthTargetValue = SplitSocketDataValueFunction(
                 realtimeGpuPerfInfoData.memoryWriteBandwidth, interval,
                 realtimeGpuPerfInfoData.duration);
+                
             gpuCounterInstance.AddGpuCounterRealtimeData(std::to_string(
                 realtimeGpuPerfInfoData.gpuActive - gpuActiveTargetValue) + "_");
             gpuCounterInstance.AddGpuCounterRealtimeData(std::to_string(

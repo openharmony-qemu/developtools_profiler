@@ -55,7 +55,7 @@ std::map<std::string, std::string> Capture::ItemData()
     }
     result["capture"] = path;
 
-    LOGD("Capture::ItemData map size(%u)", result.size());
+    LOGD("capture = %s", result["capture"].c_str());
     return result;
 }
 

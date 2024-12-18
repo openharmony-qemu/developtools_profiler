@@ -120,6 +120,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     std::cout << recvStr << std::endl;
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
+        FPS &fps = FPS::GetInstance();
+        fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
+        fps.firstDump = true;
         isInit = true;
         return ErrCode::OK;
     }
@@ -335,7 +338,6 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
-        SpProfilerFactory::editorFlag = true;
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;
         processId = sp.GetPidByPkg(curTaskInfo.packageName);
@@ -395,11 +397,11 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     return ErrCode::OK;
 }
 
-void SPTask::CreatPath(std::string Path)
+void SPTask::CreatPath(std::string path)
 {
-    if (!SPUtils::FileAccess(Path)) {
+    if (!SPUtils::FileAccess(path)) {
         std::string cmdResult;
-        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
         SPUtils::LoadCmd(creatPath, cmdResult);
     }
 }
@@ -429,7 +431,7 @@ void SPTask::StopGetInfo()
         { "board", "hw" },
         { "target_fps", refreshrate },
         { "gpuDataVersion", gpuDataVersion },
-        { "battery_change", std::to_string(battaryEnd - battaryStart) },
+        { "battery_change", std::to_string(battaryStart - battaryEnd) },
     };
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
@@ -440,6 +442,9 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
+    if (!vmap.empty()) {
+        vmap.erase(vmap.begin());
+    }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 }
 void SPTask::StopGpuCounterRecv()
@@ -576,6 +581,7 @@ void SPTask::KillHiperfCmd()
     runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
     runTime = runTime / RM_1000; // Convert to seconds
 
+    LOGD("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
         std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
@@ -592,6 +598,7 @@ void SPTask::KillHiperfCmd()
     std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
     SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
+    LOGD("pidof hiprofiker_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
@@ -621,10 +628,14 @@ int SPTask::GetCurrentBattary()
     const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
     SPUtils::LoadCmd(cmd, content);
     content = content.substr(content.find(':') + 1);
-    return std::stoi(content);
+    if (content == "") {
+        return 0;
+    }
+    return SPUtilesTye::StringToSometype<int>(content);
 }
 ErrCode SPTask::StartRecord()
 {
+    LOGD("SPTask StartRecord");
     battaryStart = GetCurrentBattary();
     startTime = SPUtils::GetCurTime();
     while (startTime > nextTime) {
@@ -638,6 +649,7 @@ ErrCode SPTask::StartRecord()
 
 ErrCode SPTask::StopRecord()
 {
+    LOGD("SPTask StopRecord");
     battaryEnd = GetCurrentBattary();
     long long stopRecordTime = SPUtils::GetCurTime();
     while (stopRecordTime > nextTime) {

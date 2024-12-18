@@ -39,7 +39,9 @@ std::map<std::string, std::string> Temperature::ItemData()
     std::map<std::string, std::string> result;
     for (auto dir : dirs) {
         std::string dirType = dir + "/type";
+        LOGD("dirType = %s", dirType.c_str());
         std::string dirTemp = dir + "/temp";
+        LOGD("dirTemp = %s", dirTemp.c_str());
 
         if (!SPUtils::FileAccess(dirType)) {
             continue;

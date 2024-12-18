@@ -15,6 +15,7 @@
 
 #ifndef NETWORK_H
 #define NETWORK_H
+#include <mutex>
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -27,20 +28,33 @@ public:
         return instance;
     }
     std::map<std::string, std::string> GetNetworkInfo();
-
+    void GetCurNetwork(long long &networkCurRx, long long &networkCurTx);
+    void IsFindHap();
+    void IsStopFindHap();
+    void ThreadGetHapNetwork();
+    void ClearHapFlag();
+    std::map<std::string, std::string> GetNetworkInfoDev();
 private:
     Network() {};
     Network(const Network &);
     Network &operator = (const Network &);
+    std::map<std::string, std::string> result;
+    long long rmnetCurRx = 0;
+    long long rmnetCurTx = 0;
+    long long ethCurRx = 0;
+    long long ethCurTx = 0;
+    long long wlanCurRx = 0;
+    long long wlanCurTx = 0;
     long long allTx = 0;
     long long allRx = 0;
     long long curTx = 0;
     long long curRx = 0;
     long long diffTx = 0;
     long long diffRx = 0;
-    long long prevTx = 0;
-    long long prevRx = 0;
     bool isFirst = true;
+    bool hapFlag = false;
+    bool stophapFlag = false;
+    std::mutex netWorktex;
 };
 }
 }

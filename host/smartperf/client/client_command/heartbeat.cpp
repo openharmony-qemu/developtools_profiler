@@ -54,7 +54,7 @@ void Heartbeat::HeartbeatRule()
         auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
         if (duration > timeout) {
-            LOGI("Socket disconnected!");
+            LOGD("Socket disconnected!");
             KillSpId();
         }
         sleep(checkMessageTime);

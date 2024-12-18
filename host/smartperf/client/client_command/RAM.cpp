@@ -152,6 +152,11 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
+        LOGD("RAM::fd is empty");
+        procRamInfo = ProcMemNaInfo();
+        for (auto item : procRamInfo) {
+            item.second = "0";
+    }
         return procRamInfo;
     }
     std::vector<std::string> paramsInfo;

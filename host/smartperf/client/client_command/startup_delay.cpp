@@ -44,6 +44,7 @@ void StartUpDelay::GetTrace(const std::string &traceName) const
         cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
     SPUtils::LoadCmd(cmdString + traceName, result);
+    LOGD("GetTrace : %s", (cmdString + traceName).c_str());
     if (result.find("OpenRecording failed") != std::string::npos) {
         std::string str;
         std::string traceFinishStr = "hitrace --trace_finish";
@@ -96,7 +97,7 @@ void StartUpDelay::GetHisysIdAndKill() const
         SPUtils::LoadCmd(killCmd + hisysIdVec[i], str);
     }
 }
-bool StartUpDelay::GetSpTcp()
+bool StartUpDelay::GetSpTcp() const
 {
     std::string resultPid;
     std::string str;
@@ -221,12 +222,18 @@ std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) c
     return output;
 }
 
-std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
+std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
 {
     std::vector<const char*> args = {"pidof", curPkgName.c_str(), nullptr};
     std::string resultProcId = ExecuteCommand(args);
-    if (!resultProcId.empty() && resultProcId.back() == '\n') {
-        resultProcId.pop_back();
+    if (!resultProcId.empty()) {
+        if (resultProcId.back() == '\n') {
+            resultProcId.pop_back();
+        }
+        size_t endpos = resultProcId.find(" ");
+        if (endpos != std::string::npos) {
+            resultProcId = resultProcId.substr(0, endpos);
+        }
         LOGD("startup_delay::output: (%s)", resultProcId.c_str());
     }
     return resultProcId;
