@@ -34,7 +34,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
-        netWorktex.lock()
+        netWorktex.lock();
         auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
         threadGetHapNetwork.detach();
         netWorktex.unlock();
