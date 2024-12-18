@@ -39,7 +39,7 @@ namespace OHOS {
 
             void* handle = dlopen(soFilePathChar, RTLD_LAZY);
             if (!handle) {
-                LOGI("open GpuCounterPlugin so file error.");
+                LOGE("open GpuCounterPlugin so file error.");
                 return nullptr;
             }
 
@@ -58,6 +58,10 @@ namespace OHOS {
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
             GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            if (!startGetGpuPerfInfo) {
+                LOGE("GpuCounterPlugin Error loading symbol");
+                return;
+            }
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
@@ -65,15 +69,12 @@ namespace OHOS {
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
-                    LOGI("GpuCounter collect start.");
                 } else {
                     LOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
-                if (ret == 0) {
-                    LOGI("GpuCounter recollect start.");
-                } else {
+                if (ret != 0) {
                     LOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else {
@@ -86,7 +87,6 @@ namespace OHOS {
             if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0) {
                 return;
             }
-            LOGI("GpuCounter collect stop.");
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
                 LOGE("data dir %s is nullptr", path.c_str());
@@ -177,7 +177,6 @@ namespace OHOS {
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {
                 gcStatus = GC_INIT;
-                LOGI("GpuCounter collect finish.");
             }
         }
     }

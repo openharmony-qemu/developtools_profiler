@@ -33,6 +33,7 @@ public:
     void TriggerGetCatchSocket(long long captureTime) const;
     bool TakeScreenCap(const std::string &savePath) const;
     void SocketMessage();
+    void SetCollectionNum();
     long long GetCurTimes();
 private:
     Capture() {};

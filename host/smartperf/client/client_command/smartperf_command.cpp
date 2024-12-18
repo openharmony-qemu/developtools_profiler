@@ -28,12 +28,13 @@
 #include "include/sp_log.h"
 #include "include/RAM.h"
 #include "include/common.h"
+#include "include/FPS.h"
 
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
-    LOGI("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
+    LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
@@ -48,8 +49,13 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         auto iterator = COMMAND_HELP_MAP.begin();
         while (iterator != COMMAND_HELP_MAP.end()) {
             if (iterator->second.compare(argv[1]) == 0) {
-                HelpCommand(iterator->first);
+                HelpCommand(iterator->first, "");
                 break;
+            }
+            if (argv[1].find("-editorServer") != std::string::npos) {
+                const size_t tokenStartPosition = 14;
+                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
+                HelpCommand(CommandHelp::EDITORSERVER, token);
             }
             ++iterator;
         }
@@ -66,17 +72,16 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
         }
     }
-
-    LOGI("SmartPerfCommand::SmartPerfCommand  complete");
+    LOGD("SmartPerfCommand::SmartPerfCommand complete");
 }
-void SmartPerfCommand::HelpCommand(CommandHelp type) const
+void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
-    LOGI("SmartPerfCommand::HelpCommand  type(%d)", type);
+    LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << "Version: " << smartPerfVersion << std::endl;
+        std::cout << "Version: " << SPUtils::SMART_PERF_VERSION << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
@@ -94,6 +99,8 @@ void SmartPerfCommand::HelpCommand(CommandHelp type) const
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
+        } else {
+            SPTask::GetInstance().SetTcpToken(token);
         }
         CreateSocketThread();
     }
@@ -120,15 +127,18 @@ void SmartPerfCommand::CreateSocketThread() const
 }
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
-    LOGI("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
+    LOGD("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {
         case CommandType::CT_N:
-            num = atoi(argStr1.c_str());
+            num = SPUtilesTye::StringToSometype<int>(argStr1.c_str());
             break;
         case CommandType::CT_PKG:
             pkgName = argStr1;
             if (pkgName.length() > 0) {
                 SpProfilerFactory::SetProfilerPkg(pkgName);
+                FPS &fps = FPS::GetInstance();
+                fps.isGameApp = SPUtils::GetIsGameApp(pkgName);
+                fps.firstDump = true;
             }
             break;
         case CommandType::CT_VIEW:
@@ -168,6 +178,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 {
     int rc = 0;
     std::string errInfo;
+
     if (!pkgName.empty()) {
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;
@@ -250,9 +261,7 @@ std::string SmartPerfCommand::ExecCommand()
         SaveGpuCounter();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
-    LOGI("SmartPerfCommand::WriteCsv start");
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
-    LOGI("SmartPerfCommand::WriteCsv finish");
     return std::string("command exec finished!");
 }
 void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
@@ -279,7 +288,7 @@ void SmartPerfCommand::InitSomething()
     std::string cmdResult;
     std::string stat = CMD_COMMAND_MAP.at(CmdCommand::PROC_STAT);
     if (SPUtils::LoadCmd(stat, cmdResult)) {
-        LOGI("SmartPerfCommand::InitSomething Privilege escalation!");
+        LOGE("SmartPerfCommand::InitSomething Privilege escalation!");
     };
 }
 }

@@ -19,8 +19,21 @@
 #include <map>
 #include <set>
 #include <string>
+#include <sstream>
 namespace OHOS {
 namespace SmartPerf {
+class SPUtilesTye {
+public:
+    template<typename T>
+    static T StringToSometype(const std::string& str)
+    {
+        T result;
+        std::stringstream ss;
+        ss << str;
+        ss >> result;
+        return result;
+    }
+};
 namespace SPUtils {
 /**
  * @brief Check if the file has permission to access
@@ -138,9 +151,12 @@ bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string,
 bool IsHmKernel();
 std::string GetCpuNum();
 void GetCurrentTime(int num, int prevTime);
-bool IsForeGround(std::string &pkg);
-bool IsFindForeGround(std::string line);
+bool IsForeGround(const std::string &pkg);
 bool IsFindAbilist();
+void SetRkFlag();
+bool GetPathPermissions(const std::string &path);
+const std::string SMART_PERF_VERSION = "1.0.5";
+bool GetIsGameApp(std::string pkg);
 };
 }
 }

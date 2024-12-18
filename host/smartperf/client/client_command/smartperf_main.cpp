@@ -26,9 +26,6 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
-#include "include/FPS.h"
-#include "include/GPU.h"
-#include "include/Power.h"
 
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -50,7 +47,21 @@ static std::string GetOptions(const std::vector<std::string> &argv)
     }
     return str;
 }
-
+static void KeyInsert(std::set<std::string> &keysMap)
+{
+    keysMap.insert("editor");
+    keysMap.insert("profilerfps");
+    keysMap.insert("start");
+    keysMap.insert("stop");
+    keysMap.insert("screen");
+    keysMap.insert("clear");
+    keysMap.insert("server");
+    keysMap.insert("sections");
+    keysMap.insert("deviceinfo");
+    keysMap.insert("ohtestfps");
+    keysMap.insert("editorServer");
+    keysMap.insert("recordcapacity");
+}
 static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
 {
     std::string str = GetOptions(argv);
@@ -69,18 +80,10 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
             return true;
         }
     }
-    keys.insert("editor");
-    keys.insert("profilerfps");
-    keys.insert("start");
-    keys.insert("stop");
-    keys.insert("screen");
-    keys.insert("clear");
-    keys.insert("server");
-    keys.insert("sections");
-    keys.insert("deviceinfo");
-    keys.insert("ohtestfps");
-    keys.insert("editorServer");
-    keys.insert("recordcapacity");
+    KeyInsert(keys);
+    if (argv[1].find("editorServer:") != std::string::npos) {
+        keys.insert(argv[1].substr(1).c_str());
+    }
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
@@ -216,13 +219,7 @@ int main(int argc, char *argv[])
              "Try `SP_daemon --help' for more options." << std::endl;
         return 0;
     }
-    bool FindAbilistResult = OHOS::SmartPerf::SPUtils::IsFindAbilist();
-    if (!FindAbilistResult) {
-        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
-        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
-        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
-    }
+    OHOS::SmartPerf::SPUtils::SetRkFlag();
     if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
     }

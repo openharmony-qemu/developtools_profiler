@@ -32,7 +32,7 @@ private:
     static const int arraySize = 1024;
     char buffer[arraySize] = {0};
     int protNumber = 8284;
-    std::string message = "init::-SESSIONID 1 -INTERVAL 1000 ";
+    std::string message = "init:::-SESSIONID 1 -INTERVAL 1000 ";
     const char *message1 = "start:::";
     const char *message2 = "stop::";
     int numBuff = 1024;
