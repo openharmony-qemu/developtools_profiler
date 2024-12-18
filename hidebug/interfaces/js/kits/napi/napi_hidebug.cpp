@@ -45,6 +45,7 @@
 #include "storage_acl.h"
 #include "system_ability_definition.h"
 #include "napi_hidebug_gc.h"
+#include "napi_util.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -308,22 +309,6 @@ static bool GetTraceParam(napi_env env, napi_callback_info info,
         return false;
     }
     return true;
-}
-
-static napi_value CreateUndefined(napi_env env)
-{
-    napi_value res = nullptr;
-    napi_get_undefined(env, &res);
-    return res;
-}
-
-static napi_value CreateErrorMessage(napi_env env, std::string msg)
-{
-    napi_value result = nullptr;
-    napi_value message = nullptr;
-    napi_create_string_utf8(env, (char *)msg.data(), msg.size(), &message);
-    napi_create_error(env, nullptr, message, &result);
-    return result;
 }
 
 napi_value StartProfiling(napi_env env, napi_callback_info info)
@@ -1027,6 +1012,52 @@ napi_value IsDebugState(napi_env env, napi_callback_info info)
     return result;
 }
 
+
+class GraphicAsyncTask : public AsyncTask {
+public:
+    GraphicAsyncTask() : AsyncTask("graphicAsyncTask") {}
+
+protected:
+    void Work(napi_env env) override
+    {
+        result_ = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
+    }
+
+    void Done(napi_env env, napi_status status) override
+    {
+        if (result_.has_value()) {
+            napi_value ret;
+            napi_create_int32(env, result_.value(), &ret);
+            napi_resolve_deferred(env, deferred_, ret);
+        } else {
+            constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+            napi_reject_deferred(env, deferred_,
+                CreateErrorMessage(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL), errMsg));
+        }
+    }
+
+private:
+    std::optional<int> result_{};
+};
+
+napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
+{
+    return AsyncTask::GetPromise<GraphicAsyncTask>(env);
+}
+
+napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
+{
+    std::optional<int32_t> result = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
+    if (result.has_value()) {
+        napi_value ret;
+        napi_create_int32(env, result.value(), &ret);
+        return ret;
+    }
+    constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+    napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errMsg);
+    return CreateUndefined(env);
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     napi_property_descriptor desc[] = {
@@ -1057,7 +1088,9 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVMRuntimeStats", GetVMRuntimeStats),
         DECLARE_NAPI_FUNCTION("getVMRuntimeStat", GetVMRuntimeStat),
         DECLARE_NAPI_FUNCTION("setAppResourceLimit", SetAppResourceLimit),
-        DECLARE_NAPI_FUNCTION("isDebugState", IsDebugState)
+        DECLARE_NAPI_FUNCTION("isDebugState", IsDebugState),
+        DECLARE_NAPI_FUNCTION("getGraphicsMemory", GetGraphicsMemory),
+        DECLARE_NAPI_FUNCTION("getGraphicsMemorySync", GetGraphicsMemorySync),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
