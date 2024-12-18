@@ -52,11 +52,9 @@ void Heartbeat::HeartbeatRule()
 {
     while (isrunning) {
         auto end = std::chrono::steady_clock::now();
-        LOGI("endTime: %lld", std::chrono::time_point_cast<std::chrono::microseconds>(end).time_since_epoch().count());
         auto duration = std::chrono::duration_cast<std::chrono::seconds>(end - updateStart).count();
-        LOGI("ListeningTimeJitter: %lld", duration);
         if (duration > timeout) {
-            LOGI("editor connect timeout have Disconnected successfully!");
+            LOGD("Socket disconnected!");
             KillSpId();
         }
         sleep(checkMessageTime);
@@ -67,8 +65,8 @@ void Heartbeat::UpdatestartTime()
 {
     std::unique_lock<std::mutex> lock(mtx);
     updateStart = std::chrono::steady_clock::now();
-    LOGI("Listening to messages from edtior or device");
     lock.unlock();
 }
+
 }
 }

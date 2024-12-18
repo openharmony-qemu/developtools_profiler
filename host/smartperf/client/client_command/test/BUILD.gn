@@ -35,6 +35,7 @@ ohos_unittest("sp_daemon_ut") {
     "../Power.cpp",
     "../RAM.cpp",
     "../Temperature.cpp",
+    "../lock_frequency.cpp",
     "../parse_click_complete_trace.cpp",
     "../parse_click_response_trace.cpp",
     "../parse_radar.cpp",

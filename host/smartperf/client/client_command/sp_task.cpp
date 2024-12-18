@@ -64,14 +64,14 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
         if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_SESSIONID)) {
             sessionId = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_INTERVAL)) {
-            interval = std::stoll(args[++i]);
+            interval = SPUtilesTye::StringToSometype<long long>(args[++i]);
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PKG)) {
             pkg = args[++i];
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FL)) { // 获取用户fps的值，并赋给snf.   CT_FL
-            snf.fps = std::stoi(args[++i]);
+            snf.fps = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FTL)) { // 获取frameTime的值      CT_FTL
-            snf.frameTime = std::stoi(args[++i]);
+            snf.frameTime = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
         } else {
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
@@ -111,7 +111,6 @@ static std::string MapToString(std::map<std::string, std::string> myMap)
 
 ErrCode SPTask::InitTask(const std::string &recvStr)
 {
-    LOGI("SPTask::InitTask start param(%s)", recvStr.c_str());
     std::string result = "";
     std::string hiprofiler = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER);
     SPUtils::LoadCmd(hiprofiler, result);
@@ -121,13 +120,15 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     std::cout << recvStr << std::endl;
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
+        FPS &fps = FPS::GetInstance();
+        fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
+        fps.firstDump = true;
         isInit = true;
-        LOGI("SPTask::InitTask Ok");
         return ErrCode::OK;
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    LOGI("SPTask::InitTask error(%s)", errInfo.c_str());
+    LOGE("SPTask::InitTask error(%s)", errInfo.c_str());
     return ErrCode::FAILED;
 }
 
@@ -206,13 +207,15 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
-        if (itConfig.find("-snapshot") != std::string::npos) {
+        if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
 
-        if (itConfig.find("-gc") != std::string::npos || itConfig.find("-o") != std::string::npos) {
+        if (itConfig.find("-gc") != std::string::npos ||
+            itConfig.find("-o") != std::string::npos ||
+            itConfig.find("-lockfreq") != std::string::npos) {
             continue;
         }
 
@@ -233,6 +236,11 @@ void SPTask::ConfigDataThread()
 
         if (itConfig.find("-gc") != std::string::npos) {
             gpuCounter.StartCollect(GpuCounter::GC_START);
+        }
+
+        if (itConfig.find("-lockfreq") != std::string::npos) {
+            lockFreq.SetIsCollecting(true);
+            lockFreqThread = std::thread([this]() { this->lockFreq.LockingThread(); });
         }
     }
 }
@@ -357,7 +365,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     gpuCounter.GetGpuRealtimeData(dataMap);
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
     msgTask(MapToString(dataMap));
-    long long nextTime = SPUtils::GetCurTime();
+    nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
     if (costTime < curTaskInfo.freq) {
@@ -368,11 +376,10 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
-    LOGI("SPTask::StartTask start ");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     if (!isInit) {
-        LOGW("SPTask::StartTask initialization failed");
+        LOGE("SPTask::StartTask initialization failed");
         return ErrCode::FAILED;
     }
     isRunning = true;
@@ -387,24 +394,24 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             AsyncGetDataMap(msgTask);
         }
     });
-    LOGI("SPTask::StartTask complete");
     return ErrCode::OK;
 }
 
-void SPTask::WritePath(std::string thisBasePath)
+void SPTask::CreatPath(std::string path)
 {
-    if (!SPUtils::FileAccess(thisBasePath)) {
+    if (!SPUtils::FileAccess(path)) {
         std::string cmdResult;
-        std::string writePath = CMD_COMMAND_MAP.at(CmdCommand::WRITE_PATH) + curTaskInfo.sessionId;
-        SPUtils::LoadCmd(writePath, cmdResult);
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
+        SPUtils::LoadCmd(creatPath, cmdResult);
     }
 }
 
 void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
+    CreatPath(baseOutPath);
     std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    WritePath(thisBasePath);
+    CreatPath(thisBasePath);
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
@@ -424,6 +431,7 @@ void SPTask::StopGetInfo()
         { "board", "hw" },
         { "target_fps", refreshrate },
         { "gpuDataVersion", gpuDataVersion },
+        { "battery_change", std::to_string(battaryStart - battaryEnd) },
     };
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
@@ -447,10 +455,8 @@ void SPTask::StopGpuCounterRecv()
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 }
-void SPTask::StopTask()
+ErrCode SPTask::StopTask()
 {
-    LOGI("SPTask::StopTask start");
-
     if (GetRecordState()) {
         StopGetInfo();
         StopSdkRecv();
@@ -460,10 +466,15 @@ void SPTask::StopTask()
         sdkvec.clear();
         gpuCounter.GetGpuCounterData().clear();
         recordState = false;
+        screenshotFlag = false;
     }
 
     ResetSdkParam();
     gpuCounter.StopCollect();
+    lockFreq.SetIsCollecting(false);
+    if (lockFreqThread.joinable()) {
+        lockFreqThread.join();
+    }
 
     isRunning = false;
     isInit = false;
@@ -472,10 +483,9 @@ void SPTask::StopTask()
     if (thread.joinable()) {
         thread.join();
     }
-
     KillHiperfCmd();
-
-    LOGI("SPTask::StopTask complete");
+    SpProfilerFactory::editorFlag = false;
+    return ErrCode::OK;
 }
 
 std::map<std::string, std::string> SPTask::DetectionAndGrab()
@@ -539,10 +549,9 @@ void SPTask::GetHiperf(const std::string &traceName)
     std::string result;
     std::string tmp = SetHiperf(traceName);
     std::cout << tmp << std::endl;
-    LOGD("hiprofiler exec (%s)", tmp.c_str());
-    LOGI("hiprofiler exec trace name(%s)", traceName.c_str());
     SPUtils::LoadCmd(tmp, result);
-    LOGI("hiprofiler exec end (%s)", result.c_str());
+    LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
+        tmp.c_str(), traceName.c_str(), result.c_str());
 }
 
 
@@ -572,7 +581,7 @@ void SPTask::KillHiperfCmd()
     runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
     runTime = runTime / RM_1000; // Convert to seconds
 
-    LOGI("Preparing to exit run time(%lld)", runTime);
+    LOGD("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
         std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
@@ -589,7 +598,7 @@ void SPTask::KillHiperfCmd()
     std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
     SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
-    LOGI("pidof hiprofiler_cmd size(%u)", out.size());
+    LOGD("pidof hiprofiker_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
@@ -613,17 +622,41 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
-void SPTask::StartRecord()
+int SPTask::GetCurrentBattary()
 {
-    LOGI("SPTask::StartRecord");
+    std::string content;
+    const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
+    SPUtils::LoadCmd(cmd, content);
+    content = content.substr(content.find(':') + 1);
+    if (content == "") {
+        return 0;
+    }
+    return SPUtilesTye::StringToSometype<int>(content);
+}
+ErrCode SPTask::StartRecord()
+{
+    LOGD("SPTask StartRecord");
+    battaryStart = GetCurrentBattary();
     startTime = SPUtils::GetCurTime();
+    while (startTime > nextTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
     InitDataFile();
+    screenshotFlag = true;
     recordState = true;
+    return ErrCode::OK;
 }
 
-void SPTask::StopRecord()
+ErrCode SPTask::StopRecord()
 {
-    LOGI("SPTask::StopRecord");
+    LOGD("SPTask StopRecord");
+    battaryEnd = GetCurrentBattary();
+    long long stopRecordTime = SPUtils::GetCurTime();
+    while (stopRecordTime > nextTime) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    screenshotFlag = false;
+    recordState = false;
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (isInit) {
@@ -637,13 +670,21 @@ void SPTask::StopRecord()
     vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
-    
-    recordState = false;
-}
+    Capture::GetInstance().SetCollectionNum();
 
+    return ErrCode::OK;
+}
 time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
+}
+void SPTask::SetTcpToken(std::string token)
+{
+    tcpToken = token;
+}
+std::string SPTask::GetTcpToken()
+{
+    return tcpToken;
 }
 }
 }

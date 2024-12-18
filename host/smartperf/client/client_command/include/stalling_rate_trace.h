@@ -39,12 +39,13 @@ public:
     void APPTabs(const std::string &line, const std::string &signS, const std::string &signF);
     void AppSwiperScroll(const std::string &line, const std::string &signS, const std::string &signF);
     void GetRsHardWareRate(double curFrameRate, const std::string &line, SWIM_TYPE type);
-    void GetFrameLossTime(double curTime, double prevTime, double drawTime, double &totalFrameLossTime);
+    void GetFrameLossTime(double &curTime, double &prevTime, double &drawTime, double &totalFrameLossTime);
     void CalcFrameRate();
     void JudgFrameRate();
     void MultiLaneFrameRate();
     void AddMultiLaneFrameRate();
     void UpdateRoundTime(double curFrameRate, SWIM_TYPE type);
+    bool IsAppLaunchPatternMatched(const std::string &line);
 private:
     std::ifstream infile;
     double nowFrameRate = 0;

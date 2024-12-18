@@ -31,11 +31,11 @@ public:
         static Temperature instance;
         return instance;
     }
+    void GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp);
 
 private:
     Temperature() {};
     Temperature(const Temperature &);
-    void GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp);
     Temperature &operator = (const Temperature &);
     std::string thermalBasePath = "/sys/class/thermal";
 };

@@ -25,7 +25,6 @@
 #include "include/ByTrace.h"
 #include "include/sp_utils.h"
 #include "include/sp_profiler_factory.h"
-#include "include/Dubai.h"
 #include "include/Capture.h"
 #include "include/navigation.h"
 #include "include/sp_log.h"
@@ -37,10 +36,10 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     SpProfiler* profiler = nullptr;
     switch (messageType) {
         case MessageType::GET_CPU_FREQ_LOAD:
+            OHOS::SmartPerf::CPU::GetInstance().IsFindHap();
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
-        case MessageType::GET_LOW_POWER_FPS:
         case MessageType::GET_CUR_FPS:
             profiler = &ProfilerFPS::GetInstance();
             break;
@@ -80,9 +79,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
             break;
-        case MessageType::SET_DUBAI_DB:
-            DumpDubaiAndMoveDb();
-            break;
         case MessageType::CATCH_NETWORK_TRAFFIC:
         case MessageType::GET_NETWORK_TRAFFIC:
             profiler = &Network::GetInstance();
@@ -91,13 +87,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             break;
     }
     return profiler;
-}
-
-void SpProfilerFactory::DumpDubaiAndMoveDb()
-{
-    Dubai::DumpDubaiBegin();
-    Dubai::DumpDubaiFinish();
-    Dubai::MoveDubaiDb();
 }
 
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
@@ -152,16 +141,16 @@ void SpProfilerFactory::SetByTrace(std::string message)
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
         if (vItems[0] == "traceSum") {
-            mSum = std::stoi(vItems[1]);
+            mSum = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "fpsJitterTime") {
-            mThreshold = std::stoi(vItems[1]);
+            mThreshold = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "catchInterval") {
-            mInterval = std::stoi(vItems[1]);
+            mInterval = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
         if (vItems[0] == "lowFps") {
-            lowFps = std::stoi(vItems[1]);
+            lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
     }
     const ByTrace &bTrace = ByTrace::GetInstance();
