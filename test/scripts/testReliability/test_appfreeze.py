@@ -44,6 +44,20 @@ def task_cmd(index):
     subprocess.check_output(f"hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
 
 
+def check_faultlog():
+    check = True
+    with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if "com.ohos.sceneboard" in line and ("syswarning" not in line):
+                check = False
+            if "render_service" in line:
+                check = False
+            if "com.example.insight_test_stage" in line:
+                check = False
+    return check
+
+
 class TestHiprofilerReliability:
     @pytest.mark.L0
     def test_appfreeze_sceneboard_sa(self):
@@ -127,15 +141,8 @@ class TestHiprofilerReliability:
             
             subprocess.check_output("hdc shell ls -lh /data/log/faultlog/faultlogger/ > /data/local/tmp/faultlog.txt")
             subprocess.check_output(f"hdc file recv /data/local/tmp/faultlog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
-            with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
-                lines = file.readlines()
-                for line in lines:
-                    if "com.ohos.sceneboard" in line and ("syswarning" not in line):
-                        check = False
-                    if "render_service" in line:
-                        check = False
-                    if "com.example.insight_test_stage" in line:
-                        check = False
+            if not check_faultlog():
+                check = False
         assert check
 
     def test_appfreeze_cmd_settings(self):
