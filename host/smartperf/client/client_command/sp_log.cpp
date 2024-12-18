@@ -44,6 +44,11 @@
 #include <cstdio>
 #endif
 
+
+
+namespace OHOS {
+namespace SmartPerf {
+#ifdef HI_LOG_ENABLE
 const int32_t LOG_MAX_LEN = 10000;
 const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 const int MAX_FILE_COUNT = 256;
@@ -52,9 +57,7 @@ std::mutex g_mtx;
 std::string g_currentLogFilePath;
 std::string g_currentDate;
 const mode_t logFileMode = 0777;
-
-namespace OHOS {
-namespace SmartPerf {
+#endif
 static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 {
 #ifdef HI_LOG_ENABLE
@@ -95,7 +98,7 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
     }
 #endif
 }
-
+#ifdef HI_LOG_ENABLE
 static bool CreateDir(const std::string& dirPath)
 {
     if (!std::__fs::filesystem::exists(dirPath)) {
@@ -306,7 +309,7 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 
     return;
 }
-
+#endif
 void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
@@ -325,7 +328,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
         return;
     }
     SpLogOut(logLevel, logBuf);
-
+#ifdef HI_LOG_ENABLE
     if (!isEditorLog) {
         return;
     }
@@ -337,7 +340,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
     }
 
     WriteMessage(logLevel, logBuf);
-
+#endif
     return;
 }
 } // namespace SmartPerf
