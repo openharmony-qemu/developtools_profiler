@@ -20,20 +20,26 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-int64_t GetElapsedNanoSecondsSinceBoot()
+namespace {
+int64_t GetNanoSecondsTimestamp(clockid_t clockId)
 {
-    struct timespec times = {0, 0};
-    (void)clock_gettime(CLOCK_BOOTTIME, &times);
-    constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
+    struct timespec times{};
+    if (clock_gettime(clockId, &times) == -1) {
+        return -1;
+    }
+    constexpr int64_t secondToNanosecond = 1 * 1000 * 1000 * 1000;
     return times.tv_sec * secondToNanosecond + times.tv_nsec;
 }
+}
 
-int64_t GetNanoSecondsTimestamp()
+int64_t GetElapsedNanoSecondsSinceBoot()
 {
-    struct timespec times = {0, 0};
-    (void)clock_gettime(CLOCK_REALTIME, &times);
-    constexpr static int secondToNanosecond = 1 * 1000 * 1000 * 1000;
-    return times.tv_sec * secondToNanosecond + times.tv_nsec;
+    return GetNanoSecondsTimestamp(CLOCK_BOOTTIME);
+}
+
+int64_t GetRealNanoSecondsTimestamp()
+{
+    return GetNanoSecondsTimestamp(CLOCK_REALTIME);
 }
 }
 }
