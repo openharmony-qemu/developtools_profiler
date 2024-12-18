@@ -124,7 +124,7 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     return RET_OK;
 }
 
-void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, bool timeout)
+void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
 {
     if (!HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
@@ -147,11 +147,6 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, boo
 
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
-    if (timeout) {
-        scheduleTaskManager_.UnscheduleTaskLockless(config->timerFd);
-    } else {
-        scheduleTaskManager_.UnscheduleTask(config->timerFd);
-    }
     nameAndFilePathCtx_.erase(config->processName);
     nameAndFilePathCtx_.erase(config->filePath);
     pidCtx_.erase(config->pid);
@@ -273,7 +268,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     hook->StartPluginSession();
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-        [this, config] { this->StopHook(config->pid_, config->processName_, true); },
+        [this, config] { this->StopHook(config->pid_, config->processName_); },
         config->duration_ * TIME_BASE,
         true);
     if (timerFd == -1) {
