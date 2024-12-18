@@ -210,9 +210,9 @@ extern "C" {
             return info;
         }
 
-        info.totalMem = systemMemInfo->memTotal;
-        info.freeMem = systemMemInfo->memFree;
-        info.availableMem = systemMemInfo->memAvailable;
+        info.totalMem = static_cast<uint64_t>(systemMemInfo->memTotal);
+        info.freeMem = static_cast<uint64_t>(systemMemInfo->memFree);
+        info.availableMem = static_cast<uint64_t>(systemMemInfo->memAvailable);
         return info;
     }
 
