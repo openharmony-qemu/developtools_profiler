@@ -47,12 +47,12 @@
 namespace OHOS {
 namespace SmartPerf {
 const int32_t LOG_MAX_LEN = 10000;
-static const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
-static const int MAX_FILE_COUNT = 256;
-static const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
-static std::mutex g_mtx;
-static std::string g_currentLogFilePath;
-static std::string g_currentDate;
+const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
+const int MAX_FILE_COUNT = 256;
+const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
+std::mutex g_mtx;
+std::string g_currentLogFilePath;
+std::string g_currentDate;
 const mode_t logFileMode = 0777;
 
 static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
