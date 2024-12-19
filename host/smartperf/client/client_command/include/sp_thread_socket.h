@@ -74,6 +74,7 @@ public:
         spSocket.Init(type);
         if (type == ProtoType::TCP) {
             std::cout << "Socket TCP Init called!" << std::endl;
+            ELOGI("Socket TCP Init called!");
             TypeTcp(spSocket);
         }
         if (type == ProtoType::UDP || type == ProtoType::UDPEX) {
@@ -86,14 +87,14 @@ public:
         std::cout << "Socket Process finished!" << std::endl;
         spSocket.Close();
     }
-    SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket) const
+    SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const
     {
         if (recvStr.find_last_of(":") == std::string::npos) {
             if (recvStr.find("SP_daemon -editor") != std::string::npos) {
                 ELOGI("Received string contains 'SP_daemon -editor', token check passed.");
                 return OK;
             } else {
-                ELOGE("Token check failed: %s", recvStr.c_str());
+                ELOGE("Token check failed: %s", recvStrNoToken.c_str());
                 return TOKEN_CHECK_FAILED;
             }
         }
@@ -101,7 +102,7 @@ public:
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
         std::string tcpToken = SPTask::GetInstance().GetTcpToken();
-        ELOGI("Comparing token with TCP token");
+        ELOGI("Comparing token with TCP token...");
 
         if (tcpToken == "" && token == "-SESSIONID") {
             ELOGI("Token is empty and received token is '-SESSIONID', token check passed.");
@@ -112,18 +113,18 @@ public:
             ELOGE("Token mismatch.");
             return TOKEN_CHECK_FAILED;
         }
-
+        ELOGI("Token match");
         return OK;
     }
 
     void TypeTcp(SpServerSocket &spSocket) const
     {
         SocketHeartbeat();
+        ELOGI("Socket TCP Init Finished, Wait Client Socket Connect...");
         while (1) {
             int procFd = spSocket.Accept();
             std::cout << "Socket TCP procFd: " << procFd << std::endl;
-            ELOGI("Accepted socket connection, procFd: %d", procFd); // Log the accepted fd
-
+            ELOGI("Accepted socket connection, procFd: %d", procFd);
             while (procFd > 0) {
                 int reFd = spSocket.Recv();
                 if (reFd < 0) {
@@ -131,12 +132,13 @@ public:
                     break;
                 }
                 std::string recvStr = spSocket.RecvBuf();
-                std::cout << "Socket TCP Recv: " << recvStr << std::endl;
-                ELOGI("Received data: %s", recvStr.c_str()); // Log length of received data
+                std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
+                std::cout << "Socket TCP Recv: " << recvStrNoToken << std::endl;
+                ELOGI("Received data: %s", recvStrNoToken.c_str());
 
                 // 解析消息 分发处理
-                const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket);
-                ELOGI("Token check status: %d", tokenStatus); // Log token check status
+                const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
+                ELOGI("Token check status: %d", tokenStatus);
                 DealMsg(recvStr, spSocket, tokenStatus);
             }
         }
@@ -148,12 +150,11 @@ public:
         std::string checkStr = recvStr.substr(std::string("init::").length());
         if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
             checkStr.find(SPTask::GetInstance().GetTcpToken()) == std::string::npos) {
-            LOGE("init error(%s) recvStr(%s)", errorInfo.c_str(), recvStr.c_str());
+            ELOGE("Init error(%s)", errorInfo.c_str());
             if (type == CMD_SOCKET) {
                 spSocket.Send("init::False,\"error\":" + errorInfo);
             } else {
                 spSocket.Send(std::string("init::") + std::to_string(INIT_FAILED));
-                ELOGE("EDITOR_SOCKET sent init:: failure");
             }
             return;
         }
@@ -165,6 +166,7 @@ public:
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
         if (type == CMD_SOCKET) {
             spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
+            ELOGI("Sent init::"  + ((code == ErrCode::OK) ? "True" : "False")));
             return;
         }
         if (code == ErrCode::OK) {
@@ -172,7 +174,7 @@ public:
             ELOGI("Sent init::True response");
         } else {
             spSocket.Send(std::string("init::") + std::to_string(INIT_FAILED));
-            ELOGI("Sent init::%d for failure", INIT_FAILED);
+            ELOGE("Sent init::%d for failure", INIT_FAILED);
         }
     }
     void StartRecv(SpServerSocket &spSocket) const
@@ -186,61 +188,60 @@ public:
         };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
         SPTask::GetInstance().StartRecord();
-        ELOGD("start:::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
             flagRunning = true;
-            LOGD("Sent start::True message to socket.");
-            ELOGD("Sent start::True message to socket.");
+            ELOGI("Sent start::True message to socket.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send("start::False");
-            LOGD("Sent start::False message to socket.");
-            ELOGD("Sent start::False message to socket.");
+            ELOGE("Sent start::False message to socket.");
         }
     }
     void StartRecvRealtime(SpServerSocket &spSocket) const
     {
         auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Send(data); };
         ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-        ELOGI("start::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("start::True");
+            ELOGI("Sent start::True message to socket.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("start::") + std::to_string(START_FAILED));
+            ELOGE("Sent start::" + std::to_string(START_FAILED)) +" message to socket.");
         }
     }
     void StopRecvRealtime(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StopTask();
-        ELOGI("stop::%s", (code == ErrCode::OK) ? "True" : "False");
         if (code == ErrCode::OK) {
             spSocket.Send("stop::True");
+            ELOGI("Sent stop::True message to socket.");
             flagRunning = false;
             spSocket.Close();
-
-            ELOGI("Socket closed after stop.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("stop::") + std::to_string(STOP_FAILED));
+            ELOGE("Sent stop::" + std::to_string(STOP_FAILED)) +" message to socket.");
         }
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StartRecord();
-        ELOGI("startRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(START_RECORD_FAILED).c_str());
         if (code == ErrCode::OK) {
             spSocket.Send("startRecord::True");
+            ELOGI("Sent startRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
+            ELOGE("Sent startRecord::" + std::to_string(START_RECORD_FAILED)) +" message to socket.");
         }
     }
     void StopRecvRecord(SpServerSocket &spSocket) const
     {
         ErrCode code = SPTask::GetInstance().StopRecord();
-        ELOGI("stopRecord::%s", (code == ErrCode::OK) ? "True" : std::to_string(STOP_RECORD_FAILED).c_str());
         if (code == ErrCode::OK) {
             spSocket.Send("stopRecord::True");
+            ELOGI("Sent stopRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("stopRecord::") + std::to_string(STOP_RECORD_FAILED));
+            ELOGE("Sent stopRecord::" + std::to_string(STOP_RECORD_FAILED)) +" message to socket.");
         }
     }
     void SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
@@ -270,13 +271,14 @@ public:
     {
         SocketHeartbeat();
         if (tokenStatus == TOKEN_CHECK_FAILED) {
-            ELOGE("Token check failed for received string: %s", recvStr.c_str());
             SendTokenFailedMessage(spSocket, recvStr);
             return;
         }
         if (recvStr.find("init:::") != std::string::npos) {
+            ELOGI("Processing 'init:::' command.");
             InitRecv(recvStr, spSocket, CMD_SOCKET);
         } else if (recvStr.find("start:::") != std::string::npos) {
+            ELOGI("Processing 'start:::' command.");
             StartRecv(spSocket);
         } else if (recvStr.find("init::") != std::string::npos) {
             ELOGI("Processing 'init::' command.");

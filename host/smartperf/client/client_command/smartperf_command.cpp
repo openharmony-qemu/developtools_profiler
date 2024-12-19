@@ -103,8 +103,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             if (token.empty()) {
                 ELOGE("Error: token is empty when setting TCP token.");
             } else {
-                ELOGI("Setting TCP token");
+                ELOGI("############################# Setting TCP token...");
                 SPTask::GetInstance().SetTcpToken(token);
+                ELOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
             }
         }
         CreateSocketThread();

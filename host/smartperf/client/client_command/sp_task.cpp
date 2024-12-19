@@ -392,21 +392,21 @@ void SPTask::SetProfilerPid()
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    ELOGI("Start processing at timestamp: %lld", lastTime);
+    ELOGD("Start processing at timestamp: %lld", lastTime);
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
         SetProfilerPid();
     }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-    ELOGI("Timestamp added to dataMap: %lld", lastTime);
+    ELOGD("Timestamp added to dataMap: %lld", lastTime);
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    ELOGI("FPS data collection initiated.");
+    ELOGD("FPS data collection initiated.");
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    ELOGI("CPU data collection initiated.");
+    ELOGD("CPU data collection initiated.");
     GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
-    ELOGI("RAM data collection initiated.");
+    ELOGD("RAM data collection initiated.");
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
@@ -414,31 +414,31 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
         std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
         if (!timeUsedMap.empty()) {
             dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
-            ELOGI("Stuck detection data added to dataMap.");
+            ELOGD("Stuck detection data added to dataMap.");
         }
     }
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
     if (GetRecordState()) {
         vmap.push_back(spdata);
-        ELOGI("Data added to vmap for recording.");
+        ELOGD("Data added to vmap for recording.");
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
-    ELOGI("GPU real-time data added to dataMap.");
+    ELOGD("GPU real-time data added to dataMap.");
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
-    ELOGI("SDK real-time data added to dataMap.");
+    ELOGD("SDK real-time data added to dataMap.");
     msgTask(MapToString(dataMap));
-    ELOGI("Data map converted to string and passed to msgTask.");
+    ELOGD("Data map converted to string and passed to msgTask.");
     nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
-    ELOGI("Time spent on data collection: %lld ms", costTime);
+    ELOGD("Time spent on data collection: %lld ms", costTime);
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
-        ELOGI("Sleeping for %lld ms to maintain frequency.", pTime - costTime);
+        ELOGD("Sleeping for %lld ms to maintain frequency.", pTime - costTime);
     }
     asyncDataMtx.unlock();
-    ELOGI("Data collection process completed.");
+    ELOGD("Data collection process completed a second loop.");
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
