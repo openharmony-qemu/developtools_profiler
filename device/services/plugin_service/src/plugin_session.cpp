@@ -19,12 +19,14 @@
 
 PluginSession::PluginSession(const ProfilerPluginConfig& pluginConfig,
                              const PluginServiceWeakPtr& pluginService,
-                             const ProfilerDataRepeaterPtr& dataRepeater)
+                             const ProfilerDataRepeaterPtr& dataRepeater,
+                             const ProfilerStateRepeaterPtr& stateRepeater)
     : state_(PluginSession::INITIAL),
       withBufferConfig_(false),
       pluginConfig_(pluginConfig),
       pluginService_(pluginService),
-      dataRepeater_(dataRepeater)
+      dataRepeater_(dataRepeater),
+      stateRepeater_(stateRepeater)
 {
     Create();
 }
@@ -32,13 +34,15 @@ PluginSession::PluginSession(const ProfilerPluginConfig& pluginConfig,
 PluginSession::PluginSession(const ProfilerPluginConfig& pluginConfig,
                              const ProfilerSessionConfig::BufferConfig& bufferConfig,
                              const PluginServiceWeakPtr& pluginService,
-                             const ProfilerDataRepeaterPtr& dataRepeater)
+                             const ProfilerDataRepeaterPtr& dataRepeater,
+                             const ProfilerStateRepeaterPtr& stateRepeater)
     : state_(PluginSession::INITIAL),
       withBufferConfig_(true),
       pluginConfig_(pluginConfig),
       bufferConfig_(bufferConfig),
       pluginService_(pluginService),
-      dataRepeater_(dataRepeater)
+      dataRepeater_(dataRepeater),
+      stateRepeater_(stateRepeater)
 {
     Create();
 }
@@ -61,11 +65,11 @@ bool PluginSession::Create()
 
     bool retval = false;
     if (withBufferConfig_) {
-        retval = pluginService->CreatePluginSession(pluginConfig_, bufferConfig_, dataRepeater_);
+        retval = pluginService->CreatePluginSession(pluginConfig_, bufferConfig_, dataRepeater_, stateRepeater_);
         PROFILER_LOG_INFO(LOG_CORE, "CreatePluginSession with buffer for %s %s!", pluginConfig_.name().c_str(),
                           retval ? "OK" : "FAIL");
     } else {
-        retval = pluginService->CreatePluginSession(pluginConfig_, dataRepeater_);
+        retval = pluginService->CreatePluginSession(pluginConfig_, dataRepeater_, stateRepeater_);
         PROFILER_LOG_INFO(LOG_CORE, "CreatePluginSession for %s %s!",
                           pluginConfig_.name().c_str(), retval ? "OK" : "FAIL");
     }

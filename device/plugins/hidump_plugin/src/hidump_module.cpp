@@ -48,11 +48,17 @@ static int HidumpRegisterWriterStruct(WriterStruct* writer)
     return 0;
 }
 
+static bool HidumpReportState()
+{
+    return g_plugin->IsDataReady();
+}
+
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = HidumpSessionStart,
     .onPluginReportResult = 0,
     .onPluginSessionStop = HidumpSessionStop,
     .onRegisterWriterStruct = (RegisterWriterStructCallback)HidumpRegisterWriterStruct,
+    .onReportStateCallback = HidumpReportState,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

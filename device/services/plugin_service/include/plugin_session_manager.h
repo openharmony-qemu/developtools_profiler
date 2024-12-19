@@ -29,10 +29,12 @@ public:
 
     bool CreatePluginSessions(const std::vector<ProfilerPluginConfig>& pluginConfigs,
                               const std::vector<ProfilerSessionConfig::BufferConfig>& bufferConfigs,
-                              const ProfilerDataRepeaterPtr& dataRepeater);
+                              const ProfilerDataRepeaterPtr& dataRepeater,
+                              const ProfilerStateRepeaterPtr& stateRepeater);
 
     bool CreatePluginSessions(const std::vector<ProfilerPluginConfig>& pluginConfigs,
-                              const ProfilerDataRepeaterPtr& dataRepeater);
+                              const ProfilerDataRepeaterPtr& dataRepeater,
+                              const ProfilerStateRepeaterPtr& stateRepeater);
 
     bool RemovePluginSessions(const std::vector<std::string>& nameList);
 
@@ -50,9 +52,11 @@ private:
     bool CheckPluginSha256(const ProfilerPluginConfig& pluginConfig);
     PluginSessionPtr CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
                                          const ProfilerSessionConfig::BufferConfig& bufferConfig,
-                                         const ProfilerDataRepeaterPtr& dataRepeater);
+                                         const ProfilerDataRepeaterPtr& dataRepeater,
+                                         const ProfilerStateRepeaterPtr& stateRepeater);
     PluginSessionPtr CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
-                                         const ProfilerDataRepeaterPtr& dataRepeater);
+                                         const ProfilerDataRepeaterPtr& dataRepeater,
+                                         const ProfilerStateRepeaterPtr& stateRepeater);
 
 private:
     std::mutex mutex_;

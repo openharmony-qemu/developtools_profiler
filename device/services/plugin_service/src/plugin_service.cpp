@@ -19,7 +19,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
+#include "common.h"
 #include "plugin_command_builder.h"
 #include "plugin_service_impl.h"
 #include "plugin_session_manager.h"
@@ -34,6 +34,7 @@ const int PAGE_BYTES = 4096;
 const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t FLUSH_BASELINE = (1U << 21); // need to flush data size with offline mode
 constexpr uint32_t STOP_BASELINE = (1U << 22); // need to stop take data size with offline mode
+const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 } // namespace
 
 PluginService::PluginService()
@@ -121,7 +122,8 @@ static ShareMemoryBlock::ReusePolicy GetReusePolicy(const ProfilerSessionConfig:
 // create plugin session with buffer config
 bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
                                         const ProfilerSessionConfig::BufferConfig& bufferConfig,
-                                        const ProfilerDataRepeaterPtr& dataRepeater)
+                                        const ProfilerDataRepeaterPtr& dataRepeater,
+                                        const ProfilerStateRepeaterPtr& stateRepeater)
 {
     uint32_t pluginId = 0;
     PluginContextPtr pluginCtx = nullptr;
@@ -131,7 +133,7 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     CHECK_NOTNULL(pluginCtx, false, "get PluginContext failed!");
 
     pluginCtx->profilerDataRepeater = dataRepeater;
-
+    pluginCtx->profilerStateRepeater = stateRepeater;
     uint32_t bufferSize = bufferConfig.pages() * PAGE_BYTES;
     auto cmd = pluginCommandBuilder_->BuildCreateSessionCmd(pluginConfig, bufferSize);
     CHECK_TRUE(cmd != nullptr, false, "CreatePluginSession BuildCreateSessionCmd FAIL %s", pluginName.c_str());
@@ -145,8 +147,11 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
     auto notifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
     CHECK_NOTNULL(notifier, false, "create EventNotifier for %s failed!", pluginName.c_str());
-    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
-               "%s hiprofiler_plugin process is off line!", __func__);
+    if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
+        SendErrorMsg(pluginCtx->profilerStateRepeater);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s hiprofiler_plugin process is off line!", __func__);
+        return false;
+    }
     pluginCtx->shareMemoryBlock = smb;
     pluginCtx->eventNotifier = notifier;
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
@@ -173,7 +178,8 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
 
 // create plugin session without buffer config
 bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
-                                        const ProfilerDataRepeaterPtr& dataRepeater)
+                                        const ProfilerDataRepeaterPtr& dataRepeater,
+                                        const ProfilerStateRepeaterPtr& stateRepeater)
 {
     uint32_t pluginId = 0;
     PluginContextPtr pluginCtx = nullptr;
@@ -182,12 +188,16 @@ bool PluginService::CreatePluginSession(const ProfilerPluginConfig& pluginConfig
     CHECK_NOTNULL(pluginCtx, false, "get PluginContext failed!");
 
     pluginCtx->profilerDataRepeater = dataRepeater;
+    pluginCtx->profilerStateRepeater = stateRepeater;
     pluginCtx->shareMemoryBlock = nullptr;
 
     auto cmd = pluginCommandBuilder_->BuildCreateSessionCmd(pluginConfig, 0);
     CHECK_TRUE(cmd != nullptr, false, "CreatePluginSession BuildCreateSessionCmd FAIL %s", pluginName.c_str());
-    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
-               "%s hiprofiler_plugin process is off line!", __func__);
+    if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
+        SendErrorMsg(pluginCtx->profilerStateRepeater);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s hiprofiler_plugin process is off line!", __func__);
+        return false;
+    }
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     PROFILER_LOG_DEBUG(LOG_CORE, "CreatePluginSession %s done!", pluginName.c_str());
@@ -204,8 +214,11 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
 
     auto cmd = pluginCommandBuilder_->BuildStartSessionCmd(config, pluginId);
     CHECK_TRUE(cmd != nullptr, false, "StartPluginSession BuildStartSessionCmd FAIL %s", pluginName.c_str());
-    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
-               "%s hiprofiler_plugin process is off line!", __func__);
+    if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
+        SendErrorMsg(pluginCtx->profilerStateRepeater);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s hiprofiler_plugin process is off line!", __func__);
+        return false;
+    }
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::IN_SESSION);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
@@ -221,8 +234,11 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
 
     auto cmd = pluginCommandBuilder_->BuildStopSessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "StopPluginSession BuildStopSessionCmd FAIL %s", pluginName.c_str());
-    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
-               "%s hiprofiler_plugin process is off line!", __func__);
+    if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
+        SendErrorMsg(pluginCtx->profilerStateRepeater);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s hiprofiler_plugin process is off line!", __func__);
+        return false;
+    }
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::LOADED);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     auto sem = GetSemaphoreFactory().Create(0);
@@ -278,8 +294,11 @@ bool PluginService::RefreshPluginSession(const std::string& pluginName)
 
     auto cmd = pluginCommandBuilder_->BuildRefreshSessionCmd(pluginId);
     CHECK_TRUE(cmd != nullptr, false, "RefreshPluginSession BuildRefreshSessionCmd FAIL %s", pluginName.c_str());
-    CHECK_TRUE(pluginServiceImpl_->SendHeartBeat(*pluginCtx->context), false,
-               "%s hiprofiler_plugin process is off line!", __func__);
+    if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
+        SendErrorMsg(pluginCtx->profilerStateRepeater);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s hiprofiler_plugin process is off line!", __func__);
+        return false;
+    }
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
     PROFILER_LOG_INFO(LOG_CORE, "RefreshPluginSession %s done!", pluginName.c_str());
     return true;
@@ -540,9 +559,22 @@ bool PluginService::AppendResult(NotifyResultRequest& request)
     PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult size:%d, cmd id:%d", size, request.command_id());
     for (int i = 0; i < size; i++) {
         PluginResult pr = request.result(i);
+        ProfilerPluginState status = pr.status();
+        uint32_t pluginId = pr.plugin_id();
+        if (COMMON::CheckSubscribeVersion(status.version())) {
+            PluginContextPtr pluginCtx = GetPluginContextById(pluginId);
+            CHECK_NOTNULL(pluginCtx, false, "plugin id %u not found!", pluginId);
+            if (pluginCtx->profilerStateRepeater == nullptr) {
+                PROFILER_LOG_ERROR(LOG_CORE, "AppendResult profilerStateRepeater==nullptr %s %d",
+                                   pr.status().name().c_str(), pluginId);
+                return false;
+            }
+            if (!pluginCtx->profilerStateRepeater->PutPluginData(std::make_shared<ProfilerPluginState>(status))) {
+                return false;
+            }
+        }
         if (pr.data().size() > 0) {
             PROFILER_LOG_DEBUG(LOG_CORE, "AppendResult Size : %zu", pr.data().size());
-            uint32_t pluginId = pr.plugin_id();
             PluginContextPtr pluginCtx = GetPluginContextById(pluginId);
             CHECK_NOTNULL(pluginCtx, false, "plugin id %u not found!", pluginId);
             if (pluginCtx->profilerDataRepeater == nullptr) {
@@ -559,7 +591,6 @@ bool PluginService::AppendResult(NotifyResultRequest& request)
             }
         } else if (pr.out_file_name() != "") { // updata plugin outFileName
             std::unique_lock<std::mutex> lock(mutex_);
-            auto pluginId = pr.plugin_id();
             CHECK_TRUE(pluginContext_.count(pluginId) > 0, false, "plugin id %u not found!", pluginId);
             pluginContext_[pluginId]->outFileName = pr.out_file_name();
         } else {
@@ -586,6 +617,19 @@ uint32_t PluginService::GetPluginIdByName(std::string name)
         return 0;
     }
     return nameIndex_[name];
+}
+
+void PluginService::SendErrorMsg(std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater)
+{
+    if (stateRepeater == nullptr) {
+        return;
+    }
+    ProfilerPluginState pluginState;
+    pluginState.set_version(COMMON::STATE_VERSION);
+    pluginState.set_event_detail("send heartbeat failed, cannot connect to hiprofiler_plugins process");
+    pluginState.set_event(ProfilerPluginState::RUNNING_ERR);
+    CHECK_NOTNULL(stateRepeater, NO_RETVAL, "stateRepeater is null, cannot push event");
+    stateRepeater->PutPluginData(std::make_shared<ProfilerPluginState>(pluginState));
 }
 
 void PluginService::SetTraceWriter(const TraceFileWriterPtr& traceWriter)

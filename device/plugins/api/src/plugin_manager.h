@@ -21,7 +21,8 @@
 #include <string>
 #include <vector>
 #include <unordered_map>
-
+#include <unordered_set>
+#include "plugin_service.ipc.h"
 #include "manager_interface.h"
 #include "plugin_module.h"
 #include "schedule_task_manager.h"
@@ -60,6 +61,7 @@ public:
     virtual bool SubmitResult(const PluginResult& pluginResult);
     bool CreateWriter(std::string pluginName, uint32_t bufferSize, int smbFd, int eventFd,
                       bool isProtobufSerialize = true);
+    bool PullState(uint32_t pluginId);
     bool ResetWriter(uint32_t pluginId);
     void SetCommandPoller(const CommandPollerPtr& p);
     bool RegisterPlugin(const PluginModulePtr& plugin, const std::string& pluginPath,
@@ -68,6 +70,7 @@ public:
 private:
     std::map<uint32_t, std::shared_ptr<PluginModule>> pluginModules_;
     std::map<std::string, uint32_t> pluginIds_; // pluginName maps to pluginId
+    std::unordered_set<std::string> loadedPlugins_;
     CommandPollerPtr commandPoller_;
     ScheduleTaskManager scheduleTaskManager_;
     std::map<std::string, std::string> pluginPathAndNameMap_;

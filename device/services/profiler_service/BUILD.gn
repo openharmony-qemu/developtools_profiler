@@ -34,7 +34,6 @@ ohos_source_set("profiler_service") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   sources = [
     "src/profiler_capability_manager.cpp",
-    "src/profiler_data_repeater.cpp",
     "src/profiler_service.cpp",
     "src/trace_file_helper.cpp",
     "src/trace_file_reader.cpp",

@@ -77,6 +77,7 @@ public:
 
     void SetClockId(clockid_t clockId);
     clockid_t GetClockId() const;
+    bool CheckDataReady();
 
 private:
     void* handle_;

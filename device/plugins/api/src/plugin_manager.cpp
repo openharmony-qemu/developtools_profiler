@@ -30,7 +30,6 @@ namespace {
 using namespace OHOS::Developtools::Profiler;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
-
 #define HHB(v) (((v) & 0xF0) >> 4)
 #define LHB(v)  ((v) & 0x0F)
 
@@ -163,7 +162,8 @@ bool PluginManager::RemovePlugin(const std::string& pluginPath)
         PROFILER_LOG_WARN(LOG_CORE, "%s:plugin delete while using, stop plugin", __func__);
 
         // delete schedule task if POLLING mode
-        if (pluginModules_[index]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
+        if (pluginModules_[index]->GetSampleMode() == PluginModule::SampleMode::POLLING ||
+            pluginModules_[index]->GetSampleMode() == PluginModule::SampleMode::STREAMING) {
             PROFILER_LOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s", __func__, pluginName.c_str());
             if (!scheduleTaskManager_.UnscheduleTask(scheduleTask_[pluginName])) {
                 PROFILER_LOG_WARN(LOG_CORE, "%s:delete schedule task plugin name = %s failed!",
@@ -283,7 +283,7 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:ready!", __func__);
     size_t idx = 0;
-
+    ProfilerPluginState* status = result.mutable_status();
     for (uint32_t id : pluginIds) {
         auto it = pluginModules_.find(id);
         if (it == pluginModules_.end()) {
@@ -292,8 +292,18 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
         }
         auto plugin = pluginModules_[id];
         auto cfgData = plugin->GetConfigData();
+        std::string pluginName = "";
+        result.set_plugin_id(id);
+        pluginModules_[id]->GetPluginName(pluginName);
+        status->set_version(COMMON::STATE_VERSION);
+        status->set_name(pluginName);
         if (!plugin->StartSession(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size())) {
+            status->set_event_detail("Plugin started failed! plugin: " + pluginName);
+            status->set_event(ProfilerPluginState::PLUGIN_ERR);
             return false;
+        } else {
+            status->set_event_detail("Plugin loaded success! plugin: " + pluginName);
+            status->set_event(ProfilerPluginState::PLUGIN_LOAD_SUCC);
         }
 
         if (plugin->GetSampleMode() == PluginModule::SampleMode::POLLING) {
@@ -306,6 +316,22 @@ bool PluginManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
                 return false;
             }
             auto callback = [this, id, config, idx] { this->PullResult(id, config[idx].is_protobuf_serialize()); };
+            int32_t timerFd = scheduleTaskManager_.ScheduleTask(callback, config[idx].sample_interval());
+            if (timerFd == -1) {
+                PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);
+                return false;
+            }
+            scheduleTask_[config[idx].name()] = timerFd;
+        } else if (plugin->GetSampleMode() == PluginModule::SampleMode::STREAMING) {
+            if (idx >= config.size()) {
+                PROFILER_LOG_WARN(LOG_CORE, "%s:idx %zu out of size %zu", __func__, idx, config.size());
+                return false;
+            }
+            if (config[idx].sample_interval() == 0) {
+                PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask interval == 0 error!", __func__);
+                return false;
+            }
+            auto callback = [this, id] { this->PullState(id); };
             int32_t timerFd = scheduleTaskManager_.ScheduleTask(callback, config[idx].sample_interval());
             if (timerFd == -1) {
                 PROFILER_LOG_DEBUG(LOG_CORE, "%s:scheduleTask failed!", __func__);
@@ -336,7 +362,8 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
             PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
             return false;
         }
-        if (pluginModules_[id]->GetSampleMode() == PluginModule::SampleMode::POLLING) {
+        if (pluginModules_[id]->GetSampleMode() == PluginModule::SampleMode::POLLING ||
+            pluginModules_[id]->GetSampleMode() == PluginModule::SampleMode::STREAMING) {
             for (const auto& it : pluginIds_) {
                 if (it.second == id) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "%s:find plugin name = %s", __func__, it.first.c_str());
@@ -407,35 +434,34 @@ bool PluginManager::PullResult(uint32_t pluginId, bool isProtobufSerialize)
     pluginModules_[pluginId]->GetBufferSizeHint(size);
     pluginModules_[pluginId]->GetPluginName(name);
     pluginModules_[pluginId]->GetPluginVersion(version);
-    
+    std::string pluginName = name;
+    int32_t length = 0;
     if (isProtobufSerialize) {
         std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
         CHECK_NOTNULL(buffer, false, "%s:buffer new failed!", __func__);
 
-        int length = it->second->ReportResult(buffer.get(), size);
-        if (length < 0) {
-            return false;
+        length = it->second->ReportResult(buffer.get(), size);
+        if (length > 0) {
+            ProfilerPluginData pluginData;
+            pluginData.set_name(name);
+            pluginData.set_version(version);
+            pluginData.set_status(0);
+            pluginData.set_data(buffer.get(), length);
+
+            struct timespec ts;
+            clockid_t clockId = pluginModules_[pluginId]->GetClockId();
+            clock_gettime(clockId, &ts);
+
+            pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId));
+            pluginData.set_tv_sec(ts.tv_sec);
+            pluginData.set_tv_nsec(ts.tv_nsec);
+
+            auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
+            CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
+
+            writer->WriteMessage(pluginData, name);
+            writer->Flush();
         }
-
-        ProfilerPluginData pluginData;
-        pluginData.set_name(name);
-        pluginData.set_version(version);
-        pluginData.set_status(0);
-        pluginData.set_data(buffer.get(), length);
-
-        struct timespec ts;
-        clockid_t clockId = pluginModules_[pluginId]->GetClockId();
-        clock_gettime(clockId, &ts);
-
-        pluginData.set_clock_id(static_cast<ProfilerPluginData_ClockId>(clockId));
-        pluginData.set_tv_sec(ts.tv_sec);
-        pluginData.set_tv_nsec(ts.tv_nsec);
-
-        auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
-        CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
-
-        writer->WriteMessage(pluginData, name);
-        writer->Flush();
     } else {
         auto writer = std::static_pointer_cast<BufferWriter>(pluginModules_[pluginId]->GetWriter());
         CHECK_NOTNULL(writer, false, "PullResult GetWriter nullptr");
@@ -460,9 +486,21 @@ bool PluginManager::PullResult(uint32_t pluginId, bool isProtobufSerialize)
         pluginData.set_tv_sec(ts.tv_sec);
         pluginData.set_tv_nsec(ts.tv_nsec);
 
-        int32_t len = pluginData.Finish();
-        writer->UseMemory(len);
+        length = pluginData.Finish();
+        writer->UseMemory(length);
         writer->Flush();
+    }
+
+    if (loadedPlugins_.find(pluginName) == loadedPlugins_.end() && length > 0) {
+        ProfilerPluginState pluginState;
+        pluginState.set_version(COMMON::STATE_VERSION);
+        pluginState.set_name(pluginName);
+        pluginState.set_event_detail("Report data success: " + pluginName);
+        pluginState.set_event(ProfilerPluginState::DATA_READY);
+        if (commandPoller_ != nullptr) {
+            commandPoller_->PushResult(pluginState, pluginId);
+        }
+        loadedPlugins_.insert(pluginName);
     }
     return true;
 }
@@ -486,6 +524,35 @@ bool PluginManager::CreateWriter(std::string pluginName, uint32_t bufferSize, in
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:no shared memory buffer allocated!", __func__);
         return false;
+    }
+    return true;
+}
+
+bool PluginManager::PullState(uint32_t pluginId)
+{
+    uint32_t size = 0;
+    std::string name = "";
+    auto it = pluginModules_.find(pluginId);
+    if (it == pluginModules_.end()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "%s:plugin not find", __func__);
+        return false;
+    }
+    pluginModules_[pluginId]->GetBufferSizeHint(size);
+    pluginModules_[pluginId]->GetPluginName(name);
+    std::string pluginName = name;
+    CHECK_TRUE(size > 0, false, "PullState failed! size is 0");
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
+    CHECK_NOTNULL(buffer, false, "%s:buffer new failed!", __func__);
+    if ((loadedPlugins_.find(pluginName) == loadedPlugins_.end()) && it->second->CheckDataReady()) {
+        ProfilerPluginState pluginState;
+        pluginState.set_version(COMMON::STATE_VERSION);
+        pluginState.set_event_detail("Report data success: " + pluginName);
+        pluginState.set_event(ProfilerPluginState::DATA_READY);
+        pluginState.set_name(pluginName);
+        if (commandPoller_ != nullptr) {
+            commandPoller_->PushResult(pluginState, pluginId);
+        }
+        loadedPlugins_.insert(pluginName);
     }
     return true;
 }
