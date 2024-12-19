@@ -201,6 +201,7 @@ double ControlCallCmd::ResponseTime()
         thGetHisysId.join();
         time = radar.ParseRadarResponse(str);
     }
+    LOGD("ResponseTime = %d", time);
     return time;
 }
 double ControlCallCmd::CompleteTime()
@@ -224,6 +225,7 @@ double ControlCallCmd::CompleteTime()
         thGetHisysId.join();
         time = radar.ParseRadarComplete(str);
     }
+    LOGD("CompleteTime = %d", time);
     return time;
 }
 std::string ControlCallCmd::GetAppStartTime() const

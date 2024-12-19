@@ -24,7 +24,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Navigation::ItemData()
 {
     std::map<std::string, std::string> result = Navigation::GetNavInfo();
-    LOGI("Navigation::ItemData map size(%u)", result.size());
+    LOGD("Navigation::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -62,23 +62,32 @@ std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) c
     }
     char buf[4096] = {'\0'};
     while ((fgets(buf, sizeof(buf), navfd)) != nullptr) {
-        std::string line = buf;
-        if (line.find("]{ name:") != std::string::npos) {
-            size_t pos = line.find("]{ name:");
-            size_t pos2 = line.find_last_of("}");
-            if (line.find(",") != std::string::npos) {
-                size_t pos1 = line.find(",");
-                nameStr = line.substr(pos + paramTen, pos1 - pos - paramEleven);
-            } else {
-                nameStr = line.substr(pos + paramTen, pos2 - pos - paramTwelve);
-            }
-        }
+        std::string line(buf);
+        SubstrNavName(line, nameStr);
     }
-    pclose(navfd);
+    if (pclose(navfd) == -1) {
+        LOGE("Error: Failed to close file");
+        navInfo["navPathName"] = nameStr;
+        return navInfo;
+    }
     navInfo["navPathName"] = nameStr;
     return navInfo;
 }
 
+void Navigation::SubstrNavName(const std::string &line, std::string &nameStr) const
+{
+    size_t nameShangPos = line.find("name: ");
+    size_t nameTrunkPos = line.find("Name: ");
+    size_t startPos = line.find("\"", nameTrunkPos + 6);
+    size_t endPos = line.find("\"", startPos + 1);
+    if (line.find("[0]") != std::string::npos) {
+        if (nameTrunkPos != std::string::npos || nameShangPos != std::string::npos) {
+            if (startPos != std::string::npos && endPos != std::string::npos) {
+                nameStr = line.substr(startPos + 1, endPos - startPos - 1);
+            }
+        }
+    }
+}
 std::string Navigation::GetWinId(std::string navPid) const
 {
     std::string wid;
@@ -103,7 +112,10 @@ std::string Navigation::GetWinId(std::string navPid) const
             }
         }
     }
-    pclose(fd);
+    if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
+        return wid = -1;
+    }
     return wid;
 }
 }

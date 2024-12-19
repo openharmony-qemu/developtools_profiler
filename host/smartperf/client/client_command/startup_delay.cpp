@@ -22,10 +22,11 @@
 #include <regex>
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "unistd.h"
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 #include "include/startup_delay.h"
 #include "include/sp_utils.h"
-#include "unistd.h"
 #include "include/sp_log.h"
 #include "include/common.h"
 
@@ -43,6 +44,7 @@ void StartUpDelay::GetTrace(const std::string &traceName) const
         cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
     SPUtils::LoadCmd(cmdString + traceName, result);
+    LOGD("GetTrace : %s", (cmdString + traceName).c_str());
     if (result.find("OpenRecording failed") != std::string::npos) {
         std::string str;
         std::string traceFinishStr = "hitrace --trace_finish";
@@ -170,44 +172,69 @@ void StartUpDelay::ClearOldServer() const
 
         if (token != curPid) {
             SPUtils::LoadCmd(killCmd + token, killResult);
-            LOGI("Find old server: %s, killed.", token.c_str());
+            LOGD("Find old server: %s, killed.", token.c_str());
         }
     }
+}
+std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) const
+{
+    std::string output = "";
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        LOGE("startup_delay::Failed to create pipe: %s", strerror(errno));
+        return output;
+    }
+    pid_t pid = fork();
+    if (pid == -1) {
+        LOGE("startup_delay::Failed to fork: %s", strerror(errno));
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return output;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        execvp(args[0], const_cast<char* const*>(args.data()));
+        LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
+        _exit(EXIT_FAILURE);
+    }
+    close(pipefd[1]);
+    char buf[1024];
+    ssize_t nread;
+    while ((nread = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
+        if (nread == sizeof(buf) - 1) {
+            LOGE("startup_delay::Buffer overflow: %s", strerror(errno));
+            break;
+        }
+        buf[nread] = '\0';
+        output.append(buf);
+    }
+    if (nread == -1) {
+        LOGE("startup_delay::Failed to read from pipe: %s", strerror(errno));
+    }
+    close(pipefd[0]);
+    int status;
+    if (waitpid(pid, &status, 0) == -1) {
+        LOGE("startup_delay::Failed to wait for child process: %s", strerror(errno));
+        return output;
+    }
+    return output;
 }
 
 std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName)
 {
-    std::string resultPid = "";
-    std::string resultProcId = "";
-    const char* args[] = { "pidof", curPkgName.c_str(), nullptr };
-    int pipefd[2];
-    if (pipe(pipefd) == -1) {
-        LOGE("startup_delay::Failed to create pipe");
-        return resultPid;
-    }
-    pid_t pid = fork();
-    if (pid == -1) {
-        LOGE("startup_delay::Failed to fork");
-        return resultPid;
-    } else if (pid == 0) {
-        close(pipefd[0]);
-        dup2(pipefd[1], STDOUT_FILENO);
-        close(pipefd[1]);
-        if (execvp(args[0], const_cast<char *const*>(args)) == -1) {
-            LOGE("startup_delay::Failed to execute pid");
-            return resultPid;
+    std::vector<const char*> args = {"pidof", curPkgName.c_str(), nullptr};
+    std::string resultProcId = ExecuteCommand(args);
+    if (!resultProcId.empty()) {
+        if (resultProcId.back() == '\n') {
+            resultProcId.pop_back();
         }
-    } else {
-        close(pipefd[1]);
-        char buf[1024];
-        ssize_t nread = read(pipefd[0], buf, sizeof(buf));
-        if (nread == -1) {
-            return resultPid;
+        size_t endpos = resultProcId.find(" ");
+        if (endpos != std::string::npos) {
+            resultProcId = resultProcId.substr(0, endpos);
         }
-        resultPid = std::string(buf, nread);
-        resultProcId = resultPid.substr(0, resultPid.size() - 1);
-        close(pipefd[0]);
-        waitpid(pid, nullptr, 0);
+        LOGD("startup_delay::output: (%s)", resultProcId.c_str());
     }
     return resultProcId;
 }

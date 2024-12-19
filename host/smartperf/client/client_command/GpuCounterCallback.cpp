@@ -125,6 +125,7 @@ namespace OHOS {
             unsigned long long memoryWriteBandwidthTargetValue = SplitSocketDataValueFunction(
                 realtimeGpuPerfInfoData.memoryWriteBandwidth, interval,
                 realtimeGpuPerfInfoData.duration);
+
             gpuCounterInstance.AddGpuCounterRealtimeData(std::to_string(
                 realtimeGpuPerfInfoData.gpuActive - gpuActiveTargetValue) + "_");
             gpuCounterInstance.AddGpuCounterRealtimeData(std::to_string(
@@ -237,7 +238,6 @@ namespace OHOS {
             }
 
             if (gpuPerfInfos[0].remainTime <= restartTime) {
-                LOGI("remain time to restart");
                 gpuCounterInstance.StartCollect(GpuCounter::GC_RESTART);
             }
             return 0;

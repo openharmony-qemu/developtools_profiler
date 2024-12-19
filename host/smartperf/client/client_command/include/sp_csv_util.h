@@ -23,6 +23,7 @@
 #include <map>
 #include "common.h"
 #include "sp_data.h"
+#include "sp_utils.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
@@ -30,7 +31,18 @@ public:
     static void WriteCsv(const std::string &path, std::vector<SPData> vmap)
     {
         std::ofstream outFile;
+        std::string cmdResult;
+        SPUtils::LoadCmd(CMD_COMMAND_MAP.at(CmdCommand::USER_PERMISSIONS), cmdResult);
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
+        if (SPUtils::GetPathPermissions(path)) {
+            std::string cmd = "chmod 777 " + path;
+            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "root") {
+                SPUtils::LoadCmd(cmd, cmdResult);
+            }
+            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "shell") {
+                SPUtils::LoadCmd(cmd, cmdResult);
+            }
+        }
         int i = 0;
         std::string title = "";
         for (SPData spdata : vmap) {

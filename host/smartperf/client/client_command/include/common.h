@@ -35,13 +35,13 @@ enum class MessageType {
     CATCH_TRACE_CONFIG,
     CATCH_TRACE_CMD,
     SET_DUBAI_DB,
+    START_DUBAI_DB,
     CATCH_NETWORK_TRAFFIC,
     GET_NETWORK_TRAFFIC, // 获取网络流量信息
     BACK_TO_DESKTOP,
     GET_CUR_FPS,
-    GET_LOW_POWER_FPS,
-    FPS_STOP,
     SET_GAME_VIEW,
+    GET_APP_TYPE,
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -61,13 +61,13 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
     { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
+    { MessageType::START_DUBAI_DB, std::string("start_dubai_db") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
     { MessageType::GET_NETWORK_TRAFFIC, std::string("get_network_traffic") },
     { MessageType::BACK_TO_DESKTOP, std::string("back_to_desk") },
-    { MessageType::GET_LOW_POWER_FPS, std::string("get_low_power_fps") },
     { MessageType::GET_CUR_FPS, std::string("get_cur_fps") },
-    { MessageType::FPS_STOP, std::string("fps_stop") },
     { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
+    { MessageType::GET_APP_TYPE, std::string("get_app_type") },
 };
 
 enum class CommandType {
@@ -94,6 +94,7 @@ enum class CommandType {
     CT_GC,
     CT_NAV,
     CT_O,
+    CT_LF,
 };
 enum class CommandHelp {
     HELP,
@@ -128,6 +129,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-gc"), CommandType::CT_GC },
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-o"), CommandType::CT_O },
+    { std::string("-lockfreq"), CommandType::CT_LF },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -154,6 +156,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_GC, std::string("-gc") },
     { CommandType::CT_NAV, std::string("-nav") },
     { CommandType::CT_O, std::string("-o") },
+    { CommandType::CT_LF, std::string("-lockfreq") },
 };
 
 
@@ -176,7 +179,7 @@ enum class CmdCommand {
     HITRACE_1024,
     HITRACE_2048,
     HITRACE_CMD,
-    CAPTURE_FILE,
+    CREAT_DIR,
     SNAPSHOT,
     SERVER,
     OHTESTFPS,
@@ -185,7 +188,6 @@ enum class CmdCommand {
     PROC_STAT,
     HIPROFILER,
     PERF,
-    WRITE_PATH,
     HIPROFILER_CMD,
     HIPROFILER_PID,
     KILL_CMD,
@@ -194,6 +196,7 @@ enum class CmdCommand {
     EDITOR_SERVER_GREP,
     UINPUT_BACK,
     TIMESTAMPS,
+    USER_PERMISSIONS,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -204,7 +207,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
         "hitrace --trace_clock mono -t 10 -b 204800 --overwrite idle ace app ohos ability graphic "
         "nweb sched freq sync workq multimodalinput > ") },
     { CmdCommand::HITRACE_CMD, std::string("ps -ef |grep hitrace |grep -v grep") },
-    { CmdCommand::CAPTURE_FILE, std::string("mkdir -p /data/local/tmp/capture") },
+    { CmdCommand::CREAT_DIR, std::string("mkdir -m 777 ") },
     { CmdCommand::SNAPSHOT, std::string("snapshot_display -f ") },
     { CmdCommand::SERVER, std::string("SP_daemon -server") },
     { CmdCommand::OHTESTFPS, std::string("SP_daemon -ohtestfps 10") },
@@ -213,15 +216,15 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::PROC_STAT, std::string("chmod o+r /proc/stat") },
     { CmdCommand::HIPROFILER, std::string("rm -f /data/local/tmp/hiprofiler_[0-9]*.htrace") },
     { CmdCommand::PERF, std::string("rm -f /data/local/tmp/perf_[0-9]*.data") },
-    { CmdCommand::WRITE_PATH, std::string("mkdir -p /data/local/tmp/smartperf/") },
     { CmdCommand::HIPROFILER_CMD, std::string("ps -ef |grep hiprofiler_cmd |grep -v grep") },
     { CmdCommand::HIPROFILER_PID, std::string("pidof hiprofiler_cmd") },
     { CmdCommand::KILL_CMD, std::string("kill ") },
     { CmdCommand::PIDOF_SP, std::string("pidof SP_daemon") },
     { CmdCommand::SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -server'") },
     { CmdCommand::EDITOR_SERVER_GREP, std::string("ps -ef | grep -v grep | grep 'SP_daemon -editorServer'") },
-    { CmdCommand::UINPUT_BACK, std::string("uinput -T -m 600 2760 600 1300 200") },
+    { CmdCommand::UINPUT_BACK, std::string("uinput -K -d 2076 -d 2020 -u 2076 -u 2020") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
+    { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
 };
 
 enum class DeviceCmd {

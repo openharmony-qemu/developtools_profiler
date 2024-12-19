@@ -24,7 +24,7 @@ std::map<std::string, std::string> DDR::ItemData()
     if (result.find("ddrFrequency") != result.end() && result["ddrFrequency"].empty()) {
         result["ddrFrequency"] = "NA";
     }
-    LOGI("DDR::ItemData map size(%u)", result.size());
+    LOGD("ddrFrequency = %s", result["ddrFrequency"].c_str());
     return result;
 }
 long long DDR::GetDdrFreq()
@@ -36,7 +36,7 @@ long long DDR::GetDdrFreq()
     } else {
         SPUtils::LoadFile(ddrCurFreqRkPath, ddrfreq);
     }
-    curFreq = std::atoll(ddrfreq.c_str());
+    curFreq = SPUtilesTye::StringToSometype<long long>(ddrfreq.c_str());
     return curFreq;
 }
 void DDR::SetRkFlag()
