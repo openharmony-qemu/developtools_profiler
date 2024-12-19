@@ -166,7 +166,7 @@ public:
         ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
         if (type == CMD_SOCKET) {
             spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
-            ELOGI("Sent init::"  + ((code == ErrCode::OK) ? "True" : "False")));
+            ELOGI("Sent init::"  + ((code == ErrCode::OK) ? "True" : "False"));
             return;
         }
         if (code == ErrCode::OK) {
@@ -206,7 +206,7 @@ public:
             ELOGI("Sent start::True message to socket.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("start::") + std::to_string(START_FAILED));
-            ELOGE("Sent start::" + std::to_string(START_FAILED)) +" message to socket.");
+            ELOGE("Sent start::" + std::to_string(START_FAILED) +" message to socket.");
         }
     }
     void StopRecvRealtime(SpServerSocket &spSocket) const
@@ -219,7 +219,7 @@ public:
             spSocket.Close();
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("stop::") + std::to_string(STOP_FAILED));
-            ELOGE("Sent stop::" + std::to_string(STOP_FAILED)) +" message to socket.");
+            ELOGE("Sent stop::" + std::to_string(STOP_FAILED) +" message to socket.");
         }
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
@@ -230,7 +230,7 @@ public:
             ELOGI("Sent startRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
-            ELOGE("Sent startRecord::" + std::to_string(START_RECORD_FAILED)) +" message to socket.");
+            ELOGE("Sent startRecord::" + std::to_string(START_RECORD_FAILED) +" message to socket.");
         }
     }
     void StopRecvRecord(SpServerSocket &spSocket) const
@@ -241,7 +241,7 @@ public:
             ELOGI("Sent stopRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("stopRecord::") + std::to_string(STOP_RECORD_FAILED));
-            ELOGE("Sent stopRecord::" + std::to_string(STOP_RECORD_FAILED)) +" message to socket.");
+            ELOGE("Sent stopRecord::" + std::to_string(STOP_RECORD_FAILED) +" message to socket.");
         }
     }
     void SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
