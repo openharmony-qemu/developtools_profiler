@@ -139,10 +139,10 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string ramConfig : curTaskInfo.taskConfig) {
         if (ramConfig.find("-r") != std::string::npos) {
-            ELOGI("AsyncCollectRam: Found ram config: %s", ramConfig.c_str());
+            ELOGI("Found ram config: %s", ramConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                ELOGI("AsyncCollectRam: Starting RAM collection in new thread");
+                ELOGI("Starting RAM collection in new thread");
                 p.set_value(RAM::GetInstance().ItemData());
             }).detach();
         }
@@ -156,10 +156,10 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string cpuConfig : curTaskInfo.taskConfig) {
         if (cpuConfig.find("-c") != std::string::npos) {
-            ELOGI("AsyncCollectCpu: Found CPU config: %s", cpuConfig.c_str());
+            ELOGI("Found CPU config: %s", cpuConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                ELOGI("AsyncCollectCpu: Starting CPU collection in new thread");
+                ELOGI("Starting CPU collection in new thread");
                 p.set_value(CPU::GetInstance().ItemData());
             }).detach();
         }
@@ -173,10 +173,10 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fpsConfig : curTaskInfo.taskConfig) {
         if (fpsConfig.find("-f") != std::string::npos) {
-            ELOGI("AsyncCollectFps: Found FPS config: %s", fpsConfig.c_str());
+            ELOGI("Found FPS config: %s", fpsConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                ELOGI("AsyncCollectFps: Starting FPS collection in new thread");
+                ELOGI("Starting FPS collection in new thread");
                 p.set_value(FPS::GetInstance().ItemData());
             }).detach();
         }
@@ -188,11 +188,11 @@ void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ram
     std::map<std::string, std::string> &dataMap)
 {
     if (ramResult.valid()) {
-        ELOGI("CheckFutureRam: Future is valid, collecting RAM data");
+        ELOGI("Future is valid, collecting RAM data");
         std::map<std::string, std::string> result = ramResult.get();
         dataMap.insert(result.begin(), result.end());
     } else {
-        ELOGE("CheckFutureRam: Invalid future for RAM data");
+        ELOGE("Invalid future for RAM data");
     }
 }
 
@@ -200,11 +200,11 @@ void SPTask::CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpu
     std::map<std::string, std::string> &dataMap)
 {
     if (cpuResult.valid()) {
-        ELOGI("CheckFutureCpu: Future is valid, collecting CPU data");
+        ELOGI("Future is valid, collecting CPU data");
         std::map<std::string, std::string> result = cpuResult.get();
         dataMap.insert(result.begin(), result.end());
     } else {
-        ELOGE("CheckFutureCpu: Invalid future for CPU data");
+        ELOGE("Invalid future for CPU data");
     }
 }
 
@@ -212,11 +212,11 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
     std::map<std::string, std::string> &dataMap)
 {
     if (fpsResult.valid()) {
-        ELOGI("CheckFutureFps: Future is valid, collecting FPS data");
+        ELOGI("Future is valid, collecting FPS data");
         std::map<std::string, std::string> result = fpsResult.get();
         dataMap.insert(result.begin(), result.end());
     } else {
-        ELOGE("CheckFutureFps: Invalid future for FPS data");
+        ELOGE("Invalid future for FPS data");
     }
 }
 
@@ -225,7 +225,7 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
     std::string foundConfig;
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
-            ELOGI("GetItemData: Snapshot flag is set, capturing screenshot for config: %s", itConfig.c_str());
+            ELOGI("Snapshot flag is set, capturing screenshot for config: %s", itConfig.c_str());
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -234,7 +234,7 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
         if (itConfig.find("-gc") != std::string::npos ||
             itConfig.find("-o") != std::string::npos ||
             itConfig.find("-lockfreq") != std::string::npos) {
-            ELOGI("GetItemData: Skipping config: %s", itConfig.c_str());
+            ELOGI("Skipping config: %s", itConfig.c_str());
             continue;
         }
 
@@ -245,27 +245,27 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
     }
-    ELOGI("GetItemData: Retrieved profiler for config: %s", foundConfig.c_str());
+    ELOGI("Retrieved profiler for config: %s", foundConfig.c_str());
 }
 
 void SPTask::ConfigDataThread()
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (!sdkData) {
-            ELOGI("ConfigDataThread: SDK data not initialized, initializing for config: %s", itConfig.c_str());
+            ELOGI("SDK data not initialized, initializing for config: %s", itConfig.c_str());
             ConfigureSdkData(itConfig);
         }
 
         if (itConfig.find("-gc") != std::string::npos) {
-            ELOGI("ConfigDataThread: Starting GPU collection for config: %s", itConfig.c_str());
+            ELOGI("Starting GPU collection for config: %s", itConfig.c_str());
             gpuCounter.StartCollect(GpuCounter::GC_START);
         }
 
         if (itConfig.find("-lockfreq") != std::string::npos) {
-            ELOGI("ConfigDataThread: Lock frequency collection enabled for config: %s", itConfig.c_str());
+            ELOGI("Lock frequency collection enabled for config: %s", itConfig.c_str());
             lockFreq.SetIsCollecting(true);
             lockFreqThread = std::thread([this]() {
-                ELOGI("ConfigDataThread: Starting lock frequency locking thread");
+                ELOGI("Starting lock frequency locking thread");
                 this->lockFreq.LockingThread();
             });
         }
@@ -275,37 +275,37 @@ void SPTask::ConfigDataThread()
 void SPTask::ConfigureSdkData(std::string itConfig)
 {
     if (itConfig.find("-o") != std::string::npos) {
-        ELOGI("ConfigureSdkData: SDK data enabled for config: %s", itConfig.c_str());
+        ELOGI("SDK data enabled for config: %s", itConfig.c_str());
         sdkData = true;
         OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
         SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
         sdkDataRecv.SetRunningState(true);
-        ELOGI("ConfigureSdkData: Starting SDK server thread");
+        ELOGI("Starting SDK server thread");
         sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
     }
 }
 
 void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
 {
-    ELOGI("RunSdkServer: Starting server thread for sdkDataRecv");
+    ELOGI("Starting server thread for sdkDataRecv");
     sdkDataRecv.ServerThread(sdkvec);
 }
 
 void SPTask::ResetSdkParam()
 {
-    ELOGI("ResetSdkParam: Disabling SDK data collection and resetting parameters");
+    ELOGI("Disabling SDK data collection and resetting parameters");
     OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
     sdkData = false;
     SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
     sdkDataRecv.SetRunningState(false);
     int listenFd = sdkDataRecv.GetListenFd();
     if (listenFd != -1) {
-        ELOGI("ResetSdkParam: Closing listenFd: %d", listenFd);
+        ELOGI("Closing listenFd: %d", listenFd);
         close(listenFd);
         sdkDataRecv.SetListenFd(-1);
     }
     if (sdk.joinable()) {
-        ELOGI("ResetSdkParam: Joining SDK server thread");
+        ELOGI("Joining SDK server thread");
         sdk.join();
     }
 }
@@ -313,7 +313,7 @@ void SPTask::ResetSdkParam()
 void SPTask::StopSdkRecv()
 {
     if (!sdkData || sdkvec.size() <= 0) {
-        ELOGI("StopSdkRecv: SDK data is not enabled or sdkvec is empty, returning early");
+        ELOGI("SDK data is not enabled or sdkvec is empty, returning early");
         return;
     }
  
@@ -339,7 +339,7 @@ void SPTask::StopSdkRecv()
     }
     outFile.close();
     sdkDataMtx.unlock();
-    ELOGI("StopSdkRecv: SDK data written successfully to %s", outSdkDataPath.c_str());
+    ELOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
     return;
 }
 
@@ -357,24 +357,24 @@ void SPTask::InitDataFile()
         "t_index_info.csv",
     };
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    ELOGI("InitDataFile: Initializing data files in directory: %s", fileDir.c_str());
+    ELOGI("Initializing data files in directory: %s", fileDir.c_str());
 
     for (const auto &file : files) {
         std::string filePath = fileDir + "/" + file;
         char filePathChar[PATH_MAX] = {0x00};
         if (realpath(filePath.c_str(), filePathChar) == nullptr) {
-            ELOGE("InitDataFile: File %s does not exist, skipping deletion.", filePath.c_str());
+            ELOGE("File %s does not exist, skipping deletion.", filePath.c_str());
             continue;
         }
 
         if (std::remove(filePathChar) == 0) {
-            ELOGI("InitDataFile: Successfully removed file: %s", filePath.c_str());
+            ELOGI("Successfully removed file: %s", filePath.c_str());
         } else {
-            ELOGE("InitDataFile: Failed to remove file: %s", filePath.c_str());
+            ELOGE("Failed to remove file: %s", filePath.c_str());
         }
     }
 
-    ELOGI("InitDataFile: Data file initialization completed.");
+    ELOGI("Data file initialization completed.");
     return;
 }
 
@@ -385,28 +385,28 @@ void SPTask::SetProfilerPid()
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(curTaskInfo.packageName);
     SpProfilerFactory::SetProfilerPidByPkg(processId);
-    ELOGI("AsyncGetDataMap: Set process ID for package: %s, process ID: %s",
+    ELOGI("Set process ID for package: %s, process ID: %s",
           curTaskInfo.packageName.c_str(), processId.c_str());
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    ELOGI("AsyncGetDataMap: Start processing at timestamp: %lld", lastTime);
+    ELOGI("Start processing at timestamp: %lld", lastTime);
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
         SetProfilerPid();
     }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-    ELOGI("AsyncGetDataMap: Timestamp added to dataMap: %lld", lastTime);
+    ELOGI("Timestamp added to dataMap: %lld", lastTime);
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    ELOGI("AsyncGetDataMap: FPS data collection initiated.");
+    ELOGI("FPS data collection initiated.");
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    ELOGI("AsyncGetDataMap: CPU data collection initiated.");
+    ELOGI("CPU data collection initiated.");
     GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
-    ELOGI("AsyncGetDataMap: RAM data collection initiated.");
+    ELOGI("RAM data collection initiated.");
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
@@ -414,31 +414,31 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
         std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
         if (!timeUsedMap.empty()) {
             dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
-            ELOGI("AsyncGetDataMap: Stuck detection data added to dataMap.");
+            ELOGI("Stuck detection data added to dataMap.");
         }
     }
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
     if (GetRecordState()) {
         vmap.push_back(spdata);
-        ELOGI("AsyncGetDataMap: Data added to vmap for recording.");
+        ELOGI("Data added to vmap for recording.");
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
-    ELOGI("AsyncGetDataMap: GPU real-time data added to dataMap.");
+    ELOGI("GPU real-time data added to dataMap.");
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
-    ELOGI("AsyncGetDataMap: SDK real-time data added to dataMap.");
+    ELOGI("SDK real-time data added to dataMap.");
     msgTask(MapToString(dataMap));
-    ELOGI("AsyncGetDataMap: Data map converted to string and passed to msgTask.");
+    ELOGI("Data map converted to string and passed to msgTask.");
     nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
-    ELOGI("AsyncGetDataMap: Time spent on data collection: %lld ms", costTime);
+    ELOGI("Time spent on data collection: %lld ms", costTime);
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
-        ELOGI("AsyncGetDataMap: Sleeping for %lld ms to maintain frequency.", pTime - costTime);
+        ELOGI("Sleeping for %lld ms to maintain frequency.", pTime - costTime);
     }
     asyncDataMtx.unlock();
-    ELOGI("AsyncGetDataMap: Data collection process completed.");
+    ELOGI("Data collection process completed.");
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)

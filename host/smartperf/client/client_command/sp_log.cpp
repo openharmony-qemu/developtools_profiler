@@ -14,11 +14,9 @@
  */
 
 #include "sp_log.h"
-
 #include "securec.h"
 
-#ifdef HI_LOG_ENABLE
-#include "hilog/log.h"
+// 所有标准库和 C++ 库的 include 应该放在这里
 #include <sys/stat.h>
 #include <string>
 #include <sstream>
@@ -28,20 +26,18 @@
 #include <unistd.h>
 #include <mutex>
 #include <ctime>
-#include <cstring>
 #include <fstream>
-#include <sstream>
 #include <vector>
 #include <filesystem>
 #include <iomanip>
 #include <chrono>
 #include <regex>
 #include <thread>
-#include <mutex>
 #include <cstdlib>
 #include <cstdio>
-#else
-#include <cstdio>
+
+#ifdef HI_LOG_ENABLE
+#include "hilog/log.h"
 #endif
 
 namespace OHOS {
@@ -96,7 +92,6 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
     }
 #endif
 }
-#ifdef HI_LOG_ENABLE
 static bool CreateDir(const std::string& dirPath)
 {
     if (!std::__fs::filesystem::exists(dirPath)) {
@@ -307,7 +302,6 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 
     return;
 }
-#endif
 void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
@@ -326,7 +320,6 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
         return;
     }
     SpLogOut(logLevel, logBuf);
-#ifdef HI_LOG_ENABLE
     if (!isEditorLog) {
         return;
     }
@@ -338,7 +331,6 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
     }
 
     WriteMessage(logLevel, logBuf);
-#endif
     return;
 }
 } // namespace SmartPerf

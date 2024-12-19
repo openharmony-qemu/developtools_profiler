@@ -45,19 +45,19 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...);
 void EditorLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define ELOGD(fmt, ...) \
-    SpLog(SP_LOG_DEBUG, true, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_DEBUG, true, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define ELOGI(fmt, ...) \
-    SpLog(SP_LOG_INFO, true, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_INFO, true, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define ELOGW(fmt, ...) \
-    SpLog(SP_LOG_WARN, true, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_WARN, true, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define ELOGE(fmt, ...) \
-    SpLog(SP_LOG_ERROR, true, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 } // namespace SmartPerf
