@@ -191,11 +191,11 @@ namespace OHOS {
 
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
+            ELOGI("Starting SdkDataRecv server thread");
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 sdkParams.receiveFd[i] = -1;
             }
             sdkParams.startTime = SPUtils::GetCurTime();
-            ELOGD("Starting server thread at time: %lld", sdkParams.startTime);
 
             sdkParams.serverFd = CreateOhSocketServer(OH_DATA_PORT);
             if (sdkParams.serverFd < 0) {
@@ -210,8 +210,9 @@ namespace OHOS {
             }
 
             listenFd = sdkParams.pipFd[1];
-            ELOGD("Server listening on pipe fd: %d", listenFd);
+            ELOGI("Server listening on pipe fd: %d", listenFd);
             RunServerThread(dataVec, sdkParams);
+            ELOGI("SdkDataRecv server thread exit.");
         }
 
 

@@ -52,10 +52,9 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 break;
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
-                ELOGI("Found '-editorServer' argument in argv[1]: %s", argv[1].c_str());
+                ELOGI("############################# Found '-editorServer' argument in argv");
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
-                ELOGI("Extracted token for editorServer");
                 HelpCommand(CommandHelp::EDITORSERVER, token);
             }
             ++iterator;

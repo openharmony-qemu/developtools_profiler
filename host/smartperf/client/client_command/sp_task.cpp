@@ -119,8 +119,8 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     std::string perf = CMD_COMMAND_MAP.at(CmdCommand::PERF);
     ELOGI("Loading perf command: %s", perf.c_str());
     SPUtils::LoadCmd(perf, result);
-    std::cout << recvStr << std::endl;
-    ELOGI("Received init task string: %s", recvStr.c_str());
+    std::cout << recvStr.substr(find("-SESSIONID")) << std::endl;
+    ELOGI("Received init task string: %s", recvStr.substr(find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
         isInit = true;
@@ -139,7 +139,6 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string ramConfig : curTaskInfo.taskConfig) {
         if (ramConfig.find("-r") != std::string::npos) {
-            ELOGI("Found ram config: %s", ramConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 ELOGI("Starting RAM collection in new thread");
@@ -156,7 +155,6 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string cpuConfig : curTaskInfo.taskConfig) {
         if (cpuConfig.find("-c") != std::string::npos) {
-            ELOGI("Found CPU config: %s", cpuConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 ELOGI("Starting CPU collection in new thread");
@@ -173,7 +171,6 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fpsConfig : curTaskInfo.taskConfig) {
         if (fpsConfig.find("-f") != std::string::npos) {
-            ELOGI("Found FPS config: %s", fpsConfig.c_str());
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 ELOGI("Starting FPS collection in new thread");
@@ -252,17 +249,15 @@ void SPTask::ConfigDataThread()
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (!sdkData) {
-            ELOGI("SDK data not initialized, initializing for config: %s", itConfig.c_str());
             ConfigureSdkData(itConfig);
         }
 
         if (itConfig.find("-gc") != std::string::npos) {
-            ELOGI("Starting GPU collection for config: %s", itConfig.c_str());
+            ELOGI("Starting GpuCounter collection in new thread");
             gpuCounter.StartCollect(GpuCounter::GC_START);
         }
 
         if (itConfig.find("-lockfreq") != std::string::npos) {
-            ELOGI("Lock frequency collection enabled for config: %s", itConfig.c_str());
             lockFreq.SetIsCollecting(true);
             lockFreqThread = std::thread([this]() {
                 ELOGI("Starting lock frequency locking thread");
@@ -275,19 +270,17 @@ void SPTask::ConfigDataThread()
 void SPTask::ConfigureSdkData(std::string itConfig)
 {
     if (itConfig.find("-o") != std::string::npos) {
-        ELOGI("SDK data enabled for config: %s", itConfig.c_str());
         sdkData = true;
         OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
         SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
         sdkDataRecv.SetRunningState(true);
-        ELOGI("Starting SDK server thread");
+        ELOGI("Starting sdkdata collection in new thread");
         sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
     }
 }
 
 void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
 {
-    ELOGI("Starting server thread for sdkDataRecv");
     sdkDataRecv.ServerThread(sdkvec);
 }
 
@@ -392,7 +385,7 @@ void SPTask::SetProfilerPid()
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    ELOGD("Start processing at timestamp: %lld", lastTime);
+    ELOGD("Start AsyncGetDataMap processing");
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
@@ -712,16 +705,23 @@ void SPTask::GetHiperf(const std::string &traceName)
 bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 {
     std::set<std::string> keys;
-    ELOGI("Start validating TCP parameter: %s", str.c_str());
+    std::string params;
+    if (str.find("-SESSIONID") != std::string::npos) {
+        params = str.substr(str.find("-SESSIONID"));
+    } else {
+        ELOGE("Init parameter error not contain '-SESSIONID'");
+        return false;
+    }
+    ELOGI("Start validating Init parameter: %s", params.c_str());
 
     for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
-    bool isValid = SPUtils::VeriyParameter(keys, str, errorInfo);
+    bool isValid = SPUtils::VeriyParameter(keys, params, errorInfo);
     if (isValid) {
-        ELOGI("TCP parameter validation successful for: %s", str.c_str());
+        ELOGI("Init parameter validation successful");
     } else {
-        ELOGE("TCP parameter validation failed for: %s, Error: %s", str.c_str(), errorInfo.c_str());
+        ELOGE("Init parameter validation failed, Error: %s", errorInfo.c_str());
     }
     return isValid;
 }
