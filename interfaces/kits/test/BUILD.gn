@@ -61,7 +61,7 @@ ohos_unittest("plugin_module_api_ut") {
     "hidumper:lib_dump_usage",
     "hilog:libhilog_base",
     "hisysevent:libhisysevent",
-    "hiview:libucollection_graphic",
+    "hiview:libucollection_utility",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
