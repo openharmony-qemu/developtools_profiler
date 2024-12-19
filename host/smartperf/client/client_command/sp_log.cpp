@@ -16,7 +16,6 @@
 #include "sp_log.h"
 #include "securec.h"
 
-// 所有标准库和 C++ 库的 include 应该放在这里
 #include <sys/stat.h>
 #include <string>
 #include <sstream>
