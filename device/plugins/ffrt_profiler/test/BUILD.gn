@@ -62,6 +62,7 @@ ohos_unittest("ffrt_profiler_ut") {
 
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/api/src/buffer_writer.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src/command_poller.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/api/src/writer_adapter.cpp",
     "../service/src/ffrt_profiler_common.cpp",
     "../service/src/ffrt_profiler_handle.cpp",
