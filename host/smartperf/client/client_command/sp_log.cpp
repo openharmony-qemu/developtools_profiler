@@ -44,8 +44,6 @@
 #include <cstdio>
 #endif
 
-
-
 namespace OHOS {
 namespace SmartPerf {
 const int32_t LOG_MAX_LEN = 10000;
