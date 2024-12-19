@@ -19,7 +19,6 @@
 #include <csignal>
 #include <filesystem>
 
-#include <iostream>
 #include "command_poller.h"
 #include "ffrt_profiler_common.h"
 #include "ffrt_profiler_manager.h"
