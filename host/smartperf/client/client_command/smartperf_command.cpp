@@ -52,7 +52,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 break;
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
-                ELOGI("############################# Found '-editorServer' argument in argv");
+                LOGI("############################# Found '-editorServer' argument in argv");
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
@@ -100,11 +100,11 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             daemon(0, 0);
         } else {
             if (token.empty()) {
-                ELOGE("Error: token is empty when setting TCP token.");
+                LOGE("Error: token is empty when setting TCP token.");
             } else {
-                ELOGI("############################# Setting TCP token...");
+                LOGI("############################# Setting TCP token...");
                 SPTask::GetInstance().SetTcpToken(token);
-                ELOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
+                LOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
             }
         }
         CreateSocketThread();

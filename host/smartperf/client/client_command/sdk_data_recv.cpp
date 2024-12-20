@@ -55,7 +55,7 @@ namespace OHOS {
             struct sockaddr_in address;
             const int reuse = 1;
 
-            ELOGI("Creating socket server on base port: %d", basePort);
+            LOGI("Creating socket server on base port: %d", basePort);
 
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (socketFd < 0) {
@@ -71,23 +71,23 @@ namespace OHOS {
             for (i = 0; i < SOCKET_PORT_NUM_PER_TYPE; i++) {
                 address.sin_port = htons(basePort + i);
                 if (::bind(socketFd, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) == 0) {
-                    ELOGD("Socket bound successfully to port: %d", basePort + i);
+                    LOGD("Socket bound successfully to port: %d", basePort + i);
                     break;
                 }
             }
 
             if (i >= SOCKET_PORT_NUM_PER_TYPE) {
-                ELOGE("Failed to bind socket after trying all ports starting from: %d", basePort);
+                LOGE("Failed to bind socket after trying all ports starting from: %d", basePort);
                 return -1;
             }
 
             if (listen(socketFd, OH_SOCKET_MAX) < 0) {
-                ELOGE("Failed to listen on socket. Error: %d", errno);
+                LOGE("Failed to listen on socket. Error: %d", errno);
                 close(socketFd);
                 return -1;
             }
 
-            ELOGI("Listening on port %d, socket fd: %d", basePort + i, socketFd);
+            LOGI("Listening on port %d, socket fd: %d", basePort + i, socketFd);
             return socketFd;
         }
         std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
@@ -131,16 +131,16 @@ namespace OHOS {
             std::string resStr;
             int readLen = 0;
 
-            ELOGD("Receiving data from socket fd[%d]: %d", index, params.receiveFd[index]);
+            LOGD("Receiving data from socket fd[%d]: %d", index, params.receiveFd[index]);
 
             if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
                 close(params.receiveFd[index]);
                 params.receiveFd[index] = -1;
-                ELOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
+                LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
 
-            ELOGD("Received data: %s", receiveBuf);
+            LOGD("Received data: %s", receiveBuf);
 
             receiveBuffer = receiveBuf;
 
@@ -180,7 +180,7 @@ namespace OHOS {
             if (!resStr.empty() && resStr.back() == '\n') {
                 resStr.pop_back();
             }
-            ELOGD("Processed data: %s", resStr.c_str());
+            LOGD("Processed data: %s", resStr.c_str());
             return resStr;
         }
 
@@ -191,7 +191,7 @@ namespace OHOS {
 
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
-            ELOGI("Starting SdkDataRecv server thread");
+            LOGI("Starting SdkDataRecv server thread");
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 sdkParams.receiveFd[i] = -1;
             }
@@ -199,20 +199,20 @@ namespace OHOS {
 
             sdkParams.serverFd = CreateOhSocketServer(OH_DATA_PORT);
             if (sdkParams.serverFd < 0) {
-                ELOGE("Failed to create server, exiting...");
+                LOGE("Failed to create server, exiting...");
                 return;
             }
 
             if (pipe(sdkParams.pipFd) == -1) {
-                ELOGE("Failed to create pipe. Error: %d", errno);
+                LOGE("Failed to create pipe. Error: %d", errno);
                 close(sdkParams.serverFd);
                 return;
             }
 
             listenFd = sdkParams.pipFd[1];
-            ELOGI("Server listening on pipe fd: %d", listenFd);
+            LOGI("Server listening on pipe fd: %d", listenFd);
             RunServerThread(dataVec, sdkParams);
-            ELOGI("SdkDataRecv server thread exit.");
+            LOGI("SdkDataRecv server thread exit.");
         }
 
 
@@ -237,14 +237,14 @@ namespace OHOS {
             FD_SET(params.serverFd, &readFds);
             FD_SET(params.pipFd[0], &readFds);
 
-            ELOGD("Setting up FD set for serverFd: %d, pipFd[0]: %d", params.serverFd, params.pipFd[0]);
+            LOGD("Setting up FD set for serverFd: %d, pipFd[0]: %d", params.serverFd, params.pipFd[0]);
 
             maxFd = std::max(params.serverFd, params.pipFd[0]);
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 if (params.receiveFd[i] >= 0) {
                     FD_SET(params.receiveFd[i], &readFds);
                     maxFd = std::max(maxFd, params.receiveFd[i]);
-                    ELOGD("Adding receiveFd[%d]: %d to FD set", i, params.receiveFd[i]);
+                    LOGD("Adding receiveFd[%d]: %d to FD set", i, params.receiveFd[i]);
                 }
             }
         }
@@ -284,7 +284,7 @@ namespace OHOS {
         void SdkDataRecv::CleanUpResources(ServerParams &params)
         {
             if (params.serverFd != -1) {
-                ELOGD("Closing server socket fd: %d", params.serverFd);
+                LOGD("Closing server socket fd: %d", params.serverFd);
                 close(params.serverFd);
                 params.serverFd = -1;
             }
