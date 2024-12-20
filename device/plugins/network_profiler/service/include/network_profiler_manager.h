@@ -87,6 +87,8 @@ private:
     NetworkProfilerConfig config_;
     std::string paramValue_;
     std::shared_ptr<Writer> writer_{nullptr};
+    std::atomic<bool> firstData_ = true;
+    std::atomic<uint32_t> firstPluginId_ = 0;
     std::shared_ptr<WriterAdapter> writerAdapter_{nullptr};
     bool isProtobufSerialize_{true};
     std::shared_ptr<CommandPoller> commandPoller_{nullptr};

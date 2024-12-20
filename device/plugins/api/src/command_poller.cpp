@@ -16,7 +16,7 @@
 #include "buffer_writer.h"
 #include "plugin_manager.h"
 #include "socket_context.h"
-
+#include <mutex>
 #include <fcntl.h>
 #include <unistd.h>
 
@@ -133,6 +133,17 @@ bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
     CHECK_TRUE(pluginManager->ReportPluginBasicData(pluginIds), false, "%s:report basic data failed!", __func__);
     PROFILER_LOG_INFO(LOG_CORE, "%s:ok", __func__);
     return true;
+}
+
+void CommandPoller::PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId)
+{
+    std::lock_guard<std::mutex> guard(reportMutex_);
+    NotifyResultRequest nrr;
+    PluginResult* pr = nrr.add_result();
+    pr->set_plugin_id(pluginId);
+    ProfilerPluginState* status = pr->mutable_status();
+    *status = pluginState;
+    NotifyResult(nrr);
 }
 
 bool CommandPoller::OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response)

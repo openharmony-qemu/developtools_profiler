@@ -57,6 +57,8 @@ namespace {
 constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
 constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
+constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
+const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 #endif
@@ -120,11 +122,11 @@ size_t ProfilerService::SessionContext::UpdatePluginConfigs(const std::vector<Pr
 bool ProfilerService::SessionContext::CreatePluginSessions()
 {
     if (bufferConfigs.size() > 0) { // with buffer configs
-        CHECK_TRUE(service->pluginSessionManager_->CreatePluginSessions(pluginConfigs, bufferConfigs, dataRepeater),
-                   false, "create plugin sessions with buffer configs failed!");
+        CHECK_TRUE(service->pluginSessionManager_->CreatePluginSessions(pluginConfigs, bufferConfigs, dataRepeater,
+            stateRepeater), false, "create plugin sessions with buffer configs failed!");
     } else { // without buffer configs
-        CHECK_TRUE(service->pluginSessionManager_->CreatePluginSessions(pluginConfigs, dataRepeater), false,
-                   "create plugin sessions without buffer configs failed!");
+        CHECK_TRUE(service->pluginSessionManager_->CreatePluginSessions(pluginConfigs, dataRepeater, stateRepeater),
+                   false, "create plugin sessions without buffer configs failed!");
     }
     return true;
 }
@@ -136,6 +138,10 @@ bool ProfilerService::SessionContext::StartPluginSessions()
     // if dataRepeater exists, reset it to usable state.
     if (dataRepeater) {
         dataRepeater->Reset();
+    }
+
+    if (stateRepeater) {
+        stateRepeater->Reset();
     }
 
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
@@ -195,6 +201,10 @@ bool ProfilerService::SessionContext::StopPluginSessions()
     // make sure FetchData thread exit
     if (dataRepeater) {
         dataRepeater->Close();
+    }
+
+    if (stateRepeater) {
+        stateRepeater->Close();
     }
     return true;
 }
@@ -283,7 +293,7 @@ Status ProfilerService::CreateSession(ServerContext* context,
 
     // create TraceFileWriter for offline mode
     TraceFileWriterPtr traceWriter;
-    std::shared_ptr<ProfilerDataRepeater> dataRepeater = nullptr;
+    std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>> dataRepeater = nullptr;
     if (sessionConfig->session_mode() == ProfilerSessionConfig::OFFLINE) {
         auto resultFile = sessionConfig->result_file();
         CHECK_EXPRESSION_TRUE(resultFile.size() > 0, "result_file empty!");
@@ -304,10 +314,11 @@ Status ProfilerService::CreateSession(ServerContext* context,
         }
         traceWriter->Flush();
     } else {
-        dataRepeater = std::make_shared<ProfilerDataRepeater>(DEFAULT_REPEATER_BUFFER_SIZE);
+        dataRepeater = std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(DEFAULT_REPEATER_BUFFER_SIZE);
         CHECK_POINTER_NOTNULL(dataRepeater, "alloc ProfilerDataRepeater failed!");
     }
-
+    ProfilerPluginState* state = response->add_plugin_status();
+    state->set_version(COMMON::STATE_VERSION);
     // create session context
     auto ctx = std::make_shared<SessionContext>();
     CHECK_POINTER_NOTNULL(ctx, "alloc SessionContext failed!");
@@ -317,6 +328,9 @@ Status ProfilerService::CreateSession(ServerContext* context,
     if (dataRepeater != nullptr) {
         ctx->dataRepeater = dataRepeater;
     }
+    if (stateRepeater_ != nullptr) {
+        ctx->stateRepeater = stateRepeater_;
+    }
     if (traceWriter != nullptr) {
         ctx->traceFileWriter = traceWriter;
     }
@@ -324,7 +338,15 @@ Status ProfilerService::CreateSession(ServerContext* context,
     ctx->pluginNames = std::move(pluginNames);
     ctx->pluginConfigs = std::move(pluginConfigs);
     ctx->bufferConfigs = std::move(bufferConfigs);
-
+    
+    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::ONLINE) {
+        if (stateRepeater_ == nullptr) {
+            stateRepeater_ = std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(DEFAULT_REPEATER_BUFFER_SIZE);
+        }
+        if (stateRepeater_ != nullptr) {
+            ctx->stateRepeater = stateRepeater_;
+        }
+    }
     // create plugin sessions
     CHECK_EXPRESSION_TRUE(ctx->CreatePluginSessions(), "create plugin sessions failed!");
     // alloc new session id
@@ -358,6 +380,22 @@ bool ProfilerService::AddSessionContext(uint32_t sessionId, const SessionContext
     CHECK_TRUE(sessionContext_.count(sessionId) == 0, false, "sessionId already exists!");
     sessionContext_[sessionId] = sessionCtx;
     return true;
+}
+
+void ProfilerService::CheckClientStatus()
+{
+    int pidVal = 0;
+    if (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, pidVal)) {
+        ProfilerPluginState pluginState;
+        pluginState.set_version(COMMON::STATE_VERSION);
+        pluginState.set_event_detail("hiprofiler_plugins process is dead!");
+        pluginState.set_event(ProfilerPluginState::RUNNING_ERR);
+        CHECK_NOTNULL(stateRepeater_, NO_RETVAL, "cannot push event, stateRepeater is null!");
+        stateRepeater_->PutPluginData(std::make_shared<ProfilerPluginState>(pluginState));
+        if (heartbeatFd_ != -1) {
+            checkStatusManager_.UnscheduleTask(heartbeatFd_);
+        }
+    }
 }
 
 ProfilerService::SessionContextPtr ProfilerService::GetSessionContext(uint32_t sessionId) const
@@ -519,7 +557,16 @@ Status ProfilerService::StartSession(ServerContext* context,
 
     // start plugin sessions with configs
     CHECK_EXPRESSION_TRUE(ctx->StartPluginSessions(), "start plugin sessions failed!");
+    ProfilerPluginState* state = response->add_plugin_status();
+    state->set_version(COMMON::STATE_VERSION);
     PROFILER_LOG_INFO(LOG_CORE, "StartSession %d %u done!", request->request_id(), sessionId);
+    if (heartbeatFd_ == -1) {
+        auto callback = [this] { this->CheckClientStatus(); };
+        heartbeatFd_ = checkStatusManager_.ScheduleTask(callback, CHECK_HEARTBEAT_INTERVAL);
+        if (heartbeatFd_ == -1) {
+            PROFILER_LOG_INFO(LOG_CORE, "schedule task failed for heartbeat check");
+        }
+    }
     return Status::OK;
 }
 
@@ -580,6 +627,66 @@ Status ProfilerService::FetchData(ServerContext* context,
     }
 
     PROFILER_LOG_INFO(LOG_CORE, "FetchData %d %u done!", request->request_id(), sessionId);
+    return Status::OK;
+}
+
+Status ProfilerService::SubscribeProfilerEvt(ServerContext* context,
+                                             const ::SubscribeProfilerEvtRequest* request,
+                                             ServerWriter<::SubscribeProfilerEvtResponse>* writer)
+{
+    CHECK_POINTER_NOTNULL(context, "context ptr invalid!");
+    CHECK_POINTER_NOTNULL(request, "request ptr invalid!");
+    CHECK_POINTER_NOTNULL(writer, "writer ptr invalid!");
+
+    CHECK_POINTER_NOTNULL(request, "request invalid!");
+    CHECK_POINTER_NOTNULL(writer, "writer invalid!");
+
+    uint32_t sessionId = request->session_id();
+    PROFILER_LOG_INFO(LOG_CORE, "SubscribeProfilerEvt %d %u start", request->request_id(), sessionId);
+
+    auto ctx = GetSessionContext(sessionId);
+    CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
+
+    // check each plugin session states
+    CHECK_EXPRESSION_TRUE(pluginSessionManager_->CheckStatus(ctx->pluginNames, PluginSession::STARTED),
+                          "session status invalid!");
+
+    if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::ONLINE) {
+        auto stateRepeater = ctx->stateRepeater;
+        CHECK_POINTER_NOTNULL(stateRepeater, "state repeater invalid!");
+
+        while (1) {
+            ctx = GetSessionContext(sessionId);
+            CHECK_POINTER_NOTNULL(ctx, "session_id invalid!");
+
+            SubscribeProfilerEvtResponse response;
+            response.set_status(StatusCode::OK);
+            response.set_response_id(++responseIdCounter_);
+
+            std::vector<ProfilerPluginStatePtr> pluginStateVec;
+            int count = stateRepeater->TakePluginData(pluginStateVec);
+            if (count > 0) {
+                response.set_has_more(true);
+                for (int i = 0; i < count; i++) {
+                    auto data = response.add_plugin_state();
+                    CHECK_POINTER_NOTNULL(data, "new plugin data invalid");
+                    CHECK_POINTER_NOTNULL(pluginStateVec[i], "plugin state invalid");
+                    *data = *pluginStateVec[i];
+                }
+            } else {
+                response.set_has_more(false);
+                PROFILER_LOG_INFO(LOG_CORE, "no more data need to fill to response!");
+            }
+
+            bool sendSuccess = writer->Write(response);
+            if (count <= 0 || !sendSuccess) {
+                PROFILER_LOG_INFO(LOG_CORE, "count = %d, sendSuccess = %d", count, sendSuccess);
+                break;
+            }
+        }
+    }
+
+    PROFILER_LOG_INFO(LOG_CORE, "SubscribeProfilerEvt %d %u done!", request->request_id(), sessionId);
     return Status::OK;
 }
 

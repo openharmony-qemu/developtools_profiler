@@ -76,6 +76,16 @@ bool PluginModule::GetInfo(PluginModuleInfo& info)
     return false;
 }
 
+bool PluginModule::CheckDataReady()
+{
+    if (structPtr_ != nullptr && structPtr_->callbacks != nullptr) {
+        if (structPtr_->callbacks->onReportStateCallback != nullptr) {
+            return structPtr_->callbacks->onReportStateCallback();
+        }
+    }
+    return false;
+}
+
 PluginModule::SampleMode PluginModule::GetSampleMode() const
 {
     if (structPtr_ && structPtr_->callbacks) {

@@ -108,7 +108,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession1, TestSize.Level1)
     ppc.set_name("abc1.so");
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
     PluginInfo plugin;
     plugin.name = "abc1.so";
     plugin.bufferSizeHint = 0;
@@ -259,7 +261,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession12, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -278,7 +282,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession22, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -402,7 +408,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession13, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -421,7 +429,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession23, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -550,7 +560,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession14, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -569,7 +581,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession24, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -693,7 +707,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession15, TestSize.Level1)
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**
@@ -712,7 +728,9 @@ HWTEST_F(UnitTestPluginService, CreatePluginSession25, TestSize.Level1)
     bc.set_pages(1);
     bc.set_policy(ProfilerSessionConfig_BufferConfig_Policy_RECYCLE);
 
-    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc, std::make_shared<ProfilerDataRepeater>(QUEUE_MAX_SIZE)));
+    ASSERT_FALSE(pluginService_->CreatePluginSession(ppc, bc,
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginData>>(QUEUE_MAX_SIZE),
+                 std::make_shared<ProfilerDataRepeater<ProfilerPluginState>>(QUEUE_MAX_SIZE)));
 }
 
 /**

@@ -22,12 +22,12 @@
 #include "hiperf_plugin_config.pb.h"
 #include "profiler_service.grpc.pb.h"
 #include "schedule_task_manager.h"
+#include "profiler_data_repeater.h"
 
 class PluginService;
 
 class PluginSession;
 class TraceFileWriter;
-class ProfilerDataRepeater;
 class PluginSessionManager;
 
 using PluginSessionPtr = STD_PTR(shared, PluginSession);
@@ -59,6 +59,11 @@ public:
     ::grpc::Status FetchData(::grpc::ServerContext* context,
                              const ::FetchDataRequest* request,
                              ::grpc::ServerWriter<::FetchDataResponse>* writer) override;
+
+    // get server-side cached subscribe data since current session started.
+    ::grpc::Status SubscribeProfilerEvt(::grpc::ServerContext* context,
+                             const ::SubscribeProfilerEvtRequest* request,
+                             ::grpc::ServerWriter<::SubscribeProfilerEvtResponse>* writer) override;
 
     // stop tracing session, deactive server side tracing triggers.
     ::grpc::Status StopSession(::grpc::ServerContext* context,
@@ -96,7 +101,8 @@ private:
         std::vector<std::string> pluginNames;
         std::vector<BufferConfig> bufferConfigs;
         std::vector<ProfilerPluginConfig> pluginConfigs;
-        std::shared_ptr<ProfilerDataRepeater> dataRepeater {nullptr};
+        std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>> dataRepeater {nullptr};
+        std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater {nullptr};
         std::shared_ptr<TraceFileWriter> traceFileWriter {nullptr};
         ScheduleTaskManager stopExpireTask;
 
@@ -123,6 +129,8 @@ private:
 
     bool RemoveSessionContext(uint32_t sessionId);
 
+    void CheckClientStatus();
+
     void MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
         const std::string& outputFile, const std::string& pluginVersion);
 
@@ -135,6 +143,9 @@ private:
     std::map<uint32_t, SessionContextPtr> sessionContext_ = {};
     std::unique_ptr<grpc::Server> server_ = nullptr;
     ScheduleTaskManager removeTask_;
+    ScheduleTaskManager checkStatusManager_;
+    std::atomic<int32_t> heartbeatFd_ = -1;
+    std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater_ = nullptr;
 
     DISALLOW_COPY_AND_MOVE(ProfilerService);
 };

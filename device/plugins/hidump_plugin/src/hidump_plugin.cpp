@@ -157,6 +157,9 @@ void HidumpPlugin::Loop(void)
                 dataProto.SerializeToArray(buffer_.data(), buffer_.size());
                 resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
                 resultWriter_->flush(resultWriter_);
+                if (!dataReady_) {
+                    dataReady_ = true;
+                }
             }
         } else {
             ProtoEncoder::HidumpInfo hidumpInfo(resultWriter_->startReport(resultWriter_));
@@ -164,6 +167,9 @@ void HidumpPlugin::Loop(void)
                 PROFILER_LOG_ERROR(LOG_CORE, "parse hidump info failed!");
             }
             int messageLen = hidumpInfo.Finish();
+            if (!dataReady_ && messageLen > 0) {
+                dataReady_ = true;
+            }
             resultWriter_->finishReport(resultWriter_, messageLen);
             resultWriter_->flush(resultWriter_);
         }

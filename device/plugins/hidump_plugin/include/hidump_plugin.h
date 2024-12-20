@@ -39,6 +39,10 @@ public:
 
     int SetWriter(WriterStruct* writer);
     void Loop(void);
+    bool IsDataReady()
+    {
+        return dataReady_.load();
+    }
 
 private:
     // for ut
@@ -57,6 +61,7 @@ private:
     std::mutex mutex_;
     std::thread writeThread_;
     std::atomic<bool> running_ = true;
+    std::atomic<bool> dataReady_ = false;
     std::unique_ptr<FILE, std::function<int (FILE*)>> fp_;
     volatile pid_t childPid_ = -1;
     int pipeFds_[2] = {-1, -1}; // 2: pipe fds

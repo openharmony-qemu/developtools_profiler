@@ -33,6 +33,9 @@ service IProfilerService {
     // get server-side cached tracing data since current session started.
     rpc FetchData(FetchDataRequest) returns (stream FetchDataResponse);
 
+    // get server-side cached subscribe data since current session started.
+    rpc SubscribeProfilerEvt(SubscribeProfilerEvtRequest) returns (stream SubscribeProfilerEvtResponse);
+
     // stop tracing session, deactivate server side tracing triggers.
     rpc StopSession(StopSessionRequest) returns (StopSessionResponse);
 
