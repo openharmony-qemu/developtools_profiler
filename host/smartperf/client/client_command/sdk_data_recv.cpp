@@ -130,18 +130,14 @@ namespace OHOS {
             char receiveBuf[MSG_MAX_LEN];
             std::string resStr;
             int readLen = 0;
-
             LOGD("Receiving data from socket fd[%d]: %d", index, params.receiveFd[index]);
-
             if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
                 close(params.receiveFd[index]);
                 params.receiveFd[index] = -1;
                 LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
-
             LOGD("Received data: %s", receiveBuf);
-
             receiveBuffer = receiveBuf;
 
             bool processFlag = true;
@@ -208,13 +204,11 @@ namespace OHOS {
                 close(sdkParams.serverFd);
                 return;
             }
-
             listenFd = sdkParams.pipFd[1];
             LOGI("Server listening on pipe fd: %d", listenFd);
             RunServerThread(dataVec, sdkParams);
             LOGI("SdkDataRecv server thread exit.");
         }
-
 
         void SdkDataRecv::RunServerThread(std::vector<std::string> &dataVec, ServerParams &params)
         {
@@ -238,7 +232,6 @@ namespace OHOS {
             FD_SET(params.pipFd[0], &readFds);
 
             LOGD("Setting up FD set for serverFd: %d, pipFd[0]: %d", params.serverFd, params.pipFd[0]);
-
             maxFd = std::max(params.serverFd, params.pipFd[0]);
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 if (params.receiveFd[i] >= 0) {
@@ -288,7 +281,6 @@ namespace OHOS {
                 close(params.serverFd);
                 params.serverFd = -1;
             }
-
             if (params.pipFd[0] != -1) {
                 close(params.pipFd[0]);
                 params.pipFd[0] = -1;

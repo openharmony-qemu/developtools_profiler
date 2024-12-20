@@ -103,17 +103,16 @@ public:
         token = token.substr(0, token.find(' '));
         std::string tcpToken = SPTask::GetInstance().GetTcpToken();
         LOGI("Comparing token with TCP token...");
-
         if (tcpToken == "" && token == "-SESSIONID") {
             LOGI("Token is empty and received token is '-SESSIONID', token check passed.");
             return OK;
         }
-
         if (token != tcpToken) {
             LOGE("Token mismatch.");
             return TOKEN_CHECK_FAILED;
         }
         LOGI("Token match");
+
         return OK;
     }
 
@@ -135,7 +134,6 @@ public:
                 std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
                 std::cout << "Socket TCP Recv: " << recvStrNoToken << std::endl;
                 LOGI("Received data: %s", recvStrNoToken.c_str());
-
                 // 解析消息 分发处理
                 const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
                 LOGI("Token check status: %d", tokenStatus);

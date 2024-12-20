@@ -309,7 +309,7 @@ void SPTask::StopSdkRecv()
         LOGI("SDK data is not enabled or sdkvec is empty, returning early");
         return;
     }
- 
+
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
@@ -553,7 +553,6 @@ void SPTask::StopGetInfo()
 void SPTask::StopGpuCounterRecv()
 {
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
-
     LOGI("GPU counter data will be saved to: %s", outGpuCounterDataPath.c_str());
 
     if (GetRecordState()) {
@@ -647,7 +646,6 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
     templateMap["fpsWarn"] = std::to_string(fcf.fps);
     templateMap["FrameTimeWarn"] = std::to_string(fcf.currentFpsTime);
     templateMap["TraceTime"] = std::to_string(startCaptuerTime);
-
     LOGI("Returning templateMap: fpsWarn = %s, FrameTimeWarn = %s, TraceTime = %s",
           templateMap["fpsWarn"].c_str(), templateMap["FrameTimeWarn"].c_str(), templateMap["TraceTime"].c_str());
 
@@ -660,7 +658,6 @@ bool SPTask::CheckCounterId()
     std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
     LOGI("Loading hiprofiler command: %s", hiprofilerCmd.c_str());
     SPUtils::LoadCmd(hiprofilerCmd, result);
-
     if (result.empty()) {
         LOGW("Failed to load hiprofiler command or received empty result.");
         return false;
@@ -677,14 +674,10 @@ bool SPTask::CheckCounterId()
 std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
     LOGI("Starting new thread with timestamp: %lld", timeStamp);
-
     auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
-
     std::thread spThread(thGetTrace);
-
     LOGI("Detaching thread for timestamp: %lld", timeStamp);
     spThread.detach();
-
     return spThread;
 }
 
@@ -692,9 +685,7 @@ void SPTask::GetHiperf(const std::string &traceName)
 {
     std::string result;
     std::string tmp = SetHiperf(traceName);
-
     LOGI("Constructed hiprofiler command: %s", tmp.c_str());
-
     std::cout << tmp << std::endl;
     SPUtils::LoadCmd(tmp, result);
     LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
@@ -751,7 +742,6 @@ void SPTask::KillHiperfCmd()
         std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
         SPUtils::LoadCmd(hiprofilerPid, result);
         SPUtils::StrSplit(result, " ", out);
-
         if (out.empty()) {
             LOGW("No hiprofiler PID found, exiting loop.");
             break;
@@ -792,10 +782,7 @@ std::string SPTask::SetHiperf(const std::string &traceName)
     std::string trtmp = strOne + hiPrefix + traceName + strTwo + "\n" + strThree + std::to_string(requestId) + "\n" +
         strFour + "\n" + strFive + hiPrefix + traceName + strSix + "\n" + strNine + strEleven + "\n" + strSeven +
         dataPrefix + traceName + strEight + strTen + "\n" + conFig;
-
-    // Log the final constructed string
     LOGD("Constructed hiprofiler command: %s", trtmp.c_str());
-    
     return trtmp;
 }
 
@@ -803,7 +790,6 @@ bool SPTask::GetRecordState()
 {
     return recordState;
 }
-
 int SPTask::GetCurrentBattary()
 {
     std::string content;
@@ -837,12 +823,10 @@ ErrCode SPTask::StartRecord()
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
     InitDataFile();
     screenshotFlag = true;
     recordState = true;
     LOGI("Recording started: Screenshot flag set to %d, Record state set to %d.", screenshotFlag, recordState);
-
     return ErrCode::OK;
 }
 
@@ -856,15 +840,12 @@ ErrCode SPTask::StopRecord()
 
     long long stopRecordTime = SPUtils::GetCurTime();
     LOGI("StopRecord initiated: Battery end level %d, Stop time %lld.", battaryEnd, stopRecordTime);
-
     while (stopRecordTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-
     screenshotFlag = false;
     recordState = false;
     LOGI("Recording stopped: Screenshot flag set to %d, Record state set to %d.", screenshotFlag, recordState);
-
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
     LOGI("Saving GPU counter data to path: %s", outGpuCounterDataPath.c_str());
 
