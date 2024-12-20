@@ -123,6 +123,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     LOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
+        FPS &fps = FPS::GetInstance();
+        fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
+        fps.firstDump = true;
         isInit = true;
         LOGI("InitTask success, task initialized.");
         return ErrCode::OK;
@@ -467,12 +470,12 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     return ErrCode::OK;
 }
 
-void SPTask::CreatPath(std::string Path)
+void SPTask::CreatPath(std::string path)
 {
-    if (!SPUtils::FileAccess(Path)) {
+    if (!SPUtils::FileAccess(path)) {
         LOGW("Path does not exist, attempting to create: %s", Path.c_str());
         std::string cmdResult;
-        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + Path;
+        std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
         bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
         if (cmdSuccess) {
             LOGI("Path created successfully: %s", Path.c_str());
@@ -546,6 +549,9 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
+    if (!vmap.empty()) {
+        vmap.erase(vmap.begin());
+    }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 
     LOGI("Write CSV header done.");
@@ -734,9 +740,7 @@ void SPTask::KillHiperfCmd()
     runTime = now > startCaptuerTime ? now - startCaptuerTime : LLONG_MAX - startCaptuerTime + now;
     runTime = runTime / RM_1000; // Convert to seconds
 
-    LOGI("Starting KillHiperfCmd. Capture time: %lld, Current time: %lld, Runtime: %lld seconds.",
-        startCaptuerTime, now, runTime);
-
+    LOGD("Preparing to exit run time(%lld)", runTime);
     do {
         out.clear();
         std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
@@ -763,6 +767,7 @@ void SPTask::KillHiperfCmd()
         LOGW("No hiprofiler PID found after waiting, nothing to kill.");
     }
 
+    LOGD("pidof hiprofiker_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
@@ -806,11 +811,12 @@ int SPTask::GetCurrentBattary()
         LOGE("Battery capacity parsing failed: No valid data after colon.");
         return 0;
     }
-    return std::stoi(content);
+    return SPUtilesTye::StringToSometype<int>(content);
 }
 
 ErrCode SPTask::StartRecord()
 {
+    LOGD("SPTask StartRecord");
     battaryStart = GetCurrentBattary();
     if (battaryStart == 0) {
         LOGE("StartRecord failed: Battery level is 0. Cannot start recording.");
@@ -832,6 +838,7 @@ ErrCode SPTask::StartRecord()
 
 ErrCode SPTask::StopRecord()
 {
+    LOGD("SPTask StopRecord");
     battaryEnd = GetCurrentBattary();
     if (battaryEnd == 0) {
         LOGE("StopRecord failed: Battery level is 0. Cannot stop recording.");

@@ -36,11 +36,26 @@ GC_INTERVAL = 10
 SLEEP_LONG = 195
 WAIT_TIMES = 7
 HOOK_SETTINGS_TIMES = 5
+TEST_TIMES = 20
 
 
 def task_cmd(index):
     indexstr = str(index)
     subprocess.check_output(f"hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
+
+
+def check_faultlog():
+    check = True
+    with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if "com.ohos.sceneboard" in line and ("syswarning" not in line):
+                check = False
+            if "render_service" in line:
+                check = False
+            if "com.example.insight_test_stage" in line:
+                check = False
+    return check
 
 
 class TestHiprofilerReliability:
@@ -103,35 +118,31 @@ class TestHiprofilerReliability:
 
     def test_appfreeze_profiler_test(self):
         subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell killall com.example.insight_test_stage")
         subprocess.check_output("hdc shell param set hiview.memleak.test disable")
-        subprocess.check_output("hdc shell killall hiview")
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
-        time.sleep(SLEEP_FOUR)
-        touch_button("模板测试")
-        time.sleep(1)
-        subprocess.check_output("hdc shell uitest uinput drag 100 800 100 100 1000")
-        time.sleep(1)
-        touch_button("Allocations_Js_Depth")
         i = 0
-        while i < CLICK_TIMES:
-            touch_button("malloc-release(depth 6)")
-            touch_button("small-malloc(depth 7)")
-            i += 1
-            time.sleep(SLEEP_FIVE)
-        
-        subprocess.check_output("hdc shell ls -lh /data/log/faultlog/faultlogger/ > /data/local/tmp/faultlog.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/faultlog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = True
-        with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                if "com.ohos.sceneboard" in line and ("syswarning" not in line):
-                    check = False
-                if "render_service" in line:
-                    check = False
-                if "com.example.insight_test_stage" in line:
-                    check = False
+        while i < TEST_TIMES:
+            i += 1
+            subprocess.check_output("hdc shell killall hiview")
+            subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+            subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+            time.sleep(SLEEP_FOUR)
+            touch_button("模板测试")
+            time.sleep(1)
+            subprocess.check_output("hdc shell uitest uinput drag 100 800 100 100 1000")
+            time.sleep(1)
+            touch_button("Allocations_Js_Depth")
+            i = 0
+            while i < CLICK_TIMES:
+                touch_button("malloc-release(depth 6)")
+                touch_button("small-malloc(depth 7)")
+                i += 1
+                time.sleep(SLEEP_FIVE)
+            
+            subprocess.check_output("hdc shell ls -lh /data/log/faultlog/faultlogger/ > /data/local/tmp/faultlog.txt")
+            subprocess.check_output(f"hdc file recv /data/local/tmp/faultlog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+            if not check_faultlog():
+                check = False
         assert check
 
     def test_appfreeze_cmd_settings(self):

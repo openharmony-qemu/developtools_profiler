@@ -28,6 +28,7 @@
 #include "include/sp_log.h"
 #include "include/RAM.h"
 #include "include/common.h"
+#include "include/FPS.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -72,6 +73,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
         }
     }
+    LOGD("SmartPerfCommand::SmartPerfCommand complete");
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
@@ -80,7 +82,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << "Version: " << smartPerfVersion << std::endl;
+        std::cout << "Version: " << SPUtils::SMART_PERF_VERSION << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
@@ -141,6 +143,9 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
             pkgName = argStr1;
             if (pkgName.length() > 0) {
                 SpProfilerFactory::SetProfilerPkg(pkgName);
+                FPS &fps = FPS::GetInstance();
+                fps.isGameApp = SPUtils::GetIsGameApp(pkgName);
+                fps.firstDump = true;
             }
             break;
         case CommandType::CT_VIEW:

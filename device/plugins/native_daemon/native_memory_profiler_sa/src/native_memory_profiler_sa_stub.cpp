@@ -84,7 +84,7 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessagePar
         std::string pidPath = "/proc/" + std::to_string(config->pid_) + "/status";
         if (stat(pidPath.c_str(), &statBuf) != 0) {
             PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFile hook process does not exist");
-            return false;
+            return RET_ERR;
         }
     }
     uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());

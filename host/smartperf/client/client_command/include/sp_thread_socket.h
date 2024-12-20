@@ -26,6 +26,7 @@
 #include "common.h"
 #include "heartbeat.h"
 #include "Dubai.h"
+#include "Network.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -334,6 +335,7 @@ public:
         auto iterator = MESSAGE_MAP.begin();
         while (iterator != MESSAGE_MAP.end()) {
             std::string recvBuf = spSocket.RecvBuf();
+            LOGD("UDP recv : %s", recvBuf.c_str());
             if (recvBuf.size() != 0) {
                 Heartbeat &heartbeat = Heartbeat::GetInstance();
                 heartbeat.UpdatestartTime();
@@ -348,9 +350,11 @@ public:
             } else {
                 std::map<std::string, std::string> data;
                 if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
+                    Network::GetInstance().IsFindHap();
                     profiler->ItemData(); // record the collection point for the first time,no need to return
                     data["network_traffic"] = "true";
                 } else if (iterator->first == MessageType::GET_NETWORK_TRAFFIC) {
+                    Network::GetInstance().IsStopFindHap();
                     data = profiler->ItemData();
                     data["network_traffic"] = "true";
                 } else {
@@ -376,11 +380,13 @@ public:
                 }
             }
             spSocket.Sendto(resultfps);
+            LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
         } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
             FetchCpuStats(spSocket, data);
         } else {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
+            LOGD("UDP send retCode = %s", retCode.c_str());
         }
     }
     void SocketHeartbeat() const
@@ -417,15 +423,13 @@ public:
             }
         }
         spSocket.Sendto(resultCpu);
+        LOGD("UDP send resultCpu = %s", resultCpu.c_str());
     }
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
-            }
             if (!SpProfilerFactory::editorFlag) {
                 std::string processId = "";
                 OHOS::SmartPerf::StartUpDelay sp;
@@ -434,6 +438,12 @@ public:
                 SpProfilerFactory::SetProfilerPkg(retCode);
             }
             spSocket.Sendto(retCode);
+            LOGD("UDP send PkgName = %s", retCode.c_str());
+        } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
+            retCode = SplitMsg(recvBuf);
+            ProfilerFPS &pfps = ProfilerFPS::GetInstance();
+            pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
+            pfps.firstDump = true;
         } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
             retCode = SplitMsg(recvBuf);
             SpProfilerFactory::SetProfilerGameLayer(retCode);
@@ -443,15 +453,34 @@ public:
         } else if (iterator->first == MessageType::GET_CPU_NUM) {
             retCode = SPUtils::GetCpuNum();
             spSocket.Sendto(retCode);
+            LOGD("UDP send cpuNum = %s", retCode.c_str());
         } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
             BackDesktop();
-        } else if (iterator->first == MessageType::START_DUBAI_DB) {
+        } else {
+            HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
+        }
+    }
+    void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    {
+        if (iterator->first == MessageType::START_DUBAI_DB) {
+            retCode = SplitMsg(recvBuf);
+            if (retCode.find("smartperf") != std::string::npos) {
+                Dubai::dubaiPkgName = retCode;
+            }
+            LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             Dubai::CallBeginAndFinish();
         } else if (iterator->first == MessageType::SET_DUBAI_DB) {
             Dubai::CallBeginAndFinish();
             Dubai::isDumpDubaiFinish = true;
+            ProfilerFPS::isLowCurFps = false;
             retCode = Dubai::CallMoveDubaiDbFinished();
             spSocket.Sendto(retCode);
+            LOGD("UDP send DuBai get finish");
+        } else if (iterator->first == MessageType::CHECK_UDP_STATUS) {
+            retCode = "UDP status is normal";
+            spSocket.Sendto(retCode);
+            LOGD("UDP status is normal");
         } else {
             retCode = iterator->second;
             spSocket.Sendto(retCode);

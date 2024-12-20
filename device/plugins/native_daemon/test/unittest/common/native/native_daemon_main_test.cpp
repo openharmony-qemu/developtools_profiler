@@ -49,7 +49,6 @@ public:
         return true;
     }
 };
-}
 
 /*
 @tc.name: NativeDaemonMainTest001
@@ -400,4 +399,5 @@ HWTEST_F(NativeDaemonMainTest, NativeDaemonMainTest022, TestSize.Level1)
     std::string cmd = "native_daemon -n hiview";
     bool ret = RunCommand(cmd, content);
     ASSERT_TRUE(ret);
+}
 }

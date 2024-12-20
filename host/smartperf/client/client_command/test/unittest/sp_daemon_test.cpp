@@ -114,11 +114,11 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string packName = "ohos.samples.ecg";
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
-    
+
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters();
+    fps.CalcFpsAndJitters(true);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";

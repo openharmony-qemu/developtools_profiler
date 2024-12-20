@@ -27,7 +27,6 @@ namespace SmartPerf {
 class SmartPerfCommand {
 public:
     const std::string smartPerfExeName = "SP_daemon";
-    const std::string smartPerfVersion = "1.0.5\n";
     const std::string smartPerfMsgErr = "error input!\n use command '--help' get more information\n";
     const std::string smartPerfMsg = "OpenHarmony performance testing tool SmartPerf command-line version\n"
         "Usage: SP_daemon [options] [arguments]\n\n"

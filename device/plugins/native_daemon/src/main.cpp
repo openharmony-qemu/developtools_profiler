@@ -273,6 +273,9 @@ int main(int argc, char* argv[])
                 std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
             }
         } else {
+            if (!COMMON::GetDeveloperMode()) {
+                return 0;
+            }
             if (!COMMON::IsBetaVersion()) {
                 printf("memory profiler only support in beta version\n");
                 if (lockFileFd > 0) {
@@ -319,6 +322,9 @@ int main(int argc, char* argv[])
             }
         }
     } else {
+        if (!COMMON::GetDeveloperMode()) {
+            return 0;
+        }
         auto hookManager = std::make_shared<HookManager>();
         if (hookManager == nullptr) {
             if (lockFileFd > 0) {

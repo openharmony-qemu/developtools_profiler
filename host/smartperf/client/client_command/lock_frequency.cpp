@@ -27,7 +27,7 @@ namespace SmartPerf {
     }
     void LockFrequency::LockingThread()
     {
-        LOGI("Lock frequency thread create");
+        LOGD("Lock frequency thread create");
         const int loopLockTime = 4000;
         char soFilePathChar[PATH_MAX] = {0x00};
         if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
@@ -50,7 +50,7 @@ namespace SmartPerf {
             std::this_thread::sleep_for(std::chrono::milliseconds(loopLockTime));
         }
 
-        LOGI("Lock frequency thread end");
+        LOGD("Lock frequency thread end");
     }
 
     void LockFrequency::SetIsCollecting(bool state)

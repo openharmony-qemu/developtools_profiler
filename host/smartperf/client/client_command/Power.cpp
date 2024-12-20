@@ -24,8 +24,10 @@ std::map<std::string, std::string> Power::ItemData()
     if (!rkFlag) {
         std::string currentNow;
         SPUtils::LoadFile(currentNowPath, currentNow);
+        LOGD("currentNow = %s", currentNow.c_str());
         std::string voltageNow;
         SPUtils::LoadFile(voltageNowPath, voltageNow);
+        LOGD("voltageNow = %s", voltageNow.c_str());
         result["currentNow"] = currentNow;
         result["voltageNow"] = voltageNow;
         if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {

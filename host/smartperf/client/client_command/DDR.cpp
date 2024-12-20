@@ -24,7 +24,7 @@ std::map<std::string, std::string> DDR::ItemData()
     if (result.find("ddrFrequency") != result.end() && result["ddrFrequency"].empty()) {
         result["ddrFrequency"] = "NA";
     }
-    LOGD("DDR::ItemData map size(%u)", result.size());
+    LOGD("ddrFrequency = %s", result["ddrFrequency"].c_str());
     return result;
 }
 long long DDR::GetDdrFreq()
