@@ -492,7 +492,8 @@ HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
     config <<= MOBILE_BIT;
     config |= SMB_SIZE;
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    std::shared_ptr<FfrtProfilerSocketService> socketService_ = std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
+    std::shared_ptr<FfrtProfilerSocketService> socketService_ =
+        std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
 
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
@@ -511,7 +512,8 @@ HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
     config <<= MOBILE_BIT;
     config |= SMB_SIZE;
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    std::shared_ptr<FfrtProfilerSocketService> socketService_ = std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
+    std::shared_ptr<FfrtProfilerSocketService> socketService_ =
+        std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
 
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
