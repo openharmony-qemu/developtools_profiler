@@ -73,6 +73,7 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
     }
 #endif
 }
+
 void SpLog(SpLogLevel logLevel, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
