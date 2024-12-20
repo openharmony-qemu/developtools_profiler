@@ -84,7 +84,7 @@ public:
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
     void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
-    void CreatPath(std::string Path);
+    void CreatPath(std::string path);
     void ConfigDataThread();
     void StopSdkRecv();
     void StopGpuCounterRecv();
@@ -94,6 +94,7 @@ public:
     ErrCode StartRecord();
     ErrCode StopRecord();
     bool GetRecordState();
+    void SaveScreenShot();
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);
     std::string GetTcpToken();

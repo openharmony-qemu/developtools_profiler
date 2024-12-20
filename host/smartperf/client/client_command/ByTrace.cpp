@@ -52,6 +52,7 @@ TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) c
     times++;
     int two = 2;
     long long curTime = SPUtils::GetCurTime();
+    LOGD("Bytrace get curTime : %lld", curTime);
     if (curNum <= sum && currentTrigger < 0 && times > two) {
         for (size_t i = 0; i < jitters.size(); i++) {
             long long normalJitter = jitters[i] / 1e6;
