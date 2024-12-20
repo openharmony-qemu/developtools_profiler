@@ -21,6 +21,7 @@
 #include <dirent.h>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <climits>
 #include <cctype>
 #include <thread>
@@ -34,13 +35,11 @@ namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
-        netWorktex.lock();
-        auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
-        threadGetHapNetwork.detach();
-        netWorktex.unlock();
+        ThreadFunctions();
         return result;
     } else {
         result = Network::GetNetworkInfo();
+        return result;
     }
     if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
         result["networkUp"] = "NA";
@@ -70,7 +69,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         diffTx = 0;
         diffRx = 0;
     }
-    ClearHapFlag();
     return networkInfo;
 }
 std::map<std::string, std::string> Network::GetNetworkInfoDev()
@@ -142,27 +140,32 @@ void Network::IsFindHap()
 }
 void Network::IsStopFindHap()
 {
+    hapFlag = false;
     stophapFlag = true;
 }
+
+void Network::ThreadFunctions()
+{
+    auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
+    threadGetHapNetwork.detach();
+}
+
 void Network::ThreadGetHapNetwork()
 {
     while (!stophapFlag) {
         long long startTime = SPUtils::GetCurTime();
-        result = Network::GetNetworkInfo();
+        result = GetNetworkInfo();
         long long stopTime = SPUtils::GetCurTime();
         long long time = 998;
         long long costTime = stopTime - startTime;
         std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
     }
-    if (stophapFlag) {
-        result = Network::GetNetworkInfo();
-    }
+    ClearHapFlag();
 }
 void Network::ClearHapFlag()
 {
     if (stophapFlag) {
         isFirst = true;
-        hapFlag = false;
         stophapFlag = false;
         rmnetCurRx = 0;
         rmnetCurTx = 0;

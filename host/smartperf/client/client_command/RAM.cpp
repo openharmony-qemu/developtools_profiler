@@ -166,7 +166,8 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             procRamInfo[value] = "0";
         }
     }
-    if (pclose(fd) == -1) {
+    int closeStatus = pclose(fd);
+    if (closeStatus == -1) {
         LOGE("Error: Failed to close file");
         return {};
     }

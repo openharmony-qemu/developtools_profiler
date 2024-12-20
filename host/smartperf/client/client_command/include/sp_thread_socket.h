@@ -434,8 +434,9 @@ public:
         if (iterator->first == MessageType::START_DUBAI_DB) {
             retCode = SplitMsg(recvBuf);
             if (retCode.find("smartperf") != std::string::npos) {
-                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
+                Dubai::dubaiPkgName = retCode;
             }
+            LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             Dubai::CallBeginAndFinish();
         } else if (iterator->first == MessageType::SET_DUBAI_DB) {
             Dubai::CallBeginAndFinish();

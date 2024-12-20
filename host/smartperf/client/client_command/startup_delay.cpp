@@ -195,6 +195,10 @@ std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) c
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
+        if (args.empty() || args[0] == nullptr) {
+            LOGE("startup_delay::Invalid commd");
+            return output;
+        }
         execvp(args[0], const_cast<char* const*>(args.data()));
         LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
         _exit(EXIT_FAILURE);
@@ -224,7 +228,8 @@ std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) c
 
 std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
 {
-    std::vector<const char*> args = {"pidof", curPkgName.c_str(), nullptr};
+    std::vector<const char*> args = {"pidof", curPkgName.c_str()};
+    args.push_back(nullptr);
     std::string resultProcId = ExecuteCommand(args);
     if (!resultProcId.empty()) {
         if (resultProcId.back() == '\n') {
