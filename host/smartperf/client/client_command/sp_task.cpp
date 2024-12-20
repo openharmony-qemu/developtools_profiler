@@ -119,8 +119,8 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     std::string perf = CMD_COMMAND_MAP.at(CmdCommand::PERF);
     ELOGI("Loading perf command: %s", perf.c_str());
     SPUtils::LoadCmd(perf, result);
-    std::cout << recvStr.substr(find("-SESSIONID")) << std::endl;
-    ELOGI("Received init task string: %s", recvStr.substr(find("-SESSIONID")).c_str());
+    std::cout << recvStr.substr(recvStr.find("-SESSIONID")) << std::endl;
+    ELOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
         isInit = true;
