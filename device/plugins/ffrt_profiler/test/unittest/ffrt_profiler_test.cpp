@@ -118,7 +118,6 @@ public:
     }
 
     int ffrtPrfolerExePid_{0};
-    
 };
 
 HWTEST_F(FfrtPofilerTest, TestFfrtProfilerRuntime, TestSize.Level1)
@@ -529,7 +528,8 @@ HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
 HWTEST_F(FfrtPofilerTest, TestFunction024, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    std::shared_ptr<FfrtProfilerSocketService> socketService_ = std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
+    std::shared_ptr<FfrtProfilerSocketService> socketService_ =
+        std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
     ASSERT_FALSE(socketService_->StartService("ffrt_profiler_unix_socket"));
 }
 
@@ -547,7 +547,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction025, TestSize.Level1)
     config.add_pid(pid);
     config.add_startup_process_name("test_name002");
     config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
-    const int8_t data[] = {1,2,3};
+    const int8_t data[] = {1, 2, 3};
     ffrtProfilerMgr->SetConfig(config);
     handle->SerializeData(data, FILE_SIZE);
 }
