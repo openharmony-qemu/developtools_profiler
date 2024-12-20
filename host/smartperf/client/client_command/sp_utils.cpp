@@ -31,6 +31,11 @@
 #include "include/common.h"
 #include "cpu_collector.h"
 #include "collect_result.h"
+#include "include/FPS.h"
+#include "include/GPU.h"
+#include "include/Power.h"
+#include "include/DDR.h"
+#include "include/profiler_fps.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -42,6 +47,7 @@ const unsigned int INT_MAX_LEN = 10;
 const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
+const int BUFFER_SIZE = 1024;
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -53,14 +59,14 @@ bool SPUtils::HasNumber(const std::string &str)
 bool SPUtils::Cmp(const std::string &a, const std::string &b)
 {
     if (HasNumber(a) && HasNumber(b)) {
-        std::string str1 = a.substr(0, a.find_first_of("0123456789"));
-        std::string str2 = b.substr(0, b.find_first_of("0123456789"));
-        if (str1 != str2) {
-            return str1 < str2;
+        std::string stra = a.substr(0, a.find_first_of("0123456789"));
+        std::string strb = b.substr(0, b.find_first_of("0123456789"));
+        if (stra != strb) {
+            return stra < strb;
         }
-        int num1 = std::stoi(a.substr(str1.length()));
-        int num2 = std::stoi(b.substr(str2.length()));
-        return num1 < num2;
+        int numa = SPUtilesTye::StringToSometype<int>(a.substr(stra.length()));
+        int numb = SPUtilesTye::StringToSometype<int>(b.substr(strb.length()));
+        return numa < numb;
     }
     return false;
 }
@@ -100,7 +106,8 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
         result = buf;
     }
     if (pclose(fd) == -1) {
-        std::cout << "" << std::endl;
+        LOGE("Error: Failed to close file");
+        return false;
     }
 
     if (isClearLinkBreak) {
@@ -287,7 +294,7 @@ std::string SPUtils::GetDeviceInfoMap()
     deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
     deviceInfoMap["activeMode"] = screenSize;
     if (deviceInfoMap.empty()) {
-        LOGI("Failed to obtain device information");
+        LOGE("Failed to obtain device information");
     }
     for (auto iter = deviceInfoMap.cbegin(); iter != deviceInfoMap.cend(); ++iter) {
         printf("%s: %s\n", iter->first.c_str(), iter->second.c_str());
@@ -316,6 +323,7 @@ std::map<std::string, std::string> SPUtils::GetDeviceInfo()
     resultMap["name"] = name;
     resultMap["model"] = model;
     resultMap["fullname"] = fullname;
+    resultMap["daemonPerfVersion"] = SMART_PERF_VERSION;
     return resultMap;
 }
 std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
@@ -623,7 +631,7 @@ std::string SPUtils::GetCpuNum()
     cpuCores += std::to_string(cpuNum);
     if (cpuNum == 0) {
         std::cout << "CPU frequency collection failed." << std::endl;
-        LOGI("CPU frequency collection failed.");
+        LOGE("CPU frequency collection failed.");
     }
     return cpuCores;
 }
@@ -641,55 +649,127 @@ void SPUtils::GetCurrentTime(int num, int prevTime)
         }
     }
 }
-bool SPUtils::IsForeGround(std::string &pkg)
+bool SPUtils::IsForeGround(const std::string &pkg)
 {
     bool isFoundAppName = false;
-    bool isFoundBundleName = false;
-    const std::string cmd = "aa dump -l";
-    char buf[1024] = {'\0'};
-    std::string appLine = "app name [" + pkg;
-    std::string bundleLine = "bundle name [" + pkg;
+    bool isForeground = false;
+    std::string result = "";
+    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
+    if (cmd.empty()) {
+        LOGE("cmd is null");
+        return false;
+    }
+
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         return false;
     }
-    bool tag = false;
-    while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line = buf;
-        if (line.find(appLine) != std::string::npos) {
+
+    size_t bytesRead;
+    std::array<char, BUFFER_SIZE> buf;
+    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
+        result.append(buf.data(), bytesRead);
+    }
+    if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
+        return false;
+    }
+
+    std::istringstream iss(result);
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (!isFoundAppName && line.find("mission name #[#" + pkg) != std::string::npos) {
             isFoundAppName = true;
         }
-        if (line.find(bundleLine) != std::string::npos) {
-            isFoundBundleName = true;
-        }
-        if (isFoundAppName || isFoundBundleName) {
-            if (line.find("app state") != std::string::npos) {
-                tag = IsFindForeGround(line);
-                isFoundAppName = false;
-                isFoundBundleName = false;
+        if (isFoundAppName) {
+            if (line.find("state #FOREGROUND") != std::string::npos) {
+                isForeground = true;
+                break;
             }
         }
     }
-    pclose(fd);
-    return tag;
+    return isForeground;
 }
-bool SPUtils::IsFindForeGround(std::string line)
-{
-    std::string foreGroundTag = line.substr(line.find("#") + 1);
-    if (foreGroundTag.find("FOREGROUND") != std::string::npos) {
-        return true;
-    } else {
-        return false;
-    }
-}
+
 bool SPUtils::IsFindAbilist()
 {
     std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    if (abilist.find("arm") != std::string::npos) {
+    std::string brand = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    if (abilist.find("arm") != std::string::npos && brand.find("HUA") != std::string::npos) {
         return true;
+    } else if (abilist.find("arm") != std::string::npos && brand.find("HUA") == std::string::npos) {
+        return OHOS::SmartPerf::FPS::GetInstance().SetOtherDeviceFlag();
     } else {
         return false;
     }
+}
+void SPUtils::SetRkFlag()
+{
+    bool findAbilistResult = IsFindAbilist();
+    if (!findAbilistResult) {
+        OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
+        OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
+    }
+}
+bool SPUtils::GetPathPermissions(const std::string &path)
+{
+    const std::string dataCsv = "/data/local/tmp/data.csv";
+    const std::string indexInfoCsv = "/data/local/tmp/smartperf/1/t_index_info.csv";
+    int isDataCsv = strcmp(path.c_str(), dataCsv.c_str());
+    int isIndexInfoCsv = strcmp(path.c_str(), indexInfoCsv.c_str());
+    if (!path.empty()) {
+        std::string cmdResult;
+        std::string cmd;
+        if (isDataCsv == 0 || isIndexInfoCsv == 0) {
+            cmd = "ls -l " + path;
+            LoadCmd(cmd, cmdResult);
+            std::string result = cmdResult.substr(0, 10);
+            return result == "-rw-r--r--";
+        } else {
+            LOGE("the path is false");
+            return false;
+        }
+    } else {
+        LOGE("THE path is empty");
+        return false;
+    }
+}
+
+bool SPUtils::GetIsGameApp(std::string pkg)
+{
+    bool isGame = false;
+    std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
+    LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        LOGD("ProfilerFPS::fd is empty");
+    }
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        if (line.find("---") != std::string::npos || line.length() <= 1) {
+            continue;
+        }
+        if (line.find("bundleName unknown") != std::string::npos) {
+            isGame = false;
+            break;
+        } else {
+            std::vector<std::string> params;
+            SPUtils::StrSplit(line, " ", params);
+            if (params[0] == "1" && params[1] == pkg) {
+                isGame = true;
+                LOGD("SPUtils::GetIsGameApp isGame", isGame);
+                break;
+            }
+        }
+    }
+    if (pclose(fd) == -1) {
+        LOGE("SPUtils::IsGameApp Error Failed to close file");
+    }
+    return isGame;
 }
 }
 }

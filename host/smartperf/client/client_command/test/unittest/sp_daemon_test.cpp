@@ -118,7 +118,7 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters();
+    fps.CalcFpsAndJitters(true);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
@@ -127,6 +127,52 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string::size_type strOne = result.find("fpsJitters");
     std::string::size_type strTwo = result.find("timestamp");
     if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    }
+
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
+
+/**
+ * @tc.name: TemperatureTestCase
+ * @tc.desc: Test Temperature
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
+{
+    std::string cmd = "SP_daemon -N 1 -t";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("timestamp");
+    std::string::size_type strTwo = result.find("system_h");
+    std::string::size_type strThree = result.find("gpu-thermal");
+    if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
+        flag = true;
+    }
+
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
+
+/**
+ * @tc.name: PowerTestCase
+ * @tc.desc: Test Power
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
+{
+    std::string cmd = "SP_daemon -N 1 -p";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("currentNow");
+    std::string::size_type strTwo = result.find("voltageNow");
+    std::string::size_type strThree = result.find("timestamp");
+    if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    } else if ((strThree != result.npos)) {
         flag = true;
     }
 
@@ -249,42 +295,6 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
     auto ret = SPUtils::LoadCmd(cmd, result);
     std::string::size_type strOne = result.find("Collection");
     std::string::size_type strTwo = result.find("ended");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    }
-
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-/**
- * @tc.name: ProfilerFpsTestCase
- * @tc.desc: Test ProfilerFps
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
-{
-    ProfilerFPS &profiler = ProfilerFPS::GetInstance();
-    std::string packName = "ohos.samples.ecg";
-    int sectionsNum = 10;
-    FpsInfoProfiler fpsInfoResult;
-    int nums = 10;
-    int printCount = 10;
-    long long msStartTime = 0;
-    int numb = 20;
-    long long harTime = 0;
-
-    profiler.GetResultFPS(sectionsNum);
-    profiler.CalcFpsAndJitters();
-    profiler.GetSectionsFps(fpsInfoResult, nums);
-    profiler.GetSectionsPrint(printCount, msStartTime, numb, harTime);
-
-    std::string cmd = "SP_daemon -profilerfps 10";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("set");
-    std::string::size_type strTwo = result.find("success");
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }

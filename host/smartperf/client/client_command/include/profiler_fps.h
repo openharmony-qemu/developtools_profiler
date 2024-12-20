@@ -22,7 +22,8 @@ namespace SmartPerf {
 struct FpsInfoProfiler {
     int fps;
     std::vector<long long> jitters;
-    std::vector<long long> currTimeStamps;
+    std::vector<long long> currTimeStamps; // 命令行
+    std::vector<long long> currDumpTimeStamps;  // hap
     int curTime;
     long long currTimeDiff;
     long long currTimeDump;
@@ -61,26 +62,30 @@ public:
     void SetTraceCatch();
     void SetGameLayer(std::string isGameView);
     std::string GetGameLayer();
+    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos);
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
-    FpsInfoProfiler selfRerderLayers(const std::string &gameLayer);
-    bool IsForeGround();
-    bool IsFindForeGround(std::string line) const;
-    void CalcFpsAndJitters();
-    FpsInfoProfiler GetSurfaceFrame(std::string name);
+    FpsInfoProfiler GetTime();
+    bool CalcFpsAndJitters(bool isBreak);
+    long long CalculateJitter();
+    FpsInfoProfiler GetSurfaceFrame(const std::string& name, FpsInfoProfiler &timeFps);
+    FpsInfoProfiler GetFrameInfoFromMap(const std::string& name, FpsInfoProfiler &timeFps);
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
-    void GetCurrentTime(int sleepNum);
     void GetOhFps(std::vector<std::string> v);
     void SetRkFlag();
     std::string GetSurface();
     FpsInfoProfiler fpsInfo;
-    FpsInfoProfiler fpsInfoMax;
+    FpsInfoProfiler fpsInfoTime;
     FpsInfoProfiler lastFpsInfoResult;
+    static inline bool firstDump = false;
+    static inline bool isGameApp = false;
+    FpsInfoProfiler GetChangedLayerFps(FpsInfoProfiler &timeFps);
+    FpsInfoProfiler GetAppFps(FpsInfoProfiler &timeFps, std::string &uniteLayer);
     static ProfilerFPS &GetInstance()
     {
         static ProfilerFPS instance;
@@ -88,6 +93,8 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     void SetProcessId(const std::string &pid);
+    static inline bool isLowCurFps = false;
+    void CalcJitters();
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
@@ -98,9 +105,9 @@ private:
     int number = 2;
     bool refresh = false;
     long long mod = 1e9;
+    long long prevlastScreenTimestamp = 0;
     long long curScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
-    long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
     bool isFirstResult = false;
     long oneSec = 1000000;
@@ -113,14 +120,13 @@ private:
     long long oneThousand = 1000;
     long long msClear = 1000000000;
     long long currRealTime = 0;
-    bool isFoundAppName = false;
-    bool isFoundBundleName = false;
     int isCatchTrace = 0;
     std::string isGameLayer = "";
     bool processFlag = false;
     bool ohFlag = false;
     std::string processId = "";
     bool rkFlag = false;
+    std::string gameLayerName;
 };
 }
 }

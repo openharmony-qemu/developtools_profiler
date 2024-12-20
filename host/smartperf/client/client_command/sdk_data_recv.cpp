@@ -108,8 +108,9 @@ namespace OHOS {
                 } else if (first == "para0") {
                     eventName = second;
                 } else if (first == "time") {
-                    realTimestamp = std::to_string(std::stoll(second) - SPTask::GetInstance().GetRealStartTime());
-                    timestamp = std::to_string(std::stoll(second) - params.startTime);
+                    realTimestamp = std::to_string(SPUtilesTye::StringToSometype<long long>(second) -
+                                    SPTask::GetInstance().GetRealStartTime());
+                    timestamp = std::to_string(SPUtilesTye::StringToSometype<long long>(second) - params.startTime);
                 } else if (first == "enable") {
                     enable = second;
                 } else if (first == "value") {
@@ -131,7 +132,7 @@ namespace OHOS {
                 params.receiveFd[index] = -1;
                 return "";
             }
-            LOGI("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
+            LOGD("Fd %d,%d, receove %s", index, params.receiveFd[index], receiveBuf);
             receiveBuffer = receiveBuf;
 
             bool processFlag = true;

@@ -63,7 +63,7 @@ int SpServerSocket::Init(ProtoType type)
         }
     }
 
-    LOGI("SpServerSocket::Init OK,prot(%d)", sockPort);
+    LOGD("SpServerSocket::Init OK,prot(%d)", sockPort);
     return 0;
 }
 
@@ -98,7 +98,7 @@ void SpServerSocket::Close()
     local.sin_port = htons(sockPort);
     local.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (::bind(sock, reinterpret_cast<struct sockaddr *>(&local), sizeof(local)) < 0) {
-        LOGI("SpServerSocket::Init Socket Bind failed");
+        LOGE("SpServerSocket::Init Socket Bind failed");
     }
 }
 
@@ -109,6 +109,9 @@ int SpServerSocket::Recvfrom()
     int l = recvfrom(sock, rbuf, sizeof(rbuf) - 1, 0, reinterpret_cast<struct sockaddr *>(&client), &len);
     if (l > 0) {
         std::cout << "Client:" << rbuf << std::endl;
+    } else {
+        LOGE("SpServerSocket::Recvfrom Error(%d)", l);
+        return -1;
     }
     return l;
 }

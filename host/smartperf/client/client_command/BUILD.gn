@@ -50,6 +50,7 @@ ohos_executable("SP_daemon") {
     "control_call_cmd.cpp",
     "editor_command.cpp",
     "heartbeat.cpp",
+    "lock_frequency.cpp",
     "navigation.cpp",
     "parse_click_complete_trace.cpp",
     "parse_click_response_trace.cpp",

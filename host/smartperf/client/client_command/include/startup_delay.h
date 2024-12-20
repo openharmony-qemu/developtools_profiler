@@ -15,7 +15,6 @@
 #ifndef STARTUP_DELAY_H
 #define STARTUP_DELAY_H
 #include <thread>
-
 namespace OHOS {
 namespace SmartPerf {
 class StartUpDelay {
@@ -29,6 +28,7 @@ public:
     bool GetSpTcp();
     bool GetSpClear() const;
     void ClearOldServer() const;
+    std::string ExecuteCommand(const std::vector<const char*> &args) const;
 };
 }
 }

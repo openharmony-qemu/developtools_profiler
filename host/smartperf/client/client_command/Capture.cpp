@@ -55,7 +55,7 @@ std::map<std::string, std::string> Capture::ItemData()
     }
     result["capture"] = path;
 
-    LOGI("Capture::ItemData map size(%u)", result.size());
+    LOGD("capture = %s", result["capture"].c_str());
     return result;
 }
 
@@ -74,18 +74,18 @@ void Capture::ThreadGetCatch()
     const std::string savePath = captureDir + "/screenCap_" + std::to_string(curTime) + ".png";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
-            LOGI("%s capture not be created!", captureDir.c_str());
+            LOGE("%s capture not be created!", captureDir.c_str());
             return;
         } else {
-            LOGI("%s created successfully!", captureDir.c_str());
+            LOGD("%s created successfully!", captureDir.c_str());
         }
     };
     std::ostringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-        LOGI("Failed to open file: %s", savePath.c_str());
+        LOGE("Failed to open file: %s", savePath.c_str());
     }
     if (!TakeScreenCap(savePath)) {
         LOGE("Screen Capture Failed!");
@@ -100,12 +100,12 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
     std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
     std::string cmdResult;
     if (!SPUtils::FileAccess(captureDir)) {
-        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CAPTURE_FILE);
+        std::string capturePath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + captureDir;
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
-            LOGI("%s capture not be created!", captureDir.c_str());
+            LOGE("%s capture not be created!", captureDir.c_str());
             return;
         } else {
-            LOGI("%s created successfully!", captureDir.c_str());
+            LOGD("%s created successfully!", captureDir.c_str());
         }
     };
     
@@ -114,13 +114,13 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
         std::cout << "" << std::endl;
     }
 
-    auto fd = open(realPath, O_RDWR | O_CREAT, 0644);
+    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
-        LOGI("Failed to open file: %s", savePath.c_str());
+        LOGE("Failed to open file: %s", savePath.c_str());
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
     if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {
-        LOGI("snapshot_display command failed!");
+        LOGE("snapshot_display command failed!");
         close(fd);
         return;
     }
@@ -191,6 +191,10 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     png_destroy_write_struct(&pngStruct, &pngInfo);
     (void)fclose(fp);
     return true;
+}
+void Capture::SetCollectionNum()
+{
+    callNum = 0;
 }
 }
 }
