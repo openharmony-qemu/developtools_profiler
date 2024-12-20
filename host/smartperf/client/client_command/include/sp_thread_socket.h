@@ -205,7 +205,7 @@ public:
             LOGI("Sent start::True message to socket.");
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("start::") + std::to_string(START_FAILED));
-            LOGE("Sent start::" + std::to_string(START_FAILED) +" message to socket.");
+            LOGE("Sent start::" + std::to_string(START_FAILED) + " message to socket.");
         }
     }
     void StopRecvRealtime(SpServerSocket &spSocket) const
@@ -218,7 +218,7 @@ public:
             spSocket.Close();
         } else if (code == ErrCode::FAILED) {
             spSocket.Send(std::string("stop::") + std::to_string(STOP_FAILED));
-            LOGE("Sent stop::" + std::to_string(STOP_FAILED) +" message to socket.");
+            LOGE("Sent stop::" + std::to_string(STOP_FAILED) + " message to socket.");
         }
     }
     void StartRecvRecord(SpServerSocket &spSocket) const
@@ -229,7 +229,7 @@ public:
             LOGI("Sent startRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("startRecord::") + std::to_string(START_RECORD_FAILED));
-            LOGE("Sent startRecord::" + std::to_string(START_RECORD_FAILED) +" message to socket.");
+            LOGE("Sent startRecord::" + std::to_string(START_RECORD_FAILED) + " message to socket.");
         }
     }
     void StopRecvRecord(SpServerSocket &spSocket) const
@@ -240,7 +240,7 @@ public:
             LOGI("Sent stopRecord::True message to socket.");
         } else {
             spSocket.Send(std::string("stopRecord::") + std::to_string(STOP_RECORD_FAILED));
-            LOGE("Sent stopRecord::" + std::to_string(STOP_RECORD_FAILED) +" message to socket.");
+            LOGE("Sent stopRecord::" + std::to_string(STOP_RECORD_FAILED) + " message to socket.");
         }
     }
     void SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const

@@ -473,17 +473,17 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 void SPTask::CreatPath(std::string path)
 {
     if (!SPUtils::FileAccess(path)) {
-        LOGW("Path does not exist, attempting to create: %s", Path.c_str());
+        LOGW("Path does not exist, attempting to create: %s", path.c_str());
         std::string cmdResult;
         std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
         bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
         if (cmdSuccess) {
-            LOGI("Path created successfully: %s", Path.c_str());
+            LOGI("Path created successfully: %s", path.c_str());
         } else {
-            LOGE("Failed to create path: %s. Command result: %s", Path.c_str(), cmdResult.c_str());
+            LOGE("Failed to create path: %s. Command result: %s", path.c_str(), cmdResult.c_str());
         }
     } else {
-        LOGI("Path already exists: %s", Path.c_str());
+        LOGI("Path already exists: %s", path.c_str());
     }
 }
 
@@ -619,7 +619,7 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 {
     std::map<std::string, std::string> templateMap;
     if (!curTaskInfo.stuckInfo.isEffective) {
-        LOGW("StuckInfo is not effective. Returning empty map.");
+        LOGE("StuckInfo is not effective. Returning empty map.");
         return templateMap;
     }
 
@@ -627,12 +627,12 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
     long long nowTime = SPUtils::GetCurTime();
     long long curframeTime = fcf.currentFpsTime / RM_1000000; // Convert to milliseconds
     std::cout << "start::" << startCaptuerTime << std::endl;
-    LOGI("Start capture time: %lld", startCaptuerTime);
+    LOGD("Start capture time: %lld", startCaptuerTime);
 
     if (startCaptuerTime > 0) {
         long long diff =
             startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) : (nowTime - startCaptuerTime);
-        LOGI("Time difference: %lld ms", diff);
+        LOGD("Time difference: %lld ms", diff);
 
         if (diff > RM_5000 && (!CheckCounterId())) {
             LOGW("Time difference exceeded threshold, resetting start capture time.");
@@ -642,18 +642,20 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 
     if (curTaskInfo.stuckInfo.fps > fcf.fps || curTaskInfo.stuckInfo.frameTime < curframeTime) {
         if (startCaptuerTime == 0) {
-            LOGI("FPS or frame time threshold exceeded, starting capture thread.");
+            LOGD("FPS or frame time threshold exceeded, starting capture thread.");
             startCaptuerTime = nowTime;
             std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
-            LOGI("ThreadGetHiperf::%ld", startCaptuerTime);
+            LOGD("ThreadGetHiperf::%ld", startCaptuerTime);
             ThreadGetHiperf(startCaptuerTime);
         }
     }
     templateMap["fpsWarn"] = std::to_string(fcf.fps);
     templateMap["FrameTimeWarn"] = std::to_string(fcf.currentFpsTime);
     templateMap["TraceTime"] = std::to_string(startCaptuerTime);
-    LOGI("Returning templateMap: fpsWarn = %s, FrameTimeWarn = %s, TraceTime = %s",
-          templateMap["fpsWarn"].c_str(), templateMap["FrameTimeWarn"].c_str(), templateMap["TraceTime"].c_str());
+    LOGD("Returning templateMap: fpsWarn = %s, FrameTimeWarn = %s, TraceTime = %s",
+        templateMap["fpsWarn"].c_str(),
+        templateMap["FrameTimeWarn"].c_str(),
+        templateMap["TraceTime"].c_str());
 
     return templateMap;
 }
@@ -679,10 +681,10 @@ bool SPTask::CheckCounterId()
 }
 std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
-    LOGI("Starting new thread with timestamp: %lld", timeStamp);
+    LOGD("Starting new thread with timestamp: %lld", timeStamp);
     auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
     std::thread spThread(thGetTrace);
-    LOGI("Detaching thread for timestamp: %lld", timeStamp);
+    LOGD("Detaching thread for timestamp: %lld", timeStamp);
     spThread.detach();
     return spThread;
 }
