@@ -413,7 +413,7 @@ void NetworkPlugin::AddNetSystemDetails(NetSystemData& systemData, NetSystemDeta
     }
 }
 
-template <typename T> bool NetworkPlugin::WriteNetWorkData(T& networkDatasProto)
+template <typename T> bool NetworkPlugin::WriteNetFlowData(T& networkDatasProto)
 {
     std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
     if (OHOS::NetManagerStandard::NetStatsClient::GetInstance().GetAllStatsInfo(infos) != 0) {
@@ -562,7 +562,7 @@ void NetworkPlugin::Record(NetFlowData &newData)
     }
 }
 
-int32_t NetworkPlugin::GetUid(int32_t pid)
+int32_t NetworkPlugin::GetUidByBundleMgr(int32_t pid)
 {
     std::string bundleName;
     std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
