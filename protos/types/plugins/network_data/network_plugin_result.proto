@@ -55,3 +55,24 @@ message NetworkDatas {
     repeated NetworkData networkinfo = 1;
     NetworkSystemData network_system_info = 2;
 }
+
+//new type
+message NetworkFlowDetail {
+    string type = 1;
+    uint64 rx_bytes = 2;
+    uint64 rx_packets = 3;
+    uint64 tx_bytes = 4;
+    uint64 tx_packets = 5;
+}
+
+//new type
+message NetworkFlowData {
+    int32 pid = 1;
+    uint64 tv_sec = 2;
+    uint64 tv_nsec = 3;
+    uint64 rx_bytes = 4;
+    uint64 rx_packets = 5;
+    uint64 tx_bytes = 6;
+    uint64 tx_packets = 7;
+    repeated NetworkFlowDetail details = 8;
+}

@@ -57,7 +57,8 @@
         "zlib",
         "grpc",
         "storage_service",
-        "abseil-cpp"
+        "abseil-cpp",
+        "netmanager_base"
       ],
       "third_party": [
         "cJSON",
