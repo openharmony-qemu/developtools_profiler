@@ -54,7 +54,7 @@ void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define WLOGE(fmt, ...) \
     WriteSpLog(SP_LOG_ERROR, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
-
+        ##__VA_ARGS__)
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
