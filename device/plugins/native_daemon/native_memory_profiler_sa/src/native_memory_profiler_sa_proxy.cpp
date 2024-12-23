@@ -15,7 +15,9 @@
 
 
 #include "native_memory_profiler_sa_proxy.h"
-
+#include "parameters.h"
+#include "xcollie/xcollie.h"
+#include "xcollie/xcollie_define.h"
 #include "logging.h"
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -73,6 +75,15 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
 
 int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
 {
+    XCollieCallback callbackFunc = [](void *) {
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+    }
+    int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer("Hiprofiler_Timeout", 10, callbackFunc, nullptr,
+                                                                 HIVIEWDFX::XCOLLIE_FLAG_LOG);
+    if (setTimerRet != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "add hicollie failed for native daemon sa Stop");
+        return RET_ERR;
+    }
     MessageParcel data;
     if (!data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor())) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop failed to write descriptor");
