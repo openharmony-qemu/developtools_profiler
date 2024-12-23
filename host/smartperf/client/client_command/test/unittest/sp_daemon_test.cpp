@@ -114,11 +114,12 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string packName = "ohos.samples.ecg";
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
-    
+    bool isBreak = false;
+
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters(true);
+    fps.CalcFpsAndJitters(isBreak);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
@@ -299,6 +300,43 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
         flag = true;
     }
 
+    EXPECT_EQ(ret, true);
+    EXPECT_EQ(flag, true);
+}
+
+/**
+ * @tc.name: ProfilerFpsTestCase
+ * @tc.desc: Test ProfilerFps
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
+{
+    ProfilerFPS &profiler = ProfilerFPS::GetInstance();
+    std::string packName = "ohos.samples.ecg";
+    int sectionsNum = 10;
+    FpsInfoProfiler fpsInfoResult;
+    int nums = 10;
+    int printCount = 10;
+    long long msStartTime = 0;
+    int numb = 20;
+    long long harTime = 0;
+    bool isBreak = false;
+    
+    profiler.GetResultFPS(sectionsNum);
+    profiler.CalcFpsAndJitters(isBreak);
+    profiler.GetSectionsFps(fpsInfoResult, nums);
+    profiler.GetSectionsPrint(printCount, msStartTime, numb, harTime);
+
+    std::string cmd = "SP_daemon -profilerfps 10";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("set");
+    std::string::size_type strTwo = result.find("success");
+    if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    }
+    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
