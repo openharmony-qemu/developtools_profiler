@@ -19,8 +19,7 @@ proto_out_dir = "$root_gen_dir/cpp/" + rebase_path(".", "//")
 proto_rel_out_dir = rebase_path(proto_out_dir, root_build_dir)
 
 if (ohos_indep_compiler_enable) {
-  grpc_binary_dir = rebase_path("//binarys/third_party")
-  grpc_cpp_plugin = "$grpc_binary_dir/grpc/innerapis/grpc_cpp_plugin/clang_x64/libs/grpc_cpp_plugin"
+  grpc_cpp_plugin = "//binarys/third_party/grpc/innerapis/grpc_cpp_plugin/clang_x64/libs/grpc_cpp_plugin"
 } else {
   grpc_cpp_plugin = "$subsys_x64_out/grpc_cpp_plugin"
 }
