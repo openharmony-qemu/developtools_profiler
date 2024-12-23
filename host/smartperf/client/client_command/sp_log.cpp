@@ -302,20 +302,16 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
     return;
 }
 
-int FormatLog(const char *fmt, char *logBuf, size_t bufSize, SpLogLevel logLevel)
+int FormatLog(const char *fmt, va_list arg, char *logBuf, size_t bufSize, SpLogLevel logLevel)
 {
     int32_t ret = 0;
-    va_list arg;
     ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
     if (ret != 0) {
         SpLogOut(logLevel, "SP log memset_s error.");
         return -1;
     }
 
-    va_start(arg, fmt);
     ret = vsprintf_s(logBuf, bufSize, fmt, arg);
-    va_end(arg);
-    
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
         return -1;
@@ -327,10 +323,14 @@ int FormatLog(const char *fmt, char *logBuf, size_t bufSize, SpLogLevel logLevel
 void SpLog(SpLogLevel logLevel, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
-    
-    if (FormatLog(fmt, logBuf, sizeof(logBuf), logLevel) != 0) {
+    va_list arg;
+
+    va_start(arg, fmt);
+    if (FormatLog(fmt, arg, logBuf, sizeof(logBuf), logLevel) != 0) {
+        va_end(arg);
         return;
     }
+    va_end(arg);
 
     SpLogOut(logLevel, logBuf);
 }
@@ -338,10 +338,14 @@ void SpLog(SpLogLevel logLevel, const char *fmt, ...)
 void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
+    va_list arg;
 
-    if (FormatLog(fmt, logBuf, sizeof(logBuf), logLevel) != 0) {
+    va_start(arg, fmt);
+    if (FormatLog(fmt, arg, logBuf, sizeof(logBuf), logLevel) != 0) {
+        va_end(arg);
         return;
     }
+    va_end(arg);
 
     SpLogOut(logLevel, logBuf);
 
