@@ -37,6 +37,24 @@ void SpLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define LOGE(fmt, ...) \
     SpLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+
+void WriteLog(SpLogLevel logLevel, const char *fmt, ...);
+
+#define WLOGD(fmt, ...) \
+    WriteSpLog(SP_LOG_DEBUG, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGI(fmt, ...) \
+    WriteSpLog(SP_LOG_INFO, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGW(fmt, ...) \
+    WriteSpLog(SP_LOG_WARN, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGE(fmt, ...) \
+    WriteSpLog(SP_LOG_ERROR, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
