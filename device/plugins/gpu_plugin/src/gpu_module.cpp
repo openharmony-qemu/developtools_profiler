@@ -25,35 +25,32 @@ std::mutex g_taskMutex;
 static int GpuDataPluginSessionStart(const uint8_t* configData, uint32_t configSize)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
-    g_plugin = std::make_unique<GpuDataPlugin>();
+    CHECK_NOTNULL(g_plugin, -1, "%s: no GpuDataPlugin created!", __func__);
     return g_plugin->Start(configData, configSize);
-}
-
-static int GpuPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
-{
-    std::lock_guard<std::mutex> guard(g_taskMutex);
-    CHECK_NOTNULL(g_plugin, -1, "g_plugin is nullptr");
-    return g_plugin->Report(bufferData, bufferSize);
-}
-
-static int GpuPluginReportResultOptimize(RandomWriteCtx* randomWrite)
-{
-    std::lock_guard<std::mutex> guard(g_taskMutex);
-    return g_plugin->ReportOptimize(randomWrite);
 }
 
 static int GpuPluginSessionStop()
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    CHECK_NOTNULL(g_plugin, -1, "%s: no GpuDataPlugin created!", __func__);
     g_plugin->Stop();
+    g_plugin.reset();
+    return 0;
+}
+
+static int GpuDataRegisterWriterStruct(WriterStruct* writer)
+{
+    std::lock_guard<std::mutex> guard(g_taskMutex);
+    g_plugin = std::make_unique<GpuDataPlugin>();
+    g_plugin->SetWriter(writer);
     return 0;
 }
 
 static PluginModuleCallbacks g_callbacks = {
     .onPluginSessionStart = GpuDataPluginSessionStart,
-    .onPluginReportResult = GpuPluginReportResult,
+    .onPluginReportResult = 0,
     .onPluginSessionStop = GpuPluginSessionStop,
-    .onPluginReportResultOptimize = GpuPluginReportResultOptimize,
+    .onRegisterWriterStruct = (RegisterWriterStructCallback)GpuDataRegisterWriterStruct,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

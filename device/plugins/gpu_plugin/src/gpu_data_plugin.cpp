@@ -15,12 +15,15 @@
 
 #include "gpu_data_plugin.h"
 #include <ctime>
+#include <numeric>
 #include "common.h"
 #include "gpu_plugin_result.pbencoder.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
 const std::string GPU_PATH = "/sys/class/devfreq/gpufreq/gpu_scene_aware/utilisation";
+const int RET_COUNT = 50;
+const uint32_t SAMPLE_INTERVAL = 10;
 } // namespace
 
 int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
@@ -40,6 +43,11 @@ int GpuDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
             __func__, GPU_PATH.c_str(), ret);
         return RET_FAIL;
     }
+    CHECK_NOTNULL(resultWriter_, -1, "GPUDataPlugin: Writer is no set!");
+    CHECK_NOTNULL(resultWriter_->write, -1, "GPUDataPlugin: Writer.write is no set!");
+    CHECK_NOTNULL(resultWriter_->flush, -1, "GPUDataPlugin: Writer.flush is no set!");
+    running_ = true;
+    writeThread_ = std::thread([this] { this->ReadGpuData(); });
 
     int ret = COMMON::PluginWriteToHisysevent("gpu_plugin", "sh", args, RET_SUCC, "success");
     PROFILER_LOG_INFO(LOG_CORE, "%s:start success! hisysevent report gpu_plugin result: %d", __func__, ret);
@@ -54,34 +62,79 @@ std::string GpuDataPlugin::GetCmdArgs(GpuConfig traceConfig)
     return args;
 }
 
-int GpuDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
+void GpuDataPlugin::ReadGpuData()
 {
-    ProtoEncoder::GpuData dataProto(randomWrite);
-    WriteGpuDataInfo(dataProto);
-    int msgSize = dataProto.Finish();
-    return msgSize;
+    PROFILER_LOG_INFO(LOG_CORE, "GPUDataPlugin: Read GPU data start");
+    CHECK_NOTNULL(resultWriter_, NO_RETVAL, "%s: resultWriter_ is nullptr", __func__);
+    typedef std::chrono::system_clock ClockType;
+    typedef std::chrono::time_point<ClockType> TimePointType;
+    TimePointType currTime = ClockType::now();
+    TimePointType awaitTimePoint = currTime;
+    std::condition_variable waitCv;
+    std::mutex waitMut;
+    std::vector<std::pair<uint64_t, int>> vectGpuData = {};
+    uint32_t nCount = 0;
+    while (running_) {
+        currTime = ClockType::now();
+        std::unique_lock<std::mutex> lock(waitMut);
+        if (currTime <= awaitTimePoint) {
+            if (waitCv.wait_until(lock, awaitTimePoint, [this]() { return !running_; })) {
+                if (!running_) {
+                    break;
+                }
+            }
+        }
+        if (!running_) {
+            break;
+        }
+        int retGpu = ReadFile();
+        if (retGpu != RET_FAIL) {
+            uint64_t bootTime = GetBootTime();
+            vectGpuData.push_back({bootTime, retGpu});
+            nCount++;
+        }
+        if (nCount == RET_COUNT) {
+            FlushGpuData(vectGpuData);
+            nCount = 0;
+            vectGpuData.clear();
+        }
+        awaitTimePoint = awaitTimePoint + std::chrono::milliseconds(SAMPLE_INTERVAL);
+    }
+    if (vectGpuData.size() > 0) {
+        FlushGpuData(vectGpuData);
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "GPUDataPlugin: Read data end");
 }
 
-int GpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
+void GpuDataPlugin::FlushGpuData(std::vector<std::pair<uint64_t, int>>& vectGpuData)
 {
-    GpuData dataProto;
-    uint32_t length;
-    WriteGpuDataInfo(dataProto);
-
-    length = dataProto.ByteSizeLong();
-    if (length > dataSize) {
-        return -length;
+    if (resultWriter_->isProtobufSerialize) {
+        GpuData dataProto;
+        WriteGpuDataInfoExt(dataProto, vectGpuData);
+        if (dataProto.ByteSizeLong() > 0) {
+            buffer_.resize(dataProto.ByteSizeLong());
+            dataProto.SerializeToArray(buffer_.data(), buffer_.size());
+            resultWriter_->write(resultWriter_, buffer_.data(), buffer_.size());
+            resultWriter_->flush(resultWriter_);
+        }
+    } else {
+        ProtoEncoder::GpuData dataProto(resultWriter_->startReport(resultWriter_));
+        WriteGpuDataInfoExt(dataProto, vectGpuData);
+        int messageLen = dataProto.Finish();
+        resultWriter_->finishReport(resultWriter_, messageLen);
+        resultWriter_->flush(resultWriter_);
     }
-    if (dataProto.SerializeToArray(data, length) > 0) {
-        return length;
-    }
-    return 0;
 }
 
 int GpuDataPlugin::Stop()
 {
+    running_ = false;
+    if (writeThread_.joinable()) {
+        writeThread_.join();
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "GPUDataPlugin:stop thread success!");
     file_.close();
-    PROFILER_LOG_INFO(LOG_CORE, "%s:stop success!", __func__);
+    PROFILER_LOG_INFO(LOG_CORE, "GPUDataPlugin: stop success!");
     return 0;
 }
 
@@ -103,22 +156,33 @@ int GpuDataPlugin::ReadFile()
     return stoi(line);
 }
 
-template <typename T> void GpuDataPlugin::WriteGpuDataInfo(T& gpuData)
+uint64_t GpuDataPlugin::GetBootTime()
 {
-    int ret = ReadFile();
-    if (ret == RET_FAIL) {
-        return;
-    }
-
     constexpr uint64_t nanoSeconds = 1000000000;
     struct timespec ts;
     int result = clock_gettime(CLOCK_BOOTTIME, &ts);
     if (result == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "clock_gettime failed");
-        return;
+        return 0;
     }
-    uint64_t boottime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds +
-        static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
-    gpuData.set_boottime(boottime);
-    gpuData.set_gpu_utilisation(static_cast<uint64_t>(ret));
+    uint64_t bootTime = (static_cast<uint64_t>(ts.tv_sec) * nanoSeconds + static_cast<uint64_t>(ts.tv_nsec)) / 1000000;
+    return bootTime;
+}
+
+template <typename T>
+void GpuDataPlugin::WriteGpuDataInfoExt(T& gpuData, std::vector<std::pair<uint64_t, int>>& vectGpuData)
+{
+    gpuData.set_boottime(0);
+    gpuData.set_gpu_utilisation(0);
+    for (auto& gpuDataInfo : vectGpuData) {
+        auto* gpuDataExt = gpuData.add_gpu_data_array();
+        gpuDataExt->set_boottime(gpuDataInfo.first);
+        gpuDataExt->set_gpu_utilisation(gpuDataInfo.second);
+    }
+}
+
+int GpuDataPlugin::SetWriter(WriterStruct* writer)
+{
+    resultWriter_ = writer;
+    return 0;
 }

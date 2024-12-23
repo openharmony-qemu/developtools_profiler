@@ -16,7 +16,14 @@ syntax = "proto3";
 option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
-message GpuData {
+message GpuDataExt {
     uint64 boottime = 1;
     uint64 gpu_utilisation = 2;
 }
+
+message GpuData {
+    uint64 boottime = 1;
+    uint64 gpu_utilisation = 2;
+    repeated GpuDataExt gpu_data_array = 3;
+}
+

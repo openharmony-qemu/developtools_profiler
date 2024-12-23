@@ -22,6 +22,10 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <vector>
 
 #include "gpu_plugin_config.pb.h"
 #include "gpu_plugin_result.pb.h"
@@ -41,17 +45,26 @@ public:
     int Start(const uint8_t* configData, uint32_t configSize);
     int Report(uint8_t* data, uint32_t dataSize);
     int ReportOptimize(RandomWriteCtx* randomWrite);
+    int SetWriter(WriterStruct* writer);
     int Stop();
+    void ReadGpuData(void);
+    void FlushGpuData(std::vector<std::pair<uint64_t, int>>& vectGpuData);
 
 private:
     int ReadFile();
     std::string GetCmdArgs(GpuConfig traceConfig);
-    template <typename T> void WriteGpuDataInfo(T& gpuData);
+    template <typename T>
+    void WriteGpuDataInfoExt(T& gpuData, std::vector<std::pair<uint64_t, int>>& vectGpuData);
+    uint64_t GetBootTime();
 
 private:
     GpuConfig protoConfig_;
     int pid_ = -1;
     std::ifstream file_;
+    WriterStruct* resultWriter_ = nullptr;
+    std::thread writeThread_;
+    std::atomic<bool> running_ = true;
+    std::vector<char> buffer_;
 };
 
 #endif
