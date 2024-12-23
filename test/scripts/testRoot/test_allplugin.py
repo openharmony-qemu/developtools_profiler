@@ -33,6 +33,8 @@ class TestHiprofilerFtrace:
     @pytest.mark.L0
     def test_allplugin(self):
         subprocess.check_output(r"hdc file send .\..\inputfiles\ftrace\config8.txt /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\hookDecoder /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\malloctest /data/local/tmp/", text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         time.sleep(SLEEP_TIME)
         task_thread.start()

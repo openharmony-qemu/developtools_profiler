@@ -37,6 +37,7 @@ APPLY_INDEX = 8
 RELEASE_INDEX = 9
 ALLOC_INDEX = 10
 TYPE_INDEX = 4
+FILE_SIZE_INDEX = 4
 MALLOC_TIMES = 10
 ADDR_INDEX = 9
 FILTER_THRESH = 5000
@@ -65,11 +66,11 @@ MATCH_INTERVAL = 10
 
 
 def task_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 20 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
 
 
 def task_multiple_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 25 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 35 -s -k")
 
 
 def get_target_stack(result):
@@ -185,7 +186,7 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, filtersiz
             callstack_ids_native.append(row[1])
     callstack_ids_destroyed = list(set(callstack_ids_destroyed) & set(callstack_ids_native))
     callstack_ids_exists = list(set(callstack_ids_exists) & set(callstack_ids_native))
-    if depth == ADDR_INDEX and (not dwarf):
+    if depth == DEPTH_FIVE and (not dwarf):
         if len(callstack_ids_destroyed) != 0:
             return False
         if len(callstack_ids_exists) != 0:
@@ -431,6 +432,15 @@ def get_profiler_test_trace(process):
     return ""
 
 
+def check_file_size(output):
+    result = output.split()[FILE_SIZE_INDEX]
+    multi = False
+    if (int(result[0]) > 2):
+        return True
+    else:
+        return False
+
+
 def check_sa_result():
     subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
     subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
@@ -480,7 +490,7 @@ def check_sa_result():
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
     subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
-    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0)
+    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0, 0)
 
 
 class TestNativehook:
@@ -515,6 +525,7 @@ class TestNativehook:
     @pytest.mark.L0
     def test_dwarf_startup(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, CLICK_TWICE)
+    
     
     @pytest.mark.L0
     def test_dwarf_sample_interval(self):
@@ -558,7 +569,7 @@ class TestNativehook:
 
     @pytest.mark.L0
     def test_startup_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
+        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, 1, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
     def test_startup_sample_interval(self):

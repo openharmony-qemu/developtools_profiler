@@ -80,7 +80,7 @@ class TestHiprofilerUserMode:
         # 校验命令行输出
         subprocess.check_output("hdc shell rm /data/local/tmp/test7.htrace")
         subprocess.check_output("hdc shell rm /data/local/tmp/tmp.txt")
-        subprocess.check_output(r"hdc file send .\inputfiles\network_profiler\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=(CONFIG_SCENEBOARD, ))
         task_thread.start()
         time.sleep(SLEEP_TWO)

@@ -1,0 +1,28 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "ftrace-plugin"
+  sample_interval: 1000
+  config_data {
+   ftrace_events: "sched/sched_switch"
+   ftrace_events: "power/suspend_resume"
+   ftrace_events: "sched/sched_wakeup"
+   ftrace_events: "sched/sched_wakeup_new"
+   ftrace_events: "sched/sched_waking"
+   ftrace_events: "sched/sched_process_exit"
+   ftrace_events: "sched/sched_process_free"
+   ftrace_events: "task/task_newtask"
+   ftrace_events: "task/task_rename"
+   buffer_size_kb: 20480
+   flush_interval_ms: 1000
+   flush_threshold_kb: 4096
+   parse_ksyms: true
+   clock: "boot"
+   trace_period_ms: 200
+   debug_on: false
+  }
+ }

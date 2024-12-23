@@ -44,8 +44,12 @@ class TestHiprofilerReliability:
     @pytest.mark.L0
     def test_badfd(self):
         subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace")
-        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        try:
+            subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+            subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            pass
         subprocess.check_output("hdc target mount", text=True, encoding="utf-8")
         subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
         subprocess.check_output("hdc shell reboot", text=True, encoding="utf-8")

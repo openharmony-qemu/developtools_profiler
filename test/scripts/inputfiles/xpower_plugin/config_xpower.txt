@@ -1,0 +1,22 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+  result_file: "/data/local/tmp/hiprofiler_data2.htrace"
+  sample_duration: 30000
+ }
+ plugin_configs {
+  plugin_name: "xpower-plugin"
+  sample_interval:2000
+  is_protobuf_serialize:true
+  config_data {
+   bundle_name: "com.huawei.hmos.settings"
+   message_type: REAL_BATTERY
+   message_type: APP_STATISTIC
+   message_type: APP_DETAIL
+   message_type: COMPONENT_TOP
+   message_type: ABNORMAL_EVENTS
+   message_type: THERMAL_REPORT
+  }
+ }
