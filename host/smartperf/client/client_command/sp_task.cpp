@@ -256,14 +256,14 @@ void SPTask::ConfigDataThread()
         }
 
         if (itConfig.find("-gc") != std::string::npos) {
-            LOGI("Starting GpuCounter collection in new thread");
+            WLOGI("Starting GpuCounter collection in new thread");
             gpuCounter.StartCollect(GpuCounter::GC_START);
         }
 
         if (itConfig.find("-lockfreq") != std::string::npos) {
             lockFreq.SetIsCollecting(true);
             lockFreqThread = std::thread([this]() {
-                LOGI("Starting lock frequency locking thread");
+                WLOGI("Starting lock frequency locking thread");
                 this->lockFreq.LockingThread();
             });
         }
@@ -277,7 +277,7 @@ void SPTask::ConfigureSdkData(std::string itConfig)
         OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
         SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
         sdkDataRecv.SetRunningState(true);
-        LOGI("Starting sdkdata collection in new thread");
+        WLOGI("Starting sdkdata collection in new thread");
         sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
     }
 }
@@ -289,7 +289,7 @@ void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
 
 void SPTask::ResetSdkParam()
 {
-    LOGI("Disabling sdk data collection and resetting parameters");
+    WLOGI("Disabling sdk data collection and resetting parameters");
     OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
     sdkData = false;
     SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
@@ -309,14 +309,14 @@ void SPTask::ResetSdkParam()
 void SPTask::StopSdkRecv()
 {
     if (!sdkData || sdkvec.size() <= 0) {
-        LOGI("SDK data is not enabled or sdkvec is empty");
+        WLOGI("SDK data is not enabled or sdkvec is empty");
         return;
     }
     LOGI("SDK data stop");
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
-        LOGE("data dir %s is nullptr", outSdkDataDir.c_str());
+        WLOGE("data dir %s is nullptr", outSdkDataDir.c_str());
         return;
     }
     std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
@@ -324,7 +324,7 @@ void SPTask::StopSdkRecv()
     std::ofstream outFile;
     outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
-        LOGE("data %s open failed", outSdkDataPath.c_str());
+        WLOGE("data %s open failed", outSdkDataPath.c_str());
         sdkDataMtx.unlock();
         return;
     }
@@ -335,7 +335,7 @@ void SPTask::StopSdkRecv()
     }
     outFile.close();
     sdkDataMtx.unlock();
-    LOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
+    WLOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
     return;
 }
 
@@ -437,7 +437,7 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     ram.SetFirstFlag();
     LOGI("RAM first flag set.");
     if (!isInit) {
-        LOGE("Initialization failed.");
+        WLOGE("Initialization failed.");
         return ErrCode::FAILED;
     }
     isRunning = true;
@@ -454,11 +454,11 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     ConfigDataThread();
     LOGI("Data collection thread configuration completed.");
     thread = std::thread([this, msgTask]() {
-        LOGI("Starting data collection thread.");
+        WLOGI("Starting data collection thread.");
         while (isRunning) {
             AsyncGetDataMap(msgTask);
         }
-        LOGI("Data collection thread exiting.");
+        WLOGI("Data collection thread exiting.");
     });
     return ErrCode::OK;
 }
@@ -545,23 +545,23 @@ void SPTask::StopGetInfo()
     }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 
-    LOGI("Write CSV header done.");
+    WLOGI("Write CSV header done.");
 }
 void SPTask::StopGpuCounterRecv()
 {
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (GetRecordState()) {
-        LOGI("Record state is valid. Saving GPU counter data.");
+        WLOGI("Record state is valid. Saving GPU counter data.");
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     } else {
-        LOGW("Record state is invalid. GPU counter data will not be saved.");
+        WLOGW("Record state is invalid. GPU counter data will not be saved.");
     }
 }
 ErrCode SPTask::StopTask()
 {
     if (GetRecordState()) {
-        LOGI("Record state is valid. Stopping task and cleaning up.");
+        WLOGI("Record state is valid. Stopping task and cleaning up.");
         StopGetInfo();
         StopSdkRecv();
         StopGpuCounterRecv();
@@ -572,7 +572,7 @@ ErrCode SPTask::StopTask()
         recordState = false;
         screenshotFlag = false;
     } else {
-        LOGW("Record state is invalid. Skipping task stop operations.");
+        WLOGW("Record state is invalid. Skipping task stop operations.");
     }
 
     ResetSdkParam();
@@ -583,7 +583,7 @@ ErrCode SPTask::StopTask()
         lockFreqThread.join();
     }
 
-    LOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
+    WLOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
     isRunning = false;
     isInit = false;
     realTimeStart = 0;
@@ -595,7 +595,7 @@ ErrCode SPTask::StopTask()
     LOGI("Killing Hiperf command.");
     KillHiperfCmd();
     SpProfilerFactory::editorFlag = false;
-    LOGI("Task successfully stopped.");
+    WLOGI("Task successfully stopped.");
     return ErrCode::OK;
 }
 
@@ -769,7 +769,7 @@ int SPTask::GetCurrentBattary()
     SPUtils::LoadCmd(cmd, content);
     content = content.substr(content.find(':') + 1);
     if (content == "") {
-        LOGE("Battery capacity is empty.");
+        WLOGE("Battery capacity is empty.");
         return 0;
     }
     return SPUtilesTye::StringToSometype<int>(content);
@@ -779,7 +779,7 @@ ErrCode SPTask::StartRecord()
 {
     battaryStart = GetCurrentBattary();
     startTime = SPUtils::GetCurTime();
-    LOGI("StartRecord initiated: Battery %d, Start time %lld.", battaryStart, startTime);
+    WLOGI("StartRecord initiated: Battery %d, Start time %lld.", battaryStart, startTime);
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
@@ -791,10 +791,9 @@ ErrCode SPTask::StartRecord()
 
 ErrCode SPTask::StopRecord()
 {
-    LOGD("SPTask StopRecord");
     battaryEnd = GetCurrentBattary();
     long long stopRecordTime = SPUtils::GetCurTime();
-    LOGI("StopRecord initiated: Battery %d, Stop time %lld.", battaryEnd, stopRecordTime);
+    WLOGI("StopRecord initiated: Battery %d, Stop time %lld.", battaryEnd, stopRecordTime);
     while (stopRecordTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
