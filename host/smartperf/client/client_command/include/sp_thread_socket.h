@@ -99,13 +99,12 @@ public:
                 return TOKEN_CHECK_FAILED;
             }
         }
-
         std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
         token = token.substr(0, token.find(' '));
         std::string tcpToken = SPTask::GetInstance().GetTcpToken();
         LOGI("Comparing token with TCP token...");
         if (tcpToken == "" && token == "-SESSIONID") {
-            LOGI("Token is empty and received token is '-SESSIONID', token check passed.");
+            LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
             return OK;
         }
         if (token != tcpToken) {

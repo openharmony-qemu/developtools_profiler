@@ -289,19 +289,19 @@ void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
 
 void SPTask::ResetSdkParam()
 {
-    LOGI("Disabling SDK data collection and resetting parameters");
+    LOGI("Disabling sdk data collection and resetting parameters");
     OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
     sdkData = false;
     SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
     sdkDataRecv.SetRunningState(false);
     int listenFd = sdkDataRecv.GetListenFd();
     if (listenFd != -1) {
-        LOGI("Closing listenFd: %d", listenFd);
+        LOGI("Closing sdk data listenFd: %d", listenFd);
         close(listenFd);
         sdkDataRecv.SetListenFd(-1);
     }
     if (sdk.joinable()) {
-        LOGI("Joining SDK server thread");
+        LOGI("Joining sdk data server thread");
         sdk.join();
     }
 }
@@ -309,10 +309,10 @@ void SPTask::ResetSdkParam()
 void SPTask::StopSdkRecv()
 {
     if (!sdkData || sdkvec.size() <= 0) {
-        LOGI("SDK data is not enabled or sdkvec is empty, returning early");
+        LOGI("SDK data is not enabled or sdkvec is empty");
         return;
     }
-
+    LOGI("SDK data stop");
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
@@ -353,21 +353,15 @@ void SPTask::InitDataFile()
         "t_index_info.csv",
     };
     std::string fileDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    LOGI("Initializing data files in directory: %s", fileDir.c_str());
 
-    for (const auto &file : files) {
+    for (const auto &file: files) {
         std::string filePath = fileDir + "/" + file;
         char filePathChar[PATH_MAX] = {0x00};
         if (realpath(filePath.c_str(), filePathChar) == nullptr) {
-            LOGE("File %s does not exist, skipping deletion.", filePath.c_str());
+            LOGE("%s is not exist, init finish.", filePath.c_str());
             continue;
         }
-
-        if (std::remove(filePathChar) == 0) {
-            LOGI("Successfully removed file: %s", filePath.c_str());
-        } else {
-            LOGE("Failed to remove file: %s", filePath.c_str());
-        }
+        std::remove(filePathChar);
     }
 
     LOGI("Data file initialization completed.");
@@ -381,8 +375,7 @@ void SPTask::SetProfilerPid()
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(curTaskInfo.packageName);
     SpProfilerFactory::SetProfilerPidByPkg(processId);
-    LOGI("Set process ID for package: %s, process ID: %s",
-          curTaskInfo.packageName.c_str(), processId.c_str());
+    LOGI("Set process ID for package: %s, process ID: %s", curTaskInfo.packageName.c_str(), processId.c_str());
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
@@ -473,17 +466,17 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 void SPTask::CreatPath(std::string path)
 {
     if (!SPUtils::FileAccess(path)) {
-        LOGW("Path does not exist, attempting to create: %s", path.c_str());
+        LOGI("CreatPath does not exist, attempting to create: %s", path.c_str());
         std::string cmdResult;
         std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
         bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
         if (cmdSuccess) {
-            LOGI("Path created successfully: %s", path.c_str());
+            LOGI("CreatPath created successfully: %s", path.c_str());
         } else {
             LOGE("Failed to create path: %s. Command result: %s", path.c_str(), cmdResult.c_str());
         }
     } else {
-        LOGI("Path already exists: %s", path.c_str());
+        LOGI("CreatPath already exists: %s", path.c_str());
     }
 }
 
@@ -523,25 +516,23 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
 void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
-    LOGI("Creating base output path: %s", baseOutPath.c_str());
     CreatPath(baseOutPath);
     std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    LOGI("Creating session path: %s", thisBasePath.c_str());
     CreatPath(thisBasePath);
     std::string outIndexpath = thisBasePath + "/t_index_info.csv";
 
     std::map<std::string, std::string> taskInfoMap = SetTaskInfo();
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
     if (deviceInfo.empty()) {
-        LOGW("Failed to get device info.");
+        LOGW("Failed to get device info when stop.");
     }
     std::map<std::string, std::string> cpuInfo = SPUtils::GetCpuInfo(isTcpMessage);
     if (cpuInfo.empty()) {
-        LOGW("Failed to get CPU info.");
+        LOGW("Failed to get CPU info when stop.");
     }
     std::map<std::string, std::string> gpuInfo = SPUtils::GetGpuInfo(isTcpMessage);
     if (gpuInfo.empty()) {
-        LOGW("Failed to get GPU info.");
+        LOGW("Failed to get GPU info when stop.");
     }
     std::map<std::string, std::string> destMap;
     destMap.insert(taskInfoMap.begin(), taskInfoMap.end());
@@ -559,7 +550,6 @@ void SPTask::StopGetInfo()
 void SPTask::StopGpuCounterRecv()
 {
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
-    LOGI("GPU counter data will be saved to: %s", outGpuCounterDataPath.c_str());
 
     if (GetRecordState()) {
         LOGI("Record state is valid. Saving GPU counter data.");
@@ -570,7 +560,6 @@ void SPTask::StopGpuCounterRecv()
 }
 ErrCode SPTask::StopTask()
 {
-    LOGI("Attempting to stop task. Current record state: %d", GetRecordState());
     if (GetRecordState()) {
         LOGI("Record state is valid. Stopping task and cleaning up.");
         StopGetInfo();
@@ -586,15 +575,12 @@ ErrCode SPTask::StopTask()
         LOGW("Record state is invalid. Skipping task stop operations.");
     }
 
-    LOGI("Resetting SDK parameters and stopping GPU collection.");
     ResetSdkParam();
     gpuCounter.StopCollect();
     lockFreq.SetIsCollecting(false);
     if (lockFreqThread.joinable()) {
         LOGI("Joining lockFreqThread.");
         lockFreqThread.join();
-    } else {
-        LOGW("lockFreqThread is not joinable.");
     }
 
     LOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
@@ -603,10 +589,8 @@ ErrCode SPTask::StopTask()
     realTimeStart = 0;
 
     if (thread.joinable()) {
-        LOGI("Joining main thread.");
+        LOGI("Joining thread.");
         thread.join();
-    } else {
-        LOGW("Main thread is not joinable.");
     }
     LOGI("Killing Hiperf command.");
     KillHiperfCmd();
@@ -642,7 +626,6 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 
     if (curTaskInfo.stuckInfo.fps > fcf.fps || curTaskInfo.stuckInfo.frameTime < curframeTime) {
         if (startCaptuerTime == 0) {
-            LOGD("FPS or frame time threshold exceeded, starting capture thread.");
             startCaptuerTime = nowTime;
             std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
             LOGD("ThreadGetHiperf::%ld", startCaptuerTime);
@@ -652,10 +635,6 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
     templateMap["fpsWarn"] = std::to_string(fcf.fps);
     templateMap["FrameTimeWarn"] = std::to_string(fcf.currentFpsTime);
     templateMap["TraceTime"] = std::to_string(startCaptuerTime);
-    LOGD("Returning templateMap: fpsWarn = %s, FrameTimeWarn = %s, TraceTime = %s",
-        templateMap["fpsWarn"].c_str(),
-        templateMap["FrameTimeWarn"].c_str(),
-        templateMap["TraceTime"].c_str());
 
     return templateMap;
 }
@@ -664,7 +643,7 @@ bool SPTask::CheckCounterId()
 {
     std::string result;
     std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
-    LOGI("Loading hiprofiler command: %s", hiprofilerCmd.c_str());
+    LOGI("Loading hiprofiler command");
     SPUtils::LoadCmd(hiprofilerCmd, result);
     if (result.empty()) {
         LOGW("Failed to load hiprofiler command or received empty result.");
@@ -672,19 +651,17 @@ bool SPTask::CheckCounterId()
     }
 
     if (result.find("-k") != std::string::npos) {
-        LOGI("Command result contains '-k'. Returning true.");
+        LOGI("Command contains '-k'.");
         return true;
     }
 
-    LOGI("Command result does not contain '-k'. Returning false.");
+    LOGI("Command does not contain '-k'.");
     return false;
 }
 std::thread SPTask::ThreadGetHiperf(long long timeStamp)
 {
-    LOGD("Starting new thread with timestamp: %lld", timeStamp);
     auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
     std::thread spThread(thGetTrace);
-    LOGD("Detaching thread for timestamp: %lld", timeStamp);
     spThread.detach();
     return spThread;
 }
@@ -693,7 +670,6 @@ void SPTask::GetHiperf(const std::string &traceName)
 {
     std::string result;
     std::string tmp = SetHiperf(traceName);
-    LOGI("Constructed hiprofiler command: %s", tmp.c_str());
     std::cout << tmp << std::endl;
     SPUtils::LoadCmd(tmp, result);
     LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
@@ -734,7 +710,7 @@ void SPTask::KillHiperfCmd()
     std::vector<std::string> out;
 
     if (startCaptuerTime <= 0) {
-        LOGW("startCaptuerTime is invalid: %lld, returning from KillHiperfCmd.", startCaptuerTime);
+        LOGW("startCaptuerTime is invalid: %lld.", startCaptuerTime);
         return;
     }
 
@@ -749,10 +725,8 @@ void SPTask::KillHiperfCmd()
         SPUtils::LoadCmd(hiprofilerPid, result);
         SPUtils::StrSplit(result, " ", out);
         if (out.empty()) {
-            LOGW("No hiprofiler PID found, exiting loop.");
+            LOGD("No hiprofiler PID found, exiting loop.");
             break;
-        } else {
-            LOGI("Found hiprofiler PID(s): %s", result.c_str());
         }
 
         sleep(1);
@@ -762,13 +736,6 @@ void SPTask::KillHiperfCmd()
     std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
     SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
-
-    if (!out.empty()) {
-        LOGI("Killing hiprofiler process with PIDs: %s", result.c_str());
-    } else {
-        LOGW("No hiprofiler PID found after waiting, nothing to kill.");
-    }
-
     LOGD("pidof hiprofiker_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
@@ -784,8 +751,6 @@ std::string SPTask::SetHiperf(const std::string &traceName)
     std::string hiPrefix = "hiprofiler_";
     std::string dataPrefix = "perf_";
     requestId++;
-    LOGD("Setting hiprofiler trace with traceName: %s, current requestId: %lld", traceName.c_str(), requestId);
-
     std::string trtmp = strOne + hiPrefix + traceName + strTwo + "\n" + strThree + std::to_string(requestId) + "\n" +
         strFour + "\n" + strFive + hiPrefix + traceName + strSix + "\n" + strNine + strEleven + "\n" + strSeven +
         dataPrefix + traceName + strEight + strTen + "\n" + conFig;
@@ -800,17 +765,11 @@ bool SPTask::GetRecordState()
 int SPTask::GetCurrentBattary()
 {
     std::string content;
-    const std::string  cmd = "hidumper -s 3302 -a -i | grep capacity";
+    const std::string cmd = "hidumper -s 3302 -a -i | grep capacity";
     SPUtils::LoadCmd(cmd, content);
-
-    if (content.empty()) {
-        LOGE("Failed to retrieve battery capacity: Command output is empty.");
-        return 0;
-    }
-
     content = content.substr(content.find(':') + 1);
     if (content == "") {
-        LOGE("Battery capacity parsing failed: No valid data after colon.");
+        LOGE("Battery capacity is empty.");
         return 0;
     }
     return SPUtilesTye::StringToSometype<int>(content);
@@ -818,23 +777,15 @@ int SPTask::GetCurrentBattary()
 
 ErrCode SPTask::StartRecord()
 {
-    LOGD("SPTask StartRecord");
     battaryStart = GetCurrentBattary();
-    if (battaryStart == 0) {
-        LOGE("StartRecord failed: Battery level is 0. Cannot start recording.");
-        return ErrCode::FAILED;
-    }
-
     startTime = SPUtils::GetCurTime();
-    LOGI("StartRecord initiated: Battery level %d, Start time %lld.", battaryStart, startTime);
-
+    LOGI("StartRecord initiated: Battery %d, Start time %lld.", battaryStart, startTime);
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     InitDataFile();
     screenshotFlag = true;
     recordState = true;
-    LOGI("Recording started: Screenshot flag set to %d, Record state set to %d.", screenshotFlag, recordState);
     return ErrCode::OK;
 }
 
@@ -842,21 +793,14 @@ ErrCode SPTask::StopRecord()
 {
     LOGD("SPTask StopRecord");
     battaryEnd = GetCurrentBattary();
-    if (battaryEnd == 0) {
-        LOGE("StopRecord failed: Battery level is 0. Cannot stop recording.");
-        return ErrCode::FAILED;
-    }
-
     long long stopRecordTime = SPUtils::GetCurTime();
-    LOGI("StopRecord initiated: Battery end level %d, Stop time %lld.", battaryEnd, stopRecordTime);
+    LOGI("StopRecord initiated: Battery %d, Stop time %lld.", battaryEnd, stopRecordTime);
     while (stopRecordTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     screenshotFlag = false;
     recordState = false;
-    LOGI("Recording stopped: Screenshot flag set to %d, Record state set to %d.", screenshotFlag, recordState);
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
-    LOGI("Saving GPU counter data to path: %s", outGpuCounterDataPath.c_str());
 
     if (isInit) {
         StopGetInfo();
