@@ -115,7 +115,7 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
     bool isBreak = false;
-
+    
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
@@ -321,7 +321,7 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     int numb = 20;
     long long harTime = 0;
     bool isBreak = false;
-    
+
     profiler.GetResultFPS(sectionsNum);
     profiler.CalcFpsAndJitters(isBreak);
     profiler.GetSectionsFps(fpsInfoResult, nums);
@@ -336,7 +336,7 @@ HWTEST_F(SPdaemonTest, ProfilerFpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
+
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
