@@ -24,36 +24,40 @@ typedef enum {
     SP_LOG_ERROR,
 } SpLogLevel;
 
-void SpLog(SpLogLevel logLevel, const char *fmt, ...);
+void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...);
 
 #define LOGD(fmt, ...) \
-    SpLog(SP_LOG_DEBUG, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_DEBUG, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGI(fmt, ...) \
-    SpLog(SP_LOG_INFO, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_INFO, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGW(fmt, ...) \
-    SpLog(SP_LOG_WARN, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_WARN, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGE(fmt, ...) \
-    SpLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_ERROR, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...);
 
 #define WLOGD(fmt, ...) \
-    WriteSpLog(SP_LOG_DEBUG, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    WriteSpLog(SP_LOG_DEBUG, true, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGI(fmt, ...) \
-    WriteSpLog(SP_LOG_INFO, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    WriteSpLog(SP_LOG_INFO, true, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGW(fmt, ...) \
-    WriteSpLog(SP_LOG_WARN, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    WriteSpLog(SP_LOG_WARN, true, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGE(fmt, ...) \
-    WriteSpLog(SP_LOG_ERROR, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    WriteSpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 } // namespace SmartPerf
 } // namespace OHOS

@@ -302,52 +302,27 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
     return;
 }
 
-int FormatLog(const char *fmt, va_list arg, char *logBuf, size_t bufSize, SpLogLevel logLevel)
-{
-    int32_t ret = 0;
-    ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
-    if (ret != 0) {
-        SpLogOut(logLevel, "SP log memset_s error.");
-        return -1;
-    }
-
-    ret = vsprintf_s(logBuf, bufSize, fmt, arg);
-    if (ret < 0) {
-        SpLogOut(logLevel, "SP log length error.");
-        return -1;
-    }
-
-    return 0;
-}
-
 void SpLog(SpLogLevel logLevel, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
+    int32_t ret = 0;
     va_list arg;
-
-    va_start(arg, fmt);
-    if (FormatLog(fmt, arg, logBuf, sizeof(logBuf), logLevel) != 0) {
-        va_end(arg);
+    ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
+    if (ret != 0) {
+        SpLogOut(logLevel, "SP log memset_s error.");
         return;
     }
-    va_end(arg);
-
-    SpLogOut(logLevel, logBuf);
-}
-
-void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...)
-{
-    char logBuf[LOG_MAX_LEN] = {0};
-    va_list arg;
-
     va_start(arg, fmt);
-    if (FormatLog(fmt, arg, logBuf, sizeof(logBuf), logLevel) != 0) {
-        va_end(arg);
+    ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
+    va_end(arg);
+    if (ret < 0) {
+        SpLogOut(logLevel, "SP log length error.");
         return;
     }
-    va_end(arg);
-
     SpLogOut(logLevel, logBuf);
+    if (!isEditorLog) {
+        return;
+    }
 
     std::lock_guard<std::mutex> lock(g_mtx);
 
@@ -356,6 +331,7 @@ void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...)
     }
 
     WriteMessage(logLevel, logBuf);
+    return;
 }
 } // namespace SmartPerf
 } // namespace OHOS
