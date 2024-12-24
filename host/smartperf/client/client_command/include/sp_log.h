@@ -42,22 +42,20 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...);
     SpLog(SP_LOG_ERROR, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
-void WriteSpLog(SpLogLevel logLevel, const char *fmt, ...);
-
 #define WLOGD(fmt, ...) \
-    WriteSpLog(SP_LOG_DEBUG, true, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_DEBUG, true, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGI(fmt, ...) \
-    WriteSpLog(SP_LOG_INFO, true, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_INFO, true, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGW(fmt, ...) \
-    WriteSpLog(SP_LOG_WARN, true, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_WARN, true, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 
 #define WLOGE(fmt, ...) \
-    WriteSpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+    SpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
 } // namespace SmartPerf
 } // namespace OHOS
