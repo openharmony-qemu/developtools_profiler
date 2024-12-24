@@ -117,6 +117,7 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
         LOGE("Failed to open file: %s", savePath.c_str());
+        return;
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
     if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {

@@ -398,9 +398,6 @@ public:
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
-            }
             if (!SpProfilerFactory::editorFlag) {
                 std::string processId = "";
                 OHOS::SmartPerf::StartUpDelay sp;
@@ -428,6 +425,11 @@ public:
         } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
             BackDesktop();
         } else if (iterator->first == MessageType::START_DUBAI_DB) {
+            retCode = SplitMsg(recvBuf);
+            LOGD("UDP send smartperf = %s", retCode.c_str());
+            if (retCode.find("smartperf") != std::string::npos) {
+                OHOS::SmartPerf::Dubai::dubaiPkgName = retCode;
+            }
             Dubai::CallBeginAndFinish();
         } else if (iterator->first == MessageType::SET_DUBAI_DB) {
             Dubai::CallBeginAndFinish();
