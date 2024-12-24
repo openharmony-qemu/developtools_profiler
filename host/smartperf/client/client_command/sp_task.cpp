@@ -120,7 +120,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     LOGI("Loading perf command: %s", perf.c_str());
     SPUtils::LoadCmd(perf, result);
     std::cout << recvStr.substr(recvStr.find("-SESSIONID")) << std::endl;
-    LOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
+    WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
         FPS &fps = FPS::GetInstance();
@@ -188,11 +188,8 @@ void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ram
     std::map<std::string, std::string> &dataMap)
 {
     if (ramResult.valid()) {
-        LOGI("Future is valid, collecting RAM data");
         std::map<std::string, std::string> result = ramResult.get();
         dataMap.insert(result.begin(), result.end());
-    } else {
-        LOGE("Invalid future for RAM data");
     }
 }
 
@@ -200,11 +197,8 @@ void SPTask::CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpu
     std::map<std::string, std::string> &dataMap)
 {
     if (cpuResult.valid()) {
-        LOGI("Future is valid, collecting CPU data");
         std::map<std::string, std::string> result = cpuResult.get();
         dataMap.insert(result.begin(), result.end());
-    } else {
-        LOGE("Invalid future for CPU data");
     }
 }
 
@@ -212,11 +206,8 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
     std::map<std::string, std::string> &dataMap)
 {
     if (fpsResult.valid()) {
-        LOGI("Future is valid, collecting FPS data");
         std::map<std::string, std::string> result = fpsResult.get();
         dataMap.insert(result.begin(), result.end());
-    } else {
-        LOGE("Invalid future for FPS data");
     }
 }
 
@@ -225,7 +216,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
     std::string foundConfig;
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
-            LOGI("Snapshot flag is set, capturing screenshot for config: %s", itConfig.c_str());
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -234,7 +224,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
         if (itConfig.find("-gc") != std::string::npos ||
             itConfig.find("-o") != std::string::npos ||
             itConfig.find("-lockfreq") != std::string::npos) {
-            LOGI("Skipping config: %s", itConfig.c_str());
             continue;
         }
 
@@ -245,7 +234,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
     }
-    LOGI("Retrieved profiler for config: %s", foundConfig.c_str());
 }
 
 void SPTask::ConfigDataThread()
@@ -375,27 +363,21 @@ void SPTask::SetProfilerPid()
     OHOS::SmartPerf::StartUpDelay sp;
     processId = sp.GetPidByPkg(curTaskInfo.packageName);
     SpProfilerFactory::SetProfilerPidByPkg(processId);
-    LOGI("Set process ID for package: %s, process ID: %s", curTaskInfo.packageName.c_str(), processId.c_str());
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 {
     long long lastTime = SPUtils::GetCurTime();
-    LOGD("Start AsyncGetDataMap processing");
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
     if (!curTaskInfo.packageName.empty()) {
         SetProfilerPid();
     }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-    LOGD("Timestamp added to dataMap: %lld", lastTime);
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    LOGD("FPS data collection initiated.");
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    LOGD("CPU data collection initiated.");
     GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
-    LOGD("RAM data collection initiated.");
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
@@ -410,24 +392,18 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     spdata.values.insert(dataMap.begin(), dataMap.end());
     if (GetRecordState()) {
         vmap.push_back(spdata);
-        LOGD("Data added to vmap for recording.");
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
-    LOGD("GPU real-time data added to dataMap.");
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
-    LOGD("SDK real-time data added to dataMap.");
     msgTask(MapToString(dataMap));
-    LOGD("Data map converted to string and passed to msgTask.");
     nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
-    LOGD("Time spent on data collection: %lld ms", costTime);
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
         LOGD("Sleeping for %lld ms to maintain frequency.", pTime - costTime);
     }
     asyncDataMtx.unlock();
-    LOGD("Data collection process completed a second loop.");
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)

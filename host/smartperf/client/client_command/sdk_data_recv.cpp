@@ -130,14 +130,12 @@ namespace OHOS {
             char receiveBuf[MSG_MAX_LEN];
             std::string resStr;
             int readLen = 0;
-            LOGD("Receiving data from socket fd[%d]: %d", index, params.receiveFd[index]);
             if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
                 close(params.receiveFd[index]);
                 params.receiveFd[index] = -1;
                 LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
-            LOGD("SdkData Received data: %s", receiveBuf);
             receiveBuffer = receiveBuf;
 
             bool processFlag = true;
