@@ -272,13 +272,27 @@ public:
     ~SmapsStats() {}
 
     template <typename T, typename S>
-    bool ParseMaps(int pid, T& processMemoryInfo, S smapsInfo, bool isReportApp, bool isReportSmaps)
+    bool ParseMaps(int pid, T& processMemoryInfo, S smapsInfo, bool isReportApp, bool isReportSmaps,
+        bool isReportSmapsrollup)
     {
-        std::string smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
-        if (testpath_.size() > 0) {
-            smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps");
+        std::string smaps_path;
+        if (isReportSmapsrollup) {
+            smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps_rollup");
+        } else {
+            smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
         }
-        ReadVmemareasFile(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+        if (testpath_.size() > 0) {
+            if (isReportSmapsrollup) {
+                smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps_rollup");
+            } else {
+                smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps");
+            }
+        }
+        if (isReportSmapsrollup) {
+            ReadVmemFromSmapsrollup(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+        } else {
+            ReadVmemareasFile(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+        }
         if (isReportApp) {
             ReviseStatsData();
         }
@@ -380,9 +394,80 @@ private:
         return true;
     }
 
+    template <typename T, typename S>
+    bool ReadVmemFromSmapsrollup(const std::string& path, T& processMemoryInfo, S smapsInfo,
+                           bool isReportApp, bool isReportSmaps)
+    {
+        bool findMapHead = false;
+        MapPiecesInfo mappic = {0};
+        MemUsageInfo memusage = {0};
+        SmapsHeadInfo smapsHeadInfo = {};
+        uint64_t prevEnd = 0;
+        int prevHeap = 0;
+        std::ifstream input(path, std::ios::in);
+        CHECK_TRUE(!input.fail(), false, "%s:open %s failed, errno = %d", __func__, path.c_str(), errno);
+        do {
+            if (!input.good()) {
+                return false;
+            }
+            std::string line;
+            getline(input, line);
+            line += '\n';
+            if (!findMapHead) {
+                // 00400000-00409000 r-xp 00000000 fc:00 426998  /usr/lib/gvfs/gvfsd-http
+                ParseMapHead(line, mappic, smapsHeadInfo);
+                findMapHead = true;
+                if (isReportSmaps) {
+                    smapsInfo = processMemoryInfo.add_smapinfo();
+                    if (!COMMON::IsUserMode()) {
+                        smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
+                        smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+                        smapsInfo->set_path(smapsHeadInfo.path);
+                        smapsInfo->set_permission(smapsHeadInfo.permission);
+                    } else {
+                        smapsInfo->set_start_addr("");
+                        smapsInfo->set_end_addr("");
+                        smapsInfo->set_path("");
+                        smapsInfo->set_permission("");
+                    }
+                    smapsInfo->set_category(ParseCategory(smapsHeadInfo));
+                }
+                continue;
+            }
+            if (findMapHead) {
+                GetMemFromSmapsrollup(line, memusage);
+            }
+        } while (!input.eof());
+
+        if (isReportSmaps) {
+            if (smapsInfo == nullptr) {
+                smapsInfo = processMemoryInfo.add_smapinfo();
+            }
+            smapsInfo->set_size(memusage.vss);
+            smapsInfo->set_rss(memusage.rss);
+            smapsInfo->set_pss(memusage.pss);
+            smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
+            smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
+            smapsInfo->set_reside(0);
+            smapsInfo->set_private_clean(memusage.privateClean);
+            smapsInfo->set_private_dirty(memusage.privateDirty);
+            smapsInfo->set_shared_clean(memusage.sharedClean);
+            smapsInfo->set_shared_dirty(memusage.sharedDirty);
+            smapsInfo->set_swap(memusage.swap);
+            smapsInfo->set_swap_pss(memusage.swapPss);
+        }
+        if (isReportApp) {
+            CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
+        }
+        input.close();
+
+        return true;
+    }
+
     bool ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadInfo& smapsHeadInfo);
     bool SetMapAddrInfo(std::string& line, MapPiecesInfo& head);
     bool GetMemUsageField(std::string& line, MemUsageInfo& memusage);
+    bool GetMemFromSmapsrollup(std::string& line, MemUsageInfo& memusage);
     void CollectVmemAreasData(const MapPiecesInfo& mempic,
                               const MemUsageInfo& memusage,
                               uint64_t& prevEnd,
