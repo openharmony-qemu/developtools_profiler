@@ -36,6 +36,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        EnableWriteLogAndDeleteOldLogFiles();
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
@@ -101,6 +102,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         } else {
+            EnableWriteLogAndDeleteOldLogFiles();
             if (token.empty()) {
                 WLOGE("Error: token is empty when setting TCP token.");
             } else {

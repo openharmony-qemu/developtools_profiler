@@ -258,7 +258,7 @@ public:
         };
         for (auto it : messageType) {
             if (message.find(it) != std::string::npos) {
-                WLOGD("Sending token check failed message for command: %s", it.c_str());
+                WLOGE("Sending token check failed message for command: %s", it.c_str());
                 socket.Send(it + std::to_string(TOKEN_CHECK_FAILED));
                 return;
             }

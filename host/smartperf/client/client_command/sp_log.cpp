@@ -22,6 +22,7 @@
 #include <iostream>
 #include <cstring>
 #include <cstdint>
+#include <dirent.h>
 #include <unistd.h>
 #include <mutex>
 #include <ctime>
@@ -43,12 +44,14 @@ namespace OHOS {
 namespace SmartPerf {
 const int32_t LOG_MAX_LEN = 10000;
 const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
+const double MAX_FILE_KEEP_TIME = 60 * 60 * 24 * 7; // 7days
 const int MAX_FILE_COUNT = 256;
 const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
 std::mutex g_mtx;
 std::string g_currentLogFilePath;
 std::string g_currentDate;
 const mode_t logFileMode = 0777;
+bool writeEnable = false;
 
 static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 {
@@ -302,6 +305,53 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
     return;
 }
 
+void EnableWriteLogAndDeleteOldLogFiles()
+{
+    writeEnable = true;
+    // 多线程锁
+    std::lock_guard<std::mutex> lock(g_mtx);
+
+    // 确保日志文件夹存在
+    if (!EnsureLogDirectoryExists()) {
+        return;
+    }
+
+    DIR* dir = opendir(LOG_FILE_DIR.c_str());
+    if (dir == nullptr) {
+        LOGE("Failed to open log directory: %s", LOG_FILE_DIR.c_str());
+        return;
+    }
+
+    struct dirent* entry;
+    time_t currentTime = time(nullptr);
+
+    while ((entry = readdir(dir)) != nullptr) {
+        // 跳过"."和".."
+        if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
+            continue;
+        }
+
+        std::string filePath = LOG_FILE_DIR + entry->d_name;
+
+        struct stat fileStat = {0};
+        if (stat(filePath.c_str(), &fileStat) != 0) {
+            LOGE("Failed to get stats for file: %s", filePath.c_str());
+            continue;
+        }
+
+        double diffSeconds = difftime(currentTime, fileStat.st_mtime);
+        if (diffSeconds > MAX_FILE_KEEP_TIME) {
+            if (remove(filePath.c_str()) == 0) {
+                LOGD("Deleted file: %s, last modified: %.2f seconds ago", filePath.c_str(), diffSeconds);
+            } else {
+                LOGE("Failed to delete file: %s", filePath.c_str());
+            }
+        }
+    }
+
+    closedir(dir);
+}
+
 void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
@@ -326,7 +376,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath()) {
+    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath() || !writeEnable) {
         return;
     }
 

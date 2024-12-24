@@ -57,6 +57,8 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...);
 #define WLOGE(fmt, ...) \
     SpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
         ##__VA_ARGS__)
+
+void EnableWriteLogAndDeleteOldLogFiles();
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
