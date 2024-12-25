@@ -29,6 +29,7 @@ const int PIECE_HEAD_LEN = 4;
 constexpr uint32_t INVALID_LENGTH = (uint32_t)-1;
 constexpr uint32_t TIMEOUT_SEC = 1;
 const int WAIT_RELEASE_TIMEOUT_US = 10;
+static std::atomic<int> g_timeCount = 0;
 #ifndef PAGE_SIZE
 constexpr uint32_t PAGE_SIZE = 4096;
 #endif
@@ -171,7 +172,7 @@ bool ShareMemoryBlock::ReleaseBlock()
         memoryPoint_ = nullptr;
         memorySize_ = 0;
     }
-
+    g_timeCount = 0;
     if (fileDescriptor_ >= 0) {
         close(fileDescriptor_);
         fileDescriptor_ = -1;
@@ -417,16 +418,19 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
     if (rawMemory == nullptr) {
         while (true) {
             if (rawMemory == nullptr) {
-                if (callback && callback()) {
+                if ((callback && callback()) || (g_timeCount > waitTime_)){
+                    PROFILER_LOG_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %d", g_timeCount.load());
                     pthread_mutex_unlock(&header_->info.mutex_);
                     return false;
                 }
                 pthread_mutex_unlock(&header_->info.mutex_);
                 usleep(WAIT_RELEASE_TIMEOUT_US);
+                g_timeCount += WAIT_RELEASE_TIMEOUT_US;
                 pthread_mutex_lock(&header_->info.mutex_);
                 rawMemory = GetFreeMemory(headerSize + payloadSize);
                 continue;
             }
+            g_timeCount = 0;
             break;
         }
     }
