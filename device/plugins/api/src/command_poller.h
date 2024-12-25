@@ -48,7 +48,7 @@ protected:
     bool OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response) override;
 
 private:
-    std::recursive_timed_mutex reportMutex_;
+    std::mutex reportMutex_;
     uint32_t requestIdAutoIncrease_;
     std::weak_ptr<ManagerInterface> pluginManager_;
 };
