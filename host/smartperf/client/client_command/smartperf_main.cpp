@@ -188,8 +188,8 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
             }
         }
         if (startParams.size() == endParams.size()) {
-            std::cout << "The last collection is interrupted. SP_daemon -start "
-            << result << " started collecting" << std::endl;
+            std::cout << "The last collection is interrupted." << std::endl;
+            std::cout << "SP_daemon -start " << result << " started collecting..." << std::endl;
         }
         cc.SocketStart(result);
         return 1;
