@@ -113,11 +113,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     std::string result = "";
     std::string hiprofiler = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER);
-    LOGI("Loading hiprofiler command: %s", hiprofiler.c_str());
     SPUtils::LoadCmd(hiprofiler, result);
     result.clear();
     std::string perf = CMD_COMMAND_MAP.at(CmdCommand::PERF);
-    LOGI("Loading perf command: %s", perf.c_str());
     SPUtils::LoadCmd(perf, result);
     std::cout << recvStr.substr(recvStr.find("-SESSIONID")) << std::endl;
     WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
@@ -213,7 +211,6 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
-    std::string foundConfig;
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
@@ -229,7 +226,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 
         SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
         if (profiler != nullptr) {
-            foundConfig += itConfig + " ";
             std::map<std::string, std::string> itemMap = profiler->ItemData();
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
@@ -385,7 +381,6 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
         std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
         if (!timeUsedMap.empty()) {
             dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
-            LOGD("Stuck detection data added to dataMap.");
         }
     }
     SPData spdata;
@@ -401,7 +396,6 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     long long pTime = 998;
     if (costTime < curTaskInfo.freq) {
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
-        LOGD("Sleeping for %lld ms to maintain frequency.", pTime - costTime);
     }
     asyncDataMtx.unlock();
 }
@@ -686,7 +680,6 @@ void SPTask::KillHiperfCmd()
     std::vector<std::string> out;
 
     if (startCaptuerTime <= 0) {
-        LOGW("startCaptuerTime is invalid: %lld.", startCaptuerTime);
         return;
     }
 
@@ -701,7 +694,6 @@ void SPTask::KillHiperfCmd()
         SPUtils::LoadCmd(hiprofilerPid, result);
         SPUtils::StrSplit(result, " ", out);
         if (out.empty()) {
-            LOGD("No hiprofiler PID found, exiting loop.");
             break;
         }
 
@@ -716,7 +708,6 @@ void SPTask::KillHiperfCmd()
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
-        LOGI("Executed kill command: %s", (killCmd + (*it)).c_str());
     }
 
     return;
@@ -730,7 +721,6 @@ std::string SPTask::SetHiperf(const std::string &traceName)
     std::string trtmp = strOne + hiPrefix + traceName + strTwo + "\n" + strThree + std::to_string(requestId) + "\n" +
         strFour + "\n" + strFive + hiPrefix + traceName + strSix + "\n" + strNine + strEleven + "\n" + strSeven +
         dataPrefix + traceName + strEight + strTen + "\n" + conFig;
-    LOGD("Constructed hiprofiler command: %s", trtmp.c_str());
     return trtmp;
 }
 
