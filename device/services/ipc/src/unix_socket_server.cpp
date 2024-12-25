@@ -133,7 +133,6 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
         socketHandle_ = -1;
         return false;
     }
-
     serviceEntry_ = &p;
     sAddrName_ = addrname;
     return true;

@@ -398,6 +398,10 @@ public:
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
             retCode = SplitMsg(recvBuf);
+            if (retCode.find("smartperf") != std::string::npos) {
+                Dubai::dubaiPkgName = retCode;
+            }
+            LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             if (!SpProfilerFactory::editorFlag) {
                 std::string processId = "";
                 OHOS::SmartPerf::StartUpDelay sp;

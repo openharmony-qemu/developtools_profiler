@@ -698,7 +698,7 @@ HWTEST_F(MemoryDataPluginTest, TestSmapsStatsInfo, TestSize.Level1)
     for (size_t i = 0; i < expectPidList.size(); i++) {
         ProcessMemoryInfo processMemoryInfo;
         SmapsInfo* smapsInfo = nullptr;
-        EXPECT_TRUE(smap.ParseMaps(expectPidList[i], processMemoryInfo, smapsInfo, true, false));
+        EXPECT_TRUE(smap.ParseMaps(expectPidList[i], processMemoryInfo, smapsInfo, true, false, false));
         EXPECT_EQ(g_pidtarget[i].java_heap, (uint64_t)(smap.GetProcessJavaHeap()));
         EXPECT_EQ(g_pidtarget[i].native_heap, (uint64_t)(smap.GetProcessNativeHeap()));
         EXPECT_EQ(g_pidtarget[i].code, (uint64_t)(smap.GetProcessCode()));

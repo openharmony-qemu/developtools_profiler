@@ -365,9 +365,10 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
 
         bool isReportApp = protoConfig_.report_app_mem_info() && !protoConfig_.report_app_mem_by_memory_service();
         bool isReportSmaps = protoConfig_.report_smaps_mem_info();
+        bool isReportSmapsrollup = protoConfig_.parse_smaps_rollup();
         if (i == 0 && (isReportApp || isReportSmaps)) {
             SmapsStats smapInfo;
-            smapInfo.ParseMaps(pid, *processinfo, smapsInfo, isReportApp, isReportSmaps);
+            smapInfo.ParseMaps(pid, *processinfo, smapsInfo, isReportApp, isReportSmaps, isReportSmapsrollup);
             if (isReportApp) {
                 WriteAppsummary(*processinfo, smapInfo);
             }

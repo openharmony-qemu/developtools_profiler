@@ -906,7 +906,7 @@ HWTEST_F(SmapsStatsTest, TestFrameworkForPath, TestSize.Level1)
     // test result
     ProcessMemoryInfo processMemoryInfo;
     SmapsInfo* smapsInfo = nullptr;
-    ASSERT_TRUE(plugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, true));
+    ASSERT_TRUE(plugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, true, false));
     EXPECT_EQ(java_heap, (uint64_t)(plugin.GetProcessJavaHeap()));
     EXPECT_EQ(native_heap, (uint64_t)(plugin.GetProcessNativeHeap()));
     EXPECT_EQ(code, (uint64_t)(plugin.GetProcessCode()));
@@ -980,7 +980,7 @@ HWTEST_F(SmapsStatsTest, TestCheckFramework, TestSize.Level1)
     SmapsStats targetPlugin(DEFAULT_TEST_PATH + std::string("proc/"));
     ProcessMemoryInfo processMemoryInfo;
     SmapsInfo* smapsInfo = nullptr;
-    ASSERT_TRUE(targetPlugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, false));
+    ASSERT_TRUE(targetPlugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, false, false));
 
     // test result
     EXPECT_EQ(testPlugin.GetProcessJavaHeap(), targetPlugin.GetProcessJavaHeap());
@@ -990,4 +990,50 @@ HWTEST_F(SmapsStatsTest, TestCheckFramework, TestSize.Level1)
     EXPECT_EQ(testPlugin.GetProcessGraphics(), targetPlugin.GetProcessGraphics());
     EXPECT_EQ(testPlugin.GetProcessPrivateOther(), targetPlugin.GetProcessPrivateOther());
 }
+
+/**
+ * @tc.name: smaps_rollup stats
+ * @tc.desc: test ParseMaps
+ * @tc.type: FUNC
+ */
+HWTEST_F(SmapsStatsTest, TestParseSmapsrollup, TestSize.Level1)
+{
+    // 3036, 4256, 288, 748, 0, 1388
+    int pid = 2;
+
+    uint64_t size = 0;
+    uint64_t rss = 4524;
+    uint64_t pss = 1477;
+    uint64_t dirty = 1404;
+    uint64_t swap = 0;
+    uint64_t swapPss = 0;
+    uint64_t swapper = swap + swapPss;
+    double reside = 0;
+    uint64_t sharedClean = 2800;
+    uint64_t sharedDirty = 380;
+    uint64_t privateClean = 320;
+    uint64_t privateDirty = 1024;
+
+    ASSERT_EQ(access(DEFAULT_TEST_PATH.c_str(), F_OK), 0);
+    SmapsStats plugin(DEFAULT_TEST_PATH + std::string("proc/"));
+
+    // test result
+    ProcessMemoryInfo processMemoryInfo;
+    SmapsInfo* smapsInfo = nullptr;
+
+    ASSERT_TRUE(plugin.ParseMaps(pid, processMemoryInfo, smapsInfo, true, true, true));
+    EXPECT_EQ(size, processMemoryInfo.smapinfo(0).size());
+    EXPECT_EQ(rss, processMemoryInfo.smapinfo(0).rss());
+    EXPECT_EQ(pss, processMemoryInfo.smapinfo(0).pss());
+    EXPECT_EQ(dirty, processMemoryInfo.smapinfo(0).dirty());
+    EXPECT_EQ(swapper, processMemoryInfo.smapinfo(0).swapper());
+    EXPECT_EQ(reside, processMemoryInfo.smapinfo(0).reside());
+    EXPECT_EQ(swap, processMemoryInfo.smapinfo(0).swap());
+    EXPECT_EQ(swapPss, processMemoryInfo.smapinfo(0).swap_pss());
+    EXPECT_EQ(sharedClean, processMemoryInfo.smapinfo(0).shared_clean());
+    EXPECT_EQ(sharedDirty, processMemoryInfo.smapinfo(0).shared_dirty());
+    EXPECT_EQ(privateClean, processMemoryInfo.smapinfo(0).private_clean());
+    EXPECT_EQ(privateDirty, processMemoryInfo.smapinfo(0).private_dirty());
+}
+
 } // namespace

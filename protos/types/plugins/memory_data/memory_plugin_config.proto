@@ -51,4 +51,6 @@ message MemoryConfig {
     bool report_gpu_dump_info = 14;
     // set true to report fake data(purgeable_ashmem_trigger gpu_memory hidumper).
     bool report_fake_data = 15;
+    // smaps meminfo will count up by /proc/{pid}/smaps_rollup
+    bool parse_smaps_rollup = 16;
 }

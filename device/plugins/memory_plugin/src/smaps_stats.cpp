@@ -267,6 +267,57 @@ bool SmapsStats::GetMemUsageField(std::string& line, MemUsageInfo& memusage)
     return false;
 }
 
+bool SmapsStats::GetMemFromSmapsrollup(std::string& line, MemUsageInfo& memusage)
+{
+    char field[64];
+    int len = 0;
+    const char* pLine = line.c_str();
+    int ret = sscanf_s(pLine, "%63s %n", field, sizeof(field), &len);
+    size_t dataIndex = strlen(field) > 1 ? strlen(field) - 1 : 0;
+    if (ret == 1 && *field && field[dataIndex] == ':') {
+        const char* c = pLine + len;
+        std::string strfield(field);
+        switch (field[0]) {
+            case 'P':
+                if (MatchHead(strfield, "Pss:")) {
+                    memusage.pss = strtoull(c, nullptr, DEC_BASE);
+                } else if (MatchHead(strfield, "Private_Clean:")) {
+                    uint64_t prcl = strtoull(c, nullptr, DEC_BASE);
+                    memusage.privateClean = prcl;
+                    memusage.uss += prcl;
+                } else if (MatchHead(strfield, "Private_Dirty:")) {
+                    uint64_t prdi = strtoull(c, nullptr, DEC_BASE);
+                    memusage.privateDirty = prdi;
+                    memusage.uss += prdi;
+                }
+                break;
+            case 'S':
+                if (MatchHead(strfield, "Size:")) {
+                    memusage.vss = strtoull(c, nullptr, DEC_BASE);
+                } else if (MatchHead(strfield, "Shared_Clean:")) {
+                    memusage.sharedClean = strtoull(c, nullptr, DEC_BASE);
+                } else if (MatchHead(strfield, "Shared_Dirty:")) {
+                    memusage.sharedDirty = strtoull(c, nullptr, DEC_BASE);
+                } else if (MatchHead(strfield, "Swap:")) {
+                    memusage.swap = strtoull(c, nullptr, DEC_BASE);
+                } else if (MatchHead(strfield, "SwapPss:")) {
+                    memusage.swapPss = strtoull(c, nullptr, DEC_BASE);
+                }
+                break;
+            case 'R':
+                if (MatchHead(strfield, "Rss:")) {
+                    memusage.rss = strtoull(c, nullptr, DEC_BASE);
+                }
+                break;
+            default:
+                break;
+        }
+        return true;
+    }
+
+    return false;
+}
+
 uint64_t SmapsStats::GetSwapablepssValue(const MemUsageInfo& memusage, bool swappable)
 {
     if (!swappable || (memusage.pss == 0)) {
