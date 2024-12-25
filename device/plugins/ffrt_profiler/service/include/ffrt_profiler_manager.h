@@ -51,12 +51,13 @@ public:
 
     FfrtProfilerManager();
     ~FfrtProfilerManager();
-    // for ut
+#ifdef HAVE_HILOG
     void SetConfig(FfrtProfilerConfig& config)
     {
         config_ = config;
         return;
     }
+#endif
     void Init();
     bool StartFfrtProfiler();
     void StopFfrtProfiler();
