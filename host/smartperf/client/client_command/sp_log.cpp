@@ -97,15 +97,15 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 
 static bool EnsureLogDirectoryExists()
 {
-    if (!std::__fs::filesystem::exists(dirPath)) {
-        LOGD("Try create dir: %s", dirPath.c_str());
+    if (!std::__fs::filesystem::exists(LOG_FILE_DIR)) {
+        LOGD("Try create dir: %s", LOG_FILE_DIR.c_str());
         try {
-            if (mkdir(dirPath.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
+            if (mkdir(LOG_FILE_DIR.c_str(), S_IRWXU | S_IRWXG | S_IRWXO) != 0) {
                 LOGE("Failed to create log directory: %s", strerror(errno));
                 return false;
             }
 
-            if (!std::__fs::filesystem::exists(dirPath)) {
+            if (!std::__fs::filesystem::exists(LOG_FILE_DIR)) {
                 LOGE("Failed to create log directory.");
                 return false;
             }
