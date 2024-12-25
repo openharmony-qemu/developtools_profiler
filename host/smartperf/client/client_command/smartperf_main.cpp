@@ -176,6 +176,10 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::ClientControl cc;
         cc.StartSPDaemon();
         OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, endStr);
+        std::vector<std::string> startParams;
+        std::vector<std::string> endParams;
+        OHOS::SmartPerf::SPUtils::StrSplit(startStr, " ", startParams);
+        OHOS::SmartPerf::SPUtils::StrSplit(endStr, " ", endParams);
         std::string result;
         for (int i = 2; i < argc; i++) {
             result += argv[i];
@@ -183,7 +187,7 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
                 result += " ";
             }
         }
-        if (startStr.size() == endStr.size()) {
+        if (startParams.size() == endParams.size()) {
             std::cout << "The last collection is interrupted. SP_daemon -start "
             << result << " started collecting" << std::endl;
         }
