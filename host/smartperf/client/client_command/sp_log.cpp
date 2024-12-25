@@ -130,13 +130,12 @@ static std::string GetCurrentDate()
 }
 static std::string GetCurrentLogFilePath(int maxLogNumber)
 {
-    // 获取当前时分秒字符串
     auto now = std::chrono::system_clock::now();
     std::time_t time = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&time);
 
     std::string sanitizedDate = g_currentDate;
-    std::replace(sanitizedDate.begin(), sanitizedDate.end(), ':', '-');  // 例如替换 ':' 为 '-'
+    std::replace(sanitizedDate.begin(), sanitizedDate.end(), ':', '-');
 
     std::ostringstream oss;
     oss << LOG_FILE_DIR << "log." << maxLogNumber << "." <<
@@ -226,29 +225,23 @@ static bool GetLogFilePath()
             fileName = entry.path().filename().string();
             fileNumber = CheckFileNameAndGetNumber(fileName, date, &currentDateFlag);
             if (fileNumber != 0) {
-                // 只可能存在一个未被压缩的日志文件，找到则退出循环
                 break;
             }
         }
     }
 
-    // 如果没有找到日志文件，则创建第一个
     if (fileNumber == 0) {
         g_currentLogFilePath = GetCurrentLogFilePath(1);
         return true;
     }
 
-    // 找到了日志文件，将文件名转换为文件路径
     std::string filePath = LOG_FILE_DIR + fileName;
 
-    // 判断:1.是否是当天的日志文件;2.文件是否合法
     if (currentDateFlag && IsFilePathValid(filePath)) {
-        // 满足则写入现有文件
         g_currentLogFilePath = filePath;
         return true;
     }
 
-    // 不满足则将其压缩
     TarFile(fileName);
 
     if (fileNumber >= MAX_FILE_COUNT) {
@@ -256,17 +249,14 @@ static bool GetLogFilePath()
         return false;
     }
 
-    // 无论压缩是否成功，都创建编号+1的日志文件
     g_currentLogFilePath = GetCurrentLogFilePath(fileNumber + 1);
     return true;
 }
 
 static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 {
-    // 如果文件不存在则需要在创建后提权
     bool chmodFlag = !std::__fs::filesystem::exists(g_currentLogFilePath);
 
-    // 打开日志文件并写入
     std::ofstream logFile(g_currentLogFilePath, std::ios::app);
     if (logFile.is_open()) {
         if (chmodFlag) {
@@ -296,10 +286,8 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 void EnableWriteLogAndDeleteOldLogFiles()
 {
     g_writeEnable = true;
-    // 多线程锁
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    // 确保日志文件夹存在
     if (!EnsureLogDirectoryExists()) {
         return;
     }
@@ -314,7 +302,6 @@ void EnableWriteLogAndDeleteOldLogFiles()
     time_t currentTime = time(nullptr);
 
     while ((entry = readdir(dir)) != nullptr) {
-        // 跳过"."和".."
         if (strcmp(entry->d_name, ".") == 0 || strcmp(entry->d_name, "..") == 0) {
             continue;
         }
