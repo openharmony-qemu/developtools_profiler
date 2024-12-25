@@ -51,7 +51,7 @@ public:
 
     FfrtProfilerManager();
     ~FfrtProfilerManager();
-#ifdef HAVE_HILOG
+#ifdef UNIT_TEST
     void SetConfig(FfrtProfilerConfig& config)
     {
         config_ = config;
