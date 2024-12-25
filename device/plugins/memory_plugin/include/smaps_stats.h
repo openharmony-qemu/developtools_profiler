@@ -275,23 +275,23 @@ public:
     bool ParseMaps(int pid, T& processMemoryInfo, S smapsInfo, bool isReportApp, bool isReportSmaps,
         bool isReportSmapsrollup)
     {
-        std::string smaps_path;
+        std::string smapsPath;
         if (isReportSmapsrollup) {
-            smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps_rollup");
+            smapsPath = std::string("/proc/") + std::to_string(pid) + std::string("/smaps_rollup");
         } else {
-            smaps_path = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
+            smapsPath = std::string("/proc/") + std::to_string(pid) + std::string("/smaps");
         }
         if (testpath_.size() > 0) {
             if (isReportSmapsrollup) {
-                smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps_rollup");
+                smapsPath = testpath_ + std::to_string(pid) + std::string("/smaps_rollup");
             } else {
-                smaps_path = testpath_ + std::to_string(pid) + std::string("/smaps");
+                smapsPath = testpath_ + std::to_string(pid) + std::string("/smaps");
             }
         }
         if (isReportSmapsrollup) {
-            ReadVmemFromSmapsrollup(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+            ReadVmemFromSmapsrollup(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
         } else {
-            ReadVmemareasFile(smaps_path, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+            ReadVmemareasFile(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
         }
         if (isReportApp) {
             ReviseStatsData();
