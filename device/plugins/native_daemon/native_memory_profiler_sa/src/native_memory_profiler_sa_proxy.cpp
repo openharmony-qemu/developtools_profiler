@@ -15,10 +15,13 @@
 
 
 #include "native_memory_profiler_sa_proxy.h"
-
+#include "parameters.h"
+#include "xcollie/xcollie.h"
+#include "xcollie/xcollie_define.h"
 #include "logging.h"
 
 namespace OHOS::Developtools::NativeDaemon {
+constexpr int32_t TIME_OUT = 10;
 NativeMemoryProfilerSaProxy::NativeMemoryProfilerSaProxy(const sptr<IRemoteObject> &impl)
     : IRemoteProxy<INativeMemoryProfilerSa>(impl) {}
 
@@ -73,9 +76,19 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
 
 int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
 {
+    XCollieCallback callbackFunc = [](void *) {
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+    };
+    int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer("Hiprofiler_Timeout", TIME_OUT, callbackFunc, nullptr,
+                                                                 HiviewDFX::XCOLLIE_FLAG_LOG);
+    if (setTimerRet == HiviewDFX::INVALID_ID) {
+        PROFILER_LOG_ERROR(LOG_CORE, "add hicollie failed for native daemon sa Stop");
+        return RET_ERR;
+    }
     MessageParcel data;
     if (!data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor())) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop failed to write descriptor");
+        HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
         return RET_ERR;
     }
     WRITEUINT32(data, pid, RET_ERR);
@@ -85,6 +98,7 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
     int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID),
                                       data, reply, option);
+    HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop failed");
         return ret;
