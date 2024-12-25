@@ -71,6 +71,7 @@ ohos_unittest("sp_daemon_ut") {
     "hiview:libucollection_utility",
     "image_framework:image_native",
     "init:libbegetutil",
+    "ipc:ipc_core",
     "window_manager:libdm",
     "window_manager:libwm",
   ]

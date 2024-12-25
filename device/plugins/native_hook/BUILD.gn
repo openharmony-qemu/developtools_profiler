@@ -65,6 +65,7 @@ ohos_source_set("native_hook_source") {
   }
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "ffrt:libffrt",
     "hitrace:libhitracechain",
     "init:libbegetutil",
@@ -175,7 +176,10 @@ ohos_executable("malloctest_cpp") {
     "-Wno-error=inline-asm",
     "-O3",
   ]
-  external_deps += [ "bounds_checking_function:libsec_shared" ]
+  external_deps += [
+    "bounds_checking_function:libsec_shared",
+    "hisysevent:libhisysevent",
+  ]
   ldflags = [ "-rdynamic" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

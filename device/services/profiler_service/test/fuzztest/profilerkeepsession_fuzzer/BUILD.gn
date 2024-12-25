@@ -39,6 +39,7 @@ ohos_fuzztest("ProfilerKeepSessionFuzzTest") {
   external_deps = [
     "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",

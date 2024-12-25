@@ -125,19 +125,22 @@ ohos_unittest("native_daemon_ut") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "faultloggerd:libunwinder",
     "googletest:gtest",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
+    "ipc:ipc_core",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
     "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
     "zlib:libz",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
+    external_deps += [ "hilog:libhilog" ]
   }
 }
 
