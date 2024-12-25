@@ -37,6 +37,7 @@
     <target name="smaps_stats_ut">
         <preparer>
             <option name="push" value="plugins/memory_plugin/test/utresources/proc/2/smaps -> /data/local/tmp/utresources/proc/2/" src="res"/>
+            <option name="push" value="plugins/memory_plugin/test/utresources/proc/2/smaps_rollup -> /data/local/tmp/utresources/proc/2/" src="res"/>
         </preparer>
     </target>
     <target name="cpudataplugin_ut">
