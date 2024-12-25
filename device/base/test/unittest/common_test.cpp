@@ -193,4 +193,26 @@ HWTEST_F(CommonTest, GetTimeStr, TestSize.Level1)
     std::string timeStr = GetTimeStr();
     EXPECT_FALSE(timeStr.empty());
 }
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: PluginWriteToHisysevent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, PluginWriteToHisysevent001, TestSize.Level1)
+{
+    int ret = PluginWriteToHisysevent("CPU_PLUGIN", "tdd_test", "test_args", RET_SUCC, "success");
+    EXPECT_EQ(ret, 0);
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: PluginWriteToHisysevent.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, PluginWriteToHisysevent002, TestSize.Level1)
+{
+    int ret = PluginWriteToHisysevent("DISKIO_PLUGIN", "tdd_test", "test_args", RET_SUCC, "success");
+    EXPECT_EQ(ret, 0);
+}
 } // namespace
