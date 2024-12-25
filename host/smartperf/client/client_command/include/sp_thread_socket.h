@@ -127,7 +127,7 @@ public:
             while (procFd > 0) {
                 int reFd = spSocket.Recv();
                 if (reFd < 0) {
-                    LOGE("Error receiving data, reFd: %d", reFd);
+                    WLOGE("Error receiving data, reFd: %d", reFd);
                     break;
                 }
                 std::string recvStr = spSocket.RecvBuf();

@@ -71,7 +71,7 @@ namespace OHOS {
             for (i = 0; i < SOCKET_PORT_NUM_PER_TYPE; i++) {
                 address.sin_port = htons(basePort + i);
                 if (::bind(socketFd, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) == 0) {
-                    LOGD("Socket bound successfully to port: %d", basePort + i);
+                    LOGI("Socket bound successfully to port: %d", basePort + i);
                     break;
                 }
             }
@@ -196,7 +196,7 @@ namespace OHOS {
             }
 
             if (pipe(sdkParams.pipFd) == -1) {
-                LOGE("Failed to create sdk data pipe. Error: %d", errno);
+                LOGE("Failed to create sdk data pipe.");
                 close(sdkParams.serverFd);
                 return;
             }
@@ -272,7 +272,7 @@ namespace OHOS {
         void SdkDataRecv::CleanUpResources(ServerParams &params)
         {
             if (params.serverFd != -1) {
-                LOGD("Closing sdk data server socket fd: %d", params.serverFd);
+                LOGI("Closing sdk data server socket fd: %d", params.serverFd);
                 close(params.serverFd);
                 params.serverFd = -1;
             }

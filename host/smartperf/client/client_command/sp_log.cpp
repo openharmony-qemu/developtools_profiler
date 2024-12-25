@@ -14,6 +14,7 @@
  */
 
 #include "sp_log.h"
+
 #include "securec.h"
 
 #include <sys/stat.h>
@@ -47,11 +48,11 @@ const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 const double MAX_FILE_KEEP_TIME = 60 * 60 * 24 * 7; // 7days
 const int MAX_FILE_COUNT = 256;
 const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
+const mode_t LOG_FILE_MODE = 0777;
 std::mutex g_mtx;
 std::string g_currentLogFilePath;
 std::string g_currentDate;
-const mode_t logFileMode = 0777;
-bool writeEnable = false;
+bool g_writeEnable = false;
 
 static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 {
@@ -94,7 +95,7 @@ static void SpLogOut(SpLogLevel logLevel, const char *logBuf)
 #endif
 }
 
-static bool CreateDir(const std::string& dirPath)
+static bool EnsureLogDirectoryExists()
 {
     if (!std::__fs::filesystem::exists(dirPath)) {
         LOGD("Try create dir: %s", dirPath.c_str());
@@ -115,11 +116,6 @@ static bool CreateDir(const std::string& dirPath)
     }
 
     return true;
-}
-
-static bool EnsureLogDirectoryExists()
-{
-    return CreateDir(LOG_FILE_DIR);
 }
 
 static std::string GetCurrentDate()
@@ -143,13 +139,8 @@ static std::string GetCurrentLogFilePath(int maxLogNumber)
     std::replace(sanitizedDate.begin(), sanitizedDate.end(), ':', '-');  // 例如替换 ':' 为 '-'
 
     std::ostringstream oss;
-    oss << LOG_FILE_DIR
-        << "log."
-        << maxLogNumber
-        << "."
-        << sanitizedDate
-        << "-"
-        << std::put_time(&tm, "%H%M%S");
+    oss << LOG_FILE_DIR << "log." << maxLogNumber << "." <<
+        sanitizedDate << "-" << std::put_time(&tm, "%H%M%S");
     return oss.str();
 }
 static bool IsFilePathValid(const std::string& filePath)
@@ -203,7 +194,7 @@ static void TarFile(const std::string& sourceFileName)
         return;
     }
 
-    Chmod(compressedFilePath.str(), logFileMode);
+    Chmod(compressedFilePath.str(), LOG_FILE_MODE);
 
     std::ostringstream deleteCommand;
     deleteCommand << "rm " << LOG_FILE_DIR << sourceFileName;
@@ -280,7 +271,7 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
     if (logFile.is_open()) {
         if (chmodFlag) {
             LOGD("Create log file %s.", g_currentLogFilePath.c_str());
-            if (!Chmod(g_currentLogFilePath, logFileMode)) {
+            if (!Chmod(g_currentLogFilePath, LOG_FILE_MODE)) {
                 logFile.close();
                 return;
             }
@@ -292,10 +283,7 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 
         std::ostringstream timeStamp;
         timeStamp << std::put_time(&tm, "[%H:%M:%S]");
-
-        logFile << timeStamp.str()
-                << logMessage
-                << std::endl;
+        logFile << timeStamp.str() << logMessage << std::endl;
 
         logFile.close();
     } else {
@@ -307,7 +295,7 @@ static void WriteMessage(SpLogLevel logLevel, char* logMessage)
 
 void EnableWriteLogAndDeleteOldLogFiles()
 {
-    writeEnable = true;
+    g_writeEnable = true;
     // 多线程锁
     std::lock_guard<std::mutex> lock(g_mtx);
 
@@ -376,7 +364,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath() || !writeEnable) {
+    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath() || !g_writeEnable) {
         return;
     }
 
