@@ -132,7 +132,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    LOGE("InitTask error(%s)", errInfo.c_str());
+    LOGE("InitTask error(%s)", errInfo.c_str()]]);
     return ErrCode::FAILED;
 }
 
@@ -484,7 +484,7 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
         { "board", "hw" },
         { "target_fps", refreshrate },
         { "gpuDataVersion", gpuDataVersion },
-        { "battery_change", std::to_string(battaryStart - battaryEnd) },
+        { "battery_change", std::to_string(battaryEnd - battaryStart) },
     };
     return taskInfoMap;
 }
