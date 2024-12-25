@@ -133,13 +133,9 @@ static std::string GetCurrentLogFilePath(int maxLogNumber)
     auto now = std::chrono::system_clock::now();
     std::time_t time = std::chrono::system_clock::to_time_t(now);
     std::tm tm = *std::localtime(&time);
-
-    std::string sanitizedDate = g_currentDate;
-    std::replace(sanitizedDate.begin(), sanitizedDate.end(), ':', '-');
-
     std::ostringstream oss;
     oss << LOG_FILE_DIR << "log." << maxLogNumber << "." <<
-        sanitizedDate << "-" << std::put_time(&tm, "%H%M%S");
+        g_currentDate << "-" << std::put_time(&tm, "%H%M%S");
     return oss.str();
 }
 static bool IsFilePathValid(const std::string& filePath)
@@ -351,7 +347,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
 
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    if (LOG_FILE_DIR.empty() || !EnsureLogDirectoryExists() || !GetLogFilePath() || !g_writeEnable) {
+    if (!EnsureLogDirectoryExists() || !GetLogFilePath() || !g_writeEnable) {
         return;
     }
 
