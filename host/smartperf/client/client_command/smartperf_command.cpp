@@ -105,6 +105,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             EnableWriteLogAndDeleteOldLogFiles();
             if (token.empty()) {
                 WLOGE("Error: token is empty when setting TCP token.");
+                return;
             } else {
                 WLOGI("############################# Setting TCP token...");
                 SPTask::GetInstance().SetTcpToken(token);

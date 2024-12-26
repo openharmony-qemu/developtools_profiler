@@ -303,19 +303,24 @@ void EnableWriteLogAndDeleteOldLogFiles()
         }
 
         std::string filePath = LOG_FILE_DIR + entry->d_name;
+        char filePathChar[PATH_MAX] = {0x00};
+        if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+            LOGE("Log file %s is not exist.", filePath.c_str());
+            continue;
+        }
 
         struct stat fileStat = {0};
-        if (stat(filePath.c_str(), &fileStat) != 0) {
-            LOGE("Failed to get stats for file: %s", filePath.c_str());
+        if (stat(filePathChar, &fileStat) != 0) {
+            LOGE("Failed to get stats for file: %s", filePathChar);
             continue;
         }
 
         double diffSeconds = difftime(currentTime, fileStat.st_mtime);
         if (diffSeconds > MAX_FILE_KEEP_TIME) {
-            if (remove(filePath.c_str()) == 0) {
-                LOGD("Deleted file: %s, last modified: %.2f seconds ago", filePath.c_str(), diffSeconds);
+            if (remove(filePathChar) == 0) {
+                LOGD("Deleted file: %s, last modified: %.2f seconds ago", filePathChar, diffSeconds);
             } else {
-                LOGE("Failed to delete file: %s", filePath.c_str());
+                LOGE("Failed to delete file: %s", filePathChar);
             }
         }
     }
@@ -347,7 +352,7 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
 
     std::lock_guard<std::mutex> lock(g_mtx);
 
-    if (!EnsureLogDirectoryExists() || !GetLogFilePath() || !g_writeEnable) {
+    if (!g_writeEnable || !EnsureLogDirectoryExists() || !GetLogFilePath()) {
         return;
     }
 
