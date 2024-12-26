@@ -249,7 +249,7 @@ static bool GetLogFilePath()
     return true;
 }
 
-static void WriteMessage(SpLogLevel logLevel, char* logMessage)
+static void WriteMessage(char* logMessage)
 {
     bool chmodFlag = !std::__fs::filesystem::exists(g_currentLogFilePath);
 
@@ -323,7 +323,7 @@ void EnableWriteLogAndDeleteOldLogFiles()
     closedir(dir);
 }
 
-void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
+void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
 {
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
@@ -341,7 +341,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
         return;
     }
     SpLogOut(logLevel, logBuf);
-    if (!isEditorLog) {
+    if (!isWriteLog) {
         return;
     }
 
@@ -351,7 +351,7 @@ void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...)
         return;
     }
 
-    WriteMessage(logLevel, logBuf);
+    WriteMessage(logBuf);
     return;
 }
 } // namespace SmartPerf

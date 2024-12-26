@@ -24,7 +24,7 @@ typedef enum {
     SP_LOG_ERROR,
 } SpLogLevel;
 
-void SpLog(SpLogLevel logLevel, bool isEditorLog, const char *fmt, ...);
+void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...);
 
 #define LOGD(fmt, ...) \
     SpLog(SP_LOG_DEBUG, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
