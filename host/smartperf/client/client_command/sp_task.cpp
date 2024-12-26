@@ -130,7 +130,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     }
 
     std::string errInfo = EXCEPTION_MSG_MAP.at(exMsg);
-    LOGE("InitTask error(%s)", errInfo.c_str()]]);
+    LOGE("InitTask error(%s)", errInfo.c_str());
     return ErrCode::FAILED;
 }
 
