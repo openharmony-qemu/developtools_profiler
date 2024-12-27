@@ -410,6 +410,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         if (iter->second->hookMgr->GetNoDataQueueFlag()) {
             clientConfig.freeEventOnlyAddrEnable = true;
         }
+        clientConfig.isSaMode = true;
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
         context.SendFileDescriptor(smbFd);
         context.SendFileDescriptor(eventFd);
