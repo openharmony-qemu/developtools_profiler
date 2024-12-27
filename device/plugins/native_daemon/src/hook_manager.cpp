@@ -762,9 +762,11 @@ void HookManager::StartPluginSession()
             PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
     }
-    int ret = COMMON::PluginWriteToHisysevent("native_hook_plugin", "sh", GetCmdArgs(hookConfig_),
-                                              COMMON::ErrorType::RET_SUCC, "success");
-    PROFILER_LOG_INFO(LOG_CORE, "hisysevent report native_hook_plugin result:%d", ret);
+    if (!saMode_) {
+        int ret = COMMON::PluginWriteToHisysevent("native_hook_plugin", "sh", GetCmdArgs(hookConfig_),
+            COMMON::ErrorType::RET_SUCC, "success");
+        PROFILER_LOG_INFO(LOG_CORE, "hisysevent report native_hook_plugin result:%d", ret);
+    }
 }
 
 std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
