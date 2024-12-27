@@ -31,7 +31,8 @@ public:
                  uint32_t size,
                  int smbFd,
                  int eventFd,
-                 bool blocked = false);
+                 bool blocked = false,
+                 bool isSaMode = false);
     ~StackWriter();
     long Write(const void* data, size_t size) override;
     long WriteTimeout(const void* data, size_t size);
