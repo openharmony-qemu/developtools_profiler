@@ -418,7 +418,7 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
     if (rawMemory == nullptr) {
         while (true) {
             if (rawMemory == nullptr) {
-                if ((callback && callback()) || (g_timeCount > waitTime_)){
+                if ((callback && callback()) || (g_timeCount > waitTime_)) {
                     PROFILER_LOG_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %d", g_timeCount.load());
                     pthread_mutex_unlock(&header_->info.mutex_);
                     return false;
