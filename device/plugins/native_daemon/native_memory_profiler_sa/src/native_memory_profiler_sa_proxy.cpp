@@ -106,7 +106,8 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
     uint64_t timeCost = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-    PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %lu", timeCost);
+    PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu",
+                      static_cast<unsigned long long>(timeCost));
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop failed");
         return ret;
