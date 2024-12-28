@@ -127,6 +127,7 @@ ohos_executable("native_daemon") {
     "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
@@ -170,6 +171,7 @@ ohos_executable("native_daemon_client") {
 
   external_deps = [
     "c_utils:utils",
+    "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
@@ -205,6 +207,7 @@ ohos_shared_library("libnative_daemon_client") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",

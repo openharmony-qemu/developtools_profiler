@@ -35,6 +35,7 @@
         "faultloggerd",
         "hiappevent",
         "hichecker",
+        "hicollie",
         "hidumper",
         "hilog",
         "hisysevent",
