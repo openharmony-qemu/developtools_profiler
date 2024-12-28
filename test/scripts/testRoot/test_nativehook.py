@@ -55,6 +55,7 @@ SA_CLICK_TIMES = 67
 SA_WAIT_TIMES = 7
 SA_STATISTICS = 300
 SA_SAMPLE = 512
+KILL_PROCESS_TIME = 20
 SAMPLE_SMALL = 512
 SAMPLE_LARGE = 51200
 FILTER_SMALL = 256
@@ -441,7 +442,7 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result():
+def check_sa_result(killProcess = False):
     subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
     subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
     subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
@@ -480,6 +481,9 @@ def check_sa_result():
     touch_button("Allocations_Js_Depth")
     i = 0
     while i < SA_CLICK_TIMES:
+        if (killProcess and i == KILL_PROCESS_TIME):
+            subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+            break
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
@@ -698,7 +702,11 @@ class TestNativehook:
     @pytest.mark.L0
     def test_depth_fifty(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIFTY, CLICK_THREETIMES)
-
+    
+    @pytest.mark.L0
+    def test_nativehook_sa_killprocess(self):
+        assert check_sa_result(True)
+    
     @pytest.mark.L0
     def test_nativehook_sa(self):
         assert check_sa_result()
