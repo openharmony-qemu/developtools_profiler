@@ -382,6 +382,8 @@ public:
             LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
         } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
             FetchCpuStats(spSocket, data);
+        } else if (iterator->first == MessageType::GET_LOG) {
+            // TODO: 发送文件
         } else {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
