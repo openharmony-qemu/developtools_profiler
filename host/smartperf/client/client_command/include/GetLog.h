@@ -16,7 +16,7 @@
 #ifndef GETLOG_H
 #define GETLOG_H
 #include "sp_profiler.h"
-#include "include/sp_log.h"
+#include "sp_log.h"
 #include <string>
 namespace OHOS {
 namespace SmartPerf {
@@ -41,7 +41,7 @@ private:
     int logFileSocket = -1;
     const int logFIleSocketPort = 8090;
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
-    const int logSocketBufferSize = 4096;
+    static const int logSocketBufferSize = 4096;
     char logSocketBuffer[logSocketBufferSize];
 };
 }
