@@ -137,7 +137,7 @@ bool CommandPoller::OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const
 
 void CommandPoller::PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId)
 {
-    std::lock_guard<std::recursive_timed_mutex> guard(reportMutex_);
+    std::lock_guard<std::mutex> guard(reportMutex_);
     NotifyResultRequest nrr;
     PluginResult* pr = nrr.add_result();
     pr->set_plugin_id(pluginId);
