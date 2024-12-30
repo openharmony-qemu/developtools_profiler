@@ -58,7 +58,7 @@ void GetLog::TarLogFile()
     std::string tarCommand = "tar -czf " + logFilePath;
     for (const auto& file : files) {
         std::string fileName = file.string();
-        fileName = fileName.substr(fileName.find_last_of('/'))
+        fileName = fileName.substr(fileName.find_last_of('/'));
         tarCommand += " " + fileName;
     }
 
