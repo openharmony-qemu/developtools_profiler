@@ -47,7 +47,6 @@ const int32_t LOG_MAX_LEN = 10000;
 const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 const double MAX_FILE_KEEP_TIME = 60 * 60 * 24 * 7; // 7days
 const int MAX_FILE_COUNT = 256;
-const std::string LOG_FILE_DIR = "/data/local/tmp/SP_daemon_log/";
 const mode_t LOG_FILE_MODE = 0777;
 std::mutex g_mtx;
 std::string g_currentLogFilePath;

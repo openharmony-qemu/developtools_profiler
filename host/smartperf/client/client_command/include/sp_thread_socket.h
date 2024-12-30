@@ -27,6 +27,7 @@
 #include "heartbeat.h"
 #include "Dubai.h"
 #include "Network.h"
+#include "GetLog.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -384,6 +385,22 @@ public:
             FetchCpuStats(spSocket, data);
         } else if (iterator->first == MessageType::GET_LOG) {
             // TODO: 发送文件
+            int logSocket = 0;
+            int connectCount = 0;
+
+            while (logSocket <= 0) {
+                if (connectCount > 3) {
+                    WLOGE("Connect file log socket failed");
+                    return;
+                }
+                connectCount++;
+                logSocket = GetLog::GetInstance().LogFileSocketConnect();
+            }
+
+            int ret = GetLog::GetInstance().SendLogFile();
+            if (ret < 0) {
+                WLOGE("Send log file failed");
+            }
         } else {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
