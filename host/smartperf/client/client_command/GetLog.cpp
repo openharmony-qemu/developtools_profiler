@@ -27,45 +27,50 @@ void GetLog::RemoveLogFile()
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
         LOGI("Log file is not exist.");
+        return;
+    } 
+
+    LOGI("Log file is exist, remove...");
+    if (remove(logFilePathChar) == 0) {
+        WLOGI("Deleted log file");
     } else {
-        LOGI("Log file is exist, remove...");
-        if (remove(logFilePathChar) == 0) {
-            WLOGI("Deleted log file");
-        } else {
-            WLOGE("Failed to delete log file");
-        }
+        WLOGE("Failed to delete log file");
     }
+
 }
 void GetLog::TarLogFile()
 {
-    std::filesystem::path dirPath(LOG_FILE_DIR);
-    std::vector<std::filesystem::path> files;
+    std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
+    std::vector<std::filesystem::path> files;       // Log file vector to tar
 
+    // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
             files.push_back(entry.path());
         }
     }
 
+    // Sort log files by last write time
     std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
 
+    // Limit log files to 10
     if (files.size() > 10) {
         files.resize(10);
     }
 
-    // Store current working directory
+    // Store current working directory, to restore later
     char currentPath[PATH_MAX];
     if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
         WLOGE("Failed to get current working directory");
         return;
     }
 
-    // Change to LOG_FILE_DIR
+    // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);
 
-    // Build tar command with relative paths only
+    // Build tokar command with relative paths only
     std::string tarCommand = "tar -czf " + logFilePath;
     for (const auto& file : files) {
         std::string filename = file.filename().string();
@@ -77,16 +82,17 @@ void GetLog::TarLogFile()
     }
 
     // Restore original working directory
-    if (chdir(currentPath) != 0) {
-        WLOGE("Failed to restore working directory");
-    }
+    std::filesystem::current_path(currentPath);
+    WLOGI("Created tar archive of log files successfully");
 }
+
 std::map<std::string, std::string> GetLog::ItemData()
 {
-    // TODO: 打包日志文件
+    // Remove old log tar file
     RemoveLogFile();
+    // Create tar archive of log files
     TarLogFile();
-
+    // Return empty map to satisfy interface
     return std::map<std::string, std::string>();
 }
 
@@ -94,15 +100,18 @@ int GetLog::LogFileSocketConnect()
 {
     logFileSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (logFileSocket < 0) {
+        WLOGE("Create log file socket failed, errno: %d", errno);
         return -1;
     }
     struct sockaddr_in socket_addr = {0};
     socket_addr.sin_family = AF_INET;
-    socket_addr.sin_port = htons(logFIleSocketPort);
+    socket_addr.sin_port = htons(logFileSocketPort);
     socket_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
     if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socket_addr), sizeof(socket_addr)) < 0) {
+        WLOGE("Connect log file socket failed, errno: %d", errno);
         return -1;
     }
+    WLOGI("Connect log file socket success, socket: %d", logFileSocket);
     return logFileSocket;
 }
 int GetLog::SendLogFile()
@@ -113,7 +122,7 @@ int GetLog::SendLogFile()
         close(logFileSocket);
         return -1;
     }
-
+    WLOGI("logfile exists, sending...");
     while (!logFile.eof()) {
         logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
         std::streamsize bytesRead = logFile.gcount();
@@ -126,7 +135,24 @@ int GetLog::SendLogFile()
     }
     logFile.close();
     close(logFileSocket);
+    WLOGI("Send log file success");
     return 0;
-}   
+}
+void GetLog::SetLogFileSocketPort(int port)
+{
+    logFileSocketPort = port;
+}
+int GetLog::GetLogFileSocketPort() const
+{
+    return logFileSocketPort;
+}
+void GetLog::SetLogFileSocket(int socket)
+{
+    logFileSocket = socket;
+}
+int GetLog::GetLogFileSocket() const
+{
+    return logFileSocket;
+}
 } // namespace SmartPerf
 } // namespace OHOS

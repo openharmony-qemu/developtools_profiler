@@ -328,6 +328,20 @@ public:
         SPUtils::LoadCmd(uinput, cmdResult);
     }
 
+    void GetLogProcess(std::map<std::string, std::string> data, std::string recvBuf) const
+    {
+        if (recvBuf.find("::") != std::string::npos) {
+            int port = std::stoi(recvBuf.substr(recvBuf.find("::") + 2));
+            WLOGI("Get File log UDP message received, port is %d", port);
+            // Init log file socket and file process
+            GetLog::GetInstance().SetLogFileSocket(-1);
+            GetLog::GetInstance().SetLogFileSocketPort(port);
+            data = profiler->ItemData();
+        } else {
+            WLOGE("Get File log UDP message received, but port is not found");
+            GetLog::GetInstance().SetLogFileSocketPort(-1);
+        }
+    }
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
     {
@@ -357,6 +371,8 @@ public:
                     Network::GetInstance().IsStopFindHap();
                     data = profiler->ItemData();
                     data["network_traffic"] = "true";
+                } else if (iterator->first == MessageType::GET_LOG && ) {
+                    GetLogProcess(data, recvBuf);
                 } else {
                     data = profiler->ItemData();
                 }
@@ -384,12 +400,15 @@ public:
         } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
             FetchCpuStats(spSocket, data);
         } else if (iterator->first == MessageType::GET_LOG) {
-            // TODO: 发送文件
-            int logSocket = 0;
+            if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
+                return;
+            }
+            int logSocket = -1;
             int connectCount = 0;
 
-            while (logSocket <= 0) {
-                if (connectCount > 3) {
+            while (logSocket < 0) {
+                WLOGI("Connect file log socket, try times: %d", connectCount + 1);
+                if (connectCount > 2) {
                     WLOGE("Connect file log socket failed");
                     return;
                 }
@@ -399,7 +418,7 @@ public:
 
             int ret = GetLog::GetInstance().SendLogFile();
             if (ret < 0) {
-                WLOGE("Send log file failed");
+                return;
             }
         } else {
             retCode = MapToString(data);

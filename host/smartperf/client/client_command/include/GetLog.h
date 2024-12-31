@@ -30,6 +30,10 @@ public:
     }
     int LogFileSocketConnect();
     int SendLogFile();
+    void SetLogFileSocketPort(int port);
+    int GetLogFileSocketPort() const;
+    void SetLogFileSocket(int socket);
+    int GetLogFileSocket() const;
 
 private:
     GetLog() {};
@@ -39,7 +43,7 @@ private:
     void TarLogFile();
 
     int logFileSocket = -1;
-    const int logFIleSocketPort = 8290;
+    int logFileSocketPort = -1;
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
     static const int logSocketBufferSize = 4096;
     char logSocketBuffer[logSocketBufferSize];
