@@ -328,19 +328,21 @@ public:
         SPUtils::LoadCmd(uinput, cmdResult);
     }
 
-    void GetLogProcess(std::map<std::string, std::string> data, std::string recvBuf) const
+    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const
     {
-        if (recvBuf.find("::") != std::string::npos) {
-            int port = std::stoi(recvBuf.substr(recvBuf.find("::") + 2));
+        if (buffer.find("::") != std::string::npos) {
+            int port = std::stoi(buffer.substr(buffer.find("::") + 2));
             WLOGI("Get File log UDP message received, port is %d", port);
             // Init log file socket and file process
             GetLog::GetInstance().SetLogFileSocket(-1);
             GetLog::GetInstance().SetLogFileSocketPort(port);
-            data = profiler->ItemData();
+            return profilerItem->ItemData();
         } else {
             WLOGE("Get File log UDP message received, but port is not found");
             GetLog::GetInstance().SetLogFileSocketPort(-1);
         }
+
+        return std::map<std::string, std::string>();
     }
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
@@ -371,8 +373,8 @@ public:
                     Network::GetInstance().IsStopFindHap();
                     data = profiler->ItemData();
                     data["network_traffic"] = "true";
-                } else if (iterator->first == MessageType::GET_LOG && ) {
-                    GetLogProcess(data, recvBuf);
+                } else if (iterator->first == MessageType::GET_LOG) {
+                    data = GetLogProcess(profiler, recvBuf);
                 } else {
                     data = profiler->ItemData();
                 }
