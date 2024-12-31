@@ -39,7 +39,7 @@ private:
     void TarLogFile();
 
     int logFileSocket = -1;
-    const int logFIleSocketPort = 8090;
+    const int logFIleSocketPort = 8290;
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
     static const int logSocketBufferSize = 4096;
     char logSocketBuffer[logSocketBufferSize];

@@ -63,10 +63,7 @@ void GetLog::TarLogFile()
     }
 
     // Change to LOG_FILE_DIR
-    if (chdir(LOG_FILE_DIR) != 0) {
-        WLOGE("Failed to change directory to LOG_FILE_DIR");
-        return;
-    }
+    std::filesystem::current_path(LOG_FILE_DIR);
 
     // Build tar command with relative paths only
     std::string tarCommand = "tar -czf " + logFilePath;
@@ -106,7 +103,7 @@ int GetLog::LogFileSocketConnect()
     if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socket_addr), sizeof(socket_addr)) < 0) {
         return -1;
     }
-    return 0;
+    return logFileSocket;
 }
 int GetLog::SendLogFile()
 {
