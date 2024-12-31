@@ -123,15 +123,7 @@ int GetLog::SendLogFile()
         return -1;
     }
     WLOGI("logfile exists, sending...");
-    
-    // Get file size
-    logFile.seekg(0, std::ios::end);
-    std::streamsize fileSize = logFile.tellg();
-    logFile.seekg(0, std::ios::beg);
-    
-    std::streamsize totalBytesSent = 0;
-    while (!logFile.eof()) {
-        logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
+    while (logFile.read(logSocketBuffer, sizeof(logSocketBuffer))) {
         std::streamsize bytesRead = logFile.gcount();
         if (send(logFileSocket, logSocketBuffer, bytesRead, 0) < 0) {
             WLOGE("Send log file failed");
@@ -139,16 +131,18 @@ int GetLog::SendLogFile()
             close(logFileSocket);
             return -1;
         }
-        totalBytesSent += bytesRead;
+    }
+    // Handle last chunk if it's smaller than the buffer size
+    if (logFile.gcount() > 0) {
+        std::streamsize bytesRead = logFile.gcount();
+        if (send(logFileSocket, logSocketBuffer, bytesRead, 0) < 0) {
+            WLOGE("Send last log file chunk failed");
+            logFile.close();
+            close(logFileSocket);
+            return -1;
+        }
     }
     logFile.close();
-    
-    if (totalBytesSent != fileSize) {
-        WLOGE("File size verification failed: sent %ld bytes, file size %ld bytes", 
-              totalBytesSent, fileSize);
-        return -1;
-    }
-    WLOGI("File sent successfully: %ld bytes", totalBytesSent);
     close(logFileSocket);
     return 0;
 }
