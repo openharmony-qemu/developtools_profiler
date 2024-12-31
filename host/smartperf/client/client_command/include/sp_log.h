@@ -24,19 +24,41 @@ typedef enum {
     SP_LOG_ERROR,
 } SpLogLevel;
 
-void SpLog(SpLogLevel logLevel, const char *fmt, ...);
+void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...);
 
 #define LOGD(fmt, ...) \
-    SpLog(SP_LOG_DEBUG, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_DEBUG, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGI(fmt, ...) \
-    SpLog(SP_LOG_INFO, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_INFO, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGW(fmt, ...) \
-    SpLog(SP_LOG_WARN, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_WARN, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
 
 #define LOGE(fmt, ...) \
-    SpLog(SP_LOG_ERROR, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), ##__VA_ARGS__)
+    SpLog(SP_LOG_ERROR, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGD(fmt, ...) \
+    SpLog(SP_LOG_DEBUG, true, (std::string("[Debug][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGI(fmt, ...) \
+    SpLog(SP_LOG_INFO, true, (std::string("[Info][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGW(fmt, ...) \
+    SpLog(SP_LOG_WARN, true, (std::string("[Warning][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+#define WLOGE(fmt, ...) \
+    SpLog(SP_LOG_ERROR, true, (std::string("[Error][") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
+        ##__VA_ARGS__)
+
+void EnableWriteLogAndDeleteOldLogFiles();
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H

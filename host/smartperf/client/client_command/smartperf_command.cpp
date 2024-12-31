@@ -36,6 +36,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        EnableWriteLogAndDeleteOldLogFiles();
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
@@ -53,6 +54,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 break;
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
+                WLOGI("############################# Found '-editorServer' argument in argv");
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
@@ -100,7 +102,15 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         } else {
-            SPTask::GetInstance().SetTcpToken(token);
+            EnableWriteLogAndDeleteOldLogFiles();
+            if (token.empty()) {
+                WLOGE("Error: token is empty when setting TCP token.");
+                return;
+            } else {
+                WLOGI("############################# Setting TCP token...");
+                SPTask::GetInstance().SetTcpToken(token);
+                WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
+            }
         }
         CreateSocketThread();
     }
