@@ -55,15 +55,33 @@ void GetLog::TarLogFile()
         files.resize(10);
     }
 
+    // Store current working directory
+    char currentPath[PATH_MAX];
+    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
+        WLOGE("Failed to get current working directory");
+        return;
+    }
+
+    // Change to LOG_FILE_DIR
+    if (chdir(LOG_FILE_DIR) != 0) {
+        WLOGE("Failed to change directory to LOG_FILE_DIR");
+        return;
+    }
+
+    // Build tar command with relative paths only
     std::string tarCommand = "tar -czf " + logFilePath;
     for (const auto& file : files) {
-        std::filesystem::path relativePath = std::filesystem::relative(file, LOG_FILE_DIR);
-        tarCommand += " " + relativePath.string();
+        std::string filename = file.filename().string();
+        tarCommand += " " + filename;
     }
 
     if (system(tarCommand.c_str()) != 0) {
         WLOGE("Failed to create tar archive");
-        return;
+    }
+
+    // Restore original working directory
+    if (chdir(currentPath) != 0) {
+        WLOGE("Failed to restore working directory");
     }
 }
 std::map<std::string, std::string> GetLog::ItemData()
