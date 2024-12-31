@@ -71,14 +71,14 @@ void GetLog::TarLogFile()
     std::filesystem::current_path(LOG_FILE_DIR);
 
     // Build tokar command with relative paths only
-    std::string tarCommand = "tar -czf " + logFilePath;
+    std::string zipCommand = "zip -j " + logFilePath;
     for (const auto& file : files) {
         std::string filename = file.filename().string();
-        tarCommand += " " + filename;
+        zipCommand += " " + filename;
     }
 
-    if (system(tarCommand.c_str()) != 0) {
-        WLOGE("Failed to create tar archive");
+    if (system(zipCommand.c_str()) != 0) {
+        WLOGE("Failed to create zip archive");
     }
 
     // Restore original working directory
