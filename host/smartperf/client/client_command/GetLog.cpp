@@ -123,8 +123,7 @@ int GetLog::SendLogFile()
         return -1;
     }
     WLOGI("logfile exists, sending...");
-    while (!logFile.eof()) {
-        logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
+    while (logFile.read(logSocketBuffer, sizeof(logSocketBuffer))) {
         std::streamsize bytesRead = logFile.gcount();
         if (send(logFileSocket, logSocketBuffer, bytesRead, 0) < 0) {
             WLOGE("Send log file failed");
@@ -133,9 +132,18 @@ int GetLog::SendLogFile()
             return -1;
         }
     }
+    // Handle last chunk if it's smaller than the buffer size
+    if (logFile.gcount() > 0) {
+        std::streamsize bytesRead = logFile.gcount();
+        if (send(logFileSocket, logSocketBuffer, bytesRead, 0) < 0) {
+            WLOGE("Send last log file chunk failed");
+            logFile.close();
+            close(logFileSocket);
+            return -1;
+        }
+    }
     logFile.close();
     close(logFileSocket);
-    WLOGI("Send log file success");
     return 0;
 }
 void GetLog::SetLogFileSocketPort(int port)
