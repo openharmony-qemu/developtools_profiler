@@ -93,39 +93,17 @@ void GetLog::GenerateDaemonLogFile()
         }
     };
 
-    // Use a min heap to keep track of files, ordered by last write time
-    std::priority_queue<std::filesystem::path, std::vector<std::filesystem::path>,
-        std::function<bool(const std::filesystem::path&, const std::filesystem::path&)>> heap(
-        [](const auto& a, const auto& b) {
-            return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
-        });
-
     // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
-            auto fileSize = std::filesystem::file_size(entry.path());
-            if (currentLogSize + fileSize <= logMaxSize) {
-                heap.push(entry.path());
-                currentLogSize += fileSize;
-            } else {
-                // If adding this file would exceed max size, remove oldest files until it fits
-                while (!heap.empty() && currentLogSize + fileSize > logMaxSize) {
-                    currentLogSize -= std::filesystem::file_size(heap.top());
-                    heap.pop();
-                }
-                if (currentLogSize + fileSize <= logMaxSize) {
-                    heap.push(entry.path());
-                    currentLogSize += fileSize;
-                }
-            }
+            files.push_back(entry.path());
         }
     }
 
-    // Transfer files from heap to vector (will be in reverse chronological order)
-    while (!heap.empty()) {
-        files.push_back(heap.top());
-        heap.pop();
-    }
+    // Sort log files by last write time
+    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+        return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
+    });
 
     // Build tokar command with relative paths only
     std::string tarCommand = "cp ";
