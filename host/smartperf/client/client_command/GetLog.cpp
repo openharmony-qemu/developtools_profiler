@@ -20,6 +20,8 @@
 #include <fstream>
 #include <filesystem>
 #include <vector>
+#include <chrono>
+#include <ctime>
 namespace OHOS {
 namespace SmartPerf {
 void GetLog::RemoveLogFile()
@@ -97,6 +99,11 @@ void GetLog::GenerateDaemonLogFile()
     }
     WLOGI("Created tar archive of daemonLog files successfully");
 }
+std::time_t to_time_t(const std::filesystem::file_time_type& ftime) {
+    auto systemTime = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    return std::chrono::system_clock::to_time_t(systemTime);
+}
+
 void GetLog::GenerateHilogFile()
 {
     std::filesystem::path dirPath(systemHilogFileDir);    // System hilog file directory
@@ -116,8 +123,8 @@ void GetLog::GenerateHilogFile()
                 auto now = std::filesystem::file_time_type::clock::now();
                 
                 // Convert to system time
-                auto fileTimeT = std::filesystem::file_time_type::clock::to_time_t(fileTime);
-                auto nowT = std::filesystem::file_time_type::clock::to_time_t(now);
+                auto fileTimeT = to_time_t(fileTime);
+                auto nowT = to_time_t(now);
                 
                 // Convert to tm struct to compare dates
                 auto fileTm = *std::localtime(&fileTimeT);
@@ -151,7 +158,6 @@ void GetLog::GenerateHilogFile()
         }
         ++it;
     }
-
 
     // Build tokar command with relative paths only
     std::string tarCommand = "cp ";
