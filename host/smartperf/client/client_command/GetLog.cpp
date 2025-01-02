@@ -24,6 +24,7 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
+#include <queue>
 namespace OHOS {
 namespace SmartPerf {
 void GetLog::RemoveLogFile()
@@ -90,21 +91,27 @@ void GetLog::GenerateDaemonLogFile()
         }
     };
 
+    // Use a min heap to keep track of the 10 most recent files
+    std::priority_queue<std::filesystem::path, std::vector<std::filesystem::path>,
+        std::function<bool(const std::filesystem::path&, const std::filesystem::path&)>> heap(
+        [](const auto& a, const auto& b) {
+            return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
+        });
+
     // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
-            files.push_back(entry.path());
+            heap.push(entry.path());
+            if (heap.size() > 10) {
+                heap.pop(); // Remove oldest file if we exceed 10 files
+            }
         }
     }
 
-    // Sort log files by last write time
-    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
-        return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
-    });
-
-    // Limit log files to 10
-    if (files.size() > 10) {
-        files.resize(10);
+    // Transfer files from heap to vector (will be in reverse chronological order)
+    while (!heap.empty()) {
+        files.push_back(heap.top());
+        heap.pop();
     }
 
     // Build tokar command with relative paths only
