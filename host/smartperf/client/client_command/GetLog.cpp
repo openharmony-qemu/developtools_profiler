@@ -24,7 +24,6 @@
 #include <vector>
 #include <chrono>
 #include <ctime>
-#include <queue>
 namespace OHOS {
 namespace SmartPerf {
 void GetLog::RemoveLogFile()
