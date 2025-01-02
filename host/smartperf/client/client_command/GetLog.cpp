@@ -104,9 +104,14 @@ void GetLog::GenerateDaemonLogFile()
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
 
-    // Build tokar command with relative paths only
+    // Build tar command with relative paths only, respecting size limit
     std::string tarCommand = "cp ";
     for (const auto& file : files) {
+        uintmax_t fileSize = std::filesystem::file_size(file);
+        if (currentLogSize + fileSize > logMaxSize) {
+            break; // Stop if adding this file would exceed the limit
+        }
+        currentLogSize += fileSize;
         std::string filename = file.filename().string();
         tarCommand += filename + " ";
     }
@@ -125,8 +130,9 @@ std::time_t to_time_t(const std::filesystem::file_time_type& ftime) {
 
 void GetLog::GenerateHilogFile()
 {
-    std::filesystem::path dirPath(systemHilogFileDir);    // System hilog file directory
-    std::vector<std::filesystem::path> files;             // System hilog file vector to tar
+    std::filesystem::path dirPath(systemHilogFileDir);      // System hilog file directory
+    std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
+    std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
     std::string cmdResult;
 
     char currentPath[PATH_MAX];
@@ -151,7 +157,7 @@ void GetLog::GenerateHilogFile()
             std::string extension = entry.path().extension().string();
             // Check for .log and .zip files
             if (extension == ".log" || extension == ".zip") {
-                files.push_back(entry.path());
+                filesOther.push_back(entry.path());
             }
             // Check for .gz files with today's date
             else if (extension == ".gz") {
@@ -170,36 +176,36 @@ void GetLog::GenerateHilogFile()
                 if (fileTm.tm_year == nowTm.tm_year && 
                     fileTm.tm_mon == nowTm.tm_mon &&
                     fileTm.tm_mday == nowTm.tm_mday) {
-                    files.push_back(entry.path());
+                    filesLog.push_back(entry.path());
                 }
             }
         }
     }
 
     // Sort hilog files by last write time
-    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+    std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
     });
-
-    // Count .gz files and limit them to 10
-    int gzCount = 0;
-    auto it = files.begin();
-    while (it != files.end()) {
-        if (it->extension() == ".gz") {
-            gzCount++;
-            if (gzCount > 10) {
-                it = files.erase(it);
-                continue;
-            }
-        }
-        ++it;
-    }
 
     // cd LOG_FILE_DIR
     std::filesystem::current_path(systemHilogFileDir);
     // Build tokar command with relative paths only
     std::string tarCommand = "cp ";
-    for (const auto& file : files) {
+    for (const auto& file : filesOther) {
+        uintmax_t fileSize = std::filesystem::file_size(file);
+        if (currentLogSize + fileSize > logMaxSize) {
+            break; // Stop if adding this file would exceed the limit
+        }
+        currentLogSize += fileSize;
+        std::string filename = file.filename().string();
+        tarCommand += filename + " ";
+    }
+    for (const auto& file : filesLog) {
+        uintmax_t fileSize = std::filesystem::file_size(file);
+        if (currentLogSize + fileSize > logMaxSize) {
+            break; // Stop if adding this file would exceed the limit
+        }
+        currentLogSize += fileSize;
         std::string filename = file.filename().string();
         tarCommand += filename + " ";
     }
