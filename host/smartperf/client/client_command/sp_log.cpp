@@ -328,17 +328,59 @@ void EnableWriteLogAndDeleteOldLogFiles()
     closedir(dir);
 }
 
+void EscapeForCSV(const std::string& str)
+{
+    std::string escapedStr;
+    for (char ch : str) {
+        if (ch == '"') {
+            escapedStr += "\"\""; 
+        } else if (ch == ',' || ch == '\n' || ch == '\r') {
+            escapedStr += '"';
+            escapedStr += ch;
+            escapedStr += '"';
+        } else {
+            escapedStr += ch;
+        }
+    }
+    str = escapedStr;
+}
+
+std::string EscapeForSQL(const std::string& str)
+{
+    std::string escapedStr;
+    for (char ch : str) {
+        if (ch == '\'') {
+            escapedStr += "''";
+        } else {
+            escapedStr += ch;
+        }
+    }
+    return escapedStr;
+}
+
+bool IsValidFormatString(const char* fmt)
+{
+    if (fmt == nullptr) {
+        return false;
+    }
+    std::string format(fmt);
+    if (format.find("%n") != std::string::npos) {
+        return false;
+    }
+    return true;
+}
+
 void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
 {
-    char logBuf[LOG_MAX_LEN] = {0};
-    int32_t ret = 0;
-    va_list arg;
-    if (fmt == NULL) {
+    if (fmt == nullptr) {
         SpLogOut(logLevel, "SP log format string is NULL.");
         return;
     }
+    char logBuf[LOG_MAX_LEN] = {0};
+    int32_t ret = 0;
+    va_list arg;
     va_start(arg, fmt);
-    ret = vsnprintf(logBuf, sizeof(logBuf), fmt, arg);
+    ret = vsprintf_s(logBuf, _TRUNCATE, sizeof(logBuf), fmt, arg);
     va_end(arg);
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
@@ -348,8 +390,10 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
         SpLogOut(logLevel, "SP log error: log message truncated.");
         return;
     }
-    EscapeForCSV(logBuf, sizeof(logBuf));
-    SpLogOut(logLevel, logBuf);
+    std::string logStr(logBuf);
+    EscapeForCSV(logStr);
+    logStr = EscapeForSQL(logStr);
+    SpLogOut(logLevel, logStr.c_str());
 
     if (!isWriteLog) {
         return;
@@ -361,26 +405,8 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
         return;
     }
 
-    WriteMessage(logBuf);
+    WriteMessage(logStr.c_str());
     return;
-}
-
-void EscapeForCSV(const std::string& str)
-{
-    std::string escapedStr;
-    for (char ch : str) {
-        if (ch == '"') {
-            escapedStr += '"';
-            escapedStr += '"';
-        } else if (ch == ',' || ch == '\n' || ch == '\r') {
-            escapedStr += '"';
-            escapedStr += ch;
-            escapedStr += '"';
-        } else {
-            escapedStr += ch;
-        }
-    }
-    str = escapedStr;
 }
 } // namespace SmartPerf
 } // namespace OHOS

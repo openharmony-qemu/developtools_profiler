@@ -59,7 +59,9 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...);
         ##__VA_ARGS__)
 
 void EnableWriteLogAndDeleteOldLogFiles();
-void EscapeForCSV(const std::string& str)
+void EscapeForCSV(const std::string& str);
+std::string EscapeForSQL(const std::string& str);
+bool IsValidFormatString(const char* fmt);
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
