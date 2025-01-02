@@ -134,6 +134,16 @@ void GetLog::GenerateHilogFile()
     std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
     std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
     std::string cmdResult;
+    std::string hilogTmp = hilogFileDir + "hilogTmp";
+
+    std::string hilogCommand = "timeout 1s hilog > " + hilogTmp;
+    if (system(hilogCommand.c_str()) != 0 && errno != ETIMEDOUT) {
+        WLOGE("Failed to capture current hilog");
+        return;
+    }
+    if (std::filesystem::exists(hilogTmp)) {
+        currentLogSize += std::filesystem::file_size(hilogTmp);
+    }
 
     char currentPath[PATH_MAX];
     if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
