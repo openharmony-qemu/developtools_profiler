@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include "include/GetLog.h"
+#include "include/sp_utils.h"
+#include "include/smartperf_command.h"
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -67,6 +69,26 @@ void GetLog::GenerateDaemonLogFile()
 {
     std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
     std::vector<std::filesystem::path> files;       // Log file vector to tar
+    std::string cmdResult;
+
+    char currentPath[PATH_MAX];
+    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
+        WLOGE("Failed to get current working directory");
+        return;
+    }
+
+    // cd LOG_FILE_DIR
+    std::filesystem::current_path(LOG_FILE_DIR);
+
+    if (!SPUtils::FileAccess(daemonLogFileDir)) {
+        std::string daemonLogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + daemonLogFileDir;
+        if (!SPUtils::LoadCmd(daemonLogFileDirPath, cmdResult)) {
+            WLOGE("%s capture not be created!", daemonLogFileDir.c_str());
+            return;
+        } else {
+            WLOGI("%s created successfully!", daemonLogFileDir.c_str());
+        }
+    };
 
     // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
@@ -108,6 +130,23 @@ void GetLog::GenerateHilogFile()
 {
     std::filesystem::path dirPath(systemHilogFileDir);    // System hilog file directory
     std::vector<std::filesystem::path> files;             // System hilog file vector to tar
+    std::string cmdResult;
+
+    char currentPath[PATH_MAX];
+    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
+        WLOGE("Failed to get current working directory");
+        return;
+    }
+
+    if (!SPUtils::FileAccess(hilogFileDir)) {
+        std::string hilogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + hilogFileDir;
+        if (!SPUtils::LoadCmd(hilogFileDirPath, cmdResult)) {
+            WLOGE("%s capture not be created!", hilogFileDir.c_str());
+            return;
+        } else {
+            WLOGI("%s created successfully!", hilogFileDir.c_str());
+        }
+    };
 
     // Get all hilog files in systemHilogFileDir
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
@@ -159,6 +198,8 @@ void GetLog::GenerateHilogFile()
         ++it;
     }
 
+    // cd LOG_FILE_DIR
+    std::filesystem::current_path(systemHilogFileDir);
     // Build tokar command with relative paths only
     std::string tarCommand = "cp ";
     for (const auto& file : files) {
@@ -166,7 +207,6 @@ void GetLog::GenerateHilogFile()
         tarCommand += filename + " ";
     }
     tarCommand += hilogFileDir;
-
     if (system(tarCommand.c_str()) != 0) {
         WLOGE("Failed to create tar archive");
         return;
