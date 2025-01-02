@@ -22,12 +22,11 @@ ohos_unittest("hidebug_test") {
 
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
-    "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug",
+    "$hidebug_path/interfaces/native/innerkits:libhidebug",
   ]
 
   include_dirs = [
-    "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
+    "$hidebug_path/interfaces/native/innerkits/include",
     "$hidebug_path/interfaces/native/kits/include",
-    "//third_party/googletest/googletest/include/gtest",
   ]
 }
