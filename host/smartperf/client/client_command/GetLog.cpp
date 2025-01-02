@@ -100,7 +100,7 @@ void GetLog::GenerateDaemonLogFile()
     WLOGI("Created tar archive of daemonLog files successfully");
 }
 std::time_t to_time_t(const std::filesystem::file_time_type& ftime) {
-    auto systemTime = std::chrono::clock_cast<std::chrono::system_clock>(ftime);
+    auto systemTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
     return std::chrono::system_clock::to_time_t(systemTime);
 }
 
@@ -238,7 +238,7 @@ int GetLog::LogFileSocketConnect()
 }
 int GetLog::SendLogFile()
 {
-    std::ifstream logFile(daemonLogFilePath, std::ios::binary);
+    std::ifstream logFile(logFilePath, std::ios::binary);
     if (!logFile.is_open()) {
         WLOGE("Open log file failed");
         close(logFileSocket);
