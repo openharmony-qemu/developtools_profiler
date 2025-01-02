@@ -333,7 +333,7 @@ void EscapeForCSV(const std::string& str)
     std::string escapedStr;
     for (char ch : str) {
         if (ch == '"') {
-            escapedStr += "\"\""; 
+            escapedStr += "\"\"";
         } else if (ch == ',' || ch == '\n' || ch == '\r') {
             escapedStr += '"';
             escapedStr += ch;
@@ -380,7 +380,7 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
     int32_t ret = 0;
     va_list arg;
     va_start(arg, fmt);
-    ret = vsprintf_s(logBuf, _TRUNCATE, sizeof(logBuf), fmt, arg);
+    ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
     va_end(arg);
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
