@@ -41,9 +41,14 @@ private:
     GetLog &operator = (const GetLog &);
     void RemoveLogFile();
     void TarLogFile();
+    void GenerateHilogFile();
+    void GenerateDaemonLogFile();
 
     int logFileSocket = -1;
     int logFileSocketPort = -1;
+    const std::string systemHilogFileDir = "/data/log/hilog/";
+    const std::string hilogFileDir = LOG_FILE_DIR + "hilog/";
+    const std::string daemonLogFileDir = LOG_FILE_DIR + "daemonLog/";
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
     static const int logSocketBufferSize = 4096;
     char logSocketBuffer[logSocketBufferSize];

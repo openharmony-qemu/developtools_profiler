@@ -37,8 +37,31 @@ void GetLog::RemoveLogFile()
         WLOGE("Failed to delete log file");
     }
 
+    char hilogFileDirChar[PATH_MAX] = {0x00};
+    if ((realpath(hilogFileDir.c_str(), hilogFileDirChar) == nullptr)) {
+        LOGI("hilog directory is not exist.");
+        return;
+    }
+    LOGI("hilog directory is exist, remove...");
+    if (remove(hilogFileDirChar) == 0) {
+        WLOGI("Deleted hilog file");
+    } else {
+        WLOGE("Failed to delete hilog file");
+    }
+
+    char daemonLogFileDirChar[PATH_MAX] = {0x00};
+    if ((realpath(daemonLogFileDir.c_str(), daemonLogFileDirChar) == nullptr)) {
+        LOGI("daemonLog directory is not exist.");
+        return;
+    }
+    LOGI("daemonLog directory is exist, remove...");
+    if (remove(daemonLogFileDirChar) == 0) {
+        WLOGI("Deleted daemonLog file");
+    } else {
+        WLOGE("Failed to delete daemonLog file");
+    }
 }
-void GetLog::TarLogFile()
+void GetLog::GenerateDaemonLogFile()
 {
     std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
     std::vector<std::filesystem::path> files;       // Log file vector to tar
@@ -60,6 +83,94 @@ void GetLog::TarLogFile()
         files.resize(10);
     }
 
+    // Build tokar command with relative paths only
+    std::string tarCommand = "cp ";
+    for (const auto& file : files) {
+        std::string filename = file.filename().string();
+        tarCommand += filename + " ";
+    }
+    tarCommand += daemonLogFileDir;
+
+    if (system(tarCommand.c_str()) != 0) {
+        WLOGE("Failed to create tar archive");
+        return;
+    }
+    WLOGI("Created tar archive of daemonLog files successfully");
+}
+void GetLog::GenerateHilogFile()
+{
+    std::filesystem::path dirPath(systemHilogFileDir);    // System hilog file directory
+    std::vector<std::filesystem::path> files;             // System hilog file vector to tar
+
+    // Get all hilog files in systemHilogFileDir
+    for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+        if (std::filesystem::is_regular_file(entry)) {
+            std::string extension = entry.path().extension().string();
+            // Check for .log and .zip files
+            if (extension == ".log" || extension == ".zip") {
+                files.push_back(entry.path());
+            }
+            // Check for .gz files with today's date
+            else if (extension == ".gz") {
+                auto fileTime = std::filesystem::last_write_time(entry.path());
+                auto now = std::filesystem::file_time_type::clock::now();
+                
+                // Convert to system time
+                auto fileTimeT = std::filesystem::file_time_type::clock::to_time_t(fileTime);
+                auto nowT = std::filesystem::file_time_type::clock::to_time_t(now);
+                
+                // Convert to tm struct to compare dates
+                auto fileTm = *std::localtime(&fileTimeT);
+                auto nowTm = *std::localtime(&nowT);
+                
+                // Compare year, month and day
+                if (fileTm.tm_year == nowTm.tm_year && 
+                    fileTm.tm_mon == nowTm.tm_mon &&
+                    fileTm.tm_mday == nowTm.tm_mday) {
+                    files.push_back(entry.path());
+                }
+            }
+        }
+    }
+
+    // Sort hilog files by last write time
+    std::sort(files.begin(), files.end(), [](const auto& a, const auto& b) {
+        return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
+    });
+
+    // Count .gz files and limit them to 10
+    int gzCount = 0;
+    auto it = files.begin();
+    while (it != files.end()) {
+        if (it->extension() == ".gz") {
+            gzCount++;
+            if (gzCount > 10) {
+                it = files.erase(it);
+                continue;
+            }
+        }
+        ++it;
+    }
+
+
+    // Build tokar command with relative paths only
+    std::string tarCommand = "cp ";
+    for (const auto& file : files) {
+        std::string filename = file.filename().string();
+        tarCommand += filename + " ";
+    }
+    tarCommand += hilogFileDir;
+
+    if (system(tarCommand.c_str()) != 0) {
+        WLOGE("Failed to create tar archive");
+        return;
+    }
+    WLOGI("Created tar archive of hilog files successfully");
+}
+void GetLog::TarLogFile()
+{
+    GenerateDaemonLogFile();
+    GenerateHilogFile();
     // Store current working directory, to restore later
     char currentPath[PATH_MAX];
     if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
@@ -70,15 +181,20 @@ void GetLog::TarLogFile()
     // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);
 
-    // Build tokar command with relative paths only
-    std::string tarCommand = "tar -czf " + logFilePath;
-    for (const auto& file : files) {
-        std::string filename = file.filename().string();
-        tarCommand += " " + filename;
+    // Check if directories exist
+    if (!std::filesystem::exists("hilog") || !std::filesystem::exists("daemonLog")) {
+        WLOGE("One or both directories do not exist");
+        std::filesystem::current_path(currentPath);
+        return;
     }
+
+    // Build tar command with relative paths
+    std::string tarCommand = "tar -czf " + logFilePath + " hilog daemonLog";
 
     if (system(tarCommand.c_str()) != 0) {
         WLOGE("Failed to create tar archive");
+        std::filesystem::current_path(currentPath);
+        return;
     }
 
     // Restore original working directory
@@ -116,7 +232,7 @@ int GetLog::LogFileSocketConnect()
 }
 int GetLog::SendLogFile()
 {
-    std::ifstream logFile(logFilePath, std::ios::binary);
+    std::ifstream logFile(daemonLogFilePath, std::ios::binary);
     if (!logFile.is_open()) {
         WLOGE("Open log file failed");
         close(logFileSocket);
@@ -135,6 +251,7 @@ int GetLog::SendLogFile()
     }
     logFile.close();
     close(logFileSocket);
+    RemoveLogFile();
     WLOGI("Send log file success");
     return 0;
 }
