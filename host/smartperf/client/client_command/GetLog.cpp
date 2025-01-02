@@ -65,6 +65,8 @@ void GetLog::RemoveLogFile()
     } else {
         WLOGE("Failed to delete daemonLog file");
     }
+
+    currentLogSize = 0;
 }
 void GetLog::GenerateDaemonLogFile()
 {
@@ -91,7 +93,7 @@ void GetLog::GenerateDaemonLogFile()
         }
     };
 
-    // Use a min heap to keep track of the 10 most recent files
+    // Use a min heap to keep track of files, ordered by last write time
     std::priority_queue<std::filesystem::path, std::vector<std::filesystem::path>,
         std::function<bool(const std::filesystem::path&, const std::filesystem::path&)>> heap(
         [](const auto& a, const auto& b) {
@@ -101,9 +103,20 @@ void GetLog::GenerateDaemonLogFile()
     // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
-            heap.push(entry.path());
-            if (heap.size() > 10) {
-                heap.pop(); // Remove oldest file if we exceed 10 files
+            auto fileSize = std::filesystem::file_size(entry.path());
+            if (currentLogSize + fileSize <= logMaxSize) {
+                heap.push(entry.path());
+                currentLogSize += fileSize;
+            } else {
+                // If adding this file would exceed max size, remove oldest files until it fits
+                while (!heap.empty() && currentLogSize + fileSize > logMaxSize) {
+                    currentLogSize -= std::filesystem::file_size(heap.top());
+                    heap.pop();
+                }
+                if (currentLogSize + fileSize <= logMaxSize) {
+                    heap.push(entry.path());
+                    currentLogSize += fileSize;
+                }
             }
         }
     }

@@ -51,6 +51,8 @@ private:
     const std::string daemonLogFileDir = LOG_FILE_DIR + "daemonLog/";
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
     static const int logSocketBufferSize = 4096;
+    static const int logMaxSize = 52428800; // 50MB = 50 * 1024 * 1024
+    int currentLogSize = 0;
     char logSocketBuffer[logSocketBufferSize];
 };
 }
