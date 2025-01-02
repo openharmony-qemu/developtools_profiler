@@ -18,8 +18,8 @@
 #include "hidebug/hidebug_type.h"
 
 #include <filesystem>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/hwext/gtest-ext.h>
+#include <gtest/hwext/gtest-tag.h>
 
 #include <cstdlib>
 
