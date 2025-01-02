@@ -63,9 +63,23 @@ public:
     }
     std::string SplitMsg(const std::string &recvBuf) const
     {
-        std::vector<std::string> sps;
-        SPUtils::StrSplit(recvBuf, "::", sps);
-        return sps[1];
+        if (recvBuf.empty()) {
+            LOGE("SplitMsg recvBuf is null");
+            return recvBuf;
+        }
+        size_t pos = recvBuf.find("::");
+        if (pos != std::string::npos) {
+            std::vector<std::string> sps;
+            SPUtils::StrSplit(recvBuf, "::", sps);
+            if (sps.size() > 1) {
+                return sps[1];
+            } else {
+                LOGE("SplitMsg sps size is zreo");
+                return recvBuf;
+            }
+        } else {
+            return recvBuf;
+        }
     }
 
     void Process(ProtoType type) const
@@ -334,7 +348,6 @@ public:
         auto iterator = MESSAGE_MAP.begin();
         while (iterator != MESSAGE_MAP.end()) {
             std::string recvBuf = spSocket.RecvBuf();
-            LOGD("UDP recv : %s", recvBuf.c_str());
             if (recvBuf.size() != 0) {
                 Heartbeat &heartbeat = Heartbeat::GetInstance();
                 heartbeat.UpdatestartTime();
@@ -343,6 +356,7 @@ public:
                 ++iterator;
                 continue;
             }
+            LOGD("UDP recv : %s", recvBuf.c_str());
             SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
             if (profiler == nullptr) {
                 HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -428,17 +442,21 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         if (iterator->first == MessageType::SET_PKG_NAME) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                Dubai::dubaiPkgName = retCode;
-            }
-            LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
-            if (!SpProfilerFactory::editorFlag) {
-                std::string processId = "";
-                OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(retCode);
-                SpProfilerFactory::SetProfilerPidByPkg(processId);
-                SpProfilerFactory::SetProfilerPkg(retCode);
+            if (recvBuf.find("smartperf") != std::string::npos) {
+                retCode = SplitMsg(recvBuf);
+                if (retCode.find("smartperf") != std::string::npos) {
+                    Dubai::dubaiPkgName = retCode;
+                    LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
+                }
+            } else {
+                retCode = SplitMsg(recvBuf);
+                if (!SpProfilerFactory::editorFlag) {
+                    std::string processId = "";
+                    OHOS::SmartPerf::StartUpDelay sp;
+                    processId = sp.GetPidByPkg(retCode);
+                    SpProfilerFactory::SetProfilerPidByPkg(processId);
+                    SpProfilerFactory::SetProfilerPkg(retCode);
+                }
             }
             spSocket.Sendto(retCode);
             LOGD("UDP send PkgName = %s", retCode.c_str());
@@ -467,11 +485,13 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const
     {
         if (iterator->first == MessageType::START_DUBAI_DB) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                Dubai::dubaiPkgName = retCode;
+            if (recvBuf.find("smartperf") != std::string::npos) {
+                retCode = SplitMsg(recvBuf);
+                if (retCode.find("smartperf") != std::string::npos) {
+                    Dubai::dubaiPkgName = retCode;
+                    LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
+                }
             }
-            LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             Dubai::CallBeginAndFinish();
         } else if (iterator->first == MessageType::SET_DUBAI_DB) {
             Dubai::CallBeginAndFinish();

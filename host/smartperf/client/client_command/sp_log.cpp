@@ -333,19 +333,24 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
     va_list arg;
-    ret = memset_s(&arg, sizeof(va_list), 0, sizeof(va_list));
-    if (ret != 0) {
-        SpLogOut(logLevel, "SP log memset_s error.");
+    if (fmt == NULL) {
+        SpLogOut(logLevel, "SP log format string is NULL.");
         return;
     }
     va_start(arg, fmt);
-    ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
+    ret = vsnprintf(logBuf, sizeof(logBuf), fmt, arg);
     va_end(arg);
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
         return;
     }
+    if (ret >= sizeof(logBuf)) {
+        SpLogOut(logLevel, "SP log error: log message truncated.");
+        return;
+    }
+    EscapeForCSV(logBuf, sizeof(logBuf));
     SpLogOut(logLevel, logBuf);
+
     if (!isWriteLog) {
         return;
     }
@@ -358,6 +363,24 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
 
     WriteMessage(logBuf);
     return;
+}
+
+void EscapeForCSV(const std::string& str)
+{
+    std::string escapedStr;
+    for (char ch : str) {
+        if (ch == '"') {
+            escapedStr += '"';
+            escapedStr += '"';
+        } else if (ch == ',' || ch == '\n' || ch == '\r') {
+            escapedStr += '"';
+            escapedStr += ch;
+            escapedStr += '"';
+        } else {
+            escapedStr += ch;
+        }
+    }
+    str = escapedStr;
 }
 } // namespace SmartPerf
 } // namespace OHOS

@@ -137,6 +137,7 @@ void Network::GetCurNetwork(long long &networkCurRx, long long &networkCurTx)
 void Network::IsFindHap()
 {
     hapFlag = true;
+    ClearHapFlag();
 }
 void Network::IsStopFindHap()
 {
@@ -160,7 +161,6 @@ void Network::ThreadGetHapNetwork()
         long long costTime = stopTime - startTime;
         std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
     }
-    ClearHapFlag();
 }
 void Network::ClearHapFlag()
 {
