@@ -97,6 +97,7 @@ private:
         int32_t timeoutScheduleTaskFd {-1};
         ProfilerService* service = nullptr;
         std::mutex sessionMutex;
+        std::mutex stopSessionMutex;
         ProfilerSessionConfig sessionConfig;
         std::vector<std::string> pluginNames;
         std::vector<BufferConfig> bufferConfigs;
