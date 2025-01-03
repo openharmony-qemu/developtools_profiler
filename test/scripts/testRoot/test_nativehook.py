@@ -442,7 +442,7 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result(killProcess = False):
+def check_sa_result(killProcess = False, checkDumpCatch = False):
     subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
     subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
     subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
@@ -480,14 +480,29 @@ def check_sa_result(killProcess = False):
     time.sleep(1)
     touch_button("Allocations_Js_Depth")
     i = 0
+    dumpCatchResult = False
+    process_hilog = None
     while i < SA_CLICK_TIMES:
-        if (killProcess and i == KILL_PROCESS_TIME):
-            subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-            break
+        if (i == KILL_PROCESS_TIME):
+            if (killProcess):
+                subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+                break
+            if checkDumpCatch:
+                pid = get_pid("native_daemon sa")
+                subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
+                process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
-    
+    if (checkDumpCatch):
+        process_hilog.terminate()
+        subprocess.check_output(f"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "Name:native_daemon" in line:
+                    dumpCatchResult = True
+        return dumpCatchResult
     filename = get_profiler_test_trace("com.example.insight_test_stage")
 
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
@@ -706,6 +721,10 @@ class TestNativehook:
     @pytest.mark.L0
     def test_nativehook_sa_killprocess(self):
         assert check_sa_result(True)
+
+    @pytest.mark.L0
+    def test_nativehook_sa_dumpcatch(self):
+        assert check_sa_result(False, True)
     
     @pytest.mark.L0
     def test_nativehook_sa(self):
