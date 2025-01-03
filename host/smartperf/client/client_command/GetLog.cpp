@@ -299,19 +299,38 @@ int GetLog::SendLogFile()
         return -1;
     }
     WLOGI("logfile exists, sending...");
+    // Get file size
+    logFile.seekg(0, std::ios::end);
+    std::streamsize fileSize = logFile.tellg();
+    logFile.seekg(0, std::ios::beg);
+
+    std::streamsize totalSent = 0;
     while (!logFile.eof()) {
         logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
         std::streamsize bytesRead = logFile.gcount();
-        if (send(logFileSocket, logSocketBuffer, bytesRead, 0) < 0) {
+        ssize_t bytesSent = send(logFileSocket, logSocketBuffer, bytesRead, 0);
+        if (bytesSent < 0) {
             WLOGE("Send log file failed");
             logFile.close();
             close(logFileSocket);
             return -1;
         }
+        totalSent += bytesSent;
+        if (bytesSent != bytesRead) {
+            WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
+            logFile.close();
+            close(logFileSocket);
+            return -1;
+        }
+    }
+
+    if (totalSent != fileSize) {
+        WLOGE("File size mismatch: sent %zd bytes, file size %zd", totalSent, fileSize);
+        return -1;
     }
     logFile.close();
     close(logFileSocket);
-    WLOGI("Send log file success");
+    WLOGI("Send log file success, bytes: %zd", totalSent);
     RemoveLogFile();
     return 0;
 }
