@@ -39,6 +39,7 @@ ohos_executable("SP_daemon") {
     "DDR.cpp",
     "Dubai.cpp",
     "FPS.cpp",
+    "GetLog.cpp",
     "GPU.cpp",
     "GpuCounter.cpp",
     "GpuCounterCallback.cpp",

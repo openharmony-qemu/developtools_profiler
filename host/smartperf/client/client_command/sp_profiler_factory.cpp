@@ -15,6 +15,7 @@
 #include <iostream>
 #include "include/CPU.h"
 #include "include/DDR.h"
+#include "include/GetLog.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
 #include "include/profiler_fps.h"
@@ -52,6 +53,9 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             break;
         case MessageType::GET_RAM_INFO:
             profiler = &RAM::GetInstance();
+            break;
+        case MessageType::GET_LOG:
+            profiler = &GetLog::GetInstance();
             break;
         default:
             break;

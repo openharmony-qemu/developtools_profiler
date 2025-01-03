@@ -27,6 +27,7 @@
 #include "heartbeat.h"
 #include "Dubai.h"
 #include "Network.h"
+#include "GetLog.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
@@ -327,6 +328,22 @@ public:
         SPUtils::LoadCmd(uinput, cmdResult);
     }
 
+    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const
+    {
+        if (buffer.find("::") != std::string::npos) {
+            int port = std::stoi(buffer.substr(buffer.find("::") + 2));
+            WLOGI("Get File log UDP message received, port is %d", port);
+            // Init log file socket and file process
+            GetLog::GetInstance().SetLogFileSocket(-1);
+            GetLog::GetInstance().SetLogFileSocketPort(port);
+            return profilerItem->ItemData();
+        } else {
+            WLOGE("Get File log UDP message received, but port is not found");
+            GetLog::GetInstance().SetLogFileSocketPort(-1);
+        }
+
+        return std::map<std::string, std::string>();
+    }
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
     {
@@ -356,6 +373,8 @@ public:
                     Network::GetInstance().IsStopFindHap();
                     data = profiler->ItemData();
                     data["network_traffic"] = "true";
+                } else if (iterator->first == MessageType::GET_LOG) {
+                    data = GetLogProcess(profiler, recvBuf);
                 } else {
                     data = profiler->ItemData();
                 }
@@ -382,6 +401,27 @@ public:
             LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
         } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
             FetchCpuStats(spSocket, data);
+        } else if (iterator->first == MessageType::GET_LOG) {
+            if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
+                return;
+            }
+            int logSocket = -1;
+            int connectCount = 0;
+
+            while (logSocket < 0) {
+                WLOGI("Connect file log socket, try times: %d", connectCount + 1);
+                if (connectCount > 2) {
+                    WLOGE("Connect file log socket failed");
+                    return;
+                }
+                connectCount++;
+                logSocket = GetLog::GetInstance().LogFileSocketConnect();
+            }
+
+            int ret = GetLog::GetInstance().SendLogFile();
+            if (ret < 0) {
+                return;
+            }
         } else {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
