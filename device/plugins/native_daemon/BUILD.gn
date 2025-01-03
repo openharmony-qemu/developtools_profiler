@@ -167,14 +167,19 @@ ohos_executable("native_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
     "native_daemon_client.cpp",
+    "../../base/src/common.cpp",
   ]
 
   external_deps = [
+    "bundle_framework:appexecfwk_base",
+    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "os_account:os_account_innerkits",
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
   ]
@@ -207,6 +212,7 @@ ohos_shared_library("libnative_daemon_client") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
+    "faultloggerd:libdfx_dumpcatcher",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",
     "init:libbegetutil",

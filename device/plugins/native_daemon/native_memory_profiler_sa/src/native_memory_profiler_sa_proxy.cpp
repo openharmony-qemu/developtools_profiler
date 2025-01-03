@@ -20,6 +20,8 @@
 #include "xcollie/xcollie.h"
 #include "xcollie/xcollie_define.h"
 #include "logging.h"
+#include "common.h"
+#include "dfx_dump_catcher.h"
 #include <iostream>
 #include <sstream>
 
