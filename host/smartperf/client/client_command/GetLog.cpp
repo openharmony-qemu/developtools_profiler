@@ -32,7 +32,7 @@ void GetLog::RemoveLogFile()
     if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
         LOGI("Log file is not exist.");
         return;
-    } 
+    }
 
     LOGI("Log file is exist, remove...");
     if (remove(logFilePathChar) == 0) {
@@ -47,9 +47,9 @@ void GetLog::RemoveLogFile()
         return;
     }
     LOGI("hilog directory is exist, remove...");
-    if (remove(hilogFileDirChar) == 0) {
-        WLOGI("Deleted hilog file");
-    } else {
+    std::string removeHilogCommand = "rm -rf " + hilogFileDir;
+    int ret = system(removeHilogCommand.c_str());
+    if (ret != 0) {
         WLOGE("Failed to delete hilog file");
     }
 
@@ -59,9 +59,9 @@ void GetLog::RemoveLogFile()
         return;
     }
     LOGI("daemonLog directory is exist, remove...");
-    if (remove(daemonLogFileDirChar) == 0) {
-        WLOGI("Deleted daemonLog file");
-    } else {
+    std::string removeDaemonCommand = "rm -rf " + daemonLogFileDir;
+    ret = system(removeDaemonCommand.c_str());
+    if (ret != 0) {
         WLOGE("Failed to delete daemonLog file");
     }
 
@@ -136,8 +136,19 @@ void GetLog::GenerateHilogFile()
     std::string cmdResult;
     std::string hilogTmp = hilogFileDir + "hilogTmp";
 
+    if (!SPUtils::FileAccess(hilogFileDir)) {
+        std::string hilogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + hilogFileDir;
+        if (!SPUtils::LoadCmd(hilogFileDirPath, cmdResult)) {
+            WLOGE("%s capture not be created!", hilogFileDir.c_str());
+            return;
+        } else {
+            WLOGI("%s created successfully!", hilogFileDir.c_str());
+        }
+    };
+
     std::string hilogCommand = "timeout 1s hilog > " + hilogTmp;
-    if (system(hilogCommand.c_str()) != 0 && errno != ETIMEDOUT) {
+    int ret = system(hilogCommand.c_str());
+    if (ret != 31744) {
         WLOGE("Failed to capture current hilog");
         return;
     }
@@ -150,16 +161,6 @@ void GetLog::GenerateHilogFile()
         WLOGE("Failed to get current working directory");
         return;
     }
-
-    if (!SPUtils::FileAccess(hilogFileDir)) {
-        std::string hilogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + hilogFileDir;
-        if (!SPUtils::LoadCmd(hilogFileDirPath, cmdResult)) {
-            WLOGE("%s capture not be created!", hilogFileDir.c_str());
-            return;
-        } else {
-            WLOGI("%s created successfully!", hilogFileDir.c_str());
-        }
-    };
 
     // Get all hilog files in systemHilogFileDir
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
@@ -310,8 +311,8 @@ int GetLog::SendLogFile()
     }
     logFile.close();
     close(logFileSocket);
-    RemoveLogFile();
     WLOGI("Send log file success");
+    RemoveLogFile();
     return 0;
 }
 void GetLog::SetLogFileSocketPort(int port)
