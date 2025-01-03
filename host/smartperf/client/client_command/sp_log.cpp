@@ -249,7 +249,7 @@ static bool GetLogFilePath()
     return true;
 }
 
-static void WriteMessage(char* logMessage)
+static void WriteMessage(const char* logMessage)
 {
     bool chmodFlag = !std::__fs::filesystem::exists(g_currentLogFilePath);
 
@@ -345,18 +345,6 @@ void EscapeForCSV(std::string str)
     str = escapedStr;
 }
 
-bool IsValidFormatString(const char* fmt)
-{
-    if (fmt == nullptr) {
-        return false;
-    }
-    std::string format(fmt);
-    if (format.find("%n") != std::string::npos) {
-        return false;
-    }
-    return true;
-}
-
 void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
 {
     if (fmt == nullptr) {
@@ -367,7 +355,7 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
     int32_t ret = 0;
     va_list arg;
     va_start(arg, fmt);
-    ret = _vsnprintf_s(logBuf, sizeof(logBuf), _TRUNCATE, fmt, arg);
+    ret = vsnprintf_s(logBuf, sizeof(logBuf), sizeof(logBuf) - 1, fmt, arg);
     va_end(arg);
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
