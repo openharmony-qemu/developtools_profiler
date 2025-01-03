@@ -26,7 +26,7 @@
 #include <sstream>
 
 namespace OHOS::Developtools::NativeDaemon {
-constexpr int32_t TIME_OUT = 20;
+constexpr int32_t TIME_OUT = 15;
 constexpr int32_t MAX_FRAME_NUM = 100;
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 NativeMemoryProfilerSaProxy::NativeMemoryProfilerSaProxy(const sptr<IRemoteObject> &impl)
@@ -87,23 +87,22 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     clock_gettime(CLOCK_REALTIME, &start);
     XCollieCallback callbackFunc = [](void *) {
         int pidVal = 0;
-        if (COMMON::IsProcessExist("native_daemon", pidVal)) {
+        if (!COMMON::IsProcessExist("native_daemon", pidVal)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop native_daemon doesn't exist!");
+        } else {
             HiviewDFX::DfxDumpCatcher dumplog;
             std::string msg = "";
             if (!dumplog.DumpCatch(pidVal, 0, msg, MAX_FRAME_NUM)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop DumpCatch failed!");
-                OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
             } else {
-                OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
                 std::istringstream iss(msg);
                 std::string line;
                 while (std::getline(iss, line, '\n')) {
                     PROFILER_LOG_ERROR(LOG_CORE, "%s", line.c_str());
                 }
             }
-        } else {
-            OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
         }
+        OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
     };
     int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer("Hiprofiler_Timeout", TIME_OUT, callbackFunc, nullptr,
                                                                  HiviewDFX::XCOLLIE_FLAG_LOG);
