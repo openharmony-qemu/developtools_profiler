@@ -366,7 +366,7 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
         return;
     }
     std::string logStr(logBuf);
-    EscapeForCSV(logStr); 
+    EscapeForCSV(logStr);
     SpLogOut(logLevel, logStr.c_str());
 
     if (!isWriteLog) {
