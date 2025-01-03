@@ -328,7 +328,7 @@ void EnableWriteLogAndDeleteOldLogFiles()
     closedir(dir);
 }
 
-void EscapeForCSV(const std::string& str)
+void EscapeForCSV(std::string str)
 {
     std::string escapedStr;
     for (char ch : str) {
@@ -343,19 +343,6 @@ void EscapeForCSV(const std::string& str)
         }
     }
     str = escapedStr;
-}
-
-std::string EscapeForSQL(const std::string& str)
-{
-    std::string escapedStr;
-    for (char ch : str) {
-        if (ch == '\'') {
-            escapedStr += "''";
-        } else {
-            escapedStr += ch;
-        }
-    }
-    return escapedStr;
 }
 
 bool IsValidFormatString(const char* fmt)
@@ -380,19 +367,18 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
     int32_t ret = 0;
     va_list arg;
     va_start(arg, fmt);
-    ret = vsprintf_s(logBuf, sizeof(logBuf), fmt, arg);
+    ret = _vsnprintf_s(logBuf, sizeof(logBuf), _TRUNCATE, fmt, arg);
     va_end(arg);
     if (ret < 0) {
         SpLogOut(logLevel, "SP log length error.");
         return;
     }
-    if (ret >= sizeof(logBuf)) {
+    if (ret >= static_cast<int32_t>(sizeof(logBuf) - 1)) {
         SpLogOut(logLevel, "SP log error: log message truncated.");
         return;
     }
     std::string logStr(logBuf);
-    EscapeForCSV(logStr);
-    logStr = EscapeForSQL(logStr);
+    EscapeForCSV(logStr); 
     SpLogOut(logLevel, logStr.c_str());
 
     if (!isWriteLog) {
