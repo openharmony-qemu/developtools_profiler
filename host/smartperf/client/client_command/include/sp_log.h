@@ -14,7 +14,7 @@
  */
 #ifndef OHOS_SP_LOG_H
 #define OHOS_SP_LOG_H
-
+#include <string>
 namespace OHOS {
 namespace SmartPerf {
 typedef enum {
@@ -59,6 +59,7 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...);
         ##__VA_ARGS__)
 
 void EnableWriteLogAndDeleteOldLogFiles();
+void EscapeForCSV(std::string str);
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H

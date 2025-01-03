@@ -298,7 +298,7 @@ void FPS::CalcJitters()
     }
 }
         
-long long FPS::CalculateJitter()
+long long FPS::CalculateJitter() const
 {
     long long jitter;
     if (prevScreenTimestamp == -1) {
@@ -345,7 +345,7 @@ std::string FPS::FindFpsRefreshrate()
     return value;
 }
 
-std::string FPS::GetHardenRefreshrate(std::string &screenInfo)
+std::string FPS::GetHardenRefreshrate(std::string &screenInfo) const
 {
     if (screenInfo.empty()) {
         SPUtils::LoadCmd(HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN), screenInfo);
