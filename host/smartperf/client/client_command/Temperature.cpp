@@ -64,7 +64,7 @@ void Temperature::GetTempInfos(std::map<std::string, std::string> &result, std::
     for (auto node : collectNodes) {
         if (!strcmp(type.c_str(), node.c_str())) {
             float t = SPUtilesTye::StringToSometype<float>(temp);
-            if (node == "gpu" || node.find("cluster")) {
+            if (node == "gpu" || node.find("cluster") != std::string::npos) {
                 result[type] = std::to_string(t);
             } else {
                 result[type] = std::to_string(t / 1e3);
