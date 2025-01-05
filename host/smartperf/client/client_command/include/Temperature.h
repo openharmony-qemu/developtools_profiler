@@ -24,8 +24,8 @@ public:
     std::vector<std::string> collectNodes = { std::string("soc_thermal"), std::string("system_h"),
                                               std::string("soc-thermal"), std::string("gpu"),
                                               std::string("shell_frame"), std::string("shell_front"),
-                                              std::string("shell_back"),  std::string("Battery") 
-                                              std::string("cluster0"),  std::string("cluster1")
+                                              std::string("shell_back"),  std::string("Battery"),
+                                              std::string("cluster0"),  std::string("cluster1"),
                                               std::string("cluster2")};
     std::map<std::string, std::string> ItemData() override;
     static Temperature &GetInstance()
