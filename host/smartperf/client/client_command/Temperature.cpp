@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <string>
 #include "include/sp_utils.h"
 #include <dirent.h>
 #include "include/Temperature.h"
@@ -61,9 +62,9 @@ std::map<std::string, std::string> Temperature::ItemData()
 void Temperature::GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp)
 {
     for (auto node : collectNodes) {
-        if (type.find(node) != std::string::npos) {
+        if (!strcmp(type.c_str(), node.c_str())) {
             float t = SPUtilesTye::StringToSometype<float>(temp);
-            if (node == "gpu") {
+            if (node == "gpu" || node.find("cluster")) {
                 result[type] = std::to_string(t);
             } else {
                 result[type] = std::to_string(t / 1e3);
