@@ -18,6 +18,7 @@
 #include "sp_profiler.h"
 #include "sp_log.h"
 #include <string>
+#include <filesystem>
 namespace OHOS {
 namespace SmartPerf {
 class GetLog : public SpProfiler {
