@@ -681,15 +681,18 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             isFoundAppName = true;
         }
         if (isFoundAppName) {
-            if (line.find("state #FOREGROUND") != std::string::npos) {
-                isForeground = true;
+            if (line.find("state") != std::string::npos) {
+                isForeground = IsFindForeGround(line);
                 break;
             }
         }
     }
     return isForeground;
 }
-
+bool SPUtils::IsFindForeGround(const std::string &line)
+{
+    return line.find("FOREGROUND") != std::string::npos;
+}
 bool SPUtils::IsFindAbilist()
 {
     std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
