@@ -681,7 +681,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             isFoundAppName = true;
         }
         if (isFoundAppName) {
-            if (line.find("state #FOREGROUND") != std::string::npos) {
+            if (line.find("state") != std::string::npos) {
                 isForeground = IsFindForeGround(line);
                 break;
             }
