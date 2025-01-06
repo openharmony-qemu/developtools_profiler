@@ -26,75 +26,93 @@
 #include <ctime>
 namespace OHOS {
 namespace SmartPerf {
+void GetLog::CreateDir(const std::string &dirPath)
+{
+    if (!SPUtils::FileAccess(dirPath)) {
+        std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
+        std::string cmdResult;
+        if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+            WLOGE("%s capture not be created!", dirPath.c_str());
+        } else {
+            WLOGI("%s created successfully!", dirPath.c_str());
+        }
+    }
+}
+
+void GetLog::RemoveDirOrFile(const std::string &path)
+{
+    char pathChar[PATH_MAX] = {0x00};
+    if ((realpath(path.c_str(), pathChar) == nullptr)) {
+        WLOGI("%s is not exist.", path.c_str());
+        return;
+    }
+    LOGI("%s is exist, remove...", path.c_str());
+
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + path;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+        WLOGE("%s capture not be removed!", path.c_str());
+    } else {
+        WLOGI("%s removed successfully!", path.c_str());
+    }
+}
+
+void GetLog::CopyFiles(std::string cpStr)
+{
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+        WLOGE("Failed to copy files: %s", cpStr.c_str());
+    }
+}
+
+void GetLog::TarFiles(std::string tarStr)
+{
+    std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
+        WLOGE("Failed to tar log files");
+    }
+}
+
 void GetLog::RemoveLogFile()
 {
-    char logFilePathChar[PATH_MAX] = {0x00};
-    if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
-        LOGI("Log file is not exist.");
-        return;
-    }
-
-    LOGI("Log file is exist, remove...");
-    if (remove(logFilePathChar) == 0) {
-        WLOGI("Deleted log file");
-    } else {
-        WLOGE("Failed to delete log file");
-    }
-
-    char hilogFileDirChar[PATH_MAX] = {0x00};
-    if ((realpath(hilogFileDir.c_str(), hilogFileDirChar) == nullptr)) {
-        LOGI("hilog directory is not exist.");
-        return;
-    }
-    LOGI("hilog directory is exist, remove...");
-    std::string removeHilogCommand = "rm -rf " + hilogFileDir;
-    int ret = system(removeHilogCommand.c_str());
-    if (ret != 0) {
-        WLOGE("Failed to delete hilog file");
-    }
-
-    char daemonLogFileDirChar[PATH_MAX] = {0x00};
-    if ((realpath(daemonLogFileDir.c_str(), daemonLogFileDirChar) == nullptr)) {
-        LOGI("daemonLog directory is not exist.");
-        return;
-    }
-    LOGI("daemonLog directory is exist, remove...");
-    std::string removeDaemonCommand = "rm -rf " + daemonLogFileDir;
-    ret = system(removeDaemonCommand.c_str());
-    if (ret != 0) {
-        WLOGE("Failed to delete daemonLog file");
-    }
+    // Process before and after send
+    RemoveDirOrFile(logFilePath);
+    RemoveDirOrFile(hilogFileDir);
+    RemoveDirOrFile(daemonLogFileDir);
 
     currentLogSize = 0;
 }
+
+char* GetLog::GetCurrentPath()
+{
+    char currentPath[PATH_MAX];
+    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
+        WLOGE("Failed to get current working directory");
+        return nullptr;
+    }
+    return currentPath;
+}
+
 void GetLog::GenerateDaemonLogFile()
 {
     std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
     std::vector<std::filesystem::path> files;       // Log file vector to tar
-    std::string cmdResult;
 
-    char currentPath[PATH_MAX];
-    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
-        WLOGE("Failed to get current working directory");
-        return;
-    }
+    CreateDir(daemonLogFileDir);                    // Create daemonLog directory
 
-    // cd LOG_FILE_DIR
+    // Save current working directory to restore it later
+    // Change directory to handle relative paths in tar operations
+    char *originPath = GetCurrentPath();        
     std::filesystem::current_path(LOG_FILE_DIR);
-
-    if (!SPUtils::FileAccess(daemonLogFileDir)) {
-        std::string daemonLogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + daemonLogFileDir;
-        if (!SPUtils::LoadCmd(daemonLogFileDirPath, cmdResult)) {
-            WLOGE("%s capture not be created!", daemonLogFileDir.c_str());
-            return;
-        } else {
-            WLOGI("%s created successfully!", daemonLogFileDir.c_str());
-        }
-    };
 
     // Get all log files in LOG_FILE_DIR
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
+            if (entry.path().filename().string().substr(0, 4) != "log.") {
+                continue;  // Skip files that don't start with "log."
+            }
             files.push_back(entry.path());
         }
     }
@@ -105,7 +123,7 @@ void GetLog::GenerateDaemonLogFile()
     });
 
     // Build tar command with relative paths only, respecting size limit
-    std::string tarCommand = "cp ";
+    std::string cpCommand = "";
     for (const auto& file : files) {
         uintmax_t fileSize = std::filesystem::file_size(file);
         if (currentLogSize + fileSize > logMaxSize) {
@@ -113,86 +131,90 @@ void GetLog::GenerateDaemonLogFile()
         }
         currentLogSize += fileSize;
         std::string filename = file.filename().string();
-        tarCommand += filename + " ";
+        cpCommand += filename + " ";
     }
-    tarCommand += daemonLogFileDir;
-
-    if (system(tarCommand.c_str()) != 0) {
-        WLOGE("Failed to create tar archive");
-        return;
-    }
+    cpCommand += daemonLogFileDir;
+    CopyFiles(cpCommand);
+    
     WLOGI("Created tar archive of daemonLog files successfully");
 }
+
 std::time_t to_time_t(const std::filesystem::file_time_type& ftime) {
     auto systemTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>(ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
     return std::chrono::system_clock::to_time_t(systemTime);
 }
 
-void GetLog::GenerateHilogFile()
+void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
 {
-    std::filesystem::path dirPath(systemHilogFileDir);      // System hilog file directory
-    std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
-    std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
-    std::string cmdResult;
+    // Get current hilog in "hilog" command
     std::string hilogTmp = hilogFileDir + "hilogTmp";
-
-    if (!SPUtils::FileAccess(hilogFileDir)) {
-        std::string hilogFileDirPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + hilogFileDir;
-        if (!SPUtils::LoadCmd(hilogFileDirPath, cmdResult)) {
-            WLOGE("%s capture not be created!", hilogFileDir.c_str());
-            return;
-        } else {
-            WLOGI("%s created successfully!", hilogFileDir.c_str());
-        }
-    };
-
-    std::string hilogCommand = "timeout 1s hilog > " + hilogTmp;
+    std::string hilogCommand = "timeout 1s hilog > " + hilogTmp;    // "hilog" is a foreground command
+    const int timeoutRet = 31744;   // 31744 is the return value of timeout command
     int ret = system(hilogCommand.c_str());
-    if (ret != 31744) {
+    if (ret != timeoutRet) {
         WLOGE("Failed to capture current hilog");
         return;
     }
     if (std::filesystem::exists(hilogTmp)) {
         currentLogSize += std::filesystem::file_size(hilogTmp);
+        fileList.push_back(hilogTmp);
     }
+}
 
-    char currentPath[PATH_MAX];
-    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
-        WLOGE("Failed to get current working directory");
-        return;
+void file_pushback_by_extension(std::vector<std::filesystem::path> &otherFileList,
+    std::vector<std::filesystem::path> &logFileList,
+    const std::filesystem::path &entry)
+{
+    std::string extension = entry.path().extension().string();
+    // Check for .log and .zip files
+    if (extension == ".log" || extension == ".zip") {
+        otherFiles.push_back(entry.path());
     }
+    // Check for .gz files with today's date
+    else if (extension == ".gz") {
+        auto fileTime = std::filesystem::last_write_time(entry.path());
+        auto now = std::filesystem::file_time_type::clock::now();
+        
+        // Convert to system time
+        auto fileTimeT = to_time_t(fileTime);
+        auto nowT = to_time_t(now);
+        
+        // Convert to tm struct to compare dates
+        auto fileTm = *std::localtime(&fileTimeT);
+        auto nowTm = *std::localtime(&nowT);
+        
+        // Compare year, month and day
+        if (fileTm.tm_year == nowTm.tm_year && 
+            fileTm.tm_mon == nowTm.tm_mon &&
+            fileTm.tm_mday == nowTm.tm_mday) {
+            logFiles.push_back(entry.path());
+        }
+    }
+}
+
+void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles, 
+    std::vector<std::filesystem::path> &logFiles)
+{
+    std::filesystem::path dirPath(systemHilogFileDir);      // System hilog file directory
 
     // Get all hilog files in systemHilogFileDir
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
-            std::string extension = entry.path().extension().string();
-            // Check for .log and .zip files
-            if (extension == ".log" || extension == ".zip") {
-                filesOther.push_back(entry.path());
-            }
-            // Check for .gz files with today's date
-            else if (extension == ".gz") {
-                auto fileTime = std::filesystem::last_write_time(entry.path());
-                auto now = std::filesystem::file_time_type::clock::now();
-                
-                // Convert to system time
-                auto fileTimeT = to_time_t(fileTime);
-                auto nowT = to_time_t(now);
-                
-                // Convert to tm struct to compare dates
-                auto fileTm = *std::localtime(&fileTimeT);
-                auto nowTm = *std::localtime(&nowT);
-                
-                // Compare year, month and day
-                if (fileTm.tm_year == nowTm.tm_year && 
-                    fileTm.tm_mon == nowTm.tm_mon &&
-                    fileTm.tm_mday == nowTm.tm_mday) {
-                    filesLog.push_back(entry.path());
-                }
-            }
+            file_pushback_by_extension(otherFiles, logFiles, entry);
         }
     }
+}
 
+void GetLog::GenerateHilogFile()
+{
+    std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
+    std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
+
+    GetHilogInMemory(filesLog);
+    CreateDir(hilogFileDir);
+    char *originPath = GetCurrentPath();
+
+    GetHilogInData(filesOther, filesLog);
     // Sort hilog files by last write time
     std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
         return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
@@ -201,7 +223,7 @@ void GetLog::GenerateHilogFile()
     // cd LOG_FILE_DIR
     std::filesystem::current_path(systemHilogFileDir);
     // Build tokar command with relative paths only
-    std::string tarCommand = "cp ";
+    std::string cpCommand = "";
     for (const auto& file : filesOther) {
         uintmax_t fileSize = std::filesystem::file_size(file);
         if (currentLogSize + fileSize > logMaxSize) {
@@ -209,7 +231,7 @@ void GetLog::GenerateHilogFile()
         }
         currentLogSize += fileSize;
         std::string filename = file.filename().string();
-        tarCommand += filename + " ";
+        cpCommand += filename + " ";
     }
     for (const auto& file : filesLog) {
         uintmax_t fileSize = std::filesystem::file_size(file);
@@ -218,25 +240,20 @@ void GetLog::GenerateHilogFile()
         }
         currentLogSize += fileSize;
         std::string filename = file.filename().string();
-        tarCommand += filename + " ";
+        cpCommand += filename + " ";
     }
-    tarCommand += hilogFileDir;
-    if (system(tarCommand.c_str()) != 0) {
-        WLOGE("Failed to create tar archive");
-        return;
-    }
+    cpCommand += hilogFileDir;
+    CopyFiles(cpCommand);
+
     WLOGI("Created tar archive of hilog files successfully");
 }
+
 void GetLog::TarLogFile()
 {
     GenerateDaemonLogFile();
     GenerateHilogFile();
-    // Store current working directory, to restore later
-    char currentPath[PATH_MAX];
-    if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
-        WLOGE("Failed to get current working directory");
-        return;
-    }
+    
+    char *originPath = GetCurrentPath();
 
     // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);
@@ -244,21 +261,16 @@ void GetLog::TarLogFile()
     // Check if directories exist
     if (!std::filesystem::exists("hilog") || !std::filesystem::exists("daemonLog")) {
         WLOGE("One or both directories do not exist");
-        std::filesystem::current_path(currentPath);
+        std::filesystem::current_path(originPath);
         return;
     }
 
     // Build tar command with relative paths
-    std::string tarCommand = "tar -czf " + logFilePath + " hilog daemonLog";
-
-    if (system(tarCommand.c_str()) != 0) {
-        WLOGE("Failed to create tar archive");
-        std::filesystem::current_path(currentPath);
-        return;
-    }
+    std::string tarCommand = logFilePath + " hilog daemonLog";
+    TarFiles(tarCommand);
 
     // Restore original working directory
-    std::filesystem::current_path(currentPath);
+    std::filesystem::current_path(originPath);
     WLOGI("Created tar archive of log files successfully");
 }
 
@@ -290,6 +302,7 @@ int GetLog::LogFileSocketConnect()
     WLOGI("Connect log file socket success, socket: %d", logFileSocket);
     return logFileSocket;
 }
+
 int GetLog::SendLogFile()
 {
     std::ifstream logFile(logFilePath, std::ios::binary);
@@ -334,18 +347,22 @@ int GetLog::SendLogFile()
     RemoveLogFile();
     return 0;
 }
+
 void GetLog::SetLogFileSocketPort(int port)
 {
     logFileSocketPort = port;
 }
+
 int GetLog::GetLogFileSocketPort() const
 {
     return logFileSocketPort;
 }
+
 void GetLog::SetLogFileSocket(int socket)
 {
     logFileSocket = socket;
 }
+
 int GetLog::GetLogFileSocket() const
 {
     return logFileSocket;

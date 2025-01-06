@@ -201,6 +201,9 @@ enum class CmdCommand {
     UINPUT_BACK,
     TIMESTAMPS,
     USER_PERMISSIONS,
+    REMOVE,
+    CP,
+    TAR,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -229,6 +232,10 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::UINPUT_BACK, std::string("uinput -K -d 2076 -d 2020 -u 2076 -u 2020") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
     { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
+    { CmdCommand::REMOVE, std::string("rm -rf ") },
+    { CmdCommand::CP, std::string("cp ") },
+    { CmdCommand::TAR, std::string("tar -czf ") },
+    
 };
 
 enum class DeviceCmd {
