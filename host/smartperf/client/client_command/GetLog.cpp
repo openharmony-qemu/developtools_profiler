@@ -26,7 +26,7 @@
 #include <ctime>
 namespace OHOS {
 namespace SmartPerf {
-void GetLog::CreateDir(const std::string& dirPath)
+void GetLog::CreateDir(const std::string &dirPath)
 {
     if (!SPUtils::FileAccess(dirPath)) {
         std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
@@ -39,7 +39,7 @@ void GetLog::CreateDir(const std::string& dirPath)
     }
 }
 
-void GetLog::RemoveDirOrFile(const std::string& path)
+void GetLog::RemoveDirOrFile(const std::string &path)
 {
     char pathChar[PATH_MAX] = {0x00};
     if ((realpath(path.c_str(), pathChar) == nullptr)) {
@@ -135,7 +135,7 @@ void GetLog::GenerateDaemonLogFile()
     WLOGI("Created tar archive of daemonLog files successfully");
 }
 
-std::time_t to_time_t(const std::filesystem::file_time_type& ftime)
+std::time_t to_time_t(const std::filesystem::file_time_type &ftime)
 {
     auto systemTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>
         (ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
@@ -159,8 +159,8 @@ void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
     }
 }
 
-void GetLog::GetHilogInData(std::vector<std::filesystem::path>& otherFiles,
-    std::vector<std::filesystem::path>& logFiles)
+void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
+    std::vector<std::filesystem::path> &logFiles)
 {
     std::filesystem::path dirPath(systemHilogFileDir);
 

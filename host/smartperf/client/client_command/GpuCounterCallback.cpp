@@ -189,13 +189,13 @@ namespace OHOS {
             gpuCounterInstance.GetRealtimeDataLock().unlock();
         }
 
-        void GpuCounterCallbackImpl::GetGpuPerfInfoItem(OHOS::SmartPerf::GpuPerfInfo *itemData)
+        std::string GpuCounterCallbackImpl::GetGpuPerfInfoItem(OHOS::SmartPerf::GpuPerfInfo *itemData)
         {
+            std::ostringstream oss;
             if (itemData == nullptr) {
                 WLOGE("GpuCounter get itemData is nullptr");
-                return;
+                return "";
             }
-            std::ostringstream oss;
             oss << itemData->startTime << ","
                 << itemData->duration << ","
                 << itemData->gpuActive << ","
@@ -211,8 +211,7 @@ namespace OHOS {
                 << itemData->memoryReadBandwidth << ","
                 << itemData->memoryWriteBandwidth << ","
                 << itemData->memoryBandwidthPercentage << ",";
-            gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
-            gpuCounterInstance.GetGpuCounterSaveReportData().push_back(oss.str());
+            return oss.str();
         }
 
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
@@ -248,8 +247,10 @@ namespace OHOS {
                     gpuCounter.pop_back();
                     continue;
                 }
-                itemData->duration = durationTime;
-                GetGpuPerfInfoItem();
+                backData->duration = durationTime;
+                std::string gpuPerfInfoItemStr = GetGpuPerfInfoItem(backData);
+                gpuCounterInstance.GetGpuCounterData().push_back(gpuPerfInfoItemStr);
+                gpuCounterInstance.GetGpuCounterSaveReportData().push_back(gpuPerfInfoItemStr);
                 GetRealTime(backData);
             }
 
