@@ -310,6 +310,7 @@ int GetLog::SendLogFile()
     if (!logFile.is_open()) {
         WLOGE("Open log file failed");
         close(logFileSocket);
+        logFileSocket = -1;
         return -1;
     }
     WLOGI("logfile exists, sending...");
@@ -327,6 +328,7 @@ int GetLog::SendLogFile()
             WLOGE("Send log file failed");
             logFile.close();
             close(logFileSocket);
+            logFileSocket = -1;
             return -1;
         }
         totalSent += bytesSent;
@@ -334,6 +336,7 @@ int GetLog::SendLogFile()
             WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
             logFile.close();
             close(logFileSocket);
+            logFileSocket = -1;
             return -1;
         }
     }
@@ -344,6 +347,7 @@ int GetLog::SendLogFile()
     }
     logFile.close();
     close(logFileSocket);
+    logFileSocket = -1;
     WLOGI("Send log file success, bytes: %zd", totalSent);
     RemoveLogFile();
     return 0;
