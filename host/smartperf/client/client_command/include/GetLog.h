@@ -46,7 +46,7 @@ private:
     void RemoveDirOrFile(const std::string& dirPath);
     void CopyFiles(std::string cpStr);
     void TarFiles(std::string tarStr);
-    void GetCurrentPath(char* currentPath);
+    int GetCurrentPath(char* currentPath);
     void GetHilogInMemory(std::vector<std::filesystem::path>& fileList);
     void GetHilogInData(std::vector<std::filesystem::path>& otherFiles, std::vector<std::filesystem::path>& logFiles);
     void GenerateHilogFile();

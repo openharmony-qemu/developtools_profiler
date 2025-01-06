@@ -85,12 +85,13 @@ void GetLog::RemoveLogFile()
     currentLogSize = 0;
 }
 
-void GetLog::GetCurrentPath(char* currentPath)
+int GetLog::GetCurrentPath(char* currentPath)
 {
     if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
         WLOGE("Failed to get current working directory");
-        return nullptr;
+        return -1;
     }
+    return 0;
 }
 
 void GetLog::GenerateDaemonLogFile()
@@ -103,7 +104,10 @@ void GetLog::GenerateDaemonLogFile()
     // Save current working directory to restore it later
     // Change directory to handle relative paths in tar operations
     char originPath[PATH_MAX] = {0x00};
-    GetCurrentPath(originPath);        
+    int ret = GetCurrentPath(originPath);
+    if (ret < 0) {
+        return;
+    }
     std::filesystem::current_path(LOG_FILE_DIR);
 
     // Get all log files in LOG_FILE_DIR
@@ -161,37 +165,6 @@ void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
     }
 }
 
-void file_pushback_by_extension(std::vector<std::filesystem::path> &otherFileList,
-    std::vector<std::filesystem::path> &logFileList,
-    const std::filesystem::path &entry)
-{
-    std::string extension = entry.path().extension().string();
-    // Check for .log and .zip files
-    if (extension == ".log" || extension == ".zip") {
-        otherFileList.push_back(entry.path());
-    }
-    // Check for .gz files with today's date
-    else if (extension == ".gz") {
-        auto fileTime = std::filesystem::last_write_time(entry.path());
-        auto now = std::filesystem::file_time_type::clock::now();
-        
-        // Convert to system time
-        auto fileTimeT = to_time_t(fileTime);
-        auto nowT = to_time_t(now);
-        
-        // Convert to tm struct to compare dates
-        auto fileTm = *std::localtime(&fileTimeT);
-        auto nowTm = *std::localtime(&nowT);
-        
-        // Compare year, month and day
-        if (fileTm.tm_year == nowTm.tm_year && 
-            fileTm.tm_mon == nowTm.tm_mon &&
-            fileTm.tm_mday == nowTm.tm_mday) {
-            logFileList.push_back(entry.path());
-        }
-    }
-}
-
 void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles, 
     std::vector<std::filesystem::path> &logFiles)
 {
@@ -200,7 +173,31 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
     // Get all hilog files in systemHilogFileDir
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
         if (std::filesystem::is_regular_file(entry)) {
-            file_pushback_by_extension(otherFiles, logFiles, entry);
+            std::string extension = entry.path().extension().string();
+            // Check for .log and .zip files
+            if (extension == ".log" || extension == ".zip") {
+                otherFiles.push_back(entry.path());
+            }
+            // Check for .gz files with today's date
+            else if (extension == ".gz") {
+                auto fileTime = std::filesystem::last_write_time(entry.path());
+                auto now = std::filesystem::file_time_type::clock::now();
+
+                // Convert to system time
+                auto fileTimeT = to_time_t(fileTime);
+                auto nowT = to_time_t(now);
+
+                // Convert to tm struct to compare dates
+                auto fileTm = *std::localtime(&fileTimeT);
+                auto nowTm = *std::localtime(&nowT);
+
+                // Compare year, month and day
+                if (fileTm.tm_year == nowTm.tm_year &&
+                    fileTm.tm_mon == nowTm.tm_mon &&
+                    fileTm.tm_mday == nowTm.tm_mday) {
+                    logFiles.push_back(entry.path());
+                }
+            }
         }
     }
 }
@@ -213,7 +210,10 @@ void GetLog::GenerateHilogFile()
     GetHilogInMemory(filesLog);
     CreateDir(hilogFileDir);
     char originPath[PATH_MAX] = {0x00};
-    GetCurrentPath(originPath);   
+    int ret = GetCurrentPath(originPath);
+    if (ret < 0) {
+        return;
+    }
 
     GetHilogInData(filesOther, filesLog);
     // Sort hilog files by last write time
@@ -256,7 +256,10 @@ void GetLog::TarLogFile()
     GenerateHilogFile();
     
     char originPath[PATH_MAX] = {0x00};
-    GetCurrentPath(originPath);   
+    int ret = GetCurrentPath(originPath);
+    if (ret < 0) {
+        return;
+    }
 
     // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);
