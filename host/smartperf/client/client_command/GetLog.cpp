@@ -292,11 +292,11 @@ int GetLog::LogFileSocketConnect()
         WLOGE("Create log file socket failed, errno: %d", errno);
         return -1;
     }
-    struct sockaddr_in socket_addr = {0};
-    socket_addr.sin_family = AF_INET;
-    socket_addr.sin_port = htons(logFileSocketPort);
-    socket_addr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socket_addr), sizeof(socket_addr)) < 0) {
+    struct sockaddr_in socketAddr = {0};
+    socketAddr.sin_family = AF_INET;
+    socketAddr.sin_port = htons(logFileSocketPort);
+    socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
         WLOGE("Connect log file socket failed, errno: %d", errno);
         return -1;
     }
