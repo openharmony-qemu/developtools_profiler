@@ -162,32 +162,37 @@ void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
 void GetLog::GetHilogInData(std::vector<std::filesystem::path>& otherFiles,
     std::vector<std::filesystem::path>& logFiles)
 {
-    std::filesystem::path dirPath(systemHilogFileDir);      // System hilog file directory
+    std::filesystem::path dirPath(systemHilogFileDir);
 
-    // Get all hilog files in systemHilogFileDir
     for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
-        if (std::filesystem::is_regular_file(entry)) {
-            std::string extension = entry.path().extension().string();
-            // Check for .log and .zip files
-            if (extension == ".log" || extension == ".zip") {
-                otherFiles.push_back(entry.path());
-            } else if (extension == ".gz") {
-                // Check for .gz files with today's date
-                auto fileTime = std::filesystem::last_write_time(entry.path());
-                auto now = std::filesystem::file_time_type::clock::now();
-                // Convert to system time
-                auto fileTimeT = to_time_t(fileTime);
-                auto nowT = to_time_t(now);
-                // Convert to tm struct to compare dates
-                auto fileTm = *std::localtime(&fileTimeT);
-                auto nowTm = *std::localtime(&nowT);
-                // Compare year, month and day
-                if (fileTm.tm_year == nowTm.tm_year &&
-                    fileTm.tm_mon == nowTm.tm_mon &&
-                    fileTm.tm_mday == nowTm.tm_mday) {
-                    logFiles.push_back(entry.path());
-                }
-            }
+        if (!std::filesystem::is_regular_file(entry)) {
+            continue;
+        }
+
+        std::string extension = entry.path().extension().string();
+        if (extension == ".log" || extension == ".zip") {
+            otherFiles.push_back(entry.path());
+            continue;
+        }
+        
+        if (extension != ".gz") {
+            continue;
+        }
+
+        // Handle .gz files
+        auto fileTime = std::filesystem::last_write_time(entry.path());
+        auto fileTimeT = to_time_t(fileTime);
+        auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
+
+        auto fileTm = *std::localtime(&fileTimeT);
+        auto nowTm = *std::localtime(&nowT);
+
+        bool isSameDay = (fileTm.tm_year == nowTm.tm_year) &&
+            (fileTm.tm_mon == nowTm.tm_mon) &&
+            (fileTm.tm_mday == nowTm.tm_mday);
+
+        if (isSameDay) {
+            logFiles.push_back(entry.path());
         }
     }
 }
