@@ -202,14 +202,13 @@ void GetLog::GenerateHilogFile()
     std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
     std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
 
-    GetHilogInMemory(filesLog);
     CreateDir(hilogFileDir);
     char originPath[PATH_MAX] = {0x00};
     if (getcwd(originPath, sizeof(originPath)) == nullptr) {
         WLOGE("Failed to get current working directory");
         return;
     }
-
+    GetHilogInMemory(filesLog);
     GetHilogInData(filesOther, filesLog);
     // Sort hilog files by last write time
     std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
@@ -260,7 +259,7 @@ void GetLog::TarLogFile()
     std::filesystem::current_path(LOG_FILE_DIR);
 
     // Check if directories exist
-    if (!std::filesystem::exists("hilog") || !std::filesystem::exists("daemonLog")) {
+    if (!std::filesystem::exists("daemonLog")) {
         WLOGE("One or both directories do not exist");
         std::filesystem::current_path(originPath);
         return;
