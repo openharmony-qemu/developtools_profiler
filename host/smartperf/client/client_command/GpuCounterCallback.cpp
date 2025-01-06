@@ -191,6 +191,11 @@ namespace OHOS {
 
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
+            if (gpuPerfInfos.empty()) {
+            WLOGE("Receive gpuPerfInfos is empty!");
+            return -1;
+            }
+
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             for (auto gpuPerfInfo : gpuPerfInfos) {
@@ -198,17 +203,22 @@ namespace OHOS {
                 gpuCounter.push_back(gpuPerfInfo);
                 unsigned int gpuCounterSize = gpuCounter.size();
                 if (gpuCounterSize <= gpuCounterBackSize) {
-                    LOGE("gpuCounter data len error!");
+                    WLOGE("gpuCounter data len error!");
                     return -1;
                 }
                 GpuPerfInfo *newData = &gpuCounter[gpuCounterSize - 1];
                 GpuPerfInfo *backData = &gpuCounter[gpuCounterSize - 2];
+                if (newData == nullptr || backData == nullptr) {
+                    WLOGE("gpuCounter data pointer is null!");
+                    return -1;
+                }
+
                 long long durationTime = newData->startTime - backData->startTime;
 
                 // 如果两次数据间隔过短，则舍弃新数据
                 if (durationTime < collectInterval) {
-                    LOGE("Start time(%lld, %lld) make duration time(%lld) too short",
-                         newData->startTime, backData->startTime, durationTime);
+                    WLOGE("Start time(%lld, %lld) make duration time(%lld) too short",
+                        newData->startTime, backData->startTime, durationTime);
                     gpuCounter.pop_back();
                     continue;
                 }
