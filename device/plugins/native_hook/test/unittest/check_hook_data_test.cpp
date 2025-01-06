@@ -53,15 +53,11 @@ constexpr int FREE_GET_DATA_SIZE = 2;
 constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
-
-#ifdef __aarch64__
-const std::string DEFAULT_LIBA_PATH("/system/lib64/liba.z.so");
-const std::string DEFAULT_LIBB_PATH("/system/lib64/libb.z.so");
+const std::string DEFAULT_LIBA_PATH("/data/local/tmp/liba.z.so");
+const std::string DEFAULT_LIBB_PATH("/data/local/tmp/libb.z.so");
 const std::string DEFAULT_LIBNATIVETEST_PATH("/data/local/tmp/libnativetest_so.z.so");
 const int LIBA_MALLOC_SIZE = 888;
 const int LIBB_MALLOC_SIZE = 666;
-#endif
-
 typedef char* (*DepthMallocSo)(int depth, int mallocSize);
 typedef void (*DepthFreeSo)(int depth, char *p);
 
@@ -73,6 +69,7 @@ class CheckHookDataTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
+
     void StartDaemonProcessArgs()
     {
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";
@@ -245,7 +242,6 @@ public:
         DepthFree(depth, p);
     }
 
-#ifdef __aarch64__
     void DlopenAndCloseSo(std::string filePath, int size, int depth)
     {
         char *ptr = nullptr;
@@ -272,7 +268,6 @@ public:
             dlclose(handle);
         }
     }
-#endif
 
     void StartMallocProcess()
     {
@@ -290,7 +285,6 @@ public:
         }
     }
 
-#ifdef __aarch64__
     void StartDlopenProcess()
     {
         if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
@@ -311,7 +305,6 @@ public:
             hookPid_ = processNum;
         }
     }
-#endif
 
     char* DepthCalloc(int depth, int callocSize)
     {
@@ -667,10 +660,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
 
 /**
  * @tc.name: native hook
- * @tc.desc: Test hook dlopen normal process. just for arm64
+ * @tc.desc: Test hook dlopen normal process.
  * @tc.type: FUNC
  */
-#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
     for (size_t i = 1; i < 2; ++i) {
@@ -696,22 +688,19 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
                         getline(infile, buf);
                     }
                     std::cout << buf << std::endl;
-                    EXPECT_TRUE((buf.find("liba.z.so") != std::string::npos) ||
-                                (buf.find("libb.z.so") != std::string::npos));
+                    EXPECT_TRUE(buf.find("liba.z.so") != std::string::npos);
                 } else if (resultVec[mallocSizePos] == std::to_string(LIBB_MALLOC_SIZE)) {
                     std::cout << buf << std::endl;
                     for (size_t i = 0; i < libUnwindDepth; i++) {
                         getline(infile, buf);
                     }
                     std::cout << buf << std::endl;
-                    EXPECT_TRUE((buf.find("liba.z.so") != std::string::npos) ||
-                                (buf.find("libb.z.so") != std::string::npos));
+                    EXPECT_TRUE(buf.find("libb.z.so") != std::string::npos);
                 }
             }
         }
     }
 }
-#endif
 
 /**
  * @tc.name: native hook
@@ -720,7 +709,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
 {
-    for (size_t i = 0; i < 2; ++i) {  // 2: 0 is dwarf, 1 is fp mode
+    for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
         statisticsInterval_ = 1;
         outFileType_ = "statistics_interval_";
@@ -732,7 +721,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         std::string cmd = "kill -36 " + std::to_string(hookPid_);
         system(cmd.c_str());
 
-        sleep(SLEEP_TIME);  // 等待生成文本
+        sleep(SLEEP_TIME); // 等待生成文本
         std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
         system(cmdEnd.c_str());
         sleep(WAIT_FLUSH);
@@ -750,13 +739,13 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
                 if (!expectCallStackId.empty()) {
                     continue;
                 }
-                getline(infile, buf);  // read stack_map id
+                getline(infile, buf); // read stack_map id
                 std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 expectCallStackId = resultVec[1];
                 std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
             } else if (buf.find("statistics_event") != std::string::npos) {
-                getline(infile, buf);  // read statistics_event pid
-                getline(infile, buf);  // read statistics_event callstack_id
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
                 std::vector<std::string>& resultVec = StringSplit(buf, ':');
                 statisticsCallStackId = resultVec[1];
                 std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
@@ -765,13 +754,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
                 }
             }
         }
-        getline(infile, buf);  // read statistics_event apply_count
-        if (!buf.empty()) {
-            std::vector<std::string>& resultVec = StringSplit(buf, ':');
-            uint16_t applyCount = std::atoi(resultVec[1].c_str());
-            std::cout << "applyCount: " << applyCount << std::endl;
-            EXPECT_TRUE(applyCount > 0);
-        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
         sleep(SLEEP_TIME);
     }
 }

@@ -120,6 +120,7 @@ HWTEST_F(FfrtPofilerTest, TestFfrtProfilerRuntime, TestSize.Level1)
     fs::remove(OUTPUT_PATH);
     EXPECT_TRUE(RunCommand(cmd, ret));
     EXPECT_TRUE(ret.find("FAIL") == std::string::npos);
+    EXPECT_TRUE(CheckFileSize(OUTPUT_PATH));
 }
 
 HWTEST_F(FfrtPofilerTest, TestFfrtProfilerError, TestSize.Level1)
