@@ -291,7 +291,7 @@ int32_t CpuDataPlugin::GetCpuFrequency(std::string fileName)
     int32_t frequency = 0;
     int32_t ret = ReadFile(fileName);
     if (ret != RET_FAIL) {
-        frequency = atoi((char*)(buffer_));
+        frequency = atoi((char*)buffer_);
     }
     return frequency;
 }

@@ -253,7 +253,7 @@ void* MallocHookStart(void* disableHookCallback)
     return nullptr;
 }
 
-static void InitHookTidKey()
+void InitHookTidKey()
 {
     if (pthread_key_create(&g_hookTid, nullptr) != 0) {
         return;
@@ -261,7 +261,7 @@ static void InitHookTidKey()
     pthread_setspecific(g_hookTid, nullptr);
 }
 
-static bool InitTheadKey()
+bool InitThreadKey()
 {
     if (g_disableHookFlag != 10000) { // 10000: initial value
         pthread_key_delete(g_disableHookFlag);
@@ -290,7 +290,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     }
     pthread_detach(threadStart);
     g_hookPid = GetRealPid();
-    if (!InitTheadKey()) {
+    if (!InitThreadKey()) {
         return false;
     }
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);

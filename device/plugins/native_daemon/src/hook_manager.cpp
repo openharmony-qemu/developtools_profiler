@@ -469,7 +469,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
             if (size == sizeof(uint64_t)) {
                 if (data) {
-                    rawStack->freeData = *(reinterpret_cast<uint64_t*>(const_cast<int8_t *>(data)));
+                    rawStack->freeData = *(reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data)));
                 }
                 rawStack->baseStackData = nullptr;
                 return true;
@@ -567,7 +567,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
         }
         if (item->stackData != nullptr) {
-            item->stackData->ClearCahce();
+            item->stackData->ClearCache();
         }
     }
     if (fpHookData_) {
