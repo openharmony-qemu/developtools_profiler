@@ -189,11 +189,37 @@ namespace OHOS {
             gpuCounterInstance.GetRealtimeDataLock().unlock();
         }
 
+        void GpuCounterCallbackImpl::GetGpuPerfInfoItem(OHOS::SmartPerf::GpuPerfInfo *itemData)
+        {
+            if (itemData == nullptr) {
+                WLOGE("GpuCounter get itemData is nullptr");
+                return;
+            }
+            std::ostringstream oss;
+            oss << itemData->startTime << ","
+                << itemData->duration << ","
+                << itemData->gpuActive << ","
+                << itemData->drawCalls << ","
+                << itemData->primitives << ","
+                << itemData->vertexCounts << ","
+                << itemData->totalInstruments << ","
+                << itemData->gpuLoadPercentage << ","
+                << itemData->vertexLoadPercentage << ","
+                << itemData->fragmentLoadPercentage << ","
+                << itemData->computeLoadPercentage << ","
+                << itemData->textureLoadPercentage << ","
+                << itemData->memoryReadBandwidth << ","
+                << itemData->memoryWriteBandwidth << ","
+                << itemData->memoryBandwidthPercentage << ",";
+            gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
+            gpuCounterInstance.GetGpuCounterSaveReportData().push_back(oss.str());
+        }
+
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
             if (gpuPerfInfos.empty()) {
-            WLOGE("Receive gpuPerfInfos is empty!");
-            return -1;
+                WLOGE("Receive gpuPerfInfos is empty!");
+                return -1;
             }
 
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
@@ -222,28 +248,8 @@ namespace OHOS {
                     gpuCounter.pop_back();
                     continue;
                 }
-
-                backData->duration = durationTime;
-
-                std::ostringstream oss;
-                oss << backData->startTime << ","
-                    << backData->duration << ","
-                    << backData->gpuActive << ","
-                    << backData->drawCalls << ","
-                    << backData->primitives << ","
-                    << backData->vertexCounts << ","
-                    << backData->totalInstruments << ","
-                    << backData->gpuLoadPercentage << ","
-                    << backData->vertexLoadPercentage << ","
-                    << backData->fragmentLoadPercentage << ","
-                    << backData->computeLoadPercentage << ","
-                    << backData->textureLoadPercentage << ","
-                    << backData->memoryReadBandwidth << ","
-                    << backData->memoryWriteBandwidth << ","
-                    << backData->memoryBandwidthPercentage << ",";
-                gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
-                gpuCounterInstance.GetGpuCounterSaveReportData().push_back(oss.str());
-
+                itemData->duration = durationTime;
+                GetGpuPerfInfoItem();
                 GetRealTime(backData);
             }
 

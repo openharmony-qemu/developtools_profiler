@@ -421,10 +421,11 @@ public:
             }
             int logSocket = -1;
             int connectCount = 0;
+            const int maxTryCount = 2;
 
             while (logSocket < 0) {
                 WLOGI("Connect file log socket, try times: %d", connectCount + 1);
-                if (connectCount > 2) {
+                if (connectCount > maxTryCount) {
                     WLOGE("Connect file log socket failed");
                     return;
                 }
