@@ -26,7 +26,7 @@
 #include <ctime>
 namespace OHOS {
 namespace SmartPerf {
-void GetLog::CreateDir(const std::string &dirPath)
+void GetLog::CreateDir(const std::string& dirPath)
 {
     if (!SPUtils::FileAccess(dirPath)) {
         std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
@@ -39,7 +39,7 @@ void GetLog::CreateDir(const std::string &dirPath)
     }
 }
 
-void GetLog::RemoveDirOrFile(const std::string &path)
+void GetLog::RemoveDirOrFile(const std::string& path)
 {
     char pathChar[PATH_MAX] = {0x00};
     if ((realpath(path.c_str(), pathChar) == nullptr)) {
@@ -85,14 +85,12 @@ void GetLog::RemoveLogFile()
     currentLogSize = 0;
 }
 
-char* GetLog::GetCurrentPath()
+void GetLog::GetCurrentPath(char* currentPath)
 {
-    char currentPath[PATH_MAX];
     if (getcwd(currentPath, sizeof(currentPath)) == nullptr) {
         WLOGE("Failed to get current working directory");
         return nullptr;
     }
-    return currentPath;
 }
 
 void GetLog::GenerateDaemonLogFile()
@@ -104,7 +102,8 @@ void GetLog::GenerateDaemonLogFile()
 
     // Save current working directory to restore it later
     // Change directory to handle relative paths in tar operations
-    char *originPath = GetCurrentPath();        
+    char originPath[PATH_MAX] = {0x00};
+    GetCurrentPath(originPath);        
     std::filesystem::current_path(LOG_FILE_DIR);
 
     // Get all log files in LOG_FILE_DIR
@@ -136,6 +135,7 @@ void GetLog::GenerateDaemonLogFile()
     cpCommand += daemonLogFileDir;
     CopyFiles(cpCommand);
     
+    std::filesystem::current_path(originPath);
     WLOGI("Created tar archive of daemonLog files successfully");
 }
 
@@ -168,7 +168,7 @@ void file_pushback_by_extension(std::vector<std::filesystem::path> &otherFileLis
     std::string extension = entry.path().extension().string();
     // Check for .log and .zip files
     if (extension == ".log" || extension == ".zip") {
-        otherFiles.push_back(entry.path());
+        otherFileList.push_back(entry.path());
     }
     // Check for .gz files with today's date
     else if (extension == ".gz") {
@@ -187,7 +187,7 @@ void file_pushback_by_extension(std::vector<std::filesystem::path> &otherFileLis
         if (fileTm.tm_year == nowTm.tm_year && 
             fileTm.tm_mon == nowTm.tm_mon &&
             fileTm.tm_mday == nowTm.tm_mday) {
-            logFiles.push_back(entry.path());
+            logFileList.push_back(entry.path());
         }
     }
 }
@@ -212,7 +212,8 @@ void GetLog::GenerateHilogFile()
 
     GetHilogInMemory(filesLog);
     CreateDir(hilogFileDir);
-    char *originPath = GetCurrentPath();
+    char originPath[PATH_MAX] = {0x00};
+    GetCurrentPath(originPath);   
 
     GetHilogInData(filesOther, filesLog);
     // Sort hilog files by last write time
@@ -245,6 +246,7 @@ void GetLog::GenerateHilogFile()
     cpCommand += hilogFileDir;
     CopyFiles(cpCommand);
 
+    std::filesystem::current_path(originPath);
     WLOGI("Created tar archive of hilog files successfully");
 }
 
@@ -253,7 +255,8 @@ void GetLog::TarLogFile()
     GenerateDaemonLogFile();
     GenerateHilogFile();
     
-    char *originPath = GetCurrentPath();
+    char originPath[PATH_MAX] = {0x00};
+    GetCurrentPath(originPath);   
 
     // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);

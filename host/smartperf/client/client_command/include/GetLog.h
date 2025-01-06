@@ -42,13 +42,13 @@ private:
     GetLog &operator = (const GetLog &);
     void RemoveLogFile();
     void TarLogFile();
-    void CreateDir(const std::string &dirPath);
-    void RemoveDirOrFile(const std::string &dirPath);
+    void CreateDir(const std::string& dirPath);
+    void RemoveDirOrFile(const std::string& dirPath);
     void CopyFiles(std::string cpStr);
     void TarFiles(std::string tarStr);
-    char* GetCurrentPath();
-    void GetHilogInMemory(std::vector<std::filesystem::path> &fileList);
-    void GetHilogInData(std::vector<std::filesystem::path> &otherFiles, std::vector<std::filesystem::path> &logFiles);
+    void GetCurrentPath(char* currentPath);
+    void GetHilogInMemory(std::vector<std::filesystem::path>& fileList);
+    void GetHilogInData(std::vector<std::filesystem::path>& otherFiles, std::vector<std::filesystem::path>& logFiles);
     void GenerateHilogFile();
     void GenerateDaemonLogFile();
 
