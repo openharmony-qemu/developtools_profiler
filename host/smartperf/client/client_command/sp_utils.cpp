@@ -740,7 +740,7 @@ bool SPUtils::GetPathPermissions(const std::string &path)
 bool SPUtils::GetIsGameApp(std::string pkg)
 {
     bool isGame = false;
-    std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
+    const std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
     LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
