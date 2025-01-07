@@ -163,10 +163,10 @@ HWTEST_F(GpuDataPluginTest, TestReadGpuData, TestSize.Level1)
     gpuPlugin.running_ = true;
     gpuPlugin.resultWriter_->isProtobufSerialize = true;
     gpuPlugin.file_.open(g_path);
-    EXPECT_EG(gpuPlugin.ReadFile(), EXPECT_VAL);
+    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
     gpuPlugin.file_.close();
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
-    slelp(SLEEP_TIME);
+    sleep(SLEEP_TIME);
     EXPECT_GT(gpuPlugin.buffer_.size(), 0);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
 #endif

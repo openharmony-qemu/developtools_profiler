@@ -17,8 +17,9 @@ option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
 
-// Cpu plug-in configuration, passed to plug-in by plug-in service.
+// gpu plug-in configuration, passed to plug-in by plug-in service.
 message GpuConfig {
     int32 pid = 1;
     bool report_gpu_info = 2;
+    bool report_gpu_data_array = 3;
 }

@@ -18,13 +18,14 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <string>
 #include <unistd.h>
+
+#include <atomic>
 #include <fstream>
 #include <iostream>
-#include <thread>
-#include <atomic>
 #include <mutex>
+#include <string>
+#include <thread>
 #include <vector>
 
 #include "gpu_plugin_config.pb.h"
@@ -43,18 +44,19 @@ public:
     GpuDataPlugin() = default;
     ~GpuDataPlugin() = default;
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* data, uint32_t dataSize);
-    int ReportOptimize(RandomWriteCtx* randomWrite);
     int SetWriter(WriterStruct* writer);
     int Stop();
-    void ReadGpuData(void);
+    void ReadGpuDataArray(void);
     void FlushGpuData(std::vector<std::pair<uint64_t, int>>& vectGpuData);
+    void ReadGpuData(void);
 
 private:
     int ReadFile();
-    std::string GetCmdArgs(GpuConfig traceConfig);
+    std::string GetCmdArgs(const GpuConfig& traceConfig);
     template <typename T>
     void WriteGpuDataInfoExt(T& gpuData, std::vector<std::pair<uint64_t, int>>& vectGpuData);
+    template <typename T>
+    void WriteGpuDataInfo(T& gpuData);
     uint64_t GetBootTime();
 
 private:
