@@ -79,7 +79,6 @@ void GetLog::RemoveLogFile()
 {
     // Process before and after send
     RemoveDirOrFile(logFilePath);
-    RemoveDirOrFile(hilogFileDir);
     RemoveDirOrFile(daemonLogFileDir);
 
     currentLogSize = 0;
@@ -135,120 +134,10 @@ void GetLog::GenerateDaemonLogFile()
     WLOGI("Created tar archive of daemonLog files successfully");
 }
 
-std::time_t to_time_t(const std::filesystem::file_time_type &ftime)
-{
-    auto systemTime = std::chrono::time_point_cast<std::chrono::system_clock::duration>
-        (ftime - std::filesystem::file_time_type::clock::now() + std::chrono::system_clock::now());
-    return std::chrono::system_clock::to_time_t(systemTime);
-}
-
-void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
-{
-    // Get current hilog in "hilog" command
-    std::string hilogTmp = hilogFileDir + "hilogTmp";
-    std::string hilogCommand = "timeout 1s hilog > " + hilogTmp;    // "hilog" is a foreground command
-    const int timeoutRet = 31744;   // 31744 is the return value of timeout command
-    int ret = system(hilogCommand.c_str());
-    if (ret != timeoutRet) {
-        WLOGE("Failed to capture current hilog");
-        return;
-    }
-    if (std::filesystem::exists(hilogTmp)) {
-        currentLogSize += std::filesystem::file_size(hilogTmp);
-        fileList.push_back(hilogTmp);
-    }
-}
-
-void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
-    std::vector<std::filesystem::path> &logFiles)
-{
-    std::filesystem::path dirPath(systemHilogFileDir);
-
-    for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
-        if (!std::filesystem::is_regular_file(entry)) {
-            continue;
-        }
-
-        std::string extension = entry.path().extension().string();
-        if (extension == ".log" || extension == ".zip") {
-            otherFiles.push_back(entry.path());
-            continue;
-        }
-        
-        if (extension != ".gz") {
-            continue;
-        }
-
-        // Handle .gz files
-        auto fileTime = std::filesystem::last_write_time(entry.path());
-        auto fileTimeT = to_time_t(fileTime);
-        auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
-
-        auto fileTm = *std::localtime(&fileTimeT);
-        auto nowTm = *std::localtime(&nowT);
-
-        bool isSameDay = (fileTm.tm_year == nowTm.tm_year) &&
-            (fileTm.tm_mon == nowTm.tm_mon) &&
-            (fileTm.tm_mday == nowTm.tm_mday);
-
-        if (isSameDay) {
-            logFiles.push_back(entry.path());
-        }
-    }
-}
-
-void GetLog::GenerateHilogFile()
-{
-    std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
-    std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
-
-    CreateDir(hilogFileDir);
-    char originPath[PATH_MAX] = {0x00};
-    if (getcwd(originPath, sizeof(originPath)) == nullptr) {
-        WLOGE("Failed to get current working directory");
-        return;
-    }
-    GetHilogInMemory(filesLog);
-    GetHilogInData(filesOther, filesLog);
-    // Sort hilog files by last write time
-    std::sort(filesLog.begin(), filesLog.end(), [](const auto& a, const auto& b) {
-        return std::filesystem::last_write_time(a) > std::filesystem::last_write_time(b);
-    });
-
-    // cd LOG_FILE_DIR
-    std::filesystem::current_path(systemHilogFileDir);
-    // Build tokar command with relative paths only
-    std::string cpCommand = "";
-    for (const auto& file : filesOther) {
-        uintmax_t fileSize = std::filesystem::file_size(file);
-        if (currentLogSize + fileSize > logMaxSize) {
-            break; // Stop if adding this file would exceed the limit
-        }
-        currentLogSize += fileSize;
-        std::string filename = file.filename().string();
-        cpCommand += filename + " ";
-    }
-    for (const auto& file : filesLog) {
-        uintmax_t fileSize = std::filesystem::file_size(file);
-        if (currentLogSize + fileSize > logMaxSize) {
-            break; // Stop if adding this file would exceed the limit
-        }
-        currentLogSize += fileSize;
-        std::string filename = file.filename().string();
-        cpCommand += filename + " ";
-    }
-    cpCommand += hilogFileDir;
-    CopyFiles(cpCommand);
-
-    std::filesystem::current_path(originPath);
-    WLOGI("Created tar archive of hilog files successfully");
-}
-
 void GetLog::TarLogFile()
 {
     GenerateDaemonLogFile();
-    GenerateHilogFile();
-    
+
     char originPath[PATH_MAX] = {0x00};
     if (getcwd(originPath, sizeof(originPath)) == nullptr) {
         WLOGE("Failed to get current working directory");
@@ -266,7 +155,7 @@ void GetLog::TarLogFile()
     }
 
     // Build tar command with relative paths
-    std::string tarCommand = logFilePath + " hilog daemonLog";
+    std::string tarCommand = logFilePath + " daemonLog";
     TarFiles(tarCommand);
 
     // Restore original working directory
