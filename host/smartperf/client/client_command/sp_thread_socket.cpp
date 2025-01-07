@@ -59,8 +59,8 @@ std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *pro
     return std::map<std::string, std::string>();
 }
 
-void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
-                  std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
+    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
