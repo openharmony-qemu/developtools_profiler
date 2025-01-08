@@ -510,8 +510,7 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
     if (curTaskInfo.stuckInfo.fps > fcf.fps || curTaskInfo.stuckInfo.frameTime < curframeTime) {
         if (startCaptuerTime == 0) {
             startCaptuerTime = nowTime;
-            LOGD("ThreadGetHiperf::%lld", startCaptuerTime);
-            std::cout << "ThreadGetHiperf::" << startCaptuerTime << std::endl;
+            LOGD("ThreadGetHiperf::%ld", startCaptuerTime);
             ThreadGetHiperf(startCaptuerTime);
         }
     }
@@ -643,8 +642,8 @@ ErrCode SPTask::StartRecord()
     }
     InitDataFile();
     screenshotFlag = true;
-    recordTrace = true;
     recordState = false;
+    recordTrace = true;
     return ErrCode::OK;
 }
 
@@ -657,9 +656,8 @@ ErrCode SPTask::StopRecord()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     screenshotFlag = false;
-    recordTrace = false;
     recordState = false;
-
+    recordTrace = false;
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (isInit) {
@@ -672,10 +670,9 @@ ErrCode SPTask::StopRecord()
 
     vmap.clear();
     sdkvec.clear();
-    KillHiperfCmd();
     gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
-
+    KillHiperfCmd();
     return ErrCode::OK;
 }
 time_t SPTask::GetRealStartTime() const
