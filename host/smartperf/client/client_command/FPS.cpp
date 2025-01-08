@@ -297,7 +297,7 @@ void FPS::CalcJitters()
         }
     }
 }
-
+        
 long long FPS::CalculateJitter() const
 {
     long long jitter;

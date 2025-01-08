@@ -393,7 +393,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name, FpsInf
 
     fpsNum = 0;
     prevScreenTimestamp = -1;
-
+    
     fpsInfo.currTimeDump = timeFps.currTimeDump;
     fpsInfo.curTime = timeFps.curTime;
     char tmp[1024];

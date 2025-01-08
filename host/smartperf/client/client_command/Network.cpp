@@ -164,14 +164,14 @@ void Network::ThreadGetHapNetwork()
 }
 void Network::ClearHapFlag()
 {
-        isFirst = true;
-        stophapFlag = false;
-        rmnetCurRx = 0;
-        rmnetCurTx = 0;
-        ethCurRx = 0;
-        ethCurTx = 0;
-        wlanCurRx = 0;
-        wlanCurTx = 0;
+    isFirst = true;
+    stophapFlag = false;
+    rmnetCurRx = 0;
+    rmnetCurTx = 0;
+    ethCurRx = 0;
+    ethCurTx = 0;
+    wlanCurRx = 0;
+    wlanCurTx = 0;
 }
 }
 }

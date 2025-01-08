@@ -403,7 +403,6 @@ double StallingRateTrace::GetTimes(const std::string &line, const std::string &s
     }
     return 0.0;
 }
-
 bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
 {
     static const std::unordered_set<std::string> appLaunchPatterns = {

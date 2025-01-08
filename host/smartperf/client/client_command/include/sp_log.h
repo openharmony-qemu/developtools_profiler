@@ -24,7 +24,7 @@ typedef enum {
     SP_LOG_ERROR,
 } SpLogLevel;
 
-void SpLog(SpLogLevel logLevel, const char *fmt, ...);
+void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...);
 
 #define LOGD(fmt, ...) \
     SpLog(SP_LOG_DEBUG, false, (std::string("[") + "SP_daemon" + "][" + __FUNCTION__ + "]:" + fmt).c_str(), \
@@ -59,6 +59,7 @@ void SpLog(SpLogLevel logLevel, const char *fmt, ...);
         ##__VA_ARGS__)
 
 void EnableWriteLogAndDeleteOldLogFiles();
+void EscapeForCSV(std::string str);
 } // namespace SmartPerf
 } // namespace OHOS
 #endif // OHOS_SP_LOG_H
