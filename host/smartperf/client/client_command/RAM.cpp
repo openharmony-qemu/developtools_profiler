@@ -58,8 +58,8 @@ std::map<std::string, std::string> RAM::ItemData()
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
     for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
-        result.insert(*it);
         LOGD("sysRamInfo: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
+        result.insert(*it);
     }
     if (!processId.empty()) {
         if (g_flagFirst) {
@@ -201,7 +201,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
-        LOGD("ParsePssValue::line = %s", line.c_str());
+        LOGD("ParsePssValues::line = %s", line.c_str());
         if (line[0] == '-') {
             continue;
         }

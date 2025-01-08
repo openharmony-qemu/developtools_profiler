@@ -642,7 +642,7 @@ ErrCode SPTask::StartRecord()
     }
     InitDataFile();
     screenshotFlag = true;
-    recordState = false;
+    recordState = true;
     recordTrace = true;
     return ErrCode::OK;
 }
@@ -673,6 +673,7 @@ ErrCode SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
     KillHiperfCmd();
+
     return ErrCode::OK;
 }
 time_t SPTask::GetRealStartTime() const
