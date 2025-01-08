@@ -445,7 +445,7 @@ void HookManager::HookManagerCtx::FlushStackArray()
         rawDataArray = {};
     }
 }
-
+ 
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<StackDataRepeater::RawStack>& rawStack)
 {
@@ -467,10 +467,9 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     while (true) {
         auto rawStack = hookCtx->stackData->GetRawStack();
         bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            if (size == sizeof(void*)) {
+            if (size == sizeof(uint64_t)) {
                 if (data) {
-                    CHECK_TRUE(memcpy_s(&rawStack->freeData, sizeof(rawStack->freeData), data, size) == EOK, false,
-                               "memcpy_s freeData failed!");
+                    rawStack->freeData = *(reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data)));
                 }
                 rawStack->baseStackData = nullptr;
                 return true;
@@ -533,6 +532,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                                                      reinterpret_cast<char*>(rawStack->data));
             continue;
         } else if (rawStack->stackConext->type == END_MSG) {
+            hookCtx->FlushStackArray();
             if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
                 break;
             }
@@ -565,6 +565,9 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         }
         if (item->shareMemoryBlock != nullptr) {
             ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
+        }
+        if (item->stackData != nullptr) {
+            item->stackData->ClearCache();
         }
     }
     if (fpHookData_) {
@@ -612,7 +615,6 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
-        item->FlushStackArray();
         CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");

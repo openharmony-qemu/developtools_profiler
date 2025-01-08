@@ -196,24 +196,29 @@ bool PluginCpuinfoStub(CpuDataPlugin& cpuPlugin, CpuData& cpuData, int pid, bool
     if (reportProcess) {
         protoConfig.set_report_process_info(true);
     }
+
     // serialize
     std::vector<uint8_t> configData(protoConfig.ByteSizeLong());
     int ret = protoConfig.SerializeToArray(configData.data(), configData.size());
+
     // start
     ret = cpuPlugin.Start(configData.data(), configData.size());
     if (ret < 0) {
         return false;
     }
+
     // report
     std::vector<uint8_t> bufferData(BUF_SIZE);
     if (unusualBuff) { // buffer异常，调整缓冲区长度为1，测试异常情况
         bufferData.resize(1, 0);
     }
+
     ret = cpuPlugin.Report(bufferData.data(), bufferData.size());
     if (ret > 0) {
         cpuData.ParseFromArray(bufferData.data(), ret);
         return true;
     }
+
     return false;
 }
 
@@ -276,8 +281,9 @@ HWTEST_F(CpuDataPluginTest, TestPluginInfo, TestSize.Level1)
 {
     CpuDataPlugin cpuPlugin;
     CpuData cpuData;
-    cpuPlugin.SetFreqPath(DEFAULT_TEST_PATH);
-    cpuPlugin.SetPath(DEFAULT_TEST_PATH + "/proc/");
+    cpuPlugin.SetFreqPath(g_path);
+    g_path = g_testPath + "/proc/";
+    cpuPlugin.SetPath(g_path);
     EXPECT_TRUE(PluginCpuinfoStub(cpuPlugin, cpuData, 1872, true, false));
 
     TestCpuUsage cpuUsage;
@@ -299,6 +305,7 @@ HWTEST_F(CpuDataPluginTest, TestPluginInfo, TestSize.Level1)
     EXPECT_FLOAT_EQ(cpuData.user_load(), cpuUsage.userLoad);
     EXPECT_FLOAT_EQ(cpuData.sys_load(), cpuUsage.sysLoad);
     EXPECT_FLOAT_EQ(cpuData.total_load(), cpuUsage.totalLoad);
+
     ASSERT_EQ(cpuUsageInfo.cores_size(), 6);
     for (int i = 1; i <= CORE_NUM; i++) {
         CpuCoreUsageInfo cpuCoreUsageInfo = cpuUsageInfo.cores()[i - 1];
@@ -932,7 +939,7 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
 #endif // COVERAGE_TEST
     EXPECT_TRUE(PluginCpuinfoStub(plugin1, cpuData1, static_cast<int>(pid1), false, false));
     EXPECT_TRUE(PluginCpuinfoStub(plugin2, cpuData2, static_cast<int>(pid2), false, false));
-    EXPECT_LE(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());
+    EXPECT_LT(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());
 
     while (waitpid(-1, nullptr, WNOHANG) == 0) {
         kill(pid1, SIGKILL);

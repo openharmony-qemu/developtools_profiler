@@ -69,6 +69,11 @@ public:
     std::shared_ptr<RawStack> GetRawStack();
     void ReturnRawStack(std::shared_ptr<RawStack> rawStack);
     size_t Size();
+    void ClearCache()
+    {
+        std::unique_lock<std::mutex> lock(cacheMutex_);
+        rawDataCacheQueue_.clear();
+    }
 
 private:
     std::mutex mutex_;

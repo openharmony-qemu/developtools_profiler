@@ -391,11 +391,9 @@ void StackPreprocess::TakeResults()
                 if (rawData->freeData) {
                     SetFreeStatisticsData(rawData->freeData);
                 }
-                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             }
             if (rawData->stackConext->type == NMD_MSG) {
-                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             } else if (rawData->stackConext->type == END_MSG) {
                 isStopTakeData_ = true;
@@ -406,7 +404,6 @@ void StackPreprocess::TakeResults()
             clock_gettime(CLOCK_REALTIME, &start);
 #endif
             if (HandleNoStackEvent(rawData)) {
-                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             } else if (rawData->stackConext->type == MUNMAP_MSG) {
                 std::lock_guard<std::mutex> guard(mtx_);
@@ -419,7 +416,6 @@ void StackPreprocess::TakeResults()
                     PROFILER_LOG_INFO(LOG_CORE, "ignoreCnts_ = %d quene size = %zu\n",
                                       ignoreCnts_, dataRepeater_->Size());
                 }
-                dataRepeater_->ReturnRawStack(rawData);
                 continue;
             }
             eventCnts_++;
@@ -463,7 +459,6 @@ void StackPreprocess::TakeResults()
                     rawData->stackConext->pid, rawData->stackConext->tid, callFrames_, stackDepth);
                     if (!ret) {
                         PROFILER_LOG_ERROR(LOG_CORE, "unwind fatal error");
-                        dataRepeater_->ReturnRawStack(rawData);
                         continue;
                     }
                 }
@@ -502,8 +497,13 @@ void StackPreprocess::TakeResults()
                     unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
             }
 #endif
-            dataRepeater_->ReturnRawStack(rawData);
         } // for
+        for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
+            if (!batchRawStack[i]) {
+                break;
+            }
+            dataRepeater_->ReturnRawStack(std::move(batchRawStack[i]));
+        }
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
