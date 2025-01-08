@@ -664,7 +664,6 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     if (fd == nullptr) {
         return false;
     }
-
     size_t bytesRead;
     std::array<char, BUFFER_SIZE> buf;
     while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
@@ -741,7 +740,7 @@ bool SPUtils::GetPathPermissions(const std::string &path)
 bool SPUtils::GetIsGameApp(std::string pkg)
 {
     bool isGame = false;
-    std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
+    const std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
     LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {

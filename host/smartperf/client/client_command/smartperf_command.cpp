@@ -178,7 +178,6 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
 {
     int rc = 0;
     std::string errInfo;
-
     if (!pkgName.empty()) {
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;

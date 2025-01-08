@@ -15,7 +15,6 @@
 
 #ifndef NETWORK_H
 #define NETWORK_H
-#include <mutex>
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
