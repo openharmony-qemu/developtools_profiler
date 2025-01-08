@@ -176,10 +176,17 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
+            if (newData == nullptr) {
+                WLOGE("GetRealTime newData is nullptr");
+                return;
+            }
+
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
+                WLOGE("Invalid duration found: realtime=%d, newData=%d", 
+                realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
             gpuCounterInstance.GetRealtimeDataLock().lock();
