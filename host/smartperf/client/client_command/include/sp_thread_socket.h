@@ -31,8 +31,8 @@
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
-public:
-    static bool flagRunning;
+private:
+    bool flagRunning = false;
     enum SocketConnectType {
         CMD_SOCKET,
         EDITOR_SOCKET,
@@ -47,6 +47,7 @@ public:
         START_RECORD_FAILED,
         STOP_RECORD_FAILED,
     };
+public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -83,7 +84,7 @@ public:
         }
     }
 
-    void Process(ProtoType type) const
+    void Process(ProtoType type)
     {
         std::cout << "Socket Process called!" << std::endl;
         SpServerSocket spSocket;
@@ -131,7 +132,7 @@ public:
         return OK;
     }
 
-    void TypeTcp(SpServerSocket &spSocket) const
+    void TypeTcp(SpServerSocket &spSocket)
     {
         SocketHeartbeat();
         WLOGI("Socket TCP Init Finished, Wait Client Socket Connect...");
@@ -190,7 +191,7 @@ public:
             WLOGE("Sent init::%d for failure", INIT_FAILED);
         }
     }
-    void StartRecv(SpServerSocket &spSocket) const
+    void StartRecv(SpServerSocket &spSocket)
     {
         if (flagRunning) {
             spSocket.Send("SP_daemon is running");
@@ -222,7 +223,7 @@ public:
             WLOGE("Sent start::" + std::to_string(START_FAILED) + " message to socket.");
         }
     }
-    void StopRecvRealtime(SpServerSocket &spSocket) const
+    void StopRecvRealtime(SpServerSocket &spSocket)
     {
         ErrCode code = SPTask::GetInstance().StopTask();
         if (code == ErrCode::OK) {
@@ -280,7 +281,7 @@ public:
         }
         WLOGW("No matching command found for token check failure in message: %s", message.c_str());
     }
-    void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus) const
+    void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
     {
         SocketHeartbeat();
         if (tokenStatus == TOKEN_CHECK_FAILED) {
@@ -494,7 +495,6 @@ public:
         }
     }
 };
-bool SpThreadSocket::flagRunning = false;
 }
 }
 #endif
