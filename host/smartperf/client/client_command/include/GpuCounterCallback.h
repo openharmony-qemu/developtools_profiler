@@ -61,6 +61,7 @@ namespace OHOS {
             void SplitSocketDataValue(int32_t interval);
             void SplitSocketDataPercent();
             void SplitSocketData();
+            std::string GetGpuPerfInfoItem(GpuPerfInfo *itemData);
             std::vector<GpuPerfInfo> gpuCounter;
             const long long collectInterval = 50;
             const int64_t maxTime = 10800000;

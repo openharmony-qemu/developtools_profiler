@@ -27,11 +27,12 @@
 #include "heartbeat.h"
 #include "Dubai.h"
 #include "Network.h"
+#include "GetLog.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpThreadSocket {
-public:
-    static bool flagRunning;
+private:
+    bool flagRunning = false;
     enum SocketConnectType {
         CMD_SOCKET,
         EDITOR_SOCKET,
@@ -46,6 +47,7 @@ public:
         START_RECORD_FAILED,
         STOP_RECORD_FAILED,
     };
+public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const
     {
         std::string result;
@@ -82,7 +84,7 @@ public:
         }
     }
 
-    void Process(ProtoType type) const
+    void Process(ProtoType type)
     {
         std::cout << "Socket Process called!" << std::endl;
         SpServerSocket spSocket;
@@ -130,7 +132,7 @@ public:
         return OK;
     }
 
-    void TypeTcp(SpServerSocket &spSocket) const
+    void TypeTcp(SpServerSocket &spSocket)
     {
         SocketHeartbeat();
         WLOGI("Socket TCP Init Finished, Wait Client Socket Connect...");
@@ -189,7 +191,7 @@ public:
             WLOGE("Sent init::%d for failure", INIT_FAILED);
         }
     }
-    void StartRecv(SpServerSocket &spSocket) const
+    void StartRecv(SpServerSocket &spSocket)
     {
         if (flagRunning) {
             spSocket.Send("SP_daemon is running");
@@ -221,7 +223,7 @@ public:
             WLOGE("Sent start::" + std::to_string(START_FAILED) + " message to socket.");
         }
     }
-    void StopRecvRealtime(SpServerSocket &spSocket) const
+    void StopRecvRealtime(SpServerSocket &spSocket)
     {
         ErrCode code = SPTask::GetInstance().StopTask();
         if (code == ErrCode::OK) {
@@ -279,7 +281,7 @@ public:
         }
         WLOGW("No matching command found for token check failure in message: %s", message.c_str());
     }
-    void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus) const
+    void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
     {
         SocketHeartbeat();
         if (tokenStatus == TOKEN_CHECK_FAILED) {
@@ -341,6 +343,7 @@ public:
         SPUtils::LoadCmd(uinput, cmdResult);
     }
 
+    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
     // UDP
     void HandleMsg(SpServerSocket &spSocket) const
     {
@@ -370,6 +373,8 @@ public:
                     Network::GetInstance().IsStopFindHap();
                     data = profiler->ItemData();
                     data["network_traffic"] = "true";
+                } else if (iterator->first == MessageType::GET_LOG) {
+                    data = GetLogProcess(profiler, recvBuf);
                 } else {
                     data = profiler->ItemData();
                 }
@@ -380,28 +385,7 @@ public:
         }
     }
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const
-    {
-        std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
-        if (iterator->first == MessageType::GET_CUR_FPS) {
-            ProfilerFPS::isLowCurFps = true;
-            std::string resultfps = "vfps||";
-            for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
-                if (iter->first != "fpsJitters") {
-                    std::string temp = iter->second + "@@";
-                    resultfps += std::string(temp.c_str());
-                }
-            }
-            spSocket.Sendto(resultfps);
-            LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
-        } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
-            FetchCpuStats(spSocket, data);
-        } else {
-            retCode = MapToString(data);
-            spSocket.Sendto(retCode);
-            LOGD("UDP send retCode = %s", retCode.c_str());
-        }
-    }
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     void SocketHeartbeat() const
     {
         Heartbeat &heartbeat = Heartbeat::GetInstance();
@@ -511,7 +495,6 @@ public:
         }
     }
 };
-bool SpThreadSocket::flagRunning = false;
 }
 }
 #endif

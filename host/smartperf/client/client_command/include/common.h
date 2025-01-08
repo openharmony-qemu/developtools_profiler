@@ -43,6 +43,7 @@ enum class MessageType {
     SET_GAME_VIEW,
     GET_APP_TYPE,
     CHECK_UDP_STATUS,
+    GET_LOG,
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -70,6 +71,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
     { MessageType::GET_APP_TYPE, std::string("get_app_type") },
     { MessageType::CHECK_UDP_STATUS, std::string("check_udp_status") },
+    { MessageType::GET_LOG, std::string("get_log") },
 };
 
 enum class CommandType {
@@ -199,6 +201,9 @@ enum class CmdCommand {
     UINPUT_BACK,
     TIMESTAMPS,
     USER_PERMISSIONS,
+    REMOVE,
+    CP,
+    TAR,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -227,6 +232,10 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::UINPUT_BACK, std::string("uinput -K -d 2076 -d 2020 -u 2076 -u 2020") },
     { CmdCommand::TIMESTAMPS, std::string("timestamps") },
     { CmdCommand::USER_PERMISSIONS, std::string("whoami") },
+    { CmdCommand::REMOVE, std::string("rm -rf ") },
+    { CmdCommand::CP, std::string("cp ") },
+    { CmdCommand::TAR, std::string("tar -czf ") },
+    
 };
 
 enum class DeviceCmd {
