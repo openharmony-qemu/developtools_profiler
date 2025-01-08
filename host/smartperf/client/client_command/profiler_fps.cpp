@@ -291,8 +291,8 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     fpsInfoTime.fps = 0;
     fpsInfoTime.curTime = 0;
     FpsInfoProfiler tmpFps = GetTime();
+    
     if (isGameApp) {
-        LOGD("ProfilerFPS::isGameApp");
         if (firstDump) {
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
@@ -419,7 +419,6 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name, FpsInf
     LOGD("ProfilerFPS fpsNum: %d", fpsNum);
     return fpsInfo;
 }
-
 bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
 {
     long long onScreenTime = curScreenTimestamp / mod;
@@ -438,7 +437,6 @@ bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
     }
     return isBreak && !findFpsCurTime;
 }
-
 void ProfilerFPS::CalcJitters()
 {
     bool isOrder = true;

@@ -414,10 +414,10 @@ bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
         "H:APP_TRANSITION_TO_OTHER_APP,",
         "H:LAUNCHER_APP_LAUNCH_FROM_DOCK,",
         "H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,",
-        "H:APP_SWIPER_SCROLL,",
-        "H:APP_SWIPER_FLING,",
         "H:APP_SWIPER_NO_ANIMATION_SWITCH",
         "H:APP_SWITCH_FRAME_ANIMATION",
+        "H:APP_SWIPER_SCROLL,",
+        "H:APP_SWIPER_FLING,",
         "H:APP_TABS_NO_ANIMATION_SWITCH",
         "H:APP_TABS_FRAME_ANIMATION",
         "H:APP_TABS_SCROLL,"

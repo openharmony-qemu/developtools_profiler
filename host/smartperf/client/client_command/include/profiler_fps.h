@@ -22,8 +22,8 @@ namespace SmartPerf {
 struct FpsInfoProfiler {
     int fps;
     std::vector<long long> jitters;
-    std::vector<long long> currTimeStamps; // 命令行
-    std::vector<long long> currDumpTimeStamps;  // hap
+    std::vector<long long> currTimeStamps;
+    std::vector<long long> currDumpTimeStamps;
     int curTime;
     long long currTimeDiff;
     long long currTimeDump;

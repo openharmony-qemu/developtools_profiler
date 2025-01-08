@@ -15,7 +15,6 @@
 
 #ifndef NETWORK_H
 #define NETWORK_H
-#include <mutex>
 #include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -33,6 +32,7 @@ public:
     void IsStopFindHap();
     void ThreadGetHapNetwork();
     void ClearHapFlag();
+    void ThreadFunctions();
     std::map<std::string, std::string> GetNetworkInfoDev();
 private:
     Network() {};
@@ -54,7 +54,6 @@ private:
     bool isFirst = true;
     bool hapFlag = false;
     bool stophapFlag = false;
-    std::mutex netWorktex;
 };
 }
 }

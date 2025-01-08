@@ -298,7 +298,7 @@ void FPS::CalcJitters()
     }
 }
 
-long long FPS::CalculateJitter()
+long long FPS::CalculateJitter() const
 {
     long long jitter;
     if (prevScreenTimestamp == -1) {
@@ -345,18 +345,18 @@ std::string FPS::FindFpsRefreshrate()
     return value;
 }
 
-std::string FPS::GetHardenRefreshrate(std::string &screenInfo)
+std::string FPS::GetHardenRefreshrate(std::string &screenInfo) const
 {
     if (screenInfo.empty()) {
         SPUtils::LoadCmd(HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN), screenInfo);
     }
     std::string value = "";
     std::string refreshrate = "refreshrate=";
-    std::size_t activeModePos = screenInfo.find("activeMode:");
+    size_t activeModePos = screenInfo.find("activeMode:");
     if (activeModePos != std::string::npos) {
-        std::size_t refreshRatePos = screenInfo.find(refreshrate, activeModePos);
+        size_t refreshRatePos = screenInfo.find(refreshrate, activeModePos);
         if (refreshRatePos != std::string::npos) {
-            std::size_t endPos = screenInfo.find(" ", refreshRatePos);
+            size_t endPos = screenInfo.find(" ", refreshRatePos);
             if (endPos != std::string::npos) {
                 value = screenInfo.substr(refreshRatePos + refreshrate.length(),
                 endPos - refreshRatePos - refreshrate.length());

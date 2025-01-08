@@ -88,6 +88,7 @@ void Navigation::SubstrNavName(const std::string &line, std::string &nameStr) co
         }
     }
 }
+
 std::string Navigation::GetWinId(std::string navPid) const
 {
     std::string wid;
