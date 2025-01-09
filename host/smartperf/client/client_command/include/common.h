@@ -42,6 +42,7 @@ enum class MessageType {
     GET_CUR_FPS,
     SET_GAME_VIEW,
     GET_APP_TYPE,
+    CHECK_UDP_STATUS,
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -68,6 +69,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CUR_FPS, std::string("get_cur_fps") },
     { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
     { MessageType::GET_APP_TYPE, std::string("get_app_type") },
+    { MessageType::CHECK_UDP_STATUS, std::string("check_udp_status") },
 };
 
 enum class CommandType {

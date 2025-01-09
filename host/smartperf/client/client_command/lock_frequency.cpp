@@ -42,7 +42,7 @@ namespace SmartPerf {
         typedef int32_t (*GetLockFreq)();
         GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
         if (!testServerPlugin) {
-            LOGE("Error loading symbol");
+            LOGE("testServerPlugin Error loading symbol");
             return;
         }
         while (isCollecting) {
