@@ -70,7 +70,6 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -98,7 +97,6 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -129,7 +127,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -151,7 +148,6 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -175,7 +171,6 @@ HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
     } else if ((strThree != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -204,7 +199,6 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -235,7 +229,6 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -256,7 +249,6 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -277,7 +269,6 @@ HWTEST_F(SPdaemonTest, StartTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -298,7 +289,6 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -319,7 +309,6 @@ HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -340,7 +329,6 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }

@@ -134,6 +134,11 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     sysRamInfo["memTotal"] = std::to_string(result.data.memTotal);
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
+    //整机内存信息
+    LOGD("memTotal:%s, memFree:%s, memAvailable:%s",
+        std::to_string(result.data.memTotal).c_str(),
+        std::to_string(result.data.memFree).c_str(),
+        std::to_string(result.data.memAvailable).c_str());
     return sysRamInfo;
 }
 
@@ -150,19 +155,23 @@ void RAM::SetProcessId(const std::string &pid)
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::map<std::string, std::string> procRamInfo;
+    std::map<std::string, std::string> emptyprocRamInfo;
     std::string pssValue = "";
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         LOGD("RAM::fd is empty");
-        procRamInfo = ProcMemNaInfo();
-        for (auto item : procRamInfo) {
+        emptyprocRamInfo = ProcMemNaInfo();
+        for (auto item : emptyprocRamInfo) {
             item.second = "0";
     }
-        return procRamInfo;
+        return emptyprocRamInfo;
     }
     std::vector<std::string> paramsInfo;
     procRamInfo = GetPssRamInfo(fd, paramsInfo);
+    if (procRamInfo.empty()) {
+        return emptyprocRamInfo;
+    }
     for (const auto& value : paramsInfo) {
         if (procRamInfo[value].empty()) {
             procRamInfo[value] = "0";
@@ -171,7 +180,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     int closeStatus = pclose(fd);
     if (closeStatus == -1) {
         LOGE("Error: Failed to close file");
-        return {};
+        return emptyprocRamInfo;
     }
     return procRamInfo;
 }
@@ -235,6 +244,10 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
     pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
     pssRamInfo["stackPss"] = stackPssValue;
+    //应用程序的内存占用信息
+    LOGD("gpuPss:%s, graphicPss:%s, arktsHeapPss:%s, nativeHeapPss:%s, stackPss:%s",
+        pssRamInfo["gpuPss"].c_str(), pssRamInfo["graphicPss"].c_str(),
+        pssRamInfo["graphicPss"].c_str(), pssRamInfo["nativeHeapPss"].c_str(), pssRamInfo["stackPss"].c_str());
     return pssRamInfo;
 }
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
@@ -256,6 +269,13 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
         }
         sumRamInfo[sumRamKeys[i]] = paramsInfo[i + 1];
     }
+    //应用程序的内存消耗信息
+    LOGD("pss:%s, sharedClean:%s, sharedDirty:%s, privateClean:%s, privateDirty:%s, swap:%s",
+        "swapPss:%s, heapSize:%s, heapAlloc:%s, heapFree:%s",
+        sumRamInfo["pss"].c_str(), sumRamInfo["sharedClean"].c_str(), sumRamInfo["sharedDirty"].c_str(),
+        sumRamInfo["privateClean"].c_str(), sumRamInfo["privateDirty"].c_str(), sumRamInfo["swap"].c_str(),
+        sumRamInfo["swapPss"].c_str(), sumRamInfo["heapSize"].c_str(), sumRamInfo["heapAlloc"].c_str(),
+        sumRamInfo["heapFree"].c_str());
     return sumRamInfo;
 }
 }

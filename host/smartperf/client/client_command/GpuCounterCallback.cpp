@@ -244,7 +244,6 @@ namespace OHOS {
                     WLOGE("gpuCounter data pointer is null!");
                     return -1;
                 }
-
                 long long durationTime = newData->startTime - backData->startTime;
 
                 // 如果两次数据间隔过短，则舍弃新数据
@@ -254,10 +253,13 @@ namespace OHOS {
                     gpuCounter.pop_back();
                     continue;
                 }
+
                 backData->duration = durationTime;
+
                 std::string gpuPerfInfoItemStr = GetGpuPerfInfoItem(backData);
                 gpuCounterInstance.GetGpuCounterData().push_back(gpuPerfInfoItemStr);
                 gpuCounterInstance.GetGpuCounterSaveReportData().push_back(gpuPerfInfoItemStr);
+
                 GetRealTime(backData);
             }
 
