@@ -46,7 +46,7 @@ void GetLog::RemoveDirOrFile(const std::string &dirPath)
         WLOGI("%s is not exist.", dirPath.c_str());
         return;
     }
-    LOGI("%s is exist, remove...", dirPath.c_str());
+    LOGD("%s is exist, remove...", dirPath.c_str());
 
     std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + dirPath;
     std::string cmdResult;

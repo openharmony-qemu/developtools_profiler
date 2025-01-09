@@ -55,7 +55,7 @@ namespace OHOS {
             struct sockaddr_in address;
             const int reuse = 1;
 
-            LOGI("Creating socket server on base port: %d", basePort);
+            LOGD("Creating socket server on base port: %d", basePort);
 
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (socketFd < 0) {
@@ -71,7 +71,7 @@ namespace OHOS {
             for (i = 0; i < SOCKET_PORT_NUM_PER_TYPE; i++) {
                 address.sin_port = htons(basePort + i);
                 if (::bind(socketFd, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) == 0) {
-                    LOGI("Socket bound successfully to port: %d", basePort + i);
+                    LOGD("Socket bound successfully to port: %d", basePort + i);
                     break;
                 }
             }
@@ -87,7 +87,7 @@ namespace OHOS {
                 return -1;
             }
 
-            LOGI("Listening on port %d, socket fd: %d", basePort + i, socketFd);
+            LOGD("Listening on port %d, socket fd: %d", basePort + i, socketFd);
             return socketFd;
         }
         std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
@@ -184,7 +184,7 @@ namespace OHOS {
 
         void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
         {
-            LOGI("Starting SdkDataRecv server thread");
+            LOGD("Starting SdkDataRecv server thread");
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 sdkParams.receiveFd[i] = -1;
             }
@@ -201,9 +201,9 @@ namespace OHOS {
                 return;
             }
             listenFd = sdkParams.pipFd[1];
-            LOGI("Sdk data server listening on pipe fd: %d", listenFd);
+            LOGD("Sdk data server listening on pipe fd: %d", listenFd);
             RunServerThread(dataVec, sdkParams);
-            LOGI("Sdk Data server thread exit.");
+            LOGD("Sdk Data server thread exit.");
         }
 
         void SdkDataRecv::RunServerThread(std::vector<std::string> &dataVec, ServerParams &params)
@@ -272,7 +272,7 @@ namespace OHOS {
         void SdkDataRecv::CleanUpResources(ServerParams &params)
         {
             if (params.serverFd != -1) {
-                LOGI("Closing sdk data server socket fd: %d", params.serverFd);
+                LOGD("Closing sdk data server socket fd: %d", params.serverFd);
                 close(params.serverFd);
                 params.serverFd = -1;
             }

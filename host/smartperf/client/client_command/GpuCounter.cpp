@@ -53,7 +53,6 @@ namespace OHOS {
 
             void* handle = GetSoHandle();
             if (!handle) {
-                WLOGE("GpuCounter get handle is nullptr");
                 return;
             }
 
@@ -169,16 +168,11 @@ namespace OHOS {
 
             void* handle = GetSoHandle();
             if (!handle) {
-                WLOGE("GpuCounter get handle is nullptr");
                 return;
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
             GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
-            if (!startGetGpuPerfInfo) {
-                WLOGE("GpuCounterPlugin Error loading symbol");
-                return;
-            }
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {

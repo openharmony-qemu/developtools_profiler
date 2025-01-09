@@ -14,9 +14,7 @@
  */
 
 #include "sp_log.h"
-
 #include "securec.h"
-
 #include <sys/stat.h>
 #include <string>
 #include <sstream>
@@ -239,31 +237,24 @@ static bool GetLogFilePath()
             }
         }
     }
-
     if (fileNumber == 0) {
         g_currentLogFilePath = GetCurrentLogFilePath(1);
         return true;
     }
-
     if (g_currentLogFilePath == "") {
         LOGE("Get current log file data is null");
         return false;
     }
-
     std::string filePath = LOG_FILE_DIR + fileName;
-
     if (currentDateFlag && IsFilePathValid(filePath)) {
         g_currentLogFilePath = filePath;
         return true;
     }
-
     TarFile(fileName);
-
     if (fileNumber >= MAX_FILE_COUNT) {
         LOGE("Log file full!");
         return false;
     }
-
     g_currentLogFilePath = GetCurrentLogFilePath(fileNumber + 1);
     return true;
 }

@@ -14,11 +14,11 @@
  */
 import deviceInfo from '@ohos.deviceInfo';
 import router from '@system.router';
-import prompt from '@system.prompt';
 import { TopComponent } from '../main/TopComponent';
 import { OtherSupport, TestMode } from '../../entity/LocalConfigEntity';
 import SPLogger from '../../utils/SPLogger'
 import batteryinfo from '@ohos.batteryInfo';
+import promptAction from '@ohos.promptAction';
 
 const TAG = 'Home'
 /*
@@ -106,7 +106,11 @@ export struct Home {
             if (!globalThis.showFloatingWindow) {
               router.push({ uri: 'pages/StartTestPage' })
             } else {
-              prompt.showToast({ message: '已经有应用正在测试，请关闭测试再进行操作', duration: 1000 })
+              try {
+                promptAction.showToast({ message: '已经有应用正在测试，请关闭测试再进行操作', duration: 1000 })
+              } catch (error) {
+                console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+              }
             }
           })
           Text(this.state.toString()).fontSize(12).height('5%').fontColor($r('app.color.color_fff'))
@@ -163,7 +167,11 @@ struct GridExample {
           .padding({ top: '8vp', right: '20vp', bottom: '8vp', left: '20vp' })
           .onClick(() => {
             if (otherSupport.testMode == TestMode.ONLINE) {
-              prompt.showToast({ message: '开发中' })
+              try {
+                promptAction.showToast({ message: '开发中' })
+              } catch (error) {
+                console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+              }
             } else if (otherSupport.testMode == TestMode.BRIGHTNESS) {
               router.push({ uri: 'pages/LightAdjust' })
             }

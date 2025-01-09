@@ -125,7 +125,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
         fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
         fps.firstDump = true;
         isInit = true;
-        LOGI("InitTask success, task initialized.");
+        LOGD("InitTask success, task initialized.");
         return ErrCode::OK;
     }
 
@@ -142,7 +142,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
         if (ramConfig.find("-r") != std::string::npos) {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                LOGI("Starting RAM collection in new thread");
+                LOGD("Starting RAM collection in new thread");
                 p.set_value(RAM::GetInstance().ItemData());
             }).detach();
         }
@@ -158,7 +158,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
         if (cpuConfig.find("-c") != std::string::npos) {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                LOGI("Starting CPU collection in new thread");
+                LOGD("Starting CPU collection in new thread");
                 p.set_value(CPU::GetInstance().ItemData());
             }).detach();
         }
@@ -174,7 +174,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
         if (fpsConfig.find("-f") != std::string::npos) {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
-                LOGI("Starting FPS collection in new thread");
+                LOGD("Starting FPS collection in new thread");
                 p.set_value(FPS::GetInstance().ItemData());
             }).detach();
         }
@@ -280,12 +280,12 @@ void SPTask::ResetSdkParam()
     sdkDataRecv.SetRunningState(false);
     int listenFd = sdkDataRecv.GetListenFd();
     if (listenFd != -1) {
-        LOGI("Closing sdk data listenFd: %d", listenFd);
+        LOGD("Closing sdk data listenFd: %d", listenFd);
         close(listenFd);
         sdkDataRecv.SetListenFd(-1);
     }
     if (sdk.joinable()) {
-        LOGI("Joining sdk data server thread");
+        LOGD("Joining sdk data server thread");
         sdk.join();
     }
 }
@@ -296,7 +296,7 @@ void SPTask::StopSdkRecv()
         WLOGI("SDK data is not enabled or sdkvec is empty");
         return;
     }
-    LOGI("SDK data stop");
+    LOGD("SDK data stop");
     std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
     char outSdkDataDirChar[PATH_MAX] = {0x00};
     if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
@@ -348,7 +348,7 @@ void SPTask::InitDataFile()
         std::remove(filePathChar);
     }
 
-    LOGI("Data file initialization completed.");
+    LOGD("Data file initialization completed.");
     return;
 }
 
@@ -402,27 +402,27 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
-    LOGI("Task starting...");
+    LOGD("Task starting...");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    LOGI("RAM first flag set.");
+    LOGD("RAM first flag set.");
     if (!isInit) {
         WLOGE("Initialization failed.");
         return ErrCode::FAILED;
     }
     isRunning = true;
     realTimeStart = SPUtils::GetCurTime();
-    LOGI("Task initialized, realTimeStart = %lld", realTimeStart);
+    LOGD("Task initialized, realTimeStart = %lld", realTimeStart);
     if (!curTaskInfo.packageName.empty()) {
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
-        LOGI("Profiler package name set to: %s", curTaskInfo.packageName.c_str());
+        LOGD("Profiler package name set to: %s", curTaskInfo.packageName.c_str());
     } else {
         LOGW("No package name provided for profiler.");
     }
     InitDataFile();
-    LOGI("Data files initialized.");
+    LOGD("Data files initialized.");
     ConfigDataThread();
-    LOGI("Data collection thread configuration completed.");
+    LOGD("Data collection thread configuration completed.");
     thread = std::thread([this, msgTask]() {
         WLOGI("Starting data collection thread.");
         while (isRunning) {
@@ -436,17 +436,17 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 void SPTask::CreatPath(std::string path)
 {
     if (!SPUtils::FileAccess(path)) {
-        LOGI("CreatPath does not exist, attempting to create: %s", path.c_str());
+        LOGD("CreatPath does not exist, attempting to create: %s", path.c_str());
         std::string cmdResult;
         std::string creatPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
         bool cmdSuccess = SPUtils::LoadCmd(creatPath, cmdResult);
         if (cmdSuccess) {
-            LOGI("CreatPath created successfully: %s", path.c_str());
+            LOGD("CreatPath created successfully: %s", path.c_str());
         } else {
             LOGE("Failed to create path: %s. Command result: %s", path.c_str(), cmdResult.c_str());
         }
     } else {
-        LOGI("CreatPath already exists: %s", path.c_str());
+        LOGD("CreatPath already exists: %s", path.c_str());
     }
 }
 
@@ -455,13 +455,13 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
     long long endTime = SPUtils::GetCurTime();
     long long testDuration = (endTime - startTime) / 1000;
     std::string refreshrate;
-    LOGI("Test duration: %lld seconds", testDuration);
+    LOGD("Test duration: %lld seconds", testDuration);
     const std::string gpuDataVersion = "1.1";
     std::string screenStr = SPUtils::GetScreen();
     size_t pos3 = screenStr.find("=");
     if (pos3 != std::string::npos) {
         refreshrate = screenStr.substr(pos3 + 1);
-        LOGI("Screen refresh rate: %s", refreshrate.c_str());
+        LOGD("Screen refresh rate: %s", refreshrate.c_str());
     } else {
         LOGW("Failed to extract refresh rate from screen string: %s", screenStr.c_str());
     }
@@ -549,7 +549,7 @@ ErrCode SPTask::StopTask()
     gpuCounter.StopCollect();
     lockFreq.SetIsCollecting(false);
     if (lockFreqThread.joinable()) {
-        LOGI("Joining lockFreqThread.");
+        LOGD("Joining lockFreqThread.");
         lockFreqThread.join();
     }
 
@@ -559,10 +559,10 @@ ErrCode SPTask::StopTask()
     realTimeStart = 0;
 
     if (thread.joinable()) {
-        LOGI("Joining thread.");
+        LOGD("Joining thread.");
         thread.join();
     }
-    LOGI("Killing Hiperf command.");
+    LOGD("Killing Hiperf command.");
     SpProfilerFactory::editorFlag = false;
     WLOGI("Task successfully stopped.");
     return ErrCode::OK;
@@ -610,7 +610,7 @@ bool SPTask::CheckCounterId()
 {
     std::string result;
     std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
-    LOGI("Loading hiprofiler command");
+    LOGD("Loading hiprofiler command");
     SPUtils::LoadCmd(hiprofilerCmd, result);
     if (result.empty()) {
         LOGW("Failed to load hiprofiler command or received empty result.");
@@ -618,11 +618,11 @@ bool SPTask::CheckCounterId()
     }
 
     if (result.find("-k") != std::string::npos) {
-        LOGI("Command contains '-k'.");
+        LOGD("Command contains '-k'.");
         return true;
     }
 
-    LOGI("Command does not contain '-k'.");
+    LOGD("Command does not contain '-k'.");
     return false;
 }
 std::thread SPTask::ThreadGetHiperf(long long timeStamp)
@@ -654,14 +654,14 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
         LOGE("Init parameter error not contain '-SESSIONID'");
         return false;
     }
-    LOGI("Start validating Init parameter: %s", params.c_str());
+    LOGD("Start validating Init parameter: %s", params.c_str());
 
     for (auto a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
     bool isValid = SPUtils::VeriyParameter(keys, params, errorInfo);
     if (isValid) {
-        LOGI("Init parameter validation successful");
+        LOGD("Init parameter validation successful");
     } else {
         LOGE("Init parameter validation failed, Error: %s", errorInfo.c_str());
     }

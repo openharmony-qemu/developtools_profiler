@@ -235,7 +235,6 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::REMOVE, std::string("rm -rf ") },
     { CmdCommand::CP, std::string("cp ") },
     { CmdCommand::TAR, std::string("tar -czf ") },
-    
 };
 
 enum class DeviceCmd {
