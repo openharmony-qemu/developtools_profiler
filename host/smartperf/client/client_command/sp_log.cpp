@@ -293,6 +293,7 @@ static void WriteMessage(const char* logMessage)
         std::tm* tm = std::localtime(&time);
         if (tm == nullptr) {
             LOGE("Write Message get current data is null");
+            logFile.close();
             return;
         }
 
