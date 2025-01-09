@@ -12,13 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-import prompt from '@system.prompt';
 import router from '@system.router';
 import database from '../../database/DatabaseUtils';
 import { secToTime } from '../../utils/TimeUtils';
 import { ReportItem } from '../../entity/LocalConfigEntity';
 import { TopComponent } from '../main/TopComponent';
+import promptAction from '@ohos.promptAction';
 
 @Component
 @Preview
@@ -69,7 +68,11 @@ export struct Report {
                   .padding('10vp')
                   .margin({ left: 800 })
                   .onClick(function (item) {
-                    prompt.showToast({ message: '报告上传功能正在开发中', duration: 1000 })
+                    try {
+                      promptAction.showToast({ message: '报告上传功能正在开发中', duration: 1000 })
+                    } catch (error) {
+                      console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+                    }
                   })
 
               }.margin({ left: '5%', top: '2%', bottom: '2%', right: '2%' }).onClick(() => {
@@ -80,7 +83,11 @@ export struct Report {
 
                 database.queryData(timeStamp + '.db').then(data => {
                   if (item.testDuration < 5) {
-                    prompt.showToast({ message: '测试时长过短', duration: 1000 })
+                    try {
+                      promptAction.showToast({ message: '测试时长过短', duration: 1000 })
+                    } catch (error) {
+                      console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+                    }
                   } else {
                     router.push({ uri: 'pages/ReportDetail', params: {
                       gpData: data,

@@ -19,9 +19,7 @@ import { SwitchItem, CollectItem } from '../common/entity/LocalConfigEntity';
 import { StartTestTitleComponent } from '../common/ui/StartTestTitleComponent';
 import { ProfilerTask } from '../common/profiler/ProfilerTask';
 import { CollectorType } from '../common/profiler/base/ProfilerConstant';
-import { getPidOfAbility } from '../common/utils/SystemUtils';
-import prompt from '@system.prompt';
-import SPLogger from '../../ets/common/utils/SPLogger';
+import promptAction from '@ohos.promptAction';
 
 
 const TAG = 'StartTestPage'
@@ -125,7 +123,11 @@ struct StartTestPage {
               console.log('TestIndicators---------onClick')
               if (this.selectApp == '请选择一个应用' || this.selectApp == 'SmartPerf') {
                 console.log('TestIndicators---------please choose app')
-                prompt.showToast({ message: 'please choose app!', duration: 1000 })
+                try {
+                  promptAction.showToast({ message: 'please choose app!', duration: 1000 })
+                } catch (error) {
+                  console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+                }
                 return
               }
               console.log('TestIndicators---------dialogController.open()')
@@ -172,7 +174,11 @@ struct StartTestPage {
               console.log('console.log:' + JSON.stringify(taskConfig));
 
               if (this.selectApp == '请选择一个应用' || this.selectApp == 'SmartPerf') {
-                prompt.showToast({ message: 'please choose app!', duration: 1000 })
+                try {
+                  promptAction.showToast({ message: 'please choose app!', duration: 1000 })
+                } catch (error) {
+                  console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+                }
                 return
               }
 			if (router != null) {
@@ -375,7 +381,11 @@ struct CustomDialogCollect {
                 }.height('60vp').width('90%')
               }
               .onClick(() => {
-                  prompt.showToast({ duration: 1000, message: 'not support' })
+                try {
+                  promptAction.showToast({ message: 'not support!', duration: 1000 })
+                } catch (error) {
+                  console.error(`showToast args error code is ${error.code}, message is ${error.message}`);
+                }
               })
               .height('60vp')
               .width('100%')
