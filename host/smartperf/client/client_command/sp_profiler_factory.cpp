@@ -95,6 +95,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
+    LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
@@ -107,6 +108,7 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
 {
+    LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS &fps = FPS::GetInstance();
     fps.SetProcessId(pid);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();

@@ -29,6 +29,7 @@
 #include "include/RAM.h"
 #include "include/common.h"
 #include "include/FPS.h"
+#include "include/sp_task.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -119,9 +120,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 void SmartPerfCommand::CreateSocketThread() const
 {
     InitSomething();
-    SpThreadSocket udpThreadSocket;
-    SpThreadSocket udpExThreadSocket;
-    SpThreadSocket tcpThreadSocket;
+    SpThreadSocket &udpThreadSocket = SpThreadSocket::GetInstance();
+    SpThreadSocket &udpExThreadSocket = SpThreadSocket::GetInstance();
+    SpThreadSocket &tcpThreadSocket = SpThreadSocket::GetInstance();
     auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
     sleep(1);
     auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
@@ -192,6 +193,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;
         processId = sp.GetPidByPkg(pkgName);
+        LOGD("The cmd pid = %s", processId.c_str());
         SpProfilerFactory::SetProfilerPidByPkg(processId);
     }
     for (size_t j = 0; j < configs.size(); j++) {

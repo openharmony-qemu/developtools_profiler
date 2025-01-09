@@ -47,6 +47,7 @@ std::map<std::string, std::string> Network::ItemData()
     if (result.find("networkDown") != result.end() && result["networkDown"].empty()) {
         result["networkDown"] = "NA";
     }
+    LOGD("networkUp: %s, networkDown: %s", result["networkUp"].c_str(), result["networkDown"].c_str());
     return result;
 }
 
@@ -64,7 +65,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
     }
     networkInfo["networkUp"] = std::to_string(diffTx);
     networkInfo["networkDown"] = std::to_string(diffRx);
-    LOGD("networkUp: %s, networkDown: %s", networkInfo["networkUp"].c_str(), networkInfo["networkDown"].c_str());
     if (!hapFlag || stophapFlag) {
         diffTx = 0;
         diffRx = 0;

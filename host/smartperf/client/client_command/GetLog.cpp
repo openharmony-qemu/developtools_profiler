@@ -39,21 +39,21 @@ void GetLog::CreateDir(const std::string &dirPath)
     }
 }
 
-void GetLog::RemoveDirOrFile(const std::string &path)
+void GetLog::RemoveDirOrFile(const std::string &dirPath)
 {
     char pathChar[PATH_MAX] = {0x00};
-    if ((realpath(path.c_str(), pathChar) == nullptr)) {
-        WLOGI("%s is not exist.", path.c_str());
+    if ((realpath(dirPath.c_str(), pathChar) == nullptr)) {
+        WLOGI("%s is not exist.", dirPath.c_str());
         return;
     }
-    LOGI("%s is exist, remove...", path.c_str());
+    LOGD("%s is exist, remove...", dirPath.c_str());
 
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + path;
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + dirPath;
     std::string cmdResult;
     if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("%s capture not be removed!", path.c_str());
+        WLOGE("%s capture not be removed!", dirPath.c_str());
     } else {
-        WLOGI("%s removed successfully!", path.c_str());
+        WLOGI("%s removed successfully!", dirPath.c_str());
     }
 }
 
