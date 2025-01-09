@@ -47,11 +47,15 @@ private:
     void CopyFiles(std::string cpStr);
     void TarFiles(std::string tarStr);
     int GetCurrentPath(char *currentPath);
+    void GetHilogInMemory(std::vector<std::filesystem::path> &fileList);
+    void GetHilogInData(std::vector<std::filesystem::path> &otherFiles, std::vector<std::filesystem::path> &logFiles);
+    void GenerateHilogFile();
     void GenerateDaemonLogFile();
 
     int logFileSocket = -1;
     int logFileSocketPort = -1;
     const std::string systemHilogFileDir = "/data/log/hilog/";
+    const std::string hilogFileDir = LOG_FILE_DIR + "hilog/";
     const std::string daemonLogFileDir = LOG_FILE_DIR + "daemonLog/";
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
     static const int logSocketBufferSize = 4096;
