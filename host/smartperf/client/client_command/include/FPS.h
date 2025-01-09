@@ -66,7 +66,7 @@ public:
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
     FpsInfo GetChangedLayerFps();
     bool CalcFpsAndJitters(bool isBreak);
-    long long CalculateJitter();
+    long long CalculateJitter() const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;
@@ -82,7 +82,7 @@ public:
     void SetProcessId(const std::string &pid);
     void SetRkFlag();
     std::string FindFpsRefreshrate();
-    std::string GetHardenRefreshrate(std::string &screenInfo);
+    std::string GetHardenRefreshrate(std::string &screenInfo) const;
     void CalcJitters();
     static inline bool firstDump = false;
     static inline bool isGameApp = false;

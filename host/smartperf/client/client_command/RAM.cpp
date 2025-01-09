@@ -58,6 +58,7 @@ std::map<std::string, std::string> RAM::ItemData()
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
     for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
+        LOGD("sysRamInfo: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
         result.insert(*it);
     }
     if (!processId.empty()) {
@@ -68,6 +69,7 @@ std::map<std::string, std::string> RAM::ItemData()
             g_flagFirst = true;
         }
         for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
+            LOGD("procRamInfoLast: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
             result.insert(*it);
         }
     } else if (!packageName.empty() && processId.empty()) {
@@ -166,7 +168,8 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
             procRamInfo[value] = "0";
         }
     }
-    if (pclose(fd) == -1) {
+    int closeStatus = pclose(fd);
+    if (closeStatus == -1) {
         LOGE("Error: Failed to close file");
         return {};
     }
@@ -197,7 +200,8 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     std::string stackPssValue = "";
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
-        std::string line = buf;
+        std::string line(buf);
+        LOGD("ParsePssValues::line = %s", line.c_str());
         if (line[0] == '-') {
             continue;
         }

@@ -35,7 +35,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
-        Network::ThreadFunctions();
+        ThreadFunctions();
         return result;
     } else {
         result = GetNetworkInfo();
@@ -109,7 +109,6 @@ std::map<std::string, std::string> Network::GetNetworkInfoDev()
     (void)fclose(fp);
     return networkInfo;
 }
-
 void Network::GetCurNetwork(long long &networkCurRx, long long &networkCurTx)
 {
     if (curRx > 0) {
@@ -135,20 +134,21 @@ void Network::GetCurNetwork(long long &networkCurRx, long long &networkCurTx)
     allRx = 0;
     allTx = 0;
 }
-
-void Network::ThreadFunctions()
-{
-    auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
-    threadGetHapNetwork.detach();
-}
 void Network::IsFindHap()
 {
     hapFlag = true;
+    ClearHapFlag();
 }
 void Network::IsStopFindHap()
 {
     hapFlag = false;
     stophapFlag = true;
+}
+
+void Network::ThreadFunctions()
+{
+    auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
+    threadGetHapNetwork.detach();
 }
 
 void Network::ThreadGetHapNetwork()
@@ -161,20 +161,17 @@ void Network::ThreadGetHapNetwork()
         long long costTime = stopTime - startTime;
         std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
     }
-    ClearHapFlag();
 }
 void Network::ClearHapFlag()
 {
-    if (stophapFlag) {
-        isFirst = true;
-        stophapFlag = false;
-        rmnetCurRx = 0;
-        rmnetCurTx = 0;
-        ethCurRx = 0;
-        ethCurTx = 0;
-        wlanCurRx = 0;
-        wlanCurTx = 0;
-    }
+    isFirst = true;
+    stophapFlag = false;
+    rmnetCurRx = 0;
+    rmnetCurTx = 0;
+    ethCurRx = 0;
+    ethCurTx = 0;
+    wlanCurRx = 0;
+    wlanCurTx = 0;
 }
 }
 }

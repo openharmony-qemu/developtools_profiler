@@ -130,6 +130,7 @@ private:
     LockFrequency &lockFreq = LockFrequency::GetInstance();
     bool recordState = false;
     bool screenshotFlag = false;
+    bool recordTrace = false;
     time_t realTimeStart = 0;
     std::string tcpToken = "";
     long long nextTime = 0;
