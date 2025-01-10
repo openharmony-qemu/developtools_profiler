@@ -487,7 +487,7 @@ bool NetworkPlugin::ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerSta
 {
     NetFlowData present = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     for (auto& info : infos) {
-        if (info.uid_ == singleUid_) {
+        if (static_cast<int32_t>(info.uid_) == singleUid_) {
             NetFlowDetail detail;
             detail.type = info.iface_;
             detail.rxBytes = info.rxBytes_;
