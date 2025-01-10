@@ -93,6 +93,7 @@ void Capture::ThreadGetCatch()
         return;
     }
     close(fd);
+    LOGD("Screenshot ThreadGetCatch captured and saved to: %s", savePath.c_str());
 }
 
 
@@ -116,18 +117,19 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
         std::cout << "" << std::endl;
     }
 
-    auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
+    auto fd = open(realPath, O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
-        LOGE("Failed to open file: %s", savePath.c_str());
+        LOGE("Failed to open file: %s", realPath);
         return;
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
-    if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {
+    if (!SPUtils::LoadCmd(snapshot + realPath, cmdResult)) {
         LOGE("snapshot_display command failed!");
         close(fd);
         return;
     }
     close(fd);
+    LOGD("Screenshot ThreadGetCatchSocket captured and saved to: %s", realPath);
 }
 
 void Capture::TriggerGetCatch()
