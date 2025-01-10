@@ -67,6 +67,9 @@
         "libpng"
       ]
     },
+    "hisysevent_config": [
+      "//developtools/profiler/hisysevent.yaml"
+    ],
     "build": {
       "sub_component": [
         "//developtools/profiler/device:hiprofiler_targets",
