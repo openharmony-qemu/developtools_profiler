@@ -45,7 +45,7 @@ const int32_t LOG_MAX_LEN = 10000;
 const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 const double MAX_FILE_KEEP_TIME = 60 * 60 * 24 * 7; // 7days
 const int MAX_FILE_COUNT = 256;
-const mode_t LOG_FILE_MODE = 0777;
+const mode_t LOG_FILE_MODE = 0755;
 std::mutex g_mtx;
 std::string g_currentLogFilePath;
 std::string g_currentDate;
@@ -157,7 +157,7 @@ static bool IsFilePathValid(const std::string& filePath)
 
 static int CheckFileNameAndGetNumber(const std::string& fileName, const std::string& date, bool* currentDateFlag)
 {
-    std::regex pattern(R"(^log\.(\d+)\.(\d{8})-\d{6}$)");
+    std::regex pattern(R"(^log\.(\d+)\.(\d{8})-\d{6}(?:\.tar\.gz)?$)");
     std::smatch matches;
 
     if (std::regex_match(fileName, matches, pattern)) {
@@ -239,11 +239,11 @@ static bool GetLogFilePath()
     }
     if (fileNumber == 0) {
         g_currentLogFilePath = GetCurrentLogFilePath(1);
+        if (g_currentLogFilePath == "") {
+            LOGE("Get current log file data is null");
+            return false;
+        }
         return true;
-    }
-    if (g_currentLogFilePath == "") {
-        LOGE("Get current log file data is null");
-        return false;
     }
     std::string filePath = LOG_FILE_DIR + fileName;
     if (currentDateFlag && IsFilePathValid(filePath)) {
@@ -265,15 +265,13 @@ static void WriteMessage(const char* logMessage)
 
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(g_currentLogFilePath.c_str(), logFilePathChar) == nullptr)) {
-        LOGE("Log file %s is not exist.", g_currentLogFilePath.c_str());
-        return;
+        LOGE("Log file %s is not exist, will create", g_currentLogFilePath.c_str());
     }
 
-    std::ofstream logFile(logFilePathChar, std::ios::app);
+    std::ofstream logFile(g_currentLogFilePath, std::ios::app);
     if (logFile.is_open()) {
         if (chmodFlag) {
-            LOGD("Create log file %s.", logFilePathChar);
-            if (!Chmod(logFilePathChar, LOG_FILE_MODE)) {
+            if (!Chmod(g_currentLogFilePath, LOG_FILE_MODE)) {
                 logFile.close();
                 return;
             }
@@ -294,7 +292,7 @@ static void WriteMessage(const char* logMessage)
 
         logFile.close();
     } else {
-        LOGE("Unable to open log file for writing: %s", logFilePathChar);
+        LOGE("Unable to open log file for writing: %s", g_currentLogFilePath.c_str());
     }
 
     return;
