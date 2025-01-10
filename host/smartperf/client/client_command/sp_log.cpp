@@ -158,7 +158,7 @@ static bool IsFilePathValid(const std::string& filePath)
 
 static int CheckFileNameAndGetNumber(const std::string& fileName, const std::string& date, bool* currentDateFlag)
 {
-    std::regex pattern(R"(^log\.(\d+)\.(\d{8})-\d{6}(?:\.tar\.gz)?$)");
+    std::regex pattern(R"(^log\.(\d+)\.(\d{8})-\d{6}$)");
     std::smatch matches;
 
     if (std::regex_match(fileName, matches, pattern)) {
@@ -188,7 +188,7 @@ static void TarFile(const std::string& sourceFileName)
     std::ostringstream compressedFilePath;
     compressedFilePath << LOG_FILE_DIR << sourceFileName << ".tar.gz";
 
-    std::string tarStr = " -C " + LOG_FILE_DIR + " " + sourceFileName;
+    std::string tarStr = compressedFilePath.str() + " -C " + LOG_FILE_DIR + " " + sourceFileName;
     std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
     std::string cmdResult;
     if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
