@@ -101,7 +101,7 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
         return false;
     }
     char buf[4096] = {'\0'};
-    size_t ret = fread(buf, sizeof(buf) - 1, 1, fd);
+    size_t ret = fread(buf, 1, sizeof(buf) - 1, fd);
     if (ret >= 0) {
         buf[ret] = '\0';
         result = buf;
