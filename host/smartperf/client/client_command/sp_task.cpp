@@ -213,7 +213,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
-            Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }

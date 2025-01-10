@@ -80,7 +80,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
         case MessageType::GET_CAPTURE:
-            Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
             break;
         case MessageType::CATCH_NETWORK_TRAFFIC:

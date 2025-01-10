@@ -214,7 +214,6 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     long long catTime = 0;
     std::string curTime = "";
     
-    capture.SocketMessage();
     capture.ThreadGetCatch();
     capture.ThreadGetCatchSocket(curTime);
     capture.TriggerGetCatch();
