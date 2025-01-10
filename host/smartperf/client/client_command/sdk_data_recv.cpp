@@ -136,6 +136,11 @@ namespace OHOS {
                 LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
+            if (readLen < MSG_MAX_LEN) {
+                receiveBuf[readLen] = '\0';
+            } else {
+                receiveBuf[MSG_MAX_LEN - 1] = '\0';
+            }
             receiveBuffer = receiveBuf;
 
             bool processFlag = true;

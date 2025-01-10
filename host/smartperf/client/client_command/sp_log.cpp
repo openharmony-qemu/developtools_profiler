@@ -34,6 +34,7 @@
 #include <thread>
 #include <cstdlib>
 #include <cstdio>
+#include "include/smartperf_command.h"
 
 #ifdef HI_LOG_ENABLE
 #include "hilog/log.h"
@@ -187,24 +188,18 @@ static void TarFile(const std::string& sourceFileName)
     std::ostringstream compressedFilePath;
     compressedFilePath << LOG_FILE_DIR << sourceFileName << ".tar.gz";
 
-    std::ostringstream tarCommand;
-    tarCommand << "tar -czf " << compressedFilePath.str() << " -C " << LOG_FILE_DIR << " " << sourceFileName;
-    LOGD("Running tar command: %s", tarCommand.str().c_str());
-
-    int tarResult = system(tarCommand.str().c_str());
-    if (tarResult != 0) {
+    std::string tarStr = " -C " + LOG_FILE_DIR + " " + sourceFileName;
+    std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
         LOGE("Failed to compress file %s", sourceFileName.c_str());
         return;
     }
 
     Chmod(compressedFilePath.str(), LOG_FILE_MODE);
 
-    std::ostringstream deleteCommand;
-    deleteCommand << "rm " << LOG_FILE_DIR << sourceFileName;
-    LOGD("Running delete command: %s", deleteCommand.str().c_str());
-
-    int deleteResult = system(deleteCommand.str().c_str());
-    if (deleteResult != 0) {
+    tarCommand = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + LOG_FILE_DIR + sourceFileName;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
         LOGE("Failed to delete original file %s", sourceFileName.c_str());
         return;
     }
