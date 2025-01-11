@@ -44,7 +44,8 @@ HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
     if (!nativeInterface) {
         return nullptr;
     }
-    std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+    std::map<uint32_t, double> threadMap{};
+    nativeInterface->GetAppThreadCpuUsage(threadMap);
     HiDebug_ThreadCpuUsagePtr head = nullptr;
     HiDebug_ThreadCpuUsagePtr prev = nullptr;
     for (const auto[threadId, cpuUsage] : threadMap) {

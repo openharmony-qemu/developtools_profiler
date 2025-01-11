@@ -177,7 +177,8 @@ extern "C" {
             code = ErrorCode::MEM_ERROR;
             return arr;
         }
-        std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+        std::map<uint32_t, double> threadMap{};
+        nativeInterface->GetAppThreadCpuUsage(threadMap);
         auto size = threadMap.size();
         if (size <= 0) {
             return arr;
