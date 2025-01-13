@@ -491,9 +491,10 @@ def check_sa_result(killProcess = False, checkDumpCatch = False):
         if (wait_time == KILL_PROCESS_TIME):
             if (killProcess):
                 subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+                time.sleep(SLEEP_TWENTY)
                 break
             if checkDumpCatch:
-                pid = get_pid("native_daemon sa")
+                pid = get_pid("native_daemon")
                 subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
                 process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
