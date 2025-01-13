@@ -16,7 +16,6 @@
 #include <thread>
 #include <string>
 #include <climits>
-#include "include/sp_task.h"
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
 #include "include/FPS.h"
@@ -35,7 +34,7 @@
 #include "unistd.h"
 #include <future>
 #include "include/common.h"
-
+#include "include/sp_csv_util.h"
 namespace OHOS {
 namespace SmartPerf {
 const long long RM_0 = 0;
@@ -213,7 +212,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
-            Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
@@ -386,7 +384,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     SPData spdata;
     spdata.values.insert(dataMap.begin(), dataMap.end());
     if (GetRecordState()) {
-        vmap.push_back(spdata);
+        ProcessErrorData(spdata);
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
@@ -793,6 +791,24 @@ void SPTask::SetTcpToken(std::string token)
 std::string SPTask::GetTcpToken()
 {
     return tcpToken;
+}
+void SPTask::ProcessErrorData(SPData &spdata)
+{
+    int newDataSize = spdata.values.size();
+    if (newDataSize > dataSize) {
+        for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
+            csvTitle += iter->first + ",";
+        }
+        if (!vmap.empty()) {
+            vmap.pop_back();
+        }
+    }
+    dataSize = newDataSize;
+    vmap.push_back(spdata);
+}
+std::string SPTask::GetCsvTitle()
+{
+    return csvTitle;
 }
 }
 }

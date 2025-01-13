@@ -441,6 +441,7 @@ bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
             if (pos + keyWords.length() < line.length() && (line[pos + keyWords.length()] == ',')) {
                 return false;
             }
+            LOGD("StallingRateTrace::IsAppLaunchPatternMatched: (%s)", keyWords.c_str());
             return true;
         }
     }

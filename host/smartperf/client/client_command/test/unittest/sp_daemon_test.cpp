@@ -211,14 +211,11 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
 HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
 {
     Capture &capture = Capture::GetInstance();
-    long long catTime = 0;
-    std::string curTime = "";
     
-    capture.SocketMessage();
     capture.ThreadGetCatch();
-    capture.ThreadGetCatchSocket(curTime);
+    capture.ThreadGetCatchSocket();
     capture.TriggerGetCatch();
-    capture.TriggerGetCatchSocket(catTime);
+    capture.TriggerGetCatchSocket();
 
     std::string cmd = "SP_daemon -N 1 -snapshot";
     std::string result = "";

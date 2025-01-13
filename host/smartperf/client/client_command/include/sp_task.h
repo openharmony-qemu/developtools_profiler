@@ -23,7 +23,6 @@
 #include <mutex>
 #include <climits>
 #include "parameters.h"
-#include "sp_csv_util.h"
 #include "sdk_data_recv.h"
 #include "GpuCounter.h"
 #include "lock_frequency.h"
@@ -98,6 +97,8 @@ public:
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);
     std::string GetTcpToken();
+    void ProcessErrorData(SPData &spdata);
+    std::string GetCsvTitle();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -138,6 +139,8 @@ private:
     long long nextTime = 0;
     int battaryStart = 0;
     int battaryEnd = 0;
+    int dataSize = 0;
+    std::string csvTitle = "";
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

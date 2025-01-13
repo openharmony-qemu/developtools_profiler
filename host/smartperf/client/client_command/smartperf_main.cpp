@@ -181,7 +181,8 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::SPUtils::StrSplit(startStr, " ", startParams);
         OHOS::SmartPerf::SPUtils::StrSplit(endStr, " ", endParams);
         std::string result;
-        for (int i = 2; i < argc; i++) {
+        const int maxExpectedArgs = 100;
+        for (int i = 2; i < argc && i < maxExpectedArgs; i++) {
             result += argv[i];
             if (i != argc - 1) {
                 result += " ";

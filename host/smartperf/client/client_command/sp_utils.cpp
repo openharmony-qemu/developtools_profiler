@@ -101,8 +101,9 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
         return false;
     }
     char buf[4096] = {'\0'};
-    size_t ret = fread(buf, sizeof(buf), 1, fd);
+    size_t ret = fread(buf, 1, sizeof(buf) - 1, fd);
     if (ret >= 0) {
+        buf[ret] = '\0';
         result = buf;
     }
     if (pclose(fd) == -1) {
@@ -748,6 +749,7 @@ bool SPUtils::GetIsGameApp(std::string pkg)
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         LOGD("ProfilerFPS::fd is empty");
+        return false;
     }
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {

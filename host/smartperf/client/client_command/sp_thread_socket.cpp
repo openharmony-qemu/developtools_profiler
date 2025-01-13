@@ -514,6 +514,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         Dubai::isDumpDubaiFinish = true;
         ProfilerFPS::isLowCurFps = false;
         retCode = Dubai::CallMoveDubaiDbFinished();
+        LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
         LOGD("UDP send DuBai get finish");
     } else if (iterator->first == MessageType::CHECK_UDP_STATUS) {
