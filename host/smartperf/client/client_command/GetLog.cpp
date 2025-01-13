@@ -164,7 +164,7 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
 
     try {
         if (std::filesystem::exists(dirPath)) {
-
+            WLOGI("Success read hilog dir");
         }
     } catch (const std::filesystem::filesystem_error &e){
         WLOGE("GetHilogFiles error: %s",e.what());
