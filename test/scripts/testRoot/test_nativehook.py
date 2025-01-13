@@ -55,7 +55,7 @@ SA_CLICK_TIMES = 67
 SA_WAIT_TIMES = 7
 SA_STATISTICS = 300
 SA_SAMPLE = 512
-KILL_PROCESS_TIME = 20
+KILL_PROCESS_TIME = 10
 SAMPLE_SMALL = 512
 SAMPLE_LARGE = 51200
 FILTER_SMALL = 256
@@ -319,7 +319,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     task_thread.join()
 
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     if response_library:
         return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
@@ -385,7 +385,7 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
         i += 1
     task_thread.join()
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
     
     first_process = False
     if response_library:
@@ -482,8 +482,13 @@ def check_sa_result(killProcess = False, checkDumpCatch = False):
     i = 0
     dumpCatchResult = False
     process_hilog = None
+    daemonpid = 0
+    wait_time = 0
     while i < SA_CLICK_TIMES:
-        if (i == KILL_PROCESS_TIME):
+        daemonpid = get_pid("native_daemon")
+        if ((killProcess or checkDumpCatch) and int(daemonpid) > 0):
+            wait_time += 1
+        if (wait_time == KILL_PROCESS_TIME):
             if (killProcess):
                 subprocess.check_output("hdc shell killall com.example.insight_test_stage")
                 break
@@ -500,14 +505,14 @@ def check_sa_result(killProcess = False, checkDumpCatch = False):
         with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
-                if "Name:native_daemon" in line:
+                if "DumpCatch" in line:
                     dumpCatchResult = True
         return dumpCatchResult
     filename = get_profiler_test_trace("com.example.insight_test_stage")
 
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0, 0)
 
