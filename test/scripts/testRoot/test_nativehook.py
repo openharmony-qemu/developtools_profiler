@@ -480,7 +480,7 @@ def check_sa_result(kill_process=False, check_dump_catch=False):
     time.sleep(1)
     touch_button("Allocations_Js_Depth")
     i = 0
-    dumpCatchResult = False
+    dump_catch_result = False
     process_hilog = None
     daemonpid = 0
     wait_time = 0
@@ -507,8 +507,8 @@ def check_sa_result(kill_process=False, check_dump_catch=False):
             lines = file.readlines()
             for line in lines:
                 if "DumpCatch" in line:
-                    dumpCatchResult = True
-        return dumpCatchResult
+                    dump_catch_result = True
+        return dump_catch_result
     filename = get_profiler_test_trace("com.example.insight_test_stage")
 
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
