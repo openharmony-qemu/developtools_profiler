@@ -442,7 +442,7 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result(killProcess = False, checkDumpCatch = False):
+def check_sa_result(kill_process=False, check_dump_catch=False):
     subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
     subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
     subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
@@ -486,21 +486,21 @@ def check_sa_result(killProcess = False, checkDumpCatch = False):
     wait_time = 0
     while i < SA_CLICK_TIMES:
         daemonpid = get_pid("native_daemon")
-        if ((killProcess or checkDumpCatch) and int(daemonpid) > 0):
+        if ((kill_process or check_dump_catch) and int(daemonpid) > 0):
             wait_time += 1
         if (wait_time == KILL_PROCESS_TIME):
-            if (killProcess):
+            if (kill_process):
                 subprocess.check_output("hdc shell killall com.example.insight_test_stage")
                 time.sleep(SLEEP_TWENTY)
                 break
-            if checkDumpCatch:
+            if check_dump_catch:
                 pid = get_pid("native_daemon")
                 subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
                 process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
-    if (checkDumpCatch):
+    if (check_dump_catch):
         process_hilog.terminate()
         subprocess.check_output(f"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
