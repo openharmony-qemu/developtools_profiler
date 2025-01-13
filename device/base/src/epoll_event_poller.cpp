@@ -240,7 +240,7 @@ bool EpollEventPoller::Start()
 
 bool EpollEventPoller::Stop()
 {
-    std::unique_lock<std::mutex> lock(mutex_);
+    std::unique_lock<std::mutex> lock(stopPollerMutex_);
     CHECK_TRUE(state_ == STARTED, false, "Stop FAIL %d", state_.load());
     running_ = false;
     Notify();
