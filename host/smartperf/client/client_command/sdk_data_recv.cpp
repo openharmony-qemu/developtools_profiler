@@ -136,40 +136,13 @@ namespace OHOS {
                 LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
-            receiveBuffer = receiveBuf;
-
-            bool processFlag = true;
-            while (processFlag) {
-                size_t start = receiveBuffer.find('{');
-                if (start == std::string::npos) {
-                    processFlag = false;
-                    break;
-                }
-
-                size_t end = receiveBuffer.find('}', start);
-                if (end == std::string::npos) {
-                    processFlag = false;
-                    break;
-                }
-
-                std::size_t startPosition = start + 1;
-                std::size_t length = end > start ? end - start - 1 : 0;
-
-                if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
-                    processFlag = false;
-                    break;
-                }
-
-                std::string message = receiveBuffer.substr(startPosition, length);
-                resStr += ProcessData(message, params);
-
-                receiveBuffer.erase(0, end + 1);
-
-                const int bufferSizeCheck = 2;
-                if (receiveBuffer.size() <= bufferSizeCheck) {
-                    processFlag = false;
-                }
+            if (readLen < MSG_MAX_LEN) {
+                receiveBuf[readLen] = '\0';
+            } else {
+                receiveBuf[MSG_MAX_LEN - 1] = '\0';
             }
+            receiveBuffer = receiveBuf;
+            SocketCommandVerification(resStr, params);
 
             if (!resStr.empty() && resStr.back() == '\n') {
                 resStr.pop_back();
@@ -313,5 +286,38 @@ namespace OHOS {
         {
             sdkParams.startTime = SPUtils::GetCurTime();
         }
+        void SdkDataRecv::SocketCommandVerification(std::string resStr, ServerParams &params)
+        {
+            bool processFlag = true;
+            while (processFlag) {
+                size_t start = receiveBuffer.find('{');
+                if (start == std::string::npos) {
+                    processFlag = false;
+                    break;
+                }
+
+                size_t end = receiveBuffer.find('}', start);
+                if (end == std::string::npos) {
+                    processFlag = false;
+                    break;
+                }
+
+                std::size_t startPosition = start + 1;
+                std::size_t length = end > start ? end - start - 1 : 0;
+                if (startPosition >= receiveBuffer.size() || length > receiveBuffer.size() - startPosition) {
+                    processFlag = false;
+                    break;
+                }
+
+                std::string message = receiveBuffer.substr(startPosition, length);
+                resStr += ProcessData(message, params);
+
+                receiveBuffer.erase(0, end + 1);
+                const int bufferSizeCheck = 2;
+                if (receiveBuffer.size() <= bufferSizeCheck) {
+                    processFlag = false;
+            }
+        }
+    }
     }
 }

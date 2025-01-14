@@ -204,6 +204,7 @@ enum class CmdCommand {
     REMOVE,
     CP,
     TAR,
+    GET_HILOG,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -235,6 +236,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::REMOVE, std::string("rm -rf ") },
     { CmdCommand::CP, std::string("cp ") },
     { CmdCommand::TAR, std::string("tar -czf ") },
+    { CmdCommand::GET_HILOG, std::string("timeout 1s hilog > ") },
 };
 
 enum class DeviceCmd {

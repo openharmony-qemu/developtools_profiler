@@ -34,6 +34,7 @@
 #include <thread>
 #include <cstdlib>
 #include <cstdio>
+#include "include/smartperf_command.h"
 
 #ifdef HI_LOG_ENABLE
 #include "hilog/log.h"
@@ -45,7 +46,7 @@ const int32_t LOG_MAX_LEN = 10000;
 const long long MAX_FILE_SIZE = 4 * 1024 * 1024;  // 4MB
 const double MAX_FILE_KEEP_TIME = 60 * 60 * 24 * 7; // 7days
 const int MAX_FILE_COUNT = 256;
-const mode_t LOG_FILE_MODE = 0777;
+const mode_t LOG_FILE_MODE = 0755;
 std::mutex g_mtx;
 std::string g_currentLogFilePath;
 std::string g_currentDate;
@@ -187,24 +188,18 @@ static void TarFile(const std::string& sourceFileName)
     std::ostringstream compressedFilePath;
     compressedFilePath << LOG_FILE_DIR << sourceFileName << ".tar.gz";
 
-    std::ostringstream tarCommand;
-    tarCommand << "tar -czf " << compressedFilePath.str() << " -C " << LOG_FILE_DIR << " " << sourceFileName;
-    LOGD("Running tar command: %s", tarCommand.str().c_str());
-
-    int tarResult = system(tarCommand.str().c_str());
-    if (tarResult != 0) {
+    std::string tarStr = compressedFilePath.str() + " -C " + LOG_FILE_DIR + " " + sourceFileName;
+    std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
         LOGE("Failed to compress file %s", sourceFileName.c_str());
         return;
     }
 
     Chmod(compressedFilePath.str(), LOG_FILE_MODE);
 
-    std::ostringstream deleteCommand;
-    deleteCommand << "rm " << LOG_FILE_DIR << sourceFileName;
-    LOGD("Running delete command: %s", deleteCommand.str().c_str());
-
-    int deleteResult = system(deleteCommand.str().c_str());
-    if (deleteResult != 0) {
+    tarCommand = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + LOG_FILE_DIR + sourceFileName;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
         LOGE("Failed to delete original file %s", sourceFileName.c_str());
         return;
     }
@@ -239,11 +234,11 @@ static bool GetLogFilePath()
     }
     if (fileNumber == 0) {
         g_currentLogFilePath = GetCurrentLogFilePath(1);
+        if (g_currentLogFilePath == "") {
+            LOGE("Get current log file data is null");
+            return false;
+        }
         return true;
-    }
-    if (g_currentLogFilePath == "") {
-        LOGE("Get current log file data is null");
-        return false;
     }
     std::string filePath = LOG_FILE_DIR + fileName;
     if (currentDateFlag && IsFilePathValid(filePath)) {
@@ -265,15 +260,13 @@ static void WriteMessage(const char* logMessage)
 
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(g_currentLogFilePath.c_str(), logFilePathChar) == nullptr)) {
-        LOGE("Log file %s is not exist.", g_currentLogFilePath.c_str());
-        return;
+        LOGE("Log file %s is not exist, will create", g_currentLogFilePath.c_str());
     }
 
-    std::ofstream logFile(logFilePathChar, std::ios::app);
+    std::ofstream logFile(g_currentLogFilePath, std::ios::app);
     if (logFile.is_open()) {
         if (chmodFlag) {
-            LOGD("Create log file %s.", logFilePathChar);
-            if (!Chmod(logFilePathChar, LOG_FILE_MODE)) {
+            if (!Chmod(g_currentLogFilePath, LOG_FILE_MODE)) {
                 logFile.close();
                 return;
             }
@@ -284,6 +277,7 @@ static void WriteMessage(const char* logMessage)
         std::tm* tm = std::localtime(&time);
         if (tm == nullptr) {
             LOGE("Write Message get current data is null");
+            logFile.close();
             return;
         }
 
@@ -293,7 +287,7 @@ static void WriteMessage(const char* logMessage)
 
         logFile.close();
     } else {
-        LOGE("Unable to open log file for writing: %s", logFilePathChar);
+        LOGE("Unable to open log file for writing: %s", g_currentLogFilePath.c_str());
     }
 
     return;
