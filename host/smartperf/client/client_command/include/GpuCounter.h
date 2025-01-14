@@ -25,15 +25,6 @@
 
 namespace OHOS {
     namespace SmartPerf {
-        class GpuCounterPlugin {
-        public:
-            uint32_t version;
-            const char *pluginName;
-
-            virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
-            virtual int32_t StopGetGpuPerfInfo() = 0;
-        };
-
         class GpuCounter : public SpProfiler {
         public:
             enum GcStatus {
