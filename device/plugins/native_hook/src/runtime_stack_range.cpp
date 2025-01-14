@@ -70,7 +70,7 @@ bool GetSigAltStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     bool ret = false;
     stack_t altStack;
     if (sigaltstack(nullptr, &altStack) != -1) {
-        if ((altStack.ss_flags & SS_ONSTACK) != 0) {
+        if ((static_cast<uint32_t>(altStack.ss_flags) & SS_ONSTACK) != 0) {
             stackBottom = reinterpret_cast<uintptr_t>(altStack.ss_sp);
             stackTop = reinterpret_cast<uintptr_t>(altStack.ss_sp) + altStack.ss_size;
             ret = true;

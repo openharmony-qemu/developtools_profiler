@@ -72,18 +72,18 @@ class TestHiprofilerMemoryPlugin:
         result = cursor.fetchall()
         row_count = len(result)
         #检查获得sys_mem 数据是否正确
-        assert(row_count > 0)
+        assert (row_count > 0)
         #检查是否存在map 的事件
         for row in result:
-            assert(row[3] >= 0)
+            assert (row[3] >= 0)
         #检查是否存在sys_mem_total 事件
         cursor = conn.cursor()
         cursor.execute("select * from sys_mem_measure,sys_event_filter where filter_id = id and name ='sys.mem.total'")
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[3] >= 0)
+            assert (row[3] >= 0)
         cursor.close()
         conn.close()
 
@@ -111,18 +111,18 @@ class TestHiprofilerMemoryPlugin:
         result = cursor.fetchall()
         row_count = len(result)
         #检查获得free pages 数据是否正确
-        assert(row_count > 0)
+        assert (row_count > 0)
         #检查是否存在 free pages 的事件
         for row in result:
-            assert(row[3] >= 0)
+            assert (row[3] >= 0)
         #检查是否存在active file  事件
         cursor = conn.cursor()
         cursor.execute("select * from sys_mem_measure,sys_event_filter where filter_id = id and name ='sys.virtual.mem.nr.active_file'")
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[3] >= 0)
+            assert (row[3] >= 0)
         cursor.close()
         conn.close()
 
@@ -203,22 +203,22 @@ class TestHiprofilerMemoryPlugin:
         result = cursor.fetchall()
         row_count = len(result)
         #检查存在dma 数据
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[3] > 0 and row[4] > 0 and row[5] > 0 and row[6] > 0 and row[7] > 0 and row[8] > 0 and row[9] > 0)
+            assert (row[3] > 0 and row[4] > 0 and row[5] > 0 and row[6] > 0 and row[7] > 0 and row[8] > 0 and row[9] > 0)
         #检查是否存在smaps 
         cursor.execute("select * from smaps limit 0,10")
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[2] != '' and row[3] != '' and row[7] >= 0 and row[8] >= 0)
+            assert (row[2] != '' and row[3] != '' and row[7] >= 0 and row[8] >= 0)
         #检查是否存在GPU数据
         cursor.execute("select * from memory_process_gpu limit 0,10")
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[3] > 0 and row[7] > 0)
+            assert (row[3] > 0 and row[7] > 0)
         cursor.close()
         conn.close()

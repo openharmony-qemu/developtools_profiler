@@ -419,7 +419,7 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid == GetCurThreadId())) {
         return stackSize;
     }
-    stackSize = stackTop - stackPtr;
+    stackSize = static_cast<int>(stackTop - stackPtr);
     return stackSize;
 }
 

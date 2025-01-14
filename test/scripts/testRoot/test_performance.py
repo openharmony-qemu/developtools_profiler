@@ -60,7 +60,7 @@ class TestHiprofilerMalloctime:
         with open(r'.\..\outputfiles\malloctest.txt', 'r') as file:
             lines = file.readlines()
             malloctime = int(lines[MALLOCTIME_INDEX].split()[MALLOCTIME_INDEX])
-        assert(malloctime < THRESH)
+        assert (malloctime < THRESH)
 
     @pytest.mark.L0
     def test_listenuri(self):
