@@ -622,7 +622,7 @@ class TestNativehook:
     
     @pytest.mark.L0
     def test_startup_sample_interval_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, 1)
+        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
     def test_sample_interval_filter_size_statistics(self):
