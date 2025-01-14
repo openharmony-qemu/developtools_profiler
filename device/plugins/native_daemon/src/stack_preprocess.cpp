@@ -473,7 +473,7 @@ void StackPreprocess::TakeResults()
                     }
                 }
             }
-            if ((hookConfig_.fp_unwind()) || rawData->stackSize > 0) {
+            if (((hookConfig_.fp_unwind()) || rawData->stackSize > 0) && (rawData->stackConext->type != PR_SET_VMA_MSG)) {
                 ReportOfflineSymbolizationData();
             }
             std::visit([&](auto& stackData) {
