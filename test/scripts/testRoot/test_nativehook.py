@@ -55,6 +55,7 @@ SA_CLICK_TIMES = 67
 SA_WAIT_TIMES = 7
 SA_STATISTICS = 300
 SA_SAMPLE = 512
+KILL_PROCESS_TIME = 10
 SAMPLE_SMALL = 512
 SAMPLE_LARGE = 51200
 FILTER_SMALL = 256
@@ -318,7 +319,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     task_thread.join()
 
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     if response_library:
         return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
@@ -384,7 +385,7 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
         i += 1
     task_thread.join()
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
     
     first_process = False
     if response_library:
@@ -441,7 +442,7 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result():
+def check_sa_result(kill_process=False, check_dump_catch=False):
     subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
     subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
     subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
@@ -479,16 +480,40 @@ def check_sa_result():
     time.sleep(1)
     touch_button("Allocations_Js_Depth")
     i = 0
+    dump_catch_result = False
+    process_hilog = None
+    daemonpid = 0
+    wait_time = 0
     while i < SA_CLICK_TIMES:
+        daemonpid = get_pid("native_daemon")
+        if ((kill_process or check_dump_catch) and int(daemonpid) > 0):
+            wait_time += 1
+        if (wait_time == KILL_PROCESS_TIME):
+            if (kill_process):
+                subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+                time.sleep(SLEEP_TWENTY)
+                break
+            if check_dump_catch:
+                pid = get_pid("native_daemon")
+                subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
+                process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
-    
+    if (check_dump_catch):
+        process_hilog.terminate()
+        subprocess.check_output(f"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "DumpCatch" in line:
+                    dump_catch_result = True
+        return dump_catch_result
     filename = get_profiler_test_trace("com.example.insight_test_stage")
 
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0, 0)
 
@@ -698,7 +723,15 @@ class TestNativehook:
     @pytest.mark.L0
     def test_depth_fifty(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIFTY, CLICK_THREETIMES)
+    
+    @pytest.mark.L0
+    def test_nativehook_sa_killprocess(self):
+        assert check_sa_result(True)
 
+    @pytest.mark.L0
+    def test_nativehook_sa_dumpcatch(self):
+        assert check_sa_result(False, True)
+    
     @pytest.mark.L0
     def test_nativehook_sa(self):
         assert check_sa_result()
