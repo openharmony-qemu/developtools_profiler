@@ -58,14 +58,11 @@ namespace OHOS {
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
-            void* GetSoHandle();
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::string gpuCounterRealtimeData;
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
-            const std::string CREATE_PLUGIN = "onCreatePlugin";
         };
     };
 }

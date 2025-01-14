@@ -24,6 +24,7 @@
 #include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/service_plugin.h"
 #include "ByTrace.h"
 #include <cstdio>
 #include <ios>
@@ -120,6 +121,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
+        ServicePluginHandler::GetInstance().ServicePluginInit();
         FPS &fps = FPS::GetInstance();
         fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
         fps.firstDump = true;

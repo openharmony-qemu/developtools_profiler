@@ -20,6 +20,7 @@
 #include "map"
 #include "thread"
 #include "GpuCounterCallback.h"
+#include "sp_profiler.h"
 
 namespace OHOS {
     namespace SmartPerf {
@@ -32,6 +33,28 @@ namespace OHOS {
             virtual int32_t StopGetGpuPerfInfo() = 0;
             virtual std::map<std::string, std::string> GetSystemFunctionStatus(std::map<std::string, std::string> &queryParams) = 0;
         };
+
+        class ServicePluginHandler : public SpProfiler {
+        public:
+            std::map<std::string, std::string> ItemData() override;
+            static ServicePluginHandler &GetInstance()
+            {
+                static ServicePluginHandler instance;
+                return instance;
+            }
+
+            void ServicePluginInit();
+            void* GetSoHandler();
+
+        private:
+            ServicePluginHandler() {};
+            ServicePluginHandler(const ServicePluginHandler &);
+            ServicePluginHandler &operator = (const ServicePluginHandler &);
+
+            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
+            const std::string CREATE_PLUGIN = "onCreatePlugin";
+            void* pluginHandle = nullptr;
+        }
     }
 }
 

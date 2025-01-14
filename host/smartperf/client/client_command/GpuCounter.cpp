@@ -30,30 +30,15 @@ namespace OHOS {
         {
             return std::map<std::string, std::string>();
         }
-        void* GpuCounter::GetSoHandle()
-        {
-            char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
-                WLOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
-                return nullptr;
-            }
-
-            void* handle = dlopen(soFilePathChar, RTLD_LAZY);
-            if (!handle) {
-                WLOGE("open GpuCounterPlugin so file error.");
-                return nullptr;
-            }
-
-            return handle;
-        }
         void GpuCounter::StartCollect(GcCollectType type)
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
             const int duration = 1000;
 
-            void* handle = GetSoHandle();
+            void* handle = ServicePluginHandler::GetInstance().GetSoHandler();
             if (!handle) {
+                WLOGE("Get service plugin handler failed.");
                 return;
             }
 
@@ -167,8 +152,9 @@ namespace OHOS {
                 return;
             }
 
-            void* handle = GetSoHandle();
+            void* handle = ServicePluginHandler::GetInstance().GetSoHandler();
             if (!handle) {
+                WLOGE("Get service plugin handler failed.");
                 return;
             }
 
