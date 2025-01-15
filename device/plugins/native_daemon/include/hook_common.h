@@ -150,6 +150,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         freeEventOnlyAddrEnable = false;
         printNmd = false;
         nmdType = -1;
+        isSaMode = false;
         arktsConfig.jsStackReport = 0;
         arktsConfig.maxJsStackDepth = 0;
         arktsConfig.jsFpunwind = false;
@@ -189,6 +190,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool freeEventOnlyAddrEnable = false;
     bool printNmd = false;
     int nmdType = -1;
+    bool isSaMode = false;
     ArkTsClientConfig arktsConfig = {0};
 };
 #endif // HOOK_COMMON_H
