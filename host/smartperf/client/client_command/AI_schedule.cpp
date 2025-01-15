@@ -52,5 +52,10 @@ std::map<std::string, std::string> AISchedule::ItemData()
     }
     return servicePlugin()->GetSystemFunctionStatus(aiScheduleParams);
 }
+
+void AISchedule::SetProcessId(const std::string &pid)
+{
+    processId = pid;
+}
 } // namespace SmartPerf
 } // namespace OHOS

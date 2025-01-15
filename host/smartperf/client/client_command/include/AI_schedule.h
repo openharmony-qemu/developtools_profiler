@@ -28,6 +28,7 @@ class AISchedule : public SpProfiler {
         static AISchedule instance;
         return instance;
     }
+    void SetProcessId(const std::string &pid);
 
     private:
     AISchedule() {};
@@ -37,7 +38,7 @@ class AISchedule : public SpProfiler {
     const std::string AI_SCHEDULE_PARAM_PID = "pid";
     const std::string AI_SCHEDULE_PARAM_TYPE = "functionType";
     const std::string CREATE_PLUGIN = "onCreatePlugin";
-    std::string gamePid;
+    std::string processId = "";
 };
 } // namespace SmartPerf
 } // namespace OHOS
