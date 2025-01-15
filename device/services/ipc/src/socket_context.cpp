@@ -50,6 +50,15 @@ SocketContext::~SocketContext()
             strerror_r(errno, buf, bufSize);
             PROFILER_LOG_ERROR(LOG_CORE, "shutdown socket err = %d %s", errno, buf);
         }
+    }
+    int socketTemp = socketHandle_;
+    socketHandle_ = -1;
+    if (recvThread_.joinable()) {
+        recvThread_.join();
+    }
+    socketHandle_ = socketTemp;
+    PROFILER_LOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
+    if (socketHandle_ >= 0) {
         ret = close(socketHandle_);
         if (ret < 0) {
             const int bufSize = 256;
@@ -59,10 +68,6 @@ SocketContext::~SocketContext()
         }
         socketHandle_ = -1;
     }
-    if (recvThread_.joinable()) {
-        recvThread_.join();
-    }
-    PROFILER_LOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
 }
 
 int SocketContext::RawProtocolProc(uint32_t pnum, const int8_t* buf, const uint32_t size)
