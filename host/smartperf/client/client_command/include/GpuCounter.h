@@ -63,6 +63,7 @@ namespace OHOS {
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::string gpuCounterRealtimeData;
+            const std::string CREATE_PLUGIN = "onCreatePlugin";
         };
     };
 }

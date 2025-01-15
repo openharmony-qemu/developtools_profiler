@@ -21,15 +21,20 @@
 
 namespace OHOS {
     namespace SmartPerf {
+        ServicePluginHandler::ServicePluginHandler()
+        {
+            pluginHandle.resize(PLUGIN_COUNT, nullptr);
+        }
+
         std::map<std::string, std::string> ServicePluginHandler::ItemData()
         {
             return std::map<std::string, std::string>();
         }
 
-        void ServicePluginHandler::ServicePluginInit()
+        void ServicePluginHandler::ServicePluginInit(enum servicePluginType type)
         {
             char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
+            if ((realpath(PLUGIN_SO_PATH[type].c_str(), soFilePathChar) == nullptr)) {
                 WLOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
             }
 
@@ -39,14 +44,12 @@ namespace OHOS {
             }
         }
 
-        void* ServicePluginHandler::GetSoHandler()
+        void* ServicePluginHandler::GetSoHandler(enum servicePluginType type)
         {
-            return pluginHandle;
-        }
-
-        std::string ServicePluginHandler::GetCreatePlugin()
-        {
-            return CREATE_PLUGIN;
+            if (pluginHandle[type] == nullptr) {
+                ServicePluginInit(type);
+            }
+            return pluginHandle[type];
         }
     }
 }

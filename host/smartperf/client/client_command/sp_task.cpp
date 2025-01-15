@@ -18,6 +18,7 @@
 #include <climits>
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
+#include "include/AI_schedule.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
 #include "include/CPU.h"
@@ -121,7 +122,6 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
-        ServicePluginHandler::GetInstance().ServicePluginInit();
         FPS &fps = FPS::GetInstance();
         fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
         fps.firstDump = true;
@@ -372,8 +372,8 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+    GetItemData(dataMap);
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);

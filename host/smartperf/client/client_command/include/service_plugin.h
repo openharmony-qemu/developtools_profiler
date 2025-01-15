@@ -24,6 +24,12 @@
 
 namespace OHOS {
     namespace SmartPerf {
+        enum servicePluginType {
+            GAME_PLUGIN,
+            TEST_PLUGIN,
+            PLUGIN_COUNT
+        };
+
         class GpuCounterPlugin {
         public:
             uint32_t version;
@@ -42,19 +48,19 @@ namespace OHOS {
                 static ServicePluginHandler instance;
                 return instance;
             }
-
-            void ServicePluginInit();
-            void* GetSoHandler();
-            std::string GetCreatePlugin();
+            void* GetSoHandler(enum servicePluginType type);
 
         private:
-            ServicePluginHandler() {};
+            ServicePluginHandler();
             ServicePluginHandler(const ServicePluginHandler &);
             ServicePluginHandler &operator = (const ServicePluginHandler &);
+            void ServicePluginInit(enum servicePluginType type);
 
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
-            const std::string CREATE_PLUGIN = "onCreatePlugin";
-            void* pluginHandle = nullptr;
+            const std::vector<std::string> PLUGIN_SO_PATH = {
+                "system/lib64/libgameservice_gpucounter_plugin.z.so",
+                "system/lib64/libtest_server_client.z.so"
+            };
+            std::vector<void*> pluginHandle = nullptr;
         };
     }
 }

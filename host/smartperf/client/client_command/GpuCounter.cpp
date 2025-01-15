@@ -43,9 +43,8 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle,
-                servicePluginHandler.GetCreatePlugin().c_str());
+            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            GetServicePlugin startGetGpuPerfInfo = (GetServicePlugin)dlsym(handle, CREATE_PLUGIN.c_str());
             if (!startGetGpuPerfInfo) {
                 WLOGE("GpuCounterPlugin Error loading symbol");
                 return;
@@ -160,9 +159,12 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle,
-                servicePluginHandler.GetCreatePlugin().c_str());
+            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            GetServicePlugin startGetGpuPerfInfo = (GetServicePlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            if (!startGetGpuPerfInfo) {
+                WLOGE("GpuCounterPlugin Error loading symbol");
+                return;
+            }
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {
