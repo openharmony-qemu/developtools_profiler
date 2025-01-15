@@ -15,7 +15,9 @@
 #include "string"
 #include "map"
 #include "thread"
+#include <dlfcn.h>
 #include "include/service_plugin.h"
+#include "include/sp_log.h"
 
 namespace OHOS {
     namespace SmartPerf {
@@ -41,7 +43,10 @@ namespace OHOS {
         {
             return pluginHandle;
         }
+
+        std::string ServicePluginHandler::GetCreatePlugin()
+        {
+            return CREATE_PLUGIN;
+        }
     }
 }
-
-#endif

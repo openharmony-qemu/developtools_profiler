@@ -36,14 +36,16 @@ namespace OHOS {
 
             const int duration = 1000;
 
-            void* handle = ServicePluginHandler::GetInstance().GetSoHandler();
+            ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
+            void* handle = servicePluginHandler.GetSoHandler();
             if (!handle) {
                 WLOGE("Get service plugin handler failed.");
                 return;
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle,
+                servicePluginHandler.GetCreatePlugin().c_str());
             if (!startGetGpuPerfInfo) {
                 WLOGE("GpuCounterPlugin Error loading symbol");
                 return;
@@ -151,15 +153,16 @@ namespace OHOS {
             if (gcStatus != GC_RUNNING) {
                 return;
             }
-
-            void* handle = ServicePluginHandler::GetInstance().GetSoHandler();
+            ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
+            void* handle = servicePluginHandler.GetSoHandler();
             if (!handle) {
                 WLOGE("Get service plugin handler failed.");
                 return;
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle,
+                servicePluginHandler.GetCreatePlugin().c_str());
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {

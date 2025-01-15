@@ -45,6 +45,7 @@ namespace OHOS {
 
             void ServicePluginInit();
             void* GetSoHandler();
+            std::string GetCreatePlugin();
 
         private:
             ServicePluginHandler() {};
@@ -54,7 +55,7 @@ namespace OHOS {
             const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
             const std::string CREATE_PLUGIN = "onCreatePlugin";
             void* pluginHandle = nullptr;
-        }
+        };
     }
 }
 
