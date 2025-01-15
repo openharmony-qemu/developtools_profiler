@@ -34,8 +34,10 @@ class AISchedule : public SpProfiler {
     AISchedule(const AISchedule &) = delete;
     AISchedule &operator=(const AISchedule &) = delete;
     std::map<std::string, std::string> aiScheduleParams;
-    const std::string AI_SCHEDULE_PARAM = "functionType";
+    const std::string AI_SCHEDULE_PARAM_PID = "pid";
+    const std::string AI_SCHEDULE_PARAM_TYPE = "functionType";
     const std::string CREATE_PLUGIN = "onCreatePlugin";
+    std::string gamePid;
 };
 } // namespace SmartPerf
 } // namespace OHOS

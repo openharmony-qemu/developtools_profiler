@@ -18,6 +18,7 @@
 #include <chrono>
 #include <dlfcn.h>
 #include "include/sp_log.h"
+#include "include/service_plugin.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -29,16 +30,10 @@ namespace SmartPerf {
     {
         LOGD("Lock frequency thread create");
         const int loopLockTime = 4000;
-        char soFilePathChar[PATH_MAX] = {0x00};
-        if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
-            LOGE("%s is not exist.", pluginSoPath.c_str());
-            return;
-        }
-        void* handle = dlopen(soFilePathChar, RTLD_LAZY);
-        if (!handle) {
-            LOGE("open TestServerPlugin so file error.");
-            return;
-        }
+
+        ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
+        void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::TEST_PLUGIN);
+
         typedef int32_t (*GetLockFreq)();
         GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
         if (!testServerPlugin) {

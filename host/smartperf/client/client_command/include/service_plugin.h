@@ -24,12 +24,6 @@
 
 namespace OHOS {
     namespace SmartPerf {
-        enum servicePluginType {
-            GAME_PLUGIN,
-            TEST_PLUGIN,
-            PLUGIN_COUNT
-        };
-
         class GpuCounterPlugin {
         public:
             uint32_t version;
@@ -42,6 +36,12 @@ namespace OHOS {
 
         class ServicePluginHandler : public SpProfiler {
         public:
+            enum servicePluginType {
+                GAME_PLUGIN,
+                TEST_PLUGIN,
+                PLUGIN_COUNT
+            };
+
             std::map<std::string, std::string> ItemData() override;
             static ServicePluginHandler &GetInstance()
             {
