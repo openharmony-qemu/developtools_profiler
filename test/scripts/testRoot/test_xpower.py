@@ -61,21 +61,21 @@ class TestHiprofilerXPowerPlugin:
         result = cursor.fetchall()
         #断言trace 时长27秒
         for row in result:
-            assert(row[0] == 27 * 1000 * 1000 * 1000)
+            assert (row[0] == 27 * 1000 * 1000 * 1000)
         cursor.execute("select count(0) from xpower_measure")
         result = cursor.fetchall()
         for row in result:
-            assert(row[0] > 0)
+            assert (row[0] > 0)
         
         cursor.execute("select * from xpower_measure where filter_id = 0 order by ts limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] > 0)
+            assert (row[3] > 0)
         #电池电量
         cursor.execute("select * from xpower_measure where filter_id = 2 order by ts limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] > 0)
+            assert (row[3] > 0)
         cursor.close()
         conn.close()
 
@@ -106,25 +106,25 @@ class TestHiprofilerXPowerPlugin:
         result = cursor.fetchall()
         #断言trace 时长33秒
         for row in result:
-            assert(row[0] == 33 * 1000 * 1000 * 1000)
+            assert (row[0] == 33 * 1000 * 1000 * 1000)
         cursor.execute("select count(0) from xpower_measure")
         result = cursor.fetchall()
         for row in result:
-            assert(row[0] > 0)
+            assert (row[0] > 0)
         #电量百分比
         cursor.execute("select * from xpower_measure, measure_filter where filter_id = id and name = 'Battery.Level' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] > 0)
+            assert (row[3] > 0)
         #外壳温度
         cursor.execute("select * from xpower_measure, measure_filter where filter_id = id and name = 'ThermalReport.ShellTemp' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] > 0)
+            assert (row[3] > 0)
         #温度等级
         cursor.execute("select * from xpower_measure, measure_filter where filter_id = id and name = 'ThermalReport.ThermalLevel' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] >= 0)
+            assert (row[3] >= 0)
         cursor.close()
         conn.close()
