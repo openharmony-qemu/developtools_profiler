@@ -18,15 +18,21 @@
 #include "logging.h"
 #include "share_memory_allocator.h"
 #include "stack_writer.h"
-
+namespace {
+    const int WAIT_TIMEOUT_SA = 3000000;
+}
 StackWriter::StackWriter(std::string name,
                          uint32_t size,
                          int smbFd,
                          int eventFd,
-                         bool blocked)
+                         bool blocked,
+                         bool isSaMode)
     : pluginName_(name), blocked_(blocked)
 {
     shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
+    if (isSaMode && shareMemoryBlock_ != nullptr) {
+        shareMemoryBlock_->SetWaitTime(WAIT_TIMEOUT_SA);
+    }
     eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     lastFlushTime_ = std::chrono::steady_clock::now();
 }

@@ -58,6 +58,11 @@ public:
         reusePloicy_ = dt;
     }
 
+    void SetWaitTime(int waitTime)
+    {
+        waitTime_ = waitTime;
+    }
+
     void ResetPos();
     void UseMemory(int32_t size);
     bool GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset);
@@ -75,7 +80,7 @@ public:
 private:
     int8_t* GetFreeMemory(uint32_t size);
     bool UseFreeMemory(int8_t* pmem, uint32_t size);
-
+    int waitTime_ = 60000000;
     uint32_t GetDataSize();
     const int8_t* GetDataPoint();
     bool Next();
@@ -98,7 +103,6 @@ private:
     bool CreateBlock(std::string name, uint32_t size);
     bool CreateBlockWithFd(std::string name, uint32_t size, int fd);
     bool ReleaseBlock();
-
     int fileDescriptor_;
     void* memoryPoint_;
     uint32_t memorySize_;
