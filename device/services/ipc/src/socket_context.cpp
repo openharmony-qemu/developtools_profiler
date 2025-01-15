@@ -59,7 +59,7 @@ SocketContext::~SocketContext()
     socketHandle_ = socketTemp;
     PROFILER_LOG_ERROR(LOG_CORE, "~SocketContext recvThread join success");
     if (socketHandle_ >= 0) {
-        ret = close(socketHandle_);
+        int ret = close(socketHandle_);
         if (ret < 0) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
