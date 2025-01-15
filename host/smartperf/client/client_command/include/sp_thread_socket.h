@@ -15,6 +15,7 @@
 #ifndef SP_THREAD_SOCKET_H
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
+#include <future>
 namespace OHOS {
 namespace SmartPerf {
 enum class SocketConnectType {
@@ -65,6 +66,10 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
+    std::future<std::map<std::string, std::string>> AsyncCollectFps() const;
+    void CheckFutureFps(SpServerSocket &spSocket, std::future<std::map<std::string, std::string>> &fpsResult) const;
+    void GetFpsThread(SpServerSocket &spSocket) const;
+    void ResetValue(std::string retCode) const;
 
 private:
     bool flagRunning = false;
