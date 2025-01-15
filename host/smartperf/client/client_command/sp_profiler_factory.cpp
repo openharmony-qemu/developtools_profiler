@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include "include/AI_schedule.h"
 #include "include/CPU.h"
 #include "include/DDR.h"
 #include "include/GetLog.h"
@@ -118,6 +119,8 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
     cpu.SetProcessId(pid);
     Navigation &nav = Navigation::GetInstance();
     nav.SetProcessId(pid);
+    AISchedule &as = AISchedule::GetInstance();
+    as.SetProcessId(pid);
 }
 
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
