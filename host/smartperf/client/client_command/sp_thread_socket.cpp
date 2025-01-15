@@ -353,6 +353,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
+                LOGD("UDP recv GET_FPS_AND_JITTERS");
                 auto thread = std::thread([this, &spSocket]() {
                     this->GetFpsThread(spSocket);
                 });
@@ -407,10 +408,10 @@ void SpThreadSocket::CheckFutureFps(SpServerSocket &spSocket,
     if (fpsResult.valid()) {
         std::map<std::string, std::string> result = fpsResult.get();
         LOGD("SpThreadSocket::FPS result.size (%d)", result.size());
+        retCode = MapToString(result);
+        spSocket.Sendto(retCode);
+        LOGD("UDP send fps retCode %s", retCode.c_str());
     }
-    retCode = MapToString(result);
-    spSocket.Sendto(retCode);
-    LOGD("UDP send fps retCode %s", retCode.c_str()); 
 }
 
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
@@ -506,16 +507,16 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             }
         } else {
             pkgName = SplitMsg(recvBuf);
-            LOGD("UDP send pkg (%s)", pkgName.c_str());
+            LOGD("UDP recv pkgName (%s)", pkgName.c_str());
         }
         spSocket.Sendto(retCode);
         LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
-        std::thread rstart([this, retCode]() {
+        std::thread rStart([this, retCode]() {
             this->ResetValue(retCode);
         });
-        rstart.detach();
+        rStart.detach();
     } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
         retCode = SplitMsg(recvBuf);
         SpProfilerFactory::SetProfilerGameLayer(retCode);
@@ -558,8 +559,8 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
                 LOGD("UDP send dubaiPkgName: (%s)", db.dubaiPkgName.c_str());
             }
         }
-        std::thread dstart([&db]() { db.CallBeginAndFinish(); });
-        dstart.detach();
+        std::thread dStart([&db]() { db.CallBeginAndFinish(); });
+        dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
         db.CallBeginAndFinish();
         db.isDumpDubaiFinish = true;
