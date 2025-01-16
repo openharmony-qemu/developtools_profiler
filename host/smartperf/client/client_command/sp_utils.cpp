@@ -48,6 +48,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
+const std::string SMART_PERF_VERSION = "1.0.5";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -774,6 +775,10 @@ bool SPUtils::GetIsGameApp(std::string pkg)
         LOGE("SPUtils::IsGameApp Error Failed to close file");
     }
     return isGame;
+}
+std::string SPUtils::GetVersion()
+{
+    return SMART_PERF_VERSION;
 }
 }
 }

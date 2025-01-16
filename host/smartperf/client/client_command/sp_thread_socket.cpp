@@ -507,7 +507,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
         rStart.detach();
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
-        retCode = "Version: " + SPUtils::SMART_PERF_VERSION;
+        retCode = "Version: " + SPUtils::GetVersion();
         spSocket.Sendto(retCode);
     } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
         retCode = SplitMsg(recvBuf);
