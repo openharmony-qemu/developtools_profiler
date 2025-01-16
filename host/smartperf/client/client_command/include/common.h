@@ -44,6 +44,7 @@ enum class MessageType {
     GET_APP_TYPE,
     CHECK_UDP_STATUS,
     GET_LOG,
+    GET_DAEMON_VERSION,
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -72,6 +73,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_APP_TYPE, std::string("get_app_type") },
     { MessageType::CHECK_UDP_STATUS, std::string("check_udp_status") },
     { MessageType::GET_LOG, std::string("get_log") },
+    { MessageType::GET_DAEMON_VERSION, std::string("get_daemon_version") },
 };
 
 enum class CommandType {

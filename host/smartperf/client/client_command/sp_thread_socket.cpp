@@ -504,10 +504,11 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
-        std::thread rStart([this, retCode]() {
-            this->ResetValue(retCode);
-        });
+        std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
         rStart.detach();
+    } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
+        retCode = "Version: " + SPUtils::SMART_PERF_VERSION;
+        spSocket.Sendto(retCode);
     } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
         retCode = SplitMsg(recvBuf);
         SpProfilerFactory::SetProfilerGameLayer(retCode);

@@ -155,7 +155,7 @@ bool IsForeGround(const std::string &pkg);
 bool IsFindAbilist();
 void SetRkFlag();
 bool GetPathPermissions(const std::string &path);
-const std::string SMART_PERF_VERSION = "1.0.5";
+static inline std::string SMART_PERF_VERSION = "1.0.5";
 bool GetIsGameApp(std::string pkg);
 bool IsFindForeGround(const std::string &line);
 };
