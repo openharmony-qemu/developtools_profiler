@@ -33,6 +33,7 @@ config("public_config") {
 
 ohos_executable("SP_daemon") {
   sources = [
+    "AI_schedule.cpp",
     "ByTrace.cpp",
     "CPU.cpp",
     "Capture.cpp",

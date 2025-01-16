@@ -18,14 +18,12 @@
 #include <climits>
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
-#include "include/AI_schedule.h"
 #include "include/FPS.h"
 #include "include/RAM.h"
 #include "include/CPU.h"
 #include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
-#include "include/service_plugin.h"
 #include "ByTrace.h"
 #include <cstdio>
 #include <ios>

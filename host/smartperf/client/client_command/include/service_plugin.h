@@ -60,7 +60,7 @@ namespace OHOS {
                 "system/lib64/libgameservice_gpucounter_plugin.z.so",
                 "system/lib64/libtest_server_client.z.so"
             };
-            std::vector<void*> pluginHandle = nullptr;
+            std::vector<void*> pluginHandle;
         };
     }
 }

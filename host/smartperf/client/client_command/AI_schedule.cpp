@@ -24,16 +24,16 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> AISchedule::ItemData()
 {
-    if (gamePid.empty()) {
+    if (processId.empty()) {
         WLOGE("AISchedule params is wrong.");
         return std::map<std::string, std::string>();
     }
-    aiScheduleParams[AI_SCHEDULE_PARAM_PID] = gamePid;
+    aiScheduleParams[AI_SCHEDULE_PARAM_PID] = processId;
     aiScheduleParams[AI_SCHEDULE_PARAM_TYPE] = "1";
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
 
-    void* serviceHandle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
-    if (serviceHandle == nullptr) {
+    void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
+    if (handle == nullptr) {
         WLOGE("Get service plugin handler failed.");
         return std::map<std::string, std::string>();
     }
