@@ -39,6 +39,7 @@
 #include "include/GetLog.h"
 namespace OHOS {
 namespace SmartPerf {
+std::string g_pkgName = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
     std::string result;
@@ -351,7 +352,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         LOGD("UDP recv : %s", recvBuf.c_str());
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
-            HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
+            HandleNullAddFpsMsg(spSocket, profiler, retCode, recvBuf, iterator);
         } else {
             std::map<std::string, std::string> data;
             if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
@@ -373,6 +374,37 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         break;
     }
 }
+
+void SpThreadSocket::GetFpsThread(SpServerSocket &spSocket) const
+{
+    std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
+    CheckFutureFps(spSocket, fpsResult);
+}
+
+std::future<std::map<std::string, std::string>> SpThreadSocket::AsyncCollectFps() const
+{
+    std::promise<std::map<std::string, std::string>> p;
+    std::future<std::map<std::string, std::string>> futureResult = p.get_future();
+    std::thread([p = std::move(p)]() mutable {
+        LOGD("SpThreadSocke::FPS collection in new thread");
+        p.set_value(ProfilerFPS::GetInstance().ItemData());
+    }).detach();
+    return futureResult;
+}
+
+void SpThreadSocket::CheckFutureFps(SpServerSocket &spSocket,
+    std::future<std::map<std::string, std::string>> &fpsResult) const
+{
+    std::string retCode;
+    if (fpsResult.valid()) {
+        std::map<std::string, std::string> result = fpsResult.get();
+        LOGD("SpThreadSocket::FPS result.size (%d)", result.size());
+        retCode = MapToString(result);
+        spSocket.Sendto(retCode);
+        LOGD("UDP send fps retCode %s", retCode.c_str());
+    }
+}
+
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
     std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
 {
@@ -465,22 +497,18 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
                 LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             }
         } else {
-            retCode = SplitMsg(recvBuf);
-            if (!SpProfilerFactory::editorFlag) {
-                std::string processId = "";
-                OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(retCode);
-                SpProfilerFactory::SetProfilerPidByPkg(processId);
-                SpProfilerFactory::SetProfilerPkg(retCode);
-            }
+            g_pkgName = SplitMsg(recvBuf);
+            LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
         LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
-        ProfilerFPS &pfps = ProfilerFPS::GetInstance();
-        pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
-        pfps.firstDump = true;
+        std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
+        rStart.detach();
+    } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
+        retCode = "Version: " + SPUtils::GetVersion();
+        spSocket.Sendto(retCode);
     } else if (profiler == nullptr && (iterator->first == MessageType::SET_GAME_VIEW)) {
         retCode = SplitMsg(recvBuf);
         SpProfilerFactory::SetProfilerGameLayer(retCode);
@@ -494,26 +522,42 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
         BackDesktop();
     } else {
+        if (!SpProfilerFactory::editorFlag) {
+            std::string processId = "";
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(g_pkgName);
+            SpProfilerFactory::SetProfilerPidByPkg(processId);
+            SpProfilerFactory::SetProfilerPkg(g_pkgName);
+        }
         HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
+}
+
+void SpThreadSocket::ResetValue(std::string retCode) const
+{
+    ProfilerFPS &pfps = ProfilerFPS::GetInstance();
+    pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
+    pfps.firstDump = true;
 }
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
     std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
 {
+    Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
         if (recvBuf.find("smartperf") != std::string::npos) {
             retCode = SplitMsg(recvBuf);
             if (retCode.find("smartperf") != std::string::npos) {
-                Dubai::dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
+                db.dubaiPkgName = retCode;
+                LOGD("UDP send dubaiPkgName: (%s)", db.dubaiPkgName.c_str());
             }
         }
-        Dubai::CallBeginAndFinish();
+        std::thread dStart([&db]() { db.CallBeginAndFinish(); });
+        dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
-        Dubai::CallBeginAndFinish();
-        Dubai::isDumpDubaiFinish = true;
+        db.CallBeginAndFinish();
+        db.isDumpDubaiFinish = true;
         ProfilerFPS::isLowCurFps = false;
-        retCode = Dubai::CallMoveDubaiDbFinished();
+        retCode = db.CallMoveDubaiDbFinished();
         LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
         LOGD("UDP send DuBai get finish");
@@ -525,6 +569,18 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         retCode = iterator->second;
         spSocket.Sendto(retCode);
         LOGD("UDP sendData: (%s)", retCode.c_str());
+    }
+}
+
+void SpThreadSocket::HandleNullAddFpsMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+{
+    if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
+        LOGD("UDP recv GET_FPS_AND_JITTERS");
+        auto thread = std::thread([this, &spSocket]() { this->GetFpsThread(spSocket); });
+        thread.detach();
+    } else {
+        HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
 }
 std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) const

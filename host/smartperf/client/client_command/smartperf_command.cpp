@@ -84,7 +84,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << "Version: " << SPUtils::SMART_PERF_VERSION << std::endl;
+        std::cout << "Version: " << SPUtils::GetVersion() << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();

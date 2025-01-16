@@ -44,7 +44,6 @@ ohos_unittest("sp_daemon_ut") {
     "../sdk_data_recv.cpp",
     "../sp_log.cpp",
     "../sp_task.cpp",
-    "../sp_thread_socket.cpp",
     "../sp_utils.cpp",
     "../startup_delay.cpp",
     "unittest/bytrace_test.cpp",
