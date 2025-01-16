@@ -39,7 +39,7 @@
 #include "include/GetLog.h"
 namespace OHOS {
 namespace SmartPerf {
-std::string pkgName = "";
+std::string g_pkgName = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
     std::string result;
@@ -354,9 +354,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         if (profiler == nullptr) {
             if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
                 LOGD("UDP recv GET_FPS_AND_JITTERS");
-                auto thread = std::thread([this, &spSocket]() {
-                    this->GetFpsThread(spSocket);
-                });
+                auto thread = std::thread([this, &spSocket]() { this->GetFpsThread(spSocket); });
                 thread.detach();
             } else {
                 HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -392,8 +390,7 @@ void SpThreadSocket::GetFpsThread(SpServerSocket &spSocket) const
 std::future<std::map<std::string, std::string>> SpThreadSocket::AsyncCollectFps() const
 {
     std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult;
-    futureResult = p.get_future();
+    std::future<std::map<std::string, std::string>> futureResult = p.get_future();
     std::thread([p = std::move(p)]() mutable {
         LOGD("SpThreadSocke::FPS collection in new thread");
         p.set_value(ProfilerFPS::GetInstance().ItemData());
@@ -506,8 +503,8 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
                 LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             }
         } else {
-            pkgName = SplitMsg(recvBuf);
-            LOGD("UDP recv pkgName (%s)", pkgName.c_str());
+            g_pkgName = SplitMsg(recvBuf);
+            LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
         LOGD("UDP send PkgName = %s", retCode.c_str());
@@ -533,9 +530,9 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         if (!SpProfilerFactory::editorFlag) {
             std::string processId = "";
             OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(pkgName);
+            processId = sp.GetPidByPkg(g_pkgName);
             SpProfilerFactory::SetProfilerPidByPkg(processId);
-            SpProfilerFactory::SetProfilerPkg(pkgName);
+            SpProfilerFactory::SetProfilerPkg(g_pkgName);
         }
         HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
