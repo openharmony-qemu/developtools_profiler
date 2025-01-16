@@ -419,7 +419,7 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid == GetCurThreadId())) {
         return stackSize;
     }
-    stackSize = stackTop - stackPtr;
+    stackSize = static_cast<int>(stackTop - stackPtr);
     return stackSize;
 }
 
@@ -742,7 +742,6 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);

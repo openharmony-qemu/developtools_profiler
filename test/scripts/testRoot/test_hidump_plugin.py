@@ -93,14 +93,14 @@ class TestHiprofilerHidumpPlugin:
         result = cursor.fetchall()
         row_count = len(result)
         #检查获得FPS数据是否正确
-        assert(row_count == 10)
+        assert (row_count == 10)
         for row in result:
-            assert(row[2] >= 0)
+            assert (row[2] >= 0)
         # 检查分段有没有成功
         last_row = result[0][1]
         for row in result[1:]:
             print(row[1] - last_row)
-            assert((row[1] - last_row) == 100 * 1000 * 1000 or (row[1] - last_row) == 1000 * 1000 * 1000)
+            assert ((row[1] - last_row) == 100 * 1000 * 1000 or (row[1] - last_row) == 1000 * 1000 * 1000)
             last_row = row[1]
         cursor.close()
         conn.close()
@@ -127,9 +127,9 @@ class TestHiprofilerHidumpPlugin:
         cursor.execute('SELECT * FROM hidump order by ts limit 0,10')
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         for row in result:
-            assert(row[2] >= 0)
+            assert (row[2] >= 0)
         cursor.close()
         conn.close()
 
@@ -153,7 +153,7 @@ class TestHiprofilerHidumpPlugin:
         for line in lines:
             if line.find("SP_daemon -profilerfps") != -1:
                 check_index = True
-        assert(check_index == False)
+        assert (check_index == False)
         #检查trace 文件大小
         subprocess.run(f'hdc file recv /data/local/tmp/test_hidumper.htrace ./outputfiles/', shell=False,
                          text=True, encoding="utf-8")

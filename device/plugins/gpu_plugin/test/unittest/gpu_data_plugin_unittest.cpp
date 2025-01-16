@@ -31,7 +31,7 @@ std::string g_testPath;
 
 #if defined(__LP64__)
 const unsigned long long EXPECT_VAL = 12;
-const unsigned long long SLEEP_TIME = 5;
+const unsigned long long SLEEP_TIME = 2;
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 #endif
 
@@ -79,8 +79,26 @@ std::string GetFullPath(std::string path)
     return path;
 }
 
+long WriteFunc(WriterStruct* writer, const void* data, size_t size)
+{
+    if (writer == nullptr || data == nullptr || size <= 0) {
+        return -1;
+    }
+
+    return 0;
+}
+
+bool FlushFunc(WriterStruct* writer)
+{
+    if (writer == nullptr) {
+        return false;
+    }
+    return true;
+}
+
+
 #if defined(__LP64__)
-bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualBuff)
+bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, WriterStruct *writer)
 {
     GpuConfig protoConfig;
     std::vector<uint8_t> configData(protoConfig.ByteSizeLong());
@@ -88,27 +106,13 @@ bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, GpuData& gpuData, bool unusualB
     if (ret < 0) {
         return false;
     }
-
+    gpuPlugin.SetWriter(writer);
     // start
     ret = gpuPlugin.Start(configData.data(), configData.size());
     if (ret < 0) {
         return false;
     }
-    
-    gpuPlugin.file_.close();
-    gpuPlugin.file_.open(g_path);
-    // report
-    std::vector<uint8_t> bufferData(BUF_SIZE);
-    if (unusualBuff) { // buffer异常，调整缓冲区长度为1，测试异常情况
-        bufferData.resize(1, 0);
-    }
- 
-    ret = gpuPlugin.Report(bufferData.data(), bufferData.size());
-    if (ret > 0) {
-        gpuData.ParseFromArray(bufferData.data(), ret);
-        return true;
-    }
-    return false;
+    return true;
 }
 #endif
 
@@ -134,22 +138,39 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
 #if defined(__LP64__)
     GpuDataPlugin gpuPlugin;
-    GpuData gpuData;
-
-    EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, gpuData, false));
-    EXPECT_EQ(gpuData.gpu_utilisation(), EXPECT_VAL);
-
-    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
     sleep(SLEEP_TIME);
-    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
-
-    // 缓冲区异常
-    EXPECT_FALSE(PluginGpuInfoStub(gpuPlugin, gpuData, true));
-    EXPECT_EQ(gpuPlugin.Stop(), 0);
+    std::vector<std::pair<uint64_t, int>> gpuDataVect = {{1000, 32}, {1001, 43}, {1002, 50}};
+    gpuPlugin.resultWriter_->isProtobufSerialize = true;
+    gpuPlugin.FlushGpuData(gpuDataVect);
+    EXPECT_GT(gpuPlugin.buffer_.size(), 0);
 #endif
 }
 
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: gpu information test read gpu data
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestReadGpuData, TestSize.Level1)
+{
+#if defined(__LP64__)
+    GpuDataPlugin gpuPlugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    gpuPlugin.SetWriter(&writer);
+    gpuPlugin.running_ = true;
+    gpuPlugin.resultWriter_->isProtobufSerialize = true;
+    gpuPlugin.file_.open(g_path);
+    EXPECT_EQ(gpuPlugin.ReadFile(), EXPECT_VAL);
+    gpuPlugin.file_.close();
+    EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
+    sleep(SLEEP_TIME);
+    EXPECT_GT(gpuPlugin.buffer_.size(), 0);
+    EXPECT_EQ(gpuPlugin.Stop(), 0);
+#endif
+}
 
 /**
  * @tc.name: gpu plugin
@@ -172,11 +193,11 @@ HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
     ASSERT_EQ(configLength, 0);
     std::vector<uint8_t> configBuffer(configLength);
     EXPECT_TRUE(protoConfig.SerializeToArray(configBuffer.data(), configLength));
-
     // run plugin
+    WriterStruct writer = {WriteFunc, FlushFunc};
     std::vector<uint8_t> dataBuffer(gpuPlugin->resultBufferSizeHint);
+    EXPECT_EQ(gpuPlugin->callbacks->onRegisterWriterStruct(&writer), 0);
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer.data(), configLength), RET_SUCC);
-    ASSERT_GT(gpuPlugin->callbacks->onPluginReportResult(dataBuffer.data(), gpuPlugin->resultBufferSizeHint), 0);
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStop(), RET_SUCC);
 
     // 反序列化失败导致的start失败

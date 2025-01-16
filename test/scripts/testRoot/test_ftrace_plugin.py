@@ -63,7 +63,7 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select * from callstack where cat ='binder' limit 0,10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[5] == 'binder transaction' or row[5] == 'binder reply' or row[5] == 'binder transaction async' or row[5] == 'binder async rcv')
+            assert (row[5] == 'binder transaction' or row[5] == 'binder reply' or row[5] == 'binder transaction async' or row[5] == 'binder async rcv')
         cursor.close()
         conn.close()
     
@@ -105,13 +105,13 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select * from instant where name = 'sched_wakeup' limit 10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[2] > 0)
-            assert(row[3] > 0)
+            assert (row[2] > 0)
+            assert (row[3] > 0)
         cursor.execute("select * from instant where name = 'sched_waking' limit 10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[2] > 0)
-            assert(row[3] > 0)
+            assert (row[2] > 0)
+            assert (row[3] > 0)
         cursor.close()
         conn.close()
         assert check_wake
@@ -140,17 +140,17 @@ class TestHiprofilerFtracePlugin:
         cursor.execute("select end_ts - start_ts as time from trace_range")
         result = cursor.fetchall()
         for row in result:
-            assert(row[0] > 10 * 1000 * 1000 * 1000)
+            assert (row[0] > 10 * 1000 * 1000 * 1000)
         #检查cpu 频率
         cursor.execute("select count(0) from cpu_measure_filter where name = 'cpu_frequency'")
         result = cursor.fetchall()
         for row in result:
-            assert(row[0] == 12)
+            assert (row[0] == 12)
         
         cursor.execute("select * from measure,cpu_measure_filter where filter_id = id and name ='cpu_frequency' limit 10")
         result = cursor.fetchall()
         for row in result:
-            assert(row[3] > 0)
+            assert (row[3] > 0)
         cursor.close()
         conn.close()
 

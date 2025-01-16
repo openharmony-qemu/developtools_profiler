@@ -59,9 +59,9 @@ def check_process_offline():
         pid_profiler = get_pid_by_process_name("hiprofilerd")
         pid_plugin = get_pid_by_process_name("hiprofiler_plugins")
         pid_daemon = get_pid_by_process_name("native_daemon")
-        assert(pid_profiler > 0)
-        assert(pid_plugin > 0)
-        assert(pid_daemon > 0)
+        assert (pid_profiler > 0)
+        assert (pid_plugin > 0)
+        assert (pid_daemon > 0)
         time.sleep(10)
         count = count + 1
 
@@ -238,35 +238,35 @@ def nativehook_dwarf_check_data(statistics_flag):
     cursor.execute('select * from native_hook_frame , data_dict where symbol_id = data_dict.id limit 10')
     result = cursor.fetchall()
     row_count = len(result)
-    assert(row_count > 0)
+    assert (row_count > 0)
     column_names = [description[0] for description in cursor.description]
     for row in result:
         #检查是否存在符号
-        assert(row[column_names.index('data')] is not None)
+        assert (row[column_names.index('data')] is not None)
     if statistics_flag:
         #检查是否存在统计数据
         cursor.execute('select * from native_hook_statistic limit 10')
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         column_names = [description[0] for description in cursor.description]
         for row in result:
             #检查是否统计数据
-            assert(row[column_names.index('apply_count')] > 0)
-            assert(row[column_names.index('release_count')] >= 0)
-            assert(row[column_names.index('apply_size')] > 0)
-            assert(row[column_names.index('release_size')] >= 0)
+            assert (row[column_names.index('apply_count')] > 0)
+            assert (row[column_names.index('release_count')] >= 0)
+            assert (row[column_names.index('apply_size')] > 0)
+            assert (row[column_names.index('release_size')] >= 0)
     else:
         #非统计模式
         cursor.execute('select * from native_hook limit 10')
         result = cursor.fetchall()
         row_count = len(result)
-        assert(row_count > 0)
+        assert (row_count > 0)
         names = [description[0] for description in cursor.description]
         for row in result:
-            assert(row[names.index('event_type')] == 'AllocEvent' or row[names.index('event_type')] == 'FreeEvent' or row[names.index('event_type')] == 'MmapEvent')
-            assert(row[names.index('heap_size')] > 0)
-            assert(row[names.index('all_heap_size')] >= 0)
+            assert (row[names.index('event_type')] == 'AllocEvent' or row[names.index('event_type')] == 'FreeEvent' or row[names.index('event_type')] == 'MmapEvent')
+            assert (row[names.index('heap_size')] > 0)
+            assert (row[names.index('all_heap_size')] >= 0)
 
     cursor.close()
     conn.close()

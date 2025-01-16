@@ -126,7 +126,7 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
-    uint64_t timeCost = (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    uint64_t timeCost = static_cast<uint64_t>((end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec));
     PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu",
                       static_cast<unsigned long long>(timeCost));
     if (ret != RET_OK) {

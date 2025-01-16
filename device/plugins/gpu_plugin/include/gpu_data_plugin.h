@@ -18,10 +18,15 @@
 
 #include <dirent.h>
 #include <fcntl.h>
-#include <string>
 #include <unistd.h>
+
+#include <atomic>
 #include <fstream>
 #include <iostream>
+#include <mutex>
+#include <string>
+#include <thread>
+#include <vector>
 
 #include "gpu_plugin_config.pb.h"
 #include "gpu_plugin_result.pb.h"
@@ -39,19 +44,29 @@ public:
     GpuDataPlugin() = default;
     ~GpuDataPlugin() = default;
     int Start(const uint8_t* configData, uint32_t configSize);
-    int Report(uint8_t* data, uint32_t dataSize);
-    int ReportOptimize(RandomWriteCtx* randomWrite);
+    int SetWriter(WriterStruct* writer);
     int Stop();
+    void ReadGpuDataArray(void);
+    void FlushGpuData(std::vector<std::pair<uint64_t, int>>& vectGpuData);
+    void ReadGpuData(void);
 
 private:
     int ReadFile();
-    std::string GetCmdArgs(GpuConfig traceConfig);
-    template <typename T> void WriteGpuDataInfo(T& gpuData);
+    std::string GetCmdArgs(const GpuConfig& traceConfig);
+    template <typename T>
+    void WriteGpuDataInfoExt(T& gpuData, std::vector<std::pair<uint64_t, int>>& vectGpuData);
+    template <typename T>
+    void WriteGpuDataInfo(T& gpuData);
+    uint64_t GetBootTime();
 
 private:
     GpuConfig protoConfig_;
     int pid_ = -1;
     std::ifstream file_;
+    WriterStruct* resultWriter_ = nullptr;
+    std::thread writeThread_;
+    std::atomic<bool> running_ = true;
+    std::vector<char> buffer_;
 };
 
 #endif
