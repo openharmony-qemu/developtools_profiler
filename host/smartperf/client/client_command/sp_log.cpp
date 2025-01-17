@@ -260,13 +260,14 @@ static void WriteMessage(const char* logMessage)
 
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(g_currentLogFilePath.c_str(), logFilePathChar) == nullptr)) {
-        LOGE("Log file %s is not exist, will create", g_currentLogFilePath.c_str());
+        strncpy_s(logFilePathChar, PATH_MAX, g_currentLogFilePath.c_str(), g_currentLogFilePath.size());
+        LOGI("Log file %s is not exist, will create", g_currentLogFilePath.c_str());
     }
 
-    std::ofstream logFile(g_currentLogFilePath, std::ios::app);
+    std::ofstream logFile(logFilePathChar, std::ios::app);
     if (logFile.is_open()) {
         if (chmodFlag) {
-            if (!Chmod(g_currentLogFilePath, LOG_FILE_MODE)) {
+            if (!Chmod(logFilePathChar, LOG_FILE_MODE)) {
                 logFile.close();
                 return;
             }
@@ -287,7 +288,7 @@ static void WriteMessage(const char* logMessage)
 
         logFile.close();
     } else {
-        LOGE("Unable to open log file for writing: %s", g_currentLogFilePath.c_str());
+        LOGE("Unable to open log file for writing: %s", logFilePathChar);
     }
 
     return;
