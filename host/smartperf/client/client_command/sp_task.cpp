@@ -794,7 +794,7 @@ std::string SPTask::GetTcpToken()
 }
 void SPTask::ProcessErrorData(SPData &spdata)
 {
-    int newDataSize = spdata.values.size();
+    unsigned int newDataSize = spdata.values.size();
     if (newDataSize > dataSize) {
         for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
             csvTitle += iter->first + ",";
