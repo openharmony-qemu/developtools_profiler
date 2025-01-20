@@ -260,7 +260,7 @@ static void WriteMessage(const char* logMessage)
 
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(g_currentLogFilePath.c_str(), logFilePathChar) == nullptr)) {
-        errno_t result = strncpy_s(logFilePathChar, PATH_MAX,_currentLogFilePath.c_str(), g_currentLogFilePath.size());
+        errno_t result = strncpy_s(logFilePathChar, PATH_MAX, g_currentLogFilePath.c_str(), g_currentLogFilePath.size());
         if (result != 0) {
             LOGE("strncpy_s failed with error: %d", result);
             return;
