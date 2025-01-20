@@ -286,7 +286,7 @@ namespace OHOS {
         {
             sdkParams.startTime = SPUtils::GetCurTime();
         }
-        void SdkDataRecv::SocketCommandVerification(std::string resStr, ServerParams &params)
+        void SdkDataRecv::SocketCommandVerification(std::string &resStr, ServerParams &params)
         {
             bool processFlag = true;
             while (processFlag) {

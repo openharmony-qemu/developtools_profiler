@@ -73,8 +73,8 @@ namespace OHOS {
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::string gpuCounterRealtimeData;
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
-            const std::string CREATE_PLUGIN = "onCreatePlugin";
+            const std::string pluginSoPath = "/system/lib64/libgameservice_gpucounter_plugin.z.so";
+            const std::string createPlugin = "onCreatePlugin";
         };
     };
 }

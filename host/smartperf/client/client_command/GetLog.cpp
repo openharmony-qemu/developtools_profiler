@@ -110,11 +110,12 @@ void GetLog::GenerateDaemonLogFile()
 
     // Save current working directory to restore it later
     // Change directory to handle relative paths in tar operations
-    char originPath[PATH_MAX] = {0x00};
-    if (getcwd(originPath, sizeof(originPath)) == nullptr) {
+    std::string originPath;
+    if (std::filesystem::current_path().string().empty()) {
         WLOGE("Failed to get current working directory");
         return;
     }
+    originPath = std::filesystem::current_path().string();
     std::filesystem::current_path(LOG_FILE_DIR);
 
     // Get all log files in LOG_FILE_DIR
@@ -146,7 +147,7 @@ void GetLog::GenerateDaemonLogFile()
     cpCommand += daemonLogFileDir;
     CopyFiles(cpCommand);
 
-    std::filesystem::current_path(originPath);
+    std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of daemonLog files successfully");
 }
 
@@ -190,13 +191,20 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
         auto fileTime = std::filesystem::last_write_time(entry.path());
         auto fileTimeT = to_time_t(fileTime);
         auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
+        if (std::localtime(&fileTimeT) == nullptr || std::localtime(&nowT) == nullptr) {
+            WLOGE("Get local time is null");
+            return;
+        }
+        std::tm* fileTm = std::localtime(&fileTimeT);
+        std::tm* nowTm = std::localtime(&nowT);
+        if (fileTm == nullptr || nowTm == nullptr) {
+            WLOGE("Get local time ptr is null");
+            return;
+        }
 
-        auto fileTm = *std::localtime(&fileTimeT);
-        auto nowTm = *std::localtime(&nowT);
-
-        bool isSameDay = (fileTm.tm_year == nowTm.tm_year) &&
-            (fileTm.tm_mon == nowTm.tm_mon) &&
-            (fileTm.tm_mday == nowTm.tm_mday);
+        bool isSameDay = (fileTm->tm_year == nowTm->tm_year) &&
+            (fileTm->tm_mon == nowTm->tm_mon) &&
+            (fileTm->tm_mday == nowTm->tm_mday);
 
         if (isSameDay) {
             logFiles.push_back(entry.path());
@@ -210,11 +218,12 @@ void GetLog::GenerateHilogFile()
     std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
 
     CreateDir(hilogFileDir);
-    char originPath[PATH_MAX] = {0x00};
-    if (getcwd(originPath, sizeof(originPath)) == nullptr) {
+    std::string originPath;
+    if (std::filesystem::current_path().string().empty()) {
         WLOGE("Failed to get current working directory");
         return;
     }
+    originPath = std::filesystem::current_path().string();
     GetHilogInMemory(filesLog);
     GetHilogInData(filesOther, filesLog);
 
@@ -253,7 +262,7 @@ void GetLog::GenerateHilogFile()
     cpCommand += hilogFileDir;
     CopyFiles(cpCommand);
 
-    std::filesystem::current_path(originPath);
+    std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of hilog files successfully");
 }
 
@@ -262,11 +271,12 @@ void GetLog::TarLogFile()
     GenerateDaemonLogFile();
     GenerateHilogFile();
 
-    char originPath[PATH_MAX] = {0x00};
-    if (getcwd(originPath, sizeof(originPath)) == nullptr) {
+    std::string originPath;
+    if (std::filesystem::current_path().string().empty()) {
         WLOGE("Failed to get current working directory");
         return;
     }
+    originPath = std::filesystem::current_path().string();
 
     // cd LOG_FILE_DIR
     std::filesystem::current_path(LOG_FILE_DIR);
@@ -274,7 +284,7 @@ void GetLog::TarLogFile()
     // Check if directories exist
     if (!std::filesystem::exists("daemonLog")) {
         WLOGE("One or both directories do not exist");
-        std::filesystem::current_path(originPath);
+        std::filesystem::current_path(originPath.c_str());
         return;
     }
 
@@ -283,7 +293,7 @@ void GetLog::TarLogFile()
     TarFiles(tarCommand);
 
     // Restore original working directory
-    std::filesystem::current_path(originPath);
+    std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of log files successfully");
 }
 
@@ -318,7 +328,12 @@ int GetLog::LogFileSocketConnect()
 
 int GetLog::SendLogFile()
 {
-    std::ifstream logFile(logFilePath, std::ios::binary);
+    char logFilePathChar[PATH_MAX] = {0x00};
+    if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
+        WLOGI("%s is not exist.", logFilePath.c_str());
+        return -1;
+    }
+    std::ifstream logFile(logFilePathChar, std::ios::binary);
     if (!logFile.is_open()) {
         WLOGE("Open log file failed");
         close(logFileSocket);
