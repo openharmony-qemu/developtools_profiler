@@ -40,14 +40,14 @@ static uintptr_t g_stackMainStart = 0;
 static uintptr_t g_stackMainEnd = 0;
 }  // namespace
 
-bool GetMainStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
+static bool GetMainStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
     stackBottom = g_stackMainStart;
     stackTop = g_stackMainEnd;
     return (stackBottom != 0 && stackTop != 0);
 }
 
-bool GetSubStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
+static bool GetSubStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
     bool ret = false;
     pthread_attr_t tattr;
@@ -65,7 +65,7 @@ bool GetSubStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
-bool GetSigAltStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
+static bool GetSigAltStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
     bool ret = false;
     stack_t altStack;
@@ -79,7 +79,7 @@ bool GetSigAltStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
-bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
+static bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
     bool ret = false;
     void* stackAddr = nullptr;
@@ -92,7 +92,7 @@ bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
-bool IsLegalSoName(const std::string &fileName)
+static bool IsLegalSoName(const std::string &fileName)
 {
     if (fileName.front() == '[' || fileName.back() == ']' ||
         std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 ||
@@ -103,7 +103,7 @@ bool IsLegalSoName(const std::string &fileName)
     return true;
 }
 
-void GetStandardLibraryRange(std::string& line)
+static void GetStandardLibraryRange(std::string& line)
 {
     line.resize(strlen(line.c_str()));
     std::vector<std::string> mapTokens = OHOS::Developtools::NativeDaemon::StringSplit(line, " ");
