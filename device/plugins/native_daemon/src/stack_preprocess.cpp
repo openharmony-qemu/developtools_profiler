@@ -471,8 +471,11 @@ void StackPreprocess::TakeResults()
                         PROFILER_LOG_ERROR(LOG_CORE, "unwind fatal error");
                         continue;
                     }
-                    ReportOfflineSymbolizationData();
                 }
+            }
+            if (((hookConfig_.fp_unwind()) || rawData->stackSize > 0) &&
+                (rawData->stackConext->type != PR_SET_VMA_MSG)) {
+                ReportOfflineSymbolizationData();
             }
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
