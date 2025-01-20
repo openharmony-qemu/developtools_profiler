@@ -192,12 +192,17 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
         auto fileTimeT = to_time_t(fileTime);
         auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
 
-        auto fileTm = *std::localtime(&fileTimeT);
-        auto nowTm = *std::localtime(&nowT);
+        std::tm* fileTm = std::localtime(&fileTimeT);
+        std::tm* nowTm = std::localtime(&nowT);
 
-        bool isSameDay = (fileTm.tm_year == nowTm.tm_year) &&
-            (fileTm.tm_mon == nowTm.tm_mon) &&
-            (fileTm.tm_mday == nowTm.tm_mday);
+        if (fileTm == nullptr || nowTm == nullptr) {
+            WLOGE("Get local time is null");
+            return;
+        }
+
+        bool isSameDay = (fileTm->tm_year == nowTm->tm_year) &&
+            (fileTm->tm_mon == nowTm->tm_mon) &&
+            (fileTm->tm_mday == nowTm->tm_mday);
 
         if (isSameDay) {
             logFiles.push_back(entry.path());
