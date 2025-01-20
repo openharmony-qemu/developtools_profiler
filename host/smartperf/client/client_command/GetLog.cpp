@@ -192,11 +192,14 @@ void GetLog::GetHilogInData(std::vector<std::filesystem::path> &otherFiles,
         auto fileTimeT = to_time_t(fileTime);
         auto nowT = to_time_t(std::filesystem::file_time_type::clock::now());
 
+        if (std::localtime(&fileTimeT) == nullptr || std::localtime(&nowT) == nullptr) {
+            WLOGE("Get local time is null");
+            return;
+        }
         std::tm* fileTm = std::localtime(&fileTimeT);
         std::tm* nowTm = std::localtime(&nowT);
-
         if (fileTm == nullptr || nowTm == nullptr) {
-            WLOGE("Get local time is null");
+            WLOGE("Get local time ptr is null");
             return;
         }
 
