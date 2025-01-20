@@ -32,8 +32,8 @@ namespace OHOS {
         void* GpuCounter::GetSoHandle()
         {
             char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
-                WLOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+            if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
+                WLOGE("%s is not exist.", pluginSoPath.c_str());
                 return nullptr;
             }
 
@@ -57,7 +57,7 @@ namespace OHOS {
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
             if (!startGetGpuPerfInfo) {
                 WLOGE("GpuCounterPlugin Error loading symbol");
                 return;
@@ -172,7 +172,7 @@ namespace OHOS {
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {

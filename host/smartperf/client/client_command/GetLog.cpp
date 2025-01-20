@@ -255,7 +255,7 @@ void GetLog::GenerateHilogFile()
     cpCommand += hilogFileDir;
     CopyFiles(cpCommand);
 
-    std::filesystem::current_path(originPath.c_str);
+    std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of hilog files successfully");
 }
 
@@ -277,7 +277,7 @@ void GetLog::TarLogFile()
     // Check if directories exist
     if (!std::filesystem::exists("daemonLog")) {
         WLOGE("One or both directories do not exist");
-        std::filesystem::current_path(originPath.c_str);
+        std::filesystem::current_path(originPath.c_str());
         return;
     }
 
@@ -286,7 +286,7 @@ void GetLog::TarLogFile()
     TarFiles(tarCommand);
 
     // Restore original working directory
-    std::filesystem::current_path(originPath.c_str);
+    std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of log files successfully");
 }
 
@@ -323,8 +323,8 @@ int GetLog::SendLogFile()
 {
     char logFilePathChar[PATH_MAX] = {0x00};
     if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
-        WLOGI("%s is not exist.", dirPath.c_str());
-        return;
+        WLOGI("%s is not exist.", logFilePath.c_str());
+        return -1;
     }
     std::ifstream logFile(logFilePathChar, std::ios::binary);
     if (!logFile.is_open()) {
