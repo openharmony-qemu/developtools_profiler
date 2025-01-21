@@ -58,9 +58,10 @@ private:
     static inline HidebugAppThreadCpu threadCpu_;
 };
 
-std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
+HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 {
-    return std::make_unique<HidebugNativeInterfaceImpl>();
+    static HidebugNativeInterfaceImpl instance;
+    return instance;
 }
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()

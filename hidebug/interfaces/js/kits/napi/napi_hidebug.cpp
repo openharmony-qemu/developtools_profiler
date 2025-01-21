@@ -576,7 +576,7 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
-    auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
+    auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
     if (!cpuUsageOptional.has_value()) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
@@ -695,11 +695,8 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result;
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
     std::map<uint32_t, double> threadMap{};
-    if (!nativeInterface) {
-        nativeInterface->GetAppThreadCpuUsage(threadMap);
-    }
+    HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage(threadMap);
     ConvertThreadCpuUsageMapToJs(env, result, threadMap);
     return result;
 }
@@ -710,12 +707,9 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     napi_value appMemoryLimit;
     napi_create_object(env, &appMemoryLimit);
     MemoryLimit memoryLimit{};
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (nativeInterface) {
-        auto memoryLimitOption = nativeInterface->GetAppMemoryLimit();
-        if (memoryLimitOption.has_value()) {
-            memoryLimit = memoryLimitOption.value();
-        }
+    auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
+    if (memoryLimitOption.has_value()) {
+        memoryLimit = memoryLimitOption.value();
     }
     napi_value rssLimit;
     napi_create_bigint_uint64(env, memoryLimit.rssLimit, &rssLimit);
@@ -745,13 +739,10 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
 napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
     HiDebug_NativeMemInfo nativeMemInfo{};
-    if (nativeInterface) {
-        auto nativeMemInfoOption = nativeInterface->GetAppNativeMemInfo();
-        if (nativeMemInfoOption.has_value()) {
-            nativeMemInfo = nativeMemInfoOption.value();
-        }
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    if (nativeMemInfoOption.has_value()) {
+        nativeMemInfo = nativeMemInfoOption.value();
     }
     napi_value memInfo;
     napi_create_object(env, &memInfo);
@@ -790,13 +781,10 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
     SysMemory systemMemInfo{};
-    if (nativeInterface) {
-        auto systemMemInfoOption = nativeInterface->GetSystemMemInfo();
-        if (systemMemInfoOption) {
-            systemMemInfo = systemMemInfoOption.value();
-        }
+    auto systemMemInfoOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
+    if (systemMemInfoOption) {
+        systemMemInfo = systemMemInfoOption.value();
     }
     napi_value sysMemInfo;
     napi_create_object(env, &sysMemInfo);
@@ -829,14 +817,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     }
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
     std::string file;
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        std::string errorMessage = "The status of the trace is abnormal";
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
-        return CreateUndefined(env);
-    }
-    auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
+    auto ret = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, traceFlag, limitSize, file);
     if (ret == HIDEBUG_SUCCESS) {
         napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
         return result;
@@ -865,11 +846,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
 napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return CreateUndefined(env);
-    }
-    auto ret = nativeInterface->StopAppTraceCapture();
+    auto ret = HidebugNativeInterface::GetInstance().StopAppTraceCapture();
     if (ret == HIDEBUG_TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
@@ -1057,7 +1034,7 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
-    auto result = HidebugNativeInterface::CreateInstance()->GetMemoryLeakResource(type, value, enabledDebugLog);
+    auto result = HidebugNativeInterface::GetInstance().GetMemoryLeakResource(type, value, enabledDebugLog);
     if (result == MemoryState::MEMORY_FAILED) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
@@ -1070,11 +1047,8 @@ napi_value IsDebugState(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("isDebugState");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    bool debugState = engine && engine->GetIsDebugModeEnabled();
-    if (!debugState) {
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        debugState = nativeInterface && nativeInterface->IsDebuggerConnected();
-    }
+    bool debugState = (engine && engine->GetIsDebugModeEnabled()) ||
+        HidebugNativeInterface::GetInstance().IsDebuggerConnected();
     napi_value result = nullptr;
     napi_get_boolean(env, debugState, &result);
     return result;
@@ -1088,7 +1062,7 @@ public:
 protected:
     void Work(napi_env env) override
     {
-        result_ = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
+        result_ = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
     }
 
     void Done(napi_env env, napi_status status) override
@@ -1118,7 +1092,7 @@ napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
 napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
-    std::optional<int32_t> result = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
+    std::optional<int32_t> result = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
     if (result.has_value()) {
         napi_value ret;
         napi_create_int32(env, result.value(), &ret);
