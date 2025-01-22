@@ -67,11 +67,11 @@ MATCH_INTERVAL = 10
 
 
 def task_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
 
 
 def task_multiple_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 35 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
 
 
 def get_target_stack(result):
@@ -603,7 +603,7 @@ class TestNativehook:
         assert check_nativehook_result(0, True, False, 0, True, False, 0, DEPTH_TEN, 1, 0, False, False, False)
 
     @pytest.mark.L0
-    def test_dwarf_startup(self):
+    def test_startup(self):
         assert check_nativehook_result(0, True, False, 0, False, False, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
 
     @pytest.mark.L0
