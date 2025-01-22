@@ -67,7 +67,7 @@ std::recursive_timed_mutex g_ClientMutex;
 std::mutex g_tagMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
-static pid_t g_hookPid = 0;
+static std::atomic<pid_t> g_hookPid = 0;
 static ClientConfig g_ClientConfig = {0};
 static uint32_t g_maxSize = INT_MAX;
 static std::unordered_map<std::string, uint32_t> g_memTagMap;
@@ -165,7 +165,7 @@ pid_t GetRealPid(void)
     char buf[STATUS_LINE_SIZE] = {0};
     FILE *fp = fopen(path, "r");
     CHECK_NOTNULL(fp, -1, "fopen fail");
-    while (!feof(fp)) {
+    while (fp != nullptr && !feof(fp)) {
         if (fgets(buf, STATUS_LINE_SIZE, fp) == nullptr) {
             fclose(fp);
             return -1;
@@ -244,13 +244,14 @@ void* MallocHookStart(void* disableHookCallback)
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_mallocTimes = 0;
     g_hookClient.reset();
+    g_hookPid = GetRealPid();
     ParseSelfMaps(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
     return nullptr;
@@ -292,7 +293,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
         return false;
     }
     pthread_detach(threadStart);
-    g_hookPid = GetRealPid();
     if (!InitTheadKey()) {
         return false;
     }
@@ -357,7 +357,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
     uintptr_t stackTop = 0;
     uintptr_t stackPtr = reinterpret_cast<uintptr_t>(__builtin_frame_address(0));
     int depth = 0;
-    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid == GetCurThreadId())) {
+    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid.load() == GetCurThreadId())) {
         return depth;
     }
 
@@ -416,7 +416,7 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     uintptr_t stackBottom = 0;
     uintptr_t stackTop = 0;
     int stackSize = 0;
-    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid == GetCurThreadId())) {
+    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid.load() == GetCurThreadId())) {
         return stackSize;
     }
     stackSize = static_cast<int>(stackTop - stackPtr);
@@ -479,7 +479,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         stackSize = GetStackSize(stackPtr, rawdata);
     }
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
@@ -566,7 +566,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     }
 
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = len;
     rawdata.addr = ret;
@@ -658,7 +658,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     }
 
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
@@ -748,7 +748,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     }
 
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
@@ -869,7 +869,7 @@ void hook_free(void (*free_func)(void*), void* p)
         }
     }
     rawdata.type = FREE_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = 0;
     rawdata.addr = p;
@@ -898,7 +898,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
 {
     StackRawData curRawdata = {{{{0}}}};
     curRawdata.addr = rawdata.addr;
-    curRawdata.pid = static_cast<uint32_t>(g_hookPid);
+    curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     curRawdata.mallocSize = rawdata.mallocSize;
     curRawdata.mmapArgs.offset = offset;
     curRawdata.type = OHOS::Developtools::NativeDaemon::MMAP_FILE_TYPE;
@@ -967,7 +967,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     }
 
     rawdata.type = MMAP_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = ret;
@@ -1050,7 +1050,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     }
 
     rawdata.type = MUNMAP_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = addr;
@@ -1098,7 +1098,7 @@ int hook_prctl(int(*fn)(int, ...),
         StackRawData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
-        rawdata.pid = static_cast<uint32_t>(g_hookPid);
+        rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
         rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
         rawdata.mallocSize = arg4;
         rawdata.addr = reinterpret_cast<void*>(arg3);
@@ -1154,7 +1154,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
         }
     }
     rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
@@ -1312,7 +1312,7 @@ static bool IsPidChanged(void)
         return false;
     } else {
         // native app & sa service
-        g_isPidChanged = (g_hookPid != pid);
+        g_isPidChanged = (g_hookPid.load() != 0 && g_hookPid.load() != pid);
     }
     return g_isPidChanged;
 }
