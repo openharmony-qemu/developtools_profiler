@@ -34,11 +34,12 @@ public:
     bool TakeScreenCap(const std::string &savePath) const;
     void SetCollectionNum();
     long long GetCurTimes();
+    void SocketMessage();
 private:
     Capture() {};
     Capture(const Capture &);
     Capture &operator = (const Capture &);
-    bool isSocketMessage = true;
+    bool isSocketMessage = false;
     int callNum = 0;
     long long curTime = 0.0;
 };

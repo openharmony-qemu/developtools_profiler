@@ -55,13 +55,18 @@ std::map<std::string, std::string> Capture::ItemData()
     }
     result["capture"] = path;
 
-    LOGD("capture = %s", result["capture"].c_str());
+    LOGD("capture:ItemData map size(%u)", result.size());
     return result;
 }
 
 long long Capture::GetCurTimes()
 {
     return SPUtils::GetCurTime();
+}
+
+void Capture::SocketMessage()
+{
+    isSocketMessage = true;
 }
 void Capture::ThreadGetCatch()
 {

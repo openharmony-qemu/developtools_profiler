@@ -139,7 +139,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             }
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
-            std::cout << "Socket TCP Recv: " << recvStrNoToken << std::endl;
+            LOGD("TCP recv data:%s", recvStr.c_str());
             WLOGI("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);

@@ -51,7 +51,8 @@ public:
                 lineContent += iter->second + ",";
             }
             if (i == 0) {
-                std::string csvTitle = SPTask::GetInstance().GetCsvTitle();
+                std::string csvTitle = "";
+                csvTitle = SetDataCsvTitle(spdata);
                 csvTitle.pop_back();
                 outFile << csvTitle << std::endl;
             }
@@ -73,6 +74,17 @@ public:
             outFile << key << "," << value << std::endl;
         }
         outFile.close();
+    }
+    static std::string SetDataCsvTitle(SPData spdata)
+    {
+        std::string csvTitle = "";
+        csvTitle = SPTask::GetInstance().GetCsvTitle();
+        if (csvTitle.empty()) {
+            for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
+                csvTitle += iter->first + ",";
+            }
+        }
+        return csvTitle;
     }
 };
 }

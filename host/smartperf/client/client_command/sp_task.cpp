@@ -212,6 +212,7 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
         if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
+            Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
         }
@@ -508,9 +509,6 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-    if (!vmap.empty()) {
-        vmap.erase(vmap.begin());
-    }
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 
     WLOGI("Write CSV header done.");

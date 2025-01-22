@@ -38,7 +38,7 @@ private:
     Network() {};
     Network(const Network &);
     Network &operator = (const Network &);
-    std::map<std::string, std::string> result;
+    std::map<std::string, std::string> result = {};
     long long rmnetCurRx = 0;
     long long rmnetCurTx = 0;
     long long ethCurRx = 0;
