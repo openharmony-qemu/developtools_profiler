@@ -458,10 +458,14 @@ def check_file_size(output):
 
 
 def check_sa_result(kill_process=False, check_dump_catch=False, multithread=False):
-    subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
-    subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
-    subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
-    subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+    try:
+        subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
+        subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
+        subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
+        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        pass
     subprocess.check_output("hdc target mount")
     if not multithread:
         subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
@@ -549,7 +553,7 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
     subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
-    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0, 0)
+    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, 0, DEPTH_TWENTY, 0, 0)
 
 
 class TestNativehook:
@@ -659,7 +663,7 @@ class TestNativehook:
         assert check_nativehook_result(STATISTICS_INTERVAL, True, False, 0, True, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
 
     @pytest.mark.L0
-    def test_statistics_dwarf_startup(self):
+    def test_statistics_startup(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, True, False, 0, False, False, 0, DEPTH_TEN, 1, 0, False, False, False)
 
     @pytest.mark.L0
