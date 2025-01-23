@@ -390,8 +390,8 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     prevScreenTimestamp = -1;
     struct timespec sysTime = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &sysTime);
-    curTimeFps.curTime = static_cast<int>(sysTime.tv_sec - 1);
-    curTimeFps.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
+    fpsInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
+    fpsInfo.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
     LOGD("fpsInfo.curTime: (%d), fpsInfo.currTimeDump: (%lld)", fpsInfo.curTime, fpsInfo.currTimeDump);
 
     char tmp[1024];

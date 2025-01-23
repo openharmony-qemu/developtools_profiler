@@ -641,15 +641,15 @@ void SPUtils::GetCurrentTime(int prevTime)
 {
     LOGD("SPUtils::prevTime (%d)", prevTime);
     unsigned long sleepNowTime = 10000;
-    bool shouldContiune = true;
-    while (shouldContiune) {
+    bool shouldContinue = true;
+    while (shouldContinue) {
         struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
         if (curTimeNow == prevTime) {
             usleep(sleepNowTime);
         } else {
-            shouldContiune = false;
+            shouldContinue = false;
         }
     }
 }

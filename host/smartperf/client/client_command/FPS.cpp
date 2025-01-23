@@ -142,8 +142,6 @@ FpsInfo FPS::GetFpsInfo()
             std::string uniteLayer;
             if (!rkFlag && !isOtherDevice) {
                 uniteLayer = "UniRender";
-            } else if (isOtherDevice) {
-                uniteLayer = profilerFps.GetSurface();
             } else {
                 uniteLayer = profilerFps.GetSurface();
             }
