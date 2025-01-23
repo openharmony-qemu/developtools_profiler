@@ -37,6 +37,7 @@
 #include "include/startup_delay.h"
 #include "include/Dubai.h"
 #include "include/GetLog.h"
+#include "include/RAM.h"
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
@@ -139,7 +140,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             }
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
-            std::cout << "Socket TCP Recv: " << recvStrNoToken << std::endl;
+            LOGD("TCP recv data:%s", recvStr.c_str());
             WLOGI("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
@@ -375,33 +376,20 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
     }
 }
 
-void SpThreadSocket::GetFpsThread(SpServerSocket &spSocket) const
+void SpThreadSocket::HandleNullAddFpsMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
 {
-    std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    CheckFutureFps(spSocket, fpsResult);
-}
-
-std::future<std::map<std::string, std::string>> SpThreadSocket::AsyncCollectFps() const
-{
-    std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult = p.get_future();
-    std::thread([p = std::move(p)]() mutable {
-        LOGD("SpThreadSocke::FPS collection in new thread");
-        p.set_value(ProfilerFPS::GetInstance().ItemData());
-    }).detach();
-    return futureResult;
-}
-
-void SpThreadSocket::CheckFutureFps(SpServerSocket &spSocket,
-    std::future<std::map<std::string, std::string>> &fpsResult) const
-{
-    std::string retCode;
-    if (fpsResult.valid()) {
-        std::map<std::string, std::string> result = fpsResult.get();
-        LOGD("SpThreadSocket::FPS result.size (%d)", result.size());
-        retCode = MapToString(result);
-        spSocket.Sendto(retCode);
-        LOGD("UDP send fps retCode %s", retCode.c_str());
+    if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
+        LOGD("UDP recv GET_FPS_AND_JITTERS");
+        auto thread = std::thread([this, &retCode, &spSocket]() {
+            std::map<std::string, std::string> result = ProfilerFPS::GetInstance().ItemData();
+            retCode = MapToString(result);
+            spSocket.Sendto(retCode);
+            LOGD("UDP send fps retCode %s", retCode.c_str());
+        });
+        thread.detach();
+    } else {
+        HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
 }
 
@@ -538,6 +526,8 @@ void SpThreadSocket::ResetValue(std::string retCode) const
     ProfilerFPS &pfps = ProfilerFPS::GetInstance();
     pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
     pfps.firstDump = true;
+    RAM &ram = RAM::GetInstance();
+    ram.SetHapFirstFlag();
 }
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
     std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
@@ -572,17 +562,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     }
 }
 
-void SpThreadSocket::HandleNullAddFpsMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
-{
-    if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
-        LOGD("UDP recv GET_FPS_AND_JITTERS");
-        auto thread = std::thread([this, &spSocket]() { this->GetFpsThread(spSocket); });
-        thread.detach();
-    } else {
-        HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
-    }
-}
 std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) const
 {
     switch (errorType) {

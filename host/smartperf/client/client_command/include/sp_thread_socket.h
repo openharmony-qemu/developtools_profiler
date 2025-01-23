@@ -68,9 +68,6 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
-    std::future<std::map<std::string, std::string>> AsyncCollectFps() const;
-    void CheckFutureFps(SpServerSocket &spSocket, std::future<std::map<std::string, std::string>> &fpsResult) const;
-    void GetFpsThread(SpServerSocket &spSocket) const;
     void ResetValue(std::string retCode) const;
 
 private:

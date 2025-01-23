@@ -36,18 +36,9 @@ std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
         ThreadFunctions();
-        return result;
     } else {
         result = Network::GetNetworkInfo();
-        return result;
     }
-    if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
-        result["networkUp"] = "NA";
-    }
-    if (result.find("networkDown") != result.end() && result["networkDown"].empty()) {
-        result["networkDown"] = "NA";
-    }
-    LOGD("networkUp: %s, networkDown: %s", result["networkUp"].c_str(), result["networkDown"].c_str());
     return result;
 }
 

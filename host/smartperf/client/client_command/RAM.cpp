@@ -101,6 +101,11 @@ void RAM::SetFirstFlag()
     g_flagFirst = false;
 }
 
+void RAM::SetHapFirstFlag()
+{
+    g_flagFirst = true;
+}
+
 std::map<std::string, std::string> RAM::ProcMemNaInfo() const
 {
     std::map<std::string, std::string> procMemInfo;
@@ -135,10 +140,7 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
     //整机内存信息
-    LOGD("memTotal:%s, memFree:%s, memAvailable:%s",
-        std::to_string(result.data.memTotal).c_str(),
-        std::to_string(result.data.memFree).c_str(),
-        std::to_string(result.data.memAvailable).c_str());
+    LOGD("sysRamInfo map size(%u)", sysRamInfo.size());
     return sysRamInfo;
 }
 
@@ -245,9 +247,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
     pssRamInfo["stackPss"] = stackPssValue;
     //应用程序的内存占用信息
-    LOGD("gpuPss:%s, graphicPss:%s, arktsHeapPss:%s, nativeHeapPss:%s, stackPss:%s",
-        pssRamInfo["gpuPss"].c_str(), pssRamInfo["graphicPss"].c_str(),
-        pssRamInfo["graphicPss"].c_str(), pssRamInfo["nativeHeapPss"].c_str(), pssRamInfo["stackPss"].c_str());
+    LOGD("pssRamInfo map size(%u)", pssRamInfo.size());
     return pssRamInfo;
 }
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
@@ -270,12 +270,7 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
         sumRamInfo[sumRamKeys[i]] = paramsInfo[i + 1];
     }
     //应用程序的内存消耗信息
-    LOGD("pss:%s, sharedClean:%s, sharedDirty:%s, privateClean:%s, privateDirty:%s, swap:%s",
-        "swapPss:%s, heapSize:%s, heapAlloc:%s, heapFree:%s",
-        sumRamInfo["pss"].c_str(), sumRamInfo["sharedClean"].c_str(), sumRamInfo["sharedDirty"].c_str(),
-        sumRamInfo["privateClean"].c_str(), sumRamInfo["privateDirty"].c_str(), sumRamInfo["swap"].c_str(),
-        sumRamInfo["swapPss"].c_str(), sumRamInfo["heapSize"].c_str(), sumRamInfo["heapAlloc"].c_str(),
-        sumRamInfo["heapFree"].c_str());
+    LOGD("sumRamInfo map size(%u)", sumRamInfo.size());
     return sumRamInfo;
 }
 }
