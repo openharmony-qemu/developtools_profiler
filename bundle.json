@@ -1,7 +1,7 @@
 {
   "name": "@ohos/hiprofiler",
   "description": "Performance profiler that provides an analytics tool for the memory, bytrace plug-in, and IDE, as well as plug-in capabilities",
-  "version": "3.09",
+  "version": "3.0.9",
   "license": "Apache License 2.0",
   "publishAs": "code-segment",
   "segment": {
