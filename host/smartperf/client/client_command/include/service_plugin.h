@@ -52,13 +52,13 @@ namespace OHOS {
 
         private:
             ServicePluginHandler();
+            ~ServicePluginHandler();
             ServicePluginHandler(const ServicePluginHandler &);
             ServicePluginHandler &operator = (const ServicePluginHandler &);
-            void ServicePluginInit(enum servicePluginType type);
 
             const std::vector<std::string> PLUGIN_SO_PATH = {
-                "system/lib64/libgameservice_gpucounter_plugin.z.so",
-                "system/lib64/libtest_server_client.z.so"
+                "/system/lib64/libgameservice_gpucounter_plugin.z.so",
+                "/system/lib64/libtest_server_client.z.so"
             };
             std::vector<void*> pluginHandle;
         };

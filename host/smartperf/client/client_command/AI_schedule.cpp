@@ -28,8 +28,8 @@ std::map<std::string, std::string> AISchedule::ItemData()
         WLOGE("AISchedule params is wrong.");
         return std::map<std::string, std::string>();
     }
-    aiScheduleParams[AI_SCHEDULE_PARAM_PID] = processId;
-    aiScheduleParams[AI_SCHEDULE_PARAM_TYPE] = "1";
+    aiScheduleParams[aiScheduleParamPid] = processId;
+    aiScheduleParams[aiScheduleParamType] = "1";
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
 
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
@@ -38,17 +38,11 @@ std::map<std::string, std::string> AISchedule::ItemData()
         return std::map<std::string, std::string>();
     }
 
-    void* handle = servicePluginHandler.GetSoHandler();
-    if (!handle) {
-        WLOGE("Get service plugin handler failed.");
-        return;
-    }
-
     typedef GpuCounterPlugin *(*GetServicePlugin)();
-    GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+    GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
         WLOGE("GpuCounterPlugin Error loading symbol");
-        return;
+        return std::map<std::string, std::string>();
     }
     return servicePlugin()->GetSystemFunctionStatus(aiScheduleParams);
 }

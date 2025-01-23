@@ -30,22 +30,7 @@ namespace OHOS {
         {
             return std::map<std::string, std::string>();
         }
-        void* GpuCounter::GetSoHandle()
-        {
-            char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
-                WLOGE("%s is not exist.", pluginSoPath.c_str());
-                return nullptr;
-            }
 
-            void* handle = dlopen(soFilePathChar, RTLD_LAZY);
-            if (!handle) {
-                WLOGE("open GpuCounterPlugin so file error.");
-                return nullptr;
-            }
-
-            return handle;
-        }
         void GpuCounter::StartCollect(GcCollectType type)
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
@@ -59,9 +44,9 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
-            if (!startGetGpuPerfInfo) {
+            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
+            if (!servicePlugin) {
                 WLOGE("GpuCounterPlugin Error loading symbol");
                 return;
             }
@@ -69,14 +54,14 @@ namespace OHOS {
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
                 gpuCounterRealtimeData.clear();
-                int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
-                int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret != 0) {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
@@ -175,10 +160,14 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
+            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
+            if (!servicePlugin) {
+                WLOGE("GpuCounterPlugin Error loading symbol");
+                return;
+            }
 
-            int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
+            int ret = servicePlugin()->StopGetGpuPerfInfo();
             if (ret == 0) {
                 gcStatus = GC_INIT;
             }

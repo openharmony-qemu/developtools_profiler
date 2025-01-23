@@ -810,5 +810,9 @@ std::string SPTask::GetCsvTitle()
 {
     return csvTitle;
 }
+void SPTask::SetRecordState(bool status)
+{
+    recordState = status;
+}
 }
 }

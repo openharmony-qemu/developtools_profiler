@@ -26,6 +26,7 @@
 #include "sp_log.h"
 #include "sp_task.h"
 #include "parameters.h"
+#include "GPU.h"
 using namespace testing::ext;
 using namespace std;
 
@@ -89,6 +90,43 @@ HWTEST_F(SPdaemonTaskTest, DetectionAndGrabTestCase001, TestSize.Level1)
     }
 
     EXPECT_EQ(ret, true);
+}
+
+/**
+ * @tc.name: GpuRkTestCase
+ * @tc.desc: Gpu rkflag is true
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTaskTest, GpuRkTestCase, TestSize.Level1)
+{
+    std::string str = "";
+    std::string errorInfo = "";
+    GPU &gpu = GPU::GetInstance();
+    gpu.SetRkFlag();
+    std::map<std::string, std::string> result = gpu.ItemData();
+    EXPECT_NE(result.size(), 0);
+}
+
+/**
+ * @tc.name: SP_LOG
+ * @tc.desc: Test SP_LOG
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTaskTest, SPLogTestCase, TestSize.Level1)
+{
+    EnableWriteLogAndDeleteOldLogFiles();
+    WLOGI("WLOGI");
+    WLOGD("WLOGD");
+    WLOGE("WLOGE");
+    WLOGW("WLOGW");
+
+    bool fileExists = (access(LOG_FILE_DIR.c_str(), F_OK) != -1);
+    if (fileExists == true) {
+        printf("log dir exist, success\n");
+    } else {
+        printf("log dir not exist, failed\n");
+    }
+    EXPECT_TRUE(fileExists);
 }
 }
 }

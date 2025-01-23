@@ -206,6 +206,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
         case CommandType::CT_TTRACE:
             ProfilerFPS::GetInstance().SetTraceCatch();
             break;
+        case CommandType::CT_AS:
+            profiler = &AISchedule::GetInstance();
+            break;
         default:
             break;
     }

@@ -25,29 +25,33 @@ namespace OHOS {
         {
             pluginHandle.resize(PLUGIN_COUNT, nullptr);
         }
+        ServicePluginHandler::~ServicePluginHandler()
+        {
+            for (int i = 0; i < PLUGIN_COUNT; i++) {
+                if (pluginHandle[i] != nullptr) {
+                    dlclose(pluginHandle[i]);
+                    pluginHandle[i] = nullptr;
+                }
+            }
+        }
 
         std::map<std::string, std::string> ServicePluginHandler::ItemData()
         {
             return std::map<std::string, std::string>();
         }
 
-        void ServicePluginHandler::ServicePluginInit(enum servicePluginType type)
-        {
-            char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(PLUGIN_SO_PATH[type].c_str(), soFilePathChar) == nullptr)) {
-                WLOGE("%s is not exist.", PLUGIN_SO_PATH[type].c_str());
-            }
-
-            pluginHandle[type] = dlopen(PLUGIN_SO_PATH[type].c_str(), RTLD_LAZY);
-            if (!pluginHandle[type]) {
-                WLOGE("open ServicePlugin so file error.");
-            }
-        }
-
         void* ServicePluginHandler::GetSoHandler(enum servicePluginType type)
         {
             if (pluginHandle[type] == nullptr) {
-                ServicePluginInit(type);
+                char soFilePathChar[PATH_MAX] = {0x00};
+                if ((realpath(PLUGIN_SO_PATH[type].c_str(), soFilePathChar) == nullptr)) {
+                    WLOGE("%s is not exist.", PLUGIN_SO_PATH[type].c_str());
+                }
+
+                pluginHandle[type] = dlopen(PLUGIN_SO_PATH[type].c_str(), RTLD_LAZY);
+                if (!pluginHandle[type]) {
+                    WLOGE("open ServicePlugin so file error.");
+                }
             }
             return pluginHandle[type];
         }

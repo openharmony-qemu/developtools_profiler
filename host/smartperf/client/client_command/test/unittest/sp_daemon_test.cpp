@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include "sp_utils.h"
+#include "AI_schedule.h"
 #include "RAM.h"
 #include "GPU.h"
 #include "CPU.h"
@@ -328,6 +329,18 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     }
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
+}
+
+/**
+ * @tc.name: AIScheduleTestCase
+ * @tc.desc: Test AISchedule
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, AIScheduleCase, TestSize.Level1)
+{
+    AISchedule &aiSchedule = AISchedule::GetInstance();
+    aiSchedule.SetProcessId("12345");
+    std::map<std::string, std::string> res = aiSchedule.ItemData();
 }
 } // namespace OHOS
 } // namespace SmartPerf

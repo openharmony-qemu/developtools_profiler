@@ -33,6 +33,10 @@ namespace SmartPerf {
 
         ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
         void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::TEST_PLUGIN);
+        if (!handle) {
+            LOGE("open TestServerPlugin so file error.");
+            return;
+        }
 
         typedef int32_t (*GetLockFreq)();
         GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());

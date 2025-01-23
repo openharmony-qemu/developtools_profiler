@@ -22,6 +22,7 @@ config("module_private_config") {
 ohos_unittest("sp_daemon_ut") {
   module_out_path = module_output_path
   sources = [
+    "../AI_schedule.cpp",
     "../ByTrace.cpp",
     "../CPU.cpp",
     "../Capture.cpp",
@@ -29,6 +30,7 @@ ohos_unittest("sp_daemon_ut") {
     "../Dubai.cpp",
     "../FPS.cpp",
     "../GPU.cpp",
+    "../GetLog.cpp",
     "../GpuCounter.cpp",
     "../GpuCounterCallback.cpp",
     "../Network.cpp",
@@ -42,6 +44,7 @@ ohos_unittest("sp_daemon_ut") {
     "../parse_slide_fps_trace.cpp",
     "../profiler_fps.cpp",
     "../sdk_data_recv.cpp",
+    "../service_plugin.cpp",
     "../sp_log.cpp",
     "../sp_task.cpp",
     "../sp_utils.cpp",
@@ -50,7 +53,11 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/ddr_test.cpp",
     "unittest/dubai_test.cpp",
     "unittest/fps_test.cpp",
+    "unittest/getlog_test.cpp",
+    "unittest/gpu_counter_test.cpp",
+    "unittest/lock_frequency_test.cpp",
     "unittest/parse_radar_test.cpp",
+    "unittest/sdk_data_recv_test.cpp",
     "unittest/smartperf_main_test.cpp",
     "unittest/sp_daemon_test.cpp",
     "unittest/sp_task_test.cpp",
