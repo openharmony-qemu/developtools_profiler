@@ -32,7 +32,7 @@ enum MemoryState {
 
 class HidebugNativeInterface {
 public:
-    static std::unique_ptr<HidebugNativeInterface> CreateInstance();
+    static HidebugNativeInterface& GetInstance();
     virtual ~HidebugNativeInterface() = default;
 
     /**

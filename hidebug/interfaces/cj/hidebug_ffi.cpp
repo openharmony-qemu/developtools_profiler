@@ -161,7 +161,7 @@ extern "C" {
 
     double FfiHidebugGetSystemCpuUsage(int32_t &code)
     {
-        auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
+        auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
         if (cpuUsageOptional.has_value()) {
             return cpuUsageOptional.value();
         }
@@ -172,12 +172,7 @@ extern "C" {
     ThreadCpuUsageArr FfiHidebugGetAppThreadCpuUsage(int32_t &code)
     {
         ThreadCpuUsageArr arr{ .head = nullptr, .size = 0};
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            code = ErrorCode::MEM_ERROR;
-            return arr;
-        }
-        std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+        std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
         auto size = threadMap.size();
         if (size <= 0) {
             return arr;
@@ -198,13 +193,7 @@ extern "C" {
     CSystemMemInfo FfiHidebugGetSystemMemInfo(int32_t &code)
     {
         CSystemMemInfo info{.totalMem = 0, .freeMem = 0, .availableMem = 0};
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            code = ErrorCode::MEM_ERROR;
-            return info;
-        }
-
-        auto systemMemInfo = nativeInterface->GetSystemMemInfo();
+        auto systemMemInfo = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
         if (!systemMemInfo) {
             code = ErrorCode::MEM_ERROR;
             return info;
@@ -219,13 +208,7 @@ extern "C" {
     CNativeMemInfo FfiHidebugGetAppNativeMemInfo(int32_t &code)
     {
         CNativeMemInfo info{};
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            code = ErrorCode::MEM_ERROR;
-            return info;
-        }
-
-        auto nativeMemInfo = nativeInterface->GetAppNativeMemInfo();
+        auto nativeMemInfo = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
         if (!nativeMemInfo) {
             code = ErrorCode::MEM_ERROR;
             return info;
@@ -243,13 +226,7 @@ extern "C" {
     CMemoryLimit FfiHidebugGetAppMemoryLimit(int32_t &code)
     {
         CMemoryLimit limit{.rssLimit = 0, .vssLimit = 0};
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            code = ErrorCode::MEM_ERROR;
-            return limit;
-        }
-
-        auto memoryLimit = nativeInterface->GetAppMemoryLimit();
+        auto memoryLimit = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
         if (!memoryLimit) {
             code = ErrorCode::MEM_ERROR;
             return limit;
@@ -290,12 +267,7 @@ extern "C" {
         uint64_t tag = std::accumulate(taglist.begin(), taglist.end(), 0ull,
             [](uint64_t a, uint64_t b) { return a | b; });
         std::string file;
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            code = ErrorCode::SYSTEM_STATUS_ABNORMAL;
-            return nullptr;
-        }
-        code = nativeInterface->StartAppTraceCapture(tag, flag, limitSize, file);
+        code = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, flag, limitSize, file);
         if (code != HIDEBUG_SUCCESS || file.empty()) {
             return nullptr;
         }
@@ -309,11 +281,7 @@ extern "C" {
 
     int32_t FfiHidebugStopAppTraceCapture()
     {
-        auto nativeInterface = HidebugNativeInterface::CreateInstance();
-        if (!nativeInterface) {
-            return ErrorCode::MEM_ERROR;
-        }
-        return nativeInterface->StopAppTraceCapture();
+        return HidebugNativeInterface::GetInstance().StopAppTraceCapture();
     }
 
     int32_t FfiHidebugSetAppResourceLimit(const char *type, int32_t value, bool enableDebugLog)
@@ -333,7 +301,7 @@ extern "C" {
             return ErrorCode::SYSTEM_STATUS_ABNORMAL;
         }
         auto result =
-            HidebugNativeInterface::CreateInstance()->GetMemoryLeakResource(std::string(type), value, enableDebugLog);
+            HidebugNativeInterface::GetInstance().GetMemoryLeakResource(std::string(type), value, enableDebugLog);
         if (result == MemoryState::MEMORY_FAILED) {
             return 0;
         }
@@ -343,7 +311,7 @@ extern "C" {
 
     bool FfiHidebugIsDebugState()
     {
-        return HidebugNativeInterface::CreateInstance()->IsDebuggerConnected();
+        return HidebugNativeInterface::GetInstance().IsDebuggerConnected();
     }
 }
 }

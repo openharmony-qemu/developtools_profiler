@@ -55,12 +55,13 @@ public:
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
 private:
-    static inline HidebugAppThreadCpu threadCpu_;
+    HidebugAppThreadCpu threadCpu_;
 };
 
-std::unique_ptr<HidebugNativeInterface> HidebugNativeInterface::CreateInstance()
+HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 {
-    return std::make_unique<HidebugNativeInterfaceImpl>();
+    static HidebugNativeInterfaceImpl instance;
+    return instance;
 }
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()

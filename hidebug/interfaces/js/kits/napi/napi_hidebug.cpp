@@ -576,8 +576,8 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
-    auto cpuUsageOptional = HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
-    if (!cpuUsageOptional.has_value()) {
+    auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
+    if (!cpuUsageOptional) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -635,29 +635,30 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 napi_value GetAppVMMemoryInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
+    uint64_t allArraySizeValue{0};
+    uint64_t heapUsedValue{0};
+    uint64_t totalHeapValue{0};
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    if (engine == nullptr) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return CreateUndefined(env);
+    if (engine) {
+        allArraySizeValue = engine->GetArrayBufferSize();
+        heapUsedValue = engine->GetHeapUsedSize();
+        totalHeapValue = engine->GetHeapTotalSize();
     }
 
     napi_value vMMemoryInfo;
     napi_create_object(env, &vMMemoryInfo);
 
     napi_value totalHeap;
-    uint64_t totalHeapValue = engine->GetHeapTotalSize();
     totalHeapValue = totalHeapValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, totalHeapValue, &totalHeap);
     napi_set_named_property(env, vMMemoryInfo, "totalHeap", totalHeap);
 
     napi_value heapUsed;
-    uint64_t heapUsedValue = engine->GetHeapUsedSize();
     heapUsedValue = heapUsedValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, heapUsedValue, &heapUsed);
     napi_set_named_property(env, vMMemoryInfo, "heapUsed", heapUsed);
 
     napi_value allArraySize;
-    uint64_t allArraySizeValue = engine->GetArrayBufferSize();
     allArraySizeValue = allArraySizeValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, allArraySizeValue, &allArraySize);
     napi_set_named_property(env, vMMemoryInfo, "allArraySize", allArraySize);
@@ -694,11 +695,7 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result;
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return CreateUndefined(env);
-    }
-    std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+    std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     ConvertThreadCpuUsageMapToJs(env, result, threadMap);
     return result;
 }
@@ -708,84 +705,73 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
     napi_value appMemoryLimit;
     napi_create_object(env, &appMemoryLimit);
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return CreateUndefined(env);
-    }
-
-    auto memoryLimit = nativeInterface->GetAppMemoryLimit();
-    if (!memoryLimit) {
-        return CreateUndefined(env);
+    MemoryLimit memoryLimit{};
+    auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
+    if (memoryLimitOption) {
+        memoryLimit = memoryLimitOption.value();
     }
     napi_value rssLimit;
-    napi_create_bigint_uint64(env, memoryLimit->rssLimit, &rssLimit);
+    napi_create_bigint_uint64(env, memoryLimit.rssLimit, &rssLimit);
     napi_set_named_property(env, appMemoryLimit, "rssLimit", rssLimit);
 
     napi_value vssLimit;
-    napi_create_bigint_uint64(env, memoryLimit->vssLimit, &vssLimit);
+    napi_create_bigint_uint64(env, memoryLimit.vssLimit, &vssLimit);
     napi_set_named_property(env, appMemoryLimit, "vssLimit", vssLimit);
-
+    uint64_t vmHeapLimitValue{0};
+    uint64_t vmTotalHeapSizeValue{0};
     NativeEngine *engine = reinterpret_cast<NativeEngine *>(env);
-    if (engine == nullptr) {
-        return CreateUndefined(env);
+    if (engine) {
+        vmHeapLimitValue = engine->GetHeapLimitSize();
+        vmTotalHeapSizeValue = engine->GetProcessHeapLimitSize();
     }
     napi_value vmHeapLimit;
-    uint64_t vmHeapLimitValue = engine->GetHeapLimitSize();
     vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmHeapLimitValue, &vmHeapLimit);
     napi_set_named_property(env, appMemoryLimit, "vmHeapLimit", vmHeapLimit);
-
     napi_value vmTotalHeapSize;
-    uint64_t vmTotalHeapSizeValue = engine->GetProcessHeapLimitSize();
     vmTotalHeapSizeValue = vmTotalHeapSizeValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmTotalHeapSizeValue, &vmTotalHeapSize);
     napi_set_named_property(env, appMemoryLimit, "vmTotalHeapSize", vmTotalHeapSize);
-
     return appMemoryLimit;
 }
 
 napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return CreateUndefined(env);
+    HiDebug_NativeMemInfo nativeMemInfo{};
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    if (nativeMemInfoOption) {
+        nativeMemInfo = nativeMemInfoOption.value();
     }
-
-    auto nativeMemInfo = nativeInterface->GetAppNativeMemInfo();
-    if (!nativeMemInfo) {
-        return CreateUndefined(env);
-    }
-
     napi_value memInfo;
     napi_create_object(env, &memInfo);
 
     napi_value pss;
-    napi_create_bigint_uint64(env, nativeMemInfo->pss, &pss);
+    napi_create_bigint_uint64(env, nativeMemInfo.pss, &pss);
     napi_set_named_property(env, memInfo, "pss", pss);
 
     napi_value rss;
-    napi_create_bigint_uint64(env, nativeMemInfo->rss, &rss);
+    napi_create_bigint_uint64(env, nativeMemInfo.rss, &rss);
     napi_set_named_property(env, memInfo, "rss", rss);
 
     napi_value sharedDirty;
-    napi_create_bigint_uint64(env, nativeMemInfo->sharedDirty, &sharedDirty);
+    napi_create_bigint_uint64(env, nativeMemInfo.sharedDirty, &sharedDirty);
     napi_set_named_property(env, memInfo, "sharedDirty", sharedDirty);
 
     napi_value privateDirty;
-    napi_create_bigint_uint64(env, nativeMemInfo->privateDirty, &privateDirty);
+    napi_create_bigint_uint64(env, nativeMemInfo.privateDirty, &privateDirty);
     napi_set_named_property(env, memInfo, "privateDirty", privateDirty);
 
     napi_value sharedClean;
-    napi_create_bigint_uint64(env, nativeMemInfo->sharedClean, &sharedClean);
+    napi_create_bigint_uint64(env, nativeMemInfo.sharedClean, &sharedClean);
     napi_set_named_property(env, memInfo, "sharedClean", sharedClean);
 
     napi_value privateClean;
-    napi_create_bigint_uint64(env, nativeMemInfo->privateClean, &privateClean);
+    napi_create_bigint_uint64(env, nativeMemInfo.privateClean, &privateClean);
     napi_set_named_property(env, memInfo, "privateClean", privateClean);
 
     napi_value vss;
-    napi_create_bigint_uint64(env, nativeMemInfo->vss, &vss);
+    napi_create_bigint_uint64(env, nativeMemInfo.vss, &vss);
     napi_set_named_property(env, memInfo, "vss", vss);
 
     return memInfo;
@@ -794,31 +780,24 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return CreateUndefined(env);
+    SysMemory systemMemInfo{};
+    auto systemMemInfoOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
+    if (systemMemInfoOption) {
+        systemMemInfo = systemMemInfoOption.value();
     }
-
-    auto systemMemInfo = nativeInterface->GetSystemMemInfo();
-    if (!systemMemInfo) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return CreateUndefined(env);
-    }
-
     napi_value sysMemInfo;
     napi_create_object(env, &sysMemInfo);
 
     napi_value totalMem;
-    napi_create_bigint_uint64(env, systemMemInfo->memTotal, &totalMem);
+    napi_create_bigint_uint64(env, systemMemInfo.memTotal, &totalMem);
     napi_set_named_property(env, sysMemInfo, "totalMem", totalMem);
 
     napi_value freeMem;
-    napi_create_bigint_uint64(env, systemMemInfo->memFree, &freeMem);
+    napi_create_bigint_uint64(env, systemMemInfo.memFree, &freeMem);
     napi_set_named_property(env, sysMemInfo, "freeMem", freeMem);
 
     napi_value availableMem;
-    napi_create_bigint_uint64(env, systemMemInfo->memAvailable, &availableMem);
+    napi_create_bigint_uint64(env, systemMemInfo.memAvailable, &availableMem);
     napi_set_named_property(env, sysMemInfo, "availableMem", availableMem);
     return sysMemInfo;
 }
@@ -837,14 +816,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     }
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
     std::string file;
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        std::string errorMessage = "The status of the trace is abnormal";
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
-        return CreateUndefined(env);
-    }
-    auto ret = nativeInterface->StartAppTraceCapture(tag, traceFlag, limitSize, file);
+    auto ret = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, traceFlag, limitSize, file);
     if (ret == HIDEBUG_SUCCESS) {
         napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
         return result;
@@ -873,11 +845,7 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
 napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
-    auto nativeInterface = HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return CreateUndefined(env);
-    }
-    auto ret = nativeInterface->StopAppTraceCapture();
+    auto ret = HidebugNativeInterface::GetInstance().StopAppTraceCapture();
     if (ret == HIDEBUG_TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
@@ -1065,7 +1033,7 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
-    auto result = HidebugNativeInterface::CreateInstance()->GetMemoryLeakResource(type, value, enabledDebugLog);
+    auto result = HidebugNativeInterface::GetInstance().GetMemoryLeakResource(type, value, enabledDebugLog);
     if (result == MemoryState::MEMORY_FAILED) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
@@ -1078,14 +1046,8 @@ napi_value IsDebugState(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("isDebugState");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    if (engine == nullptr) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return CreateUndefined(env);
-    }
-
-    bool debugState = engine->GetIsDebugModeEnabled() ||
-        HidebugNativeInterface::CreateInstance()->IsDebuggerConnected();
-
+    bool debugState = (engine && engine->GetIsDebugModeEnabled()) ||
+        HidebugNativeInterface::GetInstance().IsDebuggerConnected();
     napi_value result = nullptr;
     napi_get_boolean(env, debugState, &result);
     return result;
@@ -1099,12 +1061,12 @@ public:
 protected:
     void Work(napi_env env) override
     {
-        result_ = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
+        result_ = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
     }
 
     void Done(napi_env env, napi_status status) override
     {
-        if (result_.has_value()) {
+        if (result_) {
             napi_value ret;
             napi_create_int32(env, result_.value(), &ret);
             napi_resolve_deferred(env, deferred_, ret);
@@ -1129,8 +1091,8 @@ napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
 napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
-    std::optional<int32_t> result = HidebugNativeInterface::CreateInstance()->GetGraphicsMemory();
-    if (result.has_value()) {
+    std::optional<int32_t> result = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
+    if (result) {
         napi_value ret;
         napi_create_int32(env, result.value(), &ret);
         return ret;

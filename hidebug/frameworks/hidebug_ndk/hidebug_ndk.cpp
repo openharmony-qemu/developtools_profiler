@@ -25,14 +25,13 @@
 
 double OH_HiDebug_GetAppCpuUsage()
 {
-    double cpuUsage = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance()->GetCpuUsage();
-    return cpuUsage;
+    return OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetCpuUsage();
 }
 
 double OH_HiDebug_GetSystemCpuUsage()
 {
-    auto cpuUsageOptional = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance()->GetSystemCpuUsage();
-    if (cpuUsageOptional.has_value()) {
+    auto cpuUsageOptional = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
+    if (cpuUsageOptional) {
         return cpuUsageOptional.value();
     }
     return 0;
@@ -40,11 +39,7 @@ double OH_HiDebug_GetSystemCpuUsage()
 
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
 {
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return nullptr;
-    }
-    std::map<uint32_t, double> threadMap = nativeInterface->GetAppThreadCpuUsage();
+    auto threadMap = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     HiDebug_ThreadCpuUsagePtr head = nullptr;
     HiDebug_ThreadCpuUsagePtr prev = nullptr;
     for (const auto[threadId, cpuUsage] : threadMap) {
@@ -84,11 +79,7 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
     if (!memoryLimit) {
         return;
     }
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return;
-    }
-    auto collectResult = nativeInterface->GetAppMemoryLimit();
+    auto collectResult = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
     if (!collectResult) {
         return;
     }
@@ -98,11 +89,10 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
 
 void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
 {
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeMemInfo || !nativeInterface) {
+    if (!nativeMemInfo) {
         return;
     }
-    auto nativeMemoryInfo = nativeInterface->GetAppNativeMemInfo();
+    auto nativeMemoryInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
     if (!nativeMemoryInfo) {
         return;
     }
@@ -118,11 +108,10 @@ void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
 
 void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
 {
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!systemMemInfo || !nativeInterface) {
+    if (!systemMemInfo) {
         return;
     }
-    auto sysMemInfo = nativeInterface->GetSystemMemInfo();
+    auto sysMemInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetSystemMemInfo();
     if (!sysMemInfo) {
         return;
     }
@@ -138,17 +127,14 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
     if (fileName == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return HIDEBUG_TRACE_ABNORMAL;
-    }
+    auto& nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance();
     std::string file;
-    auto ret = nativeInterface->StartAppTraceCapture(tags, flag, limitSize, file);
+    auto ret = nativeInterface.StartAppTraceCapture(tags, flag, limitSize, file);
     if (ret != HIDEBUG_SUCCESS) {
         return ret;
     }
     if (strcpy_s(fileName, length, file.c_str()) != EOK) {
-        nativeInterface->StopAppTraceCapture();
+        nativeInterface.StopAppTraceCapture();
         return HIDEBUG_INVALID_ARGUMENT;
     }
     return HIDEBUG_SUCCESS;
@@ -157,11 +143,7 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
 
 HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
 {
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return HIDEBUG_TRACE_ABNORMAL;
-    }
-    return nativeInterface->StopAppTraceCapture();
+    return OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().StopAppTraceCapture();
 }
 
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
@@ -169,12 +151,8 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
     if (value == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
-    auto nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::CreateInstance();
-    if (!nativeInterface) {
-        return HIDEBUG_TRACE_ABNORMAL;
-    }
-    std::optional<int32_t> ret = nativeInterface->GetGraphicsMemory();
-    if (!ret.has_value() || ret < 0) {
+    std::optional<int32_t> ret = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetGraphicsMemory();
+    if (!ret || ret < 0) {
         return HIDEBUG_TRACE_ABNORMAL;
     }
     *value = static_cast<uint32_t>(ret.value());
