@@ -139,7 +139,7 @@ private:
     long long nextTime = 0;
     int battaryStart = 0;
     int battaryEnd = 0;
-    int dataSize = 0;
+    unsigned int dataSize = 0;
     std::string csvTitle = "";
 
     std::string strOne = R"(hiprofiler_cmd \

@@ -30,6 +30,22 @@ namespace OHOS {
         {
             return std::map<std::string, std::string>();
         }
+        void* GpuCounter::GetSoHandle()
+        {
+            char soFilePathChar[PATH_MAX] = {0x00};
+            if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
+                WLOGE("%s is not exist.", pluginSoPath.c_str());
+                return nullptr;
+            }
+
+            void* handle = dlopen(soFilePathChar, RTLD_LAZY);
+            if (!handle) {
+                WLOGE("open GpuCounterPlugin so file error.");
+                return nullptr;
+            }
+
+            return handle;
+        }
         void GpuCounter::StartCollect(GcCollectType type)
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
@@ -43,8 +59,8 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetServicePlugin)();
-            GetServicePlugin startGetGpuPerfInfo = (GetServicePlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
             if (!startGetGpuPerfInfo) {
                 WLOGE("GpuCounterPlugin Error loading symbol");
                 return;
@@ -159,12 +175,8 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetServicePlugin)();
-            GetServicePlugin startGetGpuPerfInfo = (GetServicePlugin)dlsym(handle, CREATE_PLUGIN.c_str());
-            if (!startGetGpuPerfInfo) {
-                WLOGE("GpuCounterPlugin Error loading symbol");
-                return;
-            }
+            typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {

@@ -58,6 +58,8 @@ private:
     bool hapFlag = false;
     const std::string cpustr = "cpu";
     const std::string totalcpu = "Totalcpu";
+    int twenty = 20;
+    int thousand = 1000;
 };
 }
 }

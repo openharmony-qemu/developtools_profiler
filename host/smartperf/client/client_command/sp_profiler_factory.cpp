@@ -41,7 +41,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             OHOS::SmartPerf::CPU::GetInstance().IsFindHap();
             profiler = &CPU::GetInstance();
             break;
-        case MessageType::GET_FPS_AND_JITTERS:
         case MessageType::GET_CUR_FPS:
             profiler = &ProfilerFPS::GetInstance();
             break;

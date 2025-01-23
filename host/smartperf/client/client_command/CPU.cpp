@@ -36,6 +36,7 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> CPU::ItemData()
 {
+    usleep(twenty * thousand);
     std::map<std::string, std::string> result;
     std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
