@@ -339,7 +339,6 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
 HWTEST_F(SPdaemonTest, AIScheduleCase, TestSize.Level1)
 {
     AISchedule &aiSchedule = AISchedule::GetInstance();
-    aiSchedule.SetProcessId("12345");
     std::map<std::string, std::string> res = aiSchedule.ItemData();
 }
 } // namespace OHOS
