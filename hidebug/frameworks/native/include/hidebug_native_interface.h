@@ -43,7 +43,7 @@ public:
     virtual std::optional<double> GetSystemCpuUsage() = 0;
 
     virtual double GetCpuUsage() = 0;
-    virtual void GetAppThreadCpuUsage(std::map<uint32_t, double>& threadMap) = 0;
+    virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
     virtual HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) = 0;
     virtual HiDebug_ErrorCode StopAppTraceCapture() = 0;

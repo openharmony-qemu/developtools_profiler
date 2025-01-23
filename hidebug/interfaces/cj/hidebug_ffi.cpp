@@ -172,8 +172,7 @@ extern "C" {
     ThreadCpuUsageArr FfiHidebugGetAppThreadCpuUsage(int32_t &code)
     {
         ThreadCpuUsageArr arr{ .head = nullptr, .size = 0};
-        std::map<uint32_t, double> threadMap{};
-        HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage(threadMap);
+        std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
         auto size = threadMap.size();
         if (size <= 0) {
             return arr;

@@ -43,7 +43,7 @@ public:
     HidebugNativeInterfaceImpl(const HidebugNativeInterfaceImpl&) = delete;
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
-    void GetAppThreadCpuUsage(std::map<uint32_t, double>& threadMap) override;
+    std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
     HiDebug_ErrorCode StopAppTraceCapture() override;
@@ -55,7 +55,7 @@ public:
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
 private:
-    static inline HidebugAppThreadCpu threadCpu_;
+    HidebugAppThreadCpu threadCpu_;
 };
 
 HidebugNativeInterface& HidebugNativeInterface::GetInstance()
@@ -73,16 +73,18 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
     return cpuUsage;
 }
 
-void HidebugNativeInterfaceImpl::GetAppThreadCpuUsage(std::map<uint32_t, double>& threadMap)
+std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
     auto collectResult = threadCpu_.CollectThreadStatInfos();
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
-        return;
+        return {};
     }
+    std::map<uint32_t, double> threadMap;
     for (const auto &threadCpuStatInfo : collectResult.data) {
         threadMap[threadCpuStatInfo.tid] = threadCpuStatInfo.cpuUsage;
     }
+    return threadMap;
 }
 
 HiDebug_ErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,

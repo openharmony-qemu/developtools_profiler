@@ -31,7 +31,7 @@ double OH_HiDebug_GetAppCpuUsage()
 double OH_HiDebug_GetSystemCpuUsage()
 {
     auto cpuUsageOptional = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
-    if (cpuUsageOptional.has_value()) {
+    if (cpuUsageOptional) {
         return cpuUsageOptional.value();
     }
     return 0;
@@ -39,8 +39,7 @@ double OH_HiDebug_GetSystemCpuUsage()
 
 HiDebug_ThreadCpuUsagePtr OH_HiDebug_GetAppThreadCpuUsage()
 {
-    std::map<uint32_t, double> threadMap{};
-    OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage(threadMap);
+    auto threadMap = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     HiDebug_ThreadCpuUsagePtr head = nullptr;
     HiDebug_ThreadCpuUsagePtr prev = nullptr;
     for (const auto[threadId, cpuUsage] : threadMap) {
@@ -153,7 +152,7 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
         return HIDEBUG_INVALID_ARGUMENT;
     }
     std::optional<int32_t> ret = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetGraphicsMemory();
-    if (!ret.has_value() || ret < 0) {
+    if (!ret || ret < 0) {
         return HIDEBUG_TRACE_ABNORMAL;
     }
     *value = static_cast<uint32_t>(ret.value());

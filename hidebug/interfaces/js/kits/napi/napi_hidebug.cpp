@@ -577,7 +577,7 @@ static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
-    if (!cpuUsageOptional.has_value()) {
+    if (!cpuUsageOptional) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
@@ -695,8 +695,7 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
     napi_value result;
-    std::map<uint32_t, double> threadMap{};
-    HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage(threadMap);
+    std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     ConvertThreadCpuUsageMapToJs(env, result, threadMap);
     return result;
 }
@@ -708,7 +707,7 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     napi_create_object(env, &appMemoryLimit);
     MemoryLimit memoryLimit{};
     auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
-    if (memoryLimitOption.has_value()) {
+    if (memoryLimitOption) {
         memoryLimit = memoryLimitOption.value();
     }
     napi_value rssLimit;
@@ -741,7 +740,7 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
     HiDebug_NativeMemInfo nativeMemInfo{};
     auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
-    if (nativeMemInfoOption.has_value()) {
+    if (nativeMemInfoOption) {
         nativeMemInfo = nativeMemInfoOption.value();
     }
     napi_value memInfo;
@@ -1067,7 +1066,7 @@ protected:
 
     void Done(napi_env env, napi_status status) override
     {
-        if (result_.has_value()) {
+        if (result_) {
             napi_value ret;
             napi_create_int32(env, result_.value(), &ret);
             napi_resolve_deferred(env, deferred_, ret);
@@ -1093,7 +1092,7 @@ napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
     std::optional<int32_t> result = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
-    if (result.has_value()) {
+    if (result) {
         napi_value ret;
         napi_create_int32(env, result.value(), &ret);
         return ret;
