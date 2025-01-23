@@ -26,7 +26,7 @@ public:
                                               std::string("shell_frame"), std::string("shell_front"),
                                               std::string("shell_back"),  std::string("Battery"),
                                               std::string("cluster0"), std::string("gpu-thermal"),
-                                              std::string("drmos_gpu_npu")};
+                                              std::string("drmos_gpu_npu"), std::string("npu_thermal")};
     std::map<std::string, std::string> ItemData() override;
     static Temperature &GetInstance()
     {
