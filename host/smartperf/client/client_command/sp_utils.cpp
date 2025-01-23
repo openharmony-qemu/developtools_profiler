@@ -637,17 +637,19 @@ std::string SPUtils::GetCpuNum()
     }
     return cpuCores;
 }
-void SPUtils::GetCurrentTime(int num, int prevTime)
+void SPUtils::GetCurrentTime(int prevTime)
 {
+    LOGD("SPUtils::prevTime (%d)", prevTime);
     unsigned long sleepNowTime = 10000;
-    for (int i = 0; i < num; i++) {
+    bool shouldContiune = true;
+    while (shouldContiune) {
         struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
         if (curTimeNow == prevTime) {
             usleep(sleepNowTime);
         } else {
-            break;
+            shouldContiune = false;
         }
     }
 }

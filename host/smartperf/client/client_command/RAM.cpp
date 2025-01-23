@@ -101,6 +101,11 @@ void RAM::SetFirstFlag()
     g_flagFirst = false;
 }
 
+void RAM::SetHapFirstFlag()
+{
+    g_flagFirst = true;
+}
+
 std::map<std::string, std::string> RAM::ProcMemNaInfo() const
 {
     std::map<std::string, std::string> procMemInfo;

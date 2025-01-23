@@ -50,6 +50,7 @@ public:
     void ThreadGetPss() const;
     void TriggerGetPss() const;
     void SetFirstFlag();
+    void SetHapFirstFlag();
     void SetProcessId(const std::string &pid);
 private:
     RAM() {};
