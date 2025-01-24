@@ -57,34 +57,23 @@ public:
             return;
         }
 
-        struct sockaddr_in tcpServerAddr = {};
-        tcpServerAddr.sin_family = AF_INET;
-        tcpServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-        tcpServerAddr.sin_port = 0;
+        struct sockaddr_in tcpServerAddr = {
+            .sin_family = AF_INET,
+            .sin_addr.s_addr = inet_addr("127.0.0.1"),
+            .sin_port = 0
+        };
 
-        if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0) {
-            WLOGE("TCP bind failed");
-            close(tcpServerFd);
-            return;
-        }
-
-        socklen_t len = sizeof(tcpServerAddr);
-        if (getsockname(tcpServerFd, (struct sockaddr*)&tcpServerAddr, &len) < 0) {
-            WLOGE("getsockname failed");
+        if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
+            getsockname(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
+            listen(tcpServerFd, 1) < 0) {
             close(tcpServerFd);
             return;
         }
         tcpPort = ntohs(tcpServerAddr.sin_port);
 
-        if (listen(tcpServerFd, 1) < 0) {
-            WLOGE("Listen failed");
-            close(tcpServerFd);
-            return;
-        }
-        WLOGI("Test Listening...\n");
         int clientFd = accept(tcpServerFd, nullptr, nullptr);
         if (clientFd < 0) {
-            perror("Accept failed");
+            WLOGE("Accept failed");
             close(tcpServerFd);
             return;
         }
@@ -100,10 +89,16 @@ public:
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
-            fwrite(buffer, 1, bytesRead, fp);
+            size_t written = fwrite(buffer, 1, bytesRead, fp);
+            if (written != static_cast<size_t>(bytesRead)) {
+                WLOGE("Failed to write all bytes: expected %zd, wrote %zu", bytesRead, written);
+                break;
+            }
         }
 
-        fclose(fp);
+        if (fclose(fp) != 0) {
+            WLOGE("Failed to close file");
+        }
         close(clientFd);
         close(tcpServerFd);
     }

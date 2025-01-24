@@ -32,7 +32,7 @@ namespace SmartPerf {
         const int loopLockTime = 4000;
 
         ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
-        void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::TEST_PLUGIN);
+        void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::TEST_PLUGIN);
         if (!handle) {
             LOGE("open TestServerPlugin so file error.");
             return;

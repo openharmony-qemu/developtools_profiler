@@ -54,7 +54,7 @@ HWTEST_F(SPdaemonLockFrequencyTest, ItemDataTestCase, TestSize.Level1)
  * @tc.desc: Test LockingThread
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonLockFrequencyTest,LockingThreadTestCase, TestSize.Level1)
+HWTEST_F(SPdaemonLockFrequencyTest, LockingThreadTestCase, TestSize.Level1)
 {
     LockFrequency::GetInstance().SetIsCollecting(true);
     std::thread lock = std::thread([this]() {

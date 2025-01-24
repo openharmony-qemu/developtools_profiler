@@ -25,7 +25,7 @@ namespace OHOS {
         {
             pluginHandle.resize(PLUGIN_COUNT, nullptr);
         }
-        ServicePluginHandler::~ServicePluginHandler()
+        ServicePluginHandler::~ServicePluginHandler() override
         {
             for (int i = 0; i < PLUGIN_COUNT; i++) {
                 if (pluginHandle[i] != nullptr) {
@@ -40,15 +40,15 @@ namespace OHOS {
             return std::map<std::string, std::string>();
         }
 
-        void* ServicePluginHandler::GetSoHandler(enum servicePluginType type)
+        void* ServicePluginHandler::GetSoHandler(enum ServicePluginType type)
         {
             if (pluginHandle[type] == nullptr) {
                 char soFilePathChar[PATH_MAX] = {0x00};
-                if ((realpath(PLUGIN_SO_PATH[type].c_str(), soFilePathChar) == nullptr)) {
-                    WLOGE("%s is not exist.", PLUGIN_SO_PATH[type].c_str());
+                if ((realpath(pluginSoPath[type].c_str(), soFilePathChar) == nullptr)) {
+                    WLOGE("%s is not exist.", pluginSoPath[type].c_str());
                 }
 
-                pluginHandle[type] = dlopen(PLUGIN_SO_PATH[type].c_str(), RTLD_LAZY);
+                pluginHandle[type] = dlopen(pluginSoPath[type].c_str(), RTLD_LAZY);
                 if (!pluginHandle[type]) {
                     WLOGE("open ServicePlugin so file error.");
                 }

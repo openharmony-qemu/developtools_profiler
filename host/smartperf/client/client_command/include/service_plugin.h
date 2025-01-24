@@ -31,12 +31,13 @@ namespace OHOS {
 
             virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
             virtual int32_t StopGetGpuPerfInfo() = 0;
-            virtual std::map<std::string, std::string> GetSystemFunctionStatus(std::map<std::string, std::string> &queryParams) = 0;
+            virtual std::map<std::string, std::string> GetSystemFunctionStatus(
+                std::map<std::string, std::string> &queryParams) = 0;
         };
 
         class ServicePluginHandler : public SpProfiler {
         public:
-            enum servicePluginType {
+            enum ServicePluginType {
                 GAME_PLUGIN,
                 TEST_PLUGIN,
                 PLUGIN_COUNT
@@ -48,15 +49,15 @@ namespace OHOS {
                 static ServicePluginHandler instance;
                 return instance;
             }
-            void* GetSoHandler(enum servicePluginType type);
+            void* GetSoHandler(enum ServicePluginType type);
 
         private:
             ServicePluginHandler();
-            ~ServicePluginHandler();
+            ~ServicePluginHandler() override;
             ServicePluginHandler(const ServicePluginHandler &);
             ServicePluginHandler &operator = (const ServicePluginHandler &);
 
-            const std::vector<std::string> PLUGIN_SO_PATH = {
+            const std::vector<std::string> pluginSoPath = {
                 "/system/lib64/libgameservice_gpucounter_plugin.z.so",
                 "/system/lib64/libtest_server_client.z.so"
             };

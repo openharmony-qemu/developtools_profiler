@@ -46,9 +46,9 @@ public:
             return -1;
         }
 
-        memset(&servaddr, 0, sizeof(servaddr));
+        memset_s(&servaddr, sizeof(servaddr), 0, sizeof(servaddr));
         servaddr.sin_family = AF_INET;
-        servaddr.sin_port = htons(12567);
+        servaddr.sin_port = htons(OH_DATA_PORT);
         servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
 
         if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {

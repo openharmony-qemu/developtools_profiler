@@ -38,7 +38,7 @@ namespace OHOS {
             const int duration = 1000;
 
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
-            void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
+            void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
             if (!handle) {
                 WLOGE("Get service plugin handler failed.");
                 return;
@@ -154,7 +154,7 @@ namespace OHOS {
                 return;
             }
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
-            void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
+            void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
             if (!handle) {
                 WLOGE("Get service plugin handler failed.");
                 return;

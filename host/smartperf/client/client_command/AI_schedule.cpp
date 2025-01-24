@@ -32,7 +32,7 @@ std::map<std::string, std::string> AISchedule::ItemData()
     aiScheduleParams[aiScheduleParamType] = "1";
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
 
-    void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::servicePluginType::GAME_PLUGIN);
+    void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
     if (handle == nullptr) {
         WLOGE("Get service plugin handler failed.");
         return std::map<std::string, std::string>();
