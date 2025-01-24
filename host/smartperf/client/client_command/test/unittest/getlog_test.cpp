@@ -63,8 +63,9 @@ public:
             .sin_port = 0
         };
 
+        socklen_t len = sizeof(tcpServerAddr);
         if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
-            getsockname(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
+            getsockname(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), &len) < 0 ||
             listen(tcpServerFd, 1) < 0) {
             close(tcpServerFd);
             return;
