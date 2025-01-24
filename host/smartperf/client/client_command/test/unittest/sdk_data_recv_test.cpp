@@ -37,7 +37,7 @@ public:
     static void TearDownTestCase() {}
     void SetUp() {}
     void TearDown() {}
-    int connectSdkServer()
+    int ConnectSdkServer()
     {
         struct sockaddr_in servaddr;
         int sockfd = socket(AF_INET, SOCK_STREAM, 0);
@@ -84,7 +84,7 @@ HWTEST_F(SPdaemonSdkDataTest, ServerThreadTestCase, TestSize.Level1)
         SdkDataRecv::GetInstance().ServerThread(dataVec);
     });
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    int sockfd = connectSdkServer();
+    int sockfd = ConnectSdkServer();
     EXPECT_NE(sockfd, -1);
     std::string sendData = "{src:test,para0:1,time:1000,enable:1,value:1}";
     int ret = send(sockfd, sendData.c_str(), sendData.size(), 0);
