@@ -44,15 +44,7 @@ std::map<std::string, std::string> AISchedule::ItemData()
         WLOGE("GpuCounterPlugin Error loading symbol");
         return std::map<std::string, std::string>();
     }
-    try {
-        return pluginInstance->GetSystemFunctionStatus(aiScheduleParams);
-    } catch (const std::exception& e) {
-        WLOGE("Exception caught: %s", e.what());
-        return std::map<std::string, std::string>();
-    } catch (...) {
-        WLOGE("Unknown exception caught during GetSystemFunctionStatus");
-        return std::map<std::string, std::string>();
-    }
+    return servicePlugin()->GetSystemFunctionStatus(aiScheduleParams);
 }
 
 void AISchedule::SetProcessId(const std::string &pid)
