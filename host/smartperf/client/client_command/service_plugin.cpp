@@ -25,7 +25,7 @@ namespace OHOS {
         {
             pluginHandle.resize(PLUGIN_COUNT, nullptr);
         }
-        ServicePluginHandler::~ServicePluginHandler() override
+        ServicePluginHandler::~ServicePluginHandler()
         {
             for (int i = 0; i < PLUGIN_COUNT; i++) {
                 if (pluginHandle[i] != nullptr) {
