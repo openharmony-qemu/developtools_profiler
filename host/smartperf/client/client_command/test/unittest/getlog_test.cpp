@@ -62,7 +62,6 @@ public:
             .sin_addr.s_addr = inet_addr("127.0.0.1"),
             .sin_port = 0
         };
-
         if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
             getsockname(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0 ||
             listen(tcpServerFd, 1) < 0) {
