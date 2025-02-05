@@ -34,24 +34,32 @@ namespace HiviewDFX {
 int64_t ApiInvokeRecorder::processId_ = -1;
 
 ApiInvokeRecorder::ApiInvokeRecorder(std::string apiName) : apiName_(std::move(apiName)),
-    beginTime_(GetNanoSecondsTimestamp()) {}
+    beginTime_(GetElapsedNanoSecondsSinceBoot()) {}
 
 ApiInvokeRecorder::~ApiInvokeRecorder()
 {
-    if (processId_ < 0) {
+    if (processId_ < 0 || beginTime_ < 0) {
+        return;
+    }
+    const int64_t costTime = GetElapsedNanoSecondsSinceBoot() - beginTime_;
+    if (costTime < 0) {
+        return;
+    }
+    int64_t realEndTime = GetRealNanoSecondsTimestamp();
+    int64_t realBeginTime = realEndTime - costTime;
+    if (realBeginTime < 0 || realEndTime < 0) {
         return;
     }
     std::string apiName(std::move(apiName_));
-    int64_t beginTime(beginTime_);
     int errorCode(errorCode_);
-    auto task = [apiName, beginTime, errorCode] {
+    auto task = [apiName, realEndTime, realBeginTime, errorCode] {
         HiAppEvent::Event event("api_diagnostic", "api_exec_end", HiAppEvent::BEHAVIOR);
-        event.AddParam("trans_id", std::string("transId_") + std::to_string(beginTime));
+        event.AddParam("trans_id", std::string("transId_") + std::to_string(realBeginTime));
         event.AddParam("api_name", apiName);
         event.AddParam("sdk_name", std::string("PerformanceAnalysisKit"));
         constexpr int milliSecondsToNanoseconds = 1000 * 1000;
-        event.AddParam("begin_time", beginTime / milliSecondsToNanoseconds);
-        event.AddParam("end_time", GetNanoSecondsTimestamp() / milliSecondsToNanoseconds);
+        event.AddParam("begin_time", realBeginTime / milliSecondsToNanoseconds);
+        event.AddParam("end_time", realEndTime / milliSecondsToNanoseconds);
         event.AddParam("result", static_cast<int>(errorCode == 0));
         event.AddParam("error_code", errorCode);
         Write(event);

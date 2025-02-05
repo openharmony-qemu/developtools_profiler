@@ -60,11 +60,13 @@ class TestHiprofilerMalloctime:
         with open(r'.\..\outputfiles\malloctest.txt', 'r') as file:
             lines = file.readlines()
             malloctime = int(lines[MALLOCTIME_INDEX].split()[MALLOCTIME_INDEX])
-        assert(malloctime < THRESH)
+        assert (malloctime < THRESH)
 
     @pytest.mark.L0
     def test_listenuri(self):
         port = 0
+        task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
+        task_thread.start()
         subprocess.check_output("hdc shell hiprofiler_cmd -q > /data/local/tmp/cmdtmp.txt")
         subprocess.check_output(f"hdc file recv /data/local/tmp/cmdtmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = False
@@ -75,7 +77,7 @@ class TestHiprofilerMalloctime:
                     port = int(line[PORT_INDEX:])
                 
             
-        subprocess.check_output("hdc shell ls -lh netstat -anp | grep " + str(port) + " > /data/local/tmp/uri.txt")
+        subprocess.check_output("hdc shell netstat -anp | grep " + str(port) + " > /data/local/tmp/uri.txt")
         subprocess.check_output(f"hdc file recv /data/local/tmp/uri.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = False
         with open(r'.\..\outputfiles\uri.txt', 'r') as file:
@@ -85,5 +87,6 @@ class TestHiprofilerMalloctime:
                     target = line.split()[LISTENURI_INDEX]
                     if "127.0.0.1" in target:
                         check = True
+        task_thread.join()
         assert check
                 

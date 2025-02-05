@@ -1,0 +1,19 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+  result_file: "/data/local/tmp/hiprofiler_data.htrace"
+  sample_duration: 35000
+ }
+ plugin_configs {
+  plugin_name: "xpower-plugin"
+  sample_interval:2000
+  is_protobuf_serialize:true
+  config_data {
+   bundle_name: ""
+   message_type: REAL_BATTERY
+   message_type: COMPONENT_TOP
+   message_type: THERMAL_REPORT
+  }
+ }

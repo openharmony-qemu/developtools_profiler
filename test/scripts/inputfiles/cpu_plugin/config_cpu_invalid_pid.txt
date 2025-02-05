@@ -1,0 +1,14 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "cpu-plugin"
+  sample_interval: 1000
+  config_data {
+   pid: -1
+   report_process_info: false
+  }
+ }

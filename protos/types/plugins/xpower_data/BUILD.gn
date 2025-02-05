@@ -69,6 +69,7 @@ action("xpower_data_cpp_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }
 

@@ -70,7 +70,6 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -98,7 +97,6 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -114,11 +112,11 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string packName = "ohos.samples.ecg";
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
-    
+
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters();
+    fps.CalcFpsAndJitters(true);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
@@ -129,7 +127,6 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -151,7 +148,6 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -175,7 +171,6 @@ HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
     } else if ((strThree != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -204,7 +199,6 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -217,14 +211,11 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
 HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
 {
     Capture &capture = Capture::GetInstance();
-    long long catTime = 0;
-    std::string curTime = "";
     
-    capture.SocketMessage();
     capture.ThreadGetCatch();
-    capture.ThreadGetCatchSocket(curTime);
+    capture.ThreadGetCatchSocket();
     capture.TriggerGetCatch();
-    capture.TriggerGetCatchSocket(catTime);
+    capture.TriggerGetCatchSocket();
 
     std::string cmd = "SP_daemon -N 1 -snapshot";
     std::string result = "";
@@ -235,7 +226,6 @@ HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -256,7 +246,6 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -277,7 +266,6 @@ HWTEST_F(SPdaemonTest, StartTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -298,7 +286,6 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -319,7 +306,6 @@ HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }
@@ -340,7 +326,6 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
     EXPECT_EQ(flag, true);
 }

@@ -34,6 +34,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(task_newtask) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(task_newtask) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -48,6 +53,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.newcomm().c_str(), msg.oom_score_adj());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(task_rename) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(task_rename) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

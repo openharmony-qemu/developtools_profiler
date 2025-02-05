@@ -229,6 +229,18 @@ int KillProcess(int pid)
     return stat;
 }
 
+bool CheckSubscribeVersion(const std::string& version)
+{
+    char* end;
+    double number = std::strtod(version.c_str(), &end);
+    if (end == version.c_str() + version.size()) {
+        return number >= 1.0;
+    } else {
+        PROFILER_LOG_INFO(LOG_CORE, "current version doesn't support event push");
+        return false;
+    }
+}
+
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi)
 {
 #ifdef HOOK_ENABLE

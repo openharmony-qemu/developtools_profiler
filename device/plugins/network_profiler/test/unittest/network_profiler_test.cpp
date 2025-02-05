@@ -35,6 +35,10 @@ using namespace OHOS::Developtools::Profiler;
 
 namespace {
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
+constexpr uint32_t SMB1_SIZE = 10 * 4096;
+const std::string WRITER_NAME = "NetworkProfilerWriterTest";
+int g_smbFd1 = 0;
+
 class NetworkProfilerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -78,19 +82,38 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest001, TestSize.Level1)
  */
 HWTEST_F(NetworkProfilerTest, NetworkProfilerTest002, TestSize.Level1)
 {
-    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
-    auto networkProfilerService = std::make_unique<NetworkProfilerSocketService>(networkProfilerMgr);
-    ASSERT_TRUE(networkProfilerService != nullptr);
-    networkProfilerMgr->Init();
-    SystemSetParameter(PARAM_KAY.c_str(), std::to_string(getpid()).c_str());
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
     auto networkProfiler = NetworkProfiler::GetInstance();
-    auto ret = networkProfiler->IsProfilerEnable();
-    ASSERT_TRUE(ret);
     NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
-    ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
+    sleep(2);
+    auto ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
     ASSERT_FALSE(ret);
+    NetworkConfig config;
     SocketContext ctx;
-    ret = client.ProtocolProc(ctx, 0, nullptr, 0);
+    ret = client.ProtocolProc(ctx, 0, reinterpret_cast<int8_t*>(&config), sizeof(config));
     ASSERT_TRUE(ret);
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+}
+
+/**
+ * @tc.name: plugin
+ * @tc.desc: Write data to shared memory through writer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerWriterTest, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    uint8_t data[] = {0x55, 0xAA, 0x55, 0xAA};
+
+    auto myCallback = []() -> bool {
+        return true;
+    };
+    auto ret = write->WriteTimeout(static_cast<void*>(data), sizeof(data), myCallback);
+    EXPECT_TRUE(ret == 0);
+
+    uint8_t payload[] = {0x11, 0x22, 0x33, 0x44};
+    ret = write->WriteWithPayloadTimeout(static_cast<void*>(data), sizeof(data),
+                                        static_cast<void*>(payload), sizeof(payload), myCallback);
+    EXPECT_TRUE(ret == 0);
 }
 } // namespace

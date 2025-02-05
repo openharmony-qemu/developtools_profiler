@@ -35,6 +35,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(oom_score_adj_update) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(oom_score_adj_update) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 } // namespace

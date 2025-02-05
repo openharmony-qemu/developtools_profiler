@@ -296,7 +296,6 @@ float Percentage(const T &a, const T &b)
     return static_cast<float>(a) / static_cast<float>(b) * FULL_PERCENTAGE;
 }
 
-bool IsRoot();
 bool PowerOfTwo(int n);
 
 #define INDENT_ONE_LEVEL (indent + 1)
@@ -317,6 +316,7 @@ bool PowerOfTwo(int n);
 #endif
 int32_t GetProcessPid(const std::string& processName);
 bool IsArkJsFile(const std::string& filepath);
+uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask);
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

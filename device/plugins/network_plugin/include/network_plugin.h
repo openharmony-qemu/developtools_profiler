@@ -36,6 +36,7 @@
 #include "network_plugin_config.pb.h"
 #include "network_plugin_result.pb.h"
 #include "plugin_module_api.h"
+#include "net_stats_client.h"
 
 struct NetDetails {
     uint64_t tx;
@@ -78,6 +79,25 @@ enum NetworkNum {
     DEC_BASE = 10,
 };
 
+using TimeSpec = struct timespec;
+
+struct NetFlowDetail {
+    std::string type;
+    uint64_t rxBytes;
+    uint64_t rxPackets;
+    uint64_t txBytes;
+    uint64_t txPackets;
+};
+
+struct NetFlowData {
+    TimeSpec ts;
+    uint64_t rxBytes;
+    uint64_t rxPackets;
+    uint64_t txBytes;
+    uint64_t txPackets;
+    std::vector<NetFlowDetail> details;
+};
+
 class NetworkPlugin {
 public:
     NetworkPlugin();
@@ -105,6 +125,14 @@ protected:
     }
 
     template <typename T> bool WriteNetWorkData(T& networkDatasProto);
+    //new version
+    template <typename T> bool WriteNetFlowData(T& networkDatasProto);
+    template <typename T> void WriteData(T& networkDatasProto, NetFlowData &netFlowData);
+    int32_t GetUidByBundleMgr(int32_t pid);
+    bool ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
+    bool RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
+    bool HandleData(NetFlowData present, NetFlowData &difference);
+    void Record(NetFlowData &newData);
 
 private:
     NetworkConfig protoConfig_;
@@ -112,5 +140,11 @@ private:
     std::unique_ptr<FILE, int (*)(FILE*)> fp_;
     std::unordered_map<int32_t, int32_t> pidUid_;
     std::string fileForTest_;
+    //new version
+    int32_t singlePid_ = 0;
+    int32_t singleUid_ = -1;
+    NetFlowData previous_ = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
+    bool isFirst = true;
+    bool isNewVersion = false;
 };
 #endif

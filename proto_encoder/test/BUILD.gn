@@ -51,6 +51,7 @@ action("proto_gen_source") {
     "$protos_root_dir",
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }
@@ -83,6 +84,7 @@ ohos_unittest("proto_encoder_ut") {
     "$proto_out_dir",
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
     "googletest:gtest",
     "protobuf:protobuf_lite",
   ]

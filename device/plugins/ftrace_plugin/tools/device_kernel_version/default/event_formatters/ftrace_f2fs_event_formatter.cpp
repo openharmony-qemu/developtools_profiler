@@ -39,6 +39,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(f2fs_sync_file_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(f2fs_sync_file_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -62,6 +67,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(f2fs_sync_file_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(f2fs_sync_file_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -79,6 +89,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(f2fs_write_begin) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(f2fs_write_begin) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -95,6 +110,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(f2fs_write_end) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(f2fs_write_end) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

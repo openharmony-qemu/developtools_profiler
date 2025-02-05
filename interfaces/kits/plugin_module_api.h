@@ -117,6 +117,13 @@ typedef int (*PluginSessionStopCallback)(void);
 typedef int (*PluginReportBasicDataCallback)(void);
 
 /**
+ * @brief interface type of plugin state,
+ * Called when checking whether data is ready
+ * @return Return true when data ready to load.
+ */
+typedef bool (*PluginReportStateCallback)(void);
+
+/**
  * WriterStruct type forward declaration
  */
 typedef struct WriterStruct WriterStruct;
@@ -230,6 +237,11 @@ struct PluginModuleCallbacks {
      * polling reporting results of plugin management framework.
      */
     PluginReportResultOptimizeCallback onPluginReportResultOptimize;
+
+    /**
+     * report plugin state
+     */
+    PluginReportStateCallback onReportStateCallback = 0;
 };
 
 /**

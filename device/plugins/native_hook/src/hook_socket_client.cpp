@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <malloc.h>
 #include "hook_socket_client.h"
 
 #include "common.h"
@@ -26,6 +25,7 @@
 #include <sys/types.h>
 #include <fcntl.h>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <iostream>
 
@@ -125,8 +125,8 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     eventFd_ = context.ReceiveFileDiscriptor();
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
-        smbFd_, eventFd_, config_->isBlocked);
-    struct mallinfo2 mi = mallinfo2();
+        smbFd_, eventFd_, config_->isBlocked, config_->isSaMode);
+    g_disableHook = false;
     nmdType_ = config_->nmdType;
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();

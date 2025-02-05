@@ -1,0 +1,55 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "memory-plugin"
+  sample_interval: 5000
+  config_data {
+   report_process_tree: true
+   report_sysmem_mem_info: true
+   sys_meminfo_counters: PMEM_ACTIVE
+   sys_meminfo_counters: PMEM_ACTIVE_ANON
+   sys_meminfo_counters: PMEM_ACTIVE_FILE
+   sys_meminfo_counters: PMEM_ANON_PAGES
+   sys_meminfo_counters: PMEM_BUFFERS
+   sys_meminfo_counters: PMEM_CACHED
+   sys_meminfo_counters: PMEM_CMA_FREE
+   sys_meminfo_counters: PMEM_CMA_TOTAL
+   sys_meminfo_counters: PMEM_COMMIT_LIMIT
+   sys_meminfo_counters: PMEM_COMMITED_AS
+   sys_meminfo_counters: PMEM_DIRTY
+   sys_meminfo_counters: PMEM_INACTIVE
+   sys_meminfo_counters: PMEM_INACTIVE_ANON
+   sys_meminfo_counters: PMEM_INACTIVE_FILE
+   sys_meminfo_counters: PMEM_KERNEL_STACK
+   sys_meminfo_counters: PMEM_MAPPED
+   sys_meminfo_counters: PMEM_MEM_AVAILABLE
+   sys_meminfo_counters: PMEM_MEM_FREE
+   sys_meminfo_counters: PMEM_MEM_TOTAL
+   sys_meminfo_counters: PMEM_MLOCKED
+   sys_meminfo_counters: PMEM_PAGE_TABLES
+   sys_meminfo_counters: PMEM_SHMEM
+   sys_meminfo_counters: PMEM_SLAB
+   sys_meminfo_counters: PMEM_SLAB_RECLAIMABLE
+   sys_meminfo_counters: PMEM_SLAB_UNRECLAIMABLE
+   sys_meminfo_counters: PMEM_SWAP_CACHED
+   sys_meminfo_counters: PMEM_SWAP_FREE
+   sys_meminfo_counters: PMEM_SWAP_TOTAL
+   sys_meminfo_counters: PMEM_UNEVICTABLE
+   sys_meminfo_counters: PMEM_VMALLOC_CHUNK
+   sys_meminfo_counters: PMEM_VMALLOC_TOTAL
+   sys_meminfo_counters: PMEM_VMALLOC_USED
+   sys_meminfo_counters: PMEM_WRITEBACK
+   sys_meminfo_counters: PMEM_KERNEL_RECLAIMABLE
+   sys_meminfo_counters: PMEM_ACTIVE_PURG
+   sys_meminfo_counters: PMEM_INACTIVE_PURG
+   sys_meminfo_counters: PMEM_PINED_PURG
+   report_sysmem_vmem_info: true
+   report_process_mem_info: true
+   report_app_mem_info: false
+   report_app_mem_by_memory_service: false
+  }
+ }

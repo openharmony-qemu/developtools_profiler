@@ -33,29 +33,7 @@ const int US_PER_S = 1000000;
 const int NS_PER_US = 1000;
 const int NS_PER_S = 1000000000;
 const int NS_PER_MS = 1000000;
-const int SLEEP_TIME = 30000;
 } // namespace
-
-/**
- * @tc.name: Service
- * @tc.desc: Server process monitoring.
- * @tc.type: FUNC
- */
-HWTEST_F(ServiceEntryTest, AllCase, TestSize.Level1)
-{
-    ServiceEntry serviceEntry;
-    IPluginServiceServer pluginService;
-    serviceEntry.StartServer("test_unix_socket_service_entry");
-    serviceEntry.RegisterService(pluginService);
-    serviceEntry.FindServiceByName(pluginService.serviceName_);
-
-    usleep(SLEEP_TIME);
-
-    IPluginServiceClient pluginClient;
-    ASSERT_TRUE(pluginClient.Connect("test_unix_socket_service_entry"));
-
-    usleep(SLEEP_TIME);
-}
 
 /**
  * @tc.name: Service

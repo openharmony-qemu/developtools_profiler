@@ -51,27 +51,30 @@ bool PluginSessionManager::CheckPluginSha256(const ProfilerPluginConfig& pluginC
 
 PluginSessionPtr PluginSessionManager::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
                                                            const ProfilerSessionConfig::BufferConfig& bufferConfig,
-                                                           const ProfilerDataRepeaterPtr& dataRepeater)
+                                                           const ProfilerDataRepeaterPtr& dataRepeater,
+                                                           const ProfilerStateRepeaterPtr& stateRepeater)
 {
     auto name = pluginConfig.name();
     CHECK_TRUE(pluginSessions_.count(name) == 0, nullptr, "plugin name %s exists!", name.c_str());
     CHECK_TRUE(CheckBufferConfig(bufferConfig), nullptr, "buffer config invalid!");
     CHECK_TRUE(CheckPluginSha256(pluginConfig), nullptr, "SHA256 check failed!");
 
-    auto session = std::make_shared<PluginSession>(pluginConfig, bufferConfig, pluginService_, dataRepeater);
+    auto session = std::make_shared<PluginSession>(pluginConfig, bufferConfig, pluginService_,
+                                                   dataRepeater, stateRepeater);
     CHECK_NOTNULL(session, nullptr, "allocate plugin session for %s failed!", name.c_str());
     CHECK_TRUE(session->IsAvailable(), nullptr, "config plugin for %s failed!", name.c_str());
     return session;
 }
 
 PluginSessionPtr PluginSessionManager::CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
-                                                           const ProfilerDataRepeaterPtr& dataRepeater)
+                                                           const ProfilerDataRepeaterPtr& dataRepeater,
+                                                           const ProfilerStateRepeaterPtr& stateRepeater)
 {
     auto name = pluginConfig.name();
     CHECK_TRUE(pluginSessions_.count(name) == 0, nullptr, "plugin name %s exists!", name.c_str());
     CHECK_TRUE(CheckPluginSha256(pluginConfig), nullptr, "SHA256 check failed!");
 
-    auto session = std::make_shared<PluginSession>(pluginConfig, pluginService_, dataRepeater);
+    auto session = std::make_shared<PluginSession>(pluginConfig, pluginService_, dataRepeater, stateRepeater);
     CHECK_NOTNULL(session, nullptr, "allocate plugin session for %s failed!", name.c_str());
     CHECK_TRUE(session->IsAvailable(), nullptr, "config plugin for %s failed!", name.c_str());
     return session;
@@ -79,14 +82,15 @@ PluginSessionPtr PluginSessionManager::CreatePluginSession(const ProfilerPluginC
 
 bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPluginConfig>& pluginConfigs,
                                                 const std::vector<ProfilerSessionConfig::BufferConfig>& bufferConfigs,
-                                                const ProfilerDataRepeaterPtr& dataRepeater)
+                                                const ProfilerDataRepeaterPtr& dataRepeater,
+                                                const ProfilerStateRepeaterPtr& stateRepeater)
 {
     CHECK_TRUE(pluginConfigs.size() == bufferConfigs.size(), false, "buffer and config vector size mismatch %zu, %zu",
                bufferConfigs.size(), pluginConfigs.size());
 
     std::map<std::string, PluginSessionPtr> tmpPluginSessions;
     for (size_t i = 0; i < pluginConfigs.size(); i++) {
-        auto session = CreatePluginSession(pluginConfigs[i], bufferConfigs[i], dataRepeater);
+        auto session = CreatePluginSession(pluginConfigs[i], bufferConfigs[i], dataRepeater, stateRepeater);
 
         // tmpPluginSessions will released if some plugin session create failed
         CHECK_NOTNULL(session, false, "create plugin-%zu session failed!", i);
@@ -102,11 +106,12 @@ bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPlugin
 }
 
 bool PluginSessionManager::CreatePluginSessions(const std::vector<ProfilerPluginConfig>& pluginConfigs,
-                                                const ProfilerDataRepeaterPtr& dataRepeater)
+                                                const ProfilerDataRepeaterPtr& dataRepeater,
+                                                const ProfilerStateRepeaterPtr& stateRepeater)
 {
     std::map<std::string, PluginSessionPtr> tmpPluginSessions;
     for (size_t i = 0; i < pluginConfigs.size(); i++) {
-        auto session = CreatePluginSession(pluginConfigs[i], dataRepeater);
+        auto session = CreatePluginSession(pluginConfigs[i], dataRepeater, stateRepeater);
 
         // tmpPluginSessions will released if some plugin session create failed
         CHECK_NOTNULL(session, false, "create plugin-%zu session without shmem buffer failed!", i);

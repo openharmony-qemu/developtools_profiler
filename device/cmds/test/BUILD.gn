@@ -13,6 +13,7 @@
 
 import("//build/test.gni")
 import("../../base/config.gni")
+import("../../plugins/ftrace_plugin/ftrace.gni")
 
 module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 config("module_private_config") {
@@ -36,7 +37,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/cpu_data:cpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/diskio_data:diskio_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/ffrt_profiler:ffrt_profiler_cpp_standard",
-    "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/default:ftrace_plugin_config_cpp_standard",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/ftrace_data/${device_kernel_version}:ftrace_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/gpu_data:gpu_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hidump_data:hidump_plugin_config_cpp_standard",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/hiebpf_data:hiebpf_data_cpp_standard",
@@ -65,6 +66,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",
+    "init:libbegetutil",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]

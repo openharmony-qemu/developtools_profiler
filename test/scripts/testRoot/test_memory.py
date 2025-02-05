@@ -57,9 +57,6 @@ class TestHiprofilerRom:
         rom_hidump = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhidumpplugin*", text=True, encoding="utf-8")
         rom_hidump = check_rom(rom_hidump)
 
-        rom_hiebpf = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhiebpfplugin*", text=True, encoding="utf-8")
-        rom_hiebpf = check_rom(rom_hiebpf)
-
         rom_hilog = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhilogplugin*", text=True, encoding="utf-8")
         rom_hilog = check_rom(rom_hilog)
 
@@ -99,4 +96,4 @@ class TestHiprofilerRom:
         rom_plugins = subprocess.check_output(f"hdc shell ls -lh /system/bin/hiprofiler_plugins*", text=True, encoding="utf-8")
         rom_plugins = check_rom(rom_plugins)
 
-        assert(rom_cpu + rom_gpu + rom_disk + rom_ftrace + rom_hidump + rom_hiebpf + rom_hilog + rom_hiperf + rom_hisys + rom_memory + rom_network + rom_process + romXpower + rom_hook + rom_daemon + rom_hiprofilerd + rom_cmd + rom_plugins + rom_netprofiler < ROM_THRESH)
+        assert (rom_cpu + rom_gpu + rom_disk + rom_ftrace + rom_hidump + rom_hilog + rom_hiperf + rom_hisys + rom_memory + rom_network + rom_process + rom_xpower + rom_hook + rom_daemon + rom_hiprofilerd + rom_cmd + rom_plugins + rom_netprofiler < ROM_THRESH)

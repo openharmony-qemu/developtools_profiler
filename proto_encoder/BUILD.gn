@@ -17,7 +17,6 @@ import("//developtools/profiler/device/base/config.gni")
 config("proto_encoder_config") {
   include_dirs = [
     "include",
-    "//third_party/bounds_checking_function/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
   ]
 }

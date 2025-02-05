@@ -44,8 +44,12 @@ class TestHiprofilerReliability:
     @pytest.mark.L0
     def test_badfd(self):
         subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace")
-        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        try:
+            subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+            subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            pass
         subprocess.check_output("hdc target mount", text=True, encoding="utf-8")
         subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
         subprocess.check_output("hdc shell reboot", text=True, encoding="utf-8")
@@ -74,6 +78,7 @@ class TestHiprofilerReliability:
 
         subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         process = subprocess.Popen(['hdc', 'shell', 'dmesg -w | grep avc > /data/local/tmp/avc.txt'])
+        process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep BADFD > /data/local/tmp/daemonhilog.txt'])
         time.sleep(1)
         touch_button("模板测试")
         time.sleep(1)
@@ -89,12 +94,21 @@ class TestHiprofilerReliability:
             touch_button("small-malloc(depth 7)")
             i += 1
         process.terminate()
+        process_hilog.terminate()
         subprocess.check_output(f"hdc file recv /data/local/tmp/avc.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        subprocess.check_output(f"hdc file recv /data/local/tmp/daemonhilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = True
         with open(r'.\..\outputfiles\avc.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
                 if "BADFD" in line:
                     if "pid=" + str(daemon_pid) + " tid=" in line:
-                        check = False 
+                        check = False
+
+        with open(r'.\..\outputfiles\daemonhilog.txt', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "BADFD" in line:
+                    if "pid=" + str(daemon_pid) + " tid=" in line:
+                        check = False
         assert check == True

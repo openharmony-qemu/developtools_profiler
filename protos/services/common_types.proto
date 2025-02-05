@@ -34,6 +34,16 @@ message ProfilerPluginState {
         IN_SESSION = 3; // have started session.
     };
     State state = 2;
+    enum Event {
+        DATA_READY = 0; //profiler data ready
+        RUNNING_ERR = 1; //profiler services encounter errors, show in detail
+        PLUGIN_ERR = 2; // plugins encounter errors, show in detail
+        PLUGIN_LOAD_SUCC = 3;
+    }
+    Event event = 3;
+    string version = 4;
+    string error_code = 5;
+    string event_detail = 6;
 }
 
 // for FetchDataResponse

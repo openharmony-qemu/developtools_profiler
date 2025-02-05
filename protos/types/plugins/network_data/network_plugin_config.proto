@@ -19,4 +19,5 @@ option optimize_for = LITE_RUNTIME;
 message NetworkConfig {
     repeated int32 pid = 1;
     string test_file = 2;
+    int32 single_pid = 3;
 }

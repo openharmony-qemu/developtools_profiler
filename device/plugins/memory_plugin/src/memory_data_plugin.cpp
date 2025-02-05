@@ -67,8 +67,6 @@ MemoryDataPlugin::~MemoryDataPlugin()
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s:~MemoryDataPlugin!", __func__);
 
-    buffer_ = nullptr;
-
     if (meminfoFd_ > 0) {
         close(meminfoFd_);
         meminfoFd_ = -1;
@@ -367,9 +365,10 @@ template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memo
 
         bool isReportApp = protoConfig_.report_app_mem_info() && !protoConfig_.report_app_mem_by_memory_service();
         bool isReportSmaps = protoConfig_.report_smaps_mem_info();
+        bool isReportSmapsrollup = protoConfig_.parse_smaps_rollup();
         if (i == 0 && (isReportApp || isReportSmaps)) {
             SmapsStats smapInfo;
-            smapInfo.ParseMaps(pid, *processinfo, smapsInfo, isReportApp, isReportSmaps);
+            smapInfo.ParseMaps(pid, *processinfo, smapsInfo, isReportApp, isReportSmaps, isReportSmapsrollup);
             if (isReportApp) {
                 WriteAppsummary(*processinfo, smapInfo);
             }
@@ -1293,7 +1292,7 @@ bool MemoryDataPlugin::GetGraphicsMemory(int32_t pid, GraphicsMemory &graphicsMe
 {
     std::shared_ptr<GraphicMemoryCollector> collector = GraphicMemoryCollector::Create();
     OHOS::HiviewDFX::CollectResult<int32_t> data;
-    data = collector->GetGraphicUsage(pid, graphicType);
+    data = collector->GetGraphicUsage(pid, graphicType, true);
     if (data.retCode != UcError::SUCCESS) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:collect progress GL or Graph error, ret:%d.", __func__, data.retCode);
         return false;

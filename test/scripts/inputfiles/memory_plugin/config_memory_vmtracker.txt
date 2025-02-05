@@ -1,0 +1,25 @@
+request_id: 1                             
+ session_config {                         
+  buffers {                               
+   pages: 16384                           
+  }                                       
+ }                                        
+ plugin_configs {                         
+  plugin_name: "memory-plugin"            
+  sample_interval: 5000                   
+  config_data {                           
+   report_process_tree: false             
+   report_sysmem_mem_info: false          
+   report_sysmem_vmem_info: false         
+   report_process_mem_info: true          
+   report_app_mem_info: false             
+   report_app_mem_by_memory_service: false
+   pid: 9797                             
+   report_purgeable_ashmem_info: true     
+   report_dma_mem_info: true              
+   report_gpu_mem_info: true              
+   report_smaps_mem_info: true            
+   report_gpu_dump_info: true             
+  }                                       
+ }                                        
+

@@ -21,8 +21,10 @@
 #include <dirent.h>
 #include <cstdio>
 #include <cstdlib>
+#include <memory>
 #include <climits>
 #include <cctype>
+#include <thread>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -32,18 +34,35 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
-    std::map<std::string, std::string> result = Network::GetNetworkInfo();
-    LOGD("Network ItemData map siez=%u", result.size());
-    if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
-        result["networkUp"] = "NA";
-    }
-    if (result.find("networkDown") != result.end() && result["networkDown"].empty()) {
-        result["networkDown"] = "NA";
+    if (hapFlag) {
+        ThreadFunctions();
+    } else {
+        result = Network::GetNetworkInfo();
     }
     return result;
 }
 
 std::map<std::string, std::string> Network::GetNetworkInfo()
+{
+    std::map<std::string, std::string> networkInfo;
+    networkInfo = GetNetworkInfoDev();
+    if (isFirst) {
+        networkInfo["networkUp"] = "0";
+        networkInfo["networkDown"] = "0";
+        isFirst = false;
+        diffRx = 0;
+        diffTx = 0;
+        return networkInfo;
+    }
+    networkInfo["networkUp"] = std::to_string(diffTx);
+    networkInfo["networkDown"] = std::to_string(diffRx);
+    if (!hapFlag || stophapFlag) {
+        diffTx = 0;
+        diffRx = 0;
+    }
+    return networkInfo;
+}
+std::map<std::string, std::string> Network::GetNetworkInfoDev()
 {
     std::map<std::string, std::string> networkInfo;
     char buff[LARGE_BUFF_MAX_LEN];
@@ -53,45 +72,97 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         return networkInfo;
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp) != nullptr) {
-        if (strstr(buff, "rmnet") || strstr(buff, "eth") || strstr(buff, "wlan")) {
+        if (strstr(buff, "rmnet0")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
                 (void)fclose(fp);
                 return networkInfo;
             }
-            allTx += curTx;
-            allRx += curRx;
+            GetCurNetwork(rmnetCurRx, rmnetCurTx);
+        }
+        if (strstr(buff, "eth0")) {
+            if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
+                &curRx, &curTx) < 0) {
+                (void)fclose(fp);
+                return networkInfo;
+            }
+            GetCurNetwork(ethCurRx, ethCurTx);
+        }
+        if (strstr(buff, "wlan0")) {
+            if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
+                &curRx, &curTx) < 0) {
+                (void)fclose(fp);
+                return networkInfo;
+            }
+            GetCurNetwork(wlanCurRx, wlanCurTx);
         }
     }
     (void)fclose(fp);
-    if (isFirst) {
-        networkInfo["networkUp"] = std::to_string(prevTx);
-        networkInfo["networkDown"] = std::to_string(prevRx);
-        isFirst = false;
-        prevTx = allTx;
-        prevRx = allRx;
-        allTx = 0;
-        allRx = 0;
-        return networkInfo;
-    }
-    if ((allTx == 0 && allRx == 0) || (allTx <= prevTx && allRx <= prevRx)) {
-        networkInfo["networkUp"] = "0";
-        networkInfo["networkDown"] = "0";
-        prevTx = allTx;
-        prevRx = allRx;
-        allTx = 0;
-        allRx = 0;
-        return networkInfo;
-    }
-    diffTx = allTx - prevTx;
-    prevTx = allTx;
-    diffRx = allRx - prevRx;
-    prevRx = allRx;
-    allTx = 0;
-    allRx = 0;
-    networkInfo["networkUp"] = std::to_string(diffTx);
-    networkInfo["networkDown"] = std::to_string(diffRx);
     return networkInfo;
+}
+void Network::GetCurNetwork(long long &networkCurRx, long long &networkCurTx)
+{
+    if (curRx > 0) {
+        allRx = curRx - networkCurRx;
+    }
+    networkCurRx = curRx;
+    if (curTx > 0) {
+        allTx = curTx - networkCurTx;
+    }
+    networkCurTx = curTx;
+    if (allRx >= 0) {
+        diffRx += allRx;
+    } else {
+        diffRx += networkCurRx;
+    }
+    if (allTx >= 0) {
+        diffTx += allTx;
+    } else {
+        diffTx += networkCurTx;
+    }
+    curRx = 0;
+    curTx = 0;
+    allRx = 0;
+    allTx = 0;
+}
+void Network::IsFindHap()
+{
+    hapFlag = true;
+    ClearHapFlag();
+}
+void Network::IsStopFindHap()
+{
+    hapFlag = false;
+    stophapFlag = true;
+}
+
+void Network::ThreadFunctions()
+{
+    auto threadGetHapNetwork = std::thread([this]() { this->ThreadGetHapNetwork(); });
+    threadGetHapNetwork.detach();
+}
+
+void Network::ThreadGetHapNetwork()
+{
+    while (!stophapFlag) {
+        long long startTime = SPUtils::GetCurTime();
+        result = GetNetworkInfo();
+        long long stopTime = SPUtils::GetCurTime();
+        long long time = 998;
+        long long costTime = stopTime - startTime;
+        std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
+    }
+}
+void Network::ClearHapFlag()
+{
+    isFirst = true;
+    stophapFlag = false;
+    rmnetCurRx = 0;
+    rmnetCurTx = 0;
+    ethCurRx = 0;
+    ethCurTx = 0;
+    wlanCurRx = 0;
+    wlanCurTx = 0;
 }
 }
 }

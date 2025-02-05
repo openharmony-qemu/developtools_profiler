@@ -23,7 +23,6 @@
 
 #include "file_utils.h"
 #include "flow_controller.h"
-#include "ftrace_module.h"
 
 using namespace testing::ext;
 

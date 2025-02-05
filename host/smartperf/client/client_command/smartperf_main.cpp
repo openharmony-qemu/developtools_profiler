@@ -47,7 +47,7 @@ static std::string GetOptions(const std::vector<std::string> &argv)
     }
     return str;
 }
-static void keyInsert(std::set<std::string> &keysMap)
+static void KeyInsert(std::set<std::string> &keysMap)
 {
     keysMap.insert("editor");
     keysMap.insert("profilerfps");
@@ -80,7 +80,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
             return true;
         }
     }
-    keyInsert(keys);
+    KeyInsert(keys);
     if (argv[1].find("editorServer:") != std::string::npos) {
         keys.insert(argv[1].substr(1).c_str());
     }
@@ -169,14 +169,28 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
+        std::string startStr = "";
+        std::string endStr = "";
+        std::string pidCmd = OHOS::SmartPerf::CMD_COMMAND_MAP.at(OHOS::SmartPerf::CmdCommand::PIDOF_SP);
+        OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, startStr);
         OHOS::SmartPerf::ClientControl cc;
         cc.StartSPDaemon();
+        OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, endStr);
+        std::vector<std::string> startParams;
+        std::vector<std::string> endParams;
+        OHOS::SmartPerf::SPUtils::StrSplit(startStr, " ", startParams);
+        OHOS::SmartPerf::SPUtils::StrSplit(endStr, " ", endParams);
         std::string result;
-        for (int i = 2; i < argc; i++) {
+        const int maxExpectedArgs = 100;
+        for (int i = 2; i < argc && i < maxExpectedArgs; i++) {
             result += argv[i];
             if (i != argc - 1) {
                 result += " ";
             }
+        }
+        if (startParams.size() == endParams.size()) {
+            std::cout << "The last collection is interrupted." << std::endl;
+            std::cout << "SP_daemon -start " << result << " started collecting..." << std::endl;
         }
         cc.SocketStart(result);
         return 1;

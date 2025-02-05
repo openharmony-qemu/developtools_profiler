@@ -33,14 +33,12 @@ public:
     std::string GetWinId(std::string navPid) const;
     std::map<std::string, std::string> GetNavResult(std::string winId) const;
     void SetProcessId(const std::string &pid);
+    void SubstrNavName(const std::string &line, std::string &nameStr) const;
 private:
     Navigation() {};
     Navigation(const Navigation &);
     Navigation &operator = (const Navigation &);
     std::string packageName = "";
-    const int paramTen = 10;
-    const int paramEleven = 11;
-    const int paramTwelve = 12;
     const int paramTwo = 2;
     const int paramThree = 3;
     std::string processId = "";

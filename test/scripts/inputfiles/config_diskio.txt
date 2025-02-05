@@ -1,0 +1,13 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "diskio-plugin"
+  sample_interval: 1000
+  config_data {
+   report_io_stats: IO_REPORT
+  }
+ }

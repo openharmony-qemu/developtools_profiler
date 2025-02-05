@@ -85,7 +85,7 @@ int DebugLogger::Log(DebugLevel level, const std::string &logTag, const char *fm
     const auto startSprintf = steady_clock::now();
 #endif
     const auto startTime = steady_clock::now();
-    if (!ShouldLog(level, logTag) or logDisabled_ or fmt == nullptr) {
+    if (!ShouldLog(level, logTag) || logDisabled_ || fmt == nullptr) {
 #ifdef HIPERF_DEBUG_TIME
         logTimes_ += duration_cast<microseconds>(steady_clock::now() - startSprintf);
 #endif
@@ -101,7 +101,7 @@ int DebugLogger::Log(DebugLevel level, const std::string &logTag, const char *fm
 #ifdef HIPERF_DEBUG_TIME
     logSprintfTimes_ += duration_cast<microseconds>(steady_clock::now() - startSprintf);
 #endif
-    if ((mixLogOutput_ and level < LEVEL_FATAL) or level == LEVEL_FATAL) {
+    if ((mixLogOutput_ && level < LEVEL_FATAL) || level == LEVEL_FATAL) {
         ret = fprintf(stdout, "%s", buffer.data()); // to the stdout
     }
 

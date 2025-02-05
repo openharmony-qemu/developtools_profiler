@@ -150,12 +150,14 @@ bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string,
     std::string &errorInfo);
 bool IsHmKernel();
 std::string GetCpuNum();
-void GetCurrentTime(int num, int prevTime);
-bool IsForeGround(std::string &pkg);
-bool IsFindForeGround(std::string line);
+void GetCurrentTime(int prevTime);
+bool IsForeGround(const std::string &pkg);
 bool IsFindAbilist();
 void SetRkFlag();
 bool GetPathPermissions(const std::string &path);
+bool GetIsGameApp(std::string pkg);
+bool IsFindForeGround(const std::string &line);
+std::string GetVersion();
 };
 }
 }

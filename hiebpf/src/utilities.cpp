@@ -24,7 +24,7 @@ namespace Hiebpf {
 std::string ReadFileToString(const std::string &fileName)
 {
     std::ifstream inputString(fileName, std::ios::in);
-    if (!inputString or !inputString.is_open()) {
+    if (!inputString || !inputString.is_open()) {
         return EMPTY_STRING;
     }
     std::istreambuf_iterator<char> firstIt = {inputString};

@@ -34,16 +34,11 @@ uint32_t RoundUp(uint32_t x, const int align)
 std::string StringReplace(std::string source, const std::string &from, const std::string &to)
 {
     size_t pos = 0;
-    std::string result;
-    // find
     while ((pos = source.find(from)) != std::string::npos) {
         // replace
-        result.append(source.substr(0, pos) + to);
-        source.erase(0, pos + from.length());
+        source.replace(pos, from.length(), to);
     }
-    // add last token
-    result.append(source);
-    return result;
+    return source;
 }
 
 size_t SubStringCount(const std::string &source, const std::string &sub)
@@ -286,16 +281,6 @@ bool WriteStringToFile(const std::string &fileName, const std::string &value)
     return output.good();
 }
 
-bool IsRoot()
-{
-#if is_linux || is_ohos
-    static bool isRoot = (getuid() == 0);
-    return isRoot;
-#else
-    return true;
-#endif
-}
-
 bool PowerOfTwo(int n)
 {
     return n && (!(n & (n - 1)));
@@ -528,6 +513,26 @@ bool IsArkJsFile(const std::string& filepath)
     return (StringEndsWith(filepath, ".hap") || StringEndsWith(filepath, ".hsp") ||
             StringStartsWith(filepath, "[anon:ArkTS Code") || StringEndsWith(filepath, ".abc")
             || StringEndsWith(filepath, ".hqf"));
+}
+
+uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask)
+{
+    uintptr_t outAddr = inAddr;
+#if defined(__aarch64__)
+    if (outAddr != 0) {
+        if (pacMask != 0) {
+            outAddr &= ~pacMask;
+        } else {
+            register uint64_t x30 __asm("x30") = inAddr;
+            asm("hint 0x7" : "+r"(x30));
+            outAddr = x30;
+        }
+        if (outAddr != inAddr) {
+            HLOGM("Strip pac in addr: %lx, out addr: %lx", (uint64_t)inAddr, (uint64_t)outAddr);
+        }
+    }
+#endif
+    return outAddr;
 }
 } // namespace NativeDaemon
 } // namespace Developtools

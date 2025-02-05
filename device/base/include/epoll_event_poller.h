@@ -68,6 +68,7 @@ private:
 
 private:
     std::mutex mutex_;
+    std::mutex stopPollerMutex_;
     std::mutex vecMutex_;
     std::thread pollThread_;
     int timeOut_ = 0;

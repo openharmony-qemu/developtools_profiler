@@ -32,15 +32,16 @@
 #include "profiler_service_types.pb.h"
 #include "service_entry.h"
 #include "trace_file_writer.h"
+#include "profiler_data_repeater.h"
 
 class PluginServiceImpl;
-class ProfilerDataRepeater;
 class SocketContext;
 class ShareMemoryBlock;
 class PluginCommandBuilder;
 class PluginSessionManager;
 
-using ProfilerDataRepeaterPtr = STD_PTR(shared, ProfilerDataRepeater);
+using ProfilerDataRepeaterPtr = std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>>;
+using ProfilerStateRepeaterPtr = std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>>;
 using ProfilerPluginStatePtr = STD_PTR(shared, ProfilerPluginState);
 
 struct PluginInfo {
@@ -66,6 +67,7 @@ struct PluginContext {
     SocketContext* context = nullptr;
     ProfilerPluginConfig config;
     ProfilerDataRepeaterPtr profilerDataRepeater;
+    ProfilerStateRepeaterPtr profilerStateRepeater;
     std::shared_ptr<ShareMemoryBlock> shareMemoryBlock;
     EventNotifierPtr eventNotifier;
     ProfilerPluginState profilerPluginState;
@@ -82,8 +84,10 @@ public:
 
     bool CreatePluginSession(const ProfilerPluginConfig& pluginConfig,
                              const ProfilerSessionConfig::BufferConfig& bufferConfig,
-                             const ProfilerDataRepeaterPtr& dataRepeater);
-    bool CreatePluginSession(const ProfilerPluginConfig& pluginConfig, const ProfilerDataRepeaterPtr& dataRepeater);
+                             const ProfilerDataRepeaterPtr& dataRepeater,
+                             const ProfilerStateRepeaterPtr& stateRepeater);
+    bool CreatePluginSession(const ProfilerPluginConfig& pluginConfig, const ProfilerDataRepeaterPtr& dataRepeater,
+                             const ProfilerStateRepeaterPtr& stateRepeater);
     bool StartPluginSession(const ProfilerPluginConfig& config);
     bool StopPluginSession(const std::string& pluginName);
     bool DestroyPluginSession(const std::string& pluginName);
@@ -107,6 +111,7 @@ public:
     void FlushAllData(const std::string& pluginName);
     bool StartEpollThread();
     bool StopEpollThread();
+    void SendErrorMsg(std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>> stateRepeater);
 
 private:
     bool StartService(const std::string& unixSocketName);

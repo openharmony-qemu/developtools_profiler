@@ -34,9 +34,13 @@ int ClientControl::SocketStart(const std::string &args)
         return resultId;
     }
     send(clientSocket, messageInit.c_str(), strlen(messageInit.c_str()), 0);
+    LOGD("start-stop messageInit : %s", messageInit.c_str());
     read(clientSocket, buffer, numBuff);
+    LOGD("start-stop recv : %s", buffer);
     send(clientSocket, message1, strlen(message1), 0);
+    LOGD("start-stop send : %s", message1);
     read(clientSocket, buffer, numBuff);
+    LOGD("start-stop recv : %s", buffer);
     char dest[arraySize] = {0};
     size_t i;
     for (i = 0; buffer[i] != '\0' && i < arraySize - 1; i++) {
@@ -51,6 +55,7 @@ int ClientControl::SocketStart(const std::string &args)
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpClear();
     }
+    LOGD("ClientControl::SocketStart() ok");
     return 0;
 }
 int ClientControl::SocketStop()
@@ -73,6 +78,7 @@ int ClientControl::SocketStop()
     } else {
         std::cout << "SP_daemon Collection ended failed" << std::endl;
     }
+    LOGD("ClientControl::SocketStop() ok");
     return 0;
 }
 int ClientControl::InitSocket()
@@ -91,6 +97,7 @@ int ClientControl::InitSocket()
         LOGE("Failed to connect to server");
         return 1;
     }
+    LOGD("ClientControl::SocketInit() ok");
     return 0;
 }
 void ClientControl::StartSPDaemon() const
@@ -105,6 +112,7 @@ int ClientControl::CloseSocket()
     shutdown(clientSocket, SHUT_RD);
     close(clientSocket);
     clientSocket = -1;
+    LOGD("ClientControl::CloseSocket() ok");
     return 0;
 }
 }

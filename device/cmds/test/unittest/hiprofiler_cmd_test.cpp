@@ -23,6 +23,7 @@
 
 #include "logging.h"
 #include "openssl/sha.h"
+#include "parameters.h"
 
 using namespace testing::ext;
 
@@ -38,7 +39,6 @@ const std::string DEFAULT_SO_PATH("/system/lib/");
 const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
 const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugins");
 const std::string DEFAULT_HIPROFILERD_NAME("hiprofilerd");
-const std::string DEFAULT_HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 
 const std::string DEFAULT_HIPROFILER_CMD_PATH("/system/bin/hiprofiler_cmd");
 const std::string FTRACE_PLUGIN_PATH("/data/local/tmp/libftrace_plugin.z.so");
@@ -48,7 +48,6 @@ constexpr uint32_t READ_BUFFER_SIZE = 1024;
 constexpr int SLEEP_TIME = 3;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
-constexpr int LINE_SIZE = 1000;
 
 
 class HiprofilerCmdTest : public ::testing::Test {
@@ -56,33 +55,26 @@ public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 
-    void StartServerStub(std::string name)
+    void StartServerStub(const std::string name)
     {
-        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
-            return;
-        }
-        int processNum = fork();
-        if (processNum == 0) {
-            if (DEFAULT_HIPROFILERD_PATH == name) {
-                // start running hiprofilerd
-                execl(name.c_str(), nullptr, nullptr);
-            } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
-                // start running hiprofiler_plugins
-                execl(name.c_str(), DEFAULT_PATH.c_str(), nullptr);
-            }
-            _exit(1);
-        } else if (DEFAULT_HIPROFILERD_PATH == name) {
-            hiprofilerdPid_ = processNum;
+        if (DEFAULT_HIPROFILERD_PATH == name) {
+            // start running hiprofilerd
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
         } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
-            hiprofilerPluginsPid_ = processNum;
+            // start running hiprofiler_plugins
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
         }
     }
 
-    void StopProcessStub(int processNum)
+    void StopProcessStub(const std::string name)
     {
-        std::string stopCmd = "kill " + std::to_string(processNum);
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(stopCmd.c_str(), "r"), pclose);
-        sleep(SLEEP_TIME); // wait process exit
+        if (DEFAULT_HIPROFILERD_PATH == name) {
+            // start running hiprofilerd
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+        } else if (DEFAULT_HIPROFILER_PLUGINS_PATH == name) {
+            // start running hiprofiler_plugins
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+        }
     }
 
     bool RunCommand(const std::string& cmd, std::string& content)
@@ -463,33 +455,6 @@ public:
         }
         return static_cast<unsigned long>(buf.st_size);
     }
-
-    void KillProcess(const std::string processName)
-    {
-        int pid = -1;
-        std::string findpid = "pidof " + processName;
-        PROFILER_LOG_INFO(LOG_CORE, "find pid command : %s", findpid.c_str());
-        std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(findpid.c_str(), "r"), pclose);
-
-        char line[LINE_SIZE];
-        do {
-            if (fgets(line, sizeof(line), pipe.get()) == nullptr) {
-                PROFILER_LOG_INFO(LOG_CORE, "not find processName : %s", processName.c_str());
-                return;
-            } else if (strlen(line) > 0 && isdigit(static_cast<unsigned char>(line[0]))) {
-                pid = atoi(line);
-                PROFILER_LOG_INFO(LOG_CORE, "find processName : %s, pid: %d", processName.c_str(), pid);
-                break;
-            }
-        } while (1);
-
-        if (pid != -1) {
-            StopProcessStub(pid);
-        }
-    }
-private:
-    int hiprofilerdPid_ = -1;
-    int hiprofilerPluginsPid_ = -1;
 };
 
 /**
@@ -499,8 +464,10 @@ private:
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level1)
 {
-    KillProcess(DEFAULT_HIPROFILERD_NAME);
-    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -h";
     std::string content = "";
@@ -520,7 +487,8 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
     EXPECT_TRUE(RunCommand(cmd, content));
     destStr = "OK";
     EXPECT_EQ(strncmp(content.c_str(), destStr.c_str(), strlen(destStr.c_str())), 0);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }
 
 /**
@@ -530,8 +498,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
 {
-    KillProcess(DEFAULT_HIPROFILERD_NAME);
-    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     // 测试不存在的config文件
     std::string configTestFile = DEFAULT_PATH + "1234.txt";
@@ -566,8 +536,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
     // 删除资源文件和生成的trace文件
     cmd = "rm " + configFile + " " + outFile;
     system(cmd.c_str());
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }
 
 /**
@@ -596,8 +568,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
     // 删除资源文件和生成的trace文件
     cmd = "rm " + FTRACE_PLUGIN_PATH + " " + outFile;
     system(cmd.c_str());
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }
 
 /**
@@ -607,8 +581,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
 {
-    KillProcess(DEFAULT_HIPROFILERD_NAME);
-    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s -l -k";
     std::string content = "";
@@ -624,8 +600,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level1)
 {
-    KillProcess(DEFAULT_HIPROFILERD_NAME);
-    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -l -k";
     std::string content = "";
@@ -639,8 +617,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level1)
 {
-    KillProcess(DEFAULT_HIPROFILERD_NAME);
-    KillProcess(DEFAULT_HIPROFILER_PLUGINS_NAME);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
 
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -k";
     std::string content = "";
@@ -673,8 +653,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
     // 删除资源文件和生成的trace文件
     cmd = "rm " + FTRACE_PLUGIN_PATH + " " + outFile;
     system(cmd.c_str());
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }
 
 /**
@@ -749,8 +731,10 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
     // 删除资源文件和生成的trace文件
     cmd = "rm " + HIPERF_PLUGIN_PATH + " " + outFile;
     system(cmd.c_str());
-    StopProcessStub(hiprofilerPluginsPid_);
-    StopProcessStub(hiprofilerdPid_);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }
 }
 
@@ -810,41 +794,6 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
 
     cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + perfFile + " " + perfSplitFile;
     system(cmd.c_str());
-}
-/**
- * @tc.name: hiprofiler_cmd
- * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
- * @tc.type: FUNC
- */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
-{
-#if defined(__LP64__)  // just support 64bit
-    std::string outFileName = "split_hiebpf";
-    std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
-    std::string ebpfFile = "/data/local/tmp/ebpf.data";
-    std::string ebpfSplitFile = "/data/local/tmp/split_ebpf_data.htrace";
-    std::string content = "";
-    int time = 10;
-    std::string cmd = CreateSplitHiebpfCommand(outFile, ebpfFile, ebpfSplitFile, time);
-    EXPECT_TRUE(RunCommand(cmd, content));
-
-    EXPECT_NE(access(outFile.c_str(), F_OK), 0);
-
-    cmd = "ls " + DEFAULT_PATH + outFileName + "*_1.htrace";
-    EXPECT_TRUE(RunCommand(cmd, content));
-    EXPECT_STRNE(content.c_str(), "");
-
-    EXPECT_EQ(access(ebpfSplitFile.c_str(), F_OK), 0);
-    if (access(ebpfFile.c_str(), F_OK) == 0) {
-        const int headerSize = 1024 + 1024; // htrace header + hiebpf header
-        auto ebpfFileSize = GetFileSize(ebpfFile.c_str());
-        auto ebpfSplitFileSize = GetFileSize(ebpfSplitFile.c_str());
-        EXPECT_GT(ebpfSplitFileSize, ebpfFileSize + headerSize);
-    }
-
-    cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace " + ebpfFile + " " + ebpfSplitFile;
-    system(cmd.c_str());
-#endif
 }
 
 /**

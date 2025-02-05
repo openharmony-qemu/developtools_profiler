@@ -39,6 +39,7 @@ public:
     bool OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& result) const;
     bool OnStopSessionCmd(const StopSessionCmd& cmd) const;
     bool OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const;
+    void PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId);
 
     uint32_t GetRequestId();
     bool OnConnect();
@@ -47,7 +48,8 @@ protected:
     bool OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response) override;
 
 private:
-    uint32_t requestIdAutoIncrease_;
+    std::mutex reportMutex_;
+    std::atomic<uint32_t> requestIdAutoIncrease_;
     std::weak_ptr<ManagerInterface> pluginManager_;
 };
 

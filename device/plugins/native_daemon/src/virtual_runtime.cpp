@@ -469,7 +469,7 @@ const DfxSymbol VirtualRuntime::GetSymbol(CallFrame& callFrame, pid_t pid, pid_t
     } else if (GetSymbolCache(callFrame.ip_, symbol, GetThread(pid, tid))) {
         return symbol;
     }
-    if (context == PERF_CONTEXT_USER or (context == PERF_CONTEXT_MAX and !symbol.IsValid())) {
+    if (context == PERF_CONTEXT_USER || (context == PERF_CONTEXT_MAX && !symbol.IsValid())) {
         // check userspace memmap
         symbol = GetUserSymbol(callFrame.ip_, GetThread(pid, tid));
         if (symbol.IsValid()) {
@@ -565,7 +565,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
         UpdateSymbols(filePath, mapItem);
-        if ((!hookConfig_.fp_unwind())) {
+        if (!hookConfig_.fp_unwind()) {
             auto &thread = UpdateThread(pid, tid);
             thread.ParseMap(processMaps_, false);
         }

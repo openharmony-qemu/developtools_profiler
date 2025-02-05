@@ -65,6 +65,7 @@ action("stream_data_cpp_gen") {
     rebase_path(".", root_build_dir),
   ]
   args += rebase_path(sources, root_build_dir)
+  args += [ "$ohos_indep_compiler_enable" ]
   deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:protoencoder_plugin(${host_toolchain})" ]
   external_deps = [ "protobuf:protoc(${host_toolchain})" ]
 }

@@ -36,6 +36,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_alloc_da_blocks) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_alloc_da_blocks) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -59,6 +64,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_allocate_blocks) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_allocate_blocks) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -75,6 +85,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_allocate_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_allocate_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -93,6 +108,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_begin_ordered_truncate) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_begin_ordered_truncate) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -109,6 +129,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_collapse_range) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_collapse_range) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -128,6 +153,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_da_release_space) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_release_space) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -144,6 +174,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_da_reserve_space) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_reserve_space) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -163,6 +198,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_da_update_reserve_space) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_update_reserve_space) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -180,6 +220,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_da_write_begin) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_write_begin) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -195,6 +240,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.len(), msg.copied());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_da_write_end) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_write_end) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -213,6 +263,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_da_write_pages) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_write_pages) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -233,6 +288,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_da_write_pages_extent) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_da_write_pages_extent) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -249,6 +309,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_direct_IO_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_direct_IO_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -267,6 +332,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_direct_IO_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_direct_IO_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -282,6 +352,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_discard_blocks) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_discard_blocks) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -299,6 +374,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_discard_preallocations) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_discard_preallocations) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -313,6 +393,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.drop());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_drop_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_drop_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -333,6 +418,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_es_cache_extent) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_cache_extent) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -352,6 +442,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_es_insert_extent) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_insert_extent) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -367,6 +462,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_es_lookup_extent_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_lookup_extent_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -387,6 +487,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_es_lookup_extent_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_lookup_extent_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -404,6 +509,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_es_remove_extent) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_remove_extent) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -419,6 +529,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.scan_time(), msg.nr_skipped(), msg.retried());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_es_shrink) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_shrink) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -436,6 +551,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_es_shrink_count) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_shrink_count) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -451,6 +571,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_es_shrink_scan_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_shrink_scan_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -468,6 +593,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_es_shrink_scan_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_es_shrink_scan_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -482,6 +612,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(), msg.nlink());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_evict_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_evict_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -503,6 +638,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_ext_convert_to_initialized_enter) msg had be cut off in "
                 "outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_convert_to_initialized_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -526,6 +666,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 "the contents of print event(ext4_ext_convert_to_initialized_fastpath) msg had be cut off in "
                 "outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_convert_to_initialized_fastpath) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -548,6 +693,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_ext_handle_unwritten_extents) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_handle_unwritten_extents) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -562,6 +712,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(), (unsigned)msg.lblk(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_ext_in_cache) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_in_cache) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -579,6 +734,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ext_load_extent) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_load_extent) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -599,6 +759,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_ext_map_blocks_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_map_blocks_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -624,6 +789,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ext_map_blocks_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_map_blocks_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -641,6 +811,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ext_put_in_cache) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_put_in_cache) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -657,6 +832,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ext_remove_space) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_remove_space) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -676,6 +856,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_ext_remove_space_done) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_remove_space_done) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -690,6 +875,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(), msg.pblk());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_ext_rm_idx) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_rm_idx) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -708,6 +898,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_ext_rm_leaf) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_rm_leaf) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -724,6 +919,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ext_show_extent) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ext_show_extent) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -744,6 +944,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_fallocate_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_fallocate_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -760,6 +965,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_fallocate_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_fallocate_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -778,6 +988,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_find_delalloc_range) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_find_delalloc_range) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -793,6 +1008,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.mode(), msg.is_metadata(), msg.block());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_forget) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_forget) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -812,6 +1032,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_free_blocks) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_free_blocks) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -827,6 +1052,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.mode(), msg.uid(), msg.gid(), msg.blocks());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_free_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_free_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -851,6 +1081,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 "the contents of print event(ext4_get_implied_cluster_alloc_exit) msg had be cut off in "
                 "outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_get_implied_cluster_alloc_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -867,6 +1102,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_get_reserved_cluster_alloc) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_get_reserved_cluster_alloc) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -887,6 +1127,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_ind_map_blocks_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ind_map_blocks_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -912,6 +1157,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_ind_map_blocks_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_ind_map_blocks_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -927,6 +1177,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.offset(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_insert_range) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_insert_range) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -945,6 +1200,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_invalidatepage) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_invalidatepage) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -961,6 +1221,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_journal_start) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_journal_start) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -976,6 +1241,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_journal_start_reserved) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_journal_start_reserved) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -994,6 +1264,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_journalled_invalidatepage) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_journalled_invalidatepage) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1011,6 +1286,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_journalled_write_end) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_journalled_write_end) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1024,6 +1304,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_load_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_load_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1039,6 +1324,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_load_inode_bitmap) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_load_inode_bitmap) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1056,6 +1346,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mark_inode_dirty) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mark_inode_dirty) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1070,6 +1365,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mb_bitmap_load) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_bitmap_load) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1086,6 +1386,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_mb_buddy_bitmap_load) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_buddy_bitmap_load) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1101,6 +1406,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_mb_discard_preallocations) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_discard_preallocations) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1119,6 +1429,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mb_new_group_pa) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_new_group_pa) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1136,6 +1451,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mb_new_inode_pa) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_new_inode_pa) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1151,6 +1471,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mb_release_group_pa) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_release_group_pa) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1168,6 +1493,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mb_release_inode_pa) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mb_release_inode_pa) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1195,6 +1525,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mballoc_alloc) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mballoc_alloc) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1212,6 +1547,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mballoc_discard) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mballoc_discard) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1227,6 +1567,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.result_len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_mballoc_free) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mballoc_free) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1246,6 +1591,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_mballoc_prealloc) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_mballoc_prealloc) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1262,6 +1612,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_other_inode_update_time) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_other_inode_update_time) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1281,6 +1636,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_punch_hole) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_punch_hole) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1295,6 +1655,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                 "the contents of print event(ext4_read_block_bitmap_load) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_read_block_bitmap_load) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1311,6 +1676,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_readpage) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_readpage) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1325,6 +1695,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(), msg.index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_releasepage) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_releasepage) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1344,6 +1719,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_remove_blocks) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_remove_blocks) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1368,6 +1748,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_request_blocks) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_request_blocks) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1383,6 +1768,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_request_inode) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_request_inode) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1401,6 +1791,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_sync_file_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_sync_file_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1417,6 +1812,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_sync_file_exit) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_sync_file_exit) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1430,6 +1830,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) >> 20)), ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.wait());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_sync_fs) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_sync_fs) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1447,6 +1852,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_trim_all_free) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_trim_all_free) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1461,6 +1871,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 msg.dev_major(), msg.dev_minor(), msg.group(), msg.start(), msg.len());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_trim_extent) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_trim_extent) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1478,6 +1893,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_truncate_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_truncate_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1493,6 +1913,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_truncate_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_truncate_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1510,6 +1935,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_unlink_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_unlink_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1524,6 +1954,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_unlink_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_unlink_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1541,6 +1976,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_write_begin) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_write_begin) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1557,6 +1997,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_write_end) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_write_end) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1571,6 +2016,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             ((unsigned int)((msg.dev()) & ((1U << 20) - 1))), msg.ino(), msg.index());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_writepage) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_writepage) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -1591,6 +2041,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_writepages) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_writepages) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1609,6 +2064,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "the contents of print event(ext4_writepages_result) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_writepages_result) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -1626,6 +2086,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
                 {0x08, "COLLAPSE_RANGE"}, {0x10, "ZERO_RANGE"}));
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "the contents of print event(ext4_zero_range) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(ext4_zero_range) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

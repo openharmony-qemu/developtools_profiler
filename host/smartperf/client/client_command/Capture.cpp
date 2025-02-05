@@ -43,7 +43,7 @@ std::map<std::string, std::string> Capture::ItemData()
         if (modResult == 0) {
             path = screenCapPath + ".jpeg";
             result["capture"] = path;
-            TriggerGetCatchSocket(curTime);
+            TriggerGetCatchSocket();
             isSocketMessage = false;
         }
     } else {
@@ -55,18 +55,18 @@ std::map<std::string, std::string> Capture::ItemData()
     }
     result["capture"] = path;
 
-    LOGD("Capture::ItemData map size(%u)", result.size());
+    LOGD("capture:ItemData map size(%u)", result.size());
     return result;
-}
-
-void Capture::SocketMessage()
-{
-    isSocketMessage = true;
 }
 
 long long Capture::GetCurTimes()
 {
     return SPUtils::GetCurTime();
+}
+
+void Capture::SocketMessage()
+{
+    isSocketMessage = true;
 }
 void Capture::ThreadGetCatch()
 {
@@ -86,16 +86,19 @@ void Capture::ThreadGetCatch()
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
         LOGE("Failed to open file: %s", savePath.c_str());
+        return;
     }
     if (!TakeScreenCap(savePath)) {
         LOGE("Screen Capture Failed!");
+        return;
     }
     close(fd);
 }
 
 
-void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
+void Capture::ThreadGetCatchSocket()
 {
+    std::string captureTime = std::to_string(curTime);
     std::string captureDir = "/data/local/tmp/capture";
     std::string savePath = captureDir + "/screenCap_" + captureTime + ".jpeg";
     std::string cmdResult;
@@ -108,15 +111,11 @@ void Capture::ThreadGetCatchSocket(const std::string &captureTime) const
             LOGD("%s created successfully!", captureDir.c_str());
         }
     };
-    
-    char realPath[PATH_MAX] = {0x00};
-    if (realpath(savePath.c_str(), realPath) == nullptr) {
-        std::cout << "" << std::endl;
-    }
 
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
-        LOGE("Failed to open file: %s", savePath.c_str());
+        LOGE("Capture::ThreadGetCatchSocket Failed to open file");
+        return;
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
     if (!SPUtils::LoadCmd(snapshot + savePath, cmdResult)) {
@@ -135,11 +134,10 @@ void Capture::TriggerGetCatch()
     tStart.detach();
 }
 
-void Capture::TriggerGetCatchSocket(long long captureTime) const
+void Capture::TriggerGetCatchSocket()
 {
-    std::string curTimeStr = std::to_string(captureTime);
-    auto tStart = std::thread([this, curTimeStr]() {
-        this->ThreadGetCatchSocket(curTimeStr);
+    auto tStart = std::thread([this]() {
+        this->ThreadGetCatchSocket();
     });
     tStart.detach();
 }
@@ -191,6 +189,10 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     png_destroy_write_struct(&pngStruct, &pngInfo);
     (void)fclose(fp);
     return true;
+}
+void Capture::SetCollectionNum()
+{
+    callNum = 0;
 }
 }
 }

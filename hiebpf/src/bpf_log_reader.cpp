@@ -121,6 +121,7 @@ int BPFLogReader::EnableTracePipe() const
     char c {'1'};
     int ret = write(fd, &c, sizeof(c));
     if (ret != sizeof(c)) {
+        close(fd);
         return -1;
     }
     close(fd);

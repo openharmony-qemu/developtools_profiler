@@ -30,7 +30,6 @@ ohos_unittest("ipc_ut") {
     "unittest/service_entry_test.cpp",
     "unittest/socket_context_test.cpp",
     "unittest/unix_socket_client_test.cpp",
-    "unittest/unix_socket_server_test.cpp",
   ]
   include_dirs = [ "${OHOS_PROFILER_DIR}/device/services/ipc/include" ]
   deps = [

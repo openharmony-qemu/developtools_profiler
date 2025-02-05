@@ -64,7 +64,9 @@ public:
     void SetLayerName(std::string sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    void CalcFpsAndJitters();
+    FpsInfo GetChangedLayerFps();
+    bool CalcFpsAndJitters(bool isBreak);
+    long long CalculateJitter() const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoMax;
     FpsInfo prevResultFpsInfo;
@@ -80,6 +82,11 @@ public:
     void SetProcessId(const std::string &pid);
     void SetRkFlag();
     std::string FindFpsRefreshrate();
+    std::string GetHardenRefreshrate(std::string &screenInfo) const;
+    void CalcJitters();
+    static inline bool firstDump = false;
+    static inline bool isGameApp = false;
+    bool SetOtherDeviceFlag();
 private:
     FPS() {};
     FPS(const FPS &);
@@ -100,6 +107,8 @@ private:
     bool rkFlag = false;
     const std::string screenPath = "/sys/class/graphics/fb0/lcd_fps_scence";
     std::string processId = "";
+    std::string gameLayerName;
+    bool isOtherDevice = false;
 };
 }
 }

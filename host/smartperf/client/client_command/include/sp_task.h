@@ -23,7 +23,6 @@
 #include <mutex>
 #include <climits>
 #include "parameters.h"
-#include "sp_csv_util.h"
 #include "sdk_data_recv.h"
 #include "GpuCounter.h"
 #include "lock_frequency.h"
@@ -84,7 +83,7 @@ public:
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
     void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
-    void CreatPath(std::string Path);
+    void CreatPath(std::string path);
     void ConfigDataThread();
     void StopSdkRecv();
     void StopGpuCounterRecv();
@@ -98,6 +97,8 @@ public:
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);
     std::string GetTcpToken();
+    void ProcessErrorData(SPData &spdata);
+    std::string GetCsvTitle();
 
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
@@ -108,6 +109,9 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
+    int GetCurrentBattary();
+    void SetProfilerPid();
+    std::map<std::string, std::string> SetTaskInfo();
 
 private:
     TaskInfo curTaskInfo;
@@ -129,8 +133,14 @@ private:
     LockFrequency &lockFreq = LockFrequency::GetInstance();
     bool recordState = false;
     bool screenshotFlag = false;
+    bool recordTrace = false;
     time_t realTimeStart = 0;
     std::string tcpToken = "";
+    long long nextTime = 0;
+    int battaryStart = 0;
+    int battaryEnd = 0;
+    unsigned int dataSize = 0;
+    std::string csvTitle = "";
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

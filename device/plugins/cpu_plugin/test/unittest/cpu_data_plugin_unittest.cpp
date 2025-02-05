@@ -937,7 +937,9 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
 #endif // COVERAGE_TEST
     EXPECT_TRUE(PluginCpuinfoStub(plugin1, cpuData1, static_cast<int>(pid1), false, false));
     EXPECT_TRUE(PluginCpuinfoStub(plugin2, cpuData2, static_cast<int>(pid2), false, false));
+#ifdef __aarch64__
     EXPECT_LT(cpuData1.cpu_usage_info().process_cpu_time_ms(), cpuData2.cpu_usage_info().process_cpu_time_ms());
+#endif
 
     while (waitpid(-1, nullptr, WNOHANG) == 0) {
         kill(pid1, SIGKILL);

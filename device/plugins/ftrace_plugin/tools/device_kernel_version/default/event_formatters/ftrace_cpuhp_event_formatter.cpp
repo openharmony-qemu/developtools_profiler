@@ -45,6 +45,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cpuhp_enter) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cpuhp_enter) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -58,6 +63,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             "cpuhp_exit:  cpu: %04u  state: %3d step: %3d ret: %d", msg.cpu(), msg.state(), msg.idx(), msg.ret());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(cpuhp_exit) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cpuhp_exit) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -86,6 +96,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(cpuhp_multi_enter) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(cpuhp_multi_enter) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

@@ -25,7 +25,6 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "dfx_regs_get.h"
-#include "c/executor_task.h"
 #include "common.h"
 #include "hook_common.h"
 #include "hook_socket_client.h"
@@ -43,9 +42,10 @@
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
 
-static pthread_key_t g_disableHookFlag;
+static pthread_key_t g_disableHookFlag = 10000;
 static pthread_key_t g_hookTid;
-static pthread_key_t g_updateThreadNameCount;
+static pthread_key_t g_updateThreadNameCount = 10000;
+static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 
@@ -68,7 +68,7 @@ std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
-static pid_t g_hookPid = 0;
+static std::atomic<pid_t> g_hookPid = 0;
 static ClientConfig g_ClientConfig = {0};
 static uint32_t g_maxSize = INT_MAX;
 static std::unordered_map<std::string, uint32_t> g_memTagMap;
@@ -81,6 +81,7 @@ constexpr int FIRST_HASH = 16;
 constexpr int SECOND_HASH = 13;
 constexpr int THRESHOLD = 256;
 constexpr int DIVIDE_VAL = 64;
+constexpr uintptr_t MAX_UNWIND_ADDR_RANGE = 16 * 1024;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
@@ -165,7 +166,7 @@ pid_t GetRealPid(void)
     char buf[STATUS_LINE_SIZE] = {0};
     FILE *fp = fopen(path, "r");
     CHECK_NOTNULL(fp, -1, "fopen fail");
-    while (!feof(fp)) {
+    while (fp != nullptr && !feof(fp)) {
         if (fgets(buf, STATUS_LINE_SIZE, fp) == nullptr) {
             fclose(fp);
             return -1;
@@ -242,21 +243,49 @@ void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
-    g_miStart = mallinfo2();
-    COMMON::PrintMallinfoLog("before hook(byte) => ", g_miStart);
     g_mallocTimes = 0;
     g_hookClient.reset();
     std::lock_guard<std::recursive_timed_mutex> guardFilter(g_FilterMapMutex);
     GetMainThreadRuntimeStackRange(g_filterStaLibRange);
+    g_hookPid = GetRealPid();
+    ParseSelfMaps(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid, &g_ClientConfig, &g_sampler,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
     return nullptr;
+}
+
+static void InitHookTidKey()
+{
+    if (pthread_key_create(&g_hookTid, nullptr) != 0) {
+        return;
+    }
+    pthread_setspecific(g_hookTid, nullptr);
+}
+
+static bool InitTheadKey()
+{
+    if (g_disableHookFlag != 10000) { // 10000: initial value
+        pthread_key_delete(g_disableHookFlag);
+    }
+    if (pthread_key_create(&g_disableHookFlag, nullptr) != 0) {
+        return false;
+    }
+    pthread_setspecific(g_disableHookFlag, nullptr);
+    pthread_once(&g_onceFlag, InitHookTidKey);
+    if (g_updateThreadNameCount != 10000) { // 10000: initial value
+        pthread_key_delete(g_updateThreadNameCount);
+    }
+    if (pthread_key_create(&g_updateThreadNameCount, nullptr) != 0) {
+        return false;
+    }
+    pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
+    return true;
 }
 
 bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
@@ -267,13 +296,9 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
         return false;
     }
     pthread_detach(threadStart);
-    g_hookPid = GetRealPid();
-    pthread_key_create(&g_disableHookFlag, nullptr);
-    pthread_setspecific(g_disableHookFlag, nullptr);
-    pthread_key_create(&g_hookTid, nullptr);
-    pthread_setspecific(g_hookTid, nullptr);
-    pthread_key_create(&g_updateThreadNameCount, nullptr);
-    pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
+    if (!InitTheadKey()) {
+        return false;
+    }
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
     int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
@@ -294,9 +319,6 @@ void* ohos_release_on_end(void*)
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
-    pthread_key_delete(g_disableHookFlag);
-    pthread_key_delete(g_hookTid);
-    pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
     return nullptr;
 }
@@ -333,40 +355,46 @@ bool FilterStandardSoIp(uint64_t ip)
 }
 
 #if defined(__aarch64__)
-static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t* ip, int stackSize,
-                                                          const char* startPtr, const char* endPtr)
+static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t* ips)
 {
-    void** startfp = (void**)__builtin_frame_address(0);
-    void** fp = startfp;
+    uintptr_t stackBottom = 0;
+    uintptr_t stackTop = 0;
+    uintptr_t stackPtr = reinterpret_cast<uintptr_t>(__builtin_frame_address(0));
     int depth = 0;
+    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid.load() == GetCurThreadId())) {
+        return depth;
+    }
+
+    uintptr_t startFp = stackPtr;
+    uintptr_t nextFp = *reinterpret_cast<uintptr_t*>(startFp);
+    if (nextFp <= stackPtr) {
+        return depth;
+    }
+    uintptr_t fp = nextFp; // skip current frame
+
     int count = 0;
-    uint64_t tempIp = 0;
-    while (depth < maxDepth) {
-        if (fp < (void**)startPtr || (fp + 1) >= (void**)endPtr) {
+    uint64_t ip = 0;
+    while (depth < maxDepth && (fp - startFp < MAX_UNWIND_ADDR_RANGE)) {
+        if (fp < stackBottom || fp >= stackTop - sizeof(uintptr_t)) {
             break;
         }
-        void** nextFp = (void**)*fp;
-        if (nextFp <= fp) {
-            break;
-        }
-        if (((nextFp - startfp) * sizeof(void*)) > static_cast<unsigned long>(stackSize)) {
-            break;
-        }
-        fp = nextFp;
-        tempIp = *(reinterpret_cast<unsigned long*>(fp + 1));
-        if (tempIp <= TEMP_IP) {
-            break;
-        }
+        ip = *reinterpret_cast<uintptr_t*>(fp + sizeof(uintptr_t));
         if (g_ClientConfig.responseLibraryMode) {
-            if (++count >= RESPONSE_LIBRARY_MODE_DEPTH || !FilterStandardSoIp(tempIp)) {
+            if (++count >= RESPONSE_LIBRARY_MODE_DEPTH || !FilterStandardSoIp(ip)) {
                 break;
             }
         } else {
-            ip[depth++] = tempIp;
+            ips[depth++] = ip > 0x4 ? ip - 0x4 : ip; // adjust pc in Arm64 architecture
         }
+
+        nextFp = *reinterpret_cast<uintptr_t*>(fp);
+        if (nextFp <= stackPtr) {
+            break;
+        }
+        fp = nextFp;
     }
     if (g_ClientConfig.responseLibraryMode) {
-        ip[0] = tempIp;
+        ips[0] = ip > 0x4 ? ip - 0x4 : ip;
         depth = 1;
     }
     return depth;
@@ -383,6 +411,21 @@ uint64_t getJsChainId()
     return 0;
 }
 #endif
+
+static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPtr, StackRawData& rawdata)
+{
+    uintptr_t* regs = reinterpret_cast<uintptr_t*>(&(rawdata.regs));
+    GetLocalRegs(regs);
+    stackPtr = reinterpret_cast<uintptr_t>(regs[RegisterGetSP(buildArchType)]);
+    uintptr_t stackBottom = 0;
+    uintptr_t stackTop = 0;
+    int stackSize = 0;
+    if (!GetRuntimeStackRange(stackPtr, stackBottom, stackTop, g_hookPid.load() == GetCurThreadId())) {
+        return stackSize;
+    }
+    stackSize = static_cast<int>(stackTop - stackPtr);
+    return stackSize;
+}
 
 void* hook_malloc(void* (*fn)(size_t), size_t size)
 {
@@ -426,41 +469,21 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-        stackSize = 0;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
-        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-        GetLocalRegs(regs);
-        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
-        if (stackendptr == nullptr) {
-            stackSize = 0;
-        }
+        stackSize = GetStackSize(stackPtr, rawdata);
     }
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
@@ -473,7 +496,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -515,8 +538,9 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
         if (g_mallocTimes % PRINT_INTERVAL == 0) {
             PROFILER_LOG_ERROR(LOG_CORE,
-                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-                g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %"
+                PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(),
+                g_timeCost.load() / g_mallocTimes.load());
         }
 #endif
         return ret;
@@ -531,41 +555,22 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-        stackSize = 0;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
-        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-        GetLocalRegs(regs);
-        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
-        if (stackendptr == nullptr) {
-            stackSize = 0;
-        }
+        stackSize = GetStackSize(stackPtr, rawdata);
     }
+
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = len;
     rawdata.addr = ret;
@@ -578,7 +583,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -587,8 +592,9 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     g_dataCounts += stackSize;
     if (g_mallocTimes % PRINT_INTERVAL == 0) {
         PROFILER_LOG_ERROR(LOG_CORE,
-            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            "g_aligned_allocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %"
+            PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(),
+            g_timeCost.load() / g_mallocTimes.load());
     }
 #endif
     return ret;
@@ -641,42 +647,22 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         return pRet;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-        stackSize = 0;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
-        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-        GetLocalRegs(regs);
-        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
-        if (stackendptr == nullptr) {
-            stackSize = 0;
-        }
+        stackSize = GetStackSize(stackPtr, rawdata);
     }
 
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
@@ -689,7 +675,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -752,49 +738,21 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     }
     StackRawData rawdata = {{{{0}}}};
     StackRawData freeData = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-        stackSize = 0;
-        if (g_ClientConfig.freeStackData) {
-            (void)memcpy_s(freeData.ip, sizeof(freeData.ip) / sizeof(uint64_t),
-                           rawdata.ip, sizeof(rawdata.ip) / sizeof(uint64_t));
-        }
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
 #endif
     } else {
-        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-        GetLocalRegs(regs);
-        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
-        if (stackendptr == nullptr) {
-            stackSize = 0;
-        }
-        if (g_ClientConfig.freeStackData) {
-            (void)memcpy_s(freeData.regs, sizeof(freeData.regs) / sizeof(char),
-                           rawdata.regs, sizeof(rawdata.regs) / sizeof(char));
-        }
+        stackSize = GetStackSize(stackPtr, rawdata);
     }
 
     rawdata.type = MALLOC_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
@@ -817,7 +775,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         freeRealSize = realSize;
     }
     holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0); // 0: Don't unwind the freeData
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -900,44 +858,22 @@ void hook_free(void (*free_func)(void*), void* p)
         return;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     rawdata.ts = freeTime;
-
     if (g_ClientConfig.freeStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-            stackSize = 0;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
-            unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-            GetLocalRegs(regs);
-            stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-            if (stackendptr == nullptr) {
-                stackSize = 0;
-            }
+            stackSize = GetStackSize(stackPtr, rawdata);
         }
     }
-
     rawdata.type = FREE_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = 0;
     rawdata.addr = p;
@@ -947,7 +883,7 @@ void hook_free(void (*free_func)(void*), void* p)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -966,7 +902,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
 {
     StackRawData curRawdata = {{{{0}}}};
     curRawdata.addr = rawdata.addr;
-    curRawdata.pid = static_cast<uint32_t>(g_hookPid);
+    curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     curRawdata.mallocSize = rawdata.mallocSize;
     curRawdata.mmapArgs.offset = offset;
     curRawdata.type = OHOS::Developtools::NativeDaemon::MMAP_FILE_TYPE;
@@ -1025,42 +961,22 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        void* stackAddr = nullptr;
-        size_t coroutineStackSize = 0;
-        if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-            stackSize = static_cast<int>(coroutineStackSize);
-            stackptr = reinterpret_cast<const char*>(stackAddr);
-            stackendptr = stackptr + coroutineStackSize;
-        } else {
-            stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-        }
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-        stackSize = 0;
+        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
-        unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-        GetLocalRegs(regs);
-        stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-        GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-        stackSize = stackendptr - stackptr;
-        if (stackendptr == nullptr) {
-            stackSize = 0;
-        }
+        stackSize = GetStackSize(stackPtr, rawdata);
     }
 
     rawdata.type = MMAP_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = ret;
@@ -1090,7 +1006,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1128,42 +1044,22 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-            stackSize = 0;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
-            unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-            GetLocalRegs(regs);
-            stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-            if (stackendptr == nullptr) {
-                stackSize = 0;
-            }
+            stackSize = GetStackSize(stackPtr, rawdata);
         }
     }
 
     rawdata.type = MUNMAP_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = addr;
@@ -1173,7 +1069,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1211,7 +1107,7 @@ int hook_prctl(int(*fn)(int, ...),
         StackRawData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
-        rawdata.pid = static_cast<uint32_t>(g_hookPid);
+        rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
         rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
         rawdata.mallocSize = arg4;
         rawdata.addr = reinterpret_cast<void*>(arg3);
@@ -1252,42 +1148,22 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     }
     int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
-    const char* stackptr = nullptr;
-    const char* stackendptr = nullptr;
+    uintptr_t stackPtr = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
 
     if (isUsing) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            void* stackAddr = nullptr;
-            size_t coroutineStackSize = 0;
-            if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
-                stackSize = static_cast<int>(coroutineStackSize);
-                stackptr = reinterpret_cast<const char*>(stackAddr);
-                stackendptr = stackptr + coroutineStackSize;
-            } else {
-                stackptr = reinterpret_cast<const char*>(__builtin_frame_address(0));
-                GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-                stackSize = stackendptr - stackptr;
-            }
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip, stackSize, stackptr, stackendptr);
-            stackSize = 0;
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
-            unsigned long* regs = reinterpret_cast<unsigned long*>(&(rawdata.regs));
-            GetLocalRegs(regs);
-            stackptr = reinterpret_cast<const char*>(regs[RegisterGetSP(buildArchType)]);
-            GetRuntimeStackEnd(stackptr, &stackendptr, g_hookPid, GetCurThreadId());  // stack end pointer
-            stackSize = stackendptr - stackptr;
-            if (stackendptr == nullptr) {
-                stackSize = 0;
-            }
+            stackSize = GetStackSize(stackPtr, rawdata);
         }
     }
     rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid);
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
@@ -1298,7 +1174,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1445,7 +1321,7 @@ static bool IsPidChanged(void)
         return false;
     } else {
         // native app & sa service
-        g_isPidChanged = (g_hookPid != pid);
+        g_isPidChanged = (g_hookPid.load() != 0 && g_hookPid.load() != pid);
     }
     return g_isPidChanged;
 }

@@ -33,6 +33,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_disable) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_disable) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -47,6 +52,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_disable_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_disable_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -59,6 +69,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         int len = snprintf_s(buffer, BUFFER_SIZE, BUFFER_SIZE - 1, "clk_enable: %s", msg.name().c_str());
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of print event(clk_enable) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_enable) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -74,6 +89,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_enable_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_enable_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -88,6 +108,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_prepare) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_prepare) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -101,6 +126,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_prepare_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_prepare_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -117,6 +147,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_set_parent) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_parent) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -131,6 +166,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_set_parent_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_parent_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -147,6 +187,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_set_phase) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_phase) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -161,6 +206,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_set_phase_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_phase_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });
@@ -177,6 +227,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_set_rate) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_rate) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -192,6 +247,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_set_rate_complete) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_set_rate_complete) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -206,6 +266,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
             PROFILER_LOG_WARN(LOG_CORE,
                               "maybe, the contents of print event(clk_unprepare) msg had be cut off in outfile");
         }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_unprepare) msg snprintf_s error");
+            return "";
+        }
         return std::string(buffer);
     });
 
@@ -219,6 +284,11 @@ REGISTER_FTRACE_EVENT_FORMATTER(
         if (len >= BUFFER_SIZE - 1) {
             PROFILER_LOG_WARN(
                 LOG_CORE, "maybe, the contents of print event(clk_unprepare_complete) msg had be cut off in outfile");
+        }
+        if (len < 0) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "maybe, the contents of print event(clk_unprepare_complete) msg snprintf_s error");
+            return "";
         }
         return std::string(buffer);
     });

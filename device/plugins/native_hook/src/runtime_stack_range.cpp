@@ -19,18 +19,13 @@
 #include <cstring>
 #include <map>
 #include <sys/types.h>
+#include "c/executor_task.h"
 #include "get_thread_id.h"
 #include "utilities.h"
 
 namespace {
-constexpr int BASE_MIN = 2;
-constexpr int BASE_CENTRE = 10;
 constexpr int BASE_MAX = 16;
 
-struct StackScope {
-    const char* start;
-    const char* end;
-};
 struct StandardLibrary {
     StandardLibrary(uint64_t begin, uint64_t end, const std::string& name)
         : soBegin_(begin), soEnd_(end), name_(name)
@@ -40,103 +35,68 @@ struct StandardLibrary {
     std::string name_;
 };
 
-static StackScope g_mainStack;
 static std::map<std::string, StandardLibrary> g_stdLib;
+static uintptr_t g_stackMainStart = 0;
+static uintptr_t g_stackMainEnd = 0;
 }  // namespace
 
-static void GetThreadRuntimeStackRange(const char** start, const char** end)
+static bool GetMainStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
-    *start = nullptr;
-    *end = nullptr;
-    pthread_t tid = pthread_self();
-    pthread_attr_t attr;
-    if (pthread_getattr_np(tid, &attr) == 0) {
-        size_t stackSize;
-        if (pthread_attr_getstack(&attr, reinterpret_cast<void**>(const_cast<char**>(start)), &stackSize) == 0) {
-            *end = *start + stackSize;
-        }
-        pthread_attr_destroy(&attr);
-    }
+    stackBottom = g_stackMainStart;
+    stackTop = g_stackMainEnd;
+    return (stackBottom != 0 && stackTop != 0);
 }
 
-static long long CvtStrToInt(const char* str, int base)
+static bool GetSubStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
-    long long result = 0;
-    if (base >= BASE_MIN && base <= BASE_CENTRE) {
-        while (*str) {
-            if (*str >= '0' && *str <= '0' + base - 1) {
-                result = result * base + static_cast<long long>((*str) - '0');
-            } else {
-                break;
-            }
-            ++str;
-        }
-    } else if (base > BASE_CENTRE && base <= BASE_MAX) {
-        while (*str) {
-            if (*str >= '0' && *str <= '0' + base - 1) {
-                result = result * base + static_cast<long long>(*str) - '0';
-            } else if (*str >= 'a' && *str <= 'a' + base - 0x0a - 1) {
-                result = result * base + static_cast<long long>(*str) - 'a' + 0x0a;
-            } else if (*str >= 'A' && *str <= 'A' + base - 0x0a - 1) {
-                result = result * base + static_cast<long long>(*str) - 'A' + 0x0a;
-            } else {
-                break;
-            }
-            ++str;
-        }
-    } else {
-        result = 0;
+    bool ret = false;
+    pthread_attr_t tattr;
+    void* base = nullptr;
+    size_t size = 0;
+    if (pthread_getattr_np(pthread_self(), &tattr) != 0) {
+        return ret;
     }
-    return result;
+    if (pthread_attr_getstack(&tattr, &base, &size) == 0) {
+        stackBottom = reinterpret_cast<uintptr_t>(base);
+        stackTop = reinterpret_cast<uintptr_t>(base) + size;
+        ret = true;
+    }
+    pthread_attr_destroy(&tattr);
+    return ret;
 }
 
-static int IsEmptyString(const std::string& str)
+static bool GetSigAltStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
-    size_t idx = 0;
-    size_t size = str.size();
-    while (idx < size) {
-        if (!isspace(static_cast<unsigned char>(str[idx])) && str[idx] != 0) {
-            return 0;
+    bool ret = false;
+    stack_t altStack;
+    if (sigaltstack(nullptr, &altStack) != -1) {
+        if ((static_cast<uint32_t>(altStack.ss_flags) & SS_ONSTACK) != 0) {
+            stackBottom = reinterpret_cast<uintptr_t>(altStack.ss_sp);
+            stackTop = reinterpret_cast<uintptr_t>(altStack.ss_sp) + altStack.ss_size;
+            ret = true;
         }
-        ++idx;
     }
-    return 1;
+    return ret;
 }
 
-static void GetAnUnlimitedLine(FILE* fp, std::string& buf)
+static bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
 {
-    if (!fp) {
-        buf.resize(0);
-        return;
+    bool ret = false;
+    void* stackAddr = nullptr;
+    size_t coroutineStackSize = 0;
+    if (ffrt_get_current_coroutine_stack(&stackAddr, &coroutineStackSize)) {
+        stackBottom = reinterpret_cast<uintptr_t>(stackAddr);
+        stackTop = stackBottom + coroutineStackSize;
+        ret = true;
     }
-    char* retLine = nullptr;
-    if (buf.size() == 0) {
-        buf.resize(INIT_LINE_SIZE);
-    }
-    
-    int offset = 0;
-    int length = 0;
-    do {
-        if (offset + length >= static_cast<int>(buf.size())) {
-            buf.resize(buf.size() + INC_LINE_SIZE);
-        }
-        retLine = fgets(&buf[0] + offset, buf.size() - offset, fp);
-        if (retLine == nullptr) {
-            break;
-        }
-        length = static_cast<int>(strlen(&buf[0] + offset));
-        if (offset + length - 1 >= 0 && buf[offset + length - 1] == '\n') {
-            break;
-        }
-        offset += length;
-    } while (1);
+    return ret;
 }
 
 bool IsLegalSoName(const std::string &fileName)
 {
-    if (fileName.front() == '[' or fileName.back() == ']' or
-        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 or
-        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 or
+    if (fileName.front() == '[' || fileName.back() == ']' ||
+        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 ||
+        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 ||
         std::strncmp(fileName.c_str(), "//anon", sizeof("//anon")) == 0) {
         return false;
     }
@@ -164,27 +124,48 @@ static void GetStandardLibraryRange(std::string& line)
     }
 }
 
-void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange)
+bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread)
 {
-    std::string line;
-    FILE* fp = fopen("/proc/self/maps", "re");
-    if (fp == nullptr) {
-        return;
-    }
-    while (!feof(fp)) {
-        line.clear();
-        GetAnUnlimitedLine(fp, line);
-        if (IsEmptyString(line)) {
-            continue;
+    bool ret = false;
+    if (isMainThread) {
+        ret = GetMainStackRange(stackBottom, stackTop);
+    } else {
+        ret = GetSubStackRange(stackBottom, stackTop);
+        if (stackPtr < stackBottom || stackPtr >= stackTop) {
+            ret = GetSigAltStackRange(stackBottom, stackTop);
         }
-        if (line.find("[stack]") != std::string::npos) {
-            std::string::size_type concatPos = line.find('-');
-            if (concatPos != std::string::npos) {
-                g_mainStack.start = reinterpret_cast<char*>(CvtStrToInt(line.c_str(), BASE_MAX));
-                g_mainStack.end = reinterpret_cast<char*>(CvtStrToInt(line.c_str() + concatPos + 1, BASE_MAX));
+    }
+    if (stackPtr < stackBottom || stackPtr >= stackTop) {
+        ret = GetCoroutineStackRange(stackBottom, stackTop);
+    }
+    return ret && (stackPtr >= stackBottom && stackPtr < stackTop);
+}
+
+bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange)
+{
+    FILE* fp = fopen("/proc/self/maps", "r");
+    bool ret = false;
+    if (fp == nullptr) {
+        return ret;
+    }
+    char mapInfo[256] = {0}; // 256: map info size
+    int pos = 0;
+    uint64_t begin = 0;
+    uint64_t end = 0;
+    uint64_t offset = 0;
+    char perms[5] = {0}; // 5:rwxp
+    while (fgets(mapInfo, sizeof(mapInfo), fp) != nullptr) {
+        if (strstr(mapInfo, "[stack]") != nullptr) {
+            if (sscanf_s(mapInfo, "%" SCNxPTR "-%" SCNxPTR " %4S %" SCNxPTR " %*X:%*X %*d%n", &begin, &end,
+                &perms, sizeof(perms), &offset, &pos) != 4) { // 4:scan size
+                    continue;
             }
-        } else if (line.find("ld-musl") != std::string::npos || line.find("libc++") != std::string::npos) {
-            GetStandardLibraryRange(line);
+            g_stackMainStart = static_cast<uintptr_t>(begin);
+            g_stackMainEnd = static_cast<uintptr_t>(end);
+            ret = true;
+        } else if (strstr(mapInfo, "ld-musl") != nullptr || strstr(mapInfo, "libc++") != nullptr) {
+            std::string lineStr = mapInfo;
+            GetStandardLibraryRange(lineStr);
         }
     }
     if (fclose(fp) != 0) {
@@ -193,6 +174,7 @@ void GetMainThreadRuntimeStackRange(std::vector<std::pair<uint64_t, uint64_t>>& 
     for (const auto& [soName, stdLibrary]: g_stdLib) {
         filterStaLibRange.emplace_back(stdLibrary.soBegin_, stdLibrary.soEnd_);
     }
+    return ret;
 }
 
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
@@ -223,54 +205,5 @@ void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uin
         filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
     } else {
         it->second = iter->second.soEnd_;
-    }
-}
-
-static bool IfContained(const char* start, const char* end, const char* ptr)
-{
-    bool ret = (ptr >= start && ptr < end);
-    return ret;
-}
-
-static void GetRuntimeSigalAltStackRange(char** start, char** end)
-{
-    *start = nullptr;
-    *end = nullptr;
-
-    stack_t altStack;
-
-    if (sigaltstack(nullptr, &altStack) != -1) {
-        if ((altStack.ss_flags & SS_ONSTACK) != 0) {
-            *start = reinterpret_cast<char*>(altStack.ss_sp);
-            *end = reinterpret_cast<char*>(altStack.ss_sp) + altStack.ss_size;
-        }
-    }
-}
-
-static bool IfSubThread(pid_t pid, pid_t tid)
-{
-    return pid != tid;
-}
-
-void GetRuntimeStackEnd(const char* stackptr, const char** end, pid_t pid, pid_t tid)
-{
-    const char* start = nullptr;
-    *end = nullptr;
-    bool isSubThread = IfSubThread(pid, tid);
-    if (isSubThread) {
-        GetThreadRuntimeStackRange(&start, end);
-    } else {
-        start = g_mainStack.start;
-        *end = g_mainStack.end;
-    }
-    if (!IfContained(start, *end, stackptr)) {
-        char *sigStackStart = nullptr;
-        char *sigStackEnd = nullptr;
-        GetRuntimeSigalAltStackRange(&sigStackStart, &sigStackEnd);
-        if (IfContained(sigStackStart, sigStackEnd, stackptr)) {
-            *end = sigStackEnd;
-        } else if (!(!isSubThread && stackptr < *end)) {
-            *end = nullptr;
-        }
     }
 }

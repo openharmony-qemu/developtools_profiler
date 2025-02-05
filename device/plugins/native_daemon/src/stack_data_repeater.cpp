@@ -32,6 +32,49 @@ StackDataRepeater::~StackDataRepeater()
     Close();
 }
 
+RawStackPtr StackDataRepeater::GetRawStack()
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (!rawDataCacheQueue_.empty()) {
+        RawStackPtr rawStack = rawDataCacheQueue_.back();
+        rawDataCacheQueue_.pop_back();
+        return rawStack;
+    }
+    return std::make_shared<RawStack>();
+}
+
+void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
+{
+    std::unique_lock<std::mutex> lock(cacheMutex_);
+    if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
+        rawStack->Reset();
+        rawDataCacheQueue_.push_back(rawStack);
+    }
+}
+
+bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray,
+                                         uint32_t batchCount)
+{
+    std::unique_lock<std::mutex> lock(mutex_);
+    if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
+        PROFILER_LOG_INFO(LOG_CORE, "no need to put nullptr if queue has data, rawDataQueue_.size() = %zu",
+                          rawDataQueue_.size());
+        return true;
+    }
+    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
+        slotCondVar_.wait(lock);
+    }
+    if (closed_) {
+        return false;
+    }
+    for (uint32_t i = 0; i < batchCount; i++) {
+        rawDataQueue_.push_back(rawDataArray[i]);
+    }
+    lock.unlock();
+    itemCondVar_.notify_one();
+    return true;
+}
+
 size_t StackDataRepeater::Size()
 {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -54,47 +97,6 @@ void StackDataRepeater::Close()
     PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
     slotCondVar_.notify_all();
     itemCondVar_.notify_all();
-}
-
-RawStackPtr StackDataRepeater::GetRawStack()
-{
-    std::unique_lock<std::mutex> lock(cacheMutex_);
-    if (!rawDataCacheQueue_.empty()) {
-        RawStackPtr rawStack = rawDataCacheQueue_.back();
-        rawDataCacheQueue_.pop_back();
-        return rawStack;
-    }
-    return std::make_shared<RawStack>();
-}
-
-void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
-{
-    std::unique_lock<std::mutex> lock(cacheMutex_);
-    if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
-        rawStack->Reset();
-        rawDataCacheQueue_.push_back(rawStack);
-    }
-}
-
-bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount)
-{
-    std::unique_lock<std::mutex> lock(mutex_);
-    if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
-        PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray: no need to put nullptr if queue has data");
-        return true;
-    }
-    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
-        slotCondVar_.wait(lock);
-    }
-    if (closed_) {
-        return false;
-    }
-    for (uint32_t i = 0; i < batchCount; i++) {
-        rawDataQueue_.push_back(rawDataArray[i]);
-    }
-    lock.unlock();
-    itemCondVar_.notify_one();
-    return true;
 }
 
 bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAccurately)
@@ -145,7 +147,8 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
     uint32_t rawDataQueueSize = 0;
     std::unique_lock<std::mutex> lock(mutex_);
     if (statInterval > 0 &&
-        !itemCondVar_.wait_for(lock, std::chrono::milliseconds(during), [&] { return !rawDataQueue_.empty(); })) {
+        !itemCondVar_.wait_for(lock, std::chrono::milliseconds(during),
+                               [&] { return ((!rawDataQueue_.empty()) || (closed_)); })) {
         if (rawDataQueue_.empty() && !closed_) {
             isTimeOut = true;
             lock.unlock();

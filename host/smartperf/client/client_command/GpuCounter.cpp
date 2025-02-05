@@ -32,14 +32,14 @@ namespace OHOS {
         void* GpuCounter::GetSoHandle()
         {
             char soFilePathChar[PATH_MAX] = {0x00};
-            if ((realpath(PLUGIN_SO_PATH.c_str(), soFilePathChar) == nullptr)) {
-                LOGE("%s is not exist.", PLUGIN_SO_PATH.c_str());
+            if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
+                WLOGE("%s is not exist.", pluginSoPath.c_str());
                 return nullptr;
             }
 
             void* handle = dlopen(soFilePathChar, RTLD_LAZY);
             if (!handle) {
-                LOGE("open GpuCounterPlugin so file error.");
+                WLOGE("open GpuCounterPlugin so file error.");
                 return nullptr;
             }
 
@@ -57,7 +57,11 @@ namespace OHOS {
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
+            if (!startGetGpuPerfInfo) {
+                WLOGE("GpuCounterPlugin Error loading symbol");
+                return;
+            }
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
@@ -66,15 +70,15 @@ namespace OHOS {
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
-                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                    WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
                 int ret = startGetGpuPerfInfo()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
                 if (ret != 0) {
-                    LOGE("GpuCounter call gameService error, ret = %d", ret);
+                    WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else {
-                LOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
+                WLOGE("GpuCounter state error, type: %d, state: %d", type, gcStatus);
             }
         }
 
@@ -85,7 +89,7 @@ namespace OHOS {
             }
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
-                LOGE("data dir %s is nullptr", path.c_str());
+                WLOGE("data dir %s is nullptr", path.c_str());
                 return;
             }
             std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/gpu_counter.csv";
@@ -94,7 +98,7 @@ namespace OHOS {
             mtx.lock();
             outFile.open(gpuCounterDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
-                LOGE("open GpuCounter data file failed.");
+                WLOGE("open GpuCounter data file failed.");
                 return;
             }
             std::string title = "startTime,"
@@ -168,7 +172,7 @@ namespace OHOS {
             }
 
             typedef GpuCounterPlugin *(*GetGpuCounterPlugin)();
-            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, CREATE_PLUGIN.c_str());
+            GetGpuCounterPlugin startGetGpuPerfInfo = (GetGpuCounterPlugin)dlsym(handle, createPlugin.c_str());
 
             int ret = startGetGpuPerfInfo()->StopGetGpuPerfInfo();
             if (ret == 0) {

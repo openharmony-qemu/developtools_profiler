@@ -16,8 +16,8 @@
 #include "include/lock_frequency.h"
 #include <thread>
 #include <chrono>
+#include <dlfcn.h>
 #include "include/sp_log.h"
-#include "test_server_client.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -27,15 +27,30 @@ namespace SmartPerf {
     }
     void LockFrequency::LockingThread()
     {
+        LOGD("Lock frequency thread create");
         const int loopLockTime = 4000;
-
-        LOGI("Lock frequency thread create");
+        char soFilePathChar[PATH_MAX] = {0x00};
+        if ((realpath(pluginSoPath.c_str(), soFilePathChar) == nullptr)) {
+            LOGE("%s is not exist.", pluginSoPath.c_str());
+            return;
+        }
+        void* handle = dlopen(soFilePathChar, RTLD_LAZY);
+        if (!handle) {
+            LOGE("open TestServerPlugin so file error.");
+            return;
+        }
+        typedef int32_t (*GetLockFreq)();
+        GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
+        if (!testServerPlugin) {
+            LOGE("Error loading symbol");
+            return;
+        }
         while (isCollecting) {
-            OHOS::testserver::TestServerClient::GetInstance().FrequencyLock();
+            testServerPlugin();
             std::this_thread::sleep_for(std::chrono::milliseconds(loopLockTime));
         }
 
-        LOGI("Lock frequency thread end");
+        LOGD("Lock frequency thread end");
     }
 
     void LockFrequency::SetIsCollecting(bool state)

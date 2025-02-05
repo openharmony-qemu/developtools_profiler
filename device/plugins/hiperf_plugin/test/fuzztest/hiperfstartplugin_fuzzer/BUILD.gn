@@ -44,7 +44,6 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
-    "//commonlibrary/c_utils/base/include",
   ]
   defines = [ "LITE_PROTO" ]
   external_deps = [

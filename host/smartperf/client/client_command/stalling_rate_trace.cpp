@@ -17,6 +17,7 @@
 #include <iostream>
 #include <regex>
 #include <cmath>
+#include <unordered_set>
 #include "include/stalling_rate_trace.h"
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
@@ -99,12 +100,15 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
+        LOGD("no app list Dynamic"); //没有APP list泳道
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
+        LOGD("no swiper Dynamic"); //没有swiper 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!tabsDynamicExists) {
+        LOGD("no tabs Dynamic"); //没有tabs 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         swiperDynamicExists ? swiperFrameLossRate : -1;
     } else {
@@ -116,6 +120,7 @@ void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
         if (swiperFrameLossRate > 0) {
+            LOGD("no app list hitchTime"); //没有app list卡顿次数
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
             frameLossRate = tabsFrameLossRate;
@@ -123,6 +128,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (swiperFrameLossRate == 0) {
+        LOGD("no swiper list hitchTime"); //没有swiper list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -131,6 +137,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (tabsFrameLossRate == 0) {
+        LOGD("no tabs list hitchTime"); //没有tabs list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (swiperFrameLossRate > 0) {
@@ -169,13 +176,7 @@ void StallingRateTrace::AddMultiLaneFrameRate()
 
 void StallingRateTrace::AppList(const std::string &line, const std::string &signS, const std::string &signF)
 {
-    if (line.find("H:LAUNCHER_APP_LAUNCH_FROM_ICON,") != std::string::npos ||
-        line.find("H:APP_LIST_FLING,") != std::string::npos ||
-        line.find("H:WEB_LIST_FLING") != std::string::npos ||
-        line.find("H:ABILITY_OR_PAGE_SWITCH,") != std::string::npos ||
-        line.find("H:APP_TRANSITION_TO_OTHER_APP,") != std::string::npos ||
-        line.find("H:LAUNCHER_APP_LAUNCH_FROM_DOCK,") != std::string::npos ||
-        line.find("H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,") != std::string::npos) {
+    if (IsAppLaunchPatternMatched(line)) {
         if (listFlag) {
             appListDynamicFinishTime = GetTimes(line, signF);
             LOGD("AppList line start: (%s), appListDynamicFinishTime: (%s)",
@@ -194,6 +195,7 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
         if (upperScreenFlag) {
             if (line.find("|H:Present Fence ") != std::string::npos) {
                 fenceId = GetFenceId(line);
+                LOGD("fenceID:(%d)", fenceId);
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
             if (line.find(waitFenceId) != std::string::npos) {
@@ -207,7 +209,8 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
     }
 }
 
-void StallingRateTrace::GetFrameLossTime(double curTime, double prevTime, double drawTime, double &totalFrameLossTime)
+void StallingRateTrace::GetFrameLossTime(double &curTime, double &prevTime,
+    double &drawTime, double &totalFrameLossTime)
 {
     if ((curTime - prevTime) > drawTime && prevTime != 0) {
         double diffTime = (curTime - prevTime) - drawTime;
@@ -281,9 +284,7 @@ void StallingRateTrace::UpdateRoundTime(double curFrameRate, SWIM_TYPE type)
 
 void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::string &signS, const std::string &signF)
 {
-    if (line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
-        line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos ||
-        line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
+    if (IsAppLaunchPatternMatched(line)) {
         if (swiperScrollFlag == 0) {
             swiperDynamicStartTime = GetTimes(line, signS);
             LOGD("AppSwiperScroll line start: (%s), swiperDynamicStartTime: (%s)",
@@ -293,9 +294,7 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
             swiperFlag = true;
         }
     }
-    if (line.find("H:APP_SWIPER_FLING,") != std::string::npos ||
-        line.find("H:APP_SWIPER_NO_ANIMATION_SWITCH") != std::string::npos ||
-        line.find("H:APP_SWITCH_FRAME_ANIMATION") != std::string::npos) {
+    if (IsAppLaunchPatternMatched(line)) {
         if (swiperFlingFlag == 1) {
             swiperDynamicFinishTime = GetTimes(line, signF);
             LOGD("AppSwiper FinishTime line: (%s), swiperDynamicFinishTime: (%s)",
@@ -328,13 +327,7 @@ void StallingRateTrace::AppSwiperScroll(const std::string &line, const std::stri
 
 void StallingRateTrace::APPTabs(const std::string &line, const std::string &signS, const std::string &signF)
 {
-    static const std::string appTabsNoAnimation = "H:APP_TABS_NO_ANIMATION_SWITCH";
-    static const std::string appTabsFrameAnimation = "H:APP_TABS_FRAME_ANIMATION";
-    static const std::string appTabsScroll = "H:APP_TABS_SCROLL,";
-
-    if (line.find(appTabsNoAnimation) != std::string::npos ||
-        line.find(appTabsFrameAnimation) != std::string::npos ||
-        line.find(appTabsScroll) != std::string::npos) {
+    if (IsAppLaunchPatternMatched(line)) {
         if (tabsFlag) {
             appTabsDynamicFinishTime = GetTimes(line, signF);
             LOGD("APPTabs line start: (%s), appTabsDynamicFinishTime: (%s)",
@@ -416,6 +409,43 @@ double StallingRateTrace::GetTimes(const std::string &line, const std::string &s
         }
     }
     return 0.0;
+}
+bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
+{
+    static const std::unordered_set<std::string> appLaunchPatterns = {
+        "H:LAUNCHER_APP_LAUNCH_FROM_ICON,",
+        "H:APP_LIST_FLING,",
+        "H:WEB_LIST_FLING",
+        "H:ABILITY_OR_PAGE_SWITCH,",
+        "H:APP_TRANSITION_TO_OTHER_APP,",
+        "H:LAUNCHER_APP_LAUNCH_FROM_DOCK,",
+        "H:LAUNCHER_APP_LAUNCH_FROM_APPCENTER,",
+        "H:APP_SWIPER_NO_ANIMATION_SWITCH",
+        "H:APP_SWITCH_FRAME_ANIMATION",
+        "H:APP_SWIPER_SCROLL,",
+        "H:APP_SWIPER_FLING,",
+        "H:APP_TABS_NO_ANIMATION_SWITCH",
+        "H:APP_TABS_FRAME_ANIMATION",
+        "H:APP_TABS_SCROLL,"
+    };
+    for (const auto &keyWords : appLaunchPatterns) {
+        size_t pos = line.find(keyWords);
+        if (pos != std::string::npos) {
+            if (pos > 0 && isspace(line[pos - 1])) {
+                continue;
+            }
+            if (pos + keyWords.length() < line.length() && !isspace(line[pos + keyWords.length()]) &&
+            line[pos + keyWords.length()] != ',') {
+                continue;
+            }
+            if (pos + keyWords.length() < line.length() && (line[pos + keyWords.length()] == ',')) {
+                return false;
+            }
+            LOGD("StallingRateTrace::IsAppLaunchPatternMatched: (%s)", keyWords.c_str());
+            return true;
+        }
+    }
+    return false;
 }
 }
 }

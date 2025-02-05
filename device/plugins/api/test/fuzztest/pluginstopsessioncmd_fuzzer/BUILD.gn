@@ -33,6 +33,8 @@ ohos_fuzztest("PluginStopSessionCmdFuzzTest") {
     "../../..:plugins_sources",
   ]
   external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]

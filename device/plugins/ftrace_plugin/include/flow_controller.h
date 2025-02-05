@@ -47,6 +47,10 @@ public:
     int StopCapture(void);
     void SetReportBasicData(bool isReportBasicData);
     bool ParseBasicData(void);
+    bool IsDataReady()
+    {
+        return dataReady_.load();
+    }
 
 private:
     DISALLOW_COPY_AND_MOVE(FlowController);
@@ -110,7 +114,7 @@ private:
     std::vector<std::shared_ptr<uint8_t>> ftraceBuffers_;
     std::atomic<bool> keepRunning_ = false;
     std::thread pollThread_ = {};
-
+    std::atomic<bool> dataReady_ = false;
     // for trace plugin config fields
     std::vector<std::string> requestEvents_ = {};   // 1
     std::vector<std::string> traceCategories_ = {}; // 2

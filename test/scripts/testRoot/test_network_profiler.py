@@ -14,13 +14,14 @@
 # limitations under the License.
 
 import pytest
-import subprocess
-import re
 import sys
-sys.path.append("..")
-from tools.utils import *
-import time
+import subprocess
 import threading
+import time
+sys.path.append("..")
+from tools.utils import touch_button
+
+
 SLEEP_TWO = 2
 SLEEP_THREE = 3
 SLEEP_FIVE = 5
@@ -38,7 +39,7 @@ def task(index):
 class TestHiprofilerNetworkProfiler:
     @pytest.mark.L0
     def test_network_profiler_multiple_times(self):
-        subprocess.check_output(f"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
         subprocess.check_output("hdc shell killall com.example.myapplication523")
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         time.sleep(SLEEP_TWO)
@@ -71,7 +72,7 @@ class TestHiprofilerNetworkProfiler:
         subprocess.check_output("hdc shell rm /data/local/tmp/test10.htrace")
         subprocess.check_output("hdc shell rm /data/local/tmp/test10_result.txt")
         subprocess.check_output("hdc shell killall com.example.myapplication523")
-        subprocess.check_output(f"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
         subprocess.check_output("hdc shell killall com.example.myapplication523")
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         time.sleep(SLEEP_TWO)

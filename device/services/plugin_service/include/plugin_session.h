@@ -21,22 +21,25 @@
 #include "nocopyable.h"
 #include "plugin_service_types.pb.h"
 #include "profiler_service_types.pb.h"
+#include "profiler_data_repeater.h"
 
 class PluginService;
-class ProfilerDataRepeater;
 
 using PluginServiceWeakPtr = STD_PTR(weak, PluginService);
-using ProfilerDataRepeaterPtr = STD_PTR(shared, ProfilerDataRepeater);
+using ProfilerDataRepeaterPtr = std::shared_ptr<ProfilerDataRepeater<ProfilerPluginData>>;
+using ProfilerStateRepeaterPtr = std::shared_ptr<ProfilerDataRepeater<ProfilerPluginState>>;
 
 class PluginSession {
 public:
     PluginSession(const ProfilerPluginConfig& pluginConfig,
                   const PluginServiceWeakPtr& pluginService,
-                  const ProfilerDataRepeaterPtr& dataRepeater);
+                  const ProfilerDataRepeaterPtr& dataRepeater,
+                  const ProfilerStateRepeaterPtr& stateRepeater);
     PluginSession(const ProfilerPluginConfig& pluginConfig,
                   const ProfilerSessionConfig::BufferConfig& bufferConfig,
                   const PluginServiceWeakPtr& pluginService,
-                  const ProfilerDataRepeaterPtr& dataRepeater);
+                  const ProfilerDataRepeaterPtr& dataRepeater,
+                  const ProfilerStateRepeaterPtr& stateRepeater);
     ~PluginSession();
 
     bool Start();
@@ -69,6 +72,7 @@ private:
     ProfilerSessionConfig::BufferConfig bufferConfig_;
     PluginServiceWeakPtr pluginService_;
     ProfilerDataRepeaterPtr dataRepeater_;
+    ProfilerStateRepeaterPtr stateRepeater_;
 
     DISALLOW_COPY_AND_MOVE(PluginSession);
 };

@@ -50,7 +50,6 @@ ohos_unittest("ftrace_plugin_ut") {
     "../../../memory_plugin/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//commonlibrary/c_utils/base/include",
   ]
   cflags = [
     "-Wno-inconsistent-missing-override",
@@ -58,6 +57,7 @@ ohos_unittest("ftrace_plugin_ut") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "googletest:gtest",
     "hilog:libhilog_base",
     "hiview:libucollection_client",

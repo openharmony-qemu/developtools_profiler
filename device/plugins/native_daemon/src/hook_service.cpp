@@ -29,11 +29,7 @@ HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookM
     : clientConfig_(clientConfig), hookMgr_(hook), multipleProcesses_(multipleProcesses)
 {
     serviceName_ = "HookService";
-    if (getuid() == 0) {
-        StartService(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
-    } else {
-        StartService(DEFAULT_UNIX_SOCKET_HOOK_PATH);
-    }
+    StartService(DEFAULT_UNIX_SOCKET_HOOK_PATH);
 }
 
 HookService::~HookService()
@@ -72,7 +68,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     hookMgr_->SetPid(peerConfig);
     bundleName.resize(strlen(bundleName.c_str()));
 
-    if (bundleName.substr(0, 2) == "./") { // 2: size
+    if (bundleName.size() >= 2 && bundleName.substr(0, 2) == "./") { // 2: size
         bundleName = bundleName.substr(2); // 2: point
     }
     size_t found = bundleName.rfind("/");

@@ -14,12 +14,13 @@
  *
  * Description: ftrace plugin module implements
  */
-#include "ftrace_module.h"
 #include <memory>
 #include <mutex>
 
 #include "flow_controller.h"
+#include "ftrace_namespace.h"
 #include "logging.h"
+#include "plugin_module_api.h"
 
 namespace {
 constexpr uint32_t MAX_BUFFER_SIZE = 4 * 1024 * 1024;
@@ -28,7 +29,7 @@ std::mutex g_mutex;
 std::unique_ptr<FTRACE_NS::FlowController> g_mainController;
 } // namespace
 
-int TracePluginRegisterWriter(const WriterStruct* writer)
+static int TracePluginRegisterWriter(const WriterStruct* writer)
 {
     std::unique_lock<std::mutex> lock(g_mutex);
     g_mainController = std::make_unique<FTRACE_NS::FlowController>();
@@ -38,7 +39,7 @@ int TracePluginRegisterWriter(const WriterStruct* writer)
     return result;
 }
 
-int TracePluginStartSession(const uint8_t configData[], const uint32_t configSize)
+static int TracePluginStartSession(const uint8_t configData[], const uint32_t configSize)
 {
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
@@ -53,7 +54,7 @@ int TracePluginStartSession(const uint8_t configData[], const uint32_t configSiz
     return result;
 }
 
-int TracePluginReportBasicData()
+static int TracePluginReportBasicData()
 {
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
@@ -64,7 +65,7 @@ int TracePluginReportBasicData()
     return 0;
 }
 
-int TracePluginStopSession()
+static int TracePluginStopSession()
 {
     std::unique_lock<std::mutex> lock(g_mutex);
     CHECK_NOTNULL(g_mainController, -1, "%s: no FlowController created!", __func__);
@@ -77,12 +78,18 @@ int TracePluginStopSession()
     return result;
 }
 
+static bool TraceReportState()
+{
+    return g_mainController->IsDataReady();
+}
+
 static PluginModuleCallbacks moduleCallbacks = {
     .onPluginSessionStart = TracePluginStartSession,
     .onPluginReportResult = 0,
     .onPluginSessionStop = TracePluginStopSession,
     .onRegisterWriterStruct = TracePluginRegisterWriter,
     .onReportBasicDataCallback = TracePluginReportBasicData, // report ftrace_plugin basic data
+    .onReportStateCallback = TraceReportState,
 };
 
 EXPORT_API PluginModuleStruct g_pluginModule = {

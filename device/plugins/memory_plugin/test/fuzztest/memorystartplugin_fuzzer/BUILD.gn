@@ -34,6 +34,7 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "hilog:libhilog_base",
     "hiview:libucollection_utility",
@@ -45,7 +46,6 @@ ohos_fuzztest("MemoryStartPluginFuzzTest") {
     "../../../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
-    "//third_party/bounds_checking_function/include",
   ]
 }
 

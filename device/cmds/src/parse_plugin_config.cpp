@@ -97,7 +97,7 @@ std::string ParsePluginConfig::GetPluginsConfig(std::string& content)
 bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
     bool ret = false;
-    if (pluginConfigMap.count(pluginName) == 0) {
+    if (pluginConfigMap.find(pluginName) == pluginConfigMap.end()) {
         printf("unknown plugin: %s\n", pluginName.c_str());
         return ret;
     }
@@ -144,6 +144,9 @@ bool ParsePluginConfig::SetSerializePluginsConfig(const std::string& pluginName,
 
 bool ParsePluginConfig::SetSerializeCpuConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
+    if (pluginConfigMap.find(pluginName) == pluginConfigMap.end()) {
+        return false;
+    }
     std::string configData = pluginConfigMap[pluginName];
     auto cpuConfigNolite = std::make_unique<ForStandard::CpuConfig>();
     if (!parser_.ParseFromString(configData, cpuConfigNolite.get())) {
@@ -401,6 +404,9 @@ bool ParsePluginConfig::SetSerializeGpuConfig(const std::string& pluginName, Pro
 bool ParsePluginConfig::SetSerializeFfrtProfilerConfig(const std::string& pluginName,
     ProfilerPluginConfig& pluginConfig)
 {
+    if (pluginConfigMap.find(pluginName) == pluginConfigMap.end()) {
+        return false;
+    }
     std::string configData = pluginConfigMap[pluginName];
     auto ffrtConfigNolite = std::make_unique<ForStandard::FfrtProfilerConfig>();
     if (!parser_.ParseFromString(configData, ffrtConfigNolite.get())) {
@@ -418,6 +424,9 @@ bool ParsePluginConfig::SetSerializeFfrtProfilerConfig(const std::string& plugin
 bool ParsePluginConfig::SetSerializeNetworkProfilerConfig(const std::string& pluginName,
     ProfilerPluginConfig& pluginConfig)
 {
+    if (pluginConfigMap.find(pluginName) == pluginConfigMap.end()) {
+        return false;
+    }
     std::string configData = pluginConfigMap[pluginName];
     auto networkConfigNolite = std::make_unique<ForStandard::NetworkProfilerConfig>();
     if (!parser_.ParseFromString(configData, networkConfigNolite.get())) {

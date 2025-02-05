@@ -21,14 +21,31 @@
 #include <fcntl.h>
 #include <iostream>
 #include <unistd.h>
+#include <sstream>
 
 using namespace OHOS::Developtools::NativeDaemon;
 
+namespace {
 static uint32_t TestDumpFile(const std::string postfix = "")
 {
     uint32_t fd = static_cast<uint32_t>(open(("/data/local/tmp/test_dump_file" + postfix + ".htrace").c_str(),
                                              O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH));
     return fd;
+}
+
+bool IsNumeric(const std::string& str)
+{
+    std::istringstream iss(str);
+    int number;
+    char trailingCharacter;
+    if (!(iss >> number)) {
+        return false;
+    }
+    if (iss >> trailingCharacter) {
+        return false;
+    }
+    return true;
+}
 }
 
 int32_t main(int32_t argc, char* argv[])
@@ -86,19 +103,22 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--stop") || (arg == "-k")) {
             stop = true;
         } else if ((arg == "--pid") || (arg == "-p")) {
-            config->pid_ = std::stoi(argv[++i]);
+            config->pid_ = i + 1 < argc && IsNumeric(argv[i + 1]) ? std::stoi(argv[++i]) : 0;
         } else if ((arg == "--filePath") || (arg == "-f")) {
-            config->filePath_ = std::string(argv[++i]);
+            config->filePath_ = i + 1 < argc ? std::string(argv[++i]) : "";
         } else if ((arg == "--duration") || (arg == "-d")) {
-            config->duration_ = static_cast<uint32_t>(std::stoi(argv[++i]));
+            config->duration_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--filterSize") || (arg == "-fs")) {
-            config->filterSize_ = std::stoi(argv[++i]);
+            config->filterSize_ = i + 1 < argc && IsNumeric(argv[i + 1]) ? std::stoi(argv[++i]) : 0;
         } else if ((arg == "--shareMemorySize") || (arg == "-sms")) {
-            config->shareMemorySize_ = std::stoi(argv[++i]);
+            config->shareMemorySize_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--processName") || (arg == "-pn")) {
-            config->processName_ = std::string(argv[++i]);
+            config->processName_ = i + 1 < argc ? std::string(argv[++i]) : "";
         } else if ((arg == "--maxStackDepth") || (arg == "-msd")) {
-            config->maxStackDepth_ = std::stoi(argv[++i]);
+            config->maxStackDepth_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint8_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--mallocDisable") || (arg == "-mad")) {
             config->mallocDisable_ = true;
         } else if ((arg == "--mmapDisable") || (arg == "-mmd")) {
@@ -108,9 +128,11 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--munmapStackData") || (arg == "-musd")) {
             config->munmapStackData_ = true;
         } else if ((arg == "--mallocFreeMatchingInterval") || (arg == "-mfmi")) {
-            config->mallocFreeMatchingInterval_ = static_cast<uint32_t>(std::stoi(argv[++i]));
+            config->mallocFreeMatchingInterval_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--mallocFreeMatchingCnt") || (arg == "-mfmc")) {
-            config->mallocFreeMatchingCnt_ = std::stoi(argv[++i]);
+            config->mallocFreeMatchingCnt_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--disable_stringCompressed") || (arg == "-sc")) {
             config->stringCompressed_ = false;
         } else if ((arg == "--dwarf") || (arg == "-df")) {
@@ -128,23 +150,27 @@ int32_t main(int32_t argc, char* argv[])
         } else if ((arg == "--callframeCompress") || (arg == "-cc")) {
             config->callframeCompress_ = true;
         } else if ((arg == "--statisticsInterval") || (arg == "-si")) {
-            config->statisticsInterval_ = std::stoi(argv[++i]);
+            config->statisticsInterval_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--clockId") || (arg == "-c")) {
-            config->clockId_ = std::stoi(argv[++i]);
+            config->clockId_ = i + 1 < argc && IsNumeric(argv[i + 1]) ? std::stoi(argv[++i]) : 0;
         } else if ((arg == "--dumpData") || (arg == "-dd")) {
             dumpData = true;
         } else if ((arg == "--sampleInterval ") || (arg == "-spi")) {
-            config->sampleInterval_ = std::stoi(argv[++i]);
+            config->sampleInterval_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--responseLibraryMode") || (arg == "-r")) {
             config->responseLibraryMode_ = true;
         } else if ((arg == "--printNmd") || (arg == "-nmd")) {
             config->printNmd_ = true;
         } else if ((arg == "--jsStackReport") || (arg == "-jr")) {
-            config->jsStackReport_ = static_cast<int32_t>(std::stoi(argv[++i]));;
+            config->jsStackReport_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<int32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--maxJsStackDepth") || (arg == "-mjsd")) {
-            config->maxJsStackDepth_ = std::stoi(argv[++i]);
+            config->maxJsStackDepth_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint8_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--filterNapiName") || (arg == "-fnapi")) {
-            config->filterNapiName_ = std::string(argv[++i]);
+            config->filterNapiName_ = i + 1 < argc ? std::string(argv[i + 1]) : "";
         } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;

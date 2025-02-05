@@ -39,16 +39,26 @@ constexpr int GB_TO_BYTE = (1024 * 1024 * 1024);
 constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
 constexpr size_t DEFULT_PAGES = 64 * 256; // 64M
-const int PIECE_HEAD_LEN = 4;
+constexpr int PIECE_HEAD_LEN = 4;
 } // namespace
 
 TraceFileWriter::TraceFileWriter(const std::string& path) : TraceFileWriter(path, false, 0, 0) {}
 
 TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
 {
+    writeCtx_.write = this;
+    writeCtx_.ctx.getMemory = [](RandomWriteCtx* ctx, uint32_t size, uint8_t** memory, uint32_t* offset) -> bool {
+        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
+        return writeCtx->write->GetMemory(size, memory, offset);
+    };
+    writeCtx_.ctx.seek = [](RandomWriteCtx* ctx, uint32_t offset) -> bool {
+        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
+        return writeCtx->write->Seek(offset);
+    };
     CHECK_TRUE(fd_ != 0, NO_RETVAL, "only-nmd mode, no need to use TraceFileWriter");
     if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
         PROFILER_LOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
+        return;
     }
     (void)FlushStream();
     fileWriteLength_ = sizeof(header_);
@@ -67,16 +77,6 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
         PROFILER_LOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
         return;
     }
-
-    writeCtx_.write = this;
-    writeCtx_.ctx.getMemory = [](RandomWriteCtx* ctx, uint32_t size, uint8_t** memory, uint32_t* offset) -> bool {
-        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
-        return writeCtx->write->GetMemory(size, memory, offset);
-    };
-    writeCtx_.ctx.seek = [](RandomWriteCtx* ctx, uint32_t offset) -> bool {
-        TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
-        return writeCtx->write->Seek(offset);
-    };
 }
 
 TraceFileWriter::TraceFileWriter(const std::string& path, bool splitFile, uint32_t splitFileMaxSizeMb,

@@ -18,8 +18,8 @@
 #include "hidebug/hidebug_type.h"
 
 #include <filesystem>
-#include <hwext/gtest-ext.h>
-#include <hwext/gtest-tag.h>
+#include <gtest/hwext/gtest-ext.h>
+#include <gtest/hwext/gtest-tag.h>
 
 #include <cstdlib>
 
@@ -36,6 +36,7 @@ protected:
     }
 };
 
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
 /**
  * @tc.name: InitEnvironmentParam
  * @tc.desc: test InitEnvironmentParam
@@ -148,6 +149,7 @@ HWTEST_F(HidebugTest, InitEnvironmentParam9, TestSize.Level1)
     const char* inputName = "hidebug";
     EXPECT_FALSE(InitEnvironmentParam(inputName));
 }
+#endif
 
 /**
  * @tc.name: OH_HiDebug_GetAppCpuUsage1

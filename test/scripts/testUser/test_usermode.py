@@ -80,7 +80,7 @@ class TestHiprofilerUserMode:
         # 校验命令行输出
         subprocess.check_output("hdc shell rm /data/local/tmp/test7.htrace")
         subprocess.check_output("hdc shell rm /data/local/tmp/tmp.txt")
-        subprocess.check_output(r"hdc file send .\inputfiles\network_profiler\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=(CONFIG_SCENEBOARD, ))
         task_thread.start()
         time.sleep(SLEEP_TWO)
@@ -155,7 +155,7 @@ class TestHiprofilerUserMode:
     @pytest.mark.L0
     def test_usermode_kernel_symbols(self):
         subprocess.check_output(r"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
         conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM data_dict')
