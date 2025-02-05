@@ -55,7 +55,7 @@ public:
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
 private:
-    HidebugAppThreadCpu threadCpu_;
+    static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
 };
 
 HidebugNativeInterface& HidebugNativeInterface::GetInstance()
