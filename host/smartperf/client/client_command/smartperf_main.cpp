@@ -117,10 +117,10 @@ static void SocketStopCommand()
 static void RecordCapacity()
 {
     const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
+    const std::string rkCapacityRmPath = "/data/service/el0/battery/battery/capacity";
     const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
     std::string capacityString;
     std::ifstream infile(capacitySavePath.c_str());
-
     if (infile.is_open()) {
         std::stringstream buffer;
         int capacityLine = 0;
@@ -140,7 +140,6 @@ static void RecordCapacity()
             }
         }
     }
-
     std::ofstream outFile(capacitySavePath.c_str(), std::ios::out | std::ios::trunc);
     if (!outFile.is_open()) {
         std::cout << "Error opening capacity file!" << std::endl;
@@ -149,6 +148,12 @@ static void RecordCapacity()
     std::string recordPower;
     auto recordTime = std::to_string(std::chrono::system_clock::to_time_t(std::chrono::system_clock::now()));
     OHOS::SmartPerf::SPUtils::LoadFile(capacityRmPath, recordPower);
+    if (recordPower.empty()) {
+        std::string rkRecordPower;
+        int maxBat = 60;
+        OHOS::SmartPerf::SPUtils::LoadFile(rkCapacityRmPath, rkRecordPower);
+        recordPower = std::to_string(OHOS::SmartPerf::SPUtilesTye::StringToSometype<int>(rkRecordPower) * maxBat);
+    }
     std::cout << "recordTime: " << recordTime << std::endl << "recordPower: " << recordPower << std::endl;
     capacityString += recordTime + "," + recordPower;
     outFile << capacityString << std::endl;
