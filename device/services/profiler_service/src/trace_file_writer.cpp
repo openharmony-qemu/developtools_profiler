@@ -426,7 +426,7 @@ bool TraceFileWriter::FinishSaFile()
     // update header info
     helper_.Update(header_);
     SetTimeStamp(); // add timestamp in header
-    // 获得当前位置
+    // get position of file pointer
     int offsetCur = lseek(fd_, 0, SEEK_CUR);
     if (offsetCur == -1) {
         return false;
@@ -436,7 +436,7 @@ bool TraceFileWriter::FinishSaFile()
     }
     auto ret = write(fd_, &header_, sizeof(header_));
     CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
-    //复原
+    // restore
     if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
         return false;
     }
