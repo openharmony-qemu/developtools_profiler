@@ -16,6 +16,7 @@
 #define RAM_H
 #include "sp_profiler.h"
 #include <string>
+#include <mutex>
 
 enum {
     RAM_ONE = 1,
@@ -58,6 +59,7 @@ private:
     RAM &operator = (const RAM &);
     std::string packageName = "";
     std::string processId = "";
+    std::mutex ramResultMtx;
 };
 }
 }

@@ -63,7 +63,9 @@ std::map<std::string, std::string> RAM::ItemData()
     }
     if (!processId.empty()) {
         if (g_flagFirst) {
+            ramResultMtx.lock();
             RAM::TriggerGetPss();
+            ramResultMtx.unlock();
         } else {
             procRamInfoLast = RAM::GetRamInfo();
             g_flagFirst = true;
