@@ -440,7 +440,7 @@ bool TraceFileWriter::FinishSaFile()
     if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
         return false;
     }
-    if ((msync((void*)fileMapAddr_, fileLength_, MS_SYNC)) == -1) {
+    if ((msync(fileMapAddr_, fileLength_, MS_SYNC)) == -1) {
         PROFILER_LOG_INFO(LOG_CORE, "msync failed, error: %s", strerror(errno));
     }
     return true;
