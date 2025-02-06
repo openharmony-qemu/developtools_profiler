@@ -25,6 +25,7 @@
 #include <chrono>
 #include "sdk_data_recv.h"
 #include "sp_task.h"
+#include "securec.h"
 
 using namespace testing::ext;
 using namespace std;

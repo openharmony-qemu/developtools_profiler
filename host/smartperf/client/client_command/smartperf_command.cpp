@@ -238,6 +238,9 @@ std::string SmartPerfCommand::ExecCommand()
     num = num + 1;
     bool gcFlag = false;
     for (std::string itConfig : configs) {
+        if (itConfig.find("-aischedule") != std::string::npos) {
+            return std::string("Command not support param aischedule");
+        }
         if (itConfig.find("-gc") != std::string::npos) {
             gpuCounter.StartCollect(GpuCounter::GC_START);
             gcFlag = true;
