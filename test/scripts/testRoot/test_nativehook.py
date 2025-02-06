@@ -67,11 +67,11 @@ MATCH_INTERVAL = 10
 
 
 def task_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
 
 
 def task_multiple_template():
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 35 -s -k")
+    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
 
 
 def get_target_stack(result):
@@ -81,9 +81,9 @@ def get_target_stack(result):
         if 'Add(napi_env__*, napi_callback_info__*)' in row[1]:
             small_malloc_stack[0] = row[0]
             malloc_release_stack[0] = row[0]
-        if 'js_depthmr6' in row[1]:
+        if 'js_depth_released6' in row[1]:
             malloc_release_stack[1] = row[0]
-        if 'js_depthsm7' in row[1]:
+        if 'js_depth_small7' in row[1]:
             small_malloc_stack[1] = row[0]
     return malloc_release_stack, small_malloc_stack
 
@@ -167,7 +167,7 @@ def check_library_result(statistics, startup, offline, sample_interval, dwarf, f
     return check_destroyed and check_exists
 
 
-def check_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval):
+def check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval):
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM data_dict')
@@ -185,8 +185,12 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, filtersiz
             callstack_ids_exists.append(row[1])
         if row[CALLSTACKID_INDEX] == malloc_release_stack[0]:
             callstack_ids_native.append(row[1])
-    callstack_ids_destroyed = list(set(callstack_ids_destroyed) & set(callstack_ids_native))
-    callstack_ids_exists = list(set(callstack_ids_exists) & set(callstack_ids_native))
+    if js_report:
+        callstack_ids_destroyed = list(set(callstack_ids_destroyed) & set(callstack_ids_native))
+        callstack_ids_exists = list(set(callstack_ids_exists) & set(callstack_ids_native))
+    else:
+        callstack_ids_destroyed = callstack_ids_native
+        callstack_ids_exists = callstack_ids_native
     if depth == DEPTH_FIVE and (not dwarf):
         if len(callstack_ids_destroyed) != 0:
             return False
@@ -256,7 +260,8 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, filtersiz
     return check_destroyed and check_exists
 
 
-def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False):
+def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False,
+                            callframe_compress=True, string_compress=True):
     try:
         subprocess.check_output(r"del .\..\inputfiles\nativehook\config.txt", text=True, encoding="utf-8")
         subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
@@ -288,8 +293,18 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     if dwarf:
         modified_content = modified_content.replace('fp_unwind: true', 'fp_unwind: false')
 
+    if not js_report:
+        modified_content = modified_content.replace('js_stack_report: 1', 'js_stack_report: 0')
+        modified_content = modified_content.replace('max_js_stack_depth: 20', 'max_js_stack_depth: 0')
+
     if response_library:
         modified_content = modified_content.replace('response_library_mode: false', 'response_library_mode: true')
+
+    if not callframe_compress:
+        modified_content = modified_content.replace('callframe_compress: true', 'callframe_compress: false')
+
+    if not string_compress:
+        modified_content = modified_content.replace('string_compress: true', 'string_compress: false')
 
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     mode = stat.S_IWUSR | stat.S_IRUSR
@@ -323,7 +338,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
 
     if response_library:
         return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
-    return check_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
+    return check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval)
 
 
 def check_nativehook_multipleprocess(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False):
@@ -442,13 +457,22 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result(kill_process=False, check_dump_catch=False):
-    subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
-    subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
-    subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
-    subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+def check_sa_result(kill_process=False, check_dump_catch=False, multithread=False):
+    try:
+        subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
+        subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
+        subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
+        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        pass
     subprocess.check_output("hdc target mount")
-    subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
+    if not multithread:
+        subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
+    else:
+        subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit_multi.json /data/local/tmp/", text=True, encoding="utf-8")
+        subprocess.check_output(f"hdc shell mv /data/local/tmp/process_resource_limit_multi.json /data/local/tmp/process_resource_limit.json", text=True, encoding="utf-8")
+        subprocess.check_output(f"hdc shell cp -f /data/local/tmp/process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
     subprocess.check_output("hdc shell reboot", text=True, encoding="utf-8")
     time.sleep(SLEEP_TWENTY)
     j = 0
@@ -511,17 +535,180 @@ def check_sa_result(kill_process=False, check_dump_catch=False):
         return dump_catch_result
     filename = get_profiler_test_trace("com.example.insight_test_stage")
 
+    if (multithread):
+        sceneboard_file = get_profiler_test_trace("com.ohos.sceneboard")
+        subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + sceneboard_file + " /data/local/tmp/test.htrace")
+        subprocess.check_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
+        subprocess.check_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        result = False
+        with open(r'.\..\outputfiles\tmp.txt', 'r') as file:
+            lines = file.readlines()
+            for line in lines:
+                if "test.htrace" in line:
+                    result = (line.split()[SIZE_INDEX][-1] == 'M')
+        if not result:
+            return False
+
     subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
     subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
     subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
-    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, DEPTH_TWENTY, 0, 0)
+    return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, 0, DEPTH_TWENTY, 0, 0)
 
 
 class TestNativehook:
     @pytest.mark.L0
-    def test_nativehook_startup(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, 0, DEPTH_TEN, 1)
+    def test_startup_statistics_sample(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_complete_data(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf_stringcompress(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, True)
+
+    @pytest.mark.L0
+    def test_dwarf_stringcompress_callframecompress(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, True, True)
+
+    @pytest.mark.L0
+    def test_dwarf_offline(self):
+        assert check_nativehook_result(0, False, True, 0, True, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_match(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, 0, DEPTH_TEN, CLICK_TWICE, 10, False, False, False)
+
+
+    @pytest.mark.L0
+    def test_jsreport(self):
+        assert check_nativehook_result(0, False, False, 0, False, True, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf_jsreport(self):
+        assert check_nativehook_result(0, False, False, 0, True, True, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_filter(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf_filter(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, FILTER_LARGE, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf_startup(self):
+        assert check_nativehook_result(0, True, False, 0, True, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_startup(self):
+        assert check_nativehook_result(0, True, False, 0, False, False, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_response_library(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_dwarf_response_library(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_TEN, 1, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_startup_response_library(self):
+        assert check_nativehook_result(0, True, False, 0, False, False, 0, DEPTH_TEN, CLICK_TWICE, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_sample(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_complete_data(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_stringcompress(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, False, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, True)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_stringcompress_callframecompress(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, True, True)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_offline(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, 0, True, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_jsreport(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, True, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_jsreport(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, True, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, FILTER_LARGE, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_startup(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, 0, True, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_startup(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, 0, False, False, 0, DEPTH_TEN, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_TEN, CLICK_TWICE, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_dwarf_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_startup_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, 0, False, False, 0, DEPTH_TEN, 1, 0, True, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_sample(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, False, 0, DEPTH_TEN, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_no_dataqueue(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, False, False, 0, DEPTH_TEN, CLICK_THREETIMES)
+    
+    @pytest.mark.L0
+    def test_dwarf_depth_five(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_FIVE, 1, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_depth_five(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_startup_depth_five(self):
+        assert check_nativehook_result(0, True, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_offline_depth_five(self):
+        assert check_nativehook_result(0, False, True, 0, False, False, 0, DEPTH_FIVE, 1, 0, False, False, False)
+    
+    @pytest.mark.L0
+    def test_filter_depth_five(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, FILTER_SMALL, DEPTH_FIVE, CLICK_TWICE, 0, False, False, False)
+
+    @pytest.mark.L0
+    def test_statistics_depth_five(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False)
 
     @pytest.mark.L0
     def test_nativehook_nonstatistics_sample(self):
@@ -559,10 +746,6 @@ class TestNativehook:
     @pytest.mark.L0
     def test_dwarf_filtersize(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
-
-    @pytest.mark.L0
-    def test_dwarf_nonstatistics(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, 1)
 
     @pytest.mark.L0
     def test_dwarf_nonstatistics_match(self):
@@ -733,16 +916,20 @@ class TestNativehook:
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIFTY, CLICK_THREETIMES)
     
     @pytest.mark.L0
-    def test_nativehook_sa_killprocess(self):
+    def test_sa_killprocess(self):
         assert check_sa_result(True)
 
     @pytest.mark.L0
-    def test_nativehook_sa_dumpcatch(self):
+    def test_sa_dumpcatch(self):
         assert check_sa_result(False, True)
     
     @pytest.mark.L0
-    def test_nativehook_sa(self):
+    def test_sa(self):
         assert check_sa_result()
+
+    @pytest.mark.L0
+    def test_sa_multithread(self):
+        assert check_sa_result(False, False, True)
 
     @pytest.mark.L0
     def test_usermode_nondebug_app_startup(self):
