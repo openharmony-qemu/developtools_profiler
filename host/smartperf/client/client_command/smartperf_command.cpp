@@ -226,7 +226,13 @@ void SmartPerfCommand::SaveGpuCounter() const
     gpuCounter.SaveData(outGpuCounterDataPath);
     gpuCounter.StopCollect();
 }
-
+void SmartPerfCommand::StartGpuCounterCollect(std::string config, bool &flag) const
+{
+    if (config.find("-gc") != std::string::npos) {
+        gpuCounter.StartCollect(GpuCounter::GC_START);
+        flag = true;
+    }
+}
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
@@ -241,10 +247,7 @@ std::string SmartPerfCommand::ExecCommand()
         if (itConfig.find("-aischedule") != std::string::npos) {
             return std::string("Command not support param aischedule");
         }
-        if (itConfig.find("-gc") != std::string::npos) {
-            gpuCounter.StartCollect(GpuCounter::GC_START);
-            gcFlag = true;
-        }
+        StartGpuCounterCollect(itConfig, gcFlag);
     }
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);

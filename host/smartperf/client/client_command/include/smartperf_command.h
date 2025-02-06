@@ -93,6 +93,7 @@ public:
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
     void CreateSocketThread() const;
     void SaveGpuCounter() const;
+    void StartGpuCounterCollect(std::string config, bool &flag) const;
     // 采集次数
     int num = 0;
     // 包名
