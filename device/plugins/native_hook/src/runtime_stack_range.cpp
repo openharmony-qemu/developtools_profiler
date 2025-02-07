@@ -192,18 +192,15 @@ void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uin
         } else if (iter->second.soEnd_ < soEnd) {
             iter->second.soEnd_ = soEnd;
         }
-    }
-
-    auto it = filterStaLibRange.begin();
-    for (; it != filterStaLibRange.end(); ++it) {
-        if (it->first == iter->second.soBegin_) {
-            break;
+        auto it = filterStaLibRange.rbegin();
+        for (; it != filterStaLibRange.rend(); ++it) {
+            if (it->first == iter->second.soBegin_) {
+                break;
+            }
         }
-    }
-
-    if (it == filterStaLibRange.end()) {
-        filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
-    } else {
+        it->first = iter->second.soBegin_;
         it->second = iter->second.soEnd_;
+    } else {
+        filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
     }
 }
