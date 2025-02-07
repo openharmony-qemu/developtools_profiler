@@ -92,7 +92,7 @@ static bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
-static bool IsLegalSoName(const std::string &fileName)
+bool IsLegalSoName(const std::string &fileName)
 {
     if (fileName.front() == '[' || fileName.back() == ']' ||
         std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 ||
@@ -175,4 +175,32 @@ bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange
         filterStaLibRange.emplace_back(stdLibrary.soBegin_, stdLibrary.soEnd_);
     }
     return ret;
+}
+
+void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
+                const StackRawData& curRawData)
+{
+    if (curRawData.addr == nullptr) {
+        return;
+    }
+    uint64_t soStart = reinterpret_cast<uint64_t>(curRawData.addr);
+    uint64_t soEnd = soStart + static_cast<uint64_t>(curRawData.mallocSize);
+    auto [iter, success] = g_stdLib.try_emplace(filePath, StandardLibrary(soStart, soEnd, filePath));
+    if (!success) {
+        if (iter->second.soBegin_ > soStart) {
+            iter->second.soBegin_ = soStart;
+        } else if (iter->second.soEnd_ < soEnd) {
+            iter->second.soEnd_ = soEnd;
+        }
+        auto it = filterStaLibRange.rbegin();
+        for (; it != filterStaLibRange.rend(); ++it) {
+            if (it->first == iter->second.soBegin_) {
+                break;
+            }
+        }
+        it->first = iter->second.soBegin_;
+        it->second = iter->second.soEnd_;
+    } else {
+        filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
+    }
 }

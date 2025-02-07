@@ -18,10 +18,14 @@
 
 #include <pthread.h>
 #include <vector>
+#include "hook_common.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+bool IsLegalSoName(const std::string &fileName);
+void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
+                const StackRawData& curRawData);
 bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread);
 
