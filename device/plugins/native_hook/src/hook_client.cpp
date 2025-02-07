@@ -245,7 +245,6 @@ void* MallocHookStart(void* disableHookCallback)
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_mallocTimes = 0;
     g_hookClient.reset();
-    std::lock_guard<std::recursive_timed_mutex> guardFilter(g_FilterMapMutex);
     g_hookPid = GetRealPid();
     ParseSelfMaps(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
