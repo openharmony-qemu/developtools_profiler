@@ -21,7 +21,7 @@
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
-#include "dfx_elf.h"
+#include "elf_factory.h"
 #include "utilities.h"
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
@@ -1311,7 +1311,8 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
 
 void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& symbols)
 {
-    std::shared_ptr<DfxElf> elfPtr = std::make_shared<DfxElf>(filePath);
+    RegularElfFactory elfFactory(filePath);
+    auto elfPtr = elfFactory.Create();
 
     symbols.textVaddr = elfPtr->GetStartVaddr();
     symbols.textOffset = elfPtr->GetStartOffset();
