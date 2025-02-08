@@ -196,7 +196,7 @@ namespace OHOS {
             gpuCounterInstance.GetRealtimeDataLock().unlock();
         }
 
-        std::string GpuCounterCallbackImpl::GetGpuPerfInfoItem(const OHOS::SmartPerf::GpuPerfInfo *itemData) const
+        std::string GpuCounterCallbackImpl::GetGpuPerfInfoItem(const GpuPerfInfo *itemData) const
         {
             std::ostringstream oss;
             if (itemData == nullptr) {

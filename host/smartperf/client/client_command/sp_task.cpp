@@ -371,8 +371,8 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
-    GetItemData(dataMap);
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+    GetItemData(dataMap);
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
@@ -807,6 +807,10 @@ void SPTask::ProcessErrorData(SPData &spdata)
 std::string SPTask::GetCsvTitle()
 {
     return csvTitle;
+}
+void SPTask::SetRecordState(bool status)
+{
+    recordState = status;
 }
 }
 }

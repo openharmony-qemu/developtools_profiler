@@ -101,6 +101,7 @@ enum class CommandType {
     CT_NAV,
     CT_O,
     CT_LF,
+    CT_AS,
 };
 enum class CommandHelp {
     HELP,
@@ -136,6 +137,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-o"), CommandType::CT_O },
     { std::string("-lockfreq"), CommandType::CT_LF },
+    { std::string("-aischedule"), CommandType::CT_AS },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -163,6 +165,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_NAV, std::string("-nav") },
     { CommandType::CT_O, std::string("-o") },
     { CommandType::CT_LF, std::string("-lockfreq") },
+    { CommandType::CT_AS, std::string("-aischedule") },
 };
 
 

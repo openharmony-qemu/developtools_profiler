@@ -96,6 +96,7 @@ public:
     void SaveScreenShot();
     time_t GetRealStartTime() const;
     void SetTcpToken(std::string token);
+    void SetRecordState(bool status);
     std::string GetTcpToken();
     void ProcessErrorData(SPData &spdata);
     std::string GetCsvTitle();
