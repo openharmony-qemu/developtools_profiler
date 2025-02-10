@@ -24,8 +24,10 @@ ohos_shared_library("hidebug") {
 
   sources = [
     "napi_hidebug.cpp",
+    "napi_hidebug_dump.cpp",
     "napi_hidebug_gc.cpp",
     "napi_hidebug_init.cpp",
+    "util/common_util.cpp",
     "util/hiappevent_util.cpp",
     "util/napi_util.cpp",
   ]
@@ -43,6 +45,7 @@ ohos_shared_library("hidebug") {
     "hiappevent:hiappevent_innerapi",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
+    "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
     "init:libbegetutil",

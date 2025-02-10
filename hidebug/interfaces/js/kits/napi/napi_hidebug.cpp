@@ -22,13 +22,13 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <ctime>
 #include <malloc.h>
 #include <parameters.h>
 #include <unistd.h>
 
 #include "application_context.h"
 #include "context.h"
+#include "common_util.h"
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
@@ -38,6 +38,7 @@
 #include "hilog/log.h"
 #include "iservice_registry.h"
 #include "memory_collector.h"
+#include "napi_hidebug_dump.h"
 #include "napi_hidebug_init.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
@@ -47,6 +48,7 @@
 #include "system_ability_definition.h"
 #include "napi_hidebug_gc.h"
 #include "napi_util.h"
+#include "error_code.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -73,21 +75,9 @@ constexpr int FD_MAX = 10000;
 constexpr int THREAD_MIN = 1;
 constexpr int THREAD_MAX = 1000;
 const std::string SLASH_STR = "/";
-const std::string DEFAULT_FILENAME = "undefined";
 const std::string JSON_FILE = ".json";
-const std::string HEAPSNAPSHOT_FILE = ".heapsnapshot";
 const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
 const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
-enum ErrorCode {
-    PERMISSION_ERROR = 201,
-    PARAMETER_ERROR = 401,
-    VERSION_ERROR = 801,
-    SYSTEM_ABILITY_NOT_FOUND = 11400101,
-    HAVA_ALREADY_TRACE = 11400102,
-    WITHOUT_WRITE_PERMISSON = 11400103,
-    SYSTEM_STATUS_ABNORMAL = 11400104,
-    NO_CAPTURE_TRACE_RUNNING = 11400105,
-};
 
 const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
     "pss_memory",
@@ -99,41 +89,6 @@ static std::map<std::string, std::pair<int, int>> limitResource = {
     {{"pss_memory", {PSS_MIN, PSS_MAX}}, {"js_heap", {JS_MIN, JS_MAX}},
         {"fd", {FD_MIN, FD_MAX}}, {"thread", {THREAD_MIN, THREAD_MAX}}}
 };
-}
-
-static bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType)
-{
-    napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, value, &valueType);
-    return valueType == targetType;
-}
-
-static bool CreateFile(const std::string &path)
-{
-    if (access(path.c_str(), F_OK) == 0) {
-        if (access(path.c_str(), W_OK) == 0) {
-            return true;
-        }
-        return false;
-    }
-    const mode_t defaultMode = S_IRUSR | S_IWUSR | S_IRGRP; // -rw-r-----
-    int fd = creat(path.c_str(), defaultMode);
-    if (fd == -1) {
-        HILOG_ERROR(LOG_CORE, "file create failed, errno = %{public}d", errno);
-        return false;
-    } else {
-        close(fd);
-        return true;
-    }
-}
-
-static bool IsLegalPath(const std::string& path)
-{
-    if (path.find("./") != std::string::npos ||
-        path.find("../") != std::string::npos) {
-        return false;
-    }
-    return true;
 }
 
 static bool IsArrayForNapiValue(napi_env env, napi_value param, uint32_t &arraySize)
@@ -198,70 +153,6 @@ static bool GetDumpParam(napi_env env, napi_callback_info info,
         std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> strCnv;
         args.push_back(strCnv.from_bytes(buf));
     }
-    return true;
-}
-
-static std::string GetFileNameParam(napi_env env, napi_callback_info info)
-{
-    size_t argc = ONE_VALUE_LIMIT;
-    napi_value argv[ONE_VALUE_LIMIT] = { nullptr };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (argc != ONE_VALUE_LIMIT) {
-        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
-        return DEFAULT_FILENAME;
-    }
-    if (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_string)) {
-        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
-        return DEFAULT_FILENAME;
-    }
-    size_t bufLen = 0;
-    napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &bufLen);
-    if (status != napi_ok) {
-        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
-        return DEFAULT_FILENAME;
-    }
-    const int bufMax = 128;
-    if (bufLen > bufMax || bufLen == 0) {
-        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
-        return DEFAULT_FILENAME;
-    }
-    char buf[bufLen + 1];
-    napi_get_value_string_utf8(env, argv[0], buf, bufLen + 1, &bufLen);
-    std::string fileName = buf;
-    return fileName;
-}
-
-static bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName)
-{
-    size_t argc = ONE_VALUE_LIMIT;
-    napi_value argv[ONE_VALUE_LIMIT] = { nullptr };
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
-    if (argc != ONE_VALUE_LIMIT) {
-        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
-        return false;
-    }
-    if (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_string)) {
-        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
-        return false;
-    }
-    size_t bufLen = 0;
-    napi_status status = napi_get_value_string_utf8(env, argv[0], nullptr, 0, &bufLen);
-    if (status != napi_ok) {
-        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
-        return false;
-    }
-    const int bufMax = 128;
-    if (bufLen > bufMax || bufLen == 0) {
-        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
-        return false;
-    }
-    char buf[bufLen + 1];
-    napi_get_value_string_utf8(env, argv[0], buf, bufLen + 1, &bufLen);
-    fileName = buf;
     return true;
 }
 
@@ -388,60 +279,6 @@ napi_value StopJsCpuProfiling(napi_env env, napi_callback_info info)
     ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     engine->StopCpuProfiler();
-    return CreateUndefined(env);
-}
-
-napi_value DumpHeapData(napi_env env, napi_callback_info info)
-{
-    ApiInvokeRecorder apiInvokeRecorder("dumpHeapData");
-    std::string fileName = GetFileNameParam(env, info);
-    auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
-    if (context == nullptr) {
-        return CreateErrorMessage(env, "Get ApplicationContext failed.");
-    }
-    std::string filesDir = context->GetFilesDir();
-    if (filesDir.empty()) {
-        return CreateErrorMessage(env, "Get App files dir failed.");
-    }
-    std::string filePath = filesDir + SLASH_STR + fileName + HEAPSNAPSHOT_FILE;
-    if (!IsLegalPath(filePath)) {
-        return CreateErrorMessage(env, "input fileName is illegal.");
-    }
-    if (!CreateFile(filePath)) {
-        return CreateErrorMessage(env, "file created failed.");
-    }
-    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
-    return CreateUndefined(env);
-}
-
-napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
-{
-    ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
-    std::string fileName;
-    if (!GetTheOnlyStringParam(env, info, fileName)) {
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
-        return CreateUndefined(env);
-    }
-    HILOG_ERROR(LOG_CORE, "filename: %{public}s.", fileName.c_str());
-    auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
-    if (context == nullptr) {
-        return CreateErrorMessage(env, "Get ApplicationContext failed.");
-    }
-    std::string filesDir = context->GetFilesDir();
-    if (filesDir.empty()) {
-        return CreateErrorMessage(env, "Get App files dir failed.");
-    }
-    std::string filePath = filesDir + SLASH_STR + fileName + HEAPSNAPSHOT_FILE;
-    if (!IsLegalPath(filePath)) {
-        return CreateErrorMessage(env, "input fileName is illegal.");
-    }
-    if (!CreateFile(filePath)) {
-        return CreateErrorMessage(env, "file created failed.");
-    }
-    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
     return CreateUndefined(env);
 }
 
@@ -1053,7 +890,6 @@ napi_value IsDebugState(napi_env env, napi_callback_info info)
     return result;
 }
 
-
 class GraphicAsyncTask : public AsyncTask {
 public:
     GraphicAsyncTask() : AsyncTask("graphicAsyncTask"), apiInvokeRecorder_("getGraphicsMemory") {}
@@ -1137,6 +973,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isDebugState", IsDebugState),
         DECLARE_NAPI_FUNCTION("getGraphicsMemory", GetGraphicsMemory),
         DECLARE_NAPI_FUNCTION("getGraphicsMemorySync", GetGraphicsMemorySync),
+        DECLARE_NAPI_FUNCTION("dumpJsRawHeapData", DumpJsRawHeapData),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

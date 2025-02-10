@@ -794,4 +794,32 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_036
+     * @tc.desc: testDumpJsRawHeapData1
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_036', 0, async function () {
+        console.info("---------------------------HidebugJsTest_036----------------------------------");
+        hidebug.dumpJsRawHeapData("TEST").then((path) => {
+            expect(false).assertTrue();
+        }).catch(error => {
+            expect(error.code === "401").assertTrue();
+        });
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_037
+     * @tc.desc: testDumpJsRawHeapData2
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_037', 0, async function () {
+        console.info("---------------------------HidebugJsTest_037----------------------------------");
+        hidebug.dumpJsRawHeapData().then((path) => {
+            expect(true).assertTrue();
+        }).catch(error => {
+            expect(error.code === "11400106").assertTrue();
+        });
+    })
 })

@@ -31,6 +31,15 @@ napi_value CreateErrorMessage(napi_env env, const std::string& errCode, const st
 
 napi_value CreateUndefined(napi_env env);
 
+bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType);
+
+bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret);
+
+bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize);
+
+bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName);
+
+std::string GetFileNameParam(napi_env env, napi_callback_info info);
 class AsyncTask {
 public:
     explicit AsyncTask(const std::string& resourceName): resourceName_(resourceName) {};

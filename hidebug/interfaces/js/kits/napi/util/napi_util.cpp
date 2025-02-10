@@ -14,8 +14,24 @@
  */
 
 #include "napi_util.h"
+
+#include <fcntl.h>
+#include <unistd.h>
+
+#include "napi/native_api.h"
+#include "napi/native_node_api.h"
+#include "hilog/log.h"
+
 namespace OHOS {
 namespace HiviewDFX {
+namespace {
+#undef LOG_DOMAIN
+#define LOG_DOMAIN 0xD002D0A
+#undef LOG_TAG
+#define LOG_TAG "HiDebug_NAPI_UTIL"
+constexpr int ONE_VALUE_LIMIT = 1;
+const std::string DEFAULT_FILENAME = "undefined";
+}
 
 napi_value CreateErrorMessage(napi_env env, const std::string& msg)
 {
@@ -42,6 +58,76 @@ napi_value CreateUndefined(napi_env env)
     napi_value res = nullptr;
     napi_get_undefined(env, &res);
     return res;
+}
+
+bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType)
+{
+    napi_valuetype valueType = napi_undefined;
+    napi_typeof(env, value, &valueType);
+    return valueType == targetType;
+}
+
+bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret)
+{
+    if (MatchValueType(env, value, napi_boolean)) {
+        napi_get_value_bool(env, value, &ret);
+        return true;
+    }
+    return false;
+}
+
+bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize)
+{
+    if (!MatchValueType(env, value, napi_string)) {
+        HILOG_ERROR(LOG_CORE, "Type error, should be string type!");
+        return false;
+    }
+    size_t bufLen = 0;
+    napi_status status = napi_get_value_string_utf8(env, value, nullptr, 0, &bufLen);
+    if (status != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
+        return false;
+    }
+    if (bufLen > maxSize || bufLen == 0) {
+        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
+        return false;
+    }
+    ret = std::string(bufLen, '\0');
+    return napi_get_value_string_utf8(env, value, &ret[0], bufLen + 1, &bufLen) == napi_ok;
+}
+
+bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName)
+{
+    size_t argc = ONE_VALUE_LIMIT;
+    napi_value argv = nullptr;
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, &argv, &thisVar, &data);
+    if (argc != ONE_VALUE_LIMIT) {
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        return false;
+    }
+    constexpr int paramLen = 128;
+    return GetNapiStringValue(env, argv, fileName, paramLen);
+}
+
+std::string GetFileNameParam(napi_env env, napi_callback_info info)
+{
+    size_t argc = ONE_VALUE_LIMIT;
+    napi_value argv = nullptr;
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, &argv, &thisVar, &data);
+    if (argc != ONE_VALUE_LIMIT) {
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        return DEFAULT_FILENAME;
+    }
+    std::string fileName;
+    constexpr int paramLen = 128;
+    if (!GetNapiStringValue(env, argv, fileName, paramLen)) {
+        return DEFAULT_FILENAME;
+    }
+    return fileName;
 }
 
 bool AsyncTask::CreatePromise(napi_env env, napi_value &promise)
