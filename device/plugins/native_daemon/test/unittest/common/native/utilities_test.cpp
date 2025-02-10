@@ -298,7 +298,12 @@ HWTEST_F(UtilitiesTest, HexDump, TestSize.Level1)
     HexDump(buf, 4);
     HexDump(buf, 5);
     HexDump(buf, 8);
-    stdoutRecord.Stop();
+    std::string out = stdoutRecord.Stop();
+    EXPECT_EQ(out.empty(), false);
+    EXPECT_NE(out.find("0x32"), std::string::npos);
+    EXPECT_NE(out.find("0x33"), std::string::npos);
+    EXPECT_NE(out.find("0x34"), std::string::npos);
+    EXPECT_EQ(out.find("0x39"), std::string::npos);
 }
 
 /**

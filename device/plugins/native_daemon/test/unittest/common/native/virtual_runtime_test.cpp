@@ -59,13 +59,6 @@ void VirtualRuntimeTest::TearDown()
 }
 
 /**
- * @tc.name: VirtualRuntimeTest
- * @tc.desc:
- * @tc.type: FUNC
- */
-HWTEST_F(VirtualRuntimeTest, VirtualRuntimeTest, TestSize.Level1) {}
-
-/**
  * @tc.name: SetSymbolsPaths
  * @tc.desc:
  * @tc.type: FUNC
