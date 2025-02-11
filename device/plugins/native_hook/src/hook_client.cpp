@@ -242,6 +242,7 @@ static bool IsPidChanged(void);
 void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+    PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_mallocTimes = 0;
     g_hookClient.reset();
@@ -288,6 +289,7 @@ static bool InitTheadKey()
 
 bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 {
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start begin!");
     pthread_t threadStart;
     if (pthread_create(&threadStart, nullptr, MallocHookStart,
                        reinterpret_cast<void *>(disableHookCallback))) {
@@ -314,6 +316,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 void* ohos_release_on_end(void*)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
@@ -323,6 +326,7 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
+    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end begin!");
     {
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
