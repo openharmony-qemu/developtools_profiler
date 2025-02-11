@@ -353,7 +353,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         LOGD("UDP recv : %s", recvBuf.c_str());
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
-            HandleNullAddFpsMsg(spSocket, profiler, retCode, recvBuf, iterator);
+            HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
         } else {
             std::map<std::string, std::string> data;
             if (iterator->first == MessageType::CATCH_NETWORK_TRAFFIC) {
@@ -373,23 +373,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         }
         LOGD("sendData key(%d) content(%s)", iterator->first, retCode.c_str());
         break;
-    }
-}
-
-void SpThreadSocket::HandleNullAddFpsMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
-{
-    if (iterator->first == MessageType::GET_FPS_AND_JITTERS) {
-        LOGD("UDP recv GET_FPS_AND_JITTERS");
-        auto thread = std::thread([this, &retCode, &spSocket]() {
-            std::map<std::string, std::string> result = ProfilerFPS::GetInstance().ItemData();
-            retCode = MapToString(result);
-            spSocket.Sendto(retCode);
-            LOGD("UDP send fps retCode %s", retCode.c_str());
-        });
-        thread.detach();
-    } else {
-        HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
 }
 

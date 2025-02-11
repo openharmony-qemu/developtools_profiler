@@ -57,30 +57,25 @@ std::map<std::string, std::string> RAM::ItemData()
 {
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
-    for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
-        LOGD("sysRamInfo: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
-        result.insert(*it);
+    for (const auto& item : sysRamInfo) {
+        result.insert(item);
     }
     if (!processId.empty()) {
         if (g_flagFirst) {
-            ramResultMtx.lock();
             RAM::TriggerGetPss();
-            ramResultMtx.unlock();
         } else {
             procRamInfoLast = RAM::GetRamInfo();
             g_flagFirst = true;
         }
-        for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
-            LOGD("procRamInfoLast: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
-            result.insert(*it);
+        for (const auto& item : procRamInfoLast) {
+            result.insert(item);
         }
     } else if (!packageName.empty() && processId.empty()) {
         std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
-        for (auto it = procMemInfo.begin(); it != procMemInfo.end(); ++it) {
-            result.insert(*it);
+        for (const auto& item : procMemInfo) {
+            result.insert(item);
         }
     }
-    LOGD("RAM::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -162,6 +157,10 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     std::map<std::string, std::string> emptyprocRamInfo;
     std::string pssValue = "";
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
+    if (cmd.empty()) {
+        LOGE("RAM::GetRamInfo cmd is null");
+        return emptyprocRamInfo;
+    }
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         LOGD("RAM::fd is empty");

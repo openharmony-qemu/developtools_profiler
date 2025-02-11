@@ -16,7 +16,6 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 #include "sp_profiler.h"
-#include "mutex"
 namespace OHOS {
 namespace SmartPerf {
 class Network : public SpProfiler {
@@ -55,7 +54,6 @@ private:
     bool isFirst = true;
     bool hapFlag = false;
     bool stophapFlag = false;
-    std::mutex networkResultMtx;
 };
 }
 }

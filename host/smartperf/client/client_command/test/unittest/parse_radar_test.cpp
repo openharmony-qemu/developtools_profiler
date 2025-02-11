@@ -53,7 +53,7 @@ HWTEST_F(ParseRadarTest, ParseRadarAPPStartTest, TestSize.Level1)
         ret = true;
     }
 
-    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(ret);
 }
 
 HWTEST_F(ParseRadarTest, ParseRadarDelayTimeTest, TestSize.Level1)
@@ -68,7 +68,7 @@ HWTEST_F(ParseRadarTest, ParseRadarDelayTimeTest, TestSize.Level1)
         ret = true;
     }
 
-    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(ret);
 }
 }
 }
