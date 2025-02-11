@@ -32,7 +32,7 @@ namespace SmartPerf {
 class SpServerSocketTest : public testing::Test {
 public:
     int sock = 0;
-    struct sockaddr_in serv_addr;
+    struct sockaddr_in servAddr;
 
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -52,13 +52,13 @@ HWTEST_F(SpServerSocketTest, InitTcpTest, TestSize.Level1)
         std::cerr << "Socket creation error";
         return;
     }
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(tcpPort);
-    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
+    servAddr.sin_family = AF_INET;
+    servAddr.sin_port = htons(tcpPort);
+    if (inet_pton(AF_INET, "127.0.0.1", &servAddr.sin_addr) <= 0) {
         std::cerr << "Invalid address/ Address not supported";
         return;
     }
-    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    if (connect(sock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0) {
         std::cerr << "Connection Failed";
         return;
     }

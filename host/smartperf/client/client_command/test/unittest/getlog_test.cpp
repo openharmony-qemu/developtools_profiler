@@ -41,12 +41,12 @@ public:
     void SetUp() {}
     void TearDown() {}
 
-    void GetLogCommand()
+    int CreateAndBindSocket()
     {
         int tcpServerFd = socket(AF_INET, SOCK_STREAM, 0);
         if (tcpServerFd < 0) {
             perror("TCP socket creation failed");
-            return;
+            return -1;
         }
 
         struct sockaddr_in tcpServerAddr = {};
@@ -54,55 +54,66 @@ public:
         tcpServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
         tcpServerAddr.sin_port = htons(TCP_PORT);
 
-        if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0) {
+        if (::bind(tcpServerFd, reinterpret_cast<struct sockaddr*>(&tcpServerAddr), sizeof(tcpServerAddr)) < 0) {
             perror("TCP bind failed");
             close(tcpServerFd);
-            return;
+            return -1;
         }
 
-        socklen_t len = sizeof(tcpServerAddr);
-        if (getsockname(tcpServerFd, reinterpret_cast<struct sockaddr *>(&tcpServerAddr), &len) < 0) {
-            perror("getsockname failed");
-            close(tcpServerFd);
-            return;
-        }
+        return tcpServerFd;
+    }
 
+    int AcceptClientConnection(int tcpServerFd)
+    {
         if (listen(tcpServerFd, 1) < 0) {
             perror("Listen failed");
-            close(tcpServerFd);
-            return;
+            return -1;
         }
 
         int clientFd = accept(tcpServerFd, nullptr, nullptr);
         if (clientFd < 0) {
             perror("Accept failed");
-            close(tcpServerFd);
-            return;
         }
+        return clientFd;
+    }
 
+    bool ReceiveAndWriteData(int clientFd)
+    {
         FILE* fp = fopen("/data/local/tmp/getlogtest.tar.gz", "wb");
         if (!fp) {
             perror("File open failed");
-            close(clientFd);
+            return false;
+
+        char buffer[4096];
+        ssize_t bytesRead;
+        bool success = true        
+        while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
+            if (fwrite(buffer, 1, bytesRead, fp) != bytesRead) {
+                perror("fwrite failed");
+                success = false;
+                break;
+            }
+
+        if (fclose(fp) == EOF) {
+            perror("fclose failed");
+            success = false;
+        }
+        return success;
+    }
+
+    void GetLogCommand()
+    {
+        int tcpServerFd = CreateAndBindSocket();
+        if (tcpServerFd < 0) return;
+
+        int clientFd = AcceptClientConnection(tcpServerFd);
+        if (clientFd < 0) {
             close(tcpServerFd);
             return;
         }
 
-        char buffer[4096];
-        ssize_t bytesRead;
-        while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
-            if (fwrite(buffer, 1, bytesRead, fp) != bytesRead) {
-                perror("fwrite failed");
-                close(clientFd);
-                close(tcpServerFd);
-                return;
-            }
-        }
-        int fcloseResult = fclose(fp);
-        if (fcloseResult == EOF) {
-            perror("fclose failed");
-            return;
-        }
+        bool writeSuccess = ReceiveAndWriteData(clientFd);
+
         close(clientFd);
         close(tcpServerFd);
     }
