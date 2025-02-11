@@ -35,9 +35,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
-        networkResultMtx.lock();
         ThreadFunctions();
-        networkResultMtx.unlock();
     } else {
         result = Network::GetNetworkInfo();
     }
@@ -62,6 +60,7 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         diffTx = 0;
         diffRx = 0;
     }
+    LOGD("NetWork dataMap size (%u)", networkInfo.size());
     return networkInfo;
 }
 std::map<std::string, std::string> Network::GetNetworkInfoDev()
