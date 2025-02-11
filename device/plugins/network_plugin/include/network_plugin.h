@@ -128,7 +128,6 @@ protected:
     //new version
     template <typename T> bool WriteNetFlowData(T& networkDatasProto);
     template <typename T> void WriteData(T& networkDatasProto, NetFlowData &netFlowData);
-    int32_t GetUidByBundleMgr(int32_t pid);
     std::string GetBundleNameByPid(int32_t pid);
     int32_t GetUidByConfiguredBundleName(std::string bundleName);
     bool ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
