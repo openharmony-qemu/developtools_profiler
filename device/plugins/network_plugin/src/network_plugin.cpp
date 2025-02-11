@@ -61,9 +61,16 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         PROFILER_LOG_INFO(LOG_CORE, "NetworkPlugin New Version!");
         isNewVersion = true;
         singlePid_ = protoConfig_.single_pid();
+        startupMode_ = protoConfig_.startup_mode();
+        bundleName_ = protoConfig_.bundle_name();
         CHECK_TRUE(singlePid_ >= 0, -1, "%s:invalid pid", __func__);
-        if (singlePid_ > 0) {
-            singleUid_ = GetUidByBundleMgr(singlePid_);
+        if (startupMode_) {
+            singleUid_ = GetUidByConfiguredBundleName(bundleName_);
+            CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
+        } else if (singlePid_ > 0) {
+            std::string name = GetBundleNameByPid(singlePid_);
+            CHECK_TRUE(name != "", -1, "%s:get bundle name failed", __func__);
+            singleUid_ = GetUidByConfiguredBundleName(name);
             CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
         }
     }
@@ -421,7 +428,7 @@ template <typename T> bool NetworkPlugin::WriteNetFlowData(T& networkDatasProto)
         return false;
     }
     NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    if (singlePid_ > 0) {
+    if (singlePid_ > 0 || startupMode_) {
         ScreenNetworkStatByUid(infos, netFlowData);
     } else {
         RetainAllNetworkStat(infos, netFlowData);
@@ -562,12 +569,17 @@ void NetworkPlugin::Record(NetFlowData &newData)
     }
 }
 
-int32_t NetworkPlugin::GetUidByBundleMgr(int32_t pid)
+std::string NetworkPlugin::GetBundleNameByPid(int32_t pid)
 {
     std::string bundleName;
     std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
     LoadStringFromFile(filePath, bundleName);
     bundleName.resize(strlen(bundleName.c_str()));
+    return bundleName;
+}
+
+int32_t NetworkPlugin::GetUidByConfiguredBundleName(std::string bundleName)
+{
     int32_t userId = 0;
     std::vector<int32_t> activeIds;
     if (AccountSA::OsAccountManager::QueryActiveOsAccountIds(activeIds) != 0) {

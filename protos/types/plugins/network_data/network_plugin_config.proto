@@ -20,4 +20,6 @@ message NetworkConfig {
     repeated int32 pid = 1;
     string test_file = 2;
     int32 single_pid = 3;
+    bool startup_mode = 4;
+    string bundle_name = 5;
 }
