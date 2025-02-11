@@ -80,7 +80,9 @@ public:
     void GetLogCommand()
     {
         int tcpServerFd = CreateAndBindSocket();
-        if (tcpServerFd < 0) return;
+        if (tcpServerFd < 0) {
+            return;
+        }
 
         int clientFd = AcceptClientConnection(tcpServerFd);
         if (clientFd < 0) {
