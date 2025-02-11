@@ -129,6 +129,8 @@ protected:
     template <typename T> bool WriteNetFlowData(T& networkDatasProto);
     template <typename T> void WriteData(T& networkDatasProto, NetFlowData &netFlowData);
     int32_t GetUidByBundleMgr(int32_t pid);
+    std::string GetBundleNameByPid(int32_t pid);
+    int32_t GetUidByConfiguredBundleName(std::string bundleName);
     bool ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool HandleData(NetFlowData present, NetFlowData &difference);
@@ -146,5 +148,7 @@ private:
     NetFlowData previous_ = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     bool isFirst = true;
     bool isNewVersion = false;
+    bool startupMode_ = false;
+    std::string bundleName_;
 };
 #endif
