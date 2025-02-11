@@ -67,7 +67,7 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         if (startupMode_) {
             singleUid_ = GetUidByConfiguredBundleName(bundleName_);
             CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
-        } else if(singlePid_>0) {
+        } else if (singlePid_ > 0) {
             std::string name = GetBundleNameByPid(singlePid_);
             CHECK_TRUE(name != "", -1, "%s:get bundle name failed", __func__);
             singleUid_ = GetUidByConfiguredBundleName(name);
