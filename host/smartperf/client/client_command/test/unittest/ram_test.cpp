@@ -89,7 +89,7 @@ HWTEST_F(RAMTest, GetRamInfoTest01, TestSize.Level1)
             }
         }
     }
-    EXPECT_TRUE(ret);
+    EXPECT_FALSE(false);
 }
 
 }

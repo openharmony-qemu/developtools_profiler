@@ -69,7 +69,6 @@ HWTEST_F(SPdaemonFpsTest, GetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
     if (fcf.fps == 0 && fcf.currentFpsTime == 0) {
         ret = true;
     }
-
     EXPECT_TRUE(ret);
 }
 

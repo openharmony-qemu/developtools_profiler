@@ -45,7 +45,7 @@ public:
             perror("socket creation failed");
             return -1;
         }
-        
+
         std::fill_n(reinterpret_cast<char*>(&servaddr), sizeof(servaddr), 0);
         servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");

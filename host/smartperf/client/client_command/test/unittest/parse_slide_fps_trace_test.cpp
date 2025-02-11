@@ -83,7 +83,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCalculateTime03, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll01, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string line = "H:APP_SWIPER_SCROLL,123456789";
     parseSlideFpsTrace.AppSwiperScroll(line);
     ASSERT_EQ(touchTime, 0);
@@ -92,7 +92,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll01, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll02, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string line = "H:APP_SWIPER_FLING,987654321";
     swiperScrollFlag = 1;
     doCompositionTime = 100;
@@ -103,7 +103,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll02, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll03, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string line = "H:APP_SWIPER_SCROLL,123456789";
     parseSlideFpsTrace.AppSwiperScroll(line);
     doCompositionTime = 123456790;
@@ -115,7 +115,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideAppSwiperScroll03, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideGetLineTime01, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string lineStr = "....10:12:34:56";
     std::string expected = "12:34:56";
     EXPECT_EQ(parseSlideFpsTrace.GetLineTime(lineStr), expected);
@@ -123,7 +123,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideGetLineTime01, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideGetLineTime02, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string lineStr = ".......";
     std::string expected = "";
     EXPECT_EQ(parseSlideFpsTrace.GetLineTime(lineStr), expected);
@@ -131,7 +131,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideGetLineTime02, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCutString01, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string lineStr = "startTestend";
     std::string start = "start";
     std::string end = "end";
@@ -143,7 +143,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCutString01, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCutString02, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string lineStr = "startTestend";
     std::string start = "start";
     std::string end = "end";
@@ -155,7 +155,7 @@ HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCutString02, TestSize.Level1)
 
 HWTEST_F(ParseSlideFpsTraceTest, ParseSlideCutString03, TestSize.Level1)
 {
-    OHOS::SmartPerf::ParseSlideFpsTrace parseSlideFpsTrace;
+    ParseSlideFpsTrace parseSlideFpsTrace;
     std::string lineStr = "startTestend";
     std::string start = "start";
     std::string end = "end";

@@ -32,7 +32,7 @@ namespace SmartPerf {
 class SpServerSocketTest : public testing::Test {
 public:
     int sock = 0;
-    struct sockaddr_in servAddr;
+    struct sockaddr_in serv_addr;
 
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
@@ -52,13 +52,13 @@ HWTEST_F(SpServerSocketTest, InitTcpTest, TestSize.Level1)
         std::cerr << "Socket creation error";
         return;
     }
-    servAddr.sin_family = AF_INET;
-    servAddr.sin_port = htons(tcpPort);
-    if (inet_pton(AF_INET, "127.0.0.1", &servAddr.sin_addr) <= 0) {
+    serv_addr.sin_family = AF_INET;
+    serv_addr.sin_port = htons(tcpPort);
+    if (inet_pton(AF_INET, "127.0.0.1", &serv_addr.sin_addr) <= 0) {
         std::cerr << "Invalid address/ Address not supported";
         return;
     }
-    if (connect(sock, (struct sockaddr *) &servAddr, sizeof(servAddr)) < 0) {
+    if (connect(sock, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         std::cerr << "Connection Failed";
         return;
     }
@@ -89,14 +89,14 @@ HWTEST_F(SpServerSocketTest, SendtoTest, TestSize.Level0)
     EXPECT_EQ(ret, 0);
 }
 
-HWTEST_F(SpServerSocketTest, RecvFailuerTest, TestSize.Level0)
+HWTEST_F(SpServerSocketTest, RecvFailureTest, TestSize.Level0)
 {
     SpServerSocket serverSocket;
     int result = serverSocket.Recv();
     ASSERT_LT(result, 0);
 }
 
-HWTEST_F(SpServerSocketTest, RecvBufferTest, TestSize.Level0)
+HWTEST_F(SpServerSocketTest, RecvBufTest, TestSize.Level0)
 {
     SpServerSocket serverSocket;
     std::string rbuf = serverSocket.RecvBuf();

@@ -13,11 +13,11 @@
  * limitations under the License.
  */
 #include "unistd.h"
-#include <gtest/gtest.h>
 #include <thread>
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <gtest/gtest.h>
 #include <sstream>
 #include "editor_command.h"
 #include "control_call_cmd.h"

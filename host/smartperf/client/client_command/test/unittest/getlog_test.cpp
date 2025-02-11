@@ -49,7 +49,7 @@ public:
             return;
         }
 
-        struct soctaddr_in tcpServerAddr = {};
+        struct sockaddr_in tcpServerAddr = {};
         tcpServerAddr.sin_family = AF_INET;
         tcpServerAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
         tcpServerAddr.sin_port = htons(TCP_PORT);
@@ -80,7 +80,7 @@ public:
             return;
         }
 
-        FILE* fp = fopen("data/local/tmp/getlogtest.tar.gz", "wb");
+        FILE* fp = fopen("/data/local/tmp/getlogtest.tar.gz", "wb");
         if (!fp) {
             perror("File open failed");
             close(clientFd);
@@ -91,10 +91,18 @@ public:
         char buffer[4096];
         ssize_t bytesRead;
         while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
-            fwrite(buffer, 1, bytesRead, fp);
+            if (fwrite(buffer, 1, bytesRead, fp) != bytesRead) {
+                perror("fwrite failed");
+                close(clientFd);
+                close(tcpServerFd);
+                return;
+            }
         }
-
-        fclose(fp);
+        int fcloseResult = fclose(fp);
+        if (fcloseResult == EOF) {
+            perror("fclose failed");
+            return;
+        }
         close(clientFd);
         close(tcpServerFd);
     }
@@ -107,7 +115,7 @@ public:
  */
 HWTEST_F(SPdaemonGetLogTest, SendFileTestCase, TestSize.Level1)
 {
-    std::map<std::string, std::string> result = GetLog::GetInstance.ItemData();
+    std::map<std::string, std::string> result = GetLog::GetInstance().ItemData();
     std::thread tcpServer = std::thread([this]() {
         GetLogCommand();
     });

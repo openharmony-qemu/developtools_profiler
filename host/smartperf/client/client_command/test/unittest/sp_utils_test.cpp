@@ -299,7 +299,7 @@ HWTEST_F(SPdaemonUtilsTest, IsForeGroundTest, TestSize.Level1)
     EXPECT_EQ(isForeground, ret);
 }
 
-HWTEST_F(SPdaemonUtilsTest, GetCurrentTimeTest, TestSize.Level1)
+HWTEST_F(SPdaemonUtilsTest, GetCurrentTime, TestSize.Level1)
 {
     bool shouldContinue = true;
     SPUtils::GetCurrentTime(10);

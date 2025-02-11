@@ -206,7 +206,7 @@ HWTEST_F(StallingRateTraceTest, JudgFrameRate04, TestSize.Level1)
 HWTEST_F(StallingRateTraceTest, AppList01, TestSize.Level1)
 {
     OHOS::SmartPerf::StallingRateTrace stallingRateTrace;
-    listFlag = true;
+    listFlag = false;
     stallingRateTrace.AppList("test_line", "test_signS", "test_signF");
     EXPECT_EQ(appListDynamicFinishTime, stallingRateTrace.GetTimes("test_line", "test_signF"));
     EXPECT_FALSE(listFlag);

@@ -16,6 +16,7 @@
 #include <iostream>
 #include <sstream>
 #include <thread>
+#include <chrono>
 #include "unistd.h"
 #include "sp_utils.h"
 #include "ByTrace.h"
@@ -46,7 +47,7 @@ HWTEST_F(ByTraceTest, ThreadGetTraceTest, TestSize.Level1)
         cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
     }
     std::string time = std::to_string(SPUtils::GetCurTime());
-    std::string traceFile = "data/local/tmp/sptrace_" + time + ".ftrace";
+    std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
     std::string traceCmdExe = cmdString + traceFile;
     auto ret = SPUtils::LoadCmd(traceCmdExe, result);
     byTrace.ThreadGetTrace();
@@ -92,7 +93,7 @@ HWTEST_F(ByTraceTest, TriggerCatchTest, TestSize.Level1)
     usleep(2);
     int curNum = 0;
     int curTime = 0;
-    int interval = 20000;
+    int interval = 2000;
     long long currentTrigger = -1;
     curTime = SPUtils::GetCurTime();
     if ((curTime - lastTriggerTime) / 1e3 > interval && !byTrace.CheckHitraceId()) {
@@ -111,7 +112,7 @@ HWTEST_F(ByTraceTest, CheckHitraceIdTest, TestSize.Level1)
 {
     std::string result;
     bool hitraceProc = false;
-    std::string hitrace = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
+    std::string hitrace = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_CMD);
     SPUtils::LoadCmd(hitrace, result);
     if (result.empty()) {
         hitraceProc = false;

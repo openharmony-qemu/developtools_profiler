@@ -39,7 +39,7 @@ public:
     void TearDown() {}
 };
 
-HWTEST_F(ParseClickCompleteTraceTest, ParseCompleteTrace_ShouldReturnZerzo_WhenFileOpenSucceeds, TestSize.Level1)
+HWTEST_F(ParseClickCompleteTraceTest, ParseCompleteTrace_ShouldReturnZerzo_WhenFileOpenFails, TestSize.Level1)
 {
     std::string fileNamePath = "invalid_file_path";
     ParseClickCompleteTrace parseClickCompleteTrace;
