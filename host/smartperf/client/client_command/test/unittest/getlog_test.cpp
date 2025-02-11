@@ -77,30 +77,6 @@ public:
         return clientFd;
     }
 
-    bool ReceiveAndWriteData(int clientFd)
-    {
-        FILE* fp = fopen("/data/local/tmp/getlogtest.tar.gz", "wb");
-        if (!fp) {
-            perror("File open failed");
-            return false;
-
-        char buffer[4096];
-        ssize_t bytesRead;
-        bool success = true        
-        while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
-            if (fwrite(buffer, 1, bytesRead, fp) != bytesRead) {
-                perror("fwrite failed");
-                success = false;
-                break;
-            }
-
-        if (fclose(fp) == EOF) {
-            perror("fclose failed");
-            success = false;
-        }
-        return success;
-    }
-
     void GetLogCommand()
     {
         int tcpServerFd = CreateAndBindSocket();
@@ -112,7 +88,29 @@ public:
             return;
         }
 
-        bool writeSuccess = ReceiveAndWriteData(clientFd);
+        FILE* fp = fopen("/data/local/tmp/getlogtest.tar.gz", "wb");
+        if (!fp) {
+            perror("File open failed");
+            close(clientFd);
+            close(tcpServerFd);
+            return;
+        }
+        char buffer[4096];
+        ssize_t bytesRead;
+        while ((bytesRead = recv(clientFd, buffer, sizeof(buffer), 0)) > 0) {
+            if (fwrite(buffer, 1, bytesRead, fp) != bytesRead) {
+                perror("fwrite failed");
+                close(clientFd);
+                close(tcpServerFd);
+                return;
+            }
+        }
+        int fcloseResult = fclose(fp);
+        if (fcloseResult == EOF) {
+            perror("fclose failed");
+            close(tcpServerFd);
+            return;
+        }
 
         close(clientFd);
         close(tcpServerFd);
@@ -130,7 +128,7 @@ HWTEST_F(SPdaemonGetLogTest, SendFileTestCase, TestSize.Level1)
     std::thread tcpServer = std::thread([this]() {
         GetLogCommand();
     });
-    GetLog::GetInstance().SetLogFileSocketPort(20888);
+    GetLog::GetInstance().SetLogFileSocketPort(TCP_PORT);
     GetLog::GetInstance().LogFileSocketConnect();
     GetLog::GetInstance().SendLogFile();
     tcpServer.join();
