@@ -271,7 +271,7 @@ int FlowController::StartCapture(void)
     // recover the hitrace
     std::string param = OHOS::system::GetParameter(TRACE_PROPERTY, "");
     if (param != "0" && param != BGSRV_PROPERTY) {
-        traceCollector_->Recover();
+        traceCollector_->Close();
     }
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
