@@ -373,7 +373,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         return depth;
     }
     uintptr_t fp = nextFp; // skip current frame
-
+    uintptr_t prevFp = 0;
     int count = 0;
     uint64_t ip = 0;
     while (depth < maxDepth && (fp - startFp < MAX_UNWIND_ADDR_RANGE)) {
@@ -393,7 +393,12 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         if (nextFp <= stackPtr) {
             break;
         }
+        prevFp = fp;
         fp = nextFp;
+        if (fp == prevFp) {
+            depth -= 1;
+            break;
+        }
     }
     if (g_ClientConfig.responseLibraryMode) {
         ips[0] = ip > 0x4 ? ip - 0x4 : ip;
