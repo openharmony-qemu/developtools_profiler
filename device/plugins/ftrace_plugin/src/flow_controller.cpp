@@ -55,7 +55,7 @@ using namespace OHOS::Developtools::Profiler;
     constexpr int OCTA_CORE_CPU = 8; // 8 core
     constexpr unsigned int RMQ_ENTRY_ALIGN_MASK = (1U << 2) - 1;
     const std::string TRACE_PROPERTY = "debug.hitrace.tags.enableflags";
-    const std::string BGSRV_PROPERTY = "5456538433239656448";
+    const std::string BGSRV_PROPERTY = "5456538433256433664";
 } // namespace
 
 FTRACE_NS_BEGIN
