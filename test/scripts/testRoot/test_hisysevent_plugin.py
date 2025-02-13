@@ -39,6 +39,7 @@ def task3():
 def task4():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent4.txt -o /data/local/tmp/test_hisysevent4.htrace -t 15 -s -k"')
 
+
 class TestHiprofilerHisyseventPlugin:
 
     # 未设置subscribe_domain参数，检查trace大小及数据

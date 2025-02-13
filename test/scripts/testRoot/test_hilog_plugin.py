@@ -34,8 +34,10 @@ def task2():
 def task3():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog3.txt -o /data/local/tmp/test_hilog3.htrace -t 10 -s -k"')
 
+
 def task4():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog4.txt -o /data/local/tmp/test_hilog4.htrace -t 10 -s -k"')
+
 
 class TestHiprofilerHilogPlugin:
 

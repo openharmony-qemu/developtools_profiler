@@ -189,7 +189,7 @@ class TestHiprofilerMemoryPlugin:
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_memory_vmtracker.db')
         #抓取结束后,检查是否存在hidumper 进程
-        output_text = subprocess.run(f'hdc shell "ps -ef | grep hidumper"', stdout=subprocess.PIPE, shell=True, text=True, check=True)
+        output_text = subprocess.run(f'hdc shell "ps -ef | grep hidumper"', stdout=subprocess.PIPE, text=True, check=True)
         process_info = output_text.stdout
         lines = process_info.strip().split('\n')
         check_index = False

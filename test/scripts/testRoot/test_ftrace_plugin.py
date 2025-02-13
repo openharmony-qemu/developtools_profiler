@@ -43,7 +43,7 @@ class TestHiprofilerFtracePlugin:
     @pytest.mark.L0
     def test_ftraceplugin(self):
         subprocess.check_output(r'hdc file send ..\\inputfiles\\ftrace\\config_ftrace.txt /data/local/tmp/',
-                       shell=True, text=True, encoding="utf-8")
+                                text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
@@ -126,7 +126,7 @@ class TestHiprofilerFtracePlugin:
         task_thread = threading.Thread(target=task_freq, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ../outputfiles/ ", shell=True,
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace_freq.htrace")
@@ -146,8 +146,8 @@ class TestHiprofilerFtracePlugin:
         #检查cpu 频率
         cursor.execute("select count(0) from cpu_measure_filter where name = 'cpu_frequency'")
         result = cursor.fetchall()
-        # for row in result:
-        #     assert(row[0] == 12)
+        for row in result:
+            assert(row[0] == 12)
         
         cursor.execute("select * from measure,cpu_measure_filter where filter_id = id and name ='cpu_frequency' limit 10")
         result = cursor.fetchall()
