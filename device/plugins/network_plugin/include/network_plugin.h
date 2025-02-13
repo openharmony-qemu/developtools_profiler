@@ -147,7 +147,6 @@ private:
     NetFlowData previous_ = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
     bool isFirst = true;
     bool isNewVersion = false;
-    bool startupMode_ = false;
     std::string bundleName_;
 };
 #endif

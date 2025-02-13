@@ -61,15 +61,19 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
         PROFILER_LOG_INFO(LOG_CORE, "NetworkPlugin New Version!");
         isNewVersion = true;
         singlePid_ = protoConfig_.single_pid();
-        startupMode_ = protoConfig_.startup_mode();
-        bundleName_ = protoConfig_.bundle_name();
         CHECK_TRUE(singlePid_ >= 0, -1, "%s:invalid pid", __func__);
-        if (startupMode_) {
+        if (protoConfig_.startup_process_name() != "") {
+            bundleName_ = protoConfig_.startup_process_name();
+            singleUid_ = GetUidByConfiguredBundleName(bundleName_);
+            CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
+        } else if (protoConfig_.restart_process_name() != "") {
+            bundleName_ = protoConfig_.restart_process_name();
             singleUid_ = GetUidByConfiguredBundleName(bundleName_);
             CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
         } else if (singlePid_ > 0) {
             std::string name = GetBundleNameByPid(singlePid_);
             CHECK_TRUE(name != "", -1, "%s:get bundle name failed", __func__);
+            bundleName_ = name;
             singleUid_ = GetUidByConfiguredBundleName(name);
             CHECK_TRUE(singleUid_ != -1, -1, "%s:get uid failed", __func__);
         }
@@ -428,7 +432,7 @@ template <typename T> bool NetworkPlugin::WriteNetFlowData(T& networkDatasProto)
         return false;
     }
     NetFlowData netFlowData = {{0, 0}, 0, 0, 0, 0, std::vector<NetFlowDetail>()};
-    if (singlePid_ > 0 || startupMode_) {
+    if (bundleName_ != "") {
         ScreenNetworkStatByUid(infos, netFlowData);
     } else {
         RetainAllNetworkStat(infos, netFlowData);
