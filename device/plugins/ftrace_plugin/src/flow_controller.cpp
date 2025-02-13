@@ -55,7 +55,7 @@ using namespace OHOS::Developtools::Profiler;
     constexpr int OCTA_CORE_CPU = 8; // 8 core
     constexpr unsigned int RMQ_ENTRY_ALIGN_MASK = (1U << 2) - 1;
     const std::string TRACE_PROPERTY = "debug.hitrace.tags.enableflags";
-    const std::string BGSRV_PROPERTY = "5456538433239656448";
+    const std::string BGSRV_PROPERTY = "5456538433256433664";
 } // namespace
 
 FTRACE_NS_BEGIN
@@ -271,7 +271,7 @@ int FlowController::StartCapture(void)
     // recover the hitrace
     std::string param = OHOS::system::GetParameter(TRACE_PROPERTY, "");
     if (param != "0" && param != BGSRV_PROPERTY) {
-        traceCollector_->Recover();
+        traceCollector_->Close();
     }
 
     uint32_t savedCmdlinesSize = platformCpuNum_ < OCTA_CORE_CPU ? SAVED_CMDLINE_SIZE_SMALL : SAVED_CMDLINE_SIZE_LARGE;
@@ -636,7 +636,7 @@ int FlowController::StopCapture(void)
     // disable userspace trace triggers
     // because trace cmd will read trace buffer,
     // so we to this action after polling thread exit.
-    traceCollector_->Recover();
+    traceCollector_->Close();
     tansporter_->Flush();
 
     // release resources
