@@ -8,9 +8,9 @@ request_id: 1
   plugin_name: "process-plugin"
   sample_interval: 1000
   config_data {
-   report_process_tree: true
-   report_cpu: false
-   report_diskio: false
-   report_pss: false
+   report_process_tree: false
+   report_cpu: true
+   report_diskio: true
+   report_pss: true
   }
  }
