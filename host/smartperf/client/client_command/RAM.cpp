@@ -61,14 +61,23 @@ std::map<std::string, std::string> RAM::ItemData()
         result.insert(item);
     }
     if (!processId.empty()) {
+        std::map<std::string, std::string> procRamInfomation;
         if (g_flagFirst) {
             RAM::TriggerGetPss();
         } else {
             procRamInfoLast = RAM::GetRamInfo();
             g_flagFirst = true;
         }
-        for (const auto& item : procRamInfoLast) {
-            result.insert(item);
+        if (!procRamInfoLast.empty()) {
+            procRamInfomation = procRamInfoLast;
+            for (const auto& item : procRamInfomation) {
+                result.insert(item);
+            }
+        } else {
+            procRamInfomation = ProcMemNaInfo();
+            for (const auto& item : procRamInfomation) {
+                result.insert(item);
+            }
         }
     } else if (!packageName.empty() && processId.empty()) {
         std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
