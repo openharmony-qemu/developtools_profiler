@@ -131,19 +131,19 @@ class TestHiprofilerMemoryPlugin:
     @pytest.mark.L0
     def test_memory_plugin_vmtracker(self):
         #获得32位还是64位   
-        sys_bit = subprocess.run(f"hdc shell getconf LONG_BIT", stdout=subprocess.PIPE, shell=True, text=True, check=True)
+        sys_bit = subprocess.run(f"hdc shell getconf LONG_BIT", stdout=subprocess.PIPE, text=True, check=True)
         sysinfo = sys_bit.stdout
         if sysinfo.strip() == "32":
             subprocess.check_output(f"hdc shell aa start -a com.ohos.settings.MainAbility -b com.ohos.settings", shell=False, text=True, encoding="utf-8")
             time.sleep(2)
-            pid_text = subprocess.run(f"hdc shell pidof 'com.ohos.settings'", stdout=subprocess.PIPE, shell=True, text=True, check=True)
+            pid_text = subprocess.run(f"hdc shell pidof 'com.ohos.settings'", stdout=subprocess.PIPE, text=True, check=True)
         else:
             #打开系统设置的应用
             subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False, 
                                 text=True, encoding="utf-8")
             time.sleep(2)
             #获得该应用的进程PID
-            pid_text = subprocess.run(f"hdc shell pidof 'com.huawei.hmos.settings'", stdout=subprocess.PIPE, shell=True, text=True, check=True)
+            pid_text = subprocess.run(f"hdc shell pidof 'com.huawei.hmos.settings'", stdout=subprocess.PIPE, text=True, check=True)
         pidinfo = pid_text.stdout
         #读文本文件,修改对应的pid
         file_content = Template('request_id: 1                             \n'

@@ -30,6 +30,7 @@ def get_file_size(file_path):
 def task():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper.txt -o /data/local/tmp/test_hidumper.htrace -t 30 -s -k"')
 
+
 def task_nosec():
     subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_nosec.txt -o /data/local/tmp/test_hidumper_nosec.htrace -t 30 -s -k"')
 

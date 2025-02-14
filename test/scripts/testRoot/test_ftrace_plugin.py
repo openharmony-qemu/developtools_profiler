@@ -48,7 +48,7 @@ class TestHiprofilerFtracePlugin:
         task_thread.start()
         task_thread.join()
 
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace.htrace ../outputfiles/ ", shell=True,
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace.htrace")
@@ -70,12 +70,12 @@ class TestHiprofilerFtracePlugin:
     
     @pytest.mark.L0
     def test_ftrace_events(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_event.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_event.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_event, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ../outputfiles/ ", shell=True,
+        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace_event.htrace")
@@ -121,7 +121,7 @@ class TestHiprofilerFtracePlugin:
     
     @pytest.mark.L0
     def test_ftrace_freq(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_freq.txt /data/local/tmp/", shell=True,
+        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_freq.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_freq, args=())
         task_thread.start()
