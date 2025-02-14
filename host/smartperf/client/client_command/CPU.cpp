@@ -76,8 +76,8 @@ std::map<std::string, std::string> CPU::ItemData()
     if (!packageName.empty() && !hapFlag) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
-            for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
-                result.insert(*it);
+            for (const auto& item : processCpuInfo) {
+                result.insert(item);
             }
         }
     }

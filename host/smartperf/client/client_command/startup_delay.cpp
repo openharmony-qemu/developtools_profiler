@@ -231,6 +231,7 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
     std::vector<const char*> args = {"pidof", curPkgName.c_str()};
     args.push_back(nullptr);
     std::string resultProcId = ExecuteCommand(args);
+    LOGD("StartUpDelay::resultProcId(%s)", resultProcId.c_str());
     if (!resultProcId.empty()) {
         if (resultProcId.back() == '\n') {
             resultProcId.pop_back();

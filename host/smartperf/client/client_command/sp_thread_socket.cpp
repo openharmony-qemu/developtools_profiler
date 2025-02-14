@@ -367,6 +367,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
             } else if (iterator->first == MessageType::GET_LOG) {
                     data = GetLogProcess(profiler, recvBuf);
             } else {
+                GetProcessIdByPkgName(iterator);
                 data = profiler->ItemData();
             }
             HandleUDPMsg(spSocket, data, retCode, iterator);
@@ -493,14 +494,22 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
         BackDesktop();
     } else {
+        HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
+    }
+}
+
+void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+{
+    if (iterator->first == MessageType::GET_FPS_AND_JITTERS || iterator->first == MessageType::GET_CUR_FPS ||
+        iterator->first == MessageType::GET_RAM_INFO) {
         if (!SpProfilerFactory::editorFlag) {
+            LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
             OHOS::SmartPerf::StartUpDelay sp;
             processId = sp.GetPidByPkg(g_pkgName);
             SpProfilerFactory::SetProfilerPidByPkg(processId);
             SpProfilerFactory::SetProfilerPkg(g_pkgName);
         }
-        HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
 }
 
