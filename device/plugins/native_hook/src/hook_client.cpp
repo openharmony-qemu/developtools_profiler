@@ -393,6 +393,10 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         if (nextFp <= stackPtr) {
             break;
         }
+        if (fp == nextFp) {
+            depth -= 1;
+            break;
+        }
         fp = nextFp;
     }
     if (g_ClientConfig.responseLibraryMode) {
