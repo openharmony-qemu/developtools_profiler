@@ -655,10 +655,6 @@ void SPUtils::GetCurrentTime(int prevTime)
 }
 bool SPUtils::IsForeGround(const std::string &pkg)
 {
-    size_t pos = pkg.find_last_of(".");
-    std::string pkgNameSuffix = (pos != std::string::npos) ? pkg.substr(pos + 1) : pkg;
-    std::string result = "";
-    const std::string cmd = "hidumper -s WindowManagerService -a '-a'|grep -E'" + pkgNameSuffix + "|Focus window";
     bool isFoundAppName = false;
     bool isForeground = false;
     std::string result = "";
