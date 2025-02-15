@@ -48,6 +48,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
+const int WINDOW_ID_INDEX = 3;
 const std::string SMART_PERF_VERSION = "1.0.6";
 bool SPUtils::FileAccess(const std::string &fileName)
 {

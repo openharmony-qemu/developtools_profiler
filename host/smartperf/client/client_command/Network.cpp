@@ -148,8 +148,8 @@ void Network::ThreadGetHapNetwork()
     while (!stophapFlag) {
         long long startTime = SPUtils::GetCurTime();
         result = GetNetworkInfo();
-        const std::string hapPid = "";
-        const std::string cmd = huaHapPkg + weiHapPkg;
+        std::string hapPid = "";
+        const std::string cmd = "pidof" + huaHapPkg + weiHapPkg;
         SPUtils::LoadCmd(cmd, hapPid);
         if (!hapPid.empty()) {
             long long stopTime = SPUtils::GetCurTime();

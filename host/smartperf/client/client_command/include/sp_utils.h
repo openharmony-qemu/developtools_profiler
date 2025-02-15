@@ -158,7 +158,6 @@ bool GetPathPermissions(const std::string &path);
 bool GetIsGameApp(std::string pkg);
 bool IsFindForeGround(const std::string &line);
 std::string GetVersion();
-const int WINDOW_ID_INDEX = 3;
 };
 }
 }
