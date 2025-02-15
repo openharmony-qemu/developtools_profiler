@@ -655,17 +655,17 @@ void SPUtils::GetCurrentTime(int prevTime)
 }
 bool SPUtils::IsForeGround(const std::string &pkg)
 {
-    bool isFoundAppName = false;
-    bool isForeground = false;
+    size_t pos = pkg.find_last_of(".");
+    std::string pkgNameSuffix = (pos != std::string::npos) ? pkg.substr(pos + 1) : pkg;
     std::string result = "";
-    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
+    const std::string cmd = "hidumper -s WindowManagerService -a '-a'|grep -E'" + pkgNameSuffix + "|Focus window";
     if (cmd.empty()) {
         LOGE("cmd is null");
         return false;
     }
-
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
+        pclose(fd);
         return false;
     }
     size_t bytesRead;
@@ -677,21 +677,29 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         LOGE("Error: Failed to close file");
         return false;
     }
-
     std::istringstream iss(result);
     std::string line;
+    std::string winId;
+    std::string focusWinId;
+    std::string focusWindow = "Focus window: ";
     while (std::getline(iss, line)) {
-        if (!isFoundAppName && line.find("mission name #[#" + pkg) != std::string::npos) {
-            isFoundAppName = true;
+        if (line.find(pkgNameSuffix) != std::string::npos) {
+            std::vector<std::string> params;
+            SPUtils::StrSplit(line, " ", params);
+            winId = params[winIdThree];
         }
-        if (isFoundAppName) {
-            if (line.find("state") != std::string::npos) {
-                isForeground = IsFindForeGround(line);
-                break;
-            }
+        size_t endPos = line.find(focusWindow);
+        if (endPos != std::string::npos) {
+            focusWinId = line.substr(endPos + focusWindow.length());
+            break;
         }
     }
-    return isForeground;
+    if (!winId.empty() && !focusWinId.empty()) {
+        if (winId == focusWinId) {
+            return true;
+        }
+    }
+    return false;
 }
 bool SPUtils::IsFindForeGround(const std::string &line)
 {
