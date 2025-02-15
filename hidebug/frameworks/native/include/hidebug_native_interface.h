@@ -19,7 +19,6 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include "hitrace_meter.h"
 #include "resource/memory.h"
 #include "hidebug/hidebug_type.h"
 
