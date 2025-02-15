@@ -156,7 +156,6 @@ bool IsFindAbilist();
 void SetRkFlag();
 bool GetPathPermissions(const std::string &path);
 bool GetIsGameApp(std::string pkg);
-bool IsFindForeGround(const std::string &line);
 std::string GetVersion();
 };
 }
