@@ -687,7 +687,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         if (line.find(pkgNameSuffix) != std::string::npos) {
             std::vector<std::string> params;
             SPUtils::StrSplit(line, " ", params);
-            winId = params[winIdThree];
+            winId = params[WINDOW_ID_INDEX];
         }
         size_t endPos = line.find(focusWindow);
         if (endPos != std::string::npos) {
