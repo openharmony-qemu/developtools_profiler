@@ -29,6 +29,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
+#include "include/Dubai.h"
 const int LARGE_BUFF_MAX_LEN = 256;
 namespace OHOS {
 namespace SmartPerf {
@@ -149,7 +150,7 @@ void Network::ThreadGetHapNetwork()
         long long startTime = SPUtils::GetCurTime();
         result = GetNetworkInfo();
         std::string hapPid = "";
-        const std::string cmd = "pidof " + huaHapPkg + weiHapPkg;
+        const std::string cmd = "pidof " + Dubai::dubaiPkgName;
         SPUtils::LoadCmd(cmd, hapPid);
         if (!hapPid.empty()) {
             long long stopTime = SPUtils::GetCurTime();

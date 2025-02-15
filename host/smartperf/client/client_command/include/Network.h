@@ -55,8 +55,6 @@ private:
     bool isFirst = true;
     bool hapFlag = false;
     bool stophapFlag = false;
-    const std::string huaHapPkg = "com.hua";
-    const std::string weiHapPkg = "wei.hmsapp.hismartperf";
 };
 }
 }

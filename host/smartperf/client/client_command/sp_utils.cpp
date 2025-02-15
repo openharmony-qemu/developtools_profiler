@@ -48,7 +48,6 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
-const int WINDOW_ID_INDEX = 3;
 const std::string SMART_PERF_VERSION = "1.0.6";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
@@ -659,11 +658,16 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     size_t pos = pkg.find_last_of(".");
     std::string pkgNameSuffix = (pos != std::string::npos) ? pkg.substr(pos + 1) : pkg;
     std::string result = "";
-    const std::string cmd = "hidumper -s WindowManagerService -a '-a'| grep -E '" + pkgNameSuffix + "|Focus window'";
+    const std::string cmd = "hidumper -s WindowManagerService -a '-a'|grep -E'" + pkgNameSuffix + "|Focus window";
+    bool isFoundAppName = false;
+    bool isForeground = false;
+    std::string result = "";
+    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
     if (cmd.empty()) {
         LOGE("cmd is null");
         return false;
     }
+
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         pclose(fd);
@@ -678,29 +682,25 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         LOGE("Error: Failed to close file");
         return false;
     }
+
     std::istringstream iss(result);
     std::string line;
-    std::string winId;
-    std::string focusWinId;
-    std::string focusWindow = "Focus window: ";
     while (std::getline(iss, line)) {
-        if (line.find(pkgNameSuffix) != std::string::npos) {
-            std::vector<std::string> params;
-            SPUtils::StrSplit(line, " ", params);
-            winId = params[WINDOW_ID_INDEX];
+        if (!isFoundAppName && line.find("mission name #[#" + pkg) != std::string::npos) {
+            isFoundAppName = true;
         }
-        size_t endPos = line.find(focusWindow);
-        if (endPos != std::string::npos) {
-            focusWinId = line.substr(endPos + focusWindow.length());
-            break;
-        }
-    }
-    if (!winId.empty() && !focusWinId.empty()) {
-        if (winId == focusWinId) {
-            return true;
+        if (isFoundAppName) {
+            if (line.find("state") != std::string::npos) {
+                isForeground = IsFindForeGround(line);
+                break;
+            }
         }
     }
-    return false;
+    return isForeground;
+}
+bool SPUtils::IsFindForeGround(const std::string &line)
+{
+    return line.find("FOREGROUND") != std::string::npos;
 }
 bool SPUtils::IsFindAbilist()
 {
