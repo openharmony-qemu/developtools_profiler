@@ -666,6 +666,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
 
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
+        pclose(fd);
         return false;
     }
     size_t bytesRead;

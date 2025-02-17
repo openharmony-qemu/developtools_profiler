@@ -325,5 +325,30 @@ HWTEST_F(SPdaemonTest, DdrTestCase, TestSize.Level1)
     EXPECT_EQ(ret, true);
     EXPECT_TRUE(flag);
 }
+
+/**
+ * @tc.name: Navigation
+ * @tc.desc: Test Navigation
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, Navigation, TestSize.Level1)
+{
+    Navigation &nav = Navigation::GetInstance();
+    std::string packName = "ohos.samples.ecg";
+
+    std::map<std::string, std::string> navItemData = nav.ItemData();
+
+    std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -nav";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("navPathName");
+    std::string::size_type strTwo = result.find("No Navigation Info");
+    if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    }
+    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(flag);
+}
 } // namespace OHOS
 } // namespace SmartPerf
