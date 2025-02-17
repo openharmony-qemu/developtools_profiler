@@ -178,7 +178,7 @@ bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange
 }
 
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
-                const StackRawData& curRawData)
+                const NameData& curRawData)
 {
     if (curRawData.addr == nullptr) {
         return;

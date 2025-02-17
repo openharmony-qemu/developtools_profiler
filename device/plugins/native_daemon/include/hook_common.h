@@ -99,8 +99,11 @@ struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
     union {
         char regs[MAX_REG_SIZE];
         uint64_t ip[MAX_UNWIND_DEPTH];
-        char name[PATH_MAX + 1] {0};
     };
+};
+
+struct alignas(8) NameData: public BaseStackRawData { // 8 is 8 bit
+    char name[PATH_MAX + 1] {0};
 };
 
 struct alignas(8) ReportEventBaseData { // 8 is 8 bit

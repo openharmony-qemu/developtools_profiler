@@ -193,7 +193,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
     long updateCount = reinterpret_cast<long>(pthread_getspecific(g_updateThreadNameCount));
     bool ret = true;
     if (updateCount == 0) {
-        StackRawData tnameData = {{{{0}}}};
+        NameData tnameData = {{{{0}}}};
         tnameData.tid = static_cast<uint32_t>(GetCurThreadId());
         tnameData.type = THREAD_NAME_MSG;
         prctl(PR_GET_NAME, tnameData.name);
@@ -226,7 +226,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
     }
     lock.unlock();
     if (isNewTag) {
-        StackRawData tagData = {{{{0}}}};
+        NameData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
         strcpy_s(tagData.name, PATH_MAX + 1, tagName);
@@ -906,7 +906,7 @@ void hook_free(void (*free_func)(void*), void* p)
 inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::string& filePath,
                                 const StackRawData& rawdata, std::shared_ptr<HookSocketClient>& holder)
 {
-    StackRawData curRawdata = {{{{0}}}};
+    NameData curRawdata = {{{{0}}}};
     curRawdata.addr = rawdata.addr;
     curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     curRawdata.mallocSize = rawdata.mallocSize;
@@ -1110,7 +1110,7 @@ int hook_prctl(int(*fn)(int, ...),
         struct timespec start = {};
         clock_gettime(CLOCK_REALTIME, &start);
 #endif
-        StackRawData rawdata = {{{{0}}}};
+        NameData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
         rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
@@ -1335,7 +1335,7 @@ static bool IsPidChanged(void)
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
     if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
-        StackRawData rawdata = {{{{0}}}};
+        BaseStackRawData rawdata = {};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
