@@ -13,15 +13,15 @@
  * limitations under the License.
  */
 
-#include "hidebug_base.h"
-#include "hidebug/hidebug.h"
-#include "hidebug/hidebug_type.h"
-
+#include <cstdlib>
 #include <filesystem>
+
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
-#include <cstdlib>
+#include "hidebug_base.h"
+#include "hidebug/hidebug.h"
+#include "hidebug/hidebug_type.h"
 
 using namespace testing::ext;
 
@@ -36,7 +36,6 @@ protected:
     }
 };
 
-#ifdef HIDEBUG_BUILD_VARIANT_ROOT
 /**
  * @tc.name: InitEnvironmentParam
  * @tc.desc: test InitEnvironmentParam
@@ -73,6 +72,7 @@ HWTEST_F(HidebugTest, InitEnvironmentParam3, TestSize.Level1)
     EXPECT_FALSE(InitEnvironmentParam(inputName));
 }
 
+#ifdef HIDEBUG_BUILD_VARIANT_ROOT
 /**
  * @tc.name: InitEnvironmentParam
  * @tc.desc: test InitEnvironmentParam for param set wrong
@@ -174,6 +174,9 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
         curThreadCpuUsage = curThreadCpuUsage->next;
     }
     OH_HiDebug_FreeThreadCpuUsage(&threadCpuUsage);
+    HiDebug_ThreadCpuUsagePtr threadCpuUsage1 = nullptr;
+    OH_HiDebug_FreeThreadCpuUsage(&threadCpuUsage1);
+    OH_HiDebug_FreeThreadCpuUsage(nullptr);
     EXPECT_TRUE(true);
 }
 
@@ -185,7 +188,8 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppThreadCpuUsage1, TestSize.Level1)
 HWTEST_F(HidebugTest, GetSystemCpuUsage, TestSize.Level1)
 {
     double systemCpuUsage = OH_HiDebug_GetSystemCpuUsage();
-    EXPECT_TRUE(systemCpuUsage >= 0 && systemCpuUsage <= 1);
+    ASSERT_GE(systemCpuUsage, 0);
+    ASSERT_LE(systemCpuUsage, 1);
 }
 
 /**
@@ -195,10 +199,11 @@ HWTEST_F(HidebugTest, GetSystemCpuUsage, TestSize.Level1)
  */
 HWTEST_F(HidebugTest, GetAppMemoryLimit1, TestSize.Level1)
 {
+    OH_HiDebug_GetAppMemoryLimit(nullptr);
     HiDebug_MemoryLimit memoryLimit;
     OH_HiDebug_GetAppMemoryLimit(&memoryLimit);
-    ASSERT_TRUE(memoryLimit.rssLimit >= 0);
-    ASSERT_TRUE(memoryLimit.vssLimit >= 0);
+    ASSERT_GE(memoryLimit.rssLimit, 0);
+    ASSERT_GE(memoryLimit.vssLimit, 0);
 }
 
 /**
@@ -226,11 +231,12 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppNativeMemInfo1, TestSize.Level1)
  */
 HWTEST_F(HidebugTest, OH_HiDebug_GetSystemMemInfo1, TestSize.Level1)
 {
+    OH_HiDebug_GetSystemMemInfo(nullptr);
     HiDebug_SystemMemInfo systemMemInfo;
     OH_HiDebug_GetSystemMemInfo(&systemMemInfo);
-    ASSERT_TRUE(systemMemInfo.totalMem >= 0);
-    ASSERT_TRUE(systemMemInfo.freeMem >= 0);
-    ASSERT_TRUE(systemMemInfo.availableMem >= 0);
+    ASSERT_GE(systemMemInfo.totalMem, 0);
+    ASSERT_GE(systemMemInfo.freeMem, 0);
+    ASSERT_GE(systemMemInfo.availableMem, 0);
 }
 
 /**
@@ -317,6 +323,7 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemory, TestSize.Level1)
 {
     uint32_t value = 0;
     EXPECT_EQ(OH_HiDebug_GetGraphicsMemory(&value), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemory(nullptr), HIDEBUG_INVALID_ARGUMENT);
     EXPECT_GE(value, 0);
 }
 } // namespace

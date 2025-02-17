@@ -18,16 +18,24 @@ module_output_path = "hiprofiler/hidebug/test/"
 
 ohos_unittest("hidebug_test") {
   module_out_path = module_output_path
-  sources = [ "./hidebug_test.cpp" ]
+  sources = [
+    "hidebug_native_interface_test.cpp",
+    "hidebug_test.cpp",
+    "hidebug_util_test.cpp",
+  ]
   if (build_variant == "root") {
     defines = [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
   }
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
+    "$hidebug_path/frameworks/native:hidebug_native",
     "$hidebug_path/interfaces/native/innerkits:libhidebug",
   ]
 
+  external_deps = [ "hiview:libucollection_client" ]
+
   include_dirs = [
+    "$hidebug_path/frameworks/native/include",
     "$hidebug_path/interfaces/native/innerkits/include",
     "$hidebug_path/interfaces/native/kits/include",
   ]

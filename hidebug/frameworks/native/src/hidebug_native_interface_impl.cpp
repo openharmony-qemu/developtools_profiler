@@ -24,6 +24,7 @@
 #include "dump_usage.h"
 #include "hidebug_app_thread_cpu.h"
 #include "hidebug_util.h"
+#include "hitrace_meter.h"
 #include "hilog/log.h"
 #include "client/cpu_collector_client.h"
 #include "client/memory_collector_client.h"
