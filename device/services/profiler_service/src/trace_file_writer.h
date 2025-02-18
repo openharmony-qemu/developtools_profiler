@@ -72,7 +72,7 @@ public:
 
     void SetTimeSource();
     void SetDurationTime();
-    bool FinishSaFile();
+    bool UpdateSaFileHeader();
 
 private:
     void SetTimeStamp();

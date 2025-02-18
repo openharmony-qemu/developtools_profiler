@@ -1286,7 +1286,7 @@ void StackPreprocess::FlushData(ProtoEncoder::BatchNativeHookData& stackData)
         dataFlushSize_ += static_cast<uint32_t>(mesgLen);
         if (dataFlushSize_ >= FLUSH_BASELINE_SA && writer_ != nullptr) {
             std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
-            tfPtr->FinishSaFile();
+            tfPtr->UpdateSaFileHeader();
             dataFlushSize_ = 0;
         }
         ctx = StartReport();

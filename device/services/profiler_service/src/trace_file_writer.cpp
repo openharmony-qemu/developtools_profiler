@@ -419,7 +419,7 @@ bool TraceFileWriter::Finish()
     return true;
 }
 
-bool TraceFileWriter::FinishSaFile()
+bool TraceFileWriter::UpdateSaFileHeader()
 {
     CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
     SetDurationTime();
