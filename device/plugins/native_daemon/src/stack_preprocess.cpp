@@ -56,6 +56,7 @@ static std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack dept
 static std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
 constexpr static int NAPI_CALL_STACK = 2; // just for napi call stack
 constexpr static uint32_t FRAME_DEPTH = 2; // add two frames
+constexpr uint32_t FLUSH_BASELINE_SA = (1U << 20);
 #ifdef PERFORMANCE_DEBUG
 constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
 static std::atomic<uint64_t> timeCost = 0;
@@ -1281,7 +1282,13 @@ void StackPreprocess::FlushData(ProtoEncoder::BatchNativeHookData& stackData)
         ctx = resultWriter_->startReport(resultWriter_);
     } else {
         profilerPluginData_.finishAdd_data(messageLen);
-        FinishReport();
+        int32_t mesgLen = FinishReport();
+        dataFlushSize_ += static_cast<uint32_t>(mesgLen);
+        if (dataFlushSize_ >= FLUSH_BASELINE_SA && writer_ != nullptr) {
+            std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+            tfPtr->UpdateSaFileHeader();
+            dataFlushSize_ = 0;
+        }
         ctx = StartReport();
     }
 
@@ -1511,7 +1518,7 @@ RandomWriteCtx* StackPreprocess::StartReport()
     return profilerPluginData_.startAdd_data();
 }
 
-void StackPreprocess::FinishReport()
+int32_t StackPreprocess::FinishReport()
 {
     struct timespec ts;
     clock_gettime(pluginDataClockId_, &ts);
@@ -1522,9 +1529,10 @@ void StackPreprocess::FinishReport()
     int32_t len = profilerPluginData_.Finish();
     if (writer_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s: the writer is nullptr!", __func__);
-        return;
+        return 0;
     }
     writer_->FinishReport(len);
+    return len;
 }
 
 void StackPreprocess::FillFpNativeIp(RawStackPtr& rawData)

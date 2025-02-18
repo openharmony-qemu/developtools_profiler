@@ -177,7 +177,7 @@ private:
     void ReportOfflineSymbolizationData();
 
     RandomWriteCtx* StartReport();
-    void FinishReport();
+    int32_t FinishReport();
     void FillFpNativeIp(RawStackPtr& rawData);
     void FillFpJsData(RawStackPtr& rawData);
     void FillDwarfErrorStack();
@@ -241,6 +241,7 @@ private:
     std::atomic<uint64_t> napiIndex_{1};
     ScheduleTaskManager scheduleTaskManager_;
     uint32_t nmdFd_ = 0;
+    uint32_t dataFlushSize_ = 0;
 };
 
 #endif // STACK_PREPROCESS_H

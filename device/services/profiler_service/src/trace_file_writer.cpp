@@ -419,6 +419,33 @@ bool TraceFileWriter::Finish()
     return true;
 }
 
+bool TraceFileWriter::UpdateSaFileHeader()
+{
+    CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
+    SetDurationTime();
+    // update header info
+    helper_.Update(header_);
+    SetTimeStamp(); // add timestamp in header
+    // get position of file pointer
+    int offsetCur = lseek(fd_, 0, SEEK_CUR);
+    if (offsetCur == -1) {
+        return false;
+    }
+    if (lseek(fd_, 0, SEEK_SET) == -1) {
+        return false;
+    }
+    auto ret = write(fd_, &header_, sizeof(header_));
+    CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
+    // restore
+    if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
+        return false;
+    }
+    if ((msync(fileMapAddr_, fileLength_, MS_SYNC)) == -1) {
+        PROFILER_LOG_INFO(LOG_CORE, "msync failed, error: %s", strerror(errno));
+    }
+    return true;
+}
+
 bool TraceFileWriter::Flush()
 {
     CHECK_TRUE(fd_ != 0, false, "Finish(), nmd-only mode no need to use TraceFileWriter");
