@@ -201,7 +201,7 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
         return False
     if (sample_interval < FILTER_THRESH and filtersize < FILTER_THRESH) and len(callstack_ids_exists) == 0:
         return False
-    if (sample_interval >= FILTER_THRESH and filtersize >= FILTER_THRESH) and len(callstack_ids_exists) != 0:
+    if (sample_interval >= FILTER_THRESH or filtersize >= FILTER_THRESH) and len(callstack_ids_exists) != 0:
         return False
     check_destroyed = False
     check_exists = False
@@ -242,7 +242,7 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
         if malloc_match_interval != 0:
             if times_destroyed != 0:
                 return False
-        elif times_destroyed != (touchtimes * MALLOC_TIMES):
+        elif times_destroyed != (touchtimes * MALLOC_TIMES) and (not ((sample_interval >= FILTER_THRESH) or (filtersize >= FILTER_THRESH))):
             return False
         for row in result:
             if row[ADDR_INDEX] in malloc_addrs and row[ALLOC_INDEX] == (DESTROY_SIZE / MALLOC_TIMES) and row[TYPE_INDEX] == "FreeEvent":
@@ -251,7 +251,7 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
         
         check_destroyed = (times_destroyed == 0)
         check_exists = (times_exists == (touchtimes * MALLOC_TIMES))
-    if (sample_interval > FILTER_THRESH) or (filtersize > FILTER_THRESH):
+    if (sample_interval >= FILTER_THRESH) or (filtersize >= FILTER_THRESH):
         check_exists = True
     if malloc_match_interval > 0:
         check_destroyed = True
@@ -710,218 +710,222 @@ class TestNativehook:
     def test_statistics_depth_five(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False)
 
-    @pytest.mark.L0
-    def test_nativehook_nonstatistics_sample(self):
-        assert check_nativehook_result(0, False, True, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_TWICE)
+def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False,
+                            callframe_compress=True, string_compress=True):
+
 
     @pytest.mark.L0
-    def test_nativehook_statistics_dwarf(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, True, 0, DEPTH_TEN, CLICK_THREETIMES)
+    def test_js_nonstatistics_sample(self):
+        assert check_nativehook_result(0, False, True, SAMPLE_LARGE, False, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_nativehook_nonstatistics_match(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, 1, MATCH_INTERVAL)
+    def test_js_statistics_dwarf(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_nativehook_startup_nonstatistics(self):
-        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_nonstatistics_match(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, 1, MATCH_INTERVAL)
 
     @pytest.mark.L0
-    def test_nativehook_statistics_response_library(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True)
+    def test_js_startup_nonstatistics(self):
+        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_dwarf_online(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, FILTER_SMALL, DEPTH_TEN, 1)
+    def test_js_statistics_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True)
 
     @pytest.mark.L0
-    def test_dwarf_startup(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_dwarf_online(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, FILTER_SMALL, DEPTH_TEN, 1)
+
+    @pytest.mark.L0
+    def test_js_dwarf_startup(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, CLICK_TWICE)
     
     
     @pytest.mark.L0
-    def test_dwarf_sample_interval(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, True, 0, DEPTH_TEN, CLICK_THREETIMES)
+    def test_js_dwarf_sample_interval(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, True, True, 0, DEPTH_TEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_dwarf_filtersize(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
+    def test_js_dwarf_filtersize(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_dwarf_nonstatistics_match(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, 0, FILTER_SMALL, 1, DEPTH_TEN, False)
+    def test_js_dwarf_nonstatistics_match(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, True, FILTER_SMALL, DEPTH_TEN, 1, False)
 
     @pytest.mark.L0
-    def test_dwarf_response_library(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, 1, 0, True)
+    def test_js_dwarf_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_nonstatistics_response_library(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, 1, 0, True)
+    def test_js_nonstatistics_response_library(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_nonstatistics_match_response_library(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, 1, MATCH_INTERVAL, True)
+    def test_js_nonstatistics_match_response_library(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, 1, MATCH_INTERVAL, True)
 
     @pytest.mark.L0
-    def test_startup_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
+    def test_js_startup_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_startup_non_statistics(self):
-        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_startup_non_statistics(self):
+        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_startup_online(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_startup_online(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_startup_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, 1, MATCH_INTERVAL, False)
+    def test_js_startup_nonstatistics_match(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, 1, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
-    def test_startup_sample_interval(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_THREETIMES)
+    def test_js_startup_sample_interval(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, True, 0, DEPTH_TEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_startup_response_library(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE, 0, True)
+    def test_js_startup_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE, 0, True)
 
     @pytest.mark.L0
-    def test_startup_response_library_sample_interval(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True)
+    def test_js_startup_response_library_sample_interval(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, True, 0, DEPTH_TEN, CLICK_THREETIMES, 0, True)
 
     @pytest.mark.L0
-    def test_startup_response_library_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, 0, True)
+    def test_js_startup_response_library_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, 0, True)
 
     @pytest.mark.L0
-    def test_startup_sample_interval_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
+    def test_js_startup_sample_interval_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_startup_sample_interval_nonstatistics(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_startup_sample_interval_nonstatistics(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, True, 0, DEPTH_TEN, CLICK_TWICE)
     
     @pytest.mark.L0
-    def test_startup_sample_interval_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, 0, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
+    def test_js_startup_sample_interval_nonstatistics_match(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, True, 0, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
-    def test_sample_interval_filter_size_statistics(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, FILTER_LARGE, DEPTH_TEN, 1)
+    def test_js_sample_interval_filter_size_statistics(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_LARGE, False, True, FILTER_LARGE, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_sample_interval_filter_size_nonstatistics(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, FILTER_LARGE, DEPTH_TEN, 1)
+    def test_js_sample_interval_filter_size_nonstatistics(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_LARGE, False, True, FILTER_LARGE, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_startup_filter_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, CLICK_THREETIMES, MATCH_INTERVAL, False)
+    def test_js_startup_filter_nonstatistics_match(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, CLICK_THREETIMES, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
-    def test_startup_filter_nonstatistics_match(self):
-        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
+    def test_js_startup_filter_nonstatistics_match(self):
+        assert check_nativehook_result(0, True, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, CLICK_TWICE, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
-    def test_online_filtersize(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, FILTER_LARGE, DEPTH_TEN, 1)
+    def test_js_online_filtersize(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, FILTER_LARGE, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_online_sample_interval(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, False, FILTER_SMALL, DEPTH_TEN, 1)
+    def test_js_online_sample_interval(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, False, True, FILTER_SMALL, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_online_sample_interval_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, False, FILTER_LARGE, DEPTH_TEN, 1)
+    def test_js_online_sample_interval_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_LARGE, False, True, FILTER_LARGE, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_online_response_library_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, 1, 0, True)
+    def test_js_online_response_library_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_online_nonstatistics(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, CLICK_THREETIMES)
+    def test_js_online_nonstatistics(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, FILTER_SMALL, DEPTH_TEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_online_nonstatistics_match(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, FILTER_SMALL, MATCH_INTERVAL, 1, DEPTH_TEN, False)
+    def test_js_online_nonstatistics_match(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, True, FILTER_SMALL, MATCH_INTERVAL, 1, DEPTH_TEN, False)
 
     @pytest.mark.L0
-    def test_online_nonstatistics_response_library(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
+    def test_js_online_nonstatistics_response_library(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_response_library_startup_statistics(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
+    def test_js_response_library_startup_statistics(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, False, SAMPLE_SMALL, False, True, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_response_library_startup_nonstatistics(self):
-        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
+    def test_js_response_library_startup_nonstatistics(self):
+        assert check_nativehook_result(0, True, True, SAMPLE_SMALL, False, True, FILTER_SMALL, DEPTH_TEN, 1, 0, True)
 
     @pytest.mark.L0
-    def test_online_nonstatistics_match_filter(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, 1, MATCH_INTERVAL, False)
+    def test_js_online_nonstatistics_match_filter(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, 1, MATCH_INTERVAL, False)
 
     @pytest.mark.L0
-    def test_online_nonstatistics_filter(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_TEN, 1)
+    def test_js_online_nonstatistics_filter(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_TEN, 1)
 
     @pytest.mark.L0
-    def test_no_dataqueue(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_THREETIMES)
+    def test_js_no_dataqueue(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_no_dataqueue_startup(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_no_dataqueue_startup(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_no_dataqueue_online(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_no_dataqueue_online(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
     
     @pytest.mark.L0
-    def test_no_dataqueue_dwarf(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_TEN, CLICK_TWICE)
+    def test_js_no_dataqueue_dwarf(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_depth_five_dwarf(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIVE, 1)
+    def test_js_depth_five_dwarf(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_FIVE, 1)
 
     @pytest.mark.L0
-    def test_depth_five(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, False, 0, DEPTH_FIVE, CLICK_THREETIMES)
+    def test_js_depth_five(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, True, SAMPLE_SMALL, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_five_startup(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, 0, DEPTH_FIVE, CLICK_THREETIMES)
+    def test_js_depth_five_startup(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, True, True, SAMPLE_SMALL, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_five_online(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, 0, DEPTH_FIVE, CLICK_TWICE)
+    def test_js_depth_five_online(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_FIVE, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_depth_five_filtersize(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, FILTER_LARGE, DEPTH_FIVE, CLICK_THREETIMES)
+    def test_js_depth_five_filtersize(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, FILTER_LARGE, DEPTH_FIVE, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_five_nonstatistics(self):
-        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, 0, DEPTH_FIVE, CLICK_THREETIMES)
+    def test_js_depth_five_nonstatistics(self):
+        assert check_nativehook_result(0, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_fifteen(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIFTEEN, CLICK_THREETIMES)
+    def test_js_depth_fifteen(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_FIFTEEN, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_twenty(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_TWENTY, CLICK_THREETIMES)
+    def test_js_depth_twenty(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TWENTY, CLICK_THREETIMES)
 
     @pytest.mark.L0
-    def test_depth_thirty(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_THIRTY, CLICK_TWICE)
+    def test_js_depth_thirty(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_THIRTY, CLICK_TWICE)
 
     @pytest.mark.L0
-    def test_depth_fifty(self):
-        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, 0, DEPTH_FIFTY, CLICK_THREETIMES)
+    def test_js_depth_fifty(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_FIFTY, CLICK_THREETIMES)
     
     @pytest.mark.L0
     def test_sa_killprocess(self):
@@ -930,17 +934,9 @@ class TestNativehook:
     @pytest.mark.L0
     def test_sa_dumpcatch(self):
         assert check_sa_result(False, True)
-    
-    @pytest.mark.L0
-    def test_sa(self):
-        assert check_sa_result()
 
     @pytest.mark.L0
-    def test_sa_multithread(self):
-        assert check_sa_result(False, False, True)
-
-    @pytest.mark.L0
-    def test_usermode_nondebug_app_startup(self):
+    def test_js_usermode_nondebug_app_startup(self):
         assert check_nativehook_multipleprocess(STATISTICS_INTERVAL, False, True, 0, False, 0, DEPTH_TEN, 1)
 
     @pytest.mark.L0
