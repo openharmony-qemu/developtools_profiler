@@ -47,7 +47,7 @@ const unsigned int INT_MAX_LEN = 10;
 const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
-const int BUFFER_SIZE = 1024;
+const int WINDOW_ID_INDEX = 3;
 const std::string SMART_PERF_VERSION = "1.0.6";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
@@ -653,12 +653,13 @@ void SPUtils::GetCurrentTime(int prevTime)
         }
     }
 }
+
 bool SPUtils::IsForeGround(const std::string &pkg)
 {
-    bool isFoundAppName = false;
-    bool isForeground = false;
-    std::string result = "";
-    const std::string cmd = "hidumper -s AbilityManagerService -a -l";
+    size_t pos = pkg.find_last_of(".");
+    std::string pkgNameSuffix = (pos != std::string::npos) ? pkg.substr(pos + 1) : pkg;
+
+    const std::string cmd = "hidumper -s WindowManagerService -a '-a'| grep -E '" + pkgNameSuffix + "|Focuswindow";
     if (cmd.empty()) {
         LOGE("cmd is null");
         return false;
@@ -669,31 +670,37 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         pclose(fd);
         return false;
     }
-    size_t bytesRead;
-    std::array<char, BUFFER_SIZE> buf;
-    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
-        result.append(buf.data(), bytesRead);
+    std::string winId;
+    std::string focusWinId;
+    const std::string focusWindow = "Focus window: ";
+    bool isFind = false;
+    char buf[4096] = {"\0"};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        if (line.find(pkgNameSuffix) != std::string::npos && isFind) {
+            isFind = true;
+            std::vector<std::string> params;
+            SPUtils::StrSplit(line, " ", params);
+            winId = params[WINDOW_ID_INDEX];
+        }
+        size_t endPos = line.find(focusWindow);
+        if (endPos != std::string::npos) {
+            if (line.back() == '\n') {
+                line.pop_back();
+            }
+            focusWinId = line.substr(endPos + focusWindow.length());
+        }
+        if (!winId.empty() && !focusWinId.empty() && winId = focusWinId) {
+            return true;
+        }
     }
     if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return false;
     }
-
-    std::istringstream iss(result);
-    std::string line;
-    while (std::getline(iss, line)) {
-        if (!isFoundAppName && line.find("mission name #[#" + pkg) != std::string::npos) {
-            isFoundAppName = true;
-        }
-        if (isFoundAppName) {
-            if (line.find("state") != std::string::npos) {
-                isForeground = IsFindForeGround(line);
-                break;
-            }
-        }
-    }
-    return isForeground;
+    return fasle;
 }
+
 bool SPUtils::IsFindForeGround(const std::string &line)
 {
     return line.find("FOREGROUND") != std::string::npos;
