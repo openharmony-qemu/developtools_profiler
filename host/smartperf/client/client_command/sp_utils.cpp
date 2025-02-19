@@ -699,7 +699,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         LOGE("Error: Failed to close file");
         return false;
     }
-    return fasle;
+    return false;
 }
 
 bool SPUtils::IsFindAbilist()
