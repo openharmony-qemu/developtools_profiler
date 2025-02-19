@@ -659,7 +659,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     size_t pos = pkg.find_last_of(".");
     std::string pkgNameSuffix = (pos != std::string::npos) ? pkg.substr(pos + 1) : pkg;
 
-    const std::string cmd = "hidumper -s WindowManagerService -a '-a'| grep -E '" + pkgNameSuffix + "|Focuswindow";
+    const std::string cmd = "hidumper -s WindowManagerService -a '-a'| grep -E '" + pkgNameSuffix + "|Focus window'";
     if (cmd.empty()) {
         LOGE("cmd is null");
         return false;
