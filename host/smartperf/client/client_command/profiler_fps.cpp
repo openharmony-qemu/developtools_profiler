@@ -557,14 +557,19 @@ std::string ProfilerFPS::GetGameLayer()
 
 std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos)
 {
-    if (std::to_string(nodeId) == processId) {
-        size_t layerStartPos = line.find("[");
-        size_t layerEndPos = line.find("]");
-        if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
-            return gameLayer;
+    StartUpDelay startUpDelay;
+    for (const auto& pid : startUpDelay.GetPidParams()) {
+        LOGD("ProfilerFPS::game.pid: (%s)", pid.c_str());
+        if (std::to_string(nodeId) == pid) {
+            size_t layerStartPos = line.find("[");
+            size_t layerEndPos = line.find("]");
+            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+                return gameLayer;
+            }
+            layerStartPos += 1;
+            gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
+            break;
         }
-        layerStartPos += 1;
-        gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
     }
     return gameLayer;
 }

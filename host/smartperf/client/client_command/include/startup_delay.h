@@ -29,6 +29,7 @@ public:
     bool GetSpClear() const;
     void ClearOldServer() const;
     std::string ExecuteCommand(const std::vector<const char*> &args) const;
+    std::vector<std::string> GetPidParams();
 };
 }
 }
