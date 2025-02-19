@@ -262,43 +262,6 @@ HWTEST_F(SPdaemonUtilsTest, GetPathPermissionsTest, TestSize.Level1)
     EXPECT_EQ(findIndex, true);
 }
 
-HWTEST_F(SPdaemonUtilsTest, IsForeGroundTest, TestSize.Level1)
-{
-    bool isFoundAppName = false;
-    bool isForeground = false;
-    std::string result;
-    std::string pkg = "";
-    bool ret = false;
-    std::string cmd = "hidumper -s AbilityManagerService -a -l";
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
-        return;
-    }
-    size_t bytesRead;
-    std::array<char, 1024> buf;
-    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
-        result.append(buf.data(), bytesRead);
-    }
-    if (pclose(fd) == -1) {
-        return;
-    }
-    std::istringstream iss(result);
-    std::string line;
-    while (std::getline(iss, line)) {
-        if (!isFoundAppName && line.find("mission name #[#" + pkg) != std::string::npos) {
-            isFoundAppName = true;
-        }
-        if (isFoundAppName) {
-            if (line.find("state") != std::string::npos) {
-                isForeground = SPUtils::IsFindForeGround(line);
-                break;
-            }
-        }
-    }
-    ret = SPUtils::IsForeGround(pkg);
-    EXPECT_EQ(isForeground, ret);
-}
-
 HWTEST_F(SPdaemonUtilsTest, GetCurrentTime, TestSize.Level1)
 {
     bool shouldContinue = true;

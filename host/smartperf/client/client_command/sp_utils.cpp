@@ -674,10 +674,10 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     std::string focusWinId;
     const std::string focusWindow = "Focus window: ";
     bool isFind = false;
-    char buf[4096] = {"\0"};
+    char buf[4096] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
-        if (line.find(pkgNameSuffix) != std::string::npos && isFind) {
+        if (line.find(pkgNameSuffix) != std::string::npos && !isFind) {
             isFind = true;
             std::vector<std::string> params;
             SPUtils::StrSplit(line, " ", params);
@@ -690,7 +690,8 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             }
             focusWinId = line.substr(endPos + focusWindow.length());
         }
-        if (!winId.empty() && !focusWinId.empty() && winId = focusWinId) {
+        if (!winId.empty() && !focusWinId.empty() && winId == focusWinId) {
+            pclose(fd);
             return true;
         }
     }
@@ -701,10 +702,6 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     return fasle;
 }
 
-bool SPUtils::IsFindForeGround(const std::string &line)
-{
-    return line.find("FOREGROUND") != std::string::npos;
-}
 bool SPUtils::IsFindAbilist()
 {
     std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
