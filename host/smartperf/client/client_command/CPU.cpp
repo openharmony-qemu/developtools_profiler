@@ -73,7 +73,7 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if (!packageName.empty() && !hapFlag) {
+    if (!packageName.empty()) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
             for (const auto& item : processCpuInfo) {
@@ -181,10 +181,6 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcSCpuUsage"] = "0";
     }
     return processCpuInfo;
-}
-void CPU::IsFindHap()
-{
-    hapFlag = true;
 }
 }
 }

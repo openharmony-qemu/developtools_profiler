@@ -38,7 +38,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     SpProfiler* profiler = nullptr;
     switch (messageType) {
         case MessageType::GET_CPU_FREQ_LOAD:
-            OHOS::SmartPerf::CPU::GetInstance().IsFindHap();
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
