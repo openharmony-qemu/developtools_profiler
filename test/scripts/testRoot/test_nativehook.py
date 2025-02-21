@@ -25,6 +25,9 @@ import sqlite3
 import datetime
 import os
 import stat
+from hypium import UiDriver, by
+uiconn = UiDriver.connect()
+uiconn.find_component(BY.text("11"))
 
 DESTROY_SIZE = 41943040
 EXIST_SIZE = 40960
@@ -463,6 +466,16 @@ def get_profiler_test_trace(process):
                 return line.split()[len(line.split()) - 1]
     return ""
 
+def get_nmd_file(process):
+    subprocess.check_output("hdc shell ls -lh /data/log/reliability/resource_leak/memory_leak/ > /data/local/tmp/leak.txt")
+    subprocess.check_output(r"hdc file recv /data/local/tmp/leak.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    with open(r'.\..\outputfiles\leak.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if process in line and ("smaps" in line) and ("sample" not in line):
+                return line.split()[len(line.split()) - 1]
+    return ""
+
 
 def check_file_size(output):
     result = output.split()[FILE_SIZE_INDEX]
@@ -512,6 +525,7 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
     subprocess.check_output("hdc shell killall com.example.insight_test_stage")
     subprocess.check_output("hdc shell param set hiview.memleak.test enable")
     subprocess.check_output("hdc shell killall hiview")
+    subprocess.check_output("hdc shell uitest uiInput click 100 200")
     subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
     time.sleep(SLEEP_FOUR)
     touch_button("模板测试")
@@ -550,7 +564,20 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
                     dump_catch_result = True
         return dump_catch_result
     filename = get_profiler_test_trace("com.example.insight_test_stage")
-
+    nmdfile = get_nmd_file("com.example.insight_test_stage")
+    if nmdfile == "":
+        return False
+    subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + nmdfile + " /data/local/tmp/nmd.txt")
+    subprocess.check_output(f"hdc file recv /data/local/tmp/nmd.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    nmd_result = False
+    with open(r'.\..\outputfiles\nmd.txt', 'r') as file:
+        lines = file.readlines()
+        for line in lines:
+            if "End jemalloc ohos statistics" in line:
+                nmd_result = True
+    if not nmd_result:
+        return False
+    
     if (multithread):
         sceneboard_file = get_profiler_test_trace("com.ohos.sceneboard")
         subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + sceneboard_file + " /data/local/tmp/test.htrace")
@@ -909,6 +936,10 @@ class TestNativehook:
     @pytest.mark.L1
     def test_sa_killprocess(self):
         assert check_sa_result(True)
+
+    @pytest.mark.L1
+    def test_sa_multi(self):
+        assert check_sa_result(False, False, True)
 
     @pytest.mark.L2
     def test_js_statistics_depth_five_dwarf(self):
