@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <regex>
+#include <unordered_set>
 
 #include "common.h"
 #include "file_utils.h"

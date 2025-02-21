@@ -37,9 +37,9 @@ ohos_fuzztest("ProfilerGetCapabilitiesFuzzTest") {
     "../../../../plugin_service:hiprofiler_plugin_service",
   ]
   external_deps = [
-    "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
+    "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",

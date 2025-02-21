@@ -49,11 +49,11 @@ ohos_unittest("hiprofiler_plugins_ut") {
   }
   configs = [ ":cflags_config" ]
   external_deps = [
-    "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "googletest:gmock",
     "googletest:gtest",
+    "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",
