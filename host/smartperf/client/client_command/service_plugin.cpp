@@ -46,11 +46,13 @@ namespace OHOS {
                 char soFilePathChar[PATH_MAX] = {0x00};
                 if ((realpath(pluginSoPath[type].c_str(), soFilePathChar) == nullptr)) {
                     WLOGE("%s is not exist.", pluginSoPath[type].c_str());
+                    return nullptr;
                 }
 
-                pluginHandle[type] = dlopen(pluginSoPath[type].c_str(), RTLD_LAZY);
+                pluginHandle[type] = dlopen(soFilePathChar, RTLD_LAZY);
                 if (!pluginHandle[type]) {
                     WLOGE("open ServicePlugin so file error.");
+                    return nullptr;
                 }
             }
             return pluginHandle[type];
