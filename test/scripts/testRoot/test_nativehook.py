@@ -25,7 +25,7 @@ import sqlite3
 import datetime
 import os
 import stat
-from hypium import UiDriver, by
+from hypium import UiDriver, BY
 uiconn = UiDriver.connect()
 uiconn.find_component(BY.text("11"))
 
