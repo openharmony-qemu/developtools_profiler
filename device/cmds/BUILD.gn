@@ -55,7 +55,7 @@ ohos_executable("hiprofiler_cmd") {
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_plugin_config_cpp_standard",
   ]
   external_deps = [
-    "abseil-cpp:absl_sync",
+    "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
     "init:libbegetutil",

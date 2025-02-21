@@ -22,6 +22,8 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <vector>
 
 #include "cpu_plugin_config.pb.h"
 #include "cpu_plugin_result.pb.h"
