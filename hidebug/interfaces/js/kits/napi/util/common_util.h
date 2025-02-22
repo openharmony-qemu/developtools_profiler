@@ -39,6 +39,8 @@ bool SetXAttr(const std::string& fileName, const std::string& key, const std::st
 
 bool CreateFile(const std::string &path);
 
+bool CreateDirectory(const std::string &path, unsigned mode);
+
 bool IsLegalPath(const std::string& path);
 
 uint64_t GetFileSize(const std::string& path);

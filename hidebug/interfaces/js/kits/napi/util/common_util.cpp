@@ -120,6 +120,22 @@ bool CreateFile(const std::string &path)
     return true;
 }
 
+bool CreateDirectory(const std::string &path, unsigned mode)
+{
+    std::vector<std::string> subPaths = SplitStr(path, '/', [](std::string& subPath) {
+        return !subPath.empty();
+    });
+    std::string currentPath;
+    for (const auto& subPath : subPaths) {
+        currentPath += "/" + subPath;
+        if (mkdir(currentPath.c_str(), mode) != 0 && errno != EEXIST) {
+            HILOG_ERROR(LOG_CORE, "directory %{public}s create failed, errno = %{public}d", currentPath.c_str(), errno);
+            return false;
+        }
+    }
+    return true;
+}
+
 bool IsBetaVersion()
 {
     return OHOS::system::GetParameter("const.logsystem.versiontype", "") == "beta";

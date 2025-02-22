@@ -84,7 +84,8 @@ bool InitRawHeapFile(std::string& fileName)
         return false;
     }
     fileName = filePath + SLASH_STR + RAW_HEAP_RECORD_FILE;
-    return CreateFile(fileName);
+    constexpr unsigned fileMode = 0700;
+    return CreateDirectory(fileName, fileMode);
 }
 
 std::vector<std::string> LoadDumpRecords()
