@@ -136,6 +136,42 @@ bool CreateDirectory(const std::string &path, unsigned mode)
     return true;
 }
 
+std::shared_ptr<SmartFile> SmartFile::OpenFile(const std::string& path, const std::string& mode)
+{
+    auto file = fopen(path.c_str(), mode.c_str());
+    if (file == nullptr) {
+        HILOG_ERROR(LOG_CORE, "can not open file %{public}s for %{public}s because of %{public}s.", path.c_str(),
+            mode.c_str(), strerror(errno));
+        return {};
+    }
+    return std::shared_ptr<SmartFile>(new (std::nothrow) SmartFile(file));
+}
+
+SmartFile::~SmartFile()
+{
+    if (fclose(file_) != 0) {
+        HILOG_ERROR(LOG_CORE, "failed close file because of %{public}s.", strerror(errno));
+    }
+}
+
+bool SmartFile::Write(const void *__restrict dataPtr, size_t itemSize, size_t dataNum)
+{
+    if (fwrite(dataPtr, itemSize, dataNum, file_) != dataNum) {
+        if (ferror(file_)) {
+            HILOG_ERROR(LOG_CORE, "failed to write file because of %{public}s.", strerror(errno));
+        } else if (feof(file_)) {
+            HILOG_ERROR(LOG_CORE, "failed to write readonly file.");
+        }
+        return false;
+    }
+    return true;
+}
+
+size_t SmartFile::Read(void *__restrict dataPtr, size_t itemSize, size_t dataNum)
+{
+    return fread(dataPtr, itemSize, dataNum, file_);
+}
+
 bool IsBetaVersion()
 {
     return OHOS::system::GetParameter("const.logsystem.versiontype", "") == "beta";

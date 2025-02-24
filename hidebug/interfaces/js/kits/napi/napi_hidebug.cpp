@@ -76,7 +76,6 @@ constexpr int THREAD_MIN = 1;
 constexpr int THREAD_MAX = 1000;
 const std::string SLASH_STR = "/";
 const std::string JSON_FILE = ".json";
-const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
 const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 
 const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
@@ -840,8 +839,7 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
-    if (!CheckVersionType("beta", KEY_HIVIEW_USER_TYPE) &&
-        !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
+    if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
         apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);
         return CreateUndefined(env);

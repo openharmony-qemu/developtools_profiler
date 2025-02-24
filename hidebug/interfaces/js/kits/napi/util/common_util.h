@@ -18,7 +18,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <string>
+#include <vector>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -44,6 +46,21 @@ bool CreateDirectory(const std::string &path, unsigned mode);
 bool IsLegalPath(const std::string& path);
 
 uint64_t GetFileSize(const std::string& path);
+
+class SmartFile {
+public:
+    static std::shared_ptr<SmartFile> OpenFile(const std::string& path, const std::string& mode);
+    ~SmartFile();
+    SmartFile(SmartFile&& other) = delete;
+    SmartFile& operator=(SmartFile&& other) = delete;
+    SmartFile(const SmartFile&) = delete;
+    SmartFile& operator=(const SmartFile&) = delete;
+    bool Write(const void *__restrict dataPtr, size_t itemSize, size_t dataNum);
+    size_t Read(void *__restrict dataPtr, size_t itemSize, size_t dataNum);
+private:
+    explicit SmartFile(::FILE *file) : file_(file) {}
+    ::FILE *file_;
+};
 
 bool IsBetaVersion();
 

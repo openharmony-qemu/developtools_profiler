@@ -19,11 +19,9 @@
 #include <cinttypes>
 #include <cstring>
 #include <fcntl.h>
-#include <fstream>
 #include <memory>
 
 #include <sys/statvfs.h>
-#include <sys/xattr.h>
 
 #include "application_context.h"
 #include "common.h"
@@ -125,21 +123,24 @@ bool AppendMetaData(const std::string& newPath)
         HILOG_ERROR(LOG_CORE, "%{public}s is not existed or empty.",  metaDataPath);
         return false;
     }
-    std::ifstream metaData(metaDataPath);
-    if (!metaData.is_open()) {
-        HILOG_ERROR(LOG_CORE, "failed to open %{public}s for %{public}s.",  metaDataPath, strerror(errno));
+    auto targetFile = SmartFile::OpenFile(newPath, "ab");
+    if (targetFile == nullptr) {
         return false;
     }
-    std::ofstream fout(newPath.c_str(), std::ios::out | std::ios::app);
-    if (!fout.is_open()) {
-        HILOG_ERROR(LOG_CORE, "failed to open %{public}s for %{public}s.",  newPath.c_str(), strerror(errno));
+    auto metaData = SmartFile::OpenFile(metaDataPath, "rb");
+    if (metaData == nullptr) {
         return false;
     }
-    fout << metaData.rdbuf();
-    fout.write(reinterpret_cast<char*>(&rawHeapFileSize), sizeof(rawHeapFileSize));
-    fout.write(reinterpret_cast<char*>(&metaDataFileSize), sizeof(metaDataFileSize));
-    fout.close();
-    return true;
+    constexpr auto buffSize = 1024;
+    char buffer[buffSize];
+    size_t bytesRead;
+    while ((bytesRead = metaData->Read(buffer, 1, buffSize)) > 0) {
+        if (!targetFile->Write(buffer, 1, bytesRead) != bytesRead) {
+            return false;
+        }
+    }
+    return targetFile->Write(&rawHeapFileSize, sizeof(rawHeapFileSize), 1) &&
+        targetFile->Write(&metaDataFileSize, sizeof(metaDataFileSize), 1);
 }
 
 bool InsertDumpRecord()
@@ -214,10 +215,8 @@ std::string GenerateDumpFile(int64_t currentTime)
 }
 }
 
-napi_value DumpHeapData(napi_env env, napi_callback_info info)
+napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env)
 {
-    ApiInvokeRecorder apiInvokeRecorder("dumpHeapData");
-    std::string fileName = GetFileNameParam(env, info);
     std::string filesDir = GetProcessDir(FILE);
     if (filesDir.empty()) {
         return CreateErrorMessage(env, "Get App files dir failed.");
@@ -234,6 +233,13 @@ napi_value DumpHeapData(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value DumpHeapData(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("dumpHeapData");
+    std::string fileName = GetFileNameParam(env, info);
+    return DumpHeapSnapshot(fileName, env);
+}
+
 napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
@@ -243,21 +249,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
-    HILOG_ERROR(LOG_CORE, "filename: %{public}s.", fileName.c_str());
-    std::string filesDir = GetProcessDir(FILE);
-    if (filesDir.empty()) {
-        return CreateErrorMessage(env, "Get App files dir failed.");
-    }
-    std::string filePath = filesDir + SLASH_STR + fileName + HEAPSNAPSHOT_FILE;
-    if (!IsLegalPath(filePath)) {
-        return CreateErrorMessage(env, "input fileName is illegal.");
-    }
-    if (!CreateFile(filePath)) {
-        return CreateErrorMessage(env, "file created failed.");
-    }
-    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
-    return CreateUndefined(env);
+    return DumpHeapSnapshot(fileName, env);
 }
 
 int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc, int& fd)
