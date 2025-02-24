@@ -49,6 +49,7 @@ const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
 
 constexpr size_t MAX_REG_SIZE = sizeof(uint64_t)
     * OHOS::Developtools::NativeDaemon::PERF_REG_ARM64_MAX;
+constexpr size_t MAX_HOOK_PATH = 1024;
 
 enum {
     MALLOCDISABLE = (1u << 0),
@@ -103,7 +104,7 @@ struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
 };
 
 struct alignas(8) NameData: public BaseStackRawData { // 8 is 8 bit
-    char name[PATH_MAX + 1] {0};
+    char name[MAX_HOOK_PATH + 1] {0};
 };
 
 struct alignas(8) ReportEventBaseData { // 8 is 8 bit

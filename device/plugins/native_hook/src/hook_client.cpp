@@ -210,7 +210,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
+    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
         return 0;
     }
     uint32_t tagId = 0;
@@ -229,7 +229,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         NameData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
+        strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName);
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
@@ -921,7 +921,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
-    if (strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len) != EOK) {
+    if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath.c_str(), len) != EOK) {
         return;
     }
     if (flags & MAP_FIXED) {
@@ -989,7 +989,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (fd >= 0) {
         rawdata.type = MMAP_FILE_PAGE_MSG;
         char path[FD_PATH_LENGTH] = {0};
-        char fileName[PATH_MAX + 1] = {0};
+        char fileName[MAX_HOOK_PATH + 1] = {0};
         (void)snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd);
         ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
         if (len != -1) {
