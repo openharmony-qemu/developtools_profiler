@@ -328,4 +328,117 @@ HWTEST_F(NetworkPluginTest, TestSystemData, TestSize.Level1)
     EXPECT_GT(plugin->callbacks->onPluginReportResult(dataBuffer.data(), dataBuffer.size()), 0);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
 }
+/////////////////////////////
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart1, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_single_pid(-1);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_EQ(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test102, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_single_pid(-1);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_EQ(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test103, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_single_pid(-1);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_EQ(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: systemdata test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test104, TestSize.Level1)
+{
+    NetworkFlowData dataProto;
+    NetFlowData data;
+    /*
+    data.rxBytes = 1;
+    data.rxPackets = 1;
+    data.txBytes = 1;
+    data.txPackets = 1;
+    NetFlowDetail detail;
+    detail.type = "wlan0";
+    detail.rxBytes = 1;
+    detail.rxBytes = 1;
+    detail.rxBytes = 1;
+    detail.rxBytes = 1;
+    data.details.push_back(detail);
+     */
+    NetworkPlugin plugin;
+    plugin.WriteData(dataProto, data);
+    EXPECT_EQ(dataProto.rx_bytes(), 1);
+    EXPECT_EQ(dataProto.rx_bytes(), 1);
+    EXPECT_EQ(dataProto.rx_bytes(), 1);
+    EXPECT_EQ(dataProto.rx_bytes(), 1);
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: systemdata test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test105, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    std::string processName = plugin.GetBundleNameByPid(1);
+    EXPECT_EQ(processName, "/bin/init");
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: systemdata test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test106, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    EXPECT_EQ(plugin.GetUidByConfiguredBundleName(""), -1);
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: systemdata test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, Test107, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkFlowData dataProto;
+    ASSERT_FALSE(plugin.WriteNetFlowData(dataProto));
+}
 } // namespace
