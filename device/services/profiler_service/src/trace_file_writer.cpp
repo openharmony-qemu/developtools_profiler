@@ -67,8 +67,8 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     pageSize_ = static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
     fileLength_ = DEFULT_PAGES * pageSize_;
 
-    if (ftruncate(fd_, fileLength_) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", fileLength_, strerror(errno));
+    if (fallocate(fd_, 0, 0, fileLength_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "fallocate file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return;
     }
 
@@ -507,8 +507,8 @@ bool TraceFileWriter::RemapFile()
 
     // file size increased by DEFULT_PAGES * pageSize_(64M)
     size_t newLength = fileLength_ + DEFULT_PAGES * pageSize_;
-    if (ftruncate(fd_, newLength) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", newLength, strerror(errno));
+    if (fallocate(fd_, 0, fileLength_, DEFULT_PAGES * pageSize_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "fallocate file(%zu) failed, error: %s", newLength, strerror(errno));
         return false;
     }
 
