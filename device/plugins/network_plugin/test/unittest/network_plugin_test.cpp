@@ -18,6 +18,7 @@
 
 #include "network_plugin.h"
 #include "plugin_module_api.h"
+#include "net_stats_client.h"
 
 using namespace testing::ext;
 
