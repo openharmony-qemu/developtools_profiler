@@ -38,7 +38,7 @@ constexpr int MB_TO_BYTE = (1024 * 1024);
 constexpr int GB_TO_BYTE = (1024 * 1024 * 1024);
 constexpr int SPLIT_FILE_MIN_SIZE = 200;    // split file min size
 constexpr int SPLIT_FILE_DEFAULT_NUM = 10;  // split file default num
-constexpr size_t DEFULT_PAGES = 64 * 256; // 64M
+constexpr size_t DEFULT_PAGES = 32 * 256; // 32M
 constexpr int PIECE_HEAD_LEN = 4;
 } // namespace
 
@@ -67,8 +67,8 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     pageSize_ = static_cast<size_t>(sysconf(_SC_PAGE_SIZE));
     fileLength_ = DEFULT_PAGES * pageSize_;
 
-    if (ftruncate(fd_, fileLength_) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", fileLength_, strerror(errno));
+    if (fallocate(fd_, 0, 0, fileLength_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "fallocate file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return;
     }
 
@@ -99,7 +99,7 @@ TraceFileWriter::~TraceFileWriter()
     if (stream_.is_open()) {
         stream_.close();
     }
-    if (fileMapAddr_ != MMAP_FAILED) {
+    if (fileMapAddr_ != MAP_FAILED) {
         munmap(fileMapAddr_, fileLength_);
     }
 }
@@ -436,6 +436,7 @@ bool TraceFileWriter::UpdateSaFileHeader()
     }
     auto ret = write(fd_, &header_, sizeof(header_));
     CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, false, "UpdateSaFileHeader() fileMapAddr not mapped!");
     // restore
     if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
         return false;
@@ -500,15 +501,16 @@ void TraceFileWriter::LogDiskUsage()
 
 bool TraceFileWriter::RemapFile()
 {
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, false, "RemapFile() fileMapAddr not mapped!");
     if (munmap(fileMapAddr_, fileLength_) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return false;
     }
 
-    // file size increased by DEFULT_PAGES * pageSize_(64M)
+    // file size increased by DEFULT_PAGES * pageSize_(32M)
     size_t newLength = fileLength_ + DEFULT_PAGES * pageSize_;
-    if (ftruncate(fd_, newLength) != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "ftruncate file(%zu) failed, error: %s", newLength, strerror(errno));
+    if (fallocate(fd_, 0, fileLength_, DEFULT_PAGES * pageSize_) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "fallocate file(%zu) failed, error: %s", newLength, strerror(errno));
         return false;
     }
 
@@ -530,11 +532,12 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
 {
     if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
         if (!RemapFile()) {
-            PROFILER_LOG_ERROR(LOG_CORE, "RemapFile failed!");
             return false;
         }
     }
-
+    if (fileMapAddr_ == MAP_FAILED) {
+        return false;
+    }
     *memory = &reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_ + messageWriteOffset_];
     *offset = messageWriteOffset_;
     return true;
@@ -548,6 +551,7 @@ bool TraceFileWriter::Seek(uint32_t offset)
 
 void TraceFileWriter::FinishReport(int32_t size)
 {
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, NO_RETVAL, "FinishReport fileMapAddr not mapped!");
     auto realSize = PIECE_HEAD_LEN + size;
     CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
         realSize, strerror(errno));
