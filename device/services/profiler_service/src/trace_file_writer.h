@@ -118,7 +118,7 @@ private:
     TraceFileHeader::HeaderData headerDataTime_ = {}; // used to store the clock source and collection time.
     int32_t fd_{-1};
     TraceFileWriterCtx writeCtx_ {};
-    void* fileMapAddr_ = MMAP_FAILED;
+    void* fileMapAddr_ = MAP_FAILED;
     size_t fileLength_ = 0;
     uint32_t fileWriteLength_ = 0;
     uint32_t messageWriteOffset_ = 0;

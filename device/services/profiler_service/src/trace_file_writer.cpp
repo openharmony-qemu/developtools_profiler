@@ -73,7 +73,7 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
     }
 
     fileMapAddr_ = mmap(nullptr, fileLength_, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_POPULATE, fd_, 0);
-    if (fileMapAddr_ == MMAP_FAILED) {
+    if (fileMapAddr_ == MAP_FAILED) {
         PROFILER_LOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
         return;
     }
@@ -99,7 +99,7 @@ TraceFileWriter::~TraceFileWriter()
     if (stream_.is_open()) {
         stream_.close();
     }
-    if (fileMapAddr_ != MMAP_FAILED) {
+    if (fileMapAddr_ != MAP_FAILED) {
         munmap(fileMapAddr_, fileLength_);
     }
 }
@@ -436,7 +436,7 @@ bool TraceFileWriter::UpdateSaFileHeader()
     }
     auto ret = write(fd_, &header_, sizeof(header_));
     CHECK_TRUE(ret == sizeof(header_), false, "write initial header failed!, error: %s", strerror(errno));
-    CHECK_TRUE(fileMapAddr_ != MMAP_FAILED, false, "UpdateSaFileHeader() fileMapAddr not mapped!");
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, false, "UpdateSaFileHeader() fileMapAddr not mapped!");
     // restore
     if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
         return false;
@@ -501,7 +501,7 @@ void TraceFileWriter::LogDiskUsage()
 
 bool TraceFileWriter::RemapFile()
 {
-    CHECK_TRUE(fileMapAddr_ != MMAP_FAILED, false, "RemapFile() fileMapAddr not mapped!");
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, false, "RemapFile() fileMapAddr not mapped!");
     if (munmap(fileMapAddr_, fileLength_) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return false;
@@ -516,7 +516,7 @@ bool TraceFileWriter::RemapFile()
 
     size_t remapPos = fileWriteLength_ & ~(pageSize_ - 1);
     fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, remapPos);
-    if (fileMapAddr_ == MMAP_FAILED) {
+    if (fileMapAddr_ == MAP_FAILED) {
         PROFILER_LOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos,
                            strerror(errno));
         return false;
@@ -536,8 +536,8 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
             return false;
         }
     }
-    if (fileMapAddr_ == MMAP_FAILED) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetMemory failed! fileMapAddr_ is MMAP_FAILED");
+    if (fileMapAddr_ == MAP_FAILED) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetMemory failed! fileMapAddr_ is MAP_FAILED");
         return false;
     }
     *memory = &reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_ + messageWriteOffset_];
@@ -553,7 +553,7 @@ bool TraceFileWriter::Seek(uint32_t offset)
 
 void TraceFileWriter::FinishReport(int32_t size)
 {
-    CHECK_TRUE(fileMapAddr_ != MMAP_FAILED, NO_RETVAL, "RemapFile() fileMapAddr not mapped!");
+    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, NO_RETVAL, "RemapFile() fileMapAddr not mapped!");
     auto realSize = PIECE_HEAD_LEN + size;
     CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
         realSize, strerror(errno));
