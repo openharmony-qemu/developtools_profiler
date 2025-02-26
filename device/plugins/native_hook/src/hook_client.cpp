@@ -193,7 +193,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
     long updateCount = reinterpret_cast<long>(pthread_getspecific(g_updateThreadNameCount));
     bool ret = true;
     if (updateCount == 0) {
-        StackRawData tnameData = {{{{0}}}};
+        NameData tnameData = {{{{0}}}};
         tnameData.tid = static_cast<uint32_t>(GetCurThreadId());
         tnameData.type = THREAD_NAME_MSG;
         prctl(PR_GET_NAME, tnameData.name);
@@ -210,7 +210,7 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
 
 uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
 {
-    if (tagName == nullptr || strlen(tagName) > PATH_MAX) {
+    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
         return 0;
     }
     uint32_t tagId = 0;
@@ -226,10 +226,10 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
     }
     lock.unlock();
     if (isNewTag) {
-        StackRawData tagData = {{{{0}}}};
+        NameData tagData = {{{{0}}}};
         tagData.type = MEMORY_TAG;
         tagData.tagId = tagId;
-        strcpy_s(tagData.name, PATH_MAX + 1, tagName);
+        strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName);
         if (client != nullptr) {
             client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
         }
@@ -904,7 +904,7 @@ void hook_free(void (*free_func)(void*), void* p)
 inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::string& filePath,
                                 const StackRawData& rawdata, std::shared_ptr<HookSocketClient>& holder)
 {
-    StackRawData curRawdata = {{{{0}}}};
+    NameData curRawdata = {{{{0}}}};
     curRawdata.addr = rawdata.addr;
     curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     curRawdata.mallocSize = rawdata.mallocSize;
@@ -919,7 +919,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
-    if (strncpy_s(curRawdata.name, PATH_MAX + 1, filePath.c_str(), len) != EOK) {
+    if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath.c_str(), len) != EOK) {
         return;
     }
     if (flags & MAP_FIXED) {
@@ -987,7 +987,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (fd >= 0) {
         rawdata.type = MMAP_FILE_PAGE_MSG;
         char path[FD_PATH_LENGTH] = {0};
-        char fileName[PATH_MAX + 1] = {0};
+        char fileName[MAX_HOOK_PATH + 1] = {0};
         (void)snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd);
         ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
         if (len != -1) {
@@ -1108,7 +1108,7 @@ int hook_prctl(int(*fn)(int, ...),
         struct timespec start = {};
         clock_gettime(CLOCK_REALTIME, &start);
 #endif
-        StackRawData rawdata = {{{{0}}}};
+        NameData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
         rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
@@ -1333,7 +1333,7 @@ static bool IsPidChanged(void)
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
     if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
-        StackRawData rawdata = {{{{0}}}};
+        BaseStackRawData rawdata = {};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;

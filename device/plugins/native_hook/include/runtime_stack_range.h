@@ -25,7 +25,7 @@ extern "C" {
 
 bool IsLegalSoName(const std::string &fileName);
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
-                const StackRawData& curRawData);
+                const NameData& curRawData);
 bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread);
 
