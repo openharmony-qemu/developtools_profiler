@@ -565,13 +565,17 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
         UpdateSymbols(filePath, mapItem);
-        if (!hookConfig_.fp_unwind()) {
+        if (!hookConfig_.fp_unwind() && hookConfig_.startup_mode()) {
             auto &thread = UpdateThread(pid, tid);
             thread.ParseMap(processMaps_, false);
+        } else if (!hookConfig_.fp_unwind()) {
+            auto &thread = UpdateThread(pid, tid);
+            processMaps_.emplace_back(mapItem);
+            thread.SortMaps();
         }
     } else {
         auto curMapsIter = mapsCache_.find(soBegin_);
-        if (curMapsIter != mapsCache_.end()) {
+        if (curMapsIter != mapsCache_.end() && (curMapsIter->second->name_ == filePath)) {
             auto& curMaps = curMapsIter->second;
             curMaps->soEnd_ = begin + length;
             std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length,
@@ -581,7 +585,18 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
                 HLOGD("update hap(%s) symbols", mapItem->name.c_str());
                 UpdateHapSymbols(mapItem);
             }
-            curMaps->AddMap(mapItem, false);
+            if (!hookConfig_.fp_unwind() && !hookConfig_.startup_mode()) {
+                auto &thread = UpdateThread(pid, tid);
+                processMaps_.emplace_back(mapItem);
+                thread.SortMaps();
+            }
+            if (begin == curMaps->soBegin_) {
+                if (!curMaps->ReplaceFront(mapItem)) {
+                    curMaps->AddMap(mapItem, false);
+                }
+            } else {
+                curMaps->AddMap(mapItem, false);
+            }
         }
     }
     if (flags & PROT_EXEC) {

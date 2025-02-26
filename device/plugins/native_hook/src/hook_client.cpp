@@ -289,7 +289,6 @@ static bool InitTheadKey()
 
 bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 {
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_start begin!");
     pthread_t threadStart;
     if (pthread_create(&threadStart, nullptr, MallocHookStart,
                        reinterpret_cast<void *>(disableHookCallback))) {
@@ -326,7 +325,6 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "ohos_malloc_hook_on_end begin!");
     {
         std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
         if (g_hookClient != nullptr) {
