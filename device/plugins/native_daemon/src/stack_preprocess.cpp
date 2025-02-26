@@ -650,7 +650,12 @@ inline uint32_t StackPreprocess::GetCallStackId(const RawStackPtr& rawStack, std
         GetMemTag(rawStack->stackConext->tagId, tagName);
         if (tagName.find("napi") != std::string::npos) {
             callStack_.reserve(callFrames.size() + 1);  // 1 : insert a frame
-            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            if (!hookConfig_.offline_symbolization()) {
+                callStack_.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
+            } else {
+                // just for offline symbolization
+                callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            }
             isNapi = true;
         }
     } else {
@@ -772,7 +777,12 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::
         GetMemTag(rawStack->stackConext->tagId, tagName);
         if (tagName.find("napi") != std::string::npos) {
             callStack_.reserve(callFrames.size() + FRAME_DEPTH);  // insert a frame
-            callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            if (!hookConfig_.offline_symbolization()) {
+                callStack_.push_back(DWARF_NAPI_CALLBACK + napiIndex_);
+            } else {
+                // just for offline symbolization
+                callStack_.push_back((DWARF_NAPI_CALLBACK + napiIndex_) | JS_OFFLINE_IP_MASK);
+            }
             isNapi = true;
         }
     } else {
