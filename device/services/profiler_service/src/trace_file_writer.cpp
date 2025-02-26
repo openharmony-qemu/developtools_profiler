@@ -532,12 +532,10 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
 {
     if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
         if (!RemapFile()) {
-            PROFILER_LOG_ERROR(LOG_CORE, "RemapFile failed!");
             return false;
         }
     }
     if (fileMapAddr_ == MAP_FAILED) {
-        PROFILER_LOG_ERROR(LOG_CORE, "GetMemory failed! fileMapAddr_ is MAP_FAILED");
         return false;
     }
     *memory = &reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_ + messageWriteOffset_];
