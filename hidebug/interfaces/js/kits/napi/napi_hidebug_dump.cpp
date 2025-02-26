@@ -25,7 +25,6 @@
 
 #include "application_context.h"
 #include "common.h"
-#include "common_util.h"
 #include "error_code.h"
 #include "hiappevent_util.h"
 #include "hidebug_util.h"
@@ -44,7 +43,7 @@ namespace {
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D0A
 #undef LOG_TAG
-#define LOG_TAG "HiDebug_DUMP"
+#define LOG_TAG "HidebugDump"
 
 constexpr auto SLASH_STR = "/";
 constexpr auto HEAPSNAPSHOT_FILE = ".heapsnapshot";
@@ -77,7 +76,7 @@ bool DumpLimitEnable()
 
 bool InitRawHeapFile(std::string& fileName)
 {
-    std::string filePath = GetProcessDir(CACHE);
+    std::string filePath = GetProcessDir(DirectoryType::CACHE);
     if (filePath.empty()) {
         return false;
     }
@@ -135,7 +134,7 @@ bool AppendMetaData(const std::string& newPath)
     char buffer[buffSize];
     size_t bytesRead;
     while ((bytesRead = metaData->Read(buffer, 1, buffSize)) > 0) {
-        if (!targetFile->Write(buffer, 1, bytesRead) != bytesRead) {
+        if (!targetFile->Write(buffer, 1, bytesRead)) {
             return false;
         }
     }
@@ -191,7 +190,7 @@ bool CheckProcessQuota()
 bool CheckDumpDiskSpace()
 {
     struct statvfs stat{};
-    std::string appDir = GetProcessDir(FILE);
+    std::string appDir = GetProcessDir(DirectoryType::FILE);
     if (statvfs(appDir.c_str(), &stat) != 0) {
         return false;
     }
@@ -206,7 +205,7 @@ bool CheckDumpDiskSpace()
 
 std::string GenerateDumpFile(int64_t currentTime)
 {
-    std::string filesDir = GetProcessDir(FILE);
+    std::string filesDir = GetProcessDir(DirectoryType::FILE);
     if (filesDir.empty()) {
         return "";
     }
@@ -217,7 +216,7 @@ std::string GenerateDumpFile(int64_t currentTime)
 
 napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env)
 {
-    std::string filesDir = GetProcessDir(FILE);
+    std::string filesDir = GetProcessDir(DirectoryType::FILE);
     if (filesDir.empty()) {
         return CreateErrorMessage(env, "Get App files dir failed.");
     }
@@ -264,6 +263,9 @@ int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::strin
         return ErrorCode::PARAMETER_ERROR;
     }
     filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
+    if (!IsLegalPath(filePath)) {
+        return DumpRawHeapErrors::FAILED_CREATE_FILE;
+    }
     fd = open(filePath.c_str(),  O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP); // -rw-r-----
     if (fd < 0) {
         return DumpRawHeapErrors::FAILED_CREATE_FILE;

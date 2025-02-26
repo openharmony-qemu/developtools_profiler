@@ -62,11 +62,13 @@ ohos_shared_library("hidebug_native") {
   ]
 
   external_deps = [
+    "ability_runtime:app_context",
     "c_utils:utils",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_client",
     "hiview:libucollection_utility",
+    "init:libbegetutil",
   ]
 }

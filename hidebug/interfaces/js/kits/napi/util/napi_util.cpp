@@ -28,7 +28,7 @@ namespace {
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D0A
 #undef LOG_TAG
-#define LOG_TAG "HiDebug_NAPI_UTIL"
+#define LOG_TAG "NapiUtil"
 constexpr int ONE_VALUE_LIMIT = 1;
 const std::string DEFAULT_FILENAME = "undefined";
 }
