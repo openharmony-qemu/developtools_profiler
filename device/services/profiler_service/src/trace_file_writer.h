@@ -21,7 +21,7 @@
 #include <mutex>
 #include <queue>
 #include <string>
-
+#include <sys/mman.h>
 #include "logging.h"
 #include "nocopyable.h"
 #include "plugin_module_api.h"
