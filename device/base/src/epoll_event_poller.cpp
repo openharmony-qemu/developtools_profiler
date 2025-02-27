@@ -130,7 +130,7 @@ void EpollEventPoller::Run()
         }
         for (int i = 0; i < retval; i++) {
             auto ctx = reinterpret_cast<EventContext*>(eventVec[i].data.ptr);
-            if (ctx != nullptr) {
+            if (ctx != nullptr && running_.load()) {
                 HandleEvent(eventVec[i].events, *ctx);
             }
         }
