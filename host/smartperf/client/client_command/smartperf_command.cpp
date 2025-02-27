@@ -37,6 +37,14 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        std::string daemonArg = argv[0];
+        if (daemonArg.find("SP_daemon::") != std::string::npos) {
+            size_t pos = daemonArg.find("::");
+            if (pos != std::string::npos) {
+                std::string uuid = daemonArg.substr(pos + 2);
+                SpThreadSocket::GetInstance().SetUdpToken(uuid);
+            }
+        }
         EnableWriteLogAndDeleteOldLogFiles();
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
@@ -109,7 +117,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
                 return;
             } else {
                 WLOGI("############################# Setting TCP token...");
-                SPTask::GetInstance().SetTcpToken(token);
+                SpThreadSocket::GetInstance().SetTcpToken(token);
                 WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
             }
         }

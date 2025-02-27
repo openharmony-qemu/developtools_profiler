@@ -97,7 +97,7 @@ void SpThreadSocket::Process(ProtoType type)
     std::cout << "Socket Process finished!" << std::endl;
     spSocket.Close();
 }
-SocketErrorType SpThreadSocket::CheckToken(std::string recvStr,
+SocketErrorType SpThreadSocket::CheckTcpToken(std::string recvStr,
     SpServerSocket &spSocket, std::string recvStrNoToken) const
 {
     if (recvStr.find_last_of(":") == std::string::npos) {
@@ -111,7 +111,7 @@ SocketErrorType SpThreadSocket::CheckToken(std::string recvStr,
     }
     std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
     token = token.substr(0, token.find(' '));
-    std::string tcpToken = SPTask::GetInstance().GetTcpToken();
+    std::string tcpToken = SpThreadSocket::GetInstance().GetTcpToken();
     LOGD("Comparing token with TCP token...");
     if (tcpToken == "" && token == "-SESSIONID") {
         LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
@@ -143,7 +143,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             LOGD("TCP recv data:%s", recvStr.c_str());
             WLOGI("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
-            const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
+            const SocketErrorType tokenStatus = CheckTcpToken(recvStr, spSocket, recvStrNoToken);
             WLOGI("Token check status: %d", tokenStatus);
             DealMsg(recvStr, spSocket, tokenStatus);
         }
@@ -155,7 +155,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
     std::string errorInfo;
     std::string checkStr = recvStr.substr(std::string("init::").length());
     if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
-        checkStr.find(SPTask::GetInstance().GetTcpToken()) == std::string::npos) {
+        checkStr.find(SpThreadSocket::GetInstance().GetTcpToken()) == std::string::npos) {
         WLOGE("Init error(%s)", errorInfo.c_str());
         if (type == SocketConnectType::CMD_SOCKET) {
             spSocket.Send("init::False,\"error\":" + errorInfo);
@@ -165,7 +165,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         return;
     }
     if (recvStr.find("-lockfreq") != std::string::npos &&
-        SPTask::GetInstance().GetTcpToken() == "") {
+        SpThreadSocket::GetInstance().GetTcpToken() == "") {
         WLOGE("'-lockfreq' must have a valid token.");
         return;
     }
@@ -275,6 +275,29 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
     }
     WLOGW("No matching command found for token check failure in message: %s", message.c_str());
 }
+SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
+    SpServerSocket &spSocket, std::string recvStrNoToken) const
+{
+    // if (recvStr.find_last_of(":") == std::string::npos) {
+    //     LOGE("Token check failed: %s", recvStrNoToken.c_str());
+    //     return SocketErrorType::TOKEN_CHECK_FAILED;
+    // }
+    // std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
+    // token = token.substr(0, token.find(' '));
+    // std::string tcpToken = SpThreadSocket::GetInstance().GetTcpToken();
+    // LOGD("Comparing token with TCP token...");
+    // if (tcpToken == "" && token == "-SESSIONID") {
+    //     LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
+    //     return SocketErrorType::OK;
+    // }
+    // if (token != tcpToken) {
+    //     LOGE("Token mismatch.");
+    //     return SocketErrorType::TOKEN_CHECK_FAILED;
+    // }
+    // LOGD("Token match");
+    WLOGI("UDP token check passed: %s", recvStr.c_str());
+    return SocketErrorType::OK;
+}
 void SpThreadSocket::DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
 {
     SocketHeartbeat();
@@ -351,6 +374,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
             continue;
         }
         LOGD("UDP recv : %s", recvBuf.c_str());
+        const SocketErrorType tokenStatus = CheckUdpToken(recvStr, spSocket, recvStrNoToken);
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -590,6 +614,22 @@ std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *pro
     }
 
     return std::map<std::string, std::string>();
+}
+void SpThreadSocket::SetTcpToken(std::string token)
+{
+    tcpToken = token;
+}
+std::string SpThreadSocket::GetTcpToken()
+{
+    return tcpToken;
+}
+void SpThreadSocket::SetUdpToken(std::string token)
+{
+    udpToken = token;
+}
+std::string SpThreadSocket::GetUdpToken()
+{
+    return udpToken;
 }
 }
 }

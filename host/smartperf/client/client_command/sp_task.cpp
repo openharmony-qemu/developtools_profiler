@@ -782,14 +782,6 @@ time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
 }
-void SPTask::SetTcpToken(std::string token)
-{
-    tcpToken = token;
-}
-std::string SPTask::GetTcpToken()
-{
-    return tcpToken;
-}
 void SPTask::ProcessErrorData(SPData &spdata)
 {
     unsigned int newDataSize = spdata.values.size();

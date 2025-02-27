@@ -95,9 +95,7 @@ public:
     bool GetRecordState();
     void SaveScreenShot();
     time_t GetRealStartTime() const;
-    void SetTcpToken(std::string token);
     void SetRecordState(bool status);
-    std::string GetTcpToken();
     void ProcessErrorData(SPData &spdata);
     std::string GetCsvTitle();
 
@@ -136,7 +134,6 @@ private:
     bool screenshotFlag = false;
     bool recordTrace = false;
     time_t realTimeStart = 0;
-    std::string tcpToken = "";
     long long nextTime = 0;
     int battaryStart = 0;
     int battaryEnd = 0;
