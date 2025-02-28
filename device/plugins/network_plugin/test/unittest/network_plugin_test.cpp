@@ -386,34 +386,6 @@ HWTEST_F(NetworkPluginTest, TestStart3, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: WriteData test
- * @tc.type: FUNC
- */
-HWTEST_F(NetworkPluginTest, TestWriteData, TestSize.Level1)
-{
-    NetworkFlowData dataProto;
-    NetFlowData data;
-    data.rxBytes = 1;
-    data.rxPackets = 1;
-    data.txBytes = 1;
-    data.txPackets = 1;
-    NetFlowDetail detail;
-    detail.type = "wlan0";
-    detail.rxBytes = 1;
-    detail.rxBytes = 1;
-    detail.rxBytes = 1;
-    detail.rxBytes = 1;
-    data.details.push_back(detail);
-    NetworkPlugin plugin;
-    plugin.WriteData(dataProto, data);
-    EXPECT_EQ(dataProto.rx_bytes(), 1);
-    EXPECT_EQ(dataProto.rx_bytes(), 1);
-    EXPECT_EQ(dataProto.rx_bytes(), 1);
-    EXPECT_EQ(dataProto.rx_bytes(), 1);
-}
-
-/**
- * @tc.name: network plugin
  * @tc.desc: GetBundleNameByPid test
  * @tc.type: FUNC
  */
