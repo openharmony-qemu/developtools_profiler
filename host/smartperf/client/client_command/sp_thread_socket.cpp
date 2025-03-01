@@ -41,6 +41,8 @@
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
+bool preset = false;
+std::string pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
     std::string result;
@@ -469,7 +471,13 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
                 LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             }
         } else {
-            g_pkgName = SplitMsg(recvBuf);
+            retCode = SplitMsg(recvBuf);
+            if (recvBuf.find("$") != std::string::npos) {
+                pkgAndPid = SplitMsg(recvBuf);
+                g_pkgName = SpGetPkg(pkgAndPid);
+            } else {
+                g_pkgName = SplitMsg(recvBuf);
+            }
             LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
@@ -505,8 +513,13 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
         if (!SpProfilerFactory::editorFlag) {
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
-            OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.GetPidByPkg(g_pkgName);
+            preset = IsPreset(pkgAndPid);
+            if (preset) {
+                processId = SpGetPid(pkgAndPid);
+            } else {
+                OHOS::SmartPerf::StartUpDelay sp;
+                processId = sp.GetPidByPkg(g_pkgName);
+            }
             SpProfilerFactory::SetProfilerPidByPkg(processId);
             SpProfilerFactory::SetProfilerPkg(g_pkgName);
         }
@@ -590,6 +603,58 @@ std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *pro
     }
 
     return std::map<std::string, std::string>();
+}
+
+std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
+{
+    if (spMsg.empty()) {
+        LOGE("spMsg is null");
+        return spMsg;
+    }
+    size_t pos = spMsg.find("$");
+    if (pos != std::string::npos) {
+        std::vector<std::string> sps;
+        SPUtils::StrSplit(spMsg, "$", sps);
+        if (sps.size() > 1) {
+            return sps[0];
+        } else {
+            LOGE("SpGetPkg sps size is zreo");
+            return spMsg;
+        }
+    } else {
+        return spMsg;
+    }
+}
+
+std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
+{
+    if (spMsg.empty()) {
+        LOGE("spMsg is null");
+        return spMsg;
+    }
+    size_t pos = spMsg.find("$");
+    if (pos != std::string::npos) {
+        std::vector<std::string> sps;
+        SPUtils::StrSplit(spMsg, "$", sps);
+        if (sps.size() > 1) {
+            return sps[1];
+        } else {
+            LOGE("SpGetPid sps size is zreo");
+            return "";
+        }
+    } else {
+        return "";
+    }
+}
+
+bool SpThreadSocket::IsPreset(const std::string &spMsg) const
+{
+    if (spMsg.find("$") != std::string::npos)
+    {
+        return true;
+    } else {
+        return false;
+    }
 }
 }
 }

@@ -26,6 +26,7 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
+constexpr const char *VERSION_TYPE = "const.logsystem.versiontype";
 
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -218,9 +219,11 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
 
 int main(int argc, char *argv[])
 {
-    if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
-        std::cout << "Not a development mode state" << std::endl;
-        return 0;
+    if (OHOS::system::GetParameter(VERSION_TYPE, "Unknown") != "beta") {
+        if (!OHOS::system::GetBoolParameter("const.security.developermode.state", true)) {
+            std::cout << "Not a development mode state" << std::endl;
+            return 0;
+        }
     }
     if (argc < 0) {
         std::cout << "Invalid argument count" << std::endl;
