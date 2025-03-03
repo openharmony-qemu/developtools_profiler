@@ -519,7 +519,7 @@ void StackPreprocess::TakeResults()
         if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
             continue;
         }
-        if (hookConfig_.statistics_interval() == 0) {
+        if ((hookConfig_.statistics_interval() == 0) && (hookConfig_.malloc_free_matching_interval() == 0)) {
             std::visit([&](auto& stackData) {
                 FlushCheck(stackData);
                 }, stackData_);
@@ -895,9 +895,14 @@ void StackPreprocess::SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::ve
     }
     uint64_t addr = reinterpret_cast<uint64_t>(rawStack->stackConext->addr);
     auto iter = applyAndReleaseMatchIntervallMap_.find(addr);
-    if (iter != applyAndReleaseMatchIntervallMap_.end()) {
-        applyAndReleaseMatchPeriodListData_.erase(iter->second);
-        applyAndReleaseMatchIntervallMap_.erase(addr);
+    bool isReleased = ((rawStack->stackConext->type == FREE_MSG) || (rawStack->stackConext->type == MUNMAP_MSG));
+    if (isReleased) {
+        if (iter != applyAndReleaseMatchIntervallMap_.end()) {
+            applyAndReleaseMatchPeriodListData_.erase(iter->second);
+            applyAndReleaseMatchIntervallMap_.erase(addr);
+        } else {
+            releasedPeriodListData_.emplace_back(rawStack->stackConext, stackMapId);
+        }
     } else {
         applyAndReleaseMatchPeriodListData_.emplace_back(rawStack->stackConext, stackMapId);
         applyAndReleaseMatchIntervallMap_.emplace(addr, std::prev(applyAndReleaseMatchPeriodListData_.end()));
@@ -1642,9 +1647,6 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
             if (rawStack.type == MALLOC_MSG) {
                 auto allocEvent = hookData->mutable_alloc_event();
                 SetEventFrame(rawStack, allocEvent, rawStack.stackMapId);
-            } else if (rawStack.type == FREE_MSG) {
-                auto freeEvent = hookData->mutable_free_event();
-                SetEventFrame(rawStack, freeEvent, rawStack.stackMapId);
             } else if (rawStack.type == MMAP_MSG) {
                 auto mmapEvent = hookData->mutable_mmap_event();
                 SetEventFrame(rawStack, mmapEvent, rawStack.stackMapId);
@@ -1656,9 +1658,6 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
                     tagName = prefix + tagName;
                 }
                 SetEventFrame(rawStack, mmapEvent, rawStack.stackMapId, tagName);
-            } else if (rawStack.type == MUNMAP_MSG) {
-                auto munmapEvent = hookData->mutable_munmap_event();
-                SetEventFrame(rawStack, munmapEvent, rawStack.stackMapId);
             } else if (rawStack.type == PR_SET_VMA_MSG) {
                 auto tagEvent = hookData->mutable_tag_event();
                 const std::string prefix = "Anonymous:";
@@ -1681,4 +1680,24 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
     applyAndReleaseMatchPeriodListData_.clear();
     applyAndReleaseMatchIntervallMap_.clear();
     prctlPeriodTags_.clear();
+
+    if (releasedPeriodListData_.empty()) {
+        return;
+    }
+    std::visit([&](auto& stackData) {
+        for (const auto& rawStack: releasedPeriodListData_) {
+            auto hookData = stackData.add_events();
+            hookData->set_tv_sec(rawStack.ts.tv_sec);
+            hookData->set_tv_nsec(rawStack.ts.tv_nsec);
+            if (rawStack.type == FREE_MSG) {
+                auto freeEvent = hookData->mutable_free_event();
+                SetEventFrame(rawStack, freeEvent, rawStack.stackMapId);
+            } else if (rawStack.type == MUNMAP_MSG) {
+                auto munmapEvent = hookData->mutable_munmap_event();
+                SetEventFrame(rawStack, munmapEvent, rawStack.stackMapId);
+            }
+        }
+    FlushData(stackData);
+    }, stackData_);
+    releasedPeriodListData_.clear();
 }

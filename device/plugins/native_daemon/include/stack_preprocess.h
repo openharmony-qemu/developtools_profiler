@@ -214,6 +214,7 @@ private:
     // Key is alloc or mmap address, value is ReportEventBaseData list iterator
     std::unordered_map<uint64_t, std::list<ReportEventBaseData>::iterator> applyAndReleaseMatchIntervallMap_;
     std::list<ReportEventBaseData> applyAndReleaseMatchPeriodListData_;
+    std::list<ReportEventBaseData> releasedPeriodListData_;
     std::chrono::seconds applyAndReleaseMatchInterval_{0};
     // used for plugin data
     clockid_t pluginDataClockId_ = CLOCK_REALTIME;
