@@ -18,7 +18,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <optional>
+#include <string>
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -48,6 +50,49 @@ private:
     T cachedValue_;
     int64_t expirationTime_ = -1;
 };
+
+enum class DirectoryType {
+    CACHE = 0,
+    FILE = 1,
+};
+
+std::string GetProcessDir(DirectoryType type);
+
+std::vector<std::string> SplitStr(const std::string& origin, char delimiter,
+    const std::function<bool(std::string&)>& filter = nullptr);
+
+bool GetXAttr(const std::string& fileName, const std::string& key, std::string& value, size_t maxLength);
+
+bool SetXAttr(const std::string& fileName, const std::string& key, const std::string& value);
+
+bool CreateFile(const std::string &path);
+
+bool CreateDirectory(const std::string &path, unsigned mode);
+
+bool IsLegalPath(const std::string& path);
+
+uint64_t GetFileSize(const std::string& path);
+
+class SmartFile {
+public:
+    static std::unique_ptr<SmartFile> OpenFile(const std::string& path, const std::string& mode);
+    ~SmartFile();
+    SmartFile(SmartFile&& other) = delete;
+    SmartFile& operator=(SmartFile&& other) = delete;
+    SmartFile(const SmartFile&) = delete;
+    SmartFile& operator=(const SmartFile&) = delete;
+    bool Write(const void *__restrict dataPtr, size_t itemSize, size_t dataNum);
+    size_t Read(void *__restrict dataPtr, size_t itemSize, size_t dataNum);
+private:
+    explicit SmartFile(FILE *file) : file_(file) {}
+    FILE *file_;
+};
+
+bool IsBetaVersion();
+
+bool IsDebuggableHap();
+
+bool IsDeveloperOptionsEnabled();
 }
 }
 #endif // HIDEBUG_UTIL_H_
