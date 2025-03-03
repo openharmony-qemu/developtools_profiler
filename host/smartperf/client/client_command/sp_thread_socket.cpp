@@ -41,8 +41,8 @@
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
-bool preset = false;
-std::string pkgAndPid = "";
+bool g_preset = false;
+std::string g_pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
     std::string result;
@@ -473,8 +473,8 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         } else {
             retCode = SplitMsg(recvBuf);
             if (recvBuf.find("$") != std::string::npos) {
-                pkgAndPid = SplitMsg(recvBuf);
-                g_pkgName = SpGetPkg(pkgAndPid);
+                g_pkgAndPid = SplitMsg(recvBuf);
+                g_pkgName = SpGetPkg(g_pkgAndPid);
             } else {
                 g_pkgName = SplitMsg(recvBuf);
             }
@@ -512,10 +512,10 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
         iterator->first == MessageType::GET_RAM_INFO) {
         if (!SpProfilerFactory::editorFlag) {
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
-            std::string processId = "";
-            preset = IsPreset(pkgAndPid);
-            if (preset) {
-                processId = SpGetPid(pkgAndPid);
+            std::string processId = "";g_
+            g_preset = IsPreset(g_pkgAndPid);
+            if (g_preset) {
+                processId = SpGetPid(g_pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
                 processId = sp.GetPidByPkg(g_pkgName);
@@ -649,8 +649,7 @@ std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
 
 bool SpThreadSocket::IsPreset(const std::string &spMsg) const
 {
-    if (spMsg.find("$") != std::string::npos)
-    {
+    if (spMsg.find("$") != std::string::npos) {
         return true;
     } else {
         return false;
