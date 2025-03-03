@@ -276,7 +276,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
     WLOGW("No matching command found for token check failure in message: %s", message.c_str());
 }
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
-    SpServerSocket &spSocket, std::string recvStrNoToken) const
+    SpServerSocket &spSocket) const
 {
     // if (recvStr.find_last_of(":") == std::string::npos) {
     //     LOGE("Token check failed: %s", recvStrNoToken.c_str());
@@ -374,7 +374,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
             continue;
         }
         LOGD("UDP recv : %s", recvBuf.c_str());
-        const SocketErrorType tokenStatus = CheckUdpToken(recvStr, spSocket, recvStrNoToken);
+        CheckUdpToken(recvBuf, spSocket);
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -619,7 +619,7 @@ void SpThreadSocket::SetTcpToken(std::string token)
 {
     tcpToken = token;
 }
-std::string SpThreadSocket::GetTcpToken()
+std::string SpThreadSocket::GetTcpToken() const
 {
     return tcpToken;
 }
@@ -627,7 +627,7 @@ void SpThreadSocket::SetUdpToken(std::string token)
 {
     udpToken = token;
 }
-std::string SpThreadSocket::GetUdpToken()
+std::string SpThreadSocket::GetUdpToken() const
 {
     return udpToken;
 }

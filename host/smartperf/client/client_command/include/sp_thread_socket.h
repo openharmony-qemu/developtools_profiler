@@ -44,7 +44,7 @@ public:
     std::string SplitMsg(const std::string &recvBuf) const;
     void Process(ProtoType type);
     SocketErrorType CheckTcpToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const;
-    SocketErrorType CheckUdpToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const;
+    SocketErrorType CheckUdpToken(std::string recvStr, SpServerSocket &spSocket) const;
     void TypeTcp(SpServerSocket &spSocket);
     void InitRecv(std::string recvStr, SpServerSocket &spSocket, SocketConnectType type) const;
     void StartRecv(SpServerSocket &spSocket);
@@ -69,9 +69,9 @@ public:
     std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
-    void SetTcpToken(std::string token) const;
+    void SetTcpToken(std::string token);
     std::string GetTcpToken() const;
-    void SetUdpToken(std::string token) const;
+    void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
 
 private:
