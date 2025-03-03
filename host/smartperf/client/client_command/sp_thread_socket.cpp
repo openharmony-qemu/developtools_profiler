@@ -512,7 +512,7 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
         iterator->first == MessageType::GET_RAM_INFO) {
         if (!SpProfilerFactory::editorFlag) {
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
-            std::string processId = "";g_
+            std::string processId = "";
             g_preset = IsPreset(g_pkgAndPid);
             if (g_preset) {
                 processId = SpGetPid(g_pkgAndPid);
