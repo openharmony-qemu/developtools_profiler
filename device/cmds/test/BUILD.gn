@@ -60,8 +60,9 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "-Dprivate=public",  #allow test code access private members
   ]
   external_deps = [
+    "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
-    "grpc:gpr",
+    "googletest:gtest",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",

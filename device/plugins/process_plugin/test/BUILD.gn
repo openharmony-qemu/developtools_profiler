@@ -42,6 +42,7 @@ ohos_unittest("processplugin_ut") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "googletest:gtest",
     "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]

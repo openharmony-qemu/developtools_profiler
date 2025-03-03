@@ -215,8 +215,7 @@ inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len
 {
     CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
     size_t dataLen = strlen(data) > 1 ? strlen(data) - 1 : 0;
-    std::string syseventInfo = std::string(data, dataLen);
-    if (COMMON::IsValidUTF8(syseventInfo)) {
+    if (google::protobuf::internal::IsStructurallyValidUTF8(data, dataLen)) {
         auto* info = hisyseventInfoProto->add_info();
         info->set_id(id_);
         size_t len = strlen(data) > 1 ? strlen(data) - 1 : 0;

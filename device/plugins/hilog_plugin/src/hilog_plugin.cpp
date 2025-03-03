@@ -354,8 +354,7 @@ template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T&
     pTmp++;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin: RemoveSpaces failed!");
     size_t dataLen = strlen(pTmp) > 1 ? strlen(pTmp) -1 : 0;
-    std::string hilogInfo = std::string(pTmp, dataLen);
-    if (COMMON::IsValidUTF8(hilogInfo)) {
+    if (google::protobuf::internal::IsStructurallyValidUTF8(pTmp, dataLen)) {
         hilogLineInfo.set_context(pTmp, dataLen);  // - \n
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin: log context include invalid UTF-8 data");

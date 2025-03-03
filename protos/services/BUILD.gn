@@ -167,6 +167,7 @@ ohos_source_set("profiler_service_proto") {
     ":profiler_service_interface_gen",
   ]
   external_deps = [
+    "abseil-cpp:absl_sync",
     "grpc:grpc",
     "grpc:grpcxx",
     "protobuf:protobuf",

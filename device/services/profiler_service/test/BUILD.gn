@@ -57,9 +57,10 @@ ohos_unittest("profiler_service_ut") {
     defines = [ "COVERAGE_TEST" ]
   }
   external_deps = [
+    "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
-    "grpc:gpr",
+    "googletest:gtest",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",
