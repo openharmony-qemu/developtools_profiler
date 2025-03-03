@@ -572,16 +572,9 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
 
 inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack)
 {
-    if (hookConfig_.response_library_mode()) {
-        auto itStack = responseLibraryMap_.find(callStack[0]);
-        if (itStack != responseLibraryMap_.end()) {
-            return itStack->second;
-        }
-    } else {
-        auto itStack = callStackMap_.find(callStack);
-        if (itStack != callStackMap_.end()) {
-            return itStack->second;
-        }
+    auto itStack = callStackMap_.find(callStack);
+    if (itStack != callStackMap_.end()) {
+        return itStack->second;
     }
     return 0;
 }
@@ -595,11 +588,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
     uint32_t stackId = 0;
     auto hookData = stackData.add_events();
     auto stackmap = hookData->mutable_stack_map();
-    if (hookConfig_.response_library_mode()) {
-        stackId = responseLibraryMap_.size() + 1;
-    } else {
-        stackId = callStackMap_.size() + 1;
-    }
+    stackId = callStackMap_.size() + 1;
     stackmap->set_id(stackId);
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
@@ -620,11 +609,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
         }
     }
     stackmap->set_pid(pid_);
-    if (hookConfig_.response_library_mode()) {
-        responseLibraryMap_[callStack_[0]] = stackId;
-    } else {
-        callStackMap_[callStack_] = stackId;
-    }
+    callStackMap_[callStack_] = stackId;
     return stackId;
 }
 
