@@ -671,7 +671,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
     }
     size_t bytesRead;
     std::array<char, BUFFER_SIZE> buf;
-    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd) > 0)) {
+    while ((bytesRead = fread(buf.data(), 1, buf.size(), fd)) > 0) {
         result.append(buf.data(), bytesRead);
     }
     if (pclose(fd) == -1) {
@@ -686,7 +686,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             isFoundAppName = true;
         }
         if (isFoundAppName) {
-            if (line.find("state") != std::string::npos) {
+            if (line.find("app state") != std::string::npos) {
                 isForeground = IsFindForeGround(line);
                 break;
             }
