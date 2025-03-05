@@ -839,6 +839,7 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
+    CreateSanBoxDir();
     if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
         apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);
@@ -873,7 +874,6 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
-    CreateSanBoxDir();
     return CreateUndefined(env);
 }
 
