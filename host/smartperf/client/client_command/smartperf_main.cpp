@@ -117,7 +117,7 @@ static void SocketStopCommand()
 static void RecordCapacity()
 {
     const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
-    const std::string rkCapacityRmPath = "/data/service/e10/battery/capacity";
+    const std::string rkCapacityRmPath = "/data/service/el0/battery/capacity";
     const std::string capacitySavePath = "/data/local/tmp/powerLeftRecord.csv";
     std::string capacityString;
     std::ifstream infile(capacitySavePath.c_str());
