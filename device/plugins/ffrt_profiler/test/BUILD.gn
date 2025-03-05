@@ -19,7 +19,10 @@ module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 config("module_private_config") {
   visibility = [ ":*" ]
   if (current_toolchain != host_toolchain) {
-    defines = [ "HAVE_HILOG" ]
+    defines = [
+      "HAVE_HILOG",
+      "UNIT_TEST",
+    ]
   }
 }
 
@@ -62,6 +65,7 @@ ohos_unittest("ffrt_profiler_ut") {
 
   sources = [
     "${OHOS_PROFILER_DIR}/device/plugins/api/src/buffer_writer.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/api/src/command_poller.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/api/src/writer_adapter.cpp",
     "../service/src/ffrt_profiler_common.cpp",
     "../service/src/ffrt_profiler_handle.cpp",
