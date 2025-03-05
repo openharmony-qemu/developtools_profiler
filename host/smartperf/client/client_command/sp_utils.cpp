@@ -48,6 +48,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
+const std::string SMART_PERF_VERSION = "1.0.6";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -101,8 +102,9 @@ bool SPUtils::LoadCmdWithLinkBreak(const std::string &cmd, bool isClearLinkBreak
         return false;
     }
     char buf[4096] = {'\0'};
-    size_t ret = fread(buf, sizeof(buf), 1, fd);
+    size_t ret = fread(buf, 1, sizeof(buf) - 1, fd);
     if (ret >= 0) {
+        buf[ret] = '\0';
         result = buf;
     }
     if (pclose(fd) == -1) {
@@ -635,28 +637,31 @@ std::string SPUtils::GetCpuNum()
     }
     return cpuCores;
 }
-void SPUtils::GetCurrentTime(int num, int prevTime)
+void SPUtils::GetCurrentTime(int prevTime)
 {
+    LOGE("SPUtils::prevTime (%d)", prevTime);
     unsigned long sleepNowTime = 10000;
-    for (int i = 0; i < num; i++) {
+    bool shouldContinue = true;
+    while (shouldContinue) {
         struct timespec time1 = { 0 };
         clock_gettime(CLOCK_MONOTONIC, &time1);
         int curTimeNow = static_cast<int>(time1.tv_sec - 1);
         if (curTimeNow == prevTime) {
             usleep(sleepNowTime);
         } else {
-            break;
+            shouldContinue = false;
         }
     }
 }
+
 bool SPUtils::IsForeGround(const std::string &pkg)
 {
     bool isFoundAppName = false;
     bool isForeground = false;
-    std::string result = "";
+    std::string result;
     const std::string cmd = "hidumper -s AbilityManagerService -a -l";
     if (cmd.empty()) {
-        LOGE("cmd is null");
+        LOGI("cmd is null");
         return false;
     }
 
@@ -670,7 +675,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
         result.append(buf.data(), bytesRead);
     }
     if (pclose(fd) == -1) {
-        LOGE("Error: Failed to close file");
+        LOGE("Error: failed to close file");
         return false;
     }
 
@@ -681,13 +686,18 @@ bool SPUtils::IsForeGround(const std::string &pkg)
             isFoundAppName = true;
         }
         if (isFoundAppName) {
-            if (line.find("state #FOREGROUND") != std::string::npos) {
-                isForeground = true;
+            if (line.find("state") != std::string::npos) {
+                isForeground = IsFindForeGround(line);
                 break;
             }
         }
     }
     return isForeground;
+}
+
+bool SPUtils::IsFindForeGround(const std::string &line)
+{
+    return line.find("FOREGROUND") != std::string::npos; 
 }
 
 bool SPUtils::IsFindAbilist()
@@ -745,6 +755,7 @@ bool SPUtils::GetIsGameApp(std::string pkg)
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         LOGD("ProfilerFPS::fd is empty");
+        return false;
     }
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
@@ -769,6 +780,10 @@ bool SPUtils::GetIsGameApp(std::string pkg)
         LOGE("SPUtils::IsGameApp Error Failed to close file");
     }
     return isGame;
+}
+std::string SPUtils::GetVersion()
+{
+    return SMART_PERF_VERSION;
 }
 }
 }

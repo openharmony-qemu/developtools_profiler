@@ -67,6 +67,7 @@ public:
     std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+
 private:
     bool flagRunning = false;
     bool socketConnect = true;

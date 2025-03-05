@@ -41,8 +41,6 @@
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
-bool g_preset = false;
-std::string g_pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
     std::string result;
@@ -133,7 +131,6 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
     while (socketConnect == true) {
         int procFd = spSocket.Accept();
         std::cout << "Socket TCP procFd: " << procFd << std::endl;
-        WLOGI("Accepted socket connection, procFd: %d", procFd);
         while (procFd > 0) {
             int reFd = spSocket.Recv();
             if (reFd < 0) {
@@ -143,10 +140,10 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
             LOGD("TCP recv data:%s", recvStr.c_str());
-            WLOGI("Received data: %s", recvStrNoToken.c_str());
+            WLOGD("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
-            WLOGI("Token check status: %d", tokenStatus);
+            WLOGD("Token check status: %d", tokenStatus);
             DealMsg(recvStr, spSocket, tokenStatus);
         }
     }
@@ -471,13 +468,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
                 LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
             }
         } else {
-            retCode = SplitMsg(recvBuf);
-            if (recvBuf.find("$") != std::string::npos) {
-                g_pkgAndPid = SplitMsg(recvBuf);
-                g_pkgName = SpGetPkg(g_pkgAndPid);
-            } else {
-                g_pkgName = SplitMsg(recvBuf);
-            }
+            g_pkgName = SplitMsg(recvBuf);
             LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
@@ -513,13 +504,8 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
         if (!SpProfilerFactory::editorFlag) {
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
-            g_preset = IsPreset(g_pkgAndPid);
-            if (g_preset) {
-                processId = SpGetPid(g_pkgAndPid);
-            } else {
-                OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(g_pkgName);
-            }
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(g_pkgName);
             SpProfilerFactory::SetProfilerPidByPkg(processId);
             SpProfilerFactory::SetProfilerPkg(g_pkgName);
         }
@@ -604,6 +590,5 @@ std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *pro
 
     return std::map<std::string, std::string>();
 }
-
 }
 }
