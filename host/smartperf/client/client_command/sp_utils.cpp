@@ -697,7 +697,7 @@ bool SPUtils::IsForeGround(const std::string &pkg)
 
 bool SPUtils::IsFindForeGround(const std::string &line)
 {
-    return line.find("FOREGROUND") != std::string::npos; 
+    return line.find("FOREGROUND") != std::string::npos;
 }
 
 bool SPUtils::IsFindAbilist()
