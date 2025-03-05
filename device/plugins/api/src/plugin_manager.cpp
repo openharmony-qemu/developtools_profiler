@@ -376,7 +376,7 @@ bool PluginManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     if (networkProfilerMgr_) {
-        networkProfilerMgr_->StopnetworkProfiler();
+        networkProfilerMgr_->StopNetworkProfiler();
     }
     return true;
 }
