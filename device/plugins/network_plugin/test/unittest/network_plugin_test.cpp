@@ -332,7 +332,7 @@ HWTEST_F(NetworkPluginTest, TestSystemData, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: start test 1
+ * @tc.desc: start test with single pid
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestStart1, TestSize.Level1)
@@ -350,14 +350,14 @@ HWTEST_F(NetworkPluginTest, TestStart1, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: start test 2
+ * @tc.desc: start test with startup process name
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestStart2, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
-    config.set_single_pid(-1);
+    config.set_startup_process_name("");
     int configSize = config.ByteSizeLong();
     std::vector<uint8_t> configData(configSize);
     int ret = config.SerializeToArray(configData.data(), configData.size());
@@ -368,14 +368,14 @@ HWTEST_F(NetworkPluginTest, TestStart2, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: start test 3
+ * @tc.desc: start test with restart process name
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestStart3, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
-    config.set_single_pid(-1);
+    config.set_restart_process_name("");
     int configSize = config.ByteSizeLong();
     std::vector<uint8_t> configData(configSize);
     int ret = config.SerializeToArray(configData.data(), configData.size());
@@ -421,7 +421,7 @@ HWTEST_F(NetworkPluginTest, TestWriteNetFlowData, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: Screen test 1
+ * @tc.desc: Screen by uid test multiple iface
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestScreen1, TestSize.Level1)
@@ -457,7 +457,7 @@ HWTEST_F(NetworkPluginTest, TestScreen1, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: Screen test 2
+ * @tc.desc: Screen by uid test with multiple uid
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestScreen2, TestSize.Level1)
@@ -493,7 +493,7 @@ HWTEST_F(NetworkPluginTest, TestScreen2, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: Screen test 3
+ * @tc.desc: retain all test with multiple iface
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestScreen3, TestSize.Level1)
@@ -519,7 +519,7 @@ HWTEST_F(NetworkPluginTest, TestScreen3, TestSize.Level1)
     info2.rxPackets_ = 2;
     info2.txPackets_ = 2;
     infos.push_back(info2);
-    plugin.ScreenNetworkStatByUid(infos, data);
+    plugin.RetainAllNetworkStat(infos, data);
     EXPECT_EQ(data.rxBytes, 3);
     EXPECT_EQ(data.txBytes, 3);
     EXPECT_EQ(data.rxPackets, 3);
@@ -529,7 +529,7 @@ HWTEST_F(NetworkPluginTest, TestScreen3, TestSize.Level1)
 
 /**
  * @tc.name: network plugin
- * @tc.desc: Screen test 4
+ * @tc.desc: retain all test with multiple uid
  * @tc.type: FUNC
  */
 HWTEST_F(NetworkPluginTest, TestScreen4, TestSize.Level1)
@@ -555,7 +555,7 @@ HWTEST_F(NetworkPluginTest, TestScreen4, TestSize.Level1)
     info2.rxPackets_ = 2;
     info2.txPackets_ = 2;
     infos.push_back(info2);
-    plugin.ScreenNetworkStatByUid(infos, data);
+    plugin.RetainAllNetworkStat(infos, data);
     EXPECT_EQ(data.rxBytes, 3);
     EXPECT_EQ(data.txBytes, 3);
     EXPECT_EQ(data.rxPackets, 3);
