@@ -93,6 +93,7 @@ int main(int argc, char* argv[])
     ffrtProfilerMgr->Init();
     std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     networkProfilerMgr->Init();
+    pluginManager->AddNetworkProfilerManager(networkProfilerMgr);
 
     while (g_isRunning) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));

@@ -255,7 +255,11 @@ void NetworkProfilerManager::StopNetworkProfiler()
         if (item->eventNotifier != nullptr) {
             item->eventNotifier = nullptr;
         }
-        item->handle = nullptr;
+        if (item->handle != nullptr) {
+            item->handle->StopHandle();
+            item->handle = nullptr;
+        }
+        
     }
 }
 
