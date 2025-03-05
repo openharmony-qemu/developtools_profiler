@@ -66,6 +66,7 @@ namespace OHOS {
             void CleanUpResources(ServerParams &params);
             void GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap);
             void SetStartRecordTime();
+            void SocketCommandVerification(std::string &resStr, ServerParams &params);
         private:
             SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);

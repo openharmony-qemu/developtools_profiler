@@ -36,7 +36,6 @@ private:
     LockFrequency &operator = (const LockFrequency &);
 
     bool isCollecting = false;
-    const std::string pluginSoPath = "system/lib64/libtest_server_client.z.so";
     const std::string lockFunction = "FrequencyLockPlugin";
 };
 }

@@ -136,7 +136,7 @@ HWTEST_F(SPdaemonMainTest, GetOptionsTestCase001, TestSize.Level1)
         ret = true;
     }
 
-    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(ret);
 }
 
 HWTEST_F(SPdaemonMainTest, CheckCMDParamTestCase002, TestSize.Level1)

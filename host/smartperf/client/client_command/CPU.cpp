@@ -36,6 +36,7 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> CPU::ItemData()
 {
+    usleep(twenty * thousand);
     std::map<std::string, std::string> result;
     std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
@@ -72,11 +73,11 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if (!packageName.empty() && !hapFlag) {
+    if (!packageName.empty()) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
-            for (auto it = processCpuInfo.begin(); it != processCpuInfo.end(); ++it) {
-                result.insert(*it);
+            for (const auto& item : processCpuInfo) {
+                result.insert(item);
             }
         }
     }
@@ -180,10 +181,6 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcSCpuUsage"] = "0";
     }
     return processCpuInfo;
-}
-void CPU::IsFindHap()
-{
-    hapFlag = true;
 }
 }
 }

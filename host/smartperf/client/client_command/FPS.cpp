@@ -104,7 +104,7 @@ void FPS::SetLayerName(std::string sName)
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
-    OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
     fpsInfoMax = GetSurfaceFrame(sName);
     return fpsInfoMax;
 }
@@ -122,13 +122,14 @@ FpsInfo FPS::GetFpsInfo()
             gameLayerName = profilerFps.GetGameLayer();
             if (gameLayerName.empty()) {
                 firstDump = true;
-                fpsInfoMax.Clear();
+                fpsInfoMax.fps = 0;
+                fpsInfoMax.jitters.clear();
                 return fpsInfoMax;
             } else {
                 firstDump = false;
             }
         }
-        OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
         fpsInfoMax = GetSurfaceFrame(gameLayerName);
         if (fpsInfoMax.fps == 0) {
             return GetChangedLayerFps();
@@ -141,21 +142,18 @@ FpsInfo FPS::GetFpsInfo()
             std::string uniteLayer;
             if (!rkFlag && !isOtherDevice) {
                 uniteLayer = "UniRender";
-            } else if (isOtherDevice) {
-                uniteLayer = profilerFps.GetSurface();
             } else {
                 uniteLayer = profilerFps.GetSurface();
             }
-            OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, prevResultFpsInfo.curTime);
+            OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
             fpsInfoMax = GetSurfaceFrame(uniteLayer);
         } else {
             LOGE("FPS:app is in the background");
             if (processId.empty()) {
                 processFlag = true;
-                fpsInfoMax.Clear();
-            } else {
-                fpsInfoMax.Clear();
             }
+            fpsInfoMax.fps = 0;
+            fpsInfoMax.jitters.clear();
         }
     }
     return fpsInfoMax;
@@ -175,7 +173,8 @@ FpsInfo FPS::GetChangedLayerFps()
         if (processId.empty()) {
             processFlag = true;
         }
-        fpsInfoMax.Clear();
+        fpsInfoMax.fps = 0;
+        fpsInfoMax.jitters.clear();
     } else {
         fpsInfoMax = GetSurfaceFrame(gameLayerName);
     }
@@ -244,9 +243,10 @@ void FPS::ReadDataFromPipe(int fd)
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
+        std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
-        sstream.str(tmp);
+        sstream.str(tmpStr);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
