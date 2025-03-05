@@ -268,7 +268,9 @@ void sched_stat_runtime_func(T &msg, uint8_t data[], size_t size, const EventFor
     msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
     msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_runtime(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_vruntime(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    if (format.osVersion.compare("6.6.76") < 0) {
+        msg->set_vruntime(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
+    }
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_stat_runtime, [](FtraceEvent &ftraceEvent, uint8_t data[], size_t size,
                                                             const EventFormat &format) {

@@ -20,15 +20,17 @@ option optimize_for = LITE_RUNTIME;
 // category: pagemap
 // /sys/kernel/debug/tracing/events/pagemap/mm_lru_activate/format
 message MmLruActivateFormat {
-    uint64 folio = 1;
+    uint64 page = 1;
     uint64 pfn = 2;
+    uint64 folio = 3;
 }
 
 // /sys/kernel/debug/tracing/events/pagemap/mm_lru_insertion/format
 message MmLruInsertionFormat {
-    uint64 folio = 1;
+    uint64 page = 1;
     uint64 pfn = 2;
     uint32 lru = 3;
     uint64 flags = 4;
+    uint64 folio = 5;
 }
 

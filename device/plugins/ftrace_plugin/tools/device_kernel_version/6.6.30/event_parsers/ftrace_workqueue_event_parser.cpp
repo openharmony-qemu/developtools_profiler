@@ -79,7 +79,7 @@ void workqueue_queue_work_func(T &msg, uint8_t data[], size_t size, const EventF
     int i = 0;
     msg->set_work(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
     msg->set_function(FtraceFieldParser::ParseIntField<uint64_t>(format.fields, i++, data, size));
-    msg->set_workqueue(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
+    msg->set_workqueue_new(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
     msg->set_req_cpu(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_cpu(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
 }

@@ -53,10 +53,10 @@ message FuncgraphEntryFormat {
 // /sys/kernel/debug/tracing/events/ftrace/funcgraph_exit/format
 message FuncgraphExitFormat {
     uint64 func = 1;
-    int32 depth = 2;
-    uint32 overrun = 3;
-    uint64 calltime = 4;
-    uint64 rettime = 5;
+    uint64 calltime = 2;
+    uint64 rettime = 3;
+    uint64 overrun = 4;
+    int32 depth = 5;
 }
 
 // /sys/kernel/debug/tracing/events/ftrace/function/format

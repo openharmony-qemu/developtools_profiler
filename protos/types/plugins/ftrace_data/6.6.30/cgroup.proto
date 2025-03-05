@@ -21,8 +21,8 @@ option optimize_for = LITE_RUNTIME;
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_attach_task/format
 message CgroupAttachTaskFormat {
     int32 dst_root = 1;
-    int32 dst_level = 2;
-    uint64 dst_id = 3;
+    uint64 dst_id = 2;
+    int32 dst_level = 3;
     int32 pid = 4;
     string dst_path = 5;
     string comm = 6;
@@ -38,24 +38,24 @@ message CgroupDestroyRootFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_freeze/format
 message CgroupFreezeFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_mkdir/format
 message CgroupMkdirFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_notify_frozen/format
 message CgroupNotifyFrozenFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
     int32 val = 5;
 }
@@ -63,8 +63,8 @@ message CgroupNotifyFrozenFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_notify_populated/format
 message CgroupNotifyPopulatedFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
     int32 val = 5;
 }
@@ -72,8 +72,8 @@ message CgroupNotifyPopulatedFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_release/format
 message CgroupReleaseFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 
@@ -87,16 +87,16 @@ message CgroupRemountFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_rename/format
 message CgroupRenameFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_rmdir/format
 message CgroupRmdirFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 
@@ -110,8 +110,8 @@ message CgroupSetupRootFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_transfer_tasks/format
 message CgroupTransferTasksFormat {
     int32 dst_root = 1;
-    int32 dst_level = 2;
-    uint64 dst_id = 3;
+    uint64 dst_id = 2;
+    int32 dst_level = 3;
     int32 pid = 4;
     string dst_path = 5;
     string comm = 6;
@@ -120,8 +120,8 @@ message CgroupTransferTasksFormat {
 // /sys/kernel/debug/tracing/events/cgroup/cgroup_unfreeze/format
 message CgroupUnfreezeFormat {
     int32 root = 1;
-    int32 level = 2;
-    uint64 id = 3;
+    uint64 id = 2;
+    int32 level = 3;
     string path = 4;
 }
 

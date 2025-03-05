@@ -45,6 +45,7 @@ message F2fsWriteBeginFormat {
     uint64 ino = 2;
     uint64 pos = 3;
     uint32 len = 4;
+    uint32 flags = 5;
 }
 
 // /sys/kernel/debug/tracing/events/f2fs/f2fs_write_end/format

@@ -99,6 +99,7 @@ message Ext4DaWriteBeginFormat {
     uint64 ino = 2;
     uint64 pos = 3;
     uint32 len = 4;
+    uint32 flags = 5;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_da_write_end/format
@@ -128,6 +129,25 @@ message Ext4DaWritePagesExtentFormat {
     uint32 flags = 5;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_direct_IO_enter/format
+message Ext4DirectIoEnterFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 pos = 3;
+    uint64 len = 4;
+    int32 rw = 5;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_direct_IO_exit/format
+message Ext4DirectIoExitFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 pos = 3;
+    uint64 len = 4;
+    int32 rw = 5;
+    int32 ret = 6;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_discard_blocks/format
 message Ext4DiscardBlocksFormat {
     uint64 dev = 1;
@@ -152,6 +172,23 @@ message Ext4DropInodeFormat {
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_es_cache_extent/format
 message Ext4EsCacheExtentFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 lblk = 3;
+    uint32 len = 4;
+    uint64 pblk = 5;
+    uint32 status = 6;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_es_find_delayed_extent_range_enter/format
+message Ext4EsFindDelayedExtentRangeEnterFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 lblk = 3;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_es_find_delayed_extent_range_exit/format
+message Ext4EsFindDelayedExtentRangeExitFormat {
     uint64 dev = 1;
     uint64 ino = 2;
     uint32 lblk = 3;
@@ -270,6 +307,14 @@ message Ext4ExtHandleUnwrittenExtentsFormat {
     uint64 newblk = 8;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_ext_in_cache/format
+message Ext4ExtInCacheFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 lblk = 3;
+    int32 ret = 4;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_ext_load_extent/format
 message Ext4ExtLoadExtentFormat {
     uint64 dev = 1;
@@ -299,6 +344,15 @@ message Ext4ExtMapBlocksExitFormat {
     int32 ret = 8;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_ext_put_in_cache/format
+message Ext4ExtPutInCacheFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 lblk = 3;
+    uint32 len = 4;
+    uint64 start = 5;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_ext_remove_space/format
 message Ext4ExtRemoveSpaceFormat {
     uint64 dev = 1;
@@ -315,10 +369,11 @@ message Ext4ExtRemoveSpaceDoneFormat {
     uint32 start = 3;
     uint32 end = 4;
     int32 depth = 5;
-    uint64 pc_pclu = 6;
-    uint32 pc_lblk = 7;
-    int32 pc_state = 8;
-    uint32 eh_entries = 9;
+    uint64 partial = 6;
+    uint32 eh_entries = 7;
+    uint64 pc_pclu = 8;
+    uint32 pc_lblk = 9;
+    int32 pc_state = 10;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_ext_rm_idx/format
@@ -332,13 +387,14 @@ message Ext4ExtRmIdxFormat {
 message Ext4ExtRmLeafFormat {
     uint64 dev = 1;
     uint64 ino = 2;
-    uint32 start = 3;
-    uint32 ee_lblk = 4;
-    uint64 ee_pblk = 5;
-    int32 ee_len = 6;
-    uint64 pc_pclu = 7;
-    uint32 pc_lblk = 8;
-    int32 pc_state = 9;
+    uint64 partial = 3;
+    uint32 start = 4;
+    uint32 ee_lblk = 5;
+    uint64 ee_pblk = 6;
+    int32 ee_len = 7;
+    uint64 pc_pclu = 8;
+    uint32 pc_lblk = 9;
+    int32 pc_state = 10;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_ext_show_extent/format
@@ -366,6 +422,17 @@ message Ext4FallocateExitFormat {
     uint64 pos = 3;
     uint32 blocks = 4;
     int32 ret = 5;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_find_delalloc_range/format
+message Ext4FindDelallocRangeFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 from = 3;
+    uint32 to = 4;
+    int32 reverse = 5;
+    int32 found = 6;
+    uint32 found_blk = 7;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_forget/format
@@ -407,6 +474,14 @@ message Ext4GetImpliedClusterAllocExitFormat {
     int32 ret = 6;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_get_reserved_cluster_alloc/format
+message Ext4GetReservedClusterAllocFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint32 lblk = 3;
+    uint32 len = 4;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_ind_map_blocks_enter/format
 message Ext4IndMapBlocksEnterFormat {
     uint64 dev = 1;
@@ -436,11 +511,37 @@ message Ext4InsertRangeFormat {
     uint64 len = 4;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_invalidatepage/format
+message Ext4InvalidatepageFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
+    uint32 offset = 4;
+    uint32 length = 5;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_journal_start/format
+message Ext4JournalStartFormat {
+    uint64 dev = 1;
+    uint64 ip = 2;
+    int32 blocks = 3;
+    int32 rsv_blocks = 4;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_journal_start_reserved/format
 message Ext4JournalStartReservedFormat {
     uint64 dev = 1;
     uint64 ip = 2;
     int32 blocks = 3;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_journalled_invalidatepage/format
+message Ext4JournalledInvalidatepageFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
+    uint32 offset = 4;
+    uint32 length = 5;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_journalled_write_end/format
@@ -604,18 +705,33 @@ message Ext4ReadBlockBitmapLoadFormat {
     uint32 prefetch = 3;
 }
 
+// /sys/kernel/debug/tracing/events/ext4/ext4_readpage/format
+message Ext4ReadpageFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_releasepage/format
+message Ext4ReleasepageFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
+}
+
 // /sys/kernel/debug/tracing/events/ext4/ext4_remove_blocks/format
 message Ext4RemoveBlocksFormat {
     uint64 dev = 1;
     uint64 ino = 2;
     uint32 from = 3;
     uint32 to = 4;
-    uint64 ee_pblk = 5;
-    uint32 ee_lblk = 6;
-    uint32 ee_len = 7;
-    uint64 pc_pclu = 8;
-    uint32 pc_lblk = 9;
-    int32 pc_state = 10;
+    uint64 partial = 5;
+    uint64 ee_pblk = 6;
+    uint32 ee_lblk = 7;
+    uint32 ee_len = 8;
+    uint64 pc_pclu = 9;
+    uint32 pc_lblk = 10;
+    int32 pc_state = 11;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_request_blocks/format
@@ -713,6 +829,7 @@ message Ext4WriteBeginFormat {
     uint64 ino = 2;
     uint64 pos = 3;
     uint32 len = 4;
+    uint32 flags = 5;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_write_end/format
@@ -722,6 +839,13 @@ message Ext4WriteEndFormat {
     uint64 pos = 3;
     uint32 len = 4;
     uint32 copied = 5;
+}
+
+// /sys/kernel/debug/tracing/events/ext4/ext4_writepage/format
+message Ext4WritepageFormat {
+    uint64 dev = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
 }
 
 // /sys/kernel/debug/tracing/events/ext4/ext4_writepages/format

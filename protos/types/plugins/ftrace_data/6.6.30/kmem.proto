@@ -34,6 +34,16 @@ message KmallocFormat {
     int32 node = 6;
 }
 
+// /sys/kernel/debug/tracing/events/kmem/kmalloc_node/format
+message KmallocNodeFormat {
+    uint64 call_site = 1;
+    uint64 ptr = 2;
+    uint64 bytes_req = 3;
+    uint64 bytes_alloc = 4;
+    uint32 gfp_flags = 5;
+    int32 node = 6;
+}
+
 // /sys/kernel/debug/tracing/events/kmem/kmem_cache_alloc/format
 message KmemCacheAllocFormat {
     uint64 call_site = 1;
@@ -43,6 +53,16 @@ message KmemCacheAllocFormat {
     uint64 gfp_flags = 5;
     int32 node = 6;
     uint32 accounted = 7;
+}
+
+// /sys/kernel/debug/tracing/events/kmem/kmem_cache_alloc_node/format
+message KmemCacheAllocNodeFormat {
+    uint64 call_site = 1;
+    uint64 ptr = 2;
+    uint64 bytes_req = 3;
+    uint64 bytes_alloc = 4;
+    uint32 gfp_flags = 5;
+    int32 node = 6;
 }
 
 // /sys/kernel/debug/tracing/events/kmem/kmem_cache_free/format

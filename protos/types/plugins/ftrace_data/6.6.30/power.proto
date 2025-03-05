@@ -97,12 +97,14 @@ message DevicePmCallbackStartFormat {
 
 // /sys/kernel/debug/tracing/events/power/pm_qos_add_request/format
 message PmQosAddRequestFormat {
-    int32 value = 1;
+    int32 pm_qos_class = 1;
+    int32 value = 2;
 }
 
 // /sys/kernel/debug/tracing/events/power/pm_qos_remove_request/format
 message PmQosRemoveRequestFormat {
-    int32 value = 1;
+    int32 pm_qos_class = 1;
+    int32 value = 2;
 }
 
 // /sys/kernel/debug/tracing/events/power/pm_qos_update_flags/format
@@ -114,7 +116,15 @@ message PmQosUpdateFlagsFormat {
 
 // /sys/kernel/debug/tracing/events/power/pm_qos_update_request/format
 message PmQosUpdateRequestFormat {
-    int32 value = 1;
+    int32 pm_qos_class = 1;
+    int32 value = 2;
+}
+
+// /sys/kernel/debug/tracing/events/power/pm_qos_update_request_timeout/format
+message PmQosUpdateRequestTimeoutFormat {
+    int32 pm_qos_class = 1;
+    int32 value = 2;
+    uint64 timeout_us = 3;
 }
 
 // /sys/kernel/debug/tracing/events/power/pm_qos_update_target/format

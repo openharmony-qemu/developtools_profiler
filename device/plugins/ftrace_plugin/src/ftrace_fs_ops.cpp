@@ -67,6 +67,16 @@ bool FtraceFsOps::IsHmKernel()
     return isHM;
 }
 
+std::string FtraceFsOps::GetKernelVersion() const
+{
+    struct utsname sysInfo;
+    if ((uname(&sysInfo)) == 0) {
+        std::string osRelVersion = sysInfo.release;
+        return osRelVersion;
+    }
+    return "";
+}
+
 int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content)
 {
     bool ret = false;

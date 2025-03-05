@@ -53,11 +53,12 @@ message BdiDirtyRatelimitFormat {
 message GlobalDirtyStateFormat {
     uint64 nr_dirty = 1;
     uint64 nr_writeback = 2;
-    uint64 background_thresh = 3;
-    uint64 dirty_thresh = 4;
-    uint64 dirty_limit = 5;
-    uint64 nr_dirtied = 6;
-    uint64 nr_written = 7;
+    uint64 nr_unstable = 3;
+    uint64 background_thresh = 4;
+    uint64 dirty_thresh = 5;
+    uint64 dirty_limit = 6;
+    uint64 nr_dirtied = 7;
+    uint64 nr_written = 8;
 }
 
 // /sys/kernel/debug/tracing/events/writeback/wbc_writepage/format
@@ -78,6 +79,12 @@ message WbcWritepageFormat {
 // /sys/kernel/debug/tracing/events/writeback/writeback_bdi_register/format
 message WritebackBdiRegisterFormat {
     string name = 1;
+}
+
+// /sys/kernel/debug/tracing/events/writeback/writeback_congestion_wait/format
+message WritebackCongestionWaitFormat {
+    uint32 usec_timeout = 1;
+    uint32 usec_delayed = 2;
 }
 
 // /sys/kernel/debug/tracing/events/writeback/writeback_dirty_inode/format
@@ -103,6 +110,13 @@ message WritebackDirtyInodeStartFormat {
     uint64 ino = 2;
     uint64 state = 3;
     uint64 flags = 4;
+}
+
+// /sys/kernel/debug/tracing/events/writeback/writeback_dirty_page/format
+message WritebackDirtyPageFormat {
+    string name = 1;
+    uint64 ino = 2;
+    uint64 index = 3;
 }
 
 // /sys/kernel/debug/tracing/events/writeback/writeback_exec/format
@@ -229,6 +243,12 @@ message WritebackWaitFormat {
     int32 for_background = 7;
     int32 reason = 8;
     uint64 cgroup_ino = 9;
+}
+
+// /sys/kernel/debug/tracing/events/writeback/writeback_wait_iff_congested/format
+message WritebackWaitIffCongestedFormat {
+    uint32 usec_timeout = 1;
+    uint32 usec_delayed = 2;
 }
 
 // /sys/kernel/debug/tracing/events/writeback/writeback_wake_background/format
