@@ -176,10 +176,17 @@ namespace OHOS {
 
         void GpuCounterCallbackImpl::GetRealTime(GpuPerfInfo *newData)
         {
+            if (newData == nullptr) {
+                WLOGE("GetRealTime newData is nullptr");
+                return;
+            }
+
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
+                WLOGE("Invalid duration found: realtime = %d, newData = %d",
+                    realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
             gpuCounterInstance.GetRealtimeDataLock().lock();
@@ -189,8 +196,38 @@ namespace OHOS {
             gpuCounterInstance.GetRealtimeDataLock().unlock();
         }
 
+        std::string GpuCounterCallbackImpl::GetGpuPerfInfoItem(const GpuPerfInfo *itemData) const
+        {
+            std::ostringstream oss;
+            if (itemData == nullptr) {
+                WLOGE("GpuCounter get itemData is nullptr");
+                return "";
+            }
+            oss << itemData->startTime << ","
+                << itemData->duration << ","
+                << itemData->gpuActive << ","
+                << itemData->drawCalls << ","
+                << itemData->primitives << ","
+                << itemData->vertexCounts << ","
+                << itemData->totalInstruments << ","
+                << itemData->gpuLoadPercentage << ","
+                << itemData->vertexLoadPercentage << ","
+                << itemData->fragmentLoadPercentage << ","
+                << itemData->computeLoadPercentage << ","
+                << itemData->textureLoadPercentage << ","
+                << itemData->memoryReadBandwidth << ","
+                << itemData->memoryWriteBandwidth << ","
+                << itemData->memoryBandwidthPercentage << ",";
+            return oss.str();
+        }
+
         int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
         {
+            if (gpuPerfInfos.empty()) {
+                WLOGE("Receive gpuPerfInfos is empty!");
+                return -1;
+            }
+
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
             for (auto gpuPerfInfo : gpuPerfInfos) {
@@ -198,42 +235,28 @@ namespace OHOS {
                 gpuCounter.push_back(gpuPerfInfo);
                 unsigned int gpuCounterSize = gpuCounter.size();
                 if (gpuCounterSize <= gpuCounterBackSize) {
-                    LOGE("gpuCounter data len error!");
+                    WLOGE("gpuCounter data len error!");
                     return -1;
                 }
                 GpuPerfInfo *newData = &gpuCounter[gpuCounterSize - 1];
                 GpuPerfInfo *backData = &gpuCounter[gpuCounterSize - 2];
+                if (newData == nullptr || backData == nullptr) {
+                    WLOGE("gpuCounter data pointer is null!");
+                    return -1;
+                }
                 long long durationTime = newData->startTime - backData->startTime;
 
                 // 如果两次数据间隔过短，则舍弃新数据
                 if (durationTime < collectInterval) {
-                    LOGE("Start time(%lld, %lld) make duration time(%lld) too short",
-                         newData->startTime, backData->startTime, durationTime);
+                    WLOGE("Start time(%lld, %lld) make duration time(%lld) too short",
+                        newData->startTime, backData->startTime, durationTime);
                     gpuCounter.pop_back();
                     continue;
                 }
-
                 backData->duration = durationTime;
-
-                std::ostringstream oss;
-                oss << backData->startTime << ","
-                    << backData->duration << ","
-                    << backData->gpuActive << ","
-                    << backData->drawCalls << ","
-                    << backData->primitives << ","
-                    << backData->vertexCounts << ","
-                    << backData->totalInstruments << ","
-                    << backData->gpuLoadPercentage << ","
-                    << backData->vertexLoadPercentage << ","
-                    << backData->fragmentLoadPercentage << ","
-                    << backData->computeLoadPercentage << ","
-                    << backData->textureLoadPercentage << ","
-                    << backData->memoryReadBandwidth << ","
-                    << backData->memoryWriteBandwidth << ","
-                    << backData->memoryBandwidthPercentage << ",";
-                gpuCounterInstance.GetGpuCounterData().push_back(oss.str());
-                gpuCounterInstance.GetGpuCounterSaveReportData().push_back(oss.str());
-
+                std::string gpuPerfInfoItemStr = GetGpuPerfInfoItem(backData);
+                gpuCounterInstance.GetGpuCounterData().push_back(gpuPerfInfoItemStr);
+                gpuCounterInstance.GetGpuCounterSaveReportData().push_back(gpuPerfInfoItemStr);
                 GetRealTime(backData);
             }
 

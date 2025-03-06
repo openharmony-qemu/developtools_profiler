@@ -35,6 +35,7 @@ namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> ProfilerFPS::ItemData()
 {
+    isSections = false;
     std::map<std::string, std::string> result;
     fpsInfo.currDumpTimeStamps.clear();
     FpsInfoProfiler finalResult = GetFpsInfo();
@@ -49,7 +50,8 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
             finalResult.fps = fullFrame;
         }
         result["fps"] = std::to_string(finalResult.fps);
-        LOGD("ProfilerFPS.result.fps: %s", std::to_string(finalResult.fps).c_str());
+        LOGD("ProfilerFPS.result.fps: (%d)", finalResult.fps);
+        LOGD("ProfilerFPS.result.curTime: (%d)", finalResult.curTime);
         std::string jitterStr = "";
         std::string split = "";
         for (size_t i = 0; i < finalResult.jitters.size(); i++) {
@@ -64,6 +66,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }
     }
+    isSections = true;
     return result;
 }
 
@@ -122,7 +125,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     if (runTime < sleepTime) {
         usleep(sleepTime - runTime);
     }
-    OHOS::SmartPerf::SPUtils::GetCurrentTime(ten, lastFpsInfoResult.curTime);
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(lastFpsInfoResult.curTime);
 }
 
 void ProfilerFPS::GetTimeDiff()
@@ -269,44 +272,28 @@ std::string ProfilerFPS::GetSurface()
     return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 
-FpsInfoProfiler ProfilerFPS::GetTime()
-{
-    FpsInfoProfiler curTimeFps;
-    struct timespec sysTime = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &sysTime);
-    curTimeFps.curTime = static_cast<int>(sysTime.tv_sec - 1);
-    curTimeFps.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
-    if (curTimeFps.curTime == lastFpsInfoResult.curTime) {
-        LOGD("ProfilerFPS::The system time is not updated");
-        curTimeFps.curTime = static_cast<int>(sysTime.tv_sec);
-        curTimeFps.currTimeDump = (sysTime.tv_sec) * mod + sysTime.tv_nsec;
-    }
-    LOGD("ProfilerFPS::timeFps.curTime: %d", curTimeFps.curTime);
-    return curTimeFps;
-}
-
 FpsInfoProfiler ProfilerFPS::GetFpsInfo()
 {
     processFlag = false;
     fpsInfoTime.fps = 0;
     fpsInfoTime.curTime = 0;
-    FpsInfoProfiler tmpFps = GetTime();
     
     if (isGameApp) {
         if (firstDump) {
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
                 firstDump = true;
-                fpsInfoTime.Clear();
+                fpsInfoTime.fps = 0;
+                fpsInfoTime.jitters.clear();
                 return fpsInfoTime;
             } else {
                 firstDump = false;
             }
         }
-        OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
-        fpsInfoTime = GetSurfaceFrame(gameLayerName, tmpFps);
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(lastFpsInfoResult.curTime);
+        fpsInfoTime = GetSurfaceFrame(gameLayerName);
         if (fpsInfoTime.fps == 0) {
-            return GetChangedLayerFps(tmpFps);
+            return GetChangedLayerFps();
         } else {
             return fpsInfoTime;
         }
@@ -323,63 +310,71 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
         }
         if (pkgName.empty() || pkgName.find("sceneboard") != std::string::npos) {
             LOGD("ProfilerFPS.pkgName: %s", pkgName.c_str());
-            OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
-            fpsInfoTime = GetSurfaceFrame(uniteLayer, tmpFps);
+            OHOS::SmartPerf::SPUtils::GetCurrentTime(lastFpsInfoResult.curTime);
+            fpsInfoTime = GetSurfaceFrame(uniteLayer);
         } else {
-            fpsInfoTime = GetAppFps(tmpFps, uniteLayer);
+            fpsInfoTime = GetAppFps(uniteLayer);
         }
     }
     return fpsInfoTime;
 }
 
-FpsInfoProfiler ProfilerFPS::GetChangedLayerFps(FpsInfoProfiler &timeFps)
+FpsInfoProfiler ProfilerFPS::GetChangedLayerFps()
 {
     gameLayerName = GetGameLayer();
     if (gameLayerName.empty()) {
         if (processId.empty()) {
             processFlag = true;
         }
-        fpsInfoTime.Clear();
+        fpsInfoTime.fps = 0;
+        fpsInfoTime.jitters.clear();
     } else {
-        fpsInfoTime = GetSurfaceFrame(gameLayerName, timeFps);
+        fpsInfoTime = GetSurfaceFrame(gameLayerName);
     }
     return fpsInfoTime;
 }
 
-FpsInfoProfiler ProfilerFPS::GetAppFps(FpsInfoProfiler &timeFps, std::string &uniteLayer)
+FpsInfoProfiler ProfilerFPS::GetAppFps(std::string &uniteLayer)
 {
     bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
     if (onTop) {
-        OHOS::SmartPerf::SPUtils::GetCurrentTime(fifty, lastFpsInfoResult.curTime);
-        fpsInfoTime = GetSurfaceFrame(uniteLayer, timeFps);
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(lastFpsInfoResult.curTime);
+        fpsInfoTime = GetSurfaceFrame(uniteLayer);
     } else {
         LOGD("ProfilerFPS::app is in the background");
         if (processId.empty()) {
             processFlag = true;
         }
-        fpsInfoTime.Clear();
+        fpsInfoTime.fps = 0;
+        fpsInfoTime.jitters.clear();
     }
     return fpsInfoTime;
 }
 
-FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(const std::string& name, FpsInfoProfiler &timeFps)
+FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(const std::string& name)
 {
     if (name == "") {
         return FpsInfoProfiler();
     }
-    return GetFrameInfoFromMap(name, timeFps);
+    return GetFrameInfoFromMap(name);
 }
 
-FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name, FpsInfoProfiler &timeFps)
+void ProfilerFPS::ResetFpsInfo()
 {
     FpsInfoProfiler tmpFps;
     tmpFps.fps = 0;
     fpsInfo = tmpFps;
     fpsInfo.fps = 0;
     fpsInfo.jitters.clear();
+}
+
+FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
+{
+    ResetFpsInfo();
     bool isBreak = false;
-    GetTimeDiff();
-    
+    if (isSections) {
+        GetTimeDiff();
+    }
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     if (cmd.empty()) {
         LOGE("cmd is null");
@@ -390,19 +385,22 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name, FpsInf
         LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
-
     fpsNum = 0;
     prevScreenTimestamp = -1;
-    
-    fpsInfo.currTimeDump = timeFps.currTimeDump;
-    fpsInfo.curTime = timeFps.curTime;
+    struct timespec sysTime = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &sysTime);
+    fpsInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
+    fpsInfo.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
+    LOGD("fpsInfo.curTime: (%d), fpsInfo.currTimeDump: (%lld)", fpsInfo.curTime, fpsInfo.currTimeDump);
+
     char tmp[1024];
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         LOGD("ProfilerFPS::GetFrameInfoFromMap dump time: %s", tmp);
+        std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
-        sstream.str(tmp);
+        sstream.str(tmpStr);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -559,14 +557,19 @@ std::string ProfilerFPS::GetGameLayer()
 
 std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos)
 {
-    if (std::to_string(nodeId) == processId) {
-        size_t layerStartPos = line.find("[");
-        size_t layerEndPos = line.find("]");
-        if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
-            return gameLayer;
+    StartUpDelay startUpDelay;
+    for (const auto& pid : startUpDelay.GetPidParams()) {
+        LOGD("ProfilerFPS::game.pid: (%s)", pid.c_str());
+        if (std::to_string(nodeId) == pid) {
+            size_t layerStartPos = line.find("[");
+            size_t layerEndPos = line.find("]");
+            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+                return gameLayer;
+            }
+            layerStartPos += 1;
+            gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
+            break;
         }
-        layerStartPos += 1;
-        gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
     }
     return gameLayer;
 }

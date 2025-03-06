@@ -67,11 +67,11 @@ public:
     void GetFPS(std::vector<std::string> v);
     void GetResultFPS(int sectionsNum);
     FpsInfoProfiler GetFpsInfo();
-    FpsInfoProfiler GetTime();
     bool CalcFpsAndJitters(bool isBreak);
     long long CalculateJitter();
-    FpsInfoProfiler GetSurfaceFrame(const std::string& name, FpsInfoProfiler &timeFps);
-    FpsInfoProfiler GetFrameInfoFromMap(const std::string& name, FpsInfoProfiler &timeFps);
+    FpsInfoProfiler GetSurfaceFrame(const std::string& name);
+    FpsInfoProfiler GetFrameInfoFromMap(const std::string& name);
+    void ResetFpsInfo();
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
@@ -84,8 +84,8 @@ public:
     FpsInfoProfiler lastFpsInfoResult;
     static inline bool firstDump = false;
     static inline bool isGameApp = false;
-    FpsInfoProfiler GetChangedLayerFps(FpsInfoProfiler &timeFps);
-    FpsInfoProfiler GetAppFps(FpsInfoProfiler &timeFps, std::string &uniteLayer);
+    FpsInfoProfiler GetChangedLayerFps();
+    FpsInfoProfiler GetAppFps(std::string &uniteLayer);
     static ProfilerFPS &GetInstance()
     {
         static ProfilerFPS instance;
@@ -127,6 +127,7 @@ private:
     std::string processId = "";
     bool rkFlag = false;
     std::string gameLayerName;
+    bool isSections = true;
 };
 }
 }
