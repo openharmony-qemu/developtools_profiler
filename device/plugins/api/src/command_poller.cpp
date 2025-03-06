@@ -187,6 +187,7 @@ bool CommandPoller::OnGetCommandResponse(SocketContext& context, ::GetCommandRes
         PROFILER_LOG_DEBUG(LOG_CORE, "%s:command Response failed!", __func__);
         return false;
     }
+    std::lock_guard<std::mutex> guard(reportMutex_);
     PROFILER_LOG_DEBUG(LOG_CORE, "%s:ok id = %d", __func__, nrr.command_id());
     NotifyResult(nrr);
     return true;

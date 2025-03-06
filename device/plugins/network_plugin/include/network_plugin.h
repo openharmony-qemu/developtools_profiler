@@ -134,6 +134,11 @@ protected:
     bool RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
     bool HandleData(NetFlowData present, NetFlowData &difference);
     void Record(NetFlowData &newData);
+    // for UT
+    void setSingleUid(int32_t singleUid)
+    {
+        singleUid_ = singleUid;
+    }
 
 private:
     NetworkConfig protoConfig_;

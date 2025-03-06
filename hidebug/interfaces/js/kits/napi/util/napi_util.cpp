@@ -28,7 +28,7 @@ namespace {
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D0A
 #undef LOG_TAG
-#define LOG_TAG "HiDebug_NAPI_UTIL"
+#define LOG_TAG "NapiUtil"
 constexpr int ONE_VALUE_LIMIT = 1;
 const std::string DEFAULT_FILENAME = "undefined";
 }
@@ -113,18 +113,8 @@ bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &f
 
 std::string GetFileNameParam(napi_env env, napi_callback_info info)
 {
-    size_t argc = ONE_VALUE_LIMIT;
-    napi_value argv = nullptr;
-    napi_value thisVar = nullptr;
-    void *data = nullptr;
-    napi_get_cb_info(env, info, &argc, &argv, &thisVar, &data);
-    if (argc != ONE_VALUE_LIMIT) {
-        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
-        return DEFAULT_FILENAME;
-    }
     std::string fileName;
-    constexpr int paramLen = 128;
-    if (!GetNapiStringValue(env, argv, fileName, paramLen)) {
+    if (!GetTheOnlyStringParam(env, info, fileName)) {
         return DEFAULT_FILENAME;
     }
     return fileName;

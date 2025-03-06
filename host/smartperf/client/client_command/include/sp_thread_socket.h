@@ -69,11 +69,13 @@ public:
     std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+    std::string SpGetPkg(const std::string &spMsg) const;
+    std::string SpGetPid(const std::string &spMsg) const;
+    bool IsPreset(const std::string &spMsg) const;
     void SetTcpToken(std::string token);
     std::string GetTcpToken() const;
     void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
-
 private:
     bool flagRunning = false;
     bool socketConnect = true;

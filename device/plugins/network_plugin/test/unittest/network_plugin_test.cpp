@@ -18,6 +18,7 @@
 
 #include "network_plugin.h"
 #include "plugin_module_api.h"
+#include "net_stats_client.h"
 
 using namespace testing::ext;
 
@@ -327,5 +328,238 @@ HWTEST_F(NetworkPluginTest, TestSystemData, TestSize.Level1)
     EXPECT_EQ(plugin->callbacks->onPluginSessionStart(configData.data(), configData.size()), 0);
     EXPECT_GT(plugin->callbacks->onPluginReportResult(dataBuffer.data(), dataBuffer.size()), 0);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with single pid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart1, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_single_pid(-1);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_EQ(ret, -1);
+    plugin.Stop();
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with startup process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart2, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_startup_process_name("");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart3, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_restart_process_name("");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: GetBundleNameByPid test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestGetBundleNameByPid, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    std::string processName = plugin.GetBundleNameByPid(1);
+    EXPECT_EQ(processName, "/bin/init");
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: GetUidByConfiguredBundleName test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestGetUidByConfiguredBundleName, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    EXPECT_EQ(plugin.GetUidByConfiguredBundleName(""), -1);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: WriteNetFlowData test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestWriteNetFlowData, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkFlowData dataProto;
+    ASSERT_FALSE(plugin.WriteNetFlowData(dataProto));
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: Screen by uid test multiple iface
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestScreen1, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    plugin.setSingleUid(1);
+    NetFlowData data;
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
+    plugin.ScreenNetworkStatByUid(infos, data);
+    OHOS::NetManagerStandard::NetStatsInfo info1;
+    info1.uid_ = 1;
+    info1.iface_ = "wlan0";
+    info1.rxBytes_ = 1;
+    info1.txBytes_ = 1;
+    info1.rxPackets_ = 1;
+    info1.txPackets_ = 1;
+    infos.push_back(info1);
+    OHOS::NetManagerStandard::NetStatsInfo info2;
+    info2.uid_ = 1;
+    info2.iface_ = "rmnet0";
+    info2.rxBytes_ = 2;
+    info2.txBytes_ = 2;
+    info2.rxPackets_ = 2;
+    info2.txPackets_ = 2;
+    infos.push_back(info2);
+    plugin.ScreenNetworkStatByUid(infos, data);
+    EXPECT_EQ(data.rxBytes, 3);
+    EXPECT_EQ(data.txBytes, 3);
+    EXPECT_EQ(data.rxPackets, 3);
+    EXPECT_EQ(data.txPackets, 3);
+    EXPECT_EQ(data.details.size(), 2);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: Screen by uid test with multiple uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestScreen2, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    plugin.setSingleUid(1);
+    NetFlowData data;
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
+    plugin.ScreenNetworkStatByUid(infos, data);
+    OHOS::NetManagerStandard::NetStatsInfo info1;
+    info1.uid_ = 1;
+    info1.iface_ = "wlan0";
+    info1.rxBytes_ = 1;
+    info1.txBytes_ = 1;
+    info1.rxPackets_ = 1;
+    info1.txPackets_ = 1;
+    infos.push_back(info1);
+    OHOS::NetManagerStandard::NetStatsInfo info2;
+    info2.uid_ = 2;
+    info2.iface_ = "rmnet0";
+    info2.rxBytes_ = 2;
+    info2.txBytes_ = 2;
+    info2.rxPackets_ = 2;
+    info2.txPackets_ = 2;
+    infos.push_back(info2);
+    plugin.ScreenNetworkStatByUid(infos, data);
+    EXPECT_EQ(data.rxBytes, 1);
+    EXPECT_EQ(data.txBytes, 1);
+    EXPECT_EQ(data.rxPackets, 1);
+    EXPECT_EQ(data.txPackets, 1);
+    EXPECT_EQ(data.details.size(), 1);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: retain all test with multiple iface
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestScreen3, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    plugin.setSingleUid(1);
+    NetFlowData data;
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
+    plugin.RetainAllNetworkStat(infos, data);
+    OHOS::NetManagerStandard::NetStatsInfo info1;
+    info1.uid_ = 1;
+    info1.iface_ = "wlan0";
+    info1.rxBytes_ = 1;
+    info1.txBytes_ = 1;
+    info1.rxPackets_ = 1;
+    info1.txPackets_ = 1;
+    infos.push_back(info1);
+    OHOS::NetManagerStandard::NetStatsInfo info2;
+    info2.uid_ = 1;
+    info2.iface_ = "rmnet0";
+    info2.rxBytes_ = 2;
+    info2.txBytes_ = 2;
+    info2.rxPackets_ = 2;
+    info2.txPackets_ = 2;
+    infos.push_back(info2);
+    plugin.RetainAllNetworkStat(infos, data);
+    EXPECT_EQ(data.rxBytes, 3);
+    EXPECT_EQ(data.txBytes, 3);
+    EXPECT_EQ(data.rxPackets, 3);
+    EXPECT_EQ(data.txPackets, 3);
+    EXPECT_EQ(data.details.size(), 2);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: retain all test with multiple uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestScreen4, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    plugin.setSingleUid(1);
+    NetFlowData data;
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos;
+    plugin.RetainAllNetworkStat(infos, data);
+    OHOS::NetManagerStandard::NetStatsInfo info1;
+    info1.uid_ = 1;
+    info1.iface_ = "wlan0";
+    info1.rxBytes_ = 1;
+    info1.txBytes_ = 1;
+    info1.rxPackets_ = 1;
+    info1.txPackets_ = 1;
+    infos.push_back(info1);
+    OHOS::NetManagerStandard::NetStatsInfo info2;
+    info2.uid_ = 2;
+    info2.iface_ = "rmnet0";
+    info2.rxBytes_ = 2;
+    info2.txBytes_ = 2;
+    info2.rxPackets_ = 2;
+    info2.txPackets_ = 2;
+    infos.push_back(info2);
+    plugin.RetainAllNetworkStat(infos, data);
+    EXPECT_EQ(data.rxBytes, 3);
+    EXPECT_EQ(data.txBytes, 3);
+    EXPECT_EQ(data.rxPackets, 3);
+    EXPECT_EQ(data.txPackets, 3);
+    EXPECT_EQ(data.details.size(), 2);
 }
 } // namespace

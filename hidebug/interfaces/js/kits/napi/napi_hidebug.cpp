@@ -28,13 +28,13 @@
 
 #include "application_context.h"
 #include "context.h"
-#include "common_util.h"
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
+#include "hidebug_util.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
 #include "memory_collector.h"
@@ -76,7 +76,6 @@ constexpr int THREAD_MIN = 1;
 constexpr int THREAD_MAX = 1000;
 const std::string SLASH_STR = "/";
 const std::string JSON_FILE = ".json";
-const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
 const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 
 const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
@@ -840,8 +839,8 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
-    if (!CheckVersionType("beta", KEY_HIVIEW_USER_TYPE) &&
-        !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
+    CreateSanBoxDir();
+    if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
         apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);
         return CreateUndefined(env);
@@ -875,7 +874,6 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
-    CreateSanBoxDir();
     return CreateUndefined(env);
 }
 

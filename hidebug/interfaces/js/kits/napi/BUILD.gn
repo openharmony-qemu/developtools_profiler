@@ -27,7 +27,6 @@ ohos_shared_library("hidebug") {
     "napi_hidebug_dump.cpp",
     "napi_hidebug_gc.cpp",
     "napi_hidebug_init.cpp",
-    "util/common_util.cpp",
     "util/hiappevent_util.cpp",
     "util/napi_util.cpp",
   ]

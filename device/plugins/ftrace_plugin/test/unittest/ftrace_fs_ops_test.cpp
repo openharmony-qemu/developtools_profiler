@@ -567,11 +567,7 @@ HWTEST_F(FtraceFsOpsTest, AppendSetEventNormal, TestSize.Level1)
     }
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/set_event";
     std::string content = FileUtils::ReadFile(path);
-    if (!FtraceFsOps::GetInstance().IsHmKernel()) {
-        EXPECT_STRNE(content.c_str(), "");
-    } else {
-        EXPECT_STREQ(content.c_str(), "");
-    }
+    EXPECT_STRNE(content.c_str(), "");
 }
 
 /*
