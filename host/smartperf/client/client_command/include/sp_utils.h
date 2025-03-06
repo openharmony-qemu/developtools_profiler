@@ -150,13 +150,14 @@ bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string,
     std::string &errorInfo);
 bool IsHmKernel();
 std::string GetCpuNum();
-void GetCurrentTime(int num, int prevTime);
+void GetCurrentTime(int prevTime);
 bool IsForeGround(const std::string &pkg);
+bool IsFindForeGround(const std::string &line);
 bool IsFindAbilist();
 void SetRkFlag();
 bool GetPathPermissions(const std::string &path);
-const std::string SMART_PERF_VERSION = "1.0.5";
 bool GetIsGameApp(std::string pkg);
+std::string GetVersion();
 };
 }
 }

@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 #include <iostream>
+#include "include/AI_schedule.h"
 #include "include/CPU.h"
 #include "include/DDR.h"
+#include "include/GetLog.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
 #include "include/profiler_fps.h"
@@ -36,7 +38,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     SpProfiler* profiler = nullptr;
     switch (messageType) {
         case MessageType::GET_CPU_FREQ_LOAD:
-            OHOS::SmartPerf::CPU::GetInstance().IsFindHap();
             profiler = &CPU::GetInstance();
             break;
         case MessageType::GET_FPS_AND_JITTERS:
@@ -52,6 +53,9 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             break;
         case MessageType::GET_RAM_INFO:
             profiler = &RAM::GetInstance();
+            break;
+        case MessageType::GET_LOG:
+            profiler = &GetLog::GetInstance();
             break;
         default:
             break;
@@ -91,6 +95,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
+    LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
     FPS &fps = FPS::GetInstance();
     fps.SetPackageName(pkg);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
@@ -103,6 +108,7 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
 {
+    LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS &fps = FPS::GetInstance();
     fps.SetProcessId(pid);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
@@ -113,6 +119,8 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
     cpu.SetProcessId(pid);
     Navigation &nav = Navigation::GetInstance();
     nav.SetProcessId(pid);
+    AISchedule &as = AISchedule::GetInstance();
+    as.SetProcessId(pid);
 }
 
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
@@ -198,6 +206,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             break;
         case CommandType::CT_TTRACE:
             ProfilerFPS::GetInstance().SetTraceCatch();
+            break;
+        case CommandType::CT_AS:
+            profiler = &AISchedule::GetInstance();
             break;
         default:
             break;

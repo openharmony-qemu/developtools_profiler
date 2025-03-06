@@ -27,12 +27,14 @@ void Dubai::DumpDubaiBegin()
     std::string result;
     std::string dumpBubaiB = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_B);
     SPUtils::LoadCmd(dumpBubaiB, result);
+    LOGD("Dubai::DumpDubaiBegin");
 }
 void Dubai::DumpDubaiFinish()
 {
     std::string result;
     std::string dumpBubaiF = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_DUBAI_F);
     SPUtils::LoadCmd(dumpBubaiF, result);
+    LOGD("Dubai::DumpDubaiFinish");
 }
 
 void Dubai::MoveDubaiDb()
