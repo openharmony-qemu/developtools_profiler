@@ -100,12 +100,15 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
+        LOGD("no app list Dynamic"); //没有APP list泳道
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
+        LOGD("no swiper Dynamic"); //没有swiper 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!tabsDynamicExists) {
+        LOGD("no tabs Dynamic"); //没有tabs 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         swiperDynamicExists ? swiperFrameLossRate : -1;
     } else {
@@ -117,6 +120,7 @@ void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
         if (swiperFrameLossRate > 0) {
+            LOGD("no app list hitchTime"); //没有app list卡顿次数
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
             frameLossRate = tabsFrameLossRate;
@@ -124,6 +128,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (swiperFrameLossRate == 0) {
+        LOGD("no swiper list hitchTime"); //没有swiper list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -132,6 +137,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (tabsFrameLossRate == 0) {
+        LOGD("no tabs list hitchTime"); //没有tabs list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (swiperFrameLossRate > 0) {
@@ -189,6 +195,7 @@ void StallingRateTrace::AppList(const std::string &line, const std::string &sign
         if (upperScreenFlag) {
             if (line.find("|H:Present Fence ") != std::string::npos) {
                 fenceId = GetFenceId(line);
+                LOGD("fenceID:(%d)", fenceId);
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceId);
             if (line.find(waitFenceId) != std::string::npos) {
@@ -427,14 +434,14 @@ bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
             if (pos > 0 && isspace(line[pos - 1])) {
                 continue;
             }
-            if (pos + keyWords.length() < line.length() &&
-                !isspace(line[pos + keyWords.length()]) &&
-                line[pos + keyWords.length()] != ',') {
+            if (pos + keyWords.length() < line.length() && !isspace(line[pos + keyWords.length()]) &&
+            line[pos + keyWords.length()] != ',') {
                 continue;
             }
             if (pos + keyWords.length() < line.length() && (line[pos + keyWords.length()] == ',')) {
                 return false;
             }
+            LOGD("StallingRateTrace::IsAppLaunchPatternMatched: (%s)", keyWords.c_str());
             return true;
         }
     }

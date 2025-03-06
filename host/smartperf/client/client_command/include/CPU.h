@@ -47,7 +47,6 @@ public:
     std::map<std::string, std::string> GetSysProcessCpuLoad() const;
     void SetPackageName(const std::string &pName);
     void SetProcessId(const std::string &pid);
-    void IsFindHap();
 
 private:
     CPU() {};
@@ -55,9 +54,10 @@ private:
     CPU &operator = (const CPU &);
     std::string packageName = "";
     std::string processId = "";
-    bool hapFlag = false;
     const std::string cpustr = "cpu";
     const std::string totalcpu = "Totalcpu";
+    int twenty = 20;
+    int thousand = 1000;
 };
 }
 }

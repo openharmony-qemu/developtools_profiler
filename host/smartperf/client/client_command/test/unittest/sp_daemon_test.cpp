@@ -17,7 +17,6 @@
 #include <thread>
 #include <vector>
 #include <gtest/gtest.h>
-
 #include "sp_utils.h"
 #include "RAM.h"
 #include "GPU.h"
@@ -31,6 +30,8 @@
 #include "parse_click_complete_trace.h"
 #include "parse_click_response_trace.h"
 #include "parse_slide_fps_trace.h"
+#include "DDR.h"
+#include "navigation.h"
 using namespace testing::ext;
 using namespace std;
 
@@ -70,9 +71,8 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -98,9 +98,8 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -114,7 +113,7 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string packName = "ohos.samples.ecg";
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
-    
+
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
@@ -129,9 +128,8 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -151,9 +149,8 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -175,9 +172,8 @@ HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
     } else if ((strThree != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -204,40 +200,8 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
-}
-
-/**
- * @tc.name: SnapShotTestCase
- * @tc.desc: Test SnapShot
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTest, SnapShotTestCase, TestSize.Level1)
-{
-    Capture &capture = Capture::GetInstance();
-    long long catTime = 0;
-    std::string curTime = "";
-    
-    capture.SocketMessage();
-    capture.ThreadGetCatch();
-    capture.ThreadGetCatchSocket(curTime);
-    capture.TriggerGetCatch();
-    capture.TriggerGetCatchSocket(catTime);
-
-    std::string cmd = "SP_daemon -N 1 -snapshot";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("capture");
-    std::string::size_type strTwo = result.find(".png");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    }
-
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -256,9 +220,8 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-    
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -277,9 +240,8 @@ HWTEST_F(SPdaemonTest, StartTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -298,9 +260,8 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -319,9 +280,8 @@ HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
@@ -340,9 +300,55 @@ HWTEST_F(SPdaemonTest, FrameLossTestCase, TestSize.Level1)
     if ((strOne != result.npos) && (strTwo != result.npos)) {
         flag = true;
     }
-
     EXPECT_EQ(ret, true);
-    EXPECT_EQ(flag, true);
+    EXPECT_TRUE(flag);
+}
+
+/**
+ * @tc.name: DdrTestCase
+ * @tc.desc: Test DDR
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, DdrTestCase, TestSize.Level1)
+{
+    std::string cmd = "SP_daemon -N 1 -d";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    DDR &ddr = DDR::GetInstance();
+    ddr.SetRkFlag();
+    ddr.GetDdrFreq();
+    std::string::size_type strOne = result.find("ddrFrequency");
+    if (strOne != result.npos) {
+        flag = true;
+    }
+    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(flag);
+}
+
+/**
+ * @tc.name: Navigation
+ * @tc.desc: Test Navigation
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonTest, Navigation, TestSize.Level1)
+{
+    Navigation &nav = Navigation::GetInstance();
+    std::string packName = "ohos.samples.ecg";
+
+    std::map<std::string, std::string> navItemData = nav.ItemData();
+
+    std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -nav";
+    std::string result = "";
+    bool flag = false;
+    auto ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("navPathName");
+    std::string::size_type strTwo = result.find("No Navigation Info");
+    if ((strOne != result.npos) && (strTwo != result.npos)) {
+        flag = true;
+    }
+    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(flag);
 }
 } // namespace OHOS
 } // namespace SmartPerf

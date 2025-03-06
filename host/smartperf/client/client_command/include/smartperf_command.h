@@ -29,7 +29,7 @@ public:
     const std::string smartPerfExeName = "SP_daemon";
     const std::string smartPerfMsgErr = "error input!\n use command '--help' get more information\n";
     const std::string smartPerfMsg = "OpenHarmony performance testing tool SmartPerf command-line version\n"
-                "Usage: SP_daemon [options] [arguments]\n\n"
+        "Usage: SP_daemon [options] [arguments]\n\n"
         "options:\n"
         " -N              set the collection times(default value is 0) range[1,2147483647], for example: -N 10 \n"
         " -PKG            set package name, must add, for example: -PKG ohos.samples.ecg \n"
@@ -48,28 +48,22 @@ public:
         " -VIEW           set layler, for example: -VIEW DisplayNode \n"
         " -OUT            set csv output path.\n"
         " -d              get device DDR information \n"
-        " -nav            get page navigation info \n"
         " -screen         get screen resolution \n"
         " -deviceinfo     get device information \n"
         " -server         start a process to listen to the socket message of the start and stop commands \n"
         " -clear          clear the process ID \n"
-        " -ohtestfps      used by the villidator to obtain the fps, the collection times can be set \n"
+        " -ohtestfps      used by the vilidator to obtain the fps, the collection times can be set \n"
         " -editorServer   start a process to listen to the socket message of the editor \n"
         " -recordcapacity get the battery level difference \n"
         " --version       get version \n"
         " --help          get help \n"
         " -editor         scenario-based collection identifier, parameter configuration items can be added later \n"
-        " appStartTime    get the cold and hot startup information of an application \n"
-        " slideList       get application page sliding information \n"
-        " timeDelay       get application page switching information \n"
-        " frameLoss       get application performance information \n"
-        " responseTime    get the page response delay after an application is operated \n"
-        " completeTime    get the page completion delay after an application is operated \n"
-        " fpsohtest       used by the villidator to obtain the fps \n"
-
+        " responseTime   get the page response delay after an application is operated \n"
+        " completeTime   get the page completion delay after an application is operated \n"
+        " fpsohtest      used by the vilidator to obtain the fps \n"
         "example1:\n"
         "SP_daemon -N 20 -c -g -t -p -r -net -snapshot -d \n"
-        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d -nav \n"
+        "SP_daemon -N 20 -PKG ohos.samples.ecg -c -g -t -p -f -r -net -snapshot -d \n"
         "SP_daemon -start -c \n"
         "SP_daemon -stop \n"
         "example2: These parameters need to be used separately \n"
@@ -81,10 +75,6 @@ public:
         "SP_daemon -editorServer \n"
         "SP_daemon -recordcapacity \n"
         "example3: These parameters need to be used separately \n"
-        "SP_daemon -editor appStartTime \n"
-        "SP_daemon -editor slideList \n"
-        "SP_daemon -editor timeDelay \n"
-        "SP_daemon -editor frameLoss \n"
         "SP_daemon -editor responseTime ohos.samples.ecg app name \n"
         "SP_daemon -editor completeTime ohos.samples.ecg app name \n"
         "SP_daemon -editor fpsohtest \n";
@@ -103,6 +93,7 @@ public:
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
     void CreateSocketThread() const;
     void SaveGpuCounter() const;
+    void StartGpuCounterCollect(std::string config, bool &flag) const;
     // 采集次数
     int num = 0;
     // 包名
