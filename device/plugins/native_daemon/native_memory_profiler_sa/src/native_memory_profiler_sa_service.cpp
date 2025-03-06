@@ -437,8 +437,7 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
                     PROFILER_LOG_INFO(LOG_CORE, "DelayedShutdown close sa success");
                 }
             },
-            DELAYED_SHUTDOWN_TIME * TIME_BASE,
-            true, false);
+            DELAYED_SHUTDOWN_TIME * TIME_BASE, true);
         if (timerFd == -1) {
             PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService:DelayedShutdown Schedule Task failed");
             return;
