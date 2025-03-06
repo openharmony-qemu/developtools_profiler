@@ -105,7 +105,7 @@ int XpowerPlugin::Start(const uint8_t *configData, uint32_t configSize)
         bool isExsit = COMMON::IsProcessExist(bundleName, processId);
         if (!isExsit) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s:the process %s does not exist.", __func__, bundleName.c_str());
-            COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_IVALID_PID,
+            COMMON::PluginWriteToHisysevent("xpower_plugin", "sh", args, COMMON::ErrorType::RET_INVALID_PID,
                                             "the process does not exist");
             return -1;
         }

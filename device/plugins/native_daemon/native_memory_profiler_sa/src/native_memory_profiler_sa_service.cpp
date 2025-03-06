@@ -228,7 +228,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
         auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "%s:check file path %s fail", __func__, config->filePath_.c_str());
-            COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_IVALID_PATH,
+            COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_INVALID_PATH,
                 "check file path failed");
             return RET_ERR;
         }
