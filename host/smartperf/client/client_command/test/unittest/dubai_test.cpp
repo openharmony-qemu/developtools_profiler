@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Huawei Device Co., Ltd.
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -60,15 +60,52 @@ HWTEST_F(DubaiTest, DubaiMoveTest, TestSize.Level1)
 {
     Dubai &dubai = Dubai::GetInstance();
     std::string result;
-    std::string dubaiName = "dubai.db";
-    std::string dubaiPath = "/data/system_ce/0/dubai/" + dubaiName;
-    std::string devicePath = "/data/app/el2/100/database/com.ohos.smartperf/entry/rdb";
-    auto ret = OHOS::SmartPerf::SPUtils::LoadCmd("cp " + dubaiPath + " " + devicePath, result);
-    auto ret1 = OHOS::SmartPerf::SPUtils::LoadCmd("chmod 777 " + devicePath + "/" + dubaiName, result);
+    const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
+    const std::string database = "/data/app/el2/100/database/";
+    const std::string pkgEntry = "/entry/rdb";
+    const std::string cpDubai = "cp " + dubaiXpower + " " + database + dubai.dubaiPkgName + pkgEntry;
+    const std::string dubaiPathChmod = "chmod 777 " + database + dubai.dubaiPkgName + pkgEntry + "/dubai.db";
+    if (!dubai.IsFileAccessible(dubaiXpower)) {
+        sleep(1);
+    }
+    auto retCp = OHOS::SmartPerf::SPUtils::LoadCmd(cpDubai, result);
+    auto retChmod = OHOS::SmartPerf::SPUtils::LoadCmd(dubaiPathChmod, result);
     dubai.MoveDubaiDb();
     
-    EXPECT_EQ(ret, true);
-    EXPECT_EQ(ret1, true);
+    EXPECT_EQ(retCp, true);
+    EXPECT_EQ(retChmod, true);
+}
+
+HWTEST_F(DubaiTest, CallMoveDubaiDbFinished01, TestSize.Level1)
+{
+    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = false;
+    std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
+    EXPECT_EQ(result, "get_dubai_db");
+}
+
+HWTEST_F(DubaiTest, CallMoveDubaiDbFinished02, TestSize.Level1)
+{
+    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = true;
+    std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
+    EXPECT_EQ(result, "get_dubai_db");
+}
+
+HWTEST_F(DubaiTest, IsFileAccessible01, TestSize.Level1)
+{
+    std::string existingFile = "existing_file.txt";
+    std::ofstream file(existingFile);
+    file << "Test content";
+    file.close();
+    bool result = Dubai::GetInstance().IsFileAccessible(existingFile);
+    EXPECT_TRUE(result);
+    std::remove(existingFile.c_str());
+}
+
+HWTEST_F(DubaiTest, IsFileAccessible02, TestSize.Level1)
+{
+    std::string nonExistingFile = "non_existing_file.txt";
+    bool result = Dubai::GetInstance().IsFileAccessible(nonExistingFile);
+    EXPECT_FALSE(result);
 }
 }
 }

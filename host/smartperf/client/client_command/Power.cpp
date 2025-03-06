@@ -36,11 +36,11 @@ std::map<std::string, std::string> Power::ItemData()
         if (result.find("voltageNow") != result.end() && result["voltageNow"].empty()) {
             result["voltageNow"] = "NA";
         }
-        LOGD("Power::ItemData map size(%u)", result.size());
     } else {
         result["failed"] = "RK does not support power acquisition";
         LOGE("failed:RK does not support power acquisition");
     }
+    LOGD("Power:ItemData map size(%u)", result.size());
     return result;
 }
 void Power::SetRkFlag()

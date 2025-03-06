@@ -57,28 +57,34 @@ std::map<std::string, std::string> RAM::ItemData()
 {
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
-    for (auto it = sysRamInfo.begin(); it != sysRamInfo.end(); ++it) {
-        LOGD("sysRamInfo: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
-        result.insert(*it);
+    for (const auto& item : sysRamInfo) {
+        result.insert(item);
     }
     if (!processId.empty()) {
+        std::map<std::string, std::string> procRamInfomation;
         if (g_flagFirst) {
             RAM::TriggerGetPss();
         } else {
             procRamInfoLast = RAM::GetRamInfo();
             g_flagFirst = true;
         }
-        for (auto it = procRamInfoLast.begin(); it != procRamInfoLast.end(); ++it) {
-            LOGD("procRamInfoLast: key = %s, value = %s", it -> first.c_str(), it -> second.c_str());
-            result.insert(*it);
+        if (!procRamInfoLast.empty()) {
+            procRamInfomation = procRamInfoLast;
+            for (const auto& item : procRamInfomation) {
+                result.insert(item);
+            }
+        } else {
+            procRamInfomation = ProcMemNaInfo();
+            for (const auto& item : procRamInfomation) {
+                result.insert(item);
+            }
         }
     } else if (!packageName.empty() && processId.empty()) {
         std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
-        for (auto it = procMemInfo.begin(); it != procMemInfo.end(); ++it) {
-            result.insert(*it);
+        for (const auto& item : procMemInfo) {
+            result.insert(item);
         }
     }
-    LOGD("RAM::ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -99,6 +105,11 @@ void RAM::TriggerGetPss() const
 void RAM::SetFirstFlag()
 {
     g_flagFirst = false;
+}
+
+void RAM::SetHapFirstFlag()
+{
+    g_flagFirst = true;
 }
 
 std::map<std::string, std::string> RAM::ProcMemNaInfo() const
@@ -134,6 +145,8 @@ std::map<std::string, std::string> RAM::GetSysRamInfo() const
     sysRamInfo["memTotal"] = std::to_string(result.data.memTotal);
     sysRamInfo["memFree"] = std::to_string(result.data.memFree);
     sysRamInfo["memAvailable"] = std::to_string(result.data.memAvailable);
+    //整机内存信息
+    LOGD("sysRamInfo map size(%u)", sysRamInfo.size());
     return sysRamInfo;
 }
 
@@ -150,19 +163,27 @@ void RAM::SetProcessId(const std::string &pid)
 std::map<std::string, std::string> RAM::GetRamInfo() const
 {
     std::map<std::string, std::string> procRamInfo;
+    std::map<std::string, std::string> emptyprocRamInfo;
     std::string pssValue = "";
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + processId;
+    if (cmd.empty()) {
+        LOGE("RAM::GetRamInfo cmd is null");
+        return emptyprocRamInfo;
+    }
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
         LOGD("RAM::fd is empty");
-        procRamInfo = ProcMemNaInfo();
-        for (auto item : procRamInfo) {
+        emptyprocRamInfo = ProcMemNaInfo();
+        for (auto item : emptyprocRamInfo) {
             item.second = "0";
     }
-        return procRamInfo;
+        return emptyprocRamInfo;
     }
     std::vector<std::string> paramsInfo;
     procRamInfo = GetPssRamInfo(fd, paramsInfo);
+    if (procRamInfo.empty()) {
+        return emptyprocRamInfo;
+    }
     for (const auto& value : paramsInfo) {
         if (procRamInfo[value].empty()) {
             procRamInfo[value] = "0";
@@ -171,7 +192,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     int closeStatus = pclose(fd);
     if (closeStatus == -1) {
         LOGE("Error: Failed to close file");
-        return {};
+        return emptyprocRamInfo;
     }
     return procRamInfo;
 }
@@ -235,6 +256,8 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     pssRamInfo["arktsHeapPss"] = arktsHeapPssValue;
     pssRamInfo["nativeHeapPss"] = nativeHeapPssValue;
     pssRamInfo["stackPss"] = stackPssValue;
+    //应用程序的内存占用信息
+    LOGD("pssRamInfo map size(%u)", pssRamInfo.size());
     return pssRamInfo;
 }
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo) const
@@ -256,6 +279,8 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
         }
         sumRamInfo[sumRamKeys[i]] = paramsInfo[i + 1];
     }
+    //应用程序的内存消耗信息
+    LOGD("sumRamInfo map size(%u)", sumRamInfo.size());
     return sumRamInfo;
 }
 }

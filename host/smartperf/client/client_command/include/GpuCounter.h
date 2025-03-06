@@ -25,15 +25,6 @@
 
 namespace OHOS {
     namespace SmartPerf {
-        class GpuCounterPlugin {
-        public:
-            uint32_t version;
-            const char *pluginName;
-
-            virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
-            virtual int32_t StopGetGpuPerfInfo() = 0;
-        };
-
         class GpuCounter : public SpProfiler {
         public:
             enum GcStatus {
@@ -67,14 +58,12 @@ namespace OHOS {
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
-            void* GetSoHandle();
             GcStatus gcStatus = GC_INIT;
             std::vector<std::string> gpuCounterData;
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::string gpuCounterRealtimeData;
-            const std::string PLUGIN_SO_PATH = "system/lib64/libgameservice_gpucounter_plugin.z.so";
-            const std::string CREATE_PLUGIN = "onCreatePlugin";
+            const std::string createPlugin = "onCreatePlugin";
         };
     };
 }
