@@ -48,13 +48,11 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
                 WLOGI("############################# Found '-editorServer' argument in argv");
-                const size_t tokenStartPosition = serverCommandLength;
-                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
+                std::string token = argv[1].substr(serverCommandLength, argv[1].length() - serverCommandLength);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
             } else if (argv[1].find("-deviceServer") != std::string::npos) {
                 WLOGI("############################# Found '-deviceServer' argument in argv");
-                const size_t tokenStartPosition = serverCommandLength;
-                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
+                std::string token = argv[1].substr(serverCommandLength, argv[1].length() - serverCommandLength);
                 HelpCommand(CommandHelp::DEVICESERVER, token);
             }
             ++iterator;
