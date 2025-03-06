@@ -34,7 +34,7 @@ NetworkProfilerHandle::~NetworkProfilerHandle()
 {
 }
 
-NetworkProfilerHandle::StopHandle()
+void NetworkProfilerHandle::StopHandle()
 {
     std::visit([&](auto& protoData) {
         FlushData(protoData);

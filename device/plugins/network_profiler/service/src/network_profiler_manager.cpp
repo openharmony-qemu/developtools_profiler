@@ -259,7 +259,6 @@ void NetworkProfilerManager::StopNetworkProfiler()
             item->handle->StopHandle();
             item->handle = nullptr;
         }
-        
     }
 }
 
