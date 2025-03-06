@@ -37,23 +37,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
-        std::string daemonArg = argv[0];
-        if (daemonArg.find("SP_daemon::") != std::string::npos) {
-            size_t pos = daemonArg.find("::");
-            if (pos != std::string::npos) {
-                std::string uuid = daemonArg.substr(pos + 2);
-                SpThreadSocket::GetInstance().SetUdpToken(uuid);
-            }
-        }
-        EnableWriteLogAndDeleteOldLogFiles();
-        OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpTcp();
-        std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
-        std::string result = "";
-        SPUtils::LoadCmd(cmdStr + pidStr, result);
-        daemon(0, 0);
-        CreateSocketThread();
+        DeviceServer();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -64,9 +48,14 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
                 WLOGI("############################# Found '-editorServer' argument in argv");
-                const size_t tokenStartPosition = 14;
+                const size_t tokenStartPosition = serverCommandLength;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
+            } else if (argv[1].find("-deviceServer") != std::string::npos) {
+                WLOGI("############################# Found '-deviceServer' argument in argv");
+                const size_t tokenStartPosition = serverCommandLength;
+                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
+                HelpCommand(CommandHelp::DEVICESERVER, token);
             }
             ++iterator;
         }
@@ -84,6 +73,18 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         }
     }
     LOGD("SmartPerfCommand::SmartPerfCommand complete");
+}
+void SmartPerfCommand::DeviceServer() const
+{
+    EnableWriteLogAndDeleteOldLogFiles();
+    OHOS::SmartPerf::StartUpDelay sd;
+    sd.GetSpTcp();
+    std::string pidStr = sd.GetPidByPkg("SP_daemon");
+    std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
+    std::string result = "";
+    SPUtils::LoadCmd(cmdStr + pidStr, result);
+    daemon(0, 0);
+    CreateSocketThread();
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
@@ -122,6 +123,10 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             }
         }
         CreateSocketThread();
+    }
+    if (type == CommandHelp::DEVICESERVER) {
+        SpThreadSocket::GetInstance().SetUdpToken(token);
+        DeviceServer();
     }
 }
 
