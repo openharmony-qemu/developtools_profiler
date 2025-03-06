@@ -138,7 +138,7 @@ void ScheduleTaskManager::ScheduleThread()
                     std::unique_lock<std::mutex> lock(mtx_);
                     if (tasks_.find(events[i].data.fd) != tasks_.end() && tasks_[events[i].data.fd] != nullptr) {
                         auto funcTask = tasks_[events[i].data.fd];
-                        guard.unlock();
+                        lock.unlock();
                         funcTask();
                     }
                 }
