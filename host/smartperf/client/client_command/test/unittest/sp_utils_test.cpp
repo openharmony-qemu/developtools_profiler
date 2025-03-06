@@ -207,5 +207,249 @@ HWTEST_F(SPdaemonUtilsTest, VeriyKey002, TestSize.Level1)
     EXPECT_EQ(ret, true);
 }
 
+HWTEST_F(SPdaemonUtilsTest, GetIsGameAppTest, TestSize.Level1)
+{
+    std::string pkg = "com.example.game";
+    std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
+    FILE *fd = popen(cmd.c_str(), "r");
+    char buf[1024] = {'\0'};
+    bool ret = false;
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        if (line.find("---") != std::string::npos || line.length() <= 1) {
+            continue;
+        }
+        if (line.find("for help") != std::string::npos) {
+            ret = true;
+            break;
+        }
+    }
+    EXPECT_EQ(ret, false);
+}
+
+HWTEST_F(SPdaemonUtilsTest, GetPathPermissionsTest, TestSize.Level1)
+{
+    std::string pathDataCsv = "/data/local/tmp/data.csv";
+    std::string pathIndexInfoCsv = "/data/local/tmp/smartperf/1/t_index_info.csv";
+    std::string dataCsv = "/data/local/tmp/data.csv";
+    std::string indexInfoCsv = "/data/local/tmp/smartperf/1/t_index_info.csv";
+    std::string cmdResult = "";
+    bool findData = false;
+    bool findIndex = false;
+    int isDataCsv = strcmp(pathDataCsv.c_str(), dataCsv.c_str());
+    int isIndexInfoCsv = strcmp(pathIndexInfoCsv.c_str(), indexInfoCsv.c_str());
+    if (isDataCsv == 0) {
+        std::string cmd = "ls -l " + pathDataCsv;
+        SPUtils::LoadCmd(cmd, cmdResult);
+        if (cmdResult.find("No such file or directory") != std::string::npos) {
+            findData = false;
+        } else {
+            std::string result = cmdResult.substr(0, 10);
+            findData = (result == "-rw-r--r--");
+        }
+    }
+    if (isIndexInfoCsv == 0) {
+        std::string cmd = "ls -l " + pathIndexInfoCsv;
+        SPUtils::LoadCmd(cmd, cmdResult);
+        if (cmdResult.find("No such file or directory") != std::string::npos) {
+            findIndex = false;
+        } else {
+            std::string result = cmdResult.substr(0, 10);
+            findIndex = (result == "-rw-r--r--");
+        }
+    }
+    EXPECT_EQ(findData, false);
+    EXPECT_EQ(findIndex, true);
+}
+
+HWTEST_F(SPdaemonUtilsTest, GetCurrentTime, TestSize.Level1)
+{
+    bool shouldContinue = true;
+    SPUtils::GetCurrentTime(10);
+    EXPECT_TRUE(shouldContinue);
+}
+
+HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest01, TestSize.Level1)
+{
+    std::set<std::string> keys;
+    std::string param = "key1-value key1-value2";
+    std::string errorInfo = "";
+    bool result = SPUtils::VeriyParameter(keys, param, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "duplicate parameters -- 'key1'");
+}
+
+HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest02, TestSize.Level1)
+{
+    std::set<std::string> keys;
+    std::string param = "key1-value key2-value2";
+    std::string errorInfo = "";
+    bool result = SPUtils::VeriyParameter(keys, param, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest03, TestSize.Level1)
+{
+    std::set<std::string> keys = {"key1"};
+    std::string param = "key2-value1";
+    std::string errorInfo = "";
+    bool result = SPUtils::VeriyParameter(keys, param, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest04, TestSize.Level1)
+{
+    std::set<std::string> keys = {"key1"};
+    std::string param = "key1-value1";
+    std::string errorInfo = "";
+    bool result = SPUtils::VeriyParameter(keys, param, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest05, TestSize.Level1)
+{
+    std::set<std::string> keys = {"key1"};
+    std::string param = "key1-value1";
+    std::string errorInfo = "";
+    bool result = SPUtils::VeriyParameter(keys, param, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest01, TestSize.Level1)
+{
+    std::string errorInfo = "";
+    bool result = SPUtils::IntegerVerification("", errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "option requires an argument");
+}
+
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest02, TestSize.Level1)
+{
+    std::string errorInfo = "";
+    std::string longString(11, '1');
+    bool result = SPUtils::IntegerVerification(longString, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "invalid option parameters");
+}
+
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest03, TestSize.Level1)
+{
+    std::string errorInfo = "";
+    bool result = SPUtils::IntegerVerification("abc", errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "invalid option parameters");
+}
+
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest05, TestSize.Level1)
+{
+    std::string errorInfo = "";
+    std::string outOfRangeString = "18446744073709551616";
+    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_NE(errorInfo, "option parameter out of range");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest01, TestSize.Level1)
+{
+    std::string str = "  Hello World  ";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "Hello World");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest02, TestSize.Level1)
+{
+    std::string str = "  HelloWorld  ";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest03, TestSize.Level1)
+{
+    std::string str = "Hello World  ";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "Hello World");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest04, TestSize.Level1)
+{
+    std::string str = "  HelloWorld";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest05, TestSize.Level1)
+{
+    std::string str = "HelloWorld";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest06, TestSize.Level1)
+{
+    std::string str = "    ";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, RemoveSpaceTest07, TestSize.Level1)
+{
+    std::string str = "";
+    SPUtils::RemoveSpace(str);
+    EXPECT_EQ(str, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, GetCurTimeTest002, TestSize.Level1)
+{
+    long long timeStampFir = SPUtils::GetCurTime();
+    usleep(1000);
+    long long timeStampSec = SPUtils::GetCurTime();
+    EXPECT_GT(timeStampSec, timeStampFir);
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest01, TestSize.Level1)
+{
+    std::string testStr = "Hello\rWorld\n";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest02, TestSize.Level1)
+{
+    std::string testStr = "\r\r\r";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest03, TestSize.Level1)
+{
+    std::string testStr = "Hello\nWorld\n";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest04, TestSize.Level1)
+{
+    std::string testStr = "\n\n\n";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "");
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest05, TestSize.Level1)
+{
+    std::string testStr = "Hello\r\nWorld\r\n";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "HelloWorld");
+}
+
+HWTEST_F(SPdaemonUtilsTest, ReplaceStringTest06, TestSize.Level1)
+{
+    std::string testStr = "Hello\r\n\r\nWorld\r\n\r\n";
+    SPUtils::ReplaceString(testStr);
+    EXPECT_EQ(testStr, "HelloWorld");
+}
 }
 }

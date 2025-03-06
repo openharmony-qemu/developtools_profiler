@@ -32,6 +32,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
+std::vector<std::string> g_pidParams;
 StartUpDelay::StartUpDelay() {}
 StartUpDelay::~StartUpDelay() {}
 void StartUpDelay::GetTrace(const std::string &traceName) const
@@ -231,10 +232,13 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
     std::vector<const char*> args = {"pidof", curPkgName.c_str()};
     args.push_back(nullptr);
     std::string resultProcId = ExecuteCommand(args);
+    LOGD("StartUpDelay::resultProcId(%s)", resultProcId.c_str());
     if (!resultProcId.empty()) {
         if (resultProcId.back() == '\n') {
             resultProcId.pop_back();
         }
+        g_pidParams.clear();
+        SPUtils::StrSplit(resultProcId, " ", g_pidParams);
         size_t endpos = resultProcId.find(" ");
         if (endpos != std::string::npos) {
             resultProcId = resultProcId.substr(0, endpos);
@@ -242,6 +246,11 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
         LOGD("startup_delay::output: (%s)", resultProcId.c_str());
     }
     return resultProcId;
+}
+
+std::vector<std::string> StartUpDelay::GetPidParams() const
+{
+    return g_pidParams;
 }
 }
 }

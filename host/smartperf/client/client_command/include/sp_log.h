@@ -17,6 +17,7 @@
 #include <string>
 namespace OHOS {
 namespace SmartPerf {
+const std::string LOG_FILE_DIR = "/data/local/tmp/spdaemonlog/";
 typedef enum {
     SP_LOG_DEBUG,
     SP_LOG_INFO,

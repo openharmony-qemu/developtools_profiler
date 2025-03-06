@@ -29,6 +29,7 @@
 #include "include/RAM.h"
 #include "include/common.h"
 #include "include/FPS.h"
+#include "include/sp_task.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -36,6 +37,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        EnableWriteLogAndDeleteOldLogFiles();
         OHOS::SmartPerf::StartUpDelay sd;
         sd.GetSpTcp();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
@@ -53,6 +55,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 break;
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
+                WLOGI("############################# Found '-editorServer' argument in argv");
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
@@ -81,7 +84,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         std::cout << smartPerfMsg << std::endl;
     }
     if (type == CommandHelp::VERSION) {
-        std::cout << "Version: " << SPUtils::SMART_PERF_VERSION << std::endl;
+        std::cout << "Version: " << SPUtils::GetVersion() << std::endl;
     }
     if (type == CommandHelp::SCREEN) {
         std::string result = SPUtils::GetScreen();
@@ -100,7 +103,15 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         } else {
-            SPTask::GetInstance().SetTcpToken(token);
+            EnableWriteLogAndDeleteOldLogFiles();
+            if (token.empty()) {
+                WLOGE("Error: token is empty when setting TCP token.");
+                return;
+            } else {
+                WLOGI("############################# Setting TCP token...");
+                SPTask::GetInstance().SetTcpToken(token);
+                WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
+            }
         }
         CreateSocketThread();
     }
@@ -109,9 +120,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 void SmartPerfCommand::CreateSocketThread() const
 {
     InitSomething();
-    SpThreadSocket udpThreadSocket;
-    SpThreadSocket udpExThreadSocket;
-    SpThreadSocket tcpThreadSocket;
+    SpThreadSocket &udpThreadSocket = SpThreadSocket::GetInstance();
+    SpThreadSocket &udpExThreadSocket = SpThreadSocket::GetInstance();
+    SpThreadSocket &tcpThreadSocket = SpThreadSocket::GetInstance();
     auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
     sleep(1);
     auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
@@ -166,6 +177,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_HW:
         case CommandType::CT_GC:
         case CommandType::CT_NAV:
+        case CommandType::CT_AS:
             configs.push_back(argStr);
             break;
         default:
@@ -182,6 +194,7 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         std::string processId = "";
         OHOS::SmartPerf::StartUpDelay sp;
         processId = sp.GetPidByPkg(pkgName);
+        LOGD("The cmd pid = %s", processId.c_str());
         SpProfilerFactory::SetProfilerPidByPkg(processId);
     }
     for (size_t j = 0; j < configs.size(); j++) {
@@ -213,7 +226,13 @@ void SmartPerfCommand::SaveGpuCounter() const
     gpuCounter.SaveData(outGpuCounterDataPath);
     gpuCounter.StopCollect();
 }
-
+void SmartPerfCommand::StartGpuCounterCollect(std::string config, bool &flag) const
+{
+    if (config.find("-gc") != std::string::npos) {
+        gpuCounter.StartCollect(GpuCounter::GC_START);
+        flag = true;
+    }
+}
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
@@ -225,10 +244,10 @@ std::string SmartPerfCommand::ExecCommand()
     num = num + 1;
     bool gcFlag = false;
     for (std::string itConfig : configs) {
-        if (itConfig.find("-gc") != std::string::npos) {
-            gpuCounter.StartCollect(GpuCounter::GC_START);
-            gcFlag = true;
+        if (itConfig.find("-aischedule") != std::string::npos) {
+            return std::string("Command not support param aischedule");
         }
+        StartGpuCounterCollect(itConfig, gcFlag);
     }
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);

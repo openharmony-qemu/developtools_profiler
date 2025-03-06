@@ -24,6 +24,7 @@
 #include "common.h"
 #include "sp_data.h"
 #include "sp_utils.h"
+#include "sp_task.h"
 namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
@@ -44,18 +45,16 @@ public:
             }
         }
         int i = 0;
-        std::string title = "";
         for (SPData spdata : vmap) {
             std::string lineContent = "";
             for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
-                if (i == 0) {
-                    title += iter->first + ",";
-                }
                 lineContent += iter->second + ",";
             }
             if (i == 0) {
-                title.pop_back();
-                outFile << title << std::endl;
+                std::string csvTitle = "";
+                csvTitle = SetDataCsvTitle(spdata);
+                csvTitle.pop_back();
+                outFile << csvTitle << std::endl;
             }
             lineContent.pop_back();
             outFile << lineContent << std::endl;
@@ -75,6 +74,17 @@ public:
             outFile << key << "," << value << std::endl;
         }
         outFile.close();
+    }
+    static std::string SetDataCsvTitle(SPData spdata)
+    {
+        std::string csvTitle = "";
+        csvTitle = SPTask::GetInstance().GetCsvTitle();
+        if (csvTitle.empty()) {
+            for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
+                csvTitle += iter->first + ",";
+            }
+        }
+        return csvTitle;
     }
 };
 }

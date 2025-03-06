@@ -29,6 +29,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
+#include "include/Dubai.h"
 const int LARGE_BUFF_MAX_LEN = 256;
 namespace OHOS {
 namespace SmartPerf {
@@ -36,16 +37,8 @@ std::map<std::string, std::string> Network::ItemData()
 {
     if (hapFlag) {
         ThreadFunctions();
-        return result;
     } else {
-        result = GetNetworkInfo();
-        return result;
-    }
-    if (result.find("networkUp") != result.end() && result["networkUp"].empty()) {
-        result["networkUp"] = "NA";
-    }
-    if (result.find("networkDown") != result.end() && result["networkDown"].empty()) {
-        result["networkDown"] = "NA";
+        result = Network::GetNetworkInfo();
     }
     return result;
 }
@@ -64,7 +57,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
     }
     networkInfo["networkUp"] = std::to_string(diffTx);
     networkInfo["networkDown"] = std::to_string(diffRx);
-    LOGD("networkUp: %s, networkDown: %s", networkInfo["networkUp"].c_str(), networkInfo["networkDown"].c_str());
     if (!hapFlag || stophapFlag) {
         diffTx = 0;
         diffRx = 0;
@@ -156,10 +148,17 @@ void Network::ThreadGetHapNetwork()
     while (!stophapFlag) {
         long long startTime = SPUtils::GetCurTime();
         result = GetNetworkInfo();
-        long long stopTime = SPUtils::GetCurTime();
-        long long time = 998;
-        long long costTime = stopTime - startTime;
-        std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
+        std::string hapPid = "";
+        const std::string cmd = "pidof " + Dubai::dubaiPkgName;
+        SPUtils::LoadCmd(cmd, hapPid);
+        if (!hapPid.empty()) {
+            long long stopTime = SPUtils::GetCurTime();
+            long long time = 998;
+            long long costTime = stopTime - startTime;
+            std::this_thread::sleep_for(std::chrono::milliseconds(time - costTime));
+        } else {
+            break;
+        }
     }
 }
 void Network::ClearHapFlag()
