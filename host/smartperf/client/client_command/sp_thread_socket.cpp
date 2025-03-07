@@ -372,7 +372,12 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
             continue;
         }
         LOGD("UDP recv : %s", recvBuf.c_str());
-        CheckUdpToken(recvBuf, spSocket);
+        const SocketErrorType tokenStatus = CheckUdpToken(recvBuf, spSocket);
+        if (tokenStatus == TOKEN_CHECK_FAILED) {
+            spSocket.Sendto("token failed");
+            spSocket.Close();
+            return;
+        }
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);

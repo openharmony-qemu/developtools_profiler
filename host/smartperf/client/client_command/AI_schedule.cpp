@@ -38,10 +38,10 @@ std::map<std::string, std::string> AISchedule::ItemData()
         return std::map<std::string, std::string>();
     }
 
-    typedef GpuCounterPlugin *(*GetServicePlugin)();
+    typedef GameServicePlugin *(*GetServicePlugin)();
     GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
     if (!servicePlugin) {
-        WLOGE("GpuCounterPlugin Error loading symbol");
+        WLOGE("GameServicePlugin Error loading symbol");
         return std::map<std::string, std::string>();
     }
     return servicePlugin()->GetSystemFunctionStatus(aiScheduleParams);
