@@ -639,7 +639,7 @@ std::string SPUtils::GetCpuNum()
 }
 void SPUtils::GetCurrentTime(int prevTime)
 {
-    LOGE("SPUtils::prevTime (%d)", prevTime);
+    LOGD("SPUtils::prevTime (%d)", prevTime);
     unsigned long sleepNowTime = 10000;
     bool shouldContinue = true;
     while (shouldContinue) {
