@@ -135,10 +135,12 @@ protected:
     bool HandleData(NetFlowData present, NetFlowData &difference);
     void Record(NetFlowData &newData);
     // for UT
+#ifdef NETWORK_PLUGIN_UNITTEST
     void setSingleUid(int32_t singleUid)
     {
         singleUid_ = singleUid;
     }
+#endif
 
 private:
     NetworkConfig protoConfig_;
