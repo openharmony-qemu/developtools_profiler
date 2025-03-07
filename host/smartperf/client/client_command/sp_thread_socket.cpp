@@ -280,23 +280,19 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
     SpServerSocket &spSocket) const
 {
-    // if (recvStr.find_last_of(":") == std::string::npos) {
-    //     LOGE("Token check failed: %s", recvStrNoToken.c_str());
-    //     return SocketErrorType::TOKEN_CHECK_FAILED;
-    // }
-    // std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
-    // token = token.substr(0, token.find(' '));
-    // std::string tcpToken = SpThreadSocket::GetInstance().GetTcpToken();
-    // LOGD("Comparing token with TCP token...");
-    // if (tcpToken == "" && token == "-SESSIONID") {
-    //     LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
-    //     return SocketErrorType::OK;
-    // }
-    // if (token != tcpToken) {
-    //     LOGE("Token mismatch.");
-    //     return SocketErrorType::TOKEN_CHECK_FAILED;
-    // }
-    // LOGD("Token match");
+    if (recvStr.find_last_of(":::") == std::string::npos) {
+        WLOGE("Token check failed: %s", recvStr.c_str());
+        return SocketErrorType::TOKEN_CHECK_FAILED;
+    }
+    std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
+    token = token.substr(0, token.find(' '));
+    std::string UdpToken = SpThreadSocket::GetInstance().GetUdpToken();
+    LOGD("Comparing token with Udp token...");
+    if (token != UdpToken) {
+        WLOGE("Token mismatch.");
+        return SocketErrorType::TOKEN_CHECK_FAILED;
+    }
+    LOGD("Token match");
     WLOGI("UDP token check passed: %s", recvStr.c_str());
     return SocketErrorType::OK;
 }

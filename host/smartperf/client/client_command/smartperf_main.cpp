@@ -61,6 +61,7 @@ static void KeyInsert(std::set<std::string> &keysMap)
     keysMap.insert("deviceinfo");
     keysMap.insert("ohtestfps");
     keysMap.insert("editorServer");
+    keysMap.insert("deviceServer");
     keysMap.insert("recordcapacity");
 }
 static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
@@ -82,7 +83,11 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
         }
     }
     KeyInsert(keys);
-    if (argv[1].find("editorServer:") != std::string::npos) {
+    std::cout << "harry: argv1 " << argv[1] << std::endl;
+    if (argv[1].find("editorServer:") != std::string::npos ||
+        argv[1].find("deviceServer:") != std::string::npos
+    ) {
+        std::cout << "harry: insert " << argv[1].substr(1) << std::endl;
         keys.insert(argv[1].substr(1).c_str());
     }
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
