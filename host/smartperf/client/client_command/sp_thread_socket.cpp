@@ -374,7 +374,8 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         LOGD("UDP recv : %s", recvBuf.c_str());
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf, spSocket);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
-            spSocket.Sendto("token failed");
+            std::string failStr = std::string("token failed");
+            spSocket.Sendto(failStr);
             spSocket.Close();
             return;
         }
