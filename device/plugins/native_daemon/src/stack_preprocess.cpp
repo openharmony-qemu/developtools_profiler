@@ -182,7 +182,7 @@ bool StackPreprocess::StopTakeResults()
 {
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-        std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true, false);
+        std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
     if (timerFd == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
         return false;
