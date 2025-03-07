@@ -126,8 +126,8 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     std::string smbName = "hooknativesmb_" + std::to_string(pid_);
     stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
         smbFd_, eventFd_, config_->isBlocked, config_->isSaMode);
-    g_disableHook = false;
     nmdType_ = config_->nmdType;
+    g_disableHook = false;
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();
     }
