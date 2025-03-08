@@ -36,6 +36,7 @@ public:
 
     void SetWriter(const std::shared_ptr<Writer>& writer);
     void SetWriter(const WriterStructPtr& writer);
+    void StopHandle();
     void SerializeData(const int8_t data[], uint32_t size);
     void SetTargetProcessInfo(uint32_t pid, const std::string& name)
     {
