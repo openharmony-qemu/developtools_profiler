@@ -73,7 +73,7 @@ std::map<std::string, std::string> CPU::ItemData()
         result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
         result[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if (!packageName.empty()) {
+    if ((!packageName.empty() || !processId.empty())) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
             for (const auto& item : processCpuInfo) {
@@ -94,7 +94,9 @@ void CPU::SetPackageName(const std::string &pName)
 
 void CPU::SetProcessId(const std::string &pid)
 {
-    processId = pid;
+    LOGD("CPU SetProcessId (%s)", pid.c_str());
+    processId.clear();
+    SPUtils::StrSplit(pid, " ", processId);
 }
 
 std::vector<CpuFreqs> CPU::GetCpuFreq()
@@ -149,21 +151,32 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
     if (!processId.empty()) {
-        int32_t procId = 0;
-        procId = SPUtilesTye::StringToSometype<int32_t>(processId);
         std::shared_ptr<CpuCollector> collector = CpuCollector::Create();
-        auto collectResult = collector->CollectProcessCpuStatInfo(procId, true);
-        auto data = collectResult.data;
-        processCpuInfo["ProcId"] = std::to_string(data.pid);
-        processCpuInfo["ProcAppName"] = data.procName;
-        processCpuInfo["ProcCpuLoad"] = std::to_string(data.cpuLoad * oneHundred);
-        processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
-        processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
-        processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
-        LOGD("ProcId: %s, ProcAppName: %s, ProcCpuLoad: %s, ProcCpuUsage: %s, ProcUCpuUsage: %s, ProcSCpuUsage: %s",
-            std::to_string(data.pid).c_str(), data.procName.c_str(), std::to_string(data.cpuLoad).c_str(),
-            std::to_string(data.cpuUsage).c_str(), std::to_string(data.uCpuUsage).c_str(),
-            std::to_string(data.sCpuUsage).c_str());
+        for (size_t i = 0; i < processId.size(); i++) {
+            int32_t procId = 0;
+            procId = SPUtilesTye::StringToSometype<int32_t>(processId[i]);
+            auto collectResult = collector->CollectProcessCpuStatInfo(procId, true);
+            auto data = collectResult.data;
+            if (i == 0) {
+                processCpuInfo["ProcId"] = std::to_string(data.pid);
+                processCpuInfo["ProcAppName"] = data.procName;
+                processCpuInfo["ProcCpuLoad"] = std::to_string(data.cpuLoad * oneHundred);
+                processCpuInfo["ProcCpuUsage"] = std::to_string(data.cpuUsage * oneHundred);
+                processCpuInfo["ProcUCpuUsage"] = std::to_string(data.uCpuUsage * oneHundred);
+                processCpuInfo["ProcSCpuUsage"] = std::to_string(data.sCpuUsage * oneHundred);
+                GetSysChildProcessCpuLoad(processId.size(), processCpuInfo);
+            } else {
+                processCpuInfo["ChildProcId"].append(std::to_string(data.pid)).append("|");
+                processCpuInfo["ChildProcCpuLoad"].append(std::to_string(data.cpuLoad * oneHundred)).append("|");
+                processCpuInfo["ChildProcCpuUsage"].append(std::to_string(data.cpuUsage * oneHundred)).append("|");
+                processCpuInfo["ChildProcUCpuUsage"].append(std::to_string(data.uCpuUsage * oneHundred)).append("|");
+                processCpuInfo["ChildProcSCpuUsage"].append(std::to_string(data.sCpuUsage * oneHundred)).append("|");
+            }
+            LOGD("ProcId: %s, ProcAppName: %s, ProcCpuLoad: %s, ProcCpuUsage: %s, ProcUCpuUsage: %s, ProcSCpuUsage: %s",
+                std::to_string(data.pid).c_str(), data.procName.c_str(), std::to_string(data.cpuLoad).c_str(),
+                std::to_string(data.cpuUsage).c_str(), std::to_string(data.uCpuUsage).c_str(),
+                std::to_string(data.sCpuUsage).c_str());
+        }
     } else {
         processCpuInfo["ProcId"] = "NA";
         processCpuInfo["ProcAppName"] = packageName;
@@ -171,7 +184,18 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcCpuUsage"] = "NA";
         processCpuInfo["ProcUCpuUsage"] = "NA";
         processCpuInfo["ProcSCpuUsage"] = "NA";
+        processCpuInfo["ChildProcId"] = "NA";
+        processCpuInfo["ChildProcCpuLoad"] = "NA";
+        processCpuInfo["ChildProcCpuUsage"] = "NA";
+        processCpuInfo["ChildProcUCpuUsage"] = "NA";
+        processCpuInfo["ChildProcSCpuUsage"] = "NA";
     }
+    GetSysProcessCpuLoadContinue(processCpuInfo);
+    return processCpuInfo;
+}
+
+void CPU::GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo) const
+{
     if (processCpuInfo.find("ProcAppName") != processCpuInfo.end() && processCpuInfo["ProcAppName"].empty()) {
         processCpuInfo["ProcId"] = "0";
         processCpuInfo["ProcAppName"] = packageName;
@@ -179,8 +203,23 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
         processCpuInfo["ProcCpuUsage"] = "0";
         processCpuInfo["ProcUCpuUsage"] = "0";
         processCpuInfo["ProcSCpuUsage"] = "0";
+        processCpuInfo["ChildProcId"] = "0";
+        processCpuInfo["ChildProcCpuLoad"] = "0";
+        processCpuInfo["ChildProcCpuUsage"] = "0";
+        processCpuInfo["ChildProcUCpuUsage"] = "0";
+        processCpuInfo["ChildProcSCpuUsage"] = "0";
     }
-    return processCpuInfo;
+}
+
+void CPU::GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, std::string> &processCpuInfo) const
+{
+    if (processIdSize == 1) {
+        processCpuInfo["ChildProcId"] = "NA";
+        processCpuInfo["ChildProcCpuLoad"] = "NA";
+        processCpuInfo["ChildProcCpuUsage"] = "NA";
+        processCpuInfo["ChildProcUCpuUsage"] = "NA";
+        processCpuInfo["ChildProcSCpuUsage"] = "NA";
+    }
 }
 }
 }

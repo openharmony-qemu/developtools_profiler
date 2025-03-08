@@ -28,6 +28,7 @@ ohos_unittest("sp_daemon_ut") {
     "../DDR.cpp",
     "../Dubai.cpp",
     "../FPS.cpp",
+    "../FileDescriptor.cpp",
     "../GPU.cpp",
     "../GetLog.cpp",
     "../GpuCounter.cpp",
@@ -36,6 +37,7 @@ ohos_unittest("sp_daemon_ut") {
     "../Power.cpp",
     "../RAM.cpp",
     "../Temperature.cpp",
+    "../Threads.cpp",
     "../control_call_cmd.cpp",
     "../editor_command.cpp",
     "../heartbeat.cpp",
@@ -61,6 +63,7 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/ddr_test.cpp",
     "unittest/dubai_test.cpp",
     "unittest/editor_command_test.cpp",
+    "unittest/filedescriptor_test.cpp",
     "unittest/fps_test.cpp",
     "unittest/gpuCounter_test.cpp",
     "unittest/parse_click_complete_trace_test.cpp",
@@ -77,6 +80,7 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/sp_utils_test.cpp",
     "unittest/stalling_rate_trace_test.cpp",
     "unittest/startup_delay_test.cpp",
+    "unittest/threads_test.cpp",
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
@@ -107,4 +111,9 @@ ohos_unittest("sp_daemon_ut") {
 group("unittest") {
   testonly = true
   deps = [ ":sp_daemon_ut" ]
+}
+
+group("fuzztest") {
+  testonly = true
+  deps = [ "fuzztest/spdaemon_fuzzer:fuzztest" ]
 }

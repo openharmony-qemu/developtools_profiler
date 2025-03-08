@@ -71,6 +71,7 @@ public:
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
+
 private:
     bool flagRunning = false;
     bool socketConnect = true;

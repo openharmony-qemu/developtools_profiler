@@ -15,6 +15,7 @@
 #ifndef RAM_H
 #define RAM_H
 #include "sp_profiler.h"
+#include <future>
 #include <string>
 
 enum {
@@ -30,16 +31,34 @@ enum {
     RAM_TENTH,
 };
 
+struct PssValues {
+    std::string gpuPssValue = "";
+    std::string graphicPssValue = "";
+    std::string arktsHeapPssValue = "";
+    std::string nativeHeapPssValue = "";
+    std::string stackPssValue = "";
+};
 namespace OHOS {
 namespace SmartPerf {
 class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo() const;
-    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo) const;
-    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo) const;
-    std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo) const;
+    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo,
+        const std::string pid, size_t index) const;
+    std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
+        const std::string pid, size_t index) const;
+    void FillPssRamInfo(size_t index, std::string pid, const PssValues &pssValues,
+        std::map<std::string, std::string> &pssRamInfo) const;
+    std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo,
+        const std::string pid, size_t index) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
+    std::map<std::string, std::string> ChildProcMemNaInfo() const;
+    void SetRamValue(std::promise<std::map<std::string, std::string>> p, std::string ramPid, size_t index) const;
+    std::map<std::string, std::string> CollectRam(std::string ramPid, size_t index) const;
+    std::future<std::map<std::string, std::string>> AsyncCollectRam(std::string ramPid, size_t index) const;
+    void CheckFutureRam(std::future<std::map<std::string, std::string>> &fdsResult,
+        std::map<std::string, std::string> &dataMap, std::string pid, size_t index) const;
     static RAM &GetInstance()
     {
         static RAM instance;
@@ -57,7 +76,7 @@ private:
     RAM(const RAM &);
     RAM &operator = (const RAM &);
     std::string packageName = "";
-    std::string processId = "";
+    std::vector<std::string> processId;
 };
 }
 }
