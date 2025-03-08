@@ -52,6 +52,9 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEINT32(parcel, jsStackReport_);
     WRITEUINT8(parcel, maxJsStackDepth_);
     WRITESTRING(parcel, filterNapiName_);
+    WRITEUINT32(parcel, largestSize_);
+    WRITEUINT32(parcel, secondLargestSize_);
+    WRITEUINT32(parcel, maxGrowthSize_);
     return true;
 }
 
@@ -92,6 +95,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READINT32(parcel, config->jsStackReport_);
     READUINT8(parcel, config->maxJsStackDepth_);
     READSTRING(parcel, config->filterNapiName_);
+    READUINT32(parcel, config->largestSize_);
+    READUINT32(parcel, config->secondLargestSize_);
+    READUINT32(parcel, config->maxGrowthSize_);
     PrintConfig(config);
     return true;
 }

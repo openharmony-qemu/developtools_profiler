@@ -32,6 +32,7 @@
 namespace {
 constexpr int FLUSH_FLAG = 20;
 constexpr int ONLY_NMD_TYPE = 2;
+constexpr int SIMP_NMD = 3;
 std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
@@ -128,8 +129,16 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         smbFd_, eventFd_, config_->isBlocked, config_->isSaMode);
     nmdType_ = config_->nmdType;
     g_disableHook = false;
+    largestSize_ = config_->largestSize;
+    secondLargestSize_ = config_->secondLargestSize;
+    maxGrowthSize_ = config_->maxGrowthSize;
+    sampleInterval_ = config_->sampleInterval;
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
+        largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();
+    } else if (nmdType_ == SIMP_NMD) {
+        SendSimplifiedNmdInfo();
     }
     return true;
 }
@@ -215,6 +224,29 @@ bool HookSocketClient::SendNmdInfo()
                                               reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
                                               std::bind(&HookSocketClient::PeerIsConnected, this));
     }
+    free(nmdBuf);
+    return true;
+}
+
+bool HookSocketClient::SendSimplifiedNmdInfo()
+{
+    if (!config_->printNmd) {
+        return false;
+    }
+    void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
+    if (nmdBuf == nullptr) {
+        return false;
+    }
+    struct OptArg opt = {0, reinterpret_cast<char*>(nmdBuf) };
+    malloc_stats_print(NmdWriteStat, &opt, "s");
+    StackRawData rawdata = {{{{0}}}};
+    rawdata.type = NMD_MSG;
+    if (stackWriter_) {
+        stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                              reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
+                                              std::bind(&HookSocketClient::PeerIsConnected, this));
+    }
+    stackWriter_->Flush();
     free(nmdBuf);
     return true;
 }

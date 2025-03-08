@@ -34,6 +34,9 @@ const std::string FILE_PATH_HEAD = "/data/local/tmp/native_memory_";
 const std::string FILE_PATH_TAIL = ".htrace";
 constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 constexpr int FILE_MODE = 0644;
+constexpr int32_t SIMP_NMD = 3;
+constexpr int32_t NMD_WAIT_MS = 100;
+constexpr int32_t NMD_WAIT_TIMES = 50;
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -93,7 +96,27 @@ bool NativeMemoryProfilerSaService::HasProfilingPermission()
 
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (config->printNmd_) {
+        std::lock_guard<std::mutex> guard(nmdMtx_);
+        nmdPidType_[config->nmdPid_] = std::make_pair(0, config->nmdType_);
+        if (!config->printNmdOnly_) {
+            return RET_OK;
+        }
+    }
     return StartHook(config);
+}
+
+int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+                                             MessageParcel &reply)
+{
+    if (config->printNmd_) {
+        std::lock_guard<std::mutex> guard(nmdMtx_);
+        nmdPidType_[config->nmdPid_] = std::make_pair(0, config->nmdType_);
+        if (!config->printNmdOnly_) {
+            return RET_OK;
+        }
+    }
+    return StartHook(config, 0, reply);
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
@@ -199,18 +222,10 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
     return args.str();
 }
 
-int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
+int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+                                                     uint32_t fd, std::shared_ptr<HookManager>& hook,
+                                                     std::string& args)
 {
-    auto args = GetCmdArgs(config);
-    if (!HasProfilingPermission()) {
-        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
-            "no profiling permission");
-        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
-        return RET_ERR;
-    }
-    if (config == nullptr) {
-        return RET_ERR;
-    }
     std::lock_guard<std::mutex> guard(mtx_);
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
@@ -245,8 +260,6 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
     writeFile->SetTimeSource();
 
-    std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
-    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     hook->RegisterWriter(writeFile);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
@@ -299,6 +312,66 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     ++taskNum_;
     DelayedShutdown(true);
     COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_SUCC, "success");
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
+{
+    auto args = GetCmdArgs(config);
+    if (!HasProfilingPermission()) {
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
+        return RET_ERR;
+    }
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
+    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
+
+    return StartHookLock(config, fd, hook, args);
+}
+
+static int32_t WaitSimplifiedNmdTimeout(uint32_t times, std::shared_ptr<HookManager>& hook, MessageParcel &reply)
+{
+    uint32_t cnt = 0;
+    while ((!hook->nmdComplete_) && (cnt < times)) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(NMD_WAIT_MS));
+        cnt++;
+    }
+    if (!hook->nmdComplete_) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WaitSimplifiedNmdTimeout, %d ms", times * NMD_WAIT_MS);
+        return RET_ERR;
+    }
+    WRITESTRING(reply, hook->simplifiedNmd_, RET_ERR);
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+                                                 uint32_t fd, MessageParcel &reply)
+{
+    auto args = GetCmdArgs(config);
+    if (!HasProfilingPermission()) {
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
+        return RET_ERR;
+    }
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
+    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
+
+    int32_t ret = StartHookLock(config, fd, hook, args);
+    if (ret != RET_OK) {
+        return ret;
+    }
+
+    if (config->nmdType_ == SIMP_NMD) {
+        return WaitSimplifiedNmdTimeout(NMD_WAIT_TIMES, hook, reply);
+    }
     return RET_OK;
 }
 
