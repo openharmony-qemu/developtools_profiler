@@ -24,7 +24,7 @@ public:
     void GetTrace(const std::string &traceName) const;
     void GetHisysIdAndKill() const;
     void GetHisysId() const;
-    std::string GetPidByPkg(const std::string &curPkgName) const;
+    std::string GetPidByPkg(const std::string &curPkgName, std::string* pids = nullptr) const;
     bool GetSpTcp() const;
     bool GetSpClear() const;
     void ClearOldServer() const;

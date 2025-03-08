@@ -45,6 +45,8 @@ public:
     std::vector<CpuFreqs> GetCpuFreq();
     std::vector<CpuUsageInfos> GetCpuUsage();
     std::map<std::string, std::string> GetSysProcessCpuLoad() const;
+    void GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo) const;
+    void GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, std::string> &processCpuInfo) const;
     void SetPackageName(const std::string &pName);
     void SetProcessId(const std::string &pid);
 
@@ -53,7 +55,7 @@ private:
     CPU(const CPU &);
     CPU &operator = (const CPU &);
     std::string packageName = "";
-    std::string processId = "";
+    std::vector<std::string> processId;
     const std::string cpustr = "cpu";
     const std::string totalcpu = "Totalcpu";
     int twenty = 20;

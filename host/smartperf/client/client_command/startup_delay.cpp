@@ -227,7 +227,7 @@ std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) c
     return output;
 }
 
-std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
+std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string* pids) const
 {
     std::vector<const char*> args = {"pidof", curPkgName.c_str()};
     args.push_back(nullptr);
@@ -239,11 +239,13 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName) const
         }
         g_pidParams.clear();
         SPUtils::StrSplit(resultProcId, " ", g_pidParams);
+        pids == nullptr ? "" : *pids = resultProcId;
         size_t endpos = resultProcId.find(" ");
         if (endpos != std::string::npos) {
             resultProcId = resultProcId.substr(0, endpos);
         }
-        LOGD("startup_delay::output: (%s)", resultProcId.c_str());
+        LOGD("startup_delay::output: (%s) (%s)", resultProcId.c_str(),
+            pids == nullptr ? resultProcId.c_str() : pids->c_str());
     }
     return resultProcId;
 }
