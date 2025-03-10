@@ -280,7 +280,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
     SpServerSocket &spSocket) const
 {
-    if (recvStr != "get_daemon_version" || recvStr != "set_pkgName::com.huawei.hmsapp.hismartperf") {
+    if (recvStr == "get_daemon_version" || recvStr == "set_pkgName::com.huawei.hmsapp.hismartperf") {
         return SocketErrorType::OK;
     }
     if (recvStr.find_last_of(":::") == std::string::npos) {
