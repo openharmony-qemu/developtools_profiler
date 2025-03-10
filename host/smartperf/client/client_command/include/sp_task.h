@@ -54,9 +54,11 @@ struct StuckNotification {
 struct TaskInfo {
     std::string sessionId = "";
     std::string packageName = "";
+    std::string pid = "";
     std::vector<std::string> taskConfig = {};
     long long freq = 0;
     StuckNotification stuckInfo;
+    bool isPrint = false;
 };
 
 class SPTask {
@@ -75,11 +77,14 @@ public:
     std::future<std::map<std::string, std::string>> AsyncCollectRam();
     std::future<std::map<std::string, std::string>> AsyncCollectFps();
     std::future<std::map<std::string, std::string>> AsyncCollectCpu();
+    std::future<std::map<std::string, std::string>> AsyncCollectFds();
     void CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
         std::map<std::string, std::string> &dataMap);
     void CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
         std::map<std::string, std::string> &dataMap);
     void CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
+        std::map<std::string, std::string> &dataMap);
+    void CheckFutureFds(std::future<std::map<std::string, std::string>> &fdsResult,
         std::map<std::string, std::string> &dataMap);
     void GetItemData(std::map<std::string, std::string> &dataMap);
     void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
@@ -106,11 +111,13 @@ private:
     bool CheckCounterId();
     void KillHiperfCmd();
     void ConfigureSdkData(std::string itConfig);
+    void PrintMap(std::map<std::string, std::string> &dataMap);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
     void ResetSdkParam();
     int GetCurrentBattary();
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();
+    void EnablePrint();
 
 private:
     TaskInfo curTaskInfo;
@@ -139,6 +146,7 @@ private:
     int battaryEnd = 0;
     unsigned int dataSize = 0;
     std::string csvTitle = "";
+    int stdOutLog = -1;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

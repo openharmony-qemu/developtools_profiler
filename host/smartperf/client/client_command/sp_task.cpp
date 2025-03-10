@@ -19,6 +19,7 @@
 #include "include/sp_profiler_factory.h"
 #include "include/sp_utils.h"
 #include "include/FPS.h"
+#include "include/FileDescriptor.h"
 #include "include/RAM.h"
 #include "include/CPU.h"
 #include "include/Capture.h"
@@ -42,8 +43,7 @@ const long long RM_5000 = 5000;
 const long long RM_1000 = 1000;
 const long long RM_1000000 = 1000000;
 const long long END_WAITING_TIME = 8; // End waiting time,unit seconds
-// init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
-static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
+std::vector<std::string> ParseCommandArgs(std::string &command)
 {
     std::vector<std::string> args;
     size_t pos = 0;
@@ -52,13 +52,22 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
         command.erase(0, pos + 1);
     }
     args.push_back(command);
+    return args;
+}
+
+// init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
+static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
+{
     StuckNotification snf;
     snf.isEffective = false;
     std::string sessionId;
     long long interval = 1000;
     std::string pkg;
+    std::string pid;
     bool isFPS = false;
+    bool isPrint = false;
     std::vector<std::string> configs;
+    std::vector<std::string> args = ParseCommandArgs(command);
     for (size_t i = 0; i < args.size(); i++) {
         if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_SESSIONID)) {
             sessionId = args[++i];
@@ -66,6 +75,10 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             interval = SPUtilesTye::StringToSometype<long long>(args[++i]);
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PKG)) {
             pkg = args[++i];
+        } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PID)) {
+            pid = args[++i];
+        } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_PRINT)) {
+            isPrint = true;
         } else if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_FL)) { // 获取用户fps的值，并赋给snf.   CT_FL
             snf.fps = SPUtilesTye::StringToSometype<int>(args[++i]);
             snf.isEffective = true;
@@ -91,7 +104,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
         LOGE("ExceptionMsg ParseToTask configs size is 0");
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
-    taskInfo = { sessionId, pkg, configs, interval, snf };
+    taskInfo = { sessionId, pkg, pid, configs, interval, snf, isPrint };
     return ExceptionMsg::NO_ERR;
 }
 
@@ -106,6 +119,17 @@ static std::string MapToString(std::map<std::string, std::string> myMap)
     str.erase(str.end() - subLen, str.end());
     str += " }";
     return str;
+}
+
+void SPTask::PrintMap(std::map<std::string, std::string> &dataMap)
+{
+    if (curTaskInfo.isPrint) {
+        int i = 0;
+        for (auto iter = dataMap.cbegin() ; iter != dataMap.cend(); ++iter) {
+            fprintf(stderr, "\norder:%d %s=%s", i++, iter->first.c_str(), iter->second.c_str());
+        }
+        std::cerr << std::endl << std::flush;
+    }
 }
 
 ErrCode SPTask::InitTask(const std::string &recvStr)
@@ -170,11 +194,26 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fpsConfig : curTaskInfo.taskConfig) {
-        if (fpsConfig.find("-f") != std::string::npos) {
+        if (fpsConfig == "-f") {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 LOGD("Starting FPS collection in new thread");
                 p.set_value(FPS::GetInstance().ItemData());
+            }).detach();
+        }
+    }
+    return futureResult;
+}
+
+std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFds()
+{
+    std::promise<std::map<std::string, std::string>> p;
+    std::future<std::map<std::string, std::string>> futureResult;
+    for (std::string fdsConfig : curTaskInfo.taskConfig) {
+        if (fdsConfig.find("-fds") != std::string::npos) {
+            futureResult = p.get_future();
+            std::thread([p = std::move(p)]() mutable {
+                p.set_value(FileDescriptor::GetInstance().ItemData());
             }).detach();
         }
     }
@@ -204,6 +243,15 @@ void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fps
 {
     if (fpsResult.valid()) {
         std::map<std::string, std::string> result = fpsResult.get();
+        dataMap.insert(result.begin(), result.end());
+    }
+}
+
+void SPTask::CheckFutureFds(std::future<std::map<std::string, std::string>> &fdsResult,
+    std::map<std::string, std::string> &dataMap)
+{
+    if (fdsResult.valid()) {
+        std::map<std::string, std::string> result = fdsResult.get();
         dataMap.insert(result.begin(), result.end());
     }
 }
@@ -355,9 +403,10 @@ void SPTask::SetProfilerPid()
 {
     SpProfilerFactory::editorFlag = true;
     std::string processId = "";
+    std::string processIds = "";
     OHOS::SmartPerf::StartUpDelay sp;
-    processId = sp.GetPidByPkg(curTaskInfo.packageName);
-    SpProfilerFactory::SetProfilerPidByPkg(processId);
+    processId = sp.GetPidByPkg(curTaskInfo.packageName, &processIds);
+    SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
 }
 
 void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
@@ -372,10 +421,12 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
     std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
+    std::future<std::map<std::string, std::string>> fdsResult = AsyncCollectFds();
     GetItemData(dataMap);
     CheckFutureFps(fpsResult, dataMap);
     CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
+    CheckFutureFds(fdsResult, dataMap);
     if (curTaskInfo.stuckInfo.isEffective && recordTrace) {
         std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
         if (!timeUsedMap.empty()) {
@@ -389,6 +440,9 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     }
     gpuCounter.GetGpuRealtimeData(dataMap);
     SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
+    if (GetRecordState()) {
+        PrintMap(dataMap);
+    }
     msgTask(MapToString(dataMap));
     nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
@@ -418,6 +472,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     } else {
         LOGW("No package name provided for profiler.");
     }
+    if (!curTaskInfo.pid.empty()) {
+        SpProfilerFactory::SetProfilerPidByPkg(curTaskInfo.pid);
+    }
     InitDataFile();
     LOGD("Data files initialized.");
     ConfigDataThread();
@@ -428,7 +485,11 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
             AsyncGetDataMap(msgTask);
         }
         WLOGI("Data collection thread exiting.");
+        if (curTaskInfo.isPrint) {
+            std::cerr << "End please press the enter key..." << std::endl << std::flush;
+        }
     });
+    EnablePrint();
     return ErrCode::OK;
 }
 
@@ -470,6 +531,7 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
         { "taskId", curTaskInfo.sessionId },
         { "appName", curTaskInfo.packageName },
         { "packageName", curTaskInfo.packageName },
+        { "pid", curTaskInfo.pid },
         { "startTime", std::to_string(startTime) },
         { "endTime", std::to_string(endTime) },
         { "testDuration", std::to_string(testDuration) },
@@ -553,7 +615,10 @@ ErrCode SPTask::StopTask()
     isRunning = false;
     isInit = false;
     realTimeStart = 0;
-
+    if (stdOutLog >= 0) {
+        close(stdOutLog);
+        stdOutLog = -1;
+    }
     if (thread.joinable()) {
         LOGD("Joining thread.");
         thread.join();
@@ -803,6 +868,24 @@ std::string SPTask::GetCsvTitle()
 void SPTask::SetRecordState(bool status)
 {
     recordState = status;
+}
+void SPTask::EnablePrint()
+{
+    if (curTaskInfo.isPrint) {
+        stdOutLog = SPUtils::GetTtyDeviceFd();
+        if (dup2(stdOutLog, STDERR_FILENO) < 0) {
+            LOGE("Dup2 fail");
+        } else {
+            close(stdOutLog);
+            stdOutLog = -1;
+        }
+    } else {
+        int &fd = SPUtils::GetTtyDeviceFd();
+        if (fd >= 0) {
+            close(fd);
+            fd = -1;
+        }
+    }
 }
 }
 }

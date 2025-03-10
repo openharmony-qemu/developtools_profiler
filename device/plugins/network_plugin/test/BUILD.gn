@@ -18,7 +18,10 @@ module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
 config("module_private_config") {
   visibility = [ ":*" ]
   if (current_toolchain != host_toolchain) {
-    defines = [ "HAVE_HILOG" ]
+    defines = [
+      "HAVE_HILOG",
+      "NETWORK_PLUGIN_UNITTEST",
+    ]
   }
 }
 

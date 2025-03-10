@@ -22,6 +22,7 @@ enum class NativeMemoryProfilerSaInterfaceCode {
     STOP_HOOK_PID = 1,
     STOP_HOOK_NAME = 2,
     DUMP_DATA = 3,
+    DUMP_SIMP_DATA = 4,
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

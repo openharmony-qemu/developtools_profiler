@@ -64,8 +64,8 @@ static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
     RET_NO_PERMISSION,
     RET_NOT_SUPPORT,
-    RET_IVALID_PATH,
-    RET_IVALID_PID,
+    RET_INVALID_PATH,
+    RET_INVALID_PID,
     RET_MSG_EMPTY,
     RET_FAIL = -1,
     RET_SUCC = 0,

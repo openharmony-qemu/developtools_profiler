@@ -23,7 +23,7 @@ public:
     static SpProfiler *GetProfilerItem(MessageType messageType);
     static SpProfiler *GetProfilerItemContinue(MessageType messageType);
     static void SetProfilerPkg(const std::string &pkg);
-    static void SetProfilerPidByPkg(std::string &pid);
+    static void SetProfilerPidByPkg(std::string &pid, std::string pids = "");
     static void SetProfilerLayer(const std::string &layer);
     static void SetProfilerGameLayer(const std::string &isGameView);
     static void SetByTrace(std::string message);

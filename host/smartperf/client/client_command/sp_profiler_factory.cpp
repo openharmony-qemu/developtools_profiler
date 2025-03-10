@@ -30,6 +30,8 @@
 #include "include/Capture.h"
 #include "include/navigation.h"
 #include "include/sp_log.h"
+#include "include/FileDescriptor.h"
+#include "include/Threads.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -56,6 +58,12 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             break;
         case MessageType::GET_LOG:
             profiler = &GetLog::GetInstance();
+            break;
+        case MessageType::GET_PROCESS_THREADS:
+            profiler = &Threads::GetInstance();
+            break;
+        case MessageType::GET_PROCESS_FDS:
+            profiler = &FileDescriptor::GetInstance();
             break;
         default:
             break;
@@ -104,23 +112,36 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
     ram.SetPackageName(pkg);
     CPU &cpu = CPU::GetInstance();
     cpu.SetPackageName(pkg);
+    Threads &threads = Threads::GetInstance();
+    threads.SetPackageName(pkg);
+    FileDescriptor &fds = FileDescriptor::GetInstance();
+    fds.SetPackageName(pkg);
 }
 
-void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid)
+void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
+    std::string bundleName;
+    SPUtils::GetBundleName(pid, bundleName);
     FPS &fps = FPS::GetInstance();
     fps.SetProcessId(pid);
+    fps.SetPackageName(bundleName);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
     profilerFps.SetProcessId(pid);
+    profilerFps.SetPackageName(bundleName);
     RAM &ram = RAM::GetInstance();
-    ram.SetProcessId(pid);
+    ram.SetProcessId(pids.empty() ? pid : pids);
     CPU &cpu = CPU::GetInstance();
-    cpu.SetProcessId(pid);
+    cpu.SetProcessId(pids.empty() ? pid : pids);
+    cpu.SetPackageName(bundleName);
     Navigation &nav = Navigation::GetInstance();
     nav.SetProcessId(pid);
     AISchedule &as = AISchedule::GetInstance();
     as.SetProcessId(pid);
+    Threads &threads = Threads::GetInstance();
+    threads.SetProcessId(pids.empty() ? pid : pids);
+    FileDescriptor &fds = FileDescriptor::GetInstance();
+    fds.SetProcessId(pids.empty() ? pid : pids);
 }
 
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
@@ -226,6 +247,14 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         case CommandType::CT_SNAPSHOT:
             if (cmdFlag) {
                 profiler = &Capture::GetInstance();
+            }
+            break;
+        case CommandType::CT_THREADS:
+            profiler = &Threads::GetInstance().GetInstance();
+            break;
+        case CommandType::CT_FDS:
+            if (cmdFlag) {
+                profiler = &FileDescriptor::GetInstance().GetInstance();
             }
             break;
         default:

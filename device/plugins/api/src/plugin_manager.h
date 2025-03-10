@@ -24,6 +24,7 @@
 #include <unordered_set>
 #include "plugin_service.ipc.h"
 #include "manager_interface.h"
+#include "network_profiler_manager.h"
 #include "plugin_module.h"
 #include "schedule_task_manager.h"
 
@@ -66,6 +67,8 @@ public:
     void SetCommandPoller(const CommandPollerPtr& p);
     bool RegisterPlugin(const PluginModulePtr& plugin, const std::string& pluginPath,
                         const PluginModuleInfo& pluginInfo);
+    void AddNetworkProfilerManager(std::shared_ptr<OHOS::Developtools::Profiler::NetworkProfilerManager>
+                                   networkProfilerMgr);
 
 private:
     std::map<uint32_t, std::shared_ptr<PluginModule>> pluginModules_;
@@ -75,6 +78,7 @@ private:
     ScheduleTaskManager scheduleTaskManager_;
     std::map<std::string, std::string> pluginPathAndNameMap_;
     std::unordered_map<std::string, int32_t> scheduleTask_; // key is plugin name, value is timerfd.
+    std::shared_ptr<OHOS::Developtools::Profiler::NetworkProfilerManager> networkProfilerMgr_{nullptr};
 };
 
 #endif // PLUGIN_MANAGER_H

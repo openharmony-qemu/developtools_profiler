@@ -103,6 +103,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
     }
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
+        SPUtils::GetTtyDeviceFd();
         std::string pidStr = sd.GetPidByPkg("SP_daemon");
         std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         std::string result = "";
@@ -152,6 +153,7 @@ void SmartPerfCommand::CreateSocketThread() const
     udpSocket.join();
     udpexSocket.join();
 }
+
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
     LOGD("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
@@ -184,16 +186,36 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_G:
         case CommandType::CT_D:
         case CommandType::CT_F:
+        case CommandType::CT_FDS:
         case CommandType::CT_T:
         case CommandType::CT_P:
         case CommandType::CT_R:
         case CommandType::CT_NET:
         case CommandType::CT_TTRACE:
+        case CommandType::CT_THREADS:
         case CommandType::CT_SNAPSHOT:
         case CommandType::CT_HW:
         case CommandType::CT_GC:
         case CommandType::CT_NAV:
         case CommandType::CT_AS:
+            configs.push_back(argStr);
+            break;
+        default:
+            HandleCommandContinue(argStr, argStr1);
+            break;
+    }
+}
+
+void SmartPerfCommand::HandleCommandContinue(std::string argStr, const std::string &argStr1)
+{
+    switch (COMMAND_MAP.at(argStr)) {
+        case CommandType::CT_PID:
+            pid = argStr1;
+            if (pid.length() > 0) {
+                SpProfilerFactory::SetProfilerPidByPkg(pid);
+            }
+            break;
+        case CommandType::CT_PRINT:
             configs.push_back(argStr);
             break;
         default:
@@ -208,10 +230,11 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     std::string errInfo;
     if (!pkgName.empty()) {
         std::string processId = "";
+        std::string processIds = "";
         OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(pkgName);
+        processId = sp.GetPidByPkg(pkgName, &processIds);
         LOGD("The cmd pid = %s", processId.c_str());
-        SpProfilerFactory::SetProfilerPidByPkg(processId);
+        SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
     }
     for (size_t j = 0; j < configs.size(); j++) {
         std::string curParam = configs[j];

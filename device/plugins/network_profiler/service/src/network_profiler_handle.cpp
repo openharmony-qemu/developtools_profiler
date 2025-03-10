@@ -32,6 +32,10 @@ NetworkProfilerHandle::NetworkProfilerHandle(clockid_t pluginDataClockId, uint32
 
 NetworkProfilerHandle::~NetworkProfilerHandle()
 {
+}
+
+void NetworkProfilerHandle::StopHandle()
+{
     std::visit([&](auto& protoData) {
         FlushData(protoData);
         }, protoData_);

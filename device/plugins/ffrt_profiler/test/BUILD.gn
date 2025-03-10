@@ -76,6 +76,7 @@ ohos_unittest("ffrt_profiler_ut") {
 
   public_deps = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
     "${OHOS_PROFILER_DIR}/device/services/ipc:ipc",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
