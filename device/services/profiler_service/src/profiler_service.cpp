@@ -176,7 +176,7 @@ bool ProfilerService::SessionContext::StopPluginSessions()
 {
     if (sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         if (offlineScheduleTaskFd != -1) {
-            stopExpireTask.UnscheduleTaskLockless(offlineScheduleTaskFd);
+            stopExpireTask.UnscheduleTask(offlineScheduleTaskFd);
             offlineScheduleTaskFd = -1;
         } else {
             return true;
@@ -241,7 +241,7 @@ void ProfilerService::SessionContext::StartSessionExpireTask(ScheduleTaskManager
 void ProfilerService::SessionContext::StopSessionExpireTask(ScheduleTaskManager& task)
 {
     if (sessionConfig.keep_alive_time() > 0 && timeoutScheduleTaskFd != -1) {
-        task.UnscheduleTaskLockless(timeoutScheduleTaskFd);
+        task.UnscheduleTask(timeoutScheduleTaskFd);
         timeoutScheduleTaskFd = -1;
     }
 }

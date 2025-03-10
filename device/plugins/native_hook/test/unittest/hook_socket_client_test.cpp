@@ -151,4 +151,31 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
     }
     ASSERT_FALSE(hookClient.SendNmdInfo());
 }
+
+/*
+ * @tc.name: SendSimplifiedNmdInfo
+ * @tc.desc: test HookSocketClient::SendSimplifiedNmdInfo with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
+{
+    uint64_t config = FILTER_SIZE;
+    config <<= MOBILE_BIT;
+    config |= SMB_SIZE;
+    Sampling sampler;
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    SocketContext socketContext;
+    auto ptr = reinterpret_cast<const int8_t*>(&config);
+    auto size = sizeof(ClientConfig);
+    ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
+
+    struct timespec ts = {};
+    clock_gettime(CLOCK_REALTIME, &ts);
+    size_t metaSize = sizeof(ts);
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(metaSize);
+    if (memcpy_s(buffer.get(), metaSize, &ts, sizeof(ts)) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
+    }
+    ASSERT_FALSE(hookClient.SendSimplifiedNmdInfo());
+}
 } // namespace

@@ -76,6 +76,7 @@ public:
     std::string GetTcpToken() const;
     void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
+
 private:
     bool flagRunning = false;
     bool socketConnect = true;

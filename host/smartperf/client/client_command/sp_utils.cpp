@@ -36,6 +36,8 @@
 #include "include/Power.h"
 #include "include/DDR.h"
 #include "include/profiler_fps.h"
+#include "include/FileDescriptor.h"
+#include "include/Threads.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -166,7 +168,6 @@ bool SPUtils::IsSubString(const std::string &str, const std::string &sub)
     if (sub.empty() || str.empty()) {
         return false;
     }
-
     return str.find(sub) != std::string::npos;
 }
 
@@ -479,7 +480,11 @@ bool SPUtils::VeriyParameter(std::set<std::string> &keys, std::string param, std
         errorInfo = "The parameter cannot be empty";
         return false;
     }
-
+    if (param.find("-PKG") != std::string::npos &&
+        param.find("-PID") != std::string::npos) {
+        LOGE("-PKG and -PID cannot be used together with");
+        return false;
+    }
     SPUtils::StrSplit(param, "-", out);
 
     for (auto it = out.begin(); it != out.end(); ++it) { // Parsing keys and values
@@ -545,6 +550,11 @@ bool SPUtils::VerifyValueStr(std::map<std::string, std::string> &mapInfo, std::s
         errorInfo += "option requires an argument -- '" + a->first + "'";
         return false;
     }
+    a = mapInfo.find("PID");
+    if (mapInfo.end() != a && a->second.empty()) { // Cannot be null
+        errorInfo += "option requires an argument -- '" + a->first + "'";
+        return false;
+    }
     a = mapInfo.find("OUT");
     if (mapInfo.end() != a) {
         if (a->second.empty()) {
@@ -593,6 +603,9 @@ bool SPUtils::IntegerValueVerification(std::set<std::string> &keys, std::map<std
     }
     if (keys.end() != keys.find("ftl")) {
         integerCheck.push_back("ftl");
+    }
+    if (keys.end() != keys.find("PID")) {
+        integerCheck.push_back("PID");
     }
 
     for (auto it = integerCheck.begin(); it != integerCheck.end(); ++it) {
@@ -784,6 +797,36 @@ bool SPUtils::GetIsGameApp(std::string pkg)
 std::string SPUtils::GetVersion()
 {
     return SMART_PERF_VERSION;
+}
+
+int& SPUtils::GetTtyDeviceFd()
+{
+    static int fd = dup(STDERR_FILENO);
+    return fd;
+}
+
+void SPUtils::GetBundleName(const std::string &pid, std::string &bundleName)
+{
+    std::string filePath = "/proc/";
+    filePath.append(pid).append("/cmdline");
+    LOGD("GetBundleName filePath:%s", filePath.c_str());
+    if (!LoadFile(filePath, bundleName)) {
+        LOGD("Get process name by pid failed! %s", filePath.c_str());
+        return;
+    }
+    bundleName.resize(strlen(bundleName.c_str()));
+    if (bundleName.size() >= 2 && bundleName.substr(0, 2) == "./") { // 2: size
+        bundleName = bundleName.substr(2); // 2: point
+    }
+    size_t found = bundleName.rfind("/");
+    std::string procName;
+    if (found != std::string::npos) {
+        procName = bundleName.substr(found + 1);
+    } else {
+        procName = bundleName;
+    }
+    bundleName = std::move(procName);
+    LOGD("GetBundleName bundleName:%s", bundleName.c_str());
 }
 }
 }

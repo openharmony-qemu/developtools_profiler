@@ -156,4 +156,38 @@ HWTEST_F(PluginManagerTest, PluginManager, TestSize.Level1)
     EXPECT_TRUE(bufferWriter.Write(str.data(), str.size()));
     EXPECT_TRUE(bufferWriter.Flush());
 }
+
+/**
+ * @tc.name: plugin
+ * @tc.desc: network-profiler normal loading and StopPluginSession test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
+{
+    using namespace OHOS::Developtools::Profiler;
+    auto pluginManage = std::make_shared<PluginManager>();
+    std::string pluginName = "network-profiler";
+    ProfilerPluginConfig config;
+    const uint8_t configData[] = {0x55, 0xAA, 0x55, 0xAA};
+    const std::vector<uint32_t> pluginIdsVector = {2};
+    config.set_name(pluginName);
+    config.set_config_data((const void*)configData, 4);
+    config.set_sample_interval(DEFAULT_SLEEP_TIME);
+    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    networkProfilerMgr->Init();
+    pluginManage->AddNetworkProfilerManager(networkProfilerMgr);
+
+    std::vector<ProfilerPluginConfig> configVec;
+    PluginResult result;
+    configVec.push_back(config);
+
+    EXPECT_FALSE(pluginManage->LoadPlugin(pluginName));
+    pluginManage->AddPlugin(g_testPluginDir + "libnetwork_profiler.z.so");
+    EXPECT_TRUE(pluginManage->CreatePluginSession(configVec));
+    EXPECT_FALSE(pluginManage->StartPluginSession(pluginIdsVector, configVec, result));
+    std::this_thread::sleep_for(TEMP_DELAY);
+    networkProfilerMgr->StartNetworkProfiler();
+    EXPECT_FALSE(pluginManage->ReportPluginBasicData(pluginIdsVector));
+    EXPECT_FALSE(pluginManage->StopPluginSession(pluginIdsVector));
+}
 } // namespace

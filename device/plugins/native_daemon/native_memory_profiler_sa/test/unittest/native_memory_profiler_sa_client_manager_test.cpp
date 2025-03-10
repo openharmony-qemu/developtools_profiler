@@ -138,4 +138,35 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, 0, 1), RET_ERR);
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest004
+ * @tc.desc: Test simplified nmd mode
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest004, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    using namespace OHOS::Security::AccessToken;
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
+    SetSelfTokenID(tokenID);
+
+    std::vector<SimplifiedMemStats> memStats;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(0, memStats), RET_ERR);
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest005
+ * @tc.desc: Test get simplified stack file
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest005, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    using namespace OHOS::Security::AccessToken;
+    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
+    SetSelfTokenID(tokenID);
+
+    SimplifiedMemConfig config;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, config), RET_ERR);
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

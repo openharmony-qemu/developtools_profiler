@@ -542,14 +542,15 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
         if (!SpProfilerFactory::editorFlag) {
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
+            std::string processIds = "";
             g_preset = IsPreset(g_pkgAndPid);
             if (g_preset) {
                 processId = SpGetPid(g_pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(g_pkgName);
+                processId = sp.GetPidByPkg(g_pkgName, &processIds);
             }
-            SpProfilerFactory::SetProfilerPidByPkg(processId);
+            SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
             SpProfilerFactory::SetProfilerPkg(g_pkgName);
         }
     }
@@ -633,7 +634,6 @@ std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *pro
 
     return std::map<std::string, std::string>();
 }
-
 std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 {
     if (spMsg.empty()) {

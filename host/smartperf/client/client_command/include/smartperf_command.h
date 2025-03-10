@@ -33,6 +33,11 @@ public:
         "options:\n"
         " -N              set the collection times(default value is 0) range[1,2147483647], for example: -N 10 \n"
         " -PKG            set package name, must add, for example: -PKG ohos.samples.ecg \n"
+        " -PID            set process pid, must add, for example: -PID 3568 \n"
+        " -threads        get threads, must add -PID or -PKG for example: \n"
+                          "\t\t -threads -PID 3568 or -threads -PKG ohos.samples.ecg \n"
+        " -fds            get file descriptor, must add -PID or -PKG for example: \n"
+                          "\t\t -fds -PID 3568 or -fds -PKG ohos.samples.ecg \n"
         " -c              get device CPU frequency and CPU usage, process CPU usage and CPU load .. \n"
         " -g              get device GPU frequency and GPU load  \n"
         " -f              get app refresh fps(frames per second) and fps jitters and refreshrate \n"
@@ -40,6 +45,7 @@ public:
         " -sections       set collection time period(using with profilerfps)\n"
         " -t              get remaining battery power and temperature.. \n"
         " -p              get battery power consumption and voltage(Not supported by some devices) \n"
+        " -print          start mode print log \n"
         " -r              get process memory and total memory \n"
         " -snapshot       get screen capture\n"
         " -net            get uplink and downlink traffic\n"
@@ -89,6 +95,7 @@ public:
     std::string ExecCommand();
     void HelpCommand(CommandHelp type, std::string token) const;
     void HandleCommand(std::string argStr, const std::string &argStr1);
+    void HandleCommandContinue(std::string argStr, const std::string &argStr1);
     int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;

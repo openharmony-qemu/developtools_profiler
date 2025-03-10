@@ -103,6 +103,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
 
   deps = [
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
     "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
     "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
     "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",

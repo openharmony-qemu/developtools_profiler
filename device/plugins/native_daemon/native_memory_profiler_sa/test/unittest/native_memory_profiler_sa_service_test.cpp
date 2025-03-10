@@ -103,4 +103,27 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
     EXPECT_EQ(service.Start(config), RET_ERR);
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaServiceTest
+ * @tc.desc: Test the service interface with false case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+
+    int32_t pid = GetProcessPid(TEST_PROC_NAME);
+    EXPECT_NE(pid, 0);
+    config->pid_ = pid;
+    config->duration_ = TEST_DURATION;
+    config->filePath_ = "/data/local/tmp/native_hook_test.htrace";
+    config->offlineSymbolization_ = true;
+    config->shareMemorySize_ = 0;
+
+    NativeMemoryProfilerSaService service;
+    OHOS::MessageParcel reply;
+    EXPECT_EQ(service.Start(config, reply), RET_ERR);
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

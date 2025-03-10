@@ -159,6 +159,9 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         arktsConfig.maxJsStackDepth = 0;
         arktsConfig.jsFpunwind = false;
         arktsConfig.filterNapiName[0] = '\0';
+        largestSize = 0;
+        secondLargestSize = 0;
+        maxGrowthSize = 0;
     }
 
     std::string ToString()
@@ -173,7 +176,9 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
-            << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind;
+            << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind
+            << ", largestSize: " << largestSize  << ", secondLargestSize: " << secondLargestSize
+            << ", maxGrowthSize: " << maxGrowthSize;
         return ss.str();
     }
 
@@ -196,5 +201,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     int nmdType = -1;
     bool isSaMode = false;
     ArkTsClientConfig arktsConfig = {0};
+    uint32_t largestSize = 0;
+    uint32_t secondLargestSize = 0;
+    uint32_t maxGrowthSize = 0;
 };
 #endif // HOOK_COMMON_H

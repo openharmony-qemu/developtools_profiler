@@ -27,7 +27,6 @@
 #include "include/common.h"
 #include "parameters.h"
 constexpr const char *VERSION_TYPE = "const.logsystem.versiontype";
-
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
     std::string str = "";
@@ -81,6 +80,10 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
         } else {
             return true;
         }
+    }
+    if (str.find("-PKG") != std::string::npos && str.find("-PID") != std::string::npos) {
+        errorInfo = "-PKG and -PID cannot be used together with";
+        return false;
     }
     KeyInsert(keys);
     std::cout << "harry: argv1 " << argv[1] << std::endl;
