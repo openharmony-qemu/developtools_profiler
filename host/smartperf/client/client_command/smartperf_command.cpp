@@ -111,6 +111,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         } else {
+            // Editor 拉起 daemon 测试
             EnableWriteLogAndDeleteOldLogFiles();
             if (token.empty()) {
                 WLOGE("Error: token is empty when setting TCP token.");
@@ -123,6 +124,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         CreateSocketThread();
     }
     if (type == CommandHelp::DEVICESERVER) {
+        // device 拉起 daemon 测试
         if (token.empty()) {
             WLOGE("Error: token is empty when setting UDP token.");
             return;

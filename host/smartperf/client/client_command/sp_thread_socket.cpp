@@ -277,26 +277,28 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
     }
     WLOGW("No matching command found for token check failure in message: %s", message.c_str());
 }
-SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
-    SpServerSocket &spSocket) const
+SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
 {
+    // device 启动时发送，不做校验
     if (recvStr == "get_daemon_version" || recvStr == "set_pkgName::com.huawei.hmsapp.hismartperf") {
         return SocketErrorType::OK;
     }
+    // command:::token
     if (recvStr.find_last_of(":::") == std::string::npos) {
         WLOGE("Token check failed: %s", recvStr.c_str());
         return SocketErrorType::TOKEN_CHECK_FAILED;
     }
+    // 提取 token
     std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
     token = token.substr(0, token.find(' '));
     std::string UdpToken = SpThreadSocket::GetInstance().GetUdpToken();
     LOGD("Comparing token with Udp token...");
+    // token 校验
     if (token != UdpToken) {
         WLOGE("Token mismatch.");
         return SocketErrorType::TOKEN_CHECK_FAILED;
     }
-    LOGD("Token match");
-    WLOGI("UDP token check passed: %s", recvStr.c_str());
+    LOGD("UDP token check passed");
     return SocketErrorType::OK;
 }
 void SpThreadSocket::DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
@@ -375,7 +377,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
             continue;
         }
         LOGD("UDP recv : %s", recvBuf.c_str());
-        const SocketErrorType tokenStatus = CheckUdpToken(recvBuf, spSocket);
+        const SocketErrorType tokenStatus = CheckUdpToken(recvBuf);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
             std::string failStr = std::string("token failed");
             spSocket.Sendto(failStr);

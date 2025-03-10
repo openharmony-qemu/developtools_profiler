@@ -88,7 +88,7 @@ public:
     const size_t oneParam = 1;
     const size_t twoParam = 2;
     const size_t threeParamMore = 3;
-    const size_t serverCommandLength = 14;
+    const size_t serverCommandLength = 14;  // -deviceServer: 与 -editorServer: 的长度
     explicit SmartPerfCommand(std::vector<std::string> argv);
     ~SmartPerfCommand() {};
     static void InitSomething();

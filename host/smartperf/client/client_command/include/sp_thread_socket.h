@@ -44,7 +44,7 @@ public:
     std::string SplitMsg(const std::string &recvBuf) const;
     void Process(ProtoType type);
     SocketErrorType CheckTcpToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const;
-    SocketErrorType CheckUdpToken(std::string recvStr, SpServerSocket &spSocket) const;
+    SocketErrorType CheckUdpToken(std::string recvStr) const;
     void TypeTcp(SpServerSocket &spSocket);
     void InitRecv(std::string recvStr, SpServerSocket &spSocket, SocketConnectType type) const;
     void StartRecv(SpServerSocket &spSocket);
@@ -80,8 +80,8 @@ public:
 private:
     bool flagRunning = false;
     bool socketConnect = true;
-    std::string tcpToken = "";
-    std::string udpToken = "";
+    std::string tcpToken = "";      // Editor 拉起测试时校验
+    std::string udpToken = "";      // device 拉起测试时校验
 };
 }
 }

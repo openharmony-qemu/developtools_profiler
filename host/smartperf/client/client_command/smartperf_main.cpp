@@ -86,7 +86,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
         return false;
     }
     KeyInsert(keys);
-    std::cout << "harry: argv1 " << argv[1] << std::endl;
+    // editor 与 device 的拉起命令与 token 一起加入白名单
     if (argv[1].find("editorServer:") != std::string::npos ||
         argv[1].find("deviceServer:") != std::string::npos
     ) {
