@@ -280,6 +280,9 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr,
     SpServerSocket &spSocket) const
 {
+    if (recvStr != "get_daemon_version" || recvStr != "set_pkgName::com.huawei.hmsapp.hismartperf") {
+        return SocketErrorType::OK;
+    }
     if (recvStr.find_last_of(":::") == std::string::npos) {
         WLOGE("Token check failed: %s", recvStr.c_str());
         return SocketErrorType::TOKEN_CHECK_FAILED;
@@ -373,8 +376,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
         }
         LOGD("UDP recv : %s", recvBuf.c_str());
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf, spSocket);
-        if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED ||
-            recvBuf != "get_daemon_version") {
+        if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
             std::string failStr = std::string("token failed");
             spSocket.Sendto(failStr);
             spSocket.Close();
