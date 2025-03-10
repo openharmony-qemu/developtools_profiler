@@ -113,13 +113,13 @@ SocketErrorType SpThreadSocket::CheckTcpToken(std::string recvStr,
     }
     std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
     token = token.substr(0, token.find(' '));
-    std::string tcpToken = SpThreadSocket::GetInstance().GetTcpToken();
+    std::string tcpSocketToken = SpThreadSocket::GetInstance().GetTcpToken();
     LOGD("Comparing token with TCP token...");
-    if (tcpToken == "" && token == "-SESSIONID") {
+    if (tcpSocketToken == "" && token == "-SESSIONID") {
         LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
         return SocketErrorType::OK;
     }
-    if (token != tcpToken) {
+    if (token != tcpSocketToken) {
         LOGE("Token mismatch.");
         return SocketErrorType::TOKEN_CHECK_FAILED;
     }
@@ -280,7 +280,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
 {
     // device 启动时发送，不做校验
-    if (recvStr == "get_daemon_version" || recvStr == "set_pkgName::com.huawei.hmsapp.hismartperf") {
+    if (recvStr == "get_daemon_version" || recvStr.find("set_pkgName::") != std::string::npos) {
         return SocketErrorType::OK;
     }
     // command:::token
@@ -291,10 +291,10 @@ SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
     // 提取 token
     std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
     token = token.substr(0, token.find(' '));
-    std::string UdpToken = SpThreadSocket::GetInstance().GetUdpToken();
+    std::string udpSocketToken = SpThreadSocket::GetInstance().GetUdpToken();
     LOGD("Comparing token with Udp token...");
     // token 校验
-    if (token != UdpToken) {
+    if (token != udpSocketToken) {
         WLOGE("Token mismatch.");
         return SocketErrorType::TOKEN_CHECK_FAILED;
     }
