@@ -90,7 +90,6 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     if (argv[1].find("editorServer:") != std::string::npos ||
         argv[1].find("deviceServer:") != std::string::npos
     ) {
-        std::cout << "harry: insert " << argv[1].substr(1) << std::endl;
         keys.insert(argv[1].substr(1).c_str());
     }
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
