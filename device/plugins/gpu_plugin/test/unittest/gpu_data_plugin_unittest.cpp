@@ -146,6 +146,9 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
     gpuPlugin.resultWriter_->isProtobufSerialize = true;
     gpuPlugin.FlushGpuData(gpuDataVect);
     EXPECT_GT(gpuPlugin.buffer_.size(), 0);
+    gpuPlugin.resultWriter_->isProtobufSerialize = false;
+    gpuPlugin.FlushGpuData(gpuDataVect);
+    EXPECT_GT(gpuPlugin.GetBootTime(), 0);
 #endif
 }
 
@@ -207,6 +210,37 @@ HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer2.data(), configLength+1), RET_FAIL);
 #endif
 }
+
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: test gpu plugin read array data
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
+{
+#if defined(__LP64__)
+    void* handle = dlopen(SO_PATH.c_str(), RTLD_LAZY);
+    ASSERT_NE(handle, nullptr);
+    PluginModuleStruct* gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
+    ASSERT_NE(gpuPlugin, nullptr);
+    EXPECT_STREQ(gpuPlugin->name, "gpu-plugin");
+    EXPECT_EQ(gpuPlugin->resultBufferSizeHint, BUF_SIZE);
+
+    // Serialize config
+    GpuConfig protoConfig;
+    protoConfig.set_pid("11001");
+    protoConfig.set_report_gpu_data_array(true);
+    int configLength = protoConfig.ByteSizeLong();
+    ASSERT_NE(configLength, 0);
+    std::vector<uint8_t> configBuffer(configLength);
+    EXPECT_TRUE(protoConfig.SerializeToArray(configBuffer.data(), configLength));
+    // run plugin
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    std::vector<uint8_t> dataBuffer(gpuPlugin->resultBufferSizeHint);
+    EXPECT_EQ(gpuPlugin->callbacks->onRegisterWriterStruct(&writer), 0);
+    EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer.data(), configLength), RET_SUCC);
+    EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStop(), RET_SUCC);
+#endif
 
 
 } // namespace
