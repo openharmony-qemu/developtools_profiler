@@ -216,4 +216,23 @@ HWTEST_F(HidumpPluginUnittest, TestStartFail, TestSize.Level1)
     // start
     EXPECT_NE(plugin.Start(configData.data(), size - 1), 0);
 }
+
+/**
+ * @tc.name: hidump plugin
+ * @tc.desc: Test pb encoder data
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestPbEncoderData, TestSize.Level1)
+{
+    HidumpConfig config;
+    HidumpPlugin plugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    config.set_report_fps(true);
+    plugin.SetConfig(config);
+    plugin.SetWriter(&writer);
+    plugin.resultWriter_->isProtobufSerialize = false;
+    EXPECT_TRUE(PluginStart(plugin, config));
+    sleep(DEFAULT_WAIT);
+}
+
 } // namespace
