@@ -241,6 +241,7 @@ void* MallocHookStart(void* disableHookCallback)
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
     g_mallocTimes = 0;
     g_hookClient.reset();
+    GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {
@@ -267,7 +268,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     pthread_setspecific(g_hookTid, nullptr);
     pthread_key_create(&g_updateThreadNameCount, nullptr);
     pthread_setspecific(g_updateThreadNameCount, reinterpret_cast<void *>(0));
-    GetMainThreadRuntimeStackRange(g_filterStaLibRange);
     constexpr int paramBufferLen = 128;
     char paramOutBuf[paramBufferLen] = {0};
     int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
@@ -630,6 +630,12 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 #endif
         return pRet;
     }
+
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return pRet;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -673,17 +679,13 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(pRet);
     }
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder != nullptr) {
-        int realSize = 0;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-        }
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -739,6 +741,11 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 #endif
         return pRet;
     }
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return pRet;
+    }
     StackRawData rawdata = {{{{0}}}};
     StackRawData freeData = {{{{0}}}};
     const char* stackptr = nullptr;
@@ -790,27 +797,24 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(pRet);
     }
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder != nullptr) {
-        int realSize = 0;
-        int freeRealSize = 0;
-        freeData.type = FREE_MSG;
-        freeData.pid = rawdata.pid;
-        freeData.tid = rawdata.tid;
-        freeData.mallocSize = 0;
-        freeData.addr = ptr;
-        freeData.ts = rawdata.ts;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-            freeRealSize = sizeof(BaseStackRawData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-            freeRealSize = realSize;
-        }
-        holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0); // 0: Don't unwind the freeData
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+
+    int realSize = 0;
+    int freeRealSize = 0;
+    freeData.type = FREE_MSG;
+    freeData.pid = rawdata.pid;
+    freeData.tid = rawdata.tid;
+    freeData.mallocSize = 0;
+    freeData.addr = ptr;
+    freeData.ts = rawdata.ts;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        freeRealSize = sizeof(BaseStackRawData);
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        freeRealSize = realSize;
     }
+    holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0); // 0: Don't unwind the freeData
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -881,7 +885,11 @@ void hook_free(void (*free_func)(void*), void* p)
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
-
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -924,17 +932,13 @@ void hook_free(void (*free_func)(void*), void* p)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = 0;
     rawdata.addr = p;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder != nullptr) {
-        int realSize = 0;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-        }
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1001,6 +1005,11 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 #endif
         return ret;
     }
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return ret;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -1041,11 +1050,6 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = ret;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder == nullptr) {
-        return ret;
-    }
     if (fd >= 0) {
         rawdata.type = MMAP_FILE_PAGE_MSG;
         char path[FD_PATH_LENGTH] = {0};
@@ -1105,6 +1109,11 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 #endif
 
     int stackSize = 0;
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return ret;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -1145,17 +1154,13 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = length;
     rawdata.addr = addr;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
-    if (holder != nullptr) {
-        int realSize = 0;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-        }
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1185,6 +1190,11 @@ int hook_prctl(int(*fn)(int, ...),
         struct timespec start = {};
         clock_gettime(CLOCK_REALTIME, &start);
 #endif
+        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+        auto holder = weakClient.lock();
+        if (holder == nullptr) {
+            return ret;
+        }
         StackRawData rawdata = {{{{0}}}};
         clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
@@ -1197,11 +1207,7 @@ int hook_prctl(int(*fn)(int, ...),
             HILOG_ERROR(LOG_CORE, "memcpy_s tag failed");
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
-        std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-        auto holder = weakClient.lock();
-        if (holder != nullptr) {
-            holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0);
-        }
+        holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1227,6 +1233,11 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
     int stackSize = 0;
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return ret;
+    }
     StackRawData rawdata = {{{{0}}}};
     const char* stackptr = nullptr;
     const char* stackendptr = nullptr;
@@ -1267,18 +1278,14 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
-    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
-    auto holder = weakClient.lock();
     rawdata.tagId = isUsing ? GetTagId(holder, tag) : 0;
-    if (holder != nullptr) {
-        int realSize = 0;
-        if (g_ClientConfig.fpunwind) {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        } else {
-            realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-        }
-        holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    holder->SendStackWithPayload(&rawdata, realSize, stackptr, stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
