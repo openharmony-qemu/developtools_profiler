@@ -96,6 +96,15 @@ bool FlushFunc(WriterStruct* writer)
     return true;
 }
 
+RandomWriteCtx* StartReportFunc(WriterStruct* writer)
+{
+    return nullptr;
+}
+
+void FinishReportFunc(WriterStruct* writer, int32_t size)
+{
+    return;
+}
 
 #if defined(__LP64__)
 bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, WriterStruct *writer)
@@ -138,7 +147,7 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
 #if defined(__LP64__)
     GpuDataPlugin gpuPlugin;
-    WriterStruct writer = {WriteFunc, FlushFunc};
+    WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc};
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
     sleep(SLEEP_TIME);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
@@ -241,6 +250,6 @@ HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer.data(), configLength), RET_SUCC);
     EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStop(), RET_SUCC);
 #endif
-
+}
 
 } // namespace
