@@ -49,7 +49,7 @@ public:
     static int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t GetMallocStats(int fd, int pid, int type, bool printNmdOnly = false);
     static int32_t StartPrintSimplifiedNmd(pid_t pid, std::vector<SimplifiedMemStats>& memStats);
-    static int32_t Start(int fd, pid_t pid, SimplifiedMemConfig& config);
+    static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
 
 private:
