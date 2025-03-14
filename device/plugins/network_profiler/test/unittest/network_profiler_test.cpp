@@ -19,6 +19,7 @@
 #include <thread>
 #include <vector>
 #include <memory>
+#include <sys/syscall.h>
 
 #include "init_param.h"
 #include "network_profiler_socker_client.h"
@@ -35,9 +36,48 @@ using namespace OHOS::Developtools::Profiler;
 
 namespace {
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
+constexpr uint32_t BUFFER_SIZE = 1024;
 constexpr uint32_t SMB1_SIZE = 10 * 4096;
 const std::string WRITER_NAME = "NetworkProfilerWriterTest";
+void* g_smbAddr = nullptr;
 int g_smbFd1 = 0;
+
+int InitShareMemory()
+{
+    int fd = syscall(SYS_memfd_create, WRITER_NAME.c_str(), 0);
+    CHECK_TRUE(fd >= 0, -1, "CreateBlock FAIL SYS_memfd_create");
+
+    int check = ftruncate(fd, SMB1_SIZE);
+    if (check < 0) {
+        close(fd);
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        return -1;
+    }
+
+    g_smbAddr = mmap(nullptr, SMB1_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (g_smbAddr == (reinterpret_cast<void *>(-1))) {
+        close(fd);
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        strerror_r(errno, buf, bufSize);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr mmap ERR : %s", buf);
+        return -1;
+    }
+
+    ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr);
+
+    // initialize header infos
+    header_->info.readOffset_ = 0;
+    header_->info.writeOffset_ = 0;
+    header_->info.memorySize_ = SMB1_SIZE - sizeof(ShareMemoryBlock::BlockHeader);
+    header_->info.bytesCount_ = 0;
+    header_->info.chunkCount_ = 0;
+
+    return fd;
+}
 
 class NetworkProfilerTest : public ::testing::Test {
 public:
@@ -48,8 +88,14 @@ public:
     static void TearDownTestCase()
     {
     }
-    void SetUp() {}
-    void TearDown() {}
+    void SetUp()
+    {
+        g_smbFd1 = InitShareMemory();
+    }
+    void TearDown()
+    {
+        g_smbFd1 = 0;
+    }
 };
 
 void CallBackFunc()
@@ -57,8 +103,20 @@ void CallBackFunc()
     return;
 }
 
+void RandData(uint8_t* data, int size)
+{
+    time_t tv = time(nullptr);
+    if (tv == -1) {
+        tv = 1;
+    }
+    unsigned int seed = static_cast<unsigned int>(tv);
+    while (--size) {
+        data[size] = rand_r(&seed) / static_cast<uint8_t>(-1);
+    }
+}
+
 /**
- * @tc.name: network profiler test
+ * @tc.name: NetworkProfilerTest001
  * @tc.desc: Test NetworkProfilerSocketClient IsProfilerEnable without SystemSetParameter
  * @tc.type: FUNC
  */
@@ -76,7 +134,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest001, TestSize.Level1)
 }
 
 /**
- * @tc.name: network profiler test
+ * @tc.name: NetworkProfilerTest002
  * @tc.desc: Test NetworkProfilerSocketClient send empty data to server
  * @tc.type: FUNC
  */
@@ -96,24 +154,133 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest002, TestSize.Level1)
 }
 
 /**
- * @tc.name: plugin
+ * @tc.name: NetworkProfilerWriterTest001
  * @tc.desc: Write data to shared memory through writer.
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkProfilerTest, NetworkProfilerWriterTest, TestSize.Level1)
+HWTEST_F(NetworkProfilerTest, NetworkProfilerWriterTest001, TestSize.Level1)
 {
     auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
-    uint8_t data[] = {0x55, 0xAA, 0x55, 0xAA};
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
 
+    uint8_t data[] = {0x55, 0xAA, 0x55, 0xAA};
     auto myCallback = []() -> bool {
         return true;
     };
-    auto ret = write->WriteTimeout(static_cast<void*>(data), sizeof(data), myCallback);
-    EXPECT_TRUE(ret == 0);
+    EXPECT_TRUE(write->WriteTimeout(static_cast<void*>(data), sizeof(data), myCallback));
+    EXPECT_FALSE(write->WriteTimeout(static_cast<void*>(data), 0, myCallback));
+    EXPECT_FALSE(write->WriteTimeout(nullptr, 0, myCallback));
 
     uint8_t payload[] = {0x11, 0x22, 0x33, 0x44};
-    ret = write->WriteWithPayloadTimeout(static_cast<void*>(data), sizeof(data),
-                                        static_cast<void*>(payload), sizeof(payload), myCallback);
-    EXPECT_TRUE(ret == 0);
+    EXPECT_TRUE(write->WriteWithPayloadTimeout(static_cast<void*>(data), sizeof(data),
+        static_cast<void*>(payload), sizeof(payload), myCallback));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(static_cast<void*>(data), 0, nullptr, 0, myCallback));
+    EXPECT_FALSE(write->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, myCallback));
+    write->block_ = true;
+    EXPECT_TRUE(write->WriteWithPayloadTimeout(static_cast<void*>(data), sizeof(data),
+        static_cast<void*>(payload), sizeof(payload), myCallback));
+}
+
+/**
+ * @tc.name: NetworkProfilerWriterTest002
+ * @tc.desc: Write data to shared memory through writer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerWriterTest002, TestSize.Level1)
+{
+    uint8_t data[BUFFER_SIZE];
+    RandData(data, BUFFER_SIZE);
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+    long bytes = BUFFER_SIZE;
+
+    EXPECT_TRUE(write->Flush());
+    write->DoStats(bytes);
+    write->Report();
+}
+
+/**
+ * @tc.name: NetworkProfilerWriterTest003
+ * @tc.desc: Write data to shared memory through writer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerWriterTest003, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_TRUE(write->Write((const void*)buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write->Write((const void*)buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(write->Write((const void*)buffer3, sizeof(buffer3)));
+
+    EXPECT_FALSE(write->Write((const void*)buffer3, 0));
+    EXPECT_FALSE(write->Write(nullptr, 0));
+}
+
+/**
+ * @tc.name: NetworkProfilerSockerClientTest004
+ * @tc.desc: test NetworkProfilerSockerClient::NetworkProfilerSockerClientTest004 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSockerClientTest004, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    auto networkProfiler = NetworkProfiler::GetInstance();
+    NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
+    NetworkConfig config;
+    SocketContext ctx;
+    auto ret = client.ProtocolProc(ctx, 0, reinterpret_cast<int8_t*>(&config), sizeof(config));
+    ASSERT_TRUE(ret);
+    client.unixSocketClient_ = std::make_shared<UnixSocketClient>();
+    sleep(2);
+    uint8_t data[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t payload[] = {0x11, 0x22, 0x33, 0x44};
+    ASSERT_FALSE(client.SendNetworkProfilerData(static_cast<void*>(data), sizeof(data),
+        static_cast<void*>(payload), sizeof(payload)));
+}
+
+/**
+ * @tc.name: NetworkProfilerSockerClientTest005
+ * @tc.desc: test NetworkProfilerSockerClient::NetworkProfilerSockerClientTest005 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSockerClientTest005, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    auto networkProfiler = NetworkProfiler::GetInstance();
+    NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
+    ASSERT_FALSE(client.PeerIsConnected());
+    client.unixSocketClient_ = std::make_shared<UnixSocketClient>();
+    ASSERT_TRUE(client.PeerIsConnected());
+    client.Flush();
+
+    NetworkConfig config;
+    SocketContext ctx;
+    auto ret = client.ProtocolProc(ctx, 0, reinterpret_cast<int8_t*>(&config), sizeof(config));
+    ASSERT_TRUE(ret);
+    client.Flush();
+}
+
+/**
+ * @tc.name: NetworkProfilerSockerClientTest006
+ * @tc.desc: test NetworkProfilerSockerClient::NetworkProfilerSockerClientTest006 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSockerClientTest006, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+
+    auto networkProfiler = NetworkProfiler::GetInstance();
+    NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
+    client.unixSocketClient_ = std::make_shared<UnixSocketClient>();
+    ASSERT_FALSE(client.Connect(NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH, nullptr));
 }
 } // namespace
