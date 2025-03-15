@@ -167,6 +167,6 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     SetSelfTokenID(tokenID);
 
     SimplifiedMemConfig config;
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, config), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, 100, config), RET_ERR);
 }
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
