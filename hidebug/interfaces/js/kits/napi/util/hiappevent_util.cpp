@@ -74,35 +74,37 @@ void ApiInvokeRecorder::SetErrorCode(int errorCode)
 
 void ApiInvokeRecorder::InitProcessor()
 {
-    using namespace HiAppEvent;
-    ReportConfig config;
-    config.name = "ha_app_event";
-    config.appId = "com_huawei_hmos_sdk_ocg";
-    config.routeInfo = "AUTO";
-    constexpr int triggerTimeOut = 90;
-    config.triggerCond.timeout = triggerTimeOut;
-    constexpr int triggerRow = 30;
-    config.triggerCond.row = triggerRow;
-    config.eventConfigs.clear();
-    config.eventConfigs.push_back({
-        .domain = "api_diagnostic",
-        .name = "api_exec_end",
-        .isRealTime = false,
-    });
-    config.eventConfigs.push_back({
-        .domain = "api_diagnostic",
-        .name = "api_called_stat",
-        .isRealTime = true,
-    });
-    config.eventConfigs.push_back({
-        .domain = "api_diagnostic",
-        .name = "api_called_stat_cnt",
-        .isRealTime = true,
-    });
-    processId_ = AppEventProcessorMgr::AddProcessor(config);
-    if (processId_ < 0) {
-        HILOG_ERROR(LOG_CORE, "failed to init processor and ret: %{public}" PRId64, processId_);
-    }
+    ffrt::submit([] {
+            using namespace HiAppEvent;
+            ReportConfig config;
+            config.name = "ha_app_event";
+            config.appId = "com_huawei_hmos_sdk_ocg";
+            config.routeInfo = "AUTO";
+            constexpr int triggerTimeOut = 90;
+            config.triggerCond.timeout = triggerTimeOut;
+            constexpr int triggerRow = 30;
+            config.triggerCond.row = triggerRow;
+            config.eventConfigs.clear();
+            config.eventConfigs.push_back({
+                .domain = "api_diagnostic",
+                .name = "api_exec_end",
+                .isRealTime = false,
+            });
+            config.eventConfigs.push_back({
+                .domain = "api_diagnostic",
+                .name = "api_called_stat",
+                .isRealTime = true,
+            });
+            config.eventConfigs.push_back({
+                .domain = "api_diagnostic",
+                .name = "api_called_stat_cnt",
+                .isRealTime = true,
+            });
+            processId_ = AppEventProcessorMgr::AddProcessor(config);
+            if (processId_ < 0) {
+                HILOG_ERROR(LOG_CORE, "failed to init processor and ret: %{public}" PRId64, processId_);
+            }
+        }, {}, {});
 }
 }
 }
