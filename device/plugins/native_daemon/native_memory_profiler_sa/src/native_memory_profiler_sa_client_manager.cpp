@@ -30,6 +30,8 @@ constexpr uint32_t NMD_DURATION = 5;
 constexpr uint32_t NMD_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
 constexpr int SIMP_NMD = 3;
+constexpr int FIVE_MINUTES = 300;
+constexpr int JS_STACK_DEPS = 10;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -214,6 +216,9 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     nConfig->maxGrowthSize_ = config.maxGrowthSize;
     nConfig->sampleInterval_ = config.sampleSize;
     nConfig->shareMemorySize_ = CALL_STACK_SMS;
+    nConfig->statisticsInterval_ = FIVE_MINUTES;
+    nConfig->jsStackReport_ = true;
+    nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
     auto service = GetRemoteService();
     if (service == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Simplified Start GetRemoteService failed");
