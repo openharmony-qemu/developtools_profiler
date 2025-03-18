@@ -158,7 +158,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction001, TestSize.Level1)
 
 /**
  * @tc.name: ffrt plugin
- * @tc.desc: FfrtPofiler CheckConfig Function return true
+ * @tc.desc: FfrtPofiler CheckConfig Function startup_process is exit return false
  * @tc.type: FUNC
  */
 HWTEST_F(FfrtPofilerTest, TestFunction002, TestSize.Level1)
@@ -166,6 +166,34 @@ HWTEST_F(FfrtPofilerTest, TestFunction002, TestSize.Level1)
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));
+    std::string pid_service;
+    RunCommand("pidof render_service", pid_service);
+
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    int32_t pid = 1;
+    config.add_pid(pid);
+    config.add_pid(stoi(pid_service));
+    config.add_pid(ffrtPrfolerExePid_);
+    config.add_startup_process_name("test_name001");
+    config.add_startup_process_name("render_service");
+    config.add_startup_process_name("test_name003");
+    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
+    ffrtProfilerMgr->SetConfig(config);
+    EXPECT_FALSE(ffrtProfilerMgr->CheckConfig());
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc: FfrtPofiler CheckConfig Function startup_process is not exit return true
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction003, TestSize.Level1)
+{
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
     int32_t pid = 1;
@@ -173,7 +201,6 @@ HWTEST_F(FfrtPofilerTest, TestFunction002, TestSize.Level1)
     config.add_pid(ffrtPrfolerExePid_);
     config.add_startup_process_name("test_name001");
     config.add_startup_process_name("test_name002");
-    config.add_startup_process_name("test_name003");
     config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
     ffrtProfilerMgr->SetConfig(config);
     EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
@@ -181,10 +208,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction002, TestSize.Level1)
 
 /**
  * @tc.name: ffrt plugin
- * @tc.desc: FfrtPofiler CheckConfig Function return flase
+ * @tc.desc: FfrtPofiler CheckConfig Function startup_process_name is not exit return flase
  * @tc.type: FUNC
  */
-HWTEST_F(FfrtPofilerTest, TestFunction003, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction004, TestSize.Level1)
 {
     StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
@@ -193,30 +220,187 @@ HWTEST_F(FfrtPofilerTest, TestFunction003, TestSize.Level1)
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
     int32_t pid = 1;
+
+    std::string cont;
+    RunCommand("pidof render_service", cont);
+    auto pid_service = stoi(cont);
+
     config.add_pid(pid);
-    config.add_pid(ffrtPrfolerExePid_);
+    config.add_pid(pid_service);
+    config.add_startup_process_name("test_name");
     config.add_startup_process_name("test_name001");
-    config.add_startup_process_name("test_name002");
-    config.add_restart_process_name("test_restart_name001");
-    config.add_restart_process_name("test_restart_name002");
+    config.add_restart_process_name("test_name1");
+    config.add_restart_process_name("render_service2");
     config.set_clock_id(FfrtProfilerConfig::MONOTONIC_COARSE);
     ffrtProfilerMgr->SetConfig(config);
     EXPECT_FALSE(ffrtProfilerMgr->CheckConfig());
 }
 
-// /**
-//  * @tc.name: ffrt plugin
-//  * @tc.desc: FfrtPofiler StartFfrtProfiler Function Test return false
-//  * @tc.type: FUNC
-//  */
-HWTEST_F(FfrtPofilerTest, TestFunction004, TestSize.Level1)
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc: FfrtPofiler CheckConfig Function startup_process_name is exit return flase
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction005, TestSize.Level1)
+{
+    StartProcess(FFRT_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    int32_t pid = 1;
+
+    std::string cont;
+    RunCommand("pidof render_service", cont);
+    auto pid_service = stoi(cont);
+
+    config.add_pid(pid);
+    config.add_pid(pid_service);
+    config.add_startup_process_name("test_name");
+    config.add_startup_process_name("test_name001");
+    config.add_restart_process_name("render_service");
+    config.add_restart_process_name("test_name2");
+    config.set_clock_id(FfrtProfilerConfig::MONOTONIC_COARSE);
+    ffrtProfilerMgr->SetConfig(config);
+    EXPECT_FALSE(ffrtProfilerMgr->CheckConfig());
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc: FfrtPofiler StartFfrtProfiler Function Test return false
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction006, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+
+    FfrtProfilerConfig config;
+    config.add_startup_process_name("test_name001");
+    config.add_startup_process_name("test_name002");
+    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
     ffrtProfilerMgr->Init();
     EXPECT_FALSE(ffrtProfilerMgr->StartFfrtProfiler());
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler StartFfrtProfiler Function set smb_pages Test return true
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction007, TestSize.Level1)
+{
+    // StartProcess(FFRT_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    int32_t pid = 1;
+    config.add_pid(pid);
+    config.add_pid(ffrtPrfolerExePid_);
+    config.add_startup_process_name("test_name001");
+    config.add_startup_process_name("test_name002");
+    config.set_clock_id(FfrtProfilerConfig::MONOTONIC_COARSE);
+    config.set_smb_pages(4096);
+    ffrtProfilerMgr->SetConfig(config);
+    ffrtProfilerMgr->Init();
+    EXPECT_TRUE(ffrtProfilerMgr->StartFfrtProfiler());
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler GetFfrtProfilerCtx Function Test
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction008, TestSize.Level1)
+{
+    StartProcess(FFRT_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    int32_t pid = 1;
+    std::string pid_str;
+    RunCommand("pidof render_service", pid_str);
+    auto pid_service = stoi(pid_str);
+    config.add_pid(pid_service);
+    config.add_startup_process_name("render_service");
+    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
+    ffrtProfilerMgr->SetConfig(config);
+    ffrtProfilerMgr->Init();
+    ffrtProfilerMgr->CheckConfig();
+    ffrtProfilerMgr->GetFfrtProfilerCtx(pid, "test_name005");
+    EXPECT_TRUE(RunCommand(cmd, ret));
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler CreateWriter Function Test isProtobufSerialize is false return true
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction009, TestSize.Level1)
+{
+    StartProcess(FFRT_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    std::string pid_str;
+    RunCommand("pidof render_service", pid_str);
+    auto pid_service = stoi(pid_str);
+    config.add_pid(pid_service);
+    config.add_startup_process_name("render_service");
+    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
+    ffrtProfilerMgr->SetConfig(config);
+    ffrtProfilerMgr->Init();
+    ffrtProfilerMgr->CheckConfig();
+    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, false));
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler CreateWriter Function Test isProtobufSerialize is true return true
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction010, TestSize.Level1)
+{
+    StartProcess(FFRT_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    std::string pid_str;
+    RunCommand("pidof render_service", pid_str);
+    auto pid_service = stoi(pid_str);
+    config.add_pid(pid_service);
+    config.add_startup_process_name("render_service");
+    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
+    ffrtProfilerMgr->SetConfig(config);
+    ffrtProfilerMgr->Init();
+    ffrtProfilerMgr->CheckConfig();
+    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, true));
+}
+
+// /**
+//  * @tc.name: ffrt plugin
+//  * @tc.desc:  FfrtPofiler RegisterAgentPlugin Function Test return false
+//  * @tc.type: FUNC
+//  */
+HWTEST_F(FfrtPofilerTest, TestFunction011, TestSize.Level1)
+{
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    ASSERT_TRUE(ffrtProfilerMgr != nullptr);
+    std::shared_ptr<CommandPoller> commandPoller = std::make_shared<CommandPoller>(ffrtProfilerMgr);
+    ASSERT_TRUE(commandPoller != nullptr);
+    EXPECT_FALSE(commandPoller->OnConnect());
+    ffrtProfilerMgr->SetCommandPoller(commandPoller);
+    EXPECT_FALSE(ffrtProfilerMgr->RegisterAgentPlugin("ffrt-profiler"));
 }
 
 // /**
@@ -224,7 +408,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction004, TestSize.Level1)
 //  * @tc.desc: FfrtPofiler LoadPlugin Function Test return true
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction005, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction012, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -239,7 +423,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction005, TestSize.Level1)
 //  * @tc.desc: FfrtPofiler UnloadPlugin Function Test return true
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction006, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction013, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -254,7 +438,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction006, TestSize.Level1)
 //  * @tc.desc: FfrtPofiler UnloadPlugin Function Test return true
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction007, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction014, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -268,7 +452,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction007, TestSize.Level1)
 //  * @tc.desc: FfrtPofiler UnloadPlugin Function Test return true
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction008, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction015, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -298,34 +482,10 @@ HWTEST_F(FfrtPofilerTest, TestSystemData, TestSize.Level1)
 
 // /**
 //  * @tc.name: ffrt plugin
-//  * @tc.desc:  FfrtPofiler UnloadPlugin Function Test return false
-//  * @tc.type: FUNC
-//  */
-HWTEST_F(FfrtPofilerTest, TestFunction009, TestSize.Level1)
-{
-    StartProcess(FFRT_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
-    std::string ret;
-    EXPECT_TRUE(RunCommand(cmd, ret));
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    FfrtProfilerConfig config;
-    int32_t pid = 1;
-    config.add_pid(pid);
-    config.add_pid(ffrtPrfolerExePid_);
-    config.add_startup_process_name("test_name001");
-    config.add_startup_process_name("test_name002");
-    config.set_clock_id(FfrtProfilerConfig::MONOTONIC_COARSE);
-    ffrtProfilerMgr->SetConfig(config);
-    ffrtProfilerMgr->Init();
-    EXPECT_FALSE(ffrtProfilerMgr->StartFfrtProfiler());
-}
-
-// /**
-//  * @tc.name: ffrt plugin
 //  * @tc.desc:  FfrtPofiler CheckConfig Function Test return true
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction010, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction016, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
@@ -348,7 +508,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction010, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler StopFfrtProfiler Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction011, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction017, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
@@ -368,7 +528,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction011, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler ResetWriter Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction014, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction018, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
@@ -385,7 +545,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction014, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler ReportPluginBasicData Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction015, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction019, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::vector<uint32_t> pluginIds = {1, 2, 3};
@@ -397,7 +557,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction015, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler StopPluginSession Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction016, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction020, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::vector<uint32_t> pluginIds = {1, 2, 3};
@@ -409,7 +569,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction016, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler DestroyPluginSession Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction017, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction021, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::vector<uint32_t> pluginIds = {1, 2, 3};
@@ -421,7 +581,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction017, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler CreatePluginSession Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction018, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
 {
     const uint8_t configData[] = {0x30, 0x01, 0x38, 0x01, 0x42, 0x01, 0x01};
     ProfilerPluginConfig  ppc;
@@ -441,7 +601,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction018, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler GetProcessName Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction019, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
 {
     StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
@@ -454,7 +614,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction019, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler SplitString Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction020, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction024, TestSize.Level1)
 {
     StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
@@ -470,7 +630,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction020, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler SplitString Function test string is empty
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction021, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction025, TestSize.Level1)
 {
     StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
@@ -486,7 +646,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction021, TestSize.Level1)
  * @tc.desc:  FfrtPofiler ProtocolProc Function Test
  * @tc.type: FUNC
  */
-HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction026, TestSize.Level1)
 {
     uint64_t config = FILE_SIZE;
     config <<= MOBILE_BIT;
@@ -506,7 +666,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
 //  * @tc.desc:  FfrtPofiler ProtocolProc Function Test
 //  * @tc.type: FUNC
 //  */
-HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction027, TestSize.Level1)
 {
     uint64_t config = FILE_SIZE;
     config <<= MOBILE_BIT;
@@ -524,10 +684,30 @@ HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
 
 /**
  * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler ProtocolProc Function Test
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction028, TestSize.Level1)
+{
+    uint64_t config = FILE_SIZE;
+    config <<= MOBILE_BIT;
+    config |= SMB_SIZE;
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    std::shared_ptr<FfrtProfilerSocketService> socketService_ =
+        std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
+
+    SocketContext socketContext;
+    auto ptr = reinterpret_cast<const int8_t*>(&config);
+    auto size = sizeof(int);
+    ASSERT_FALSE(socketService_->ProtocolProc(socketContext, 0, ptr, size));
+}
+
+/**
+ * @tc.name: ffrt plugin
  * @tc.desc:  FfrtPofiler StartService Function Test
  * @tc.type: FUNC
  */
-HWTEST_F(FfrtPofilerTest, TestFunction024, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction029, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::shared_ptr<FfrtProfilerSocketService> socketService_ =
@@ -540,17 +720,40 @@ HWTEST_F(FfrtPofilerTest, TestFunction024, TestSize.Level1)
  * @tc.desc:  FfrtPofiler FfrtProfilerManager SerializeData Function Test
  * @tc.type: FUNC
  */
-HWTEST_F(FfrtPofilerTest, TestFunction025, TestSize.Level1)
+HWTEST_F(FfrtPofilerTest, TestFunction030, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
+    const int8_t data[] = {1, 2, 3};
+    handle->SerializeData(data, FILE_SIZE);
     FfrtProfilerConfig config;
     int32_t pid = -1;
     config.add_pid(pid);
     config.add_startup_process_name("test_name002");
     config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
-    const int8_t data[] = {1, 2, 3};
     ffrtProfilerMgr->SetConfig(config);
-    handle->SerializeData(data, FILE_SIZE);
+    EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
+}
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler FfrtProfilerManager SerializeData Function Test
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction031, TestSize.Level1)
+{
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
+    const int8_t data[] = {-1, 0, 1, 2, 3, 4 , 5};
+    handle->SerializeData(data, MOBILE_BIT);
+    FfrtProfilerConfig config;
+    int32_t pid = -1;
+    config.add_pid(pid);
+    config.add_startup_process_name("test_name003");
+    config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
+    ffrtProfilerMgr->SetConfig(config);
+    ffrtProfilerMgr->Init();
+    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, false));
+    EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
 }
 }
