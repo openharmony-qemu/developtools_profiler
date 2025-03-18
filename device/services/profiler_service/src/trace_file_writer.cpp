@@ -515,7 +515,7 @@ bool TraceFileWriter::RemapFile()
     }
 
     size_t remapPos = fileWriteLength_ & ~(pageSize_ - 1);
-    fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, remapPos);
+    fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, 0);
     if (fileMapAddr_ == MAP_FAILED) {
         PROFILER_LOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos,
                            strerror(errno));
