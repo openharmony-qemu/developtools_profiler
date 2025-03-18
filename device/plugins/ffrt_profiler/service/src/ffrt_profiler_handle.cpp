@@ -67,10 +67,6 @@ void FfrtProfilerHandle::SerializeData(const int8_t data[], uint32_t size)
 template <typename T>
 void FfrtProfilerHandle::SerializeDataImpl(T& protoData, const int8_t data[], uint32_t size)
 {
-    if (size < sizeof(FfrtResultBase)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s the size=%d is too small", __FUNCTION__, size);
-        return;
-    }
     FfrtResultBase* baseData = reinterpret_cast<FfrtResultBase*>(const_cast<int8_t*>(data));
     if (baseData->type == static_cast<int32_t>(EventType::INVALID)) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s type is invalid", __FUNCTION__);

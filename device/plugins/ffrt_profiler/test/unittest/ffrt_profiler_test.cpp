@@ -293,7 +293,6 @@ HWTEST_F(FfrtPofilerTest, TestFunction006, TestSize.Level1)
  */
 HWTEST_F(FfrtPofilerTest, TestFunction007, TestSize.Level1)
 {
-    // StartProcess(FFRT_TEST_EXE, "100");
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));
@@ -744,7 +743,7 @@ HWTEST_F(FfrtPofilerTest, TestFunction031, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {-1, 0, 1, 2, 3, 4 , 5};
+    const int8_t data[] = {-1, 0, 1, 2, 3, 4, 5};
     handle->SerializeData(data, MOBILE_BIT);
     FfrtProfilerConfig config;
     int32_t pid = -1;
