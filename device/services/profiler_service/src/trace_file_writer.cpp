@@ -538,7 +538,7 @@ bool TraceFileWriter::RemapFile()
 
 bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
 {
-    while ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
+    if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
         if (!RemapFile()) {
             return false;
         }
