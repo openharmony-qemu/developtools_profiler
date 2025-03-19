@@ -510,12 +510,19 @@ bool TraceFileWriter::RemapFile()
     // file size increased by DEFULT_PAGES * pageSize_(32M)
     size_t newLength = fileLength_ + DEFULT_PAGES * pageSize_;
     if (fallocate(fd_, 0, fileLength_, DEFULT_PAGES * pageSize_) != 0) {
+        fileMapAddr_ = MAP_FAILED;
         PROFILER_LOG_ERROR(LOG_CORE, "fallocate file(%zu) failed, error: %s", newLength, strerror(errno));
         return false;
     }
 
     size_t remapPos = fileWriteLength_ & ~(pageSize_ - 1);
-    fileMapAddr_ = mmap(nullptr, newLength, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE, fd_, 0);
+    if (newLength <= remapPos) {
+        fileMapAddr_ = MAP_FAILED;
+        PROFILER_LOG_ERROR(LOG_CORE, "RemapFile failed, newLength is less than remapPos");
+        return false;
+    }
+    fileMapAddr_ = mmap(nullptr, newLength - remapPos, PROT_WRITE | PROT_READ, MAP_SHARED | MAP_POPULATE,
+                        fd_, remapPos);
     if (fileMapAddr_ == MAP_FAILED) {
         PROFILER_LOG_ERROR(LOG_CORE, "remap(%zu:%zu) data file failed, error: %s", newLength, remapPos,
                            strerror(errno));
@@ -530,7 +537,7 @@ bool TraceFileWriter::RemapFile()
 
 bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
 {
-    if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
+    while ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) > fileLength_) {
         if (!RemapFile()) {
             return false;
         }
