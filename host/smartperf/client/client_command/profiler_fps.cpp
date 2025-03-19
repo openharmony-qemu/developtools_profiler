@@ -544,7 +544,8 @@ std::string ProfilerFPS::GetGameLayer()
             }
             nodeId = nodeId >> kShiftAmount;
             LOGD("ProfilerFPS::nodeId: (%d)", nodeId);
-            GetLayerName(gameLayer, nodeId, line, endPos);
+            gameLayer = GetLayerName(gameLayer, nodeId, line, endPos);
+            break;
         }
     }
     if (pclose(fd) == -1) {
