@@ -371,6 +371,11 @@ void SpLog(SpLogLevel logLevel, bool isWriteLog, const char *fmt, ...)
         SpLogOut(logLevel, "SP log format string is NULL.");
         return;
     }
+    size_t fmtLength = strlen(fmt);
+    if (fmtLength == 0) {
+        SpLogOut(logLevel, "SP log format string is empty.");
+        return;
+    }
     char logBuf[LOG_MAX_LEN] = {0};
     int32_t ret = 0;
     va_list arg;
