@@ -121,6 +121,7 @@ private:
     void* fileMapAddr_ = MAP_FAILED;
     size_t fileLength_ = 0;
     uint32_t fileWriteLength_ = 0;
+    uint32_t mmapFileLength_ = 0;
     uint32_t messageWriteOffset_ = 0;
     size_t pageSize_ = 0;
     size_t mapOffset_ = 0;

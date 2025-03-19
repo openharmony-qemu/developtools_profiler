@@ -77,6 +77,7 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
         PROFILER_LOG_ERROR(LOG_CORE, "mmap file(%d) failed, error: %s", fd_, strerror(errno));
         return;
     }
+    mmapFileLength_ = fileLength_;
 }
 
 TraceFileWriter::TraceFileWriter(const std::string& path, bool splitFile, uint32_t splitFileMaxSizeMb,
@@ -100,7 +101,7 @@ TraceFileWriter::~TraceFileWriter()
         stream_.close();
     }
     if (fileMapAddr_ != MAP_FAILED) {
-        munmap(fileMapAddr_, fileLength_);
+        munmap(fileMapAddr_, mmapFileLength_);
     }
 }
 
@@ -441,7 +442,7 @@ bool TraceFileWriter::UpdateSaFileHeader()
     if (lseek(fd_, offsetCur, SEEK_SET) == -1) {
         return false;
     }
-    if ((msync(fileMapAddr_, fileLength_, MS_SYNC)) == -1) {
+    if ((msync(fileMapAddr_, mmapFileLength_, MS_SYNC)) == -1) {
         PROFILER_LOG_INFO(LOG_CORE, "msync failed, error: %s", strerror(errno));
     }
     return true;
@@ -502,7 +503,7 @@ void TraceFileWriter::LogDiskUsage()
 bool TraceFileWriter::RemapFile()
 {
     CHECK_TRUE(fileMapAddr_ != MAP_FAILED, false, "RemapFile() fileMapAddr not mapped!");
-    if (munmap(fileMapAddr_, fileLength_) != 0) {
+    if (munmap(fileMapAddr_, mmapFileLength_) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "munmap file(%zu) failed, error: %s", fileLength_, strerror(errno));
         return false;
     }
@@ -528,7 +529,7 @@ bool TraceFileWriter::RemapFile()
                            strerror(errno));
         return false;
     }
-
+    mmapFileLength_ = newLength - remapPos;
     mapOffset_ = fileWriteLength_ - remapPos;
     fileLength_ = newLength;
     PROFILER_LOG_INFO(LOG_CORE, "remap(%zu:%zu) data file(%zu) sucess", remapPos, mapOffset_, fileLength_);
