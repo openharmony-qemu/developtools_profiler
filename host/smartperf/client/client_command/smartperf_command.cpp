@@ -56,6 +56,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
                 WLOGI("############################# Found '-editorServer' argument in argv");
+                SPUtils::KillStartDaemon();
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);

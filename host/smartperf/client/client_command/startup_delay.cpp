@@ -249,7 +249,7 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string
     return resultProcId;
 }
 
-std::vector<std::string> StartUpDelay::GetPidParams()
+std::vector<std::string> StartUpDelay::GetPidParams() const
 {
     return g_pidParams;
 }
