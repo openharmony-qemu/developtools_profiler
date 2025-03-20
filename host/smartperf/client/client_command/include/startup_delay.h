@@ -29,7 +29,8 @@ public:
     bool GetSpClear() const;
     void ClearOldServer() const;
     std::string ExecuteCommand(const std::vector<const char*> &args) const;
-    std::vector<std::string> GetPidParams() const;
+    std::vector<std::string> GetPidParams();
+    void KillTestSpdaemon(const std::string &line, const std::string &curPid) const;
 };
 }
 }

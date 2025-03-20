@@ -169,6 +169,17 @@ static void RecordCapacity()
     outFile.close();
 }
 
+static void KillStartDaemon()
+{
+    std::string pidCmd = "ps -ef | grep SP_daemon";
+    std::string cmdResult = "";
+    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, cmdResult);
+    if (cmdResult.find("testserver") != std::string::npos) {
+        int32_t command = 2;
+        OHOS::SmartPerf::SPUtils::KillTestsaDaemon(command);
+    }
+}
+
 static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
 {
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
@@ -178,6 +189,7 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
+        KillStartDaemon();
         std::string startStr = "";
         std::string endStr = "";
         std::string pidCmd = OHOS::SmartPerf::CMD_COMMAND_MAP.at(OHOS::SmartPerf::CmdCommand::PIDOF_SP);
