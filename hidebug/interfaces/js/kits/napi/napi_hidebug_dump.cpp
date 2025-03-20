@@ -324,6 +324,7 @@ void ResolveDumpJsRawHeapData(napi_env env, napi_deferred deferred, const std::s
             HILOG_ERROR(LOG_CORE, "failed to report dump success event.");
         }
     }
+    g_dumpingCount.fetch_sub(1);
     napi_value ret;
     napi_create_string_utf8(env, fileName.c_str(), fileName.size(), &ret);
     napi_resolve_deferred(env, deferred, ret);
@@ -354,11 +355,11 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
             napi_value err = ResolveErrorCode(env, TransferRetCodeToErrorCode(retCode));
             if (err != nullptr) {
                 remove(fileName.c_str());
+                g_dumpingCount.fetch_sub(1);
                 napi_reject_deferred(env, deferred, err);
             } else {
                 ResolveDumpJsRawHeapData(env, deferred, fileName);
             }
-            g_dumpingCount.fetch_sub(1);
         }, napi_eprio_high);
     });
     if (fd >= 0) {
