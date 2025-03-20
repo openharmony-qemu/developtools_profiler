@@ -28,6 +28,7 @@
         "ability_runtime",
         "ability_base",
         "access_token",
+        "arkxtest",
         "bounds_checking_function",
         "bundle_framework",
         "common_event_service",

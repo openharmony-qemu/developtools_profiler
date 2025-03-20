@@ -80,6 +80,7 @@ ohos_executable("SP_daemon") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
+    "ability_base:want",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
@@ -93,5 +94,9 @@ ohos_executable("SP_daemon") {
     "HI_LOG_ENABLE",
     "LOG_DOMAIN = 0xD004100",
   ]
+  if (arkxtest_able) {
+    external_deps += [ "arkxtest:test_server_client" ]
+    defines += [ "ARKTEST_ENABLE" ]
+  }
 }
 ## Build so }}}

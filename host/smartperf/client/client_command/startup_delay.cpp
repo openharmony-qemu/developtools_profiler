@@ -123,20 +123,19 @@ bool StartUpDelay::GetSpTcp() const
 
 bool StartUpDelay::GetSpClear() const
 {
-    std::string resultPid;
-    std::string str;
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
-    SPUtils::LoadCmd("pidof SP_daemon", resultPid);
-    std::string token;
+    std::string cmd = "ps -ef | grep -v grep | grep SP_daemon";
     std::string curPid = std::to_string(getpid());
-    std::stringstream ss(resultPid);
-    std::string killCmd = CMD_COMMAND_MAP.at(CmdCommand::KILL_CMD);
-    while (ss >> token) {
-        if (token != curPid) {
-            SPUtils::LoadCmd("kill " + token, str);
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return false;
+    }
+    char buf[4096] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        if (line.find("testserver") == std::string::npos) {
+            KillTestSpdaemon(line, curPid);
         }
     }
-
     return false;
 }
 
@@ -253,6 +252,28 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string
 std::vector<std::string> StartUpDelay::GetPidParams() const
 {
     return g_pidParams;
+}
+
+void StartUpDelay::KillTestSpdaemon(const std::string &line, const std::string &curPid) const
+{
+    std::istringstream iss(line);
+    std::string cmd = "";
+    std::string field;
+    std::string cmdResult;
+    std::string pid = "-1";
+    int count = 0;
+    int first = 1;
+    while (iss >> field) {
+        if (count == first) {
+            pid = field;
+            break;
+        }
+        count++;
+    }
+    if (pid != curPid) {
+        cmd = "kill " + pid;
+        SPUtils::LoadCmd(cmd, cmdResult);
+    }
 }
 }
 }

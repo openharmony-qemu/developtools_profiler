@@ -92,6 +92,7 @@ ohos_unittest("sp_daemon_ut") {
     "//third_party/libpng:libpng",
   ]
   external_deps = [
+    "ability_base:want",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
@@ -106,6 +107,11 @@ ohos_unittest("sp_daemon_ut") {
 
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
+
+  if (arkxtest_able) {
+    external_deps += [ "arkxtest:test_server_client" ]
+    defines = [ "ARKTEST_ENABLE" ]
+  }
 }
 
 group("unittest") {

@@ -182,6 +182,7 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
+        OHOS::SmartPerf::SPUtils::KillStartDaemon();
         std::string startStr = "";
         std::string endStr = "";
         std::string pidCmd = OHOS::SmartPerf::CMD_COMMAND_MAP.at(OHOS::SmartPerf::CmdCommand::PIDOF_SP);

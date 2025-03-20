@@ -30,6 +30,7 @@ public:
     void ClearOldServer() const;
     std::string ExecuteCommand(const std::vector<const char*> &args) const;
     std::vector<std::string> GetPidParams() const;
+    void KillTestSpdaemon(const std::string &line, const std::string &curPid) const;
 };
 }
 }
