@@ -88,6 +88,7 @@ public:
     const size_t oneParam = 1;
     const size_t twoParam = 2;
     const size_t threeParamMore = 3;
+    const size_t serverCommandLength = 14;  // -deviceServer: 与 -editorServer: 的长度
     explicit SmartPerfCommand(std::vector<std::string> argv);
     ~SmartPerfCommand() {};
     static void InitSomething();
@@ -101,6 +102,7 @@ public:
     void CreateSocketThread() const;
     void SaveGpuCounter() const;
     void StartGpuCounterCollect(std::string config, bool &flag) const;
+    void DeviceServer() const;
     // 采集次数
     int num = 0;
     // 包名

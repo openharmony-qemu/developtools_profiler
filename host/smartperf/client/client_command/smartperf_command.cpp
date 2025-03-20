@@ -37,15 +37,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
-        EnableWriteLogAndDeleteOldLogFiles();
-        OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpTcp();
-        std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
-        std::string result = "";
-        SPUtils::LoadCmd(cmdStr + pidStr, result);
-        daemon(0, 0);
-        CreateSocketThread();
+        DeviceServer();
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -60,6 +52,10 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 const size_t tokenStartPosition = 14;
                 std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
+            } else if (argv[1].find("-deviceServer") != std::string::npos) {
+                WLOGI("############################# Found '-deviceServer' argument in argv");
+                std::string token = argv[1].substr(serverCommandLength, argv[1].length() - serverCommandLength);
+                HelpCommand(CommandHelp::DEVICESERVER, token);
             }
             ++iterator;
         }
@@ -77,6 +73,18 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
         }
     }
     LOGD("SmartPerfCommand::SmartPerfCommand complete");
+}
+void SmartPerfCommand::DeviceServer() const
+{
+    EnableWriteLogAndDeleteOldLogFiles();
+    OHOS::SmartPerf::StartUpDelay sd;
+    sd.GetSpTcp();
+    std::string pidStr = sd.GetPidByPkg("SP_daemon");
+    std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
+    std::string result = "";
+    SPUtils::LoadCmd(cmdStr + pidStr, result);
+    daemon(0, 0);
+    CreateSocketThread();
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
@@ -105,17 +113,28 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);
         } else {
+            // Editor 拉起 daemon 测试
             EnableWriteLogAndDeleteOldLogFiles();
             if (token.empty()) {
                 WLOGE("Error: token is empty when setting TCP token.");
                 return;
-            } else {
-                WLOGI("############################# Setting TCP token...");
-                SPTask::GetInstance().SetTcpToken(token);
-                WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
             }
+            WLOGI("############################# Setting TCP token...");
+            SpThreadSocket::GetInstance().SetTcpToken(token);
+            WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
         }
         CreateSocketThread();
+    }
+    if (type == CommandHelp::DEVICESERVER) {
+        // device 拉起 daemon 测试
+        if (token.empty()) {
+            WLOGE("Error: token is empty when setting UDP token.");
+            return;
+        }
+        SpThreadSocket::GetInstance().SetUdpToken(token);
+        WLOGI("############################# Setting UDP token...");
+        DeviceServer();
+        WLOGI("############################# DeviceServer Socket Create Start, Ready to Start Collector...");
     }
 }
 
