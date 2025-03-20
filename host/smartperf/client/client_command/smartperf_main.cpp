@@ -60,6 +60,7 @@ static void KeyInsert(std::set<std::string> &keysMap)
     keysMap.insert("deviceinfo");
     keysMap.insert("ohtestfps");
     keysMap.insert("editorServer");
+    keysMap.insert("deviceServer");
     keysMap.insert("recordcapacity");
 }
 static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorInfo)
@@ -85,7 +86,10 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
         return false;
     }
     KeyInsert(keys);
-    if (argv[1].find("editorServer:") != std::string::npos) {
+    // editor 与 device 的拉起命令与 token 一起加入白名单
+    if (argv[1].find("editorServer:") != std::string::npos ||
+        argv[1].find("deviceServer:") != std::string::npos
+    ) {
         keys.insert(argv[1].substr(1).c_str());
     }
     for (auto a : OHOS::SmartPerf::COMMAND_MAP) {

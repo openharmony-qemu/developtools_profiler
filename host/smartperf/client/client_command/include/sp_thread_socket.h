@@ -43,7 +43,8 @@ public:
     std::string MapToString(std::map<std::string, std::string> dataMap) const;
     std::string SplitMsg(const std::string &recvBuf) const;
     void Process(ProtoType type);
-    SocketErrorType CheckToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const;
+    SocketErrorType CheckTcpToken(std::string recvStr, SpServerSocket &spSocket, std::string recvStrNoToken) const;
+    SocketErrorType CheckUdpToken(std::string recvStr) const;
     void TypeTcp(SpServerSocket &spSocket);
     void InitRecv(std::string recvStr, SpServerSocket &spSocket, SocketConnectType type) const;
     void StartRecv(SpServerSocket &spSocket);
@@ -71,10 +72,16 @@ public:
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
+    void SetTcpToken(std::string token);
+    std::string GetTcpToken() const;
+    void SetUdpToken(std::string token);
+    std::string GetUdpToken() const;
 
 private:
     bool flagRunning = false;
     bool socketConnect = true;
+    std::string tcpToken = "";      // Editor 拉起测试时校验
+    std::string udpToken = "";      // device 拉起测试时校验
 };
 }
 }

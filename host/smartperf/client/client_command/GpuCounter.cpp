@@ -44,10 +44,10 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            typedef GameServicePlugin *(*GetServicePlugin)();
             GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
             if (!servicePlugin) {
-                WLOGE("GpuCounterPlugin Error loading symbol");
+                WLOGE("GameServicePlugin Error loading symbol");
                 return;
             }
 
@@ -160,10 +160,10 @@ namespace OHOS {
                 return;
             }
 
-            typedef GpuCounterPlugin *(*GetServicePlugin)();
+            typedef GameServicePlugin *(*GetServicePlugin)();
             GetServicePlugin servicePlugin = (GetServicePlugin)dlsym(handle, createPlugin.c_str());
             if (!servicePlugin) {
-                WLOGE("GpuCounterPlugin Error loading symbol");
+                WLOGE("GameServicePlugin Error loading symbol");
                 return;
             }
 

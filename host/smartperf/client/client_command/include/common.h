@@ -117,6 +117,7 @@ enum class CommandHelp {
     CLEAR,
     SERVER,
     EDITORSERVER,
+    DEVICESERVER,
 };
 
 const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
@@ -189,6 +190,7 @@ const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::CLEAR, std::string("-clear") },
     { CommandHelp::SERVER, std::string("-server") },
     { CommandHelp::EDITORSERVER, std::string("-editorServer") },
+    { CommandHelp::DEVICESERVER, std::string("-deviceServer") },
 };
 
 enum class TraceStatus {
