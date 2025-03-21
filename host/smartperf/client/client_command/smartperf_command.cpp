@@ -37,6 +37,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        SpThreadSocket::GetInstance().SetNeedUdpToken(false);
         DeviceServer();
     }
     if (argv.size() == twoParam) {

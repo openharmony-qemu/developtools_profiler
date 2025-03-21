@@ -76,12 +76,14 @@ public:
     std::string GetTcpToken() const;
     void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
+    void SetNeedUdpToken(bool isNeed);
 
 private:
     bool flagRunning = false;
     bool socketConnect = true;
     std::string tcpToken = "";      // Editor 拉起测试时校验
     std::string udpToken = "";      // device 拉起测试时校验
+    bool isNeedUdpToken = true;     // 是否需要校验 udp token
 };
 }
 }
