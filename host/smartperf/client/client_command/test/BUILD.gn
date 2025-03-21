@@ -22,6 +22,7 @@ config("module_private_config") {
 ohos_unittest("sp_daemon_ut") {
   module_out_path = module_output_path
   sources = [
+    "../AI_schedule.cpp",
     "../ByTrace.cpp",
     "../CPU.cpp",
     "../Capture.cpp",
