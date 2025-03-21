@@ -314,9 +314,6 @@ void* ohos_release_on_end(void*)
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
-    pthread_key_delete(g_disableHookFlag);
-    pthread_key_delete(g_hookTid);
-    pthread_key_delete(g_updateThreadNameCount);
     g_ClientConfig.Reset();
     return nullptr;
 }
