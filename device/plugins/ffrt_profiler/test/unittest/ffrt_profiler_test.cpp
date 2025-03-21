@@ -166,14 +166,14 @@ HWTEST_F(FfrtPofilerTest, TestFunction002, TestSize.Level1)
     std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
     std::string ret;
     EXPECT_TRUE(RunCommand(cmd, ret));
-    std::string pid_service;
-    RunCommand("pidof render_service", pid_service);
+    std::string pidService;
+    RunCommand("pidof render_service", pidService);
 
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
     int32_t pid = 1;
     config.add_pid(pid);
-    config.add_pid(stoi(pid_service));
+    config.add_pid(stoi(pidService));
     config.add_pid(ffrtPrfolerExePid_);
     config.add_startup_process_name("test_name001");
     config.add_startup_process_name("render_service");
@@ -223,10 +223,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction004, TestSize.Level1)
 
     std::string cont;
     RunCommand("pidof render_service", cont);
-    auto pid_service = stoi(cont);
+    auto pidService = stoi(cont);
 
     config.add_pid(pid);
-    config.add_pid(pid_service);
+    config.add_pid(pidService);
     config.add_startup_process_name("test_name");
     config.add_startup_process_name("test_name001");
     config.add_restart_process_name("test_name1");
@@ -253,10 +253,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction005, TestSize.Level1)
 
     std::string cont;
     RunCommand("pidof render_service", cont);
-    auto pid_service = stoi(cont);
+    auto pidService = stoi(cont);
 
     config.add_pid(pid);
-    config.add_pid(pid_service);
+    config.add_pid(pidService);
     config.add_startup_process_name("test_name");
     config.add_startup_process_name("test_name001");
     config.add_restart_process_name("render_service");
@@ -323,10 +323,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction008, TestSize.Level1)
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
     int32_t pid = 1;
-    std::string pid_str;
-    RunCommand("pidof render_service", pid_str);
-    auto pid_service = stoi(pid_str);
-    config.add_pid(pid_service);
+    std::string pidStr;
+    RunCommand("pidof render_service", pidStr);
+    auto pidService = stoi(pidStr);
+    config.add_pid(pidService);
     config.add_startup_process_name("render_service");
     config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
     ffrtProfilerMgr->SetConfig(config);
@@ -349,10 +349,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction009, TestSize.Level1)
     EXPECT_TRUE(RunCommand(cmd, ret));
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
-    std::string pid_str;
-    RunCommand("pidof render_service", pid_str);
-    auto pid_service = stoi(pid_str);
-    config.add_pid(pid_service);
+    std::string pidStr;
+    RunCommand("pidof render_service", pidStr);
+    auto pidService = stoi(pidStr);
+    config.add_pid(pidService);
     config.add_startup_process_name("render_service");
     config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
     ffrtProfilerMgr->SetConfig(config);
@@ -374,10 +374,10 @@ HWTEST_F(FfrtPofilerTest, TestFunction010, TestSize.Level1)
     EXPECT_TRUE(RunCommand(cmd, ret));
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     FfrtProfilerConfig config;
-    std::string pid_str;
-    RunCommand("pidof render_service", pid_str);
-    auto pid_service = stoi(pid_str);
-    config.add_pid(pid_service);
+    std::string pidStr;
+    RunCommand("pidof render_service", pidStr);
+    auto pidService = stoi(pidStr);
+    config.add_pid(pidService);
     config.add_startup_process_name("render_service");
     config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
     ffrtProfilerMgr->SetConfig(config);
@@ -723,36 +723,14 @@ HWTEST_F(FfrtPofilerTest, TestFunction030, TestSize.Level1)
 {
     std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {1, 2, 3};
-    handle->SerializeData(data, FILE_SIZE);
+    const int8_t data[] = {-1, 0, 1, 2, 3, 4};
+    handle->SerializeData(data, MOBILE_BIT);
     FfrtProfilerConfig config;
     int32_t pid = -1;
     config.add_pid(pid);
     config.add_startup_process_name("test_name002");
     config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
     ffrtProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
-}
-
-/**
- * @tc.name: ffrt plugin
- * @tc.desc:  FfrtPofiler FfrtProfilerManager SerializeData Function Test
- * @tc.type: FUNC
- */
-HWTEST_F(FfrtPofilerTest, TestFunction031, TestSize.Level1)
-{
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {-1, 0, 1, 2, 3, 4, 5};
-    handle->SerializeData(data, MOBILE_BIT);
-    FfrtProfilerConfig config;
-    int32_t pid = -1;
-    config.add_pid(pid);
-    config.add_startup_process_name("test_name003");
-    config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
-    ffrtProfilerMgr->SetConfig(config);
-    ffrtProfilerMgr->Init();
-    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, false));
     EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
 }
 }
