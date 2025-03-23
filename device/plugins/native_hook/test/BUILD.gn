@@ -35,6 +35,7 @@ ohos_unittest("nativehook_ut") {
   module_out_path = module_output_path
   sources = [
     "../../memory_plugin/src/buffer_splitter.cpp",
+    "unittest/check_hook_data_test.cpp",
     "unittest/hook_client_test.cpp",
     "unittest/hook_socket_client_test.cpp",
     "unittest/sampling_test.cpp",
@@ -71,6 +72,8 @@ ohos_unittest("nativehook_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "faultloggerd:libunwinder",
@@ -89,5 +92,6 @@ group("unittest") {
   deps = [
     ":nativehook_ut",
     "${OHOS_PROFILER_DIR}/device/plugins/native_hook:nativetest_so",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon_client",
   ]
 }

@@ -263,7 +263,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     hook->RegisterWriter(writeFile);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
-    hook->SetSaServiceConfig(true, false);
+    if (config->hookstandalone_) {
+        hook->SetSaServiceConfig(true, true);
+    } else {
+        hook->SetSaServiceConfig(true, false);
+    }
     if (config->pid_ > 0) {
         std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
         if (nmdPidType_.find(config->pid_) != nmdPidType_.end()) {

@@ -142,7 +142,7 @@ void StackPreprocess::FinishTraceFile()
 void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
 {
     writer_ = writer;
-    if (!isSaService_) {
+    if ((!isSaService_) || (isHookStandaloneSerialize_)) {
         stackData_ = BatchNativeHookData();
     }
 }
@@ -158,7 +158,11 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
         PROFILER_LOG_ERROR(LOG_CORE, "%s: get RandomWriteCtx FAILED!", __func__);
         return;
     }
-    stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
+    if (isHookStandaloneSerialize_) {
+        stackData_ = BatchNativeHookData();
+    } else {
+        stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
+    }
 }
 
 bool StackPreprocess::StartTakeResults()
@@ -480,7 +484,7 @@ void StackPreprocess::TakeResults()
             }
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    SetHookData(rawData, callFrames_, stackData);
+                    WriteFrames(rawData, callFrames_);
                 } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
                     WriteFrames(rawData, callFrames_);
                 } else if (!hookConfig_.save_file()) {
@@ -1499,7 +1503,11 @@ void StackPreprocess::WriteHookConfig()
         PROFILER_LOG_ERROR(LOG_CORE, "%s: get RandomWriteCtx FAILED!", __func__);
         return;
     }
-    stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
+    if (isHookStandaloneSerialize_) {
+        stackData_ = BatchNativeHookData();
+    } else {
+        stackData_ = ProtoEncoder::BatchNativeHookData(ctx);
+    }
 }
 
 RandomWriteCtx* StackPreprocess::StartReport()
