@@ -46,6 +46,7 @@ DUMP_TRACE:
   SYS_MEM_FREE: {type: INT32, desc: free system memory in MB}
   SYS_MEM_AVAIL: {type: INT32, desc: available system memory in MB}
   SYS_CPU: {type: INT32, desc: average system cpu usage}
+  TRACE_MODE: {type: UINT8, desc: average system cpu usage}
 
 HIPERF_USAGE:
   __BASE: {type: BEHAVIOR, level: CRITICAL, desc: hiperf usage statistics}
