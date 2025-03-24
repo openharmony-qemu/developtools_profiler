@@ -279,6 +279,7 @@ static bool SimplifiedFilter(void* ptr, size_t mallcoSize)
 
 void* MallocHookStart(void* disableHookCallback)
 {
+    __set_hook_flag(false);
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
     g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
