@@ -38,7 +38,8 @@ constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
 constexpr int SLEEP_TIME = 10;
-constexpr int WAIT_FLUSH = 20;
+constexpr int WAIT_FLUSH = 15;
+constexpr int HOOK_TIME = 10;
 
 const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
@@ -95,6 +96,8 @@ public:
             command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
             command_.push_back(const_cast<char*>("-p"));
             command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+            command_.push_back(const_cast<char*>("-d"));
+            command_.push_back(const_cast<char*>(std::to_string(HOOK_TIME).c_str()));
             if (modeIndex_ == 0) {
                 command_.push_back(const_cast<char*>("-df"));
             }
