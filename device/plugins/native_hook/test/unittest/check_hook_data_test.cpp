@@ -40,6 +40,7 @@ constexpr int DATA_SIZE = 50;
 constexpr int SLEEP_TIME = 10;
 constexpr int WAIT_FLUSH = 15;
 constexpr int HOOK_TIME = 10;
+constexpr int SLEEP_FIVE = 5;
 
 const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
@@ -438,7 +439,7 @@ public:
         StartDaemonProcessArgs();
         StopProcess(hookPid_);
         StopProcess(daemonPid_);
-        sleep(5);
+        sleep(SLEEP_FIVE);
     }
     int daemonPid_ = -1;
     int hookPid_ = -1;
