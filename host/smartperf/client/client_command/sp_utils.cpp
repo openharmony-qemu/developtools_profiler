@@ -834,11 +834,11 @@ void SPUtils::GetBundleName(const std::string &pid, std::string &bundleName)
     LOGD("GetBundleName bundleName:%s", bundleName.c_str());
 }
 
-void SPUtils::GetTestsaPlugin(int command)
+    void SPUtils::GetTestsaPlugin(int32_t command, std::string& externInfo)
 {
     #ifdef ARKTEST_ENABLE
-    std::string stopJsonString = "{\"command\": \"stopCollect\"}";
-    OHOS::testserver::TestServerClient::GetInstance().SpDaemonProcess(command, stopJsonString);
+    //Call the function
+    OHOS::testserver::TestServerClient::GetInstance().SpDaemonProcess(command, externInfo);
     #endif
 }
 
@@ -848,9 +848,9 @@ void SPUtils::KillStartDaemon()
     std::string cmdResult = "";
     OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, cmdResult);
     if (cmdResult.find("testserver") != std::string::npos) {
-        int command = 2;
+        int32_t command = 2;
         std::string externInfo = "";
-        GetTestsaPlugin(command);
+        GetTestsaPlugin(command, externInfo);
     }
 }
 }

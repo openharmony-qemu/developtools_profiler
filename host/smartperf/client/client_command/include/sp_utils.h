@@ -160,7 +160,7 @@ bool IsFindForeGround(const std::string &line);
 std::string GetVersion();
 int& GetTtyDeviceFd();
 void GetBundleName(const std::string &pid, std::string &bundleName);
-void GetTestsaPlugin(int command);
+void GetTestsaPlugin(int32_t command, std::string& externInfo);
 void KillStartDaemon();
 };
 }
