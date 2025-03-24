@@ -202,7 +202,11 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
 {
     std::map<std::string, std::string> procRamInfo;
     std::map<std::string, std::string> emptyprocRamInfo;
-    std::string pssValue = "";
+
+    if (!std::all_of(ramPid.begin(), ramPid.end(), ::isdigit)) {
+        LOGE("RAM::CollectRam invalid ramPid");
+        return emptyprocRamInfo;
+    }
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + ramPid;
     if (cmd.empty()) {
         LOGE("RAM::GetRamInfo cmd is null");
@@ -215,6 +219,7 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
         for (auto item : emptyprocRamInfo) {
             item.second = "0";
         }
+        pclose(fd);
         return emptyprocRamInfo;
     }
     std::vector<std::string> paramsInfo;
@@ -227,8 +232,7 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
             procRamInfo[value] = "0";
         }
     }
-    int closeStatus = pclose(fd);
-    if (closeStatus == -1) {
+    if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return emptyprocRamInfo;
     }

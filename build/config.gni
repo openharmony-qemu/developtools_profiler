@@ -30,3 +30,11 @@ if (getenv("BUILD_L2") == "true") {
 declare_args() {
   hiprofiler_SmartPerf = true
 }
+
+declare_args() {
+  arkxtest_able = false
+  if (defined(global_parts_info) &&
+      defined(global_parts_info.testfwk_arkxtest)) {
+    arkxtest_able = true
+  }
+}

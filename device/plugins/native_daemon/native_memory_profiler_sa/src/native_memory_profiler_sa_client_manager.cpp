@@ -30,6 +30,8 @@ constexpr uint32_t NMD_DURATION = 5;
 constexpr uint32_t NMD_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
 constexpr int SIMP_NMD = 3;
+constexpr int FIVE_MINUTES = 300;
+constexpr int JS_STACK_DEPS = 10;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -173,7 +175,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: SimplifiedNmd GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
@@ -201,22 +203,25 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, SimplifiedMemConfig& config)
+int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config)
 {
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
-    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats invalid pid");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Simplified Start invalid pid");
     std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
     CHECK_NOTNULL(nConfig, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     nConfig->pid_ = static_cast<int32_t>(pid);
-    nConfig->duration_ = NMD_DURATION;
+    nConfig->duration_ = duration;
     nConfig->largestSize_ = config.largestSize;
     nConfig->secondLargestSize_ = config.secondLargestSize;
     nConfig->maxGrowthSize_ = config.maxGrowthSize;
     nConfig->sampleInterval_ = config.sampleSize;
     nConfig->shareMemorySize_ = CALL_STACK_SMS;
+    nConfig->statisticsInterval_ = FIVE_MINUTES;
+    nConfig->jsStackReport_ = true;
+    nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
     auto service = GetRemoteService();
     if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Simplified Start GetRemoteService failed");
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);

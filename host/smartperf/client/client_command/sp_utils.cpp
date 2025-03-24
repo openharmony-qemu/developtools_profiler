@@ -23,6 +23,7 @@
 #include <climits>
 #include <cctype>
 #include <climits>
+#include <dlfcn.h>
 #include <sys/utsname.h>
 #include "sys/time.h"
 #include "securec.h"
@@ -38,6 +39,10 @@
 #include "include/profiler_fps.h"
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
+
+#ifdef ARKTEST_ENABLE
+#include "test_server_client.h"
+#endif
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -827,6 +832,26 @@ void SPUtils::GetBundleName(const std::string &pid, std::string &bundleName)
     }
     bundleName = std::move(procName);
     LOGD("GetBundleName bundleName:%s", bundleName.c_str());
+}
+
+void SPUtils::GetTestsaPlugin(int32_t command, std::string& externInfo)
+{
+    #ifdef ARKTEST_ENABLE
+    //Call the function
+    OHOS::testserver::TestServerClient::GetInstance().SpDaemonProcess(command, externInfo);
+    #endif
+}
+
+void SPUtils::KillStartDaemon()
+{
+    std::string pidCmd = "ps -ef | grep SP_daemon";
+    std::string cmdResult = "";
+    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, cmdResult);
+    if (cmdResult.find("testserver") != std::string::npos) {
+        int32_t command = 2;
+        std::string externInfo = "";
+        GetTestsaPlugin(command, externInfo);
+    }
 }
 }
 }
