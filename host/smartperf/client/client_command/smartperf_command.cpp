@@ -101,11 +101,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         std::cout << result << std::endl;
     }
     OHOS::SmartPerf::StartUpDelay sd;
-    if (type == CommandHelp::CLEAR) {
-        sd.GetSpClear(false);
-    }
-    if (type == CommandHelp::CLEARALL) {
-        sd.GetSpClear(true);
+    if (type == CommandHelp::CLEAR || type == CommandHelp::CLEARALL) {
+        bool isClearTestServer = (type == CommandHelp::CLEARALL);
+        sd.GetSpClear(isClearTestServer);
     }
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
