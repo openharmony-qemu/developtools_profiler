@@ -92,7 +92,7 @@ HWTEST_F(StartupDelayTest, GetSpTcpTest01, TestSize.Level1)
 HWTEST_F(StartupDelayTest, GetSpClearTest01, TestSize.Level1)
 {
     StartUpDelay startUpDelay;
-    bool result = startUpDelay.GetSpClear();
+    bool result = startUpDelay.GetSpClear(false);
     EXPECT_FALSE(result);
 }
 

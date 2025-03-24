@@ -26,7 +26,7 @@ public:
     void GetHisysId() const;
     std::string GetPidByPkg(const std::string &curPkgName, std::string* pids = nullptr) const;
     bool GetSpTcp() const;
-    bool GetSpClear() const;
+    bool GetSpClear(bool isKillTestServer) const;
     void ClearOldServer() const;
     std::string ExecuteCommand(const std::vector<const char*> &args) const;
     std::vector<std::string> GetPidParams() const;

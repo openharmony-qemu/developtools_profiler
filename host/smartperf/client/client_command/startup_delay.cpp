@@ -121,7 +121,7 @@ bool StartUpDelay::GetSpTcp() const
     return false;
 }
 
-bool StartUpDelay::GetSpClear() const
+bool StartUpDelay::GetSpClear(bool isKillTestServer) const
 {
     std::string cmd = "ps -ef | grep -v grep | grep SP_daemon";
     std::string curPid = std::to_string(getpid());
@@ -132,7 +132,7 @@ bool StartUpDelay::GetSpClear() const
     char buf[4096] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
-        if (line.find("testserver") == std::string::npos) {
+        if (isKillTestServer || line.find("testserver") == std::string::npos) {
             KillTestSpdaemon(line, curPid);
         }
     }
