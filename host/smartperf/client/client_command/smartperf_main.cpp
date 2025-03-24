@@ -55,6 +55,7 @@ static void KeyInsert(std::set<std::string> &keysMap)
     keysMap.insert("stop");
     keysMap.insert("screen");
     keysMap.insert("clear");
+    keysMap.insert("clearAll");
     keysMap.insert("server");
     keysMap.insert("sections");
     keysMap.insert("deviceinfo");
