@@ -93,9 +93,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->responseLibraryMode_);
     READBOOL(parcel, config->printNmd_);
     READBOOL(parcel, config->printNmdOnly_);
-    READBOOL(parcel, hookstandalone_);
-    READBOOL(parcel, saveFile_);
-    READSTRING(parcel, fileName_);
+    READBOOL(parcel, config->hookstandalone_);
+    READBOOL(parcel, config->saveFile_);
+    READSTRING(parcel, config->fileName_);
     READUINT32(parcel, config->nmdPid_);
     READUINT32(parcel, config->nmdType_);
     READINT32(parcel, config->jsStackReport_);

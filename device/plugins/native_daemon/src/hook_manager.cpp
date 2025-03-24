@@ -743,7 +743,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
     }
-    if (config->config->saveFile_  || config->hookstandalone_) {
+    if (config->saveFile_ || config->hookstandalone_) {
         hookConfig_.set_save_file(config->saveFile_);
         hookConfig_.set_file_name(config->fileName_);
         isProtobufSerialize_ = true;

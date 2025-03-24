@@ -38,7 +38,7 @@ constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
 constexpr int SLEEP_TIME = 10;
-constexpr int WAIT_FLUSH = 3;
+constexpr int WAIT_FLUSH = 20;
 
 const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
@@ -95,7 +95,7 @@ public:
             command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
             command_.push_back(const_cast<char*>("-p"));
             command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
-            if (modeIndex_ = 0) {
+            if (modeIndex_ == 0) {
                 command_.push_back(const_cast<char*>("-df"));
             }
             if (unwindDepth_ > 0) {
@@ -449,6 +449,7 @@ public:
     bool offlineSymbolization_ = false;
     bool callframeCompress_ = false;
     bool stringCompress_ = false;
+    bool rawString_ = false;
     bool responseLibraryMode_ = false;
     bool saveFile_ = false;
     bool isHookStandalone_ = true;
@@ -474,7 +475,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -541,7 +542,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
         StartCallocProcess(setDepth);
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -607,7 +608,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
         StartReallocProcess(setDepth);
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -692,7 +693,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         StartDlopenProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -747,7 +748,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -801,7 +802,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -852,7 +853,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -901,7 +902,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -942,7 +943,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -984,7 +985,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -1030,7 +1031,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -1084,7 +1085,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
@@ -1136,7 +1137,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(20);
+        sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
 
