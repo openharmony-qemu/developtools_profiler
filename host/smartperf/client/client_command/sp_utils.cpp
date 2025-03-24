@@ -834,7 +834,7 @@ void SPUtils::GetBundleName(const std::string &pid, std::string &bundleName)
     LOGD("GetBundleName bundleName:%s", bundleName.c_str());
 }
 
-    void SPUtils::GetTestsaPlugin(int32_t command, std::string& externInfo)
+void SPUtils::GetTestsaPlugin(int32_t command, std::string& externInfo)
 {
     #ifdef ARKTEST_ENABLE
     //Call the function
