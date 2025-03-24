@@ -484,7 +484,7 @@ void StackPreprocess::TakeResults()
             }
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    WriteFrames(rawData, callFrames_);
+                    SetHookData(rawData, callFrames_, stackData);
                 } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
                     WriteFrames(rawData, callFrames_);
                 } else if (!hookConfig_.save_file()) {

@@ -742,6 +742,8 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
+    }
+    if (config->config->saveFile_  || config->hookstandalone_) {
         hookConfig_.set_save_file(config->saveFile_);
         hookConfig_.set_file_name(config->fileName_);
         isProtobufSerialize_ = true;

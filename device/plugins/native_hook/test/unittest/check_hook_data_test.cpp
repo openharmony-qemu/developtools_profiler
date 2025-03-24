@@ -89,7 +89,6 @@ public:
             std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
             command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_CLIENT_PATH.c_str()));
             command_.push_back(const_cast<char*>("-s"));
-            command_.push_back(const_cast<char*>("-hsa"));
             command_.push_back(const_cast<char*>("-fn"));
             command_.push_back(const_cast<char*>(outFile_.c_str()));
             command_.push_back(const_cast<char*>("-sms"));
@@ -125,6 +124,9 @@ public:
             }
             if (saveFile_) {
                 command_.push_back(const_cast<char*>("-sf"));
+            }
+            if (isHookStandalone_) {
+                command_.push_back(const_cast<char*>("-hsa"));
             }
             if (mallocFreeMatchingInterval_ > 0) {
                 command_.push_back(const_cast<char*>("-mfmi"));
@@ -449,6 +451,7 @@ public:
     bool stringCompress_ = false;
     bool responseLibraryMode_ = false;
     bool saveFile_ = false;
+    bool isHookStandalone_ = true;
     std::string outFile_ = "";
     std::string outFileType_ = "";
     std::string mode_[2] = {"dwarf", "fp"};
@@ -467,6 +470,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
         outFileType_ = "malloc_";
         modeIndex_ = i; // 0 is dwarf, 1 is fp mode
         saveFile_ = true;
+        isHookStandalone_ = false;
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
@@ -533,6 +537,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
         outFileType_ = "calloc_";
         modeIndex_ = i;
         saveFile_ = true;
+        isHookStandalone_ = false;
         StartCallocProcess(setDepth);
         sleep(1);
         StartDaemonProcessArgs();
@@ -598,6 +603,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
         outFileType_ = "realloc_";
         modeIndex_ = i;
         saveFile_ = true;
+        isHookStandalone_ = false;
         StartReallocProcess(setDepth);
         sleep(1);
         StartDaemonProcessArgs();
@@ -682,6 +688,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         outFileType_ = "dlopen_";
         modeIndex_ = i;
         saveFile_ = true;
+        isHookStandalone_ = false;
         StartDlopenProcess();
         sleep(1);
         StartDaemonProcessArgs();
@@ -736,6 +743,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         outFileType_ = "statistics_interval_";
         modeIndex_ = i;
         saveFile_ = true;
+        isHookStandalone_ = false;
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
