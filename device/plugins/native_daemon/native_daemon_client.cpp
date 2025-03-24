@@ -95,6 +95,9 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --jsStackReport                     -jr : jsStackReport, default: 0\n");
             printf("    --maxJsStackDepth                   -mjsd : maxJsStackDepth, default: 0\n");
             printf("    --filterNapiName                    -fnapi : filterNapiName \n");
+            printf("    --hookstandalone                    -hsa : hookstandalone \n");
+            printf("    --save_file                         -sf : save_file \n");
+            printf("    ----fileName                        -fn : file_name \n");
             return 0;
         }
 
@@ -145,8 +148,8 @@ int32_t main(int32_t argc, char* argv[])
             config->startupMode_ = true;
         } else if ((arg == "--memtraceEnable") || (arg == "-me")) {
             config->memtraceEnable_ = true;
-        } else if ((arg == "--offlineSymbolization") || (arg == "-os")) {
-            config->offlineSymbolization_ = true;
+        } else if ((arg == "--onlineSymbolization") || (arg == "-os")) {
+            config->offlineSymbolization_ = false;
         } else if ((arg == "--callframeCompress") || (arg == "-cc")) {
             config->callframeCompress_ = true;
         } else if ((arg == "--statisticsInterval") || (arg == "-si")) {
@@ -171,6 +174,12 @@ int32_t main(int32_t argc, char* argv[])
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint8_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--filterNapiName") || (arg == "-fnapi")) {
             config->filterNapiName_ = i + 1 < argc ? std::string(argv[i + 1]) : "";
+        } else if ((arg == "--hookstandalone") || (arg == "-hsa")) {
+            config->hookstandalone_ = true;
+        } else if ((arg == "--save_file") || (arg == "-sf")) {
+            config->saveFile_ = true;
+        } else if ((arg == "--fileName") || (arg == "-fn")) {
+            config->fileName_ = i + 1 < argc ? std::string(argv[++i]) : "";
         } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;

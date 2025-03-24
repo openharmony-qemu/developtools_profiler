@@ -743,8 +743,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         statisticsInterval_ = 1;
         outFileType_ = "statistics_interval_";
         modeIndex_ = i;
-        saveFile_ = true;
-        isHookStandalone_ = false;
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
