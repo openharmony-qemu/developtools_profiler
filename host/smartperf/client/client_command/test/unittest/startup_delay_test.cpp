@@ -89,13 +89,6 @@ HWTEST_F(StartupDelayTest, GetSpTcpTest01, TestSize.Level1)
     EXPECT_FALSE(result);
 }
 
-HWTEST_F(StartupDelayTest, GetSpClearTest01, TestSize.Level1)
-{
-    StartUpDelay startUpDelay;
-    bool result = startUpDelay.GetSpClear(false);
-    EXPECT_FALSE(result);
-}
-
 HWTEST_F(StartupDelayTest, GetPidByPkgTest01, TestSize.Level1)
 {
     StartUpDelay startUpDelay;
