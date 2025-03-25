@@ -894,9 +894,9 @@ void StackPreprocess::SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::ve
         return;
     }
     uint64_t addr = reinterpret_cast<uint64_t>(rawStack->stackConext->addr);
-    auto iter = applyAndReleaseMatchIntervallMap_.find(addr);
-    bool isReleased = ((rawStack->stackConext->type == FREE_MSG) || (rawStack->stackConext->type == MUNMAP_MSG));
-    if (isReleased) {
+    bool isReleasedType = ((rawStack->stackConext->type == FREE_MSG) || (rawStack->stackConext->type == MUNMAP_MSG));
+    if (isReleasedType) {
+        auto iter = applyAndReleaseMatchIntervallMap_.find(addr);
         if (iter != applyAndReleaseMatchIntervallMap_.end()) {
             applyAndReleaseMatchPeriodListData_.erase(iter->second);
             applyAndReleaseMatchIntervallMap_.erase(addr);
@@ -1682,6 +1682,7 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
     prctlPeriodTags_.clear();
 
     if (releasedPeriodListData_.empty()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "releasedPeriodListData_ is empty!");
         return;
     }
     std::visit([&](auto& stackData) {
