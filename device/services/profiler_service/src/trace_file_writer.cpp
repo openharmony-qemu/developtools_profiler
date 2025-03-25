@@ -491,7 +491,6 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
             return false;
         }
     }
-    
     if (fileMapAddr_ == MAP_FAILED) {
         return false;
     }
