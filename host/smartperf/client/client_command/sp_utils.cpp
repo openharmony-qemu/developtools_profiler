@@ -843,6 +843,8 @@ void SPUtils::GetTestsaPlugin(int command)
 }
 
 void SPUtils::KillStartDaemon()
+{
+    std::string pidCmd = "ps -ef | grep SP_daemon";
     std::string cmdResult = "";
     OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, cmdResult);
     if (cmdResult.find("testserver") != std::string::npos) {
