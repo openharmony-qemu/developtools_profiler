@@ -1698,7 +1698,7 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
                 SetEventFrame(rawStack, munmapEvent, rawStack.stackMapId);
             }
         }
-    FlushData(stackData);
-    }, stackData_);
+        FlushData(stackData);
+        }, stackData_);
     releasedPeriodListData_.clear();
 }
