@@ -243,9 +243,10 @@ void FPS::ReadDataFromPipe(int fd)
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
+        std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
-        sstream.str(tmp);
+        sstream.str(tmpStr);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -254,6 +255,7 @@ void FPS::ReadDataFromPipe(int fd)
             break;
         }
     }
+    (void)fclose(fp);
     CalcJitters();
 }
 

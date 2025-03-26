@@ -89,6 +89,8 @@ ohos_executable("SP_daemon") {
     "ipc:ipc_core",
     "window_manager:libdm",
     "window_manager:libwm",
+    "samgr:samgr_proxy",
+    "comm_event_service:cesfwk_core"
   ]
   defines = [
     "HI_LOG_ENABLE",

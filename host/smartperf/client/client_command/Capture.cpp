@@ -90,6 +90,7 @@ void Capture::ThreadGetCatch()
     }
     if (!TakeScreenCap(savePath)) {
         LOGE("Screen Capture Failed!");
+        close(fd);
         return;
     }
     close(fd);

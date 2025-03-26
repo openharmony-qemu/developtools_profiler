@@ -207,7 +207,7 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
         LOGE("RAM::CollectRam invalid ramPid");
         return emptyprocRamInfo;
     }
-    std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + ramPid;
+    const std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_MEM) + ramPid;
     if (cmd.empty()) {
         LOGE("RAM::GetRamInfo cmd is null");
         return emptyprocRamInfo;
@@ -219,12 +219,12 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
         for (auto item : emptyprocRamInfo) {
             item.second = "0";
         }
-        pclose(fd);
         return emptyprocRamInfo;
     }
     std::vector<std::string> paramsInfo;
     procRamInfo = GetPssRamInfo(fd, paramsInfo, ramPid, index);
     if (procRamInfo.empty()) {
+        pclose(fd);
         return emptyprocRamInfo;
     }
     for (const auto &value : paramsInfo) {
