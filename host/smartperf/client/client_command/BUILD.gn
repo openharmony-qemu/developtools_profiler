@@ -81,8 +81,8 @@ ohos_executable("SP_daemon") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
     "ability_base:want",
-    "comm_event_service:cesfwk_core",
     "c_utils:utils",
+    "comm_event_service:cesfwk_core",
     "hilog:libhilog",
     "hiview:libucollection_utility",
     "image_framework:image_native",
