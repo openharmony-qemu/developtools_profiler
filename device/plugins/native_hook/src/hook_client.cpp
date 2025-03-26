@@ -70,7 +70,7 @@ std::mutex g_usableSizeMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
 static std::atomic<pid_t> g_hookPid = 0;
-static std::atomic<bool> g_hookMode = false;
+static std::atomic<bool> g_hookReady = false;
 static ClientConfig g_ClientConfig = {0};
 static uint32_t g_maxSize = INT_MAX;
 static std::unordered_map<std::string, uint32_t> g_memTagMap;
@@ -281,7 +281,7 @@ static bool SimplifiedFilter(void* ptr, size_t mallcoSize)
 void* MallocHookStart(void* disableHookCallback)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
-    if (g_hookMode) {
+    if (g_hookReady) {
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
@@ -298,7 +298,7 @@ void* MallocHookStart(void* disableHookCallback)
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
-    g_hookMode = true;
+    g_hookReady = true;
     return nullptr;
 }
 
@@ -358,7 +358,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 void* ohos_release_on_end(void*)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
-    if (!g_hookMode) {
+    if (!g_hookReady) {
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
@@ -366,7 +366,7 @@ void* ohos_release_on_end(void*)
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
-    g_hookMode = false;
+    g_hookReady = false;
     return nullptr;
 }
 
@@ -484,7 +484,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (fn) {
         ret = fn(size);
     }
-    if ((!g_hookMode) || SimplifiedFilter(ret, size)) {
+    if ((!g_hookReady) || SimplifiedFilter(ret, size)) {
         return ret;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -572,7 +572,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     if (fn) {
         ret = fn(align, len);
     }
-    if ((!g_hookMode) || SimplifiedFilter(ret, len)) {
+    if ((!g_hookReady) || SimplifiedFilter(ret, len)) {
         return ret;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -672,7 +672,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (fn) {
         pRet = fn(number, size);
     }
-    if ((!g_hookMode) || SimplifiedFilter(pRet, number * size)) {
+    if ((!g_hookReady) || SimplifiedFilter(pRet, number * size)) {
         return pRet;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -765,7 +765,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (fn) {
         pRet = fn(ptr, size);
     }
-    if ((!g_hookMode) || SimplifiedFilter(pRet, size)) {
+    if ((!g_hookReady) || SimplifiedFilter(pRet, size)) {
         return pRet;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -869,7 +869,7 @@ void hook_free(void (*free_func)(void*), void* p)
         if (!free_func) {
             return;
         }
-        if ((!g_hookMode) || g_ClientConfig.mallocDisable || IsPidChanged()) {
+        if ((!g_hookReady) || g_ClientConfig.mallocDisable || IsPidChanged()) {
             free_func(p);
             return;
         }
@@ -898,7 +898,7 @@ void hook_free(void (*free_func)(void*), void* p)
 #endif
         return;
     }
-    if ((!g_hookMode) && free_func) {
+    if ((!g_hookReady) && free_func) {
         free_func(p);
         return;
     }
@@ -998,7 +998,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (fn) {
         ret = fn(addr, length, prot, flags, fd, offset);
     }
-    if (!g_hookMode) {
+    if (!g_hookReady) {
         return ret;
     }
     if (g_ClientConfig.largestSize > 0) {
@@ -1098,7 +1098,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
-    if ((!g_hookMode) && fn) {
+    if ((!g_hookReady) && fn) {
         int ret = fn(addr, length);
         return ret;
     }
@@ -1170,7 +1170,7 @@ int hook_prctl(int(*fn)(int, ...),
     if (fn) {
         ret = fn(option, arg2, arg3, arg4, arg5);
     }
-    if ((!g_hookMode) || reinterpret_cast<char*>(arg5) == nullptr || IsPidChanged() || g_ClientConfig.mmapDisable) {
+    if ((!g_hookReady) || reinterpret_cast<char*>(arg5) == nullptr || IsPidChanged() || g_ClientConfig.mmapDisable) {
         return ret;
     }
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
@@ -1213,7 +1213,7 @@ int hook_prctl(int(*fn)(int, ...),
 
 void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
 {
-    if (!g_hookMode || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
+    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
         return;
     }
 #ifdef PERFORMANCE_DEBUG
