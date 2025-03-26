@@ -920,7 +920,7 @@ HWTEST_F(UnitTestPluginService, PluginService_SessionConfig, TestSize.Level1)
 {
     std::vector<std::string> pluginNames = {"abc.so", "mem.so"};
     std::shared_ptr<ProfilerSessionConfig> config = std::make_shared<ProfilerSessionConfig>();
-    pluginService_->SetProfilerSessionConfig(config, pluginNames); 
+    pluginService_->SetProfilerSessionConfig(config, pluginNames);
 }
 
 } // namespace
