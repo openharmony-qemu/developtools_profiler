@@ -82,7 +82,7 @@ ohos_executable("SP_daemon") {
   external_deps = [
     "ability_base:want",
     "c_utils:utils",
-    "comm_event_service:cesfwk_core",
+    "comm_event_service:cesfwk_innerkits",
     "hilog:libhilog",
     "hiview:libucollection_utility",
     "image_framework:image_native",
