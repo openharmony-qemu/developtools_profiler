@@ -53,7 +53,7 @@ int ClientControl::SocketStart(const std::string &args)
     } else {
         std::cout << "SP_daemon Collection begins failed" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpClear();
+        sd.GetSpClear(false);
     }
     LOGD("ClientControl::SocketStart() ok");
     return 0;
@@ -74,7 +74,7 @@ int ClientControl::SocketStop()
         std::cout << "Output Path: data/local/tmp/smartperf/1/t_index_info.csv" << std::endl;
         OHOS::SmartPerf::StartUpDelay sd;
         OHOS::SmartPerf::ClientControl::CloseSocket();
-        sd.GetSpClear();
+        sd.GetSpClear(false);
     } else {
         std::cout << "SP_daemon Collection ended failed" << std::endl;
     }
@@ -93,7 +93,7 @@ int ClientControl::InitSocket()
     serverAddress.sin_port = htons(protNumber);
     if (connect(clientSocket, reinterpret_cast<struct sockaddr *>(&serverAddress), sizeof(serverAddress)) < 0) {
         OHOS::SmartPerf::StartUpDelay sd;
-        sd.GetSpClear();
+        sd.GetSpClear(false);
         LOGE("Failed to connect to server");
         return 1;
     }

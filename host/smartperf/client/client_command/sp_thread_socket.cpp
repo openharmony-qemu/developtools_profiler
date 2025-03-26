@@ -279,6 +279,10 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
 }
 SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
 {
+    // 不需要校验 token
+    if (isNeedUdpToken == false) {
+        return SocketErrorType::OK;
+    }
     // device 启动时发送，不做校验
     if (recvStr == "get_daemon_version" || recvStr.find("set_pkgName::") != std::string::npos) {
         return SocketErrorType::OK;
@@ -701,6 +705,10 @@ void SpThreadSocket::SetUdpToken(std::string token)
 std::string SpThreadSocket::GetUdpToken() const
 {
     return udpToken;
+}
+void SpThreadSocket::SetNeedUdpToken(bool isNeed)
+{
+    isNeedUdpToken = isNeed;
 }
 }
 }

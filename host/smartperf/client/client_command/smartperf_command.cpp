@@ -37,6 +37,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        SpThreadSocket::GetInstance().SetNeedUdpToken(false);
         DeviceServer();
     }
     if (argv.size() == twoParam) {
@@ -100,8 +101,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
         std::cout << result << std::endl;
     }
     OHOS::SmartPerf::StartUpDelay sd;
-    if (type == CommandHelp::CLEAR) {
-        sd.GetSpClear();
+    if (type == CommandHelp::CLEAR || type == CommandHelp::CLEARALL) {
+        bool isClearTestServer = (type == CommandHelp::CLEARALL);
+        sd.GetSpClear(isClearTestServer);
     }
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
