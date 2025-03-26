@@ -653,7 +653,6 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 #endif
         return pRet;
     }
-
     std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
     auto holder = weakClient.lock();
     if (holder == nullptr) {
@@ -820,7 +819,6 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
         Addr2Bitpool(pRet);
     }
-
     int realSize = 0;
     int freeRealSize = 0;
     freeData.type = FREE_MSG;
@@ -1131,7 +1129,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (g_ClientConfig.mmapDisable || IsPidChanged()) {
         return ret;
     }
-
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
