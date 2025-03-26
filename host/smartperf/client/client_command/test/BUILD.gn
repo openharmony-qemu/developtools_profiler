@@ -94,16 +94,16 @@ ohos_unittest("sp_daemon_ut") {
   ]
   external_deps = [
     "ability_base:want",
+    "comm_event_service:cesfwk_core",
     "c_utils:utils",
     "hilog:libhilog",
     "hiview:libucollection_utility",
     "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
-    "samgr:samgr_proxy",
-    "comm_event_service:cesfwk_core"
   ]
 
   configs = [ "//build/config/compiler:exceptions" ]
