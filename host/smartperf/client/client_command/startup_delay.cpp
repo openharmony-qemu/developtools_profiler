@@ -136,6 +136,7 @@ bool StartUpDelay::GetSpClear(bool isKillTestServer) const
             KillTestSpdaemon(line, curPid);
         }
     }
+    pclose(fd);
     return false;
 }
 

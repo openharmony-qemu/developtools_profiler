@@ -95,11 +95,13 @@ ohos_unittest("sp_daemon_ut") {
   external_deps = [
     "ability_base:want",
     "c_utils:utils",
+    "common_event_service:cesfwk_innerkits",
     "hilog:libhilog",
     "hiview:libucollection_utility",
     "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
   ]

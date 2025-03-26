@@ -25,7 +25,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> AISchedule::ItemData()
 {
     if (processId.empty()) {
-        WLOGE("AISchedule params is wrong.");
+        WLOGE("AISchedule need processId.");
         return std::map<std::string, std::string>();
     }
     aiScheduleParams[aiScheduleParamPid] = processId;

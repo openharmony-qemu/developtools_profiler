@@ -385,7 +385,6 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
         LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
-
     fpsNum = 0;
     prevScreenTimestamp = -1;
     struct timespec sysTime = { 0 };
@@ -398,9 +397,10 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         LOGD("ProfilerFPS::GetFrameInfoFromMap dump time: %s", tmp);
+        std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
-        sstream.str(tmp);
+        sstream.str(tmpStr);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -540,6 +540,7 @@ std::string ProfilerFPS::GetGameLayer()
             std::stringstream ss(nodeIdStr);
             ss >> nodeId;
             if (ss.fail() || !ss.eof()) {
+                pclose(fd);
                 return gameLayer;
             }
             nodeId = nodeId >> kShiftAmount;
