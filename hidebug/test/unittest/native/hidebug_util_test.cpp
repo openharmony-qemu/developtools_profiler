@@ -21,7 +21,6 @@
 
 #include <sys/stat.h>
 
-#include "directory_ex.h"
 #include "hidebug_util.h"
 
 using namespace testing::ext;
