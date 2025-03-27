@@ -68,6 +68,14 @@ message AppDetail {
   AppDetailDisplay display = 4; //指定应用的display调优信息
   AppDetailModem modem = 5;     //5.0新增：指定应用的modem调优信息
   AppDetailDisplayExt display_ext = 6;//5.1新增：应用显示相关数据
+  AppDetailHighLoad high_load = 7;    //6.0新增：cpu线程高负载
+}
+
+message AppDetailHighLoad {
+    int32 pid = 1;                   //线程对应进程的pid
+    int32 tid = 2;                   //线程tid
+    int32 load = 3;                  //线程负载
+    string thread_name = 4;          //线程名
 }
 
 message AppDetailDisplayExt {
