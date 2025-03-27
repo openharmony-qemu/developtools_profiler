@@ -57,6 +57,16 @@ bool FlushFunc(WriterStruct* writer)
     return true;
 }
 
+RandomWriteCtx* StartReportFunc(WriterStruct* writer)
+{
+    return nullptr;
+}
+
+void FinishReportFunc(WriterStruct* writer, int32_t size)
+{
+    return;
+}
+
 bool PluginStart(HidumpPlugin& plugin, HidumpConfig& config)
 {
     // serialize
@@ -216,4 +226,24 @@ HWTEST_F(HidumpPluginUnittest, TestStartFail, TestSize.Level1)
     // start
     EXPECT_NE(plugin.Start(configData.data(), size - 1), 0);
 }
+
+/**
+ * @tc.name: hidump plugin
+ * @tc.desc: Test pb encoder data
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestPbEncoderData, TestSize.Level1)
+{
+    HidumpConfig config;
+    HidumpPlugin plugin;
+    WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc, false};
+    config.set_report_fps(true);
+    plugin.SetConfig(config);
+    plugin.SetWriter(&writer);
+    EXPECT_TRUE(PluginStart(plugin, config));
+    sleep(DEFAULT_WAIT);
+    plugin.running_ = false;
+    EXPECT_EQ(plugin.Stop(), 0);
+}
+
 } // namespace

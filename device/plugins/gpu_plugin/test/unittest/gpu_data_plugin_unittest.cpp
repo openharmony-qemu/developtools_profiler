@@ -96,6 +96,15 @@ bool FlushFunc(WriterStruct* writer)
     return true;
 }
 
+RandomWriteCtx* StartReportFunc(WriterStruct* writer)
+{
+    return nullptr;
+}
+
+void FinishReportFunc(WriterStruct* writer, int32_t size)
+{
+    return;
+}
 
 #if defined(__LP64__)
 bool PluginGpuInfoStub(GpuDataPlugin& gpuPlugin, WriterStruct *writer)
@@ -138,7 +147,7 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
 {
 #if defined(__LP64__)
     GpuDataPlugin gpuPlugin;
-    WriterStruct writer = {WriteFunc, FlushFunc};
+    WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc};
     EXPECT_TRUE(PluginGpuInfoStub(gpuPlugin, &writer));
     sleep(SLEEP_TIME);
     EXPECT_EQ(gpuPlugin.Stop(), 0);
@@ -146,6 +155,9 @@ HWTEST_F(GpuDataPluginTest, TestPlugin, TestSize.Level1)
     gpuPlugin.resultWriter_->isProtobufSerialize = true;
     gpuPlugin.FlushGpuData(gpuDataVect);
     EXPECT_GT(gpuPlugin.buffer_.size(), 0);
+    gpuPlugin.resultWriter_->isProtobufSerialize = false;
+    gpuPlugin.FlushGpuData(gpuDataVect);
+    EXPECT_GT(gpuPlugin.GetBootTime(), 0);
 #endif
 }
 
@@ -208,5 +220,36 @@ HWTEST_F(GpuDataPluginTest, TestPluginRegister, TestSize.Level1)
 #endif
 }
 
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: test gpu plugin read array data
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
+{
+#if defined(__LP64__)
+    void* handle = dlopen(SO_PATH.c_str(), RTLD_LAZY);
+    ASSERT_NE(handle, nullptr);
+    PluginModuleStruct* gpuPlugin = (PluginModuleStruct*)dlsym(handle, "g_pluginModule");
+    ASSERT_NE(gpuPlugin, nullptr);
+    EXPECT_STREQ(gpuPlugin->name, "gpu-plugin");
+    EXPECT_EQ(gpuPlugin->resultBufferSizeHint, BUF_SIZE);
+
+    // Serialize config
+    GpuConfig protoConfig;
+    protoConfig.set_pid("11001");
+    protoConfig.set_report_gpu_data_array(true);
+    int configLength = protoConfig.ByteSizeLong();
+    ASSERT_NE(configLength, 0);
+    std::vector<uint8_t> configBuffer(configLength);
+    EXPECT_TRUE(protoConfig.SerializeToArray(configBuffer.data(), configLength));
+    // run plugin
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    std::vector<uint8_t> dataBuffer(gpuPlugin->resultBufferSizeHint);
+    EXPECT_EQ(gpuPlugin->callbacks->onRegisterWriterStruct(&writer), 0);
+    EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStart(configBuffer.data(), configLength), RET_SUCC);
+    EXPECT_EQ(gpuPlugin->callbacks->onPluginSessionStop(), RET_SUCC);
+#endif
+}
 
 } // namespace

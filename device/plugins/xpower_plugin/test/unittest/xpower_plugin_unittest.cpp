@@ -95,6 +95,8 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     EXPECT_EQ(plugin->callbacks->onRegisterWriterStruct(&writer), 0);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStart(configData.data(), configData.size()), 0);
     usleep(US_PER_S * DEFAULT_WAIT); // 9s
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(4096);
+    EXPECT_NE(plugin->callbacks->onPluginReportResult(buffer.get(), 4096), -1);
     EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
 
     // test proto data

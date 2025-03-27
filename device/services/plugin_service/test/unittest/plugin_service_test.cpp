@@ -744,8 +744,9 @@ HWTEST_F(UnitTestPluginService, StartPluginSession5, TestSize.Level1)
     ppc.set_name("sample.so");
     ppc.set_plugin_sha256("ASDFAADSF");
     ppc.set_sample_interval(SAMPLE_INTERVAL);
-
+    ASSERT_TRUE(pluginService_->StartEpollThread());
     ASSERT_FALSE(pluginService_->StartPluginSession(ppc));
+    ASSERT_TRUE(pluginService_->StopEpollThread());
 }
 
 /**
@@ -909,4 +910,17 @@ HWTEST_F(UnitTestPluginService, PluginSessionManager_Check, TestSize.Level1)
     ppc.set_plugin_sha256("asdfasdfasdfasfd");
     EXPECT_TRUE(pluginSessionMgr_->CheckPluginSha256(ppc));
 }
+
+/**
+ * @tc.name: profilerSessionConfig
+ * @tc.desc: test profiler session config
+ * @tc.type: FUNC
+ */
+HWTEST_F(UnitTestPluginService, PluginService_SessionConfig, TestSize.Level1)
+{
+    std::vector<std::string> pluginNames = {"abc.so", "mem.so"};
+    std::shared_ptr<ProfilerSessionConfig> config = std::make_shared<ProfilerSessionConfig>();
+    pluginService_->SetProfilerSessionConfig(config, pluginNames);
+}
+
 } // namespace
