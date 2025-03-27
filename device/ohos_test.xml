@@ -127,6 +127,8 @@
         <preparer>
             <option name="shell" value="remount"/>
             <option name="push" value="developtools/hiprofiler/libnativetest_so.z.so -> /data/local/tmp/" src="out"/>
+            <option name="push" value="developtools/hiprofiler/native_daemon_client -> /data/local/tmp/" src="out"/>
+            <option name="shell" value="chmod 777 /data/local/tmp/native_daemon_client"/>
         </preparer>
     </target>
     <target name="processplugin_ut">

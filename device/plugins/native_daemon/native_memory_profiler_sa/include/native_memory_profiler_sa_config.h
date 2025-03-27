@@ -57,6 +57,9 @@ public:
     bool responseLibraryMode_{false};
     bool printNmd_{false};
     bool printNmdOnly_{false};
+    bool hookstandalone_{false};
+    bool saveFile_{false};
+    std::string fileName_;
     uint32_t nmdPid_{0};
     uint32_t nmdType_{0};
     int32_t jsStackReport_{0};

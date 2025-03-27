@@ -399,7 +399,7 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
         return false;
     }
-    if (hookConfig_.save_file() && !hookConfig_.file_name().empty()) {
+    if ((hookConfig_.save_file() || isHookStandalone_) && !hookConfig_.file_name().empty()) {
         auto retFile = COMMON::CheckNotExistsFilePath(hookConfig_.file_name());
         if (!retFile.first) {
             PROFILER_LOG_INFO(LOG_CORE, "check file path %s fail", hookConfig_.file_name().c_str());
@@ -740,6 +740,14 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     printMallocNmd_ = config->printNmd_;
+    if (config->hookstandalone_) {
+        isHookStandalone_ = true;
+    }
+    if (config->saveFile_ || config->hookstandalone_) {
+        hookConfig_.set_save_file(config->saveFile_);
+        hookConfig_.set_file_name(config->fileName_);
+        isProtobufSerialize_ = true;
+    }
     largestSize_ = config->largestSize_;
     secondLargestSize_ = config->secondLargestSize_;
     maxGrowthSize_ = config->maxGrowthSize_;

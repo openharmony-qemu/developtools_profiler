@@ -19,7 +19,8 @@
 #include <vector>
 #include <sys/syscall.h>
 #include <sys/mman.h>
-
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
 #include "buffer_splitter.h"
 #include "logging.h"
 #include "parameters.h"
@@ -37,9 +38,11 @@ constexpr int DEFAULT_CALLOC_SIZE = 100;
 constexpr int DEFAULT_REALLOC_SIZE = 1000;
 constexpr int DATA_SIZE = 50;
 constexpr int SLEEP_TIME = 10;
-constexpr int WAIT_FLUSH = 3;
+constexpr int WAIT_FLUSH = 15;
+constexpr int HOOK_TIME = 10;
+constexpr int SLEEP_FIVE = 5;
 
-const std::string DEFAULT_NATIVE_DAEMON_PATH("/system/bin/native_daemon");
+const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
 constexpr int BUFFER_SIZE = 100 * 1024;
 constexpr int DEFAULT_DEPTH = 32;
@@ -53,7 +56,7 @@ constexpr int FREE_GET_DATA_SIZE = 2;
 constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
-
+const std::string TEST_PROC_NAME = "hiview";
 #ifdef __aarch64__
 const std::string DEFAULT_LIBA_PATH("/system/lib64/liba.z.so");
 const std::string DEFAULT_LIBB_PATH("/system/lib64/libb.z.so");
@@ -84,59 +87,66 @@ public:
             int waitProcMills = 300;
             OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
             std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-            command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_PATH.c_str()));
-            command_.push_back(const_cast<char*>("-o"));
-            command_.push_back(const_cast<char*>(outFile_.c_str()));
+            OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "1");
+            std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
+            command_.push_back(const_cast<char*>(DEFAULT_NATIVE_DAEMON_CLIENT_PATH.c_str()));
             command_.push_back(const_cast<char*>("-s"));
+            command_.push_back(const_cast<char*>("-fn"));
+            command_.push_back(const_cast<char*>(outFile_.c_str()));
+            command_.push_back(const_cast<char*>("-sms"));
             command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
             command_.push_back(const_cast<char*>("-p"));
             command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
-            command_.push_back(const_cast<char*>("-u"));
-            command_.push_back(const_cast<char*>(mode_[modeIndex_].c_str()));
+            command_.push_back(const_cast<char*>("-d"));
+            command_.push_back(const_cast<char*>(std::to_string(HOOK_TIME).c_str()));
+            if (modeIndex_ == 0) {
+                command_.push_back(const_cast<char*>("-df"));
+            }
             if (unwindDepth_ > 0) {
-                command_.push_back(const_cast<char*>("-d"));
+                command_.push_back(const_cast<char*>("-msd"));
                 command_.push_back(const_cast<char*>(std::to_string(unwindDepth_).c_str()));
             }
             if (statisticsInterval_ > 0) {
-                command_.push_back(const_cast<char*>("-S"));
+                command_.push_back(const_cast<char*>("-si"));
                 command_.push_back(const_cast<char*>(std::to_string(statisticsInterval_).c_str()));
             }
             if (sampleInterval_ > 0) {
-                command_.push_back(const_cast<char*>("-i"));
+                command_.push_back(const_cast<char*>("-spi"));
                 command_.push_back(const_cast<char*>(std::to_string(sampleInterval_).c_str()));
             }
-            if (offlineSymbolization_) {
-                command_.push_back(const_cast<char*>("-O"));
-                command_.push_back(const_cast<char*>("true"));
+            if (!offlineSymbolization_) {
+                command_.push_back(const_cast<char*>("-os"));
             }
             if (callframeCompress_) {
-                command_.push_back(const_cast<char*>("-C"));
-                command_.push_back(const_cast<char*>("true"));
+                command_.push_back(const_cast<char*>("-cc"));
             }
-            if (stringCompress_) {
-                command_.push_back(const_cast<char*>("-c"));
-                command_.push_back(const_cast<char*>("true"));
-            }
-            if (rawString_) {
-                command_.push_back(const_cast<char*>("-r"));
-                command_.push_back(const_cast<char*>("true"));
+            if (!stringCompress_) {
+                command_.push_back(const_cast<char*>("-sc"));
             }
             if (responseLibraryMode_) {
-                command_.push_back(const_cast<char*>("-so"));
-                command_.push_back(const_cast<char*>("true"));
+                command_.push_back(const_cast<char*>("-r"));
+            }
+            if (saveFile_) {
+                command_.push_back(const_cast<char*>("-sf"));
+            }
+            if (isHookStandalone_) {
+                command_.push_back(const_cast<char*>("-hsa"));
             }
             if (mallocFreeMatchingInterval_ > 0) {
-                command_.push_back(const_cast<char*>("-mfm"));
+                command_.push_back(const_cast<char*>("-mfmi"));
                 command_.push_back(const_cast<char*>(std::to_string(mallocFreeMatchingInterval_).c_str()));
             }
             if (jsReport_) {
-                command_.push_back(const_cast<char*>("-js"));
+                command_.push_back(const_cast<char*>("-jr"));
                 command_.push_back(const_cast<char*>(std::to_string(START_JS_REPORT).c_str()));
-                command_.push_back(const_cast<char*>("-jsd"));
+                command_.push_back(const_cast<char*>("-mjsd"));
                 command_.push_back(const_cast<char*>(std::to_string(jsMaxDepth_).c_str()));
             }
             command_.push_back(nullptr);
-            execv(DEFAULT_NATIVE_DAEMON_PATH.c_str(), command_.data());
+            using namespace OHOS::Security::AccessToken;
+            AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
+            SetSelfTokenID(tokenID);
+            execv(DEFAULT_NATIVE_DAEMON_CLIENT_PATH.c_str(), command_.data());
             _exit(1);
         } else {
             daemonPid_ = processNum;
@@ -424,27 +434,12 @@ public:
 #ifdef COVERAGE_TEST
         const int coverageSleepTime = 5; // sleep 5s
         sleep(coverageSleepTime);
-        StartDaemonProcessArgs();
-        sleep(coverageSleepTime);
-#else
-        sleep(1);
-        StartDaemonProcessArgs();
-        sleep(WAIT_TIME);
-#endif
-        std::string cmd = "kill -36 " + std::to_string(hookPid_);
-        system(cmd.c_str());
 
-        sleep(SLEEP_TIME); // 等待生成文本
-        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
-        system(cmdEnd.c_str());
-#ifdef COVERAGE_TEST
-        const int waitFlushTime = 5; // sleep 5s
-        sleep(waitFlushTime);
-#else
-        sleep(WAIT_FLUSH);
 #endif
+        StartDaemonProcessArgs();
         StopProcess(hookPid_);
         StopProcess(daemonPid_);
+        sleep(SLEEP_FIVE);
     }
     int daemonPid_ = -1;
     int hookPid_ = -1;
@@ -460,6 +455,8 @@ public:
     bool stringCompress_ = false;
     bool rawString_ = false;
     bool responseLibraryMode_ = false;
+    bool saveFile_ = false;
+    bool isHookStandalone_ = true;
     std::string outFile_ = "";
     std::string outFileType_ = "";
     std::string mode_[2] = {"dwarf", "fp"};
@@ -477,8 +474,14 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
         unwindDepth_ = 30;
         outFileType_ = "malloc_";
         modeIndex_ = i; // 0 is dwarf, 1 is fp mode
+        saveFile_ = true;
+        isHookStandalone_ = false;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         int32_t ret = ReadFile(outFile_);
         ASSERT_NE(ret, -1);
@@ -538,8 +541,14 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
         unwindDepth_ = 100;
         outFileType_ = "calloc_";
         modeIndex_ = i;
+        saveFile_ = true;
+        isHookStandalone_ = false;
         StartCallocProcess(setDepth);
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         int32_t ret = ReadFile(outFile_);
         ASSERT_NE(ret, -1);
@@ -598,8 +607,14 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
         int setDepth = 100;
         outFileType_ = "realloc_";
         modeIndex_ = i;
+        saveFile_ = true;
+        isHookStandalone_ = false;
         StartReallocProcess(setDepth);
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         int32_t ret = ReadFile(outFile_);
         ASSERT_NE(ret, -1);
@@ -677,8 +692,15 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         unwindDepth_ = 6;
         outFileType_ = "dlopen_";
         modeIndex_ = i;
+        saveFile_ = true;
+        isHookStandalone_ = false;
         StartDlopenProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
         EXPECT_TRUE(infile.is_open());
@@ -728,13 +750,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(1);
-        std::string cmd = "kill -36 " + std::to_string(hookPid_);
-        system(cmd.c_str());
-
-        sleep(SLEEP_TIME); // 等待生成文本
-        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
-        system(cmdEnd.c_str());
         sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
@@ -787,7 +802,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
         modeIndex_ = i;
         offlineSymbolization_ = true;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -834,7 +853,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
         modeIndex_ = i;
         callframeCompress_ = true;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -879,7 +902,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
         modeIndex_ = i;
         stringCompress_ = true;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -916,7 +943,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
         modeIndex_ = i;
         rawString_ = true;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -954,7 +985,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
         modeIndex_ = i;
         responseLibraryMode_ = true;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -998,13 +1033,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(1);
-        std::string cmd = "kill -36 " + std::to_string(hookPid_);
-        system(cmd.c_str());
-
-        sleep(SLEEP_TIME); // 等待生成文本
-        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
-        system(cmdEnd.c_str());
         sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
@@ -1057,7 +1085,11 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
         modeIndex_ = i;
         mallocFreeMatchingInterval_ = 2;
         StartMallocProcess();
-        StartAndStopHook();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
@@ -1107,13 +1139,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
         StartMallocProcess();
         sleep(1);
         StartDaemonProcessArgs();
-        sleep(1);
-        std::string cmd = "kill -36 " + std::to_string(hookPid_);
-        system(cmd.c_str());
-
-        sleep(SLEEP_TIME); // 等待生成文本
-        std::string cmdEnd = "kill -37 " + std::to_string(hookPid_);
-        system(cmdEnd.c_str());
         sleep(WAIT_FLUSH);
         StopProcess(hookPid_);
         syscall(SYS_tkill, daemonPid_, 2);
