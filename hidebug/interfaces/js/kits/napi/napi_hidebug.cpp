@@ -431,7 +431,6 @@ static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 
 static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("removeNapiWrap");
     size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
     napi_value argv[REMOVE_NAPI_WRAP_PARAM_COUNT] = {nullptr};
     napi_value thisVar = nullptr;
@@ -442,7 +441,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
         !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
         HILOG_DEBUG(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
