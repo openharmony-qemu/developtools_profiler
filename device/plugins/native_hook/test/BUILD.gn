@@ -91,7 +91,7 @@ group("unittest") {
   testonly = true
   deps = [
     ":nativehook_ut",
-    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:nativetest_so",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon_client",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:nativetest_so",
   ]
 }
