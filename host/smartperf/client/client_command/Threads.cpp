@@ -53,11 +53,16 @@ std::map<std::string, std::string> Threads::ItemData()
     std::map<std::string, std::string> result;
     std::string& threadsNum = result["threadsNum"];
     std::string& tids = result["tids"];
-    for (size_t i = 0; i < processId.size(); i++) {
+    size_t idNum = processId.size();
+    for (size_t i = 0; i < idNum; i++) {
         std::string tid = "";
         std::string num = GetThreads(processId[i], tid);
-        threadsNum.append(processId[i]).append(":").append(num).append("|");
-        tids.append(processId[i]).append(":").append(tid).append("|");
+        threadsNum.append(processId[i]).append(":").append(num);
+        tids.append(processId[i]).append(":").append(tid);
+        if (idNum > 1) {
+            threadsNum.append("|");
+            tids.append("|");
+        }
     }
     return result;
 }
