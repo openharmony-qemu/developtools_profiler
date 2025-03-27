@@ -48,6 +48,7 @@ HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level1)
     ASSERT_FALSE(interface.IsDebuggerConnected());
 }
 
+#ifdef __aarch64__
 /**
  * @tc.name: OH_HiDebug_GetGraphicsMemory
  * @tc.desc: test OH_HiDebug_GetRealNanoSecondsTimestamp. get graphics memory.
@@ -58,5 +59,6 @@ HWTEST_F(HidebugNativeInterfaceTest, GetMemoryLeakResourceTest, TestSize.Level1)
     auto& interface = HidebugNativeInterface::GetInstance();
     ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), MemoryState::MEMORY_SUCCESS);
 }
+#endif
 }
 }
