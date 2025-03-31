@@ -122,7 +122,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
                 return;
             }
             WLOGI("############################# Setting TCP token...");
-            SpThreadSocket::GetInstance().SetTcpToken(token);
+            SpThreadSocket::GetInstance().SetToken(token);
             WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
         }
         CreateSocketThread();
@@ -133,7 +133,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             WLOGE("Error: token is empty when setting UDP token.");
             return;
         }
-        SpThreadSocket::GetInstance().SetUdpToken(token);
+        SpThreadSocket::GetInstance().SetToken(token);
         WLOGI("############################# Setting UDP token...");
         DeviceServer();
         WLOGI("############################# DeviceServer Socket Create Start, Ready to Start Collector...");

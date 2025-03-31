@@ -117,7 +117,7 @@ SocketErrorType SpThreadSocket::CheckTcpToken(std::string recvStr,
     }
     std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
     token = token.substr(0, token.find(' '));
-    std::string tcpSocketToken = SpThreadSocket::GetInstance().GetTcpToken();
+    std::string tcpSocketToken = SpThreadSocket::GetInstance().GetToken();
     LOGD("Comparing token with TCP token...");
     if (tcpSocketToken == "" && token == "-SESSIONID") {
         LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
@@ -161,7 +161,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
     std::string errorInfo;
     std::string checkStr = recvStr.substr(std::string("init::").length());
     if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
-        checkStr.find(SpThreadSocket::GetInstance().GetTcpToken()) == std::string::npos) {
+        checkStr.find(SpThreadSocket::GetInstance().GetToken()) == std::string::npos) {
         WLOGE("Init error(%s)", errorInfo.c_str());
         if (type == SocketConnectType::CMD_SOCKET) {
             spSocket.Send("init::False,\"error\":" + errorInfo);
@@ -171,7 +171,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         return;
     }
     if (recvStr.find("-lockfreq") != std::string::npos &&
-        SpThreadSocket::GetInstance().GetTcpToken() == "") {
+        SpThreadSocket::GetInstance().GetToken() == "") {
         WLOGE("'-lockfreq' must have a valid token.");
         return;
     }
@@ -299,7 +299,7 @@ SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
     // 提取 token
     std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
     token = token.substr(0, token.find(' '));
-    std::string udpSocketToken = SpThreadSocket::GetInstance().GetUdpToken();
+    std::string udpSocketToken = SpThreadSocket::GetInstance().GetToken();
     LOGD("Comparing token with Udp token...");
     // token 校验
     if (token != udpSocketToken) {
@@ -805,21 +805,13 @@ bool SpThreadSocket::IsPreset(const std::string &spMsg) const
         return false;
     }
 }
-void SpThreadSocket::SetTcpToken(std::string token)
+void SpThreadSocket::SetToken(std::string token)
 {
-    tcpToken = token;
+    checkToken = token;
 }
-std::string SpThreadSocket::GetTcpToken() const
+std::string SpThreadSocket::GetToken() const
 {
-    return tcpToken;
-}
-void SpThreadSocket::SetUdpToken(std::string token)
-{
-    udpToken = token;
-}
-std::string SpThreadSocket::GetUdpToken() const
-{
-    return udpToken;
+    return checkToken;
 }
 void SpThreadSocket::SetNeedUdpToken(bool isNeed)
 {

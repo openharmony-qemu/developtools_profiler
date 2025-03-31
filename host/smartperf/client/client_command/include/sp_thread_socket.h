@@ -72,10 +72,8 @@ public:
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
-    void SetTcpToken(std::string token);
-    std::string GetTcpToken() const;
-    void SetUdpToken(std::string token);
-    std::string GetUdpToken() const;
+    void SetToken(std::string token);
+    std::string GetToken() const;
     void SetNeedUdpToken(bool isNeed);
     void ConnectAndSendFile(const std::string filePath);
     void StartGpuCounter() const;
@@ -86,9 +84,8 @@ public:
 private:
     bool flagRunning = false;
     bool socketConnect = true;
-    std::string tcpToken = "";      // Editor 拉起测试时校验
-    std::string udpToken = "";      // device 拉起测试时校验
-    bool isNeedUdpToken = true;     // 是否需要校验 udp token
+    std::string checkToken = "";    // 拉起测试时校验
+    bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice/gpu_counter.csv";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
