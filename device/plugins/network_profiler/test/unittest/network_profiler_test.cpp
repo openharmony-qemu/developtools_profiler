@@ -21,6 +21,7 @@
 #include <memory>
 #include <sys/syscall.h>
 
+#include "command_poller.h"
 #include "init_param.h"
 #include "network_profiler_socker_client.h"
 #include "network_profiler.h"
@@ -35,9 +36,13 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::Profiler;
 
 namespace {
+const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
+const std::string NETWORK_TEST_EXE = "/data/local/tmp/network_profiler_test_exe";
 const std::string PARAM_KAY = "hiviewdfx.hiprofiler.networkprofiler.target";
 constexpr uint32_t BUFFER_SIZE = 1024;
 constexpr uint32_t SMB1_SIZE = 10 * 4096;
+constexpr int FILE_SIZE = 2000;
+constexpr int MOBILE_BIT = 32;
 const std::string WRITER_NAME = "NetworkProfilerWriterTest";
 void* g_smbAddr = nullptr;
 int g_smbFd1 = 0;
@@ -88,6 +93,55 @@ public:
     static void TearDownTestCase()
     {
     }
+    std::string CreateCommand(const std::string& outputFile, int32_t time, const std::string& model,
+        const std::string& procedure) const
+    {
+        std::string cmdStr =
+            "hiprofiler_cmd \\\n"
+            "-c - \\\n";
+        cmdStr += "-o " + outputFile + " \\\n";
+        cmdStr += "-t " + std::to_string(time) + " \\\n";
+        cmdStr += "-s \\\n";
+        cmdStr += "-k \\\n"
+            "<<CONFIG\n"
+            "request_id: 1\n"
+            "session_config {\n"
+            "  buffers {\n"
+            "    pages: 32768\n"
+            "  }\n"
+            "  result_file: \"/data/local/tmp/hiprofiler_data.htrace\"\n"
+            "  sample_duration: 30000\n"
+            "}\n"
+            "plugin_configs {\n"
+            "  plugin_name: \"ffrt-profiler\"\n"
+            "  config_data {\n";
+        cmdStr += model + ": " + procedure + '\n';
+        cmdStr += "smb_pages: 16384\n"
+                "flush_interval: 5\n"
+                "block: true\n"
+                "clock_id: BOOTTIME\n"
+            "  }\n"
+            "}\n"
+            "CONFIG\n";
+        return cmdStr;
+    }
+    void StartProcess(const std::string& name, const std::string& args)
+    {
+        if (signal(SIGCHLD, SIG_IGN) == SIG_ERR) {
+            return;
+        }
+
+        int processNum = fork();
+        if (processNum == 0) {
+            execl(name.c_str(), name.c_str(), args.c_str(), NULL);
+            _exit(1);
+        } else if (processNum < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Failed to fork process");
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "sub process PID: %d", processNum);
+            prfolerExePid = processNum;
+        }
+    }
     void SetUp()
     {
         g_smbFd1 = InitShareMemory();
@@ -96,6 +150,7 @@ public:
     {
         g_smbFd1 = 0;
     }
+    int prfolerExePid{0};
 };
 
 void CallBackFunc()
@@ -151,6 +206,45 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerTest002, TestSize.Level1)
     ret = client.ProtocolProc(ctx, 0, reinterpret_cast<int8_t*>(&config), sizeof(config));
     ASSERT_TRUE(ret);
     SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+}
+
+/**
+ * @tc.name: NetworkProfilerTest003
+ * @tc.desc: Test NetworkProfilerSocketClient send empty data to server
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerTest003, TestSize.Level1)
+{
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
+    auto networkProfiler = NetworkProfiler::GetInstance();
+    NetworkProfilerSocketClient client(1, networkProfiler, CallBackFunc);
+    sleep(2);
+    auto ret = client.SendNetworkProfilerData(nullptr, 0, nullptr, 0);
+    ASSERT_FALSE(ret);
+    networkProfiler->Enable();
+    networkProfiler->ServiceCloseCallback();
+    networkProfiler->Disable();
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+}
+
+/**
+ * @tc.name: NetworkProfilerTest004
+ * @tc.desc: Test NetworkProfilerSocketClient IsProfilerEnable without SystemSetParameter
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerTest004, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    auto networkProfilerService = std::make_unique<NetworkProfilerSocketService>(networkProfilerMgr);
+    ASSERT_TRUE(networkProfilerService != nullptr);
+    networkProfilerMgr->Init();
+    auto networkProfiler = NetworkProfiler::GetInstance();
+    auto ret = networkProfiler->IsProfilerEnable();
+    ASSERT_FALSE(ret);
+    networkProfiler->Enable();
+    networkProfiler->SetEnableFlag(true);
+    networkProfiler->Enable();
+    networkProfiler->~NetworkProfiler();
 }
 
 /**
@@ -283,4 +377,279 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerSockerClientTest006, TestSize.Level
     client.unixSocketClient_ = std::make_shared<UnixSocketClient>();
     ASSERT_FALSE(client.Connect(NETWORK_PROFILER_UNIX_SOCKET_FULL_PATH, nullptr));
 }
+
+/**
+ * @tc.name: NetworkProfilerServiceTest001
+ * @tc.desc: test NetworkProfilerService::NetworkProfilerServiceTest001 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerServiceTest001, TestSize.Level1)
+{
+    StartProcess(NETWORK_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(prfolerExePid));
+    string str = "network_plugin_test_string";
+    string seq = "_";
+    std::vector<string> ret;
+    SplitParamValue(str, seq, ret);
+    EXPECT_EQ(ret.size(), 4);
+}
+
+/**
+ * @tc.name: NetworkProfilerServiceTest002
+ * @tc.desc: test NetworkProfilerService::NetworkProfilerServiceTest002 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerServiceTest002, TestSize.Level1)
+{
+    StartProcess(NETWORK_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(prfolerExePid));
+    string str = "";
+    string seq = "_";
+    std::vector<string> ret;
+    SplitParamValue(str, seq, ret);
+    EXPECT_EQ(ret.size(), 0);
+}
+
+/**
+ * @tc.name: NetworkProfilerServiceTest003
+ * @tc.desc: test NetworkProfilerService::NetworkProfilerServiceTest003 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerServiceTest003, TestSize.Level1)
+{
+    StartProcess(NETWORK_TEST_EXE, "100");
+    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(prfolerExePid));
+    auto res = GetProcessNameByPid(prfolerExePid);
+    EXPECT_EQ(res, "networkprofiler_ut");
+}
+
+/**
+ * @tc.name: NetworkProfilerManagerTest001
+ * @tc.desc: test NetworkProfilerManager::NetworkProfilerManagerTest001 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest001, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    ASSERT_TRUE(networkProfilerMgr != nullptr);
+    networkProfilerMgr->Init();
+
+    std::vector<uint32_t> pluginIds(1);
+    ProfilerPluginConfig config;
+    config.set_name("network");
+    config.set_plugin_sha256("");
+    config.set_sample_interval(20);
+
+    PluginResult result;
+    std::vector<ProfilerPluginConfig> configVec;
+    configVec.push_back(config);
+
+    EXPECT_TRUE(networkProfilerMgr->CreatePluginSession(configVec));
+    EXPECT_FALSE(networkProfilerMgr->StartPluginSession(pluginIds, configVec, result));
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0));
+    EXPECT_TRUE(networkProfilerMgr->ResetWriter(0));
+    EXPECT_TRUE(networkProfilerMgr->StopPluginSession(pluginIds));
+    EXPECT_TRUE(networkProfilerMgr->DestroyPluginSession(pluginIds));
+}
+
+/**
+ * @tc.name: NetworkProfilerManagerTest002
+ * @tc.desc: test NetworkProfilerManager::NetworkProfilerManagerTest002 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest002, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    ASSERT_TRUE(networkProfilerMgr != nullptr);
+    auto commandPoller = std::make_shared<CommandPoller>(networkProfilerMgr);
+    ASSERT_TRUE(commandPoller != nullptr);
+    EXPECT_FALSE(commandPoller->OnConnect());
+    networkProfilerMgr->SetCommandPoller(commandPoller);
+
+    std::vector<uint32_t> pluginIds = {1, 2, 3};
+    EXPECT_FALSE(networkProfilerMgr->RegisterAgentPlugin("network"));
+    EXPECT_TRUE(networkProfilerMgr->ReportPluginBasicData(pluginIds));
+}
+
+/**
+ * @tc.name: NetworkProfilerManagerTest003
+ * @tc.desc: test NetworkProfilerManager::NetworkProfilerManagerTest003 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest003, TestSize.Level1)
+{
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    ASSERT_TRUE(networkProfilerMgr != nullptr);
+
+    auto commandPoller = std::make_shared<CommandPoller>(networkProfilerMgr);
+    ASSERT_TRUE(commandPoller != nullptr);
+    EXPECT_FALSE(commandPoller->OnConnect());
+    networkProfilerMgr->SetCommandPoller(commandPoller);
+
+    EXPECT_FALSE(networkProfilerMgr->RegisterAgentPlugin("network"));
+    ASSERT_TRUE(networkProfilerMgr->LoadPlugin("network"));
+    ASSERT_TRUE(networkProfilerMgr->UnloadPlugin("network"));
+    SystemSetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
+}
+
+/**
+ * @tc.name: NetworkProfilerManagerTest004
+ * @tc.desc: test NetworkProfilerManager::NetworkProfilerManagerTest004 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest004, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    ASSERT_TRUE(networkProfilerMgr != nullptr);
+    auto commandPoller = std::make_shared<CommandPoller>(networkProfilerMgr);
+    ASSERT_TRUE(commandPoller != nullptr);
+    EXPECT_FALSE(commandPoller->OnConnect());
+    networkProfilerMgr->SetCommandPoller(commandPoller);
+
+    EXPECT_FALSE(networkProfilerMgr->RegisterAgentPlugin("network"));
+    ASSERT_TRUE(networkProfilerMgr->LoadPlugin("network"));
+    ASSERT_TRUE(networkProfilerMgr->UnloadPlugin(commandPoller->GetRequestId()));
+}
+
+/**
+ * @tc.name: NetworkProfilerHandleTest001
+ * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest001 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest001, TestSize.Level1)
+{
+    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    NetworkProfilerConfig config;
+    int32_t pid = -1;
+    config.add_pid(pid);
+    config.add_pid(prfolerExePid);
+    config.add_startup_process_name("");
+    config.add_startup_process_name("test_name002");
+    config.add_restart_process_name("");
+    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
+    networkProfilerMgr->SetConfig(config);
+    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
+
+    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
+    const int8_t data[] = {1, 2, 3};
+    handle->SerializeData(data, FILE_SIZE);
+    handle->StopHandle();
+}
+
+/**
+ * @tc.name: NetworkProfilerHandleTest002
+ * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest002 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
+{
+    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
+    EXPECT_NE(write->shareMemoryBlock_, nullptr);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    NetworkProfilerConfig config;
+    int32_t pid = 1;
+    config.add_pid(pid);
+    config.add_pid(prfolerExePid);
+    config.add_startup_process_name("");
+    config.add_startup_process_name("test_name003");
+    config.add_restart_process_name("");
+    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
+    networkProfilerMgr->SetConfig(config);
+    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
+    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, false));
+    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
+    const int8_t data[] = {1, 2, 3};
+    handle->SerializeData(data, FILE_SIZE);
+
+    EXPECT_TRUE(write->Write((const void*)buffer1, sizeof(buffer1)));
+    handle->SetWriter(write);
+    handle->StopHandle();
+}
+
+/**
+ * @tc.name: NetworkProfilerHandleTest003
+ * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest003 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest003, TestSize.Level1)
+{
+    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    NetworkProfilerConfig config;
+    int32_t pid = 1;
+    config.add_pid(pid);
+    config.add_pid(prfolerExePid);
+    config.add_startup_process_name("network");
+    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
+    networkProfilerMgr->SetConfig(config);
+    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
+    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, true));
+
+    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
+    const int8_t data[] = {};
+    handle->SerializeData(data, 0);
+
+    handle->StopHandle();
+    ASSERT_TRUE(networkProfilerMgr->UnloadPlugin("network"));
+}
+
+/**
+ * @tc.name: NetworkProfilerSocketServiceTest004
+ * @tc.desc: test NetworkProfilerSocketService::NetworkProfilerSocketServiceTest004 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSocketServiceTest004, TestSize.Level1)
+{
+    uint64_t config = FILE_SIZE;
+    config <<= MOBILE_BIT;
+    config |= SMB1_SIZE;
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    auto socketService_ = std::make_shared<NetworkProfilerSocketService>(networkProfilerMgr);
+
+    SocketContext socketContext;
+    auto ptr = reinterpret_cast<const int8_t*>(&config);
+    auto size = sizeof(uint64_t);
+    ASSERT_FALSE(socketService_->ProtocolProc(socketContext, 0, ptr, size));
+}
+
+/**
+ * @tc.name: NetworkProfilerSocketServiceTest005
+ * @tc.desc: test NetworkProfilerSocketService::NetworkProfilerSocketServiceTest005 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSocketServiceTest005, TestSize.Level1)
+{
+    uint64_t config = FILE_SIZE;
+    config <<= MOBILE_BIT;
+    config |= SMB1_SIZE;
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    auto socketService = std::make_shared<NetworkProfilerSocketService>(networkProfilerMgr);
+
+    SocketContext socketContext;
+    auto ptr = reinterpret_cast<const int8_t*>(&config);
+    auto size = sizeof(int);
+    socketService->SetConfig(sizeof(uint64_t), sizeof(uint64_t), true, 0);
+    ASSERT_FALSE(socketService->ProtocolProc(socketContext, 0, ptr, size));
+}
+
+/**
+ * @tc.name: NetworkProfilerSocketServiceTest006
+ * @tc.desc: test NetworkProfilerSocketService::NetworkProfilerSocketServiceTest006 with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, NetworkProfilerSocketServiceTest006, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    auto socketService = std::make_shared<NetworkProfilerSocketService>(networkProfilerMgr);
+
+    SocketContext socketContext;
+    int pid = -1;
+    const int8_t* ptr = reinterpret_cast<const int8_t*>(&pid);
+    socketService->SetConfig(sizeof(uint64_t), sizeof(uint64_t), true, 0);
+    ASSERT_FALSE(socketService->ProtocolProc(socketContext, 0, ptr, sizeof(pid)));
+}
+
 } // namespace
