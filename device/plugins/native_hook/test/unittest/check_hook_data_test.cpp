@@ -136,6 +136,12 @@ public:
                 command_.push_back(const_cast<char*>("-mfmi"));
                 command_.push_back(const_cast<char*>(std::to_string(mallocFreeMatchingInterval_).c_str()));
             }
+            if (dumpdata_) {
+                command_.push_back(const_cast<char*>("-dd"));
+            }
+            if (nmd_) {
+                command_.push_back(const_cast<char*>("-nmd"));
+            }
             if (jsReport_) {
                 command_.push_back(const_cast<char*>("-jr"));
                 command_.push_back(const_cast<char*>(std::to_string(START_JS_REPORT).c_str()));
@@ -457,6 +463,8 @@ public:
     bool responseLibraryMode_ = false;
     bool saveFile_ = false;
     bool isHookStandalone_ = true;
+    bool dumpdata_ = false;
+    bool nmd_ = false;
     std::string outFile_ = "";
     std::string outFileType_ = "";
     std::string mode_[2] = {"dwarf", "fp"};
@@ -1174,6 +1182,151 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test no data queue normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
+{
+    for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        statisticsInterval_ = 1;
+        sampleInterval_ = 256;
+        offlineSymbolization_ = true;
+        outFileType_ = "no_data_queue_";
+        modeIndex_ = i;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test dumpdata normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
+{
+    for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        statisticsInterval_ = 1;
+        modeIndex_ = i;
+        dumpdata_ = true;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        outFile_ = "/data/local/tmp/test_dump_file.htrace";
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
+    }
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test nmd normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
+{
+    for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        modeIndex_ = i;
+        dumpdata_ = true;
+        nmd_ = true;
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        outFile_ = "/data/local/tmp/test_dump_file.htrace";
+        infile.open(outFile_, std::ios::in);
+        EXPECT_TRUE(infile.is_open());
+        std::string buf;
+        bool nmdResult = false;
+        while (getline(infile, buf)) {
+            if (buf.find("End jemalloc ohos statistics") != std::string::npos) {
+                nmdResult = true;
+            }
+        }
+        EXPECT_TRUE(nmdResult);
         sleep(SLEEP_TIME);
     }
 }
