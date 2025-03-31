@@ -1316,7 +1316,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
         syscall(SYS_tkill, daemonPid_, 2);
 
         std::ifstream infile;
-        outFile_ = "/data/local/tmp/test_dump_file.htrace";
+        outFile_ = "/data/local/tmp/test_dump_file0.htrace";
         infile.open(outFile_, std::ios::in);
         EXPECT_TRUE(infile.is_open());
         std::string buf;

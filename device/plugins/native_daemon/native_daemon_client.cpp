@@ -24,7 +24,7 @@
 #include <sstream>
 
 using namespace OHOS::Developtools::NativeDaemon;
-
+const int ONLY_NMD = 2;
 namespace {
 static uint32_t TestDumpFile(const std::string postfix = "")
 {
@@ -193,14 +193,14 @@ int32_t main(int32_t argc, char* argv[])
 
     if (start) {
         std::cout << "start....." << std::endl;
-        if (dumpData) {
+        if (config->printNmd_) {
+            uint32_t fdFirst = TestDumpFile(std::to_string(0));
+            NativeMemoryProfilerSaClientManager::GetMallocStats(fdFirst, config->pid_, ONLY_NMD, true);
+            close(fdFirst);
+        } else if (dumpData) {
             uint32_t fd = TestDumpFile();
             NativeMemoryProfilerSaClientManager::DumpData(fd, config);
             close(fd);
-        } else if (config->printNmd_) {
-            uint32_t fdFirst = TestDumpFile(std::to_string(0));
-            NativeMemoryProfilerSaClientManager::GetMallocStats(fdFirst, config->pid_, 0, true);
-            close(fdFirst);
         } else {
             NativeMemoryProfilerSaClientManager::Start(config);
         }
