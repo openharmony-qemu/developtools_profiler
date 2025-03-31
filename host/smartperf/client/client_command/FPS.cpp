@@ -255,6 +255,7 @@ void FPS::ReadDataFromPipe(int fd)
             break;
         }
     }
+    (void)fclose(fp);
     CalcJitters();
 }
 

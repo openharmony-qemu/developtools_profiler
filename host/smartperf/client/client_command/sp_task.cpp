@@ -572,7 +572,6 @@ void SPTask::StopGetInfo()
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
     OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
-
     WLOGI("Write CSV header done.");
 }
 void SPTask::StopGpuCounterRecv()
