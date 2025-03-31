@@ -56,7 +56,9 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
     g_nativeConfig.set_malloc_free_matching_interval(hookData.mallocFreeMatchingInterval);
     for (const std::string& pid: hookData.pids) {
-        g_nativeConfig.add_expand_pids(atoi(pid.data()));
+        if (IsNumeric(std::string(pid.data()))) {
+            g_nativeConfig.add_expand_pids(atoi(pid.data()));
+        }
     }
     // statistical reporting must be callframe compressed and accurate.
     if (g_nativeConfig.statistics_interval() > 0 ||

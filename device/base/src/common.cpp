@@ -136,6 +136,9 @@ bool IsProcessExist(const std::string& processName, int& pid)
         if ((!isdigit(*ptr->d_name)) || ptr->d_type != DT_DIR) {
             continue;
         }
+        if (!IsNumeric(std::string(ptr->d_name))) {
+            continue;
+        }
         char filePath[FILE_PATH_SIZE] = {0};
         int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
         if (len < 0) {

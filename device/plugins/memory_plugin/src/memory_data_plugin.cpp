@@ -338,7 +338,10 @@ template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInf
 
 int MemoryDataPlugin::ParseNumber(std::string line)
 {
-    return atoi(line.substr(line.find_first_of("01234567890")).c_str());
+    if (IsNumeric(line.substr(line.find_first_of("01234567890")))) {
+        return atoi(line.substr(line.find_first_of("01234567890")).c_str());
+    }
+    return 0;
 }
 
 template <typename T, typename S> void MemoryDataPlugin::WriteMemoryData(T& memoryDataProto, S smapsInfo)
@@ -563,7 +566,9 @@ int32_t MemoryDataPlugin::GetValidPid(DIR* dirp)
         if (dirEnt->d_type != DT_DIR) {
             continue;
         }
-
+        if (!IsNumeric(std::string(dirEnt->d_name))) {
+            continue;
+        }
         int32_t pid = atoi(dirEnt->d_name);
         if (pid) {
             return pid;
@@ -1093,6 +1098,12 @@ int MemoryDataPlugin::GetIndentNum(const std::string& line)
 
 uint64_t MemoryDataPlugin::SizeToBytes(const std::string& sizeStr, const std::string& type)
 {
+    double result = 0;
+    std::istringstream iss(sizeStr);
+    iss >> result;
+    if (iss.fail() || !iss.eof()) {
+        return 0;
+    }
     auto size = std::atof(sizeStr.c_str());
     uint64_t byteSize = round(size);
     if (type == "KB") {
