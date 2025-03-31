@@ -77,6 +77,9 @@ public:
     void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
     void SetNeedUdpToken(bool isNeed);
+    void GetLogCommandProcess() const;
+    void StartGpuCounter() const;
+    void SaveGpuCounter() const;
 
 private:
     bool flagRunning = false;
@@ -84,6 +87,8 @@ private:
     std::string tcpToken = "";      // Editor 拉起测试时校验
     std::string udpToken = "";      // device 拉起测试时校验
     bool isNeedUdpToken = true;     // 是否需要校验 udp token
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice/gpu_counter.csv";
 };
 }
 }

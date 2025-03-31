@@ -414,6 +414,49 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
     }
 }
 
+void SpThreadSocket::GetLogCommandProcess() const
+{
+    if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
+        return;
+    }
+    int logSocket = -1;
+    int connectCount = 0;
+    const int maxTryCount = 2;
+
+    while (logSocket < 0) {
+        WLOGI("Connect file log socket, try times: %d", connectCount + 1);
+        if (connectCount > maxTryCount) {
+            WLOGE("Connect file log socket failed");
+            return;
+        }
+        connectCount++;
+        logSocket = GetLog::GetInstance().LogFileSocketConnect();
+    }
+
+    int ret = GetLog::GetInstance().SendLogFile();
+    if (ret < 0) {
+        return;
+    }
+}
+
+void SpThreadSocket::StartGpuCounter() const
+{
+    char filePathChar[PATH_MAX] = {0x00};
+    if (realpath(gpuCounterfilePath.c_str(), filePathChar) == nullptr) {
+        LOGE("%s is not exist, init finish.", gpuCounterfilePath.c_str());
+        return;
+    }
+    std::remove(filePathChar);
+    gpuCounter.StartCollect(GpuCounter::GC_START);
+}
+
+void SpThreadSocket::SaveGpuCounter() const
+{
+    gpuCounter.GetInstance().SaveData(gpuCounterfilePath);
+    gpuCounter.GetGpuCounterData().clear();
+    gpuCounter.StopCollect();
+}
+
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
     std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
 {
@@ -432,27 +475,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
-        if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
-            return;
-        }
-        int logSocket = -1;
-        int connectCount = 0;
-        const int maxTryCount = 2;
-
-        while (logSocket < 0) {
-            WLOGI("Connect file log socket, try times: %d", connectCount + 1);
-            if (connectCount > maxTryCount) {
-                WLOGE("Connect file log socket failed");
-                return;
-            }
-            connectCount++;
-            logSocket = GetLog::GetInstance().LogFileSocketConnect();
-        }
-
-        int ret = GetLog::GetInstance().SendLogFile();
-        if (ret < 0) {
-            return;
-        }
+        GetLogCommandProcess();
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
