@@ -133,7 +133,6 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
     while (socketConnect == true) {
         int procFd = spSocket.Accept();
         std::cout << "Socket TCP procFd: " << procFd << std::endl;
-        WLOGI("Accepted socket connection, procFd: %d", procFd);
         while (procFd > 0) {
             int reFd = spSocket.Recv();
             if (reFd < 0) {
@@ -143,10 +142,10 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
             LOGD("TCP recv data:%s", recvStr.c_str());
-            WLOGI("Received data: %s", recvStrNoToken.c_str());
+            WLOGD("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckToken(recvStr, spSocket, recvStrNoToken);
-            WLOGI("Token check status: %d", tokenStatus);
+            WLOGD("Token check status: %d", tokenStatus);
             DealMsg(recvStr, spSocket, tokenStatus);
         }
     }
