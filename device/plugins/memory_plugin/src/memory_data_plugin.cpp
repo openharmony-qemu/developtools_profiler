@@ -338,7 +338,7 @@ template <typename T> void MemoryDataPlugin::WriteAppsummary(T& processMemoryInf
 
 int MemoryDataPlugin::ParseNumber(std::string line)
 {
-    if (IsNumeric(line.substr(line.find_first_of("01234567890")))) {
+    if (COMMON::IsNumeric(line.substr(line.find_first_of("01234567890")))) {
         return atoi(line.substr(line.find_first_of("01234567890")).c_str());
     }
     return 0;
@@ -566,7 +566,7 @@ int32_t MemoryDataPlugin::GetValidPid(DIR* dirp)
         if (dirEnt->d_type != DT_DIR) {
             continue;
         }
-        if (!IsNumeric(std::string(dirEnt->d_name))) {
+        if (!COMMON::IsNumeric(std::string(dirEnt->d_name))) {
             continue;
         }
         int32_t pid = atoi(dirEnt->d_name);

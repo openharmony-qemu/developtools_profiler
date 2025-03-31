@@ -149,7 +149,7 @@ bool FtraceParser::ParseEventFormat(const std::string& formatDesc, EventFormat& 
             ParseFieldFormat(line, format);
         } else if (StringUtils::StartsWith(line, idLinePrefix)) {
             auto idStr = line.substr(idLinePrefix.size() + 1);
-            if (IsNumeric(idStr)) {
+            if (COMMON::IsNumeric(idStr)) {
                 format.eventId = static_cast<uint32_t>(atoi(idStr.c_str()));
             }
         }
@@ -234,13 +234,13 @@ bool FtraceParser::ParseFieldFormat(const std::string& fieldLine, EventFormat& f
     std::string type = EraseNameFromTypeName(typeName, name); // for field type
     fieldInfo.name = name;
     fieldInfo.typeName = typeName;
-    if (IsNumeric(offsetStr)) {
+    if (COMMON::IsNumeric(offsetStr)) {
         fieldInfo.offset = atoi(offsetStr.c_str());
     }
-    if (IsNumeric(sizeStr)) {
+    if (COMMON::IsNumeric(sizeStr)) {
         fieldInfo.size = atoi(sizeStr.c_str());
     }
-    if (IsNumeric(signedStr)) {
+    if (COMMON::IsNumeric(signedStr)) {
         fieldInfo.isSigned = atoi(signedStr.c_str());
     }
 

@@ -15,7 +15,7 @@
 #include "hook_standalone.h"
 
 #include <csignal>
-
+#include "common.h"
 #include "hook_common.h"
 #include "hook_manager.h"
 #include "logging.h"
@@ -56,7 +56,7 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
     g_nativeConfig.set_malloc_free_matching_interval(hookData.mallocFreeMatchingInterval);
     for (const std::string& pid: hookData.pids) {
-        if (IsNumeric(std::string(pid.data()))) {
+        if (COMMON::IsNumeric(std::string(pid.data()))) {
             g_nativeConfig.add_expand_pids(atoi(pid.data()));
         }
     }

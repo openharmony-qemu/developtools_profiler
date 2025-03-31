@@ -185,7 +185,7 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
-            if (IsNumeric(curWord)) {
+            if (COMMON::IsNumeric(curWord)) {
                 rd_sectors_kb = atoi(curWord.c_str());
             }
         } else if (strcmp(curWord.c_str(), "pgpgout") == 0) {
@@ -195,7 +195,7 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
-            if (IsNumeric(curWord)) {
+            if (COMMON::IsNumeric(curWord)) {
                 wr_sectors_kb = atoi(curWord.c_str());
             }
         }

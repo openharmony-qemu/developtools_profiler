@@ -135,7 +135,7 @@ int32_t ProcessDataPlugin::GetValidPid(DIR* dirp)
         if (dirEnt->d_type != DT_DIR) {
             continue;
         }
-        if (!IsNumeric(std::string(dirEnt->d_name))) {
+        if (!COMMON::IsNumeric(std::string(dirEnt->d_name))) {
             continue;
         }
         int32_t pid = atoi(dirEnt->d_name);
