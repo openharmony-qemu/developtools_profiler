@@ -12,6 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
 #include <functional>
 #include <vector>
@@ -366,7 +370,7 @@ void SpThreadSocket::BackDesktop() const
     SPUtils::LoadCmd(uinput, cmdResult);
 }
 // UDP
-void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
+void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
 {
     std::string retCode = "";
     auto iterator = MESSAGE_MAP.begin();
@@ -414,9 +418,81 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
     }
 }
 
-void SpThreadSocket::GetLogCommandProcess() const
+int SpThreadSocket::FileSocketConnect()
 {
-    if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
+    sendFileSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (sendFileSocket < 0) {
+        WLOGE("Create log file socket failed, errno: %d", errno);
+        return -1;
+    }
+    struct sockaddr_in socketAddr = {0};
+    socketAddr.sin_family = AF_INET;
+    socketAddr.sin_port = htons(sendFileSocketPort);
+    socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if (connect(sendFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
+        WLOGE("Connect log file socket failed, errno: %d", errno);
+        return -1;
+    }
+    WLOGI("Connect log file socket success, socket: %d", sendFileSocket);
+    return sendFileSocket;
+}
+
+int SpThreadSocket::SendFile(const std::string filePath)
+{
+    char filePathChar[PATH_MAX] = {0x00};
+    if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+        WLOGI("%s is not exist.", filePath.c_str());
+        return -1;
+    }
+    std::ifstream logFile(filePathChar, std::ios::binary);
+    if (!logFile.is_open()) {
+        WLOGE("Open log file failed");
+        close(sendFileSocket);
+        sendFileSocket = -1;
+        return -1;
+    }
+    WLOGI("logfile exists, sending...");
+    // Get file size
+    logFile.seekg(0, std::ios::end);
+    std::streamsize fileSize = logFile.tellg();
+    logFile.seekg(0, std::ios::beg);
+
+    std::streamsize totalSent = 0;
+    while (!logFile.eof()) {
+        logFile.read(fileSocketBuffer, sizeof(fileSocketBuffer));
+        std::streamsize bytesRead = logFile.gcount();
+        ssize_t bytesSent = send(sendFileSocket, fileSocketBuffer, bytesRead, 0);
+        if (bytesSent < 0) {
+            WLOGE("Send log file failed");
+            logFile.close();
+            close(sendFileSocket);
+            sendFileSocket = -1;
+            return -1;
+        }
+        totalSent += bytesSent;
+        if (bytesSent != bytesRead) {
+            WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
+            logFile.close();
+            close(sendFileSocket);
+            sendFileSocket = -1;
+            return -1;
+        }
+    }
+
+    if (totalSent != fileSize) {
+        WLOGE("File size mismatch: sent %zd bytes, file size %zd", totalSent, fileSize);
+        return -1;
+    }
+    logFile.close();
+    close(sendFileSocket);
+    sendFileSocket = -1;
+    WLOGI("Send log file success, bytes: %zd", totalSent);
+    return 0;
+}
+
+void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
+{
+    if (sendFileSocketPort == -1) {
         return;
     }
     int logSocket = -1;
@@ -430,10 +506,10 @@ void SpThreadSocket::GetLogCommandProcess() const
             return;
         }
         connectCount++;
-        logSocket = GetLog::GetInstance().LogFileSocketConnect();
+        logSocket = FileSocketConnect();
     }
 
-    int ret = GetLog::GetInstance().SendLogFile();
+    int ret = SendFile(filePath);
     if (ret < 0) {
         return;
     }
@@ -458,7 +534,7 @@ void SpThreadSocket::SaveGpuCounter() const
 }
 
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
-    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
@@ -475,7 +551,13 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
-        GetLogCommandProcess();
+        ConnectAndSendFile(logFilePath);
+        GetLog::GetInstance().RemoveLogFile();
+    } else if (iterator->first == MessageType::START_GPU_COUNTER) {
+        StartGpuCounter();
+    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
+        SaveGpuCounter();
+        ConnectAndSendFile(gpuCounterfilePath);
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
@@ -647,18 +729,18 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
             return "UNKNOWN";
     }
 }
-std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *profilerItem, std::string buffer) const
+std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *profilerItem, std::string buffer)
 {
     if (buffer.find("::") != std::string::npos) {
         int port = std::stoi(buffer.substr(buffer.find("::") + 2));
         WLOGI("Get File log UDP message received, port is %d", port);
         // Init log file socket and file process
-        GetLog::GetInstance().SetLogFileSocket(-1);
-        GetLog::GetInstance().SetLogFileSocketPort(port);
+        sendFileSocket = -1;
+        sendFileSocketPort = port;
         return profilerItem->ItemData();
     } else {
         WLOGE("Get File log UDP message received, but port is not found");
-        GetLog::GetInstance().SetLogFileSocketPort(-1);
+        sendFileSocketPort = -1;
     }
 
     return std::map<std::string, std::string>();

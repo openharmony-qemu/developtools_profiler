@@ -56,9 +56,9 @@ public:
     void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus);
     void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
-    void HandleMsg(SpServerSocket &spSocket) const;
+    void HandleMsg(SpServerSocket &spSocket);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
@@ -66,7 +66,7 @@ public:
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
-    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
+    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer);
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SpGetPkg(const std::string &spMsg) const;
@@ -77,9 +77,11 @@ public:
     void SetUdpToken(std::string token);
     std::string GetUdpToken() const;
     void SetNeedUdpToken(bool isNeed);
-    void GetLogCommandProcess() const;
+    void ConnectAndSendFile(const std::string filePath);
     void StartGpuCounter() const;
     void SaveGpuCounter() const;
+    int FileSocketConnect();
+    int SendFile(std::string filePath);
 
 private:
     bool flagRunning = false;
@@ -89,6 +91,11 @@ private:
     bool isNeedUdpToken = true;     // 是否需要校验 udp token
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice/gpu_counter.csv";
+    const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
+    int sendFileSocket = -1;
+    int sendFileSocketPort = -1;
+    static const int fileSocketBufferSize = 4096;
+    char fileSocketBuffer[fileSocketBufferSize] = {};
 };
 }
 }

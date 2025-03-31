@@ -118,5 +118,22 @@ public:
         close(tcpServerFd);
     }
 };
+
+/**
+ * @tc.name: GetLog::SendFileTestCase
+ * @tc.desc: Test SendFileTestCase
+ * @tc.type: FUNC
+ */
+HWTEST_F(SPdaemonGetLogTest, SendFileTestCase, TestSize.Level1)
+{
+    std::map<std::string, std::string> result = GetLog::GetInstance().ItemData();
+    std::thread tcpServer = std::thread([this]() {
+        GetLogCommand();
+    });
+    GetLog::GetInstance().SetLogFileSocketPort(TCP_PORT);
+    GetLog::GetInstance().LogFileSocketConnect();
+    GetLog::GetInstance().SendLogFile();
+    tcpServer.join();
+}
 } // namespace SmartPerf
 }

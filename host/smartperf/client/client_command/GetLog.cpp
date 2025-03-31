@@ -15,10 +15,6 @@
 #include "include/GetLog.h"
 #include "include/sp_utils.h"
 #include "include/smartperf_command.h"
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <fstream>
 #include <filesystem>
 #include <vector>
@@ -307,97 +303,5 @@ std::map<std::string, std::string> GetLog::ItemData()
     return std::map<std::string, std::string>();
 }
 
-int GetLog::LogFileSocketConnect()
-{
-    logFileSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (logFileSocket < 0) {
-        WLOGE("Create log file socket failed, errno: %d", errno);
-        return -1;
-    }
-    struct sockaddr_in socketAddr = {0};
-    socketAddr.sin_family = AF_INET;
-    socketAddr.sin_port = htons(logFileSocketPort);
-    socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
-        WLOGE("Connect log file socket failed, errno: %d", errno);
-        return -1;
-    }
-    WLOGI("Connect log file socket success, socket: %d", logFileSocket);
-    return logFileSocket;
-}
-
-int GetLog::SendLogFile()
-{
-    char logFilePathChar[PATH_MAX] = {0x00};
-    if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
-        WLOGI("%s is not exist.", logFilePath.c_str());
-        return -1;
-    }
-    std::ifstream logFile(logFilePathChar, std::ios::binary);
-    if (!logFile.is_open()) {
-        WLOGE("Open log file failed");
-        close(logFileSocket);
-        logFileSocket = -1;
-        return -1;
-    }
-    WLOGI("logfile exists, sending...");
-    // Get file size
-    logFile.seekg(0, std::ios::end);
-    std::streamsize fileSize = logFile.tellg();
-    logFile.seekg(0, std::ios::beg);
-
-    std::streamsize totalSent = 0;
-    while (!logFile.eof()) {
-        logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
-        std::streamsize bytesRead = logFile.gcount();
-        ssize_t bytesSent = send(logFileSocket, logSocketBuffer, bytesRead, 0);
-        if (bytesSent < 0) {
-            WLOGE("Send log file failed");
-            logFile.close();
-            close(logFileSocket);
-            logFileSocket = -1;
-            return -1;
-        }
-        totalSent += bytesSent;
-        if (bytesSent != bytesRead) {
-            WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
-            logFile.close();
-            close(logFileSocket);
-            logFileSocket = -1;
-            return -1;
-        }
-    }
-
-    if (totalSent != fileSize) {
-        WLOGE("File size mismatch: sent %zd bytes, file size %zd", totalSent, fileSize);
-        return -1;
-    }
-    logFile.close();
-    close(logFileSocket);
-    logFileSocket = -1;
-    WLOGI("Send log file success, bytes: %zd", totalSent);
-    RemoveLogFile();
-    return 0;
-}
-
-void GetLog::SetLogFileSocketPort(int port)
-{
-    logFileSocketPort = port;
-}
-
-int GetLog::GetLogFileSocketPort() const
-{
-    return logFileSocketPort;
-}
-
-void GetLog::SetLogFileSocket(int socket)
-{
-    logFileSocket = socket;
-}
-
-int GetLog::GetLogFileSocket() const
-{
-    return logFileSocket;
-}
 } // namespace SmartPerf
 } // namespace OHOS
