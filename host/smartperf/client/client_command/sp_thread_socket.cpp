@@ -406,7 +406,10 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
                 data = profiler->ItemData();
                 data["network_traffic"] = "true";
             } else if (iterator->first == MessageType::GET_LOG) {
-                    data = GetLogProcess(profiler, recvBuf);
+                GetSocketPort(recvBuf);
+                data = profiler->ItemData();
+            } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
+                GetSocketPort(recvBuf);
             } else {
                 GetProcessIdByPkgName(iterator);
                 data = profiler->ItemData();
@@ -495,18 +498,18 @@ void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
     if (sendFileSocketPort == -1) {
         return;
     }
-    int logSocket = -1;
+    int fileSocket = -1;
     int connectCount = 0;
     const int maxTryCount = 2;
 
-    while (logSocket < 0) {
+    while (fileSocket < 0) {
         WLOGI("Connect file log socket, try times: %d", connectCount + 1);
         if (connectCount > maxTryCount) {
             WLOGE("Connect file log socket failed");
             return;
         }
         connectCount++;
-        logSocket = FileSocketConnect();
+        fileSocket = FileSocketConnect();
     }
 
     int ret = SendFile(filePath);
@@ -558,6 +561,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
         SaveGpuCounter();
         ConnectAndSendFile(gpuCounterfilePath);
+
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
@@ -729,21 +733,27 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
             return "UNKNOWN";
     }
 }
-std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *profilerItem, std::string buffer)
+void SpThreadSocket::GetSocketPort(std::string buffer)
 {
     if (buffer.find("::") != std::string::npos) {
-        int port = std::stoi(buffer.substr(buffer.find("::") + 2));
-        WLOGI("Get File log UDP message received, port is %d", port);
-        // Init log file socket and file process
-        sendFileSocket = -1;
-        sendFileSocketPort = port;
-        return profilerItem->ItemData();
+        std::string portStr = buffer.substr(buffer.find("::") + 2);
+        if (portStr.find(":::") != std::string::npos) {
+            portStr = portStr.substr(0, portStr.find(":::"));
+        }
+        
+        try {
+            int port = std::stoi(portStr);
+            WLOGI("Get File log UDP message received, port is %d", port);
+            sendFileSocket = -1;
+            sendFileSocketPort = port;
+        } catch (const std::exception& e) {
+            WLOGE("Failed to parse port number: %s", e.what());
+            sendFileSocketPort = -1;
+        }
     } else {
         WLOGE("Get File log UDP message received, but port is not found");
         sendFileSocketPort = -1;
     }
-
-    return std::map<std::string, std::string>();
 }
 std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 {

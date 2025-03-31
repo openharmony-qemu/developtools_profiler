@@ -66,7 +66,7 @@ public:
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
-    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer);
+    void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SpGetPkg(const std::string &spMsg) const;
