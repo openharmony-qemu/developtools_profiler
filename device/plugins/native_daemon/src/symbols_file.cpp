@@ -37,6 +37,7 @@
 #include "dfx_extractor_utils.h"
 #include "dfx_symbols.h"
 #include "dwarf_encoding.h"
+#include "elf_factory.h"
 #include "utilities.h"
 
 using namespace OHOS::HiviewDFX;
@@ -200,11 +201,14 @@ protected:
         std::string elfPath = FindSymbolFile(symbolsFileSearchPaths_, symbolFilePath);
         UNWIND_CHECK_TRUE(!elfPath.empty(), false, "elf found failed (belong to %s)", filePath_.c_str());
         if (elfFile_ == nullptr) {
-            if (StringEndsWith(elfPath, ".hap")) {
-                elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
+            if (StringEndsWith(elfPath, ".hap") && StringStartsWith(elfPath, "/proc")) {
+                CompressHapElfFactory elfFactory(elfPath, map->prevMap);
+                elfFile_ = elfFactory.Create();
+                map->offset -= map->prevMap->offset;
                 map->elf = elfFile_;
             } else {
-                elfFile_ = std::make_shared<DfxElf>(elfPath);
+                RegularElfFactory elfFactory(elfPath);
+                elfFile_ = elfFactory.Create();
             }
         }
 
@@ -253,7 +257,7 @@ private:
                         uint64_t &sectionFileOffset) const override
     {
         struct ShdrInfo shdrInfo;
-        if (elfFile_->GetSectionInfo(shdrInfo, name)) {
+        if (elfFile_ != nullptr && elfFile_->GetSectionInfo(shdrInfo, name)) {
             sectionVaddr = shdrInfo.addr;
             sectionSize = shdrInfo.size;
             sectionFileOffset = shdrInfo.offset;
@@ -270,7 +274,7 @@ private:
                            uint64_t &fdeTableSize) override
     {
         ShdrInfo shinfo;
-        if (!elfFile_->GetSectionInfo(shinfo, ".eh_frame_hdr")) {
+        if (elfFile_ == nullptr || !elfFile_->GetSectionInfo(shinfo, ".eh_frame_hdr")) {
             return false;
         }
 
@@ -347,7 +351,9 @@ private:
     {
         symbols_.clear();
         HLOGD("%zu symbols loadded from symbolsTable.", symbolsTable.size());
+
         symbols_.swap(symbolsTable);
+
         AdjustSymbols();
         HLOGD("%zu symbols loadded from elf '%s'.", symbols_.size(), elfPath.c_str());
         for (auto& symbol: symbols_) {
@@ -366,12 +372,15 @@ private:
         const auto startTime = steady_clock::now();
 #endif
         if (elfFile_ == nullptr) {
-            if (StringEndsWith(elfPath, ".hap") && map != nullptr) {
-                elfFile_ = DfxElf::CreateFromHap(elfPath, map->prevMap, map->offset);
+            if (StringEndsWith(elfPath, ".hap") && StringStartsWith(elfPath, "/proc") && map != nullptr) {
+                CompressHapElfFactory elfFactory(elfPath, map->prevMap);
+                elfFile_ = elfFactory.Create();
+                map->offset -= map->prevMap->offset;
                 map->elf = elfFile_;
                 HLOGD("loaded map %s", elfPath.c_str());
             } else {
-                elfFile_ = std::make_shared<DfxElf>(elfPath);
+                RegularElfFactory elfFactory(elfPath);
+                elfFile_ = elfFactory.Create();
                 HLOGD("loaded elf %s", elfPath.c_str());
             }
         }
@@ -797,7 +806,6 @@ public:
         if (debugInfoLoaded_) {
             return true;
         }
-
         if (!onRecording_) {
             return true;
         }
