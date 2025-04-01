@@ -137,6 +137,7 @@ bool IsProcessExist(const std::string& processName, int& pid)
             continue;
         }
         if (!IsNumeric(std::string(ptr->d_name))) {
+            PROFILER_LOG_DEBUG(LOG_CORE, "IsProcessExist: d_name is not numeric");
             continue;
         }
         char filePath[FILE_PATH_SIZE] = {0};
@@ -147,7 +148,6 @@ bool IsProcessExist(const std::string& processName, int& pid)
         }
         FILE* fp = fopen(filePath, "r");
         if (fp == nullptr) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
             continue;
         }
         char buf[BUFFER_SIZE] = {0};
