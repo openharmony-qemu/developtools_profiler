@@ -162,6 +162,10 @@ int& GetTtyDeviceFd();
 void GetBundleName(const std::string &pid, std::string &bundleName);
 void GetTestsaPlugin(int command);
 void KillStartDaemon();
+void CreateDir(const std::string &dirPath);
+void RemoveDirOrFile(const std::string &dirPath);
+void CopyFiles(std::string cpStr);
+void TarFiles(std::string tarStr);
 };
 }
 }

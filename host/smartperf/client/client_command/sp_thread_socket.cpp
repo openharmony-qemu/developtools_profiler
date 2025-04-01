@@ -520,12 +520,14 @@ void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
 
 void SpThreadSocket::StartGpuCounter() const
 {
+    SPUtils::CreateDir(smartperfDevicePath);
     char filePathChar[PATH_MAX] = {0x00};
     if (realpath(gpuCounterfilePath.c_str(), filePathChar) == nullptr) {
-        LOGE("%s is not exist, init finish.", gpuCounterfilePath.c_str());
-        return;
+        LOGI("%s is not exist, init finish.", gpuCounterfilePath.c_str());
+    } else {
+        std::remove(filePathChar);
+        LOGI("%s is existed, remove.", gpuCounterfilePath.c_str());
     }
-    std::remove(filePathChar);
     gpuCounter.StartCollect(GpuCounter::GC_START);
 }
 
