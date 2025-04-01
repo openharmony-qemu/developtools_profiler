@@ -38,6 +38,7 @@ private:
     bool rkFlag = false;
     std::string packageName = "";
     std::vector<std::string> processId;
+    size_t idNum = 0;
 };
 }
 }

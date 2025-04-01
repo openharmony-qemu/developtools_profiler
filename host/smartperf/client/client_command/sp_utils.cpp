@@ -246,11 +246,19 @@ std::string SPUtils::GetScreen()
 {
     std::string cmd = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SCREEN);
     std::string screenStr = "";
-    LoadCmd(cmd, screenStr);
-    uint64_t left = screenStr.find("activeMode");
-    uint64_t right = screenStr.find("capability");
-    std::string screen = screenStr.substr(left, right - left);
-    return screen;
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return screenStr;
+    }
+    char buf[4096] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        if (line.find("activeMode") != std::string::npos) {
+            screenStr = line;
+        }
+    }
+    pclose(fd);
+    return screenStr;
 }
 std::string SPUtils::GetRadarFrame()
 {

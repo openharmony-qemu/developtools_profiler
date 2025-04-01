@@ -15,7 +15,6 @@
 #ifndef SP_THREAD_SOCKET_H
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
-#include <future>
 namespace OHOS {
 namespace SmartPerf {
 enum class SocketConnectType {

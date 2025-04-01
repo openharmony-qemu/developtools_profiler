@@ -30,7 +30,8 @@ std::map<std::string, std::string> FileDescriptor::ItemData()
     std::string& fdTotal = result["fdTotal"];
     fds.reserve(FDSRESERVE_SIZE);
     fdTotal.reserve(FDTOTALSRESERVE_SIZE);
-    for (size_t i = 0; i < processId.size(); i++) {
+    idNum = processId.size();
+    for (size_t i = 0; i < idNum; i++) {
         GetFds(processId[i], fds, fdTotal);
     }
 #ifndef FUZZ_TEST
@@ -78,8 +79,11 @@ void FileDescriptor::GetFds(const std::string &pid, std::string &fds, std::strin
             ++cnt;
             fds.append(entry.path().filename().string()).append("->").append(fileSymlink).append(" ");
         }
-        fds.append("|");
-        fdTotal.append(pid).append(":").append(std::to_string(cnt)).append("|");
+        fdTotal.append(pid).append(":").append(std::to_string(cnt));
+        if (idNum > 1) {
+            fds.append("|");
+            fdTotal.append("|");
+        }
     } else {
         processId.erase(std::remove(processId.begin(), processId.end(), pid), processId.end());
 #ifndef FUZZ_TEST

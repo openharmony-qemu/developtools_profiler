@@ -61,7 +61,6 @@ std::map<std::string, std::string> Network::GetNetworkInfo()
         diffTx = 0;
         diffRx = 0;
     }
-    LOGD("NetWork dataMap size (%u)", networkInfo.size());
     return networkInfo;
 }
 std::map<std::string, std::string> Network::GetNetworkInfoDev()
