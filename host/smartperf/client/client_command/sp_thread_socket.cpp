@@ -408,8 +408,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             } else if (iterator->first == MessageType::GET_LOG) {
                 GetSocketPort(recvBuf);
                 data = profiler->ItemData();
-            } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
-                GetSocketPort(recvBuf);
             } else {
                 GetProcessIdByPkgName(iterator);
                 data = profiler->ItemData();
@@ -558,12 +556,6 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::GET_LOG) {
         ConnectAndSendFile(logFilePath);
         GetLog::GetInstance().RemoveLogFile();
-    } else if (iterator->first == MessageType::START_GPU_COUNTER) {
-        StartGpuCounter();
-    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
-        SaveGpuCounter();
-        ConnectAndSendFile(gpuCounterfilePath);
-
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
@@ -607,7 +599,7 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
 void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::SET_PKG_NAME) {
         if (recvBuf.find("smartperf") != std::string::npos) {
@@ -682,7 +674,7 @@ void SpThreadSocket::ResetValue(std::string retCode) const
     ram.SetHapFirstFlag();
 }
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
@@ -707,6 +699,12 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         retCode = "UDP status is normal";
         spSocket.Sendto(retCode);
         LOGD("UDP status is normal");
+    } else if (iterator->first == MessageType::START_GPU_COUNTER) {
+        StartGpuCounter();
+    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
+        GetSocketPort(recvBuf);
+        SaveGpuCounter();
+        ConnectAndSendFile(gpuCounterfilePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);

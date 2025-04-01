@@ -62,9 +62,9 @@ public:
     void SocketHeartbeat() const;
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
