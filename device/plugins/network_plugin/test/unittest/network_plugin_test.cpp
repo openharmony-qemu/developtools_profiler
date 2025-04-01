@@ -383,6 +383,131 @@ HWTEST_F(NetworkPluginTest, TestStart3, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with single pid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart4, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_single_pid(9999);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with startup process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart5, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_startup_process_name("process");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestStart6, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_restart_process_name("process");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ret = plugin.Start(configData.data(), configSize);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestReport1, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_restart_process_name("process");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configSize);
+    ret = plugin.Report(nullptr, 0);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestReport2, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.set_restart_process_name("process");
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configSize);
+    ret = plugin.ReportOptimize(nullptr);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestReport3, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.add_pid(9999);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configSize);
+    ret = plugin.ReportOptimize(nullptr);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: start test with restart process name
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestReport4, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkConfig config;
+    config.add_pid(9999);
+    int configSize = config.ByteSizeLong();
+    std::vector<uint8_t> configData(configSize);
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    plugin.Start(configData.data(), configSize);
+    ret = plugin.Report(nullptr, 0);
+    EXPECT_GE(ret, -1);
+    plugin.Stop();
+}
 
 /**
  * @tc.name: network plugin
@@ -561,5 +686,41 @@ HWTEST_F(NetworkPluginTest, TestScreen4, TestSize.Level1)
     EXPECT_EQ(data.rxPackets, 3);
     EXPECT_EQ(data.txPackets, 3);
     EXPECT_EQ(data.details.size(), 2);
+}
+/**
+ * @tc.name: network plugin
+ * @tc.desc: retain all test with multiple uid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestScreen5, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    plugin.setSingleUid(1);
+    NetFlowData data;
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos1;
+    OHOS::NetManagerStandard::NetStatsInfo info1;
+    info1.uid_ = 1;
+    info1.iface_ = "wlan0";
+    info1.rxBytes_ = 1;
+    info1.txBytes_ = 1;
+    info1.rxPackets_ = 1;
+    info1.txPackets_ = 1;
+    infos1.push_back(info1);
+    plugin.RetainAllNetworkStat(infos1, data);
+    std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos2;
+    OHOS::NetManagerStandard::NetStatsInfo info2;
+    info2.uid_ = 1;
+    info2.iface_ = "wlan0";
+    info2.rxBytes_ = 2;
+    info2.txBytes_ = 2;
+    info2.rxPackets_ = 2;
+    info2.txPackets_ = 2;
+    infos2.push_back(info2);
+    plugin.RetainAllNetworkStat(infos2, data);
+    EXPECT_EQ(data.rxBytes, 1);
+    EXPECT_EQ(data.txBytes, 1);
+    EXPECT_EQ(data.rxPackets, 1);
+    EXPECT_EQ(data.txPackets, 1);
+    EXPECT_EQ(data.details.size(), 1);
 }
 } // namespace
