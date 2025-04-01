@@ -21,7 +21,7 @@
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
-#include "elf_factory.h"
+#include "dfx_elf.h"
 #include "utilities.h"
 #include "native_hook_result_standard.pb.h"
 #include "native_hook_config_standard.pb.h"
@@ -572,9 +572,16 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
 
 inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack)
 {
-    auto itStack = callStackMap_.find(callStack);
-    if (itStack != callStackMap_.end()) {
-        return itStack->second;
+    if (hookConfig_.response_library_mode()) {
+        auto itStack = responseLibraryMap_.find(callStack[0]);
+        if (itStack != responseLibraryMap_.end()) {
+            return itStack->second;
+        }
+    } else {
+        auto itStack = callStackMap_.find(callStack);
+        if (itStack != callStackMap_.end()) {
+            return itStack->second;
+        }
     }
     return 0;
 }
@@ -588,7 +595,11 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
     uint32_t stackId = 0;
     auto hookData = stackData.add_events();
     auto stackmap = hookData->mutable_stack_map();
-    stackId = callStackMap_.size() + 1;
+    if (hookConfig_.response_library_mode()) {
+        stackId = responseLibraryMap_.size() + 1;
+    } else {
+        stackId = callStackMap_.size() + 1;
+    }
     stackmap->set_id(stackId);
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
@@ -609,7 +620,11 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
         }
     }
     stackmap->set_pid(pid_);
-    callStackMap_[callStack_] = stackId;
+    if (hookConfig_.response_library_mode()) {
+        responseLibraryMap_[callStack_[0]] = stackId;
+    } else {
+        callStackMap_[callStack_] = stackId;
+    }
     return stackId;
 }
 
@@ -737,7 +752,12 @@ void StackPreprocess::SetEventFrame(const RawStackPtr& rawStack, std::vector<Cal
 
 void StackPreprocess::FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex)
 {
-    CallFrame& jsCallFrame = callFrames_.emplace_back(0);
+    #if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
+    CallFrame& jsCallFrame = callFrames_.emplace_back(0 & (~pacMask));
     jsCallFrame.symbolName_ = tagName;
     jsCallFrame.isJsFrame_ = true;
     jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
@@ -1313,8 +1333,7 @@ void StackPreprocess::Flush(const uint8_t* src, size_t size)
 
 void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& symbols)
 {
-    RegularElfFactory elfFactory(filePath);
-    auto elfPtr = elfFactory.Create();
+    std::shared_ptr<DfxElf> elfPtr = std::make_shared<DfxElf>(filePath);
 
     symbols.textVaddr = elfPtr->GetStartVaddr();
     symbols.textOffset = elfPtr->GetStartOffset();
@@ -1533,12 +1552,17 @@ int32_t StackPreprocess::FinishReport()
 
 void StackPreprocess::FillFpNativeIp(RawStackPtr& rawData)
 {
+#if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
     uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
     for (uint8_t idx = 0; idx < rawData->fpDepth ; ++idx) {
         if (fpIp[idx] == 0) {
             break;
         }
-        callFrames_.emplace_back(StripPac(fpIp[idx], 0));
+        callFrames_.emplace_back(fpIp[idx] & (~pacMask));
     }
 }
 
@@ -1602,7 +1626,12 @@ void StackPreprocess::FillFpJsData(RawStackPtr& rawData)
 
 void StackPreprocess::FillDwarfErrorStack()
 {
-    CallFrame& jsCallFrame = callFrames_.emplace_back(0);
+#if defined(__aarch64__)
+    uintptr_t pacMask = 0xFFFFFF8000000000;
+#else
+    uintptr_t pacMask = 0;
+#endif
+    CallFrame& jsCallFrame = callFrames_.emplace_back(0 & (~pacMask));
     jsCallFrame.symbolName_ = "UnwindErrorDwarf";
     jsCallFrame.isJsFrame_ = true;
     jsCallFrame.needReport_ |= CALL_FRAME_REPORT;

@@ -54,7 +54,6 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "c_utils:utils",
     "googletest:gmock",
     "googletest:gtest",
-    "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
     "hilog:libhilog_base",

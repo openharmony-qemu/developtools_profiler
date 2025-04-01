@@ -32,8 +32,6 @@ public:
     virtual int32_t Stop(uint32_t pid) = 0;
     virtual int32_t Stop(const std::string& name) = 0;
     virtual int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) = 0;
-    virtual int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, std::string& replyStats) = 0;
-    virtual int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) = 0;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

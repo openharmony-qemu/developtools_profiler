@@ -514,26 +514,6 @@ bool IsArkJsFile(const std::string& filepath)
             StringStartsWith(filepath, "[anon:ArkTS Code") || StringEndsWith(filepath, ".abc")
             || StringEndsWith(filepath, ".hqf"));
 }
-
-uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask)
-{
-    uintptr_t outAddr = inAddr;
-#if defined(__aarch64__)
-    if (outAddr != 0) {
-        if (pacMask != 0) {
-            outAddr &= ~pacMask;
-        } else {
-            register uint64_t x30 __asm("x30") = inAddr;
-            asm("hint 0x7" : "+r"(x30));
-            outAddr = x30;
-        }
-        if (outAddr != inAddr) {
-            HLOGM("Strip pac in addr: %lx, out addr: %lx", (uint64_t)inAddr, (uint64_t)outAddr);
-        }
-    }
-#endif
-    return outAddr;
-}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

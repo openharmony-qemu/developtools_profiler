@@ -34,7 +34,7 @@ public:
     void OptimizeCallback(const std::uint32_t messageType, const uint8_t* protoData, size_t protoSize);
     void SetWriter(WriterStruct* writer);
     bool StartPowerManager(std::uint32_t messageType, std::string& bundleName);
-    std::string GetCmdArgs(XpowerConfig traceConfig);
+    std::string GetCmdArgs(const XpowerConfig& traceConfig);
 private:
     void* powerClientHandle_ = nullptr;
     XpowerConfig protoConfig_;

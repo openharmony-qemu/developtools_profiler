@@ -56,16 +56,6 @@ public:
         }
         maps_.emplace_back(map);
     }
-    bool ReplaceFront(std::shared_ptr<DfxMap> map)
-    {
-        if (maps_.size() <= 1) {
-            maps_.clear();
-            AddMap(map, true);
-        } else {
-            return false;
-        }
-        return true;
-    }
     uint64_t soBegin_ {0};
     uint64_t soEnd_ {0};
     uint32_t filePathId_ {0}; // for maps item filePath id
@@ -101,7 +91,7 @@ public:
     {
         return *maps_;
     }
-    void SortMaps();
+
     bool ParseMap(std::vector<std::shared_ptr<DfxMap>> &memMaps, bool update = false);
     void CreateMapItem(const std::string filename, uint64_t begin, uint64_t len, uint64_t offset);
     const std::shared_ptr<DfxMap> FindMapByAddr(uint64_t addr) const;
@@ -116,6 +106,7 @@ public:
 public:
 
 private:
+    void SortMaps();
 #ifdef DEBUG_TIME
     bool IsSorted() const;
 #endif

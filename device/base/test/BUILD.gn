@@ -41,6 +41,7 @@ ohos_unittest("hiprofiler_base_ut") {
     "c_utils:utils",
     "googletest:gtest",
     "hilog:libhilog_base",
+    "hisysevent:libhisysevent",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }

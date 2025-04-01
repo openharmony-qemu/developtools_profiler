@@ -113,7 +113,7 @@ bool RunCommand(const std::string& cmd)
     return true;
 }
 
-std::string GetCmdArgs(HiperfPluginConfig protoConfig)
+std::string GetCmdArgs(const HiperfPluginConfig& protoConfig)
 {
     std::stringstream args;
     args << "is_root: " << (protoConfig.is_root() ? "true" : "false") << ", ";

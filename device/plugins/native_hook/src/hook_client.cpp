@@ -66,14 +66,12 @@ static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
-std::mutex g_usableSizeMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
 static std::atomic<pid_t> g_hookPid = 0;
 static ClientConfig g_ClientConfig = {0};
 static uint32_t g_maxSize = INT_MAX;
 static std::unordered_map<std::string, uint32_t> g_memTagMap;
-static std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
 constexpr int PID_STR_SIZE = 4;
 constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
@@ -240,42 +238,6 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
 }
 
 static bool IsPidChanged(void);
-
-/* 返回值：true：该size大小需要过滤，不记录trace信息； fasle：不需要过滤，按正常流程记录trace信息 */
-static bool SimplifiedFilter(void* ptr, size_t mallcoSize)
-{
-    if (g_ClientConfig.largestSize == 0 || g_ClientConfig.secondLargestSize == 0) {
-        return false;
-    }
-
-    size_t usableSize = 0;
-    if (mallcoSize == 0) {
-        /* hook_free */
-        usableSize = malloc_usable_size(ptr);
-    } else {
-        std::unique_lock<std::mutex> lock(g_usableSizeMapMutex);
-        auto it = g_mallocUsableSizeMap.find(mallcoSize);
-        if (it == g_mallocUsableSizeMap.end()) {
-            usableSize = malloc_usable_size(ptr);
-            g_mallocUsableSizeMap[mallcoSize] = usableSize;
-        } else {
-            usableSize = it->second;
-        }
-        lock.unlock();
-    }
-
-    if (usableSize >= g_ClientConfig.sampleInterval) {
-        return false;
-    }
-
-    if ((usableSize == g_ClientConfig.largestSize) ||
-        (usableSize == g_ClientConfig.secondLargestSize) ||
-        (usableSize == g_ClientConfig.maxGrowthSize)) {
-            return false;
-    }
-
-    return true;
-}
 
 void* MallocHookStart(void* disableHookCallback)
 {
@@ -475,9 +437,6 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (fn) {
         ret = fn(size);
     }
-    if (SimplifiedFilter(ret, size)) {
-        return ret;
-    }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return ret;
     }
@@ -562,9 +521,6 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     void* ret = nullptr;
     if (fn) {
         ret = fn(align, len);
-    }
-    if (SimplifiedFilter(ret, len)) {
-        return ret;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return ret;
@@ -663,9 +619,6 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (fn) {
         pRet = fn(number, size);
     }
-    if (SimplifiedFilter(pRet, number * size)) {
-        return pRet;
-    }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return pRet;
     }
@@ -755,9 +708,6 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     void* pRet = nullptr;
     if (fn) {
         pRet = fn(ptr, size);
-    }
-    if (SimplifiedFilter(pRet, size)) {
-        return pRet;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return pRet;
@@ -985,15 +935,10 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     if (fn) {
         ret = fn(addr, length, prot, flags, fd, offset);
     }
-    if (g_ClientConfig.largestSize > 0) {
-        if ((fd <= 0) || IsPidChanged()) {
-            return ret;
-        }
-    } else {
-        if (g_ClientConfig.mmapDisable || IsPidChanged()) {
-            return ret;
-        }
+    if (g_ClientConfig.mmapDisable || IsPidChanged()) {
+        return ret;
     }
+
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);

@@ -48,7 +48,7 @@ private:
     // for ut
     void SetConfig(HidumpConfig& config);
     int SetTestCmd(const char *test_cmd);
-    std::string GetCmdArgs(HidumpConfig protoConfig);
+    std::string GetCmdArgs(const HidumpConfig& protoConfig);
     const char *GetTestCmd();
     char *testCmd_ = nullptr;
 private:

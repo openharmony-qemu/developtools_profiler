@@ -68,7 +68,7 @@
       ]
     },
     "hisysevent_config": [
-      "//developtools/profiler/hisysevent.yaml"
+      "//developtools/profiler/device/hisysevent.yaml"
     ],
     "build": {
       "sub_component": [

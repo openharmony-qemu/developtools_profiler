@@ -113,7 +113,7 @@ protected:
     bool ReadSystemTxRxBytes(NetSystemData &systemData);
     void AddNetDetails(NetworkCell& cell, NetDetails& data);
     void AddNetSystemDetails(NetSystemData& systemData, NetSystemDetails& data);
-    std::string GetCmdArgs(NetworkConfig traceConfig);
+    std::string GetCmdArgs(const NetworkConfig& traceConfig);
     // for UT
     void setPathForTest(std::string path)
     {

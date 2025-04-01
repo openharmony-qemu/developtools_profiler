@@ -19,9 +19,6 @@
 
 #include "logging.h"
 
-#include <iostream>
-#include <sstream>
-
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr uint32_t LIB_SMS = 4096;
@@ -29,7 +26,6 @@ constexpr uint32_t CALL_STACK_SMS = 16384;
 constexpr uint32_t NMD_DURATION = 5;
 constexpr uint32_t NMD_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
-constexpr int SIMP_NMD = 3;
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -153,73 +149,5 @@ int32_t NativeMemoryProfilerSaClientManager::GetMallocStats(int fd, int pid, int
     }
     NativeMemoryProfilerSaProxy proxy(service);
     return proxy.DumpData(fd, config);
-}
-
-int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
-                                                                     std::vector<SimplifiedMemStats>& memStats)
-{
-    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: StartPrintSimplifiedNmd invalid pid");
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
-    config->printNmd_ = true;
-    config->printNmdOnly_ = true;
-    config->pid_ = static_cast<int32_t>(pid);
-    config->duration_ = NMD_DURATION;
-    config->mallocDisable_ = true;
-    config->mmapDisable_ = true;
-    config->shareMemorySize_ = NMD_SHMEM;
-    config->nmdPid_ = static_cast<uint32_t>(pid);
-    config->nmdType_ = static_cast<uint32_t>(SIMP_NMD);
-    CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
-    auto service = GetRemoteService();
-    if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
-        return RET_ERR;
-    }
-    NativeMemoryProfilerSaProxy proxy(service);
-    std::string replyStats;
-    int32_t ret = proxy.Start(config, replyStats);
-    if (ret != RET_OK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "StartPrintSimplifiedNmd failed");
-        return ret;
-    }
-    size_t newlinePos = replyStats.find_first_of('\n');
-    if (newlinePos != std::string::npos) {
-        replyStats.erase(0, newlinePos + 1);
-    }
-    SimplifiedMemStats tmp;
-    std::istringstream iss(replyStats);
-    std::stringstream ss;
-    std::string line;
-    while (std::getline(iss, line, '\n')) {
-        ss.str("");
-        ss.clear();
-        ss.str(line);
-        ss >> tmp.size >> tmp.allocated >> tmp.nmalloc >> tmp.ndalloc;
-        memStats.push_back(tmp);
-    }
-    return RET_OK;
-}
-
-int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, SimplifiedMemConfig& config)
-{
-    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
-    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: GetMallocStats invalid pid");
-    std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
-    CHECK_NOTNULL(nConfig, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
-    nConfig->pid_ = static_cast<int32_t>(pid);
-    nConfig->duration_ = NMD_DURATION;
-    nConfig->largestSize_ = config.largestSize;
-    nConfig->secondLargestSize_ = config.secondLargestSize;
-    nConfig->maxGrowthSize_ = config.maxGrowthSize;
-    nConfig->sampleInterval_ = config.sampleSize;
-    nConfig->shareMemorySize_ = CALL_STACK_SMS;
-    auto service = GetRemoteService();
-    if (service == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
-        return RET_ERR;
-    }
-    NativeMemoryProfilerSaProxy proxy(service);
-    return proxy.DumpData(fd, nConfig);
 }
 } // namespace OHOS::Developtools::NativeDaemon

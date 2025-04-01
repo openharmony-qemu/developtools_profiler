@@ -14,5 +14,5 @@
 import("../../../build/config.gni")
 
 declare_args() {
-  device_kernel_version = "6.6.30"
+  device_kernel_version = "default"
 }

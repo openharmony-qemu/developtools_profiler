@@ -48,7 +48,7 @@ XpowerPlugin::~XpowerPlugin()
     }
 }
 
-std::string XpowerPlugin::GetCmdArgs(XpowerConfig traceConfig)
+std::string XpowerPlugin::GetCmdArgs(const XpowerConfig& traceConfig)
 {
     std::stringstream args;
     args << "bundle_name: " << traceConfig.bundle_name() << ", ";

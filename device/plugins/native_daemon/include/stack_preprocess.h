@@ -202,6 +202,8 @@ private:
     std::vector<uint64_t> callStack_;
     // Key is callStack_, value is call stack id
     std::map<std::vector<uint64_t>, uint32_t> callStackMap_;
+    // Key is ip , response_library_mode used
+    std::unordered_map<uint64_t, uint32_t> responseLibraryMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
