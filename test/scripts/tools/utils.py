@@ -22,9 +22,6 @@ import json
 
 OUTPUT_PATH = "testModule/output"
 PID_INDEX = 7
-SMALL_FILE_EXPECTED_SIZE = 1 * 1024
-SMALL_FILE_EXPECTED_SIZE_2 = 5 * 1024
-MID_FILE_EXPECTED_SIZE = 100 * 1024
 
 
 def get_path_by_attribute(tree, key, value):
@@ -87,16 +84,3 @@ def get_pid(name):
             if line.split()[PID_INDEX] == name:
                 return line.split()[1]
     return 0
-
-
-def get_pid_by_process_name(process_name):
-    pid = None
-    cmd = f"hdc shell \"pidof {process_name}\""
-    try:
-        pid = subprocess.check_output(cmd, encoding="utf-8", text=True)
-        pid = int(pid.strip())
-    except subprocess.CalledProcessError as e:
-        print(f"Command failed: {cmd}\nError: {e}")
-    except Exception as e:
-        print(f"Unexpected error: {e}")
-    return pid

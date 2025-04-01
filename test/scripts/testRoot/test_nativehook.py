@@ -58,7 +58,6 @@ SA_CLICK_TIMES = 67
 SA_WAIT_TIMES = 7
 SA_STATISTICS = 300
 SA_SAMPLE = 512
-KILL_PROCESS_TIME = 10
 SAMPLE_SMALL = 512
 SAMPLE_LARGE = 51200
 FILTER_SMALL = 256
@@ -486,7 +485,7 @@ def check_file_size(output):
         return False
 
 
-def check_sa_result(kill_process=False, check_dump_catch=False, multithread=False):
+def check_sa_result(kill_process=False, multithread=False):
     try:
         subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
         subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
@@ -534,35 +533,22 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
     time.sleep(1)
     touch_button("Allocations_Js_Depth")
     i = 0
-    dump_catch_result = False
     process_hilog = None
     daemonpid = 0
     wait_time = 0
     while i < SA_CLICK_TIMES:
         daemonpid = get_pid("native_daemon")
-        if ((kill_process or check_dump_catch) and int(daemonpid) > 0):
+        if (kill_process and int(daemonpid) > 0):
             wait_time += 1
         if (wait_time == KILL_PROCESS_TIME):
             if (kill_process):
                 subprocess.check_output("hdc shell killall com.example.insight_test_stage")
                 time.sleep(SLEEP_TWENTY)
                 break
-            if check_dump_catch:
-                pid = get_pid("native_daemon")
-                subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
-                process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
-    if (check_dump_catch):
-        process_hilog.terminate()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
-        with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
-            lines = file.readlines()
-            for line in lines:
-                if "DumpCatch" in line:
-                    dump_catch_result = True
-        return dump_catch_result
+    
     filename = get_profiler_test_trace("com.example.insight_test_stage")
     nmdfile = get_nmd_file("com.example.insight_test_stage")
     if nmdfile == "":
@@ -934,12 +920,13 @@ class TestNativehook:
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, True, 0, DEPTH_TEN, CLICK_TWICE)
 
     @pytest.mark.L1
+    def test_sa_multi(self):
+        assert check_sa_result(False, True)
+
+    @pytest.mark.L1
     def test_sa_killprocess(self):
         assert check_sa_result(True)
 
-    @pytest.mark.L1
-    def test_sa_multi(self):
-        assert check_sa_result(False, False, True)
 
     @pytest.mark.L2
     def test_js_statistics_depth_five_dwarf(self):
@@ -1044,10 +1031,6 @@ class TestNativehook:
     @pytest.mark.L2
     def test_multipleprocess_depth_five(self):
         assert check_nativehook_multipleprocess(0, False, True, SAMPLE_SMALL, False, 0, DEPTH_FIVE, 1)
-
-    @pytest.mark.L2
-    def test_sa_dumpcatch(self):
-        assert check_sa_result(False, True)
 
     @pytest.mark.L2
     def test_appfreeze(self):

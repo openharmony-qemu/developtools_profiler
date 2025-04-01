@@ -14,14 +14,13 @@
 # limitations under the License.
 
 import pytest
-import sys
 import subprocess
-import threading
-import time
+import re
+import sys
 sys.path.append("..")
-from tools.utils import touch_button
-
-
+from tools.utils import *
+import time
+import threading
 SLEEP_TWO = 2
 SLEEP_THREE = 3
 SLEEP_FIVE = 5

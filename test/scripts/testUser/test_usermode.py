@@ -155,7 +155,7 @@ class TestHiprofilerUserMode:
     @pytest.mark.L0
     def test_usermode_kernel_symbols(self):
         subprocess.check_output(r"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
         conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM data_dict')
