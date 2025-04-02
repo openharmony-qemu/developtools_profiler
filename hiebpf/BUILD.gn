@@ -89,7 +89,7 @@ action("gen_bpf_skeleton") {
   script = "./scripts/gen_skeleton.sh"
   sources = []
   outputs = [ "$skel_out_dir/hiebpf.skel.h" ]
-  bpftool_dir = rebase_path("//prebuilts/develop_tools_bpftool/bpftool/bin/bpftool")
+  bpftool_dir = rebase_path("//prebuilts/develop_tools/bpftool/bin/bpftool")
   skel_src_dir_abs = rebase_path("${skel_src_dir}")
   skel_out_dir_abs = rebase_path("${skel_out_dir}")
   args = [
