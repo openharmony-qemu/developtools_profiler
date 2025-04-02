@@ -45,6 +45,7 @@ constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
+constexpr int32_t SIMP_NMD = 3;
 }
 
 HookManager::~HookManager()
@@ -232,6 +233,9 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
     clientConfig.printNmd = printMallocNmd_;
     clientConfig.nmdType = static_cast<int>(nmdParamInfo_.type);
+    clientConfig.largestSize = largestSize_;
+    clientConfig.secondLargestSize = secondLargestSize_;
+    clientConfig.maxGrowthSize = maxGrowthSize_;
     // -1 is save '\0'
     int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
@@ -490,8 +494,15 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
             if (rawStack->stackConext->type == NMD_MSG && printMallocNmd_) {
                 rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
                 const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
-                lseek(nmdParamInfo_.fd, 0, SEEK_END);
-                (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
+                if (nmdParamInfo_.type == SIMP_NMD) {
+                    simplifiedNmd_ = std::string(nmdResult);
+                    nmdComplete_ = true;
+                    PROFILER_LOG_INFO(LOG_CORE, "receive simplified nmd info, target pid :%d, processName:%s.\n",
+                                      hookCtx->pid, hookCtx->processName.c_str());
+                } else {
+                    lseek(nmdParamInfo_.fd, 0, SEEK_END);
+                    (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
+                }
                 return true;
             } else if (rawStack->stackConext->type == END_MSG) {
                 return true;
@@ -729,6 +740,9 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     printMallocNmd_ = config->printNmd_;
+    largestSize_ = config->largestSize_;
+    secondLargestSize_ = config->secondLargestSize_;
+    maxGrowthSize_ = config->maxGrowthSize_;
 }
 
 int32_t HookManager::CreatePluginSession()
@@ -769,7 +783,7 @@ void HookManager::StartPluginSession()
     }
 }
 
-std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
+std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
 {
     std::stringstream args;
     args << "pid: " << COMMON::GetProcessNameByPid(traceConfig.pid()) << ", ";

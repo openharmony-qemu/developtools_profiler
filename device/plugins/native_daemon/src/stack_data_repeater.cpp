@@ -57,7 +57,7 @@ bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, C
 {
     std::unique_lock<std::mutex> lock(mutex_);
     if ((rawDataArray.empty()) && (rawDataQueue_.size() > 0)) {
-        PROFILER_LOG_INFO(LOG_CORE, "no need put nullptr if queue has data, rawDataQueue_.size() = %zu",
+        PROFILER_LOG_INFO(LOG_CORE, "no need to put nullptr if queue has data, rawDataQueue_.size() = %zu",
                           rawDataQueue_.size());
         return true;
     }

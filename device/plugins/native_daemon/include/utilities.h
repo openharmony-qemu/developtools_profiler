@@ -316,6 +316,7 @@ bool PowerOfTwo(int n);
 #endif
 int32_t GetProcessPid(const std::string& processName);
 bool IsArkJsFile(const std::string& filepath);
+uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask);
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

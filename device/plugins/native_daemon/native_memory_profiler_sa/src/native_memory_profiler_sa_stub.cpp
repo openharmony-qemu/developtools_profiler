@@ -43,6 +43,9 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_DATA) : {
             return StubDumpFile(data, reply);
         }
+        case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA) : {
+            return StubDumpSimpFile(data, reply);
+        }
         default : {
             PROFILER_LOG_ERROR(LOG_CORE, "Unknown code:%u", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, options);
@@ -89,5 +92,22 @@ int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessagePar
     }
     uint32_t fd = static_cast<uint32_t>(data.ReadFileDescriptor());
     return DumpData(fd, config);
+}
+
+int32_t NativeMemoryProfilerSaStub::StubDumpSimpFile(MessageParcel &data, MessageParcel &reply)
+{
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config)) {
+        return RET_ERR;
+    }
+    if (config->pid_ > 0) {
+        struct stat statBuf;
+        std::string pidPath = "/proc/" + std::to_string(config->pid_) + "/status";
+        if (stat(pidPath.c_str(), &statBuf) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StubDumpFile hook process does not exist");
+            return RET_ERR;
+        }
+    }
+    return Start(config, reply);
 }
 } // namespace OHOS::Developtools::NativeDaemon

@@ -104,7 +104,7 @@ public:
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void WriteHookConfig();
-    std::string GetCmdArgs(const NativeHookConfig& traceConfig);
+    std::string GetCmdArgs(NativeHookConfig traceConfig);
     std::pair<int, int> GetFds(int32_t pid, const std::string& name);
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
@@ -131,6 +131,8 @@ public:
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<StackDataRepeater::RawStack>& rawStack);
+    std::string simplifiedNmd_;
+    volatile bool nmdComplete_ = false;
 
 private:
     int pid_ = -1; // for SA mode
@@ -161,6 +163,9 @@ private:
     constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
     uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
     NmdParam nmdParamInfo_;
+    uint32_t largestSize_ = 0;
+    uint32_t secondLargestSize_ = 0;
+    uint32_t maxGrowthSize_ = 0;
 };
 }
 #endif // AGENT_MANAGER_H
