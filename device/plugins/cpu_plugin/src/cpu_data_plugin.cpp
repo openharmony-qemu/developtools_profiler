@@ -266,6 +266,9 @@ int64_t CpuDataPlugin::GetCpuUsageTime(std::vector<std::string>& cpuUsageVec)
     int64_t utime = 0;
     int64_t stime = 0;
     int64_t usageTime = 0;
+    if ((!COMMON::IsNumeric(cpuUsageVec[PROCESS_UTIME])) || (!COMMON::IsNumeric(cpuUsageVec[PROCESS_STIME]))) {
+        return 0;
+    }
     utime = atoi(cpuUsageVec[PROCESS_UTIME].c_str());
     stime = atoi(cpuUsageVec[PROCESS_STIME].c_str());
     // 进程，线程CPU占用率只计算utime(用户态时间),stime(核心态时间)
@@ -399,7 +402,12 @@ bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuT
     // 获取到的数据不包含user, nice, system, idle, iowait, irq, softirq, steal八个数值时返回
     CHECK_TRUE(cpuUsageVec.size() == SYSTEM_UNSPECIFIED, false,
                "%s:failed to get system cpu usage, size=%zu", __func__, cpuUsageVec.size());
-
+    if ((!COMMON::IsNumeric(cpuUsageVec[SYSTEM_USER])) || (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_NICE])) ||
+        (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_SYSTEM])) || (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_IDLE])) ||
+        (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_IOWAIT])) || (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_IRQ])) ||
+        (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_SOFTIRQ])) || (!COMMON::IsNumeric(cpuUsageVec[SYSTEM_STEAL]))) {
+        return false;
+    }
     int64_t user = 0;
     int64_t nice = 0;
     int64_t system = 0;
@@ -480,7 +488,7 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
             if (pid_ < 0 && protoConfig_.report_process_info()) {
                 return;
             }
-        } else {
+        } else if (COMMON::IsNumeric(cpuUsageVec[0])) {
             std::string core = std::string(cpuUsageVec[0].c_str() + cpuLength, cpuUsageVec[0].size() - cpuLength);
             int32_t coreNum = atoi(core.c_str());
             // 第一次获取数据时需要将前一个数据置为0
@@ -571,7 +579,9 @@ int32_t CpuDataPlugin::GetValidTid(DIR* dirp)
         if (dirEnt->d_type != DT_DIR) {
             continue;
         }
-
+        if (!COMMON::IsNumeric(std::string(dirEnt->d_name))) {
+            continue;
+        }
         int32_t tid = atoi(dirEnt->d_name);
         if (tid) {
             return tid;
