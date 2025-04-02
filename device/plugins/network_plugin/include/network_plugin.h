@@ -127,7 +127,24 @@ protected:
     template <typename T> bool WriteNetWorkData(T& networkDatasProto);
     //new version
     template <typename T> bool WriteNetFlowData(T& networkDatasProto);
-    template <typename T> void WriteData(T& networkDatasProto, NetFlowData &netFlowData);
+    template <typename T> void WriteData(T &networkDatasProto, NetFlowData &netFlowData)
+    {
+        networkDatasProto.set_pid(singlePid_);
+        networkDatasProto.set_tv_sec(netFlowData.ts.tv_sec);
+        networkDatasProto.set_tv_nsec(netFlowData.ts.tv_nsec);
+        networkDatasProto.set_rx_bytes(netFlowData.rxBytes);
+        networkDatasProto.set_rx_packets(netFlowData.rxPackets);
+        networkDatasProto.set_tx_bytes(netFlowData.txBytes);
+        networkDatasProto.set_tx_packets(netFlowData.txPackets);
+        for (auto& it:netFlowData.details) {
+            auto* data = networkDatasProto.add_details();
+            data->set_type(it.type);
+            data->set_rx_bytes(it.rxBytes);
+            data->set_rx_packets(it.rxPackets);
+            data->set_tx_bytes(it.txBytes);
+            data->set_tx_packets(it.txPackets);
+        }
+    }
     std::string GetBundleNameByPid(int32_t pid);
     int32_t GetUidByConfiguredBundleName(std::string bundleName);
     bool ScreenNetworkStatByUid(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos, NetFlowData &data);
