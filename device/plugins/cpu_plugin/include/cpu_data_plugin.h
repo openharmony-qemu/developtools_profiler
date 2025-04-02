@@ -22,8 +22,6 @@
 #include <unistd.h>
 #include <fstream>
 #include <iostream>
-#include <map>
-#include <vector>
 
 #include "cpu_plugin_config.pb.h"
 #include "cpu_plugin_result.pb.h"
@@ -101,7 +99,7 @@ private:
     DIR* OpenDestDir(std::string& dirPath);
     int32_t GetValidTid(DIR* dirp);
     ThreadState GetThreadState(const char threadState);
-    std::string GetCmdArgs(CpuConfig protoConfig);
+    std::string GetCmdArgs(const CpuConfig& protoConfig);
 
     template <typename T> void WriteThread(T& threadInfo, const char* pFile, uint32_t fileLen, int32_t tid);
 

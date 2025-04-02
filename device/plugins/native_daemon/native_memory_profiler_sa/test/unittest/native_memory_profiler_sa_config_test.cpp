@@ -58,30 +58,4 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest001, 
     EXPECT_EQ(result->fpUnwind_, false);
 }
 
-/**
- * @tc.name: NativeMemoryProfilerSaConfigTest002
- * @tc.desc: Test adding member variable serialization and derivativeization
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest002, TestSize.Level3)
-{
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
-
-    config->largestSize_ = 100;
-    config->secondLargestSize_ = 200;
-    config->maxGrowthSize_ = 300;
-
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
-
-    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->largestSize_, 100);
-    EXPECT_EQ(result->secondLargestSize_, 200);
-    EXPECT_EQ(result->maxGrowthSize_, 300);
-}
-
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H

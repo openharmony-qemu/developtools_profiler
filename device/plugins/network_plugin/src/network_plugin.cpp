@@ -85,7 +85,7 @@ int NetworkPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return 0;
 }
 
-std::string NetworkPlugin::GetCmdArgs(NetworkConfig traceConfig)
+std::string NetworkPlugin::GetCmdArgs(const NetworkConfig& traceConfig)
 {
     std::stringstream args;
     for (const auto& p : traceConfig.pid()) {

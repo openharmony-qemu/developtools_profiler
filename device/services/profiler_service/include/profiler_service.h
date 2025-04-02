@@ -15,9 +15,9 @@
 #ifndef PROFILER_SERVICE_H
 #define PROFILER_SERVICE_H
 
-#define NDEBUG 1
 #include <grpcpp/grpcpp.h>
 #include <memory>
+#include "logging.h"
 #include "nocopyable.h"
 #include "hiperf_plugin_config.pb.h"
 #include "profiler_service.grpc.pb.h"

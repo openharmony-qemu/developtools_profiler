@@ -95,7 +95,7 @@ private:
 
     template <typename T> bool WritePssData(int pid, T& processinfo);
 
-    std::string GetCmdArgs(ProcessConfig traceConfig);
+    std::string GetCmdArgs(const ProcessConfig& traceConfig);
 
     ProcessConfig protoConfig_;
     std::unique_ptr<uint8_t[]> buffer_;

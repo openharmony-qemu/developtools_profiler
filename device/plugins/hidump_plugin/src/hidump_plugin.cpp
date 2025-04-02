@@ -59,7 +59,7 @@ HidumpPlugin::~HidumpPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
-std::string HidumpPlugin::GetCmdArgs(HidumpConfig protoConfig)
+std::string HidumpPlugin::GetCmdArgs(const HidumpConfig& protoConfig)
 {
     std::string args;
     args += "sections: " + std::to_string(protoConfig.sections()) + ", report_fps: ";

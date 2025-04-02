@@ -349,7 +349,7 @@ public:
     };
 
     template <typename T> void WriteProcesseList(T& memoryData);
-    std::string GetCmdArgs(MemoryConfig protoConfig);
+    std::string GetCmdArgs(const MemoryConfig& protoConfig);
     template <typename T> void WriteProcinfoByPidfds(T& processMemoryInfo, int32_t pid);
 
     DIR* OpenDestDir(const char* dirPath);

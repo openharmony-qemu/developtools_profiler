@@ -56,7 +56,7 @@ private:
 
     template <typename T> void WriteDiskioData(T& diskioData);
 
-    std::string GetCmdArgs(DiskioConfig protoConfig);
+    std::string GetCmdArgs(const DiskioConfig& protoConfig);
 
     // for UT
     void SetPath(std::string path)

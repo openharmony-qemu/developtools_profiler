@@ -64,7 +64,7 @@ int ProcessDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return RET_SUCC;
 }
 
-std::string ProcessDataPlugin::GetCmdArgs(ProcessConfig traceConfig)
+std::string ProcessDataPlugin::GetCmdArgs(const ProcessConfig& traceConfig)
 {
     std::stringstream args;
     args << "report_process_tree: " << (traceConfig.report_process_tree() ? "true" : "false") << ", ";

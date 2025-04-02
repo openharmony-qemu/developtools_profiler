@@ -320,6 +320,7 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
     }
 
     if (!CheckStartSession(profilerStub, sessionId)) {
+        StopThread(keepSessionThread, sendHeart);
         return false;
     }
 

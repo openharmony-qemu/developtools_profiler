@@ -51,13 +51,6 @@ public:
 
     FfrtProfilerManager();
     ~FfrtProfilerManager();
-#ifdef UNIT_TEST
-    void SetConfig(FfrtProfilerConfig& config)
-    {
-        config_ = config;
-        return;
-    }
-#endif
     void Init();
     bool StartFfrtProfiler();
     void StopFfrtProfiler();
