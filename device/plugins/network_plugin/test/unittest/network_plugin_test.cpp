@@ -383,6 +383,7 @@ HWTEST_F(NetworkPluginTest, TestStart3, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+
 /**
  * @tc.name: network plugin
  * @tc.desc: start test with single pid
@@ -436,12 +437,13 @@ HWTEST_F(NetworkPluginTest, TestStart6, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+
 /**
  * @tc.name: network plugin
- * @tc.desc: start test with restart process name
+ * @tc.desc: new version report test
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkPluginTest, TestReport1, TestSize.Level1)
+HWTEST_F(NetworkPluginTest, TestReportNewVersion, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
@@ -454,12 +456,13 @@ HWTEST_F(NetworkPluginTest, TestReport1, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+
 /**
  * @tc.name: network plugin
- * @tc.desc: start test with restart process name
+ * @tc.desc: new version report optimize test
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkPluginTest, TestReport2, TestSize.Level1)
+HWTEST_F(NetworkPluginTest, TestReportOptimizeNewVersion, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
@@ -472,12 +475,13 @@ HWTEST_F(NetworkPluginTest, TestReport2, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+
 /**
  * @tc.name: network plugin
- * @tc.desc: start test with restart process name
+ * @tc.desc: old version report test
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkPluginTest, TestReport3, TestSize.Level1)
+HWTEST_F(NetworkPluginTest, TestReportOldVersion, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
@@ -490,12 +494,13 @@ HWTEST_F(NetworkPluginTest, TestReport3, TestSize.Level1)
     EXPECT_GE(ret, -1);
     plugin.Stop();
 }
+
 /**
  * @tc.name: network plugin
- * @tc.desc: start test with restart process name
+ * @tc.desc: old version report optimize test
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkPluginTest, TestReport4, TestSize.Level1)
+HWTEST_F(NetworkPluginTest, TestReportOptimizeOldVersion, TestSize.Level1)
 {
     NetworkPlugin plugin;
     NetworkConfig config;
@@ -687,12 +692,13 @@ HWTEST_F(NetworkPluginTest, TestScreen4, TestSize.Level1)
     EXPECT_EQ(data.txPackets, 3);
     EXPECT_EQ(data.details.size(), 2);
 }
+
 /**
  * @tc.name: network plugin
- * @tc.desc: retain all test with multiple uid
+ * @tc.desc: previous data test
  * @tc.type: FUNC
  */
-HWTEST_F(NetworkPluginTest, TestScreen5, TestSize.Level1)
+HWTEST_F(NetworkPluginTest, TestPreviousData, TestSize.Level1)
 {
     NetworkPlugin plugin;
     plugin.setSingleUid(1);
@@ -722,5 +728,23 @@ HWTEST_F(NetworkPluginTest, TestScreen5, TestSize.Level1)
     EXPECT_EQ(data.rxPackets, 1);
     EXPECT_EQ(data.txPackets, 1);
     EXPECT_EQ(data.details.size(), 1);
+}
+
+/**
+ * @tc.name: network plugin
+ * @tc.desc: WriteData test
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkPluginTest, TestWriteData, TestSize.Level1)
+{
+    NetworkPlugin plugin;
+    NetworkFlowData dataProto;
+    NetFlowData flow = {{0, 0}, 1, 1, 1, 1, std::vector<NetFlowDetail>()};
+    plugin.WriteData(dataProto, flow);
+    EXPECT_EQ(dataProto.rx_bytes(), 1);
+    EXPECT_EQ(dataProto.rx_packets(), 1);
+    EXPECT_EQ(dataProto.tx_bytes(), 1);
+    EXPECT_EQ(dataProto.tx_packets(), 1);
+    EXPECT_EQ(dataProto.details().size(), 0);
 }
 } // namespace

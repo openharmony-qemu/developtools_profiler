@@ -441,25 +441,6 @@ template <typename T> bool NetworkPlugin::WriteNetFlowData(T& networkDatasProto)
     return true;
 }
 
-template <typename T> void NetworkPlugin::WriteData(T &networkDatasProto, NetFlowData &netFlowData)
-{
-    networkDatasProto.set_pid(singlePid_);
-    networkDatasProto.set_tv_sec(netFlowData.ts.tv_sec);
-    networkDatasProto.set_tv_nsec(netFlowData.ts.tv_nsec);
-    networkDatasProto.set_rx_bytes(netFlowData.rxBytes);
-    networkDatasProto.set_rx_packets(netFlowData.rxPackets);
-    networkDatasProto.set_tx_bytes(netFlowData.txBytes);
-    networkDatasProto.set_tx_packets(netFlowData.txPackets);
-    for (auto& it:netFlowData.details) {
-        auto* data = networkDatasProto.add_details();
-        data->set_type(it.type);
-        data->set_rx_bytes(it.rxBytes);
-        data->set_rx_packets(it.rxPackets);
-        data->set_tx_bytes(it.txBytes);
-        data->set_tx_packets(it.txPackets);
-    }
-}
-
 bool NetworkPlugin::RetainAllNetworkStat(const std::vector<OHOS::NetManagerStandard::NetStatsInfo> infos,
                                          NetFlowData &data)
 {
