@@ -166,7 +166,7 @@ static int CheckFileNameAndGetNumber(const std::string& fileName, const std::str
         if (fileDate == date) {
             *currentDateFlag = true;
         }
-        return std::stoi(matches[1].str());
+        return SPUtilesTye::StringToSometype<int>(matches[1].str());
     }
 
     return 0;

@@ -742,7 +742,7 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
         }
         
         try {
-            int port = std::stoi(portStr);
+            int port = SPUtilesTye::StringToSometype<int>(portStr);
             WLOGI("Get File log UDP message received, port is %d", port);
             sendFileSocket = -1;
             sendFileSocketPort = port;
