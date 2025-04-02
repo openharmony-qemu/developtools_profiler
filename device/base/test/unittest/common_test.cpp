@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include "common.h"
 #include "logging.h"
+#include <malloc.h>
 
 namespace {
 using namespace testing::ext;
@@ -100,6 +101,24 @@ HWTEST_F(CommonTest, StartAndKillProcess, TestSize.Level1)
 
 /**
  * @tc.name: CommonTest
+ * @tc.desc: StartProcess.Start process name is not exit or illegal
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, StartNoexitProcess, TestSize.Level1)
+{
+    std::vector<char*> argvVec;
+    EXPECT_EQ(COMMON::StartProcess("/system/bin/test_thread", argvVec), -1);
+    argvVec.push_back(const_cast<char*>(""));
+    EXPECT_EQ(COMMON::StartProcess("/system/bin/test_thread", argvVec), -1);
+    argvVec.push_back(const_cast<char*>("test||"));
+    EXPECT_EQ(COMMON::StartProcess("/system/bin/hiprofilerd", argvVec), -1);
+    argvVec.clear();
+    EXPECT_EQ(COMMON::KillProcess(-1), -1);
+    EXPECT_EQ(COMMON::KillProcess(999999999), -1);
+}
+
+/**
+ * @tc.name: CommonTest
  * @tc.desc: VerifyPath.
  * @tc.type: FUNC
  */
@@ -169,6 +188,22 @@ HWTEST_F(CommonTest, ReadFile, TestSize.Level1)
     fileName = "/data/local/tmp/config.txt";
     std::string cmd = "rm " + fileName;
     system(cmd.c_str());
+
+    // Absolute path
+    fileName = "data/log/bbox";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    readContent.clear();
+    ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(readContent.empty());
+
+// Relative path
+    fileName = "./log/faultlog/faultlogger";
+    validPaths = { "/tmp/", "/data/local/tmp/" };
+    readContent.clear();
+    ret = ReadFile(fileName, validPaths, readContent);
+    EXPECT_FALSE(ret);
+    EXPECT_TRUE(readContent.empty());
 }
 
 /**
@@ -214,5 +249,81 @@ HWTEST_F(CommonTest, PluginWriteToHisysevent002, TestSize.Level1)
 {
     int ret = PluginWriteToHisysevent("DISKIO_PLUGIN", "tdd_test", "test_args", RET_SUCC, "success");
     EXPECT_EQ(ret, 0);
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: test CheckSubscribeVersion and PrintMallinfoLog
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CheckSubscribeVersion, TestSize.Level1)
+{
+    static struct mallinfo2 miStart = {0};
+    miStart.arena = 1;
+    miStart.ordblks = 2;
+    miStart.smblks = 3;
+    miStart.hblks = 4;
+    miStart.hblkhd = 5;
+    miStart.usmblks = 6;
+    miStart.fsmblks = 7;
+    miStart.uordblks = 8;
+    miStart.fordblks = 9;
+    miStart.keepcost = 10;
+    std::string testStr = "test:";
+    COMMON::PrintMallinfoLog(testStr, miStart);
+    EXPECT_EQ(COMMON::CheckSubscribeVersion("0.5_2"), false);
+    EXPECT_EQ(COMMON::CheckSubscribeVersion("1.0"), true);
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: StartProcess.CustomPopen command name is not exit or illegal
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CustomPopen, TestSize.Level1)
+{
+    std::vector<std::string> fullCmdTest;
+    fullCmdTest.push_back("/system/bin/test");
+    fullCmdTest.push_back("hisysevent");
+    fullCmdTest.push_back("-rd");
+    volatile pid_t childPid = -1;
+    int pipeFds[2] = {-1, -1};
+    FILE* fpr = COMMON::CustomPopen(fullCmdTest, nullptr, pipeFds, childPid, true);
+    EXPECT_EQ(fpr, nullptr);
+    EXPECT_EQ(COMMON::CustomPopen(fullCmdTest, "w", pipeFds, childPid), nullptr);
+    fullCmdTest.clear();
+    fullCmdTest.push_back("/system/bin/hiprofilerd");
+    fullCmdTest.push_back("hiprofilerd&");
+    fullCmdTest.push_back("-rd");
+    EXPECT_EQ(COMMON::CustomPopen(fullCmdTest, "w", pipeFds, childPid), nullptr);
+}
+
+/**
+ * @tc.name: CommonTest
+ * @tc.desc: IsNumeric and SplitString
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, IsNumeric, TestSize.Level1)
+{
+    EXPECT_EQ(COMMON::IsNumeric("test"), false);
+    EXPECT_EQ(COMMON::IsNumeric("1111test"), false);
+    EXPECT_EQ(COMMON::IsNumeric("1111"), true);
+
+    string str = "";
+    string seq = "_";
+    std::vector<string> ret;
+    COMMON::SplitString(str, seq, ret);
+    EXPECT_EQ(ret.size(), 0);
+}
+/**
+ * @tc.name: AdaptSandboxPath
+ * @tc.desc: AdaptSandboxPath
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, AdaptSandboxPath, TestSize.Level1)
+{
+    std::string path = "/data/storage/test";
+    COMMON::AdaptSandboxPath(path, 1);
+    EXPECT_EQ(path, "/proc/1/root/data/storage/test");
 }
 } // namespace
