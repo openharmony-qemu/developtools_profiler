@@ -87,6 +87,7 @@ private:
     std::string checkToken = "";    // 拉起测试时校验
     bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
     std::string tracefilePath = "";

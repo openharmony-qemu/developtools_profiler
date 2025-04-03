@@ -495,7 +495,7 @@ int SpThreadSocket::SendFile(const std::string filePath)
 
 void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
 {
-    if (sendFileSocketPort == -1 || filePath == "") {
+    if (sendFileSocketPort == -1) {
         return;
     }
     int fileSocket = -1;
@@ -533,7 +533,7 @@ void SpThreadSocket::StartGpuCounter() const
 
 void SpThreadSocket::SaveGpuCounter() const
 {
-    gpuCounter.GetInstance().SaveData(gpuCounterfilePath);
+    gpuCounter.GetInstance().SaveData(smartperfDevicePath);
     gpuCounter.GetGpuCounterData().clear();
     gpuCounter.StopCollect();
 }
@@ -708,9 +708,11 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         SaveGpuCounter();
         ConnectAndSendFile(gpuCounterfilePath);
     } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
-        // Todo: copy trace file to /data/local/tmp/smartperfDevice
         tracefilePath = "";
         GetSocketPort(recvBuf);
+        if (tracefilePath.empty()) {
+            return;
+        }
         ConnectAndSendFile(tracefilePath);
     } else {
         retCode = iterator->second;
@@ -744,7 +746,7 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
 {
     if (buffer.find("::") != std::string::npos) {
         std::string portStr = buffer.substr(buffer.find("::") + 2);
-        std::string fileName = '';
+        std::string fileName = "";
         if (portStr.find(":::") != std::string::npos) {
             portStr = portStr.substr(0, portStr.find(":::"));
         }
@@ -752,7 +754,7 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
         if (portStr.find("$") != std::string::npos) {
             fileName = portStr.substr(portStr.find("$") + 1);
             portStr = portStr.substr(0, portStr.find("$"));
-            tracefilePath = smartperfDevicePath + fileName;
+            tracefilePath = traceOriginPath + fileName;
         }
         
         try {
