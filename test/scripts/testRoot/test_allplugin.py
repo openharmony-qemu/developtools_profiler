@@ -15,7 +15,11 @@
 
 import pytest
 import subprocess
+import re
+import sys
 import time
+sys.path.append("..")
+from tools.utils import *
 import threading
 
 LIB_PATH = "/system/lib"

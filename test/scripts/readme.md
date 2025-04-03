@@ -9,7 +9,7 @@
 
 ## 测试用例执行
 前置条件：
-1. 将onebox中的trace_streamer_nativehook.exe, process_resource_limit.json, process_resource_limit_reliability.json, hookDecoder, malloctest放入inputfiles文件夹
+1. 将onebox中的trace_streamer_nativehook.exe, process_resource_limit.json放入inputfiles文件夹
 2. 打开并运行onebox中的profiler-test和network-profiler-test这两个IDE工程
 3. 将所有的 "text=True"替换为"shell=True, text=True"
 
