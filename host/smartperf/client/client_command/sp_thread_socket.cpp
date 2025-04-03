@@ -460,9 +460,11 @@ int SpThreadSocket::SendFile(const std::string filePath)
 
     std::streamsize totalSent = 0;
     while (!logFile.eof()) {
+        WLOGI("!logFile.eof() gcount: %zd", logFile.gcount());
         logFile.read(fileSocketBuffer, sizeof(fileSocketBuffer));
         std::streamsize bytesRead = logFile.gcount();
         ssize_t bytesSent = send(sendFileSocket, fileSocketBuffer, bytesRead, 0);
+        WLOGI("!send gcount: %zd", bytesSent);
         if (bytesSent < 0) {
             WLOGE("Send log file failed");
             logFile.close();
@@ -493,7 +495,7 @@ int SpThreadSocket::SendFile(const std::string filePath)
 
 void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
 {
-    if (sendFileSocketPort == -1) {
+    if (sendFileSocketPort == -1 || filePath == "") {
         return;
     }
     int fileSocket = -1;
@@ -705,6 +707,11 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         GetSocketPort(recvBuf);
         SaveGpuCounter();
         ConnectAndSendFile(gpuCounterfilePath);
+    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
+        // Todo: copy trace file to /data/local/tmp/smartperfDevice
+        tracefilePath = "";
+        GetSocketPort(recvBuf);
+        ConnectAndSendFile(tracefilePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
@@ -737,8 +744,15 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
 {
     if (buffer.find("::") != std::string::npos) {
         std::string portStr = buffer.substr(buffer.find("::") + 2);
+        std::string fileName = '';
         if (portStr.find(":::") != std::string::npos) {
             portStr = portStr.substr(0, portStr.find(":::"));
+        }
+
+        if (portStr.find("$") != std::string::npos) {
+            fileName = portStr.substr(portStr.find("$") + 1);
+            portStr = portStr.substr(0, portStr.find("$"));
+            tracefilePath = smartperfDevicePath + fileName;
         }
         
         try {

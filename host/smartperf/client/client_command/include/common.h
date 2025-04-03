@@ -49,6 +49,7 @@ enum class MessageType {
     GET_PROCESS_FDS,
     START_GPU_COUNTER,  
     SAVE_GPU_COUNTER,
+    CATCH_TRACE_FINISH
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -82,6 +83,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_PROCESS_FDS, std::string("get_process_fds") },
     { MessageType::START_GPU_COUNTER, std::string("start_gpu_counter") },
     { MessageType::SAVE_GPU_COUNTER, std::string("save_gpu_counter") },
+    { MessageType::CATCH_TRACE_FINISH, std::string("catch_trace_finish") },
 };
 
 enum class CommandType {

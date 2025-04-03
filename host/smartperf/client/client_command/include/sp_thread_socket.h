@@ -89,10 +89,11 @@ private:
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
+    std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
     int sendFileSocket = -1;
     int sendFileSocketPort = -1;
-    static const int fileSocketBufferSize = 4096;
+    static const int fileSocketBufferSize = 8192;
     char fileSocketBuffer[fileSocketBufferSize] = {};
 };
 }
