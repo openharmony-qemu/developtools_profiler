@@ -12,6 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 #include <iostream>
 #include <functional>
 #include <vector>
@@ -41,7 +45,6 @@
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
-bool g_preset = false;
 std::string g_pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
@@ -113,7 +116,7 @@ SocketErrorType SpThreadSocket::CheckTcpToken(std::string recvStr,
     }
     std::string token = recvStr.substr(recvStr.find_last_of(":") + 1);
     token = token.substr(0, token.find(' '));
-    std::string tcpSocketToken = SpThreadSocket::GetInstance().GetTcpToken();
+    std::string tcpSocketToken = SpThreadSocket::GetInstance().GetToken();
     LOGD("Comparing token with TCP token...");
     if (tcpSocketToken == "" && token == "-SESSIONID") {
         LOGI("Token is empty but received token is '-SESSIONID', token check passed.");
@@ -157,7 +160,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
     std::string errorInfo;
     std::string checkStr = recvStr.substr(std::string("init::").length());
     if (!SPTask::GetInstance().CheckTcpParam(checkStr, errorInfo) &&
-        checkStr.find(SpThreadSocket::GetInstance().GetTcpToken()) == std::string::npos) {
+        checkStr.find(SpThreadSocket::GetInstance().GetToken()) == std::string::npos) {
         WLOGE("Init error(%s)", errorInfo.c_str());
         if (type == SocketConnectType::CMD_SOCKET) {
             spSocket.Send("init::False,\"error\":" + errorInfo);
@@ -167,7 +170,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         return;
     }
     if (recvStr.find("-lockfreq") != std::string::npos &&
-        SpThreadSocket::GetInstance().GetTcpToken() == "") {
+        SpThreadSocket::GetInstance().GetToken() == "") {
         WLOGE("'-lockfreq' must have a valid token.");
         return;
     }
@@ -295,7 +298,7 @@ SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
     // 提取 token
     std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
     token = token.substr(0, token.find(' '));
-    std::string udpSocketToken = SpThreadSocket::GetInstance().GetUdpToken();
+    std::string udpSocketToken = SpThreadSocket::GetInstance().GetToken();
     LOGD("Comparing token with Udp token...");
     // token 校验
     if (token != udpSocketToken) {
@@ -366,7 +369,7 @@ void SpThreadSocket::BackDesktop() const
     SPUtils::LoadCmd(uinput, cmdResult);
 }
 // UDP
-void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
+void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
 {
     std::string retCode = "";
     auto iterator = MESSAGE_MAP.begin();
@@ -402,7 +405,8 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
                 data = profiler->ItemData();
                 data["network_traffic"] = "true";
             } else if (iterator->first == MessageType::GET_LOG) {
-                    data = GetLogProcess(profiler, recvBuf);
+                GetSocketPort(recvBuf);
+                data = profiler->ItemData();
             } else {
                 GetProcessIdByPkgName(iterator);
                 data = profiler->ItemData();
@@ -414,8 +418,127 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket) const
     }
 }
 
+int SpThreadSocket::FileSocketConnect()
+{
+    sendFileSocket = socket(AF_INET, SOCK_STREAM, 0);
+    if (sendFileSocket < 0) {
+        WLOGE("Create log file socket failed, errno: %d", errno);
+        return -1;
+    }
+    struct sockaddr_in socketAddr = {0};
+    socketAddr.sin_family = AF_INET;
+    socketAddr.sin_port = htons(sendFileSocketPort);
+    socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    if (connect(sendFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
+        WLOGE("Connect log file socket failed, errno: %d", errno);
+        return -1;
+    }
+    WLOGI("Connect log file socket success, socket: %d", sendFileSocket);
+    return sendFileSocket;
+}
+
+int SpThreadSocket::SendFile(const std::string filePath)
+{
+    char filePathChar[PATH_MAX] = {0x00};
+    if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
+        WLOGI("%s is not exist.", filePath.c_str());
+        return -1;
+    }
+    std::ifstream logFile(filePathChar, std::ios::binary);
+    if (!logFile.is_open()) {
+        WLOGE("Open log file failed");
+        close(sendFileSocket);
+        sendFileSocket = -1;
+        return -1;
+    }
+    WLOGI("logfile exists, sending...");
+    // Get file size
+    logFile.seekg(0, std::ios::end);
+    std::streamsize fileSize = logFile.tellg();
+    logFile.seekg(0, std::ios::beg);
+
+    std::streamsize totalSent = 0;
+    while (!logFile.eof()) {
+        WLOGI("!logFile.eof() gcount: %zd", logFile.gcount());
+        logFile.read(fileSocketBuffer, sizeof(fileSocketBuffer));
+        std::streamsize bytesRead = logFile.gcount();
+        ssize_t bytesSent = send(sendFileSocket, fileSocketBuffer, bytesRead, 0);
+        WLOGI("!send gcount: %zd", bytesSent);
+        if (bytesSent < 0) {
+            WLOGE("Send log file failed");
+            logFile.close();
+            close(sendFileSocket);
+            sendFileSocket = -1;
+            return -1;
+        }
+        totalSent += bytesSent;
+        if (bytesSent != bytesRead) {
+            WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
+            logFile.close();
+            close(sendFileSocket);
+            sendFileSocket = -1;
+            return -1;
+        }
+    }
+
+    if (totalSent != fileSize) {
+        WLOGE("File size mismatch: sent %zd bytes, file size %zd", totalSent, fileSize);
+        return -1;
+    }
+    logFile.close();
+    close(sendFileSocket);
+    sendFileSocket = -1;
+    WLOGI("Send log file success, bytes: %zd", totalSent);
+    return 0;
+}
+
+void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
+{
+    if (sendFileSocketPort == -1) {
+        return;
+    }
+    int fileSocket = -1;
+    int connectCount = 0;
+    const int maxTryCount = 2;
+
+    while (fileSocket < 0) {
+        WLOGI("Connect file log socket, try times: %d", connectCount + 1);
+        if (connectCount > maxTryCount) {
+            WLOGE("Connect file log socket failed");
+            return;
+        }
+        connectCount++;
+        fileSocket = FileSocketConnect();
+    }
+
+    int ret = SendFile(filePath);
+    if (ret < 0) {
+        return;
+    }
+}
+
+void SpThreadSocket::StartGpuCounter() const
+{
+    SPUtils::CreateDir(smartperfDevicePath);
+    char filePathChar[PATH_MAX] = {0x00};
+    if (realpath(gpuCounterfilePath.c_str(), filePathChar) == nullptr) {
+        LOGI("%s is not exist, init finish.", gpuCounterfilePath.c_str());
+    } else {
+        std::remove(filePathChar);
+        LOGI("%s is existed, remove.", gpuCounterfilePath.c_str());
+    }
+    gpuCounter.StartCollect(GpuCounter::GC_START);
+}
+
+void SpThreadSocket::SaveGpuCounter() const
+{
+    gpuCounter.GetInstance().SaveData(smartperfDevicePath);
+    gpuCounter.GetGpuCounterData().clear();
+    gpuCounter.StopCollect();
+}
+
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
-    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
@@ -432,27 +555,8 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
-        if (GetLog::GetInstance().GetLogFileSocketPort() == -1) {
-            return;
-        }
-        int logSocket = -1;
-        int connectCount = 0;
-        const int maxTryCount = 2;
-
-        while (logSocket < 0) {
-            WLOGI("Connect file log socket, try times: %d", connectCount + 1);
-            if (connectCount > maxTryCount) {
-                WLOGE("Connect file log socket failed");
-                return;
-            }
-            connectCount++;
-            logSocket = GetLog::GetInstance().LogFileSocketConnect();
-        }
-
-        int ret = GetLog::GetInstance().SendLogFile();
-        if (ret < 0) {
-            return;
-        }
+        ConnectAndSendFile(logFilePath);
+        GetLog::GetInstance().RemoveLogFile();
     } else {
         retCode = MapToString(data);
         spSocket.Sendto(retCode);
@@ -496,7 +600,7 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
 void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::SET_PKG_NAME) {
         if (recvBuf.find("smartperf") != std::string::npos) {
@@ -507,12 +611,16 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             }
         } else {
             retCode = SplitMsg(recvBuf);
-            if (recvBuf.find("$") != std::string::npos) {
-                g_pkgAndPid = SplitMsg(recvBuf);
+            if (retCode.find("$") != std::string::npos) {
+                g_pkgAndPid = retCode;
                 g_pkgName = SpGetPkg(g_pkgAndPid);
             } else {
-                g_pkgName = SplitMsg(recvBuf);
+                g_pkgName = retCode;
             }
+            std::string pkgName = g_pkgName;
+            std::thread rStart([this, pkgName]() { this->ResetValue(pkgName); });
+            rStart.detach();
+            spSocket.Sendto(g_pkgName);
             LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
@@ -546,18 +654,21 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
     if (iterator->first == MessageType::GET_FPS_AND_JITTERS || iterator->first == MessageType::GET_CUR_FPS ||
         iterator->first == MessageType::GET_RAM_INFO) {
         if (!SpProfilerFactory::editorFlag) {
+            std::string pkgName = g_pkgName;
+            std::string pkgAndPid = g_pkgAndPid;
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
             std::string processIds = "";
-            g_preset = IsPreset(g_pkgAndPid);
-            if (g_preset) {
-                processId = SpGetPid(g_pkgAndPid);
+            ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
+            profilerFPS.isPreset = IsPreset(pkgAndPid);
+            if (profilerFPS.isPreset) {
+                processId = SpGetPid(pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(g_pkgName, &processIds);
+                processId = sp.GetPidByPkg(pkgName, &processIds);
             }
             SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
-            SpProfilerFactory::SetProfilerPkg(g_pkgName);
+            SpProfilerFactory::SetProfilerPkg(pkgName);
         }
     }
 }
@@ -571,7 +682,7 @@ void SpThreadSocket::ResetValue(std::string retCode) const
     ram.SetHapFirstFlag();
 }
 void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
@@ -596,6 +707,19 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         retCode = "UDP status is normal";
         spSocket.Sendto(retCode);
         LOGD("UDP status is normal");
+    } else if (iterator->first == MessageType::START_GPU_COUNTER) {
+        StartGpuCounter();
+    } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
+        GetSocketPort(recvBuf);
+        SaveGpuCounter();
+        ConnectAndSendFile(gpuCounterfilePath);
+    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
+        tracefilePath = "";
+        GetSocketPort(recvBuf);
+        if (tracefilePath.empty()) {
+            return;
+        }
+        ConnectAndSendFile(tracefilePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
@@ -624,21 +748,34 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
             return "UNKNOWN";
     }
 }
-std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *profilerItem, std::string buffer) const
+void SpThreadSocket::GetSocketPort(std::string buffer)
 {
     if (buffer.find("::") != std::string::npos) {
-        int port = std::stoi(buffer.substr(buffer.find("::") + 2));
-        WLOGI("Get File log UDP message received, port is %d", port);
-        // Init log file socket and file process
-        GetLog::GetInstance().SetLogFileSocket(-1);
-        GetLog::GetInstance().SetLogFileSocketPort(port);
-        return profilerItem->ItemData();
+        std::string portStr = buffer.substr(buffer.find("::") + 2);
+        std::string fileName = "";
+        if (portStr.find(":::") != std::string::npos) {
+            portStr = portStr.substr(0, portStr.find(":::"));
+        }
+
+        if (portStr.find("$") != std::string::npos) {
+            fileName = portStr.substr(portStr.find("$") + 1);
+            portStr = portStr.substr(0, portStr.find("$"));
+            tracefilePath = traceOriginPath + fileName;
+        }
+        
+        try {
+            int port = SPUtilesTye::StringToSometype<int>(portStr);
+            WLOGI("Get File log UDP message received, port is %d", port);
+            sendFileSocket = -1;
+            sendFileSocketPort = port;
+        } catch (const std::exception& e) {
+            WLOGE("Failed to parse port number: %s", e.what());
+            sendFileSocketPort = -1;
+        }
     } else {
         WLOGE("Get File log UDP message received, but port is not found");
-        GetLog::GetInstance().SetLogFileSocketPort(-1);
+        sendFileSocketPort = -1;
     }
-
-    return std::map<std::string, std::string>();
 }
 std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 {
@@ -690,21 +827,13 @@ bool SpThreadSocket::IsPreset(const std::string &spMsg) const
         return false;
     }
 }
-void SpThreadSocket::SetTcpToken(std::string token)
+void SpThreadSocket::SetToken(std::string token)
 {
-    tcpToken = token;
+    checkToken = token;
 }
-std::string SpThreadSocket::GetTcpToken() const
+std::string SpThreadSocket::GetToken() const
 {
-    return tcpToken;
-}
-void SpThreadSocket::SetUdpToken(std::string token)
-{
-    udpToken = token;
-}
-std::string SpThreadSocket::GetUdpToken() const
-{
-    return udpToken;
+    return checkToken;
 }
 void SpThreadSocket::SetNeedUdpToken(bool isNeed)
 {

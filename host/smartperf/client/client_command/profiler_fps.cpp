@@ -424,7 +424,7 @@ bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
     if (findFpsCurTime) {
         isBreak = true;
         fpsNum++;
-        if (isLowCurFps) {
+        if (isLowCurFps && !isPreset) {
             fpsInfo.fps = fpsNum;
         } else {
             fpsInfo.fps = fpsNum;

@@ -29,23 +29,13 @@ public:
         static GetLog instance;
         return instance;
     }
-    int LogFileSocketConnect();
-    int SendLogFile();
-    void SetLogFileSocketPort(int port);
-    int GetLogFileSocketPort() const;
-    void SetLogFileSocket(int socket);
-    int GetLogFileSocket() const;
+    void RemoveLogFile();
 
 private:
     GetLog() {};
     GetLog(const GetLog &);
     GetLog &operator = (const GetLog &);
-    void RemoveLogFile();
     void TarLogFile();
-    void CreateDir(const std::string &dirPath);
-    void RemoveDirOrFile(const std::string &dirPath);
-    void CopyFiles(std::string cpStr);
-    void TarFiles(std::string tarStr);
     int GetCurrentPath(char *currentPath);
     void GetHilogInMemory(std::vector<std::filesystem::path> &fileList);
     void GetHilogInData(std::vector<std::filesystem::path> &otherFiles, std::vector<std::filesystem::path> &logFiles);
@@ -58,10 +48,8 @@ private:
     const std::string hilogFileDir = LOG_FILE_DIR + "hilog/";
     const std::string daemonLogFileDir = LOG_FILE_DIR + "daemonLog/";
     const std::string logFilePath = LOG_FILE_DIR + "logfile.tar.gz";
-    static const int logSocketBufferSize = 4096;
     static const uintmax_t logMaxSize = 52428800; // 50MB = 50 * 1024 * 1024
     uintmax_t currentLogSize = 0;
-    char logSocketBuffer[logSocketBufferSize] = {};
 };
 }
 }

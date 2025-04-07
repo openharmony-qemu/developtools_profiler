@@ -15,10 +15,6 @@
 #include "include/GetLog.h"
 #include "include/sp_utils.h"
 #include "include/smartperf_command.h"
-#include <netinet/in.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <unistd.h>
 #include <fstream>
 #include <filesystem>
 #include <vector>
@@ -26,55 +22,6 @@
 #include <ctime>
 namespace OHOS {
 namespace SmartPerf {
-void GetLog::CreateDir(const std::string &dirPath)
-{
-    if (!SPUtils::FileAccess(dirPath)) {
-        std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
-        std::string cmdResult;
-        if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-            WLOGE("%s capture not be created!", dirPath.c_str());
-        } else {
-            WLOGI("%s created successfully!", dirPath.c_str());
-        }
-    }
-}
-
-void GetLog::RemoveDirOrFile(const std::string &dirPath)
-{
-    char pathChar[PATH_MAX] = {0x00};
-    if ((realpath(dirPath.c_str(), pathChar) == nullptr)) {
-        WLOGI("%s is not exist.", dirPath.c_str());
-        return;
-    }
-    LOGD("%s is exist, remove...", dirPath.c_str());
-
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + dirPath;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("%s capture not be removed!", dirPath.c_str());
-    } else {
-        WLOGI("%s removed successfully!", dirPath.c_str());
-    }
-}
-
-void GetLog::CopyFiles(std::string cpStr)
-{
-    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
-        WLOGE("Failed to copy files: %s", cpStr.c_str());
-    }
-}
-
-void GetLog::TarFiles(std::string tarStr)
-{
-    std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
-    std::string cmdResult;
-    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
-        WLOGE("Failed to tar log files");
-    }
-}
-
 void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
 {
     // Get current hilog in "hilog" command
@@ -93,9 +40,9 @@ void GetLog::GetHilogInMemory(std::vector<std::filesystem::path> &fileList)
 void GetLog::RemoveLogFile()
 {
     // Process before and after send
-    RemoveDirOrFile(logFilePath);
-    RemoveDirOrFile(hilogFileDir);
-    RemoveDirOrFile(daemonLogFileDir);
+    SPUtils::RemoveDirOrFile(logFilePath);
+    SPUtils::RemoveDirOrFile(hilogFileDir);
+    SPUtils::RemoveDirOrFile(daemonLogFileDir);
 
     currentLogSize = 0;
 }
@@ -106,7 +53,7 @@ void GetLog::GenerateDaemonLogFile()
     std::filesystem::path dirPath(LOG_FILE_DIR);    // Log file directory
     std::vector<std::filesystem::path> files;       // Log file vector to tar
 
-    CreateDir(daemonLogFileDir);                    // Create daemonLog directory
+    SPUtils::CreateDir(daemonLogFileDir);                    // Create daemonLog directory
 
     // Save current working directory to restore it later
     // Change directory to handle relative paths in tar operations
@@ -145,7 +92,7 @@ void GetLog::GenerateDaemonLogFile()
         cpCommand += filename + " ";
     }
     cpCommand += daemonLogFileDir;
-    CopyFiles(cpCommand);
+    SPUtils::CopyFiles(cpCommand);
 
     std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of daemonLog files successfully");
@@ -217,7 +164,7 @@ void GetLog::GenerateHilogFile()
     std::vector<std::filesystem::path> filesLog;            // Log file vector to tar
     std::vector<std::filesystem::path> filesOther;          // Other file vector to tar
 
-    CreateDir(hilogFileDir);
+    SPUtils::CreateDir(hilogFileDir);
     std::string originPath;
     if (std::filesystem::current_path().string().empty()) {
         WLOGE("Failed to get current working directory");
@@ -260,7 +207,7 @@ void GetLog::GenerateHilogFile()
         cpCommand += filename + " ";
     }
     cpCommand += hilogFileDir;
-    CopyFiles(cpCommand);
+    SPUtils::CopyFiles(cpCommand);
 
     std::filesystem::current_path(originPath.c_str());
     WLOGI("Created tar archive of hilog files successfully");
@@ -290,7 +237,7 @@ void GetLog::TarLogFile()
 
     // Build tar command with relative paths
     std::string tarCommand = logFilePath + " hilog daemonLog";
-    TarFiles(tarCommand);
+    SPUtils::TarFiles(tarCommand);
 
     // Restore original working directory
     std::filesystem::current_path(originPath.c_str());
@@ -307,97 +254,5 @@ std::map<std::string, std::string> GetLog::ItemData()
     return std::map<std::string, std::string>();
 }
 
-int GetLog::LogFileSocketConnect()
-{
-    logFileSocket = socket(AF_INET, SOCK_STREAM, 0);
-    if (logFileSocket < 0) {
-        WLOGE("Create log file socket failed, errno: %d", errno);
-        return -1;
-    }
-    struct sockaddr_in socketAddr = {0};
-    socketAddr.sin_family = AF_INET;
-    socketAddr.sin_port = htons(logFileSocketPort);
-    socketAddr.sin_addr.s_addr = inet_addr("127.0.0.1");
-    if (connect(logFileSocket, reinterpret_cast<struct sockaddr *>(&socketAddr), sizeof(socketAddr)) < 0) {
-        WLOGE("Connect log file socket failed, errno: %d", errno);
-        return -1;
-    }
-    WLOGI("Connect log file socket success, socket: %d", logFileSocket);
-    return logFileSocket;
-}
-
-int GetLog::SendLogFile()
-{
-    char logFilePathChar[PATH_MAX] = {0x00};
-    if ((realpath(logFilePath.c_str(), logFilePathChar) == nullptr)) {
-        WLOGI("%s is not exist.", logFilePath.c_str());
-        return -1;
-    }
-    std::ifstream logFile(logFilePathChar, std::ios::binary);
-    if (!logFile.is_open()) {
-        WLOGE("Open log file failed");
-        close(logFileSocket);
-        logFileSocket = -1;
-        return -1;
-    }
-    WLOGI("logfile exists, sending...");
-    // Get file size
-    logFile.seekg(0, std::ios::end);
-    std::streamsize fileSize = logFile.tellg();
-    logFile.seekg(0, std::ios::beg);
-
-    std::streamsize totalSent = 0;
-    while (!logFile.eof()) {
-        logFile.read(logSocketBuffer, sizeof(logSocketBuffer));
-        std::streamsize bytesRead = logFile.gcount();
-        ssize_t bytesSent = send(logFileSocket, logSocketBuffer, bytesRead, 0);
-        if (bytesSent < 0) {
-            WLOGE("Send log file failed");
-            logFile.close();
-            close(logFileSocket);
-            logFileSocket = -1;
-            return -1;
-        }
-        totalSent += bytesSent;
-        if (bytesSent != bytesRead) {
-            WLOGE("Incomplete send: sent %zd bytes out of %zd", bytesSent, bytesRead);
-            logFile.close();
-            close(logFileSocket);
-            logFileSocket = -1;
-            return -1;
-        }
-    }
-
-    if (totalSent != fileSize) {
-        WLOGE("File size mismatch: sent %zd bytes, file size %zd", totalSent, fileSize);
-        return -1;
-    }
-    logFile.close();
-    close(logFileSocket);
-    logFileSocket = -1;
-    WLOGI("Send log file success, bytes: %zd", totalSent);
-    RemoveLogFile();
-    return 0;
-}
-
-void GetLog::SetLogFileSocketPort(int port)
-{
-    logFileSocketPort = port;
-}
-
-int GetLog::GetLogFileSocketPort() const
-{
-    return logFileSocketPort;
-}
-
-void GetLog::SetLogFileSocket(int socket)
-{
-    logFileSocket = socket;
-}
-
-int GetLog::GetLogFileSocket() const
-{
-    return logFileSocket;
-}
 } // namespace SmartPerf
 } // namespace OHOS

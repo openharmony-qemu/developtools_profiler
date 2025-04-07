@@ -860,5 +860,54 @@ void SPUtils::KillStartDaemon()
         GetTestsaPlugin(command);
     }
 }
+
+void SPUtils::CreateDir(const std::string &dirPath)
+{
+    if (!SPUtils::FileAccess(dirPath)) {
+        std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + dirPath;
+        std::string cmdResult;
+        if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+            WLOGE("%s capture not be created!", dirPath.c_str());
+        } else {
+            WLOGI("%s created successfully!", dirPath.c_str());
+        }
+    }
+}
+
+void SPUtils::RemoveDirOrFile(const std::string &dirPath)
+{
+    char pathChar[PATH_MAX] = {0x00};
+    if ((realpath(dirPath.c_str(), pathChar) == nullptr)) {
+        WLOGI("%s is not exist.", dirPath.c_str());
+        return;
+    }
+    LOGD("%s is exist, remove...", dirPath.c_str());
+
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + dirPath;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+        WLOGE("%s capture not be removed!", dirPath.c_str());
+    } else {
+        WLOGI("%s removed successfully!", dirPath.c_str());
+    }
+}
+
+void SPUtils::CopyFiles(std::string cpStr)
+{
+    std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(cmd, cmdResult)) {
+        WLOGE("Failed to copy files: %s", cpStr.c_str());
+    }
+}
+
+void SPUtils::TarFiles(std::string tarStr)
+{
+    std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
+    std::string cmdResult;
+    if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
+        WLOGE("Failed to tar log files");
+    }
+}
 }
 }

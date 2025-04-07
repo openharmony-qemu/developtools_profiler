@@ -56,34 +56,46 @@ public:
     void DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus);
     void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
-    void HandleMsg(SpServerSocket &spSocket) const;
+    void HandleMsg(SpServerSocket &spSocket);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
-        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
-    std::map<std::string, std::string> GetLogProcess(SpProfiler *profilerItem, std::string buffer) const;
+    void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
     void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
-    void SetTcpToken(std::string token);
-    std::string GetTcpToken() const;
-    void SetUdpToken(std::string token);
-    std::string GetUdpToken() const;
+    void SetToken(std::string token);
+    std::string GetToken() const;
     void SetNeedUdpToken(bool isNeed);
+    void ConnectAndSendFile(const std::string filePath);
+    void StartGpuCounter() const;
+    void SaveGpuCounter() const;
+    int FileSocketConnect();
+    int SendFile(std::string filePath);
 
 private:
     bool flagRunning = false;
     bool socketConnect = true;
-    std::string tcpToken = "";      // Editor 拉起测试时校验
-    std::string udpToken = "";      // device 拉起测试时校验
-    bool isNeedUdpToken = true;     // 是否需要校验 udp token
+    std::string checkToken = "";    // 拉起测试时校验
+    bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
+    const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
+    const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
+    std::string tracefilePath = "";
+    const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
+    int sendFileSocket = -1;
+    int sendFileSocketPort = -1;
+    static const int fileSocketBufferSize = 8192;
+    char fileSocketBuffer[fileSocketBufferSize] = {};
 };
 }
 }

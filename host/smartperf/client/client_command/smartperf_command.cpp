@@ -38,7 +38,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
-        DeviceServer();
+        DeviceServer(true);
     }
     if (argv.size() == twoParam) {
         auto iterator = COMMAND_HELP_MAP.begin();
@@ -75,7 +75,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
     }
     LOGD("SmartPerfCommand::SmartPerfCommand complete");
 }
-void SmartPerfCommand::DeviceServer() const
+void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
 {
     EnableWriteLogAndDeleteOldLogFiles();
     OHOS::SmartPerf::StartUpDelay sd;
@@ -84,7 +84,9 @@ void SmartPerfCommand::DeviceServer() const
     std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
     std::string result = "";
     SPUtils::LoadCmd(cmdStr + pidStr, result);
-    daemon(0, 0);
+    if (isNeedDaemon) {
+        daemon(0, 0);
+    }
     CreateSocketThread();
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
@@ -122,7 +124,7 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
                 return;
             }
             WLOGI("############################# Setting TCP token...");
-            SpThreadSocket::GetInstance().SetTcpToken(token);
+            SpThreadSocket::GetInstance().SetToken(token);
             WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
         }
         CreateSocketThread();
@@ -133,9 +135,9 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             WLOGE("Error: token is empty when setting UDP token.");
             return;
         }
-        SpThreadSocket::GetInstance().SetUdpToken(token);
+        SpThreadSocket::GetInstance().SetToken(token);
         WLOGI("############################# Setting UDP token...");
-        DeviceServer();
+        DeviceServer(false);
         WLOGI("############################# DeviceServer Socket Create Start, Ready to Start Collector...");
     }
 }
