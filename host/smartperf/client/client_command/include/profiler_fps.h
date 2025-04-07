@@ -94,6 +94,7 @@ public:
     std::map<std::string, std::string> ItemData() override;
     void SetProcessId(const std::string &pid);
     static inline bool isLowCurFps = false;
+    static inline bool isPreset = false;
     void CalcJitters();
 private:
     ProfilerFPS() {};

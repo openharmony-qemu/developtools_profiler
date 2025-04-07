@@ -45,7 +45,6 @@
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
-bool g_preset = false;
 std::string g_pkgAndPid = "";
 std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
 {
@@ -613,11 +612,15 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         } else {
             retCode = SplitMsg(recvBuf);
             if (recvBuf.find("$") != std::string::npos) {
-                g_pkgAndPid = SplitMsg(recvBuf);
+                g_pkgAndPid = retCode;
                 g_pkgName = SpGetPkg(g_pkgAndPid);
             } else {
-                g_pkgName = SplitMsg(recvBuf);
+                g_pkgName = retCode;
             }
+            std::string pkgName = g_pkgName;
+            std::thread rStart([this, pkgName]() { this->ResetValue(pkgName); });
+            rStart.detach();
+            spSocket.Sendto(g_pkgName);
             LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
@@ -651,18 +654,21 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
     if (iterator->first == MessageType::GET_FPS_AND_JITTERS || iterator->first == MessageType::GET_CUR_FPS ||
         iterator->first == MessageType::GET_RAM_INFO) {
         if (!SpProfilerFactory::editorFlag) {
+            std::string pkgName = g_pkgName;
+            std::string pkgAndPid = g_pkgAndPid;
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
             std::string processIds = "";
-            g_preset = IsPreset(g_pkgAndPid);
-            if (g_preset) {
-                processId = SpGetPid(g_pkgAndPid);
+            ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
+            profilerFPS.isPreset = IsPreset(pkgAndPid);
+            if (profilerFPS.isPreset) {
+                processId = SpGetPid(pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
-                processId = sp.GetPidByPkg(g_pkgName, &processIds);
+                processId = sp.GetPidByPkg(pkgName, &processIds);
             }
             SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
-            SpProfilerFactory::SetProfilerPkg(g_pkgName);
+            SpProfilerFactory::SetProfilerPkg(pkgName);
         }
     }
 }
