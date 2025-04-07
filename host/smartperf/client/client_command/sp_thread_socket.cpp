@@ -611,7 +611,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             }
         } else {
             retCode = SplitMsg(recvBuf);
-            if (recvBuf.find("$") != std::string::npos) {
+            if (retCode.find("$") != std::string::npos) {
                 g_pkgAndPid = retCode;
                 g_pkgName = SpGetPkg(g_pkgAndPid);
             } else {
