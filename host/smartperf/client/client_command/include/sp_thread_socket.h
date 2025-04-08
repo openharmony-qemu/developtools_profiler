@@ -68,7 +68,7 @@ public:
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
-    void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+    void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
@@ -96,6 +96,7 @@ private:
     int sendFileSocketPort = -1;
     static const int fileSocketBufferSize = 8192;
     char fileSocketBuffer[fileSocketBufferSize] = {};
+    bool isSetPid = false;
 };
 }
 }
