@@ -35,6 +35,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include "include/smartperf_command.h"
+#include "include/sp_utils.h"
 
 #ifdef HI_LOG_ENABLE
 #include "hilog/log.h"
@@ -166,7 +167,7 @@ static int CheckFileNameAndGetNumber(const std::string& fileName, const std::str
         if (fileDate == date) {
             *currentDateFlag = true;
         }
-        return std::stoi(matches[1].str());
+        return SPUtilesTye::StringToSometype<int>(matches[1].str());
     }
 
     return 0;

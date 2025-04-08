@@ -349,7 +349,7 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowTabsTime = SPUtilesTye::StringToSometype<double>(GetOnScreenTimeStart(line));
                 GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
                 lastTabsTime = nowTabsTime;
                 upperScreenTabsFlag = false;
