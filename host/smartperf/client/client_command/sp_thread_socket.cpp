@@ -607,7 +607,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             retCode = SplitMsg(recvBuf);
             if (retCode.find("smartperf") != std::string::npos) {
                 Dubai::dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
+                LOGD("UDP send smartperf: (%s)", Dubai::dubaiPkgName.c_str());
             }
         } else {
             retCode = SplitMsg(recvBuf);
@@ -686,13 +686,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
-        if (recvBuf.find("smartperf") != std::string::npos) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                db.dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", db.dubaiPkgName.c_str());
-            }
-        }
         std::thread dStart([&db]() { db.CallBeginAndFinish(); });
         dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
