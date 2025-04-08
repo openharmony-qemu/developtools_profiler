@@ -539,13 +539,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
-        if (recvBuf.find("smartperf") != std::string::npos) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                db.dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", db.dubaiPkgName.c_str());
-            }
-        }
         std::thread dStart([&db]() { db.CallBeginAndFinish(); });
         dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
@@ -591,7 +584,7 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
 std::map<std::string, std::string> SpThreadSocket::GetLogProcess(SpProfiler *profilerItem, std::string buffer) const
 {
     if (buffer.find("::") != std::string::npos) {
-        int port = std::stoi(buffer.substr(buffer.find("::") + 2));
+        int port = SPUtilesTye::StringToSometype<int>(buffer.substr(buffer.find("::") + 2));
         WLOGI("Get File log UDP message received, port is %d", port);
         // Init log file socket and file process
         GetLog::GetInstance().SetLogFileSocket(-1);
