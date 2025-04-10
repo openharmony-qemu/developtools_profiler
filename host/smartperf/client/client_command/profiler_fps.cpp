@@ -556,7 +556,10 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
         StartUpDelay startUpDelay;
         for (const auto& pid : startUpDelay.GetPidParams()) {
             gameLayer = GetSurfaceId(gameLayer, nodeId, line, endPos, pid);
-            break;
+            if (!gameLayer.empty())
+            {
+                break;
+            }  
         }
     }
     return gameLayer;
