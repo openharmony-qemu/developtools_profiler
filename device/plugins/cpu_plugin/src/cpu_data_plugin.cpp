@@ -491,6 +491,7 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
         } else {
             std::string core = std::string(cpuUsageVec[0].c_str() + cpuLength, cpuUsageVec[0].size() - cpuLength);
             if (!COMMON::IsNumeric(core)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "WriteSystemCpuUsage core is not numeric");
                 return;
             }
             int32_t coreNum = atoi(core.c_str());
