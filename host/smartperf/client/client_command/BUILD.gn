@@ -77,7 +77,7 @@ ohos_executable("SP_daemon") {
   cflags = [
     "-O2",
     "-ffunction-sections",
-    "-fdata-sections"
+    "-fdata-sections",
     "-fvisibility=hidden",
     "-flto",
   ]
