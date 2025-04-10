@@ -77,6 +77,8 @@ public:
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
     void GetOhFps(std::vector<std::string> v);
+    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, std::string &line,
+        size_t &endPos, const std::string &surfaceId);
     void SetRkFlag();
     std::string GetSurface();
     FpsInfoProfiler fpsInfo;

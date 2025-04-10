@@ -35,7 +35,6 @@ namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
-    LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
         DeviceServer(true);
@@ -91,7 +90,6 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
-    LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }
@@ -123,7 +121,6 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
                 WLOGE("Error: token is empty when setting TCP token.");
                 return;
             }
-            WLOGI("############################# Setting TCP token...");
             SpThreadSocket::GetInstance().SetToken(token);
             WLOGI("############################# EditorServer Socket Create Start, Ready to Start Collector...");
         }
@@ -136,7 +133,6 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
             return;
         }
         SpThreadSocket::GetInstance().SetToken(token);
-        WLOGI("############################# Setting UDP token...");
         DeviceServer(false);
         WLOGI("############################# DeviceServer Socket Create Start, Ready to Start Collector...");
     }

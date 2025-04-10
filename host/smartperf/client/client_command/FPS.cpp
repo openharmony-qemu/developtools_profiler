@@ -16,15 +16,11 @@
 #include <algorithm>
 #include <iostream>
 #include <sstream>
-#include <queue>
 #include <string>
-#include <thread>
 #include <unistd.h>
 #include <ctime>
 #include <sys/time.h>
 #include "include/sp_utils.h"
-#include "include/ByTrace.h"
-#include "include/Capture.h"
 #include "include/FPS.h"
 #include "include/startup_delay.h"
 #include "include/profiler_fps.h"
@@ -199,12 +195,10 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     int pipefd[2];
     pid_t pid;
     if (pipe(pipefd) == -1) {
-        LOGE("FPS::Failed to create pipe");
         return fpsInfo;
     }
     pid = fork();
     if (pid == -1) {
-        LOGE("FPS::Failed to fork");
         return fpsInfo;
     }
     if (pid == 0) {
@@ -237,7 +231,6 @@ void FPS::ReadDataFromPipe(int fd)
         fpsInfo.curTime, fpsInfo.currTimeDump);
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
-        LOGE("FPS::Failed to open file descriptor");
         return;
     }
     std::stringstream sstream;

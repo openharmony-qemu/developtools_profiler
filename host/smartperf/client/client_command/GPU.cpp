@@ -43,7 +43,6 @@ std::map<std::string, std::string> GPU::ItemData()
         result["gpuFrequency"] = "NA";
         result["gpuLoad"] = "NA";
     }
-    LOGD("GPU:ItemData map size(%u)", result.size());
     return result;
 }
 
