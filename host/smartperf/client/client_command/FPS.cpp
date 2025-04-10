@@ -206,7 +206,6 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
         execvp(args[0], const_cast<char *const*>(args.data()));
-        LOGE("FPS::Failed to execute hidumper");
         _exit(EXIT_FAILURE);
     }
     close(pipefd[1]);

@@ -512,7 +512,6 @@ std::string ProfilerFPS::GetGameLayer()
     std::string nodeIdStr;
     uint64_t nodeId;
     if (dumperSurface.empty()) {
-        LOGE("ProfilerFPS::DUMPER_SURFACE failed");
         return gameLayer;
     }
     FILE *fd = popen(dumperSurface.c_str(), "r");
@@ -563,7 +562,7 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
     return gameLayer;
 }
 
-GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, std::string &line,
+std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, std::string &line,
     size_t &endPos, const std::string &surfaceId)
 {
     if (std::to_string(nodeId) == surfaceId) {

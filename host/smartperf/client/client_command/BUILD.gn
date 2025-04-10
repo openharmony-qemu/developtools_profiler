@@ -77,11 +77,11 @@ ohos_executable("SP_daemon") {
   cflags = [
     "-O2",
     "-ffunction-sections",
-    "fdata-sections",
-    "fvisibility=hidden",
+    "-fdata-sections"
+    "-fvisibility=hidden",
     "-flto",
   ]
-  ldflags = [ "-w1,--gc-sections", "-flto" ]
+  ldflags = [ "-Wl,--gc-sections", "-flto" ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
   deps = [ "//third_party/libpng:libpng" ]
