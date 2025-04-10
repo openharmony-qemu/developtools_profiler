@@ -204,11 +204,7 @@ std::string FtraceFsOps::GetPageHeaderFormat() const
 
 std::string FtraceFsOps::GetEventDataFormat(const std::string& type, const std::string& name) const
 {
-    if (access((ftraceRoot_ + "/events/" + type + "/" + name + "/format").c_str(), R_OK) == 0) {
-        return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
-    } else {
-        return "";
-    }
+    return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
 }
 
 bool FtraceFsOps::ClearTraceBuffer()
