@@ -85,13 +85,16 @@ namespace OHOS {
         std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
         {
             std::stringstream ss(message);
-            std::string item;
-            std::string source;
-            std::string timestamp;
-            std::string eventName;
             std::string enable;
-            std::string value;
+            std::string eventName;
+            std::string gameHead;
+            std::string item;
             std::string realTimestamp;
+            std::string source;
+            std::string systime;
+            std::string smartFpsName;
+            std::string timestamp;
+            std::string value;
             while (std::getline(ss, item, ',')) {
                 std::stringstream itemSS(item);
                 std::string first;
@@ -102,6 +105,9 @@ namespace OHOS {
                     source = second;
                 } else if (first == "para0") {
                     eventName = second;
+                    if (second == "SmartFps") {
+                        smartFpsName = second;
+                    }
                 } else if (first == "time") {
                     realTimestamp = std::to_string(SPUtilesTye::StringToSometype<long long>(second) -
                                     SPTask::GetInstance().GetRealStartTime());
@@ -110,9 +116,14 @@ namespace OHOS {
                     enable = second;
                 } else if (first == "value") {
                     value = second;
+                } else if (first == "systime") {
+                    systime = second;
                 }
             }
             item = source + "," + timestamp + "," + eventName + "," + enable + "," + value + "\r\n";
+            gameHead = source + "," + timestamp + "," + smartFpsName + "," + enable +
+                "," + value + "," + systime + "\r\n";
+            GetSdkFpsAndSystime(gameHead);
             sdkDataRealtimeData += source + "_" + realTimestamp + "_" + eventName + "_" + enable + "_" + value + ";";
             return item;
         }
@@ -250,6 +261,7 @@ namespace OHOS {
         {
             return listenFd;
         }
+
         void SdkDataRecv::SetListenFd(int fd)
         {
             listenFd = fd;
@@ -271,6 +283,7 @@ namespace OHOS {
         {
             sdkParams.startTime = SPUtils::GetCurTime();
         }
+
         void SdkDataRecv::SocketCommandVerification(std::string &resStr, ServerParams &params)
         {
             bool processFlag = true;
@@ -301,8 +314,45 @@ namespace OHOS {
                 const int bufferSizeCheck = 2;
                 if (receiveBuffer.size() <= bufferSizeCheck) {
                     processFlag = false;
+                }
             }
         }
-    }
+
+        void SdkDataRecv::GetSdkFpsAndSystime(const std::string &sdkStr)
+        {
+            std::stringstream ss(sdkStr);
+            std::string filed;
+            std::string curvalue;
+            std::string cursystem;
+            int indexFour = 4;
+            int indexFive = 5;
+            std::vector<std::string> vec;
+            size_t endPos = sdkStr.find("\r\n");
+            if (endPos != std::string::npos) {
+                ss = std::stringstream(sdkStr.substr(0, endPos));
+            }
+
+            while (getline(ss, filed, ',')) {
+                vec.push_back(filed);
+            }
+            for (size_t = i; i < vec.size(); i++) {
+                curvalue = vec[indexFour];
+                cursystem = vec[indexFive];
+                if (curvalue != 0 && cursystem != 0) {
+                    sdkFps = curvalue;
+                    sdkSystime = cursystem;
+                }
+            }
+        }
+
+        std::string SdkDataRecv::GetSdkFps() const
+        {
+            return sdkFps;
+        }
+
+        std::string SdkDataRecv::GetSdkSystime() const
+        {
+            return sdkSystime;
+        }
     }
 }

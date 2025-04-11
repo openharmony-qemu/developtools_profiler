@@ -52,14 +52,19 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         LOGD("ProfilerFPS.result.curTime: (%d)", finalResult.curTime);
         std::string jitterStr = "";
         std::string split = "";
+        std::string jitterStrByGame;
         for (size_t i = 0; i < finalResult.jitters.size(); i++) {
             if (i > 0) {
                 split = ";;";
             }
             jitterStr += split + std::to_string(finalResult.jitters[i]);
         }
-        result["fpsJitters"] = jitterStr;
-        LOGD("ProfilerFPS.result.jitters: %s", jitterStr.c_str());
+        if (!isTargetFps) {
+            fpsBySdk = GetFpsBySdk();
+        }
+        jitterStrByGame = jitterStr + "$$targetFps||" + fpsBySdk;
+        result["fpsJitters"] = jitterStrByGame;
+        LOGD("ProfilerFPS.result.jitters: %s", jitterStrByGame.c_str());
         if (isCatchTrace > 0) {
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }
@@ -411,9 +416,11 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
 }
 bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
 {
+    long long sdkSystime = GetSystimeBySdk();
     long long onScreenTime = curScreenTimestamp / mod;
     bool findFpsCurTime = (onScreenTime == fpsInfo.curTime);
     if (findFpsCurTime) {
+        isTargetFps = (sdkSystime == onScreenTime);
         isBreak = true;
         fpsNum++;
         if (isLowCurFps && !isPreset) {
@@ -582,6 +589,22 @@ std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, 
 void ProfilerFPS::SetRkFlag()
 {
     rkFlag = true;
+}
+
+std::string ProfilerFPS::GetFpsBySdk()
+{
+    std::string sdkFps;
+    sdkFps = sdkData.GetSdkFps();
+    return sdkFps;
+
+}
+
+long long ProfilerFPS::GetSystimeBySdk()
+{
+    long long sdkSystime;
+    long long systimeBySdk = SPUtilesTye::StringToSometype<long long>(sdkData.GetSdkSystime());
+    sdkSystime = systimeBySdk / mod;
+    return sdkSystime;
 }
 }
 }

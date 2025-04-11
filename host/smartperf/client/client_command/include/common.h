@@ -19,6 +19,10 @@
 namespace OHOS {
 namespace SmartPerf {
 enum class MessageType {
+    APP_START_COLLECT,
+    APP_STOP_COLLECT,
+    APP_PAUSE_COLLECT,
+    APP_RESUME_COLLECT,
     GET_CPU_NUM,
     GET_CPU_FREQ_LOAD,
     SET_PKG_NAME,
@@ -53,6 +57,10 @@ enum class MessageType {
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
+    { MessageType::APP_START_COLLECT, std::string("app_start_collect") },
+    { MessageType::APP_STOP_COLLECT, std::string("app_stop_collect") },
+    { MessageType::APP_PAUSE_COLLECT, std::string("app_pause_collect") },
+    { MessageType::APP_RESUME_COLLECT, std::string("app_resume_collect") },
     { MessageType::GET_CPU_NUM, std::string("get_cpu_num") },
     { MessageType::GET_CPU_FREQ_LOAD, std::string("get_cpu_freq_load") },
     { MessageType::SET_PKG_NAME, std::string("set_pkgName") },

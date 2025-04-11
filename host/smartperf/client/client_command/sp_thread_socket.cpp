@@ -543,7 +543,9 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
-        ProfilerFPS::isLowCurFps = true;
+        ProfilerFPS &pfps = ProfilerFPS::GetInstance();
+        pfps.isLowCurFps = true;
+        std::string sdkFps;
         std::string resultfps = "vfps||";
         for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
             if (iter->first != "fpsJitters") {
@@ -551,8 +553,12 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
                 resultfps += std::string(temp.c_str());
             }
         }
-        spSocket.Sendto(resultfps);
-        LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
+        if (!pfps.isTargetFps) {
+            pfps.fpsBySdk = pfps.GetFpsBySdk();
+        }
+        sdkFps = resultfps + "$$targetFps||" + pfps.fpsBySdk;
+        spSocket.Sendto(sdkFps);
+        LOGD("UDP send Cur_resultfps = %s", sdkFps.c_str());
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
@@ -618,8 +624,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             std::string pkgName = g_pkgName;
             std::thread rStart([this, pkgName]() { this->ResetValue(pkgName); });
             rStart.detach();
-            spSocket.Sendto(g_pkgName);
-            LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
+            LOGD("HandleNullMsg pkgName: (%s)", pkgName.c_str());
         }
         spSocket.Sendto(retCode);
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
@@ -710,6 +715,14 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             return;
         }
         ConnectAndSendFile(tracefilePath);
+    } else if (iterator->first == MessageType::APP_START_COLLECT ||
+        iterator->first == MessageType::APP_RESUME_COLLECT) { 
+        SPTask::isSdkTask = true;
+        SPTask::GetInstance.ConfigureSdkDataHap();
+    } else if (iterator->first == MessageType::APP_STOP_COLLECT ||
+        iterator->first == MessageType::APP_PAUSE_COLLECT) {
+        SPTask::isSdkTask = false;
+        SPTask::GetInstance.ResetSdkParam();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
