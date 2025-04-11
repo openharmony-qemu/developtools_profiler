@@ -81,20 +81,16 @@ std::map<std::string, std::string> CPU::ItemData()
             }
         }
     }
-
-    LOGD("CPU::ItemData map size(%u)", result.size());
     return result;
 }
 
 void CPU::SetPackageName(const std::string &pName)
 {
     packageName = pName;
-    LOGD("CPU SetPackageName name(%s)", pName.c_str());
 }
 
 void CPU::SetProcessId(const std::string &pid)
 {
-    LOGD("CPU SetProcessId (%s)", pid.c_str());
     processId.clear();
     SPUtils::StrSplit(pid, " ", processId);
 }
@@ -136,12 +132,6 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
         cpuUsageInfos.irqUsage = cpuInfo.irqUsage;
         cpuUsageInfos.softIrqUsage = cpuInfo.softIrqUsage;
         workload.push_back(cpuUsageInfos);
-        LOGD("UsageCpuId: %s, userUsage: %s, niceUsage: %s, systemUsage: %s",
-            "idleUsage: %s, ioWaitUsage: %s, irqUsage: %s, softIrqUsage: %s",
-            cpuInfo.cpuId.c_str(), std::to_string(cpuInfo.userUsage).c_str(),
-            std::to_string(cpuInfo.niceUsage).c_str(), std::to_string(cpuInfo.systemUsage).c_str(),
-            std::to_string(cpuInfo.idleUsage).c_str(), std::to_string(cpuInfo.ioWaitUsage).c_str(),
-            std::to_string(cpuInfo.irqUsage).c_str(), std::to_string(cpuInfo.softIrqUsage).c_str());
     }
     return workload;
 }

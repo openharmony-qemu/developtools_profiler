@@ -13,11 +13,9 @@
  * limitations under the License.
  */
 #include "unistd.h"
-#include <thread>
 #include <cstdio>
 #include <cstring>
 #include <map>
-#include <sstream>
 #include "include/editor_command.h"
 #include "include/control_call_cmd.h"
 

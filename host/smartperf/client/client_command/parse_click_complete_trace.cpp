@@ -12,7 +12,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <thread>
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -22,7 +21,6 @@
 #include <iomanip>
 #include "include/parse_click_complete_trace.h"
 #include "include/sp_utils.h"
-#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
@@ -34,10 +32,9 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        LOGE("ParseClickCompleteTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }
-    completeTime = SmartPerf::ParseClickCompleteTrace::GetLineTime();
+    completeTime = GetLineTime();
     infile.close();
     return completeTime * conversion;
 }
@@ -47,8 +44,8 @@ double ParseClickCompleteTrace::GetLineTime()
     std::string endTime = "0";
     std::string::size_type doComposition;
     while (getline(infile, line)) {
-        appPid = SmartPerf::ParseClickCompleteTrace::GetPid(line, "pid", appPid);
-        startTime = SmartPerf::ParseClickCompleteTrace::GetStartTime(line, startTime);
+        appPid = GetPid(line, "pid", appPid);
+        startTime = GetStartTime(line, startTime);
         doComposition = line.find("H:RSMainThread::DoComposition");
         if (doComposition != std::string::npos) {
             size_t subNum = 5;
@@ -73,7 +70,7 @@ double ParseClickCompleteTrace::GetLineTime()
             }
         }
     }
-    completeTime = SmartPerf::ParseClickCompleteTrace::GetTime(endTime);
+    completeTime = GetTime(endTime);
     return completeTime;
 }
 double ParseClickCompleteTrace::GetTime(std::string endTime)

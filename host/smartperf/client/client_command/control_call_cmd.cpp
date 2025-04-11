@@ -27,7 +27,6 @@
 #include "include/parse_click_response_trace.h"
 #include "include/parse_radar.h"
 #include "include/parse_slide_fps_trace.h"
-#include "include/sp_log.h"
 #include "include/stalling_rate_trace.h"
 #include "common.h"
 
@@ -201,7 +200,6 @@ double ControlCallCmd::ResponseTime()
         thGetHisysId.join();
         time = radar.ParseRadarResponse(str);
     }
-    LOGD("ResponseTime = %d", time);
     return time;
 }
 double ControlCallCmd::CompleteTime()
@@ -225,7 +223,6 @@ double ControlCallCmd::CompleteTime()
         thGetHisysId.join();
         time = radar.ParseRadarComplete(str);
     }
-    LOGD("CompleteTime = %d", time);
     return time;
 }
 std::string ControlCallCmd::GetAppStartTime() const

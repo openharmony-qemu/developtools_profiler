@@ -16,6 +16,7 @@
 #define CONTROL_CALL_CMD_H
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 namespace OHOS {
