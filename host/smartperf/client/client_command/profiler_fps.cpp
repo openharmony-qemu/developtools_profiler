@@ -62,9 +62,13 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         if (!isTargetFps) {
             fpsBySdk = GetFpsBySdk();
         }
-        jitterStrByGame = jitterStr + "$$targetFps||" + fpsBySdk;
-        result["fpsJitters"] = jitterStrByGame;
-        LOGD("ProfilerFPS.result.jitters: %s", jitterStrByGame.c_str());
+        if (isGameApp) {
+            jitterStrByGame = jitterStr + "$$targetFps||" + fpsBySdk;
+            result["fpsJitters"] = jitterStrByGame;
+        } else {
+            result["fpsJitters"] = jitterStr;
+        }
+        LOGD("ProfilerFPS::jitterStr: %s, jitterStrByGame: %s", jitterStr.c_str(), jitterStrByGame.c_str());
         if (isCatchTrace > 0) {
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }

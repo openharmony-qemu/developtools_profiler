@@ -335,10 +335,10 @@ namespace OHOS {
             while (getline(ss, filed, ',')) {
                 vec.push_back(filed);
             }
-            for (size_t = i; i < vec.size(); i++) {
+            for (size_t i = 0; i < vec.size(); i++) {
                 curvalue = vec[indexFour];
                 cursystem = vec[indexFive];
-                if (curvalue != 0 && cursystem != 0) {
+                if (curvalue != "0" && cursystem != "0") {
                     sdkFps = curvalue;
                     sdkSystime = cursystem;
                 }
