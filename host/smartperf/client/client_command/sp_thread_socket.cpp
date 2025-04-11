@@ -561,7 +561,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
         } else {
             spSocket.Sendto(resultfps);
         }
-        LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str(),);
+        LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str());
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
@@ -721,11 +721,11 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::APP_START_COLLECT ||
         iterator->first == MessageType::APP_RESUME_COLLECT) {
         SPTask::isSdkTask = true;
-        SPTask::GetInstance.ConfigureSdkDataHap();
+        SPTask::GetInstance().ConfigureSdkDataHap();
     } else if (iterator->first == MessageType::APP_STOP_COLLECT ||
         iterator->first == MessageType::APP_PAUSE_COLLECT) {
         SPTask::isSdkTask = false;
-        SPTask::GetInstance.ResetSdkParam();
+        SPTask::GetInstance().ResetSdkParam();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
