@@ -613,6 +613,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::SET_PKG_NAME) {
+        isSetPid = false;
         retCode = SplitMsg(recvBuf);
         if (recvBuf.find(SMARTPERF) != std::string::npos && retCode.find(SMARTPERF) != std::string::npos) {
             Dubai::dubaiPkgName = retCode;
@@ -654,11 +655,11 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     }
 }
 
-void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator) const
+void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::GET_FPS_AND_JITTERS || iterator->first == MessageType::GET_CUR_FPS ||
         iterator->first == MessageType::GET_RAM_INFO) {
-        if (!SpProfilerFactory::editorFlag) {
+        if (!SpProfilerFactory::editorFlag && isSetPid == false) {
             std::string pkgName = g_pkgName;
             std::string pkgAndPid = g_pkgAndPid;
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
@@ -674,6 +675,7 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
             }
             SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
             SpProfilerFactory::SetProfilerPkg(pkgName);
+            isSetPid = true;
         }
     }
 }
@@ -769,14 +771,14 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
             tracefilePath = traceOriginPath + fileName;
         }
         
-        try {
-            int port = SPUtilesTye::StringToSometype<int>(portStr);
+        int port = SPUtilesTye::StringToSometype<int>(portStr);
+        if (port <= 0) {
+            WLOGE("Invalid port number: %d", port);
+            sendFileSocketPort = -1;
+        } else {
             WLOGI("Get File log UDP message received, port is %d", port);
             sendFileSocket = -1;
             sendFileSocketPort = port;
-        } catch (const std::exception& e) {
-            WLOGE("Failed to parse port number: %s", e.what());
-            sendFileSocketPort = -1;
         }
     } else {
         WLOGE("Get File log UDP message received, but port is not found");
