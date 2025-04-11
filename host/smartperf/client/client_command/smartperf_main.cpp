@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include <cstdio>
-#include <thread>
 #include <cstring>
 #include "unistd.h"
 #include <fstream>

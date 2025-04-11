@@ -54,8 +54,6 @@ std::map<std::string, std::string> Temperature::ItemData()
         SPUtils::LoadFile(dirTemp, temp);
         GetTempInfos(result, type, temp);
     }
-
-    LOGD("Temperature::ItemData map size(%u)", result.size());
     return result;
 }
 

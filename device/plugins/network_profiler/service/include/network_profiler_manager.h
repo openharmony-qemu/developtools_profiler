@@ -51,6 +51,13 @@ public:
 
     NetworkProfilerManager();
     ~NetworkProfilerManager();
+#ifdef NETWORK_UNITTEST
+    void SetConfig(NetworkProfilerConfig& config)
+    {
+        config_ = config;
+        return;
+    }
+#endif
     void Init();
     bool StartNetworkProfiler();
     void StopNetworkProfiler();

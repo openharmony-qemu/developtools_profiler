@@ -75,7 +75,6 @@
       "sub_component": [
         "//developtools/profiler/device:hiprofiler_targets",
         "//developtools/profiler/hidebug/interfaces/js/kits:profiler_jsapi_module",
-        "//developtools/profiler/hidebug/interfaces/cj:cj_hidebug_ffi",
         "//developtools/profiler/hidebug/frameworks/hidebug_ndk:ohhidebug",
         "//developtools/profiler/hidebug/frameworks/native:hidebug_native",
         "//developtools/profiler/host/smartperf/client/client_command/:SP_daemon",
@@ -131,6 +130,13 @@
             ]
           },
           "name": "//developtools/profiler/device/plugins/ffrt_profiler/client:libffrt_profiler"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/hidebug/interfaces/cj",
+            "header_files": []
+          },
+          "name": "//developtools/profiler/hidebug/interfaces/cj:cj_hidebug_ffi"
         }
       ],
       "test": [

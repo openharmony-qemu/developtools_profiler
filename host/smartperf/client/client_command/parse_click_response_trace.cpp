@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <thread>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -22,7 +22,6 @@
 #include <iomanip>
 #include "include/parse_click_response_trace.h"
 #include "include/sp_utils.h"
-#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
@@ -34,7 +33,6 @@ double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
-        LOGE("ParseClickResponseTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }
     completeTime = GetLineTime();
@@ -50,8 +48,8 @@ double ParseClickResponseTrace::GetLineTime()
     std::string::size_type doComposition;
     size_t subNum = 5;
     while (getline(infile, line)) {
-        appPid = ParseClickResponseTrace::GetPid(line, "pid", appPid);
-        startTime = ParseClickResponseTrace::GetStartTime(line, startTime);
+        appPid = GetPid(line, "pid", appPid);
+        startTime = GetStartTime(line, startTime);
         doComposition = line.find("H:RSMainThread::DoComposition");
         if (doComposition != std::string::npos) {
             size_t position1 = line.find("....");
@@ -63,7 +61,7 @@ double ParseClickResponseTrace::GetLineTime()
             }
         }
     }
-    completeTime = ParseClickResponseTrace::GetTime(startTime, endTime);
+    completeTime = GetTime(startTime, endTime);
     return completeTime;
 }
 double ParseClickResponseTrace::GetTime(std::string startTime, std::string endTime)

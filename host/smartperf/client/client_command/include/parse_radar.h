@@ -22,8 +22,6 @@ namespace OHOS {
 namespace SmartPerf {
 class ParseRadar {
 public:
-    double ParseRadarStart(const std::string &string) const;
-    double ParseRadarStartResponse(const std::string &string) const;
     double ParseRadarResponse(const std::string &string) const;
     double ParseRadarDelayTime(const std::string &string, const std::string &target, const int &delayTime) const;
     std::string ParseRadarAppStrart(const std::string &string) const;

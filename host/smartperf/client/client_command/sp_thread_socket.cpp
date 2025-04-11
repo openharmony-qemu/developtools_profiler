@@ -42,6 +42,7 @@
 #include "include/Dubai.h"
 #include "include/GetLog.h"
 #include "include/RAM.h"
+#define SMARTPERF "smartperf"
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
@@ -146,7 +147,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
             std::string recvStr = spSocket.RecvBuf();
             std::string recvStrNoToken = recvStr.substr(0, recvStr.find("::"));
             LOGD("TCP recv data:%s", recvStr.c_str());
-            WLOGI("Received data: %s", recvStrNoToken.c_str());
+            WLOGD("Received data: %s", recvStrNoToken.c_str());
             // 解析消息 分发处理
             const SocketErrorType tokenStatus = CheckTcpToken(recvStr, spSocket, recvStrNoToken);
             WLOGI("Token check status: %d", tokenStatus);
@@ -604,14 +605,11 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
 {
     if (iterator->first == MessageType::SET_PKG_NAME) {
         isSetPid = false;
-        if (recvBuf.find("smartperf") != std::string::npos) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                Dubai::dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", Dubai::dubaiPkgName.c_str());
-            }
+        retCode = SplitMsg(recvBuf);
+        if (recvBuf.find(SMARTPERF) != std::string::npos && retCode.find(SMARTPERF) != std::string::npos) {
+            Dubai::dubaiPkgName = retCode;
+            LOGD("UDP send smartperf: (%s)", Dubai::dubaiPkgName.c_str());
         } else {
-            retCode = SplitMsg(recvBuf);
             if (retCode.find("$") != std::string::npos) {
                 g_pkgAndPid = retCode;
                 g_pkgName = SpGetPkg(g_pkgAndPid);
@@ -625,7 +623,6 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
-        LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
         std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
@@ -688,13 +685,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
-        if (recvBuf.find("smartperf") != std::string::npos) {
-            retCode = SplitMsg(recvBuf);
-            if (retCode.find("smartperf") != std::string::npos) {
-                db.dubaiPkgName = retCode;
-                LOGD("UDP send dubaiPkgName: (%s)", db.dubaiPkgName.c_str());
-            }
-        }
         std::thread dStart([&db]() { db.CallBeginAndFinish(); });
         dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
@@ -782,7 +772,6 @@ void SpThreadSocket::GetSocketPort(std::string buffer)
 std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 {
     if (spMsg.empty()) {
-        LOGE("spMsg is null");
         return spMsg;
     }
     size_t pos = spMsg.find("$");
@@ -792,7 +781,6 @@ std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
         if (sps.size() > 1) {
             return sps[0];
         } else {
-            LOGE("SpGetPkg sps size is zreo");
             return spMsg;
         }
     } else {
@@ -803,7 +791,6 @@ std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
 {
     if (spMsg.empty()) {
-        LOGE("spMsg is null");
         return spMsg;
     }
     size_t pos = spMsg.find("$");
@@ -813,7 +800,6 @@ std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
         if (sps.size() > 1) {
             return sps[1];
         } else {
-            LOGE("SpGetPid sps size is zreo");
             return "";
         }
     } else {

@@ -73,6 +73,7 @@ ohos_unittest("networkprofiler_ut") {
     "${OHOS_PROFILER_DIR}/device/base/include",
   ]
   cflags = [
+    "-DNETWORK_UNITTEST",
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members

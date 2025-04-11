@@ -13,7 +13,6 @@
  * limitations under the License.
  */
 #include <iostream>
-#include <sstream>
 #include <fstream>
 #include <unistd.h>
 #include "include/sp_utils.h"
