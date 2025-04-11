@@ -137,7 +137,6 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
     while (socketConnect == true) {
         int procFd = spSocket.Accept();
         std::cout << "Socket TCP procFd: " << procFd << std::endl;
-        WLOGI("Accepted socket connection, procFd: %d", procFd);
         while (procFd > 0) {
             int reFd = spSocket.Recv();
             if (reFd < 0) {
@@ -442,7 +441,7 @@ int SpThreadSocket::SendFile(const std::string filePath)
 {
     char filePathChar[PATH_MAX] = {0x00};
     if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
-        WLOGI("%s is not exist.", filePath.c_str());
+        WLOGE("%s is not exist.", filePath.c_str());
         return -1;
     }
     std::ifstream logFile(filePathChar, std::ios::binary);
@@ -523,10 +522,10 @@ void SpThreadSocket::StartGpuCounter() const
     SPUtils::CreateDir(smartperfDevicePath);
     char filePathChar[PATH_MAX] = {0x00};
     if (realpath(gpuCounterfilePath.c_str(), filePathChar) == nullptr) {
-        LOGI("%s is not exist, init finish.", gpuCounterfilePath.c_str());
+        LOGD("%s is not exist, init finish.", gpuCounterfilePath.c_str());
     } else {
         std::remove(filePathChar);
-        LOGI("%s is existed, remove.", gpuCounterfilePath.c_str());
+        LOGD("%s is existed, remove.", gpuCounterfilePath.c_str());
     }
     gpuCounter.StartCollect(GpuCounter::GC_START);
 }
@@ -543,7 +542,9 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
-        ProfilerFPS::isLowCurFps = true;
+        ProfilerFPS &pfps = ProfilerFPS::GetInstance();
+        pfps.isLowCurFps = true;
+        std::string sdkFps;
         std::string resultfps = "vfps||";
         for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
             if (iter->first != "fpsJitters") {
@@ -551,8 +552,16 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
                 resultfps += std::string(temp.c_str());
             }
         }
-        spSocket.Sendto(resultfps);
-        LOGD("UDP send Cur_resultfps = %s", resultfps.c_str());
+        if (!pfps.isTargetFps) {
+            pfps.fpsBySdk = pfps.GetFpsBySdk();
+        }
+        if (pfps.isGameApp) {
+            sdkFps = resultfps + "$$targetFps||" + pfps.fpsBySdk;
+            spSocket.Sendto(sdkFps);
+        } else {
+            spSocket.Sendto(resultfps);
+        }
+        LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str());
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
@@ -618,8 +627,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             std::string pkgName = g_pkgName;
             std::thread rStart([this, pkgName]() { this->ResetValue(pkgName); });
             rStart.detach();
-            spSocket.Sendto(g_pkgName);
-            LOGD("UDP recv g_pkgName (%s)", g_pkgName.c_str());
+            LOGD("HandleNullMsg pkgName: (%s)", pkgName.c_str());
         }
         spSocket.Sendto(retCode);
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
@@ -710,6 +718,14 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             return;
         }
         ConnectAndSendFile(tracefilePath);
+    } else if (iterator->first == MessageType::APP_START_COLLECT ||
+        iterator->first == MessageType::APP_RESUME_COLLECT) {
+        SPTask::isSdkTask = true;
+        SPTask::GetInstance().ConfigureSdkDataHap();
+    } else if (iterator->first == MessageType::APP_STOP_COLLECT ||
+        iterator->first == MessageType::APP_PAUSE_COLLECT) {
+        SPTask::isSdkTask = false;
+        SPTask::GetInstance().ResetSdkParam();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
