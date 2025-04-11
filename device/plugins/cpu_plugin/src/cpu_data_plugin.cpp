@@ -488,8 +488,12 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
             if (pid_ < 0 && protoConfig_.report_process_info()) {
                 return;
             }
-        } else if (COMMON::IsNumeric(cpuUsageVec[0])) {
+        } else {
             std::string core = std::string(cpuUsageVec[0].c_str() + cpuLength, cpuUsageVec[0].size() - cpuLength);
+            if (!COMMON::IsNumeric(core)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "WriteSystemCpuUsage core is not numeric");
+                return;
+            }
             int32_t coreNum = atoi(core.c_str());
             // 第一次获取数据时需要将前一个数据置为0
             if (prevCoreSystemCpuTimeMap_.size() == static_cast<size_t>(coreNum)) {
