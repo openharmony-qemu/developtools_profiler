@@ -719,7 +719,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         }
         ConnectAndSendFile(tracefilePath);
     } else if (iterator->first == MessageType::APP_START_COLLECT ||
-        iterator->first == MessageType::APP_RESUME_COLLECT) { 
+        iterator->first == MessageType::APP_RESUME_COLLECT) {
         SPTask::isSdkTask = true;
         SPTask::GetInstance.ConfigureSdkDataHap();
     } else if (iterator->first == MessageType::APP_STOP_COLLECT ||

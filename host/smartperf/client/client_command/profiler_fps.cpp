@@ -597,15 +597,13 @@ void ProfilerFPS::SetRkFlag()
 
 std::string ProfilerFPS::GetFpsBySdk()
 {
-    std::string sdkFps;
-    sdkFps = sdkData.GetSdkFps();
+    std::string sdkFps = sdkData.GetSdkFps();
     return sdkFps;
-
 }
 
 long long ProfilerFPS::GetSystimeBySdk()
 {
-    long long sdkSystime;
+    long long sdkSystime = 0;
     long long systimeBySdk = SPUtilesTye::StringToSometype<long long>(sdkData.GetSdkSystime());
     sdkSystime = systimeBySdk / mod;
     return sdkSystime;
