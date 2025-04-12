@@ -25,6 +25,7 @@
 #include "accesstoken_kit.h"
 #include "common.h"
 #include "logging.h"
+#include <sys/socket.h>
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
