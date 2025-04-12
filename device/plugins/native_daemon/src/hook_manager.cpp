@@ -618,7 +618,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if (item->pid > 0) {
+        if (item->pid > 0 && hookService_) {
             hookService_->CloseSocketFd(item->pid);
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);

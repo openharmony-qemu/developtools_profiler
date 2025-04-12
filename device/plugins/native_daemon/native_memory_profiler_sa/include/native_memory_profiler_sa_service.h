@@ -81,6 +81,7 @@ private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     int32_t delayedShutdownTimerFd_{-1};
     std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
+    std::unordered_map<int, int> pidFds_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

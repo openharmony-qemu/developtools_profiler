@@ -167,7 +167,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
             pid, name.c_str());
         return;
     }
-
+    CloseSocketFd(pid);
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
     nameAndFilePathCtx_.erase(config->processName);
@@ -496,6 +496,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
+    pidFds_[peerConfig] = context.GetSocketHandle();
     return true;
 }
 
