@@ -53,6 +53,7 @@ private:
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     void DelayedShutdown(bool cancel);
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void CloseSocketFd(int pid);
 
 private:
     struct TaskConfig {
