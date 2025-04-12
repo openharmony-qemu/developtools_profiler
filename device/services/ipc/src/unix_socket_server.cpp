@@ -54,6 +54,17 @@ UnixSocketServer::~UnixSocketServer()
     }
 }
 
+void UnixSocketServer::RemoveContext(int fd)
+{
+    if (socketClients_.find(fd) != socketClients_.end()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "RemoveContext socketClients disconnect socketClients_.size() = %zu",
+                           socketClients_.size());
+        socketClients_.erase(fd);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "RemoveContext Client %d not exist", fd);
+    }
+}
+
 void UnixSocketServer::UnixSocketAccept()
 {
     pthread_setname_np(pthread_self(), "UnixSocketAccept");

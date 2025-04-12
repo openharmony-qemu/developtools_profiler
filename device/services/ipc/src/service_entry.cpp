@@ -35,12 +35,20 @@ bool ServiceEntry::StartServer(const std::string& addrname)
     return true;
 }
 
+bool ServiceEntry::RemoveContext(int fd)
+{
+    if (unixSocketServer_ != nullptr) {
+        unixSocketServer_->RemoveContext(fd);
+    }
+}
+
 bool ServiceEntry::RegisterService(ServiceBase& psb)
 {
     CHECK_TRUE(serviceMap_.find(psb.serviceName_) == serviceMap_.end(), false, "RegisterService FAIL");
     serviceMap_[psb.serviceName_] = &psb;
     return true;
 }
+
 const ServiceBase* ServiceEntry::FindServiceByName(const std::string& service_name)
 {
     CHECK_TRUE(serviceMap_.find(service_name) != serviceMap_.end(), nullptr, "FindServiceByName FAIL %s",

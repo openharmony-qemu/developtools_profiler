@@ -32,7 +32,7 @@ public:
 
     int socketHandle_;
     bool StartServer(const std::string& addrname, ServiceEntry& p);
-
+    void RemoveContext(int fd);
     std::string sAddrName_;
     // private:
     ServiceEntry* serviceEntry_;

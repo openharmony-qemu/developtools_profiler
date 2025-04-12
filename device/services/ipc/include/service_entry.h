@@ -46,6 +46,8 @@ public:
 
     const ServiceBase* FindServiceByName(const std::string& service_name);
 
+    void RemoveContext(int fd);
+
 private:
     std::shared_ptr<UnixSocketServer> unixSocketServer_;
 
