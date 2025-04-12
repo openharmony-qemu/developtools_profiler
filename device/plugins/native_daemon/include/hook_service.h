@@ -29,6 +29,7 @@ public:
     HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook, bool multipleProcesses = false);
     ~HookService();
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
+    void CloseSocketFd(int pid);
 private:
     bool StartService(const std::string& unixSocketName);
 
@@ -37,6 +38,8 @@ private:
     ClientConfig clientConfig_;
     std::shared_ptr<HookManager> hookMgr_{nullptr};
     std::mutex mtx_;
+    std::mutex closeMtx_;
+    std::unordered_map<int, int> pidFds_;
     bool firstProcess_ = true;
     bool multipleProcesses_ = false;
 };

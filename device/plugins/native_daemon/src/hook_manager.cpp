@@ -41,7 +41,6 @@ std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 constexpr int SIGNAL_START_HOOK = 36;
-constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
@@ -620,13 +619,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     }
     for (const auto& item : hookCtx_) {
         if (item->pid > 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "stop command : send 37 signal to process  %d", item->pid);
-            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
-                const int bufSize = 256;
-                char buf[bufSize] = {0};
-                strerror_r(errno, buf, bufSize);
-                PROFILER_LOG_ERROR(LOG_CORE, "send 37 signal to process %d , error = %s", item->pid, buf);
-            }
+            hookService_->CloseSocketFd(item->pid);
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }

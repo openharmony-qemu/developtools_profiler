@@ -73,6 +73,7 @@ public:
     bool IsConnected();
     int ReceiveFileDiscriptor();
     enum ClientState GetClientState() { return clientState_; }
+    int GetSocketHandle() { return socketHandle_; }
 protected:
     int socketHandle_;
     bool CreateRecvThread(void (*callback)() = nullptr);
