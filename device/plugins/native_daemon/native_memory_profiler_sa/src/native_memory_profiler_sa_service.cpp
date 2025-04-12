@@ -152,7 +152,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
 {
     std::lock_guard<std::mutex> lock(closeMtx_);
     if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
-        shutdown(pidFds_[pid], SHUT_RDWR);
+        serviceEntry_->RemoveContext(pidFds_[pid]);
         pidFds_.erase(pid);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "HookService::CloseSocketFd pid invalid");
