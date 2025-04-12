@@ -15,21 +15,66 @@
 
 #ifndef HIAPPEVENT_UTIL_H_
 #define HIAPPEVENT_UTIL_H_
-#include <string>
 #include <cstdint>
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+
+#include "hidebug_util.h"
+
 namespace OHOS {
 namespace HiviewDFX {
+
+class ApiRecordReporter {
+public:
+    virtual ~ApiRecordReporter() = default;
+    virtual void ReportRecord(const std::string& apiName, int errorCode, int64_t beginTime, int64_t endTime) = 0;
+    static void InitProcessor();
+protected:
+    static int64_t processId_;
+};
+
+class SingleRecordReporter final : public ApiRecordReporter {
+public:
+    static SingleRecordReporter& GetInstance();
+    SingleRecordReporter(const SingleRecordReporter&) = delete;
+    SingleRecordReporter& operator=(const SingleRecordReporter&) = delete;
+    SingleRecordReporter(SingleRecordReporter&&) = delete;
+    SingleRecordReporter& operator=(SingleRecordReporter&&) = delete;
+    void ReportRecord(const std::string& apiName, int errorCode, int64_t beginTime, int64_t endTime) override;
+private:
+    SingleRecordReporter() = default;
+    ~SingleRecordReporter() override = default;
+};
+
+class MultipleRecordReporter final : public ApiRecordReporter {
+public:
+    MultipleRecordReporter(uint32_t timeout, uint32_t limitValue);
+    void ReportRecord(const std::string& apiName, int errorCode, int64_t beginTime, int64_t endTime) override;
+private:
+    void UploadRecordData(const std::string& apiName) const;
+    std::mutex mutex_;
+    const uint32_t timeout_;
+    const uint32_t limitValue_;
+    int64_t lastReportTime_{GetElapsedNanoSecondsSinceBoot()};
+    int64_t totalCostTime_{0};
+    int64_t maxCostTime_{std::numeric_limits<int64_t>::min()};
+    int64_t minCostTime_{std::numeric_limits<int64_t>::max()};;
+    std::vector<int32_t> records_{};
+};
+
 class ApiInvokeRecorder {
 public:
-    explicit ApiInvokeRecorder(std::string apiName);
+    explicit ApiInvokeRecorder(std::string apiName, ApiRecordReporter& reporter = SingleRecordReporter::GetInstance());
     ~ApiInvokeRecorder();
     void SetErrorCode(int errorCode);
-    static void InitProcessor();
+
 private:
     std::string apiName_;
     int errorCode_{0};
     int64_t beginTime_;
-    static int64_t processId_;
+    ApiRecordReporter& reporter_;
 };
 }
 }
