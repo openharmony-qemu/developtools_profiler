@@ -416,9 +416,6 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
 {
     CHECK_NOTNULL(header_, false, "header not ready!");
     pthread_mutex_lock(&header_->info.mutex_);
-    if (callback && callback()) {
-        return false;
-    }
     int8_t* rawMemory = GetFreeMemory(headerSize + payloadSize);
     if (rawMemory == nullptr) {
         while (true) {
