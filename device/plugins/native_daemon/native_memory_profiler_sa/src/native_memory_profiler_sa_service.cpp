@@ -151,7 +151,7 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
 void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
 {
     std::lock_guard<std::mutex> lock(closeMtx_);
-    if (pidFds_.find(pid) != pidFds_.end() && pidFds_[pid] != 0) {
+    if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
         shutdown(pidFds_[pid], SHUT_RDWR);
         pidFds_.erase(pid);
     } else {
@@ -173,6 +173,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         }
     } else if (auto taskIter = nameAndFilePathCtx_.find(name); taskIter != nameAndFilePathCtx_.end()) {
         config = taskIter->second;
+        pid = config->hookMgr->GetPid();
     }
     if (config == nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",

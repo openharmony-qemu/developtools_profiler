@@ -104,7 +104,7 @@ bool HookSocketClient::Connect(const std::string addrname)
         return false;
     }
     unixSocketClient_ = std::make_shared<UnixSocketClient>();
-    if (!unixSocketClient_->Connect(addrname, *this)) {
+    if (!unixSocketClient_->Connect(addrname, *this, disableHookCallback_)) {
         unixSocketClient_ = nullptr;
         return false;
     }
