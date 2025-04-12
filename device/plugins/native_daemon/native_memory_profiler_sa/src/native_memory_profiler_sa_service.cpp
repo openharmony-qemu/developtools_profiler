@@ -155,7 +155,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
         serviceEntry_->RemoveContext(pidFds_[pid]);
         pidFds_.erase(pid);
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "HookService::CloseSocketFd pid invalid");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
     }
 }
 

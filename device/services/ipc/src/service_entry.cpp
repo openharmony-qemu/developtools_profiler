@@ -35,7 +35,7 @@ bool ServiceEntry::StartServer(const std::string& addrname)
     return true;
 }
 
-bool ServiceEntry::RemoveContext(int fd)
+void ServiceEntry::RemoveContext(int fd)
 {
     if (unixSocketServer_ != nullptr) {
         unixSocketServer_->RemoveContext(fd);

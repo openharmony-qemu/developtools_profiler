@@ -358,11 +358,15 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 void* ohos_release_on_end(void*)
 {
     std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
+    if (!g_hookReady) {
+        return nullptr;
+    }
     PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
+    g_hookReady = false;
     return nullptr;
 }
 
