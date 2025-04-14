@@ -53,6 +53,7 @@ private:
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     void DelayedShutdown(bool cancel);
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void CloseSocketFd(int pid);
 
 private:
     struct TaskConfig {
@@ -81,6 +82,8 @@ private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     int32_t delayedShutdownTimerFd_{-1};
     std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
+    std::unordered_map<int, int> pidFds_;
+    std::mutex pidFdMtx_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

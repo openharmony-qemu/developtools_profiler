@@ -25,6 +25,7 @@
 #include "accesstoken_kit.h"
 #include "common.h"
 #include "logging.h"
+#include <sys/socket.h>
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -147,6 +148,19 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     return RET_OK;
 }
 
+void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
+{
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
+    if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
+        int socketFd = pidFds_[pid];
+        pidFds_.erase(pid);
+        lock.unlock();
+        serviceEntry_->RemoveContext(socketFd);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
+    }
+}
+
 void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
 {
     if (!HasProfilingPermission()) {
@@ -161,13 +175,14 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         }
     } else if (auto taskIter = nameAndFilePathCtx_.find(name); taskIter != nameAndFilePathCtx_.end()) {
         config = taskIter->second;
+        pid = config->hookMgr->GetPid();
     }
     if (config == nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
             pid, name.c_str());
         return;
     }
-
+    CloseSocketFd(pid);
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
     nameAndFilePathCtx_.erase(config->processName);
@@ -496,6 +511,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
+    std::unique_lock<std::mutex> socketLock(pidFdMtx_);
+    pidFds_[peerConfig] = context.GetSocketHandle();
+    socketLock.unlock();
     return true;
 }
 

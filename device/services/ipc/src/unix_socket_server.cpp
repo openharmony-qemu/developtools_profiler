@@ -48,9 +48,22 @@ UnixSocketServer::~UnixSocketServer()
         acceptThread_.join();
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "acceptThread finish");
+    std::unique_lock<std::mutex> lock(mtx_);
     if (socketClients_.size() > 0) {
         PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
         socketClients_.clear();
+    }
+}
+
+void UnixSocketServer::RemoveContext(int fd)
+{
+    std::unique_lock<std::mutex> lock(mtx_);
+    if (socketClients_.find(fd) != socketClients_.end()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "RemoveContext socketClients disconnect socketClients_.size() = %zu",
+                           socketClients_.size());
+        socketClients_.erase(fd);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "RemoveContext Client %d not exist", fd);
     }
 }
 
@@ -87,6 +100,7 @@ void UnixSocketServer::UnixSocketAccept()
                 clientEvt.events = EPOLLHUP;
                 CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt) != -1,
                     NO_RETVAL, "Unix Socket Server Exit");
+                std::unique_lock<std::mutex> lock(mtx_);
                 if (socketClients_.find(clientSocket) == socketClients_.end()) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
                                        socketClients_.size());
@@ -99,6 +113,7 @@ void UnixSocketServer::UnixSocketAccept()
                 delEvt.data.fd = events[i].data.fd;
                 delEvt.events = EPOLLHUP;
                 epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
+                std::unique_lock<std::mutex> lock(mtx_);
                 if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
                     PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
                                        socketClients_.size());

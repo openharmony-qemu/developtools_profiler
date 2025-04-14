@@ -32,7 +32,7 @@ public:
 
     int socketHandle_;
     bool StartServer(const std::string& addrname, ServiceEntry& p);
-
+    void RemoveContext(int fd);
     std::string sAddrName_;
     // private:
     ServiceEntry* serviceEntry_;
@@ -41,6 +41,7 @@ private:
     void UnixSocketAccept();
     std::map<int, std::shared_ptr<ClientConnection>> socketClients_;
     std::thread acceptThread_;
+    std::mutex mtx_;
 };
 
 #endif

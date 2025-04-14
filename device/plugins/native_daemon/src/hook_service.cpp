@@ -18,7 +18,7 @@
 #include "hook_manager.h"
 #include <cinttypes>
 #include <unistd.h>
-
+#include <sys/socket.h>
 #include "common.h"
 #include "logging.h"
 #include "parameter.h"
@@ -47,6 +47,19 @@ bool HookService::StartService(const std::string& unixSocketName)
     }
     serviceEntry_->RegisterService(*this);
     return true;
+}
+
+void HookService::CloseSocketFd(int pid)
+{
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
+    if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
+        int socketFd = pidFds_[pid];
+        pidFds_.erase(pid);
+        lock.unlock();
+        serviceEntry_->RemoveContext(socketFd);
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
+    }
 }
 
 bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
@@ -96,6 +109,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     context.SendFileDescriptor(smbFd);
     context.SendFileDescriptor(eventFd);
     hookMgr_->ResetStartupParam();
+    std::unique_lock<std::mutex> socketLock(pidFdMtx_);
+    pidFds_[peerConfig] = context.GetSocketHandle();
+    socketLock.unlock();
     return true;
 }
 }

@@ -362,6 +362,13 @@ void* ohos_release_on_end(void*)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
+    if (g_hookClient != nullptr) {
+        if (g_hookClient->GetNmdType() == 1) {
+            g_hookClient->SendNmdInfo();
+        }
+        g_hookClient->SendEndMsg();
+        g_hookClient->Flush();
+    }
     delete [] g_addressChecker;
     g_addressChecker = nullptr;
     g_hookClient = nullptr;
@@ -372,16 +379,6 @@ void* ohos_release_on_end(void*)
 
 bool ohos_malloc_hook_on_end(void)
 {
-    {
-        std::lock_guard<std::recursive_timed_mutex> guard(g_ClientMutex);
-        if (g_hookClient != nullptr) {
-            if (g_hookClient->GetNmdType() == 1) {
-                g_hookClient->SendNmdInfo();
-            }
-            g_hookClient->SendEndMsg();
-            g_hookClient->Flush();
-        }
-    }
     pthread_t threadEnd;
     if (pthread_create(&threadEnd, nullptr, ohos_release_on_end, nullptr)) {
         return false;
