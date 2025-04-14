@@ -18,6 +18,14 @@ syntax = "proto3";
 option optimize_for = LITE_RUNTIME;
 
 // category: sched
+// /sys/kernel/debug/tracing/events/sched/sched_blocked_reason/format
+message SchedBlockedReasonFormat {
+    int32 pid = 1;
+    uint64 caller = 2;
+    uint32 io_wait = 3;
+    string caller_str = 4;
+}
+
 // /sys/kernel/debug/tracing/events/sched/sched_kthread_stop/format
 message SchedKthreadStopFormat {
     string comm = 1;
@@ -131,16 +139,19 @@ message SchedStatWaitFormat {
 
 // /sys/kernel/debug/tracing/events/sched/sched_stick_numa/format
 message SchedStickNumaFormat {
-    int32 src_pid = 1;
-    int32 src_tgid = 2;
-    int32 src_ngid = 3;
+    int32 pid = 1;
+    int32 tgid = 2;
+    int32 ngid = 3;
     int32 src_cpu = 4;
     int32 src_nid = 5;
-    int32 dst_pid = 6;
-    int32 dst_tgid = 7;
-    int32 dst_ngid = 8;
-    int32 dst_cpu = 9;
-    int32 dst_nid = 10;
+    int32 dst_cpu = 6;
+    int32 dst_nid = 7;
+    int32 src_pid = 8;
+    int32 src_tgid = 9;
+    int32 src_ngid = 10;
+    int32 dst_pid = 11;
+    int32 dst_tgid = 12;
+    int32 dst_ngid = 13;
 }
 
 // /sys/kernel/debug/tracing/events/sched/sched_swap_numa/format
@@ -185,7 +196,8 @@ message SchedWakeupFormat {
     string comm = 1;
     int32 pid = 2;
     int32 prio = 3;
-    int32 target_cpu = 4;
+    int32 success = 4;
+    int32 target_cpu = 5;
 }
 
 // /sys/kernel/debug/tracing/events/sched/sched_wakeup_new/format
@@ -193,7 +205,8 @@ message SchedWakeupNewFormat {
     string comm = 1;
     int32 pid = 2;
     int32 prio = 3;
-    int32 target_cpu = 4;
+    int32 success = 4;
+    int32 target_cpu = 5;
 }
 
 // /sys/kernel/debug/tracing/events/sched/sched_waking/format
@@ -201,6 +214,7 @@ message SchedWakingFormat {
     string comm = 1;
     int32 pid = 2;
     int32 prio = 3;
-    int32 target_cpu = 4;
+    int32 success = 4;
+    int32 target_cpu = 5;
 }
 

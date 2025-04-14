@@ -66,6 +66,7 @@ FlowController::FlowController()
     ksymsParser_ = std::make_unique<KernelSymbolsParser>();
     ftraceSupported_ = FtraceFsOps::GetInstance().GetFtraceRoot().size() > 0;
     traceCollector_ = OHOS::HiviewDFX::UCollectClient::TraceCollector::Create();
+    osVersion_ = FtraceFsOps::GetInstance().GetKernelVersion();
 }
 
 FlowController::~FlowController(void)
@@ -545,6 +546,7 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
 {
     if (resultWriter_->isProtobufSerialize) {
         auto traceResult = std::make_unique<TracePluginResult>();
+        traceResult->set_version(osVersion_);
         FtraceEvent* event = nullptr;  // Used to distinguish between SubEventParser instance types.
         CHECK_TRUE(ParseFtraceEvent(traceResult.get(), cpuid, page, event), false, "parse raw event for cpu-%d failed!",
                    cpuid);
@@ -556,6 +558,7 @@ bool FlowController::ParseEventData(int cpuid, uint8_t* page)
         static ProtoEncoder::TracePluginResult traceResult;
         msgPool.Reset();
         traceResult.Reset(ctx, &msgPool);
+        traceResult.set_version(osVersion_);
         ProtoEncoder::FtraceEvent* event = nullptr;  // Used to distinguish between SubEventParser instance types.
         CHECK_TRUE(ParseFtraceEvent(&traceResult, cpuid, page, event), false, "parse raw event for cpu-%d failed!",
                    cpuid);

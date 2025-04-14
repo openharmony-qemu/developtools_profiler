@@ -33,6 +33,7 @@ public:
     int WriteTraceFile(const std::string& path, const std::string& content);
     int WriteTraceFile(const std::string& path, const std::string& content, int flags);
     std::string ReadTraceFile(const std::string& path) const;
+    std::string GetKernelVersion() const;
 
     MOCKABLE std::string GetKernelSymbols() const;
     MOCKABLE std::string GetPrintkFormats() const;

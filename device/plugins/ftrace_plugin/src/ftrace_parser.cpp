@@ -76,6 +76,7 @@ bool FtraceParser::Init()
 
     std::string formatDesc = FtraceFsOps::GetInstance().GetPageHeaderFormat();
     CHECK_TRUE(formatDesc.size() > 0, false, "read header_page failed!");
+    osVersion_ = FtraceFsOps::GetInstance().GetKernelVersion();
     return ParseHeaderPageFormat(formatDesc);
 }
 

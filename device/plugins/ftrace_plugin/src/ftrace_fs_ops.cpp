@@ -67,6 +67,16 @@ bool FtraceFsOps::IsHmKernel()
     return isHM;
 }
 
+std::string FtraceFsOps::GetKernelVersion() const
+{
+    struct utsname sysInfo;
+    if ((uname(&sysInfo)) == 0) {
+        std::string osRelVersion = sysInfo.release;
+        return osRelVersion;
+    }
+    return "";
+}
+
 int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content)
 {
     bool ret = false;
@@ -194,11 +204,7 @@ std::string FtraceFsOps::GetPageHeaderFormat() const
 
 std::string FtraceFsOps::GetEventDataFormat(const std::string& type, const std::string& name) const
 {
-    if (access((ftraceRoot_ + "/events/" + type + "/" + name + "/format").c_str(), R_OK) == 0) {
-        return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
-    } else {
-        return "";
-    }
+    return FileUtils::ReadFile(ftraceRoot_ + "/events/" + type + "/" + name + "/format");
 }
 
 bool FtraceFsOps::ClearTraceBuffer()

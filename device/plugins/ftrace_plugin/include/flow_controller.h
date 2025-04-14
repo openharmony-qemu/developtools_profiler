@@ -135,6 +135,7 @@ private:
     std::string traceClock_;
     std::atomic<bool> isReportBasicData_ = false;
     std::string fakePath_ = "";
+    std::string osVersion_ = "";
 };
 FTRACE_NS_END
 #endif // FLOW_CONTROLLER_H

@@ -22,6 +22,7 @@ message TracePluginResult {
   repeated FtraceCpuDetailMsg ftrace_cpu_detail = 2;
   repeated SymbolsDetailMsg symbols_detail = 5;
   repeated ClockDetailMsg clocks_detail = 6;
+  string version = 7;
 }
 
 message ClockDetailMsg {
