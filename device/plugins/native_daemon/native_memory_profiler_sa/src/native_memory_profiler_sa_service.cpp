@@ -44,7 +44,7 @@ NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(N
 {
     serviceName_ = "HookService";
     serviceEntry_ = std::make_shared<ServiceEntry>();
-    if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH)) {
+    if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH, true)) {
         serviceEntry_ = nullptr;
         PROFILER_LOG_ERROR(LOG_CORE, "Start IPC Service FAIL");
         return;
@@ -150,10 +150,12 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
 
 void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
 {
-    std::lock_guard<std::mutex> lock(closeMtx_);
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
     if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
-        serviceEntry_->RemoveContext(pidFds_[pid]);
+        int socketFd = pidFds_[pid];
         pidFds_.erase(pid);
+        lock.unlock();
+        serviceEntry_->RemoveContext(socketFd);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
     }
@@ -509,7 +511,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
+    std::unique_lock<std::mutex> socketLock(pidFdMtx_);
     pidFds_[peerConfig] = context.GetSocketHandle();
+    socketLock.unlock();
     return true;
 }
 

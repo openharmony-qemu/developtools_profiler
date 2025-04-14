@@ -40,7 +40,7 @@ HookService::~HookService()
 bool HookService::StartService(const std::string& unixSocketName)
 {
     serviceEntry_ = std::make_shared<ServiceEntry>();
-    if (!serviceEntry_->StartServer(unixSocketName)) {
+    if (!serviceEntry_->StartServer(unixSocketName, true)) {
         serviceEntry_ = nullptr;
         PROFILER_LOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
         return false;
@@ -51,12 +51,14 @@ bool HookService::StartService(const std::string& unixSocketName)
 
 void HookService::CloseSocketFd(int pid)
 {
-    std::lock_guard<std::mutex> lock(closeMtx_);
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
     if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
-        serviceEntry_->RemoveContext(pidFds_[pid]);
+        int socketFd = pidFds_[pid];
         pidFds_.erase(pid);
+        lock.unlock();
+        serviceEntry_->RemoveContext(socketFd);
     } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "HookService::CloseSocketFd pid invalid");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
     }
 }
 
@@ -107,7 +109,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     context.SendFileDescriptor(smbFd);
     context.SendFileDescriptor(eventFd);
     hookMgr_->ResetStartupParam();
+    std::unique_lock<std::mutex> socketLock(pidFdMtx_);
     pidFds_[peerConfig] = context.GetSocketHandle();
+    socketLock.unlock();
     return true;
 }
 }

@@ -38,7 +38,7 @@ private:
     ClientConfig clientConfig_;
     std::shared_ptr<HookManager> hookMgr_{nullptr};
     std::mutex mtx_;
-    std::mutex closeMtx_;
+    std::mutex pidFdMtx_;
     std::unordered_map<int, int> pidFds_;
     bool firstProcess_ = true;
     bool multipleProcesses_ = false;
