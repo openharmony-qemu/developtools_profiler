@@ -27,7 +27,7 @@ class ServiceEntry;
 
 class UnixSocketServer {
 public:
-    UnixSocketServer(bool isLocked = false);
+    UnixSocketServer();
     ~UnixSocketServer();
 
     int socketHandle_;
@@ -42,7 +42,6 @@ private:
     std::map<int, std::shared_ptr<ClientConnection>> socketClients_;
     std::thread acceptThread_;
     std::mutex mtx_;
-    bool isLocked_ = false;
 };
 
 #endif

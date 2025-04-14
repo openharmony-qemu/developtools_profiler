@@ -40,7 +40,7 @@ public:
     ServiceEntry();
     ~ServiceEntry();
 
-    bool StartServer(const std::string& addrname, bool serverLocked = false);
+    bool StartServer(const std::string& addrname);
 
     bool RegisterService(ServiceBase& psb);
 

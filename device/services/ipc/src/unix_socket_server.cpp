@@ -33,12 +33,11 @@ constexpr int EPOLL_WAIT_TIMEOUT = 1000;
 constexpr int RETRY_MAX_COUNT = 5;
 }
 
-UnixSocketServer::UnixSocketServer(bool isLocked)
+UnixSocketServer::UnixSocketServer()
 {
     sAddrName_ = "";
     socketHandle_ = -1;
     serviceEntry_ = nullptr;
-    isLocked_ = isLocked;
 }
 
 UnixSocketServer::~UnixSocketServer()
@@ -49,17 +48,10 @@ UnixSocketServer::~UnixSocketServer()
         acceptThread_.join();
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "acceptThread finish");
-    if (isLocked_) {
-        std::unique_lock<std::mutex> lock(mtx_);
-        if (socketClients_.size() > 0) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
-            socketClients_.clear();
-        }
-    } else {
-        if (socketClients_.size() > 0) {
-            PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
-            socketClients_.clear();
-        }
+    std::unique_lock<std::mutex> lock(mtx_);
+    if (socketClients_.size() > 0) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
+        socketClients_.clear();
     }
 }
 
@@ -108,46 +100,26 @@ void UnixSocketServer::UnixSocketAccept()
                 clientEvt.events = EPOLLHUP;
                 CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt) != -1,
                     NO_RETVAL, "Unix Socket Server Exit");
-                if (isLocked_) {
-                    std::unique_lock<std::mutex> lock(mtx_);
-                    if (socketClients_.find(clientSocket) == socketClients_.end()) {
-                        PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
-                                        socketClients_.size());
-                        socketClients_[clientSocket] = std::make_shared<ClientConnection>(clientSocket, *serviceEntry_);
-                    } else {
-                        PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
-                    }
+                std::unique_lock<std::mutex> lock(mtx_);
+                if (socketClients_.find(clientSocket) == socketClients_.end()) {
+                    PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
+                                       socketClients_.size());
+                    socketClients_[clientSocket] = std::make_shared<ClientConnection>(clientSocket, *serviceEntry_);
                 } else {
-                    if (socketClients_.find(clientSocket) == socketClients_.end()) {
-                        PROFILER_LOG_DEBUG(LOG_CORE, "new socketClients_ socketClients_.size() = %zu",
-                                        socketClients_.size());
-                        socketClients_[clientSocket] = std::make_shared<ClientConnection>(clientSocket, *serviceEntry_);
-                    } else {
-                        PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
-                    }
+                    PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
                 }
             } else if (events[i].events & EPOLLHUP) {
                 struct epoll_event delEvt;
                 delEvt.data.fd = events[i].data.fd;
                 delEvt.events = EPOLLHUP;
                 epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
-                if (isLocked_) {
-                    std::unique_lock<std::mutex> lock(mtx_);
-                    if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
-                        PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
-                                        socketClients_.size());
-                        socketClients_.erase(events[i].data.fd);
-                    } else {
-                        PROFILER_LOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
-                    }
+                std::unique_lock<std::mutex> lock(mtx_);
+                if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
+                    PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
+                                       socketClients_.size());
+                    socketClients_.erase(events[i].data.fd);
                 } else {
-                    if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
-                        PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
-                                        socketClients_.size());
-                        socketClients_.erase(events[i].data.fd);
-                    } else {
-                        PROFILER_LOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
-                    }
+                    PROFILER_LOG_ERROR(LOG_CORE, "Client %d not exist", events[i].data.fd);
                 }
             }
         }

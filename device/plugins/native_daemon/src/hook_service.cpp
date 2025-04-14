@@ -40,7 +40,7 @@ HookService::~HookService()
 bool HookService::StartService(const std::string& unixSocketName)
 {
     serviceEntry_ = std::make_shared<ServiceEntry>();
-    if (!serviceEntry_->StartServer(unixSocketName, true)) {
+    if (!serviceEntry_->StartServer(unixSocketName)) {
         serviceEntry_ = nullptr;
         PROFILER_LOG_DEBUG(LOG_CORE, "Start IPC Service FAIL");
         return false;

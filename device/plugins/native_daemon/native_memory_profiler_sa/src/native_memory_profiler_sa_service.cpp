@@ -44,7 +44,7 @@ NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(N
 {
     serviceName_ = "HookService";
     serviceEntry_ = std::make_shared<ServiceEntry>();
-    if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH, true)) {
+    if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH)) {
         serviceEntry_ = nullptr;
         PROFILER_LOG_ERROR(LOG_CORE, "Start IPC Service FAIL");
         return;
