@@ -755,7 +755,7 @@ int32_t HookManager::CreatePluginSession()
     return RET_ERR;
 }
 
-void HookManager::StartPluginSession(std::unordered_map<pid_t, std::paid<uid_t, gid_t>>* pidInfo)
+void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo)
 {
     for (const auto& item : hookCtx_) {
         if (item->stackPreprocess == nullptr) {

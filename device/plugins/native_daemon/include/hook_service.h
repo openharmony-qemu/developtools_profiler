@@ -45,7 +45,7 @@ private:
     std::unordered_map<pid_t, int> pidFds_;
     bool firstProcess_ = true;
     bool multipleProcesses_ = false;
-    std::unordered_map<pid_t, std::paid<uid_t, gid_t>> pidInfo_;
+    std::unordered_map<pid_t, std::pair<uid_t, gid_t>> pidInfo_;
 };
 }
 #endif // HOOK_SERVICE_H
