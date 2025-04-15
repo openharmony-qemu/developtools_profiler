@@ -426,6 +426,48 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
     return stat;
 }
 
+unsigned long StringToUnsignedLong(const std::string& str)
+{
+    std::istringstream iss(str);
+    unsigned long result = 0;
+    iss >> result;
+    if (iss.fail() || !iss.eof()) {
+        return 0;
+    }
+    return result;
+}
+
+unsigned long GetStatusLine(std::string& line)
+{
+    size_t start = line.find_first_of("\t") + 1;
+    size_t end = line.find_first_of("\t", start);
+    std::string targetStr = line.substr(start, end - start);
+    return StringToUnsignedLong(targetStr);
+}
+
+void GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid)
+{
+    std::string line;
+    std::string procStatusPath = "/proc/" + std::to_string(pid) + "/status";
+    std::ifstream fileStream(procStatusPath);
+
+    if (!fileStream.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid cannot open proc status file for pid: %d", pid);
+        return;
+    }
+    while (std::getline(fileStream, line)) {
+        if (line.substr(0, 4) == "Uid:") {
+            ruid = static_cast<uid_t>(GetStatusLine(line));
+        } else if (line.substr(0, 4) == "Gid:") {
+            rgid = static_cast<gid_t>(GetStatusLine(line));
+        }
+        if (ruid != 0 && rgid != 0) {
+            break;
+        }
+    }
+    fileStream.close();
+}
+
 // IF pipe fds is block, before release other threads, you need call CustomPUnblock
 int CustomPUnblock(int fds[])
 {

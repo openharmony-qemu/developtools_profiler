@@ -182,12 +182,13 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
             pid, name.c_str());
         return;
     }
-    CloseSocketFd(pid);
+    CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
     nameAndFilePathCtx_.erase(config->processName);
     nameAndFilePathCtx_.erase(config->filePath);
     pidCtx_.erase(config->pid);
+    pidInfo_.erase(static_cast<pid_t>(pid));
     if (nmdPidType_.find(config->pid) != nmdPidType_.end()) {
         nmdPidType_.erase(config->pid);
     }
@@ -297,7 +298,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     if (!config->printNmdOnly_) {
         hook->WriteHookConfig();
     }
-    hook->StartPluginSession();
+    hook->StartPluginSession(&pidInfo_);
 
     int32_t timerFd = scheduleTaskManager_.ScheduleTask(
         [this, config] { this->StopHook(config->pid_, config->processName_); },
@@ -487,6 +488,16 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
 
     std::lock_guard<std::mutex> guard(mtx_);
     if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
+        int socketHandle = context.GetSocketHandle();
+        struct ucred cred;
+        socketlen_t len;
+        len = sizeof(struct ucred);
+        getsockopt(socketHandle, SOL_SOCKET. SO_PEERCRED, &cred, &len);
+        if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
+            (pidInfo_[cred.pid].second == cred.gid))) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");
+            return false;
+        }
         auto [eventFd, smbFd] = iter->second->hookMgr->GetFds(peerConfig, bundleName);
         iter->second->hookMgr->SetPid(peerConfig);
         if (eventFd == smbFd) {
@@ -512,7 +523,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         return false;
     }
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
-    pidFds_[peerConfig] = context.GetSocketHandle();
+    pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
     socketLock.unlock();
     return true;
 }
