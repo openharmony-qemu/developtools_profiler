@@ -808,6 +808,12 @@ void StackPreprocess::SetAllocStatisticsFrame(const RawStackPtr& rawStack, T& st
 {
     callStack_.resize(rawStack->fpDepth + 1);
     callStack_[0] = (rawStack->stackConext->mallocSize | SIZE_MASK);
+    uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawStack->data);
+    for (uint8_t idx = 0; idx < rawStack->fpDepth ; ++idx) {
+        if (fpIp[idx] != 0) {
+            fpIp[idx] = StripPac(fpIp[idx], 0);
+        }
+    }
     if (memcpy_s(callStack_.data() + 1, sizeof(uint64_t) * rawStack->fpDepth,
                  rawStack->data, sizeof(uint64_t) * rawStack->fpDepth) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s callStack_ failed");
