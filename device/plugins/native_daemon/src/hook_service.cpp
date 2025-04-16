@@ -109,7 +109,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
     firstProcess_ = false;
-    if (!(hookMgr_ && hookMgr->GetHookConfig().startup_mode())) {
+    if (!(hookMgr_ && hookMgr_->GetHookConfig().startup_mode())) {
         int socketHandle = context.GetSocketHandle();
         struct ucred cred;
         socklen_t len = sizeof(struct ucred);
