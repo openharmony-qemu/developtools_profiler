@@ -99,6 +99,7 @@ ohos_executable("SP_daemon") {
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
+    "graphic_2d:librender_service_client",
   ]
   defines = [
     "HI_LOG_ENABLE",
