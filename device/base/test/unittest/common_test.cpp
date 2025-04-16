@@ -81,6 +81,34 @@ HWTEST_F(CommonTest, IsProcessExist, TestSize.Level1)
 
 /**
  * @tc.name: CommonTest
+ * @tc.desc: GetUidGidFromPid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetUidGidFromPid, TestSize.Level1)
+{
+    const std::string procName = "hiprofiler_base_ut";
+    int pid = 0;
+    EXPECT_TRUE(COMMON::IsProcessExist(procName, pid));
+    EXPECT_NE(pid, 0);
+    uid_t uid = 0;
+    gid_t gid = 0;
+    EXPECT_TRUE(COMMON::GetUidGidFromPid(static_cast<pid_t>(pid), uid, gid));
+    EXPECT_EQ(uid, 0);
+    EXPECT_EQ(gid, 0);
+
+    const std::string hiviewName = "hiview";
+    pid = 0;
+    EXPECT_TRUE(COMMON::IsProcessExist(hiviewName, pid));
+    EXPECT_NE(pid, 0);
+    uid = 0;
+    gid = 0;
+    EXPECT_TRUE(COMMON::GetUidGidFromPid(static_cast<pid_t>(pid), uid, gid));
+    EXPECT_NE(uid, 0);
+    EXPECT_NE(gid, 0);
+}
+
+/**
+ * @tc.name: CommonTest
  * @tc.desc: StartProcess.
  * @tc.type: FUNC
  */

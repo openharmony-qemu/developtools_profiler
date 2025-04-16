@@ -97,7 +97,7 @@ public:
     void ResetStartupParam();
     void SethookStandalone(bool);
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
-    void StartPluginSession();
+    void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -124,6 +124,12 @@ public:
     {
         return pid_;
     }
+
+    NativeHookConfig GetHookConfig()
+    {
+        return hookConfig_;
+    }
+
     void SetSaMode(bool saMode)
     {
         saMode_ = saMode;
