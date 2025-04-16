@@ -111,8 +111,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     firstProcess_ = false;
     int socketHandle = context.GetSocketHandle();
     struct ucred cred;
-    socklen_t len;
-    len = sizeof(struct ucred);
+    socklen_t len = sizeof(struct ucred);
     if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc getsockopt failed");
         return false;

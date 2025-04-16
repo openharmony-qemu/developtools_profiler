@@ -490,8 +490,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
         int socketHandle = context.GetSocketHandle();
         struct ucred cred;
-        socklen_t len;
-        len = sizeof(struct ucred);
+        socklen_t len = sizeof(struct ucred);
         if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
             PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
             return false;

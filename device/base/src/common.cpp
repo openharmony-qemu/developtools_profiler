@@ -61,6 +61,8 @@ const std::map<std::string, clockid_t> clockIdMap = {
 constexpr int EXECVP_ERRNO = 2;
 const int SHELL_UID = 2000;
 const std::string DEFAULT_PATH = "/data/local/tmp/";
+const std::string UID_TAG = "Uid:";
+const std::string GID_TAG = "Gid:";
 constexpr int READ = 0;
 constexpr int WRITE = 1;
 const int FILE_PATH_SIZE = 512;
@@ -453,13 +455,13 @@ bool GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid)
     }
     unsigned long statusId = 0;
     while (std::getline(fileStream, line)) {
-        if (line.substr(0, 4) == "Uid:") {
+        if (line.substr(0, 4) == UID_TAG) {
             if (!GetStatusLineId(line, statusId)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid get uid failed");
                 return false;
             }
             ruid = static_cast<uid_t>(statusId);
-        } else if (line.substr(0, 4) == "Gid:") {
+        } else if (line.substr(0, 4) == GID_TAG) {
             if (!GetStatusLineId(line, statusId)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid get gid failed");
                 return false;
