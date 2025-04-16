@@ -19,7 +19,7 @@ ohos_executable("pagemap_parse") {
 
   include_dirs = []
   defines = []
-  cflags_cc = [ "-std=c++20" ]
+  cflags_cc = [ "-std=c++17" ]
   deps = []
 
   install_images = [ "system" ]
