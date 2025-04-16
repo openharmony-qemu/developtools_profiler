@@ -124,6 +124,12 @@ public:
     {
         return pid_;
     }
+
+    NativeHookConfig GetHookConfig()
+    {
+        return hookConfig_;
+    }
+
     void SetSaMode(bool saMode)
     {
         saMode_ = saMode;

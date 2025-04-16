@@ -484,21 +484,24 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (bundleName.substr(0, 2) == "./") { // 2: size, Command line programs will be prefixed with "./"
         bundleName = bundleName.substr(2); // 2: point
     }
+    bool startupMode = hasStartupMode_;
     FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
 
     std::lock_guard<std::mutex> guard(mtx_);
     if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
-        int socketHandle = context.GetSocketHandle();
-        struct ucred cred;
-        socklen_t len = sizeof(struct ucred);
-        if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
-            return false;
-        }
-        if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
-            (pidInfo_[cred.pid].second == cred.gid))) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");
-            return false;
+        if (!startupMode) {
+            int socketHandle = context.GetSocketHandle();
+            struct ucred cred;
+            socklen_t len = sizeof(struct ucred);
+            if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
+                return false;
+            }
+            if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
+                (pidInfo_[cred.pid].second == cred.gid))) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");
+                return false;
+            }
         }
         auto [eventFd, smbFd] = iter->second->hookMgr->GetFds(peerConfig, bundleName);
         iter->second->hookMgr->SetPid(peerConfig);
