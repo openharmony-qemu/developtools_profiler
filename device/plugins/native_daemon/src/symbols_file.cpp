@@ -311,6 +311,10 @@ private:
     bool LoadEhFrameHDR(const unsigned char *buffer, size_t bufferSize, uint64_t shdrOffset)
     {
         eh_frame_hdr *ehFrameHdr = (eh_frame_hdr *)buffer;
+        if (ehFrameHdr == nullptr) {
+            HLOGD("LoadEhFrameHDR error: ehFrameHdr is null!");
+            return false;
+        }
         const uint8_t *dataPtr = ehFrameHdr->encode_data;
         DwarfEncoding dwEhFramePtr(ehFrameHdr->eh_frame_ptr_enc, dataPtr);
         DwarfEncoding dwFdeCount(ehFrameHdr->fde_count_enc, dataPtr);

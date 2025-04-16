@@ -147,7 +147,12 @@ int main(int argc, char* argv[])
         PrintUsage(argv[0]);
         return -1;
     }
-    int pid = stoi(argv[1]);
+    int pid = -1;
+    auto result = std::from_chars(pid_str.data(), pid_str.data() + pid_str.size(), pid);
+    if (result.ec != std::errc()) {
+        PrintUsage(argv[0]);
+        return -1;
+    }
     string mapsPath = "/proc/" + to_string(pid) + "/maps";
     ifstream maps_file(mapsPath, ios::binary);
     if (!maps_file) {
