@@ -770,8 +770,7 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
             PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
             uid_t uid = 0;
             gid_t gid = 0;
-            COMMON::GetUidGidFromPid(static_cast<pid_t>(item->pid), uid, gid);
-            if (uid == 0 || gid == 0) {
+            if (!COMMON::GetUidGidFromPid(static_cast<pid_t>(item->pid), uid, gid)) {
                 PROFILER_LOG_INFO(LOG_CORE, "get target process uid gid failed");
                 continue;
             }
@@ -780,7 +779,8 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
                 char buf[bufSize] = {0};
                 strerror_r(errno, buf, bufSize);
                 PROFILER_LOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
-            } else if (!saMode_) {
+            }
+            if (!saMode_) {
                 hookService_->AddPidInfo(static_cast<pid_t>(item->pid), uid, gid);
             } else if (pidInfo != nullptr) {
                 (*pidInfo)[static_cast<pid_t>(item->pid)] = std::make_pair(uid, gid);

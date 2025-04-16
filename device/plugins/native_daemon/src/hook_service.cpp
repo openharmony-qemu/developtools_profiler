@@ -113,7 +113,10 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     struct ucred cred;
     socklen_t len;
     len = sizeof(struct ucred);
-    getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len);
+    if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc getsockopt failed");
+        return false;
+    }
     if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
         (pidInfo_[cred.pid].second == cred.gid))) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc process uid gid check failed");

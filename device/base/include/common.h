@@ -50,7 +50,7 @@ int32_t GetPackageUid(const std::string &name);
 bool GetCurrentUserId(int32_t &userId);
 bool IsNumeric(const std::string& str);
 bool IsUserMode();
-void GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid);
+bool GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid);
 bool GetDeveloperMode();
 bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
