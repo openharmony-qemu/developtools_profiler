@@ -404,7 +404,7 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoByRs(const std::string& name, bool isBrea
     iss << fpsInfoResult;
     std::string timeStampLine;
     std::stringstream ss;
-    while(getline(iss, timeStampLine, '\n')) {
+    while (getline(iss, timeStampLine, '\n')) {
         timeStampLine.erase(0, timeStampLine.find_first_not_of(' '));
         curScreenTimestamp = 0;
         if (timeStampLine.empty()) {
