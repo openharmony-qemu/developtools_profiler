@@ -67,6 +67,9 @@ namespace OHOS {
             void GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap);
             void SetStartRecordTime();
             void SocketCommandVerification(std::string &resStr, ServerParams &params);
+            void GetSdkFpsAndSystime(const std::string &sdkStr);
+            std::string GetSdkFps() const;
+            std::string GetSdkSystime() const;
         private:
             SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);
@@ -81,6 +84,8 @@ namespace OHOS {
             std::string sdkDataRealtimeData = "";
             ServerParams sdkParams;
             std::mutex realtimeDataLock;
+            std::string sdkFps;
+            std::string sdkSystime;
         };
     }
 }

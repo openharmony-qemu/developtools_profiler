@@ -54,14 +54,23 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         LOGD("ProfilerFPS.result.curTime: (%d)", finalResult.curTime);
         std::string jitterStr = "";
         std::string split = "";
+        std::string jitterStrByGame;
         for (size_t i = 0; i < finalResult.jitters.size(); i++) {
             if (i > 0) {
                 split = ";;";
             }
             jitterStr += split + std::to_string(finalResult.jitters[i]);
         }
-        result["fpsJitters"] = jitterStr;
-        LOGD("ProfilerFPS.result.jitters: %s", jitterStr.c_str());
+        if (!isTargetFps) {
+            fpsBySdk = GetFpsBySdk();
+        }
+        if (isGameApp) {
+            jitterStrByGame = jitterStr + "$$targetFps||" + fpsBySdk;
+            result["fpsJitters"] = jitterStrByGame;
+        } else {
+            result["fpsJitters"] = jitterStr;
+        }
+        LOGD("ProfilerFPS::jitterStr: %s, jitterStrByGame: %s", jitterStr.c_str(), jitterStrByGame.c_str());
         if (isCatchTrace > 0) {
             ByTrace::GetInstance().CheckFpsJitters(finalResult.jitters, finalResult.fps);
         }
@@ -419,9 +428,11 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
 }
 bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
 {
+    long long sdkSystime = GetSystimeBySdk();
     long long onScreenTime = curScreenTimestamp / mod;
     bool findFpsCurTime = (onScreenTime == fpsInfo.curTime);
     if (findFpsCurTime) {
+        isTargetFps = (sdkSystime == onScreenTime);
         isBreak = true;
         fpsNum++;
         if (isLowCurFps) {
@@ -579,6 +590,20 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
 void ProfilerFPS::SetRkFlag()
 {
     rkFlag = true;
+}
+
+std::string ProfilerFPS::GetFpsBySdk()
+{
+    std::string sdkFps = sdkData.GetSdkFps();
+    return sdkFps;
+}
+
+long long ProfilerFPS::GetSystimeBySdk()
+{
+    long long sdkSystime = 0;
+    long long systimeBySdk = SPUtilesTye::StringToSometype<long long>(sdkData.GetSdkSystime());
+    sdkSystime = systimeBySdk / mod;
+    return sdkSystime;
 }
 }
 }

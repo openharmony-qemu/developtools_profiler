@@ -103,7 +103,9 @@ public:
     void SetRecordState(bool status);
     void ProcessErrorData(SPData &spdata);
     std::string GetCsvTitle();
-
+    void ConfigureSdkDataHap();
+    static inline bool isSdkTask = false;
+    void ResetSdkParam();
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
     void GetHiperf(const std::string &traceName);
@@ -113,7 +115,6 @@ private:
     void ConfigureSdkData(std::string itConfig);
     void PrintMap(std::map<std::string, std::string> &dataMap);
     void RunSdkServer(SdkDataRecv &sdkDataRecv);
-    void ResetSdkParam();
     int GetCurrentBattary();
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();

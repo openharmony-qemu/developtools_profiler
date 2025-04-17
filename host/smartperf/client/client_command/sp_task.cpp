@@ -887,5 +887,17 @@ void SPTask::EnablePrint()
         }
     }
 }
+
+void SPTask::ConfigureSdkDataHap()
+{
+    if (isSdkTask) {
+        sdkData = true;
+        OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
+        SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
+        sdkDataRecv.SetRunningState(true);
+        WLOGI("Starting sdkdata collection in new thread");
+        sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
+    }
+}
 }
 }

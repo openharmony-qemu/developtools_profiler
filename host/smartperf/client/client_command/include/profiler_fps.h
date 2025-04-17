@@ -16,6 +16,7 @@
 #define PLUGNFPS_H
 #include <vector>
 #include "sp_profiler.h"
+#include "sdk_data_recv.h"
 #include <queue>
 namespace OHOS {
 namespace SmartPerf {
@@ -82,8 +83,6 @@ public:
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoTime;
     FpsInfoProfiler lastFpsInfoResult;
-    static inline bool firstDump = false;
-    static inline bool isGameApp = false;
     FpsInfoProfiler GetChangedLayerFps();
     FpsInfoProfiler GetAppFps(std::string &uniteLayer);
     static ProfilerFPS &GetInstance()
@@ -93,8 +92,15 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     void SetProcessId(const std::string &pid);
-    static inline bool isLowCurFps = false;
     void CalcJitters();
+    SdkDataRecv &sdkData = SdkDataRecv::GetInstance();
+    std::string GetFpsBySdk();
+    long long GetSystimeBySdk();
+    static inline bool firstDump = false;
+    static inline bool isGameApp = false;
+    static inline bool isLowCurFps = false;
+    static inline bool isTargetFps = false;
+    static inline std::string fpsBySdk;
 private:
     ProfilerFPS() {};
     ProfilerFPS(const ProfilerFPS &);
