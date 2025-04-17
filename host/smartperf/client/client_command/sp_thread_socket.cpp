@@ -421,6 +421,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
         ProfilerFPS &pfps = ProfilerFPS::GetInstance();
         pfps.isLowCurFps = true;
         std::string sdkFps;
+        std::string resultfps = "vfps||";
         for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
             if (iter->first != "fpsJitters") {
                 std::string temp = iter->second + "@@";
