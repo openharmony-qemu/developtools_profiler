@@ -292,8 +292,6 @@ static void WriteMessage(const char* logMessage)
         logFile << timeStamp.str() << logMessage << std::endl;
 
         logFile.close();
-    } else {
-        LOGE("Unable to open log file for writing: %s", logFilePathChar);
     }
 
     return;
