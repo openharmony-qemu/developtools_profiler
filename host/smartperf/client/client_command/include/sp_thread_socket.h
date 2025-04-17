@@ -59,6 +59,8 @@ public:
     void HandleMsg(SpServerSocket &spSocket) const;
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
+    void HandleUDPAddMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator) const;
     void SocketHeartbeat() const;
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
