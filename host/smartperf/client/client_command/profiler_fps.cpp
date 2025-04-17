@@ -396,9 +396,9 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoByRs(const std::string& name, bool isBrea
 {
     uint64_t nodeId;
     std::istringstream s(name);
-    s >> nodeId
+    s >> nodeId;
     LOGD("ProfilerFPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
-    std::string fpsInfoResult = OHOS::Rosen::RSInterface::GetInstance().GetRefreshInfoToSP(nodeId);
+    std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
     LOGD("ProfilerFPS fpsInfoResult: %s", fpsInfoResult.c_str());
     std::stringstream iss;
     iss << fpsInfoResult;
@@ -621,7 +621,7 @@ std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, 
 {
     if (std::to_string(nodeId) == surfaceId) {
         if (isNodeId) {
-            gameLayer =  nodeIdStr；
+            gameLayer =  nodeIdStr;
         } else {
             size_t layerStartPos = line.find("[");
             size_t layerEndPos = line.find("]");
