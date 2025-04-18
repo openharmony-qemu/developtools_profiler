@@ -60,10 +60,12 @@ std::atomic<int> g_dumpingCount = 0;
 
 constexpr std::pair<int, const char*> DumpErrCodeMap[]  = {
     {ErrorCode::PARAMETER_ERROR, "Invalid parameter."},
-    {DumpRawHeapErrors::REPEAT_DUMPING, "Repeated data dump."},
+    {DumpRawHeapErrors::REPEAT_DUMPING, "It is currently dumping. Please wait until the dumping is completed "
+    "before making another call."},
     {DumpRawHeapErrors::FAILED_CREATE_FILE, "Failed to create dump file."},
     {DumpRawHeapErrors::LOW_DISK_SPACE, "Disk remaining space too low."},
-    {DumpRawHeapErrors::QUOTA_EXCEEDED, "Quota exceeded."},
+    {DumpRawHeapErrors::QUOTA_EXCEEDED, "The number of available invocations for the interface is insufficient. "
+    "Please wait until the number of available invocations for the interface is reset."},
     {DumpRawHeapErrors::FORK_FAILED, "Fork operation failed."},
     {DumpRawHeapErrors::FAILED_WAIT_CHILD_PROCESS_FINISHED, "Failed to wait for the child process to finish."},
     {DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED, "Timeout while waiting for the child process to finish."}
