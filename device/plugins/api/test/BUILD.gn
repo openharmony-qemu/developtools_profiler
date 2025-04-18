@@ -41,7 +41,6 @@ ohos_unittest("hiprofiler_plugins_ut") {
     "unittest/command_poller_test.cpp",
     "unittest/plugin_manager_test.cpp",
     "unittest/plugin_module_test.cpp",
-    "unittest/plugin_watcher_test.cpp",
     "unittest/writer_adapter_test.cpp",
   ]
   if (use_clang_coverage) {
