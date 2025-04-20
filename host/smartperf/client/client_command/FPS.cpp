@@ -195,10 +195,12 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
     int pipefd[2];
     pid_t pid;
     if (pipe(pipefd) == -1) {
+        LOGE("FPS::Failed to create pipe");
         return fpsInfo;
     }
     pid = fork();
     if (pid == -1) {
+        LOGE("FPS::Failed to fork");
         return fpsInfo;
     }
     if (pid == 0) {
@@ -206,6 +208,7 @@ FpsInfo FPS::GetSurfaceFrame(std::string name)
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
         execvp(args[0], const_cast<char *const*>(args.data()));
+        LOGE("FPS::Failed to execute hidumper");
         _exit(EXIT_FAILURE);
     }
     close(pipefd[1]);
@@ -230,6 +233,7 @@ void FPS::ReadDataFromPipe(int fd)
         fpsInfo.curTime, fpsInfo.currTimeDump);
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
+        LOGE("FPS::Failed to open file descriptor");
         return;
     }
     std::stringstream sstream;

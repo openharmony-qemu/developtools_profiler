@@ -54,8 +54,12 @@ namespace OHOS {
             int socketFd = 0;
             struct sockaddr_in address;
             const int reuse = 1;
+
+            LOGD("Creating socket server on base port: %d", basePort);
+
             socketFd = socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
             if (socketFd < 0) {
+                LOGE("Failed to create socket. Error: %d", errno);
                 return -1;
             }
             setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof(reuse));
@@ -67,19 +71,23 @@ namespace OHOS {
             for (i = 0; i < SOCKET_PORT_NUM_PER_TYPE; i++) {
                 address.sin_port = htons(basePort + i);
                 if (::bind(socketFd, reinterpret_cast<struct sockaddr *>(&address), sizeof(address)) == 0) {
+                    LOGD("Socket bound successfully to port: %d", basePort + i);
                     break;
                 }
             }
 
             if (i >= SOCKET_PORT_NUM_PER_TYPE) {
+                LOGE("Failed to bind socket after trying all ports starting from: %d", basePort);
                 return -1;
             }
 
             if (listen(socketFd, OH_SOCKET_MAX) < 0) {
                 close(socketFd);
+                LOGE("Failed to listen on socket. Error: %d", errno);
                 return -1;
             }
 
+            LOGD("Listening on port %d, socket fd: %d", basePort + i, socketFd);
             return socketFd;
         }
         std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
@@ -136,6 +144,7 @@ namespace OHOS {
             if ((readLen = read(params.receiveFd[index], receiveBuf, MSG_MAX_LEN)) <= 0) {
                 close(params.receiveFd[index]);
                 params.receiveFd[index] = -1;
+                LOGE("Failed to read data from socket fd[%d]. Read length: %d, Error: %d", index, readLen, errno);
                 return "";
             }
             if (readLen < MSG_MAX_LEN) {
@@ -165,15 +174,18 @@ namespace OHOS {
             sdkParams.startTime = SPUtils::GetCurTime();
             sdkParams.serverFd = CreateOhSocketServer(OH_DATA_PORT);
             if (sdkParams.serverFd < 0) {
+                LOGE("Failed to create sdk data server, exiting...");
                 return;
             }
 
             if (pipe(sdkParams.pipFd) == -1) {
+                LOGE("Failed to create sdk data pipe.");
                 close(sdkParams.serverFd);
                 return;
             }
             listenFd = sdkParams.pipFd[1];
             RunServerThread(dataVec, sdkParams);
+            LOGD("Sdk Data server thread exit.");
         }
 
         void SdkDataRecv::RunServerThread(std::vector<std::string> &dataVec, ServerParams &params)
@@ -242,6 +254,7 @@ namespace OHOS {
         void SdkDataRecv::CleanUpResources(ServerParams &params)
         {
             if (params.serverFd != -1) {
+                LOGD("Closing sdk data server socket fd: %d", params.serverFd);
                 close(params.serverFd);
                 params.serverFd = -1;
             }

@@ -37,7 +37,9 @@ std::map<std::string, std::string> Power::ItemData()
         }
     } else {
         result["failed"] = "RK does not support power acquisition";
+        LOGE("failed:RK does not support power acquisition");
     }
+    LOGD("Power:ItemData map size(%u)", result.size());
     return result;
 }
 void Power::SetRkFlag()

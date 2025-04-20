@@ -39,6 +39,7 @@ int SpServerSocket::Init(ProtoType type)
         sockPort = (type == ProtoType::UDP ? udpPort : udpExPort);
     }
     if (sock < 0) {
+        LOGE("SpServerSocket::Init Socket Create Failed");
         return -1;
     }
     if (type == ProtoType::TCP) {
