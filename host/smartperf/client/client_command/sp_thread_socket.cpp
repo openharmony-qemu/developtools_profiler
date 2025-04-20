@@ -567,13 +567,11 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
         // No page hap need return fps and jitters to calc fatal frame freeze
         if (pfps.isPreset) {
             retCode = MapToString(data);
-            spSocket.Sendto(retCode);  
+            spSocket.Sendto(retCode);
             LOGD("UDP send retCode No page %s", retCode.c_str());
         } else {
             LowPowerFps(spSocket, data);
         }
-       
-
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
