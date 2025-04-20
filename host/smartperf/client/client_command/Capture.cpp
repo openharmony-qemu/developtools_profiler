@@ -83,7 +83,7 @@ void Capture::ThreadGetCatch()
     std::ostringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
-		LOGE("Failed to open file: %s", savePath.c_str());
+        LOGE("Failed to open file: %s", savePath.c_str());
         return;
     }
     if (!TakeScreenCap(savePath)) {
@@ -113,7 +113,7 @@ void Capture::ThreadGetCatchSocket()
 
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
-		LOGE("Capture::ThreadGetCatchSocket Failed to open file");
+        LOGE("Capture::ThreadGetCatchSocket Failed to open file");
         return;
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);

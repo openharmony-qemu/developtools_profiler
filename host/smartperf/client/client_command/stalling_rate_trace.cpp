@@ -32,7 +32,7 @@ double StallingRateTrace::StallingRateResult(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-		LOGE("StallingRateTrace open file(%s) fialed ", file.c_str());
+        LOGE("StallingRateTrace open file(%s) fialed ", file.c_str());
         return stalligRate;
     }
     stalligRate = SmartPerf::StallingRateTrace::CalculateTime();

@@ -33,7 +33,7 @@ double ParseClickCompleteTrace::ParseCompleteTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
-		LOGE("ParseClickCompleteTrace open file(%s) fialed ", fileNamePath.c_str());
+        LOGE("ParseClickCompleteTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }
     completeTime = GetLineTime();

@@ -30,7 +30,7 @@ double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
     }
     infile.open(realPath);
     if (infile.fail()) {
-		LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
+        LOGE("ParseSlideFpsTrace open file(%s) fialed ", file.c_str());
         return fps;
     }
     fps = SmartPerf::ParseSlideFpsTrace::CalculateTime();
@@ -49,13 +49,13 @@ double ParseSlideFpsTrace::CalculateTime()
                 needTime = true;
                 frameNow = 0;
                 touchTime = SPUtilesTye::StringToSometype<double>(ParseSlideFpsTrace::GetLineTime(line));
-				LOGD("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
+                LOGD("ParseSlideFpsTrace::touchTime: (%s)", std::to_string(touchTime).c_str());
                 swiperFlingFlag = 0;
             }
         } else if (line.find("H:RSMainThread::DoComposition") != std::string::npos) {
             frameNow++;
             doCompositionTime = SPUtilesTye::StringToSometype<double>(ParseSlideFpsTrace::GetLineTime(line));
-			 LOGD("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
+            LOGD("ParseSlideFpsTrace::doCompositionTime: (%s)", std::to_string(doCompositionTime).c_str());
         } else if (line.find("H:WEB_LIST_FLING") != std::string::npos ||
             line.find("H:APP_LIST_FLING,") != std::string::npos) {
             listFlag++;

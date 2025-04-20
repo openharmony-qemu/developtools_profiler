@@ -83,11 +83,11 @@ namespace OHOS {
 
             if (listen(socketFd, OH_SOCKET_MAX) < 0) {
                 close(socketFd);
-				LOGE("Failed to listen on socket. Error: %d", errno);
+                LOGE("Failed to listen on socket. Error: %d", errno);
                 return -1;
             }
 
-			LOGD("Listening on port %d, socket fd: %d", basePort + i, socketFd);
+            LOGD("Listening on port %d, socket fd: %d", basePort + i, socketFd);
             return socketFd;
         }
         std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
