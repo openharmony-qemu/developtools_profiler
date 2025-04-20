@@ -302,14 +302,19 @@ std::string SPUtils::GetRadarFrame()
         otherPromise.set_value(ExecuteCommand(otherCmd));
     });
     slideThread.join();
-    otherPromise.join();
+    otherThread.join();
     std::string slideValue = slideResult.get();
     std::string otherValue = otherResult.get();
-    curRadar = (slideValue.empty()) ? (otherValue.empty() ? "" : otherValue) : slideValue;
+    if (!otherValue.empty()) {
+        curRadar = otherValue;
+    } else {
+        curRadar = slideValue;
+    }
     StrSplit(curRadar, splitStr, params);
     for (auto param : params) {
         if (param.find("LAUNCHER_APP_LAUNCH") != std::string::npos) {
             curRadar = param;
+            break;
         }
     }
     LOGD("GetRadarFrame::curRadar: %s", curRadar.c_str());
