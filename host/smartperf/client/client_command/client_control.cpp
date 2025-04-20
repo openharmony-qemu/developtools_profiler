@@ -30,7 +30,7 @@ int ClientControl::SocketStart(const std::string &args)
     std::string messageInit = message + args;
     int resultId = OHOS::SmartPerf::ClientControl::InitSocket();
     if (resultId == 1) {
-        LOGE("ClientControl::InitSocket() error(%d)", resultId);
+        LOGE("SocketStart::InitSocket() error(%d)", resultId);
         return resultId;
     }
     send(clientSocket, messageInit.c_str(), strlen(messageInit.c_str()), 0);

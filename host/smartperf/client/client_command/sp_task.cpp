@@ -96,8 +96,10 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
     if (sessionId.empty()) {
+        LOGE("ExceptionMsg ParseToTask sessoin id is null");
         return ExceptionMsg::SESSION_ID_NULL;
     } else if (configs.size() == 0) {
+        LOGE("ExceptionMsg ParseToTask configs size is 0");
         return ExceptionMsg::TASK_CONFIG_NULL;
     }
     taskInfo = { sessionId, pkg, pid, configs, interval, snf, isPrint };
@@ -144,6 +146,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
         fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
         fps.firstDump = true;
         isInit = true;
+        LOGD("InitTask success, task initialized.");
         return ErrCode::OK;
     }
 
@@ -160,6 +163,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
         if (ramConfig.find("-r") != std::string::npos) {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
+                LOGD("Starting RAM collection in new thread");
                 p.set_value(RAM::GetInstance().ItemData());
             }).detach();
         }
@@ -175,6 +179,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
         if (cpuConfig.find("-c") != std::string::npos) {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
+                LOGD("Starting CPU collection in new thread");
                 p.set_value(CPU::GetInstance().ItemData());
             }).detach();
         }
@@ -190,6 +195,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
         if (fpsConfig == "-f") {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
+                LOGD("Starting FPS collection in new thread");
                 p.set_value(FPS::GetInstance().ItemData());
             }).detach();
         }
@@ -447,8 +453,10 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
+    LOGD("Task starting...");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
+    LOGD("RAM first flag set.");
     if (!isInit) {
         WLOGE("Initialization failed.");
         return ErrCode::FAILED;
@@ -466,7 +474,9 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         SpProfilerFactory::SetProfilerPidByPkg(curTaskInfo.pid);
     }
     InitDataFile();
+    LOGD("Data files initialized.");
     ConfigDataThread();
+    LOGD("Data collection thread configuration completed.");
     thread = std::thread([this, msgTask]() {
         WLOGI("Starting data collection thread.");
         while (isRunning) {
@@ -621,6 +631,7 @@ std::map<std::string, std::string> SPTask::DetectionAndGrab()
 {
     std::map<std::string, std::string> templateMap;
     if (!curTaskInfo.stuckInfo.isEffective) {
+        LOGE("StuckInfo is not effective. Returning empty map.");
         return templateMap;
     }
 

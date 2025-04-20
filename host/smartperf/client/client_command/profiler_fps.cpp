@@ -119,6 +119,7 @@ void ProfilerFPS::GetResultFPS(int sectionsNum)
     }
     time_t now = time(nullptr);
     if (now == -1) {
+        LOGE("Failed to get current time.");
         return;
     }
     char *dt = ctime(&now);
@@ -161,6 +162,7 @@ void ProfilerFPS::GetTimeDiff()
         }
     }
     if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
         return;
     }
     fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
@@ -381,10 +383,12 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     }
     std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     if (cmd.empty()) {
+        LOGE("cmd is null");
         return fpsInfo;
     }
     FILE *fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
@@ -413,6 +417,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     }
     CalcJitters();
     if (pclose(fp) == -1) {
+        LOGE("Error: Failed to close file");
         return fpsInfo;
     }
     LOGD("ProfilerFPS fpsNum: %d", fpsNum);
@@ -523,6 +528,7 @@ std::string ProfilerFPS::GetGameLayer()
     std::string nodeIdStr;
     uint64_t nodeId;
     if (dumperSurface.empty()) {
+        LOGE("ProfilerFPS::DUMPER_SURFACE failed");
         return gameLayer;
     }
     FILE *fd = popen(dumperSurface.c_str(), "r");
@@ -552,6 +558,7 @@ std::string ProfilerFPS::GetGameLayer()
         }
     }
     if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
         return gameLayer;
     }
     LOGD("ProfilerFPS::gameLayer: (%s)", gameLayer.c_str());
@@ -587,6 +594,7 @@ std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, 
         layerStartPos += 1;
         gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
     }
+    LOGD("PorfilerFOS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
 }
 

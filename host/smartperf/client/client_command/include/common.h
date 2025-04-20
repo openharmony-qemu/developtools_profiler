@@ -325,10 +325,12 @@ enum class HisyseventCmd {
     HISYS_COMPLETED,
     HISYSEVENT,
     HISYS_PID,
+    HISYS_SCROLL_ANIMATION,
 };
 const std::unordered_map<HisyseventCmd, std::string> HISYSEVENT_CMD_MAP = {
     { HisyseventCmd::HISYS_APP_START, std::string("hisysevent -r -o PERFORMANCE -n APP_START") },
     { HisyseventCmd::HISYS_JANK, std::string("hisysevent -r -o PERFORMANCE -n INTERACTION_JANK") },
+    { HisyseventCmd::HISYS_SCROLL_ANIMATION, std::string("hisysevent -r -o PERFORMANCE -n SCROLL_ANIMATION") },
     { HisyseventCmd::HISYS_RESPONSE, std::string("hisysevent -r -n INTERACTION_RESPONSE_LATENCY") },
     { HisyseventCmd::HISYS_COMPLETED, std::string("hisysevent -r -n INTERACTION_COMPLETED_LATENCY") },
     { HisyseventCmd::HISYSEVENT, std::string("ps -ef |grep hisysevent") },

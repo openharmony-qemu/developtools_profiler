@@ -17,6 +17,7 @@
 #include <thread>
 #include <chrono>
 #include <dlfcn.h>
+#include "include/sp_log.h"
 #include "include/service_plugin.h"
 
 namespace OHOS {
@@ -27,23 +28,28 @@ namespace SmartPerf {
     }
     void LockFrequency::LockingThread()
     {
+        LOGD("Lock frequency thread create");
         const int loopLockTime = 4000;
 
         ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
         void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::TEST_PLUGIN);
         if (!handle) {
+            LOGE("open TestServerPlugin so file error.");
             return;
         }
 
         typedef int32_t (*GetLockFreq)();
         GetLockFreq testServerPlugin = (GetLockFreq)dlsym(handle, lockFunction.c_str());
         if (!testServerPlugin) {
+            LOGE("Error loading symbol");
             return;
         }
         while (isCollecting) {
             testServerPlugin();
             std::this_thread::sleep_for(std::chrono::milliseconds(loopLockTime));
         }
+
+        LOGD("Lock frequency thread end");
     }
 
     void LockFrequency::SetIsCollecting(bool state)

@@ -35,6 +35,7 @@ namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
+    LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
         DeviceServer(true);
@@ -90,6 +91,7 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 {
+    LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }

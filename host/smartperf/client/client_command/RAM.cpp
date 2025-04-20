@@ -311,6 +311,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
+        LOGD("ParsePssValues::line = %s", line.c_str());
         if (line[0] == '-') {
             continue;
         }
@@ -342,6 +343,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
 
     FillPssRamInfo(index, pid, pss, pssRamInfo);
     // 应用程序的内存占用信息
+    LOGD("pssRamInfo map size(%u)", pssRamInfo.size());
     return pssRamInfo;
 }
 
@@ -404,6 +406,7 @@ std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> 
     }
    
     //应用程序的内存消耗信息
+    LOGD("sumRamInfo map size(%u)", sumRamInfo.size());
     return sumRamInfo;
 }
 }

@@ -18,6 +18,7 @@
 #include "unistd.h"
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
+#include "include/sp_log.h"
 #include "include/common.h"
 namespace OHOS {
 namespace SmartPerf {
@@ -28,6 +29,8 @@ void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int 
     threshold = mThreshold;
     lowfps = mLowfps;
     curNum = mCurNum;
+    LOGD("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%lld) mLowfps(%d) mCurNum(%d)",
+        mSum, mInterval, mThreshold, mLowfps, mCurNum);
 }
 void ByTrace::ThreadGetTrace() const
 {
@@ -42,12 +45,14 @@ void ByTrace::ThreadGetTrace() const
     std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
     std::string traceCmdExe = cmdString + traceFile;
     SPUtils::LoadCmd(traceCmdExe, result);
+    LOGD("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
 }
 TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
 {
     times++;
     int two = 2;
     long long curTime = SPUtils::GetCurTime();
+    LOGD("Bytrace get curTime : %lld", curTime);
     if (curNum <= sum && currentTrigger < 0 && times > two) {
         for (const long long& jitter : jitters) {
             long long normalJitter = jitter / 1e6;

@@ -76,14 +76,18 @@ void Capture::ThreadGetCatch()
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGE("%s capture not be created!", captureDir.c_str());
             return;
+        } else {
+            LOGD("%s created successfully!", captureDir.c_str());
         }
     };
     std::ostringstream errorRecv;
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0666);
     if (fd == -1) {
+		LOGE("Failed to open file: %s", savePath.c_str());
         return;
     }
     if (!TakeScreenCap(savePath)) {
+        LOGE("Screen Capture Failed!");
         close(fd);
         return;
     }
@@ -102,11 +106,14 @@ void Capture::ThreadGetCatchSocket()
         if (!SPUtils::LoadCmd(capturePath, cmdResult)) {
             LOGE("%s capture not be created!", captureDir.c_str());
             return;
+        } else {
+            LOGD("%s created successfully!", captureDir.c_str());
         }
     };
 
     auto fd = open(savePath.c_str(), O_RDWR | O_CREAT, 0644);
     if (fd == -1) {
+		LOGE("Capture::ThreadGetCatchSocket Failed to open file");
         return;
     }
     std::string snapshot = CMD_COMMAND_MAP.at(CmdCommand::SNAPSHOT);
@@ -140,6 +147,7 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     std::shared_ptr<Media::PixelMap> pixelMap = displayMgr.GetScreenshot(displayMgr.GetDefaultDisplayId());
     static constexpr int bitmapDepth = 8;
     if (pixelMap == nullptr) {
+        LOGE("Failed to get display pixelMap");
         return false;
     }
     auto width = static_cast<uint32_t>(pixelMap->GetWidth());
@@ -148,10 +156,12 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     auto stride = static_cast<uint32_t>(pixelMap->GetRowBytes());
     png_structp pngStruct = png_create_write_struct(PNG_LIBPNG_VER_STRING, nullptr, nullptr, nullptr);
     if (pngStruct == nullptr) {
+        LOGE("png_create_write_struct nullptr!");
         return false;
     }
     png_infop pngInfo = png_create_info_struct(pngStruct);
     if (pngInfo == nullptr) {
+        LOGE("png_create_info_struct error nullptr!");
         png_destroy_write_struct(&pngStruct, nullptr);
         return false;
     }
@@ -161,6 +171,7 @@ bool Capture::TakeScreenCap(const std::string &savePath) const
     }
     FILE *fp = fopen(realPath, "wb");
     if (fp == nullptr) {
+        LOGE("open file error!");
         png_destroy_write_struct(&pngStruct, &pngInfo);
         return false;
     }
