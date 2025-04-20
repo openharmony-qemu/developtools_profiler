@@ -633,6 +633,10 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         }
         spSocket.Sendto(retCode);
         LOGD("UDP send PkgName = %s", retCode.c_str());
+    } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
+        retCode = SplitMsg(recvBuf);
+        std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
+        rStart.detach();
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
         retCode = "Version: " + SPUtils::GetVersion();
         spSocket.Sendto(retCode);

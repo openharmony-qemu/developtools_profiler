@@ -99,15 +99,15 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
-        LOGD("no app list Dynamic"); //Ã»ÓÐAPP listÓ¾µÀ
+        LOGD("no app list Dynamic"); //Ã»ï¿½ï¿½APP listÓ¾ï¿½ï¿½
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
-        LOGD("no swiper Dynamic"); //Ã»ÓÐswiper Ó¾µÀ
+        LOGD("no swiper Dynamic"); //Ã»ï¿½ï¿½swiper Ó¾ï¿½ï¿½
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!tabsDynamicExists) {
-        LOGD("no tabs Dynamic"); //Ã»ÓÐtabs Ó¾µÀ
+        LOGD("no tabs Dynamic"); //Ã»ï¿½ï¿½tabs Ó¾ï¿½ï¿½
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         swiperDynamicExists ? swiperFrameLossRate : -1;
     } else {
@@ -119,7 +119,7 @@ void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
         if (swiperFrameLossRate > 0) {
-            LOGD("no app list hitchTime"); //Ã»ÓÐapp list¿¨¶Ù´ÎÊý
+            LOGD("no app list hitchTime"); //Ã»ï¿½ï¿½app listï¿½ï¿½ï¿½Ù´ï¿½ï¿½ï¿½
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
             frameLossRate = tabsFrameLossRate;
@@ -127,7 +127,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (swiperFrameLossRate == 0) {
-        LOGD("no swiper list hitchTime"); //Ã»ÓÐswiper list¿¨¶Ù´ÎÊý
+        LOGD("no swiper list hitchTime"); //Ã»ï¿½ï¿½swiper listï¿½ï¿½ï¿½Ù´ï¿½ï¿½ï¿½
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -136,7 +136,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (tabsFrameLossRate == 0) {
-        LOGD("no tabs list hitchTime"); //Ã»ÓÐtabs list¿¨¶Ù´ÎÊý
+        LOGD("no tabs list hitchTime"); //Ã»ï¿½ï¿½tabs listï¿½ï¿½ï¿½Ù´ï¿½ï¿½ï¿½
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (swiperFrameLossRate > 0) {
@@ -348,7 +348,7 @@ void StallingRateTrace::APPTabs(const std::string &line, const std::string &sign
             }
             std::string waitFenceId = "|H:Waiting for Present Fence " + std::to_string(fenceIdTabs);
             if (line.find(waitFenceId) != std::string::npos) {
-                nowTabsTime = std::stod(SmartPerf::StallingRateTrace::GetOnScreenTimeStart(line));
+                nowTabsTime = SPUtilesTye::StringToSometype<double>(GetOnScreenTimeStart(line));
                 GetFrameLossTime(nowTabsTime, lastTabsTime, roundTabsTime, frameLossTabsTime);
                 lastTabsTime = nowTabsTime;
                 upperScreenTabsFlag = false;
