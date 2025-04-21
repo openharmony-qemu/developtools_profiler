@@ -22,6 +22,7 @@
 #include <iomanip>
 #include "include/parse_click_response_trace.h"
 #include "include/sp_utils.h"
+#include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
@@ -33,6 +34,7 @@ double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
     }
     infile.open(realPath);
     if (infile.fail()) {
+        LOGE("ParseClickResponseTrace open file(%s) fialed ", fileNamePath.c_str());
         return 0;
     }
     completeTime = GetLineTime();

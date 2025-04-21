@@ -619,7 +619,8 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
     }
     for (const auto& item : hookCtx_) {
         if ((item->pid > 0) && hookService_) {
-            hookService_->CloseSocketFd(item->pid);
+            hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
+            hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
         } else if (item->pid <= 0) {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
@@ -754,7 +755,7 @@ int32_t HookManager::CreatePluginSession()
     return RET_ERR;
 }
 
-void HookManager::StartPluginSession()
+void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo)
 {
     for (const auto& item : hookCtx_) {
         if (item->stackPreprocess == nullptr) {
@@ -767,11 +768,22 @@ void HookManager::StartPluginSession()
         item->stackPreprocess->InitStatisticsTime();
         if (item->pid > 0) {
             PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
+            uid_t uid = 0;
+            gid_t gid = 0;
+            if (!COMMON::GetUidGidFromPid(static_cast<pid_t>(item->pid), uid, gid)) {
+                PROFILER_LOG_INFO(LOG_CORE, "get target process uid gid failed");
+                continue;
+            }
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
                 const int bufSize = 256;
                 char buf[bufSize] = {0};
                 strerror_r(errno, buf, bufSize);
                 PROFILER_LOG_ERROR(LOG_CORE, "send 36 signal error = %s", buf);
+            }
+            if (!saMode_) {
+                hookService_->AddPidInfo(static_cast<pid_t>(item->pid), uid, gid);
+            } else if (pidInfo != nullptr) {
+                (*pidInfo)[static_cast<pid_t>(item->pid)] = std::make_pair(uid, gid);
             }
         } else {
             PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession: pid(%d) is less or equal zero.", item->pid);

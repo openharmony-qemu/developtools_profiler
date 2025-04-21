@@ -13,6 +13,8 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <future>
+#include <thread>
 #include <fstream>
 #include <sstream>
 #include <algorithm>
@@ -265,11 +267,57 @@ std::string SPUtils::GetScreen()
     pclose(fd);
     return screenStr;
 }
+
+std::string SPUtils::ExecuteCommand(const std::string& command)
+{
+    std::string result;
+    FILE* pipe = popen(command.c_str(), "r");
+    if (!pipe) {
+        LOGE("popen failed!");
+        return " ";
+    }
+    char buffer[BUFFER_SIZE];
+    size_t bytesRead;
+    while ((bytesRead = fread(buffer, 1, sizeof(buffer), pipe)) > 0) {
+        result.append(buffer, bytesRead);
+    }
+    pclose(pipe);
+    return result;
+}
 std::string SPUtils::GetRadarFrame()
 {
-    std::string cmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_JANK);
+    std::vector<std::string> params;
+    std::string slideCmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_SCROLL_ANIMATION);
+    std::string otherCmd = HISYSEVENT_CMD_MAP.at(HisyseventCmd::HISYS_JANK);
     std::string curRadar = "";
-    LoadCmd(cmd, curRadar);
+    const std::string splitStr = "{";
+    std::promise<std::string> slidePromise;
+    std::promise<std::string> otherPromise;
+    std::future<std::string> slideResult = slidePromise.get_future();
+    std::future<std::string> otherResult = otherPromise.get_future();
+    std::thread slideThread([&slideCmd, &slidePromise]() {
+        slidePromise.set_value(ExecuteCommand(slideCmd));
+    });
+    std::thread otherThread([&otherCmd, &otherPromise]() {
+        otherPromise.set_value(ExecuteCommand(otherCmd));
+    });
+    slideThread.join();
+    otherThread.join();
+    std::string slideValue = slideResult.get();
+    std::string otherValue = otherResult.get();
+    if (!otherValue.empty()) {
+        curRadar = otherValue;
+    } else {
+        curRadar = slideValue;
+    }
+    StrSplit(curRadar, splitStr, params);
+    for (auto param : params) {
+        if (param.find("LAUNCHER_APP_LAUNCH") != std::string::npos) {
+            curRadar = param;
+            break;
+        }
+    }
+    LOGD("GetRadarFrame::curRadar: %s", curRadar.c_str());
     return curRadar;
 }
 std::string SPUtils::GetRadarResponse()

@@ -60,7 +60,10 @@ const std::map<std::string, clockid_t> clockIdMap = {
 };
 constexpr int EXECVP_ERRNO = 2;
 const int SHELL_UID = 2000;
+const int STATUS_ID_INDEX = 4;
 const std::string DEFAULT_PATH = "/data/local/tmp/";
+const std::string UID_TAG = "Uid:";
+const std::string GID_TAG = "Gid:";
 constexpr int READ = 0;
 constexpr int WRITE = 1;
 const int FILE_PATH_SIZE = 512;
@@ -424,6 +427,54 @@ int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock
 
     PROFILER_LOG_DEBUG(LOG_CORE, "END %s: success!", __func__);
     return stat;
+}
+
+bool GetStatusLineId(std::string& line, unsigned long& target)
+{
+    size_t start = line.find_first_of("\t") + 1;
+    size_t end = line.find_first_of("\t", start);
+    std::string targetStr = line.substr(start, end - start);
+    std::istringstream iss(targetStr);
+    unsigned long result = 0;
+    iss >> result;
+    if (iss.fail() || !iss.eof()) {
+        return false;
+    }
+    target = result;
+    return true;
+}
+
+bool GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid)
+{
+    std::string line;
+    std::string procStatusPath = "/proc/" + std::to_string(pid) + "/status";
+    std::ifstream fileStream(procStatusPath);
+
+    if (!fileStream.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid cannot open proc status file for pid: %d", pid);
+        return false;
+    }
+    unsigned long statusId = 0;
+    while (std::getline(fileStream, line)) {
+        if (line.substr(0, STATUS_ID_INDEX) == UID_TAG) {
+            if (!GetStatusLineId(line, statusId)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid get uid failed");
+                return false;
+            }
+            ruid = static_cast<uid_t>(statusId);
+        } else if (line.substr(0, STATUS_ID_INDEX) == GID_TAG) {
+            if (!GetStatusLineId(line, statusId)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "GetUidGidFromPid get gid failed");
+                return false;
+            }
+            rgid = static_cast<gid_t>(statusId);
+        }
+        if (ruid != 0 && rgid != 0) {
+            break;
+        }
+    }
+    fileStream.close();
+    return true;
 }
 
 // IF pipe fds is block, before release other threads, you need call CustomPUnblock

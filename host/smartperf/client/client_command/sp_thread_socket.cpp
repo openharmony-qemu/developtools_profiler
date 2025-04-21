@@ -136,6 +136,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
     while (socketConnect == true) {
         int procFd = spSocket.Accept();
         std::cout << "Socket TCP procFd: " << procFd << std::endl;
+        WLOGI("Accepted socket connection, procFd: %d", procFd);
         while (procFd > 0) {
             int reFd = spSocket.Recv();
             if (reFd < 0) {
@@ -641,6 +642,7 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             LOGD("HandleNullMsg pkgName: (%s)", pkgName.c_str());
         }
         spSocket.Sendto(retCode);
+        LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
         std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
@@ -815,6 +817,7 @@ std::string SpThreadSocket::SpGetPkg(const std::string &spMsg) const
 std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
 {
     if (spMsg.empty()) {
+        LOGE("spMsg is null");
         return spMsg;
     }
     size_t pos = spMsg.find("$");
@@ -824,6 +827,7 @@ std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
         if (sps.size() > 1) {
             return sps[1];
         } else {
+            LOGE("SpGetPid sps size is zreo");
             return "";
         }
     } else {

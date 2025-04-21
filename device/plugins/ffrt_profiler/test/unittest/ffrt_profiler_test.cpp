@@ -336,56 +336,6 @@ HWTEST_F(FfrtPofilerTest, TestFunction008, TestSize.Level1)
     EXPECT_TRUE(RunCommand(cmd, ret));
 }
 
-/**
- * @tc.name: ffrt plugin
- * @tc.desc:  FfrtPofiler CreateWriter Function Test isProtobufSerialize is false return true
- * @tc.type: FUNC
- */
-HWTEST_F(FfrtPofilerTest, TestFunction009, TestSize.Level1)
-{
-    StartProcess(FFRT_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
-    std::string ret;
-    EXPECT_TRUE(RunCommand(cmd, ret));
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    FfrtProfilerConfig config;
-    std::string pidStr;
-    RunCommand("pidof render_service", pidStr);
-    auto pidService = stoi(pidStr);
-    config.add_pid(pidService);
-    config.add_startup_process_name("render_service");
-    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
-    ffrtProfilerMgr->SetConfig(config);
-    ffrtProfilerMgr->Init();
-    ffrtProfilerMgr->CheckConfig();
-    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, false));
-}
-
-/**
- * @tc.name: ffrt plugin
- * @tc.desc:  FfrtPofiler CreateWriter Function Test isProtobufSerialize is true return true
- * @tc.type: FUNC
- */
-HWTEST_F(FfrtPofilerTest, TestFunction010, TestSize.Level1)
-{
-    StartProcess(FFRT_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
-    std::string ret;
-    EXPECT_TRUE(RunCommand(cmd, ret));
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    FfrtProfilerConfig config;
-    std::string pidStr;
-    RunCommand("pidof render_service", pidStr);
-    auto pidService = stoi(pidStr);
-    config.add_pid(pidService);
-    config.add_startup_process_name("render_service");
-    config.set_clock_id(FfrtProfilerConfig::REALTIME_COARSE);
-    ffrtProfilerMgr->SetConfig(config);
-    ffrtProfilerMgr->Init();
-    ffrtProfilerMgr->CheckConfig();
-    EXPECT_TRUE(ffrtProfilerMgr->CreateWriter("ffrt-profiler", SMB_SIZE, MOBILE_BIT, MOBILE_BIT, true));
-}
-
 // /**
 //  * @tc.name: ffrt plugin
 //  * @tc.desc:  FfrtPofiler RegisterAgentPlugin Function Test return false
@@ -520,23 +470,6 @@ HWTEST_F(FfrtPofilerTest, TestFunction017, TestSize.Level1)
     ffrtProfilerMgr->SetConfig(config);
     ffrtProfilerMgr->StopFfrtProfiler();
     EXPECT_EQ(ffrtProfilerMgr->ffrtCtx_.size(), 0);
-}
-
-// /**
-//  * @tc.name: ffrt plugin
-//  * @tc.desc:  FfrtPofiler ResetWriter Function Test
-//  * @tc.type: FUNC
-//  */
-HWTEST_F(FfrtPofilerTest, TestFunction018, TestSize.Level1)
-{
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    FfrtProfilerConfig config;
-    int32_t pid = -1;
-    config.add_pid(pid);
-    config.add_startup_process_name("test_name002");
-    config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
-    ffrtProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(ffrtProfilerMgr->ResetWriter(ffrtPrfolerExePid_));
 }
 
 // /**

@@ -166,6 +166,7 @@ void CreateDir(const std::string &dirPath);
 void RemoveDirOrFile(const std::string &dirPath);
 void CopyFiles(std::string cpStr);
 void TarFiles(std::string tarStr);
+std::string ExecuteCommand(const std::string& command);
 };
 }
 }

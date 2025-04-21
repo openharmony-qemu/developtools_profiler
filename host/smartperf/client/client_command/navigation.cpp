@@ -24,6 +24,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Navigation::ItemData()
 {
     std::map<std::string, std::string> result = Navigation::GetNavInfo();
+    LOGD("Navigation:ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -114,6 +115,7 @@ std::string Navigation::GetWinId(std::string navPid) const
         }
     }
     if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
         return wid = -1;
     }
     return wid;

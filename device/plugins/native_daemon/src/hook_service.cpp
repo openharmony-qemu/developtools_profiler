@@ -49,7 +49,19 @@ bool HookService::StartService(const std::string& unixSocketName)
     return true;
 }
 
-void HookService::CloseSocketFd(int pid)
+void HookService::AddPidInfo(pid_t pid, uid_t uid, gid_t gid)
+{
+    std::unique_lock<std::mutex> lock(pidInfoMtx_);
+    pidInfo_[pid] = std::make_pair(uid, gid);
+}
+
+void HookService::RemovePidInfo(pid_t pid)
+{
+    std::unique_lock<std::mutex> lock(pidInfoMtx_);
+    pidInfo_.erase(pid);
+}
+
+void HookService::CloseSocketFd(pid_t pid)
 {
     std::unique_lock<std::mutex> lock(pidFdMtx_);
     if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
@@ -97,6 +109,20 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
     firstProcess_ = false;
+    if (!(hookMgr_ && hookMgr_->GetHookConfig().startup_mode())) {
+        int socketHandle = context.GetSocketHandle();
+        struct ucred cred;
+        socklen_t len = sizeof(struct ucred);
+        if (getsockopt(socketHandle, SOL_SOCKET, SO_PEERCRED, &cred, &len) == -1) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc getsockopt failed");
+            return false;
+        }
+        if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
+            (pidInfo_[cred.pid].second == cred.gid))) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HookService ProtocolProc process uid gid check failed");
+            return false;
+        }
+    }
     auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
     if (eventFd == smbFd) {
         PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
@@ -110,7 +136,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     context.SendFileDescriptor(eventFd);
     hookMgr_->ResetStartupParam();
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
-    pidFds_[peerConfig] = context.GetSocketHandle();
+    pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
     socketLock.unlock();
     return true;
 }
