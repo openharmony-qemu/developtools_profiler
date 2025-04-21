@@ -31,6 +31,7 @@
 #include "ByTrace.h"
 #include "startup_delay.h"
 #include "common.h"
+#include "transaction/rs_interfaces.h"
 
 using namespace testing::ext;
 using namespace std;

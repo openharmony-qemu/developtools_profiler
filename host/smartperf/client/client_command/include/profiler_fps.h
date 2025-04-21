@@ -71,7 +71,8 @@ public:
     bool CalcFpsAndJitters(bool isBreak);
     long long CalculateJitter();
     FpsInfoProfiler GetSurfaceFrame(const std::string& name);
-    FpsInfoProfiler GetFrameInfoFromMap(const std::string& name);
+    FpsInfoProfiler GetFpsInfoByRs(const std::string& name, bool isBreak);
+    FpsInfoProfiler GetFpsInfoByDump(const std::string& name, bool isBreak);
     void ResetFpsInfo();
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
@@ -137,6 +138,8 @@ private:
     bool rkFlag = false;
     std::string gameLayerName;
     bool isSections = true;
+    std::string nodeIdStr = "";
+    bool isNodeId = false;
 };
 }
 }

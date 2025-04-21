@@ -96,6 +96,7 @@ ohos_unittest("sp_daemon_ut") {
     "ability_base:want",
     "c_utils:utils",
     "common_event_service:cesfwk_innerkits",
+    "graphic_2d:librender_service_client",
     "hilog:libhilog",
     "hiview:libucollection_utility",
     "image_framework:image_native",

@@ -33,7 +33,6 @@
 #include "include/sp_profiler_factory.h"
 #include "include/sp_log.h"
 #include "include/sp_task.h"
-#include "include/profiler_fps.h"
 #include "include/heartbeat.h"
 #include "include/control_call_cmd.h"
 #include "include/sp_profiler_factory.h"
@@ -538,31 +537,42 @@ void SpThreadSocket::SaveGpuCounter() const
     gpuCounter.StopCollect();
 }
 
+void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data)
+{
+    std::string sdkFps;
+    std::string resultfps = "vfps||";
+    for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
+        if (iter->first != "fpsJitters") {
+            std::string temp = iter->second + "@@";
+            resultfps += std::string(temp.c_str());
+        }
+    }
+    if (!pfps.isTargetFps) {
+        pfps.fpsBySdk = pfps.GetFpsBySdk();
+    }
+    if (pfps.isGameApp) {
+        sdkFps = resultfps + "$$targetFps||" + pfps.fpsBySdk;
+        spSocket.Sendto(sdkFps);
+    } else {
+        spSocket.Sendto(resultfps);
+    }
+    LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str());
+}
+
 void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
     std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
-        ProfilerFPS &pfps = ProfilerFPS::GetInstance();
         pfps.isLowCurFps = true;
-        std::string sdkFps;
-        std::string resultfps = "vfps||";
-        for (auto iter = data.cbegin(); iter != data.cend(); ++iter) {
-            if (iter->first != "fpsJitters") {
-                std::string temp = iter->second + "@@";
-                resultfps += std::string(temp.c_str());
-            }
-        }
-        if (!pfps.isTargetFps) {
-            pfps.fpsBySdk = pfps.GetFpsBySdk();
-        }
-        if (pfps.isGameApp) {
-            sdkFps = resultfps + "$$targetFps||" + pfps.fpsBySdk;
-            spSocket.Sendto(sdkFps);
+        // No page hap need return fps and jitters to calc fatal frame freeze
+        if (pfps.isPreset) {
+            retCode = MapToString(data);
+            spSocket.Sendto(retCode);
+            LOGD("UDP send retCode No page %s", retCode.c_str());
         } else {
-            spSocket.Sendto(resultfps);
+            LowPowerFps(spSocket, data);
         }
-        LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str());
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
@@ -667,9 +677,8 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
             std::string processIds = "";
-            ProfilerFPS &profilerFPS = ProfilerFPS::GetInstance();
-            profilerFPS.isPreset = IsPreset(pkgAndPid);
-            if (profilerFPS.isPreset) {
+            pfps.isPreset = IsPreset(pkgAndPid);
+            if (pfps.isPreset) {
                 processId = SpGetPid(pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
@@ -684,7 +693,6 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
 
 void SpThreadSocket::ResetValue(std::string retCode) const
 {
-    ProfilerFPS &pfps = ProfilerFPS::GetInstance();
     pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
     pfps.firstDump = true;
     RAM &ram = RAM::GetInstance();
@@ -700,7 +708,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
         db.CallBeginAndFinish();
         db.isDumpDubaiFinish = true;
-        ProfilerFPS::isLowCurFps = false;
+        pfps.isLowCurFps = false;
         retCode = db.CallMoveDubaiDbFinished();
         LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
