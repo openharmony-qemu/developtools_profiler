@@ -69,13 +69,7 @@ std::map<std::string, std::string> procRamInfoLast {
 };
 std::map<std::string, std::string> RAM::ItemData()
 {
-    std::map<std::string, std::string> result;
-    std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
-    if (!sysRamInfo.empty()) {
-        for (const auto& item : sysRamInfo) {
-            result.insert(item);
-        }
-    }
+    std::map<std::string, std::string> result = RAM::GetSysRamInfo();
     if (!processId.empty()) {
         std::map<std::string, std::string> procRamInfomation;
         if (g_flagFirst) {
@@ -86,20 +80,14 @@ std::map<std::string, std::string> RAM::ItemData()
         }
         if (!procRamInfoLast.empty()) {
             procRamInfomation = procRamInfoLast;
-            for (const auto& item : procRamInfomation) {
-                result.insert(item);
-            }
         } else {
             procRamInfomation = ProcMemNaInfo();
-            for (const auto& item : procRamInfomation) {
-                result.insert(item);
-            }
         }
+        result.insert(std::make_move_iterator(procRamInfomation.begin()),
+            std::make_move_iterator(procRamInfomation.end()));
     } else if (!packageName.empty() && processId.empty()) {
         std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
-        for (const auto& item : procMemInfo) {
-            result.insert(item);
-        }
+        result.insert(std::make_move_iterator(procMemInfo.begin()), std::make_move_iterator(procMemInfo.end()));
     }
     return result;
 }
@@ -217,22 +205,18 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
     if (fd == nullptr) {
         LOGD("RAM::fd is empty");
         emptyprocRamInfo = ProcMemNaInfo();
-        for (auto item : emptyprocRamInfo) {
+        for (auto& item : emptyprocRamInfo) {
             item.second = "0";
         }
         return emptyprocRamInfo;
     }
-    std::vector<std::string> paramsInfo;
-    procRamInfo = GetPssRamInfo(fd, paramsInfo, ramPid, index);
+
+    procRamInfo = GetPssRamInfo(fd, ramPid, index);
     if (procRamInfo.empty()) {
         pclose(fd);
         return emptyprocRamInfo;
     }
-    for (const auto &value : paramsInfo) {
-        if (procRamInfo[value].empty()) {
-            procRamInfo[value] = "0";
-        }
-    }
+
     if (pclose(fd) == -1) {
         LOGE("Error: Failed to close file");
         return emptyprocRamInfo;
@@ -290,12 +274,12 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     return dataMap;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo,
-    const std::string pid, size_t index) const
+std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string pid, size_t index) const
 {
+    std::vector<std::string> paramsInfo;
     std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo, pid, index);
     std::map<std::string, std::string> sumRamInfo = SaveSumRamInfo(paramsInfo, pid, index);
-    pssRamInfo.insert(sumRamInfo.cbegin(), sumRamInfo.cend());
+    pssRamInfo.insert(std::make_move_iterator(sumRamInfo.begin()), std::make_move_iterator(sumRamInfo.end()));
     if (paramsInfo.empty()) {
         for (auto &pss : pssRamInfo) {
             pss.second = pid + ":" + "0" + "|";
@@ -368,7 +352,7 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
     }
 }
 
-std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string> paramsInfo,
+std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>& paramsInfo,
     std::string pid, size_t index) const
 {
     std::map<std::string, std::string> sumRamInfo;

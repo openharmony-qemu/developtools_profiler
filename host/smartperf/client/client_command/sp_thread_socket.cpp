@@ -170,8 +170,7 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         }
         return;
     }
-    if (recvStr.find("-lockfreq") != std::string::npos &&
-        SpThreadSocket::GetInstance().GetToken() == "") {
+    if (recvStr.find("-lockfreq") != std::string::npos && SpThreadSocket::GetInstance().GetToken() == "") {
         WLOGE("'-lockfreq' must have a valid token.");
         return;
     }
@@ -199,7 +198,6 @@ void SpThreadSocket::StartRecv(SpServerSocket &spSocket)
         std::cout << data << std::endl;
     };
     ErrCode code = SPTask::GetInstance().StartTask(lambdaTask);
-    SPTask::GetInstance().StartRecord();
     if (code == ErrCode::OK) {
         spSocket.Send("start::True");
         flagRunning = true;
@@ -207,7 +205,9 @@ void SpThreadSocket::StartRecv(SpServerSocket &spSocket)
     } else if (code == ErrCode::FAILED) {
         spSocket.Send("start::False");
         WLOGE("Sent start::False message to socket.");
+        return;
     }
+    SPTask::GetInstance().StartRecord();
 }
 void SpThreadSocket::StartRecvRealtime(SpServerSocket &spSocket) const
 {
@@ -299,6 +299,7 @@ SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
     // 提取 token
     std::string token = recvStr.substr(recvStr.find_last_of(":::") + 1);
     token = token.substr(0, token.find(' '));
+
     std::string udpSocketToken = SpThreadSocket::GetInstance().GetToken();
     LOGD("Comparing token with Udp token...");
     // token 校验
@@ -429,15 +430,15 @@ void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
 
 void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
 {
-    spTask.SetStartFlag();
+    taskMgr_ = std::make_shared<TaskManager>();
+    taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
-    if (recvBuf.find("-FPS") != std::string::npos || recvBuf.find("-LOW_POWER") != std::string::npos) {
-        FPS &fps = FPS::GetInstance();
-        fps.isGameApp = SPUtils::GetIsGameApp(spTask.GetCurTaskInfo().packageName);
-        fps.firstDump = true;
-    }
     spTask.SetAppInitFlag();
-    spTask.SetAppReceiveDataOffFlag();
+
+    std::string filePath = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId + "/t_index_info.csv";
+    spTask.CreatPath(filePath);
+    taskMgr_->SetFilePath(filePath);
+    taskMgr_->SetRecordState(true);
 }
 
 int SpThreadSocket::FileSocketConnect()
@@ -750,9 +751,12 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         }
         ConnectAndSendFile(tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
-        hapStartFlag = false;
-        SPTask::isSdkTask = false;
         SPTask::GetInstance().ResetSdkParam();
+        if (taskMgr_ != nullptr) {
+            taskMgr_->SetHapFlag(false);
+            taskMgr_->Stop();
+            taskMgr_->WriteToCSV();
+        }
         spTask.ClearStopFlag();
     } else {
         UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);
@@ -763,23 +767,29 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
     std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::APP_START_COLLECT) {
-        hapStartFlag = true;
-        hapAppcollect = true;
         SPTask::isSdkTask = true;
         SPTask::GetInstance().ConfigureSdkDataHap();
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
-        spTask.SetAppReceiveDataOnFlag();
+        if (taskMgr_ != nullptr) {
+            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
+            taskMgr_->SetHapFlag(true);
+            taskMgr_->EnableIPCCallback(lambdaTask);
+        }
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
-        spTask.SetAppReceiveDataOffFlag();
+        if (taskMgr_ != nullptr) {
+            taskMgr_->DisableIPCCallback();
+        }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
-        hapAppcollect = false;
         SPTask::isSdkTask = false;
         SPTask::GetInstance().ResetSdkParam();
+        if (taskMgr_ != nullptr) {
+            taskMgr_->Stop(true);
+        }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
-        hapAppcollect = true;
         SPTask::isSdkTask = true;
         SPTask::GetInstance().ConfigureSdkDataHap();
+        StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(indexFilePath);
@@ -902,23 +912,21 @@ void SpThreadSocket::SetNeedUdpToken(bool isNeed)
 void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
 {
     LOGD("UDP START Task starting...");
-    auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data.c_str()); };
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     spTask.ConfigDataThread();
-    udpStartCollect = std::thread([this, lambdaTask]() {
-        while (hapStartFlag) {
-            if (hapAppcollect) {
-                spTask.AsyncGetDataMap(lambdaTask);
-            }
+    if (udpStartCollect.joinable()) {
+        udpStartCollect.join();
+    }
+    udpStartCollect = std::thread([this]() {
+        if (taskMgr_ == nullptr) {
+            return;
         }
+        taskMgr_->Start();
+        taskMgr_->Wait();
         LOGD("Data collecting thread exiting.");
     });
     return;
-}
-bool SpThreadSocket::GetHapStartFalg()
-{
-    return hapStartFlag;
 }
 }
 }

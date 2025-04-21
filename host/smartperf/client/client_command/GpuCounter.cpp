@@ -28,7 +28,26 @@ namespace OHOS {
     namespace SmartPerf {
         std::map<std::string, std::string> GpuCounter::ItemData()
         {
-            return std::map<std::string, std::string>();
+            std::map<std::string, std::string> gpuCounterDataMap;
+            GetGpuRealtimeData(gpuCounterDataMap);
+            return gpuCounterDataMap;
+        }
+
+        void GpuCounter::StartExecutionOnce()
+        {
+            StartCollect(GpuCounter::GC_START);
+        }
+
+        void GpuCounter::FinishtExecutionOnce()
+        {
+            SaveData(savePathDirectory_);
+            StopCollect();
+            gpuCounterData.clear();
+        }
+
+        void GpuCounter::SetSavePathDirectory(const std::string& dir)
+        {
+            savePathDirectory_ = dir;
         }
 
         void GpuCounter::StartCollect(GcCollectType type)
@@ -70,11 +89,12 @@ namespace OHOS {
             }
         }
 
-        void GpuCounter::SaveData(std::string path)
+        void GpuCounter::SaveData(const std::string& path)
         {
-            if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0) {
+            if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0 || path.empty()) {
                 return;
             }
+            savePathDirectory_ = path;
             char gpuCounterDataDirChar[PATH_MAX] = {0x00};
             if (realpath(path.c_str(), gpuCounterDataDirChar) == nullptr) {
                 WLOGE("data dir %s is nullptr", path.c_str());

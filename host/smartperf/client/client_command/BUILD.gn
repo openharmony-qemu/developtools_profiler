@@ -53,7 +53,9 @@ ohos_executable("SP_daemon") {
     "Threads.cpp",
     "client_control.cpp",
     "control_call_cmd.cpp",
+    "cpu_info.cpp",
     "editor_command.cpp",
+    "effective.cpp",
     "heartbeat.cpp",
     "lock_frequency.cpp",
     "navigation.cpp",
@@ -75,6 +77,13 @@ ohos_executable("SP_daemon") {
     "stalling_rate_trace.cpp",
     "startup_delay.cpp",
   ]
+
+  sources += [
+    "argument_parser.cpp",
+    "task_manager.cpp",
+    "thread_pool.cpp",
+  ]
+
   cflags = [
     "-O2",
     "-ffunction-sections",

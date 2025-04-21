@@ -73,26 +73,6 @@ HWTEST_F(SPdaemonTaskTest, CheckTcpParamTestCase003, TestSize.Level1)
 }
 
 /**
- * @tc.name: SPTask::DetectionAndGrab
- * @tc.desc: Test DetectionAndGrab
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTaskTest, DetectionAndGrabTestCase001, TestSize.Level1)
-{
-    bool ret = false;
-    std::map<std::string, std::string> templateMap;
-    std::string recvStr = "-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -o";
-    SPTask::GetInstance().InitTask(recvStr);
-    templateMap = SPTask::GetInstance().DetectionAndGrab();
-
-    if (templateMap.empty()) {
-        ret = true;
-    }
-
-    EXPECT_TRUE(ret);
-}
-
-/**
  * @tc.name: GpuRkTestCase
  * @tc.desc: Gpu rkflag is true
  * @tc.type: FUNC

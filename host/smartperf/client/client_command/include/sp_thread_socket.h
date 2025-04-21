@@ -111,7 +111,8 @@ private:
     bool hapStartFlag = false;
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
-    bool hapAppcollect = false;
+
+    std::shared_ptr<TaskManager> taskMgr_ {nullptr};
 };
 }
 }
