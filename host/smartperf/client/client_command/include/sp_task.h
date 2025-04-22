@@ -128,6 +128,7 @@ private:
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();
     void EnablePrint();
+    std::string ProcessingCollectionsMap(SPData spdata);
 
 private:
     TaskInfo curTaskInfo;
@@ -157,7 +158,7 @@ private:
     unsigned int dataSize = 0;
     std::string csvTitle = "";
     int stdOutLog = -1;
-    bool appRecviveDataFlag = false;
+    bool appReceiveDataFlag = false;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \

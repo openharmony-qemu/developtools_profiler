@@ -128,7 +128,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-fl"), CommandType::CT_FL },
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-gc"), CommandType::CT_GC },
-    { std::string("-GPU_CONTER"), CommandType::CT_GC },
+    { std::string("-GPU_COUNTER"), CommandType::CT_GC },
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-o"), CommandType::CT_O },
     { std::string("-lockfreq"), CommandType::CT_LF },

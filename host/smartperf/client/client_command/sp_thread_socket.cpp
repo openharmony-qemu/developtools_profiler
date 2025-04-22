@@ -651,29 +651,29 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
         LOGD("UDP send DuBai get finish");
-    // } else if (iterator->first == MessageType::APP_START_COLLECT ||
-    //     iterator->first == MessageType::APP_RESUME_COLLECT) {
-    //     SPTask::isSdkTask = true;
-    //     SPTask::GetInstance().ConfigureSdkDataHap();
-    // } else if (iterator->first == MessageType::APP_STOP_COLLECT ||
-    //     iterator->first == MessageType::APP_PAUSE_COLLECT) {
-    //     SPTask::isSdkTask = false;
-    //     SPTask::GetInstance().ResetSdkParam();
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         hapStartFlag = false;
+        SPTask::isSdkTask = false;
+        SPTask::GetInstance().ResetSdkParam();
         spTask.ClearStopFlag();
     } else if (iterator->first == MessageType::APP_START_COLLECT) {
         hapStartFlag = true;
         hapAppcollect = true;
         StartHapCollecting(spSocket);
+        SPTask::isSdkTask = true;
+        SPTask::GetInstance().ConfigureSdkDataHap();
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         spTask.SetAppReceiveDataOnFlag();
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
         spTask.SetAppReceiveDataOffFlag();
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
         hapAppcollect = false;
+        SPTask::isSdkTask = false;
+        SPTask::GetInstance().ResetSdkParam();
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
         hapAppcollect = true;
+        SPTask::isSdkTask = true;
+        SPTask::GetInstance().ConfigureSdkDataHap();
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(indexFilePath);

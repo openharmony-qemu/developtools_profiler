@@ -94,6 +94,7 @@ private:
     ProfilerFPS &pfps = ProfilerFPS::GetInstance();
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
+    const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
     const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
     std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
@@ -102,6 +103,10 @@ private:
     static const int fileSocketBufferSize = 8192;
     char fileSocketBuffer[fileSocketBufferSize] = {};
     bool isSetPid = false;
+    bool hapStartFlag = false;
+    SPTask &spTask = SPTask::GetInstance();
+    std::thread udpStartCollect;
+    bool hapAppcollect = false;
 };
 }
 }

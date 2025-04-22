@@ -238,7 +238,7 @@ void SPTask::CheckFutureFds(std::future<std::map<std::string, std::string>> &fds
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
-        if ((itConfig == "-snapshot" || ifConfig == "-SCREEN") && screenshotFlag) {
+        if ((itConfig == "-snapshot" || itConfig == "-SCREEN") && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -247,7 +247,7 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
         if (itConfig.find("-gc") != std::string::npos ||
             itConfig.find("-o") != std::string::npos ||
             itConfig.find("-lockfreq") != std::string::npos ||
-            itconfig.find("-GPU_COUNTER") != std::string::npos) {
+            itConfig.find("-GPU_COUNTER") != std::string::npos) {
             continue;
         }
 
@@ -394,15 +394,12 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     long long lastTime = SPUtils::GetCurTime();
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
-    if (!curTaskInfo.packageName.empty()) {
-        SetProfilerPid();
-    }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
     for (std::string cpuConfig : curTaskInfo.taskConfig) {
         if (cpuConfig == "-c" || cpuConfig == "-CPU") {
             std::map<std::string, std::string> cpuMap = {};
             cpuMap = CPU::GetInstance().ItemData;
-            dataMpa.insert(cpuMap.begin(), cpuMap.end());
+            dataMap.insert(cpuMap.begin(), cpuMap.end());
         }
     }
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
@@ -956,7 +953,7 @@ void SPTask::SetAppInitFlag()
 
 std::string SPTask::ProcessingCollectionsMap(SPData spdata)
 {
-    const std::string appCollectMap = "t_index_info$$";
+    std::string appCollectMap = "t_index_info$$";
     for (const auto& key : keysToFind) {
         if (spdata.values.find(key) != spdata.values.end()) {
             appCollectMap += key + ":" + spdata.values[key] + ",";
