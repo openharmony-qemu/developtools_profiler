@@ -252,7 +252,9 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
-    CalcJitters();
+    if (!hapLowFpsFlag) {
+        CalcJitters();
+    }
 }
 
 bool FPS::CalcFpsAndJitters(bool isBreak)

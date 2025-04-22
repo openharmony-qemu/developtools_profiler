@@ -71,8 +71,10 @@ std::map<std::string, std::string> RAM::ItemData()
 {
     std::map<std::string, std::string> result;
     std::map<std::string, std::string> sysRamInfo = RAM::GetSysRamInfo();
-    for (const auto& item : sysRamInfo) {
-        result.insert(item);
+    if (!sysRamInfo.empty()) {
+        for (const auto& item : sysRamInfo) {
+            result.insert(item);
+        }
     }
     if (!processId.empty()) {
         std::map<std::string, std::string> procRamInfomation;

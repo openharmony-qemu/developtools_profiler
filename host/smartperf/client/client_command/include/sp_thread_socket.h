@@ -16,6 +16,8 @@
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
 #include "profiler_fps.h"
+#include "sp_task.h"
+#include <thread>
 namespace OHOS {
 namespace SmartPerf {
 enum class SocketConnectType {
@@ -68,7 +70,6 @@ public:
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
-    void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;
@@ -79,7 +80,9 @@ public:
     void StartGpuCounter() const;
     void SaveGpuCounter() const;
     int FileSocketConnect();
-    int SendFile(std::string filePath);
+    int SendFile(const std::string filePath);
+    void StartHapCollecting(SpServerSocket &spSocket);
+    bool GetHapStartFalg();
     void LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data);
 
 private:

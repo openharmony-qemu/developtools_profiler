@@ -52,11 +52,11 @@ struct StuckNotification {
     long long frameTime = LLONG_MAX;
 };
 struct TaskInfo {
-    std::string sessionId = "";
+    std::string sessionId = "1";
     std::string packageName = "";
     std::string pid = "";
     std::vector<std::string> taskConfig = {};
-    long long freq = 0;
+    long long freq = 998;
     StuckNotification stuckInfo;
     bool isPrint = false;
 };
@@ -94,6 +94,8 @@ public:
     void StopGpuCounterRecv();
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
+    void SendRealTimeMap(std::function<void(std::string data)> msgTask, std::map<std::string, std::string> dataMap,
+        SPData &spdata)
     void StopGetInfo();
     ErrCode StartRecord();
     ErrCode StopRecord();
@@ -106,6 +108,13 @@ public:
     void ConfigureSdkDataHap();
     static inline bool isSdkTask = false;
     void ResetSdkParam();
+    void SetAppCmd(std::string &recvBuf);
+    TaskInfo GetCurTaskInfo();
+    void SetAppReceiveDataOffFlag();
+    void SetAppReceiveDataOnFlag();
+    void SetAppInitFlag();
+    void SetStartFlag();
+    void ClearStopFlag();
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
     void GetHiperf(const std::string &traceName);
@@ -148,6 +157,7 @@ private:
     unsigned int dataSize = 0;
     std::string csvTitle = "";
     int stdOutLog = -1;
+    bool appRecviveDataFlag = false;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
@@ -214,6 +224,12 @@ private:
     }
     })";
     std::string conFig = R"(CONFIG)";
+    std::vector<std::string> keysToFind = {"fps","refreshrate","currentNow","ddrFrequency","cpu0Frequency",
+        "cpu1Frequency","cpu2Frequency","cpu3Frequency","cpu4Frequency","cpu5Frequency","cpu6Frequency",
+        "cpu7Frequency","cpu8Frequency","cpu9Frequency","cpu10Frequency","cpu11Frequency","gpuFrequency",
+        "pss","shell_frame","shell_back","soc_thermal","cpu0Usage","cpu1Usage","cpu2Usage","cpu3Usage",
+        "cpu4Usage","cpu5Usage","cpu6Usage","cpu7Usage","cpu8Usage","cpu9Usage","cpu10Usage","cpu11Usage",
+        "gpuLoad"};
 };
 }
 }
