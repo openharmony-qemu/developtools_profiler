@@ -251,7 +251,7 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
     return DumpHeapSnapshot(fileName, env);
 }
 
-int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc, int& fd)
+int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc)
 {
     size_t argc = ONE_VALUE_LIMIT;  // expected param length.
     napi_value argv = nullptr;
@@ -269,11 +269,10 @@ int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::strin
         return DumpRawHeapErrors::QUOTA_EXCEEDED;
     }
     filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
-    if (!IsLegalPath(filePath)) {
+    if (!CreateFile(filePath)) {
         return DumpRawHeapErrors::FAILED_CREATE_FILE;
     }
-    fd = open(filePath.c_str(),  O_CREAT | O_WRONLY, S_IRUSR | S_IWUSR | S_IRGRP); // -rw-r-----
-    return fd < 0 ? DumpRawHeapErrors::FAILED_CREATE_FILE : 0;
+    return 0;
 }
 
 napi_value ResolveErrorCode(napi_env env, const int errCode)
@@ -338,8 +337,7 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     napi_create_promise(env, &deferred, &promise);
     bool isGc = true;
     std::string fileName;
-    int fd = -1;
-    int32_t errCode = GetDumpJsRawHeapParams(env, info, fileName, isGc, fd);
+    int32_t errCode = GetDumpJsRawHeapParams(env, info, fileName, isGc);
     napi_value err = ResolveErrorCode(env, errCode);
     if (err != nullptr) {
         g_dumpingCount.fetch_sub(1);
@@ -349,7 +347,7 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     /* When the interface is available, the fd will be set to -1. */
-    engine->DumpHeapSnapshot(fd, isGc, [apiInvokeRecorder, env, deferred, fileName] (uint8_t retCode) {
+    engine->DumpHeapSnapshot(isGc, fileName, [apiInvokeRecorder, env, deferred, fileName] (uint8_t retCode) {
         apiInvokeRecorder->SetErrorCode(retCode);
         napi_send_event(env, [env, deferred, fileName, retCode]() {
             napi_value err = ResolveErrorCode(env, TransferRetCodeToErrorCode(retCode));
@@ -362,14 +360,6 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
             }
         }, napi_eprio_high);
     });
-    if (fd >= 0) {
-        HILOG_ERROR(LOG_CORE, "DumpJsRawHeapData is not supported in current version.");
-        close(fd);
-        remove(fileName.c_str());
-        g_dumpingCount.fetch_sub(1);
-        err = ResolveErrorCode(env, DumpRawHeapErrors::TIMEOUT_WAIT_CHILD_PROCESS_FINISHED);
-        napi_reject_deferred(env, deferred, err);
-    }
     return promise;
 }
 }
