@@ -398,7 +398,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     for (std::string cpuConfig : curTaskInfo.taskConfig) {
         if (cpuConfig == "-c" || cpuConfig == "-CPU") {
             std::map<std::string, std::string> cpuMap = {};
-            cpuMap = CPU::GetInstance().ItemData;
+            cpuMap = CPU::GetInstance().ItemData();
             dataMap.insert(cpuMap.begin(), cpuMap.end());
         }
     }

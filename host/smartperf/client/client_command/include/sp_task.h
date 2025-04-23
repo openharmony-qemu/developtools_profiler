@@ -95,7 +95,7 @@ public:
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
     void SendRealTimeMap(std::function<void(std::string data)> msgTask, std::map<std::string, std::string> dataMap,
-        SPData &spdata)
+        SPData &spdata);
     void StopGetInfo();
     ErrCode StartRecord();
     ErrCode StopRecord();
