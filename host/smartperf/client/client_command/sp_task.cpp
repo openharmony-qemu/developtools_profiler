@@ -954,7 +954,7 @@ void SPTask::SetAppInitFlag()
 std::string SPTask::ProcessingCollectionsMap(SPData spdata)
 {
     std::string appCollectMap = "t_index_info$$";
-    for (const auto& key : keysToFind) {
+    for (const auto& key : g_keysToFind) {
         if (key == "refreshRate") {
             key = "refreshrate";
         }
