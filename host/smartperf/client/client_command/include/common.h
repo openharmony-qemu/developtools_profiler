@@ -42,6 +42,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::START_DUBAI_DB, std::string("start_dubai_db") },
     { MessageType::SET_GAME_VIEW, std::string("set_game_view") },
     { MessageType::GET_APP_TYPE, std::string("get_app_type") },
+    { MessageType::GET_DAEMON_VERSION, std::string("get_daemon_version") },
     { MessageType::APP_START_COLLECT, std::string("app_start_collect") },
     { MessageType::APP_STOP_COLLECT, std::string("app_stop_collect") },
     { MessageType::APP_RECEIVE_DATA_ON, std::string("app_receive_data_on") },

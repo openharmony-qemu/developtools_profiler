@@ -961,18 +961,6 @@ std::string SPTask::ProcessingCollectionsMap(SPData spdata)
         "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
         "gpuLoad"};
     for (const auto& key : keysToFind) {
-        if (key == "refreshRate") {
-            key = "refreshrate";
-        }
-        if (key == "shallFrame") {
-            key = "shall_frame";
-        }
-        if (key == "shallBack") {
-            key = "shall_back";
-        }
-        if (key == "socThermal") {
-            key = "soc_thermal";
-        }
         if (spdata.values.find(key) != spdata.values.end()) {
             appCollectMap += key + ":" + spdata.values[key] + ",";
         }
