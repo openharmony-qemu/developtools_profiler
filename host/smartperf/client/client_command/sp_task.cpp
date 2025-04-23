@@ -960,7 +960,7 @@ std::string SPTask::ProcessingCollectionsMap(SPData spdata)
         "pss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
         "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
         "gpuLoad"};
-    for (const auto& key : g_keysToFind) {
+    for (const auto& key : keysToFind) {
         if (key == "refreshRate") {
             key = "refreshrate";
         }
