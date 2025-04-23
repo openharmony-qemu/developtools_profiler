@@ -225,11 +225,11 @@ private:
     }
     })";
     std::string conFig = R"(CONFIG)";
-    std::vector<std::string> keysToFind = {"fps","refreshrate","currentNow","ddrFrequency","cpu0Frequency",
-        "cpu1Frequency","cpu2Frequency","cpu3Frequency","cpu4Frequency","cpu5Frequency","cpu6Frequency",
-        "cpu7Frequency","cpu8Frequency","cpu9Frequency","cpu10Frequency","cpu11Frequency","gpuFrequency",
-        "pss","shell_frame","shell_back","soc_thermal","cpu0Usage","cpu1Usage","cpu2Usage","cpu3Usage",
-        "cpu4Usage","cpu5Usage","cpu6Usage","cpu7Usage","cpu8Usage","cpu9Usage","cpu10Usage","cpu11Usage",
+    std::vector<std::string> keysToFind = {"fps", "refreshrate", "currentNow", "ddrFrequency", "cpu0Frequency",
+        "cpu1Frequency", "cpu2Frequency", "cpu3Frequency", "cpu4Frequency", "cpu5Frequency", "cpu6Frequency",
+        "cpu7Frequency", "cpu8Frequency", "cpu9Frequency", "cpu10Frequency", "cpu11Frequency", "gpuFrequency",
+        "pss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
+        "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
         "gpuLoad"};
 };
 }

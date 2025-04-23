@@ -917,7 +917,7 @@ void SPTask::SetAppCmd(std::string &recvBuf)
         count++;
         if (count == counter) {
             curTaskInfo.packageName = word;
-        } else if (count > 3) {
+        } else if (count > counter) {
             if  (word.find(":::") != std::string::npos) {
                 size_t pos = word.find(":::");
                 word = word.substr(0, pos);

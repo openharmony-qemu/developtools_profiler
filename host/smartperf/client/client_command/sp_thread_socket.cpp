@@ -802,7 +802,7 @@ void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
     ram.SetFirstFlag();
     spTask.ConfigDataThread();
     udpStartCollect = std::thread([this, lambdaTask]() {
-        while(hapStartFlag) {
+        while (hapStartFlag) {
             if (hapAppcollect) {
                 spTask.AsyncGetDataMap(lambdaTask);
             }
