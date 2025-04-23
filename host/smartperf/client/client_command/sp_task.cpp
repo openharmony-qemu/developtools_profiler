@@ -955,14 +955,17 @@ std::string SPTask::ProcessingCollectionsMap(SPData spdata)
 {
     std::string appCollectMap = "t_index_info$$";
     for (const auto& key : keysToFind) {
-        if (key == refreshRate) {
-            key = refreshrate;
+        if (key == "refreshRate") {
+            key = "refreshrate";
         }
-        if (key == shallFrame) {
-            key = shall_frame;
+        if (key == "shallFrame") {
+            key = "shall_frame";
         }
-        if (key == shallBack) {
-            key = shall_back;
+        if (key == "shallBack") {
+            key = "shall_back";
+        }
+        if (key == "socThermal") {
+            key = "soc_thermal";
         }
         if (spdata.values.find(key) != spdata.values.end()) {
             appCollectMap += key + ":" + spdata.values[key] + ",";

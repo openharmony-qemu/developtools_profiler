@@ -228,7 +228,7 @@ private:
     std::vector<std::string> keysToFind = {"fps", "refreshRate", "currentNow", "ddrFrequency", "cpu0Frequency",
         "cpu1Frequency", "cpu2Frequency", "cpu3Frequency", "cpu4Frequency", "cpu5Frequency", "cpu6Frequency",
         "cpu7Frequency", "cpu8Frequency", "cpu9Frequency", "cpu10Frequency", "cpu11Frequency", "gpuFrequency",
-        "pss", "shellFrame", "shellBack", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
+        "pss", "shellFrame", "shellBack", "socThermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
         "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
         "gpuLoad"};
 };
