@@ -376,7 +376,7 @@ template <typename T> void sched_switch_func(T& msg, uint8_t data[], size_t size
     msg->set_prev_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     int16_t prevPrio = FtraceFieldParser::ParseIntField<int16_t>(format.fields, i++, data, size);
     msg->set_prev_prio(static_cast<int32_t>(prevPrio));
-    uint16_t prevState = FtraceFieldParser::ParseIntField<uint16_t>(format.fields, i++, data, size)
+    uint16_t prevState = FtraceFieldParser::ParseIntField<uint16_t>(format.fields, i++, data, size);
     msg->set_prev_state(static_cast<uint64_t>(prevState));
     msg->set_next_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
     msg->set_next_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
