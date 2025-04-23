@@ -185,7 +185,9 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
-            rd_sectors_kb = atoi(curWord.c_str());
+            if (COMMON::IsNumeric(curWord)) {
+                rd_sectors_kb = atoi(curWord.c_str());
+            }
         } else if (strcmp(curWord.c_str(), "pgpgout") == 0) {
             if (!totalbuffer.NextWord('\n')) {
                 PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get pgpgout, CurWord() = %s",
@@ -193,7 +195,9 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
                 break;
             }
             curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
-            wr_sectors_kb = atoi(curWord.c_str());
+            if (COMMON::IsNumeric(curWord)) {
+                wr_sectors_kb = atoi(curWord.c_str());
+            }
         }
     } while (totalbuffer.NextLine());
 
