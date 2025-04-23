@@ -470,7 +470,9 @@ void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hook
 
 void HookManager::DumpNmdInfo(const char* nmdResult)
 {
-    const std::string filePath = "/data/local/tmp/nmd_" + hookConfig_.process_name() + ".txt";
+    std::string fileName = hookConfig_.process_name().empty() ? std::to_string(hookConfig_.pid()) :
+                                                                hookConfig_.process_name();
+    const std::string filePath = "/data/local/tmp/nmd_" + fileName + ".txt";
     std::ofstream outFile(filePath);
     if (!outFile.is_open()) {
         PROFILER_LOG_ERROR(LOG_CORE, "unable to write into nmd.txt");
