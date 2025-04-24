@@ -167,6 +167,7 @@ private:
     uint32_t largestSize_ = 0;
     uint32_t secondLargestSize_ = 0;
     uint32_t maxGrowthSize_ = 0;
+    int32_t maxProcessCount_ = 4;
 };
 }
 #endif // AGENT_MANAGER_H

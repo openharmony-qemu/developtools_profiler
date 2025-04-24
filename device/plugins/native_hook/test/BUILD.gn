@@ -72,6 +72,7 @@ ohos_unittest("nativehook_ut") {
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
     "c_utils:utils",
     "faultloggerd:libunwinder",
     "googletest:gtest",
