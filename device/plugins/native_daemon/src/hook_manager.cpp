@@ -44,6 +44,7 @@ constexpr int SIGNAL_START_HOOK = 36;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
+constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 }
 
@@ -230,8 +231,9 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
+    printMallocNmd_ = hookConfig_.dump_nmd() ? hookConfig_.dump_nmd() : printMallocNmd_;
+    clientConfig.nmdType = printMallocNmd_ ? ONLY_NMD_TYPE : static_cast<int>(nmdParamInfo_.type);
     clientConfig.printNmd = printMallocNmd_;
-    clientConfig.nmdType = static_cast<int>(nmdParamInfo_.type);
     clientConfig.largestSize = largestSize_;
     clientConfig.secondLargestSize = secondLargestSize_;
     clientConfig.maxGrowthSize = maxGrowthSize_;
@@ -465,6 +467,26 @@ void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hook
     }
 }
 
+void HookManager::DumpNmdInfo(const char* nmdResult)
+{
+    std::string fileName = hookConfig_.process_name().empty() ? std::to_string(hookConfig_.pid()) :
+                                                                hookConfig_.process_name();
+    const std::string filePath = "/data/local/tmp/nmd_" + fileName + ".txt";
+    std::ofstream outFile(filePath);
+    if (!outFile.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "unable to write into nmd.txt");
+        return;
+    }
+    outFile << nmdResult;
+    if (!outFile) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Error: Failed to write data to file %s", filePath.c_str());
+        outFile.close();
+        return;
+    }
+    outFile.close();
+    PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
+}
+
 void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx)
 {
     CHECK_NOTNULL(hookCtx->shareMemoryBlock, NO_RETVAL, "smb is null!");
@@ -493,6 +515,9 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
             if (rawStack->stackConext->type == NMD_MSG && printMallocNmd_) {
                 rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
                 const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
+                if (!saMode_) {
+                    DumpNmdInfo(nmdResult);
+                }
                 if (nmdParamInfo_.type == SIMP_NMD) {
                     simplifiedNmd_ = std::string(nmdResult);
                     nmdComplete_ = true;
