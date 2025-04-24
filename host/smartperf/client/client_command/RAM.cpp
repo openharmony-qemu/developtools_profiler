@@ -283,8 +283,8 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     }
     if (processIds.size() == 1) {
         std::map<std::string, std::string> procMemInfo = RAM::ChildProcMemNaInfo();
-        for (auto it = procMemInfo.begin(); it != procMemInfo.end(); ++it) {
-            dataMap.insert(*it);
+        for (const auto& item : procMemInfo) {
+            dataMap.insert(item);
         }
     }
     return dataMap;
