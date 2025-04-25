@@ -132,6 +132,7 @@ private:
         if (parseEventCtx != nullptr) {
             auto* ftraceEvent = ftraceCpuDetailMsg.add_event();
             ftraceEvent->set_timestamp(timestamp_);
+            parseEventCtx->format.osVersion = osVersion_;
             ParseFtraceEvent(*ftraceEvent, evStart, evtSize, parseEventCtx);
         }
 
@@ -224,6 +225,7 @@ private:
     uint8_t* endOfData_ = nullptr; // end of event data
     uint8_t* endOfPage_ = nullptr; // end of full page
     uint64_t timestamp_ = 0;
+    std::string osVersion_ = "";
     PageHeader pageHeader_ = {};
 
     std::unordered_map<int32_t, int32_t> tgidDict_ = {};

@@ -26,6 +26,7 @@ auto_generated_ftrace_proto_sources = [
   "ftrace.proto",
   "ftrace_event.proto",
   "gpio.proto",
+  "gpu_mem.proto",
   "i2c.proto",
   "ipi.proto",
   "irq.proto",

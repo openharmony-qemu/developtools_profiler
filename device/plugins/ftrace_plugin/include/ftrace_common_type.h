@@ -156,6 +156,7 @@ struct EventFormat {
     uint32_t eventSize = 0;
     std::string eventName = "";
     std::string eventType = "";
+    std::string osVersion = "";
     std::vector<FieldFormat> fields = {};
     std::vector<FieldFormat> commonFields = {};
     CommonFiledIndex commonIndex = {};

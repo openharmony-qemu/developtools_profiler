@@ -146,6 +146,15 @@ message BlockRqRequeueFormat {
     string cmd = 5;
 }
 
+// /sys/kernel/debug/tracing/events/block/block_sleeprq/format
+message BlockSleeprqFormat {
+    uint64 dev = 1;
+    uint64 sector = 2;
+    uint32 nr_sector = 3;
+    string rwbs = 4;
+    string comm = 5;
+}
+
 // /sys/kernel/debug/tracing/events/block/block_split/format
 message BlockSplitFormat {
     uint64 dev = 1;

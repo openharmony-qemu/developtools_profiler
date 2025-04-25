@@ -39,8 +39,9 @@ message WorkqueueExecuteStartFormat {
 message WorkqueueQueueWorkFormat {
     uint64 work = 1;
     uint64 function = 2;
-    string workqueue = 3;
+    uint64 workqueue = 3;
     int32 req_cpu = 4;
     int32 cpu = 5;
+    string workqueue_new = 6;
 }
 

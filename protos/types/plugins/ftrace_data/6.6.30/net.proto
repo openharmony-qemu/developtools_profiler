@@ -160,3 +160,26 @@ message NetifRxEntryFormat {
     uint32 gso_type = 19;
 }
 
+// /sys/kernel/debug/tracing/events/net/netif_rx_ni_entry/format
+message NetifRxNiEntryFormat {
+    string name = 1;
+    uint32 napi_id = 2;
+    uint32 queue_mapping = 3;
+    uint64 skbaddr = 4;
+    uint32 vlan_tagged = 5;
+    uint32 vlan_proto = 6;
+    uint32 vlan_tci = 7;
+    uint32 protocol = 8;
+    uint32 ip_summed = 9;
+    uint32 hash = 10;
+    uint32 l4_hash = 11;
+    uint32 len = 12;
+    uint32 data_len = 13;
+    uint32 truesize = 14;
+    uint32 mac_header_valid = 15;
+    int32 mac_header = 16;
+    uint32 nr_frags = 17;
+    uint32 gso_size = 18;
+    uint32 gso_type = 19;
+}
+
