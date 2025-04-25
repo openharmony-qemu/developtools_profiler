@@ -41,6 +41,34 @@ std::string StringReplace(std::string source, const std::string &from, const std
     return source;
 }
 
+int GetValueFromJsonFile(const std::string& filePath, const std::string key)
+{
+    std::ifstream inFile(filePath, std::ios::in);
+    if (!inFile.is_open()) {
+        HLOGE("parse json file: %s is not existed.", filePath.c_str());
+        return -1;
+    }
+    std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
+    cJSON* jsonNode = cJSON_Parse(fileContent.c_str());
+    inFile.close();
+
+    if (jsonNode == nullptr) {
+        HLOGE("parse json file: %s failed.", filePath.c_str());
+        return -1;
+    }
+
+    cJSON* vaulezNode = cJSON_GetObjectItem(jsonNode, key.c_str());
+    if (vaulezNode == nullptr) {
+        HLOGE("ParseJson hiprofiler_hook_process_count json node not found.");
+        return -1;
+    }
+    if (!cJSON_IsNumber(vaulezNode)) {
+        HLOGE("ParseJson: hiprofiler_hook_process_count item is illegal.");
+        return -1;
+    }
+    return vaulezNode->valueint;
+}
+
 size_t SubStringCount(const std::string &source, const std::string &sub)
 {
     size_t count(0);

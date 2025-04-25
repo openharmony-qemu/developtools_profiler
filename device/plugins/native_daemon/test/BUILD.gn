@@ -126,6 +126,7 @@ ohos_unittest("native_daemon_ut") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
     "c_utils:utils",
     "faultloggerd:libunwinder",
     "googletest:gtest",

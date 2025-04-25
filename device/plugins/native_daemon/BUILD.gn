@@ -127,6 +127,7 @@ ohos_executable("native_daemon") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
     "c_utils:utils",
     "hicollie:libhicollie",
     "hisysevent:libhisysevent",

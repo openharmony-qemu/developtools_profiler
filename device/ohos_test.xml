@@ -117,6 +117,8 @@
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/syms_from_readelf_64 -> /data/test/resource/testdata/" src="res"/>
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/symbols_file_test_elf32 -> /data/test/resource/testdata/" src="res"/>
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/symbols_file_test_elf64 -> /data/test/resource/testdata/" src="res"/>
+            <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/hiprofiler_cfg.json -> /data/test/resource/testdata/" src="res"/>
+            <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/hiprofiler_cfg_2.json -> /data/test/resource/testdata/" src="res"/>
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/dwarf/user_regs.dump -> /data/test/resource/testdata/dwarf/" src="res"/>
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/dwarf/user_data.dump -> /data/test/resource/testdata/dwarf/" src="res"/>
             <option name="push" value="plugins/native_daemon/test/unittest/resource/testdata/dwarf/hiperf_example_cmd -> /data/test/resource/testdata/dwarf/" src="res"/>

@@ -32,6 +32,7 @@
         "bounds_checking_function",
         "bundle_framework",
         "common_event_service",
+        "cJSON",
         "c_utils",
         "faultloggerd",
         "hiappevent",

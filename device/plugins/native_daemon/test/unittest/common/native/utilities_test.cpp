@@ -628,6 +628,54 @@ HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level1)
     }
     ExitThreads();
 }
+
+/**
+ * @tc.name: test funtion GetValueFromJsonFile return normal result
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level1)
+{
+    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg.json";
+    auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
+    EXPECT_EQ(res, 2);
+}
+
+/**
+ * @tc.name: test funtion GetValueFromJsonFile when path is not exit
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile002, TestSize.Level1)
+{
+    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg22.json";
+    auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
+    EXPECT_EQ(res, -1);
+}
+
+/**
+ * @tc.name: test funtion GetValueFromJsonFile when key is not exit
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile003, TestSize.Level1)
+{
+    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg.json";
+    auto res = GetValueFromJsonFile(filePath, "test");
+    EXPECT_EQ(res, -1);
+}
+
+/**
+ * @tc.name: test funtion GetValueFromJsonFile when value is not int
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile004, TestSize.Level1)
+{
+    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg_2.json";
+    auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
+    EXPECT_EQ(res, -1);
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

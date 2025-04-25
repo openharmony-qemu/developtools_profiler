@@ -78,6 +78,7 @@ private:
     bool hasStartupMode_{false};
     std::string startupModeProcessName_;
     int32_t taskNum_{0};
+    int32_t taskMaxNum_ = 4;
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
     int32_t delayedShutdownTimerFd_{-1};
     std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
