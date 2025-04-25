@@ -330,7 +330,10 @@ napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 
 napi_value GetCpuUsage(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getCpuUsage");
+    constexpr uint32_t reportTimeOutSec = 5 * 60;
+    constexpr uint32_t limitSize = 100;
+    static MultipleRecordReporter multipleRecordReporter(reportTimeOutSec, limitSize);
+    ApiInvokeRecorder apiInvokeRecorder("getCpuUsage", multipleRecordReporter);
     napi_value cpuUsageValue;
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
     pid_t pid = getprocpid();
@@ -411,7 +414,10 @@ napi_value GetVss(napi_env env, napi_callback_info info)
 
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
+    constexpr uint32_t reportTimeOutSec = 5 * 60;
+    constexpr uint32_t limitSize = 100;
+    static MultipleRecordReporter multipleRecordReporter(reportTimeOutSec, limitSize);
+    ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage", multipleRecordReporter);
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
     if (!cpuUsageOptional) {
         std::string paramErrorMessage = "The status of the system CPU usage is abnormal.";
@@ -425,7 +431,6 @@ static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
 
 static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
 {
-    ApiInvokeRecorder apiInvokeRecorder("removeNapiWrap");
     size_t argc = REMOVE_NAPI_WRAP_PARAM_COUNT;
     napi_value argv[REMOVE_NAPI_WRAP_PARAM_COUNT] = {nullptr};
     napi_value thisVar = nullptr;
@@ -436,7 +441,6 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
         !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
         HILOG_DEBUG(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -939,7 +943,7 @@ napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
 
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
-    ApiInvokeRecorder::InitProcessor();
+    ApiRecordReporter::InitProcessor();
     napi_property_descriptor desc[] = {
         DECLARE_NAPI_FUNCTION("startProfiling", StartProfiling),
         DECLARE_NAPI_FUNCTION("stopProfiling", StopProfiling),
