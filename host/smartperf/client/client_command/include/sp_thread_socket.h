@@ -59,6 +59,8 @@ public:
     void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
+    void HeartbeatDetection(std::string recvBuf);
+    void UdpStartInitFunc(std::string recvBuf);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
@@ -67,9 +69,12 @@ public:
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
+    void UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     void GetSocketPort(std::string buffer);
     void ResetValue(std::string retCode) const;
+    void GetProcessIdByPkgName(std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SpGetPkg(const std::string &spMsg) const;
     std::string SpGetPid(const std::string &spMsg) const;
     bool IsPreset(const std::string &spMsg) const;

@@ -39,8 +39,60 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
 {
     SpProfiler* profiler = nullptr;
     switch (messageType) {
+        case MessageType::GET_CPU_FREQ_LOAD:
+            profiler = &CPU::GetInstance();
+            break;
+        case MessageType::GET_FPS_AND_JITTERS:
+        case MessageType::GET_CUR_FPS:
+            profiler = &ProfilerFPS::GetInstance();
+            break;
+        case MessageType::GET_GPU_FREQ:
+        case MessageType::GET_GPU_LOAD:
+            profiler = &GPU::GetInstance();
+            break;
+        case MessageType::GET_DDR_FREQ:
+            profiler = &DDR::GetInstance();
+            break;
+        case MessageType::GET_RAM_INFO:
+            profiler = &RAM::GetInstance();
+            break;
+        case MessageType::GET_LOG:
+            profiler = &GetLog::GetInstance();
+            break;
+        case MessageType::GET_PROCESS_THREADS:
+            profiler = &Threads::GetInstance();
+            break;
+        case MessageType::GET_PROCESS_FDS:
+            profiler = &FileDescriptor::GetInstance();
+            break;
+        default:
+            break;
+    }
+    if (profiler == nullptr) {
+        profiler = GetProfilerItemContinue(messageType);
+    }
+    return profiler;
+}
+SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
+{
+    SpProfiler* profiler = nullptr;
+    switch (messageType) {
         case MessageType::GET_TEMPERATURE:
             profiler = &Temperature::GetInstance();
+            break;
+        case MessageType::GET_POWER:
+            profiler = &Power::GetInstance();
+            break;
+        case MessageType::CATCH_TRACE_CONFIG:
+            ProfilerFPS::GetInstance().SetTraceCatch();
+            break;
+        case MessageType::GET_CAPTURE:
+            Capture::GetInstance().SocketMessage();
+            profiler = &Capture::GetInstance();
+            break;
+        case MessageType::CATCH_NETWORK_TRAFFIC:
+        case MessageType::GET_NETWORK_TRAFFIC:
+            profiler = &Network::GetInstance();
             break;
         default:
             break;
