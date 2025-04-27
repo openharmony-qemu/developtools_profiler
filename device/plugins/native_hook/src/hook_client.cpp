@@ -248,7 +248,9 @@ static bool SimplifiedFilter(void* ptr, size_t mallcoSize)
     if (g_ClientConfig.largestSize == 0 || g_ClientConfig.secondLargestSize == 0) {
         return false;
     }
-
+    if (mallcoSize >= g_ClientConfig.sampleInterval) {
+        return false;
+    }
     size_t usableSize = 0;
     if (mallcoSize == 0) {
         /* hook_free */
