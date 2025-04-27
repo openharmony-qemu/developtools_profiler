@@ -14,13 +14,19 @@
  */
 
 #include "ani_util.h"
+#include "hilog/log.h"
 
 namespace OHOS {
 namespace HiviewDFX {
+#undef LOG_DOMAIN
+#define LOG_DOMAIN 0xD002D0A
+#undef LOG_TAG
+#define LOG_TAG "HiDebug_ANI_UTIL"
+
 void AniUtil::ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t errCode)
 {
     ani_module hiDebugModule = nullptr;
-    if (env->FindModule("L@ohos/hidebug;", &hiDebugModule) != ANI_OK) {
+    if (env->FindModule("@ohos.hidebug", &hiDebugModule) != ANI_OK) {
         return;
     }
     ani_function createErrorFn = nullptr;
@@ -82,6 +88,16 @@ ani_status AniUtil::SetNamedPropertyNumber(ani_env *env, ani_object object, cons
     ani_double aniNumber = static_cast<ani_double>(value);
     ani_status status = env->Object_SetPropertyByName_Double(object, name.c_str(), aniNumber);
     return status;
+}
+
+ani_vm* AniUtil::GetAniVm(ani_env *env)
+{
+    ani_vm* vm = nullptr;
+    auto status = env->GetVM(&vm);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed get vm for %{public}d.", status);
+    }
+    return vm;
 }
 } // namespace HiviewDFX
 } // namespace OHOS
