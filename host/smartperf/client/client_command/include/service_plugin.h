@@ -19,6 +19,7 @@
 #include "string"
 #include "map"
 #include "thread"
+#include "GameEvent.h"
 #include "GpuCounterCallback.h"
 #include "sp_profiler.h"
 
@@ -33,6 +34,8 @@ namespace OHOS {
             virtual int32_t StopGetGpuPerfInfo() = 0;
             virtual std::map<std::string, std::string> GetSystemFunctionStatus(
                 std::map<std::string, std::string> &queryParams) = 0;
+            virtual int32_t RegisterGameEventListener(std::unique_ptr<GameEventCallback> callback) = 0;
+            virtual int32_t UnregisterGameEventListener() = 0;
         };
 
         class ServicePluginHandler : public SpProfiler {
