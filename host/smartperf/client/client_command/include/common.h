@@ -17,6 +17,7 @@
 #include <unordered_map>
 #include <string>
 namespace OHOS {
+namespace SmartPerf {    
 enum class MessageType {
     APP_START_COLLECT,
     APP_STOP_COLLECT,
@@ -52,13 +53,9 @@ enum class MessageType {
     GET_PROCESS_FDS,
     START_GPU_COUNTER,
     SAVE_GPU_COUNTER,
-    CATCH_TRACE_FINISH
-    APP_START_COLLECT,
-    APP_STOP_COLLECT,
+    CATCH_TRACE_FINISH,
     APP_RECEIVE_DATA_ON,
     APP_RECEIVE_DATA_OFF,
-    APP_PAUSE_COLLECT,
-    APP_RESUME_COLLECT,
     GET_INDEX_INFO
 };
 

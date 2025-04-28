@@ -765,9 +765,9 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
     if (iterator->first == MessageType::APP_START_COLLECT) {
         hapStartFlag = true;
         hapAppcollect = true;
-        StartHapCollecting(spSocket);
         SPTask::isSdkTask = true;
         SPTask::GetInstance().ConfigureSdkDataHap();
+        StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         spTask.SetAppReceiveDataOnFlag();
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
