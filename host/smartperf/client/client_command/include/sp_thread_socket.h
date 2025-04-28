@@ -16,6 +16,8 @@
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
 #include "profiler_fps.h"
+#include "sp_task.h"
+#include <thread>
 namespace OHOS {
 namespace SmartPerf {
 enum class SocketConnectType {
@@ -57,6 +59,8 @@ public:
     void EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const;
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
+    void HeartbeatDetection(std::string recvBuf);
+    void UdpStartInitFunc(std::string recvBuf);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
@@ -64,6 +68,8 @@ public:
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator);
+    void UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode, std::string recvBuf,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     std::string SocketErrorTypeToString(SocketErrorType errorType) const;
     void GetSocketPort(std::string buffer);
@@ -79,7 +85,9 @@ public:
     void StartGpuCounter() const;
     void SaveGpuCounter() const;
     int FileSocketConnect();
-    int SendFile(std::string filePath);
+    int SendFile(const std::string filePath);
+    void StartHapCollecting(SpServerSocket &spSocket);
+    bool GetHapStartFalg();
     void LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data);
 
 private:
@@ -91,6 +99,7 @@ private:
     ProfilerFPS &pfps = ProfilerFPS::GetInstance();
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
+    const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
     const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
     std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
@@ -99,6 +108,10 @@ private:
     static const int fileSocketBufferSize = 8192;
     char fileSocketBuffer[fileSocketBufferSize] = {};
     bool isSetPid = false;
+    bool hapStartFlag = false;
+    SPTask &spTask = SPTask::GetInstance();
+    std::thread udpStartCollect;
+    bool hapAppcollect = false;
 };
 }
 }

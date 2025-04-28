@@ -73,7 +73,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
     }
     return profiler;
 }
-
 SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 {
     SpProfiler* profiler = nullptr;
@@ -121,19 +120,14 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
-    std::string bundleName;
-    SPUtils::GetBundleName(pid, bundleName);
     FPS &fps = FPS::GetInstance();
     fps.SetProcessId(pid);
-    fps.SetPackageName(bundleName);
     ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
     profilerFps.SetProcessId(pid);
-    profilerFps.SetPackageName(bundleName);
     RAM &ram = RAM::GetInstance();
     ram.SetProcessId(pids.empty() ? pid : pids);
     CPU &cpu = CPU::GetInstance();
     cpu.SetProcessId(pids.empty() ? pid : pids);
-    cpu.SetPackageName(bundleName);
     Navigation &nav = Navigation::GetInstance();
     nav.SetProcessId(pid);
     AISchedule &as = AISchedule::GetInstance();

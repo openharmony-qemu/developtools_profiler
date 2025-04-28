@@ -30,7 +30,7 @@ public:
     // 创建一个套接字
     int Init(ProtoType type);
     // UDP
-    int Sendto(std::string &sendBuf);
+    int Sendto(const std::string &sendBuf);
     int Recvfrom();
     // TCP
     int Accept();

@@ -87,6 +87,7 @@ public:
     static inline bool firstDump = false;
     static inline bool isGameApp = false;
     bool SetOtherDeviceFlag();
+    bool hapLowFpsFlag = false;
 private:
     FPS() {};
     FPS(const FPS &);

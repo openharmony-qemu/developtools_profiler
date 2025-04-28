@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include <iostream>
+#include <thread>
 #include <string>
 #include <climits>
 #include "include/sp_profiler_factory.h"
@@ -24,6 +25,7 @@
 #include "include/Capture.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "ByTrace.h"
 #include <cstdio>
 #include <ios>
 #include <vector>
@@ -34,6 +36,7 @@
 #include <future>
 #include "include/common.h"
 #include "include/sp_csv_util.h"
+#include "include/sp_thread_socket.h"
 namespace OHOS {
 namespace SmartPerf {
 const long long RM_0 = 0;
@@ -145,7 +148,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
         FPS &fps = FPS::GetInstance();
         fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
         fps.firstDump = true;
-        isInit = true;
+        SetAppInitFlag();
         LOGD("InitTask success, task initialized.");
         return ErrCode::OK;
     }
@@ -160,27 +163,11 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string ramConfig : curTaskInfo.taskConfig) {
-        if (ramConfig.find("-r") != std::string::npos) {
+        if (ramConfig == "-r" || ramConfig == "-RAM") {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 LOGD("Starting RAM collection in new thread");
                 p.set_value(RAM::GetInstance().ItemData());
-            }).detach();
-        }
-    }
-    return futureResult;
-}
-
-std::future<std::map<std::string, std::string>> SPTask::AsyncCollectCpu()
-{
-    std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult;
-    for (std::string cpuConfig : curTaskInfo.taskConfig) {
-        if (cpuConfig.find("-c") != std::string::npos) {
-            futureResult = p.get_future();
-            std::thread([p = std::move(p)]() mutable {
-                LOGD("Starting CPU collection in new thread");
-                p.set_value(CPU::GetInstance().ItemData());
             }).detach();
         }
     }
@@ -192,7 +179,10 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fpsConfig : curTaskInfo.taskConfig) {
-        if (fpsConfig == "-f") {
+        if (fpsConfig == "-f" || fpsConfig == "-FPS" || fpsConfig == "-LOW_POWER") {
+            if (fpsConfig == "-LOW_POWER") {
+                FPS::GetInstance().hapLowFpsFlag = true;
+            }
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 LOGD("Starting FPS collection in new thread");
@@ -208,7 +198,7 @@ std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFds()
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult;
     for (std::string fdsConfig : curTaskInfo.taskConfig) {
-        if (fdsConfig.find("-fds") != std::string::npos) {
+        if (fdsConfig == "-fds" || fdsConfig == "-FDS") {
             futureResult = p.get_future();
             std::thread([p = std::move(p)]() mutable {
                 p.set_value(FileDescriptor::GetInstance().ItemData());
@@ -223,15 +213,6 @@ void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ram
 {
     if (ramResult.valid()) {
         std::map<std::string, std::string> result = ramResult.get();
-        dataMap.insert(result.begin(), result.end());
-    }
-}
-
-void SPTask::CheckFutureCpu(std::future<std::map<std::string, std::string>> &cpuResult,
-    std::map<std::string, std::string> &dataMap)
-{
-    if (cpuResult.valid()) {
-        std::map<std::string, std::string> result = cpuResult.get();
         dataMap.insert(result.begin(), result.end());
     }
 }
@@ -257,7 +238,7 @@ void SPTask::CheckFutureFds(std::future<std::map<std::string, std::string>> &fds
 void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 {
     for (std::string itConfig : curTaskInfo.taskConfig) {
-        if (itConfig.find("-snapshot") != std::string::npos && screenshotFlag) {
+        if ((itConfig == "-snapshot" || itConfig == "-SCREEN") && screenshotFlag) {
             Capture::GetInstance().SocketMessage();
             std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
             dataMap.insert(captureMap.begin(), captureMap.end());
@@ -265,7 +246,8 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
 
         if (itConfig.find("-gc") != std::string::npos ||
             itConfig.find("-o") != std::string::npos ||
-            itConfig.find("-lockfreq") != std::string::npos) {
+            itConfig.find("-lockfreq") != std::string::npos ||
+            itConfig.find("-GPU_COUNTER") != std::string::npos) {
             continue;
         }
 
@@ -412,17 +394,19 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     long long lastTime = SPUtils::GetCurTime();
     asyncDataMtx.lock();
     std::map<std::string, std::string> dataMap;
-    if (!curTaskInfo.packageName.empty()) {
-        SetProfilerPid();
-    }
     dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
+    for (std::string cpuConfig : curTaskInfo.taskConfig) {
+        if (cpuConfig == "-c" || cpuConfig == "-CPU") {
+            std::map<std::string, std::string> cpuMap = {};
+            cpuMap = CPU::GetInstance().ItemData();
+            dataMap.insert(cpuMap.begin(), cpuMap.end());
+        }
+    }
     std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    std::future<std::map<std::string, std::string>> cpuResult = AsyncCollectCpu();
     std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
     std::future<std::map<std::string, std::string>> fdsResult = AsyncCollectFds();
     GetItemData(dataMap);
     CheckFutureFps(fpsResult, dataMap);
-    CheckFutureCpu(cpuResult, dataMap);
     CheckFutureRam(ramResult, dataMap);
     CheckFutureFds(fdsResult, dataMap);
     if (curTaskInfo.stuckInfo.isEffective && recordTrace) {
@@ -441,7 +425,7 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
     if (GetRecordState()) {
         PrintMap(dataMap);
     }
-    msgTask(MapToString(dataMap));
+    SendRealTimeMap(msgTask, dataMap, spdata);
     nextTime = SPUtils::GetCurTime();
     long long costTime = nextTime - lastTime;
     long long pTime = 998;
@@ -449,6 +433,20 @@ void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
         std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
     }
     asyncDataMtx.unlock();
+}
+
+void SPTask::SendRealTimeMap(std::function<void(std::string data)> msgTask, std::map<std::string, std::string> dataMap,
+    SPData &spdata)
+{
+    std::string realTimeMap = "";
+    if (SpThreadSocket::GetInstance().GetHapStartFalg()) {
+        realTimeMap = ProcessingCollectionsMap(spdata);
+    } else {
+        realTimeMap = MapToString(dataMap);
+    }
+    if (!appReceiveDataFlag) {
+        msgTask(realTimeMap);
+    }
 }
 
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
@@ -805,11 +803,16 @@ ErrCode SPTask::StartRecord()
     while (startTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    SetStartFlag();
+    return ErrCode::OK;
+}
+
+void SPTask::SetStartFlag()
+{
     InitDataFile();
     screenshotFlag = true;
     recordState = true;
     recordTrace = true;
-    return ErrCode::OK;
 }
 
 ErrCode SPTask::StopRecord()
@@ -820,6 +823,12 @@ ErrCode SPTask::StopRecord()
     while (stopRecordTime > nextTime) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
+    ClearStopFlag();
+    return ErrCode::OK;
+}
+
+void SPTask::ClearStopFlag()
+{
     screenshotFlag = false;
     recordState = false;
     recordTrace = false;
@@ -838,9 +847,8 @@ ErrCode SPTask::StopRecord()
     gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
     KillHiperfCmd();
-
-    return ErrCode::OK;
 }
+
 time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
@@ -849,14 +857,15 @@ void SPTask::ProcessErrorData(SPData &spdata)
 {
     unsigned int newDataSize = spdata.values.size();
     if (newDataSize > dataSize) {
+        csvTitle = "";
         for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
             csvTitle += iter->first + ",";
         }
         if (!vmap.empty()) {
             vmap.pop_back();
         }
+        dataSize = newDataSize;
     }
-    dataSize = newDataSize;
     vmap.push_back(spdata);
 }
 std::string SPTask::GetCsvTitle()
@@ -896,6 +905,67 @@ void SPTask::ConfigureSdkDataHap()
         WLOGI("Starting sdkdata collection in new thread");
         sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
     }
+}
+
+void SPTask::SetAppCmd(std::string &recvBuf)
+{
+    std::stringstream ssLine(recvBuf);
+    std::string word = "";
+    int count = 0;
+    int counter = 3;
+    while (ssLine >> word) {
+        count++;
+        if (count == counter) {
+            curTaskInfo.packageName = word;
+        } else if (count > counter) {
+            if  (word.find(":::") != std::string::npos) {
+                size_t pos = word.find(":::");
+                word = word.substr(0, pos);
+            }
+            curTaskInfo.taskConfig.push_back(word);
+        }
+    }
+}
+
+TaskInfo SPTask::GetCurTaskInfo()
+{
+    return curTaskInfo;
+}
+
+void SPTask::SetAppReceiveDataOffFlag()
+{
+    appReceiveDataFlag = true;
+}
+
+void SPTask::SetAppReceiveDataOnFlag()
+{
+    appReceiveDataFlag = false;
+}
+
+void SPTask::SetAppInitFlag()
+{
+    isInit = true;
+    if (!GetCurTaskInfo().packageName.empty()) {
+        SetProfilerPid();
+        SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
+    }
+}
+
+std::string SPTask::ProcessingCollectionsMap(SPData spdata)
+{
+    std::string appCollectMap = "t_index_info$$";
+    std::vector<std::string> keysToFind = {"fps", "refreshrate", "currentNow", "ddrFrequency", "cpu0Frequency",
+        "cpu1Frequency", "cpu2Frequency", "cpu3Frequency", "cpu4Frequency", "cpu5Frequency", "cpu6Frequency",
+        "cpu7Frequency", "cpu8Frequency", "cpu9Frequency", "cpu10Frequency", "cpu11Frequency", "gpuFrequency",
+        "pss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
+        "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
+        "gpuLoad"};
+    for (const auto& key : keysToFind) {
+        if (spdata.values.find(key) != spdata.values.end()) {
+            appCollectMap += key + ":" + spdata.values[key] + ",";
+        }
+    }
+    return appCollectMap;
 }
 }
 }

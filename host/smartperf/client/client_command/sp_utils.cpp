@@ -866,30 +866,6 @@ int& SPUtils::GetTtyDeviceFd()
     return fd;
 }
 
-void SPUtils::GetBundleName(const std::string &pid, std::string &bundleName)
-{
-    std::string filePath = "/proc/";
-    filePath.append(pid).append("/cmdline");
-    LOGD("GetBundleName filePath:%s", filePath.c_str());
-    if (!LoadFile(filePath, bundleName)) {
-        LOGD("Get process name by pid failed! %s", filePath.c_str());
-        return;
-    }
-    bundleName.resize(strlen(bundleName.c_str()));
-    if (bundleName.size() >= 2 && bundleName.substr(0, 2) == "./") { // 2: size
-        bundleName = bundleName.substr(2); // 2: point
-    }
-    size_t found = bundleName.rfind("/");
-    std::string procName;
-    if (found != std::string::npos) {
-        procName = bundleName.substr(found + 1);
-    } else {
-        procName = bundleName;
-    }
-    bundleName = std::move(procName);
-    LOGD("GetBundleName bundleName:%s", bundleName.c_str());
-}
-
 void SPUtils::GetTestsaPlugin(int command)
 {
     #ifdef ARKTEST_ENABLE

@@ -52,11 +52,11 @@ struct StuckNotification {
     long long frameTime = LLONG_MAX;
 };
 struct TaskInfo {
-    std::string sessionId = "";
+    std::string sessionId = "1";
     std::string packageName = "";
     std::string pid = "";
     std::vector<std::string> taskConfig = {};
-    long long freq = 0;
+    long long freq = 998;
     StuckNotification stuckInfo;
     bool isPrint = false;
 };
@@ -94,6 +94,8 @@ public:
     void StopGpuCounterRecv();
     void InitDataFile();
     void AsyncGetDataMap(std::function<void(std::string data)> msgTask);
+    void SendRealTimeMap(std::function<void(std::string data)> msgTask, std::map<std::string, std::string> dataMap,
+        SPData &spdata);
     void StopGetInfo();
     ErrCode StartRecord();
     ErrCode StopRecord();
@@ -106,6 +108,13 @@ public:
     void ConfigureSdkDataHap();
     static inline bool isSdkTask = false;
     void ResetSdkParam();
+    void SetAppCmd(std::string &recvBuf);
+    TaskInfo GetCurTaskInfo();
+    void SetAppReceiveDataOffFlag();
+    void SetAppReceiveDataOnFlag();
+    void SetAppInitFlag();
+    void SetStartFlag();
+    void ClearStopFlag();
 private:
     std::thread ThreadGetHiperf(long long timeStamp);
     void GetHiperf(const std::string &traceName);
@@ -119,6 +128,7 @@ private:
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();
     void EnablePrint();
+    std::string ProcessingCollectionsMap(SPData spdata);
 
 private:
     TaskInfo curTaskInfo;
@@ -148,6 +158,7 @@ private:
     unsigned int dataSize = 0;
     std::string csvTitle = "";
     int stdOutLog = -1;
+    bool appReceiveDataFlag = false;
 
     std::string strOne = R"(hiprofiler_cmd \
   -c - \
