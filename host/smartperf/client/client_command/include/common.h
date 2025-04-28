@@ -17,7 +17,7 @@
 #include <unordered_map>
 #include <string>
 namespace OHOS {
-namespace SmartPerf {    
+namespace SmartPerf {
 enum class MessageType {
     APP_START_COLLECT,
     APP_STOP_COLLECT,
