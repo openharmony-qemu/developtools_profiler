@@ -483,7 +483,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (fn) {
         ret = fn(size);
     }
-    if ((!g_hookReady) || SimplifiedFilter(ret, size)) {
+    if (!g_hookReady) {
         return ret;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -498,7 +498,8 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {  //0 not sampling
+    if (SimplifiedFilter(ret, size) ||
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -571,7 +572,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     if (fn) {
         ret = fn(align, len);
     }
-    if ((!g_hookReady) || SimplifiedFilter(ret, len)) {
+    if (!g_hookReady) {
         return ret;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -586,7 +587,8 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(len) == 0) {  //0 not sampling
+    if (SimplifiedFilter(ret, len) ||
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(len) == 0)) { //0 not sampling
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -671,7 +673,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (fn) {
         pRet = fn(number, size);
     }
-    if ((!g_hookReady) || SimplifiedFilter(pRet, number * size)) {
+    if (!g_hookReady) {
         return pRet;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -686,7 +688,8 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size * number) == 0) {
+    if (SimplifiedFilter(pRet, number * size) ||
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size * number) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -764,7 +767,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (fn) {
         pRet = fn(ptr, size);
     }
-    if ((!g_hookReady) || SimplifiedFilter(pRet, size)) {
+    if (!g_hookReady) {
         return pRet;
     }
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
@@ -779,7 +782,8 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0) {
+    if (SimplifiedFilter(pRet, size) ||
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
