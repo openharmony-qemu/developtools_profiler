@@ -41,12 +41,13 @@ std::string StringReplace(std::string source, const std::string &from, const std
     return source;
 }
 
-int GetValueFromJsonFile(const std::string& filePath, const std::string key)
+int GetValueFromJsonFile(const std::string& filePath, const std::string& key)
 {
     std::ifstream inFile(filePath, std::ios::in);
+    int result = -1; // 默认返回值
     if (!inFile.is_open()) {
         HLOGE("parse json file: %s is not existed.", filePath.c_str());
-        return -1;
+        return result;
     }
     std::string fileContent((std::istreambuf_iterator<char>(inFile)), std::istreambuf_iterator<char>());
     cJSON* jsonNode = cJSON_Parse(fileContent.c_str());
@@ -54,19 +55,24 @@ int GetValueFromJsonFile(const std::string& filePath, const std::string key)
 
     if (jsonNode == nullptr) {
         HLOGE("parse json file: %s failed.", filePath.c_str());
-        return -1;
+        return result;
     }
+    do {
+        cJSON* valueNode = cJSON_GetObjectItem(jsonNode, key.c_str());
+        if (valueNode == nullptr) {
+            HLOGE("ParseJson hiprofiler_hook_process_count json node not found.");
+            break;
+        }
+        if (!cJSON_IsNumber(valueNode)) {
+            HLOGE("ParseJson: hiprofiler_hook_process_count item is illegal.");
+            break;
+        }
+        result = valueNode->valueint; // 获取整数值
+    } while (false);
 
-    cJSON* vaulezNode = cJSON_GetObjectItem(jsonNode, key.c_str());
-    if (vaulezNode == nullptr) {
-        HLOGE("ParseJson hiprofiler_hook_process_count json node not found.");
-        return -1;
-    }
-    if (!cJSON_IsNumber(vaulezNode)) {
-        HLOGE("ParseJson: hiprofiler_hook_process_count item is illegal.");
-        return -1;
-    }
-    return vaulezNode->valueint;
+    // 释放 cJSON 结构体占用的内存
+    cJSON_Delete(jsonNode);
+    return result;
 }
 
 size_t SubStringCount(const std::string &source, const std::string &sub)

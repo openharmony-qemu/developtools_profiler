@@ -24,6 +24,8 @@ using namespace std;
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+const std::string TEST_PATH = "/data/test/resource/testdata/";
+
 class UtilitiesTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
@@ -636,7 +638,7 @@ HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level1)
  */
 HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level1)
 {
-    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg.json";
+    std::string filePath = TEST_PATH + "hiprofiler_cfg.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
     EXPECT_EQ(res, 2);
 }
@@ -646,9 +648,9 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile002, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_FileNotFound, TestSize.Level1)
 {
-    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg22.json";
+    std::string filePath = TEST_PATH + "hiprofiler_cfg22.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
     EXPECT_EQ(res, -1);
 }
@@ -658,9 +660,9 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile002, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile003, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidKey, TestSize.Level1)
 {
-    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg.json";
+    std::string filePath = TEST_PATH + "hiprofiler_cfg.json";
     auto res = GetValueFromJsonFile(filePath, "test");
     EXPECT_EQ(res, -1);
 }
@@ -670,9 +672,9 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile003, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile004, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidFormat, TestSize.Level1)
 {
-    std::string filePath = "/data/test/resource/testdata/hiprofiler_cfg_2.json";
+    std::string filePath = TEST_PATH + "hiprofiler_cfg_2.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
     EXPECT_EQ(res, -1);
 }
