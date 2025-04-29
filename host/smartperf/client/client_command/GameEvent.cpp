@@ -26,7 +26,7 @@ namespace SmartPerf {
 void GameEventCallbackImpl::OnGameEvent(int32_t type, std::map<std::string, std::string> &params)
 {
     WLOGI("GameEvent::OnGameEvent Callback");
-    for(auto &item : params) {
+    for (auto &item : params) {
         WLOGI("GameEventCallbackImpl::OnGameEvent, key: %s, value: %s", item.first.c_str(), item.second.c_str());
     }
 }
@@ -37,7 +37,7 @@ std::map<std::string, std::string> GameEvent::ItemData()
 }
 
 int GameEvent::RegisterGameEvent()
-{    
+{
     WLOGI("GameEvent::RegisterGameEvent");
     std::unique_ptr<GameEventCallback> gameEventCallback = std::make_unique<GameEventCallbackImpl>();
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
