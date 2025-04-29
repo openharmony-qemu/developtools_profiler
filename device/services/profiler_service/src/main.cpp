@@ -31,7 +31,6 @@ int main(int argc, char* argv[])
     if ((!COMMON::GetDeveloperMode()) || COMMON::IsProcessRunning(lockFileFd)) { // process is running
         return 0;
     }
-    gpr_set_log_verbosity(GPR_LOG_SEVERITY_DEBUG);
     grpc::EnableDefaultHealthCheckService(true);
 
     auto service = std::make_shared<ProfilerService>(std::make_shared<PluginService>());
