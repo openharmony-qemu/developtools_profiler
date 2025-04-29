@@ -435,6 +435,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
         nextFp = *reinterpret_cast<uintptr_t*>(fp);
         if (nextFp <= stackPtr) {
+            depth -= 1;
             break;
         }
         if (fp == nextFp) {
