@@ -29,7 +29,7 @@ class GameEventCallback {
 
 class GameEventCallbackImpl  : public GameEventCallback {
     public:
-    GameEventCallbackImpl();
+    GameEventCallbackImpl() {};
     void OnGameEvent(int32_t type, std::map<std::string, std::string> &params) override;
 };
 
