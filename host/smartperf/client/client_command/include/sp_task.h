@@ -26,6 +26,7 @@
 #include "sdk_data_recv.h"
 #include "GpuCounter.h"
 #include "lock_frequency.h"
+#include "GameEvent.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class ExceptionMsg {
@@ -138,6 +139,7 @@ private:
     std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     LockFrequency &lockFreq = LockFrequency::GetInstance();
+    GameEvent &gameEvent = GameEvent::GetInstance();
     bool recordState = false;
     bool screenshotFlag = false;
     bool recordTrace = false;
