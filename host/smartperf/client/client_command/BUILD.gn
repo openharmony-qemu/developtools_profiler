@@ -42,6 +42,7 @@ ohos_executable("SP_daemon") {
     "FPS.cpp",
     "FileDescriptor.cpp",
     "GPU.cpp",
+    "GameEvent.cpp",
     "GetLog.cpp",
     "GpuCounter.cpp",
     "GpuCounterCallback.cpp",

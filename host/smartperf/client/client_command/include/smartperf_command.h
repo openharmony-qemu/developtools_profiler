@@ -21,6 +21,7 @@
 #include "common.h"
 #include "sp_utils.h"
 #include "GpuCounter.h"
+#include "GameEvent.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -119,6 +120,7 @@ public:
     // 采集配置项
     std::vector<std::string> configs;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
+    GameEvent &gameEvent = GameEvent::GetInstance();
 };
 }
 }

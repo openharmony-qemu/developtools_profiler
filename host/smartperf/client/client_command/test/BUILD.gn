@@ -31,6 +31,7 @@ ohos_unittest("sp_daemon_ut") {
     "../FPS.cpp",
     "../FileDescriptor.cpp",
     "../GPU.cpp",
+    "../GameEvent.cpp",
     "../GetLog.cpp",
     "../GpuCounter.cpp",
     "../GpuCounterCallback.cpp",

@@ -16,6 +16,7 @@
 #include <thread>
 #include <cstring>
 #include <iterator>
+#include "include/GameEvent.h"
 #include "unistd.h"
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"
@@ -294,6 +295,7 @@ std::string SmartPerfCommand::ExecCommand()
         }
         StartGpuCounterCollect(itConfig, gcFlag);
     }
+    gameEvent.RegisterGameEvent();
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
@@ -325,6 +327,7 @@ std::string SmartPerfCommand::ExecCommand()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
+    gameEvent.UnregisterGameEvent();
     return std::string("command exec finished!");
 }
 void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
