@@ -136,6 +136,7 @@ private:
     std::atomic<bool> isReportBasicData_ = false;
     std::string fakePath_ = "";
     std::string osVersion_ = "";
+    std::unordered_set<std::string> typeSet_ = {};
 };
 FTRACE_NS_END
 #endif // FLOW_CONTROLLER_H

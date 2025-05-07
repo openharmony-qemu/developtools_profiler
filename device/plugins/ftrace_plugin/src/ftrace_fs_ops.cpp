@@ -306,9 +306,20 @@ bool FtraceFsOps::EnableEvent(const std::string& type, const std::string& name)
     return WriteTraceFile(enablePath, "1") > 0;
 }
 
+bool FtraceFsOps::EnableEventByType(const std::string& type)
+{
+    std::string enablePath = "/events/" + type + "/enable";
+    return WriteTraceFile(enablePath, "1") > 0;
+}
 bool FtraceFsOps::DisableEvent(const std::string& type, const std::string& name)
 {
     std::string enablePath = "/events/" + type + "/" + name + "/enable";
+    return WriteTraceFile(enablePath, "0") > 0;
+}
+
+bool FtraceFsOps::DisableEventByType(const std::string& type)
+{
+    std::string enablePath = "/events/" + type + "/enable";
     return WriteTraceFile(enablePath, "0") > 0;
 }
 
