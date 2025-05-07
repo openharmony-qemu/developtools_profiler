@@ -258,9 +258,6 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         }
     }
 
-    std::map<std::string, std::string> gameEventMap = GameEvent::GetInstance().GetGameEventItemData();
-    spMap.insert(gameEventMap.cbegin(), gameEventMap.cend());
-
     if (!errInfo.empty()) { // GPU Counter init failed
         printf("%s\n", errInfo.c_str());
         LOGE("%s", errInfo.c_str());

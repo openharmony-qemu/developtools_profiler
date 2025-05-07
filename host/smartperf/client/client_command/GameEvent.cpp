@@ -69,7 +69,7 @@ int GameEvent::RegisterGameEvent()
     } else {
         WLOGE("GameEvent::ItemData, RegisterGameEventListener failed");
     }
-    return 0;
+    return ret;
 }
 
 int GameEvent::UnregisterGameEvent()
@@ -98,7 +98,7 @@ int GameEvent::UnregisterGameEvent()
     } else {
         WLOGE("GameEvent::ItemData, UnregisterGameEventListener failed");
     }
-    return 0;
+    return ret;
 }
 
 } // namespace SmartPerf

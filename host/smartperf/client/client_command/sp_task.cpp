@@ -257,8 +257,6 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
     }
-    std::map<std::string, std::string> gameEventMap = GameEvent::GetInstance().GetGameEventItemData();
-    dataMap.insert(gameEventMap.begin(), gameEventMap.end());
 }
 
 void SPTask::ConfigDataThread()
