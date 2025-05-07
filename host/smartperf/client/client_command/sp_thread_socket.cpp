@@ -24,6 +24,7 @@
 #include <map>
 #include <mutex>
 #include <climits>
+#include "include/GameEvent.h"
 #include "parameters.h"
 #include "include/sp_csv_util.h"
 #include "include/sdk_data_recv.h"
@@ -174,6 +175,10 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         SpThreadSocket::GetInstance().GetToken() == "") {
         WLOGE("'-lockfreq' must have a valid token.");
         return;
+    }
+    // Register GameEvent: TCP 
+    if (recvStr.find("-ge") != std::string::npos) {
+        GameEvent::GetInstance().RegisterGameEvent();
     }
     ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
     if (type == SocketConnectType::CMD_SOCKET) {
@@ -435,6 +440,9 @@ void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
         FPS &fps = FPS::GetInstance();
         fps.isGameApp = SPUtils::GetIsGameApp(spTask.GetCurTaskInfo().packageName);
         fps.firstDump = true;
+    }
+    if (recvBuf.find("-ge") != std::string::npos) {
+        GameEvent::GetInstance().RegisterGameEvent();
     }
     spTask.SetAppInitFlag();
     spTask.SetAppReceiveDataOffFlag();
@@ -753,6 +761,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         hapStartFlag = false;
         SPTask::isSdkTask = false;
         SPTask::GetInstance().ResetSdkParam();
+        GameEvent::GetInstance().UnregisterGameEvent();
         spTask.ClearStopFlag();
     } else {
         UdpStartMessProcess(spSocket, profiler, retCode, recvBuf, iterator);

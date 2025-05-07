@@ -257,6 +257,8 @@ void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
             dataMap.insert(itemMap.begin(), itemMap.end());
         }
     }
+    std::map<std::string, std::string> gameEventMap = GameEvent::GetInstance().GetGameEventItemData();
+    dataMap.insert(gameEventMap.begin(), gameEventMap.end());
 }
 
 void SPTask::ConfigDataThread()
@@ -475,7 +477,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     LOGD("Data files initialized.");
     ConfigDataThread();
     LOGD("Data collection thread configuration completed.");
-    gameEvent.RegisterGameEvent();
     thread = std::thread([this, msgTask]() {
         WLOGI("Starting data collection thread.");
         while (isRunning) {

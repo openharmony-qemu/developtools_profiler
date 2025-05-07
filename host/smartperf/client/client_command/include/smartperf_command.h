@@ -103,6 +103,7 @@ public:
     void CreateSocketThread() const;
     void SaveGpuCounter() const;
     void StartGpuCounterCollect(std::string config, bool &flag) const;
+    void StartGameEventCollect(std::string config) const;
     void DeviceServer(int isNeedDaemon) const;
     // 采集次数
     int num = 0;

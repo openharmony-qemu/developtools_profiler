@@ -205,6 +205,7 @@ void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argS
         case CommandType::CT_GC:
         case CommandType::CT_NAV:
         case CommandType::CT_AS:
+        case CommandType::CT_GE:
             configs.push_back(argStr);
             break;
         default:
@@ -257,6 +258,9 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
         }
     }
 
+    std::map<std::string, std::string> gameEventMap = GameEvent::GetInstance().GetGameEventItemData();
+    spMap.insert(gameEventMap.cbegin(), gameEventMap.cend());
+
     if (!errInfo.empty()) { // GPU Counter init failed
         printf("%s\n", errInfo.c_str());
         LOGE("%s", errInfo.c_str());
@@ -279,6 +283,12 @@ void SmartPerfCommand::StartGpuCounterCollect(std::string config, bool &flag) co
         flag = true;
     }
 }
+void SmartPerfCommand::StartGameEventCollect(std::string config) const
+{
+    if (config.find("-ge") != std::string::npos) {
+        GameEvent::GetInstance().RegisterGameEvent();
+    }
+}
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
@@ -294,8 +304,8 @@ std::string SmartPerfCommand::ExecCommand()
             return std::string("Command not support param aischedule");
         }
         StartGpuCounterCollect(itConfig, gcFlag);
+        StartGameEventCollect(itConfig);    // GameEvent Register: Command
     }
-    gameEvent.RegisterGameEvent();
     while (index < num) {
         std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
         long long lastTime = SPUtils::GetCurTime();
