@@ -19,6 +19,9 @@
 #include <map>
 namespace OHOS {
 namespace SmartPerf {
+using ReportDataFunc = int (*)(const std::vector<int32_t>& resId, const std::vector<int64_t>& value,
+    const std::vector<int64_t>& endTime, const std::string& msgStr);
+using PerfScenarioFunc = int (*)(const std::string& msgStr);
 class LockFrequency : public SpProfiler {
 public:
     static LockFrequency &GetInstance()
@@ -37,6 +40,8 @@ private:
 
     bool isCollecting = false;
     const std::string lockFunction = "FrequencyLockPlugin";
+    ReportDataFunc reportFunc_ = nullptr;
+    PerfScenarioFunc scenarioFunc_ = nullptr;
 };
 }
 }
