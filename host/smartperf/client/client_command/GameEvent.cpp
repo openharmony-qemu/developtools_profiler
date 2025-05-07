@@ -28,7 +28,6 @@ void GameEventCallbackImpl::OnGameEvent(int32_t type, std::map<std::string, std:
     WLOGI("GameEvent::OnGameEvent Callback");
     for (auto &item : params) {
         GameEvent::GetInstance().GetGameEventItemData()[item.first] = item.second;
-        WLOGI("GameEventCallbackImpl::OnGameEvent, key: %s, value: %s", item.first.c_str(), item.second.c_str());
     }
 }
 
