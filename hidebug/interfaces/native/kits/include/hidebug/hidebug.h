@@ -161,7 +161,7 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
  * @return The number of stack frames written to array.
  * @since 20
  */
-int OH_HiDebug_BacktraceFromFp(BacktraceObject object, void* startFp, void** pcArray, int size);
+int OH_HiDebug_BacktraceFromFp(HiDebug_Backtrace_Object object, void* startFp, void** pcArray, int size);
 
 /**
  * @brief Defines the callback of the {@link OH_HiDebug_SymbolicAddress} function.
@@ -186,7 +186,7 @@ typedef void (*OH_HiDebug_SymbolicAddressCallback)(void* pc, void* arg, const Hi
  *         {@link HIDEBUG_INVALID_SYMBOLIC_PC_ADDRESS} Could not find symbol info by given pc.
  * @since 20
  */
-HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(BacktraceObject object, void* pc, void* arg,
+HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(HiDebug_Backtrace_Object object, void* pc, void* arg,
     OH_HiDebug_SymbolicAddressCallback callback);
 
 /**
@@ -195,7 +195,7 @@ HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(BacktraceObject object, void* pc, v
  * @return BacktraceObject if Success or NULL if is not supported on current arch
  * @since 20
  */
-BacktraceObject OH_HiDebug_CreateBacktraceObject(void);
+HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject();
 
 /**
  * @brief Destroy a backtrace object and the function is not signal-safe.
@@ -203,7 +203,7 @@ BacktraceObject OH_HiDebug_CreateBacktraceObject(void);
  * @param object The object to be destroyed.
  * @since 20
  */
-void OH_HiDebug_DestroyBacktraceObject(BacktraceObject object);
+void OH_HiDebug_DestroyBacktraceObject(HiDebug_Backtrace_Object object);
 
 #ifdef __cplusplus
 }

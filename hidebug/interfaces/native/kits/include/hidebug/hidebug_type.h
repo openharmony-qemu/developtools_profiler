@@ -296,7 +296,7 @@ typedef struct HiDebug_StackFrame {
  *
  * @since 20
  */
-typedef struct BacktraceObject__* BacktraceObject;
+typedef struct HiDebug_Backtrace_Object__* HiDebug_Backtrace_Object;
 
 #ifdef __cplusplus
 }
