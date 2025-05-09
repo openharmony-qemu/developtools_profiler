@@ -25,7 +25,6 @@ namespace OHOS {
 namespace SmartPerf {
 void GameEventCallbackImpl::OnGameEvent(int32_t type, std::map<std::string, std::string> &params)
 {
-    WLOGI("GameEvent::OnGameEvent Callback");
     for (auto &item : params) {
         GameEvent::GetInstance().GetGameEventItemData()[item.first] = item.second;
     }

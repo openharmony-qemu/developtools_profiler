@@ -70,6 +70,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
                 argStr1 = argv[i + 1];
             }
             if (COMMAND_MAP.count(argStr) > 0) {
+                LOGD("SmartPerfCommand argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
                 HandleCommand(argStr, argStr1);
             }
         }
@@ -163,7 +164,6 @@ void SmartPerfCommand::CreateSocketThread() const
 
 void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
 {
-    LOGD("SmartPerfCommand::HandleCommand  argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
     switch (COMMAND_MAP.at(argStr)) {
         case CommandType::CT_N:
             num = SPUtilesTye::StringToSometype<int>(argStr1.c_str());
