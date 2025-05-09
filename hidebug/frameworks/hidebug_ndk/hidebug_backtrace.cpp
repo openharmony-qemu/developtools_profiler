@@ -18,7 +18,7 @@
 #include "dfx_map.h"
 #include "fp_backtrace.h"
 
-int OH_HiDebug_BacktraceFromFp(BacktraceObject object, void* startFp, void** pcArray, int size)
+int OH_HiDebug_BacktraceFromFp(HiDebug_Backtrace_Object object, void* startFp, void** pcArray, int size)
 {
     if (object == nullptr || startFp == nullptr || pcArray == nullptr || size <= 0) {
         return 0;
@@ -27,7 +27,7 @@ int OH_HiDebug_BacktraceFromFp(BacktraceObject object, void* startFp, void** pcA
     return static_cast<int>(fpBacktrace->BacktraceFromFp(startFp, pcArray, static_cast<uint32_t>(size)));
 }
 
-HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(BacktraceObject object, void* pc, void* arg,
+HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(HiDebug_Backtrace_Object object, void* pc, void* arg,
     OH_HiDebug_SymbolicAddressCallback callback)
 {
     if (object == nullptr || callback == nullptr || pc == nullptr) {
@@ -61,12 +61,12 @@ HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(BacktraceObject object, void* pc, v
     return HIDEBUG_SUCCESS;
 }
 
-BacktraceObject OH_HiDebug_CreateBacktraceObject()
+HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject()
 {
-    return reinterpret_cast<BacktraceObject>(OHOS::HiviewDFX::FpBacktrace::CreateInstance());
+    return reinterpret_cast<HiDebug_Backtrace_Object>(OHOS::HiviewDFX::FpBacktrace::CreateInstance());
 }
 
-void OH_HiDebug_DestroyBacktraceObject(BacktraceObject object)
+void OH_HiDebug_DestroyBacktraceObject(HiDebug_Backtrace_Object object)
 {
     delete reinterpret_cast<OHOS::HiviewDFX::FpBacktrace*>(object);
 }
