@@ -16,6 +16,7 @@
 #include "include/AI_schedule.h"
 #include "include/CPU.h"
 #include "include/DDR.h"
+#include "include/GameEvent.h"
 #include "include/GetLog.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
@@ -250,6 +251,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
             if (cmdFlag) {
                 profiler = &FileDescriptor::GetInstance().GetInstance();
             }
+            break;
+        case CommandType::CT_GE:
+            profiler = &GameEvent::GetInstance();
             break;
         default:
             break;
