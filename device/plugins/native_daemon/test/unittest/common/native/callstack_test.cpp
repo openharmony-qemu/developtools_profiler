@@ -40,6 +40,7 @@ void CallStackTest::SetUp() {}
 void CallStackTest::TearDown() {}
 
 
+#ifndef is_linux
 /**
  * @tc.name: UnwindCallStack
  * @tc.desc:
@@ -47,10 +48,6 @@ void CallStackTest::TearDown() {}
  */
 HWTEST_F(CallStackTest, UnwindCallStack, TestSize.Level1)
 {
-#if is_linux
-    return;
-#endif
-
     std::vector<u64> regs;
     std::vector<u8> data;
     LoadFromFile(PATH_RESOURCE_TEST_DWARF_DATA + TEST_DWARF_USER_REGS_0, regs);
@@ -78,6 +75,7 @@ HWTEST_F(CallStackTest, UnwindCallStack, TestSize.Level1)
 #endif
     }
 }
+#endif
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

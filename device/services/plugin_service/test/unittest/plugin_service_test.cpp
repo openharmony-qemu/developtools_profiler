@@ -921,6 +921,14 @@ HWTEST_F(UnitTestPluginService, PluginService_SessionConfig, TestSize.Level1)
     std::vector<std::string> pluginNames = {"abc.so", "mem.so"};
     std::shared_ptr<ProfilerSessionConfig> config = std::make_shared<ProfilerSessionConfig>();
     pluginService_->SetProfilerSessionConfig(config, pluginNames);
+
+    PluginInfo plugin;
+    SocketContext ctx;
+    plugin.name = "abc_check.so";
+    plugin.bufferSizeHint = 0;
+    plugin.sha256 = "asdfasdfasdfasfd";
+    plugin.context = &ctx;
+    EXPECT_TRUE(pluginService_->AddPluginInfo(plugin));
 }
 
 } // namespace

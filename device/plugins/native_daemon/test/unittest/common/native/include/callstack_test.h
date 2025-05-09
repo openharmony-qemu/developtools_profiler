@@ -135,12 +135,14 @@ void LoadFromFile(const std::string &fileName, std::vector<T> &data)
     ASSERT_EQ(ret, data.size());
 }
 
+#ifndef is_linux
 static void MakeMaps(VirtualThread &thread)
 {
     for (const mmapDumpInfo &mmap : TEST_DWARF_MMAP) {
         thread.CreateMapItem(mmap.fileName, mmap.begin, mmap.len, mmap.pgoff);
     }
 }
+#endif
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS
