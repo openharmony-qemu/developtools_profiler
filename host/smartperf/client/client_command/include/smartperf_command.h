@@ -22,6 +22,7 @@
 #include "sp_utils.h"
 #include "GpuCounter.h"
 #include "GameEvent.h"
+#include "task_manager.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -55,6 +56,7 @@ public:
         " -VIEW           set layler, for example: -VIEW DisplayNode \n"
         " -OUT            set csv output path.\n"
         " -d              get device DDR information \n"
+        " -ci             get cpu instructions and cycles \n"
         " -screen         get screen resolution \n"
         " -deviceinfo     get device information \n"
         " -server         start a process to listen to the socket message of the start and stop commands \n"
@@ -102,7 +104,6 @@ public:
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
     void CreateSocketThread() const;
     void SaveGpuCounter() const;
-    void StartGpuCounterCollect(std::string config, bool &flag) const;
     void DeviceServer(int isNeedDaemon) const;
     // 采集次数
     int num = 0;
@@ -121,6 +122,7 @@ public:
     std::vector<std::string> configs;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     GameEvent &gameEvent = GameEvent::GetInstance();
+    TaskManager taskMgr_;
 };
 }
 }

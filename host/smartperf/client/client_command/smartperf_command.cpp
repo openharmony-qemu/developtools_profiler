@@ -31,11 +31,17 @@
 #include "include/common.h"
 #include "include/FPS.h"
 #include "include/sp_task.h"
+#include "cpu_info.h"
 
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
+    std::string argvStr;
+    for (auto& item : argv) {
+        argvStr += item + " ";
+    }
+    taskMgr_.AddTask(argvStr);
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
@@ -225,6 +231,10 @@ void SmartPerfCommand::HandleCommandContinue(std::string argStr, const std::stri
         case CommandType::CT_PRINT:
             configs.push_back(argStr);
             break;
+        case CommandType::CT_CI: {
+            configs.push_back(argStr);
+            break;
+        }
         default:
             std::cout << "other unknown args:" << argStr << std::endl;
             break;
@@ -266,67 +276,23 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     return rc;
 }
 
-void SmartPerfCommand::SaveGpuCounter() const
-{
-    std::string outGpuCounterDataPath = "/data/local/tmp";
-    gpuCounter.SaveData(outGpuCounterDataPath);
-    gpuCounter.StopCollect();
-}
-void SmartPerfCommand::StartGpuCounterCollect(std::string config, bool &flag) const
-{
-    if (config.find("-gc") != std::string::npos) {
-        gpuCounter.StartCollect(GpuCounter::GC_START);
-        flag = true;
-    }
-}
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    int rc = 0;
-    int index = 0;
-    std::vector<SPData> vmap;
-    const long long freq = 1000;
-    num = num + 1;
-    bool gcFlag = false;
-    for (std::string itConfig : configs) {
+    for (std::string& itConfig : configs) {
         if (itConfig.find("-aischedule") != std::string::npos) {
             return std::string("Command not support param aischedule");
         }
-        StartGpuCounterCollect(itConfig, gcFlag);
     }
+
     gameEvent.RegisterGameEvent();
-    while (index < num) {
-        std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
-        long long lastTime = SPUtils::GetCurTime();
-        spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-        rc = GetItemInfo(spMap);
-        if (rc == -1) {
-            break;
-        }
-        std::map<std::string, std::string> gpuCounterDataMap;
-        gpuCounter.GetGpuRealtimeData(gpuCounterDataMap);
-        spMap.insert(gpuCounterDataMap.begin(), gpuCounterDataMap.end());
-        std::cout << std::endl;
-        PrintMap(spMap, index);
-        std::cout << std::endl;
-        SPData spdata;
-        if (index != 0) {
-            spdata.values.insert(spMap.cbegin(), spMap.cend());
-            vmap.push_back(spdata);
-        }
-        long long nextTime = SPUtils::GetCurTime();
-        long long costTime = nextTime - lastTime;
-        if (costTime < freq) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(freq - costTime));
-        }
-        index++;
-    }
-    if (gcFlag) {
-        SaveGpuCounter();
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(freq));
-    SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
+    taskMgr_.SetFilePath(outPath);
+    taskMgr_.SetRecordState(true);
+    taskMgr_.Start();
+    taskMgr_.Wait();
+    taskMgr_.Stop();
+    taskMgr_.WriteToCSV();
     gameEvent.UnregisterGameEvent();
     return std::string("command exec finished!");
 }

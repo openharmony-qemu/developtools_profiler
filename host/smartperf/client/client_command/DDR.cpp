@@ -20,10 +20,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> DDR::ItemData()
 {
     std::map<std::string, std::string> result;
-    result["ddrFrequency"] = std::to_string(GetDdrFreq());
-    if (result.find("ddrFrequency") != result.end() && result["ddrFrequency"].empty()) {
-        result["ddrFrequency"] = "NA";
-    }
+    result["ddrFrequency"] = std::to_string(GetDdrFreq()).empty() ? "NA" : std::to_string(GetDdrFreq());
     return result;
 }
 long long DDR::GetDdrFreq()

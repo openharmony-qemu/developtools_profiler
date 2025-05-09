@@ -1,0 +1,103 @@
+/*
+ * Copyright (C) 2025 Huawei Device Co., Ltd.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef TASK_MANAGER_H
+#define TASK_MANAGER_H
+
+#include "thread_pool.h"
+#include "argument_parser.h"
+#include "sp_profiler_factory.h"
+#include "common.h"
+#include <fstream>
+
+namespace OHOS::SmartPerf {
+class TaskManager;
+class ThreadLocal {
+public:
+    ThreadLocal();
+    ~ThreadLocal();
+    std::map<uint32_t, std::map<std::string, std::string>> datasA_;
+    std::map<uint32_t, std::map<std::string, std::string>> datasB_;
+    TaskManager* mgr_{nullptr};
+    std::atomic_bool switch_ {true};
+};
+
+class TaskManager {
+public:
+    TaskManager();
+    ~TaskManager();
+
+    void AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv);
+    void AddTask(const std::string& argv);
+    void AddTask(SpProfiler* task, bool priority);
+    void SetFilePath(const std::string& fileName, bool removeCurrentFile = true);
+    void Start();
+    void Stop(bool pause = false);
+    void SetStopFlag();
+    void CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas);
+    void WriteToCSV();
+    void Wait();
+    void RegisterThreadLocal(ThreadLocal* local);
+    void EnableIPCCallback(std::function<void(std::string)> callback);
+    void DisableIPCCallback();
+    void SetHapFlag(bool flag);
+    void SetNextTime(long long& nextTime);
+    void SetRecordState(bool record);
+
+private:
+    std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
+    void GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value);
+    std::string MapToString(std::map<std::string, std::string>& myMap);
+    void StartSaveFileThread();
+    void SaveRegularly(std::chrono::steady_clock::time_point& loopEnd);
+    void ProcessCurrentBatch(std::map<std::string, std::string>& data);
+    void ScheduleSaveData();
+    void ProcessOnceTask(bool start);
+
+    ThreadPool threadPool_ {4};
+    int32_t collectCount_ {-1};
+    std::atomic_bool running_ {false};
+    std::thread mainLoop_;
+    std::vector<SpProfiler *> normalTask_;
+    std::vector<SpProfiler *> priorityTask_;
+    std::map<uint32_t, std::map<std::string, std::string>> datas_;
+    std::mutex mtx_;
+    std::string fileName_ {"/data/local/tmp/data.csv"};
+    bool saveFlag_ {false};
+    long long* nextTime_ {nullptr};
+
+    std::condition_variable finishCond_;
+    std::mutex finishMtx_;
+    std::string processName_;
+    std::string processIds_;
+    int32_t processId_ {-1};
+    bool printDataInfo_ {true};
+    bool ipcDataRecv_ {false};
+    std::vector<ThreadLocal*> threadLocals_ {4};
+    std::ofstream dataFile_;
+    std::chrono::steady_clock::time_point currentTimePoint_;
+    std::set<std::string> titles_;
+
+    std::thread scheduleSaveDataTh_;
+    std::condition_variable scheduleSaveDataCond_;
+    std::mutex scheduleSaveDataMtx_;
+    std::function<void(std::string)> ipcCallback_ {nullptr};
+    bool hapCollect_ {false};
+    uint32_t dataIndex_ {0};
+    std::atomic_bool recordData_ {false};
+    std::atomic_bool savingFile_ {false};
+};
+}
+#endif // TASK_MANAGER_H

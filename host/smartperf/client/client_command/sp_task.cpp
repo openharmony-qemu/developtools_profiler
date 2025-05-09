@@ -37,12 +37,10 @@
 #include "include/common.h"
 #include "include/sp_csv_util.h"
 #include "include/sp_thread_socket.h"
+#include "effective.h"
 namespace OHOS {
 namespace SmartPerf {
-const long long RM_0 = 0;
-const long long RM_5000 = 5000;
 const long long RM_1000 = 1000;
-const long long RM_1000000 = 1000000;
 const long long END_WAITING_TIME = 8; // End waiting time,unit seconds
 std::vector<std::string> ParseCommandArgs(std::string &command)
 {
@@ -109,30 +107,6 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     return ExceptionMsg::NO_ERR;
 }
 
-static std::string MapToString(std::map<std::string, std::string> myMap)
-{
-    // 将Map转换为字符串
-    std::string str = "{ ";
-    for (auto it = myMap.begin(); it != myMap.end(); ++it) {
-        str += "\"" + it->first + "\": " + it->second + ", ";
-    }
-    const int subLen = 2;
-    str.erase(str.end() - subLen, str.end());
-    str += " }";
-    return str;
-}
-
-void SPTask::PrintMap(std::map<std::string, std::string> &dataMap)
-{
-    if (curTaskInfo.isPrint) {
-        int i = 0;
-        for (auto iter = dataMap.cbegin() ; iter != dataMap.cend(); ++iter) {
-            fprintf(stderr, "\norder:%d %s=%s", i++, iter->first.c_str(), iter->second.c_str());
-        }
-        std::cerr << std::endl << std::flush;
-    }
-}
-
 ErrCode SPTask::InitTask(const std::string &recvStr)
 {
     std::string result = "";
@@ -145,9 +119,15 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
-        FPS &fps = FPS::GetInstance();
-        fps.isGameApp = SPUtils::GetIsGameApp(curTaskInfo.packageName);
-        fps.firstDump = true;
+        taskMgr_ = std::make_shared<TaskManager>();
+        taskMgr_->AddTask(recvStr);
+        if (curTaskInfo.stuckInfo.isEffective) {
+            if (curTaskInfo.stuckInfo.fps != 0) {
+                Effective::GetInstance().fps_ = curTaskInfo.stuckInfo.fps;
+            } else {
+                Effective::GetInstance().frameTime_ = curTaskInfo.stuckInfo.frameTime;
+            }
+        }
         SetAppInitFlag();
         LOGD("InitTask success, task initialized.");
         return ErrCode::OK;
@@ -158,110 +138,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     return ErrCode::FAILED;
 }
 
-std::future<std::map<std::string, std::string>> SPTask::AsyncCollectRam()
-{
-    std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult;
-    for (std::string ramConfig : curTaskInfo.taskConfig) {
-        if (ramConfig == "-r" || ramConfig == "-RAM") {
-            futureResult = p.get_future();
-            std::thread([p = std::move(p)]() mutable {
-                LOGD("Starting RAM collection in new thread");
-                p.set_value(RAM::GetInstance().ItemData());
-            }).detach();
-        }
-    }
-    return futureResult;
-}
-
-std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFps()
-{
-    std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult;
-    for (std::string fpsConfig : curTaskInfo.taskConfig) {
-        if (fpsConfig == "-f" || fpsConfig == "-FPS" || fpsConfig == "-LOW_POWER") {
-            if (fpsConfig == "-LOW_POWER") {
-                FPS::GetInstance().hapLowFpsFlag = true;
-            }
-            futureResult = p.get_future();
-            std::thread([p = std::move(p)]() mutable {
-                LOGD("Starting FPS collection in new thread");
-                p.set_value(FPS::GetInstance().ItemData());
-            }).detach();
-        }
-    }
-    return futureResult;
-}
-
-std::future<std::map<std::string, std::string>> SPTask::AsyncCollectFds()
-{
-    std::promise<std::map<std::string, std::string>> p;
-    std::future<std::map<std::string, std::string>> futureResult;
-    for (std::string fdsConfig : curTaskInfo.taskConfig) {
-        if (fdsConfig == "-fds" || fdsConfig == "-FDS") {
-            futureResult = p.get_future();
-            std::thread([p = std::move(p)]() mutable {
-                p.set_value(FileDescriptor::GetInstance().ItemData());
-            }).detach();
-        }
-    }
-    return futureResult;
-}
-
-void SPTask::CheckFutureRam(std::future<std::map<std::string, std::string>> &ramResult,
-    std::map<std::string, std::string> &dataMap)
-{
-    if (ramResult.valid()) {
-        std::map<std::string, std::string> result = ramResult.get();
-        dataMap.insert(result.begin(), result.end());
-    }
-}
-
-void SPTask::CheckFutureFps(std::future<std::map<std::string, std::string>> &fpsResult,
-    std::map<std::string, std::string> &dataMap)
-{
-    if (fpsResult.valid()) {
-        std::map<std::string, std::string> result = fpsResult.get();
-        dataMap.insert(result.begin(), result.end());
-    }
-}
-
-void SPTask::CheckFutureFds(std::future<std::map<std::string, std::string>> &fdsResult,
-    std::map<std::string, std::string> &dataMap)
-{
-    if (fdsResult.valid()) {
-        std::map<std::string, std::string> result = fdsResult.get();
-        dataMap.insert(result.begin(), result.end());
-    }
-}
-
-void SPTask::GetItemData(std::map<std::string, std::string> &dataMap)
-{
-    for (std::string itConfig : curTaskInfo.taskConfig) {
-        if ((itConfig == "-snapshot" || itConfig == "-SCREEN") && screenshotFlag) {
-            Capture::GetInstance().SocketMessage();
-            std::map<std::string, std::string> captureMap = Capture::GetInstance().ItemData();
-            dataMap.insert(captureMap.begin(), captureMap.end());
-        }
-
-        if (itConfig.find("-gc") != std::string::npos ||
-            itConfig.find("-o") != std::string::npos ||
-            itConfig.find("-lockfreq") != std::string::npos ||
-            itConfig.find("-GPU_COUNTER") != std::string::npos) {
-            continue;
-        }
-
-        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(itConfig), false);
-        if (profiler != nullptr) {
-            std::map<std::string, std::string> itemMap = profiler->ItemData();
-            dataMap.insert(itemMap.begin(), itemMap.end());
-        }
-    }
-}
-
 void SPTask::ConfigDataThread()
 {
-    for (std::string itConfig : curTaskInfo.taskConfig) {
+    for (std::string& itConfig : curTaskInfo.taskConfig) {
         if (!sdkData) {
             ConfigureSdkData(itConfig);
         }
@@ -352,7 +231,6 @@ void SPTask::StopSdkRecv()
 
 void SPTask::InitDataFile()
 {
-    vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterSaveReportData().clear();
     SdkDataRecv::GetInstance().SetStartRecordTime();
@@ -389,66 +267,6 @@ void SPTask::SetProfilerPid()
     SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
 }
 
-void SPTask::AsyncGetDataMap(std::function<void(std::string data)> msgTask)
-{
-    long long lastTime = SPUtils::GetCurTime();
-    asyncDataMtx.lock();
-    std::map<std::string, std::string> dataMap;
-    dataMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-    for (std::string cpuConfig : curTaskInfo.taskConfig) {
-        if (cpuConfig == "-c" || cpuConfig == "-CPU") {
-            std::map<std::string, std::string> cpuMap = {};
-            cpuMap = CPU::GetInstance().ItemData();
-            dataMap.insert(cpuMap.begin(), cpuMap.end());
-        }
-    }
-    std::future<std::map<std::string, std::string>> fpsResult = AsyncCollectFps();
-    std::future<std::map<std::string, std::string>> ramResult = AsyncCollectRam();
-    std::future<std::map<std::string, std::string>> fdsResult = AsyncCollectFds();
-    GetItemData(dataMap);
-    CheckFutureFps(fpsResult, dataMap);
-    CheckFutureRam(ramResult, dataMap);
-    CheckFutureFds(fdsResult, dataMap);
-    if (curTaskInfo.stuckInfo.isEffective && recordTrace) {
-        std::map<std::string, std::string> timeUsedMap = DetectionAndGrab();
-        if (!timeUsedMap.empty()) {
-            dataMap.insert(timeUsedMap.begin(), timeUsedMap.end());
-        }
-    }
-    SPData spdata;
-    spdata.values.insert(dataMap.begin(), dataMap.end());
-    if (GetRecordState()) {
-        ProcessErrorData(spdata);
-    }
-    gpuCounter.GetGpuRealtimeData(dataMap);
-    SdkDataRecv::GetInstance().GetSdkDataRealtimeData(dataMap);
-    if (GetRecordState()) {
-        PrintMap(dataMap);
-    }
-    SendRealTimeMap(msgTask, dataMap, spdata);
-    nextTime = SPUtils::GetCurTime();
-    long long costTime = nextTime - lastTime;
-    long long pTime = 998;
-    if (costTime < curTaskInfo.freq) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(pTime - costTime));
-    }
-    asyncDataMtx.unlock();
-}
-
-void SPTask::SendRealTimeMap(std::function<void(std::string data)> msgTask, std::map<std::string, std::string> dataMap,
-    SPData &spdata)
-{
-    std::string realTimeMap = "";
-    if (SpThreadSocket::GetInstance().GetHapStartFalg()) {
-        realTimeMap = ProcessingCollectionsMap(spdata);
-    } else {
-        realTimeMap = MapToString(dataMap);
-    }
-    if (!appReceiveDataFlag) {
-        msgTask(realTimeMap);
-    }
-}
-
 ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
 {
     LOGD("Task starting...");
@@ -462,29 +280,27 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     isRunning = true;
     realTimeStart = SPUtils::GetCurTime();
     LOGD("Task initialized, realTimeStart = %lld", realTimeStart);
-    if (!curTaskInfo.packageName.empty()) {
-        SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
-        LOGD("Profiler package name set to: %s", curTaskInfo.packageName.c_str());
-    } else {
-        LOGW("No package name provided for profiler.");
-    }
-    if (!curTaskInfo.pid.empty()) {
-        SpProfilerFactory::SetProfilerPidByPkg(curTaskInfo.pid);
-    }
     InitDataFile();
     LOGD("Data files initialized.");
     ConfigDataThread();
     LOGD("Data collection thread configuration completed.");
     gameEvent.RegisterGameEvent();
-    thread = std::thread([this, msgTask]() {
+    thread = std::thread([=]() {
+        if (taskMgr_ == nullptr) {
+            return;
+        }
         WLOGI("Starting data collection thread.");
-        while (isRunning) {
-            AsyncGetDataMap(msgTask);
-        }
-        WLOGI("Data collection thread exiting.");
-        if (curTaskInfo.isPrint) {
-            std::cerr << "End please press the enter key..." << std::endl << std::flush;
-        }
+        CreatPath(baseOutPath);
+        std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
+        CreatPath(thisBasePath);
+        std::string outIndexpath = thisBasePath + "/t_index_info.csv";
+        GpuCounter::GetInstance().SetSavePathDirectory(thisBasePath);
+
+        taskMgr_->SetFilePath(outIndexpath);
+        taskMgr_->EnableIPCCallback(msgTask);
+        taskMgr_->SetNextTime(nextTime);
+        taskMgr_->Start();
+        taskMgr_->Wait();
     });
     EnablePrint();
     return ErrCode::OK;
@@ -544,10 +360,6 @@ std::map<std::string, std::string> SPTask::SetTaskInfo()
 void SPTask::StopGetInfo()
 {
     bool isTcpMessage = true;
-    CreatPath(baseOutPath);
-    std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
-    CreatPath(thisBasePath);
-    std::string outIndexpath = thisBasePath + "/t_index_info.csv";
 
     std::map<std::string, std::string> taskInfoMap = SetTaskInfo();
     std::map<std::string, std::string> deviceInfo = SPUtils::GetDeviceInfo();
@@ -568,40 +380,28 @@ void SPTask::StopGetInfo()
     destMap.insert(cpuInfo.begin(), cpuInfo.end());
     destMap.insert(gpuInfo.begin(), gpuInfo.end());
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-    OHOS::SmartPerf::SpCsvUtil::WriteCsv(outIndexpath, vmap);
 
     WLOGI("Write CSV header done.");
 }
-void SPTask::StopGpuCounterRecv()
-{
-    std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
-    if (GetRecordState()) {
-        WLOGI("Record state is valid. Saving GPU counter data.");
-        gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
-    } else {
-        WLOGW("Record state is invalid. GPU counter data will not be saved.");
-    }
-}
 ErrCode SPTask::StopTask()
 {
+    if (taskMgr_ != nullptr) {
+        taskMgr_->Stop();
+        taskMgr_->WriteToCSV();
+    }
     if (GetRecordState()) {
         WLOGI("Record state is valid. Stopping task and cleaning up.");
         StopGetInfo();
         StopSdkRecv();
-        StopGpuCounterRecv();
 
-        vmap.clear();
         sdkvec.clear();
-        gpuCounter.GetGpuCounterData().clear();
         recordState = false;
-        screenshotFlag = false;
     } else {
         WLOGW("Record state is invalid. Skipping task stop operations.");
     }
 
     ResetSdkParam();
-    gpuCounter.StopCollect();
     lockFreq.SetIsCollecting(false);
     if (lockFreqThread.joinable()) {
         LOGD("Joining lockFreqThread.");
@@ -627,82 +427,6 @@ ErrCode SPTask::StopTask()
     return ErrCode::OK;
 }
 
-std::map<std::string, std::string> SPTask::DetectionAndGrab()
-{
-    std::map<std::string, std::string> templateMap;
-    if (!curTaskInfo.stuckInfo.isEffective) {
-        LOGE("StuckInfo is not effective. Returning empty map.");
-        return templateMap;
-    }
-
-    FpsCurrentFpsTime fcf = FPS::GetInstance().GetFpsCurrentFpsTime();
-    long long nowTime = SPUtils::GetCurTime();
-    long long curframeTime = fcf.currentFpsTime / RM_1000000; // Convert to milliseconds
-    LOGD("Start capture time: %lld", startCaptuerTime);
-
-    if (startCaptuerTime > 0) {
-        long long diff =
-            startCaptuerTime > nowTime ? (LLONG_MAX - startCaptuerTime + nowTime) : (nowTime - startCaptuerTime);
-        LOGD("Time difference: %lld ms", diff);
-
-        if (diff > RM_5000 && (!CheckCounterId())) {
-            LOGW("Time difference exceeded threshold, resetting start capture time.");
-            startCaptuerTime = RM_0;
-        }
-    }
-
-    if (curTaskInfo.stuckInfo.fps > fcf.fps || curTaskInfo.stuckInfo.frameTime < curframeTime) {
-        if (startCaptuerTime == 0) {
-            startCaptuerTime = nowTime;
-            LOGD("ThreadGetHiperf::%ld", startCaptuerTime);
-            ThreadGetHiperf(startCaptuerTime);
-        }
-    }
-    templateMap["fpsWarn"] = std::to_string(fcf.fps);
-    templateMap["FrameTimeWarn"] = std::to_string(fcf.currentFpsTime);
-    templateMap["TraceTime"] = std::to_string(startCaptuerTime);
-
-    return templateMap;
-}
-
-bool SPTask::CheckCounterId()
-{
-    std::string result;
-    std::string hiprofilerCmd = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_CMD);
-    LOGD("Loading hiprofiler command");
-    SPUtils::LoadCmd(hiprofilerCmd, result);
-    if (result.empty()) {
-        LOGW("Failed to load hiprofiler command or received empty result.");
-        return false;
-    }
-
-    if (result.find("-k") != std::string::npos) {
-        LOGD("Command contains '-k'.");
-        return true;
-    }
-
-    LOGD("Command does not contain '-k'.");
-    return false;
-}
-std::thread SPTask::ThreadGetHiperf(long long timeStamp)
-{
-    auto thGetTrace = [this, timeStamp]() { this->GetHiperf(std::to_string(timeStamp)); };
-    std::thread spThread(thGetTrace);
-    spThread.detach();
-    return spThread;
-}
-
-void SPTask::GetHiperf(const std::string &traceName)
-{
-    std::string result;
-    std::string tmp = SetHiperf(traceName);
-    std::cout << tmp << std::endl;
-    SPUtils::LoadCmd(tmp, result);
-    LOGD("hiprofiler exec (%s), hiprofiler exec trace name(%s), hiprofiler exec end (%s)",
-        tmp.c_str(), traceName.c_str(), result.c_str());
-}
-
-
 bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
 {
     std::set<std::string> keys;
@@ -715,7 +439,7 @@ bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
     }
     LOGD("Start validating Init parameter: %s", params.c_str());
 
-    for (auto a : COMMAND_MAP) {
+    for (auto& a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
     bool isValid = SPUtils::VeriyParameter(keys, params, errorInfo);
@@ -769,17 +493,6 @@ void SPTask::KillHiperfCmd()
     return;
 }
 
-std::string SPTask::SetHiperf(const std::string &traceName)
-{
-    std::string hiPrefix = "hiprofiler_";
-    std::string dataPrefix = "perf_";
-    requestId++;
-    std::string trtmp = strOne + hiPrefix + traceName + strTwo + "\n" + strThree + std::to_string(requestId) + "\n" +
-        strFour + "\n" + strFive + hiPrefix + traceName + strSix + "\n" + strNine + strEleven + "\n" + strSeven +
-        dataPrefix + traceName + strEight + strTen + "\n" + conFig;
-    return trtmp;
-}
-
 bool SPTask::GetRecordState()
 {
     return recordState;
@@ -806,15 +519,16 @@ ErrCode SPTask::StartRecord()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     SetStartFlag();
+    if (taskMgr_ != nullptr) {
+        taskMgr_->SetRecordState(true);
+    }
     return ErrCode::OK;
 }
 
 void SPTask::SetStartFlag()
 {
     InitDataFile();
-    screenshotFlag = true;
     recordState = true;
-    recordTrace = true;
 }
 
 ErrCode SPTask::StopRecord()
@@ -826,14 +540,15 @@ ErrCode SPTask::StopRecord()
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     ClearStopFlag();
+    if (taskMgr_ != nullptr) {
+        taskMgr_->SetRecordState(false);
+    }
     return ErrCode::OK;
 }
 
 void SPTask::ClearStopFlag()
 {
-    screenshotFlag = false;
     recordState = false;
-    recordTrace = false;
     std::string outGpuCounterDataPath = baseOutPath + "/" + curTaskInfo.sessionId;
 
     if (isInit) {
@@ -844,7 +559,6 @@ void SPTask::ClearStopFlag()
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 
-    vmap.clear();
     sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
@@ -855,21 +569,7 @@ time_t SPTask::GetRealStartTime() const
 {
     return realTimeStart;
 }
-void SPTask::ProcessErrorData(SPData &spdata)
-{
-    unsigned int newDataSize = spdata.values.size();
-    if (newDataSize > dataSize) {
-        csvTitle = "";
-        for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
-            csvTitle += iter->first + ",";
-        }
-        if (!vmap.empty()) {
-            vmap.pop_back();
-        }
-        dataSize = newDataSize;
-    }
-    vmap.push_back(spdata);
-}
+
 std::string SPTask::GetCsvTitle()
 {
     return csvTitle;

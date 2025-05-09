@@ -29,7 +29,7 @@ namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
 public:
-    static void WriteCsv(const std::string &path, std::vector<SPData> vmap)
+    static void WriteCsv(const std::string &path, std::vector<SPData>& vmap)
     {
         std::ofstream outFile;
         std::string cmdResult;
@@ -45,7 +45,7 @@ public:
             }
         }
         int i = 0;
-        for (SPData spdata : vmap) {
+        for (SPData& spdata : vmap) {
             std::string lineContent = "";
             for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
                 lineContent += iter->second + ",";

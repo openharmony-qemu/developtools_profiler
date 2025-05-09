@@ -335,12 +335,15 @@ std::string FPS::FindFpsRefreshrate()
             }
         }
     } else {
-            std::string screen = OHOS::SmartPerf::SPUtils::GetScreen();
-            std::string start = "refreshrate=";
-            size_t startPos = screen.find(start) + start.length();
-            size_t endPos = screen.length();
-            value = screen.substr(startPos, endPos - startPos);
+        std::string screen = OHOS::SmartPerf::SPUtils::GetScreen();
+        pos = screen.find("=");
+        if (pos != std::string::npos) {
+            value = screen.substr(pos + 1);
+            if (!value.empty() && value.back() == '\n') {
+                value.pop_back();
+            }
         }
+    }
     return value;
 }
 

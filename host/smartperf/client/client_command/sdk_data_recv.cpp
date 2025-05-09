@@ -45,7 +45,9 @@ namespace OHOS {
 
         std::map<std::string, std::string> SdkDataRecv::ItemData()
         {
-            return std::map<std::string, std::string>();
+            std::map<std::string, std::string> ret;
+            GetSdkDataRealtimeData(ret);
+            return ret;
         }
 
         int SdkDataRecv::CreateOhSocketServer(int basePort)

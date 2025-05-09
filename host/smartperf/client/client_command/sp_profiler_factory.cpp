@@ -32,6 +32,9 @@
 #include "include/sp_log.h"
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
+#include "include/GpuCounter.h"
+#include "effective.h"
+#include "cpu_info.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -136,6 +139,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
     threads.SetProcessId(pids.empty() ? pid : pids);
     FileDescriptor &fds = FileDescriptor::GetInstance();
     fds.SetProcessId(pids.empty() ? pid : pids);
+    CPUInfo::GetInstance().SetPids(pids.empty() ? pid : pids);
 }
 
 void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
@@ -160,7 +164,7 @@ void SpProfilerFactory::SetByTrace(std::string message)
     int mInterval = 0;
     long long mThreshold = 0;
     int lowFps = 0;
-    for (std::string vItem : values) {
+    for (std::string& vItem : values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
         if (vItems[0] == "traceSum") {
@@ -251,6 +255,22 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
                 profiler = &FileDescriptor::GetInstance().GetInstance();
             }
             break;
+        case CommandType::CT_GC: {
+            profiler = &GpuCounter::GetInstance();
+            break;
+        }
+        case CommandType::CT_O: {
+            profiler = &SdkDataRecv::GetInstance();
+            break;
+        }
+        case CommandType::CT_FL:
+        case CommandType::CT_FTL: {
+            profiler = &Effective::GetInstance();
+        }
+        case CommandType::CT_CI: {
+            profiler = &CPUInfo::GetInstance();
+            break;
+        }
         default:
             break;
     }
