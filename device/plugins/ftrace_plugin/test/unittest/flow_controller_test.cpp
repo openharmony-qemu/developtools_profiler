@@ -264,6 +264,46 @@ HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
 }
 
 /*
+ * @tc.name: StartCapture
+ * @tc.desc: test FlowController::StartCaptureWithBinder.
+ * @tc.type: FUNC
+ */
+HWTEST_F(FlowControllerTest, StartCaptureWithBinder, TestSize.Level1)
+{
+    OHOS::Profiler::Plugins::FlowController controller;
+    TracePluginConfig config;
+
+    // set writer
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    ASSERT_EQ(controller.SetWriter(static_cast<WriterStructPtr>(&writer)), 0);
+
+    // set config
+    config.add_ftrace_events("binder/binder_transaction");
+    config.add_hitrace_categories("ability");
+    config.add_hitrace_categories("ace");
+    config.set_buffer_size_kb(BUFFER_SIZE_KB);
+    config.set_flush_interval_ms(FLUSH_INTERVAL_MS);
+    config.set_flush_threshold_kb(FLUSH_THRESHOLD_KB);
+    config.set_parse_ksyms(true);
+    config.set_clock("global");
+    config.set_trace_period_ms(TRACE_PERIOD_MS);
+    config.set_raw_data_prefix("/data/local/tmp/raw_trace_");
+    std::vector<uint8_t> configData(config.ByteSizeLong());
+    int ret = config.SerializeToArray(configData.data(), configData.size());
+    ASSERT_GT(ret, 0);
+    EXPECT_EQ(controller.LoadConfig(configData.data(), configData.size()), 0);
+
+    EXPECT_EQ(controller.StartCapture(), 0);
+    EXPECT_EQ(controller.StopCapture(), 0);
+
+    if (OHOS::Profiler::Plugins::FtraceFsOps::GetInstance().IsHmKernel() == false) {
+        controller.parseMode_ = TracePluginConfig_ParseMode_DELAY_PARSE;
+        EXPECT_EQ(controller.StartCapture(), 0);
+        EXPECT_EQ(controller.StopCapture(), 0);
+    }
+}
+
+/*
  * @tc.name: frace_module
  * @tc.desc: test Framework.
  * @tc.type: FUNC

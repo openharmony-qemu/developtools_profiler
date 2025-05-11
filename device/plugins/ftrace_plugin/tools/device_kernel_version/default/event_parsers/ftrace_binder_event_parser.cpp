@@ -291,7 +291,8 @@ template <typename T> void binder_transaction_func(T& msg, uint8_t data[], size_
     msg->set_target_node(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_to_proc(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_to_thread(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_reply(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
+    int8_t reply = FtraceFieldParser::ParseIntField<int8_t>(format.fields, i++, data, size);
+    msg->set_reply(static_cast<int32_t>(reply));
     msg->set_code(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
     msg->set_flags(FtraceFieldParser::ParseIntField<uint32_t>(format.fields, i++, data, size));
 }
