@@ -40,6 +40,16 @@ std::map<std::string, std::string> &GameEvent::GetGameEventItemData()
     return gameEventItemData;
 }
 
+void GameEvent::StartExecutionOnce()
+{
+    RegisterGameEvent();
+}
+
+void GameEvent::FinishtExecutionOnce()
+{
+    UnregisterGameEvent();
+}
+
 int GameEvent::RegisterGameEvent()
 {
     if (isRegister) {

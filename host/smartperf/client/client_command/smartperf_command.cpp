@@ -304,50 +304,13 @@ std::string SmartPerfCommand::ExecCommand()
         if (itConfig.find("-aischedule") != std::string::npos) {
             return std::string("Command not support param aischedule");
         }
-        StartGpuCounterCollect(itConfig, gcFlag);
-        StartGameEventCollect(itConfig);    // GameEvent Register: Command
     }
-    while (index < num) {
-        std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> spMap(SPUtils::Cmp);
-        long long lastTime = SPUtils::GetCurTime();
-        spMap.insert(std::pair<std::string, std::string>(std::string("timestamp"), std::to_string(lastTime)));
-        rc = GetItemInfo(spMap);
-        if (rc == -1) {
-            break;
-        }
-        std::map<std::string, std::string> gpuCounterDataMap;
-        gpuCounter.GetGpuRealtimeData(gpuCounterDataMap);
-        spMap.insert(gpuCounterDataMap.begin(), gpuCounterDataMap.end());
-        std::cout << std::endl;
-        PrintMap(spMap, index);
-        std::cout << std::endl;
-        SPData spdata;
-        if (index != 0) {
-            spdata.values.insert(spMap.cbegin(), spMap.cend());
-            vmap.push_back(spdata);
-        }
-        long long nextTime = SPUtils::GetCurTime();
-        long long costTime = nextTime - lastTime;
-        if (costTime < freq) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(freq - costTime));
-        }
-        index++;
-    }
-    if (gcFlag) {
-        SaveGpuCounter();
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(freq));
-    SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
-    }
-
-    gameEvent.RegisterGameEvent();
     taskMgr_.SetFilePath(outPath);
     taskMgr_.SetRecordState(true);
     taskMgr_.Start();
     taskMgr_.Wait();
     taskMgr_.Stop();
     taskMgr_.WriteToCSV();
-    gameEvent.UnregisterGameEvent();
     return std::string("command exec finished!");
 }
 void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const

@@ -175,10 +175,6 @@ void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, Soc
         WLOGE("'-lockfreq' must have a valid token.");
         return;
     }
-    // Register GameEvent: TCP 
-    if (recvStr.find("-ge") != std::string::npos) {
-        GameEvent::GetInstance().RegisterGameEvent();
-    }
     ErrCode code = SPTask::GetInstance().InitTask(SplitMsg(recvStr));
     if (type == SocketConnectType::CMD_SOCKET) {
         spSocket.Send(std::string("init::") + ((code == ErrCode::OK) ? "True" : "False"));
@@ -438,14 +434,6 @@ void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
     taskMgr_ = std::make_shared<TaskManager>();
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
-    if (recvBuf.find("-FPS") != std::string::npos || recvBuf.find("-LOW_POWER") != std::string::npos) {
-        FPS &fps = FPS::GetInstance();
-        fps.isGameApp = SPUtils::GetIsGameApp(spTask.GetCurTaskInfo().packageName);
-        fps.firstDump = true;
-    }
-    if (recvBuf.find("-ge") != std::string::npos) {
-        GameEvent::GetInstance().RegisterGameEvent();
-    }
     spTask.SetAppInitFlag();
 
     std::string filePath = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId + "/t_index_info.csv";
@@ -765,7 +753,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         ConnectAndSendFile(tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         SPTask::GetInstance().ResetSdkParam();
-        GameEvent::GetInstance().UnregisterGameEvent();
         if (taskMgr_ != nullptr) {
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
