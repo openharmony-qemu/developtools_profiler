@@ -284,8 +284,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     LOGD("Data files initialized.");
     ConfigDataThread();
     LOGD("Data collection thread configuration completed.");
-    thread = std::thread([this, msgTask]() {
-    gameEvent.RegisterGameEvent();
     thread = std::thread([=]() {
         if (taskMgr_ == nullptr) {
             return;
