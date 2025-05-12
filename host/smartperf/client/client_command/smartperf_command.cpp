@@ -277,25 +277,6 @@ int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, declty
     return rc;
 }
 
-void SmartPerfCommand::SaveGpuCounter() const
-{
-    std::string outGpuCounterDataPath = "/data/local/tmp";
-    gpuCounter.SaveData(outGpuCounterDataPath);
-    gpuCounter.StopCollect();
-}
-void SmartPerfCommand::StartGpuCounterCollect(std::string config, bool &flag) const
-{
-    if (config.find("-gc") != std::string::npos) {
-        gpuCounter.StartCollect(GpuCounter::GC_START);
-        flag = true;
-    }
-}
-void SmartPerfCommand::StartGameEventCollect(std::string config) const
-{
-    if (config.find("-ge") != std::string::npos) {
-        GameEvent::GetInstance().RegisterGameEvent();
-    }
-}
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();

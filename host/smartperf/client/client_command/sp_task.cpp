@@ -406,7 +406,6 @@ ErrCode SPTask::StopTask()
         LOGD("Joining lockFreqThread.");
         lockFreqThread.join();
     }
-    gameEvent.UnregisterGameEvent();
 
     WLOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
     isRunning = false;
