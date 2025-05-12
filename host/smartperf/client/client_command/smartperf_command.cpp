@@ -31,11 +31,17 @@
 #include "include/common.h"
 #include "include/FPS.h"
 #include "include/sp_task.h"
+#include "cpu_info.h"
 
 namespace OHOS {
 namespace SmartPerf {
 SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
 {
+    std::string argvStr;
+    for (auto& item : argv) {
+        argvStr += item + " ";
+    }
+    taskMgr_.AddTask(argvStr);
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
@@ -226,6 +232,10 @@ void SmartPerfCommand::HandleCommandContinue(std::string argStr, const std::stri
         case CommandType::CT_PRINT:
             configs.push_back(argStr);
             break;
+        case CommandType::CT_CI: {
+            configs.push_back(argStr);
+            break;
+        }
         default:
             std::cout << "other unknown args:" << argStr << std::endl;
             break;
@@ -290,13 +300,7 @@ std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    int rc = 0;
-    int index = 0;
-    std::vector<SPData> vmap;
-    const long long freq = 1000;
-    num = num + 1;
-    bool gcFlag = false;
-    for (std::string itConfig : configs) {
+    for (std::string& itConfig : configs) {
         if (itConfig.find("-aischedule") != std::string::npos) {
             return std::string("Command not support param aischedule");
         }
@@ -334,6 +338,15 @@ std::string SmartPerfCommand::ExecCommand()
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(freq));
     SpCsvUtil::WriteCsv(std::string(outPath.c_str()), vmap);
+    }
+
+    gameEvent.RegisterGameEvent();
+    taskMgr_.SetFilePath(outPath);
+    taskMgr_.SetRecordState(true);
+    taskMgr_.Start();
+    taskMgr_.Wait();
+    taskMgr_.Stop();
+    taskMgr_.WriteToCSV();
     gameEvent.UnregisterGameEvent();
     return std::string("command exec finished!");
 }

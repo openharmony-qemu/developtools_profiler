@@ -44,13 +44,12 @@ class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
     std::map<std::string, std::string> GetRamInfo() const;
-    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, std::vector<std::string> paramsInfo,
-        const std::string pid, size_t index) const;
+    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string pid, size_t index) const;
     std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
         const std::string pid, size_t index) const;
     void FillPssRamInfo(size_t index, std::string pid, const PssValues &pssValues,
         std::map<std::string, std::string> &pssRamInfo) const;
-    std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string> paramsInfo,
+    std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string>& paramsInfo,
         const std::string pid, size_t index) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
     std::map<std::string, std::string> ChildProcMemNaInfo() const;

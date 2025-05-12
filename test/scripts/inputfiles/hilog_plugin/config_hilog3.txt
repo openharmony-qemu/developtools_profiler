@@ -8,7 +8,7 @@ request_id: 1
   plugin_name: "hilog-plugin"
   sample_interval: 5000
   config_data {
-   log_level: INFO
+   log_level: ERROR
    need_record: false
    need_clear: false
   }

@@ -43,6 +43,7 @@ namespace OHOS {
             enum ServicePluginType {
                 GAME_PLUGIN,
                 TEST_PLUGIN,
+                PERF_GENIUS_PLUGIN,
                 PLUGIN_COUNT
             };
 
@@ -62,7 +63,8 @@ namespace OHOS {
 
             const std::vector<std::string> pluginSoPath = {
                 "/system/lib64/libgameservice_gpucounter_plugin.z.so",
-                "/system/lib64/libtest_server_client.z.so"
+                "/system/lib64/libtest_server_client.z.so",
+                "/system/lib64/libperfgenius_client.z.so"
             };
             std::vector<void*> pluginHandle;
         };

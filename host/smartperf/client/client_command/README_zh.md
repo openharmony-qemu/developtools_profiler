@@ -90,6 +90,7 @@ options:
  -VIEW           set layler, for example: -VIEW DisplayNode
  -OUT            set csv output path.
  -d              get device DDR information
+ -ci             get cpu instructions and cycles
  -screen         get screen resolution
  -deviceinfo     get device information
  -server         start a process to listen to the socket message of the start and stop commands

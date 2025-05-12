@@ -22,6 +22,8 @@ public:
     SpProfiler() {};
     virtual ~SpProfiler() {};
     virtual std::map<std::string, std::string> ItemData() = 0;
+    virtual void StartExecutionOnce() {};
+    virtual void FinishtExecutionOnce() {};
 };
 }
 }

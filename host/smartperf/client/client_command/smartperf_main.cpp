@@ -25,6 +25,8 @@
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
+#include "task_manager.h"
+
 constexpr const char *VERSION_TYPE = "const.logsystem.versiontype";
 static std::string GetOptions(const std::vector<std::string> &argv)
 {
@@ -92,7 +94,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     ) {
         keys.insert(argv[1].substr(1).c_str());
     }
-    for (auto a : OHOS::SmartPerf::COMMAND_MAP) {
+    for (auto& a : OHOS::SmartPerf::COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
@@ -207,10 +209,12 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
             std::cout << "SP_daemon -start " << result << " started collecting..." << std::endl;
         }
         cc.SocketStart(result);
-        return 1;
+        std::cout << "command exec finished!" << std::endl;
+        return 0;
     } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
         SocketStopCommand();
-        return 1;
+        std::cout << "command exec finished!" << std::endl;
+        return 0;
     } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
@@ -253,6 +257,7 @@ int main(int argc, char *argv[])
     if (ProcessSpecificParameter(argc, argv, vec) == 0) {
         return 0;
     }
+
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
     std::cout << cmd.ExecCommand() << std::endl;
     return 0;

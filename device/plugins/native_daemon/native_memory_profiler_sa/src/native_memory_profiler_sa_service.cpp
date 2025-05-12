@@ -175,7 +175,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         }
     } else if (auto taskIter = nameAndFilePathCtx_.find(name); taskIter != nameAndFilePathCtx_.end()) {
         config = taskIter->second;
-        pid = config->hookMgr->GetPid();
+        pid = static_cast<pid_t>(config->hookMgr->GetPid());
     }
     if (config == nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",

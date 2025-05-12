@@ -130,6 +130,7 @@ enum class CommandType {
     CT_LF,
     CT_AS,
     CT_GE,
+    CT_CI,
 };
 enum class CommandHelp {
     HELP,
@@ -184,6 +185,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-lockfreq"), CommandType::CT_LF },
     { std::string("-aischedule"), CommandType::CT_AS },
     { std::string("-ge"), CommandType::CT_GE },
+    { std::string("-ci"), CommandType::CT_CI },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -272,7 +274,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
         "hitrace --trace_clock mono -t 10 -b 204800 --overwrite idle ace app ohos ability graphic "
         "nweb sched freq sync workq multimodalinput > ") },
     { CmdCommand::HITRACE_CMD, std::string("ps -ef |grep hitrace |grep -v grep") },
-    { CmdCommand::CREAT_DIR, std::string("mkdir -m 777 ") },
+    { CmdCommand::CREAT_DIR, std::string("mkdir -p -m 777 ") },
     { CmdCommand::SNAPSHOT, std::string("snapshot_display -f ") },
     { CmdCommand::SERVER, std::string("SP_daemon -server") },
     { CmdCommand::OHTESTFPS, std::string("SP_daemon -ohtestfps 10") },

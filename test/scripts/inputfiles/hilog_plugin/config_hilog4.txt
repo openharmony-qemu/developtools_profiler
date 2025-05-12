@@ -1,0 +1,16 @@
+request_id: 1
+ session_config {
+  buffers {
+   pages: 16384
+  }
+ }
+ plugin_configs {
+  plugin_name: "hilog-plugin"
+  sample_interval: 5000
+  config_data {
+   pid: -9999 
+   log_level: ERROR
+   need_record: false
+   need_clear: false
+  }
+ }

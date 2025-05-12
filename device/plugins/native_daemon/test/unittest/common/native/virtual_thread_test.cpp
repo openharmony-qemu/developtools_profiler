@@ -143,7 +143,16 @@ HWTEST_F(VirtualThreadTest, ParseMap, TestSize.Level1)
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
     std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(),
         GetThreadId(), files, runtime.get());
+    thread->CreateMapItem("0.so", 1000, 2000, 3000);
+    thread->CreateMapItem("1.so", 3000, 4000, 5000);
+    thread->CreateMapItem("2.so", 10000, 20000, 30000);
+    const std::vector<std::shared_ptr<DfxMap>> &maps = thread->GetMaps();
+    fprintf(stderr, "map size = %zd\n", maps.size());
 
+    EXPECT_EQ(maps.size(), 3u);
+    EXPECT_EQ(maps.at(0)->begin, 1000u);
+    EXPECT_EQ(maps.at(1)->begin, 3000u);
+    EXPECT_EQ(maps.at(2)->begin, 10000u);
     dl_iterate_phdr(PhdrCallBack, static_cast<void *>(thread.get()));
 }
 

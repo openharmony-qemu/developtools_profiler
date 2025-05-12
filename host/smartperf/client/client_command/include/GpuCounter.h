@@ -39,6 +39,8 @@ namespace OHOS {
 
         public:
             std::map<std::string, std::string> ItemData() override;
+            void StartExecutionOnce() override;
+            void FinishtExecutionOnce() override;
 
             static GpuCounter &GetInstance()
             {
@@ -53,7 +55,8 @@ namespace OHOS {
             std::string &GetGpuCounterRealtimeData();
             void AddGpuCounterRealtimeData(std::string dataString);
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
-            void SaveData(std::string path);
+            void SetSavePathDirectory(const std::string& dir);
+            void SaveData(const std::string& path);
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
@@ -64,6 +67,7 @@ namespace OHOS {
             std::mutex realtimeDataLock;
             std::string gpuCounterRealtimeData;
             const std::string createPlugin = "onCreatePlugin";
+            std::string savePathDirectory_ {"/data/local/tmp/"};
         };
     };
 }
