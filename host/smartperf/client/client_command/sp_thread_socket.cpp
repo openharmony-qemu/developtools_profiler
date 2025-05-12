@@ -372,6 +372,13 @@ void SpThreadSocket::BackDesktop() const
     SPUtils::LoadCmd(uinput, cmdResult);
 }
 // UDP
+void SpThreadSocket::RemoveToken(std::string &recvMessage)
+{
+    if (recvMessage.find(":::") != std::string::npos) {
+        recvMessage = recvMessage.substr(0, recvMessage.find(":::"));
+    }
+}
+
 void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
 {
     std::string retCode = "";
@@ -379,14 +386,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
     while (iterator != MESSAGE_MAP.end()) {
         std::string recvBuf = spSocket.RecvBuf();
         HeartbeatDetection(recvBuf);
-        if (recvBuf.find("init") != std::string::npos) {
-            UdpStartInitFunc(recvBuf);
-            break;
-        }
-        if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
-            ++iterator;
-            continue;
-        }
         LOGD("UDP recv : %s", recvBuf.c_str());
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
@@ -394,6 +393,15 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             spSocket.Sendto(failStr);
             spSocket.Close();
             return;
+        }
+        RemoveToken(recvBuf);
+        if (recvBuf.find("init") != std::string::npos) {
+            UdpStartInitFunc(recvBuf);
+            break;
+        }
+        if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
+            ++iterator;
+            continue;
         }
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {

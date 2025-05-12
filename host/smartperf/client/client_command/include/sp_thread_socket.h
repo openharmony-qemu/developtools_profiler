@@ -89,6 +89,7 @@ public:
     void StartHapCollecting(SpServerSocket &spSocket);
     bool GetHapStartFalg();
     void LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data);
+    void RemoveToken(std::string &recvMessage);
 
 private:
     bool flagRunning = false;
