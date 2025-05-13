@@ -47,7 +47,7 @@ void ByTrace::ThreadGetTrace() const
     SPUtils::LoadCmd(traceCmdExe, result);
     LOGD("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
 }
-TraceStatus ByTrace::CheckFpsJitters(std::vector<long long> jitters, int cfps) const
+TraceStatus ByTrace::CheckFpsJitters(std::vector<long long>& jitters, int cfps) const
 {
     times++;
     int two = 2;

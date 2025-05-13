@@ -77,12 +77,7 @@ HWTEST_F(SPdaemonSdkDataTest, ItemDataTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonSdkDataTest, ServerThreadTestCase, TestSize.Level1)
 {
-    std::vector<std::string> dataVec;
-    SdkDataRecv::GetInstance().SetRunningState(true);
-    SPTask::GetInstance().GetRecordState();
-    std::thread sdk = std::thread([&dataVec, this]() {
-        SdkDataRecv::GetInstance().ServerThread(dataVec);
-    });
+    SdkDataRecv::GetInstance().StartExecutionOnce(false);
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     int sockfd = ConnectSdkServer();
     EXPECT_NE(sockfd, -1);
@@ -93,11 +88,8 @@ HWTEST_F(SPdaemonSdkDataTest, ServerThreadTestCase, TestSize.Level1)
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     close(sockfd);
-    SdkDataRecv::GetInstance().SetRunningState(false);
-    close(SdkDataRecv::GetInstance().GetListenFd());
-    sdk.join();
-    SPTask::GetInstance().GetRecordState();
-    EXPECT_EQ(dataVec.size(), 0);
+    SdkDataRecv::GetInstance().FinishtExecutionOnce(false);
+    EXPECT_EQ(SdkDataRecv::GetInstance().sdkVec_.size(), 0);
 }
 }
 }

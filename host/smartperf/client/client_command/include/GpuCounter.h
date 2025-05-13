@@ -39,8 +39,8 @@ namespace OHOS {
 
         public:
             std::map<std::string, std::string> ItemData() override;
-            void StartExecutionOnce() override;
-            void FinishtExecutionOnce() override;
+            void StartExecutionOnce(bool isPause) override;
+            void FinishtExecutionOnce(bool isPause) override;
 
             static GpuCounter &GetInstance()
             {
@@ -51,13 +51,10 @@ namespace OHOS {
             void StopCollect();
             std::vector<std::string> &GetGpuCounterData();
             std::vector<std::string> &GetGpuCounterSaveReportData();
-            std::mutex &GetRealtimeDataLock();
-            std::string &GetGpuCounterRealtimeData();
-            void AddGpuCounterRealtimeData(std::string dataString);
+            void AddGpuCounterRealtimeData(const std::string& dataString);
             void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
             void SetSavePathDirectory(const std::string& dir);
             void SaveData(const std::string& path);
-            void SetCollectDur(int dur);
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);

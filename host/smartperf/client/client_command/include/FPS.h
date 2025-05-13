@@ -60,8 +60,8 @@ struct FpsCurrentFpsTime {
 
 class FPS : public SpProfiler {
 public:
-    void SetPackageName(std::string pName);
-    void SetLayerName(std::string sName);
+    void SetPackageName(const std::string& pName);
+    void SetLayerName(const std::string& sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
     FpsInfo GetChangedLayerFps();
@@ -76,6 +76,7 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
+    void StartExecutionOnce(bool isPause) override;
     void SetFpsCurrentFpsTime(FpsInfo fpsInfoResult);
     FpsCurrentFpsTime GetFpsCurrentFpsTime();
     void ReadDataFromPipe(int fd);
@@ -90,7 +91,7 @@ public:
     bool hapLowFpsFlag = false;
     bool hapNeedCatonInfo = false;
     int catonNum = 0;
-    void CalcFatalCaton(std::vector<long long> jitters);
+    void CalcFatalCaton(std::vector<long long>& jitters);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -104,7 +105,7 @@ private:
     long long prevScreenTimestamp = -1;
     long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
-    FpsInfo GetSurfaceFrame(std::string name);
+    FpsInfo GetSurfaceFrame(const std::string& name);
     int fifty = 50;
     int hundred = 100;
     FpsCurrentFpsTime ffTime;

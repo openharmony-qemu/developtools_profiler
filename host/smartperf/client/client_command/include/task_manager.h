@@ -35,26 +35,27 @@ public:
 
 class TaskManager {
 public:
-    TaskManager();
+    TaskManager(bool isIPC = false);
     ~TaskManager();
 
     void AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv);
     void AddTask(const std::string& argv);
     void AddTask(SpProfiler* task, bool priority);
+    void AddTask(std::vector<std::string>& argv);
     void SetFilePath(const std::string& fileName, bool removeCurrentFile = true);
-    void Start();
+    void Start(bool record = true);
     void Stop(bool pause = false);
-    void SetStopFlag();
     void CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas);
     void WriteToCSV();
     void Wait();
     void RegisterThreadLocal(ThreadLocal* local);
     void EnableIPCCallback();
-    void SetIPCCallback(std::function<void(std::string)> callback);
+    void SetIPCCallback(std::function<void(const std::string&)> callback);
     void DisableIPCCallback();
     void SetHapFlag(bool flag);
     void SetNextTime(long long& nextTime);
     void SetRecordState(bool record);
+    void DeleteTask(SpProfiler* task);
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
@@ -63,7 +64,7 @@ private:
     void StartSaveFileThread();
     void SaveRegularly(std::chrono::steady_clock::time_point& loopEnd);
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
-    void ScheduleSaveData();
+    void ScheduleSaveData(bool switchFlag = false);
     void ProcessOnceTask(bool start);
 
     ThreadPool threadPool_ {4};
@@ -82,7 +83,6 @@ private:
     std::mutex finishMtx_;
     std::string processName_;
     std::string processIds_;
-    int32_t processId_ {-1};
     bool printDataInfo_ {true};
     bool ipcDataRecv_ {false};
     std::vector<ThreadLocal*> threadLocals_ {4};
@@ -93,11 +93,12 @@ private:
     std::thread scheduleSaveDataTh_;
     std::condition_variable scheduleSaveDataCond_;
     std::mutex scheduleSaveDataMtx_;
-    std::function<void(std::string)> ipcCallback_ {nullptr};
+    std::function<void(const std::string&)> ipcCallback_ {nullptr};
     bool hapCollect_ {false};
     uint32_t dataIndex_ {0};
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
+    bool isPause_ {false};
 };
 }
 #endif // TASK_MANAGER_H

@@ -83,27 +83,23 @@ std::map<std::string, std::string> RAM::ItemData()
         } else {
             procRamInfomation = ProcMemNaInfo();
         }
-        result.insert(std::make_move_iterator(procRamInfomation.begin()),
-            std::make_move_iterator(procRamInfomation.end()));
+        result.merge(procRamInfomation);
     } else if (!packageName.empty() && processId.empty()) {
-        std::map<std::string, std::string> procMemInfo = RAM::ProcMemNaInfo();
-        result.insert(std::make_move_iterator(procMemInfo.begin()), std::make_move_iterator(procMemInfo.end()));
+        result.merge(RAM::ProcMemNaInfo());
     }
     return result;
 }
 
 void RAM::ThreadGetPss() const
 {
-    std::map<std::string, std::string> procRamInfo = RAM::GetRamInfo();
-    procRamInfoLast = procRamInfo;
+    procRamInfoLast = RAM::GetRamInfo();
 }
 
 void RAM::TriggerGetPss() const
 {
-    auto tStart = std::thread([this]() {
+    std::thread([this]() {
         this->ThreadGetPss();
-    });
-    tStart.detach();
+    }).detach();
 }
 
 void RAM::SetFirstFlag()
@@ -187,9 +183,8 @@ void RAM::SetProcessId(const std::string &pid)
     LOGD("RAM SetProcessId (%s)", pid.c_str());
 }
 
-std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t index) const
+std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, size_t index) const
 {
-    std::map<std::string, std::string> procRamInfo;
     std::map<std::string, std::string> emptyprocRamInfo;
 
     if (!std::all_of(ramPid.begin(), ramPid.end(), ::isdigit)) {
@@ -211,7 +206,7 @@ std::map<std::string, std::string> RAM::CollectRam(std::string ramPid, size_t in
         return emptyprocRamInfo;
     }
 
-    procRamInfo = GetPssRamInfo(fd, ramPid, index);
+    std::map<std::string, std::string> procRamInfo = GetPssRamInfo(fd, ramPid, index);
     if (procRamInfo.empty()) {
         pclose(fd);
         return emptyprocRamInfo;
@@ -230,7 +225,7 @@ void RAM::SetRamValue(std::promise<std::map<std::string, std::string>> p,
     p.set_value(CollectRam(ramPid, index));
 }
 
-std::future<std::map<std::string, std::string>> RAM::AsyncCollectRam(std::string ramPid, size_t index) const
+std::future<std::map<std::string, std::string>> RAM::AsyncCollectRam(const std::string& ramPid, size_t index) const
 {
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult = p.get_future();
@@ -239,7 +234,7 @@ std::future<std::map<std::string, std::string>> RAM::AsyncCollectRam(std::string
 }
 
 void RAM::CheckFutureRam(std::future<std::map<std::string, std::string>> &fdsResult,
-                         std::map<std::string, std::string> &dataMap, std::string pid, size_t index) const
+                         std::map<std::string, std::string> &dataMap, const std::string& pid, size_t index) const
 {
     if (fdsResult.valid()) {
         std::map<std::string, std::string> result = fdsResult.get();
@@ -274,7 +269,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     return dataMap;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string pid, size_t index) const
+std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string& pid, size_t index) const
 {
     std::vector<std::string> paramsInfo;
     std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo, pid, index);
@@ -353,7 +348,7 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
 }
 
 std::map<std::string, std::string> RAM::SaveSumRamInfo(std::vector<std::string>& paramsInfo,
-    std::string pid, size_t index) const
+    const std::string& pid, size_t index) const
 {
     std::map<std::string, std::string> sumRamInfo;
     if (paramsInfo.empty()) {

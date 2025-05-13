@@ -21,6 +21,7 @@
 #include "sp_profiler.h"
 #include "sp_data.h"
 #include <sys/select.h>
+#include <thread>
 
 namespace OHOS {
     namespace SmartPerf {
@@ -46,6 +47,8 @@ namespace OHOS {
         class SdkDataRecv : public SpProfiler {
         public:
             std::map<std::string, std::string> ItemData() override;
+            void StartExecutionOnce(bool isPause) override;
+            void FinishtExecutionOnce(bool isPause) override;
             static SdkDataRecv &GetInstance()
             {
                 static SdkDataRecv instance;
@@ -53,23 +56,22 @@ namespace OHOS {
             }
             static int CreateOhSocketServer(int basePort);
             std::string OhDataReceive(int index, ServerParams &params);
-            std::string ProcessData(std::string message, ServerParams &params);
-            void ServerThread(std::vector<std::string> &dataVec);
+            std::string ProcessData(std::string& message, ServerParams &params);
+            void ServerThread();
 
-            void SetRunningState(bool state);
-            int GetListenFd();
-            void SetListenFd(int fd);
-            void RunServerThread(std::vector<std::string> &dataVec, ServerParams &params);
-            void HandleReceiveFd(std::vector<std::string> &dataVec, int i, ServerParams &params);
+            void RunServerThread(ServerParams &params);
+            void HandleReceiveFd(int i, ServerParams &params);
             void HandleServerFd(ServerParams &params);
             void SetUpFdSet(ServerParams &params);
             void CleanUpResources(ServerParams &params);
             void GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap);
-            void SetStartRecordTime();
             void SocketCommandVerification(std::string &resStr, ServerParams &params);
             void GetSdkFpsAndSystime(const std::string &sdkStr);
             std::string GetSdkFps() const;
             std::string GetSdkSystime() const;
+            void SetFilePath(const std::string& path);
+
+            std::vector<std::string> sdkVec_;
         private:
             SdkDataRecv();
             SdkDataRecv(const SdkDataRecv &);
@@ -86,6 +88,8 @@ namespace OHOS {
             std::mutex realtimeDataLock;
             std::string sdkFps;
             std::string sdkSystime;
+            std::thread th_;
+            std::string filePath_;
         };
     }
 }

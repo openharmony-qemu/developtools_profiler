@@ -18,6 +18,7 @@
 #include <chrono>
 #include <sys/types.h>
 #include <unistd.h>
+#include "securec.h"
 
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"
@@ -38,7 +39,9 @@
 #include "include/AI_schedule.h"
 #include "include/Threads.h"
 #include "include/FileDescriptor.h"
+#include "Capture.h"
 #include <sys/syscall.h>
+#include <filesystem>
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -67,14 +70,18 @@ ThreadLocal::~ThreadLocal()
     }
 }
 
-TaskManager::TaskManager()
+TaskManager::TaskManager(bool isIPC)
 {
     g_mgr = this;
+    if (isIPC) {
+        Capture::GetInstance().SocketMessage();
+    }
 }
 
 TaskManager::~TaskManager()
 {
     Stop();
+    dataFile_.close();
 }
 
 void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv)
@@ -103,6 +110,14 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
             }
             case CommandType::CT_PRINT: {
                 printDataInfo_ = true;
+                continue;
+            }
+            case CommandType::CT_VIEW: {
+                FPS::GetInstance().SetLayerName(std::get<std::string>(val));
+                continue;
+            }
+            case CommandType::CT_OUT: {
+                SetFilePath(std::get<std::string>(val));
                 continue;
             }
             default:
@@ -138,6 +153,15 @@ void TaskManager::AddTask(SpProfiler* task, bool priority)
     priority ? priorityTask_.emplace_back(task) : normalTask_.emplace_back(task);
 }
 
+void TaskManager::AddTask(std::vector<std::string>& argv)
+{
+    std::string argvStr;
+    for (auto& item : argv) {
+        argvStr += item + " ";
+    }
+    AddTask(argvStr);
+}
+
 void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFile)
 {
     fileName_ = fileName;
@@ -145,6 +169,10 @@ void TaskManager::SetFilePath(const std::string& fileName, bool removeCurrentFil
     if (removeCurrentFile) {
         std::remove(fileName_.c_str());
     }
+    std::filesystem::path fullPath = fileName;
+    std::string dir = fullPath.parent_path().string();
+    GpuCounter::GetInstance().SetSavePathDirectory(dir);
+    SdkDataRecv::GetInstance().SetFilePath(dir);
 }
 
 std::map<std::string, std::string> TaskManager::TaskFun(SpProfiler* pro, uint32_t batch, bool record)
@@ -163,17 +191,20 @@ std::map<std::string, std::string> TaskManager::TaskFun(SpProfiler* pro, uint32_
 void TaskManager::StartSaveFileThread()
 {
     if (scheduleSaveDataTh_.joinable()) {
+        LOGD("The thread save data is working");
         return;
     }
     scheduleSaveDataTh_ = std::thread([this]() {
+        LOGD("running: %d, recordData: %d", running_.load(), recordData_.load());
         while (running_ && recordData_) {
             std::unique_lock<std::mutex> lock(scheduleSaveDataMtx_);
             scheduleSaveDataCond_.wait(lock);
             if (!running_) {
-                return;
+                break;
             }
             ScheduleSaveData();
         }
+        LOGD("The data saving thread exits");
     });
 }
 
@@ -186,6 +217,7 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
     if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE)) {
         std::unique_lock<std::mutex> lock(mtx_);
         if (savingFile_) {
+            LOGD("Saving file");
             return;
         }
         savingFile_ = true;
@@ -195,19 +227,25 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
             }
             item->switch_ = !item->switch_;
         }
-        scheduleSaveDataCond_.notify_one();
+        LOGD("Start saving data automatically");
+        scheduleSaveDataCond_.notify_all();
         currentTimePoint_ = loopEnd;
     }
 }
 
-void TaskManager::Start()
+void TaskManager::Start(bool record)
 {
     if (priorityTask_.empty() && normalTask_.empty()) {
+        LOGD("No mission");
         return;
     }
 
     ProcessOnceTask(true);
     running_ = true;
+    if (record) {
+        saveFlag_ = true;
+        SetRecordState(true);
+    }
     mainLoop_ = std::thread([this]() {
         while (running_) {
             auto loopStart = std::chrono::steady_clock::now();
@@ -215,6 +253,7 @@ void TaskManager::Start()
             if (dataIndex_++ == collectCount_) {
                 break;
             }
+            LOGD("data index: %u", dataIndex_);
 
             std::map<std::string, std::string> currDatas;
             currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
@@ -224,8 +263,7 @@ void TaskManager::Start()
             }
 
             for (auto& item : priorityTask_) {
-                auto ret = threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get();
-                currDatas.insert(std::make_move_iterator(ret.begin()), std::make_move_iterator(ret.end()));
+                currDatas.merge(TaskFun(item, dataIndex_, recordData));
             }
 
             std::vector<std::future<std::map<std::string, std::string>>> result;
@@ -234,8 +272,7 @@ void TaskManager::Start()
             }
 
             for (auto& item : result) {
-                auto ret = item.get();
-                currDatas.insert(std::make_move_iterator(ret.begin()), std::make_move_iterator(ret.end()));
+                currDatas.merge(item.get());
             }
 
             if (nextTime_ != nullptr) {
@@ -250,6 +287,7 @@ void TaskManager::Start()
                 std::this_thread::sleep_for(std::chrono::seconds(1) - elapsed);
             }
         }
+        LOGD("main loop exit");
         ProcessOnceTask(false);
         running_ = false;
         finishCond_.notify_all();
@@ -261,17 +299,22 @@ void TaskManager::WriteToCSV()
 {
     std::unique_lock<std::mutex> lock(mtx_);
     if (datas_.empty() || !saveFlag_) {
+        LOGD("datas is empty or saveFlag: %d", saveFlag_);
         return;
     }
 
     if (!dataFile_.is_open()) {
-        dataFile_.open(fileName_, std::ios::app);
-        char filePath[PATH_MAX] = {0x00};
+        char filePath[PATH_MAX] = {0};
         if (realpath(fileName_.c_str(), filePath) == nullptr) {
-            LOGE("The file does not exist");
+            if (strncpy_s(filePath, PATH_MAX, fileName_.c_str(), fileName_.size()) != 0) {
+                LOGE("strncpy_s failed");
+                return;
+            }
+            LOGE("The file %s does not exist, will create", fileName_.c_str());
         }
         dataFile_.open(filePath, std::ios::out | std::ios::trunc);
         if (!dataFile_.is_open()) {
+            LOGE("The file open fail");
             return;
         }
         for (const auto& [id, m] : datas_) {
@@ -299,27 +342,24 @@ void TaskManager::WriteToCSV()
     dataFile_.flush();
 
     if (!running_) {
-        dataFile_.close();
+        std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
     }
-}
-
-void TaskManager::SetStopFlag()
-{
-    running_ = false;
 }
 
 void TaskManager::Stop(bool pause)
 {
-    SetStopFlag();
+    isPause_ = pause;
+    running_ = false;
     if (mainLoop_.joinable()) {
         mainLoop_.join();
     }
     if (scheduleSaveDataTh_.joinable()) {
         scheduleSaveDataTh_.join();
     }
-
     if (!pause) {
         threadPool_.Stop();
+    } else {
+        ScheduleSaveData(true);
     }
 }
 
@@ -343,30 +383,13 @@ void TaskManager::CollectData(std::map<uint32_t, std::map<std::string, std::stri
 void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value)
 {
     if (type == CommandType::CT_PKG) {
-        if (auto pval = std::get_if<std::string>(&value)) {
-            processName_ = *pval;
-        } else {
-            std::cerr << "Invalid type for -PKG argument\n";
-            return;
-        }
-        SpProfilerFactory::SetProfilerPkg(processName_);
-        FPS &fps = FPS::GetInstance();
-        fps.isGameApp = SPUtils::GetIsGameApp(processName_);
-        fps.firstDump = true;
-        fps.catonNum = 0;
-
+        processName_ = std::get<std::string>(value);
         OHOS::SmartPerf::StartUpDelay sp;
         sp.GetPidByPkg(processName_, &processIds_);
     }
 
     if (type == CommandType::CT_PID) {
-        if (auto pval = std::get_if<int32_t>(&value)) {
-            processId_ = *pval;
-        } else {
-            std::cerr << "Invalid type for -PID argument\n";
-            return;
-        }
-        processIds_ = std::to_string(processId_);
+        processIds_ = std::get<int32_t>(value);
     }
 
     FPS::GetInstance().SetProcessId(processIds_);
@@ -374,12 +397,15 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     ProfilerFPS::GetInstance().SetProcessId(processIds_);
     ProfilerFPS::GetInstance().SetPackageName(processName_);
     RAM::GetInstance().SetProcessId(processIds_);
+    RAM::GetInstance().SetPackageName(processName_);
     CPU::GetInstance().SetProcessId(processIds_);
     CPU::GetInstance().SetPackageName(processName_);
     Navigation::GetInstance().SetProcessId(processIds_);
     AISchedule::GetInstance().SetProcessId(processIds_);
     Threads::GetInstance().SetProcessId(processIds_);
+    Threads::GetInstance().SetPackageName(processName_);
     FileDescriptor::GetInstance().SetProcessId(processIds_);
+    FileDescriptor::GetInstance().SetPackageName(processName_);
 }
 
 void TaskManager::RegisterThreadLocal(ThreadLocal* local)
@@ -432,16 +458,21 @@ void TaskManager::ProcessCurrentBatch(std::map<std::string, std::string>& data)
     }
 }
 
-void TaskManager::ScheduleSaveData()
+void TaskManager::ScheduleSaveData(bool switchFlag)
 {
     for (auto& item : threadLocals_) {
         if (item == nullptr) {
             continue;
         }
-
+        if (switchFlag) {
+            item->switch_ = !item->switch_;
+        }
         std::map<uint32_t, std::map<std::string, std::string>>& datas = item->switch_ ? item->datasB_ : item->datasA_;
         for (auto& [k, v] : datas) {
-            datas_[k].insert(std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
+            if (v.empty()) {
+                continue;
+            }
+            datas_[k].merge(v);
         }
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas);
     }
@@ -456,7 +487,7 @@ void TaskManager::EnableIPCCallback()
     ipcDataRecv_ = true;
 }
 
-void TaskManager::SetIPCCallback(std::function<void(std::string)> callback)
+void TaskManager::SetIPCCallback(std::function<void(const std::string&)> callback)
 {
     ipcCallback_ = callback;
 }
@@ -482,24 +513,26 @@ void TaskManager::ProcessOnceTask(bool start)
         if (item == nullptr) {
             continue;
         }
-        start ? item->StartExecutionOnce() : item->FinishtExecutionOnce();
+        start ? item->StartExecutionOnce(isPause_) : item->FinishtExecutionOnce(isPause_);
     }
 
     for (auto& item : normalTask_) {
         if (item == nullptr) {
             continue;
         }
-        start ? item->StartExecutionOnce() : item->FinishtExecutionOnce();
+        start ? item->StartExecutionOnce(isPause_) : item->FinishtExecutionOnce(isPause_);
     }
 }
 
 void TaskManager::SetRecordState(bool record)
 {
     if (record) {
+        LOGD("Start saving data regularly");
         currentTimePoint_ = std::chrono::steady_clock::now();
-        StartSaveFileThread();
         recordData_ = record;
+        StartSaveFileThread();
     } else {
+        LOGD("Turn off timing to save data");
         auto time = currentTimePoint_ + std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE + 1);
         SaveRegularly(time);
         recordData_ = record;
@@ -508,6 +541,26 @@ void TaskManager::SetRecordState(bool record)
             scheduleSaveDataTh_.join();
         }
         dataFile_.close();
+    }
+}
+
+void TaskManager::DeleteTask(SpProfiler* task)
+{
+    if (task == nullptr) {
+        return;
+    }
+
+    for (auto iter = normalTask_.begin(); iter != normalTask_.end(); ++iter) {
+        if (task == *iter) {
+            normalTask_.erase(iter);
+            return;
+        }
+    }
+    for (auto iter = priorityTask_.begin(); iter != priorityTask_.end(); ++iter) {
+        if (task == *iter) {
+            priorityTask_.erase(iter);
+            return;
+        }
     }
 }
 }

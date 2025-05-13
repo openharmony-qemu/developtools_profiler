@@ -32,16 +32,13 @@
 #include "include/FPS.h"
 #include "include/sp_task.h"
 #include "cpu_info.h"
+#include "AI_schedule.h"
 
 namespace OHOS {
 namespace SmartPerf {
-SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
+SmartPerfCommand::SmartPerfCommand(std::vector<std::string>& argv)
 {
-    std::string argvStr;
-    for (auto& item : argv) {
-        argvStr += item + " ";
-    }
-    taskMgr_.AddTask(argvStr);
+    taskMgr_.AddTask(argv);
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
@@ -68,19 +65,6 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string> argv)
             ++iterator;
         }
     }
-    if (argv.size() >= threeParamMore) {
-        for (int i = 1; i <= static_cast<int>(argv.size()) - 1; i++) {
-            std::string argStr = argv[i];
-            std::string argStr1;
-            if (i < static_cast<int>(argv.size()) - 1) {
-                argStr1 = argv[i + 1];
-            }
-            if (COMMAND_MAP.count(argStr) > 0) {
-                LOGD("SmartPerfCommand argStr(%s) argStr1(%s)", argStr.c_str(), argStr1.c_str());
-                HandleCommand(argStr, argStr1);
-            }
-        }
-    }
     LOGD("SmartPerfCommand::SmartPerfCommand complete");
 }
 void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
@@ -97,7 +81,7 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
     }
     CreateSocketThread();
 }
-void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
+void SmartPerfCommand::HelpCommand(CommandHelp type, const std::string& token) const
 {
     LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
@@ -151,166 +135,28 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, std::string token) const
 void SmartPerfCommand::CreateSocketThread() const
 {
     InitSomething();
-    SpThreadSocket &udpThreadSocket = SpThreadSocket::GetInstance();
-    SpThreadSocket &udpExThreadSocket = SpThreadSocket::GetInstance();
-    SpThreadSocket &tcpThreadSocket = SpThreadSocket::GetInstance();
-    auto tcpSocket = std::thread([&tcpThreadSocket]() { tcpThreadSocket.Process(ProtoType::TCP); });
+    auto tcpSocket = std::thread([]() { SpThreadSocket::GetInstance().Process(ProtoType::TCP); });
     sleep(1);
-    auto udpSocket = std::thread([&udpThreadSocket]() { udpThreadSocket.Process(ProtoType::UDP); });
+    auto udpSocket = std::thread([]() { SpThreadSocket::GetInstance().Process(ProtoType::UDP); });
     sleep(1);
-    auto udpexSocket = std::thread([&udpExThreadSocket]() { udpExThreadSocket.Process(ProtoType::UDPEX); });
-    Heartbeat &heartbeat = Heartbeat::GetInstance();
-    heartbeat.UpdatestartTime();
-    std::thread threadHeartbeat([&heartbeat]() {heartbeat.HeartbeatRule(); });
-    threadHeartbeat.detach();
+    auto udpexSocket = std::thread([]() { SpThreadSocket::GetInstance().Process(ProtoType::UDPEX); });
+    Heartbeat::GetInstance().UpdatestartTime();
+    std::thread([]() { Heartbeat::GetInstance().HeartbeatRule(); }).detach();
     tcpSocket.join();
     udpSocket.join();
     udpexSocket.join();
-}
-
-void SmartPerfCommand::HandleCommand(std::string argStr, const std::string &argStr1)
-{
-    switch (COMMAND_MAP.at(argStr)) {
-        case CommandType::CT_N:
-            num = SPUtilesTye::StringToSometype<int>(argStr1.c_str());
-            break;
-        case CommandType::CT_PKG:
-            pkgName = argStr1;
-            if (pkgName.length() > 0) {
-                SpProfilerFactory::SetProfilerPkg(pkgName);
-                FPS &fps = FPS::GetInstance();
-                fps.isGameApp = SPUtils::GetIsGameApp(pkgName);
-                fps.firstDump = true;
-            }
-            break;
-        case CommandType::CT_VIEW:
-            layerName = argStr1;
-            if (layerName.length() > 0) {
-                SpProfilerFactory::SetProfilerLayer(layerName);
-            }
-            break;
-        case CommandType::CT_OUT:
-            outPathParam = argStr1;
-            if (strcmp(outPathParam.c_str(), "") != 0) {
-                outPath = outPathParam;
-            }
-            break;
-        case CommandType::CT_C:
-        case CommandType::CT_G:
-        case CommandType::CT_D:
-        case CommandType::CT_F:
-        case CommandType::CT_FDS:
-        case CommandType::CT_T:
-        case CommandType::CT_P:
-        case CommandType::CT_R:
-        case CommandType::CT_NET:
-        case CommandType::CT_TTRACE:
-        case CommandType::CT_THREADS:
-        case CommandType::CT_SNAPSHOT:
-        case CommandType::CT_HW:
-        case CommandType::CT_GC:
-        case CommandType::CT_NAV:
-        case CommandType::CT_AS:
-        case CommandType::CT_GE:
-            configs.push_back(argStr);
-            break;
-        default:
-            HandleCommandContinue(argStr, argStr1);
-            break;
-    }
-}
-
-void SmartPerfCommand::HandleCommandContinue(std::string argStr, const std::string &argStr1)
-{
-    switch (COMMAND_MAP.at(argStr)) {
-        case CommandType::CT_PID:
-            pid = argStr1;
-            if (pid.length() > 0) {
-                SpProfilerFactory::SetProfilerPidByPkg(pid);
-            }
-            break;
-        case CommandType::CT_PRINT:
-            configs.push_back(argStr);
-            break;
-        case CommandType::CT_CI: {
-            configs.push_back(argStr);
-            break;
-        }
-        default:
-            std::cout << "other unknown args:" << argStr << std::endl;
-            break;
-    }
-}
-
-int SmartPerfCommand::GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap)
-{
-    int rc = 0;
-    std::string errInfo;
-    if (!pkgName.empty()) {
-        std::string processId = "";
-        std::string processIds = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        processId = sp.GetPidByPkg(pkgName, &processIds);
-        LOGD("The cmd pid = %s", processId.c_str());
-        SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
-    }
-    for (size_t j = 0; j < configs.size(); j++) {
-        std::string curParam = configs[j];
-
-        if (curParam.find("-gc") != std::string::npos) {
-            continue;
-        }
-
-        SpProfiler *profiler = SpProfilerFactory::GetCmdProfilerItem(COMMAND_MAP.at(curParam), true);
-        if (profiler != nullptr) {
-            std::map<std::string, std::string> data = profiler->ItemData();
-            spMap.insert(data.cbegin(), data.cend());
-        }
-    }
-
-    if (!errInfo.empty()) { // GPU Counter init failed
-        printf("%s\n", errInfo.c_str());
-        LOGE("%s", errInfo.c_str());
-        return -1;
-    }
-
-    return rc;
 }
 
 std::string SmartPerfCommand::ExecCommand()
 {
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    for (std::string& itConfig : configs) {
-        if (itConfig.find("-aischedule") != std::string::npos) {
-            return std::string("Command not support param aischedule");
-        }
-    }
-    taskMgr_.SetFilePath(outPath);
-    taskMgr_.SetRecordState(true);
+    taskMgr_.DeleteTask(&AISchedule::GetInstance());
     taskMgr_.Start();
     taskMgr_.Wait();
     taskMgr_.Stop();
     taskMgr_.WriteToCSV();
     return std::string("command exec finished!");
-}
-void SmartPerfCommand::PrintfExecCommand(const std::map<std::string, std::string> data) const
-{
-    int i = 0;
-    for (auto a = data.cbegin(); a != data.cend(); ++a) {
-        printf("order:%d %s=%s\n", i++, a->first.c_str(), a->second.c_str());
-    }
-}
-
-void SmartPerfCommand::PrintMap(std::multimap<std::string, std::string,
-    decltype(SPUtils::Cmp) *> &spMap, int index) const
-{
-    int i = 0;
-    for (auto iter = spMap.cbegin(); iter != spMap.cend(); ++iter) {
-        if (index != 0) {
-            printf("order:%d %s=%s\n", i++, iter->first.c_str(), iter->second.c_str());
-        }
-    }
 }
 
 void SmartPerfCommand::InitSomething()

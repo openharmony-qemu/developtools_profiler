@@ -25,7 +25,7 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-double ParseClickResponseTrace::ParseResponseTrace(std::string fileNamePath)
+double ParseClickResponseTrace::ParseResponseTrace(const std::string& fileNamePath)
 {
     int conversion = 1000;
     char realPath[PATH_MAX] = {0x00};
@@ -80,7 +80,7 @@ double ParseClickResponseTrace::GetTime(std::string startTime, std::string endTi
     }
     return completeTime;
 }
-std::string ParseClickResponseTrace::GetPid(std::string line, const std::string &pn, const std::string &pb)
+std::string ParseClickResponseTrace::GetPid(const std::string& line, const std::string &pn, const std::string &pb)
 {
     std::string appPid;
     if (appPidnum == 0) {
@@ -113,7 +113,7 @@ std::string ParseClickResponseTrace::GetPid(std::string line, const std::string 
     }
     return appPid;
 }
-std::string ParseClickResponseTrace::GetStartTime(std::string line, const std::string &startTimeBefore)
+std::string ParseClickResponseTrace::GetStartTime(const std::string& line, const std::string &startTimeBefore)
 {
     std::string startTime;
     std::string::size_type te = line.find("H:touchEventDispatch");

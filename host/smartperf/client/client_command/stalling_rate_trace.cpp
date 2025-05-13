@@ -23,7 +23,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
-double StallingRateTrace::StallingRateResult(std::string file)
+double StallingRateTrace::StallingRateResult(const std::string& file)
 {
     double stalligRate = 0;
     char realPath[PATH_MAX] = {0x00};
@@ -382,18 +382,15 @@ int StallingRateTrace::GetFenceId(const std::string &line) const
     std::string delimiter = "H:Present Fence ";
     size_t pos = line.find(delimiter);
     std::string result = line.substr(pos + delimiter.length());
-    int presentFenceId = SPUtilesTye::StringToSometype<int>(result.c_str());
-    return presentFenceId;
+    return SPUtilesTye::StringToSometype<int>(result.c_str());
 }
 
 std::string StallingRateTrace::GetOnScreenTimeStart(const std::string &line) const
 {
-    std::string startTime = "0";
     size_t subNum = 7;
     size_t positionFirst = line.find("....");
     size_t positionSecond = line.find(":");
-    startTime = line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum);
-    return startTime;
+    return line.substr(positionFirst + subNum, positionSecond - positionFirst - subNum);
 }
 
 double StallingRateTrace::GetTimes(const std::string &line, const std::string &sign) const
@@ -434,7 +431,7 @@ bool StallingRateTrace::IsAppLaunchPatternMatched(const std::string &line)
                 continue;
             }
             if (pos + keyWords.length() < line.length() && !isspace(line[pos + keyWords.length()]) &&
-            line[pos + keyWords.length()] != ',') {
+                line[pos + keyWords.length()] != ',') {
                 continue;
             }
             if (pos + keyWords.length() < line.length() && (line[pos + keyWords.length()] == ',')) {

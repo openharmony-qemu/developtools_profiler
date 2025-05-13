@@ -40,13 +40,19 @@ std::map<std::string, std::string> &GameEvent::GetGameEventItemData()
     return gameEventItemData;
 }
 
-void GameEvent::StartExecutionOnce()
+void GameEvent::StartExecutionOnce(bool isPause)
 {
+    if (isPause) {
+        return;
+    }
     RegisterGameEvent();
 }
 
-void GameEvent::FinishtExecutionOnce()
+void GameEvent::FinishtExecutionOnce(bool isPause)
 {
+    if (isPause) {
+        return;
+    }
     UnregisterGameEvent();
 }
 

@@ -22,10 +22,10 @@ namespace OHOS {
 namespace SmartPerf {
 class ParseClickCompleteTrace {
 public:
-    double ParseCompleteTrace(std::string fileNamePath);
+    double ParseCompleteTrace(const std::string& fileNamePath);
     double GetTime(std::string endTime);
-    std::string GetPid(std::string line, const std::string &pn, const std::string &pb);
-    std::string GetStartTime(std::string line, const std::string &startTimeBefore);
+    std::string GetPid(const std::string& line, const std::string &pn, const std::string &pb);
+    std::string GetStartTime(const std::string& line, const std::string &startTimeBefore);
     double GetLineTime();
 
 private:

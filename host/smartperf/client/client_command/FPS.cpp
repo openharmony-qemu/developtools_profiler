@@ -76,7 +76,7 @@ std::map<std::string, std::string> FPS::ItemData()
     return result;
 }
 
-void FPS::CalcFatalCaton(std::vector<long long> jitters)
+void FPS::CalcFatalCaton(std::vector<long long>& jitters)
 {
     if (!HAVE_CATON && catonNum == 0) {
         for (long long &timestamp : jitters) {
@@ -88,6 +88,15 @@ void FPS::CalcFatalCaton(std::vector<long long> jitters)
             }
         }
     }
+}
+
+void FPS::StartExecutionOnce(bool isPause)
+{
+    if (isPause) {
+        return;
+    }
+    isGameApp = SPUtils::GetIsGameApp(pkgName);
+    firstDump = true;
 }
 
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
@@ -104,9 +113,9 @@ FpsCurrentFpsTime FPS::GetFpsCurrentFpsTime()
     return ffTime;
 }
 
-void FPS::SetPackageName(std::string pName)
+void FPS::SetPackageName(const std::string& pName)
 {
-    pkgName = std::move(pName);
+    pkgName = pName;
 }
 
 void FPS::SetProcessId(const std::string &pid)
@@ -114,9 +123,9 @@ void FPS::SetProcessId(const std::string &pid)
     processId = pid;
 }
 
-void FPS::SetLayerName(std::string sName)
+void FPS::SetLayerName(const std::string& sName)
 {
-    surfaceViewName = std::move(sName);
+    surfaceViewName = sName;
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
@@ -197,7 +206,7 @@ FpsInfo FPS::GetChangedLayerFps()
     return fpsInfoMax;
 }
 
-FpsInfo FPS::GetSurfaceFrame(std::string name)
+FpsInfo FPS::GetSurfaceFrame(const std::string& name)
 {
     if (name == "") {
         return FpsInfo();

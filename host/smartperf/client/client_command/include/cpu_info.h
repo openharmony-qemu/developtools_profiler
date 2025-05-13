@@ -33,9 +33,9 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-    void StartExecutionOnce() override;
-    void FinishtExecutionOnce() override;
-    void SetPids(std::string& pids);
+    void StartExecutionOnce(bool isPause) override;
+    void FinishtExecutionOnce(bool isPause) override;
+    void SetPids(const std::string& pids);
     void Start();
     void Stop();
 private:

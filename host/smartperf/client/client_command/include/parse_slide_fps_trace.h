@@ -23,11 +23,11 @@ namespace OHOS {
 namespace SmartPerf {
 class ParseSlideFpsTrace {
 public:
-    double ParseSlideFpsTraceNoh(std::string file);
+    double ParseSlideFpsTraceNoh(const std::string& file);
     double CalculateTime();
-    std::string GetLineTime(std::string lineStr) const;
-    std::string CutString(std::string lineStr, const std::string &start, const std::string &end, size_t offset) const;
-    void AppSwiperScroll(std::string line);
+    std::string GetLineTime(const std::string& lineStr) const;
+    std::string CutString(const std::string& lineStr, const std::string &start, const std::string &end, size_t offset) const;
+    void AppSwiperScroll(const std::string& line);
 private:
     std::ifstream infile;
     bool needTime = false;

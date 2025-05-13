@@ -119,7 +119,7 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     WLOGI("Received init task string: %s", recvStr.substr(recvStr.find("-SESSIONID")).c_str());
     ExceptionMsg exMsg = ParseToTask(recvStr, curTaskInfo);
     if (exMsg == ExceptionMsg::NO_ERR) {
-        taskMgr_ = std::make_shared<TaskManager>();
+        taskMgr_ = std::make_shared<TaskManager>(true);
         taskMgr_->AddTask(recvStr);
         if (curTaskInfo.stuckInfo.isEffective) {
             if (curTaskInfo.stuckInfo.fps != 0) {
@@ -138,103 +138,9 @@ ErrCode SPTask::InitTask(const std::string &recvStr)
     return ErrCode::FAILED;
 }
 
-void SPTask::ConfigDataThread()
-{
-    for (std::string& itConfig : curTaskInfo.taskConfig) {
-        if (!sdkData) {
-            ConfigureSdkData(itConfig);
-        }
-
-        if (itConfig.find("-gc") != std::string::npos) {
-            WLOGI("Starting GpuCounter collection in new thread");
-            gpuCounter.SetCollectDur(50);
-            gpuCounter.StartCollect(GpuCounter::GC_START);
-        }
-
-        if (itConfig.find("-lockfreq") != std::string::npos) {
-            lockFreq.SetIsCollecting(true);
-            lockFreqThread = std::thread([this]() {
-                WLOGI("Starting lock frequency locking thread");
-                this->lockFreq.LockingThread();
-            });
-        }
-    }
-}
-
-void SPTask::ConfigureSdkData(std::string itConfig)
-{
-    if (itConfig.find("-o") != std::string::npos) {
-        sdkData = true;
-        OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
-        SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
-        sdkDataRecv.SetRunningState(true);
-        WLOGI("Starting sdkdata collection in new thread");
-        sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
-    }
-}
-
-void SPTask::RunSdkServer(SdkDataRecv &sdkDataRecv)
-{
-    sdkDataRecv.ServerThread(sdkvec);
-}
-
-void SPTask::ResetSdkParam()
-{
-    WLOGI("Disabling sdk data collection and resetting parameters");
-    OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
-    sdkData = false;
-    SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
-    sdkDataRecv.SetRunningState(false);
-    int listenFd = sdkDataRecv.GetListenFd();
-    if (listenFd != -1) {
-        LOGD("Closing sdk data listenFd: %d", listenFd);
-        close(listenFd);
-        sdkDataRecv.SetListenFd(-1);
-    }
-    if (sdk.joinable()) {
-        LOGD("Joining sdk data server thread");
-        sdk.join();
-    }
-}
-
-void SPTask::StopSdkRecv()
-{
-    if (!sdkData || sdkvec.size() <= 0) {
-        WLOGI("SDK data is not enabled or sdkvec is empty");
-        return;
-    }
-    LOGD("SDK data stop");
-    std::string outSdkDataDir = baseOutPath + "/" + curTaskInfo.sessionId;
-    char outSdkDataDirChar[PATH_MAX] = {0x00};
-    if (realpath(outSdkDataDir.c_str(), outSdkDataDirChar) == nullptr) {
-        WLOGE("data dir %s is nullptr", outSdkDataDir.c_str());
-        return;
-    }
-    std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
-    sdkDataMtx.lock();
-    std::ofstream outFile;
-    outFile.open(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
-    if (!outFile.is_open()) {
-        WLOGE("data %s open failed", outSdkDataPath.c_str());
-        sdkDataMtx.unlock();
-        return;
-    }
-    std::string title = "source,timestamp,eventName,enable,value\r";
-    outFile << title << std::endl;
-    for (const auto &item : sdkvec) {
-        outFile << item << std::endl;
-    }
-    outFile.close();
-    sdkDataMtx.unlock();
-    WLOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
-    return;
-}
-
 void SPTask::InitDataFile()
 {
-    sdkvec.clear();
     gpuCounter.GetGpuCounterSaveReportData().clear();
-    SdkDataRecv::GetInstance().SetStartRecordTime();
     startTime = SPUtils::GetCurTime();
     std::vector<std::string> files = {
         "sdk_data.csv",
@@ -268,7 +174,7 @@ void SPTask::SetProfilerPid()
     SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
 }
 
-ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
+ErrCode SPTask::StartTask(std::function<void(const std::string&)> msgTask)
 {
     LOGD("Task starting...");
     RAM &ram = RAM::GetInstance();
@@ -279,35 +185,29 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         return ErrCode::FAILED;
     }
     isRunning = true;
-    realTimeStart = SPUtils::GetCurTime();
-    LOGD("Task initialized, realTimeStart = %lld", realTimeStart);
+    LOGD("Task initialized, realTimeStart = %lld", SPUtils::GetCurTime());
     InitDataFile();
     LOGD("Data files initialized.");
-    ConfigDataThread();
-    LOGD("Data collection thread configuration completed.");
     thread = std::thread([=]() {
         if (taskMgr_ == nullptr) {
             return;
         }
         WLOGI("Starting data collection thread.");
-        CreatPath(baseOutPath);
         std::string thisBasePath = baseOutPath + "/" + curTaskInfo.sessionId;
         CreatPath(thisBasePath);
         std::string outIndexpath = thisBasePath + "/t_index_info.csv";
-        GpuCounter::GetInstance().SetSavePathDirectory(thisBasePath);
-
         taskMgr_->SetFilePath(outIndexpath);
         taskMgr_->SetIPCCallback(msgTask);
         taskMgr_->EnableIPCCallback();
         taskMgr_->SetNextTime(nextTime);
-        taskMgr_->Start();
+        taskMgr_->Start(false);
         taskMgr_->Wait();
     });
     EnablePrint();
     return ErrCode::OK;
 }
 
-void SPTask::CreatPath(std::string path)
+void SPTask::CreatPath(const std::string& path)
 {
     if (!SPUtils::FileAccess(path)) {
         LOGD("CreatPath does not exist, attempting to create: %s", path.c_str());
@@ -376,12 +276,11 @@ void SPTask::StopGetInfo()
         LOGW("Failed to get GPU info when stop.");
     }
     std::map<std::string, std::string> destMap;
-    destMap.insert(taskInfoMap.begin(), taskInfoMap.end());
-    destMap.insert(deviceInfo.begin(), deviceInfo.end());
-    destMap.insert(cpuInfo.begin(), cpuInfo.end());
-    destMap.insert(gpuInfo.begin(), gpuInfo.end());
+    destMap.merge(taskInfoMap);
+    destMap.merge(deviceInfo);
+    destMap.merge(cpuInfo);
+    destMap.merge(gpuInfo);
     OHOS::SmartPerf::SpCsvUtil::WriteCsvH(destMap);
-
     WLOGI("Write CSV header done.");
 }
 
@@ -394,25 +293,14 @@ ErrCode SPTask::StopTask()
     if (GetRecordState()) {
         WLOGI("Record state is valid. Stopping task and cleaning up.");
         StopGetInfo();
-        StopSdkRecv();
-
-        sdkvec.clear();
         recordState = false;
     } else {
         WLOGW("Record state is invalid. Skipping task stop operations.");
     }
 
-    ResetSdkParam();
-    lockFreq.SetIsCollecting(false);
-    if (lockFreqThread.joinable()) {
-        LOGD("Joining lockFreqThread.");
-        lockFreqThread.join();
-    }
-
     WLOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
     isRunning = false;
     isInit = false;
-    realTimeStart = 0;
     if (stdOutLog >= 0) {
         close(stdOutLog);
         stdOutLog = -1;
@@ -427,7 +315,7 @@ ErrCode SPTask::StopTask()
     return ErrCode::OK;
 }
 
-bool SPTask::CheckTcpParam(std::string str, std::string &errorInfo)
+bool SPTask::CheckTcpParam(const std::string& str, std::string &errorInfo)
 {
     std::set<std::string> keys;
     std::string params;
@@ -484,7 +372,7 @@ void SPTask::KillHiperfCmd()
     const std::string hiprofilerPid = CMD_COMMAND_MAP.at(CmdCommand::HIPROFILER_PID);
     SPUtils::LoadCmd(hiprofilerPid, result);
     SPUtils::StrSplit(result, " ", out);
-    LOGD("pidof hiprofiker_cmd size(%d)", out.size());
+    LOGD("pidof hiprofiler_cmd size(%d)", out.size());
     for (auto it = out.begin(); out.end() != it; ++it) {
         result.clear();
         SPUtils::LoadCmd(killCmd + (*it), result);
@@ -553,21 +441,12 @@ void SPTask::ClearStopFlag()
 
     if (isInit) {
         StopGetInfo();
-        if (sdkData) {
-            StopSdkRecv();
-        }
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 
-    sdkvec.clear();
     gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
     KillHiperfCmd();
-}
-
-time_t SPTask::GetRealStartTime() const
-{
-    return realTimeStart;
 }
 
 std::string SPTask::GetCsvTitle()
@@ -597,19 +476,7 @@ void SPTask::EnablePrint()
     }
 }
 
-void SPTask::ConfigureSdkDataHap()
-{
-    if (isSdkTask) {
-        sdkData = true;
-        OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
-        SdkDataRecv &sdkDataRecv = SdkDataRecv::GetInstance();
-        sdkDataRecv.SetRunningState(true);
-        WLOGI("Starting sdkdata collection in new thread");
-        sdk = std::thread([&sdkDataRecv, this]() { this->RunSdkServer(sdkDataRecv); });
-    }
-}
-
-void SPTask::SetAppCmd(std::string &recvBuf)
+void SPTask::SetAppCmd(const std::string &recvBuf)
 {
     std::stringstream ssLine(recvBuf);
     std::string word = "";
@@ -634,16 +501,6 @@ TaskInfo SPTask::GetCurTaskInfo()
     return curTaskInfo;
 }
 
-void SPTask::SetAppReceiveDataOffFlag()
-{
-    appReceiveDataFlag = true;
-}
-
-void SPTask::SetAppReceiveDataOnFlag()
-{
-    appReceiveDataFlag = false;
-}
-
 void SPTask::SetAppInitFlag()
 {
     isInit = true;
@@ -651,23 +508,6 @@ void SPTask::SetAppInitFlag()
         SetProfilerPid();
         SpProfilerFactory::SetProfilerPkg(curTaskInfo.packageName);
     }
-}
-
-std::string SPTask::ProcessingCollectionsMap(SPData spdata)
-{
-    std::string appCollectMap = "t_index_info$$";
-    std::vector<std::string> keysToFind = {"fps", "refreshrate", "currentNow", "ddrFrequency", "cpu0Frequency",
-        "cpu1Frequency", "cpu2Frequency", "cpu3Frequency", "cpu4Frequency", "cpu5Frequency", "cpu6Frequency",
-        "cpu7Frequency", "cpu8Frequency", "cpu9Frequency", "cpu10Frequency", "cpu11Frequency", "gpuFrequency",
-        "pss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
-        "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
-        "gpuLoad"};
-    for (const auto& key : keysToFind) {
-        if (spdata.values.find(key) != spdata.values.end()) {
-            appCollectMap += key + ":" + spdata.values[key] + ",";
-        }
-    }
-    return appCollectMap;
 }
 }
 }

@@ -29,7 +29,7 @@ public:
         SWIM_APPTABS = 3,
     };
 public:
-    double StallingRateResult(std::string file);
+    double StallingRateResult(const std::string& file);
     double CalculateTime();
     double GetFrameRate(const std::string &line) const;
     int GetFenceId(const std::string &line) const;

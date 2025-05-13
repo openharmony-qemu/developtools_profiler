@@ -25,12 +25,12 @@ class ControlCallCmd {
 public:
     double CompleteTime();
     double ResponseTime();
-    std::string GetResult(std::vector<std::string> v);
+    std::string GetResult(const std::vector<std::string>& v);
     std::string GetFrame();
     std::string GetAppStartTime() const;
     std::string SlideList();
     std::string TimeDelay();
-    void IsohTest(std::vector<std::string> v);
+    void IsohTest(const std::vector<std::string>& v);
 
 private:
     bool isOhTest = false;

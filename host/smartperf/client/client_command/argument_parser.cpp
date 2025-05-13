@@ -21,6 +21,7 @@
 #include <memory>
 #include <cstring>
 #include "securec.h"
+#include "sp_utils.h"
 
 namespace OHOS::SmartPerf {
 namespace {
@@ -67,16 +68,11 @@ void ArgumentParser::Parse(const std::string& input)
     Parse(argc, argv.data());
 }
 
-void ArgumentParser::HandleIntParameter(std::string& key, std::string value, const ArgumentSpec& spec)
+void ArgumentParser::HandleIntParameter(const std::string& key, std::string value, const ArgumentSpec& spec)
 {
     if (spec.type == ArgType::INT) {
-        int val;
-        try {
-            val = std::stoi(value);
-        } catch (...) {
-            errors_.push_back("Invalid int value for " + key + ": " + value);
-            return;
-        }
+        int val = SPUtilesTye::StringToSometype<int>(value);
+
         if (spec.min && val < *spec.min) {
             errors_.push_back("Value for " + key + " below min: " + std::to_string(*spec.min));
             return;

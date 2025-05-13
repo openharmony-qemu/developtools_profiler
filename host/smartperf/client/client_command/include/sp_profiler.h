@@ -22,8 +22,8 @@ public:
     SpProfiler() {};
     virtual ~SpProfiler() {};
     virtual std::map<std::string, std::string> ItemData() = 0;
-    virtual void StartExecutionOnce() {};
-    virtual void FinishtExecutionOnce() {};
+    virtual void StartExecutionOnce(bool isPause) {};
+    virtual void FinishtExecutionOnce(bool isPause) {};
     std::function<void(std::string)> ipcCallback_ {nullptr};
 };
 }

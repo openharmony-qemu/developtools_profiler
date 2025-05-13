@@ -63,10 +63,12 @@ bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
 }
+
 bool SPUtils::HasNumber(const std::string &str)
 {
     return std::any_of(str.begin(), str.end(), [](char c) { return std::isdigit(c); });
 }
+
 bool SPUtils::Cmp(const std::string &a, const std::string &b)
 {
     if (HasNumber(a) && HasNumber(b)) {
@@ -344,50 +346,36 @@ static std::string GetSplitOne(std::string cmd)
 
 std::string SPUtils::GetDeviceInfoMap()
 {
-    size_t len = 2;
-    bool isTcpMessage = false;
     std::map<std::string, std::string> deviceInfoMap;
-    std::map<std::string, std::string> cpuInfo = GetCpuInfo(isTcpMessage);
-    std::map<std::string, std::string> gpuInfo = GetGpuInfo(isTcpMessage);
-    std::map<std::string, std::string> deviceInfo = GetDeviceInfo();
+    deviceInfoMap.merge(GetCpuInfo(false));
+    deviceInfoMap.merge(GetGpuInfo(false));
+    deviceInfoMap.merge(GetDeviceInfo());
+
     std::string screenInfos = GetScreen();
     size_t pos = screenInfos.find(": ");
     size_t pos1 = screenInfos.find(",");
+    size_t len = 2;
     std::string screenSize = screenInfos.substr(pos + len, pos1 - pos - len);
-    deviceInfoMap.insert(cpuInfo.begin(), cpuInfo.end());
-    deviceInfoMap.insert(gpuInfo.begin(), gpuInfo.end());
-    deviceInfoMap.insert(deviceInfo.begin(), deviceInfo.end());
     deviceInfoMap["activeMode"] = screenSize;
-    if (deviceInfoMap.empty()) {
-        LOGE("Failed to obtain device information");
-    }
     for (auto iter = deviceInfoMap.cbegin(); iter != deviceInfoMap.cend(); ++iter) {
         printf("%s: %s\n", iter->first.c_str(), iter->second.c_str());
     }
-    std::cout << "" << std::endl;
+    std::cout << std::endl;
     return std::string("command exec finished!");
 }
 
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
-    std::string sn = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::SN));
-    std::string deviceTypeName = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME));
-    std::string brand = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
-    std::string version = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::VERSION));
-    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    std::string name = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::NAME));
-    std::string model = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::MODEL));
-    std::string fullname = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME));
-    resultMap["sn"] = sn;
-    resultMap["deviceTypeName"] = deviceTypeName;
-    resultMap["brand"] = brand;
+    resultMap["sn"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::SN));
+    resultMap["deviceTypeName"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME));
+    resultMap["brand"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
     resultMap["board"] = "hw";
-    resultMap["version"] = version;
-    resultMap["abilist"] = abilist;
-    resultMap["name"] = name;
-    resultMap["model"] = model;
-    resultMap["fullname"] = fullname;
+    resultMap["version"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::VERSION));
+    resultMap["abilist"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
+    resultMap["name"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::NAME));
+    resultMap["model"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::MODEL));
+    resultMap["fullname"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME));
     resultMap["daemonPerfVersion"] = SMART_PERF_VERSION;
     return resultMap;
 }
@@ -443,7 +431,7 @@ std::map<std::string, std::string> SPUtils::GetGpuInfo(bool isTcpMessage)
         "/sys/class/devfreq/gpufreq/",
     };
     std::map<std::string, std::string> resultMap;
-    for (auto path : gpuCurFreqPaths) {
+    for (auto& path : gpuCurFreqPaths) {
         if (FileAccess(path)) {
             std::string max;
             SPUtils::LoadFile(path + "/max_freq", max);
@@ -489,7 +477,7 @@ void SPUtils::RemoveSpace(std::string &str)
 }
 
 
-bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
+bool SPUtils::IntegerVerification(const std::string& str, std::string& errorInfo)
 {
     uint64_t dest = 0;
     bool isValid = false;
@@ -530,7 +518,7 @@ bool SPUtils::IntegerVerification(std::string str, std::string errorInfo)
     return true;
 }
 
-bool SPUtils::VeriyParameter(std::set<std::string> &keys, std::string param, std::string &errorInfo)
+bool SPUtils::VeriyParameter(std::set<std::string> &keys, const std::string& param, std::string &errorInfo)
 {
     std::string keyParam;
     std::string valueParm;
@@ -822,7 +810,7 @@ bool SPUtils::GetPathPermissions(const std::string &path)
     }
 }
 
-bool SPUtils::GetIsGameApp(std::string pkg)
+bool SPUtils::GetIsGameApp(const std::string& pkg)
 {
     bool isGame = false;
     const std::string cmd = "hidumper -s 66006 -a '-t " + pkg + "'";
@@ -869,10 +857,10 @@ int& SPUtils::GetTtyDeviceFd()
 
 void SPUtils::GetTestsaPlugin(int command)
 {
-    #ifdef ARKTEST_ENABLE
+#ifdef ARKTEST_ENABLE
     std::string stopJsonString = "{\"command\": \"stopCollect\"}";
     OHOS::testserver::TestServerClient::GetInstance().SpDaemonProcess(command, stopJsonString);
-    #endif
+#endif
 }
 
 void SPUtils::KillStartDaemon()
@@ -917,7 +905,7 @@ void SPUtils::RemoveDirOrFile(const std::string &dirPath)
     }
 }
 
-void SPUtils::CopyFiles(std::string cpStr)
+void SPUtils::CopyFiles(const std::string& cpStr)
 {
     std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::CP) + cpStr;
     std::string cmdResult;
@@ -926,7 +914,7 @@ void SPUtils::CopyFiles(std::string cpStr)
     }
 }
 
-void SPUtils::TarFiles(std::string tarStr)
+void SPUtils::TarFiles(const std::string& tarStr)
 {
     std::string tarCommand = CMD_COMMAND_MAP.at(CmdCommand::TAR) + tarStr;
     std::string cmdResult;

@@ -43,12 +43,13 @@
 #include "include/GetLog.h"
 #include "include/RAM.h"
 #include "include/FPS.h"
+
 #define SMARTPERF "smartperf"
 namespace OHOS {
 namespace SmartPerf {
 std::string g_pkgName = "";
 std::string g_pkgAndPid = "";
-std::string SpThreadSocket::MapToString(std::map<std::string, std::string> dataMap) const
+std::string SpThreadSocket::MapToString(std::map<std::string, std::string>& dataMap) const
 {
     std::string result;
     int i = 0;
@@ -104,8 +105,8 @@ void SpThreadSocket::Process(ProtoType type)
     std::cout << "Socket Process finished!" << std::endl;
     spSocket.Close();
 }
-SocketErrorType SpThreadSocket::CheckTcpToken(std::string recvStr,
-    SpServerSocket &spSocket, std::string recvStrNoToken) const
+SocketErrorType SpThreadSocket::CheckTcpToken(const std::string& recvStr,
+    SpServerSocket &spSocket, const std::string& recvStrNoToken) const
 {
     if (recvStr.find_last_of(":") == std::string::npos) {
         if (recvStr.find("SP_daemon -editor") != std::string::npos) {
@@ -157,7 +158,7 @@ void SpThreadSocket::TypeTcp(SpServerSocket &spSocket)
     }
 }
 // TCP
-void SpThreadSocket::InitRecv(std::string recvStr, SpServerSocket &spSocket, SocketConnectType type) const
+void SpThreadSocket::InitRecv(const std::string& recvStr, SpServerSocket &spSocket, SocketConnectType type) const
 {
     std::string errorInfo;
     std::string checkStr = recvStr.substr(std::string("init::").length());
@@ -259,7 +260,7 @@ void SpThreadSocket::StopRecvRecord(SpServerSocket &spSocket) const
         " message to socket.");
     }
 }
-void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string &message) const
+void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, const std::string &message) const
 {
     if (message.find("init:::") != std::string::npos ||
         message.find("start:::") != std::string::npos) {
@@ -273,7 +274,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
         "startRecord::",
         "stopRecord::",
     };
-    for (auto it : messageType) {
+    for (auto& it : messageType) {
         if (message.find(it) != std::string::npos) {
             WLOGE("Sending token check failed message for command: %s", it.c_str());
             socket.Send(it + SocketErrorTypeToString(SocketErrorType::TOKEN_CHECK_FAILED));
@@ -282,7 +283,7 @@ void SpThreadSocket::SendTokenFailedMessage(SpServerSocket &socket, std::string 
     }
     WLOGW("No matching command found for token check failure in message: %s", message.c_str());
 }
-SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
+SocketErrorType SpThreadSocket::CheckUdpToken(const std::string& recvStr) const
 {
     // 不需要校验 token
     if (isNeedUdpToken == false) {
@@ -311,7 +312,7 @@ SocketErrorType SpThreadSocket::CheckUdpToken(std::string recvStr) const
     LOGD("UDP token check passed");
     return SocketErrorType::OK;
 }
-void SpThreadSocket::DealMsg(std::string recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
+void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocket, SocketErrorType tokenStatus)
 {
     SocketHeartbeat();
     if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
@@ -345,7 +346,7 @@ void SpThreadSocket::DealMsg(std::string recvStr, SpServerSocket &spSocket, Sock
         WLOGW("Received unknown command: %s", recvStr.c_str());
     }
 }
-void SpThreadSocket::EditorRecv(std::string recvStr, const SpServerSocket &spSocket) const
+void SpThreadSocket::EditorRecv(const std::string& recvStr, const SpServerSocket &spSocket) const
 {
     std::vector<std::string> vec;
     size_t size = recvStr.size();
@@ -429,7 +430,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
     }
 }
 
-void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
+void SpThreadSocket::HeartbeatDetection(const std::string& recvBuf)
 {
     if (recvBuf.size() != 0) {
         Heartbeat &heartbeat = Heartbeat::GetInstance();
@@ -437,20 +438,18 @@ void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
     }
 }
 
-void SpThreadSocket::UdpStartInitFunc(std::string recvBuf, SpServerSocket &spSocket)
+void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket &spSocket)
 {
-    taskMgr_ = std::make_shared<TaskManager>();
+    taskMgr_ = std::make_shared<TaskManager>(true);
     auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
     taskMgr_->SetIPCCallback(lambdaTask);
-
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
     spTask.SetAppInitFlag();
 
-    std::string filePath = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId + "/t_index_info.csv";
-    spTask.CreatPath(filePath);
-    taskMgr_->SetFilePath(filePath);
-    taskMgr_->SetRecordState(true);
+    std::string fileDir = "/data/local/tmp/smartperf/" + spTask.GetCurTaskInfo().sessionId;
+    spTask.CreatPath(fileDir);
+    taskMgr_->SetFilePath(fileDir + "/t_index_info.csv");
 }
 
 int SpThreadSocket::FileSocketConnect()
@@ -472,7 +471,7 @@ int SpThreadSocket::FileSocketConnect()
     return sendFileSocket;
 }
 
-int SpThreadSocket::SendFile(const std::string filePath)
+int SpThreadSocket::SendFile(const std::string& filePath)
 {
     char filePathChar[PATH_MAX] = {0x00};
     if ((realpath(filePath.c_str(), filePathChar) == nullptr)) {
@@ -566,14 +565,14 @@ void SpThreadSocket::StartGpuCounter() const
         std::remove(filePathChar);
         LOGD("%s is existed, remove.", gpuCounterfilePath.c_str());
     }
-    gpuCounter.StartCollect(GpuCounter::GC_START);
+    GpuCounter::GetInstance().StartCollect(GpuCounter::GC_START);
 }
 
 void SpThreadSocket::SaveGpuCounter() const
 {
-    gpuCounter.GetInstance().SaveData(smartperfDevicePath);
-    gpuCounter.GetGpuCounterData().clear();
-    gpuCounter.StopCollect();
+    GpuCounter::GetInstance().GetInstance().SaveData(smartperfDevicePath);
+    GpuCounter::GetInstance().GetGpuCounterData().clear();
+    GpuCounter::GetInstance().StopCollect();
 }
 
 void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data)
@@ -586,11 +585,11 @@ void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string,
             resultfps += std::string(temp.c_str());
         }
     }
-    if (!pfps.isTargetFps) {
-        pfps.fpsBySdk = pfps.GetFpsBySdk();
+    if (!ProfilerFPS::GetInstance().isTargetFps) {
+        ProfilerFPS::GetInstance().fpsBySdk = ProfilerFPS::GetInstance().GetFpsBySdk();
     }
-    if (pfps.isGameApp) {
-        sdkFps = resultfps + "$$targetFps||" + pfps.fpsBySdk;
+    if (ProfilerFPS::GetInstance().isGameApp) {
+        sdkFps = resultfps + "$$targetFps||" + ProfilerFPS::GetInstance().fpsBySdk;
         spSocket.Sendto(sdkFps);
     } else {
         spSocket.Sendto(resultfps);
@@ -598,14 +597,14 @@ void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string,
     LOGD("UDP send Cur_resultfps = %s, Cur_sdkFps = %s", resultfps.c_str(), sdkFps.c_str());
 }
 
-void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data,
-    std::string retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string>& data,
+    std::string& retCode, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     std::cout << "iterator->first: " << static_cast<int>(iterator->first) << std::endl;
     if (iterator->first == MessageType::GET_CUR_FPS) {
-        pfps.isLowCurFps = true;
+        ProfilerFPS::GetInstance().isLowCurFps = true;
         // No page hap need return fps and jitters to calc fatal frame freeze
-        if (pfps.isPreset) {
+        if (ProfilerFPS::GetInstance().isPreset) {
             retCode = MapToString(data);
             spSocket.Sendto(retCode);
             LOGD("UDP send retCode No page %s", retCode.c_str());
@@ -628,7 +627,7 @@ void SpThreadSocket::SocketHeartbeat() const
     Heartbeat &heartbeat = Heartbeat::GetInstance();
     heartbeat.UpdatestartTime();
 }
-void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string> data) const
+void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string>& data) const
 {
     std::string resultCpuFrequency = "";
     std::string resultCpuUsage = "";
@@ -659,8 +658,8 @@ void SpThreadSocket::FetchCpuStats(SpServerSocket &spSocket, std::map<std::strin
     spSocket.Sendto(resultCpu);
     LOGD("UDP send resultCpu = %s", resultCpu.c_str());
 }
-void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+    const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::SET_PKG_NAME) {
         isSetPid = false;
@@ -675,17 +674,14 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
             } else {
                 g_pkgName = retCode;
             }
-            std::string pkgName = g_pkgName;
-            std::thread rStart([this, pkgName]() { this->ResetValue(pkgName); });
-            rStart.detach();
-            LOGD("HandleNullMsg pkgName: (%s)", pkgName.c_str());
+            std::thread([this]() { this->ResetValue(g_pkgName); }).detach();
+            LOGD("HandleNullMsg pkgName: (%s)", g_pkgName.c_str());
         }
         spSocket.Sendto(retCode);
         LOGD("UDP send PkgName = %s", retCode.c_str());
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_APP_TYPE)) {
         retCode = SplitMsg(recvBuf);
-        std::thread rStart([this, retCode]() { this->ResetValue(retCode); });
-        rStart.detach();
+        std::thread([this, retCode]() { this->ResetValue(retCode); }).detach();
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
         retCode = "Version: " + SPUtils::GetVersion();
         spSocket.Sendto(retCode);
@@ -716,8 +712,8 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
             LOGD("SpProfilerFactory::g_pkgName(%s)", g_pkgName.c_str());
             std::string processId = "";
             std::string processIds = "";
-            pfps.isPreset = IsPreset(pkgAndPid);
-            if (pfps.isPreset) {
+            ProfilerFPS::GetInstance().isPreset = IsPreset(pkgAndPid);
+            if (ProfilerFPS::GetInstance().isPreset) {
                 processId = SpGetPid(pkgAndPid);
             } else {
                 OHOS::SmartPerf::StartUpDelay sp;
@@ -732,13 +728,12 @@ void SpThreadSocket::GetProcessIdByPkgName(std::unordered_map<MessageType, std::
 
 void SpThreadSocket::ResetValue(std::string retCode) const
 {
-    pfps.isGameApp = SPUtils::GetIsGameApp(retCode);
-    pfps.firstDump = true;
-    RAM &ram = RAM::GetInstance();
-    ram.SetHapFirstFlag();
+    ProfilerFPS::GetInstance().isGameApp = SPUtils::GetIsGameApp(retCode);
+    ProfilerFPS::GetInstance().firstDump = true;
+    RAM::GetInstance().SetHapFirstFlag();
 }
-void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+    const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     Dubai &db = Dubai::GetInstance();
     if (iterator->first == MessageType::START_DUBAI_DB) {
@@ -747,7 +742,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
         db.CallBeginAndFinish();
         db.isDumpDubaiFinish = true;
-        pfps.isLowCurFps = false;
+        ProfilerFPS::GetInstance().isLowCurFps = false;
         retCode = db.CallMoveDubaiDbFinished();
         LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
@@ -767,7 +762,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
-        SPTask::GetInstance().ResetSdkParam();
         if (taskMgr_ != nullptr) {
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
@@ -779,12 +773,13 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     }
 }
 
-void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string retCode,
-    std::string recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
+void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
+    const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator)
 {
     if (iterator->first == MessageType::APP_START_COLLECT) {
-        SPTask::isSdkTask = true;
-        SPTask::GetInstance().ConfigureSdkDataHap();
+        if (taskMgr_ != nullptr) {
+            taskMgr_->AddTask(&SdkDataRecv::GetInstance(), false);
+        }
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
@@ -796,14 +791,10 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
             taskMgr_->DisableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
-        SPTask::isSdkTask = false;
-        SPTask::GetInstance().ResetSdkParam();
         if (taskMgr_ != nullptr) {
             taskMgr_->Stop(true);
         }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
-        SPTask::isSdkTask = true;
-        SPTask::GetInstance().ConfigureSdkDataHap();
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
@@ -835,7 +826,7 @@ std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) c
             return "UNKNOWN";
     }
 }
-void SpThreadSocket::GetSocketPort(std::string buffer)
+void SpThreadSocket::GetSocketPort(const std::string& buffer)
 {
     if (buffer.find("::") != std::string::npos) {
         std::string portStr = buffer.substr(buffer.find("::") + 2);
@@ -906,30 +897,29 @@ std::string SpThreadSocket::SpGetPid(const std::string &spMsg) const
 
 bool SpThreadSocket::IsPreset(const std::string &spMsg) const
 {
-    if (spMsg.find("$") != std::string::npos) {
-        return true;
-    } else {
-        return false;
-    }
+    return spMsg.find("$") != std::string::npos;
 }
-void SpThreadSocket::SetToken(std::string token)
+
+void SpThreadSocket::SetToken(const std::string& token)
 {
     checkToken = token;
 }
+
 std::string SpThreadSocket::GetToken() const
 {
     return checkToken;
 }
+
 void SpThreadSocket::SetNeedUdpToken(bool isNeed)
 {
     isNeedUdpToken = isNeed;
 }
+
 void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
 {
     LOGD("UDP START Task starting...");
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
-    spTask.ConfigDataThread();
     if (udpStartCollect.joinable()) {
         udpStartCollect.join();
     }
