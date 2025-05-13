@@ -100,7 +100,7 @@ private:
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
-    const std::string gpuCounterfilePath = "/data/local/tmpgpu_counter.csv";
+    const std::string gpuCounterfilePath = "/data/local/tmp/gpu_counter.csv";
     std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
     int sendFileSocket = -1;
