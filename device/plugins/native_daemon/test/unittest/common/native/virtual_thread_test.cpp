@@ -142,7 +142,7 @@ HWTEST_F(VirtualThreadTest, ParseMap, TestSize.Level1)
 
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
     std::shared_ptr<VirtualThread> thread = std::make_shared<VirtualThread>(getpid(),
-        GetThreadId(), files, runtime.get());
+        GetThreadId(), files, runtime.get(), false);
     thread->CreateMapItem("0.so", 1000, 2000, 3000);
     thread->CreateMapItem("1.so", 3000, 4000, 5000);
     thread->CreateMapItem("2.so", 10000, 20000, 30000);
