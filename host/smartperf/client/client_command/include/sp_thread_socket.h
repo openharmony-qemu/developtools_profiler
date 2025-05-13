@@ -81,7 +81,7 @@ public:
     void SetToken(std::string token);
     std::string GetToken() const;
     void SetNeedUdpToken(bool isNeed);
-    void ConnectAndSendFile(const std::string filePath);
+    void ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath);
     void StartGpuCounter() const;
     void SaveGpuCounter() const;
     int FileSocketConnect();

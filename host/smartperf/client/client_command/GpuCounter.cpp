@@ -54,7 +54,10 @@ namespace OHOS {
         {
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
+            // 1s 一次Gameservice回调
             const int duration = 1000;
+            // 250ms 一次GameService数据收集
+            const int collectDur = 250;
 
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
             void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
@@ -73,14 +76,14 @@ namespace OHOS {
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
                 gpuCounterRealtimeData.clear();
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
                 if (ret != 0) {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
