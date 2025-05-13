@@ -266,6 +266,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         case CommandType::CT_FL:
         case CommandType::CT_FTL: {
             profiler = &Effective::GetInstance();
+            break;
         }
         case CommandType::CT_CI: {
             profiler = &CPUInfo::GetInstance();
