@@ -153,8 +153,8 @@ private:
                    false, "parse common fields failed!");
         if (pid != 0) {
             int tgid = 0;
-            if (auto it = tgidDict_.find(pid); it != tgidDict_.end()) {
-                tgid = it->second;
+            if (tgidDict_.count(pid) > 0) {
+                tgid = tgidDict_[pid];
                 ftraceEvent.set_tgid(tgid);
             } else {
                 ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids());

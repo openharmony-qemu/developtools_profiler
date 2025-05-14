@@ -21,4 +21,5 @@ option optimize_for = LITE_RUNTIME;
 message CpuConfig {
     int32 pid = 1;
     bool report_process_info = 2;
+    bool skip_thread_cpu_info = 3;
 }
