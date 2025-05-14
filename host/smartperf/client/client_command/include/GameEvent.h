@@ -43,14 +43,19 @@ class GameEvent : public SpProfiler {
     }
     int RegisterGameEvent();
     int UnregisterGameEvent();
+    void StartExecutionOnce() override;
+    void FinishtExecutionOnce() override;
+    std::map<std::string, std::string> &GetGameEventItemData();
     private:
     GameEvent() {};
     GameEvent(const GameEvent &) = delete;
     GameEvent &operator=(const GameEvent &) = delete;
     std::map<std::string, std::string> gameEventParams;
+    std::map<std::string, std::string> gameEventItemData;
     const std::string gameEventParamPid = "pid";
     const std::string gameEventParamType = "functionType";
     const std::string createPlugin = "onCreatePlugin";
+    bool isRegister = false;
 };
 } // namespace SmartPerf
 } // namespace OHOS

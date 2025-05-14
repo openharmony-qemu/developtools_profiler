@@ -284,7 +284,6 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
     LOGD("Data files initialized.");
     ConfigDataThread();
     LOGD("Data collection thread configuration completed.");
-    gameEvent.RegisterGameEvent();
     thread = std::thread([=]() {
         if (taskMgr_ == nullptr) {
             return;
@@ -407,7 +406,6 @@ ErrCode SPTask::StopTask()
         LOGD("Joining lockFreqThread.");
         lockFreqThread.join();
     }
-    gameEvent.UnregisterGameEvent();
 
     WLOGI("Stopping task. isRunning: %d, isInit: %d", isRunning, isInit);
     isRunning = false;
