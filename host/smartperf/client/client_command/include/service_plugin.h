@@ -30,7 +30,9 @@ namespace OHOS {
             uint32_t version;
             const char *pluginName;
 
-            virtual int32_t StartGetGpuPerfInfo(int64_t duration, std::unique_ptr <GpuCounterCallback> callback) = 0;
+            virtual int32_t StartGetGpuPerfInfo(int64_t duration,
+                int64_t collectDur,
+                std::unique_ptr <GpuCounterCallback> callback) = 0;
             virtual int32_t StopGetGpuPerfInfo() = 0;
             virtual std::map<std::string, std::string> GetSystemFunctionStatus(
                 std::map<std::string, std::string> &queryParams) = 0;

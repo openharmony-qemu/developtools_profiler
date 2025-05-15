@@ -35,6 +35,7 @@ namespace OHOS {
 
         void GpuCounter::StartExecutionOnce()
         {
+            collectDur = 250;
             StartCollect(GpuCounter::GC_START);
         }
 
@@ -50,10 +51,20 @@ namespace OHOS {
             savePathDirectory_ = dir;
         }
 
+        void GpuCounter::SetCollectDur(int dur)
+        {
+            collectDur = dur;
+        }
+
         void GpuCounter::StartCollect(GcCollectType type)
         {
+            if (collectDur == 0) {
+                WLOGE("GpuCounter collectDur is not set");
+                return;
+            }
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
+            // 1s 一次Gameservice回调
             const int duration = 1000;
 
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
@@ -73,14 +84,14 @@ namespace OHOS {
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
                 gpuCounterRealtimeData.clear();
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
                 if (ret == 0) {
                     gcStatus = GC_RUNNING;
                 } else {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
                 if (ret != 0) {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }

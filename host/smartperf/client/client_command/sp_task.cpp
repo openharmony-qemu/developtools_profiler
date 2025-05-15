@@ -147,6 +147,7 @@ void SPTask::ConfigDataThread()
 
         if (itConfig.find("-gc") != std::string::npos) {
             WLOGI("Starting GpuCounter collection in new thread");
+            gpuCounter.SetCollectDur(50);
             gpuCounter.StartCollect(GpuCounter::GC_START);
         }
 
