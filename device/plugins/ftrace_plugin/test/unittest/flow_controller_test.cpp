@@ -282,7 +282,7 @@ HWTEST_F(FlowControllerTest, HitraceApps, TestSize.Level1)
     config.add_hitrace_categories("ability");
     config.add_hitrace_categories("ace");
     config.add_hitrace_categories("binder");
-    config.add_hitrace_categories("graphics");
+    config.add_hitrace_categories("graphic");
     config.add_hitrace_categories("idle");
     config.set_buffer_size_kb(BUFFER_SIZE_KB);
     config.set_flush_interval_ms(FLUSH_INTERVAL_MS);
