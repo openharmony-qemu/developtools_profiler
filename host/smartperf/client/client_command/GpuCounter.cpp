@@ -35,6 +35,7 @@ namespace OHOS {
 
         void GpuCounter::StartExecutionOnce()
         {
+            collectDur = 250;
             StartCollect(GpuCounter::GC_START);
         }
 
@@ -50,14 +51,21 @@ namespace OHOS {
             savePathDirectory_ = dir;
         }
 
+        void GpuCounter::SetCollectDur(int dur)
+        {
+            collectDur = dur;
+        }
+
         void GpuCounter::StartCollect(GcCollectType type)
         {
+            if (collectDur == 0) {
+                WLOGE("GpuCounter collectDur is not set");
+                return;
+            }
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
 
             // 1s 一次Gameservice回调
             const int duration = 1000;
-            // 250ms 一次GameService数据收集
-            const int collectDur = 250;
 
             ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
             void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
