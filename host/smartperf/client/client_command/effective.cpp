@@ -24,8 +24,8 @@ constexpr long long RM_1000000 = 1000000;
 constexpr long long RM_5000 = 5000;
 constexpr long long RM_0 = 0;
 }
-
-namespace OHOS::SmartPerf {
+namespace OHOS {
+namespace SmartPerf {
 std::map<std::string, std::string> Effective::ItemData()
 {
     std::map<std::string, std::string> templateMap;
@@ -103,5 +103,5 @@ std::string Effective::SetHiperf(const std::string &traceName)
         strSeven_ + dataPrefix + traceName + strEight_ + strTen_ + "\n" + conFig_;
     return trtmp;
 }
-
+}
 }

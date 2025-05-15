@@ -25,19 +25,37 @@ namespace OHOS {
 namespace SmartPerf {
 void GameEventCallbackImpl::OnGameEvent(int32_t type, std::map<std::string, std::string> &params)
 {
-    WLOGI("GameEvent::OnGameEvent Callback");
     for (auto &item : params) {
-        WLOGI("GameEventCallbackImpl::OnGameEvent, key: %s, value: %s", item.first.c_str(), item.second.c_str());
+        GameEvent::GetInstance().GetGameEventItemData()[item.first] = item.second;
     }
 }
 
 std::map<std::string, std::string> GameEvent::ItemData()
 {
-    return std::map<std::string, std::string>();
+    return gameEventItemData;
+}
+
+std::map<std::string, std::string> &GameEvent::GetGameEventItemData()
+{
+    return gameEventItemData;
+}
+
+void GameEvent::StartExecutionOnce()
+{
+    RegisterGameEvent();
+}
+
+void GameEvent::FinishtExecutionOnce()
+{
+    UnregisterGameEvent();
 }
 
 int GameEvent::RegisterGameEvent()
 {
+    if (isRegister) {
+        WLOGI("GameEvent::RegisterGameEvent, already register");
+        return 0;
+    }
     WLOGI("GameEvent::RegisterGameEvent");
     std::unique_ptr<GameEventCallback> gameEventCallback = std::make_unique<GameEventCallbackImpl>();
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
@@ -55,6 +73,7 @@ int GameEvent::RegisterGameEvent()
 
     int ret = servicePlugin()->RegisterGameEventListener(std::move(gameEventCallback));
     if (ret == 0) {
+        isRegister = true;
         WLOGI("GameEvent::ItemData, RegisterGameEventListener success");
     } else {
         WLOGE("GameEvent::ItemData, RegisterGameEventListener failed");
@@ -64,6 +83,9 @@ int GameEvent::RegisterGameEvent()
 
 int GameEvent::UnregisterGameEvent()
 {
+    if (!isRegister) {
+        return 0;
+    }
     WLOGI("GameEvent::UnregisterGameEvent");
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::GAME_PLUGIN);
@@ -80,11 +102,12 @@ int GameEvent::UnregisterGameEvent()
 
     int ret = servicePlugin()->UnregisterGameEventListener();
     if (ret == 0) {
+        isRegister = false;
         WLOGI("GameEvent::ItemData, UnregisterGameEventListener success");
     } else {
         WLOGE("GameEvent::ItemData, UnregisterGameEventListener failed");
     }
-    return 0;
+    return ret;
 }
 
 } // namespace SmartPerf

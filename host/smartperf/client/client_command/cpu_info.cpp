@@ -21,8 +21,8 @@
 #include <string_view>
 #include <iomanip>
 #include <unistd.h>
-
-namespace OHOS::SmartPerf {
+namespace OHOS {
+namespace SmartPerf {
 namespace {
 const std::string HIPERF_CMD = "/bin/hiperf stat -e hw-instructions,hw-cpu-cycles -d 1 -i 800 ";
 }
@@ -49,19 +49,19 @@ std::map<std::string, std::string> CPUInfo::ItemData()
         if (std::regex_search(line, match, cpu_cycles_regex)) {
             std::string number_str = match[1];
             number_str.erase(std::remove(number_str.begin(), number_str.end(), ','), number_str.end());
-            cpu_cycles_total += std::stoull(number_str);
+            cpu_cycles_total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
             ++cpu_cycles_count;
         }
 
         if (std::regex_search(line, match, instructions_regex)) {
             std::string number_str = match[1];
             number_str.erase(std::remove(number_str.begin(), number_str.end(), ','), number_str.end());
-            instructions_total += std::stoull(number_str);
+            instructions_total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
             ++instructions_count;
         }
 
         if (std::regex_search(line, match, cpi_regex)) {
-            cpi_total += std::stod(match[1]);
+            cpi_total += SPUtilesTye::StringToSometype<double>(match[1]);
             ++cpi_count;
         }
     }
@@ -132,5 +132,6 @@ void CPUInfo::Stop()
 {
     std::system("killall hiperf > /data/local/tmp/cpu_temp_error 2>&1");
     std::remove("/data/local/tmp/cpu_temp_error");
+}
 }
 }

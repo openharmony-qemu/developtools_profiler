@@ -103,7 +103,6 @@ public:
     void PrintfExecCommand(const std::map<std::string, std::string> data) const;
     void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
     void CreateSocketThread() const;
-    void SaveGpuCounter() const;
     void DeviceServer(int isNeedDaemon) const;
     // 采集次数
     int num = 0;
