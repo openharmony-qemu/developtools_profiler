@@ -151,6 +151,33 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
  */
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
 
+/**
+ * @brief Set custom dispatch table of malloc function.
+ *
+ * @param dispatchTable Indicates pointer of custom dispatch table.
+ * @return Result code
+ *         {@link HIDEBUG_SUCCESS} Get graphics memory success.
+ *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument，value is null.
+ * @since 14
+ */
+HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *dispatchTable);
+
+/**
+ * @brief Get default dispatch table of malloc function.
+ *
+ * @return  The default dispatch table of malloc function.
+
+ * @since 14
+ */
+HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void);
+
+/**
+ * @brief Restore malloc dispatch table.
+ *
+ * @since 14
+ */
+void OH_HiDebug_RestoreMallocDispatchTable(void);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

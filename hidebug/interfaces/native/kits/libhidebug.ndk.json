@@ -34,5 +34,17 @@
     {
         "first_introduced": "12",
         "name": "OH_HiDebug_StopAppTraceCapture"
+    },
+    {
+        "first_introduced": "14",
+        "name": "OH_HiDebug_SetMallocDispatchTable"
+    },
+    {
+        "first_introduced": "14",
+        "name": "OH_HiDebug_GetDefaultMallocDispatchTable"
+    },
+    {
+        "first_introduced": "14",
+        "name": "OH_HiDebug_RestoreMallocDispatchTable"
     }
 ]
