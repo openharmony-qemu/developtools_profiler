@@ -75,6 +75,7 @@ int SpServerSocket::Accept()
 
 int SpServerSocket::Sendto(const std::string &sendBuf)
 {
+    LOGD("SpServerSocket Sendto sendBuf(%s)", sendBuf.c_str());
     socklen_t len = sizeof(sockaddr_in);
     sendto(sock, sendBuf.c_str(), sendBuf.size(), 0, reinterpret_cast<struct sockaddr *>(&client), len);
     return 0;

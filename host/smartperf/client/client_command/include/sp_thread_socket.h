@@ -60,7 +60,7 @@ public:
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
     void HeartbeatDetection(std::string recvBuf);
-    void UdpStartInitFunc(std::string recvBuf);
+    void UdpStartInitFunc(std::string recvBuf, SpServerSocket &spSocket);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;

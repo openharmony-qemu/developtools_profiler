@@ -30,6 +30,7 @@
 #include <sys/types.h>
 namespace OHOS {
 namespace SmartPerf {
+bool HAVE_CATON = false;
 std::map<std::string, std::string> FPS::ItemData()
 {
     std::map<std::string, std::string> result;
@@ -60,7 +61,12 @@ std::map<std::string, std::string> FPS::ItemData()
             }
             jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
         }
-        result["fpsJitters"] = jitterStr;
+        if (hapNeedCatonInfo && fpsInfoResult.jitters.size() > 0) {
+            CalcFatalCaton(fpsInfoResult.jitters);
+            result["fpsJitters"] = "";
+        } else {
+            result["fpsJitters"] = jitterStr;
+        }
         LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
             std::to_string(fpsInfoResult.fps).c_str(),
             std::to_string(fpsInfoResult.curTime).c_str(),
@@ -68,6 +74,20 @@ std::map<std::string, std::string> FPS::ItemData()
         SetFpsCurrentFpsTime(fpsInfoResult);
     }
     return result;
+}
+
+void FPS::CalcFatalCaton(std::vector<long long> jitters)
+{
+    if (!HAVE_CATON && catonNum == 0) {
+        for (long long &timestamp : jitters) {
+            if ((timestamp / 1e6) > hundred) {
+                HAVE_CATON = true;
+                catonNum = 1;
+                ipcCallback_("haveCaton");
+                break;
+            }
+        }
+    }
 }
 
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
@@ -252,7 +272,7 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
-    if (!hapLowFpsFlag) {
+    if (!hapLowFpsFlag || hapNeedCatonInfo) {
         CalcJitters();
     }
 }
