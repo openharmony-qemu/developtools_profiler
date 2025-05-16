@@ -189,12 +189,16 @@ bool CheckTid(std::vector<int>& tidListTmp)
     return true;
 }
 
-bool PluginCpuinfoStub(CpuDataPlugin& cpuPlugin, CpuData& cpuData, int pid, bool reportProcess, bool unusualBuff)
+bool PluginCpuinfoStub(CpuDataPlugin& cpuPlugin, CpuData& cpuData, int pid, bool reportProcess, bool unusualBuff,
+                       bool skipThread = false)
 {
     CpuConfig protoConfig;
     protoConfig.set_pid(pid);
     if (reportProcess) {
         protoConfig.set_report_process_info(true);
+    }
+    if (skipThread) {
+        protoConfig.set_skip_thread_cpu_info(true);
     }
 
     // serialize
@@ -353,6 +357,29 @@ HWTEST_F(CpuDataPluginTest, TestPlugin, TestSize.Level1)
         EXPECT_EQ(threadInfo.prev_thread_cpu_time_ms(), 0);
     }
 
+    EXPECT_EQ(cpuPlugin.Stop(), 0);
+
+    // 缓冲区异常
+    EXPECT_FALSE(PluginCpuinfoStub(cpuPlugin, cpuData, 1872, false, true));
+    EXPECT_EQ(cpuPlugin.Stop(), 0);
+}
+
+/**
+ * @tc.name: cpu plugin
+ * @tc.desc: cpu plugin test for skip thread.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CpuDataPluginTest, TestSkipThread, TestSize.Level1)
+{
+    CpuDataPlugin cpuPlugin;
+    CpuData cpuData;
+    g_path = g_testPath;
+    cpuPlugin.SetFreqPath(g_path);
+    g_path = g_testPath + "/proc/";
+    cpuPlugin.SetPath(g_path);
+    EXPECT_TRUE(PluginCpuinfoStub(cpuPlugin, cpuData, 1872, false, false, true));
+
+    ASSERT_EQ(cpuData.thread_info_size(), 0);
     EXPECT_EQ(cpuPlugin.Stop(), 0);
 
     // 缓冲区异常
