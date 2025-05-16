@@ -157,7 +157,7 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
  * @param dispatchTable Indicates pointer of custom dispatch table.
  * @return Result code
  *         {@link HIDEBUG_SUCCESS} Set customized dispatch table success.
- *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument，value is null.
+ *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument, dispatchTable is null.
  * @since 20
  */
 HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *dispatchTable);
