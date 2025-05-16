@@ -396,7 +396,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init") != std::string::npos) {
-            UdpStartInitFunc(recvBuf);
+            UdpStartInitFunc(recvBuf, spSocket);
             break;
         }
         if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
@@ -437,11 +437,11 @@ void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
     }
 }
 
-void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
+void SpThreadSocket::UdpStartInitFunc(std::string recvBuf, SpServerSocket &spSocket)
 {
     taskMgr_ = std::make_shared<TaskManager>();
     auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
-    taskMgr_->SetIPCCallback();
+    taskMgr_->SetIPCCallback(lambdaTask);
 
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
@@ -538,6 +538,7 @@ void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::str
     const int maxTryCount = 2;
 
     std::string sendFileSizeMsg = "SendFileSize:::" + std::to_string(SPUtils::GetFileSize(filePath));
+    LOGD("ConnectAndSendFile sendFileSizeMsg: (%s)", sendFileSizeMsg.c_str());
     spSocket.Sendto(sendFileSizeMsg);
     while (fileSocket < 0) {
         WLOGI("Connect file log socket, try times: %d", connectCount + 1);
