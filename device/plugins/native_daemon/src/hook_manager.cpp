@@ -101,7 +101,7 @@ bool HookManager::CheckProcess()
             return false;
         }
     } else {
-        if (hookCtx_.size() > MAX_PID_COUNT) {
+        if (hookCtx_.size() > static_cast<size_t>(MAX_PID_COUNT)) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, MAX_PID_COUNT);
             return false;
         }
