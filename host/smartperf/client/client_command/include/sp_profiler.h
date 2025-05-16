@@ -24,6 +24,7 @@ public:
     virtual std::map<std::string, std::string> ItemData() = 0;
     virtual void StartExecutionOnce() {};
     virtual void FinishtExecutionOnce() {};
+    std::function<void(std::string)> ipcCallback_ {nullptr};
 };
 }
 }

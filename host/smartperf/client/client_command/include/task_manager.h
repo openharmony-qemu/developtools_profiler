@@ -50,7 +50,8 @@ public:
     void WriteToCSV();
     void Wait();
     void RegisterThreadLocal(ThreadLocal* local);
-    void EnableIPCCallback(std::function<void(std::string)> callback);
+    void EnableIPCCallback();
+    void SetIPCCallback(std::function<void(std::string)> callback);
     void DisableIPCCallback();
     void SetHapFlag(bool flag);
     void SetNextTime(long long& nextTime);

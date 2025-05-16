@@ -297,7 +297,8 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         GpuCounter::GetInstance().SetSavePathDirectory(thisBasePath);
 
         taskMgr_->SetFilePath(outIndexpath);
-        taskMgr_->EnableIPCCallback(msgTask);
+        taskMgr_->SetIPCCallback(msgTask);
+        taskMgr_->EnableIPCCallback();
         taskMgr_->SetNextTime(nextTime);
         taskMgr_->Start();
         taskMgr_->Wait();

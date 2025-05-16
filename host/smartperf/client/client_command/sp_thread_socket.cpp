@@ -440,6 +440,9 @@ void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
 void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
 {
     taskMgr_ = std::make_shared<TaskManager>();
+    auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
+    taskMgr_->SetIPCCallback();
+
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
     spTask.SetAppInitFlag();
@@ -523,6 +526,10 @@ int SpThreadSocket::SendFile(const std::string filePath)
 
 void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath)
 {
+    if (filePath.empty()) {
+        WLOGE("Connect filePath does not exist.");
+        return;
+    }
     if (sendFileSocketPort == -1) {
         return;
     }
@@ -757,9 +764,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
         tracefilePath = "";
         GetSocketPort(recvBuf);
-        if (tracefilePath.empty()) {
-            return;
-        }
         ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         SPTask::GetInstance().ResetSdkParam();
@@ -783,9 +787,8 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
-            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
             taskMgr_->SetHapFlag(true);
-            taskMgr_->EnableIPCCallback(lambdaTask);
+            taskMgr_->EnableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
         if (taskMgr_ != nullptr) {

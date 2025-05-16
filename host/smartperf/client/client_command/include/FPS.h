@@ -88,6 +88,9 @@ public:
     static inline bool isGameApp = false;
     bool SetOtherDeviceFlag();
     bool hapLowFpsFlag = false;
+    bool hapNeedCatonInfo = false;
+    int catonNum = 0;
+    void CalcFatalCaton(std::vector<long long> jitters);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -103,6 +106,7 @@ private:
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(std::string name);
     int fifty = 50;
+    int hundred = 100;
     FpsCurrentFpsTime ffTime;
     bool processFlag = false;
     bool rkFlag = false;

@@ -101,6 +101,7 @@ private:
         {"fpsohtest", {ArgumentParser::ArgType::BOOL, "used by the vilidator to obtain the fps"}},
         {"-gc", {ArgumentParser::ArgType::BOOL, "get gpu counter"}},
         {"-ge", {ArgumentParser::ArgType::BOOL, "get game event"}},
+        {"-fc", {ArgumentParser::ArgType::BOOL, "get caton info"}},
         {"-server", {ArgumentParser::ArgType::BOOL, "server"}},
         {"-o", {ArgumentParser::ArgType::BOOL, "sdk data recv"}},
         {"-ci", {ArgumentParser::ArgType::BOOL, "get cpu instructions and cycles"}},
