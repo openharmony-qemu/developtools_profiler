@@ -266,6 +266,11 @@ void TaskManager::WriteToCSV()
 
     if (!dataFile_.is_open()) {
         dataFile_.open(fileName_, std::ios::app);
+        char filePath[PATH_MAX] = {0x00};
+        if (realpath(fileName_.c_str(), filePath) == nullptr) {
+            LOGE("The file does not exist");
+        }
+        dataFile_.open(filePath, std::ios::out | std::ios::trunc);
         if (!dataFile_.is_open()) {
             return;
         }
