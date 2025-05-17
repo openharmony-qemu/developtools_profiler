@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#if is_ohos && !is_mingw
+#if is_ohos && !is_mingw && __aarch64__
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
