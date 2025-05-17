@@ -30,7 +30,6 @@ public:
     ~ThreadLocal();
     std::map<uint32_t, std::map<std::string, std::string>> datasA_;
     std::map<uint32_t, std::map<std::string, std::string>> datasB_;
-    TaskManager* mgr_{nullptr};
     std::atomic_bool switch_ {true};
 };
 

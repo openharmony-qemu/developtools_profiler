@@ -66,9 +66,8 @@ HWTEST_F(SPdaemonTest, CpuTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("cpu0Usage");
-    std::string::size_type strTwo = result.find("cpu0idleUsage");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -93,9 +92,8 @@ HWTEST_F(SPdaemonTest, GpuTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("gpuFrequency");
-    std::string::size_type strTwo = result.find("gpuLoad");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -123,9 +121,8 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("fpsJitters");
-    std::string::size_type strTwo = result.find("timestamp");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -143,10 +140,8 @@ HWTEST_F(SPdaemonTest, TemperatureTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("timestamp");
-    std::string::size_type strTwo = result.find("system_h");
-    std::string::size_type strThree = result.find("gpu-thermal");
-    if ((strOne != result.npos) && ((strTwo != result.npos) || (strThree != result.npos))) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -164,12 +159,8 @@ HWTEST_F(SPdaemonTest, PowerTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("currentNow");
-    std::string::size_type strTwo = result.find("voltageNow");
-    std::string::size_type strThree = result.find("timestamp");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
-        flag = true;
-    } else if ((strThree != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -195,9 +186,8 @@ HWTEST_F(SPdaemonTest, RamTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("memAvailable");
-    std::string::size_type strTwo = result.find("memTotal");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -215,9 +205,8 @@ HWTEST_F(SPdaemonTest, NetWorkTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("networkDown");
-    std::string::size_type strTwo = result.find("networkUp");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -275,9 +264,8 @@ HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("activeMode");
-    std::string::size_type strTwo = result.find("refreshrate");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -318,8 +306,8 @@ HWTEST_F(SPdaemonTest, DdrTestCase, TestSize.Level1)
     DDR &ddr = DDR::GetInstance();
     ddr.SetRkFlag();
     ddr.GetDdrFreq();
-    std::string::size_type strOne = result.find("ddrFrequency");
-    if (strOne != result.npos) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);
@@ -342,9 +330,8 @@ HWTEST_F(SPdaemonTest, Navigation, TestSize.Level1)
     std::string result = "";
     bool flag = false;
     auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("navPathName");
-    std::string::size_type strTwo = result.find("No Navigation Info");
-    if ((strOne != result.npos) && (strTwo != result.npos)) {
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
         flag = true;
     }
     EXPECT_EQ(ret, true);

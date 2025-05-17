@@ -49,22 +49,21 @@ constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
 namespace OHOS::SmartPerf {
 ThreadLocal::ThreadLocal()
 {
-    mgr_ = g_mgr;
-    if (mgr_ == nullptr) {
+    if (g_mgr == nullptr) {
         return;
     }
-    mgr_->RegisterThreadLocal(this);
+    g_mgr->RegisterThreadLocal(this);
 }
 
 ThreadLocal::~ThreadLocal()
 {
-    if (mgr_ == nullptr || (datasA_.empty() && datasB_.empty())) {
+    if (g_mgr == nullptr || (datasA_.empty() && datasB_.empty())) {
         return;
     }
     if (switch_) {
-        mgr_->CollectData(datasA_);
+        g_mgr->CollectData(datasA_);
     } else {
-        mgr_->CollectData(datasB_);
+        g_mgr->CollectData(datasB_);
     }
 }
 
@@ -329,7 +328,10 @@ void TaskManager::CollectData(std::map<uint32_t, std::map<std::string, std::stri
 {
     std::unique_lock<std::mutex> lock(mtx_);
     for (auto& [k, v] : datas) {
-        datas_[k].insert(std::make_move_iterator(v.begin()), std::make_move_iterator(v.end()));
+        if (v.empty()) {
+            continue;
+        }
+        datas_[k].merge(v);
     }
 }
 

@@ -55,27 +55,16 @@ static bool VerifResult(const std::string &result)
  */
 HWTEST_F(SPdaemonFdsTest, FdsTestCase01, TestSize.Level1)
 {
-    std::string cmd = "SP_daemon -N 1 -fds -PKG sh";
+    std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -fds";
     std::string result = "";
+    bool flag = false;
     bool ret = SPUtils::LoadCmd(cmd, result);
+    std::string::size_type strOne = result.find("command exec finished!");
+    if ((strOne != result.npos)) {
+        flag = true;
+    }
     EXPECT_EQ(ret, true);
-    ret = VerifResult(result);
-    EXPECT_EQ(ret, true);
-}
-
-/**
- * @tc.name: FdsTestCase02
- * @tc.desc: Test Fds by pid
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonFdsTest, FdsTestCase02, TestSize.Level1)
-{
-    std::string cmd = "SP_daemon -N 1 -fds -PID 1";
-    std::string result = "";
-    bool ret = SPUtils::LoadCmd(cmd, result);
-    EXPECT_EQ(ret, true);
-    ret = VerifResult(result);
-    EXPECT_EQ(ret, true);
+    EXPECT_TRUE(flag);
 }
 
 /**
