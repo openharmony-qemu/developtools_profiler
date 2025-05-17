@@ -19,7 +19,10 @@ ohos_shared_library("ohhidebug") {
     "../native/include",
   ]
 
-  sources = [ "hidebug_ndk.cpp" ]
+  sources = [
+    "hidebug_ndk.cpp",
+    "hidebug_backtrace.cpp",
+  ]
 
   deps = [ "../native:hidebug_native" ]
 
@@ -28,6 +31,7 @@ ohos_shared_library("ohhidebug") {
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
+    "faultloggerd:libbacktrace_local",
   ]
 
   innerapi_tags = [ "ndk" ]

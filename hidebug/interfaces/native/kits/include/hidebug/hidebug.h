@@ -151,6 +151,60 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
  */
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
 
+/**
+ * @brief Get backtrace frames start from the given frame pointer and the function is signal-safe.
+ *
+ * @param object The backtrace object create by {@link OH_HiDebug_CreateBacktraceObject}.
+ * @param startFp The entry frame pointer.
+ * @param pcArray The array to place program counter values.
+ * @param size The size of the array to place program counter values.
+ * @return The number of stack frames written to array.
+ * @since 20
+ */
+int OH_HiDebug_BacktraceFromFp(HiDebug_Backtrace_Object object, void* startFp, void** pcArray, int size);
+
+/**
+ * @brief Defines the callback of the {@link OH_HiDebug_SymbolicAddress} function.
+ *
+ * @param pc The program counter pass to {@link OH_HiDebug_SymbolicAddress}.
+ * @param arg The arg pass to {@link OH_HiDebug_SymbolicAddress}.
+ * @param frame The parsed frame content, the content is invalid after return of {@link OH_HiDebug_SymbolicAddress}.
+ * @since 20
+ */
+typedef void (*OH_HiDebug_SymbolicAddressCallback)(void* pc, void* arg, const HiDebug_StackFrame* frame);
+
+/**
+ * @brief Get detailed symbol info by given pc and the function is not signal-safe.
+ *
+ * @param object The backtrace object create by {@link OH_HiDebug_CreateBacktraceObject}.
+ * @param pc The program counter return by {@link OH_HiDebug_BacktraceFromFp}.
+ * @param arg The arg will be pass to callback.
+ * @param callback The function to pass parsed frame to caller.
+ * @return Result code
+ *         {@link HIDEBUG_SUCCESS} Get detailed frame info successfully and the callback is invoked.
+ *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument.
+ *         {@link HIDEBUG_INVALID_SYMBOLIC_PC_ADDRESS} Could not find symbol info by given pc.
+ * @since 20
+ */
+HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(HiDebug_Backtrace_Object object, void* pc, void* arg,
+    OH_HiDebug_SymbolicAddressCallback callback);
+
+/**
+ * @brief Create a backtrace object for further using and the function is not signal-safe.
+ *
+ * @return BacktraceObject if Success or NULL if is not supported on current arch
+ * @since 20
+ */
+HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject();
+
+/**
+ * @brief Destroy a backtrace object and the function is not signal-safe.
+ *
+ * @param object The object to be destroyed.
+ * @since 20
+ */
+void OH_HiDebug_DestroyBacktraceObject(HiDebug_Backtrace_Object object);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus
