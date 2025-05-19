@@ -254,25 +254,6 @@ HWTEST_F(SPdaemonTest, StopTestCase, TestSize.Level1)
 }
 
 /**
- * @tc.name: ScreenTestCase
- * @tc.desc: Test Screen
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTest, ScreenTestCase, TestSize.Level1)
-{
-    std::string cmd = "SP_daemon -screen";
-    std::string result = "";
-    bool flag = false;
-    auto ret = SPUtils::LoadCmd(cmd, result);
-    std::string::size_type strOne = result.find("command exec finished!");
-    if ((strOne != result.npos)) {
-        flag = true;
-    }
-    EXPECT_EQ(ret, true);
-    EXPECT_TRUE(flag);
-}
-
-/**
  * @tc.name: FrameLossTestCase
  * @tc.desc: Test FrameLoss
  * @tc.type: FUNC

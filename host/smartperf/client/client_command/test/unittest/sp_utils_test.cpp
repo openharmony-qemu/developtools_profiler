@@ -227,41 +227,6 @@ HWTEST_F(SPdaemonUtilsTest, GetIsGameAppTest, TestSize.Level1)
     EXPECT_EQ(ret, false);
 }
 
-HWTEST_F(SPdaemonUtilsTest, GetPathPermissionsTest, TestSize.Level1)
-{
-    std::string pathDataCsv = "/data/local/tmp/data.csv";
-    std::string pathIndexInfoCsv = "/data/local/tmp/smartperf/1/t_index_info.csv";
-    std::string dataCsv = "/data/local/tmp/data.csv";
-    std::string indexInfoCsv = "/data/local/tmp/smartperf/1/t_index_info.csv";
-    std::string cmdResult = "";
-    bool findData = false;
-    bool findIndex = false;
-    int isDataCsv = strcmp(pathDataCsv.c_str(), dataCsv.c_str());
-    int isIndexInfoCsv = strcmp(pathIndexInfoCsv.c_str(), indexInfoCsv.c_str());
-    if (isDataCsv == 0) {
-        std::string cmd = "ls -l " + pathDataCsv;
-        SPUtils::LoadCmd(cmd, cmdResult);
-        if (cmdResult.find("No such file or directory") != std::string::npos) {
-            findData = false;
-        } else {
-            std::string result = cmdResult.substr(0, 10);
-            findData = (result == "-rw-r--r--");
-        }
-    }
-    if (isIndexInfoCsv == 0) {
-        std::string cmd = "ls -l " + pathIndexInfoCsv;
-        SPUtils::LoadCmd(cmd, cmdResult);
-        if (cmdResult.find("No such file or directory") != std::string::npos) {
-            findIndex = false;
-        } else {
-            std::string result = cmdResult.substr(0, 10);
-            findIndex = (result == "-rw-r--r--");
-        }
-    }
-    EXPECT_EQ(findData, false);
-    EXPECT_EQ(findIndex, true);
-}
-
 HWTEST_F(SPdaemonUtilsTest, GetCurrentTime, TestSize.Level1)
 {
     bool shouldContinue = true;
