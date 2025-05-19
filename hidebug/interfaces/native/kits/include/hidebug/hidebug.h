@@ -177,6 +177,8 @@ HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void);
  * @since 20
  */
 void OH_HiDebug_RestoreMallocDispatchTable(void);
+
+/**
  * @brief Get backtrace frames start from the given frame pointer and the function is signal-safe.
  *
  * @param object The backtrace object create by {@link OH_HiDebug_CreateBacktraceObject}.
