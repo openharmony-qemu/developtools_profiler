@@ -272,7 +272,7 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
-    if (!hapLowFpsFlag || hapNeedCatonInfo) {
+    if ((!hapLowFpsFlag || hapNeedCatonInfo) && catonNum == 0) {
         CalcJitters();
     }
 }
