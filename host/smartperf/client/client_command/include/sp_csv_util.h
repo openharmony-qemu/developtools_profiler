@@ -25,6 +25,12 @@
 #include "sp_data.h"
 #include "sp_utils.h"
 #include "sp_task.h"
+#include <sys/stat.h>
+#include <sys/statfs.h>
+#include "sp_log.h"
+#include "hisysevent.h"
+#include <vector>
+#include <dirent.h>
 namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
@@ -60,6 +66,7 @@ public:
             outFile << lineContent << std::endl;
             ++i;
         }
+        ReportFileWriteEvent(path);
         outFile.close();
     }
     static void WriteCsvH(std::map<std::string, std::string> vmap)
@@ -73,6 +80,7 @@ public:
         for (const auto& [key, value] : vmap) {
             outFile << key << "," << value << std::endl;
         }
+        ReportFileWriteEvent(outGeneralPath);
         outFile.close();
     }
     static std::string SetDataCsvTitle(SPData spdata)
@@ -85,6 +93,72 @@ public:
             }
         }
         return csvTitle;
+    }
+
+    static bool IsUiTestCreatedFile(const std::string &fileName)
+    {
+        if (fileName == "t_general_info.csv" || fileName == "t_index_info.csv" || fileName == "data.csv") {
+            return true;
+        }
+        return false;
+    }
+
+    static uint64_t GetFileSize(const std::string &filePath)
+    {
+        struct stat fileStat;
+        uint64_t fileSize = stat(filePath.c_str(), &fileStat) ? 0 : static_cast<uint64_t>(fileStat.st_size);
+        return fileSize;
+    }
+
+    static uint64_t GetUiTestCreatedFileSize(const std::string &newFilePath, std::string &dirName)
+    {
+        uint64_t createdFileSize = 0;
+        DIR* dir = opendir(dirName.c_str());
+        if (!dir) {
+            LOGE("Open dir %{public}s failed.", dirName.c_str());
+            return createdFileSize;
+        }
+        if (newFilePath != "") {
+            createdFileSize += GetFileSize(newFilePath);
+        }
+        struct dirent* file;
+        while ((file = readdir(dir)) != nullptr) {
+            if (file->d_type == DT_REG && IsUiTestCreatedFile(file->d_name)) {
+                std::string filePath = dirName + "/" + file->d_name;
+                if (filePath != newFilePath) {
+                    createdFileSize += GetFileSize(filePath);
+                }
+            }
+        }
+        closedir(dir);
+        return createdFileSize;
+    }
+
+    static void ReportFileWriteEvent(cosnt std::string &newFilePath)
+    {
+        std::string partitionName = "/data";
+        std::string dirName = "/data/local/tmp";
+        struct statfs partitionStat;
+        if (statfs(partitionName.c_str(), &partitionStat) != 0) {
+            LOGE("Get remain partition size failed, partitionName = %{public}s", partitionName.c_str());
+            return;
+        }
+        constexpr double units = 1024.0;
+        double remainPartitionSize = (static_cast<double>(partitionStat.f_bfree) / units) *
+                                     (static_cast<double>(partitionStat.f_bsize) / units);
+        uint64_t createdFileSize = GetUiTestCreatedFileSize(newFilePath, dirName);
+        std::vector<std::string> filePaths = { dirName };
+        std::vector<uint64_t> fileSizes = { createdFileSize };
+        HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
+            HiviewDFX::HiSysEvent::EventType::STATISTIC,
+            "COMPONENT_NAME", "arkxtest",
+            "PARTITION_NAME", partitionName,
+            "REMAIN_PARTITION_SIZE", remainPartitionSize,
+            "FILE_OR_FOLDER_PATH", filePaths,
+            "FILE_OR_FOLDER_SIZE", fileSizes);
+
+        LOGD("partitionName = %s", partitionName.c_str());
+        LOGD("remainPartitionSize = %lld", remainPartitionSize);
     }
 };
 }
