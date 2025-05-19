@@ -151,7 +151,7 @@ public:
         std::vector<uint64_t> fileSizes = { createdFileSize };
         HiSysEventWrite(HiviewDFX::HiSysEvent::Domain::FILEMANAGEMENT, "USER_DATA_SIZE",
             HiviewDFX::HiSysEvent::EventType::STATISTIC,
-            "COMPONENT_NAME", "arkxtest",
+            "COMPONENT_NAME", "SP_daemon",
             "PARTITION_NAME", partitionName,
             "REMAIN_PARTITION_SIZE", remainPartitionSize,
             "FILE_OR_FOLDER_PATH", filePaths,
