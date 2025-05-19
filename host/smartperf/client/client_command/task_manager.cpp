@@ -89,6 +89,9 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
         if (key == "-LOW_POWER") {
             FPS::GetInstance().hapLowFpsFlag = true;
         }
+        if (key == "-fc") {
+            FPS::GetInstance().hapNeedCatonInfo = true;
+        }
         switch (iter->second) {
             case CommandType::CT_N: {
                 collectCount_ = std::get<int>(val);
@@ -111,7 +114,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
         if (pro == nullptr) {
             continue;
         }
-
+        pro->ipcCallback_ = ipcCallback_;
         if (iter->second == CommandType::CT_C || iter->second == CommandType::CT_P) {
             priorityTask_.emplace_back(pro);
         } else {
@@ -122,6 +125,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
 
 void TaskManager::AddTask(const std::string& argv)
 {
+    LOGD("AddTask argv (%s)", argv.c_str());
     ArgumentParser parameter;
     parameter.Parse(argv);
     AddTask(parameter.Values());
@@ -342,6 +346,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
         FPS &fps = FPS::GetInstance();
         fps.isGameApp = SPUtils::GetIsGameApp(processName_);
         fps.firstDump = true;
+        fps.catonNum = 0;
 
         OHOS::SmartPerf::StartUpDelay sp;
         sp.GetPidByPkg(processName_, &processIds_);
@@ -439,16 +444,19 @@ void TaskManager::ScheduleSaveData()
     savingFile_ = false;
 }
 
-void TaskManager::EnableIPCCallback(std::function<void(std::string)> callback)
+void TaskManager::EnableIPCCallback()
+{
+    ipcDataRecv_ = true;
+}
+
+void TaskManager::SetIPCCallback(std::function<void(std::string)> callback)
 {
     ipcCallback_ = callback;
-    ipcDataRecv_ = true;
 }
 
 void TaskManager::DisableIPCCallback()
 {
     ipcDataRecv_ = false;
-    ipcCallback_ = nullptr;
 }
 
 void TaskManager::SetHapFlag(bool flag)

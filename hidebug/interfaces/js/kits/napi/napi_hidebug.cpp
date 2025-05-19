@@ -31,6 +31,7 @@
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
+#include "faultlogger_client.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
@@ -73,6 +74,12 @@ constexpr int FD_MIN = 10;
 constexpr int FD_MAX = 10000;
 constexpr int THREAD_MIN = 1;
 constexpr int THREAD_MAX = 1000;
+constexpr int ENABLE_ARGS_NO_PARAMS = 0;
+constexpr int ENABLE_ARGS_ONE_PARAMS = 1;
+constexpr int ENABLE_ARGS_TWO_PARAMS = 2;
+constexpr double DEFAULT_SAMPLE_RATE = 2500;
+constexpr double DEFAULT_MAX_SIMUTANEOUS_ALLOCATIONS = 1000;
+constexpr int DEFAULT_DURATION = 7;
 const std::string SLASH_STR = "/";
 const std::string JSON_FILE = ".json";
 const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
@@ -86,6 +93,13 @@ const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
 static std::map<std::string, std::pair<int, int>> limitResource = {
     {{"pss_memory", {PSS_MIN, PSS_MAX}}, {"js_heap", {JS_MIN, JS_MAX}},
         {"fd", {FD_MIN, FD_MAX}}, {"thread", {THREAD_MIN, THREAD_MAX}}}
+};
+
+struct GwpAsanParams {
+    bool alwaysEnabled = false;
+    double sampleRate = DEFAULT_SAMPLE_RATE;
+    double maxSimutaneousAllocations = DEFAULT_MAX_SIMUTANEOUS_ALLOCATIONS;
+    int32_t duration = DEFAULT_DURATION;
 };
 }
 
@@ -924,6 +938,153 @@ napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+bool CheckTypeForNapiValue(napi_env env, napi_value value, napi_valuetype expectType)
+{
+    napi_valuetype valueType = napi_undefined;
+    if (napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
+    return valueType == expectType;
+}
+
+bool ParseGwpAsanOptions(napi_env env, napi_value value, GwpAsanParams& gwpAsanParams)
+{
+    bool hasProperty = false;
+    napi_valuetype valueType = napi_undefined;
+
+    //alwaysEnabled?: bool
+    napi_has_named_property(env, value, "alwaysEnabled", &hasProperty);
+    if (hasProperty) {
+        napi_value nAlwaysEnabled = nullptr;
+        napi_get_named_property(env, value, "alwaysEnabled", &nAlwaysEnabled);
+        napi_typeof(env, nAlwaysEnabled, &valueType);
+        if (valueType != napi_boolean) {
+            HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
+            return false;
+        }
+        napi_get_value_bool(env, nAlwaysEnabled, &gwpAsanParams.alwaysEnabled);
+    }
+
+    //sampleRate?: number
+    napi_has_named_property(env, value, "sampleRate", &hasProperty);
+    if (hasProperty) {
+        napi_value nSampleRate = nullptr;
+        napi_get_named_property(env, value, "sampleRate", &nSampleRate);
+        napi_typeof(env, nSampleRate, &valueType);
+        if (valueType != napi_number) {
+            HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
+            return false;
+        }
+        napi_get_value_double(env, nSampleRate, &gwpAsanParams.sampleRate);
+    }
+
+    //maxSimutaneousAllocations?: number
+    napi_has_named_property(env, value, "maxSimutaneousAllocations", &hasProperty);
+    if (hasProperty) {
+        napi_value nMaxSimutaneousAllocations = nullptr;
+        napi_get_named_property(env, value, "maxSimutaneousAllocations", &nMaxSimutaneousAllocations);
+        napi_typeof(env, nMaxSimutaneousAllocations, &valueType);
+        if (valueType != napi_number) {
+            HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
+            return false;
+        }
+        napi_get_value_double(env, nMaxSimutaneousAllocations, &gwpAsanParams.maxSimutaneousAllocations);
+    }
+    if (gwpAsanParams.sampleRate <= 0 || gwpAsanParams.maxSimutaneousAllocations <= 0) {
+        HILOG_ERROR(LOG_CORE, "sampleRate or maxSimutaneousAllocations must be greater than 0");
+        return false;
+    }
+    HILOG_DEBUG(LOG_CORE, "Parse GwpAsanOptions success, alwaysEnabled: %{public}d, sampleRate: %{public}f,"
+        " maxSimutaneousAllocations: %{public}f",
+        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate, gwpAsanParams.maxSimutaneousAllocations);
+    return true;
+}
+
+bool UpdateGwpAsanParams(napi_env env, napi_callback_info info, GwpAsanParams& gwpAsanParams,
+    std::string& paramErrorMessage)
+{
+    size_t argc = ENABLE_ARGS_TWO_PARAMS;
+    napi_value argv[ENABLE_ARGS_TWO_PARAMS] = { nullptr };
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    bool paramsResult = false;
+    switch (argc) {
+        case ENABLE_ARGS_NO_PARAMS: {
+            return true;
+        }
+        case ENABLE_ARGS_ONE_PARAMS: {
+            if (!ParseGwpAsanOptions(env, argv[ARRAY_INDEX_FIRST], gwpAsanParams)) {
+                paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
+                paramsResult = false;
+                break;
+            }
+            paramsResult = true;
+            break;
+        }
+        case ENABLE_ARGS_TWO_PARAMS: {
+            if (!ParseGwpAsanOptions(env, argv[ARRAY_INDEX_FIRST], gwpAsanParams)) {
+                paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
+                paramsResult = false;
+                break;
+            }
+            if (!CheckTypeForNapiValue(env, argv[ARRAY_INDEX_SECOND], napi_number) ||
+                napi_get_value_int32(env, argv[ARRAY_INDEX_SECOND], &gwpAsanParams.duration) != napi_ok ||
+                gwpAsanParams.duration <= 0) {
+                paramErrorMessage = "Invalid parameter, set duration must be a num.";
+                paramsResult = false;
+                break;
+            }
+            paramsResult = true;
+            break;
+        }
+        default: {
+            paramErrorMessage = "Invalid parameter, the number of parameters "
+                "cannot exceed two.";
+            paramsResult = false;
+            break;
+        }
+    }
+    return paramsResult;
+}
+
+napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("enableGwpAsanGrayscale");
+    GwpAsanParams gwpAsanParams;
+    std::string paramErrorMessage;
+    if (!UpdateGwpAsanParams(env, info, gwpAsanParams, paramErrorMessage)) {
+        HILOG_ERROR(LOG_CORE, "EnableGwpAsanGrayscale failed. Invalid params!");
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(),
+            paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    if (!EnableGwpAsanGrayscale(gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
+        HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
+        apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMTIT);
+        paramErrorMessage = "Failed to enable gwp asan grayscale.";
+        napi_throw_error(env, std::to_string(ErrorCode::OVER_ENABLE_LIMTIT).c_str(), paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+    return CreateUndefined(env);
+}
+
+napi_value DisableGwpAsanGrayscale(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("disableGwpAsanGrayscale");
+    DisableGwpAsanGrayscale();
+    return CreateUndefined(env);
+}
+
+napi_value GetGwpAsanGrayscaleState(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getGwpAsanGrayscaleState");
+    auto result = GetGwpAsanGrayscaleState();
+    napi_value ret;
+    napi_create_uint32(env, result, &ret);
+    return ret;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     ApiRecordReporter::InitProcessor();
@@ -959,6 +1120,9 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getGraphicsMemory", GetGraphicsMemory),
         DECLARE_NAPI_FUNCTION("getGraphicsMemorySync", GetGraphicsMemorySync),
         DECLARE_NAPI_FUNCTION("dumpJsRawHeapData", DumpJsRawHeapData),
+        DECLARE_NAPI_FUNCTION("enableGwpAsanGrayscale", EnableGwpAsanGrayscale),
+        DECLARE_NAPI_FUNCTION("disableGwpAsanGrayscale", DisableGwpAsanGrayscale),
+        DECLARE_NAPI_FUNCTION("getGwpAsanGrayscaleState", GetGwpAsanGrayscaleState),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

@@ -46,6 +46,7 @@ ohos_shared_library("hidebug") {
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
+    "hiview:libfaultlogger",
     "hiview:libucollection_utility",
     "init:libbegetutil",
     "ipc:ipc_core",

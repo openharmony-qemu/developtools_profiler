@@ -110,7 +110,7 @@ int CpuDataPlugin::ReportOptimize(RandomWriteCtx* randomWrite)
     ProtoEncoder::CpuUsageInfo* cpuUsageInfo = nullptr;
     WriteCpuUsageInfo(dataProto, cpuUsageInfo);
 
-    if (pid_ > 0) {
+    if (pid_ > 0 && (!protoConfig_.skip_thread_cpu_info())) {
         WriteThreadInfo(dataProto);
     }
     if (protoConfig_.report_process_info()) {
@@ -129,7 +129,7 @@ int CpuDataPlugin::Report(uint8_t* data, uint32_t dataSize)
     CpuUsageInfo* cpuUsageInfo = nullptr;
     WriteCpuUsageInfo(dataProto, cpuUsageInfo);
 
-    if (pid_ > 0) {
+    if (pid_ > 0 && (!protoConfig_.skip_thread_cpu_info())) {
         WriteThreadInfo(dataProto);
     }
     if (protoConfig_.report_process_info()) {

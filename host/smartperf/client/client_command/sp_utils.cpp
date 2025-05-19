@@ -27,6 +27,7 @@
 #include <climits>
 #include <dlfcn.h>
 #include <sys/utsname.h>
+#include <sys/stat.h>
 #include "sys/time.h"
 #include "securec.h"
 #include "include/sp_utils.h"
@@ -57,7 +58,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
-const std::string SMART_PERF_VERSION = "1.0.7";
+const std::string SMART_PERF_VERSION = "1.0.8";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -932,6 +933,16 @@ void SPUtils::TarFiles(std::string tarStr)
     if (!SPUtils::LoadCmd(tarCommand, cmdResult)) {
         WLOGE("Failed to tar log files");
     }
+}
+
+size_t SPUtils::GetFileSize(std::string filePath)
+{
+    struct stat statbuf;
+    if (stat(filePath.c_str(), &statbuf) == -1) {
+        LOGE("Failed to get file size for %s", filePath.c_str());
+        return 0;
+    }
+    return static_cast<size_t>(statbuf.st_size);
 }
 }
 }

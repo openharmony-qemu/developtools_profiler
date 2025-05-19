@@ -924,7 +924,7 @@ HWTEST_F(UnitTestPluginService, PluginService_SessionConfig, TestSize.Level1)
 
     PluginInfo plugin;
     SocketContext ctx;
-    plugin.name = "abc_check.so";
+    plugin.name = "test_check.so";
     plugin.bufferSizeHint = 0;
     plugin.sha256 = "asdfasdfasdfasfd";
     plugin.context = &ctx;

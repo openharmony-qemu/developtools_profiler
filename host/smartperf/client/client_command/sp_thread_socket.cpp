@@ -396,7 +396,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init") != std::string::npos) {
-            UdpStartInitFunc(recvBuf);
+            UdpStartInitFunc(recvBuf, spSocket);
             break;
         }
         if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
@@ -437,9 +437,12 @@ void SpThreadSocket::HeartbeatDetection(std::string recvBuf)
     }
 }
 
-void SpThreadSocket::UdpStartInitFunc(std::string recvBuf)
+void SpThreadSocket::UdpStartInitFunc(std::string recvBuf, SpServerSocket &spSocket)
 {
     taskMgr_ = std::make_shared<TaskManager>();
+    auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
+    taskMgr_->SetIPCCallback(lambdaTask);
+
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
     spTask.SetAppInitFlag();
@@ -521,8 +524,12 @@ int SpThreadSocket::SendFile(const std::string filePath)
     return 0;
 }
 
-void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
+void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath)
 {
+    if (filePath.empty()) {
+        WLOGE("Connect filePath does not exist.");
+        return;
+    }
     if (sendFileSocketPort == -1) {
         return;
     }
@@ -530,6 +537,9 @@ void SpThreadSocket::ConnectAndSendFile(const std::string filePath)
     int connectCount = 0;
     const int maxTryCount = 2;
 
+    std::string sendFileSizeMsg = "SendFileSize:::" + std::to_string(SPUtils::GetFileSize(filePath));
+    LOGD("ConnectAndSendFile sendFileSizeMsg: (%s)", sendFileSizeMsg.c_str());
+    spSocket.Sendto(sendFileSizeMsg);
     while (fileSocket < 0) {
         WLOGI("Connect file log socket, try times: %d", connectCount + 1);
         if (connectCount > maxTryCount) {
@@ -605,7 +615,7 @@ void SpThreadSocket::HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string
     } else if (iterator->first == MessageType::GET_CPU_FREQ_LOAD) {
         FetchCpuStats(spSocket, data);
     } else if (iterator->first == MessageType::GET_LOG) {
-        ConnectAndSendFile(logFilePath);
+        ConnectAndSendFile(spSocket, logFilePath);
         GetLog::GetInstance().RemoveLogFile();
     } else {
         retCode = MapToString(data);
@@ -751,14 +761,11 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
         GetSocketPort(recvBuf);
         SaveGpuCounter();
-        ConnectAndSendFile(gpuCounterfilePath);
+        ConnectAndSendFile(spSocket, gpuCounterfilePath);
     } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
         tracefilePath = "";
         GetSocketPort(recvBuf);
-        if (tracefilePath.empty()) {
-            return;
-        }
-        ConnectAndSendFile(tracefilePath);
+        ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         SPTask::GetInstance().ResetSdkParam();
         if (taskMgr_ != nullptr) {
@@ -781,9 +788,8 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
-            auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
             taskMgr_->SetHapFlag(true);
-            taskMgr_->EnableIPCCallback(lambdaTask);
+            taskMgr_->EnableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
         if (taskMgr_ != nullptr) {
@@ -801,7 +807,7 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
-        ConnectAndSendFile(indexFilePath);
+        ConnectAndSendFile(spSocket, indexFilePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);

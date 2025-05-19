@@ -240,6 +240,20 @@ std::string FlowController::ReloadTraceArgs()
             args += ("," + traceCategories_[i]);
         }
     }
+    int appNum = 0;
+    for (size_t i = 0; i < traceApps_.size(); i++) {
+        int pidval = 0;
+        if (COMMON::IsProcessExist(traceApps_[i], pidval)) {
+            if (appNum == 0) {
+                args += (" filterPids:" + std::to_string(pidval));
+            } else {
+                args += ("," + std::to_string(pidval));
+            }
+            appNum += 1;
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReloadTraceArgs process %s doesn't exist", traceApps_[i].c_str());
+        }
+    }
 
     if (traceClock_.size() > 0) {
         args += (" clockType:" + traceClock_);

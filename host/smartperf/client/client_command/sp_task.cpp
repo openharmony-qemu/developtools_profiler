@@ -147,6 +147,7 @@ void SPTask::ConfigDataThread()
 
         if (itConfig.find("-gc") != std::string::npos) {
             WLOGI("Starting GpuCounter collection in new thread");
+            gpuCounter.SetCollectDur(50);
             gpuCounter.StartCollect(GpuCounter::GC_START);
         }
 
@@ -296,7 +297,8 @@ ErrCode SPTask::StartTask(std::function<void(std::string data)> msgTask)
         GpuCounter::GetInstance().SetSavePathDirectory(thisBasePath);
 
         taskMgr_->SetFilePath(outIndexpath);
-        taskMgr_->EnableIPCCallback(msgTask);
+        taskMgr_->SetIPCCallback(msgTask);
+        taskMgr_->EnableIPCCallback();
         taskMgr_->SetNextTime(nextTime);
         taskMgr_->Start();
         taskMgr_->Wait();

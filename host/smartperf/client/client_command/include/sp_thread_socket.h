@@ -60,7 +60,7 @@ public:
     void BackDesktop() const;
     void HandleMsg(SpServerSocket &spSocket);
     void HeartbeatDetection(std::string recvBuf);
-    void UdpStartInitFunc(std::string recvBuf);
+    void UdpStartInitFunc(std::string recvBuf, SpServerSocket &spSocket);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string> data, std::string retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
@@ -81,7 +81,7 @@ public:
     void SetToken(std::string token);
     std::string GetToken() const;
     void SetNeedUdpToken(bool isNeed);
-    void ConnectAndSendFile(const std::string filePath);
+    void ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath);
     void StartGpuCounter() const;
     void SaveGpuCounter() const;
     int FileSocketConnect();
@@ -101,7 +101,7 @@ private:
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
-    const std::string gpuCounterfilePath = smartperfDevicePath + "gpu_counter.csv";
+    const std::string gpuCounterfilePath = "/data/local/tmp/gpu_counter.csv";
     std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
     int sendFileSocket = -1;
