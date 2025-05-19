@@ -194,6 +194,8 @@ typedef struct HiDebug_MallocDispatch {
     void* (*mmap) (void*, size_t, int, int, int, off_t);
     int (*munmap) (void*, size_t);
 } HiDebug_MallocDispatch;
+
+/**
  * @brief Defines Js stack frame content
  *
  * @since 20

@@ -13,18 +13,22 @@
  * limitations under the License.
  */
 
-#include <stdatomic.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <sys/mman.h>
 #include <unistd.h>
-
+#include <thread>
+#include <iostream>
+#include <map>
+#include <vector>
+#include <string>
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "securec.h"
 #pragma clang optimize off
 
+bool g_isInit = false;
 static void* MyMalloc(size_t size)
 {
     HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
@@ -67,13 +71,6 @@ static void* MyRealloc(void* ptr, size_t size)
     return original->realloc(ptr, size);
 }
 
-static void* MyAlignedAlloc(size_t alignment, size_t size)
-{
-    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
-    printf("test my_aligned_alloc----\n");
-    return original->aligned_alloc(alignment, size);
-}
-
 HiDebug_MallocDispatch* InitCustomMalloc()
 {
     HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
@@ -85,7 +82,6 @@ HiDebug_MallocDispatch* InitCustomMalloc()
     current->munmap = MyMunmap;
     current->calloc = MyCalloc;
     current->realloc = MyRealloc;
-    current->aligned_alloc = MyAlignedAlloc;
     OH_HiDebug_SetMallocDispatchTable(current);
     return current;
 }
@@ -100,8 +96,16 @@ void DesCustomMalloc(HiDebug_MallocDispatch* current)
 void TestMalloc()
 {
     int* temp = (int*)malloc(sizeof(int));
+    if (temp == nullptr) {
+        printf("malloc failed\n");
+        return;
+    }
     *temp = 8;
     int* temp2 = (int*)malloc(sizeof(int));
+    if (temp2 == nullptr) {
+        printf("malloc failed\n");
+        return;
+    }
     *temp2 = 10;
     int ret = *temp2 + *temp;
     printf("ret = %d\n", ret);
@@ -112,6 +116,10 @@ void TestMmap()
 {
     char* p_map = nullptr;
     p_map = (char*)mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (p_map == MAP_FAILED) {
+        printf("mmap failed\n");
+        return;
+    }
     sprintf(p_map, "%s", "hi, this is test mmap");
     printf("p_map = %s\n", p_map);
     munmap(p_map, 100);
@@ -120,6 +128,10 @@ void TestMmap()
 void TestCalloc()
 {
     int* ptr = (int*)calloc(5, sizeof(int));
+    if (ptr == nullptr) {
+        printf("calloc failed\n");
+        return;
+    }
     for (size_t i = 0; i < 5; ++i) {
         ptr[i] = i * i;
         printf("ptr[%zu] = %d\n", i, ptr[i]);
@@ -130,11 +142,20 @@ void TestCalloc()
 void TestRealloc()
 {
     int* ptr = (int*)malloc(5 * sizeof(int));
+    if (ptr == nullptr) {
+        printf("malloc failed\n");
+        return;
+    }
     for (size_t i = 0; i < 5; ++i) {
         ptr[i] = i * i;
         printf("ptr[%zu] = %d\n", i, ptr[i]);
     }
     int* newPtr = (int*)realloc(ptr, 10 * sizeof(int));
+    if (newPtr == nullptr) {
+        printf("realloc failed\n");
+        free(ptr);
+        return;
+    }
     for (size_t i = 0; i < 10; ++i) {
         newPtr[i] = i * i;
         printf("newPtr[%zu] = %d\n", i, newPtr[i]);
@@ -142,27 +163,152 @@ void TestRealloc()
     free(newPtr);
 }
 
-void TestAlignedAlloc()
+void TestMutilThread(int num)
 {
-    size_t alignment = 16;
-    size_t size = 8 * sizeof(int);
-    int* ptr = (int*)aligned_alloc(alignment, size);
-    for (size_t i = 0; i < size / sizeof(int); ++i) {
-        ptr[i] = i * i;
-        printf("ptr[%zu] = %d\n", i, ptr[i]);
+    std::cout << "TestMutilThread num = " << num << ", thread_id is " << std::this_thread::get_id() << std::endl;
+    TestMalloc();
+    TestMmap();
+    TestCalloc();
+    TestRealloc();
+}
+
+class TestCustomClass {
+   private:
+    int temp_;
+
+   public:
+    TestCustomClass()
+    {
+        temp_ = 10;
+        printf("TestCustomClass constructor\n");
     }
-    free(ptr);
+    ~TestCustomClass() 
+    {
+        printf("TestCustomClass destructor\n");
+    }
+};
+
+void TestNewFunc()
+{
+    int* ptr = new int(10);
+    if (ptr == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    printf("ptr = %d\n", *ptr);
+    delete ptr;
+    ptr = nullptr;
+    int* ptr2 = new int[10];
+    if (ptr2 == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        ptr2[i] = i * i;
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        printf("ptr2[%zu] = %d\n", i, ptr2[i]);
+    }
+    delete[] ptr2;
+    ptr2 = nullptr;
+    std::string* str = new std::string("hello, world");
+    if (str == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    printf("str = %s\n", str->c_str());
+    delete str;
+    str = nullptr;
+    TestCustomClass* test = new TestCustomClass();
+    if (test == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    delete test;
+    test = nullptr;
+    std::vector<int>* vec = new std::vector<int>(10);
+    if (vec == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    for (size_t i = 0; i < vec->size(); ++i) {
+        (*vec)[i] = i * i;
+    }
+    for (size_t i = 0; i < vec->size(); ++i) {
+        printf("vec[%zu] = %d\n", i, (*vec)[i]);
+    }
+    delete vec;
+    vec = nullptr;
+    std::map<int, int>* map = new std::map<int, int>();
+    if (map == nullptr) {
+        printf("new failed\n");
+        return;
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        (*map)[i] = i * i;
+    }
+    for (size_t i = 0; i < 10; ++i) {
+        printf("map[%zu] = %d\n", i, (*map)[i]);
+    }
+    delete map;
+    map = nullptr;
+}
+
+static void* MyNestedMalloc(size_t size)
+{
+    if (g_isInit) {
+        HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+        return original->malloc(size);
+    }
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    printf("test MyNestedMalloc----\n");
+    g_isInit = true;
+    TestMalloc();
+    g_isInit = false;
+    return original->malloc(size);
+}
+
+HiDebug_MallocDispatch* InitNestedCustomMalloc()
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    HiDebug_MallocDispatch* current = (HiDebug_MallocDispatch*)original->malloc(sizeof(HiDebug_MallocDispatch));
+    memset_s(current, sizeof(HiDebug_MallocDispatch), 0, sizeof(HiDebug_MallocDispatch));
+    current->malloc = MyNestedMalloc;
+    OH_HiDebug_SetMallocDispatchTable(current);
+    return current;
 }
 
 int main(int argc, char* argv[])
 {
     HiDebug_MallocDispatch* current = InitCustomMalloc();
+    // test malloc
     TestMalloc();
     TestMmap();
     TestCalloc();
     TestRealloc();
-    TestAlignedAlloc();
+    // test muti-threads
+    std::vector<std::thread> vecThreads;
+    for (size_t i = 0; i < 10; i++) {
+        vecThreads.push_back(std::thread(TestMutilThread, i));
+    }
+    for (auto& thread : vecThreads) {
+        thread.join();
+    }
+    // test new operation
+    TestNewFunc();
     DesCustomMalloc(current);
+
+    // nested call
+    HiDebug_MallocDispatch* nestedCurrent = InitNestedCustomMalloc();
+    int *nestedPtr = (int*)malloc(sizeof(int));
+    if (nestedPtr == nullptr) {
+        printf("malloc failed\n");
+        return 0;
+    }
+    *nestedPtr = 8;
+    free(nestedPtr);
+    nestedPtr = nullptr;
+    DesCustomMalloc(nestedCurrent);
     return 0;
 }
 #pragma clang optimize on

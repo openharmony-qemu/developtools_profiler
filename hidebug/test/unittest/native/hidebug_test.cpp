@@ -82,12 +82,6 @@ static void* TestCustomRealloc(void* ptr, size_t size)
     return original->realloc(ptr, size);
 }
 
-static void* TestCustomAlignedAlloc(size_t alignment, size_t size)
-{
-    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
-    return original->aligned_alloc(alignment, size);
-}
-
 /**
  * @tc.name: InitEnvironmentParam
  * @tc.desc: test InitEnvironmentParam
@@ -445,7 +439,6 @@ HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTableAlloc, TestSize.Level1)
     memset_s(current, sizeof(HiDebug_MallocDispatch), 0, sizeof(HiDebug_MallocDispatch));
     current->calloc = TestCustomCalloc;
     current->realloc = TestCustomRealloc;
-    current->aligned_alloc = TestCustomAlignedAlloc;
     EXPECT_EQ(OH_HiDebug_SetMallocDispatchTable(current), HIDEBUG_SUCCESS);
     int* tempCalloc = (int*)calloc(10, sizeof(int));
     EXPECT_NE(tempCalloc, nullptr);
@@ -455,12 +448,7 @@ HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTableAlloc, TestSize.Level1)
     EXPECT_NE(temp, nullptr);
     *temp = 20;
     EXPECT_EQ(*temp, 20);
-    int* tempAligned = (int*)aligned_alloc(16, 10 * sizeof(int));
-    EXPECT_NE(tempAligned, nullptr);
-    *tempAligned = 30;
-    EXPECT_EQ(*tempAligned, 30);
     free(temp);
-    free(tempAligned);
     DesCustomMalloc(current);
 }
 

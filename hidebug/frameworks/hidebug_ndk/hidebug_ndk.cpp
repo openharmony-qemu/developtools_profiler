@@ -21,11 +21,10 @@
 
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
-#include <stdatomic.h>
 #include "securec.h"
 #include "musl_preinit_common.h"
 
-static volatile struct MallocDispatchType* g_lastDispatchTable = NULL;
+static volatile struct MallocDispatchType* g_lastDispatchTable = nullptr;
 static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
 	.malloc = __libc_malloc_default_dispatch.malloc,
 	.free = __libc_malloc_default_dispatch.free,
@@ -33,7 +32,6 @@ static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
 	.munmap = __libc_malloc_default_dispatch.munmap,
 	.calloc = __libc_malloc_default_dispatch.calloc,
 	.realloc = __libc_malloc_default_dispatch.realloc,
-	.aligned_alloc = __libc_malloc_default_dispatch.aligned_alloc,
 };
 static struct MallocDispatchType g_currentDispatchDatable = __libc_malloc_default_dispatch;
 
@@ -201,9 +199,6 @@ HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatc
     if (newDispatchTable->realloc != nullptr) {
         g_currentDispatchDatable.realloc = newDispatchTable->realloc;
     }
-    if (newDispatchTable->aligned_alloc != nullptr) {
-        g_currentDispatchDatable.aligned_alloc = newDispatchTable->aligned_alloc;
-    }
     atomic_store_explicit(&__custom_hook_flag, (volatile bool)true, memory_order_seq_cst);
     atomic_exchange_explicit(&__musl_libc_globals.current_dispatch_table,
                              (volatile const long long)&g_currentDispatchDatable, memory_order_acq_rel);
@@ -220,4 +215,6 @@ void OH_HiDebug_RestoreMallocDispatchTable(void)
     atomic_store_explicit(&__custom_hook_flag, (volatile bool)false, memory_order_seq_cst);
     atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)g_lastDispatchTable,
                           memory_order_seq_cst);
+    g_currentDispatchDatable = __libc_malloc_default_dispatch;
+    g_lastDispatchTable = nullptr;
 }
