@@ -134,7 +134,7 @@ public:
         return createdFileSize;
     }
 
-    static void ReportFileWriteEvent(cosnt std::string &newFilePath)
+    static void ReportFileWriteEvent(const std::string &newFilePath)
     {
         std::string partitionName = "/data";
         std::string dirName = "/data/local/tmp";
