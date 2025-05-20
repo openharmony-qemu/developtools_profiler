@@ -42,6 +42,7 @@ ohos_source_set("libhidebug_init_source") {
   }
   external_deps = [
     "bounds_checking_function:libsec_static",
+    "cJSON:cjson",
     "init:libinit_module_engine",
   ]
   sources = [ "hidebug_base.c" ]
