@@ -16,6 +16,7 @@
                 -   [内核内存信息](#section35362541222)
                 -   [虚拟内存统计](#section35362541223)
                 -   [进程内存使用跟踪](#section35362541224)
+                -   [输出进程jemalloc的stats信息](#section35362541227)
             -   [bytrace/hitrace场景示例](#section35362541225)
             -   [hiperf场景示例](#section35362541226)
 -   [相关仓](#section1293495681320)
@@ -718,37 +719,6 @@ hiprofiler_cmd \
 CONFIG
 ```
 
-##### 输出进程jemalloc的stats信息<a name="section35362541224"></a>
-
-如配置抓取的进程名是com.ohos.mms
-
-``` sh
-hiprofiler_cmd \
-  -c - \
-  -o /data/local/tmp/hiprofiler_data222.htrace \
-  -t 5 \
-  -s \
-  -k \
-<<CONFIG
-request_id: 1
-plugin_configs {
-plugin_name: "nativehook"
-config_data {
-smb_pages: 16384
-process_name: "com.ohos.mms"
-dump_nmd: true
-}
-}
-CONFIG
-```
-
-使用说明：
-
-* pid/process_name:设置抓取的进程ID或者进程名
-* dump_nmd: 配置该参数为true表示会导出目标进程的stats信息
-* 若只是想导出stats信息,可以把-t参数的时间设置小一点，五秒最优。
-* 导出的stats信息最终保存路径为：/data/local/tmp/nmd_(process_name/pid).txt
-
 ##### 进程内存使用跟踪<a name="section35362541224"></a>
 
 如配置抓取的进程名是com.ohos.mms
@@ -793,6 +763,37 @@ CONFIG
 * max_stack_depth:抓取的栈的深度
 * smb_pages:native_daemon和native_hook进程之间存储数据的共享内存大小（4KB的倍数）
 * filter_size:只抓取大于该size的malloc数据（free不受影响）
+
+##### 输出进程jemalloc的stats信息<a name="section35362541227"></a>
+
+如配置抓取的进程名是com.ohos.mms
+
+``` sh
+hiprofiler_cmd \
+  -c - \
+  -o /data/local/tmp/hiprofiler_data222.htrace \
+  -t 5 \
+  -s \
+  -k \
+<<CONFIG
+request_id: 1
+plugin_configs {
+plugin_name: "nativehook"
+config_data {
+smb_pages: 16384
+process_name: "com.ohos.mms"
+dump_nmd: true
+}
+}
+CONFIG
+```
+
+使用说明：
+
+* pid/process_name:设置抓取的进程ID或者进程名
+* dump_nmd: 配置该参数为true表示会导出目标进程的stats信息
+* 若只是想导出stats信息,可以把-t参数的时间设置小一点，五秒最优。
+* 导出的stats信息最终保存路径为：/data/local/tmp/nmd_(process_name/pid).txt
 
 #### bytrace/hitrace场景示例<a name="section35362541225"></a>
 
