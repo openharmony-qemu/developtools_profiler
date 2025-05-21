@@ -76,20 +76,6 @@ HWTEST_F(DubaiTest, DubaiMoveTest, TestSize.Level1)
     EXPECT_EQ(retChmod, true);
 }
 
-HWTEST_F(DubaiTest, CallMoveDubaiDbFinished01, TestSize.Level1)
-{
-    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = false;
-    std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
-    EXPECT_EQ(result, "get_dubai_db");
-}
-
-HWTEST_F(DubaiTest, CallMoveDubaiDbFinished02, TestSize.Level1)
-{
-    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = true;
-    std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
-    EXPECT_EQ(result, "get_dubai_db");
-}
-
 HWTEST_F(DubaiTest, IsFileAccessible01, TestSize.Level1)
 {
     std::string existingFile = "existing_file.txt";

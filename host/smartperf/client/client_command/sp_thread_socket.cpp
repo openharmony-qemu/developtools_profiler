@@ -532,27 +532,41 @@ void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::str
     if (sendFileSocketPort == -1) {
         return;
     }
-    int fileSocket = -1;
-    int connectCount = 0;
-    const int maxTryCount = 2;
-
-    std::string sendFileSizeMsg = "SendFileSize:::" + std::to_string(SPUtils::GetFileSize(filePath));
-    LOGD("ConnectAndSendFile sendFileSizeMsg: (%s)", sendFileSizeMsg.c_str());
-    spSocket.Sendto(sendFileSizeMsg);
-    while (fileSocket < 0) {
-        WLOGI("Connect file log socket, try times: %d", connectCount + 1);
-        if (connectCount > maxTryCount) {
-            WLOGE("Connect file log socket failed");
+    std::thread sendSizeThread([&spSocket, filePath]() {
+        size_t fileSize = SPUtils::GetFileSize(filePath);
+        if (fileSize == 0) {
+            LOGE("UDP ConnectAndSendFile recv GetFileSize fileSize: (%d)", fileSize);
             return;
         }
-        connectCount++;
-        fileSocket = FileSocketConnect();
-    }
+        std::string sendFileSizeMsg = "SendFileSize:::" + std::to_string(fileSize);
+        LOGD("UDP START sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
+        spSocket.Sendto(sendFileSizeMsg);
+        LOGD("UDP Sendto sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
+    });
+    std::thread sendFileThread([this, filePath]() {
+        int fileSocket = -1;
+        int connectCount = 0;
+        const int maxTryCount = 2;
 
-    int ret = SendFile(filePath);
-    if (ret < 0) {
-        return;
-    }
+        while (fileSocket < 0) {
+            WLOGI("Connect file log socket, try times: %d", connectCount + 1);
+            if (connectCount > maxTryCount) {
+                WLOGE("Connect file log socket failed");
+                return;
+            }
+            connectCount++;
+            fileSocket = FileSocketConnect();
+        }
+
+        int ret = SendFile(filePath);
+        if (ret < 0) {
+            WLOGE("Failed to send file");
+            return;
+        }
+    });
+
+    sendSizeThread.join();
+    sendFileThread.join();
 }
 
 void SpThreadSocket::StartGpuCounter() const
@@ -740,10 +754,12 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         std::thread dStart([&db]() { db.CallBeginAndFinish(); });
         dStart.detach();
     } else if (iterator->first == MessageType::SET_DUBAI_DB) {
+        GetSocketPort(recvBuf);
         db.CallBeginAndFinish();
-        db.isDumpDubaiFinish = true;
         ProfilerFPS::GetInstance().isLowCurFps = false;
-        retCode = db.CallMoveDubaiDbFinished();
+        db.MoveDubaiDb(dubaiXpower);
+        ConnectAndSendFile(spSocket, dubaiFilePath);
+        retCode = "get_dubai_db";
         LOGD("UDP send GetDubaiDb Message: (%s)", retCode.c_str());
         spSocket.Sendto(retCode);
         LOGD("UDP send DuBai get finish");
