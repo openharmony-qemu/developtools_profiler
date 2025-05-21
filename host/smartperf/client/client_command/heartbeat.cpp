@@ -64,7 +64,6 @@ void Heartbeat::UpdatestartTime()
 {
     std::unique_lock<std::mutex> lock(mtx);
     updateStart = std::chrono::steady_clock::now();
-    lock.unlock();
 }
 
 }

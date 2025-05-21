@@ -27,14 +27,15 @@ std::map<std::string, std::string> Power::ItemData()
         std::string voltageNow;
         SPUtils::LoadFile(voltageNowPath, voltageNow);
         LOGD("currentNow = %s, voltageNow = %s", currentNow.c_str(), voltageNow.c_str());
+        if (currentNow.empty()) {
+            currentNow = "NA";
+        }
+        if (voltageNow.empty()) {
+            voltageNow = "NA";
+        }
+
         result["currentNow"] = currentNow;
         result["voltageNow"] = voltageNow;
-        if (result.find("currentNow") != result.end() && result["currentNow"].empty()) {
-            result["currentNow"] = "NA";
-        }
-        if (result.find("voltageNow") != result.end() && result["voltageNow"].empty()) {
-            result["voltageNow"] = "NA";
-        }
     } else {
         result["failed"] = "RK does not support power acquisition";
         LOGE("failed:RK does not support power acquisition");

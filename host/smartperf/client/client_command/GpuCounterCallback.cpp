@@ -181,19 +181,15 @@ namespace OHOS {
                 return;
             }
 
-            GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
-
             JoinSocketData(newData);
             if ((realtimeGpuPerfInfoData.duration == 0) || (newData->duration == 0)) {
                 WLOGE("Invalid duration found: realtime = %d, newData = %d",
                     realtimeGpuPerfInfoData.duration, newData->duration);
                 return;
             }
-            gpuCounterInstance.GetRealtimeDataLock().lock();
             while (realtimeGpuPerfInfoData.duration >= maxDuration) {
                 SplitSocketData();
             }
-            gpuCounterInstance.GetRealtimeDataLock().unlock();
         }
 
         std::string GpuCounterCallbackImpl::GetGpuPerfInfoItem(const GpuPerfInfo *itemData) const
@@ -221,7 +217,7 @@ namespace OHOS {
             return oss.str();
         }
 
-        int GpuCounterCallbackImpl::OnGpuData(std::vector <GpuPerfInfo> &gpuPerfInfos)
+        int GpuCounterCallbackImpl::OnGpuData(std::vector<GpuPerfInfo> &gpuPerfInfos)
         {
             if (gpuPerfInfos.empty()) {
                 WLOGE("Receive gpuPerfInfos is empty!");
@@ -230,7 +226,7 @@ namespace OHOS {
 
             GpuCounter &gpuCounterInstance = GpuCounter::GetInstance();
 
-            for (auto gpuPerfInfo : gpuPerfInfos) {
+            for (const auto& gpuPerfInfo : gpuPerfInfos) {
                 unsigned int gpuCounterBackSize = gpuCounter.size();
                 gpuCounter.push_back(gpuPerfInfo);
                 unsigned int gpuCounterSize = gpuCounter.size();

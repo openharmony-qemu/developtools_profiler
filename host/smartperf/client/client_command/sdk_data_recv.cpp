@@ -50,6 +50,61 @@ namespace OHOS {
             return ret;
         }
 
+        void SdkDataRecv::StartExecutionOnce(bool isPause)
+        {
+            if (!isPause) {
+                sdkParams.startTime = SPUtils::GetCurTime();
+            }
+            OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
+            collectRunring = true;
+            WLOGI("Starting sdkdata collection in new thread");
+            th_ = std::thread([this]() { ServerThread(); });
+        }
+
+        void SdkDataRecv::FinishtExecutionOnce(bool isPause)
+        {
+            WLOGI("Disabling sdk data collection and resetting parameters");
+            OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "0");
+            collectRunring = false;
+            if (listenFd != -1) {
+                LOGD("Closing sdk data listenFd: %d", listenFd);
+                close(listenFd);
+                listenFd = -1;
+            }
+
+            if (th_.joinable()) {
+                th_.join();
+            }
+            if (isPause) {
+                return;
+            }
+
+            if (sdkVec_.empty()) {
+                WLOGI("SDK data is not enabled or sdkvec is empty");
+                return;
+            }
+
+            LOGD("SDK data stop");
+            char outSdkDataDirChar[PATH_MAX] = {0x00};
+            if (realpath(filePath_.c_str(), outSdkDataDirChar) == nullptr) {
+                WLOGE("data dir %s is nullptr", filePath_.c_str());
+                return;
+            }
+            std::string outSdkDataPath = filePath_ + "/sdk_data.csv";
+            std::ofstream outFile(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
+            if (!outFile.is_open()) {
+                WLOGE("data %s open failed", outSdkDataPath.c_str());
+                return;
+            }
+            std::string title = "source,timestamp,eventName,enable,value\r";
+            outFile << title << std::endl;
+            for (const auto &item : sdkVec_) {
+                outFile << item << std::endl;
+            }
+            outFile.close();
+            WLOGI("SDK data written successfully to %s", outSdkDataPath.c_str());
+        }
+
         int SdkDataRecv::CreateOhSocketServer(int basePort)
         {
             int i = 0;
@@ -92,7 +147,7 @@ namespace OHOS {
             LOGD("Listening on port %d, socket fd: %d", basePort + i, socketFd);
             return socketFd;
         }
-        std::string SdkDataRecv::ProcessData(std::string message, ServerParams &params)
+        std::string SdkDataRecv::ProcessData(std::string& message, ServerParams &params)
         {
             std::stringstream ss(message);
             std::string enable;
@@ -120,7 +175,7 @@ namespace OHOS {
                     }
                 } else if (first == "time") {
                     realTimestamp = std::to_string(SPUtilesTye::StringToSometype<long long>(second) -
-                                    SPTask::GetInstance().GetRealStartTime());
+                        sdkParams.startTime);
                     timestamp = std::to_string(SPUtilesTye::StringToSometype<long long>(second) - params.startTime);
                 } else if (first == "enable") {
                     enable = second;
@@ -134,6 +189,7 @@ namespace OHOS {
             gameHead = source + "," + timestamp + "," + smartFpsName + "," + enable +
                 "," + value + "," + systime + "\r\n";
             GetSdkFpsAndSystime(gameHead);
+            std::unique_lock<std::mutex> lock(realtimeDataLock);
             sdkDataRealtimeData += source + "_" + realTimestamp + "_" + eventName + "_" + enable + "_" + value + ";";
             return item;
         }
@@ -163,12 +219,7 @@ namespace OHOS {
             return resStr;
         }
 
-        void SdkDataRecv::SetRunningState(bool state)
-        {
-            collectRunring = state;
-        }
-
-        void SdkDataRecv::ServerThread(std::vector<std::string> &dataVec)
+        void SdkDataRecv::ServerThread()
         {
             for (int i = 0; i < OH_SOCKET_MAX; i++) {
                 sdkParams.receiveFd[i] = -1;
@@ -186,11 +237,11 @@ namespace OHOS {
                 return;
             }
             listenFd = sdkParams.pipFd[1];
-            RunServerThread(dataVec, sdkParams);
+            RunServerThread(sdkParams);
             LOGD("Sdk Data server thread exit.");
         }
 
-        void SdkDataRecv::RunServerThread(std::vector<std::string> &dataVec, ServerParams &params)
+        void SdkDataRecv::RunServerThread(ServerParams &params)
         {
             while (collectRunring) {
                 SetUpFdSet(params);
@@ -198,7 +249,7 @@ namespace OHOS {
                     continue;
                 }
                 for (int i = 0; i < OH_SOCKET_MAX; i++) {
-                    HandleReceiveFd(dataVec, i, params);
+                    HandleReceiveFd(i, params);
                 }
                 HandleServerFd(params);
             }
@@ -221,12 +272,12 @@ namespace OHOS {
             }
         }
 
-        void SdkDataRecv::HandleReceiveFd(std::vector<std::string> &dataVec, int i, ServerParams &params)
+        void SdkDataRecv::HandleReceiveFd(int i, ServerParams &params)
         {
             if (params.receiveFd[i] >= 0 && FD_ISSET(params.receiveFd[i], &readFds)) {
                 std::string data = OhDataReceive(i, params);
                 if (SPTask::GetInstance().GetRecordState()) {
-                    dataVec.push_back(data);
+                    sdkVec_.push_back(data);
                 }
             }
         }
@@ -272,31 +323,13 @@ namespace OHOS {
             }
         }
 
-        int SdkDataRecv::GetListenFd()
-        {
-            return listenFd;
-        }
-
-        void SdkDataRecv::SetListenFd(int fd)
-        {
-            listenFd = fd;
-        }
-
         void SdkDataRecv::GetSdkDataRealtimeData(std::map<std::string, std::string> &dataMap)
         {
+            std::unique_lock<std::mutex> lock(realtimeDataLock);
             if (sdkDataRealtimeData.size() > 0) {
-                std::map<std::string, std::string> sdkDataRealtimeDataMap;
-                sdkDataRealtimeDataMap["sdkData"] = sdkDataRealtimeData;
-                realtimeDataLock.lock();
-                dataMap.insert(sdkDataRealtimeDataMap.begin(), sdkDataRealtimeDataMap.end());
-                realtimeDataLock.unlock();
+                dataMap.insert({"sdkData", sdkDataRealtimeData});
                 sdkDataRealtimeData.clear();
             }
-        }
-
-        void SdkDataRecv::SetStartRecordTime()
-        {
-            sdkParams.startTime = SPUtils::GetCurTime();
         }
 
         void SdkDataRecv::SocketCommandVerification(std::string &resStr, ServerParams &params)
@@ -368,6 +401,11 @@ namespace OHOS {
         std::string SdkDataRecv::GetSdkSystime() const
         {
             return sdkSystime;
+        }
+
+        void SdkDataRecv::SetFilePath(const std::string& path)
+        {
+            filePath_ = path;
         }
     }
 }

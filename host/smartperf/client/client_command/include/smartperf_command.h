@@ -92,35 +92,13 @@ public:
     const size_t twoParam = 2;
     const size_t threeParamMore = 3;
     const size_t serverCommandLength = 14;  // -deviceServer: 与 -editorServer: 的长度
-    explicit SmartPerfCommand(std::vector<std::string> argv);
+    explicit SmartPerfCommand(std::vector<std::string>& argv);
     ~SmartPerfCommand() {};
     static void InitSomething();
     std::string ExecCommand();
-    void HelpCommand(CommandHelp type, std::string token) const;
-    void HandleCommand(std::string argStr, const std::string &argStr1);
-    void HandleCommandContinue(std::string argStr, const std::string &argStr1);
-    int GetItemInfo(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap);
-    void PrintfExecCommand(const std::map<std::string, std::string> data) const;
-    void PrintMap(std::multimap<std::string, std::string, decltype(SPUtils::Cmp) *> &spMap, int index) const;
+    void HelpCommand(CommandHelp type, const std::string& token) const;
     void CreateSocketThread() const;
     void DeviceServer(int isNeedDaemon) const;
-    // 采集次数
-    int num = 0;
-    // 包名
-    std::string pkgName = "";
-    // 图层名
-    std::string layerName = "";
-    // 是否开启trace 抓取
-    int trace = 0;
-    // csv输出路径
-    std::string outPath = "/data/local/tmp/data.csv";
-    std::string outPathParam = "";
-    // 指定进程pid
-    std::string pid = "";
-    // 采集配置项
-    std::vector<std::string> configs;
-    GpuCounter &gpuCounter = GpuCounter::GetInstance();
-    GameEvent &gameEvent = GameEvent::GetInstance();
     TaskManager taskMgr_;
 };
 }

@@ -41,14 +41,10 @@ public:
         std::string cmdResult;
         SPUtils::LoadCmd(CMD_COMMAND_MAP.at(CmdCommand::USER_PERMISSIONS), cmdResult);
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
-        if (SPUtils::GetPathPermissions(path)) {
+        if (SPUtils::GetPathPermissions(path) && outFile.is_open() && path == "/data/local/tmp/data.csv" && 
+            (cmdResult == "root" || cmdResult == "shell"))  {
             std::string cmd = "chmod 777 " + path;
-            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "root") {
-                SPUtils::LoadCmd(cmd, cmdResult);
-            }
-            if (outFile.is_open() && path == "/data/local/tmp/data.csv" && cmdResult == "shell") {
-                SPUtils::LoadCmd(cmd, cmdResult);
-            }
+            SPUtils::LoadCmd(cmd, cmdResult);
         }
         int i = 0;
         for (SPData& spdata : vmap) {
@@ -69,7 +65,7 @@ public:
         ReportFileWriteEvent(path);
         outFile.close();
     }
-    static void WriteCsvH(std::map<std::string, std::string> vmap)
+    static void WriteCsvH(std::map<std::string, std::string>& vmap)
     {
         const std::string outGeneralPath = "/data/local/tmp/smartperf/1/t_general_info.csv";
         std::ofstream outFile(outGeneralPath, std::ios::out | std::ios::trunc);
@@ -83,10 +79,9 @@ public:
         ReportFileWriteEvent(outGeneralPath);
         outFile.close();
     }
-    static std::string SetDataCsvTitle(SPData spdata)
+    static std::string SetDataCsvTitle(SPData& spdata)
     {
-        std::string csvTitle = "";
-        csvTitle = SPTask::GetInstance().GetCsvTitle();
+        std::string csvTitle = SPTask::GetInstance().GetCsvTitle();
         if (csvTitle.empty()) {
             for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
                 csvTitle += iter->first + ",";

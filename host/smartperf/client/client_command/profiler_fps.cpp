@@ -85,7 +85,7 @@ void ProfilerFPS::SetTraceCatch()
 
 void ProfilerFPS::SetPackageName(std::string pName)
 {
-    pkgName = std::move(pName);
+    pkgName = pName;
 }
 
 void ProfilerFPS::SetProcessId(const std::string &pid)
@@ -245,7 +245,7 @@ void ProfilerFPS::GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const
     }
 }
 
-void ProfilerFPS::GetFPS(std::vector<std::string> v)
+void ProfilerFPS::GetFPS(std::vector<std::string>& v)
 {
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
@@ -524,7 +524,7 @@ long long ProfilerFPS::CalculateJitter()
     return jitter;
 }
 
-void ProfilerFPS::GetOhFps(std::vector<std::string> v)
+void ProfilerFPS::GetOhFps(std::vector<std::string>& v)
 {
     if (v[number] == "") {
         printf("the args of num must be not-null!\n");
@@ -548,7 +548,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string> v)
     printf("SP_daemon exec finished!\n");
 }
 
-void ProfilerFPS::SetGameLayer(std::string isGameView)
+void ProfilerFPS::SetGameLayer(const std::string& isGameView)
 {
     isGameLayer = std::move(isGameView);
 }

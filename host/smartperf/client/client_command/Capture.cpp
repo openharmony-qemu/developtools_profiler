@@ -127,18 +127,16 @@ void Capture::ThreadGetCatchSocket()
 
 void Capture::TriggerGetCatch()
 {
-    auto tStart = std::thread([this]() {
+    std::thread([this]() {
         this->ThreadGetCatch();
-    });
-    tStart.detach();
+    }).detach();
 }
 
 void Capture::TriggerGetCatchSocket()
 {
-    auto tStart = std::thread([this]() {
+    std::thread([this]() {
         this->ThreadGetCatchSocket();
-    });
-    tStart.detach();
+    }).detach();
 }
 
 bool Capture::TakeScreenCap(const std::string &savePath) const

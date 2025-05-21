@@ -33,7 +33,7 @@ public:
         static Temperature instance;
         return instance;
     }
-    void GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp);
+    void GetTempInfos(std::map<std::string, std::string> &result, const std::string& type, const std::string& temp);
 
 private:
     Temperature() {};

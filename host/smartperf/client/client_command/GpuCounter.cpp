@@ -33,14 +33,21 @@ namespace OHOS {
             return gpuCounterDataMap;
         }
 
-        void GpuCounter::StartExecutionOnce()
+        void GpuCounter::StartExecutionOnce(bool isPause)
         {
-            collectDur = 250;
+            if (isPause) {
+                return;
+            }
+            collectDur = 50;
             StartCollect(GpuCounter::GC_START);
         }
 
-        void GpuCounter::FinishtExecutionOnce()
+        void GpuCounter::FinishtExecutionOnce(bool isPause)
         {
+            if (isPause) {
+                return;
+            }
+
             SaveData(savePathDirectory_);
             StopCollect();
             gpuCounterData.clear();
@@ -49,11 +56,6 @@ namespace OHOS {
         void GpuCounter::SetSavePathDirectory(const std::string& dir)
         {
             savePathDirectory_ = dir;
-        }
-
-        void GpuCounter::SetCollectDur(int dur)
-        {
-            collectDur = dur;
         }
 
         void GpuCounter::StartCollect(GcCollectType type)
@@ -113,14 +115,12 @@ namespace OHOS {
             }
             std::string gpuCounterDataPath = std::string(gpuCounterDataDirChar) + "/gpu_counter.csv";
             std::ofstream outFile;
-            std::mutex mtx;
-            mtx.lock();
             outFile.open(gpuCounterDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
                 WLOGE("open GpuCounter data file failed.");
                 return;
             }
-            std::string title = "startTime,"
+            static const std::string title = "startTime,"
                 "duration,"
                 "gpuActive,"
                 "drawCalls,"
@@ -136,11 +136,11 @@ namespace OHOS {
                 "memoryWriteBandwidth,"
                 "memoryBandwidthPercentage\r";
             outFile << title << std::endl;
+            std::unique_lock<std::mutex> lock(realtimeDataLock);
             for (unsigned int i = 0; i < gpuCounterSaveReportData.size() - 1; i++) {
                 outFile << gpuCounterSaveReportData[i] << std::endl;
             }
             outFile.close();
-            mtx.unlock();
         }
 
         std::vector<std::string> &GpuCounter::GetGpuCounterData()
@@ -153,28 +153,17 @@ namespace OHOS {
             return gpuCounterSaveReportData;
         }
 
-        std::mutex &GpuCounter::GetRealtimeDataLock()
+        void GpuCounter::AddGpuCounterRealtimeData(const std::string& dataString)
         {
-            return realtimeDataLock;
-        }
-
-        std::string &GpuCounter::GetGpuCounterRealtimeData()
-        {
-            return gpuCounterRealtimeData;
-        }
-        void GpuCounter::AddGpuCounterRealtimeData(std::string dataString)
-        {
+            std::unique_lock<std::mutex> lock(realtimeDataLock);
             gpuCounterRealtimeData += dataString;
         }
 
         void GpuCounter::GetGpuRealtimeData(std::map<std::string, std::string> &dataMap)
         {
+            std::unique_lock<std::mutex> lock(realtimeDataLock);
             if (gpuCounterRealtimeData.size() > 0) {
-                std::map<std::string, std::string> gpuCounterRealtimeDataMap;
-                gpuCounterRealtimeDataMap["gpuCounterData"] = gpuCounterRealtimeData;
-                realtimeDataLock.lock();
-                dataMap.insert(gpuCounterRealtimeDataMap.begin(), gpuCounterRealtimeDataMap.end());
-                realtimeDataLock.unlock();
+                dataMap.insert({"gpuCounterData", gpuCounterRealtimeData});
                 gpuCounterRealtimeData.clear();
             }
         }

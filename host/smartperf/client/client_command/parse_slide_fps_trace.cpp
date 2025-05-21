@@ -21,7 +21,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
-double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(std::string file)
+double ParseSlideFpsTrace::ParseSlideFpsTraceNoh(const std::string& file)
 {
     double fps = -1.0;
     char realPath[PATH_MAX] = {0x00};
@@ -88,7 +88,7 @@ double ParseSlideFpsTrace::CalculateTime()
     return -1.0;
 }
 
-void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
+void ParseSlideFpsTrace::AppSwiperScroll(const std::string& line)
 {
     if (line.find("H:APP_SWIPER_SCROLL,") != std::string::npos) {
         if (swiperScrollFlag == 0) {
@@ -115,14 +115,14 @@ void ParseSlideFpsTrace::AppSwiperScroll(std::string line)
     }
 }
 
-std::string ParseSlideFpsTrace::GetLineTime(std::string lineStr) const
+std::string ParseSlideFpsTrace::GetLineTime(const std::string& lineStr) const
 {
     size_t num = 7;
     size_t position1 = lineStr.find("....");
     size_t position2 = lineStr.find(":");
     return lineStr.substr(position1 + num, position2 - position1 - num);
 }
-std::string ParseSlideFpsTrace::CutString(std::string lineStr, const std::string &start,
+std::string ParseSlideFpsTrace::CutString(const std::string& lineStr, const std::string &start,
     const std::string &end, size_t offset) const
 {
     size_t position1 = lineStr.find(start);

@@ -17,6 +17,8 @@
 #include "sp_profiler.h"
 #include <string>
 #include <map>
+#include <thread>
+
 namespace OHOS {
 namespace SmartPerf {
 using ReportDataFunc = int (*)(const std::vector<int32_t>& resId, const std::vector<int64_t>& value,
@@ -30,6 +32,8 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
+    void StartExecutionOnce(bool isPause) override;
+    void FinishtExecutionOnce(bool isPause) override;
     void LockingThread();
     void SetIsCollecting(bool state);
 
@@ -42,6 +46,7 @@ private:
     const std::string lockFunction = "FrequencyLockPlugin";
     ReportDataFunc reportFunc_ = nullptr;
     PerfScenarioFunc scenarioFunc_ = nullptr;
+    std::thread th_;
 };
 }
 }

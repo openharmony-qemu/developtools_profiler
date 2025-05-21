@@ -46,7 +46,7 @@ std::map<std::string, std::string> Navigation::GetNavInfo() const
     return navInfo;
 }
 
-std::map<std::string, std::string> Navigation::GetNavResult(std::string winId) const
+std::map<std::string, std::string> Navigation::GetNavResult(const std::string& winId) const
 {
     std::map<std::string, std::string> navInfo;
     std::string nameStr = "No Navigation Info";

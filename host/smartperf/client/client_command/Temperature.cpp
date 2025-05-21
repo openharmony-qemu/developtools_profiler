@@ -55,7 +55,8 @@ std::map<std::string, std::string> Temperature::ItemData()
     return result;
 }
 
-void Temperature::GetTempInfos(std::map<std::string, std::string> &result, std::string type, std::string temp)
+void Temperature::GetTempInfos(std::map<std::string, std::string> &result, const std::string& type,
+    const std::string& temp)
 {
     for (auto node : collectNodes) {
         if (!strcmp(type.c_str(), node.c_str())) {

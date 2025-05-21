@@ -24,7 +24,7 @@
 namespace OHOS {
 namespace SmartPerf {
 namespace {
-const std::string HIPERF_CMD = "/bin/hiperf stat -e hw-instructions,hw-cpu-cycles -d 1 -i 800 ";
+const std::string HIPERF_CMD = "/bin/hiperf stat -e hw-instructions,hw-cpu-cycles -d 1 -i 500 ";
 }
 std::map<std::string, std::string> CPUInfo::ItemData()
 {
@@ -32,9 +32,6 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     std::map<std::string, std::string> result;
     std::istringstream stream(buffer_);
     std::string line;
-    std::regex cpu_cycles_regex(R"(\s*([\d,]+)\s+hw-cpu-cycles)");
-    std::regex instructions_regex(R"(\s*([\d,]+)\s+hw-instructions)");
-    std::regex cpi_regex(R"(\|\s*([\d.]+)\s+cycles per instruction)");
 
     uint64_t cpu_cycles_total = 0;
     uint64_t instructions_total = 0;
@@ -43,26 +40,39 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     size_t instructions_count = 0;
     size_t cpi_count = 0;
 
+    auto trim = [](std::string& s) {
+        s.erase(0, s.find_first_not_of(" \t"));
+        s.erase(s.find_last_not_of(" \t") + 1);
+    };
+    auto findData = [](const std::string& targetStr, auto& total, auto& count) {
+        size_t count_start = targetStr.find_first_not_of(" \t");
+        size_t count_end = targetStr.find(" ", count_start);
+        std::string number_str = targetStr.substr(count_start, count_end - count_start);
+        number_str.erase(std::remove(number_str.begin(), number_str.end(), ','), number_str.end());
+        total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
+        ++count;
+    };
+
     while (std::getline(stream, line)) {
-        std::smatch match;
-
-        if (std::regex_search(line, match, cpu_cycles_regex)) {
-            std::string number_str = match[1];
-            number_str.erase(std::remove(number_str.begin(), number_str.end(), ','), number_str.end());
-            cpu_cycles_total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
-            ++cpu_cycles_count;
+        if (line.find("hw-cpu-cycles") != std::string::npos) {
+            findData(line, cpu_cycles_total, cpu_cycles_count);
         }
 
-        if (std::regex_search(line, match, instructions_regex)) {
-            std::string number_str = match[1];
-            number_str.erase(std::remove(number_str.begin(), number_str.end(), ','), number_str.end());
-            instructions_total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
-            ++instructions_count;
-        }
+        if (line.find("hw-instructions") != std::string::npos) {
+            findData(line, instructions_total, instructions_count);
 
-        if (std::regex_search(line, match, cpi_regex)) {
-            cpi_total += SPUtilesTye::StringToSometype<double>(match[1]);
-            ++cpi_count;
+            size_t comment_pos = line.find("|");
+            if (comment_pos != std::string::npos) {
+                std::string comment = line.substr(comment_pos + 1);
+                trim(comment);
+                size_t cpi_pos = comment.find("cycles per instruction");
+                if (cpi_pos != std::string::npos) {
+                    size_t number_end = comment.find(" ", 0);
+                    std::string cpi_str = comment.substr(0, number_end);
+                    cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
+                    ++cpi_count;
+                }
+            }
         }
     }
 
@@ -70,15 +80,15 @@ std::map<std::string, std::string> CPUInfo::ItemData()
         result["hw-cpu-cycles"] = std::to_string(static_cast<double>(cpu_cycles_total) / cpu_cycles_count);
     instructions_count == 0 ? "" :
         result["hw-instructions"] = std::to_string(static_cast<double>(instructions_total) / instructions_count);
-    cpi_count == 0 ? "" :
-        result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
+    cpi_count == 0 ? "" : result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
 
     Start();
     return result;
 }
 
-void CPUInfo::StartExecutionOnce()
-{
+void CPUInfo::StartExecutionOnce(bool isPause)
+{   
+    (void)isPause;
     Stop();
     hiperfCmd_ = HIPERF_CMD;
     if (pids_.empty()) {
@@ -108,8 +118,9 @@ void CPUInfo::StartExecutionOnce()
     sleep(1);
 }
 
-void CPUInfo::FinishtExecutionOnce()
+void CPUInfo::FinishtExecutionOnce(bool isPause)
 {
+    (void)isPause;
     running_ = false;
     Stop();
     cond_.notify_all();
@@ -118,8 +129,9 @@ void CPUInfo::FinishtExecutionOnce()
     }
 }
 
-void CPUInfo::SetPids(std::string& pids)
+void CPUInfo::SetPids(const std::string& pids)
 {
+    pids_.clear();
     SPUtils::StrSplit(pids, " ", pids_);
 }
 

@@ -52,6 +52,30 @@ namespace SmartPerf {
         LOGD("Lock frequency thread end");
     }
 
+    void LockFrequency::StartExecutionOnce(bool isPause)
+    {
+        if (isPause) {
+            return;
+        }
+        SetIsCollecting(true);
+        th_ = std::thread([this]() {
+            WLOGI("Starting lock frequency locking thread");
+            LockingThread();
+        });
+    }
+
+    void LockFrequency::FinishtExecutionOnce(bool isPause)
+    {
+        if (isPause) {
+            return;
+        }
+        SetIsCollecting(false);
+        if (th_.joinable()) {
+            LOGD("Joining lockFreqThread.");
+            th_.join();
+        }
+    }
+
     void LockFrequency::SetIsCollecting(bool state)
     {
         isCollecting = state;

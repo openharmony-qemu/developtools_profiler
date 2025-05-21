@@ -23,9 +23,7 @@
 #include <mutex>
 #include <climits>
 #include "parameters.h"
-#include "sdk_data_recv.h"
 #include "GpuCounter.h"
-#include "lock_frequency.h"
 #include "GameEvent.h"
 #include "task_manager.h"
 
@@ -72,40 +70,29 @@ public:
         return instance;
     }
     ErrCode InitTask(const std::string &recvStr);
-    ErrCode StartTask(std::function<void(std::string data)> msgTask);
+    ErrCode StartTask(std::function<void(const std::string&)> msgTask);
     ErrCode StopTask();
-    bool CheckTcpParam(std::string str, std::string &errorInfo);
-    void CreatPath(std::string path);
-    void ConfigDataThread();
-    void StopSdkRecv();
+    bool CheckTcpParam(const std::string& str, std::string &errorInfo);
+    void CreatPath(const std::string& path);
     void InitDataFile();
     void StopGetInfo();
     ErrCode StartRecord();
     ErrCode StopRecord();
     bool GetRecordState();
-    time_t GetRealStartTime() const;
     void SetRecordState(bool status);
     std::string GetCsvTitle();
-    void ConfigureSdkDataHap();
-    static inline bool isSdkTask = false;
-    void ResetSdkParam();
-    void SetAppCmd(std::string &recvBuf);
+    void SetAppCmd(const std::string &recvBuf);
     TaskInfo GetCurTaskInfo();
-    void SetAppReceiveDataOffFlag();
-    void SetAppReceiveDataOnFlag();
     void SetAppInitFlag();
     void SetStartFlag();
     void ClearStopFlag();
 
 private:
     void KillHiperfCmd();
-    void ConfigureSdkData(std::string itConfig);
-    void RunSdkServer(SdkDataRecv &sdkDataRecv);
     int GetCurrentBattary();
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();
     void EnablePrint();
-    std::string ProcessingCollectionsMap(SPData spdata);
 
 private:
     TaskInfo curTaskInfo;
@@ -114,24 +101,16 @@ private:
     bool isRunning = false;
     bool isInit = false;
     std::mutex asyncDataMtx;
-    std::mutex sdkDataMtx;
     const std::string baseOutPath = "/data/local/tmp/smartperf";
     long long startCaptuerTime = 0;
-    bool sdkData = false;
-    std::thread sdk;
-    std::thread lockFreqThread;
-    std::vector<std::string> sdkvec;
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
-    LockFrequency &lockFreq = LockFrequency::GetInstance();
     GameEvent &gameEvent = GameEvent::GetInstance();
     bool recordState = false;
-    time_t realTimeStart = 0;
     long long nextTime = 0;
     int battaryStart = 0;
     int battaryEnd = 0;
     std::string csvTitle = "";
     int stdOutLog = -1;
-    bool appReceiveDataFlag = false;
     std::shared_ptr<TaskManager> taskMgr_ {nullptr};
 };
 }

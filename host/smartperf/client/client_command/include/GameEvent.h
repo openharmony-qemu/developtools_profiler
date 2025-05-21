@@ -43,8 +43,8 @@ class GameEvent : public SpProfiler {
     }
     int RegisterGameEvent();
     int UnregisterGameEvent();
-    void StartExecutionOnce() override;
-    void FinishtExecutionOnce() override;
+    void StartExecutionOnce(bool isPause) override;
+    void FinishtExecutionOnce(bool isPause) override;
     std::map<std::string, std::string> &GetGameEventItemData();
     private:
     GameEvent() {};

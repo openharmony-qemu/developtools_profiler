@@ -49,7 +49,7 @@ public:
     void SetValue(const std::string& key, const ArgValue& value);
 
 private:
-    void HandleIntParameter(std::string& key, std::string value, const ArgumentSpec& spec);
+    void HandleIntParameter(const std::string& key, std::string value, const ArgumentSpec& spec);
 
     std::unordered_map<std::string, ArgumentSpec> specs_ = {
         {"-N", {ArgumentParser::ArgType::INT,
@@ -107,6 +107,9 @@ private:
         {"-ci", {ArgumentParser::ArgType::BOOL, "get cpu instructions and cycles"}},
         {"-fl", {ArgumentParser::ArgType::INT, "set fps"}},
         {"-ftl", {ArgumentParser::ArgType::INT, "set frameTime"}},
+        {"-lockfreq", {ArgumentParser::ArgType::BOOL}},
+        {"-nav", {ArgumentParser::ArgType::BOOL}},
+        {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
 
         // UDP
         {"-CPU", {ArgumentParser::ArgType::BOOL}},

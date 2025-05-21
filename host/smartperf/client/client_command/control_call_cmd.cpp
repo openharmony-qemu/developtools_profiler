@@ -33,7 +33,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
-std::string ControlCallCmd::GetResult(std::vector<std::string> v)
+std::string ControlCallCmd::GetResult(const std::vector<std::string>& v)
 {
     IsohTest(v);
     if (v[typeName] == "responseTime") {
@@ -108,10 +108,7 @@ std::string ControlCallCmd::TimeDelay()
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(two) << rateResult;
-    std::string ssResult = ss.str();
-    std::string hitchTimeRate = "HitchTimeRate:" + ssResult + "ms/s \n";
-    resultTime = resultTime + hitchTimeRate + maxFrame;
-    return resultTime;
+    return resultTime + "HitchTimeRate:" + ss.str() + "ms/s \n" + maxFrame;;
 }
 std::string ControlCallCmd::SlideList()
 {
@@ -190,8 +187,7 @@ double ControlCallCmd::ResponseTime()
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "response" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
-        thGetTrace.join();
+        std::thread([&sd, traceName]() { sd.GetTrace(traceName); }).join();
         time = pcrt.ParseResponseTrace(traceName);
     } else {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
@@ -214,8 +210,7 @@ double ControlCallCmd::CompleteTime()
     SPUtils::LoadCmd(rmTrace, cmdResult);
     std::string traceName = std::string("/data/local/tmp/") + std::string("sp_trace_") + "complete" + ".ftrace";
     if (isOhTest) {
-        std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
-        thGetTrace.join();
+        std::thread([&sd, traceName]() { sd.GetTrace(traceName); }).join();
         time = pcct.ParseCompleteTrace(traceName);
     } else {
         std::thread thGetTrace = std::thread([&sd, traceName]() { sd.GetTrace(traceName); });
@@ -266,7 +261,7 @@ std::string ControlCallCmd::GetAppStartTime() const
     resultStream = resultStream + hitchTimeRate + resultStream2;
     return resultStream;
 }
-void ControlCallCmd::IsohTest(std::vector<std::string> v)
+void ControlCallCmd::IsohTest(const std::vector<std::string>& v)
 {
     if (v[ohType] == "ohtest") {
         isOhTest = true;

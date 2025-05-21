@@ -29,7 +29,7 @@ public:
     // 开始抓trace线程
     void ThreadGetTrace() const;
     // 校验fps-jitters
-    TraceStatus CheckFpsJitters(std::vector<long long> jitters, int cfps) const;
+    TraceStatus CheckFpsJitters(std::vector<long long>& jitters, int cfps) const;
     // 触发trace
     void TriggerCatch(long long curTime) const;
     bool CheckHitraceId() const;

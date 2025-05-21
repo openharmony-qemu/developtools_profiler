@@ -36,6 +36,7 @@
 #include "include/GpuCounter.h"
 #include "effective.h"
 #include "cpu_info.h"
+#include "lock_frequency.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -107,55 +108,34 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
 void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
-    FPS &fps = FPS::GetInstance();
-    fps.SetPackageName(pkg);
-    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
-    profilerFps.SetPackageName(pkg);
-    RAM &ram = RAM::GetInstance();
-    ram.SetPackageName(pkg);
-    CPU &cpu = CPU::GetInstance();
-    cpu.SetPackageName(pkg);
-    Threads &threads = Threads::GetInstance();
-    threads.SetPackageName(pkg);
-    FileDescriptor &fds = FileDescriptor::GetInstance();
-    fds.SetPackageName(pkg);
+    FPS::GetInstance().SetPackageName(pkg);
+    ProfilerFPS::GetInstance().SetPackageName(pkg);
+    RAM::GetInstance().SetPackageName(pkg);
+    CPU::GetInstance().SetPackageName(pkg);
+    Threads::GetInstance().SetPackageName(pkg);
+    FileDescriptor::GetInstance().SetPackageName(pkg);
 }
 
 void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
-    FPS &fps = FPS::GetInstance();
-    fps.SetProcessId(pid);
-    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
-    profilerFps.SetProcessId(pid);
-    RAM &ram = RAM::GetInstance();
-    ram.SetProcessId(pids.empty() ? pid : pids);
-    CPU &cpu = CPU::GetInstance();
-    cpu.SetProcessId(pids.empty() ? pid : pids);
-    Navigation &nav = Navigation::GetInstance();
-    nav.SetProcessId(pid);
-    AISchedule &as = AISchedule::GetInstance();
-    as.SetProcessId(pid);
-    Threads &threads = Threads::GetInstance();
-    threads.SetProcessId(pids.empty() ? pid : pids);
-    FileDescriptor &fds = FileDescriptor::GetInstance();
-    fds.SetProcessId(pids.empty() ? pid : pids);
+    FPS::GetInstance().SetProcessId(pid);
+    ProfilerFPS::GetInstance().SetProcessId(pid);
+    RAM::GetInstance().SetProcessId(pids.empty() ? pid : pids);
+    CPU::GetInstance().SetProcessId(pids.empty() ? pid : pids);
+    Navigation::GetInstance().SetProcessId(pid);
+    AISchedule::GetInstance().SetProcessId(pid);
+    Threads::GetInstance().SetProcessId(pids.empty() ? pid : pids);
+    FileDescriptor::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     CPUInfo::GetInstance().SetPids(pids.empty() ? pid : pids);
-}
-
-void SpProfilerFactory::SetProfilerLayer(const std::string &layer)
-{
-    FPS &fps = FPS::GetInstance();
-    fps.SetLayerName(layer);
 }
 
 void SpProfilerFactory::SetProfilerGameLayer(const std::string &isGameView)
 {
-    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
-    profilerFps.SetGameLayer(isGameView);
+    ProfilerFPS::GetInstance().SetGameLayer(isGameView);
 }
 
-void SpProfilerFactory::SetByTrace(std::string message)
+void SpProfilerFactory::SetByTrace(const std::string& message)
 {
     std::vector<std::string> values;
     std::string delimiter = "||";
@@ -274,6 +254,10 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         }
         case CommandType::CT_CI: {
             profiler = &CPUInfo::GetInstance();
+            break;
+        }
+        case CommandType::CT_LF: {
+            profiler = &LockFrequency::GetInstance();
             break;
         }
         default:

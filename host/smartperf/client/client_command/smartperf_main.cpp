@@ -99,22 +99,10 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     }
 
     /* ************The command line for the following parameters is not implemented****************** */
-    auto itr = keys.find("f1");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
-    itr = keys.find("f2");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
-    itr = keys.find("fl");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
-    itr = keys.find("ftl");
-    if (keys.end() != itr) {
-        keys.erase(itr);
-    }
+    keys.erase("f1");
+    keys.erase("f2");
+    keys.erase("fl");
+    keys.erase("ftl");
     return OHOS::SmartPerf::SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 
@@ -237,14 +225,14 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
-    if (argc < 0) {
+    const int maxExpectedArgs = 100;
+    if (argc > maxExpectedArgs) {
         std::cout << "Invalid argument count" << std::endl;
         return -1;
     }
     std::string errorInfo;
     std::vector<std::string> vec;
-    const int maxExpectedArgs = 100;
-    for (int i = 0; i < argc && i < maxExpectedArgs; i++) {
+    for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
     if (!g_checkCmdParam(vec, errorInfo)) {
