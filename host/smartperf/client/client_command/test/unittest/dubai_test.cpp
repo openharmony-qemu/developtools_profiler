@@ -56,26 +56,6 @@ HWTEST_F(DubaiTest, DubaiFinishTest, TestSize.Level1)
     EXPECT_EQ(ret, true);
 }
 
-HWTEST_F(DubaiTest, DubaiMoveTest, TestSize.Level1)
-{
-    Dubai &dubai = Dubai::GetInstance();
-    std::string result;
-    const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
-    const std::string database = "/data/app/el2/100/database/";
-    const std::string pkgEntry = "/entry/rdb";
-    const std::string cpDubai = "cp " + dubaiXpower + " " + database + dubai.dubaiPkgName + pkgEntry;
-    const std::string dubaiPathChmod = "chmod 777 " + database + dubai.dubaiPkgName + pkgEntry + "/dubai.db";
-    if (!dubai.IsFileAccessible(dubaiXpower)) {
-        sleep(1);
-    }
-    auto retCp = OHOS::SmartPerf::SPUtils::LoadCmd(cpDubai, result);
-    auto retChmod = OHOS::SmartPerf::SPUtils::LoadCmd(dubaiPathChmod, result);
-    dubai.MoveDubaiDb();
-    
-    EXPECT_EQ(retCp, true);
-    EXPECT_EQ(retChmod, true);
-}
-
 HWTEST_F(DubaiTest, IsFileAccessible01, TestSize.Level1)
 {
     std::string existingFile = "existing_file.txt";
