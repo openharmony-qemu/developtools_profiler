@@ -29,7 +29,11 @@ public:
         T retval = {};
         auto end = data + size;
         auto start = data + format.offset;
-        ReadData(start, end, &retval, format.size);
+        size_t copySize = format.size;
+        if (sizeof(T) < format.size) {
+            copySize = sizeof(T);
+        }
+        ReadData(start, end, &retval, copySize);
         return retval;
     }
 
