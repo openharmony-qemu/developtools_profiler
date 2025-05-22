@@ -100,6 +100,8 @@ private:
     const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
     const std::string gpuCounterfilePath = "/data/local/tmp/gpu_counter.csv";
+    const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
+    const std::string dubaiFilePath = "/data/local/tmp/dubai/dubai.db";
     std::string tracefilePath = "";
     const std::string logFilePath = "/data/local/tmp/spdaemonlog/logfile.tar.gz";
     int sendFileSocket = -1;
