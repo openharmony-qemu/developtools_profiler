@@ -101,8 +101,8 @@ private:
         {"fpsohtest", {ArgumentParser::ArgType::BOOL, "used by the vilidator to obtain the fps"}},
         {"-gc", {ArgumentParser::ArgType::BOOL, "get gpu counter default frequency is 50"}},
         {"-GPU_COUNTER", {ArgumentParser::ArgType::INT,
-            std::string("get gpu counter frequency which can be set in range [50,10000] and ") +
-            "must be a factor of 50, for example: -GPU_COUNTER 250", 50, 10000}
+            std::string("get gpu counter frequency which can be set in range [50,1000] and ") +
+            "must be a factor of 50, for example: -GPU_COUNTER 250", 50, 1000}
         },
         {"-ge", {ArgumentParser::ArgType::BOOL, "get game event"}},
         {"-fc", {ArgumentParser::ArgType::BOOL, "get caton info"}},
