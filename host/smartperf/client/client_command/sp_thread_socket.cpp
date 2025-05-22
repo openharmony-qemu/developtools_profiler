@@ -491,11 +491,9 @@ int SpThreadSocket::SendFile(const std::string& filePath)
     logFile.seekg(0, std::ios::beg);
     std::streamsize totalSent = 0;
     while (!logFile.eof()) {
-        WLOGI("!logFile.eof() gcount: %zd", logFile.gcount());
         logFile.read(fileSocketBuffer, sizeof(fileSocketBuffer));
         std::streamsize bytesRead = logFile.gcount();
         ssize_t bytesSent = send(sendFileSocket, fileSocketBuffer, bytesRead, 0);
-        WLOGI("!send gcount: %zd", bytesSent);
         if (bytesSent < 0) {
             WLOGE("Send log file failed");
             logFile.close();
@@ -553,24 +551,6 @@ void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::str
     if (ret < 0) {
         return;
     }
-}
-
-void SpThreadSocket::StartGpuCounter() const
-{
-    SPUtils::CreateDir(smartperfDevicePath);
-    char filePathChar[PATH_MAX] = {0x00};
-    if (realpath(gpuCounterfilePath.c_str(), filePathChar) == nullptr) {
-        LOGD("%s is not exist, init finish.", gpuCounterfilePath.c_str());
-    } else {
-        std::remove(filePathChar);
-        LOGD("%s is existed, remove.", gpuCounterfilePath.c_str());
-    }
-    GpuCounter::GetInstance().StartCollect(GpuCounter::GC_START);
-}
-
-void SpThreadSocket::SaveGpuCounter() const
-{
-    GpuCounter::GetInstance().GetInstance().SaveData(smartperfDevicePath);
 }
 
 void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data)
@@ -749,18 +729,18 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         retCode = "UDP status is normal";
         spSocket.Sendto(retCode);
         LOGD("UDP status is normal");
-    } else if (iterator->first == MessageType::START_GPU_COUNTER) {
-        StartGpuCounter();
     } else if (iterator->first == MessageType::SAVE_GPU_COUNTER) {
         GetSocketPort(recvBuf);
-        SaveGpuCounter();
-        ConnectAndSendFile(spSocket, gpuCounterfilePath);
+        std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
+        ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
     } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
         tracefilePath = "";
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         if (taskMgr_ != nullptr) {
+            // UDP (device) 停止时，设置GPU_COUNTER保存路径
+            GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
             taskMgr_->WriteToCSV();

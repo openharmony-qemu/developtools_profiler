@@ -46,7 +46,7 @@ namespace OHOS {
             if (isPause) {
                 return;
             }
-
+            std::unique_lock<std::mutex> lock(gpuCounterLock);
             SaveData(savePathDirectory_);
             StopCollect();
             gpuCounterData.clear();
@@ -104,6 +104,8 @@ namespace OHOS {
 
         void GpuCounter::SaveData(const std::string& path)
         {
+            // device与editor采集都会走tcp stop时的SaveData，但是deivce同时会走FinishtExecutionOnce导致SaveData执行两次
+            // 目前device在第一次保存数据后会清空，第二次SaveData实际不生效
             if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0 || path.empty()) {
                 return;
             }
@@ -117,7 +119,7 @@ namespace OHOS {
             std::ofstream outFile;
             outFile.open(gpuCounterDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
-                WLOGE("open GpuCounter data file failed.");
+                WLOGE("open GpuCounter data file failed. %s", gpuCounterDataPath.c_str());
                 return;
             }
             static const std::string title = "startTime,"
@@ -197,5 +199,10 @@ namespace OHOS {
         {
             frequency = freq;
         }
+
+        std::mutex &GpuCounter::GetGpuCounterLock()
+        {
+            return gpuCounterLock;
+        }   
     }
 }

@@ -56,6 +56,7 @@ namespace OHOS {
             void SetSavePathDirectory(const std::string& dir);
             void SaveData(const std::string& path);
             void SetFrequency(const int& freq);
+            std::mutex &GetGpuCounterLock();
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
@@ -64,6 +65,7 @@ namespace OHOS {
             std::vector<std::string> gpuCounterData;
             std::vector<std::string> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
+            std::mutex gpuCounterLock;
             std::string gpuCounterRealtimeData;
             const std::string createPlugin = "onCreatePlugin";
             std::string savePathDirectory_ {"/data/local/tmp/"};
