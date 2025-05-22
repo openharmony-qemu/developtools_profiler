@@ -214,7 +214,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_VIEW, std::string("-VIEW") },
     { CommandType::CT_FL, std::string("-fl") },
     { CommandType::CT_FTL, std::string("-ftl") },
-    { CommandType::CT_GC, std::string("-gc") },
+    { CommandType::CT_GC, std::string("-GPU_COUNTER") },
     { CommandType::CT_NAV, std::string("-nav") },
     { CommandType::CT_O, std::string("-o") },
     { CommandType::CT_LF, std::string("-lockfreq") },

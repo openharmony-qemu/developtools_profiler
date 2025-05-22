@@ -38,7 +38,6 @@ namespace OHOS {
             if (isPause) {
                 return;
             }
-            collectDur = 50;
             StartCollect(GpuCounter::GC_START);
         }
 
@@ -60,8 +59,8 @@ namespace OHOS {
 
         void GpuCounter::StartCollect(GcCollectType type)
         {
-            if (collectDur == 0) {
-                WLOGE("GpuCounter collectDur is not set");
+            if (frequency == 0) {
+                WLOGE("GpuCounter frequency is not set");
                 return;
             }
             std::unique_ptr<GpuCounterCallback> gpuCounterCallback = std::make_unique<GpuCounterCallbackImpl>();
@@ -86,14 +85,15 @@ namespace OHOS {
             if (type == GC_START && gcStatus == GC_INIT) {
                 gpuCounterData.clear();
                 gpuCounterRealtimeData.clear();
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, frequency, std::move(gpuCounterCallback));
                 if (ret == 0) {
+                    LOGI("GpuCounter start collect, frequency = %d", frequency);
                     gcStatus = GC_RUNNING;
                 } else {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
             } else if (type == GC_RESTART && gcStatus == GC_RUNNING) {
-                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, collectDur, std::move(gpuCounterCallback));
+                int ret = servicePlugin()->StartGetGpuPerfInfo(duration, frequency, std::move(gpuCounterCallback));
                 if (ret != 0) {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
                 }
@@ -191,6 +191,11 @@ namespace OHOS {
             if (ret == 0) {
                 gcStatus = GC_INIT;
             }
+        }
+
+        void GpuCounter::SetFrequency(const int& freq)
+        {
+            frequency = freq;
         }
     }
 }

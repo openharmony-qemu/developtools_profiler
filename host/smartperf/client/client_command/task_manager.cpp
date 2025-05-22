@@ -39,6 +39,7 @@
 #include "include/AI_schedule.h"
 #include "include/Threads.h"
 #include "include/FileDescriptor.h"
+#include "include/GpuCounter.h"
 #include "Capture.h"
 #include <sys/syscall.h>
 #include <filesystem>
@@ -88,6 +89,10 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
 {
     for (auto& [key, val] : argv) {
         auto iter = COMMAND_MAP.find(key);
+        if (iter == COMMAND_MAP.end() && (key == "-GPU_COUNTER" || key == "gc")) {
+            GpuCounter::GetInstance().SetFrequency(50);
+            continue;
+        }
         if (iter == COMMAND_MAP.end()) {
             continue;
         }
@@ -118,6 +123,17 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
             }
             case CommandType::CT_OUT: {
                 SetFilePath(std::get<std::string>(val));
+                continue;
+            }
+            case CommandType::CT_GC: {
+                int frequency = std::get<int>(val);
+                if(frequency <= 10000 && frequency >= 50 && frequency % 50 == 0) {
+                    GpuCounter::GetInstance().SetFrequency(frequency);
+                } else {
+                    LOGW("GPU_COUNTER frequency must be a factor of 50 and in range [50,10000], " +
+                        "this frequency is %d, set to 50", frequency);
+                    GpuCounter::GetInstance().SetFrequency(50);
+                }
                 continue;
             }
             default:

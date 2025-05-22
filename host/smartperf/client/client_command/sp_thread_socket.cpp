@@ -571,8 +571,6 @@ void SpThreadSocket::StartGpuCounter() const
 void SpThreadSocket::SaveGpuCounter() const
 {
     GpuCounter::GetInstance().GetInstance().SaveData(smartperfDevicePath);
-    GpuCounter::GetInstance().GetGpuCounterData().clear();
-    GpuCounter::GetInstance().StopCollect();
 }
 
 void SpThreadSocket::LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data)
