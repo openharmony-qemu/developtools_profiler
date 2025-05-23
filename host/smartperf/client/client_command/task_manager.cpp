@@ -111,10 +111,10 @@ void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
 
 void TaskManager::SpecialKeyProcess(const std::string& specKey)
 {
-    if (key == "-LOW_POWER") {
+    if (specKey == "-LOW_POWER") {
         FPS::GetInstance().hapLowFpsFlag = true;
     }
-    if (key == "-fc") {
+    if (specKey == "-fc") {
         FPS::GetInstance().hapNeedCatonInfo = true;
     }
 }
