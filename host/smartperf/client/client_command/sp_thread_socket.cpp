@@ -756,6 +756,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         if (taskMgr_ != nullptr) {
             // UDP (device) 停止时，设置GPU_COUNTER保存路径
+            SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
