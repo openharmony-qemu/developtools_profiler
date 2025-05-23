@@ -85,6 +85,40 @@ TaskManager::~TaskManager()
     dataFile_.close();
 }
 
+void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
+{
+    const int defaultFreq = 50;
+    const int minFreq = 50;
+    const int maxFreq = 1000;   
+    if (std::holds_alternative<bool>(value)) {
+        // 如果val是bool类型，代表参数为-gc，使用默认频率
+        GpuCounter::GetInstance().SetFrequency(defaultFreq);
+        return;
+    }
+
+    // -GPU_COUNTER为int类型
+    // 参数拓展时，如果有其他类型，需要增加if判断，否则会variant识别异常导致crash
+    int frequency = std::get<int>(value);
+    // GPU_COUNTER频率最大支持10000，但daemon采集间隔是1000。频率设置应小于采集间隔。
+    if(frequency <= maxFreq && frequency >= minFreq && frequency % minFreq == 0) {
+        GpuCounter::GetInstance().SetFrequency(frequency);
+    } else {
+        LOGW("GPU_COUNTER frequency must be a factor of 50 and in range [50,1000], " +
+            "this frequency is %d, set to 50", frequency);
+        GpuCounter::GetInstance().SetFrequency(defaultFreq);
+    }
+}
+
+void TaskManager::SpecialKeyProcess(const std::string& specKey)
+{
+    if (key == "-LOW_POWER") {
+        FPS::GetInstance().hapLowFpsFlag = true;
+    }
+    if (key == "-fc") {
+        FPS::GetInstance().hapNeedCatonInfo = true;
+    }
+}
+
 void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv)
 {
     for (auto& [key, val] : argv) {
@@ -92,13 +126,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
         if (iter == COMMAND_MAP.end()) {
             continue;
         }
-
-        if (key == "-LOW_POWER") {
-            FPS::GetInstance().hapLowFpsFlag = true;
-        }
-        if (key == "-fc") {
-            FPS::GetInstance().hapNeedCatonInfo = true;
-        }
+        SpecialKeyProcess(key);
         switch (iter->second) {
             case CommandType::CT_N: {
                 collectCount_ = std::get<int>(val);
@@ -122,23 +150,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
                 continue;
             }
             case CommandType::CT_GC: {
-                if (std::holds_alternative<bool>(val)) {
-                    // 如果val是bool类型，代表参数为-gc，使用默认频率
-                    GpuCounter::GetInstance().SetFrequency(50);
-                    break;
-                }
-
-                // -GPU_COUNTER为int类型
-                // 参数拓展时，如果有其他类型，需要增加if判断，否则会variant识别异常导致crash
-                int frequency = std::get<int>(val);
-                // GPU_COUNTER频率最大支持10000，但daemon采集间隔是1000。频率设置应小于采集间隔。
-                if(frequency <= 1000 && frequency >= 50 && frequency % 50 == 0) {
-                    GpuCounter::GetInstance().SetFrequency(frequency);
-                } else {
-                    LOGW("GPU_COUNTER frequency must be a factor of 50 and in range [50,1000], " +
-                        "this frequency is %d, set to 50", frequency);
-                    GpuCounter::GetInstance().SetFrequency(50);
-                }
+                GpuCounterProcess(val);
             }
             default:
                 break;
