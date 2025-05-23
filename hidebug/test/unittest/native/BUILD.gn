@@ -33,11 +33,26 @@ ohos_unittest("hidebug_test") {
     "$hidebug_path/interfaces/native/innerkits:libhidebug",
   ]
 
-  external_deps = [ "hiview:libucollection_client" ]
+  external_deps = [
+    "bounds_checking_function:libsec_shared",
+    "hiview:libucollection_client",
+  ]
 
   include_dirs = [
     "$hidebug_path/frameworks/native/include",
     "$hidebug_path/interfaces/native/innerkits/include",
     "$hidebug_path/interfaces/native/kits/include",
   ]
+}
+
+ohos_executable("malloc_dispatch_exe") {
+  sources = [ "hidebug_malloc_dispatch.cpp" ]
+  include_dirs = [ "$hidebug_path/interfaces/native/kits/include" ]
+  defines = [ "HOOK_ENABLE" ]
+  deps = [ "$hidebug_path/frameworks/hidebug_ndk:ohhidebug" ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
+  install_enable = false
+  install_images = [ "system" ]
+  part_name = "hiprofiler"
+  subsystem_name = "developtools"
 }

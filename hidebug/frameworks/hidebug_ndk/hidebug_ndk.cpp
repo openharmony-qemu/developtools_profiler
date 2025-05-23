@@ -22,6 +22,18 @@
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
 #include "securec.h"
+#include "musl_preinit_common.h"
+
+static volatile struct MallocDispatchType* g_lastDispatchTable = nullptr;
+static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
+	.malloc = __libc_malloc_default_dispatch.malloc,
+	.free = __libc_malloc_default_dispatch.free,
+	.mmap = __libc_malloc_default_dispatch.mmap,
+	.munmap = __libc_malloc_default_dispatch.munmap,
+	.calloc = __libc_malloc_default_dispatch.calloc,
+	.realloc = __libc_malloc_default_dispatch.realloc,
+};
+static struct MallocDispatchType g_currentDispatchDatable = __libc_malloc_default_dispatch;
 
 double OH_HiDebug_GetAppCpuUsage()
 {
@@ -157,4 +169,52 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
     }
     *value = static_cast<uint32_t>(ret.value());
     return HIDEBUG_SUCCESS;
+}
+
+HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *newDispatchTable)
+{
+    if (newDispatchTable == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    volatile struct MallocDispatchType *lastDispatchTable = (struct MallocDispatchType *)atomic_load_explicit(
+        &__musl_libc_globals.current_dispatch_table, memory_order_acquire);
+    if (lastDispatchTable != nullptr) {
+        g_lastDispatchTable = lastDispatchTable;
+    }
+    if (newDispatchTable->malloc != nullptr) {
+        g_currentDispatchDatable.malloc = newDispatchTable->malloc;
+    }
+    if (newDispatchTable->free != nullptr) {
+        g_currentDispatchDatable.free = newDispatchTable->free;
+    }
+    if (newDispatchTable->mmap != nullptr) {
+        g_currentDispatchDatable.mmap = newDispatchTable->mmap;
+    }
+    if (newDispatchTable->munmap != nullptr) {
+        g_currentDispatchDatable.munmap = newDispatchTable->munmap;
+    }
+    if (newDispatchTable->calloc != nullptr) {
+        g_currentDispatchDatable.calloc = newDispatchTable->calloc;
+    }
+    if (newDispatchTable->realloc != nullptr) {
+        g_currentDispatchDatable.realloc = newDispatchTable->realloc;
+    }
+    atomic_store_explicit(&__custom_hook_flag, (volatile bool)true, memory_order_seq_cst);
+    atomic_exchange_explicit(&__musl_libc_globals.current_dispatch_table,
+                             (volatile const long long)&g_currentDispatchDatable, memory_order_acq_rel);
+    return HIDEBUG_SUCCESS;
+}
+
+HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void)
+{
+    return &g_defaultDispatchDatable;
+}
+
+void OH_HiDebug_RestoreMallocDispatchTable(void)
+{
+    atomic_store_explicit(&__custom_hook_flag, (volatile bool)false, memory_order_seq_cst);
+    atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)g_lastDispatchTable,
+                          memory_order_seq_cst);
+    g_currentDispatchDatable = __libc_malloc_default_dispatch;
+    g_lastDispatchTable = nullptr;
 }

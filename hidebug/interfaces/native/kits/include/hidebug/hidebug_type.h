@@ -39,7 +39,8 @@
 #define HIVIEWDFX_HIDEBUG_TYPE_H
 
 #include <stdint.h>
-
+#include <stddef.h>
+#include <unistd.h>
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -179,6 +180,20 @@ typedef enum HiDebug_TraceFlag {
     /** Capture all thread trace */
     HIDEBUG_TRACE_FLAG_ALL_THREADS = 2
 } HiDebug_TraceFlag;
+
+/**
+ * @brief Defines structure type of malloc dispatch table.
+ *
+ * @since 20
+*/
+typedef struct HiDebug_MallocDispatch {
+    void* (*malloc)(size_t);
+    void* (*calloc)(size_t, size_t);
+    void* (*realloc)(void*, size_t);
+    void (*free)(void*);
+    void* (*mmap) (void*, size_t, int, int, int, off_t);
+    int (*munmap) (void*, size_t);
+} HiDebug_MallocDispatch;
 
 /**
  * @brief Defines Js stack frame content
