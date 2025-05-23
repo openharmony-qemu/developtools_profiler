@@ -31,6 +31,7 @@
 #include <iostream>
 #include <mutex>
 #include <thread>
+#include <unordered_set>
 
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 
