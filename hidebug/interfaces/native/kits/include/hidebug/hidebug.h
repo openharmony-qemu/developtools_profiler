@@ -195,7 +195,7 @@ HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(HiDebug_Backtrace_Object object, vo
  * @return BacktraceObject if Success or NULL if is not supported on current arch
  * @since 20
  */
-HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject();
+HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject(void);
 
 /**
  * @brief Destroy a backtrace object and the function is not signal-safe.
