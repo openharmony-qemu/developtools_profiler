@@ -949,6 +949,10 @@ bool CheckTypeForNapiValue(napi_env env, napi_value value, napi_valuetype expect
 
 bool ParseGwpAsanOptions(napi_env env, napi_value value, GwpAsanParams& gwpAsanParams)
 {
+    if (!CheckTypeForNapiValue(env, value, napi_object)) {
+        HILOG_ERROR(LOG_CORE, "The type of options must be GwpAsanOptions.");
+        return false;
+    }
     bool hasProperty = false;
     napi_valuetype valueType = napi_undefined;
 
