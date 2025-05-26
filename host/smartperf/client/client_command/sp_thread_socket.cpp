@@ -759,6 +759,9 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
+            if (!taskMgr_->getRunning()) {
+                GpuCounter::GetInstance().GetInstance().FinishtExecutionOnce(false);
+            }
             taskMgr_->Stop();
             taskMgr_->WriteToCSV();
         }
