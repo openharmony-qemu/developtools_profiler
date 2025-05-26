@@ -152,33 +152,6 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
 
 /**
- * @brief Replace MallocDispatch table with developer customized memory functions.
- *
- * @param dispatchTable Indicates pointer of custom dispatch table.
- * @return Result code
- *         {@link HIDEBUG_SUCCESS} Set customized dispatch table success.
- *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument, dispatchTable is null pointer.
- * @since 20
- */
-HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *dispatchTable);
-
-/**
- * @brief Obtain current MallocDispatch table.
- *
- * @return  The default dispatch table of malloc function.
-
- * @since 20
- */
-HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void);
-
-/**
- * @brief Restore original MallocDispatch table.
- *
- * @since 20
- */
-void OH_HiDebug_RestoreMallocDispatchTable(void);
-
-/**
  * @brief Get backtrace frames start from the given frame pointer and the function is signal-safe.
  *
  * @param object The backtrace object create by {@link OH_HiDebug_CreateBacktraceObject}.
