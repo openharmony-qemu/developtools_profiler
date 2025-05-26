@@ -595,9 +595,4 @@ void TaskManager::DeleteTask(SpProfiler* task)
         }
     }
 }
-
-bool TaskManager::GetRunning() const
-{
-    return running_.load();
-}
 }

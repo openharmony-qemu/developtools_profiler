@@ -759,9 +759,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
-            if (!taskMgr_->GetRunning()) {
-                GpuCounter::GetInstance().GetInstance().FinishtExecutionOnce(false);
-            }
             taskMgr_->Stop();
             taskMgr_->WriteToCSV();
         }
@@ -789,11 +786,16 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
             taskMgr_->DisableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
+        LOGI("----------------------APP_PAUSE_COLLECT------------------------------");
         if (taskMgr_ != nullptr) {
+            SPUtils::CreateDir(gpuCounterfilePath);
+            GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
+            GpuCounter::GetInstance().GetInstance().SetIsPause(true);
             taskMgr_->Stop(true);
         }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
         StartHapCollecting(spSocket);
+        GpuCounter::GetInstance().GetInstance().SetIsPause(false);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, indexFilePath);
@@ -926,6 +928,7 @@ void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
             return;
         }
         taskMgr_->Start();
+        taskMgr_->SetRecordData(true);
         taskMgr_->Wait();
         LOGD("Data collecting thread exiting.");
     });

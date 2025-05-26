@@ -57,6 +57,7 @@ namespace OHOS {
             void SaveData(const std::string& path);
             void SetFrequency(const int& freq);
             std::mutex &GetGpuCounterLock();
+            void SetIsPause(bool isPause);
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
@@ -70,6 +71,7 @@ namespace OHOS {
             const std::string createPlugin = "onCreatePlugin";
             std::string savePathDirectory_ {"/data/local/tmp/"};
             int frequency = 50;
+            bool isPause_ {false};
         };
     };
 }

@@ -56,7 +56,6 @@ public:
     void SetNextTime(long long& nextTime);
     void SetRecordState(bool record);
     void DeleteTask(SpProfiler* task);
-    bool GetRunning() const;
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
