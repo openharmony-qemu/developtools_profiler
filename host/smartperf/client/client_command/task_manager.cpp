@@ -596,8 +596,8 @@ void TaskManager::DeleteTask(SpProfiler* task)
     }
 }
 
-std::atomic_bool TaskManager::GetRunning() const
+bool TaskManager::GetRunning() const
 {
-    return running_;
+    return running_.load();
 }
 }
