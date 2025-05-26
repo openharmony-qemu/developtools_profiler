@@ -22,19 +22,19 @@
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
 #include "securec.h"
+#ifdef HOOK_ENABLE
 #include "musl_preinit_common.h"
-
-static volatile struct MallocDispatchType* g_lastDispatchTable = nullptr;
+static volatile struct MallocDispatchType *g_lastDispatchTable = nullptr;
 static struct HiDebug_MallocDispatch g_defaultDispatchDatable = {
-	.malloc = __libc_malloc_default_dispatch.malloc,
-	.free = __libc_malloc_default_dispatch.free,
-	.mmap = __libc_malloc_default_dispatch.mmap,
-	.munmap = __libc_malloc_default_dispatch.munmap,
-	.calloc = __libc_malloc_default_dispatch.calloc,
-	.realloc = __libc_malloc_default_dispatch.realloc,
+    .malloc = __libc_malloc_default_dispatch.malloc,
+    .calloc = __libc_malloc_default_dispatch.calloc,
+    .realloc = __libc_malloc_default_dispatch.realloc,
+    .free = __libc_malloc_default_dispatch.free,
+    .mmap = __libc_malloc_default_dispatch.mmap,
+    .munmap = __libc_malloc_default_dispatch.munmap,
 };
 static struct MallocDispatchType g_currentDispatchDatable = __libc_malloc_default_dispatch;
-
+#endif
 double OH_HiDebug_GetAppCpuUsage()
 {
     return OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetCpuUsage();
@@ -173,6 +173,7 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
 
 HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *newDispatchTable)
 {
+#ifdef HOOK_ENABLE
     if (newDispatchTable == nullptr) {
         return HIDEBUG_INVALID_ARGUMENT;
     }
@@ -203,18 +204,27 @@ HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatc
     atomic_exchange_explicit(&__musl_libc_globals.current_dispatch_table,
                              (volatile const long long)&g_currentDispatchDatable, memory_order_acq_rel);
     return HIDEBUG_SUCCESS;
+#else
+    return HIDEBUG_INVALID_ARGUMENT;
+#endif
 }
 
 HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void)
 {
+#ifdef HOOK_ENABLE
     return &g_defaultDispatchDatable;
+#else
+    return nullptr;
+#endif
 }
 
 void OH_HiDebug_RestoreMallocDispatchTable(void)
 {
+#ifdef HOOK_ENABLE
     atomic_store_explicit(&__custom_hook_flag, (volatile bool)false, memory_order_seq_cst);
     atomic_store_explicit(&__musl_libc_globals.current_dispatch_table, (volatile const long long)g_lastDispatchTable,
                           memory_order_seq_cst);
     g_currentDispatchDatable = __libc_malloc_default_dispatch;
     g_lastDispatchTable = nullptr;
+#endif
 }

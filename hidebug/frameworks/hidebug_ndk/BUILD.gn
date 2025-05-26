@@ -20,18 +20,20 @@ ohos_shared_library("ohhidebug") {
   ]
 
   sources = [
-    "hidebug_ndk.cpp",
     "hidebug_backtrace.cpp",
+    "hidebug_ndk.cpp",
   ]
-
+  if (!is_asan) {
+    defines = [ "HOOK_ENABLE" ]
+  }
   deps = [ "../native:hidebug_native" ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "faultloggerd:libbacktrace_local",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
     "hiview:libucollection_utility",
-    "faultloggerd:libbacktrace_local",
   ]
 
   innerapi_tags = [ "ndk" ]
