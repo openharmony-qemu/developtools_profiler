@@ -61,7 +61,7 @@ HiDebug_ErrorCode OH_HiDebug_SymbolicAddress(HiDebug_Backtrace_Object object, vo
     return HIDEBUG_SUCCESS;
 }
 
-HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject()
+HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject(void)
 {
     return reinterpret_cast<HiDebug_Backtrace_Object>(OHOS::HiviewDFX::FpBacktrace::CreateInstance());
 }

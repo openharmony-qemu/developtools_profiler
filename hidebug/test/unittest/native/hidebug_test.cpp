@@ -22,6 +22,8 @@
 #include "hidebug_base.h"
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
+#include "securec.h"
+#include <sys/mman.h>
 
 using namespace testing::ext;
 
@@ -35,6 +37,50 @@ protected:
         system("param set libc.hook_mode 0");
     }
 };
+
+static void* TestCustomMalloc(size_t size)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    return original->malloc(size);
+}
+static void DesCustomMalloc(HiDebug_MallocDispatch* current)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    original->free(current);
+    OH_HiDebug_RestoreMallocDispatchTable();
+}
+
+static void TestCustomFree(void* ptr)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    EXPECT_NE(ptr, nullptr);
+    original->free(ptr);
+}
+
+static void* TestCustomMmap(void* addr, size_t len, int prot, int flags, int fd, off_t offset)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    return original->mmap(addr, len, prot, flags, fd, offset);
+}
+
+static int TestCustomMunmap(void* addr, size_t len)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    EXPECT_NE(addr, nullptr);
+    return original->munmap(addr, len);
+}
+
+static void* TestCustomCalloc(size_t nmemb, size_t size)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    return original->calloc(nmemb, size);
+}
+
+static void* TestCustomRealloc(void* ptr, size_t size)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    return original->realloc(ptr, size);
+}
 
 /**
  * @tc.name: InitEnvironmentParam
@@ -326,4 +372,84 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemory, TestSize.Level1)
     EXPECT_EQ(OH_HiDebug_GetGraphicsMemory(nullptr), HIDEBUG_INVALID_ARGUMENT);
     EXPECT_GE(value, 0);
 }
+
+/**
+ * @tc.name: OH_HiDebug_SetMallocDispatchTable
+ * @tc.desc: test OH_HiDebug_SetMallocDispatchTable. set malloc dispatch table.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTable, TestSize.Level1)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    EXPECT_NE(original, nullptr);
+    HiDebug_MallocDispatch* current = (HiDebug_MallocDispatch*)original->malloc(sizeof(HiDebug_MallocDispatch));
+    EXPECT_NE(current, nullptr);
+    memset_s(current, sizeof(HiDebug_MallocDispatch), 0, sizeof(HiDebug_MallocDispatch));
+    current->malloc = TestCustomMalloc;
+    current->free = TestCustomFree;
+    EXPECT_EQ(OH_HiDebug_SetMallocDispatchTable(nullptr), HIDEBUG_INVALID_ARGUMENT);
+    EXPECT_EQ(OH_HiDebug_SetMallocDispatchTable(current), HIDEBUG_SUCCESS);
+    int* temp = (int*)malloc(sizeof(int));
+    *temp = 8;
+    int* temp2 = (int*)malloc(sizeof(int));
+    *temp2 = 10;
+    int ret = *temp2 + *temp;
+    EXPECT_EQ(ret, 18);
+    free(temp);
+    free(temp2);
+    DesCustomMalloc(current);
+}
+
+/**
+ * @tc.name: OH_HiDebug_SetMallocDispatchTableMmap test mmap and munmap
+ * @tc.desc: test OH_HiDebug_SetMallocDispatchTable. set malloc dispatch table.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTableMmap, TestSize.Level1)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    EXPECT_NE(original, nullptr);
+    HiDebug_MallocDispatch* current = (HiDebug_MallocDispatch*)original->malloc(sizeof(HiDebug_MallocDispatch));
+    EXPECT_NE(current, nullptr);
+    memset_s(current, sizeof(HiDebug_MallocDispatch), 0, sizeof(HiDebug_MallocDispatch));
+    current->mmap = TestCustomMmap;
+    current->munmap = TestCustomMunmap;
+    EXPECT_EQ(OH_HiDebug_SetMallocDispatchTable(current), HIDEBUG_SUCCESS);
+    char* tempMap = nullptr;
+    tempMap = (char*)mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    EXPECT_NE(tempMap, nullptr);
+    if (sprintf_s(tempMap, 100, "%s", "hi, this is test mmap") > 0) {
+        EXPECT_EQ(std::string(tempMap), "hi, this is test mmap");
+    }
+    munmap(tempMap, 100);
+    DesCustomMalloc(current);
+}
+
+/**
+ * @tc.name: OH_HiDebug_SetMallocDispatchTableMmap test mmap and munmap
+ * @tc.desc: test OH_HiDebug_SetMallocDispatchTable. set malloc dispatch table.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTableAlloc, TestSize.Level1)
+{
+    HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
+    EXPECT_NE(original, nullptr);
+    HiDebug_MallocDispatch* current = (HiDebug_MallocDispatch*)original->malloc(sizeof(HiDebug_MallocDispatch));
+    EXPECT_NE(current, nullptr);
+    memset_s(current, sizeof(HiDebug_MallocDispatch), 0, sizeof(HiDebug_MallocDispatch));
+    current->calloc = TestCustomCalloc;
+    current->realloc = TestCustomRealloc;
+    EXPECT_EQ(OH_HiDebug_SetMallocDispatchTable(current), HIDEBUG_SUCCESS);
+    int* tempCalloc = (int*)calloc(10, sizeof(int));
+    EXPECT_NE(tempCalloc, nullptr);
+    *tempCalloc = 10;
+    EXPECT_EQ(*tempCalloc, 10);
+    int* temp = (int*)realloc(tempCalloc, 20 * sizeof(int));
+    EXPECT_NE(temp, nullptr);
+    *temp = 20;
+    EXPECT_EQ(*temp, 20);
+    free(temp);
+    DesCustomMalloc(current);
+}
+
 } // namespace
