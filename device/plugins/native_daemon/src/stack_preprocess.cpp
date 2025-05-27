@@ -1369,6 +1369,7 @@ void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& sy
 
 bool StackPreprocess::FlushRecordStatistics()
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     if (statisticsPeriodData_.empty()) {
         return false;
     }
@@ -1635,6 +1636,7 @@ void StackPreprocess::FillDwarfErrorStack()
 
 void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     if (applyAndReleaseMatchPeriodListData_.empty()) {
         return;
     }
