@@ -786,7 +786,6 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
             taskMgr_->DisableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
-        LOGI("----------------------APP_PAUSE_COLLECT------------------------------");
         if (taskMgr_ != nullptr) {
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
@@ -928,7 +927,6 @@ void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
             return;
         }
         taskMgr_->Start();
-        taskMgr_->SetRecordData(true);
         taskMgr_->Wait();
         LOGD("Data collecting thread exiting.");
     });

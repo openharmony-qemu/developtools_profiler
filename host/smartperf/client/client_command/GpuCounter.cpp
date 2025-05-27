@@ -35,13 +35,11 @@ namespace OHOS {
 
         void GpuCounter::StartExecutionOnce(bool isPause)
         {
-            LOGI("GpuCounter StartExecutionOnce, isPause: %d", isPause);
             StartCollect(GpuCounter::GC_START);
         }
 
         void GpuCounter::FinishtExecutionOnce(bool isPause)
         {
-            LOGI("GpuCounter FinishtExecutionOnce, isPause: %d", isPause);
             std::unique_lock<std::mutex> lock(gpuCounterLock);
             SaveData(savePathDirectory_);
             StopCollect();
@@ -81,14 +79,12 @@ namespace OHOS {
             }
 
             if (type == GC_START && gcStatus == GC_INIT) {
-                LOGI("GpuCounter StartCollect, type: %d, gcStatus: %d, isPause_: %d", type, gcStatus, isPause_);
                 if (!isPause_) {
                     gpuCounterData.clear();
                     gpuCounterRealtimeData.clear();
                 }
                 int ret = servicePlugin()->StartGetGpuPerfInfo(duration, frequency, std::move(gpuCounterCallback));
                 if (ret == 0) {
-                    LOGI("GpuCounter start collect, frequency = %d", frequency);
                     gcStatus = GC_RUNNING;
                 } else {
                     WLOGE("GpuCounter call gameService error, ret = %d", ret);
