@@ -83,8 +83,6 @@ public:
     std::string GetToken() const;
     void SetNeedUdpToken(bool isNeed);
     void ConnectAndSendFile(SpServerSocket &spSocket, const std::string filePath);
-    void StartGpuCounter() const;
-    void SaveGpuCounter() const;
     int FileSocketConnect();
     int SendFile(const std::string& filePath);
     void StartHapCollecting(SpServerSocket &spSocket);
@@ -97,9 +95,8 @@ private:
     std::string checkToken = "";    // 拉起测试时校验
     bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
-    const std::string smartperfDevicePath = "/data/local/tmp/smartperfDevice/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
-    const std::string gpuCounterfilePath = "/data/local/tmp/gpu_counter.csv";
+    const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice";
     const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
     const std::string dubaiFilePath = "/data/local/tmp/dubai/dubai.db";
     std::string tracefilePath = "";

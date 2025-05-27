@@ -66,6 +66,8 @@ private:
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
     void ScheduleSaveData(bool switchFlag = false);
     void ProcessOnceTask(bool start);
+    void GpuCounterProcess(const ArgumentParser::ArgValue& value);
+    void SpecialKeyProcess(const std::string& specKey);
 
     ThreadPool threadPool_ {4};
     int32_t collectCount_ {-1};

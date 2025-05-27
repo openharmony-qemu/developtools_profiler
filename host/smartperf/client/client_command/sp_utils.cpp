@@ -883,6 +883,13 @@ void SPUtils::CreateDir(const std::string &dirPath)
             WLOGE("%s capture not be created!", dirPath.c_str());
         } else {
             WLOGI("%s created successfully!", dirPath.c_str());
+            return;
+        }
+
+        std::string chmodCmd = "chmod 777 " + dirPath;
+        std::string chmodResult;
+        if (!SPUtils::LoadCmd(chmodCmd, chmodResult)) {
+            WLOGE("Failed to chmod %s", dirPath.c_str());
         }
     }
 }
