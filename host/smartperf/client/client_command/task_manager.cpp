@@ -89,7 +89,7 @@ void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
 {
     const int defaultFreq = 50;
     const int minFreq = 50;
-    const int maxFreq = 1000;   
+    const int maxFreq = 1000;
     if (std::holds_alternative<bool>(value)) {
         // 如果val是bool类型，代表参数为-gc，使用默认频率
         GpuCounter::GetInstance().SetFrequency(defaultFreq);
@@ -100,7 +100,7 @@ void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
     // 参数拓展时，如果有其他类型，需要增加if判断，否则会variant识别异常导致crash
     int frequency = std::get<int>(value);
     // GPU_COUNTER频率最大支持10000，但daemon采集间隔是1000。频率设置应小于采集间隔。
-    if(frequency <= maxFreq && frequency >= minFreq && frequency % minFreq == 0) {
+    if (frequency <= maxFreq && frequency >= minFreq && frequency % minFreq == 0) {
         GpuCounter::GetInstance().SetFrequency(frequency);
     } else {
         LOGW("GPU_COUNTER frequency must be a factor of 50 and in range [50,1000], " +
