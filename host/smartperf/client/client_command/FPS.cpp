@@ -28,6 +28,7 @@
 #include "include/common.h"
 #include <sys/wait.h>
 #include <sys/types.h>
+#include "include/GameEvent.h"
 namespace OHOS {
 namespace SmartPerf {
 bool HAVE_CATON = false;
@@ -97,7 +98,7 @@ void FPS::GetGameScenStatus()
     }
     std::map<std::string, std::string> gameEvent = GameEvent::GetInstance().GetGameEventItemData();
     for (const auto& item : gameEvent) {
-        if (item.first == "scendId") {
+        if (item.first == "sceneId") {
             if (item.second == "4") {
                 inGameSceneNum++;
             } else {
