@@ -92,6 +92,7 @@ public:
     bool hapNeedCatonInfo = false;
     int catonNum = 0;
     void CalcFatalCaton(std::vector<long long>& jitters);
+    void GetGameScenStatus();
 private:
     FPS() {};
     FPS(const FPS &);
@@ -115,6 +116,8 @@ private:
     std::string processId = "";
     std::string gameLayerName;
     bool isOtherDevice = false;
+    int inGameSceneNum = 0;
+    int eleven = 11;
 };
 }
 }
