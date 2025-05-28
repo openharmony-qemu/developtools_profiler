@@ -90,6 +90,24 @@ void FPS::CalcFatalCaton(std::vector<long long>& jitters)
     }
 }
 
+void FPS::GetGameScenStatus()
+{
+    if (!hapNeedCatonInfo || catonNum > 0) {
+        return;
+    }
+    std::map<std::string, std::string> gameEvent = GameEvent::GetInstance().GetGameEventItemData();
+    for (const auto& item : gameEvent) {
+        if (item.first == "scendId") {
+            if (item.second == "4") {
+                inGameSceneNum++;
+            } else {
+                inGameSceneNum = 0;
+            }
+        }
+    }
+    LOGD("IN GAME SCENE inGameSceneNum (%d)", inGameSceneNum);
+}
+
 void FPS::StartExecutionOnce(bool isPause)
 {
     if (isPause) {
@@ -97,6 +115,7 @@ void FPS::StartExecutionOnce(bool isPause)
     }
     isGameApp = SPUtils::GetIsGameApp(pkgName);
     firstDump = true;
+    catonNum = 0;
 }
 
 void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
@@ -154,6 +173,7 @@ FpsInfo FPS::GetFpsInfo()
                 firstDump = false;
             }
         }
+        GetGameScenStatus();
         OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
         fpsInfoMax = GetSurfaceFrame(gameLayerName);
         if (fpsInfoMax.fps == 0) {
@@ -281,7 +301,7 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
-    if ((!hapLowFpsFlag || hapNeedCatonInfo) && catonNum == 0) {
+    if (!hapLowFpsFlag || (hapNeedCatonInfo && catonNum == 0 && inGameSceneNum > eleven)) {
         CalcJitters();
     }
 }
