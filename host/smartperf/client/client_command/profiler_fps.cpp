@@ -560,10 +560,10 @@ std::string ProfilerFPS::GetGameLayer()
         return gameLayer;
     }
     std::string cmdResult;
-    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_RS_TREE);
     char buf[1024] = {'\0'};
-    std::string start = "NodeId[";
-    std::string end = "] LayerId";
+    std::string start = "SURFACE_NODE[";
+    std::string end = "],";
     uint64_t nodeId;
     if (dumperSurface.empty()) {
         LOGE("ProfilerFPS::DUMPER_SURFACE failed");
@@ -576,7 +576,7 @@ std::string ProfilerFPS::GetGameLayer()
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
         std::string line = buf;
         size_t startPos = line.find(start);
-        size_t endPos = line.find(end);
+        size_t endPos = line.find_first_of(end);
         if (startPos != std::string::npos && endPos != std::string::npos) {
             nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
             LOGD("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
@@ -591,8 +591,7 @@ std::string ProfilerFPS::GetGameLayer()
             }
             nodeId = nodeId >> kShiftAmount;
             LOGD("ProfilerFPS::nodeId: (%d)", nodeId);
-            gameLayer = GetLayerName(gameLayer, nodeId, line, endPos);
-            break;
+            gameLayer = GetLayerName(gameLayer, nodeId);
         }
     }
     if (pclose(fd) == -1) {
@@ -603,15 +602,15 @@ std::string ProfilerFPS::GetGameLayer()
     return gameLayer;
 }
 
-std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos)
+std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId)
 {
     if (isPreset) {
-        gameLayer = GetSurfaceId(gameLayer, nodeId, line, endPos, processId);
+        gameLayer = GetSurfaceId(gameLayer, nodeId, processId);
         LOGD("ProfilerFPS::GetLayerName::processId: (%s)", processId.c_str());
     } else {
         StartUpDelay startUpDelay;
         for (const auto& pid : startUpDelay.GetPidParams()) {
-            gameLayer = GetSurfaceId(gameLayer, nodeId, line, endPos, pid);
+            gameLayer = GetSurfaceId(gameLayer, nodeId, pid);
             if (!gameLayer.empty()) {
                 break;
             }
@@ -620,21 +619,10 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
     return gameLayer;
 }
 
-std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, std::string &line,
-    size_t &endPos, const std::string &surfaceId)
+std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId)
 {
     if (std::to_string(nodeId) == surfaceId) {
-        if (isNodeId) {
-            gameLayer =  nodeIdStr;
-        } else {
-            size_t layerStartPos = line.find("[");
-            size_t layerEndPos = line.find("]");
-            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
-                return gameLayer;
-            }
-            layerStartPos += 1;
-            gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
-        }
+        gameLayer =  nodeIdStr;
     }
     LOGD("PorfilerFOS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
