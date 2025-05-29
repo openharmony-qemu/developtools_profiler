@@ -240,7 +240,12 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     }
     fpsInfo = fpsMap[name];
     fpsInfo.fps = 0;
-    std::string command = "fps " + name;
+    std::string command = "";
+    if (isGameApp) {
+        command = "fps -id " + name;
+    } else {
+        command = "fps " + name;
+    }
     const std::vector<const char*> args = { "hidumper", "-s", "10", "-a", command.c_str(), nullptr };
     int pipefd[2];
     pid_t pid;

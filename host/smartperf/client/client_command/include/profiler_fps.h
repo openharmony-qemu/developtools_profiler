@@ -63,7 +63,7 @@ public:
     void SetTraceCatch();
     void SetGameLayer(const std::string& isGameView);
     std::string GetGameLayer();
-    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, std::string &line, size_t &endPos);
+    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId);
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string>& v);
     void GetResultFPS(int sectionsNum);
@@ -79,8 +79,7 @@ public:
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
     void GetOhFps(std::vector<std::string>& v);
-    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, std::string &line,
-        size_t &endPos, const std::string &surfaceId);
+    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId);
     void SetRkFlag();
     std::string GetSurface();
     FpsInfoProfiler fpsInfo;

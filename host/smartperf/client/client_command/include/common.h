@@ -330,6 +330,7 @@ enum class HidumperCmd {
     DUMPER_A_A,
     DUMPER_NAV,
     DUMPER_MEM,
+    DUMPER_RS_TREE,
 };
 const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_DUBAI_B, std::string("hidumper -s 1213 -a '-b'") },
@@ -341,6 +342,7 @@ const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_A_A, std::string("hidumper -s WindowManagerService -a '-a'") },
     { HidumperCmd::DUMPER_NAV, std::string("hidumper -s WindowManagerService -a '-w ") },
     { HidumperCmd::DUMPER_MEM, std::string("hidumper --mem ") },
+    { HidumperCmd::DUMPER_RS_TREE, std::string("hidumper -s 10 -a RSTree | grep SURFACE_NODE") },
 };
 
 enum class HisyseventCmd {
