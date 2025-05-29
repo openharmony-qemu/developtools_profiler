@@ -151,6 +151,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
             }
             case CommandType::CT_GC: {
                 GpuCounterProcess(val);
+                [[fallthrough]];
             }
             default:
                 break;

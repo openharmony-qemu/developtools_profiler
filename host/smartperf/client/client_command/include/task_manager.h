@@ -70,7 +70,7 @@ private:
     void SpecialKeyProcess(const std::string& specKey);
 
     ThreadPool threadPool_ {4};
-    int32_t collectCount_ {-1};
+    uint32_t collectCount_ {0};
     std::atomic_bool running_ {false};
     std::thread mainLoop_;
     std::vector<SpProfiler *> normalTask_;
