@@ -55,6 +55,7 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEINT32(parcel, jsStackReport_);
     WRITEUINT8(parcel, maxJsStackDepth_);
     WRITESTRING(parcel, filterNapiName_);
+    WRITESTRING(parcel, targetSoName_);
     WRITEUINT32(parcel, largestSize_);
     WRITEUINT32(parcel, secondLargestSize_);
     WRITEUINT32(parcel, maxGrowthSize_);
@@ -101,6 +102,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READINT32(parcel, config->jsStackReport_);
     READUINT8(parcel, config->maxJsStackDepth_);
     READSTRING(parcel, config->filterNapiName_);
+    READSTRING(parcel, config->targetSoName_);
     READUINT32(parcel, config->largestSize_);
     READUINT32(parcel, config->secondLargestSize_);
     READUINT32(parcel, config->maxGrowthSize_);
@@ -124,9 +126,9 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
     PROFILER_LOG_DEBUG(LOG_CORE,
         "startupMode: %d, memtraceEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
-        "statisticsInterval: %d, clockId: %d",
+        "statisticsInterval: %d, clockId: %d, targetSoName: %s",
         config->startupMode_, config->memtraceEnable_, config->offlineSymbolization_, config->callframeCompress_,
-        config->statisticsInterval_, config->clockId_);
+        config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());
     PROFILER_LOG_DEBUG(LOG_CORE,
         "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());

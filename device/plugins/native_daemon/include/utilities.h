@@ -213,6 +213,8 @@ std::vector<std::string> GetEntriesInDir(const std::string &basePath);
 
 std::vector<std::string> GetSubDirs(const std::string &basePath);
 
+size_t ComputeAlign(size_t size);
+
 bool IsDir(const std::string &path);
 
 bool IsPath(const std::string &fileName);

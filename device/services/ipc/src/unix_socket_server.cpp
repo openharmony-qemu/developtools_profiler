@@ -67,7 +67,7 @@ void UnixSocketServer::RemoveContext(int fd)
     }
 }
 
-void UnixSocketServer::UnixSocketAccept()
+void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
 {
     pthread_setname_np(pthread_self(), "UnixSocketAccept");
     CHECK_TRUE(socketHandle_ != -1, NO_RETVAL, "Unix Socket Accept socketHandle_ == -1");
@@ -115,6 +115,11 @@ void UnixSocketServer::UnixSocketAccept()
                 epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
                 std::unique_lock<std::mutex> lock(mtx_);
                 if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
+                    lock.unlock();
+                    if (callback != nullptr) {
+                        callback(events[i].data.fd);
+                    }
+                    std::unique_lock<std::mutex> socketMapLock(mtx_);
                     PROFILER_LOG_DEBUG(LOG_CORE, "socketClients disconnect socketClients_.size() = %zu",
                                        socketClients_.size());
                     socketClients_.erase(events[i].data.fd);
@@ -127,7 +132,7 @@ void UnixSocketServer::UnixSocketAccept()
     close(epfd);
 }
 
-bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
+bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int))
 {
     CHECK_TRUE(socketHandle_ == -1, false, "StartServer FAIL socketHandle_ != -1");
     int sock = GetControlSocket(addrname.c_str());
@@ -137,7 +142,7 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p)
                "StartServer FAIL listen ERR : %d", errno);
 
     socketHandle_ = sock;
-    acceptThread_ = std::thread([this] { this->UnixSocketAccept(); });
+    acceptThread_ = std::thread([this, callback] { this->UnixSocketAccept(callback); });
     if (acceptThread_.get_id() == std::thread::id()) {
         close(socketHandle_);
         unlink(addrname.c_str());

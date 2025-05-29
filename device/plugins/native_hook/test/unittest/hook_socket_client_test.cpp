@@ -18,6 +18,7 @@
 
 #include "hook_socket_client.h"
 #include "hook_service.h"
+#include "hook_common.h"
 #include "service_entry.h"
 #include "socket_context.h"
 #include "unix_socket_client.h"
@@ -92,11 +93,11 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
 }
 
 /*
- * @tc.name: GetSmbFd
- * @tc.desc: test HookSocketClient::GetSmbFd with normal case.
+ * @tc.name: FdListSize
+ * @tc.desc: test fd list size with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, GetSmbFd, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level1)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
@@ -105,15 +106,16 @@ HWTEST_F(HookSocketClientTest, GetSmbFd, TestSize.Level1)
     auto size = sizeof(clientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
-    ASSERT_EQ(hookClient.GetSmbFd(), -1);
+    ASSERT_EQ(hookClient.GetSmbFds().size(), OHOS::Developtools::NativeDaemon::SHARED_MEMORY_NUM);
+    ASSERT_EQ(hookClient.GetEventFds().size(), OHOS::Developtools::NativeDaemon::SHARED_MEMORY_NUM);
 }
 
 /*
- * @tc.name: GetEventFd
- * @tc.desc: test HookSocketClient::GetEventFd with normal case.
+ * @tc.name: GetSmbFds
+ * @tc.desc: test HookSocketClient::GetSmbFds with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, GetEventFd, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level1)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
@@ -122,7 +124,30 @@ HWTEST_F(HookSocketClientTest, GetEventFd, TestSize.Level1)
     auto size = sizeof(clientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
-    ASSERT_EQ(hookClient.GetEventFd(), -1);
+    std::vector<int> smbFds = hookClient.GetSmbFds();
+    for (int i = 0; i < smbFds.size(); ++i) {
+        ASSERT_EQ(smbFds[i], -1);
+    }
+}
+
+/*
+ * @tc.name: GetEventFds
+ * @tc.desc: test HookSocketClient::GetEventFds with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
+{
+    ClientConfig clientConfig;
+    SocketContext socketContext;
+    Sampling sampler;
+    auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
+    auto size = sizeof(clientConfig);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
+    std::vector<int> eventFds = hookClient.GetEventFds();
+    for (int i = 0; i < eventFds.size(); ++i) {
+        ASSERT_EQ(eventFds[i], -1);
+    }
 }
 
 /*

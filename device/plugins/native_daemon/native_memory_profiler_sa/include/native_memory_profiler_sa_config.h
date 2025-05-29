@@ -65,6 +65,7 @@ public:
     int32_t jsStackReport_{0};
     uint8_t maxJsStackDepth_{0};
     std::string filterNapiName_;
+    std::string targetSoName_;
     uint32_t largestSize_{0};
     uint32_t secondLargestSize_{0};
     uint32_t maxGrowthSize_{0};

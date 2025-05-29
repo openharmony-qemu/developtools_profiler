@@ -25,22 +25,24 @@ class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)());
+    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
+                    std::atomic<Range>* targetedRange = nullptr,
+                    void (*disableHookCallback)() = nullptr);
     ~HookSocketClient();
     bool Connect(const std::string addrname);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
-    int GetSmbFd()
+    std::vector<int> GetSmbFds()
     {
-        return smbFd_;
+        return smbFds_;
     }
-    int GetEventFd()
+    std::vector<int>  GetEventFds()
     {
-        return eventFd_;
+        return eventFds_;
     }
     void Flush();
     bool SendStack(const void* data, size_t size);
     bool SendStackWithPayload(const void* data, size_t size, const void* payload,
-            size_t payloadSize);
+            size_t payloadSize, int smbIndex = 0);
     void DisableHook();
     bool PeerIsConnected();
     bool SendNmdInfo();
@@ -53,13 +55,14 @@ public:
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
-    int smbFd_;
-    int eventFd_;
+    std::vector<int> smbFds_;
+    std::vector<int> eventFds_;
     int pid_;
     int nmdType_ = -1;
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
-    std::shared_ptr<StackWriter> stackWriter_;
+    std::atomic<Range>* targetedRange_ = nullptr;
+    std::vector<std::shared_ptr<StackWriter>> stackWriterList_;
     void (*disableHookCallback_)(){nullptr};
     uint32_t largestSize_ = 0;
     uint32_t secondLargestSize_ = 0;

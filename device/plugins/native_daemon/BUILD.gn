@@ -63,6 +63,8 @@ ohos_executable("native_daemon") {
     "src/dwarf_encoding.cpp",
     "src/get_thread_id.cpp",
     "src/hook_manager.cpp",
+    "src/hook_record.cpp",
+    "src/hook_record_factory.cpp",
     "src/hook_service.cpp",
     "src/hook_standalone.cpp",
     "src/main.cpp",

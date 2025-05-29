@@ -29,7 +29,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
+#include <atomic>
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
@@ -731,6 +731,16 @@ void AdaptSandboxPath(std::string& filePath, int pid)
     if (filePath.find("/data/storage") == 0 && access(filePath.c_str(), F_OK) != 0) {
         filePath = "/proc/" + std::to_string(pid) + "/root" + filePath;
     }
+}
+
+void SpinLock(std::atomic_flag& flag)
+{
+    while (flag.test_and_set(std::memory_order_acquire)) {}
+}
+
+void SpinUnlock(std::atomic_flag& flag)
+{
+    flag.clear(std::memory_order_release);
 }
 
 bool GetCurrentUserId(int32_t& userId)

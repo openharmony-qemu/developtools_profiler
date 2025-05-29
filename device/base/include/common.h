@@ -53,6 +53,8 @@ bool IsUserMode();
 bool GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid);
 bool GetDeveloperMode();
 bool IsBetaVersion();
+void SpinLock(std::atomic_flag& flag);
+void SpinUnlock(std::atomic_flag& flag);
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
