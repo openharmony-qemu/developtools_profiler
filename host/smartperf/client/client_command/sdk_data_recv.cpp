@@ -90,7 +90,7 @@ namespace OHOS {
                 WLOGE("data dir %s is nullptr", filePath_.c_str());
                 return;
             }
-            std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
+            const std::string outSdkDataPath = std::string(outSdkDataDirChar) + "/sdk_data.csv";
             std::ofstream outFile(outSdkDataPath.c_str(), std::ios::out | std::ios::trunc);
             if (!outFile.is_open()) {
                 WLOGE("data %s open failed", outSdkDataPath.c_str());
