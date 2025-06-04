@@ -34,6 +34,7 @@ using namespace OHOS::HiviewDFX::UCollect;
 
 namespace OHOS {
 namespace SmartPerf {
+const int COLLECT_INTERVAL = 6;
 bool g_flagFirst = false;
 std::map<std::string, std::string> procRamInfoLast {
         {"pss", "NA"},
@@ -69,7 +70,11 @@ std::map<std::string, std::string> procRamInfoLast {
 };
 std::map<std::string, std::string> RAM::ItemData()
 {
-    std::map<std::string, std::string> result = RAM::GetSysRamInfo();
+    static int collectCount = 0;
+    if ((collectCount++ % COLLECT_INTERVAL) != 0) {
+        return result;
+    }
+    result = RAM::GetSysRamInfo();
     if (!processId.empty()) {
         std::map<std::string, std::string> procRamInfomation;
         if (g_flagFirst) {
