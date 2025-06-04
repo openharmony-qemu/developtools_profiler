@@ -95,7 +95,11 @@ std::string Dubai::CallMoveDubaiDbFinished()
 
 bool Dubai::IsFileAccessible(const std::string &filename)
 {
-    std::ifstream file(filename);
+    char buBaiRealPath[PATH_MAX] = {0x00};
+    if (realpath(filename.c_str(), buBaiRealPath) == nullptr) {
+        std::cout << "" << std::endl;
+    }
+    std::ifstream file(buBaiRealPath);
     return file.good();
 }
 }

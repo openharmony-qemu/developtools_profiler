@@ -70,7 +70,7 @@ private:
     void SpecialKeyProcess(const std::string& specKey);
 
     ThreadPool threadPool_ {4};
-    uint32_t collectCount_ {0};
+    int32_t collectCount_ {-1};
     std::atomic_bool running_ {false};
     std::thread mainLoop_;
     std::vector<SpProfiler *> normalTask_;
@@ -97,7 +97,7 @@ private:
     std::mutex scheduleSaveDataMtx_;
     std::function<void(const std::string&)> ipcCallback_ {nullptr};
     bool hapCollect_ {false};
-    uint32_t dataIndex_ {0};
+    int32_t dataIndex_ {0};
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
     bool isPause_ {false};
