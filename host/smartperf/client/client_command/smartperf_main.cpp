@@ -232,7 +232,8 @@ int main(int argc, char *argv[])
     }
     std::string errorInfo;
     std::vector<std::string> vec;
-    for (int i = 0; i < argc; i++) {
+    int loopBound = std::min(argc, maxExpectedArgs);
+    for (int i = 0; i < loopBound; i++) {
         vec.push_back(argv[i]);
     }
     if (!g_checkCmdParam(vec, errorInfo)) {

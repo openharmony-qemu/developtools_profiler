@@ -550,7 +550,7 @@ void ProfilerFPS::GetOhFps(std::vector<std::string>& v)
 
 void ProfilerFPS::SetGameLayer(const std::string& isGameView)
 {
-    isGameLayer = std::move(isGameView);
+    isGameLayer = isGameView;
 }
 
 std::string ProfilerFPS::GetGameLayer()

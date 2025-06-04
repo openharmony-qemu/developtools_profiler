@@ -82,7 +82,9 @@ TaskManager::TaskManager(bool isIPC)
 TaskManager::~TaskManager()
 {
     Stop();
-    dataFile_.close();
+    if (dataFile_.is_open()) {
+        dataFile_.close();
+    }
 }
 
 void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
@@ -384,9 +386,17 @@ void TaskManager::Stop(bool pause)
     isPause_ = pause;
     running_ = false;
     if (mainLoop_.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            running_ = false;
+        }
         mainLoop_.join();
     }
     if (scheduleSaveDataTh_.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            running_ = false;
+        }
         scheduleSaveDataTh_.join();
     }
     if (!pause) {

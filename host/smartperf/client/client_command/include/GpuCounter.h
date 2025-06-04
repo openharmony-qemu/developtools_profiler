@@ -52,7 +52,6 @@ namespace OHOS {
             std::vector<std::string> &GetGpuCounterData();
             std::vector<std::string> &GetGpuCounterSaveReportData();
             void AddGpuCounterRealtimeData(const std::string& dataString);
-            void GetGpuRealtimeData(std::map<std::string, std::string> &dataMap);
             void SetSavePathDirectory(const std::string& dir);
             void SaveData(const std::string& path);
             void SetFrequency(const int& freq);
