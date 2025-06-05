@@ -228,7 +228,7 @@ int main(int argc, char *argv[])
     const int maxExpectedArgs = 100;
     std::string errorInfo;
     std::vector<std::string> vec;
-    if (argc > maxExpectedArgs || argc < 0) {
+    if (argc < 0 || argc > maxExpectedArgs) {
         std::cout << "Invalid argument count" << std::endl;
         return -1;
     }
