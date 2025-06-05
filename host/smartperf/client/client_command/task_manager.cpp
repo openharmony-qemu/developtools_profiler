@@ -79,13 +79,7 @@ TaskManager::TaskManager(bool isIPC)
     }
 }
 
-TaskManager::~TaskManager()
-{
-    Stop();
-    if (dataFile_.is_open()) {
-        dataFile_.close();
-    }
-}
+TaskManager::~TaskManager() {}
 
 void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
 {
@@ -298,7 +292,7 @@ void TaskManager::Start(bool record)
             }
 
             for (auto& item : priorityTask_) {
-                currDatas.merge(TaskFun(item, dataIndex_, recordData));
+                currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
             }
 
             std::vector<std::future<std::map<std::string, std::string>>> result;
