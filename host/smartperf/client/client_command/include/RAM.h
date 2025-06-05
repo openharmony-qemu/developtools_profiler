@@ -76,6 +76,7 @@ private:
     RAM &operator = (const RAM &);
     std::string packageName = "";
     std::vector<std::string> processId;
+    std::map<std::string, std::string> result = {};
 };
 }
 }
