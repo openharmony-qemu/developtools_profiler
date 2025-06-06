@@ -36,6 +36,7 @@ ohos_source_set("native_hook_source") {
     "../native_daemon/src/get_thread_id.cpp",
     "../native_daemon/src/register.cpp",
     "../native_daemon/src/utilities.cpp",
+    "src/address_handler.cpp",
     "src/hook_client.cpp",
     "src/hook_socket_client.cpp",
     "src/runtime_stack_range.cpp",

@@ -36,6 +36,7 @@ struct StandardLibrary {
 };
 
 static std::map<std::string, StandardLibrary> g_stdLib;
+static std::map<std::string, StandardLibrary> g_targetLib;
 static uintptr_t g_stackMainStart = 0;
 static uintptr_t g_stackMainEnd = 0;
 }  // namespace
@@ -103,7 +104,7 @@ bool IsLegalSoName(const std::string &fileName)
     return true;
 }
 
-static void GetStandardLibraryRange(std::string& line)
+static void GetStandardLibraryRange(std::string& line, bool targeted = false)
 {
     line.resize(strlen(line.c_str()));
     std::vector<std::string> mapTokens = OHOS::Developtools::NativeDaemon::StringSplit(line, " ");
@@ -113,7 +114,13 @@ static void GetStandardLibraryRange(std::string& line)
         std::string::size_type concatPos = soRange.find('-');
         uint64_t soStart = static_cast<uint64_t>(strtoll(soRange.c_str(), nullptr, BASE_MAX));
         uint64_t soEnd = static_cast<uint64_t>(strtoll(soRange.c_str() + concatPos + 1, nullptr, BASE_MAX));
-        auto [iter, isExit] = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+        auto iter = g_stdLib.begin();
+        bool isExit = false;
+        if (targeted) {
+            std::tie(iter, isExit) = g_targetLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+        } else {
+            std::tie(iter, isExit) = g_stdLib.try_emplace(soName, StandardLibrary(soStart, soEnd, soName));
+        }
         if (!isExit) {
             if (iter->second.soBegin_ > soStart) {
                 iter->second.soBegin_ = soStart;
@@ -122,6 +129,37 @@ static void GetStandardLibraryRange(std::string& line)
             }
         }
     }
+}
+
+bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLib)
+{
+    FILE* fp = fopen("/proc/self/maps", "r");
+    bool ret = false;
+    if (fp == nullptr) {
+        return ret;
+    }
+    char mapInfo[256] = {0}; // 256: map info size
+    int pos = 0;
+    uint64_t begin = 0;
+    uint64_t end = 0;
+    uint64_t offset = 0;
+    char perms[5] = {0}; // 5:rwxp
+    while (fgets(mapInfo, sizeof(mapInfo), fp) != nullptr) {
+        if (strstr(mapInfo, targetedLib.c_str()) != nullptr) {
+            std::string lineStr = mapInfo;
+            GetStandardLibraryRange(lineStr, true);
+        }
+    }
+    if (fclose(fp) != 0) {
+        printf("fclose failed.\n");
+    }
+    auto range = targetedRange.load();
+    for (const auto& [soName, stdLibrary]: g_targetLib) {
+        range.start = stdLibrary.soBegin_;
+        range.end = stdLibrary.soEnd_;
+    }
+    targetedRange.store(range);
+    return ret;
 }
 
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread)

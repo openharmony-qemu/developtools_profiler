@@ -25,6 +25,8 @@
 #include "socket_context.h"
 
 namespace OHOS::Developtools::NativeDaemon {
+const int VEC_SHIFT = 2;
+
 HookService::HookService(const ClientConfig& clientConfig, std::shared_ptr<HookManager> hook, bool multipleProcesses)
     : clientConfig_(clientConfig), hookMgr_(hook), multipleProcesses_(multipleProcesses)
 {
@@ -123,17 +125,22 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
             return false;
         }
     }
-    auto [eventFd, smbFd] = hookMgr_->GetFds(peerConfig, procName);
-    if (eventFd == smbFd) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Get eventFd and smbFd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
-        return false;
-    }
 
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
-    context.SendFileDescriptor(smbFd);
-    context.SendFileDescriptor(eventFd);
+
+    std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName);
+    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        int eventFd = fdVec[i * VEC_SHIFT];
+        int smbFd = fdVec[i * VEC_SHIFT + 1];
+        if (eventFd == smbFd) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get fd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
+            return false;
+        }
+        context.SendFileDescriptor(smbFd);
+        context.SendFileDescriptor(eventFd);
+    }
     hookMgr_->ResetStartupParam();
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
     pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();

@@ -81,6 +81,8 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "../../src/dwarf_encoding.cpp",
     "../../src/get_thread_id.cpp",
     "../../src/hook_manager.cpp",
+    "../../src/hook_record.cpp",
+    "../../src/hook_record_factory.cpp",
     "../../src/hook_service.cpp",
     "../../src/register.cpp",
     "../../src/stack_data_repeater.cpp",

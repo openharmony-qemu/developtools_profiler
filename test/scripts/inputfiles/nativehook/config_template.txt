@@ -25,5 +25,6 @@
    statistics_interval: 10
    sample_interval: 256
    response_library_mode: false
+   target_so_name: ""
   }
  }

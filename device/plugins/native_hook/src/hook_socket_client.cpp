@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 #include "hook_socket_client.h"
-
+#include "runtime_stack_range.h"
 #include "common.h"
 #include "hook_common.h"
 #include "unix_socket_client.h"
@@ -33,7 +33,6 @@ namespace {
 constexpr int FLUSH_FLAG = 20;
 constexpr int ONLY_NMD_TYPE = 2;
 constexpr int SIMP_NMD = 3;
-std::atomic<uint64_t> g_flushCount = 0;
 std::atomic<bool> g_disableHook = false;
 constexpr uint32_t MEMCHECK_DETAILINFO_MAXSIZE = 102400;
 
@@ -44,7 +43,7 @@ struct OptArg {
 
 } // namespace
 
-
+using namespace OHOS::Developtools::NativeDaemon;
 static std::string GetRealTime()
 {
     time_t now = time(nullptr);
@@ -79,11 +78,14 @@ static void NmdWriteStat(void *arg, const char *buf)
     opt->pos += len;
 }
 
-HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler, void (*disableHookCallback)())
-    : pid_(pid), config_(config), sampler_(sampler), disableHookCallback_(disableHookCallback)
+HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
+                                   std::atomic<Range>* targetedRange, void (*disableHookCallback)())
+    : pid_(pid), config_(config), sampler_(sampler), targetedRange_(targetedRange),
+      disableHookCallback_(disableHookCallback)
 {
-    smbFd_ = 0;
-    eventFd_ = 0;
+    smbFds_.reserve(SHARED_MEMORY_NUM);
+    eventFds_.reserve(SHARED_MEMORY_NUM);
+    stackWriterList_.reserve(SHARED_MEMORY_NUM);
     unixSocketClient_ = nullptr;
     serviceName_ = "HookService";
     Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
@@ -91,11 +93,13 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *samp
 
 HookSocketClient::~HookSocketClient()
 {
-    if (stackWriter_) {
-        stackWriter_->Flush();
+    for (int i = 0; i < stackWriterList_.size(); ++i) {
+        if (stackWriterList_[i]) {
+            stackWriterList_[i]->Flush();
+        }
+        stackWriterList_[i] = nullptr;
     }
     unixSocketClient_ = nullptr;
-    stackWriter_ = nullptr;
 }
 
 bool HookSocketClient::Connect(const std::string addrname)
@@ -122,11 +126,16 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     sampler_->InitSampling(config_->sampleInterval);
-    smbFd_ = context.ReceiveFileDiscriptor();
-    eventFd_ = context.ReceiveFileDiscriptor();
-    std::string smbName = "hooknativesmb_" + std::to_string(pid_);
-    stackWriter_ = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
-        smbFd_, eventFd_, config_->isBlocked, config_->isSaMode);
+    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        int smbfd = context.ReceiveFileDiscriptor();
+        int eventfd = context.ReceiveFileDiscriptor();
+        smbFds_.push_back(smbfd);
+        eventFds_.push_back(eventfd);
+        std::string smbName = "hooknativesmb_" + std::to_string(pid_) + ":" + std::to_string(i);
+        std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
+            smbfd, eventfd, config_->isBlocked, config_->isSaMode);
+        stackWriterList_.push_back(stackWriter);
+    }
     nmdType_ = config_->nmdType;
     g_disableHook = false;
     largestSize_ = config_->largestSize;
@@ -140,12 +149,15 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     } else if (nmdType_ == SIMP_NMD) {
         SendSimplifiedNmdInfo();
     }
+    if (!config_->targetSoName.empty()) {
+        ParseTargetedMaps(*targetedRange_, config_->targetSoName);
+    }
     return true;
 }
 
 bool HookSocketClient::SendStack(const void* data, size_t size)
 {
-    if (stackWriter_ == nullptr || unixSocketClient_ == nullptr) {
+    if (stackWriterList_.size() == 0 || stackWriterList_[0] == nullptr || unixSocketClient_ == nullptr) {
         return false;
     }
 
@@ -153,41 +165,46 @@ bool HookSocketClient::SendStack(const void* data, size_t size)
         return false;
     }
 
-    stackWriter_->WriteTimeout(data, size);
-    stackWriter_->Flush();
+    stackWriterList_[0]->WriteTimeout(data, size);
+    stackWriterList_[0]->Flush();
 
     return true;
 }
 
 bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const void* payload,
-    size_t payloadSize)
+    size_t payloadSize, int smbIndex)
 {
-    if (stackWriter_ == nullptr || unixSocketClient_ == nullptr || g_disableHook) {
+    if (smbIndex + 1 > stackWriterList_.size()) {
+        return false;
+    }
+    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
+    if (stackWriter == nullptr || unixSocketClient_ == nullptr || g_disableHook) {
         return false;
     } else if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
         DisableHook();
         return false;
     }
 
-    bool ret = stackWriter_->WriteWithPayloadTimeout(data, size, payload, payloadSize,
-                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
+    bool ret = stackWriter->WriteWithPayloadTimeout(data, size, payload, payloadSize,
+                                                    std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
         DisableHook();
         return false;
     }
-    ++g_flushCount;
-    if (g_flushCount % FLUSH_FLAG == 0) {
-        stackWriter_->Flush();
+    if (stackWriter->PrepareFlush()) {
+        stackWriter->Flush();
     }
     return true;
 }
 
 void HookSocketClient::Flush()
 {
-    if (stackWriter_ == nullptr || unixSocketClient_ == nullptr) {
-        return;
+    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        if (stackWriterList_[i] == nullptr || unixSocketClient_ == nullptr) {
+            return;
+        }
+        stackWriterList_[i]->Flush();
     }
-    stackWriter_->Flush();
 }
 
 void HookSocketClient::DisableHook()
@@ -208,7 +225,7 @@ bool HookSocketClient::PeerIsConnected()
 
 bool HookSocketClient::SendNmdInfo()
 {
-    if (!config_->printNmd) {
+    if ((!config_->printNmd) || (stackWriterList_.size() == 0)) {
         return false;
     }
     void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
@@ -219,18 +236,19 @@ bool HookSocketClient::SendNmdInfo()
     malloc_stats_print(NmdWriteStat, &opt, "a");
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = NMD_MSG;
-    if (stackWriter_) {
-        stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                              reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
-                                              std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (stackWriterList_[0]) {
+        stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                     reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
+                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     }
+    stackWriterList_[0]->Flush();
     free(nmdBuf);
     return true;
 }
 
 bool HookSocketClient::SendSimplifiedNmdInfo()
 {
-    if (!config_->printNmd) {
+    if ((!config_->printNmd) || (stackWriterList_.size() == 0)) {
         return false;
     }
     void* nmdBuf = malloc(MEMCHECK_DETAILINFO_MAXSIZE);
@@ -241,12 +259,12 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
     malloc_stats_print(NmdWriteStat, &opt, "s");
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = NMD_MSG;
-    if (stackWriter_) {
-        stackWriter_->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                              reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
-                                              std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (stackWriterList_[0]) {
+        stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                     reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
+                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     }
-    stackWriter_->Flush();
+    stackWriterList_[0]->Flush();
     free(nmdBuf);
     return true;
 }
@@ -255,8 +273,10 @@ bool HookSocketClient::SendEndMsg()
 {
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = END_MSG;
-    if (stackWriter_) {
-        stackWriter_->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
+    for (int i = 0; i < stackWriterList_.size(); ++i) {
+        if (stackWriterList_[i]) {
+            stackWriterList_[i]->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
+        }
     }
     return true;
 }

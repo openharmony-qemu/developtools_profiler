@@ -20,6 +20,7 @@
 #include "stack_writer.h"
 namespace {
     const int WAIT_TIMEOUT_SA = 3000000;
+    const int FLUSH_FLAG = 20;
 }
 StackWriter::StackWriter(std::string name,
                          uint32_t size,
@@ -88,6 +89,15 @@ long StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const v
         return shareMemoryBlock_->PutWithPayloadTimeout(
             reinterpret_cast<const int8_t*>(data), size, reinterpret_cast<const int8_t*>(payload), payloadSize);
     }
+}
+
+bool StackWriter::PrepareFlush()
+{
+    ++dataCount_;
+    if (dataCount_ % FLUSH_FLAG == 0) {
+        return true;
+    }
+    return false;
 }
 
 bool StackWriter::Flush()

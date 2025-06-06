@@ -24,6 +24,7 @@
 #include "event_notifier.h"
 #include "share_memory_block.h"
 #include "writer.h"
+#include <mutex>
 
 class StackWriter : public Writer {
 public:
@@ -39,6 +40,7 @@ public:
     long WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
                                  const std::function<bool()>& callback);
     bool Flush() override;
+    bool PrepareFlush();
 
 private:
     void DoStats(long bytes);
@@ -54,6 +56,8 @@ private:
     std::atomic<uint32_t> bytesPending_ = 0;
     std::atomic<uint64_t> writeCount_ = 0;
     std::atomic<uint32_t> flushCount_ = 0;
+    std::atomic<uint64_t> dataCount_ = 0;
+    std::mutex flushMutex_;
 };
 
 

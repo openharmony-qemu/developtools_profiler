@@ -27,6 +27,22 @@
 #include "service_entry.h"
 
 namespace OHOS::Developtools::NativeDaemon {
+
+struct TaskConfig {
+    TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, const std::string& processName,
+        const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0)
+        : hookMgr(manager), pid(pid), processName(processName), filePath(filePath), timerFd(timerFd),
+          isStartupMode(startupMode), fd(fd) {}
+    ~TaskConfig() {};
+    std::shared_ptr<HookManager> hookMgr = nullptr;
+    int32_t pid{0};
+    std::string processName;
+    std::string filePath;
+    int32_t timerFd{-1};
+    bool isStartupMode{false};
+    uint32_t fd{0};
+};
+
 class NativeMemoryProfilerSaService : public SystemAbility, public NativeMemoryProfilerSaStub, public ServiceBase {
     DECLARE_SYSTEM_ABILITY(NativeMemoryProfilerSaService);
 public:
@@ -40,51 +56,25 @@ public:
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                   std::string& replyStats) override { return 0; }
+    static void StopHook(uint32_t pid, std::string name = "");
+    static void ClientDisconnectCallback(int socketFd);
+    static bool HasProfilingPermission();
+    static void CloseSocketFd(int pid);
+    static void DelayedShutdown(bool cancel);
 
 private:
-    void StopHook(uint32_t pid, std::string name = "");
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                           uint32_t fd, std::shared_ptr<HookManager>& hook, std::string& args);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
-    struct TaskConfig;
     bool CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
-    void DelayedShutdown(bool cancel);
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
-    void CloseSocketFd(int pid);
 
 private:
-    struct TaskConfig {
-        TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, const std::string& processName,
-            const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0)
-            : hookMgr(manager), pid(pid), processName(processName), filePath(filePath), timerFd(timerFd),
-              isStartupMode(startupMode), fd(fd) {}
-        ~TaskConfig() {};
-        std::shared_ptr<HookManager> hookMgr = nullptr;
-        int32_t pid{0};
-        std::string processName;
-        std::string filePath;
-        int32_t timerFd{-1};
-        bool isStartupMode{false};
-        uint32_t fd{0};
-    };
-    bool HasProfilingPermission();
-    std::unordered_map<std::string, std::shared_ptr<TaskConfig>> nameAndFilePathCtx_;
-    std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> pidCtx_;
-    std::mutex mtx_;
     std::mutex nmdMtx_;
-    ScheduleTaskManager scheduleTaskManager_;
-    bool hasStartupMode_{false};
     std::string startupModeProcessName_;
-    int32_t taskNum_{0};
-    std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};
-    int32_t delayedShutdownTimerFd_{-1};
-    std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> nmdPidType_;
-    std::unordered_map<pid_t, int> pidFds_;
-    std::mutex pidFdMtx_;
-    std::unordered_map<pid_t, std::pair<uid_t, gid_t>> pidInfo_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

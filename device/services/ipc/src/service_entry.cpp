@@ -23,13 +23,13 @@ ServiceEntry::ServiceEntry()
     unixSocketServer_ = nullptr;
 }
 ServiceEntry::~ServiceEntry() {}
-bool ServiceEntry::StartServer(const std::string& addrname)
+bool ServiceEntry::StartServer(const std::string& addrname, void (*callback)(int))
 {
     CHECK_TRUE(unixSocketServer_ == nullptr, false, "Servier Already Started");
 
     auto server = std::make_shared<UnixSocketServer>();
 
-    CHECK_TRUE(server->StartServer(addrname, *this), false, "StartServer FAIL");
+    CHECK_TRUE(server->StartServer(addrname, *this, callback), false, "StartServer FAIL");
 
     unixSocketServer_ = server;
     return true;

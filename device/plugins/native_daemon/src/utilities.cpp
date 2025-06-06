@@ -25,6 +25,19 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 constexpr uint32_t INT_MAX_LEN = 10;
+constexpr static uint32_t SC_LG_TINY_MIN = 3;
+constexpr static uint32_t LG_QUANTUM = 4;
+constexpr static uint32_t SC_NTINY = LG_QUANTUM - SC_LG_TINY_MIN;
+constexpr static uint32_t SC_LG_TINY_MAXCLASS = (LG_QUANTUM > SC_LG_TINY_MIN ? LG_QUANTUM - 1 : -1);
+constexpr static uint32_t SC_LG_NGROUP = 2;
+constexpr static uint32_t LG_SIZE_CLASS_GROUP = 2;
+constexpr static uint32_t NTBINS = 1;
+constexpr static uint32_t LG_TINY_MAXCLASS = 3;
+constexpr static uint32_t RIGHT_MOVE_1 = 1;
+constexpr static uint32_t RIGHT_MOVE_2 = 2;
+constexpr static uint32_t RIGHT_MOVE_4 = 4;
+constexpr static uint32_t RIGHT_MOVE_8 = 8;
+constexpr static uint32_t RIGHT_MOVE_16 = 16;
 
 uint32_t RoundUp(uint32_t x, const int align)
 {
@@ -203,6 +216,65 @@ bool IsHexDigits(const std::string &str)
         effectStr = "0";
     }
     return std::all_of(effectStr.begin(), effectStr.end(), ::isxdigit);
+}
+
+unsigned LgFloor(unsigned long val)
+{
+    val |= (val >> RIGHT_MOVE_1);
+    val |= (val >> RIGHT_MOVE_2);
+    val |= (val >> RIGHT_MOVE_4);
+    val |= (val >> RIGHT_MOVE_8);
+    val |= (val >> RIGHT_MOVE_16);
+    if (sizeof(val) > 4) {              // 4: sizeThreshold
+        int constant = sizeof(val) * 4; // 4: sizeThreshold
+        val |= (val >> constant);
+    }
+    val++;
+    if (val == 0) {
+        return 8 * sizeof(val) - 1; // 8: 8byte
+    }
+    return __builtin_ffsl(val) - 2; // 2: adjustment
+}
+
+uint64_t PowCeil(uint64_t val)
+{
+    size_t msbIndex = LgFloor(val - 1);
+    return 1ULL << (msbIndex + 1);
+}
+
+size_t ComputeAlign(size_t size)
+{
+    if (size == 0) {
+        return 0;
+    }
+    unsigned index = 0;
+    if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
+        unsigned lgTmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
+        unsigned lgCeil = LgFloor(PowCeil(size));
+        index = (lgCeil < lgTmin) ? 0 : lgCeil - lgTmin;
+    } else {
+        unsigned floor = LgFloor((size << 1) - 1);
+        unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
+        unsigned grp = shift << SC_LG_NGROUP;
+        unsigned lgDelta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
+        size_t deltaInverseMask = size_t(-1) << lgDelta;
+        unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+        index = SC_NTINY + grp + mod;
+    }
+
+    if (index < NTBINS) {
+        return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
+    }
+    size_t reducedIndex = index - NTBINS;
+    size_t grpVal = reducedIndex >> LG_SIZE_CLASS_GROUP;
+    size_t modVal = reducedIndex & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
+    size_t grpSizeMask = ~((!!grpVal) - 1);
+    size_t grpSize = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpVal) & grpSizeMask;
+    size_t shiftVal = (grpVal == 0) ? 1 : grpVal;
+    size_t lgDeltaVal = shiftVal + (LG_QUANTUM - 1);
+    size_t modSize = (modVal + 1) << lgDeltaVal;
+    size_t usize = grpSize + modSize;
+    return usize;
 }
 
 bool IsDir(const std::string &path)

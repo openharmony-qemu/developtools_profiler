@@ -24,50 +24,23 @@
 #include "native_hook_result.pb.h"
 #include "hook_common.h"
 #include "utilities.h"
+#include "hook_record.h"
+
+namespace OHOS::Developtools::NativeDaemon {
 
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
-constexpr const int CACHE_DATA_SIZE = 40000;
 constexpr const int32_t CACHE_ARRAY_SIZE = 10;
 
 class StackDataRepeater {
 public:
-    struct RawStack {
-        std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
-        BaseStackRawData* stackConext = nullptr; // points to the foundation type data
-        union {
-            uint8_t* stackData;
-            const char* jsStackData = nullptr;
-        };
-        uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
-        uint64_t freeData = 0;
-        uint32_t stackSize = 0;
-        uint8_t fpDepth = 0; // fp mode fpDepth is ip depth, dwarf mode is invalid
-        bool reportFlag = false;
-        bool reduceStackFlag = false;
-        void Reset()
-        {
-            baseStackData = nullptr;
-            stackConext = nullptr;
-            data = nullptr;
-            stackData = nullptr;
-            freeData = 0;
-            stackSize = 0;
-            fpDepth = 0;
-            reportFlag = false;
-            reduceStackFlag = false;
-        }
-    };
-
     explicit StackDataRepeater(size_t maxSize);
     ~StackDataRepeater();
-    bool PutRawStack(const std::shared_ptr<RawStack>& rawData, bool isRecordAccurately);
-    bool PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount);
-    std::shared_ptr<RawStack> TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
-        std::shared_ptr<RawStack> batchRawStack[], uint32_t statInterval, bool& isTimeOut);
+    bool PutRawStack(const std::shared_ptr<HookRecord>& rawData, bool isRecordAccurately);
+    bool PutRawStackArray(std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE>& rawDataArray, uint32_t batchCount);
+    std::shared_ptr<HookRecord> TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
+        std::shared_ptr<HookRecord> batchRawStack[], uint32_t statInterval, bool& isTimeOut);
     void Close();
     void Reset();
-    std::shared_ptr<RawStack> GetRawStack();
-    void ReturnRawStack(std::shared_ptr<RawStack> rawStack);
     size_t Size();
     void ClearCache()
     {
@@ -78,11 +51,11 @@ public:
 private:
     std::mutex mutex_;
     std::mutex cacheMutex_;
-    std::deque<std::shared_ptr<RawStack>> rawDataCacheQueue_;
+    std::deque<std::shared_ptr<HookRecord>> rawDataCacheQueue_;
     std::condition_variable slotCondVar_;
     std::condition_variable itemCondVar_;
-    std::deque<std::shared_ptr<RawStack>> rawDataQueue_;
-    std::unordered_map<void *, std::shared_ptr<RawStack>> mallocMap_ = {};
+    std::deque<std::shared_ptr<HookRecord>> rawDataQueue_;
+    std::unordered_map<uint64_t, std::shared_ptr<HookRecord>> mallocMap_ = {};
     size_t maxSize_;
     uint64_t reducedStackCount_;
     std::atomic_bool closed_;
@@ -90,8 +63,6 @@ private:
     DISALLOW_COPY_AND_MOVE(StackDataRepeater);
 };
 
-using RawStackPtr = STD_PTR(shared, StackDataRepeater::RawStack);
-
 using StackDataRepeaterPtr = STD_PTR(shared, StackDataRepeater);
-
+}
 #endif // STACK_DATA_REPEATER_H

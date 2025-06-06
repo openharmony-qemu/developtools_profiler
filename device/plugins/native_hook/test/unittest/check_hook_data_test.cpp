@@ -789,6 +789,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
@@ -1072,6 +1075,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
@@ -1178,6 +1184,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
@@ -1234,6 +1243,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
@@ -1289,6 +1301,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
             }
         }
         getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;

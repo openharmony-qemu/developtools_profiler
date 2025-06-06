@@ -38,6 +38,7 @@
 #include <sys/mman.h>
 #include "sampling.h"
 #include "hitrace/trace.h"
+#include "address_handler.h"
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -93,42 +94,11 @@ constexpr int TEMP_IP = 100;
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
+std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
-struct Bitpool {
-    std::atomic<uint64_t> slot;
-};
-Bitpool* g_addressChecker = nullptr;
-
-inline static uint32_t AddrHash(uint32_t h)
-{
-    h ^= h >> FIRST_HASH;
-    h *= 0x85ebca6b;
-    h ^= h >> SECOND_HASH;
-    h *= 0xc2b2ae35;
-    h ^= h >> FIRST_HASH;
-    return h;
-}
-
-inline void Addr2Bitpool(void* addr)
-{
-    if (!g_addressChecker) {
-        return;
-    }
-    uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
-    g_addressChecker[val / DIVIDE_VAL].slot |= (0x1 << (val % DIVIDE_VAL));
-}
-
-inline bool IsAddrExist(void* addr)
-{
-    if (!g_addressChecker) {
-        return true;
-    }
-    uint32_t val = AddrHash(static_cast<uint32_t>(reinterpret_cast<uint64_t>(addr))) % (MAX_BITPOOL_SIZE * DIVIDE_VAL);
-    if (g_addressChecker[val / DIVIDE_VAL].slot.load() & (0x1 << (val % DIVIDE_VAL))) {
-        return true;
-    }
-    return false;
-}
+WholeAddrHandler* g_wholeAddrHandler = nullptr;
+MidAddrHandler* g_highPartHandler = nullptr;
+LowAddrHandler* g_addrHandler = nullptr;
 
 const MallocDispatchType* GetDispatch()
 {
@@ -287,7 +257,11 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
-    g_addressChecker = new Bitpool [MAX_BITPOOL_SIZE] {{0}};
+    g_wholeAddrHandler = new WholeAddrHandler();
+    g_highPartHandler = new MidAddrHandler();
+    g_addrHandler = new LowAddrHandler();
+    g_addrHandler->SetSuccessor(g_highPartHandler);
+    g_highPartHandler->SetSuccessor(g_wholeAddrHandler);
     g_mallocTimes = 0;
     g_hookClient.reset();
     g_hookPid = GetRealPid();
@@ -297,7 +271,7 @@ void* MallocHookStart(void* disableHookCallback)
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler, &targetedRange,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
     g_hookReady = true;
@@ -371,8 +345,18 @@ void* ohos_release_on_end(void*)
         g_hookClient->SendEndMsg();
         g_hookClient->Flush();
     }
-    delete [] g_addressChecker;
-    g_addressChecker = nullptr;
+    if (g_addrHandler != nullptr) {
+        delete g_addrHandler;
+        g_addrHandler = nullptr;
+    }
+    if (g_highPartHandler != nullptr) {
+        delete g_highPartHandler;
+        g_highPartHandler = nullptr;
+    }
+    if (g_wholeAddrHandler != nullptr) {
+        delete g_wholeAddrHandler;
+        g_wholeAddrHandler = nullptr;
+    }
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
     g_hookReady = false;
@@ -400,6 +384,15 @@ bool FilterStandardSoIp(uint64_t ip)
     return false;
 }
 
+bool CheckTargetLibIp(uint64_t ip)
+{
+    auto range = targetedRange.load();
+    if (ip >= range.start && ip < range.end) {
+        return true;
+    }
+    return false;
+}
+
 #if defined(__aarch64__)
 static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t* ips)
 {
@@ -417,7 +410,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         return depth;
     }
     uintptr_t fp = nextFp; // skip current frame
-
+    bool filterTarget = true;
     int count = 0;
     uint64_t ip = 0;
     while (depth < maxDepth && (fp - startFp < MAX_UNWIND_ADDR_RANGE)) {
@@ -432,7 +425,10 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         } else {
             ips[depth++] = ip > 0x4 ? ip - 0x4 : ip; // adjust pc in Arm64 architecture
         }
-
+        
+        if ((!g_ClientConfig.targetSoName.empty()) && CheckTargetLibIp(ip)) {
+            filterTarget = false;
+        }
         nextFp = *reinterpret_cast<uintptr_t*>(fp);
         if (nextFp <= stackPtr) {
             depth -= 1;
@@ -447,6 +443,9 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
     if (g_ClientConfig.responseLibraryMode) {
         ips[0] = ip > 0x4 ? ip - 0x4 : ip;
         depth = 1;
+    }
+    if ((!g_ClientConfig.targetSoName.empty()) && filterTarget) {
+        depth = 0;
     }
     return depth;
 }
@@ -532,6 +531,21 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+        if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+            g_mallocTimes++;
+            struct timespec end = {};
+            clock_gettime(CLOCK_REALTIME, &end);
+            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+            if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            }
+#endif
+            return ret;
+        }
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
@@ -543,7 +557,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.mallocSize = size;
     rawdata.addr = ret;
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-        Addr2Bitpool(ret);
+        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -551,7 +565,8 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -622,6 +637,21 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+        if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+            g_mallocTimes++;
+            struct timespec end = {};
+            clock_gettime(CLOCK_REALTIME, &end);
+            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+            if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            }
+#endif
+            return ret;
+        }
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
@@ -634,7 +664,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     rawdata.mallocSize = len;
     rawdata.addr = ret;
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-        Addr2Bitpool(ret);
+        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -642,7 +672,8 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -718,6 +749,21 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+        if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+            g_mallocTimes++;
+            struct timespec end = {};
+            clock_gettime(CLOCK_REALTIME, &end);
+            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+            if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            }
+#endif
+            return pRet;
+        }
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
@@ -730,7 +776,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-        Addr2Bitpool(pRet);
+        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -738,7 +784,8 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -813,6 +860,21 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+        if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+            g_mallocTimes++;
+            struct timespec end = {};
+            clock_gettime(CLOCK_REALTIME, &end);
+            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+            if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            }
+#endif
+            return pRet;
+        }
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);
@@ -824,7 +886,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-        Addr2Bitpool(pRet);
+        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
     int freeRealSize = 0;
@@ -841,8 +903,11 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
         freeRealSize = realSize;
     }
-    holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0); // 0: Don't unwind the freeData
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    // 0: Don't unwind the freeData
+    holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0,
+                                 reinterpret_cast<uint64_t>(freeData.addr) % SHARED_MEMORY_NUM);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -877,16 +942,33 @@ void hook_free(void (*free_func)(void*), void* p)
             free_func(p);
             return;
         }
+#ifdef PERFORMANCE_DEBUG
+        struct timespec start = {};
+        clock_gettime(CLOCK_REALTIME, &start);
+#endif
         if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-            if (!IsAddrExist(p)) {
+            if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
                 free_func(p);
+#ifdef PERFORMANCE_DEBUG
+                g_mallocTimes++;
+                struct timespec end = {};
+                clock_gettime(CLOCK_REALTIME, &end);
+                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+                if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                }
+#endif
                 return;
             }
         }
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
-            holder->SendStackWithPayload(&p, sizeof(void*), nullptr, 0);
+            holder->SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
+                                         reinterpret_cast<uint64_t>(p) % SHARED_MEMORY_NUM);
         }
         free_func(p);
 #ifdef PERFORMANCE_DEBUG
@@ -915,7 +997,7 @@ void hook_free(void (*free_func)(void*), void* p)
         return;
     }
     if (g_ClientConfig.sampleInterval >= THRESHOLD) {
-        if (!IsAddrExist(p)) {
+        if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
             return;
         }
     }
@@ -937,6 +1019,21 @@ void hook_free(void (*free_func)(void*), void* p)
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+                g_mallocTimes++;
+                struct timespec end = {};
+                clock_gettime(CLOCK_REALTIME, &end);
+                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+                if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                }
+#endif
+                return;
+            }
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
@@ -954,7 +1051,8 @@ void hook_free(void (*free_func)(void*), void* p)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -976,7 +1074,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
     curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
     curRawdata.mallocSize = rawdata.mallocSize;
     curRawdata.mmapArgs.offset = offset;
-    curRawdata.type = OHOS::Developtools::NativeDaemon::MMAP_FILE_TYPE;
+    curRawdata.type = MMAP_FILE_TYPE;
     if (prot & PROT_EXEC) {
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
@@ -986,13 +1084,30 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
+    if ((flags & MAP_FIXED) && (IsLegalSoName(filePath)) && (!g_ClientConfig.targetSoName.empty()) &&
+       (filePath.find(g_ClientConfig.targetSoName) != std::string::npos)) {
+        uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
+        uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
+        auto range = targetedRange.load();
+        if (range.start == 0 && range.end == 0) {
+            range.start = soStart;
+            range.end = soEnd;
+        }
+        if (range.start > soStart) {
+            range.start = soStart;
+        } else if (range.end < soEnd) {
+            range.end = soEnd;
+        }
+        targetedRange.store(range);
+    }
     if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath.c_str(), len) != EOK) {
         return;
     }
     if (flags & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
-    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
+    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 }
 
 void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
@@ -1081,11 +1196,27 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
+        if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+            g_mallocTimes++;
+            struct timespec end = {};
+            clock_gettime(CLOCK_REALTIME, &end);
+            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+            if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+            }
+#endif
+            return ret;
+        }
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1126,6 +1257,15 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     if (holder == nullptr) {
         return ret;
     }
+    if (!g_ClientConfig.targetSoName.empty()) {
+        uint64_t addrval = reinterpret_cast<uint64_t>(addr);
+        auto range = targetedRange.load();
+        if (addrval < range.end && addrval >= range.start) {
+            range.end = 0;
+            range.start = 0;
+            targetedRange.store(range);
+        }
+    }
     StackRawData rawdata = {{{{0}}}};
     uintptr_t stackPtr = 0;
     int fpStackDepth = 0;
@@ -1134,6 +1274,21 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+                g_mallocTimes++;
+                struct timespec end = {};
+                clock_gettime(CLOCK_REALTIME, &end);
+                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+                if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                }
+#endif
+                return ret;
+            }
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
@@ -1152,7 +1307,8 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1199,7 +1355,8 @@ int hook_prctl(int(*fn)(int, ...),
             HILOG_BASE_ERROR(LOG_CORE, "memcpy_s tag failed");
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
-        holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0);
+        holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1239,6 +1396,21 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+#ifdef PERFORMANCE_DEBUG
+                g_mallocTimes++;
+                struct timespec end = {};
+                clock_gettime(CLOCK_REALTIME, &end);
+                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+                if (g_mallocTimes % PRINT_INTERVAL == 0) {
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
+                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
+                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+                }
+#endif
+                return;
+            }
             rawdata.jsChainId = getJsChainId();
 #endif
         } else {
@@ -1257,7 +1429,8 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1417,8 +1590,12 @@ bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, siz
         rawdata.type = JS_STACK_MSG;
         std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
         auto holder = weakClient.lock();
+        bool result = true;
         if (holder != nullptr) {
-            return holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize);
+            for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+                result &= (holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize, i));
+            }
+            return result;
         }
     }
     return false;

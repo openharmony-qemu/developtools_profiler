@@ -27,6 +27,7 @@ bool IsLegalSoName(const std::string &fileName);
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
                 const NameData& curRawData);
 bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
+bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLib);
 bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uintptr_t& stackTop, bool isMainThread);
 
 #ifdef __cplusplus
