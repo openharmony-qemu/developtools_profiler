@@ -59,7 +59,6 @@ bool CheckCmdLineArgValid(const std::string& cmdLine);
 int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
                              std::string errorMessage);
 std::string GetProcessNameByPid(int32_t pid);
-bool IsValidUTF8(const std::string &str);
 
 static const std::string STATE_VERSION = "1.0";
 enum ErrorType {

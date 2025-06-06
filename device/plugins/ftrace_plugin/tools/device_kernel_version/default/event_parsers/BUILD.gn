@@ -32,6 +32,7 @@ ohos_source_set("ftrace_event_parsers") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
+      "c_utils:utils",
       "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
