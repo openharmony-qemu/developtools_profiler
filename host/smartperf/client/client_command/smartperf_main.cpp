@@ -226,14 +226,13 @@ int main(int argc, char *argv[])
         }
     }
     const int maxExpectedArgs = 100;
-    if (argc > maxExpectedArgs) {
+    std::string errorInfo;
+    std::vector<std::string> vec;
+    if (argc < 0 || argc > maxExpectedArgs) {
         std::cout << "Invalid argument count" << std::endl;
         return -1;
     }
-    std::string errorInfo;
-    std::vector<std::string> vec;
-    int loopBound = std::min(argc, maxExpectedArgs);
-    for (int i = 0; i < loopBound; i++) {
+    for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
     if (!g_checkCmdParam(vec, errorInfo)) {
