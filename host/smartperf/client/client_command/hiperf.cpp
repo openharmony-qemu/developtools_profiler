@@ -114,7 +114,7 @@ void Hiperf::GetHiperfData()
 
 void Hiperf::SetDataMap(std::string &line)
 {
-    for(const auto &dataKey : collectNodes_) {
+    for (const auto &dataKey : collectNodes_) {
         if (line.find(dataKey) != std::string::npos) {
             std::string count;
             std::stringstream ss(line);
