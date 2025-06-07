@@ -32,7 +32,7 @@ public:
         return instance;
     }
     void StartExecutionOnce(bool isPause) override;
-    void FinishExecutionOnce(bool isPause) override;
+    void FinishExecutionOnce(bool isPause);
     void SetProcessId(const std::string &pid);
     void PrepareHiperf();
     void StartHiperf();
