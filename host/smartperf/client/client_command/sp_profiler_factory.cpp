@@ -121,6 +121,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS::GetInstance().SetProcessId(pid);
+    Hiperf::GetInstance().SetProcessId(pid);
     ProfilerFPS::GetInstance().SetProcessId(pid);
     RAM::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     CPU::GetInstance().SetProcessId(pids.empty() ? pid : pids);

@@ -36,9 +36,9 @@ void Hiperf::StartExecutionOnce(bool isPause)
 
 void Hiperf::FinishExecutionOnce(bool isPause)
 {
-    std::unique_lock<std::mutes> lock(hiperfLock_);
+    std::unique_lock<std::mutex> lock(hiperfLock_);
     StopHiperf();
-    GetHiperData();
+    GetHiperfData();
 }
 
 void Hiperf::SetProcessId(const std::string &pid)
@@ -133,7 +133,7 @@ void Hiperf::SetDataMap(std::string &line)
 
 std::string Hiperf::ReturnHiperfData()
 {
-    std::string hioerfStr = "his$$" + SpTreadSocket::GetInstance().MapToString(hiperfData_);
+    std::string hiperfStr = "his$$" + SpThreadSocket::GetInstance().MapToString(hiperfData_);
     LOGD("Hiperf::hiperfStr = %s", hiperfStr.c_str());
     return hiperfStr;
 }

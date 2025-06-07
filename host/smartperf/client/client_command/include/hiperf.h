@@ -31,8 +31,8 @@ public:
         static Hiperf instance;
         return instance;
     }
-    void StartExecutionOnce(bool isPause);
-    void FinishExecutionOnce(bool isPause);
+    void StartExecutionOnce(bool isPause) override;
+    void FinishtExecutionOnce(bool isPause) override;
     void SetProcessId(const std::string &pid);
     void PrepareHiperf();
     void StartHiperf();
