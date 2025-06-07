@@ -34,7 +34,7 @@ void Hiperf::StartExecutionOnce(bool isPause)
     StartHiperf();
 }
 
-void Hiperf::FinishExecutionOnce(bool isPause)
+void Hiperf::FinishtExecutionOnce(bool isPause)
 {
     std::unique_lock<std::mutex> lock(hiperfLock_);
     StopHiperf();
