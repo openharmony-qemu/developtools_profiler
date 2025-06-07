@@ -35,8 +35,9 @@
 #include "include/Threads.h"
 #include "include/GpuCounter.h"
 #include "effective.h"
-#include "cpu_info.h"
-#include "lock_frequency.h"
+#include "include/cpu_info.h"
+#include "include/lock_frequency.h"
+#include "include/hiperf.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -258,6 +259,10 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         }
         case CommandType::CT_LF: {
             profiler = &LockFrequency::GetInstance();
+            break;
+        }
+        case CommandType::CT_HCI: {
+            profiler = &Hiperf::GetInstance();
             break;
         }
         default:

@@ -43,6 +43,7 @@
 #include "include/GetLog.h"
 #include "include/RAM.h"
 #include "include/FPS.h"
+#include "include/hiperf.h"
 
 #define SMARTPERF "smartperf"
 namespace OHOS {
@@ -760,6 +761,8 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
+            retCode = Hiperf::GetInstance().ReturnHiperfData();
+            spSocket.Sendto(retCode);
             taskMgr_->WriteToCSV();
         }
         spTask.ClearStopFlag();
