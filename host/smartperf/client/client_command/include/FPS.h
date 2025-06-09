@@ -93,6 +93,8 @@ public:
     int catonNum = 0;
     void CalcFatalCaton(std::vector<long long>& jitters);
     void GetGameScenStatus();
+    FpsInfo GetFpsInfoByDump(const std::string& name);
+    FpsInfo GetFpsInfoByRs(const std::string& name);
 private:
     FPS() {};
     FPS(const FPS &);

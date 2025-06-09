@@ -396,7 +396,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             return;
         }
         RemoveToken(recvBuf);
-        if (recvBuf.find("init") != std::string::npos) {
+        if (recvBuf.find("init::") != std::string::npos) {
             UdpStartInitFunc(recvBuf, spSocket);
             break;
         }

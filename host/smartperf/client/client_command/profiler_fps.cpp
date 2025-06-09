@@ -28,7 +28,6 @@
 #include "include/ByTrace.h"
 #include "include/startup_delay.h"
 #include "include/common.h"
-#include "transaction/rs_interfaces.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -287,7 +286,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfo()
     
     if (isGameApp) {
         if (firstDump) {
-            isNodeId = true;
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
                 firstDump = true;
@@ -359,6 +357,14 @@ FpsInfoProfiler ProfilerFPS::GetAppFps(std::string &uniteLayer)
     return fpsInfoTime;
 }
 
+FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(const std::string& name)
+{
+    if (name == "") {
+        return FpsInfoProfiler();
+    }
+    return GetFrameInfoFromMap(name);
+}
+
 void ProfilerFPS::ResetFpsInfo()
 {
     FpsInfoProfiler tmpFps;
@@ -368,15 +374,17 @@ void ProfilerFPS::ResetFpsInfo()
     fpsInfo.jitters.clear();
 }
 
-FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(const std::string& name)
+FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
 {
-    if (name == "") {
-        return fpsInfo;
-    }
     ResetFpsInfo();
     bool isBreak = false;
     if (isSections) {
         GetTimeDiff();
+    }
+    std::string cmd = IsSetFpsCmd(name);
+    FILE *fp = popen(cmd.c_str(), "r");
+    if (fp == nullptr) {
+        return fpsInfo;
     }
     fpsNum = 0;
     prevScreenTimestamp = -1;
@@ -385,65 +393,14 @@ FpsInfoProfiler ProfilerFPS::GetSurfaceFrame(const std::string& name)
     fpsInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
     fpsInfo.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
     LOGD("fpsInfo.curTime: (%d), fpsInfo.currTimeDump: (%lld)", fpsInfo.curTime, fpsInfo.currTimeDump);
-
-    if (name == "UniRender") {
-        fpsInfo = GetFpsInfoByDump(name, isBreak);
-    } else {
-        fpsInfo = GetFpsInfoByRs(name, isBreak);
-    }
-    return fpsInfo;
-}
-
-FpsInfoProfiler ProfilerFPS::GetFpsInfoByRs(const std::string& name, bool isBreak)
-{
-    uint64_t nodeId;
-    std::istringstream s(name);
-    s >> nodeId;
-    LOGD("ProfilerFPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
-    std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
-    LOGD("ProfilerFPS fpsInfoResult: %s", fpsInfoResult.c_str());
-    std::stringstream iss;
-    iss << fpsInfoResult;
-    std::string timeStampLine;
-    while (getline(iss, timeStampLine, '\n')) {
-        timeStampLine.erase(0, timeStampLine.find_first_not_of(' '));
-        curScreenTimestamp = 0;
-        if (timeStampLine.empty()) {
-            continue;
-        }
-        std::stringstream ss;
-        ss.clear();
-        ss << timeStampLine;
-        ss >> curScreenTimestamp;
-        if (curScreenTimestamp == 0) {
-            continue;
-        }
-        if (CalcFpsAndJitters(isBreak)) {
-            break;
-        }
-    }
-    CalcJitters();
-    return fpsInfo;
-}
-
-FpsInfoProfiler ProfilerFPS::GetFpsInfoByDump(const std::string& name, bool isBreak)
-{
-    std::string cmd = "hidumper -s 10 -a \"fps " + name + "\"";
-    if (cmd.empty()) {
-        return fpsInfo;
-    }
-    FILE *fp = popen(cmd.c_str(), "r");
-    if (fp == nullptr) {
-        return fpsInfo;
-    }
-
     char tmp[1024];
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGD("ProfilerFPS::GetFpsInfoByDump dump time: %s", tmp);
+        LOGD("ProfilerFPS::GetFrameInfoFromMap dump time: %s", tmp);
+        std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
-        sstream.str(tmp);
+        sstream.str(tmpStr);
         sstream >> curScreenTimestamp;
         if (curScreenTimestamp == 0) {
             continue;
@@ -460,7 +417,6 @@ FpsInfoProfiler ProfilerFPS::GetFpsInfoByDump(const std::string& name, bool isBr
     LOGD("ProfilerFPS fpsNum: %d", fpsNum);
     return fpsInfo;
 }
-
 
 bool ProfilerFPS::CalcFpsAndJitters(bool isBreak)
 {
@@ -556,9 +512,6 @@ void ProfilerFPS::SetGameLayer(const std::string& isGameView)
 std::string ProfilerFPS::GetGameLayer()
 {
     std::string gameLayer = "";
-    if (processId.empty()) {
-        return gameLayer;
-    }
     std::string cmdResult;
     const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_RS_TREE);
     char buf[1024] = {'\0'};
@@ -579,7 +532,10 @@ std::string ProfilerFPS::GetGameLayer()
         size_t endPos = line.find_first_of(end);
         if (startPos != std::string::npos && endPos != std::string::npos) {
             nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
-            LOGD("ProfilerFPS::nodeIdStr: (%s)", nodeIdStr.c_str());
+        }
+        if (line.find(pkgName) != std::string::npos) {
+            pclose(fd);
+            return nodeIdStr;
         }
         const int kShiftAmount = 32;
         if (!nodeIdStr.empty()) {
@@ -591,7 +547,10 @@ std::string ProfilerFPS::GetGameLayer()
             }
             nodeId = nodeId >> kShiftAmount;
             LOGD("ProfilerFPS::nodeId: (%d)", nodeId);
-            gameLayer = GetLayerName(gameLayer, nodeId);
+            gameLayer = GetLayerName(gameLayer, nodeId, line);
+            if (!gameLayer.empty()) {
+                break;
+            }
         }
     }
     if (pclose(fd) == -1) {
@@ -602,15 +561,15 @@ std::string ProfilerFPS::GetGameLayer()
     return gameLayer;
 }
 
-std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId)
+std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, const std::string& line)
 {
     if (isPreset) {
-        gameLayer = GetSurfaceId(gameLayer, nodeId, processId);
+        gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line);
         LOGD("ProfilerFPS::GetLayerName::processId: (%s)", processId.c_str());
     } else {
         StartUpDelay startUpDelay;
         for (const auto& pid : startUpDelay.GetPidParams()) {
-            gameLayer = GetSurfaceId(gameLayer, nodeId, pid);
+            gameLayer = GetSurfaceId(gameLayer, nodeId, pid, line);
             if (!gameLayer.empty()) {
                 break;
             }
@@ -619,9 +578,10 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId)
     return gameLayer;
 }
 
-std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId)
+std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
+    const std::string& line)
 {
-    if (std::to_string(nodeId) == surfaceId) {
+    if (std::to_string(nodeId) == surfaceId && line.find("VisibleRegion [empty]") != std::string::npos) {
         gameLayer =  nodeIdStr;
     }
     LOGD("PorfilerFOS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
@@ -645,6 +605,17 @@ long long ProfilerFPS::GetSystimeBySdk()
     long long systimeBySdk = SPUtilesTye::StringToSometype<long long>(sdkData.GetSdkSystime());
     sdkSystime = systimeBySdk / mod;
     return sdkSystime;
+}
+
+std::string ProfilerFPS::IsSetFpsCmd(const std::string& name)
+{
+    std::string cmd = "";
+    if (name = "UniRender") {
+        cmd = "hidumper -s 10 -a \"fps " + name + "\"";
+    } else {
+        cmd = "hidumper -s 10 -a \"fps -id " + name + "\"";
+    }
+    return cmd;
 }
 }
 }

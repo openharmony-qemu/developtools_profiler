@@ -63,7 +63,7 @@ public:
     void SetTraceCatch();
     void SetGameLayer(const std::string& isGameView);
     std::string GetGameLayer();
-    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId);
+    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, const std::string& line);
     void SetPackageName(std::string pName);
     void GetFPS(std::vector<std::string>& v);
     void GetResultFPS(int sectionsNum);
@@ -71,17 +71,18 @@ public:
     bool CalcFpsAndJitters(bool isBreak);
     long long CalculateJitter();
     FpsInfoProfiler GetSurfaceFrame(const std::string& name);
-    FpsInfoProfiler GetFpsInfoByRs(const std::string& name, bool isBreak);
-    FpsInfoProfiler GetFpsInfoByDump(const std::string& name, bool isBreak);
+    FpsInfoProfiler GetFrameInfoFromMap(const std::string& name);
     void ResetFpsInfo();
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsFps(FpsInfoProfiler &fpsInfoResult, int nums) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetTimeDiff();
     void GetOhFps(std::vector<std::string>& v);
-    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId);
+    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
+        const std::string& line);
     void SetRkFlag();
     std::string GetSurface();
+    std::string IsSetFpsCmd(const std::string& name);
     FpsInfoProfiler fpsInfo;
     FpsInfoProfiler fpsInfoTime;
     FpsInfoProfiler lastFpsInfoResult;
@@ -138,7 +139,6 @@ private:
     std::string gameLayerName;
     bool isSections = true;
     std::string nodeIdStr = "";
-    bool isNodeId = false;
 };
 }
 }
