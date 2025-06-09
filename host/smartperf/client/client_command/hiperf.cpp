@@ -49,7 +49,7 @@ void Hiperf::SetProcessId(const std::string &pid)
 void Hiperf::PrepareHiperf()
 {
     std::string cmdResult;
-    const std::string preparedCmd = "hiperf stat -- control perpare -p " + processId_ + " -o" + savePath_;
+    const std::string preparedCmd = "hiperf stat --control prepare -p " + processId_ + " -o" + savePath_;
     SPUtils::LoadCmd(preparedCmd, cmdResult);
     if (cmdResult.empty()) {
         LOGE("create control hiperf sampling failed");
