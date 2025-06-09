@@ -268,7 +268,6 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     }
     close(pipefd[1]);
     ReadDataFromPipe(pipefd[0]);
-    close(pipefd[0]);
     waitpid(pid, nullptr, 0);
     return fpsInfo;
 }
@@ -289,6 +288,7 @@ void FPS::ReadDataFromPipe(int fd)
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
         LOGE("FPS::Failed to open file descriptor");
+        close(fd);
         return;
     }
     std::stringstream sstream;
