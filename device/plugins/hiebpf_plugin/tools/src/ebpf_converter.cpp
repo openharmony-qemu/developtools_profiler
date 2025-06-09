@@ -558,7 +558,8 @@ int32_t main(int32_t argc, char* argv[])
         {0, 0, 0, 0}
     };
     int32_t opt;
-    std::string inputPath, outputPath;
+    std::string inputPath;
+    std::string outputPath;
     while ((opt = getopt_long(argc, argv, "i:o:h", long_options, nullptr)) != -1) {
         switch (opt) {
             case 'i': {

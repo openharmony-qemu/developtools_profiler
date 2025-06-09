@@ -64,7 +64,8 @@ void PrintUsage(const string& program)
 int ParseMapsLine(const string& line, MapInfo& mapping)
 {
     std::istringstream iss(line);
-    uint64_t start, end;
+    uint64_t start = 0;
+    uint64_t end = 0;
 
     // 读取起始地址和结束地址
     if (!(iss >> hex >> start)) {
