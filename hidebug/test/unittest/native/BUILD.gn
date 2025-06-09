@@ -14,7 +14,7 @@
 import("//build/test.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
-module_output_path = "hiprofiler/hiprofiler/hidebug/"
+module_output_path = "hiprofiler/hidebug/"
 
 ohos_unittest("hidebug_test") {
   module_out_path = module_output_path
