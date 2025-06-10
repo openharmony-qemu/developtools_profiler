@@ -199,7 +199,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
 
 void HookSocketClient::Flush()
 {
-    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+    for (int i = 0; i < stackWriterList_.size(); ++i) {
         if (stackWriterList_[i] == nullptr || unixSocketClient_ == nullptr) {
             return;
         }
