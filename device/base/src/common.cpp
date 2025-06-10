@@ -733,16 +733,6 @@ void AdaptSandboxPath(std::string& filePath, int pid)
     }
 }
 
-void SpinLock(std::atomic_flag& flag)
-{
-    while (flag.test_and_set(std::memory_order_acquire)) {}
-}
-
-void SpinUnlock(std::atomic_flag& flag)
-{
-    flag.clear(std::memory_order_release);
-}
-
 bool GetCurrentUserId(int32_t& userId)
 {
     std::vector<int32_t> activeIds;

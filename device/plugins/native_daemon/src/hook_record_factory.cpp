@@ -185,6 +185,23 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
     }
 }
 
+void HookRecordFactory::InitRawStack(RawStackPtr rawStack, const int8_t sharedMemData[],
+                                     uint32_t size, bool storeData)
+{
+    if (storeData) {
+        rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
+        if (memcpy_s(rawStack->baseStackData.get(), size, sharedMemData, size) != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HookRecordFactory memcpy_s raw data failed!");
+            return;
+        }
+        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
+        rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
+    } else {
+        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
+        rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
+    }
+}
+
 std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t sharedMemData[],
                                                              uint32_t size, bool storeData)
 {
@@ -198,17 +215,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         return freeRecord;
     }
     auto rawStack = GetRawStackFromCache();
-    if (storeData) {
-        rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
-        CHECK_TRUE(memcpy_s(rawStack->baseStackData.get(), size, sharedMemData, size) == EOK, nullptr,
-                   "memcpy_s raw data failed!");
-
-        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
-        rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
-    } else {
-        rawStack->stackContext = reinterpret_cast<BaseStackRawData*>(const_cast<int8_t*>(sharedMemData));
-        rawStack->data = reinterpret_cast<uint8_t*>(const_cast<int8_t*>(sharedMemData)) + sizeof(BaseStackRawData);
-    }
+    InitRawStack(rawStack, sharedMemData, size, storeData);
     uint16_t type = rawStack->stackContext->type;
     switch (type) {
         case NMD_MSG:

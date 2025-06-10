@@ -38,12 +38,12 @@ public:
  */
 HWTEST_F(AddressHandlerTest, LowAddrHandlerTest, TestSize.Level1)
 {
-    LowAddrHandler* handler = new LowAddrHandler();
+    std::unique_ptr<LowAddrHandler> handler = std::make_unique<LowAddrHandler>();
     uint64_t noExistaddr = TEST_ADDR - 1;
     handler->AddAllocAddr(TEST_ADDR);
     ASSERT_TRUE(handler->CheckAddr(TEST_ADDR));
     ASSERT_FALSE(handler->CheckAddr(noExistaddr));
-    delete handler;
+    handler = nullptr;
 }
 
 /**
@@ -53,7 +53,7 @@ HWTEST_F(AddressHandlerTest, LowAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
 {
-    MidAddrHandler* handler = new MidAddrHandler();
+    std::unique_ptr<MidAddrHandler> handler = std::make_unique<MidAddrHandler>();
     uint64_t addr = 0xFF00000;
     uint64_t noExistaddr = addr - 1;
     handler->AddAllocAddr(addr);
@@ -64,7 +64,7 @@ HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
     handler->AddAllocAddr(addr);
     ASSERT_TRUE(handler->CheckAddr(addr));
     ASSERT_TRUE(handler->CheckAddr(noExistaddr));
-    delete handler;
+    handler = nullptr;
 }
 
 /**
@@ -74,12 +74,12 @@ HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, WholeAddrHandlerTest, TestSize.Level1)
 {
-    WholeAddrHandler* handler = new WholeAddrHandler();
+    std::unique_ptr<WholeAddrHandler> handler = std::make_unique<WholeAddrHandler>();
     uint64_t noExistaddr = TEST_ADDR - 1;
     handler->AddAllocAddr(TEST_ADDR);
     ASSERT_TRUE(handler->CheckAddr(TEST_ADDR));
     ASSERT_FALSE(handler->CheckAddr(noExistaddr));
-    delete handler;
+    handler = nullptr;
 }
 
 /**
@@ -89,19 +89,19 @@ HWTEST_F(AddressHandlerTest, WholeAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
 {
-    LowAddrHandler* handlerLow = new LowAddrHandler();
-    MidAddrHandler* handlerMid = new MidAddrHandler();
+    std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
+    std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();
     uint64_t addr = 0xFF000000000;
     uint64_t noExistaddr = 0xFE000000000;
     handlerLow->AddAllocAddr(addr);
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
     handlerMid->AddAllocAddr(addr);
-    handlerLow->SetSuccessor(handlerMid);
+    handlerLow->SetSuccessor(std::move(handlerMid));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_FALSE(handlerLow->CheckAddr(noExistaddr));
-    delete handlerLow;
-    delete handlerMid;
+    handlerLow = nullptr;
+    handlerMid = nullptr;
 }
 
 /**
@@ -111,19 +111,19 @@ HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
 {
-    LowAddrHandler* handlerLow = new LowAddrHandler();
-    WholeAddrHandler* handlerWhole = new WholeAddrHandler();
+    std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
+    std::unique_ptr<WholeAddrHandler> handlerWhole = std::make_unique<WholeAddrHandler>();
     uint64_t addr = 0xFF000000000;
     uint64_t noExistaddr = 0xFE000000000;
     handlerLow->AddAllocAddr(addr);
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
     handlerWhole->AddAllocAddr(addr);
-    handlerLow->SetSuccessor(handlerWhole);
+    handlerLow->SetSuccessor(std::move(handlerWhole));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_FALSE(handlerLow->CheckAddr(noExistaddr));
-    delete handlerLow;
-    delete handlerWhole;
+    handlerLow = nullptr;
+    handlerWhole = nullptr;
 }
 
 /**
@@ -133,19 +133,19 @@ HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level1)
 {
-    MidAddrHandler* handlerMid = new MidAddrHandler();
-    WholeAddrHandler* handlerWhole = new WholeAddrHandler();
+    std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();
+    std::unique_ptr<WholeAddrHandler> handlerWhole = std::make_unique<WholeAddrHandler>();
     uint64_t addr = TEST_ADDR;
     uint64_t noExistaddr = addr - 1;
     handlerMid->AddAllocAddr(addr);
     ASSERT_TRUE(handlerMid->CheckAddr(addr));
     ASSERT_TRUE(handlerMid->CheckAddr(noExistaddr));
     handlerWhole->AddAllocAddr(addr);
-    handlerMid->SetSuccessor(handlerWhole);
+    handlerMid->SetSuccessor(std::move(handlerWhole));
     ASSERT_TRUE(handlerMid->CheckAddr(addr));
     ASSERT_FALSE(handlerMid->CheckAddr(noExistaddr));
-    delete handlerMid;
-    delete handlerWhole;
+    handlerMid = nullptr;
+    handlerWhole = nullptr;
 }
 
 /**
@@ -155,9 +155,9 @@ HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level1)
  */
 HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level1)
 {
-    LowAddrHandler* handlerLow = new LowAddrHandler();
-    MidAddrHandler* handlerMid = new MidAddrHandler();
-    WholeAddrHandler* handlerWhole = new WholeAddrHandler();
+    std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
+    std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();
+    std::unique_ptr<WholeAddrHandler> handlerWhole = std::make_unique<WholeAddrHandler>();
     uint64_t addr = 0xFF0000000000000;
     uint64_t noExistaddr = 0xEF0000000000000;
     handlerLow->AddAllocAddr(addr);
@@ -165,14 +165,12 @@ HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level1)
     handlerMid->AddAllocAddr(addr);
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
-    handlerLow->SetSuccessor(handlerMid);
-    ASSERT_TRUE(handlerLow->CheckAddr(addr));
-    ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
-    handlerMid->SetSuccessor(handlerWhole);
+    handlerMid->SetSuccessor(std::move(handlerWhole));
+    handlerLow->SetSuccessor(std::move(handlerMid));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
     ASSERT_FALSE(handlerLow->CheckAddr(noExistaddr));
-    delete handlerLow;
-    delete handlerMid;
-    delete handlerWhole;
+    handlerLow = nullptr;
+    handlerMid = nullptr;
+    handlerWhole = nullptr;
 }
 }

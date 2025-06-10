@@ -122,6 +122,10 @@ bool NativeMemoryProfilerSaClientManager::CheckConfig(const std::shared_ptr<Nati
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: duration cannot be 0");
         return false;
     }
+    if (config->filePath_.length() >= PATH_MAX) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: filePath_ invalid");
+        return false;
+    }
     if (config->shareMemorySize_ == 0) {
         config->shareMemorySize_ = config->responseLibraryMode_ ? LIB_SMS : CALL_STACK_SMS;
     }

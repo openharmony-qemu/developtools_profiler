@@ -85,6 +85,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "../../src/hook_record_factory.cpp",
     "../../src/hook_service.cpp",
     "../../src/register.cpp",
+    "../../src/stack_builder.cpp",
     "../../src/stack_data_repeater.cpp",
     "../../src/stack_preprocess.cpp",
     "../../src/symbols_file.cpp",

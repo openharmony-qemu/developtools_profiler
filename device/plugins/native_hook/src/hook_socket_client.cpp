@@ -93,7 +93,7 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *samp
 
 HookSocketClient::~HookSocketClient()
 {
-    for (int i = 0; i < stackWriterList_.size(); ++i) {
+    for (size_t i = 0; i < stackWriterList_.size(); ++i) {
         if (stackWriterList_[i]) {
             stackWriterList_[i]->Flush();
         }
@@ -126,7 +126,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     sampler_->InitSampling(config_->sampleInterval);
-    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+    for (size_t i = 0; i < SHARED_MEMORY_NUM; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();
         int eventfd = context.ReceiveFileDiscriptor();
         smbFds_.push_back(smbfd);
@@ -273,10 +273,11 @@ bool HookSocketClient::SendEndMsg()
 {
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = END_MSG;
-    for (int i = 0; i < stackWriterList_.size(); ++i) {
-        if (stackWriterList_[i]) {
-            stackWriterList_[i]->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
+    std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
+        [&rawdata](std::shared_ptr<StackWriter>& writer) {
+        if (writer) {
+            writer->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
         }
-    }
+    });
     return true;
 }

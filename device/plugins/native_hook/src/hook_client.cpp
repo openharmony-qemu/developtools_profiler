@@ -96,9 +96,9 @@ static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
-WholeAddrHandler* g_wholeAddrHandler = nullptr;
-MidAddrHandler* g_highPartHandler = nullptr;
-LowAddrHandler* g_addrHandler = nullptr;
+std::unique_ptr<WholeAddrHandler> g_wholeAddrHandler = nullptr;
+std::unique_ptr<MidAddrHandler> g_midPartHandler = nullptr;
+std::unique_ptr<LowAddrHandler> g_addrHandler = nullptr;
 
 const MallocDispatchType* GetDispatch()
 {
@@ -257,11 +257,11 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
-    g_wholeAddrHandler = new WholeAddrHandler();
-    g_highPartHandler = new MidAddrHandler();
-    g_addrHandler = new LowAddrHandler();
-    g_addrHandler->SetSuccessor(g_highPartHandler);
-    g_highPartHandler->SetSuccessor(g_wholeAddrHandler);
+    g_wholeAddrHandler = std::make_unique<WholeAddrHandler>();
+    g_midPartHandler = std::make_unique<MidAddrHandler>();
+    g_addrHandler = std::make_unique<LowAddrHandler>();
+    g_midPartHandler->SetSuccessor(std::move(g_wholeAddrHandler));
+    g_addrHandler->SetSuccessor(std::move(g_midPartHandler));
     g_mallocTimes = 0;
     g_hookClient.reset();
     g_hookPid = GetRealPid();
@@ -345,18 +345,9 @@ void* ohos_release_on_end(void*)
         g_hookClient->SendEndMsg();
         g_hookClient->Flush();
     }
-    if (g_addrHandler != nullptr) {
-        delete g_addrHandler;
-        g_addrHandler = nullptr;
-    }
-    if (g_highPartHandler != nullptr) {
-        delete g_highPartHandler;
-        g_highPartHandler = nullptr;
-    }
-    if (g_wholeAddrHandler != nullptr) {
-        delete g_wholeAddrHandler;
-        g_wholeAddrHandler = nullptr;
-    }
+    g_addrHandler = nullptr;
+    g_midPartHandler = nullptr;
+    g_wholeAddrHandler = nullptr;
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
     g_hookReady = false;
@@ -556,7 +547,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
-    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
         g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
@@ -663,7 +654,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = len;
     rawdata.addr = ret;
-    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
         g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
@@ -775,7 +766,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
-    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
         g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
@@ -885,7 +876,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
-    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
         g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
@@ -946,7 +937,7 @@ void hook_free(void (*free_func)(void*), void* p)
         struct timespec start = {};
         clock_gettime(CLOCK_REALTIME, &start);
 #endif
-        if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+        if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
             if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
                 free_func(p);
 #ifdef PERFORMANCE_DEBUG
@@ -996,7 +987,7 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return;
     }
-    if (g_ClientConfig.sampleInterval >= THRESHOLD) {
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
         if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
             return;
         }
@@ -1271,7 +1262,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
     if (g_ClientConfig.munmapStackData) {
-        if (g_ClientConfig.fpunwind) {
+        if (g_ClientConfig.fpunwind && g_ClientConfig.statisticsInterval == 0) {
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             if (fpStackDepth == 0) {
