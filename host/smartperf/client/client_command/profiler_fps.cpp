@@ -384,6 +384,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     std::string cmd = IsSetFpsCmd(name);
     FILE *fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
+        LOGE("Failed to open hidumper file");
         return fpsInfo;
     }
     fpsNum = 0;
@@ -393,6 +394,7 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     fpsInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
     fpsInfo.currTimeDump = (sysTime.tv_sec - 1) * mod + sysTime.tv_nsec;
     LOGD("fpsInfo.curTime: (%d), fpsInfo.currTimeDump: (%lld)", fpsInfo.curTime, fpsInfo.currTimeDump);
+    
     char tmp[1024];
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
@@ -581,8 +583,8 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
 std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
     const std::string& line)
 {
-    if (std::to_string(nodeId) == surfaceId && line.find("VisibleRegion [empty]") != std::string::npos) {
-        gameLayer =  nodeIdStr;
+    if (std::to_string(nodeId) == surfaceId && line.find("VisibleRegion [Empty]") != std::string::npos) {
+        gameLayer = nodeIdStr;
     }
     LOGD("PorfilerFOS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
     return gameLayer;
@@ -610,7 +612,7 @@ long long ProfilerFPS::GetSystimeBySdk()
 std::string ProfilerFPS::IsSetFpsCmd(const std::string& name)
 {
     std::string cmd = "";
-    if (name = "UniRender") {
+    if (name == "UniRender") {
         cmd = "hidumper -s 10 -a \"fps " + name + "\"";
     } else {
         cmd = "hidumper -s 10 -a \"fps -id " + name + "\"";
