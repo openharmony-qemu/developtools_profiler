@@ -28,23 +28,19 @@
 #include "google/protobuf/text_format.h"
 #include "trace_file_writer.h"
 
-constexpr static uint32_t MAX_MATCH_CNT = 1000;
-constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
-constexpr static uint32_t LOG_PRINT_TIMES = 10000;
-constexpr static uint32_t WAIT_STOP_TIME = 5000;
-constexpr static uint32_t WAIT_TIME_ONCE = 10;
-constexpr static uint32_t MAX_BATCH_CNT = 40;
-constexpr static uint64_t SIZE_MASK = 0xFFFFFF0000000000;
-constexpr static uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
-constexpr static uint64_t DWARF_ERROR_ID = 999999;
-constexpr static uint64_t DWARF_NAPI_CALLBACK = 999999;
-static std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
-static std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
-constexpr static int NAPI_CALL_STACK = 2; // just for napi call stack
-constexpr static uint32_t FRAME_DEPTH = 2; // add two frames
+constexpr uint32_t MAX_MATCH_CNT = 1000;
+constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
+constexpr uint32_t LOG_PRINT_TIMES = 10000;
+constexpr uint32_t WAIT_STOP_TIME = 5000;
+constexpr uint32_t WAIT_TIME_ONCE = 10;
+constexpr uint32_t MAX_BATCH_CNT = 40;
+constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
+constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
+constexpr int NAPI_CALL_STACK = 2; // just for napi call stack
+constexpr uint32_t FRAME_DEPTH = 2; // add two frames
 constexpr uint32_t FLUSH_BASELINE_SA = (1U << 20);
 #ifdef PERFORMANCE_DEBUG
-constexpr static uint32_t LONG_TIME_THRESHOLD = 1000000;
+constexpr uint32_t LONG_TIME_THRESHOLD = 1000000;
 static std::atomic<uint64_t> timeCost = 0;
 static std::atomic<uint64_t> unwindTimes = 0;
 #endif
@@ -53,10 +49,9 @@ using namespace OHOS::Developtools::NativeDaemon;
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::Profiler;
 
-static thread_local std::vector<CallFrame> g_callFrames;
 static thread_local std::vector<uint64_t> g_callStack;
-static thread_local std::vector<std::string> g_fpJsCallStacks;
 static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap = {};
+static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
     clockid_t pluginDataClockId, FILE* fpHookData, bool isHookStandalone, bool isSaService, bool isProtobufSerialize)
@@ -97,15 +92,6 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
         PROFILER_LOG_ERROR(LOG_CORE, "If you need to save the file, please set the file_name");
     }
     PROFILER_LOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d", isHookStandaloneSerialize_);
-#if defined(__arm__)
-    u64regs_.resize(PERF_REG_ARM_MAX);
-#else
-    u64regs_.resize(PERF_REG_ARM64_MAX);
-#endif
-    g_callFrames.reserve(hookConfig_.max_stack_depth() + hookConfig_.max_js_stack_depth());
-    if (hookConfig_.fp_unwind() && hookConfig_.js_stack_report() > 0) {
-        g_fpJsCallStacks.reserve(hookConfig_.max_js_stack_depth());
-    }
 }
 
 StackPreprocess::~StackPreprocess()
@@ -266,6 +252,9 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
     eventNotifier->Take();
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
+    if (g_director == nullptr) {
+        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance);
+    }
     while (!isStopTakeData_) {
         bool ret = shareMemoryBlock->TakeData(
             [&](const int8_t data[], uint32_t size) -> bool {
@@ -321,28 +310,18 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                 SaveJsRawStack(rawData->stackContext->jsChainId, reinterpret_cast<char*>(rawData->data));
                 return true;
             }
-            {
-                std::lock_guard<std::mutex> guard(mtx_);
-                runtime_instance->UpdateThread(rawData->stackContext->pid, rawData->stackContext->tid);
+            if (rawData->stackContext->jsChainId > 0) {
+                rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
             }
-            g_callFrames.clear();
-            if (hookConfig_.fp_unwind()) {
-                FillFpNativeIp(rawData);
-                if (rawData->stackContext->jsChainId > 0) {
-                    rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
-                }
-                if (rawData->stackContext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report() > 0) {
-                    FillFpJsData(hookRecord);
-                }
-            }
+            auto& callFrames = g_director->ConstructCallFrames(hookRecord);
             ReportOfflineSymbolizationData();
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    SetHookData(hookRecord, g_callFrames, stackData);
+                    SetHookData(hookRecord, callFrames, stackData);
                 } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
-                    WriteFrames(hookRecord, g_callFrames);
+                    WriteFrames(hookRecord, callFrames);
                 } else if (!hookConfig_.save_file()) {
-                    SetHookData(hookRecord, g_callFrames, stackData);
+                    SetHookData(hookRecord, callFrames, stackData);
                 }
                 }, stackData_);
             IntervalFlushRecordStatistics();
@@ -379,14 +358,10 @@ void StackPreprocess::TakeResults()
     if (!dataRepeater_) {
         return;
     }
-
-    size_t minStackDepth = hookConfig_.max_stack_depth() > MIN_STACK_DEPTH
-        ? MIN_STACK_DEPTH : hookConfig_.max_stack_depth();
-    if (hookConfig_.blocked()) {
-        minStackDepth = static_cast<size_t>(hookConfig_.max_stack_depth());
-    }
-    minStackDepth += FILTER_STACK_DEPTH;
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, start!", gettid());
+    if (g_director == nullptr) {
+        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance);
+    }
     while (1) {
         HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
         if (isStopTakeData_) {
@@ -454,61 +429,24 @@ void StackPreprocess::TakeResults()
             if (eventCnts_ % LOG_PRINT_TIMES == 0) {
                 PROFILER_LOG_INFO(LOG_CORE, "eventCnts_ = %d quene size = %zu\n", eventCnts_, dataRepeater_->Size());
             }
-            g_callFrames.clear();
-            if (hookConfig_.fp_unwind()) {
-                FillFpNativeIp(rawData);
-                if (rawData->stackContext->jsChainId > 0 && rawData->jsStackData && hookConfig_.js_stack_report() > 0) {
-                    FillFpJsData(hookRecord);
-                }
-            } else if (type != PR_SET_VMA_MSG) {
-                if (rawData->stackSize == 0) {
-                    FillDwarfErrorStack();
-                } else {
-#if defined(__arm__)
-                uint32_t *regAddrArm = reinterpret_cast<uint32_t *>(rawData->data);
-                u64regs_.assign(regAddrArm, regAddrArm + PERF_REG_ARM_MAX);
-#else
-                if (memcpy_s(u64regs_.data(), sizeof(uint64_t) * PERF_REG_ARM64_MAX, rawData->data,
-                    sizeof(uint64_t) * PERF_REG_ARM64_MAX) != EOK) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s regs failed");
-                }
-#endif
-                }
-            }
+            auto& callFrames = g_director->ConstructCallFrames(hookRecord);
 #ifdef PERFORMANCE_DEBUG
-            size_t realFrameDepth = g_callFrames.size();
+            size_t realFrameDepth = callFrames.size();
 #endif
-            size_t stackDepth = ((size_t)hookConfig_.max_stack_depth() > MAX_CALL_FRAME_UNWIND_SIZE)
-                        ? MAX_CALL_FRAME_UNWIND_SIZE
-                        : hookConfig_.max_stack_depth() + FILTER_STACK_DEPTH;
-            if (rawData->reduceStackFlag) {
-                stackDepth = minStackDepth;
-            }
-            if ((hookConfig_.fp_unwind()) || rawData->stackSize > 0) {
-                std::lock_guard<std::mutex> guard(mtx_);
-                if (type != PR_SET_VMA_MSG) {
-                    bool ret = runtime_instance->UnwindStack(u64regs_, rawData->stackData, rawData->stackSize,
-                    rawData->stackContext->pid, rawData->stackContext->tid, g_callFrames, stackDepth);
-                    if (!ret) {
-                        PROFILER_LOG_ERROR(LOG_CORE, "unwind fatal error");
-                        continue;
-                    }
-                }
-            }
             if (((hookConfig_.fp_unwind()) || rawData->stackSize > 0) &&
                 (type != PR_SET_VMA_MSG)) {
                 ReportOfflineSymbolizationData();
             }
             std::visit([&](auto& stackData) {
                 if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    SetHookData(hookRecord, g_callFrames, stackData);
+                    SetHookData(hookRecord, callFrames, stackData);
                 } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
-                    WriteFrames(hookRecord, g_callFrames);
+                    WriteFrames(hookRecord, callFrames);
                 } else if (!hookConfig_.save_file()) {
                     if (hookConfig_.malloc_free_matching_interval() > 0) {
-                        SetApplyAndReleaseMatchFrame(hookRecord, g_callFrames, stackData);
+                        SetApplyAndReleaseMatchFrame(hookRecord, callFrames, stackData);
                     } else {
-                        SetHookData(hookRecord, g_callFrames, stackData);
+                        SetHookData(hookRecord, callFrames, stackData);
                     }
                 }
                 }, stackData_);
@@ -521,7 +459,7 @@ void StackPreprocess::TakeResults()
             if (curTimeCost >= LONG_TIME_THRESHOLD) {
                 PROFILER_LOG_ERROR(LOG_CORE, "bigTimeCost %" PRIu64 " event=%d, realFrameDepth=%zu, "
                     "callFramesDepth=%zu\n",
-                    curTimeCost, type, realFrameDepth, g_callFrames.size());
+                    curTimeCost, type, realFrameDepth, callFrames.size());
             }
             timeCost += curTimeCost;
             unwindTimes++;
@@ -724,7 +662,7 @@ void StackPreprocess::SetEventFrame(const ReportEventBaseData& rawStack,
 
 void StackPreprocess::FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex)
 {
-    CallFrame& jsCallFrame = g_callFrames.emplace_back(0);
+    CallFrame& jsCallFrame = callFrames.emplace_back(0);
     jsCallFrame.symbolName_ = tagName;
     jsCallFrame.isJsFrame_ = true;
     jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
@@ -775,7 +713,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
         ReportFrameMap(callFrames.back(), stackData);
         ++napiIndex_;
     }
-    COMMON::SpinLock(recordMapFlag_);
+    spinLock_.Lock();
     // by call stack id set alloc statistics data.
     uint32_t stackId = FindCallStackId(g_callStack);
     if (stackId > 0) {
@@ -785,7 +723,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
-    COMMON::SpinUnlock(recordMapFlag_);
+    spinLock_.Unlock();
 }
 
 template <typename T>
@@ -958,13 +896,13 @@ inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
     // through the addr lookup record
     auto addrIter = g_allocAddrMap.find(addr);
     if (addrIter != g_allocAddrMap.end()) {
-        COMMON::SpinLock(recordMapFlag_);
+        spinLock_.Lock();
         auto& record = addrIter->second.second;
         ++record->releaseCount;
         record->releaseSize += addrIter->second.first;
         statisticsPeriodData_[record->callstackId] = record;
         g_allocAddrMap.erase(addr);
-        COMMON::SpinUnlock(recordMapFlag_);
+        spinLock_.Unlock();
         return true;
     }
     return false;
@@ -1340,7 +1278,7 @@ bool StackPreprocess::FlushRecordStatistics()
     if (statisticsPeriodData_.empty()) {
         return false;
     }
-    COMMON::SpinLock(recordMapFlag_);
+    spinLock_.Lock();
     std::visit([&](auto& stackData) {
         FlushData(stackData);
         }, stackData_);
@@ -1363,7 +1301,7 @@ bool StackPreprocess::FlushRecordStatistics()
         FlushData(stackData);
         }, stackData_);
     statisticsPeriodData_.clear();
-    COMMON::SpinUnlock(recordMapFlag_);
+    spinLock_.Unlock();
     return true;
 }
 
@@ -1463,91 +1401,6 @@ int32_t StackPreprocess::FinishReport()
     }
     writer_->FinishReport(len);
     return len;
-}
-
-void StackPreprocess::FillFpNativeIp(RawStackPtr& rawData)
-{
-    uint64_t* fpIp = reinterpret_cast<uint64_t *>(rawData->data);
-    for (uint8_t idx = 0; idx < rawData->fpDepth ; ++idx) {
-        if (fpIp[idx] == 0) {
-            break;
-        }
-        g_callFrames.emplace_back(StripPac(fpIp[idx], 0));
-    }
-}
-
-void StackPreprocess::FillFpJsData(HookRecordPtr& hookRecord)
-{
-    auto rawData = hookRecord->GetRawStack();
-    if (hookConfig_.statistics_interval() > 0) {
-        switch (hookRecord->GetType()) {
-            case FREE_MSG:
-            case MUNMAP_MSG:
-            case MEMORY_UNUSING_MSG:
-                 return;
-            default:
-                break;
-        }
-    }
-    g_fpJsCallStacks.clear();
-    /**
-      *     jsStackData:
-      *              ts_malloc1|entry/src/main/ets/pages/Index.ets:5:5,ts_malloc2|entry/src/main/ets/pages/Index.ets:8:5
-      *                        |                                      |
-      *                        JS_SYMBOL_FILEPATH_SEP                 JS_CALL_STACK_DEPTH_SEP
-      *     jsCallStack:
-      *                  ts_malloc1|entry/src/main/ets/pages/Index.ets:5:5
-      *                            / \
-      *                           |   |
-      *     jsSymbolFilePathSepPos    |
-      *                               jsFilePathPos = jsSymbolFilePathSepPos + 1
-      */
-    AdvancedSplitString(rawData->jsStackData, JS_CALL_STACK_DEPTH_SEP, g_fpJsCallStacks);
-    std::lock_guard<std::mutex> guard(mtx_);
-    for (std::string& jsCallStack: g_fpJsCallStacks) {
-        std::string::size_type jsSymbolFilePathSepPos = jsCallStack.find_first_of(JS_SYMBOL_FILEPATH_SEP);
-        if (jsSymbolFilePathSepPos == std::string::npos) {
-            PROFILER_LOG_ERROR(LOG_CORE, "%s: jsCallStack find FAILED!", __func__);
-            continue;
-        }
-        std::string::size_type jsFilePathPos = jsSymbolFilePathSepPos + 1;
-        jsCallStack[jsSymbolFilePathSepPos] = '\0'; // "ts_malloc1'\0'entry/src/main/ets/pages/Index.ets:5:5"
-        CallFrame& jsCallFrame = g_callFrames.emplace_back(0, 0, true);
-        jsCallFrame.symbolName_ = StringViewMemoryHold::GetInstance().HoldStringView(jsCallStack.c_str());
-        jsCallFrame.filePath_ = StringViewMemoryHold::GetInstance().HoldStringView(jsCallStack.c_str() + jsFilePathPos);
-        if (hookConfig_.offline_symbolization()) {
-            DfxSymbol symbol;
-            if (!runtime_instance->ArktsGetSymbolCache(jsCallFrame, symbol)) {
-                symbol.filePathId_ = runtime_instance->FillArkTsFilePath(jsCallFrame.filePath_);
-                symbol.symbolName_ = jsCallFrame.symbolName_;
-                symbol.module_ = jsCallFrame.filePath_;
-                symbol.symbolId_ = runtime_instance->GetJsSymbolCacheSize();
-                runtime_instance->FillSymbolNameId(jsCallFrame, symbol);
-                runtime_instance->FillFileSet(jsCallFrame, symbol);
-                jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
-                runtime_instance->FillJsSymbolCache(jsCallFrame, symbol);
-            }
-            jsCallFrame.callFrameId_ = symbol.symbolId_;
-            jsCallFrame.symbolNameId_ = symbol.symbolNameId_;
-            jsCallFrame.filePathId_ = symbol.filePathId_;
-            jsCallFrame.filePath_ = symbol.module_;
-            jsCallFrame.symbolName_ = symbol.symbolName_;
-        }
-    }
-}
-
-void StackPreprocess::FillDwarfErrorStack()
-{
-    CallFrame& jsCallFrame = g_callFrames.emplace_back(0);
-    jsCallFrame.symbolName_ = "UnwindErrorDwarf";
-    jsCallFrame.isJsFrame_ = true;
-    jsCallFrame.needReport_ |= CALL_FRAME_REPORT;
-    jsCallFrame.needReport_ |= SYMBOL_NAME_ID_REPORT;
-    jsCallFrame.needReport_ |= FILE_PATH_ID_REPORT;
-    jsCallFrame.callFrameId_ = DWARF_ERROR_ID;
-    jsCallFrame.symbolNameId_ = DWARF_ERROR_ID;
-    jsCallFrame.filePathId_ = DWARF_ERROR_ID;
-    jsCallFrame.filePath_ = "no-file-path";
 }
 
 void StackPreprocess::FlushRecordApplyAndReleaseMatchData()

@@ -42,7 +42,9 @@ const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
 const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
-const int SHARED_MEMORY_NUM = 3;
+constexpr int SHARED_MEMORY_NUM = 3;
+constexpr uint64_t DWARF_ERROR_ID = 999999;
+constexpr uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 }
 }
 }
@@ -78,6 +80,11 @@ enum {
     END_MSG,
     FREE_MSG_SIMP,
     UNKNOWN,
+};
+
+enum SymbolType {
+    NATIVE_SYMBOL,
+    JS_SYMBOL,
 };
 
 struct Range {

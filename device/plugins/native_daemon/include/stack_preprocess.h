@@ -36,6 +36,8 @@
 #include "native_hook_result.pbencoder.h"
 #include "safe_map.h"
 #include "schedule_task_manager.h"
+#include "common.h"
+#include "stack_builder.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
@@ -193,9 +195,6 @@ private:
 
     RandomWriteCtx* StartReport();
     int32_t FinishReport();
-    void FillFpNativeIp(RawStackPtr& rawData);
-    void FillFpJsData(HookRecordPtr& hookRecord);
-    void FillDwarfErrorStack();
     void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
@@ -235,7 +234,7 @@ private:
     std::mutex mtx_;
     std::mutex memTagMtx_;
     std::mutex jsMapMtx_;
-    std::atomic_flag recordMapFlag_ = ATOMIC_FLAG_INIT;
+    COMMON::SpinLock spinLock_;
     bool isSaService_{false};
     std::mutex allocAddrMapMtx_;
     bool isProtobufSerialize_{true};

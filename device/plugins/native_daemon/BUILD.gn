@@ -69,6 +69,7 @@ ohos_executable("native_daemon") {
     "src/hook_standalone.cpp",
     "src/main.cpp",
     "src/register.cpp",
+    "src/stack_builder.cpp",
     "src/stack_data_repeater.cpp",
     "src/stack_preprocess.cpp",
     "src/symbols_file.cpp",

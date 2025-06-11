@@ -53,8 +53,6 @@ bool IsUserMode();
 bool GetUidGidFromPid(pid_t pid, uid_t& ruid, gid_t& rgid);
 bool GetDeveloperMode();
 bool IsBetaVersion();
-void SpinLock(std::atomic_flag& flag);
-void SpinUnlock(std::atomic_flag& flag);
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
@@ -71,6 +69,21 @@ enum ErrorType {
     RET_MSG_EMPTY,
     RET_FAIL = -1,
     RET_SUCC = 0,
+};
+
+class SpinLock {
+public:
+    void Lock()
+    {
+        while (flag.test_and_set(std::memory_order_acquire)) {}
+    }
+
+    void Unlock()
+    {
+        flag.clear(std::memory_order_release);
+    }
+private:
+    std::atomic_flag flag = ATOMIC_FLAG_INIT;
 };
 } // COMMON
 #endif // COMMON_H

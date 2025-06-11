@@ -25,6 +25,12 @@ constexpr uint32_t MASK_SMALL = 1ULL << 22;
 constexpr int SPIN_SHIFT_FIRST = 30;
 constexpr int SPIN_SHIFT_SECOND = 27;
 constexpr int SPIN_SHIFT_THIRD = 31;
+constexpr uint64_t SPIN_FIRST_SALT = 0x9e3779b97f4a7c15;
+constexpr uint64_t SPIN_SECOND_SALT = 0xbf58476d1ce4e5b9;
+constexpr uint64_t SPIN_THIRD_SALT = 0x94d049bb133111eb;
+constexpr uint32_t FNV_HASH = 16777619u;
+constexpr uint32_t MUR_FIRST_SALT = 0x85ebca6b;
+constexpr uint32_t MUR_SECOND_SALT = 0xc2b2ae35;
 }
 
 AddressHandler::AddressHandler(int poolSize)
@@ -73,9 +79,9 @@ bool LowAddrHandler::CheckAddr(uint64_t addr)
 uint32_t LowAddrHandler::HashFunc(uint32_t addrKey)
 {
     addrKey ^= addrKey >> FIRST_HASH;
-    addrKey *= 0x85ebca6b;
+    addrKey *= MUR_FIRST_SALT;
     addrKey ^= addrKey >> SECOND_HASH;
-    addrKey *= 0xc2b2ae35;
+    addrKey *= MUR_SECOND_SALT;
     addrKey ^= addrKey >> FIRST_HASH;
     return addrKey;
 }
@@ -116,7 +122,7 @@ uint32_t MidAddrHandler::HashFunc(uint32_t addrKey)
     uint32_t hash = 2166136261u;
     //mix in the input
     hash ^= addrKey;
-    hash *= 16777619u;
+    hash *= FNV_HASH;
     hash = hash & (MASK_SMALL - 1);
     return hash;
 }
@@ -152,8 +158,8 @@ bool WholeAddrHandler::CheckAddr(uint64_t addr)
 
 uint64_t WholeAddrHandler::HashFunc(uint64_t addrKey)
 {
-    uint64_t hashval = (addrKey += 0x9e3779b97f4a7c15);
-    hashval = (hashval ^ (hashval >> SPIN_SHIFT_FIRST)) * 0xbf58476d1ce4e5b9;
-    hashval = (hashval ^ (hashval >> SPIN_SHIFT_SECOND)) * 0x94d049bb133111eb;
+    uint64_t hashval = (addrKey += SPIN_FIRST_SALT);
+    hashval = (hashval ^ (hashval >> SPIN_SHIFT_FIRST)) * SPIN_SECOND_SALT;
+    hashval = (hashval ^ (hashval >> SPIN_SHIFT_SECOND)) * SPIN_THIRD_SALT;
     return hashval ^ (hashval >> SPIN_SHIFT_THIRD);
 }

@@ -56,10 +56,10 @@ HookManager::~HookManager()
 {
     hookService_ = nullptr;
     for (const auto& item : hookCtx_) {
-        for (int i = 0; i < item->shareMemoryBlockList.size(); ++i) {
+        for (size_t i = 0; i < item->shareMemoryBlockList.size(); ++i) {
             item->shareMemoryBlockList[i] = nullptr;
         }
-        for (int i = 0; i < item->eventPollerList.size(); ++i) {
+        for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
             item->eventPollerList[i] = nullptr;
         }
         if (item->stackPreprocess != nullptr) {

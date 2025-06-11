@@ -25,19 +25,19 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 constexpr uint32_t INT_MAX_LEN = 10;
-constexpr static uint32_t SC_LG_TINY_MIN = 3;
-constexpr static uint32_t LG_QUANTUM = 4;
-constexpr static uint32_t SC_NTINY = LG_QUANTUM - SC_LG_TINY_MIN;
-constexpr static uint32_t SC_LG_TINY_MAXCLASS = (LG_QUANTUM > SC_LG_TINY_MIN ? LG_QUANTUM - 1 : -1);
-constexpr static uint32_t SC_LG_NGROUP = 2;
-constexpr static uint32_t LG_SIZE_CLASS_GROUP = 2;
-constexpr static uint32_t NTBINS = 1;
-constexpr static uint32_t LG_TINY_MAXCLASS = 3;
-constexpr static uint32_t RIGHT_MOVE_1 = 1;
-constexpr static uint32_t RIGHT_MOVE_2 = 2;
-constexpr static uint32_t RIGHT_MOVE_4 = 4;
-constexpr static uint32_t RIGHT_MOVE_8 = 8;
-constexpr static uint32_t RIGHT_MOVE_16 = 16;
+constexpr uint32_t SC_LG_TINY_MIN = 3;
+constexpr uint32_t LG_QUANTUM = 4;
+constexpr uint32_t SC_NTINY = LG_QUANTUM - SC_LG_TINY_MIN;
+constexpr uint32_t SC_LG_TINY_MAXCLASS = (LG_QUANTUM > SC_LG_TINY_MIN ? LG_QUANTUM - 1 : -1);
+constexpr uint32_t SC_LG_NGROUP = 2;
+constexpr uint32_t LG_SIZE_CLASS_GROUP = 2;
+constexpr uint32_t NTBINS = 1;
+constexpr uint32_t LG_TINY_MAXCLASS = 3;
+constexpr uint32_t RIGHT_MOVE_1 = 1;
+constexpr uint32_t RIGHT_MOVE_2 = 2;
+constexpr uint32_t RIGHT_MOVE_4 = 4;
+constexpr uint32_t RIGHT_MOVE_8 = 8;
+constexpr uint32_t RIGHT_MOVE_16 = 16;
 
 uint32_t RoundUp(uint32_t x, const int align)
 {

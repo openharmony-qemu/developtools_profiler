@@ -24,8 +24,8 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
-constexpr static uint32_t MAX_MATCH_INTERVAL = 3600;
-constexpr static uint32_t MAX_MATCH_CNT = 1000;
+constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
+constexpr uint32_t MAX_MATCH_CNT = 1000;
 
 class StackPreprocessTest : public testing::Test {
 public:
