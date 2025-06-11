@@ -50,7 +50,7 @@ private:
     std::string processId_;
     std::mutex hiperfLock_;
     std::map<std::string, std::string> hiperfData_ = {};
-    std::vector<std::string> collectNodes_ = {std::string("hw_cpu_cycles"), std::string("hw-instructions")};
+    std::vector<std::string> collectNodes_ = {std::string("hw-cpu-cycles"), std::string("hw-instructions")};
     bool hiperfFirstCollect_ = true;
 };
 }
