@@ -535,7 +535,8 @@ std::string ProfilerFPS::GetGameLayer()
         if (startPos != std::string::npos && endPos != std::string::npos) {
             nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
         }
-        if (line.find(pkgName) != std::string::npos) {
+        if (line.find(pkgName) != std::string::npos ||
+            (line.find("ShellAssistantAnco") != std::string::npos && line.find("Surface") != std::string::npos)) {
             pclose(fd);
             return nodeIdStr;
         }
