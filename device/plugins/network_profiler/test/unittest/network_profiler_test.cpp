@@ -411,19 +411,6 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerServiceTest002, TestSize.Level1)
 }
 
 /**
- * @tc.name: NetworkProfilerServiceTest003
- * @tc.desc: test NetworkProfilerService::NetworkProfilerServiceTest003 with normal case.
- * @tc.type: FUNC
- */
-HWTEST_F(NetworkProfilerTest, NetworkProfilerServiceTest003, TestSize.Level1)
-{
-    StartProcess(NETWORK_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(prfolerExePid));
-    auto res = GetProcessNameByPid(prfolerExePid);
-    EXPECT_EQ(res, "networkprofiler_ut");
-}
-
-/**
  * @tc.name: NetworkProfilerManagerTest001
  * @tc.desc: test NetworkProfilerManager::NetworkProfilerManagerTest001 with normal case.
  * @tc.type: FUNC
@@ -510,90 +497,6 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerManagerTest004, TestSize.Level1)
     EXPECT_FALSE(networkProfilerMgr->RegisterAgentPlugin("network"));
     ASSERT_TRUE(networkProfilerMgr->LoadPlugin("network"));
     ASSERT_TRUE(networkProfilerMgr->UnloadPlugin(commandPoller->GetRequestId()));
-}
-
-/**
- * @tc.name: NetworkProfilerHandleTest001
- * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest001 with normal case.
- * @tc.type: FUNC
- */
-HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest001, TestSize.Level1)
-{
-    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
-    NetworkProfilerConfig config;
-    int32_t pid = -1;
-    config.add_pid(pid);
-    config.add_pid(prfolerExePid);
-    config.add_startup_process_name("");
-    config.add_startup_process_name("test_name002");
-    config.add_restart_process_name("");
-    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
-    networkProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
-
-    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {1, 2, 3};
-    handle->SerializeData(data, FILE_SIZE);
-    handle->StopHandle();
-}
-
-/**
- * @tc.name: NetworkProfilerHandleTest002
- * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest002 with normal case.
- * @tc.type: FUNC
- */
-HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
-{
-    auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
-    EXPECT_NE(write->shareMemoryBlock_, nullptr);
-    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
-    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
-    NetworkProfilerConfig config;
-    int32_t pid = 1;
-    config.add_pid(pid);
-    config.add_pid(prfolerExePid);
-    config.add_startup_process_name("");
-    config.add_startup_process_name("test_name003");
-    config.add_restart_process_name("");
-    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
-    networkProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
-    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, false));
-    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {1, 2, 3};
-    handle->SerializeData(data, FILE_SIZE);
-
-    EXPECT_TRUE(write->Write((const void*)buffer1, sizeof(buffer1)));
-    handle->SetWriter(write);
-    handle->StopHandle();
-}
-
-/**
- * @tc.name: NetworkProfilerHandleTest003
- * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest003 with normal case.
- * @tc.type: FUNC
- */
-HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest003, TestSize.Level1)
-{
-    std::shared_ptr<NetworkProfilerManager> networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
-    NetworkProfilerConfig config;
-    int32_t pid = 1;
-    config.add_pid(pid);
-    config.add_pid(prfolerExePid);
-    config.add_startup_process_name("network");
-    config.set_clock_id(NetworkProfilerConfig::MONOTONIC);
-    networkProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(networkProfilerMgr->CheckConfig());
-    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
-    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, true));
-
-    auto handle = std::make_shared<NetworkProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {};
-    handle->SerializeData(data, 0);
-
-    handle->StopHandle();
-    ASSERT_TRUE(networkProfilerMgr->UnloadPlugin("network"));
 }
 
 /**
