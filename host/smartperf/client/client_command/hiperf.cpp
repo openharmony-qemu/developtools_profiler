@@ -133,7 +133,7 @@ void Hiperf::SetDataMap(std::string &line)
 
 std::string Hiperf::ReturnHiperfData()
 {
-    std::string hiperfStr = "his$$" + SpThreadSocket::GetInstance().MapToString(hiperfData_);
+    std::string hiperfStr = "hci$$" + SpThreadSocket::GetInstance().MapToString(hiperfData_);
     LOGD("Hiperf::hiperfStr = %s", hiperfStr.c_str());
     return hiperfStr;
 }
