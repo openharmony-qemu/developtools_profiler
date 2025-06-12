@@ -46,6 +46,7 @@
         "ipc",
         "init",
         "libbpf",
+		"libpng",
         "napi",
         "protobuf",
         "safwk",
@@ -63,8 +64,7 @@
         "netmanager_base"
       ],
       "third_party": [
-        "libunwind",
-        "libpng"
+        "libunwind"
       ]
     },
     "hisysevent_config": [

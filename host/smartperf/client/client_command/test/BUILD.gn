@@ -88,12 +88,9 @@ ohos_unittest("sp_daemon_ut") {
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
-    "//third_party/googletest/googletest/include/gtest",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
-    "//third_party/googletest:gtest",
-    "//third_party/libpng:libpng",
   ]
   external_deps = [
     "ability_base:want",
@@ -107,6 +104,7 @@ ohos_unittest("sp_daemon_ut") {
     "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "libpng:libpng",
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",
