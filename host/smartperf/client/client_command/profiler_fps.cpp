@@ -514,7 +514,6 @@ void ProfilerFPS::SetGameLayer(const std::string& isGameView)
 std::string ProfilerFPS::GetGameLayer()
 {
     std::string gameLayer = "";
-    std::string cmdResult;
     const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_RS_TREE);
     char buf[1024] = {'\0'};
     std::string start = "SURFACE_NODE[";
