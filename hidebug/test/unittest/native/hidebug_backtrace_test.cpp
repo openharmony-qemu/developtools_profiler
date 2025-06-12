@@ -26,7 +26,7 @@ class HidebugBacktraceTest : public ::testing::Test {};
  * @tc.desc: test OH_HiDebug_BacktraceFromFp
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugBacktraceTest, BacktraceFromFpTest, TestSize.Level1)
+HWTEST_F(HidebugBacktraceTest, BacktraceFromFpTest, TestSize.Level0)
 {
     EXPECT_EQ(OH_HiDebug_BacktraceFromFp(nullptr, nullptr, nullptr, 0), -1);
     BacktraceObject obj = OH_HiDebug_CreateBacktraceObject();
