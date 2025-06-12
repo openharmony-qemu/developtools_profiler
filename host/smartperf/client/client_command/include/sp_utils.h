@@ -167,7 +167,7 @@ void CopyFiles(const std::string& cpStr);
 void TarFiles(const std::string& tarStr);
 std::string ExecuteCommand(const std::string& command);
 size_t GetFileSize(std::string filePath);
-bool IsFindDHGame(std::string &pkg);
+bool IsFindDHGame(const std::string &pkg);
 };
 }
 }

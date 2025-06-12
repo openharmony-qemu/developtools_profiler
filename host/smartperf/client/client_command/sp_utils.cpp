@@ -940,13 +940,13 @@ size_t SPUtils::GetFileSize(std::string filePath)
     return static_cast<size_t>(statbuf.st_size);
 }
 
-bool SPUtils::IsFindDHGame(std::string &pkg)
+bool SPUtils::IsFindDHGame(const std::string &pkg)
 {
     bool isdhGame = false;
     const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
     char buf[1024] = {'\0'};
     FILE *fd = popen(dumperSurface.c_str(), "r");
-    if (fd = nullptr) {
+    if (fd == nullptr) {
         return isdhGame;
     }
     while (fgets(buf, sizeof(buf), fd) != nullptr) {
