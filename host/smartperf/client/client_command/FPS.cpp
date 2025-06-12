@@ -249,7 +249,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
-    if (name == "UniRender") {
+    if (name == "UniRender" || isStartStop) {
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs(name);
@@ -259,7 +259,12 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
 
 FpsInfo FPS::GetFpsInfoByDump(const std::string& name)
 {
-    std::string command = "fps " + name;
+    std::string command = "";
+    if (isStartStop) {
+        command = "fps -id " + name;
+    } else {
+        command = "fps " + name;
+    }
     const std::vector<const char*> args = { "hidumper", "-s", "10", "-a", command.c_str(), nullptr };
     int pipefd[2];
     pid_t pid;

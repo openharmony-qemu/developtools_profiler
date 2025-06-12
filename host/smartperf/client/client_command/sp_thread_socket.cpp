@@ -322,6 +322,7 @@ void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocke
     if (recvStr.find("init:::") != std::string::npos) {
         WLOGI("Processing 'init:::' command.");
         InitRecv(recvStr, spSocket, SocketConnectType::CMD_SOCKET);
+        FPS::GetInstance().isStartStop = true;
     } else if (recvStr.find("start:::") != std::string::npos) {
         WLOGI("Processing 'start:::' command.");
         StartRecv(spSocket);

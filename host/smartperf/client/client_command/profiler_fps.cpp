@@ -583,7 +583,8 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
 std::string ProfilerFPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
     const std::string& line)
 {
-    if (std::to_string(nodeId) == surfaceId && line.find("VisibleRegion [Empty]") != std::string::npos) {
+    if (std::to_string(nodeId) == surfaceId &&
+        line.find("VisibleRegion [Empty], OpaqueRegion [Empty]") != std::string::npos) {
         gameLayer = nodeIdStr;
     }
     LOGD("PorfilerFOS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
