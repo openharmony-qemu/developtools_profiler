@@ -808,4 +808,64 @@ describe("HidebugJsTest", function () {
             expect(error.code === "401").assertTrue();
         });
     })
+
+    /**
+     * @tc.name: HidebugJsTest_037
+     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_037', 0, async function () {
+        console.info("---------------------------HidebugJsTest_037----------------------------------");
+        try {
+            hidebug.SetJsRawHeapTrimLevel(2);
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_038
+     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_038', 0, async function () {
+        console.info("---------------------------HidebugJsTest_038----------------------------------");
+        try {
+            hidebug.SetJsRawHeapTrimLevel("abc");
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_039
+     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_039', 0, async function () {
+        console.info("---------------------------HidebugJsTest_039----------------------------------");
+        try {
+            hidebug.SetJsRawHeapTrimLevel(1);
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_040
+     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_040', 0, async function () {
+        console.info("---------------------------HidebugJsTest_040----------------------------------");
+        try {
+            hidebug.SetJsRawHeapTrimLevel(1, 2);
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
 })
