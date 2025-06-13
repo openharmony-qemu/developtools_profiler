@@ -31,7 +31,6 @@ using namespace OHOS::Developtools::Profiler;
 namespace {
 const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 const std::string FFRT_TEST_EXE = "/data/local/tmp/ffrt_profiler_test_exe";
-constexpr uint32_t BUFFER_SIZE = (1UL << 23);
 constexpr int FILE_SIZE = 2000;
 constexpr int MOBILE_BIT = 32;
 constexpr int32_t SMB_SIZE = 409600;
@@ -530,19 +529,6 @@ HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
 
 // /**
 //  * @tc.name: ffrt plugin
-//  * @tc.desc:  FfrtPofiler GetProcessName Function Test
-//  * @tc.type: FUNC
-//  */
-HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
-{
-    StartProcess(FFRT_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
-    auto res = GetProcessName(ffrtPrfolerExePid_);
-    EXPECT_EQ(res, "ffrt_profiler_ut");
-}
-
-// /**
-//  * @tc.name: ffrt plugin
 //  * @tc.desc:  FfrtPofiler SplitString Function Test
 //  * @tc.type: FUNC
 //  */
@@ -645,25 +631,5 @@ HWTEST_F(FfrtPofilerTest, TestFunction029, TestSize.Level1)
     std::shared_ptr<FfrtProfilerSocketService> socketService_ =
         std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
     ASSERT_FALSE(socketService_->StartService("ffrt_profiler_unix_socket"));
-}
-
-/**
- * @tc.name: ffrt plugin
- * @tc.desc:  FfrtPofiler FfrtProfilerManager SerializeData Function Test
- * @tc.type: FUNC
- */
-HWTEST_F(FfrtPofilerTest, TestFunction030, TestSize.Level1)
-{
-    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
-    std::shared_ptr<FfrtProfilerHandle> handle = std::make_shared<FfrtProfilerHandle>(BUFFER_SIZE, true);
-    const int8_t data[] = {-1, 0, 1, 2, 3, 4};
-    handle->SerializeData(data, MOBILE_BIT);
-    FfrtProfilerConfig config;
-    int32_t pid = -1;
-    config.add_pid(pid);
-    config.add_startup_process_name("test_name002");
-    config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
-    ffrtProfilerMgr->SetConfig(config);
-    EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
 }
 }

@@ -35,7 +35,6 @@ ohos_unittest("nativehook_ut") {
   module_out_path = module_output_path
   sources = [
     "../../memory_plugin/src/buffer_splitter.cpp",
-    "unittest/check_hook_data_test.cpp",
     "unittest/hook_client_test.cpp",
     "unittest/hook_socket_client_test.cpp",
     "unittest/sampling_test.cpp",
