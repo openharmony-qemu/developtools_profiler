@@ -1,5 +1,5 @@
 /*
- * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
@@ -22,7 +22,7 @@ using namespace testing::ext;
 
 namespace {
 
-const uint64_t TEST_ADDR = 64;
+constexpr uint64_t TEST_ADDR = 64;
 class AddressHandlerTest : public ::testing::Test {
 public:
     static void SetUpTestCase() {}

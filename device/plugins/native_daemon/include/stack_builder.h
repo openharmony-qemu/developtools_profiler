@@ -23,7 +23,7 @@ namespace OHOS::Developtools::NativeDaemon {
 
 class StackBuilder {
 public:
-    StackBuilder() {};
+    StackBuilder() = delete;
     StackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime)
         : hookConfig_(config), runtimeInstance_(runtime) {};
     virtual ~StackBuilder() {};
@@ -42,6 +42,7 @@ protected:
 
 class FpStackBuilder : public StackBuilder {
 public:
+    FpStackBuilder() = delete;
     FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
     void PrepareUnwind(HookRecordPtr hookRecord);
     void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
@@ -56,6 +57,7 @@ private:
 
 class DwarfStackBuilder : public StackBuilder {
 public:
+    DwarfStackBuilder() = delete;
     DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
     void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
     void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
@@ -70,6 +72,7 @@ private:
 
 class BuildStackDirector {
 public:
+    BuildStackDirector() = delete;
     BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
     std::vector<CallFrame>& ConstructCallFrames(HookRecordPtr hookRecord);
     void SetBuilder(std::shared_ptr<StackBuilder> builder)

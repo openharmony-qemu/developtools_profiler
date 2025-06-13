@@ -94,10 +94,7 @@ long StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const v
 bool StackWriter::PrepareFlush()
 {
     ++dataCount_;
-    if (dataCount_ % FLUSH_FLAG == 0) {
-        return true;
-    }
-    return false;
+    return (dataCount_ % FLUSH_FLAG == 0);
 }
 
 bool StackWriter::Flush()

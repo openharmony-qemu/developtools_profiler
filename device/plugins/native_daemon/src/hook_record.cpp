@@ -54,11 +54,11 @@ bool HookRecord::IsValid()
 template <typename T>
 void HookRecord::SetEventFrame(T* event, SerializeInfo& hookInfo)
 {
-    // ignore the first two frame if dwarf unwind
     if (!(event && IsValid())) {
         PROFILER_LOG_ERROR(LOG_CORE, "hookRecord SetEventFrame get nullptr");
         return;
     }
+    // ignore the first two frame if dwarf unwind
     size_t idx = hookInfo.config->fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     event->set_pid(rawStack_->stackContext->pid);
     event->set_tid(rawStack_->stackContext->tid);

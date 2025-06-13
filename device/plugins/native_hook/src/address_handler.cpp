@@ -21,7 +21,6 @@ constexpr int FIRST_HASH = 16;
 constexpr int SECOND_HASH = 13;
 constexpr int DIVIDE_VAL = 64;
 constexpr int SHIFT_VAL = 16;
-constexpr uint32_t MASK_SMALL = 1ULL << 22;
 constexpr int SPIN_SHIFT_FIRST = 30;
 constexpr int SPIN_SHIFT_SECOND = 27;
 constexpr int SPIN_SHIFT_THIRD = 31;
@@ -123,7 +122,6 @@ uint32_t MidAddrHandler::HashFunc(uint32_t addrKey)
     //mix in the input
     hash ^= addrKey;
     hash *= FNV_HASH;
-    hash = hash & (MASK_SMALL - 1);
     return hash;
 }
 

@@ -125,7 +125,7 @@ HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level1)
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> smbFds = hookClient.GetSmbFds();
-    for (int i = 0; i < smbFds.size(); ++i) {
+    for (size_t i = 0; i < smbFds.size(); ++i) {
         ASSERT_EQ(smbFds[i], -1);
     }
 }
@@ -145,7 +145,7 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> eventFds = hookClient.GetEventFds();
-    for (int i = 0; i < eventFds.size(); ++i) {
+    for (size_t i = 0; i < eventFds.size(); ++i) {
         ASSERT_EQ(eventFds[i], -1);
     }
 }

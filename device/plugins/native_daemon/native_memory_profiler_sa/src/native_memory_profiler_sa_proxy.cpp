@@ -181,9 +181,9 @@ int32_t NativeMemoryProfilerSaProxy::Stop(const std::string& name)
     HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
-    uint64_t timeCost = static_cast<uint64_t>((end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec));
-    PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu",
-                      static_cast<unsigned long long>(timeCost));
+    unsigned long long timeCost = static_cast<unsigned long long>((end.tv_sec - start.tv_sec) * S_TO_NS +
+                                                                  (end.tv_nsec - start.tv_nsec));
+    PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu", timeCost);
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop failed");
         return ret;

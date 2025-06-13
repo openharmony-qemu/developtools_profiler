@@ -844,7 +844,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
             case FREE_MSG:
             case MUNMAP_MSG:
             case MEMORY_UNUSING_MSG: {
-                SetFreeStatisticsData((uint64_t)hookRecord->GetAddr());
+                SetFreeStatisticsData(hookRecord->GetAddr());
                 break;
             }
             case MALLOC_MSG:
@@ -918,7 +918,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRec
             auto& record = recordIter->second;
             ++record.applyCount;
             record.applySize += rawStack->stackContext->mallocSize;
-            g_allocAddrMap[(uint64_t)hookRecord->GetAddr()] =
+            g_allocAddrMap[hookRecord->GetAddr()] =
                 std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
             statisticsPeriodData_[stackId] = &recordIter->second;
         }
@@ -953,7 +953,7 @@ inline void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRec
         }
 
         auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
-        g_allocAddrMap[(uint64_t)hookRecord->GetAddr()] =
+        g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
@@ -970,8 +970,8 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
         std::string tagName(reinterpret_cast<char*>(rawStack->data));
         fprintf(fpHookData_, "prctl;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ":tag:%s\n",
             rawStack->stackContext->pid, rawStack->stackContext->tid,
-            (int64_t)rawStack->stackContext->ts.tv_sec, rawStack->stackContext->ts.tv_nsec,
-            (uint64_t)hookRecord->GetAddr(), (prefix + tagName).c_str());
+            static_cast<int64_t>(rawStack->stackContext->ts.tv_sec), rawStack->stackContext->ts.tv_nsec,
+            hookRecord->GetAddr(), (prefix + tagName).c_str());
         return;
     }
     std::string tag = "";
@@ -993,7 +993,8 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
     }
 
     fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
-        rawStack->stackContext->pid, rawStack->stackContext->tid, (int64_t)rawStack->stackContext->ts.tv_sec,
+        rawStack->stackContext->pid, rawStack->stackContext->tid,
+        static_cast<int64_t>(rawStack->stackContext->ts.tv_sec),
         rawStack->stackContext->ts.tv_nsec, hookRecord->GetAddr(), rawStack->stackContext->mallocSize);
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     for (; idx < callFrames.size(); ++idx) {
