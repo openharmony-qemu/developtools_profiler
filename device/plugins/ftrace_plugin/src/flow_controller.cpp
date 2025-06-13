@@ -904,21 +904,11 @@ void FlowController::EnableTraceEvents(void)
         if (type == "power_kernel") {
             fmtType = "power";
         }
-        if (userEventSet.count(fmtType + "/" + name) == 0) {
-            continue;
-        }
-        if (FtraceFsOps::GetInstance().EnableEvent(type, name)) {
-            FtraceFsOps::GetInstance().AppendSetEvent(type, name);
-            enabledEvents_.push_back(event);
-        } else if (typeSet_.count(type) == 0 && FtraceFsOps::GetInstance().EnableEventByType(type)) {
-            FtraceFsOps::GetInstance().AppendSetEvent(type, name);
-            enabledEvents_.push_back(event);
-            typeSet_.insert(type);
-        } else if (typeSet_.count(type) > 0) {
-            FtraceFsOps::GetInstance().AppendSetEvent(type, name);
-            enabledEvents_.push_back(event);
-        } else {
-            PROFILER_LOG_ERROR(LOG_CORE, "Enable event fail: %s->%s", type.c_str(), name.c_str());
+        if (userEventSet.count(fmtType + "/" + name)) { // user config format
+            if (FtraceFsOps::GetInstance().EnableEvent(type, name)) {
+                FtraceFsOps::GetInstance().AppendSetEvent(type, name);
+                enabledEvents_.push_back(event);
+            }
         }
     }
     FtraceFsOps::GetInstance().EnableTracing();
@@ -932,10 +922,6 @@ void FlowController::DisableTraceEvents(void)
         std::string name = event.second;
         FtraceFsOps::GetInstance().DisableEvent(type, name);
     }
-    for (auto& eventType: typeSet_) {
-        FtraceFsOps::GetInstance().DisableEventByType(eventType);
-    }
-    typeSet_.clear();
     enabledEvents_.clear();
 }
 
