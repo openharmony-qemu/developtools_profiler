@@ -378,10 +378,7 @@ bool FilterStandardSoIp(uint64_t ip)
 bool CheckTargetLibIp(uint64_t ip)
 {
     auto range = targetedRange.load();
-    if (ip >= range.start && ip < range.end) {
-        return true;
-    }
-    return false;
+    return (ip >= range.start && ip < range.end);
 }
 
 #if defined(__aarch64__)
@@ -416,7 +413,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         } else {
             ips[depth++] = ip > 0x4 ? ip - 0x4 : ip; // adjust pc in Arm64 architecture
         }
-        
+
         if ((!g_ClientConfig.targetSoName.empty()) && CheckTargetLibIp(ip)) {
             filterTarget = false;
         }
@@ -523,18 +520,6 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-            g_mallocTimes++;
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-            if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-            }
-#endif
             return ret;
         }
         rawdata.jsChainId = getJsChainId();
@@ -629,18 +614,6 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-            g_mallocTimes++;
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-            if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-            }
-#endif
             return ret;
         }
         rawdata.jsChainId = getJsChainId();
@@ -741,18 +714,6 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-            g_mallocTimes++;
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-            if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-            }
-#endif
             return pRet;
         }
         rawdata.jsChainId = getJsChainId();
@@ -852,18 +813,6 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 #ifdef __aarch64__
         fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
         if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-            g_mallocTimes++;
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-            if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-            }
-#endif
             return pRet;
         }
 #endif
@@ -1011,18 +960,6 @@ void hook_free(void (*free_func)(void*), void* p)
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-                g_mallocTimes++;
-                struct timespec end = {};
-                clock_gettime(CLOCK_REALTIME, &end);
-                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-                if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE,
-                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-                }
-#endif
                 return;
             }
             rawdata.jsChainId = getJsChainId();
@@ -1188,18 +1125,6 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
         if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-            g_mallocTimes++;
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-            if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                    " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                    g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-            }
-#endif
             return ret;
         }
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
@@ -1266,18 +1191,6 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-                g_mallocTimes++;
-                struct timespec end = {};
-                clock_gettime(CLOCK_REALTIME, &end);
-                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-                if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE,
-                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-                }
-#endif
                 return ret;
             }
             rawdata.jsChainId = getJsChainId();
@@ -1388,18 +1301,6 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
 #ifdef __aarch64__
             fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             if (fpStackDepth == 0) {
-#ifdef PERFORMANCE_DEBUG
-                g_mallocTimes++;
-                struct timespec end = {};
-                clock_gettime(CLOCK_REALTIME, &end);
-                g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
-                if (g_mallocTimes % PRINT_INTERVAL == 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE,
-                        "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64
-                        " mean cost = %" PRIu64"\n", g_mallocTimes.load(), g_timeCost.load(),
-                        g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
-                }
-#endif
                 return;
             }
             rawdata.jsChainId = getJsChainId();

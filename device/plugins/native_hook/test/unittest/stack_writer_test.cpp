@@ -265,10 +265,10 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutTwoSmbTest, TestSize.Level1)
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
-    EXPECT_TRUE(writer1->WriteWithPayloadTimeout((const void*)buffer1, sizeof(buffer1),
-        (const void*)buffer1, sizeof(buffer1), nullptr));
-    EXPECT_TRUE(writer2->WriteWithPayloadTimeout((const void*)buffer2, sizeof(buffer2),
-        (const void*)buffer2, sizeof(buffer2), nullptr));
+    EXPECT_TRUE(writer1->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<void*>(buffer1), sizeof(buffer1), nullptr));
+    EXPECT_TRUE(writer2->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<void*>(buffer2), sizeof(buffer2), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 }
 
@@ -288,12 +288,12 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbTest, TestSize.Level1)
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
     EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
     EXPECT_NE(writer3->shareMemoryBlock_, nullptr);
-    EXPECT_TRUE(writer1->WriteWithPayloadTimeout((const void*)buffer1, sizeof(buffer1),
-        (const void*)buffer1, sizeof(buffer1), nullptr));
-    EXPECT_TRUE(writer2->WriteWithPayloadTimeout((const void*)buffer2, sizeof(buffer2),
-        (const void*)buffer2, sizeof(buffer2), nullptr));
-    EXPECT_TRUE(writer3->WriteWithPayloadTimeout((const void*)buffer3, sizeof(buffer3),
-        (const void*)buffer3, sizeof(buffer3), nullptr));
+    EXPECT_TRUE(writer1->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<void*>(buffer1), sizeof(buffer1), nullptr));
+    EXPECT_TRUE(writer2->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2),
+        reinterpret_cast<void*>(buffer2), sizeof(buffer2), nullptr));
+    EXPECT_TRUE(writer3->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer3), sizeof(buffer3),
+        reinterpret_cast<void*>(buffer3), sizeof(buffer3), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
 }
 
@@ -310,11 +310,11 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbFalseTest, TestSize.Lev
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     auto writer3 = std::make_shared<StackWriter>(PLUGIN_NAME_THIRD, SMB_SIZE, InitShareMemory(), -1, true);
-    EXPECT_FALSE(writer1->WriteWithPayloadTimeout((const void*)buffer1, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer1->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer1), 0, nullptr, 0, nullptr));
     EXPECT_FALSE(writer1->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
-    EXPECT_FALSE(writer2->WriteWithPayloadTimeout((const void*)buffer2, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer2->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer2), 0, nullptr, 0, nullptr));
     EXPECT_FALSE(writer2->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
-    EXPECT_FALSE(writer3->WriteWithPayloadTimeout((const void*)buffer3, 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(writer3->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer3), 0, nullptr, 0, nullptr));
     EXPECT_FALSE(writer3->WriteWithPayloadTimeout(nullptr, 0, nullptr, 0, nullptr));
     EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
     EXPECT_FALSE(CheckBuffer(buffer2, sizeof(buffer2)));
@@ -333,8 +333,8 @@ HWTEST_F(StackWriterTest, WriteTimeoutTwoSmbTest, TestSize.Level1)
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
-    EXPECT_TRUE(writer1->WriteTimeout((const void*)buffer1, sizeof(buffer1)));
-    EXPECT_TRUE(writer2->WriteTimeout((const void*)buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(writer1->WriteTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1)));
+    EXPECT_TRUE(writer2->WriteTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 }
 
@@ -354,9 +354,9 @@ HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbTest, TestSize.Level1)
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
     EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
     EXPECT_NE(writer3->shareMemoryBlock_, nullptr);
-    EXPECT_TRUE(writer1->WriteTimeout((const void*)buffer1, sizeof(buffer1)));
-    EXPECT_TRUE(writer2->WriteTimeout((const void*)buffer2, sizeof(buffer2)));
-    EXPECT_TRUE(writer3->WriteTimeout((const void*)buffer3, sizeof(buffer3)));
+    EXPECT_TRUE(writer1->WriteTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1)));
+    EXPECT_TRUE(writer2->WriteTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2)));
+    EXPECT_TRUE(writer3->WriteTimeout(reinterpret_cast<void*>(buffer3), sizeof(buffer3)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
 }
 
@@ -373,11 +373,11 @@ HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbFalseTest, TestSize.Level1)
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     auto writer3 = std::make_shared<StackWriter>(PLUGIN_NAME_THIRD, SMB_SIZE, InitShareMemory(), -1, true);
-    EXPECT_FALSE(writer1->WriteTimeout((const void*)buffer1, 0));
+    EXPECT_FALSE(writer1->WriteTimeout(reinterpret_cast<void*>(buffer1), 0));
     EXPECT_FALSE(writer1->WriteTimeout(nullptr, 0));
-    EXPECT_FALSE(writer2->WriteTimeout((const void*)buffer2, 0));
+    EXPECT_FALSE(writer2->WriteTimeout(reinterpret_cast<void*>(buffer2), 0));
     EXPECT_FALSE(writer2->WriteTimeout(nullptr, 0));
-    EXPECT_FALSE(writer3->WriteTimeout((const void*)buffer3, 0));
+    EXPECT_FALSE(writer3->WriteTimeout(reinterpret_cast<void*>(buffer3), 0));
     EXPECT_FALSE(writer3->WriteTimeout(nullptr, 0));
     EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
     EXPECT_FALSE(CheckBuffer(buffer2, sizeof(buffer2)));

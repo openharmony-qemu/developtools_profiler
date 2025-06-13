@@ -30,7 +30,7 @@ namespace OHOS::Developtools::NativeDaemon {
 const std::string MMAP_FILE_PAGE_PREFIX = "FilePage:";
 const std::string PR_SET_VMA_PREFIX = "Anonymous:";
 using NativeHookProto = std::variant<NativeHookData*, OHOS::Developtools::Profiler::ProtoEncoder::NativeHookData*>;
-#define STD_PTR(K, T) std::K##_ptr<T>
+
 struct RawStack {
     std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
     BaseStackRawData* stackContext = nullptr; // points to the foundation type data
@@ -107,13 +107,14 @@ public:
     FreeRecord() {};
     FreeRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
     void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
-    virtual ~FreeRecord() {};
+    ~FreeRecord() {};
 };
 
 class FreeRecordSimp : public HookRecord {
 public:
     FreeRecordSimp() {};
     FreeRecordSimp(uint64_t freeAddr) : freeAddr_(freeAddr) {};
+    ~FreeRecordSimp() {};
     uint16_t GetType() override
     {
         return FREE_MSG_SIMP;
@@ -139,8 +140,8 @@ public:
         return (freeAddr_ != 0);
     }
 
+private:
     uint64_t freeAddr_ = 0;
-    virtual ~FreeRecordSimp() {};
 };
 
 class MallocRecord : public HookRecord {

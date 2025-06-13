@@ -248,7 +248,7 @@ size_t ComputeAlign(size_t size)
         return 0;
     }
     unsigned index = 0;
-    if (size <= (size_t(1) << SC_LG_TINY_MAXCLASS)) {
+    if (size <= (static_cast<size_t>(1) << SC_LG_TINY_MAXCLASS)) {
         unsigned lgTmin = SC_LG_TINY_MAXCLASS - SC_NTINY + 1;
         unsigned lgCeil = LgFloor(PowCeil(size));
         index = (lgCeil < lgTmin) ? 0 : lgCeil - lgTmin;
@@ -257,19 +257,19 @@ size_t ComputeAlign(size_t size)
         unsigned shift = (floor < SC_LG_NGROUP + LG_QUANTUM) ? 0 : floor - (SC_LG_NGROUP + LG_QUANTUM);
         unsigned grp = shift << SC_LG_NGROUP;
         unsigned lgDelta = (floor < SC_LG_NGROUP + LG_QUANTUM + 1) ? LG_QUANTUM : floor - SC_LG_NGROUP - 1;
-        size_t deltaInverseMask = size_t(-1) << lgDelta;
-        unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((size_t(1) << SC_LG_NGROUP) - 1);
+        size_t deltaInverseMask = static_cast<size_t>(-1) << lgDelta;
+        unsigned mod = ((((size - 1) & deltaInverseMask) >> lgDelta)) & ((static_cast<size_t>(1) << SC_LG_NGROUP) - 1);
         index = SC_NTINY + grp + mod;
     }
 
     if (index < NTBINS) {
-        return (size_t(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
+        return (static_cast<size_t>(1) << (LG_TINY_MAXCLASS - NTBINS + 1 + index));
     }
     size_t reducedIndex = index - NTBINS;
     size_t grpVal = reducedIndex >> LG_SIZE_CLASS_GROUP;
-    size_t modVal = reducedIndex & ((size_t(1) << LG_SIZE_CLASS_GROUP) - 1);
+    size_t modVal = reducedIndex & ((static_cast<size_t>(1) << LG_SIZE_CLASS_GROUP) - 1);
     size_t grpSizeMask = ~((!!grpVal) - 1);
-    size_t grpSize = ((size_t(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpVal) & grpSizeMask;
+    size_t grpSize = ((static_cast<size_t>(1) << (LG_QUANTUM + (LG_SIZE_CLASS_GROUP - 1))) << grpVal) & grpSizeMask;
     size_t shiftVal = (grpVal == 0) ? 1 : grpVal;
     size_t lgDeltaVal = shiftVal + (LG_QUANTUM - 1);
     size_t modSize = (modVal + 1) << lgDeltaVal;

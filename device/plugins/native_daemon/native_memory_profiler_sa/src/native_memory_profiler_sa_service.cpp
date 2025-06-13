@@ -38,7 +38,7 @@ constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 100;
 constexpr int32_t NMD_WAIT_TIMES = 50;
-const int VEC_SHIFT = 2;
+constexpr int VEC_SHIFT = 2;
 
 static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
 static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
