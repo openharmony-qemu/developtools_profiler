@@ -827,7 +827,7 @@ bool SPUtils::GetIsGameApp(const std::string& pkg)
             continue;
         }
         if (line.find("bundleName unknown") != std::string::npos) {
-            isGame = false;
+            isGame = IsFindDHGame(pkg);
             break;
         } else {
             std::vector<std::string> params;
@@ -938,6 +938,26 @@ size_t SPUtils::GetFileSize(std::string filePath)
         return 0;
     }
     return static_cast<size_t>(statbuf.st_size);
+}
+
+bool SPUtils::IsFindDHGame(const std::string &pkg)
+{
+    bool isdhGame = false;
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    char buf[1024] = {'\0'};
+    FILE *fd = popen(dumperSurface.c_str(), "r");
+    if (fd == nullptr) {
+        return isdhGame;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        if (line.find(pkg) != std::string::npos || line.find("ShellAssistantAnco") != std::string::npos) {
+            isdhGame = true;
+            break;
+        }
+    }
+    pclose(fd);
+    return isdhGame;
 }
 }
 }

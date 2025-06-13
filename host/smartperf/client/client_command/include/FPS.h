@@ -87,12 +87,15 @@ public:
     void CalcJitters();
     static inline bool firstDump = false;
     static inline bool isGameApp = false;
+    static inline bool isStartStop = false;
     bool SetOtherDeviceFlag();
     bool hapLowFpsFlag = false;
     bool hapNeedCatonInfo = false;
     int catonNum = 0;
     void CalcFatalCaton(std::vector<long long>& jitters);
     void GetGameScenStatus();
+    FpsInfo GetFpsInfoByDump(const std::string& name);
+    FpsInfo GetFpsInfoByRs(const std::string& name);
 private:
     FPS() {};
     FPS(const FPS &);

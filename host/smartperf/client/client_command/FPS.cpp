@@ -29,6 +29,7 @@
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "include/GameEvent.h"
+#include "transaction/rs_interfaces.h"
 namespace OHOS {
 namespace SmartPerf {
 bool HAVE_CATON = false;
@@ -240,8 +241,26 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     }
     fpsInfo = fpsMap[name];
     fpsInfo.fps = 0;
+    fpsInfo.currTimeStamps.clear();
+    fpsNum = 0;
+    prevScreenTimestamp = -1;
+    struct timespec time1 = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &time1);
+    fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
+    fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
+    LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
+    if (name == "UniRender" || isStartStop) {
+        fpsInfo = GetFpsInfoByDump(name);
+    } else {
+        fpsInfo = GetFpsInfoByRs(name);
+    }
+    return fpsInfo;
+}
+
+FpsInfo FPS::GetFpsInfoByDump(const std::string& name)
+{
     std::string command = "";
-    if (isGameApp) {
+    if (isStartStop) {
         command = "fps -id " + name;
     } else {
         command = "fps " + name;
@@ -272,19 +291,11 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     return fpsInfo;
 }
 
+
 void FPS::ReadDataFromPipe(int fd)
 {
-    fpsInfo.currTimeStamps.clear();
     char tmp[1024];
-    fpsNum = 0;
-    prevScreenTimestamp = -1;
     bool isBreak = false;
-    struct timespec time1 = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &time1);
-    fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
-    fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld",
-        fpsInfo.curTime, fpsInfo.currTimeDump);
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
         LOGE("FPS::Failed to open file descriptor");
@@ -307,9 +318,44 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
+    if (!hapLowFpsFlag) {
+        CalcJitters();
+    }
+}
+
+FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
+{
+    bool isBreak = false;
+    uint64_t nodeId;
+    std::istringstream s(name);
+    s >> nodeId;
+    LOGD("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
+    std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
+    LOGD("FPS fpsInfoResult: %s", fpsInfoResult.c_str());
+    std::stringstream iss;
+    iss << fpsInfoResult;
+    std::string timeStampLine;
+    while (getline(iss, timeStampLine, '\n')) {
+        timeStampLine.erase(0, timeStampLine.find_first_not_of(' '));
+        curScreenTimestamp = 0;
+        if (timeStampLine.empty()) {
+            continue;
+        }
+        std::stringstream ss;
+        ss.clear();
+        ss << timeStampLine;
+        ss >> curScreenTimestamp;
+        if (curScreenTimestamp == 0) {
+            continue;
+        }
+        if (CalcFpsAndJitters(isBreak)) {
+            break;
+        }
+    }
     if (!hapLowFpsFlag || (hapNeedCatonInfo && catonNum == 0 && inGameSceneNum > eleven)) {
         CalcJitters();
     }
+    return fpsInfo;
 }
 
 bool FPS::CalcFpsAndJitters(bool isBreak)
