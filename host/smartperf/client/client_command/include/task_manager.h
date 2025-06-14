@@ -35,7 +35,7 @@ public:
 
 class TaskManager {
 public:
-    TaskManager(bool isIPC = false);
+    explicit TaskManager(bool isIPC = false);
     ~TaskManager();
 
     void AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv);
@@ -56,7 +56,9 @@ public:
     void SetNextTime(long long& nextTime);
     void SetRecordState(bool record);
     void DeleteTask(SpProfiler* task);
-
+    void GetCurrMapData(std::map<std::string, std::string>& data, bool recordData);
+    void GetFutureResult(std::vector<std::future<std::map<std::string, std::string>>>& result,
+        std::map<std::string, std::string>& data, bool recordData);
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
     void GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value);
@@ -95,7 +97,7 @@ private:
     std::mutex scheduleSaveDataMtx_;
     std::function<void(const std::string&)> ipcCallback_ {nullptr};
     bool hapCollect_ {false};
-    uint32_t dataIndex_ {0};
+    int32_t dataIndex_ {0};
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
     bool isPause_ {false};

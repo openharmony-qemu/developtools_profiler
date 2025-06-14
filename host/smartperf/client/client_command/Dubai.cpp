@@ -40,10 +40,10 @@ void Dubai::MoveDubaiDb()
 {
     std::string result;
     const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
-    const std::string Database = "/data/app/el2/100/database/";
-    const std::string PkgEntry = "/entry/rdb";
-    const std::string cpDubai = "cp " + dubaiXpower + " " + Database + dubaiPkgName + PkgEntry;
-    const std::string dubaiPathChmod = "chmod 777 " + Database + dubaiPkgName + PkgEntry + "/dubai.db";
+    const std::string database = "/data/app/el2/100/database/";
+    const std::string pkgEntry = "/entry/rdb";
+    const std::string cpDubai = "cp " + dubaiXpower + " " + database + dubaiPkgName + pkgEntry;
+    const std::string dubaiPathChmod = "chmod 777 " + database + dubaiPkgName + pkgEntry + "/dubai.db";
     LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
         cpDubai.c_str(), dubaiPathChmod.c_str());
     if (!IsFileAccessible(dubaiXpower)) {

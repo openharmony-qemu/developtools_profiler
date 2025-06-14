@@ -35,10 +35,11 @@ namespace OHOS {
 
         void GpuCounter::StartExecutionOnce(bool isPause)
         {
+            const int dur = 50;
             if (isPause) {
                 return;
             }
-            collectDur = 50;
+            collectDur = dur;
             StartCollect(GpuCounter::GC_START);
         }
 

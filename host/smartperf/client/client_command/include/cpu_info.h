@@ -38,6 +38,7 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
+    void HandleCPIComment(std::string& line, size_t& cpi_count, double& cpi_total);
 private:
     std::vector<std::string> pids_;
     std::thread th_;

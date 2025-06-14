@@ -123,7 +123,7 @@ static void RecordCapacity()
         std::stringstream buffer;
         int capacityLine = 0;
         std::string line;
-        const int MAX_RECORD_COUNT = 100;
+        const int maxRecordCount = 100;
         buffer << infile.rdbuf();
         capacityString = buffer.str();
         infile.close();
@@ -131,7 +131,7 @@ static void RecordCapacity()
         while (std::getline(buffer, line)) {
             capacityLine++;
         }
-        if (capacityLine == MAX_RECORD_COUNT) {
+        if (capacityLine == maxRecordCount) {
             std::size_t pos = capacityString.find('\n');
             if (pos != std::string::npos) {
                 capacityString = capacityString.substr(pos + 1);
@@ -213,7 +213,6 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         RecordCapacity();
         return 0;
     }
-
     return 1;
 }
 
@@ -226,12 +225,12 @@ int main(int argc, char *argv[])
         }
     }
     const int maxExpectedArgs = 100;
-    if (argc > maxExpectedArgs) {
+    std::string errorInfo;
+    std::vector<std::string> vec;
+    if (argc < 0 || argc > maxExpectedArgs) {
         std::cout << "Invalid argument count" << std::endl;
         return -1;
     }
-    std::string errorInfo;
-    std::vector<std::string> vec;
     for (int i = 0; i < argc; i++) {
         vec.push_back(argv[i]);
     }
