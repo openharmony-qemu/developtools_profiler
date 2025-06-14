@@ -38,6 +38,9 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
+    void TrimString(std::string& s);
+    void FindData(const std::string& targetStr, uint64_t& total, size_t& count);
+    void HandleCPIComment(const std::string& line, size_t& cpi_count, double& cpi_total);
 private:
     std::vector<std::string> pids_;
     std::thread th_;

@@ -26,7 +26,8 @@ public:
     double ParseSlideFpsTraceNoh(const std::string& file);
     double CalculateTime();
     std::string GetLineTime(const std::string& lineStr) const;
-    std::string CutString(const std::string& lineStr, const std::string &start, const std::string &end, size_t offset) const;
+    std::string CutString(const std::string& lineStr, const std::string &start,
+        const std::string &end, size_t offset) const;
     void AppSwiperScroll(const std::string& line);
 private:
     std::ifstream infile;

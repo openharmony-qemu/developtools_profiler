@@ -30,7 +30,7 @@
 #include <sys/types.h>
 namespace OHOS {
 namespace SmartPerf {
-bool HAVE_CATON = false;
+bool g_haveCaton = false;
 std::map<std::string, std::string> FPS::ItemData()
 {
     std::map<std::string, std::string> result;
@@ -78,10 +78,10 @@ std::map<std::string, std::string> FPS::ItemData()
 
 void FPS::CalcFatalCaton(std::vector<long long>& jitters)
 {
-    if (!HAVE_CATON && catonNum == 0) {
+    if (!g_haveCaton && catonNum == 0) {
         for (long long &timestamp : jitters) {
             if ((timestamp / 1e6) > hundred) {
-                HAVE_CATON = true;
+                g_haveCaton = true;
                 catonNum = 1;
                 ipcCallback_("haveCaton");
                 break;

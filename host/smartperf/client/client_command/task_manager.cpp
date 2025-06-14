@@ -256,28 +256,10 @@ void TaskManager::Start(bool record)
             LOGD("data index: %u", dataIndex_);
 
             std::map<std::string, std::string> currDatas;
-            currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
-            if (recordData) {
-                datas_.emplace(dataIndex_,
-                    std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
-            }
-
-            for (auto& item : priorityTask_) {
-                currDatas.merge(TaskFun(item, dataIndex_, recordData));
-            }
+            GetCurrMapData(currDatas, recordData);
 
             std::vector<std::future<std::map<std::string, std::string>>> result;
-            for (auto& item : normalTask_) {
-                result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
-            }
-
-            for (auto& item : result) {
-                currDatas.merge(item.get());
-            }
-
-            if (nextTime_ != nullptr) {
-                *nextTime_ = SPUtils::GetCurTime();
-            }
+            GetFutureResult(result, currDatas, recordData);
 
             ProcessCurrentBatch(currDatas);
             auto loopEnd = std::chrono::steady_clock::now();
@@ -293,6 +275,32 @@ void TaskManager::Start(bool record)
         finishCond_.notify_all();
         scheduleSaveDataCond_.notify_all();
     });
+}
+
+void TaskManager::GetCurrMapData(std::map<std::string, std::string>& data, bool recordData)
+{
+    data.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
+    if (recordData) {
+        datas_.emplace(dataIndex_,
+            std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
+    }
+    for (auto& item : priorityTask_) {
+        data.merge(TaskFun(item, dataIndex_, recordData));
+    }
+}
+
+void TaskManager::GetFutureResult(std::vector<std::future<std::map<std::string, std::string>>>& result,
+    std::map<std::string, std::string>& data, bool recordData)
+{
+    for (auto& item : normalTask_) {
+        result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
+    }
+    for (auto& item : result) {
+        data.merge(item.get());
+    }
+    if (nextTime_ != nullptr) {
+        *nextTime_ = SPUtils::GetCurTime();
+    }
 }
 
 void TaskManager::WriteToCSV()

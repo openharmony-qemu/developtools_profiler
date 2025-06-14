@@ -153,8 +153,8 @@ void SPUtils::ForDirFiles(const std::string &path, std::vector<std::string> &fil
     if (dir == nullptr) {
         return;
     }
-
-    while (true) {
+    bool isForDirFiles = true;
+    while (isForDirFiles) {
         struct dirent *ptr = readdir(dir);
         if (ptr == nullptr) {
             break;

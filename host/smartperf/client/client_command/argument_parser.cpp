@@ -72,7 +72,6 @@ void ArgumentParser::HandleIntParameter(const std::string& key, std::string valu
 {
     if (spec.type == ArgType::INT) {
         int val = SPUtilesTye::StringToSometype<int>(value);
-
         if (spec.min && val < *spec.min) {
             errors_.push_back("Value for " + key + " below min: " + std::to_string(*spec.min));
             return;
