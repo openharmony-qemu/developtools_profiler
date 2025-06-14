@@ -56,7 +56,12 @@ std::map<std::string, std::string> CPUInfo::ItemData()
         }
         if (line.find("hw-instructions") != std::string::npos) {
             findData(line, instructions_total, instructions_count);
-            HandleCPIComment(line, cpi_count, cpi_total);
+            size_t comment_pos = line.find("|");
+            if (comment_pos != std::string::npos) {
+                std::string comment = line.substr(comment_pos + 1);
+                trim(comment);
+                HandleCPIComment(cpi_count, cpi_total, comment);
+            }
         }
     }
     cpu_cycles_count == 0 ? "" :
@@ -68,19 +73,14 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     return result;
 }
 
-void CPUInfo::HandleCPIComment(std::string& line, size_t& cpi_count, double& cpi_total)
+void CPUInfo::HandleCPIComment(size_t& cpi_count, double& cpi_total, std::string& comment)
 {
-    size_t comment_pos = line.find("|");
-    if (comment_pos != std::string::npos) {
-        std::string comment = line.substr(comment_pos + 1);
-        trim(comment);
-        size_t cpi_pos = comment.find("cycles per instruction");
-        if (cpi_pos != std::string::npos) {
-            size_t number_end = comment.find(" ", 0);
-            std::string cpi_str = comment.substr(0, number_end);
-            cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
-            ++cpi_count;
-        }
+    size_t cpi_pos = comment.find("cycles per instruction");
+    if (cpi_pos != std::string::npos) {
+        size_t number_end = comment.find(" ", 0);
+        std::string cpi_str = comment.substr(0, number_end);
+        cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
+        ++cpi_count;
     }
 }
 
