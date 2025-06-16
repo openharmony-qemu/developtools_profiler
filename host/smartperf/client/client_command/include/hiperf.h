@@ -40,7 +40,7 @@ public:
     void GetHiperfData();
     void SetDataMap(std::string &line);
     std::string ReturnHiperfData();
-    std::string ProcessCountData(std::string &count);
+    std::string ProcessCountData(std::string count);
 
 private:
     Hiperf() {};

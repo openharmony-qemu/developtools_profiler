@@ -138,7 +138,7 @@ std::string Hiperf::ReturnHiperfData()
     return hiperfStr;
 }
 
-std::string Hiperf::ProcessCountData(std::string &count)
+std::string Hiperf::ProcessCountData(std::string count)
 {
     std::string countStr = "";
     for (char c : count) {
