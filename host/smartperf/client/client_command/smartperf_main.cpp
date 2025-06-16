@@ -163,34 +163,6 @@ static void RecordCapacity()
     outFile.close();
 }
 
-static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
-{
-    if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
-        OHOS::SmartPerf::EditorCommand(argc, vec);
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
-        SplitProcessSpecificParameter(argc, argv);
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
-        SocketStopCommand();
-        std::cout << "command exec finished!" << std::endl;
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
-        std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
-        return 0;
-    } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
-        RecordCapacity();
-        return 0;
-    }
-    return 1;
-}
-
 static void SplitProcessSpecificParameter(int argc, char *argv[])
 {
     OHOS::SmartPerf::SPUtils::KillStartDaemon();
@@ -219,6 +191,34 @@ static void SplitProcessSpecificParameter(int argc, char *argv[])
     }
     cc.SocketStart(result);
     std::cout << "command exec finished!" << std::endl;
+}
+
+static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
+{
+    if (argc > 1 && strcmp(argv[1], "-editor") == 0) {
+        OHOS::SmartPerf::EditorCommand(argc, vec);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
+        SplitProcessSpecificParameter(argc, argv);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-stop") == 0) {
+        SocketStopCommand();
+        std::cout << "command exec finished!" << std::endl;
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-deviceinfo") == 0) {
+        std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
+        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
+        return 0;
+    } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
+        RecordCapacity();
+        return 0;
+    }
+    return 1;
 }
 
 int main(int argc, char *argv[])
