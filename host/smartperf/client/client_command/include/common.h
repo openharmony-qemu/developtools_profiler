@@ -189,7 +189,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-ge"), CommandType::CT_GE },
     { std::string("-ci"), CommandType::CT_CI },
     { std::string("-fc"), CommandType::CT_FC },
-    { std::string("-hci"), CommandType::CT_HCI },
+    { std::string("-HCI"), CommandType::CT_HCI },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -224,7 +224,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_GE, std::string("-ge") },
     { CommandType::CT_CI, std::string("-ci") },
     { CommandType::CT_FC, std::string("-fc") },
-    { CommandType::CT_HCI, std::string("-hci") },
+    { CommandType::CT_HCI, std::string("-HCI") },
 };
 
 
