@@ -389,7 +389,8 @@ std::map<std::string, std::string> SPUtils::GetCpuInfo(bool isTcpMessage)
     if (dir == nullptr) {
         return resultMap;
     }
-    while (true) {
+    bool isForDirFiles = true;
+    while (isForDirFiles) {
         struct dirent *ptr = readdir(dir);
         if (ptr == nullptr) {
             break;
