@@ -38,6 +38,7 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     size_t cpu_cycles_count = 0;
     size_t instructions_count = 0;
     size_t cpi_count = 0;
+    TrimString(buffer_);
     while (std::getline(stream, line)) {
         if (line.find("hw-cpu-cycles") != std::string::npos) {
             FindData(line, cpu_cycles_total, cpu_cycles_count);
