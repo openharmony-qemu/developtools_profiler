@@ -129,6 +129,7 @@ private:
         {"-SCREEN", {ArgumentParser::ArgType::BOOL}},
         {"-DDR", {ArgumentParser::ArgType::BOOL}},
         {"-NET", {ArgumentParser::ArgType::BOOL}},
+        {"-HCI", {ArgumentParser::ArgType::BOOL}},
     };
     std::unordered_map<std::string, ArgValue> values_;
     std::vector<std::string> errors_;

@@ -40,6 +40,7 @@
 #include "include/Threads.h"
 #include "include/FileDescriptor.h"
 #include "include/GpuCounter.h"
+#include "include/hiperf.h"
 #include "Capture.h"
 #include <sys/syscall.h>
 #include <filesystem>
@@ -443,6 +444,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     Threads::GetInstance().SetPackageName(processName_);
     FileDescriptor::GetInstance().SetProcessId(processIds_);
     FileDescriptor::GetInstance().SetPackageName(processName_);
+    Hiperf::GetInstance().SetProcessId(processIds_);
 }
 
 void TaskManager::RegisterThreadLocal(ThreadLocal* local)
