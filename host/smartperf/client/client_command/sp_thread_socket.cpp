@@ -335,12 +335,14 @@ void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocke
         StartRecvRealtime(spSocket);
     } else if (recvStr.find("stop::") != std::string::npos) {
         WLOGI("Processing 'stop::' command.");
+        SpProfilerFactory::editorFlag = false;
         StopRecvRealtime(spSocket);
     } else if (recvStr.find("startRecord::") != std::string::npos) {
         WLOGI("Processing 'startRecord::' command.");
         StartRecvRecord(spSocket);
     } else if (recvStr.find("stopRecord::") != std::string::npos) {
         WLOGI("Processing 'stopRecord::' command.");
+        SpProfilerFactory::editorFlag = false;
         StopRecvRecord(spSocket);
     } else if (recvStr.find("SP_daemon -editor") != std::string::npos) {
         EditorRecv(recvStr, spSocket);

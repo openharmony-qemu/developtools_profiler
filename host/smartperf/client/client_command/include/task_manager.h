@@ -36,7 +36,6 @@ public:
 class TaskManager {
 public:
     TaskManager(bool isIPC = false);
-    ~TaskManager();
 
     void AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv);
     void AddTask(const std::string& argv);

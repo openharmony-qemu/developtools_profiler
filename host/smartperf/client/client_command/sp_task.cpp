@@ -310,7 +310,6 @@ ErrCode SPTask::StopTask()
         thread.join();
     }
     LOGD("Killing Hiperf command.");
-    SpProfilerFactory::editorFlag = false;
     WLOGI("Task successfully stopped.");
     return ErrCode::OK;
 }

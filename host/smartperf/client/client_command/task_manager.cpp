@@ -80,8 +80,6 @@ TaskManager::TaskManager(bool isIPC)
     }
 }
 
-TaskManager::~TaskManager() {}
-
 void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
 {
     const int defaultFreq = 50;
@@ -244,7 +242,8 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
         return;
     }
 
-    if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE)) {
+    if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE) &&
+        !(SpProfilerFactory::editorFlag)) {
         std::unique_lock<std::mutex> lock(mtx_);
         if (savingFile_) {
             LOGD("Saving file");
@@ -398,6 +397,7 @@ void TaskManager::Stop(bool pause)
         threadPool_.Stop();
     } else {
         ScheduleSaveData(true);
+        dataFile_.close();
     }
 }
 
