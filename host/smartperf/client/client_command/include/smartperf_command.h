@@ -38,7 +38,7 @@ public:
         " -PID            set process pid, must add, for example: -PID 3568 \n"
         " -threads        get threads, must add -PID or -PKG for example: \n"
                           "\t\t -threads -PID 3568 or -threads -PKG ohos.samples.ecg \n"
-        " -fd             get file descriptor, must add -PID or -PKG for example: \n"
+        " -fds             get file descriptor, must add -PID or -PKG for example: \n"
                           "\t\t -fds -PID 3568 or -fds -PKG ohos.samples.ecg \n"
         " -c              get device CPU frequency and CPU usage, process CPU usage and CPU load .. \n"
         " -ci             get cpu instructions and cycles \n"
