@@ -87,7 +87,7 @@ public:
     void CalcJitters();
     static inline bool firstDump = false;
     static inline bool isGameApp = false;
-    static inline bool isStartStop = false;
+    static inline bool isNeedDump = false;
     bool SetOtherDeviceFlag();
     bool hapLowFpsFlag = false;
     bool hapNeedCatonInfo = false;

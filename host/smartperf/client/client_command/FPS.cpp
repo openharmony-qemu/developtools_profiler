@@ -147,6 +147,7 @@ void FPS::SetProcessId(const std::string &pid)
 void FPS::SetLayerName(const std::string& sName)
 {
     surfaceViewName = sName;
+    isNeedDump = true;
 }
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
@@ -249,7 +250,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
-    if (name == "UniRender" || isStartStop) {
+    if (name == "UniRender" || isNeedDump) {
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs(name);
@@ -260,7 +261,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
 FpsInfo FPS::GetFpsInfoByDump(const std::string& name)
 {
     std::string command = "";
-    if (isStartStop) {
+    if (isNeedDump && isGameApp) {
         command = "fps -id " + name;
     } else {
         command = "fps " + name;
