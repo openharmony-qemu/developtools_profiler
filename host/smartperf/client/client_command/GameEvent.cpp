@@ -32,8 +32,8 @@ void GameEventCallbackImpl::OnGameEvent(int32_t type, std::map<std::string, std:
 
 std::map<std::string, std::string> GameEvent::ItemData()
 {
-    return gameEventItemData;
     LOGI("GameEvent:ItemData map size(%u)", gameEventItemData.size());
+    return gameEventItemData;
 }
 
 std::map<std::string, std::string> &GameEvent::GetGameEventItemData()

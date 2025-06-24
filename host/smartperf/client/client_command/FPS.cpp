@@ -306,7 +306,6 @@ void FPS::ReadDataFromPipe(int fd)
     }
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
         std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
@@ -333,7 +332,6 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
     s >> nodeId;
     LOGD("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
     std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
-    LOGD("FPS fpsInfoResult: %s", fpsInfoResult.c_str());
     std::stringstream iss;
     iss << fpsInfoResult;
     std::string timeStampLine;
