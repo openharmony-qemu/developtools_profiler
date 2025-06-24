@@ -47,6 +47,7 @@ namespace OHOS {
         {
             std::map<std::string, std::string> ret;
             GetSdkDataRealtimeData(ret);
+            LOGI("SdkDataRecv:ItemData map size(%u)", ret.size());
             return ret;
         }
 

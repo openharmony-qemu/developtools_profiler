@@ -391,7 +391,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
     while (iterator != MESSAGE_MAP.end()) {
         std::string recvBuf = spSocket.RecvBuf();
         HeartbeatDetection(recvBuf);
-        LOGD("UDP recv : %s", recvBuf.c_str());
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
             std::string failStr = std::string("token failed");
@@ -401,6 +400,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init::") != std::string::npos) {
+            LOGD("UDP recv : %s", recvBuf.c_str());
             UdpStartInitFunc(recvBuf, spSocket);
             break;
         }
@@ -408,6 +408,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             ++iterator;
             continue;
         }
+        LOGD("UDP recv : %s", recvBuf.c_str());
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);

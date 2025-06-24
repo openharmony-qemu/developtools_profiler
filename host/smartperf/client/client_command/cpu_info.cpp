@@ -83,6 +83,7 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     cpi_count == 0 ? "" : result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
 
     Start();
+    LOGI("CPUInfo:ItemData map size(%u)", result.size());
     return result;
 }
 

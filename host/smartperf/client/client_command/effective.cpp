@@ -52,7 +52,7 @@ std::map<std::string, std::string> Effective::ItemData()
     templateMap["fpsWarn"] = std::to_string(fcf.fps);
     templateMap["FrameTimeWarn"] = std::to_string(fcf.currentFpsTime);
     templateMap["TraceTime"] = std::to_string(startCaptuerTime_);
-
+    LOGI("Effective:ItemData map size(%u)", templateMap.size());
     return templateMap;
 }
 

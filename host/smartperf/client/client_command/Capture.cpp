@@ -54,6 +54,7 @@ std::map<std::string, std::string> Capture::ItemData()
         }
     }
     result["capture"] = path;
+    LOGI("Capture:ItemData map size(%u)", result.size());
     return result;
 }
 

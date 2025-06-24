@@ -39,6 +39,7 @@ std::map<std::string, std::string> Network::ItemData()
     } else {
         result = Network::GetNetworkInfo();
     }
+    LOGI("Network:ItemData map size(%u)", result.size());
     return result;
 }
 

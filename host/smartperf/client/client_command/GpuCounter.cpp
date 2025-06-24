@@ -29,6 +29,7 @@ namespace OHOS {
         std::map<std::string, std::string> GpuCounter::ItemData()
         {
             std::map<std::string, std::string> gpuCounterDataMap;
+            LOGI("GpuCounter:ItemData map size(%u)", gpuCounterDataMap.size());
             return gpuCounterDataMap;
         }
 

@@ -75,6 +75,7 @@ std::map<std::string, std::string> FPS::ItemData()
             jitterStr.c_str());
         SetFpsCurrentFpsTime(fpsInfoResult);
     }
+    LOGI("FPS:ItemData map size(%u)", result.size());
     return result;
 }
 

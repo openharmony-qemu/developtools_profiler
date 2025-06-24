@@ -94,6 +94,7 @@ std::map<std::string, std::string> RAM::ItemData()
         result = {};
         result.merge(RAM::ProcMemNaInfo());
     }
+    LOGI("RAM:ItemData map size(%u)", result.size());
     return result;
 }
 

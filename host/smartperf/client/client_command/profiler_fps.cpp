@@ -74,6 +74,7 @@ std::map<std::string, std::string> ProfilerFPS::ItemData()
         }
     }
     isSections = true;
+    LOGI("ProfilerFPS:ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -398,7 +399,6 @@ FpsInfoProfiler ProfilerFPS::GetFrameInfoFromMap(const std::string& name)
     char tmp[1024];
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGD("ProfilerFPS::GetFrameInfoFromMap dump time: %s", tmp);
         std::string tmpStr(tmp);
         curScreenTimestamp = 0;
         sstream.clear();
