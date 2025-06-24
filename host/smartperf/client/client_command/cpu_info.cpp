@@ -21,6 +21,7 @@
 #include <string_view>
 #include <iomanip>
 #include <unistd.h>
+#include "sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
 namespace {

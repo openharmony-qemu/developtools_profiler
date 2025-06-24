@@ -29,6 +29,7 @@
 #include "securec.h"
 #include "include/sp_utils.h"
 #include "include/Dubai.h"
+#include "include/sp_log.h"
 const int LARGE_BUFF_MAX_LEN = 256;
 namespace OHOS {
 namespace SmartPerf {
