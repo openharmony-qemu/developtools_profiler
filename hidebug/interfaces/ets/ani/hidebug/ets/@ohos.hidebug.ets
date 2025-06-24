@@ -92,6 +92,36 @@ export namespace hidebug {
 
   export native function getAppNativeMemInfo(): NativeMemInfo;
 
+  export interface VMMemoryInfo {
+    totalHeap: bigint;
+    heapUsed: bigint;
+    allArraySize: bigint;
+  }
+
+  class VMMemoryInfoImpl implements VMMemoryInfo {
+    totalHeap: bigint;
+    heapUsed: bigint;
+    allArraySize: bigint;
+  }
+
+  export native function getAppVMMemoryInfo(): VMMemoryInfo;
+
+  export interface MemoryLimit {
+    rssLimit: bigint;
+    vssLimit: bigint;
+    vmHeapLimit: bigint;
+    vmTotalHeapSize: bigint;
+  }
+
+  class MemoryLimitImpl implements MemoryLimit {
+    rssLimit: bigint;
+    vssLimit: bigint;
+    vmHeapLimit: bigint;
+    vmTotalHeapSize: bigint;
+  }
+
+  export native function getAppMemoryLimit(): MemoryLimit;
+
   export enum TraceFlag {
     MAIN_THREAD = 1,
     ALL_THREADS = 2
@@ -131,6 +161,11 @@ export namespace hidebug {
     const IMAGE: number = 17179869184; // 1 << 34;
     const MEDIA: number = 8589934592; // 1 << 33;
   }
+  type GcStats = Record<string, number>;
+
+  export native function getVMRuntimeStats(): GcStats;
+
+  export native function getVMRuntimeStat(item: string): number;
 
   export native function startAppTraceCapture(tags: number[], flag: TraceFlag, limitSize: number): string;
 

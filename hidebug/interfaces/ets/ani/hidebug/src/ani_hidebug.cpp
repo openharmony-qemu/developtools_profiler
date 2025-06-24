@@ -33,14 +33,15 @@
 #include "cpu_collector.h"
 #include "directory_ex.h"
 #include "dump_usage.h"
+#include "error_code.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
 #include "memory_collector.h"
-#include "native_engine/native_engine.h"
 #include "refbase.h"
+#include "static_core/plugins/ets/dfx/heap_helpers.h"
 #include "static_core/runtime/tooling/inspector/debugger_arkapi.h"
 #include "storage_acl.h"
 #include "system_ability_definition.h"
@@ -54,25 +55,19 @@ namespace {
 #undef LOG_TAG
 #define LOG_TAG "HiDebug_ANI"
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
-constexpr int PSS_MIN = 1024;
-constexpr int PSS_MAX = 4 * 1024 * 1024;
-constexpr int JS_MIN = 85;
-constexpr int JS_MAX = 95;
-constexpr int FD_MIN = 10;
-constexpr int FD_MAX = 10000;
-constexpr int THREAD_MIN = 1;
-constexpr int THREAD_MAX = 1000;
 constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
-enum ErrorCode {
-    PERMISSION_ERROR = 201,
-    PARAMETER_ERROR = 401,
-    VERSION_ERROR = 801,
-    SYSTEM_ABILITY_NOT_FOUND = 11400101,
-    HAVA_ALREADY_TRACE = 11400102,
-    WITHOUT_WRITE_PERMISSON = 11400103,
-    SYSTEM_STATUS_ABNORMAL = 11400104,
-    NO_CAPTURE_TRACE_RUNNING = 11400105,
-};
+static ani_vm* g_currentVm = nullptr;
+
+std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
+{
+    return {
+                {"ark.gc.gc-count", ark::dfx::GetGCCount},
+                {"ark.gc.gc-time", ark::dfx::GetGCDuration},
+                {"ark.gc.gc-bytes-allocated", ark::dfx::GetAccumulatedAllocateSize},
+                {"ark.gc.gc-bytes-freed", ark::dfx::GetAccumulatedFreeSize},
+                {"ark.gc.fullgc-longtime-count", ark::dfx::GetFullGCLongTimeCount}
+            };
+}
 }
 
 static bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySize)
@@ -442,12 +437,6 @@ void StopAppTraceCapture(ani_env *env)
     }
 }
 
-static bool CheckVersionType(const std::string& type, const std::string& key)
-{
-    auto versionType = OHOS::system::GetParameter(key, "unknown");
-    return (versionType.find(type) != std::string::npos);
-}
-
 ani_double GetGraphicsMemorySync(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
@@ -461,8 +450,131 @@ ani_double GetGraphicsMemorySync(ani_env *env)
     return 0;
 }
 
+static bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
+{
+    if (AniUtil::ParseAniString(env, filenameAni, fileName) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed to parse ani_string filename");
+        return false;
+    }
+    size_t bufLen = fileName.size();
+    const int bufMax = 128;
+    if (bufLen > bufMax || bufLen == 0) {
+        HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
+        return false;
+    }
+    return true;
+}
+
+static ani_object GetAppVMMemoryInfo(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
+    ani_class cls = nullptr;
+    ani_method ctorMethod = nullptr;
+    ani_object vMMemoryInfo = nullptr;
+    if (env->FindClass("L@ohos/hidebug/hidebug/VMMemoryInfoImpl;", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+        env->Object_New(cls, ctorMethod, &vMMemoryInfo) != ANI_OK) {
+        return AniUtil::CreateUndefined(env);
+    }
+
+    uint64_t totalHeapValue = ark::dfx::GetHeapTotalSize(g_currentVm);
+    totalHeapValue = totalHeapValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "totalHeap", totalHeapValue);
+
+    uint64_t heapUsedValue = ark::dfx::GetHeapUsedSize(g_currentVm);
+    heapUsedValue = heapUsedValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "heapUsed", heapUsedValue);
+
+    uint64_t allArraySizeValue = ark::dfx::GetArrayBufferSize(g_currentVm);
+    allArraySizeValue = allArraySizeValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "allArraySize", allArraySizeValue);
+
+    return vMMemoryInfo;
+}
+
+static ani_object GetAppMemoryLimit(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
+    ani_class cls = nullptr;
+    ani_method ctorMethod = nullptr;
+    ani_object appMemoryLimit = nullptr;
+    if (env->FindClass("L@ohos/hidebug/hidebug/MemoryLimitImpl;", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+        env->Object_New(cls, ctorMethod, &appMemoryLimit) != ANI_OK) {
+        return AniUtil::CreateUndefined(env);
+    }
+    MemoryLimit memoryLimit{};
+    auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
+    if (memoryLimitOption) {
+        memoryLimit = memoryLimitOption.value();
+    }
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "rssLimit", memoryLimit.rssLimit);
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vssLimit", memoryLimit.vssLimit);
+    uint64_t vmHeapLimitValue = ark::dfx::GetHeapLimitSize(g_currentVm);
+    vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vmHeapLimit", vmHeapLimitValue);
+    uint64_t vmTotalHeapSizeValue = ark::dfx::GetProcessHeapLimitSize(g_currentVm);
+    vmTotalHeapSizeValue = vmTotalHeapSizeValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vmTotalHeapSize", vmTotalHeapSizeValue);
+    return appMemoryLimit;
+}
+
+static ani_object GetVMRuntimeStats(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStats");
+    ani_class cls = nullptr;
+    ani_method ctorMethod = nullptr;
+    ani_object vmRunTimeStats = nullptr;
+    if (env->FindClass("Lescompat/Record;", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", "Lstd/core/Object;:V", &ctorMethod) != ANI_OK ||
+        env->Object_New(cls, ctorMethod, &vmRunTimeStats, nullptr) != ANI_OK) {
+        return AniUtil::CreateUndefined(env);
+    }
+    ani_method setMethod = nullptr;
+    if (env->Class_FindMethod(cls, "$_set", nullptr, &setMethod) != ANI_OK) {
+        return vmRunTimeStats;
+    }
+    ani_class doubleClass = nullptr;
+    env->FindClass("Lstd/core/Double;", &doubleClass);
+    ani_method doubleCtor = nullptr;
+    env->Class_FindMethod(doubleClass, "<ctor>", "D:V", &doubleCtor);
+    auto vmGcMap = GetVmGcMap();
+    for (const auto &[k, targetFunction] : vmGcMap) {
+        ani_string aniKey = nullptr;
+        if (ANI_OK != env->String_NewUTF8(k.c_str(), k.size(), &aniKey)) {
+            HILOG_ERROR(LOG_CORE, "create new value string failed");
+        }
+        ani_object doubleObject = nullptr;
+        env->Object_New(doubleClass, doubleCtor, &doubleObject, static_cast<ani_double>(targetFunction(g_currentVm)));
+        env->Object_CallMethod_Void(vmRunTimeStats, setMethod, aniKey, doubleObject);
+    }
+    return vmRunTimeStats;
+}
+
+static ani_double GetVMRuntimeStat(ani_env *env, ani_string itemAni)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
+    std::string param;
+    if (!GetTheOnlyStringParam(env, itemAni, param)) {
+        std::string paramErrorMessage = "Invalid parameter, a string parameter required.";
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        return 0;
+    }
+    auto vmGcMap = GetVmGcMap();
+    auto target = vmGcMap.find(param);
+    if (target == vmGcMap.end()) {
+        std::string paramErrorMessage = "Invalid parameter, unknown property.";
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        return 0;
+    }
+    return static_cast<ani_double>((target->second)(g_currentVm));
+}
+
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
+    g_currentVm = vm;
     ani_env *env = nullptr;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
         return ANI_ERROR;
@@ -472,6 +584,12 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
     std::array methods = {
+        ani_native_function {"getAppVMMemoryInfo", ":L@ohos/hidebug/hidebug/VMMemoryInfo;",
+            reinterpret_cast<void *>(GetAppVMMemoryInfo)},
+        ani_native_function {"getAppMemoryLimit", ":L@ohos/hidebug/hidebug/MemoryLimit;",
+            reinterpret_cast<void *>(GetAppMemoryLimit)},
+        ani_native_function {"getVMRuntimeStats", ":Lescompat/Record;", reinterpret_cast<void *>(GetVMRuntimeStats)},
+        ani_native_function {"getVMRuntimeStat", "Lstd/core/String;:D", reinterpret_cast<void *>(GetVMRuntimeStat)},
         ani_native_function {"getPss", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPss)},
         ani_native_function {"getSharedDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetSharedDirty)},
         ani_native_function {"getPrivateDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPrivateDirty)},
