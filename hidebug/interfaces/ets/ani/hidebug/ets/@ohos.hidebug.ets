@@ -24,6 +24,10 @@ function createVoidBusinessError(code: number, msg: string): BusinessError<void>
 
 export namespace hidebug {
   loadLibrary("hidebug_ani");
+  export native function startJsCpuProfiling(filename: string): void;
+
+  export native function stopJsCpuProfiling(): void;
+
   export native function getNativeHeapSize(): bigint;
 
   export native function getNativeHeapAllocatedSize(): bigint;
