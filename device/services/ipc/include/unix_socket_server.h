@@ -42,6 +42,7 @@ private:
     std::map<int, std::shared_ptr<ClientConnection>> socketClients_;
     std::thread acceptThread_;
     std::mutex mtx_;
+    int epfd_ = -1;
 };
 
 #endif
