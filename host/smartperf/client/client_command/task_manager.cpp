@@ -178,6 +178,7 @@ void TaskManager::AddTask(SpProfiler* task, bool priority)
     if (task == nullptr) {
         return;
     }
+    LOGD("Start the collection in the start/stop mode");
     priority ? priorityTask_.emplace_back(task) : normalTask_.emplace_back(task);
 }
 
@@ -394,6 +395,7 @@ void TaskManager::Stop(bool pause)
         scheduleSaveDataTh_.join();
     }
     if (!pause) {
+        LOGD("Start/Stop Collection End");
         threadPool_.Stop();
     } else {
         ScheduleSaveData(true);

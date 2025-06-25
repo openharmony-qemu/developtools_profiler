@@ -785,21 +785,25 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
+            LOGD("Start to display data in real time");
             taskMgr_->SetHapFlag(true);
             taskMgr_->EnableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
         if (taskMgr_ != nullptr) {
+            LOGD("Real time data display ends");
             taskMgr_->DisableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
         if (taskMgr_ != nullptr) {
+            LOGD("Pause Collection");
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             GpuCounter::GetInstance().GetInstance().SetIsPause(true);
             taskMgr_->Stop(true);
         }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
+        LOGD("Resuming Collection");
         StartHapCollecting(spSocket);
         GpuCounter::GetInstance().GetInstance().SetIsPause(false);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
