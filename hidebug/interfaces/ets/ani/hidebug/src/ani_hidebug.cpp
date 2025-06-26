@@ -41,6 +41,7 @@
 #include "memory_collector.h"
 #include "native_engine/native_engine.h"
 #include "refbase.h"
+#include "static_core/runtime/tooling/inspector/debugger_arkapi.h"
 #include "storage_acl.h"
 #include "system_ability_definition.h"
 
@@ -414,6 +415,15 @@ ani_string StartAppTraceCapture(ani_env *env,
     return nullptr;
 }
 
+static ani_boolean IsDebugState(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("isDebugState");
+    bool debugState = ark::ArkDebugNativeAPI::IsDebugModeEnabled() ||
+        HidebugNativeInterface::GetInstance().IsDebuggerConnected();
+    ani_boolean result = static_cast<ani_boolean>(debugState);
+    return result;
+}
+
 void StopAppTraceCapture(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
@@ -482,6 +492,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
             reinterpret_cast<void *>(GetSystemMemInfo)},
         ani_native_function {"startAppTraceCapture", "[DL@ohos/hidebug/hidebug/TraceFlag;D:Lstd/core/String;",
             reinterpret_cast<void *>(StartAppTraceCapture)},
+        ani_native_function {"isDebugState", ":Z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":V", reinterpret_cast<void *>(StopAppTraceCapture)},
         ani_native_function {"getGraphicsMemorySync", ":D", reinterpret_cast<void *>(GetGraphicsMemorySync)},
     };

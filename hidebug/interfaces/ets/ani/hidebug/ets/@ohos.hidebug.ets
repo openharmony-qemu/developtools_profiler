@@ -136,6 +136,8 @@ export namespace hidebug {
 
   export native function stopAppTraceCapture(): void;
 
+  export native function isDebugState(): boolean;
+
   export function getGraphicsMemory(): Promise<number> {
     return new Promise<number>((resolve: (v: number) => void, reject: (e: BusinessError<void>) => void) => {
       taskpool.execute(getGraphicsMemorySync).then((ret: NullishType): void => {

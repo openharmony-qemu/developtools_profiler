@@ -50,6 +50,7 @@ ohos_shared_library("hidebug_ani") {
     "ipc:ipc_core",
     "napi:ace_napi",
     "runtime_core:ani",
+    "runtime_core:libarkruntime",
     "samgr:samgr_proxy",
     "storage_service:storage_manager_acl",
   ]
