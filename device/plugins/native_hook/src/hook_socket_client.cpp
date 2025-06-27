@@ -174,7 +174,7 @@ bool HookSocketClient::SendStack(const void* data, size_t size)
 bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const void* payload,
     size_t payloadSize, int smbIndex)
 {
-    if (smbIndex + 1 > stackWriterList_.size()) {
+    if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
     }
     std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
