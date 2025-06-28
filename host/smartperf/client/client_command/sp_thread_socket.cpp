@@ -933,6 +933,7 @@ void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
             return;
         }
         taskMgr_->Start();
+        taskMgr_->SetRecordState(true);
         taskMgr_->Wait();
         LOGD("Data collecting thread exiting.");
     });

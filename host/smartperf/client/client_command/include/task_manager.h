@@ -55,6 +55,7 @@ public:
     void SetNextTime(long long& nextTime);
     void SetRecordState(bool record);
     void DeleteTask(SpProfiler* task);
+    void SetFileTitle();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
@@ -100,6 +101,7 @@ private:
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
     bool isPause_ {false};
+    bool firstSetTitle_ {true};
 };
 }
 #endif // TASK_MANAGER_H
