@@ -108,7 +108,7 @@ std::string ControlCallCmd::TimeDelay()
     double rateResult = srt.StallingRateResult(traceName);
     std::ostringstream ss;
     ss << std::fixed << std::setprecision(two) << rateResult;
-    return resultTime + "HitchTimeRate:" + ss.str() + "ms/s \n" + maxFrame;;
+    return resultTime + "HitchTimeRate:" + ss.str() + "ms/s \n" + maxFrame;
 }
 std::string ControlCallCmd::SlideList()
 {
