@@ -112,9 +112,7 @@ bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
 {
     std::unique_lock<std::mutex> lock(mtx_);
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
-        tasks_.erase(timerFd);
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
-        close(timerFd);
         return true;
     }
     return false;
@@ -132,7 +130,6 @@ void ScheduleTaskManager::ScheduleThread()
                 if (events[i].data.fd == stopFd_) {
                     return;
                 }
-
                 int32_t ret = read(events[i].data.fd, &exp, sizeof(uint64_t));
                 if (ret == sizeof(uint64_t)) {
                     std::unique_lock<std::mutex> lock(mtx_);
@@ -161,6 +158,5 @@ void ScheduleTaskManager::StartThread()
     evt.data.fd = stopFd_;
     evt.events = EPOLLIN;
     epoll_ctl(epollFd_, EPOLL_CTL_ADD, stopFd_, &evt);
-
     scheduleThread_ = std::thread([this] { this->ScheduleThread(); });
 }
