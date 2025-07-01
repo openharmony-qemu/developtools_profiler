@@ -75,7 +75,6 @@ bool EpollEventPoller::AddContextLocked(const EventContextPtr& ctx)
 
 bool EpollEventPoller::RemoveContextLocked(const EventContextPtr& ctx)
 {
-    context_.erase(ctx->fd);
     CHECK_TRUE(UpdateEvent(EPOLL_CTL_DEL, ctx), false, "update fd %d ctx FAILED!", ctx->fd);
     return true;
 }
@@ -216,7 +215,7 @@ bool EpollEventPoller::Finalize()
         close(fd);
     }
     fileDescriptors_.clear();
-
+    context_.clear();
     epollFd_ = INVALID_FD;
     eventFd_ = INVALID_FD;
     state_ = INITIAL;
