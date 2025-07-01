@@ -341,12 +341,15 @@ void TaskManager::WriteToCSV()
             }
             LOGE("The file %s does not exist, will create", fileName_.c_str());
         }
-        dataFile_.open(filePath, std::ios::out | std::ios::app);
+        if (std::string(filePath).find("data.csv") != std::string::npos) {
+            dataFile_.open(filePath, std::ios::out | std::ios::trunc);
+        } else {
+            dataFile_.open(filePath, std::ios::out | std::ios::app);
+        }
         if (!dataFile_.is_open()) {
             LOGE("The file open fail");
             return;
         }
-        LOGD("The will writting file data size = (%u)", datas_.size());
         SetFileTitle();
     }
     for (auto& [_, v] : datas_) {

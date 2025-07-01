@@ -48,6 +48,10 @@ UnixSocketServer::~UnixSocketServer()
         acceptThread_.join();
     }
     PROFILER_LOG_DEBUG(LOG_CORE, "acceptThread finish");
+    if (epfd_ != -1) {
+        close(epfd_);
+        epfd_ = -1;
+    }
     std::unique_lock<std::mutex> lock(mtx_);
     if (socketClients_.size() > 0) {
         PROFILER_LOG_DEBUG(LOG_CORE, "socketClients_.size() = %zu delete map", socketClients_.size());
@@ -61,6 +65,14 @@ void UnixSocketServer::RemoveContext(int fd)
     if (socketClients_.find(fd) != socketClients_.end()) {
         PROFILER_LOG_DEBUG(LOG_CORE, "RemoveContext socketClients disconnect socketClients_.size() = %zu",
                            socketClients_.size());
+        if (epfd_ != -1) {
+            struct epoll_event delEvt;
+            delEvt.data.fd = fd;
+            delEvt.events = EPOLLHUP;
+            if (epoll_ctl(epfd_, EPOLL_CTL_DEL, fd, &delEvt) == -1) {
+                PROFILER_LOG_ERROR(LOG_CORE, "RemoveContext epoll_ctl failed, errno: %s", strerror(errno));
+            }
+        }
         socketClients_.erase(fd);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "RemoveContext Client %d not exist", fd);
@@ -71,15 +83,15 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
 {
     pthread_setname_np(pthread_self(), "UnixSocketAccept");
     CHECK_TRUE(socketHandle_ != -1, NO_RETVAL, "Unix Socket Accept socketHandle_ == -1");
-    int epfd = epoll_create(1);
+    epfd_ = epoll_create(1);
     struct epoll_event evt;
     evt.data.fd = socketHandle_;
     evt.events = EPOLLIN | EPOLLHUP;
-    CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, socketHandle_, &evt) != -1, NO_RETVAL, "Unix Socket Server Exit");
+    CHECK_TRUE(epoll_ctl(epfd_, EPOLL_CTL_ADD, socketHandle_, &evt) != -1, NO_RETVAL, "Unix Socket Server Exit");
     struct epoll_event events[EPOLL_MAX_TASK_COUNT];
     int retryCount = 0;
     while (socketHandle_ != -1) {
-        int nfds = epoll_wait(epfd, events, EPOLL_MAX_TASK_COUNT, EPOLL_WAIT_TIMEOUT);  // timeout value set 1000.
+        int nfds = epoll_wait(epfd_, events, EPOLL_MAX_TASK_COUNT, EPOLL_WAIT_TIMEOUT);  // timeout value set 1000.
         if (nfds == -1) {
             if (errno == EINTR && retryCount < RETRY_MAX_COUNT) {
                 ++retryCount;
@@ -98,7 +110,7 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
                 struct epoll_event clientEvt;
                 clientEvt.data.fd = clientSocket;
                 clientEvt.events = EPOLLHUP;
-                CHECK_TRUE(epoll_ctl(epfd, EPOLL_CTL_ADD, clientSocket, &clientEvt) != -1,
+                CHECK_TRUE(epoll_ctl(epfd_, EPOLL_CTL_ADD, clientSocket, &clientEvt) != -1,
                     NO_RETVAL, "Unix Socket Server Exit");
                 std::unique_lock<std::mutex> lock(mtx_);
                 if (socketClients_.find(clientSocket) == socketClients_.end()) {
@@ -109,12 +121,14 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
                     PROFILER_LOG_ERROR(LOG_CORE, "Client %d exist", clientSocket);
                 }
             } else if (events[i].events & EPOLLHUP) {
-                struct epoll_event delEvt;
-                delEvt.data.fd = events[i].data.fd;
-                delEvt.events = EPOLLHUP;
-                epoll_ctl(epfd, EPOLL_CTL_DEL, events[i].data.fd, &delEvt);
                 std::unique_lock<std::mutex> lock(mtx_);
                 if (socketClients_.find(events[i].data.fd) != socketClients_.end()) {
+                    struct epoll_event delEvt;
+                    delEvt.data.fd = events[i].data.fd;
+                    delEvt.events = EPOLLHUP;
+                    if (epoll_ctl(epfd_, EPOLL_CTL_DEL, events[i].data.fd, &delEvt) == -1) {
+                        PROFILER_LOG_ERROR(LOG_CORE, "UnixSocketServer epoll_ctl failed, errno: %s", strerror(errno));
+                    }
                     lock.unlock();
                     if (callback != nullptr) {
                         callback(events[i].data.fd);
@@ -129,7 +143,6 @@ void UnixSocketServer::UnixSocketAccept(void (*callback)(int))
             }
         }
     }
-    close(epfd);
 }
 
 bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int))

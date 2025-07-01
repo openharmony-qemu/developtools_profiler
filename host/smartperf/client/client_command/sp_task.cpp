@@ -220,6 +220,12 @@ void SPTask::CreatPath(const std::string& path)
             LOGE("Failed to create path: %s. Command result: %s", path.c_str(), cmdResult.c_str());
         }
     } else {
+        std::ofstream file(path, std::ios::trunc);
+        if (!file) {
+            LOGE("Unable to open file");
+            return;
+        }
+        file.close();
         LOGD("CreatPath already exists: %s", path.c_str());
     }
 }

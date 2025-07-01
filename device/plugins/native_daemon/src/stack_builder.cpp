@@ -137,7 +137,7 @@ DwarfStackBuilder::DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<V
     minStackDepth_ += FILTER_STACK_DEPTH;
     stackDepth_ = (static_cast<size_t>(hookConfig_->max_stack_depth()) > MAX_CALL_FRAME_UNWIND_SIZE)
             ? MAX_CALL_FRAME_UNWIND_SIZE
-            : hookConfig_->max_stack_depth() + FILTER_STACK_DEPTH;
+            : static_cast<size_t>(hookConfig_->max_stack_depth()) + FILTER_STACK_DEPTH;
 }
 
 void DwarfStackBuilder::FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord)
