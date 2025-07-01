@@ -51,7 +51,6 @@ int GPU::GetGpuFreq()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<GpuFreq> result = collector->CollectGpuFrequency();
-    LOGD("GpuFrequency: %s", std::to_string(result.data.curFeq).c_str());
     return result.data.curFeq;
 }
 
@@ -59,7 +58,6 @@ float GPU::GetGpuLoad()
 {
     std::shared_ptr<GpuCollector> collector = GpuCollector::Create();
     CollectResult<SysGpuLoad> result = collector->CollectSysGpuLoad();
-    LOGD("SysGpuLoad: %s", std::to_string(result.data.gpuLoad).c_str());
     return float(result.data.gpuLoad);
 }
 

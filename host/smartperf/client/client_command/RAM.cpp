@@ -300,7 +300,6 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
-        LOGD("ParsePssValues::line = %s", line.c_str());
         if (line[0] == '-') {
             continue;
         }

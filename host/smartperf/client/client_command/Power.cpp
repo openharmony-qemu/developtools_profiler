@@ -26,7 +26,6 @@ std::map<std::string, std::string> Power::ItemData()
         SPUtils::LoadFile(currentNowPath, currentNow);
         std::string voltageNow;
         SPUtils::LoadFile(voltageNowPath, voltageNow);
-        LOGD("currentNow = %s, voltageNow = %s", currentNow.c_str(), voltageNow.c_str());
         if (currentNow.empty()) {
             currentNow = "NA";
         }
@@ -40,7 +39,7 @@ std::map<std::string, std::string> Power::ItemData()
         result["failed"] = "RK does not support power acquisition";
         LOGE("failed:RK does not support power acquisition");
     }
-    LOGD("Power:ItemData map size(%u)", result.size());
+    LOGI("Power:ItemData map size(%u)", result.size());
     return result;
 }
 void Power::SetRkFlag()
