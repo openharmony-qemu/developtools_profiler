@@ -332,7 +332,6 @@ void TaskManager::WriteToCSV()
         LOGD("datas is empty or saveFlag: %d", saveFlag_);
         return;
     }
-
     if (!dataFile_.is_open()) {
         char filePath[PATH_MAX] = {0};
         if (realpath(fileName_.c_str(), filePath) == nullptr) {
@@ -342,24 +341,14 @@ void TaskManager::WriteToCSV()
             }
             LOGE("The file %s does not exist, will create", fileName_.c_str());
         }
-        dataFile_.open(filePath, std::ios::out | std::ios::trunc);
+        dataFile_.open(filePath, std::ios::out | std::ios::app);
         if (!dataFile_.is_open()) {
             LOGE("The file open fail");
             return;
         }
         LOGD("The will writting file data size = (%u)", datas_.size());
-        for (const auto& [id, m] : datas_) {
-            for (const auto& [k, _] : m) {
-                titles_.insert(k);
-            }
-        }
-    
-        for (const auto& field : titles_) {
-            dataFile_ << field << ",";
-        }
-        dataFile_ << "\n";
+        SetFileTitle();
     }
-
     for (auto& [_, v] : datas_) {
         for (auto& item : titles_) {
             auto it = v.find(item);
@@ -370,11 +359,27 @@ void TaskManager::WriteToCSV()
         }
         dataFile_ << "\n";
     }
-    dataFile_.flush();
+    dataFile_.close();
 
     if (!running_) {
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
     }
+}
+
+void TaskManager::SetFileTitle()
+{
+    if (firstSetTitle_) {
+        for (const auto& [id, m] : datas_) {
+            for (const auto& [k, _] : m) {
+                titles_.insert(k);
+            }
+        }
+        for (const auto& field : titles_) {
+            dataFile_ << field << ",";
+        }
+        dataFile_ << "\n";
+    }
+    firstSetTitle_ = false;
 }
 
 void TaskManager::Stop(bool pause)
@@ -400,7 +405,6 @@ void TaskManager::Stop(bool pause)
         threadPool_.Stop();
     } else {
         ScheduleSaveData(true);
-        dataFile_.close();
     }
 }
 
@@ -582,7 +586,6 @@ void TaskManager::SetRecordState(bool record)
         if (scheduleSaveDataTh_.joinable()) {
             scheduleSaveDataTh_.join();
         }
-        dataFile_.close();
     }
 }
 

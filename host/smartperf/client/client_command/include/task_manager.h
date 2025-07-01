@@ -100,6 +100,7 @@ private:
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
     bool isPause_ {false};
+    bool firstSetTitle_ {true};
 };
 }
 #endif // TASK_MANAGER_H
