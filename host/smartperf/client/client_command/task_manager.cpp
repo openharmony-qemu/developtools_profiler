@@ -346,6 +346,7 @@ void TaskManager::WriteToCSV()
             LOGE("The file open fail");
             return;
         }
+        
         LOGD("The will writting file data size = (%u)", datas_.size());
         SetFileTitle();
     }
