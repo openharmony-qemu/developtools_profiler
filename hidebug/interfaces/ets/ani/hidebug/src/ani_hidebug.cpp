@@ -80,8 +80,8 @@ static bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySiz
     ani_boolean isArray = ANI_FALSE;
     ani_class cls = nullptr;
     ani_static_method isArrayMethod = nullptr;
-    if (env->FindClass("Lescompat/Array;", &cls) != ANI_OK ||
-        env->Class_FindStaticMethod(cls, "isArray", "Lstd/core/Object;:Z", &isArrayMethod) != ANI_OK ||
+    if (env->FindClass("escompat.Array", &cls) != ANI_OK ||
+        env->Class_FindStaticMethod(cls, "isArray", "C{std.core.Object}:z", &isArrayMethod) != ANI_OK ||
         env->Class_CallStaticMethod_Boolean(cls, isArrayMethod, &isArray, param) != ANI_OK ||
         isArray == ANI_FALSE) {
         return false;
@@ -104,7 +104,7 @@ static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16s
     }
     for (ani_int i = 0; i < arraySize; i++) {
         ani_ref aniValue = nullptr;
-        if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "I:Lstd/core/Object;", &aniValue, i) != ANI_OK) {
+        if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "i:C{std.core.Object}", &aniValue, i) != ANI_OK) {
             HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
             return false;
         }
@@ -286,7 +286,7 @@ static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32
 {
     ani_method ctorMethod = nullptr;
     ani_object obj = nullptr;
-    if (env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+    if (env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &obj) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -300,7 +300,7 @@ static ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<
     ani_class cls = nullptr;
     ani_size aniSize = static_cast<ani_size>(threadMap.size());
     ani_array_ref result = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/ThreadCpuUsageImpl;", &cls) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.ThreadCpuUsageImpl", &cls) != ANI_OK ||
         env->Array_New_Ref(static_cast<ani_type>(cls), aniSize, nullptr, &result) != ANI_OK) {
         return result;
     }
@@ -333,8 +333,8 @@ ani_object GetAppNativeMemInfo(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object memInfo = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/NativeMemInfoImpl;", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.NativeMemInfoImpl", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &memInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -360,8 +360,8 @@ ani_object GetSystemMemInfo(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object sysMemInfo = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/SystemMemInfoImpl;", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.SystemMemInfoImpl", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &sysMemInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -476,8 +476,8 @@ static ani_object GetAppVMMemoryInfo(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object vMMemoryInfo = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/VMMemoryInfoImpl;", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.VMMemoryInfoImpl", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &vMMemoryInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -503,8 +503,8 @@ static ani_object GetAppMemoryLimit(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object appMemoryLimit = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/MemoryLimitImpl;", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.MemoryLimitImpl", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &appMemoryLimit) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -530,8 +530,8 @@ static ani_object GetVMRuntimeStats(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object vmRunTimeStats = nullptr;
-    if (env->FindClass("Lescompat/Record;", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", "Lstd/core/Object;:V", &ctorMethod) != ANI_OK ||
+    if (env->FindClass("escompat.Record", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", "C{std.core.Object}:", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &vmRunTimeStats, nullptr) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
@@ -540,9 +540,9 @@ static ani_object GetVMRuntimeStats(ani_env *env)
         return vmRunTimeStats;
     }
     ani_class doubleClass = nullptr;
-    env->FindClass("Lstd/core/Double;", &doubleClass);
+    env->FindClass("std.core.Double", &doubleClass);
     ani_method doubleCtor = nullptr;
-    env->Class_FindMethod(doubleClass, "<ctor>", "D:V", &doubleCtor);
+    env->Class_FindMethod(doubleClass, "<ctor>", "d:", &doubleCtor);
     auto vmGcMap = GetVmGcMap();
     for (const auto &[k, targetFunction] : vmGcMap) {
         ani_string aniKey = nullptr;
@@ -635,42 +635,42 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
     ani_namespace nameSpace = nullptr;
-    if (ANI_OK != env->FindNamespace("L@ohos/hidebug/hidebug;", &nameSpace)) {
+    if (ANI_OK != env->FindNamespace("@ohos.hidebug.hidebug", &nameSpace)) {
         return ANI_ERROR;
     }
     std::array methods = {
-        ani_native_function {"getAppVMMemoryInfo", ":L@ohos/hidebug/hidebug/VMMemoryInfo;",
+        ani_native_function {"getAppVMMemoryInfo", ":C{@ohos.hidebug.hidebug.VMMemoryInfo}",
             reinterpret_cast<void *>(GetAppVMMemoryInfo)},
-        ani_native_function {"getAppMemoryLimit", ":L@ohos/hidebug/hidebug/MemoryLimit;",
+        ani_native_function {"getAppMemoryLimit", ":C{@ohos.hidebug.hidebug.MemoryLimit}",
             reinterpret_cast<void *>(GetAppMemoryLimit)},
-        ani_native_function {"getVMRuntimeStats", ":Lescompat/Record;", reinterpret_cast<void *>(GetVMRuntimeStats)},
-        ani_native_function {"getVMRuntimeStat", "Lstd/core/String;:D", reinterpret_cast<void *>(GetVMRuntimeStat)},
-        ani_native_function {"getPss", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPss)},
-        ani_native_function {"getSharedDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetSharedDirty)},
-        ani_native_function {"getPrivateDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPrivateDirty)},
-        ani_native_function {"getCpuUsage", ":D", reinterpret_cast<void *>(GetCpuUsage)},
-        ani_native_function {"getServiceDump", "DDLescompat/Array;:V", reinterpret_cast<void *>(GetServiceDump)},
-        ani_native_function {"getNativeHeapSize", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetNativeHeapSize)},
-        ani_native_function {"getNativeHeapAllocatedSize", ":Lescompat/BigInt;",
+        ani_native_function {"getVMRuntimeStats", ":C{escompat.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
+        ani_native_function {"getVMRuntimeStat", "C{std.core.String}:d", reinterpret_cast<void *>(GetVMRuntimeStat)},
+        ani_native_function {"getPss", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetPss)},
+        ani_native_function {"getSharedDirty", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetSharedDirty)},
+        ani_native_function {"getPrivateDirty", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetPrivateDirty)},
+        ani_native_function {"getCpuUsage", ":d", reinterpret_cast<void *>(GetCpuUsage)},
+        ani_native_function {"getServiceDump", "ddC{escompat.Array}:", reinterpret_cast<void *>(GetServiceDump)},
+        ani_native_function {"getNativeHeapSize", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetNativeHeapSize)},
+        ani_native_function {"getNativeHeapAllocatedSize", ":C{escompat.BigInt}",
             reinterpret_cast<void *>(GetNativeHeapAllocatedSize)},
-        ani_native_function {"getNativeHeapFreeSize", ":Lescompat/BigInt;",
+        ani_native_function {"getNativeHeapFreeSize", ":C{escompat.BigInt}",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
-        ani_native_function {"getVss", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetVss)},
-        ani_native_function {"getAppThreadCpuUsage", ":[L@ohos/hidebug/hidebug/ThreadCpuUsage;",
+        ani_native_function {"getVss", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetVss)},
+        ani_native_function {"getAppThreadCpuUsage", ":A{C{@ohos.hidebug.hidebug.ThreadCpuUsage}}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
-        ani_native_function {"getSystemCpuUsage", ":D", reinterpret_cast<void *>(GetSystemCpuUsage)},
-        ani_native_function {"getAppNativeMemInfo", ":L@ohos/hidebug/hidebug/NativeMemInfo;",
+        ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},
+        ani_native_function {"getAppNativeMemInfo", ":C{@ohos.hidebug.hidebug.NativeMemInfo}",
             reinterpret_cast<void *>(GetAppNativeMemInfo)},
-        ani_native_function {"getSystemMemInfo", ":L@ohos/hidebug/hidebug/SystemMemInfo;",
+        ani_native_function {"getSystemMemInfo", ":C{@ohos.hidebug.hidebug.SystemMemInfo}",
             reinterpret_cast<void *>(GetSystemMemInfo)},
-        ani_native_function {"startAppTraceCapture", "[DL@ohos/hidebug/hidebug/TraceFlag;D:Lstd/core/String;",
+        ani_native_function {"startAppTraceCapture", "A{dC{@ohos.hidebug.hidebug.TraceFlag}d:C{std.core.String}}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
-        ani_native_function {"isDebugState", ":Z", reinterpret_cast<void *>(IsDebugState)},
-        ani_native_function {"stopAppTraceCapture", ":V", reinterpret_cast<void *>(StopAppTraceCapture)},
-        ani_native_function {"startJsCpuProfiling", "Lstd/core/String;:V",
+        ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
+        ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
+        ani_native_function {"startJsCpuProfiling", "C{std.core.String}:",
             reinterpret_cast<void *>(StartJsCpuProfiling)},
-        ani_native_function {"stopJsCpuProfiling", ":V", reinterpret_cast<void *>(StopJsCpuProfiling)},
-        ani_native_function {"getGraphicsMemorySync", ":D", reinterpret_cast<void *>(GetGraphicsMemorySync)},
+        ani_native_function {"stopJsCpuProfiling", ":", reinterpret_cast<void *>(StopJsCpuProfiling)},
+        ani_native_function {"getGraphicsMemorySync", ":d", reinterpret_cast<void *>(GetGraphicsMemorySync)},
     };
     if (ANI_OK != env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size())) {
         return ANI_ERROR;
