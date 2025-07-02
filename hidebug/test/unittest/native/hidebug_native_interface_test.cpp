@@ -42,7 +42,7 @@ protected:
  * @tc.desc: test OH_HiDebug_GetRealNanoSecondsTimestamp. get graphics memory.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level1)
+HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level0)
 {
     auto& interface = HidebugNativeInterface::GetInstance();
     ASSERT_FALSE(interface.IsDebuggerConnected());

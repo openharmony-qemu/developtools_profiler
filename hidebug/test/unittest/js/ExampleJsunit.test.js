@@ -707,7 +707,7 @@ describe("HidebugJsTest", function () {
             hidebug.stopProfiling();
             let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
             expect(fs.accessSync(path2)).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -737,7 +737,7 @@ describe("HidebugJsTest", function () {
             hidebug.stopJsCpuProfiling();
             let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
             expect(fs.accessSync(path2)).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -771,7 +771,7 @@ describe("HidebugJsTest", function () {
         try {
             let graphicMemory = await hidebug.getGraphicsMemory();
             expect(graphicMemory >= 0).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -788,7 +788,7 @@ describe("HidebugJsTest", function () {
         try {
             let graphicMemory = hidebug.getGraphicsMemorySync();
             expect(graphicMemory >= 0).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
