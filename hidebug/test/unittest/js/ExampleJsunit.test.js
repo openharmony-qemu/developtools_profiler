@@ -811,13 +811,14 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_037
-     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.desc: setJsRawHeapTrimLevel
      * @tc.type: FUNC
      */
-    it('HidebugJsTest_037', 0, async function () {
+    it('HidebugJsTest_037', 0, function () {
         console.info("---------------------------HidebugJsTest_037----------------------------------");
         try {
-            hidebug.SetJsRawHeapTrimLevel(2);
+            hidebug.setJsRawHeapTrimLevel(2);
+            expect().assertFail();
         } catch (error) {
             console.info(error.code);
             expect(error.code === "401").assertTrue();
@@ -826,13 +827,14 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_038
-     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.desc: setJsRawHeapTrimLevel
      * @tc.type: FUNC
      */
-    it('HidebugJsTest_038', 0, async function () {
+    it('HidebugJsTest_038', 0, function () {
         console.info("---------------------------HidebugJsTest_038----------------------------------");
         try {
-            hidebug.SetJsRawHeapTrimLevel("abc");
+            hidebug.setJsRawHeapTrimLevel("abc");
+            expect().assertFail();
         } catch (error) {
             console.info(error.code);
             expect(error.code === "401").assertTrue();
@@ -841,13 +843,14 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_039
-     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.desc: setJsRawHeapTrimLevel
      * @tc.type: FUNC
      */
-    it('HidebugJsTest_039', 0, async function () {
+    it('HidebugJsTest_039', 0, function () {
         console.info("---------------------------HidebugJsTest_039----------------------------------");
         try {
-            hidebug.SetJsRawHeapTrimLevel(1);
+            hidebug.setJsRawHeapTrimLevel(1);
+            expect(true).assertTrue();
         } catch (error) {
             console.info(error.code);
             expect(error.code === "401").assertTrue();
@@ -856,13 +859,14 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_040
-     * @tc.desc: SetJsRawHeapTrimLevel
+     * @tc.desc: setJsRawHeapTrimLevel
      * @tc.type: FUNC
      */
-    it('HidebugJsTest_040', 0, async function () {
+    it('HidebugJsTest_040', 0, function () {
         console.info("---------------------------HidebugJsTest_040----------------------------------");
         try {
-            hidebug.SetJsRawHeapTrimLevel(1, 2);
+            hidebug.setJsRawHeapTrimLevel(1, 2);
+            expect().assertFail();
         } catch (error) {
             console.info(error.code);
             expect(error.code === "401").assertTrue();
