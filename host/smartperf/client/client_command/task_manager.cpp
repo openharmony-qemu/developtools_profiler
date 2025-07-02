@@ -178,6 +178,7 @@ void TaskManager::AddTask(SpProfiler* task, bool priority)
     if (task == nullptr) {
         return;
     }
+    LOGD("Start the collection in the start/stop mode");
     priority ? priorityTask_.emplace_back(task) : normalTask_.emplace_back(task);
 }
 
@@ -340,15 +341,12 @@ void TaskManager::WriteToCSV()
             }
             LOGE("The file %s does not exist, will create", fileName_.c_str());
         }
-        if (std::string(filePath).find("data.csv") != std::string::npos) {
-            dataFile_.open(filePath, std::ios::out | std::ios::trunc);
-        } else {
-            dataFile_.open(filePath, std::ios::out | std::ios::app);
-        }
+        dataFile_.open(filePath, std::ios::out | std::ios::app);
         if (!dataFile_.is_open()) {
             LOGE("The file open fail");
             return;
         }
+        LOGD("The file will write data size = (%u)", datas_.size());
         SetFileTitle();
     }
     for (auto& [_, v] : datas_) {
@@ -403,6 +401,7 @@ void TaskManager::Stop(bool pause)
         scheduleSaveDataTh_.join();
     }
     if (!pause) {
+        LOGD("Start/Stop Collection End");
         threadPool_.Stop();
     } else {
         ScheduleSaveData(true);

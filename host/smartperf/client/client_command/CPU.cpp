@@ -81,6 +81,7 @@ std::map<std::string, std::string> CPU::ItemData()
             }
         }
     }
+    LOGI("CPU:ItemData map size(%u)", result.size());
     return result;
 }
 
@@ -108,8 +109,6 @@ std::vector<CpuFreqs> CPU::GetCpuFreq()
         cpuFreqs.cpuId = cpufreq[i].cpuId;
         cpuFreqs.curFreq = cpufreq[i].curFreq;
         cpuFrequency.push_back(cpuFreqs);
-        LOGD("cpuFreqs.cpuId: %s, cpuFreqs.curFreq: %s",
-            std::to_string(cpufreq[i].cpuId).c_str(), std::to_string(cpufreq[i].curFreq).c_str());
     }
     return cpuFrequency;
 }
@@ -134,12 +133,6 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
         cpuUsageInfos.irqUsage = cpuInfo.irqUsage;
         cpuUsageInfos.softIrqUsage = cpuInfo.softIrqUsage;
         workload.push_back(cpuUsageInfos);
-        LOGD("UsageCpuId: %s, userUsage: %s, niceUsage: %s, systemUsage: %s",
-            "idleUsage: %s, ioWaitUsage: %s, irqUsage: %s, softIrqUsage: %s",
-            cpuInfo.cpuId.c_str(), std::to_string(cpuInfo.userUsage).c_str(),
-            std::to_string(cpuInfo.niceUsage).c_str(), std::to_string(cpuInfo.systemUsage).c_str(),
-            std::to_string(cpuInfo.idleUsage).c_str(), std::to_string(cpuInfo.ioWaitUsage).c_str(),
-            std::to_string(cpuInfo.irqUsage).c_str(), std::to_string(cpuInfo.softIrqUsage).c_str());
     }
     return workload;
 }
@@ -169,10 +162,6 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
                 processCpuInfo["ChildProcUCpuUsage"].append(std::to_string(data.uCpuUsage * oneHundred)).append("|");
                 processCpuInfo["ChildProcSCpuUsage"].append(std::to_string(data.sCpuUsage * oneHundred)).append("|");
             }
-            LOGD("ProcId: %s, ProcAppName: %s, ProcCpuLoad: %s, ProcCpuUsage: %s, ProcUCpuUsage: %s, ProcSCpuUsage: %s",
-                std::to_string(data.pid).c_str(), data.procName.c_str(), std::to_string(data.cpuLoad).c_str(),
-                std::to_string(data.cpuUsage).c_str(), std::to_string(data.uCpuUsage).c_str(),
-                std::to_string(data.sCpuUsage).c_str());
         }
     } else {
         processCpuInfo["ProcId"] = "NA";

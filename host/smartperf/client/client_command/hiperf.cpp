@@ -25,6 +25,7 @@ namespace SmartPerf {
 std::map<std::string, std::string> Hiperf::ItemData()
 {
     std::map<std::string, std::string> result;
+    LOGI("Hiperf:ItemData map size(%u)", result.size());
     return result;
 }
 

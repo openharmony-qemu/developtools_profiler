@@ -391,7 +391,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
     while (iterator != MESSAGE_MAP.end()) {
         std::string recvBuf = spSocket.RecvBuf();
         HeartbeatDetection(recvBuf);
-        LOGD("UDP recv : %s", recvBuf.c_str());
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
             std::string failStr = std::string("token failed");
@@ -401,6 +400,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init::") != std::string::npos) {
+            LOGD("UDP recv : %s", recvBuf.c_str());
             UdpStartInitFunc(recvBuf, spSocket);
             break;
         }
@@ -408,6 +408,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             ++iterator;
             continue;
         }
+        LOGD("UDP recv : %s", recvBuf.c_str());
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -784,21 +785,25 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
+            LOGD("Start to display data in real time");
             taskMgr_->SetHapFlag(true);
             taskMgr_->EnableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_OFF) {
         if (taskMgr_ != nullptr) {
+            LOGD("Real time data display ends");
             taskMgr_->DisableIPCCallback();
         }
     } else if (iterator->first == MessageType::APP_PAUSE_COLLECT) {
         if (taskMgr_ != nullptr) {
+            LOGD("Pause Collection");
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             GpuCounter::GetInstance().GetInstance().SetIsPause(true);
             taskMgr_->Stop(true);
         }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
+        LOGD("Resuming Collection");
         StartHapCollecting(spSocket);
         GpuCounter::GetInstance().GetInstance().SetIsPause(false);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
