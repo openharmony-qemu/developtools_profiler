@@ -42,7 +42,7 @@ protected:
  * @tc.desc: test GetRealNanoSecondsTimestamp.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugUtilTest, GetRealNanoSecondsTimestampTest, TestSize.Level1)
+HWTEST_F(HidebugUtilTest, GetRealNanoSecondsTimestampTest, TestSize.Level0)
 {
     EXPECT_GE(GetRealNanoSecondsTimestamp(), 0);
 }
@@ -52,7 +52,7 @@ HWTEST_F(HidebugUtilTest, GetRealNanoSecondsTimestampTest, TestSize.Level1)
  * @tc.desc: test GetElapsedNanoSecondsSinceBoot.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugUtilTest, GetElapsedNanoSecondsSinceBootTest, TestSize.Level1)
+HWTEST_F(HidebugUtilTest, GetElapsedNanoSecondsSinceBootTest, TestSize.Level0)
 {
     EXPECT_GE(GetElapsedNanoSecondsSinceBoot(), 0);
 }
@@ -78,7 +78,7 @@ HWTEST_F(HidebugUtilTest, GetProcessDirTest, TestSize.Level1)
  * @tc.desc: test SplitStr.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugUtilTest, SplitStrTest, TestSize.Level1)
+HWTEST_F(HidebugUtilTest, SplitStrTest, TestSize.Level0)
 {
     auto split1 = SplitStr("/test/", '/');
     EXPECT_EQ(split1.size(), 3);
@@ -95,7 +95,7 @@ HWTEST_F(HidebugUtilTest, SplitStrTest, TestSize.Level1)
  * @tc.desc: test IsLegalPath.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugUtilTest, IsLegalPathTest, TestSize.Level1)
+HWTEST_F(HidebugUtilTest, IsLegalPathTest, TestSize.Level0)
 {
     EXPECT_FALSE(IsLegalPath("./"));
     EXPECT_FALSE(IsLegalPath(""));

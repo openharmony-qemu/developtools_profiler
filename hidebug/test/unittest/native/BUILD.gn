@@ -24,8 +24,9 @@ ohos_unittest("hidebug_test") {
     "hidebug_test.cpp",
     "hidebug_util_test.cpp",
   ]
+  defines = [ "is_ohos=${is_ohos}" ]
   if (build_variant == "root") {
-    defines = [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
+    defines += [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
   }
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",

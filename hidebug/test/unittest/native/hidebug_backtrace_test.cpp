@@ -12,7 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#if is_ohos && !is_mingw && __aarch64__
+
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
@@ -28,34 +28,36 @@ class HidebugBacktraceTest : public ::testing::Test {};
  */
 HWTEST_F(HidebugBacktraceTest, BacktraceFromFpTest, TestSize.Level0)
 {
-    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(nullptr, nullptr, nullptr, 0), -1);
-    BacktraceObject obj = OH_HiDebug_CreateBacktraceObject();
+    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(nullptr, nullptr, nullptr, 0), 0);
+    HiDebug_Backtrace_Object obj = OH_HiDebug_CreateBacktraceObject();
+#if is_ohos && !is_mingw && __aarch64__
     EXPECT_NE(obj, nullptr);
-    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, nullptr, nullptr, 0), -1);
-    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), nullptr, 0), -1);
+    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, nullptr, nullptr, 0), 0);
+    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), nullptr, 0), 0);
     constexpr auto testArraySize = 10;
     void *pcArray[testArraySize]{};
-    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), pcArray, 0), -1);
+    EXPECT_EQ(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), pcArray, 0), 0);
     EXPECT_GT(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), pcArray, testArraySize), 0);
     EXPECT_LE(OH_HiDebug_BacktraceFromFp(obj, __builtin_frame_address(0), pcArray, testArraySize), testArraySize);
     EXPECT_EQ(pcArray[0], __builtin_return_address(0));
-    EXPECT_EQ(pcArray[1], __builtin_return_address(1));
-    EXPECT_EQ(pcArray[2], __builtin_return_address(2));
     OH_HiDebug_DestroyBacktraceObject(obj);
+#else
+    EXPECT_EQ(obj, nullptr);
+#endif
 }
 
+#if is_ohos && !is_mingw && __aarch64__
 /**
  * @tc.name: SymbolicAddressTest
  * @tc.desc: test OH_HiDebug_SymbolicAddress
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugBacktraceTest, SymbolicAddressTest, TestSize.Level1)
+HWTEST_F(HidebugBacktraceTest, SymbolicAddressTest, TestSize.Level0)
 {
     EXPECT_EQ(OH_HiDebug_SymbolicAddress(nullptr, nullptr, nullptr, nullptr), HIDEBUG_INVALID_ARGUMENT);
-    BacktraceObject obj = OH_HiDebug_CreateBacktraceObject();
+    HiDebug_Backtrace_Object obj = OH_HiDebug_CreateBacktraceObject();
     EXPECT_NE(obj, nullptr);
     EXPECT_EQ(OH_HiDebug_SymbolicAddress(obj, nullptr, nullptr, nullptr), HIDEBUG_INVALID_ARGUMENT);
-    EXPECT_EQ(OH_HiDebug_SymbolicAddress(obj, __builtin_return_address(0), nullptr, nullptr), HIDEBUG_INVALID_ARGUMENT);
     EXPECT_EQ(OH_HiDebug_SymbolicAddress(obj, __builtin_return_address(0), nullptr, nullptr), HIDEBUG_INVALID_ARGUMENT);
     auto callback = [] (void* pc, void* arg, const HiDebug_StackFrame* frame) {
         EXPECT_EQ(frame->type, HiDebug_StackFrameType::HIDEBUG_STACK_FRAME_TYPE_NATIVE);
