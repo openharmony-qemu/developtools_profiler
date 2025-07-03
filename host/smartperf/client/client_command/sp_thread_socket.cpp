@@ -445,6 +445,10 @@ void SpThreadSocket::HeartbeatDetection(const std::string& recvBuf)
 
 void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket &spSocket)
 {
+    if (taskMgr_ != nullptr) {
+        taskMgr_->Stop();
+        taskMgr_->WriteToCSV();
+    }
     taskMgr_ = std::make_shared<TaskManager>(true);
     auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
     taskMgr_->SetIPCCallback(lambdaTask);

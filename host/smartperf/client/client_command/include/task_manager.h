@@ -57,15 +57,16 @@ public:
     void DeleteTask(SpProfiler* task);
     void SetFileTitle();
     void InitDataCsv();
+    ArgumentParser& GetArgumentParser();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
     void GetProcessInfo(CommandType type, const ArgumentParser::ArgValue& value);
     std::string MapToString(std::map<std::string, std::string>& myMap);
     void StartSaveFileThread();
+    void CollectThreadsData();
     void SaveRegularly(std::chrono::steady_clock::time_point& loopEnd);
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
-    void ScheduleSaveData(bool switchFlag = false);
     void ProcessOnceTask(bool start);
     void GpuCounterProcess(const ArgumentParser::ArgValue& value);
     void SpecialKeyProcess(const std::string& specKey);
@@ -101,8 +102,9 @@ private:
     int32_t dataIndex_ {0};
     std::atomic_bool recordData_ {false};
     std::atomic_bool savingFile_ {false};
-    bool isPause_ {false};
+    std::atomic_bool isPause_ {false};
     bool firstSetTitle_ {true};
+    ArgumentParser parameter_;
 };
 }
 #endif // TASK_MANAGER_H
