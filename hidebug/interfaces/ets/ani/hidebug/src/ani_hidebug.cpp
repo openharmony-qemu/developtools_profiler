@@ -119,7 +119,7 @@ static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16s
     return true;
 }
 
-static bool GetTraceParam(ani_env *env, ani_array_double tagsAni, std::vector<uint64_t> &tags)
+static bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(static_cast<ani_array>(tagsAni), &arraySize) != ANI_OK) {
@@ -130,8 +130,8 @@ static bool GetTraceParam(ani_env *env, ani_array_double tagsAni, std::vector<ui
         HILOG_ERROR(LOG_CORE, "The length of tags array exceeds the limit.");
         return false;
     }
-    ani_double *aniValues = new ani_double[arraySize];
-    if (env->Array_GetRegion_Double(tagsAni, 0, arraySize, aniValues) != ANI_OK) {
+    ani_long *aniValues = new ani_long[arraySize];
+    if (env->Array_GetRegion_Long(tagsAni, 0, arraySize, aniValues) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Get input tags value failed.");
         delete []aniValues;
         return false;
@@ -227,7 +227,7 @@ ani_object GetNativeHeapFreeSize(ani_env *env)
 }
 
 static void GetServiceDump(ani_env *env,
-    ani_double serviceIdAni, ani_double fdAni, ani_object argsAni)
+    ani_int serviceIdAni, ani_int fdAni, ani_object argsAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getServiceDump");
     int serviceAbilityId = static_cast<int>(serviceIdAni);
@@ -290,7 +290,7 @@ static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32
         env->Object_New(cls, ctorMethod, &obj) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
-    AniUtil::SetNamedPropertyNumber(env, obj, "threadId", static_cast<double>(threadIdValue));
+    env->Object_SetPropertyByName_Long(obj, "threadId", static_cast<ani_long>(threadIdValue));
     AniUtil::SetNamedPropertyNumber(env, obj, "cpuUsage", cpuUsageValue);
     return obj;
 }
@@ -373,7 +373,7 @@ ani_object GetSystemMemInfo(ani_env *env)
 }
 
 ani_string StartAppTraceCapture(ani_env *env,
-    ani_array_double tagsAni, ani_enum_item flagAni, ani_double limitSizeAni)
+    ani_array_long tagsAni, ani_enum_item flagAni, ani_int limitSizeAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("startAppTraceCapture");
     ani_string result = nullptr;
@@ -442,12 +442,12 @@ void StopAppTraceCapture(ani_env *env)
     }
 }
 
-ani_double GetGraphicsMemorySync(ani_env *env)
+ani_int GetGraphicsMemorySync(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
     std::optional<int32_t> result = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
     if (result) {
-        return static_cast<ani_double>(result.value());
+        return static_cast<ani_int>(result.value());
     }
     constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
     AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
@@ -531,32 +531,33 @@ static ani_object GetVMRuntimeStats(ani_env *env)
     ani_method ctorMethod = nullptr;
     ani_object vmRunTimeStats = nullptr;
     if (env->FindClass("escompat.Record", &cls) != ANI_OK ||
-        env->Class_FindMethod(cls, "<ctor>", "C{std.core.Object}:", &ctorMethod) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", nullptr, &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &vmRunTimeStats, nullptr) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "failed to init record.");
         return AniUtil::CreateUndefined(env);
     }
     ani_method setMethod = nullptr;
     if (env->Class_FindMethod(cls, "$_set", nullptr, &setMethod) != ANI_OK) {
         return vmRunTimeStats;
     }
-    ani_class doubleClass = nullptr;
-    env->FindClass("std.core.Double", &doubleClass);
-    ani_method doubleCtor = nullptr;
-    env->Class_FindMethod(doubleClass, "<ctor>", "d:", &doubleCtor);
+    ani_class longClass = nullptr;
+    env->FindClass("std.core.Long", &longClass);
+    ani_method longCtor = nullptr;
+    env->Class_FindMethod(longClass, "<ctor>", "l:", &longCtor);
     auto vmGcMap = GetVmGcMap();
     for (const auto &[k, targetFunction] : vmGcMap) {
         ani_string aniKey = nullptr;
         if (ANI_OK != env->String_NewUTF8(k.c_str(), k.size(), &aniKey)) {
             HILOG_ERROR(LOG_CORE, "create new value string failed");
         }
-        ani_object doubleObject = nullptr;
-        env->Object_New(doubleClass, doubleCtor, &doubleObject, static_cast<ani_double>(targetFunction(g_currentVm)));
-        env->Object_CallMethod_Void(vmRunTimeStats, setMethod, aniKey, doubleObject);
+        ani_object longObject = nullptr;
+        env->Object_New(longClass, longCtor, &longObject, static_cast<ani_long>(targetFunction(g_currentVm)));
+        env->Object_CallMethod_Void(vmRunTimeStats, setMethod, aniKey, longObject);
     }
     return vmRunTimeStats;
 }
 
-static ani_double GetVMRuntimeStat(ani_env *env, ani_string itemAni)
+static ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
     std::string param;
@@ -574,7 +575,7 @@ static ani_double GetVMRuntimeStat(ani_env *env, ani_string itemAni)
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return 0;
     }
-    return static_cast<ani_double>((target->second)(g_currentVm));
+    return static_cast<ani_long>((target->second)(g_currentVm));
 }
 
 static std::string StartCpuProfiler(const std::string& fileName)
@@ -644,36 +645,38 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getAppMemoryLimit", ":C{@ohos.hidebug.hidebug.MemoryLimit}",
             reinterpret_cast<void *>(GetAppMemoryLimit)},
         ani_native_function {"getVMRuntimeStats", ":C{escompat.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
-        ani_native_function {"getVMRuntimeStat", "C{std.core.String}:d", reinterpret_cast<void *>(GetVMRuntimeStat)},
+        ani_native_function {"getVMRuntimeStat", "C{std.core.String}:l", reinterpret_cast<void *>(GetVMRuntimeStat)},
         ani_native_function {"getPss", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetPss)},
         ani_native_function {"getSharedDirty", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetSharedDirty)},
         ani_native_function {"getPrivateDirty", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetPrivateDirty)},
         ani_native_function {"getCpuUsage", ":d", reinterpret_cast<void *>(GetCpuUsage)},
-        ani_native_function {"getServiceDump", "ddC{escompat.Array}:", reinterpret_cast<void *>(GetServiceDump)},
+        ani_native_function {"getServiceDump", "iiC{escompat.Array}:", reinterpret_cast<void *>(GetServiceDump)},
         ani_native_function {"getNativeHeapSize", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetNativeHeapSize)},
         ani_native_function {"getNativeHeapAllocatedSize", ":C{escompat.BigInt}",
             reinterpret_cast<void *>(GetNativeHeapAllocatedSize)},
         ani_native_function {"getNativeHeapFreeSize", ":C{escompat.BigInt}",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
         ani_native_function {"getVss", ":C{escompat.BigInt}", reinterpret_cast<void *>(GetVss)},
-        ani_native_function {"getAppThreadCpuUsage", ":A{C{@ohos.hidebug.hidebug.ThreadCpuUsage}}",
+        ani_native_function {"getAppThreadCpuUsage", ":C{escompat.Array}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},
         ani_native_function {"getAppNativeMemInfo", ":C{@ohos.hidebug.hidebug.NativeMemInfo}",
             reinterpret_cast<void *>(GetAppNativeMemInfo)},
         ani_native_function {"getSystemMemInfo", ":C{@ohos.hidebug.hidebug.SystemMemInfo}",
             reinterpret_cast<void *>(GetSystemMemInfo)},
-        ani_native_function {"startAppTraceCapture", "A{dC{@ohos.hidebug.hidebug.TraceFlag}d:C{std.core.String}}",
+        ani_native_function {"startAppTraceCapture",
+            "C{escompat.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
         ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
         ani_native_function {"startJsCpuProfiling", "C{std.core.String}:",
             reinterpret_cast<void *>(StartJsCpuProfiling)},
         ani_native_function {"stopJsCpuProfiling", ":", reinterpret_cast<void *>(StopJsCpuProfiling)},
-        ani_native_function {"getGraphicsMemorySync", ":d", reinterpret_cast<void *>(GetGraphicsMemorySync)},
+        ani_native_function {"getGraphicsMemorySync", ":i", reinterpret_cast<void *>(GetGraphicsMemorySync)},
     };
-    if (ANI_OK != env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size())) {
-        return ANI_ERROR;
+    auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
+    if (ANI_OK != retCode) {
+        return retCode;
     }
     *result = ANI_VERSION_1;
     return ANI_OK;
