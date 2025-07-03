@@ -1034,8 +1034,7 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
     if (flags & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
-    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
 }
 
 void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
