@@ -44,7 +44,6 @@ std::map<std::string, std::string> Capture::ItemData()
             path = screenCapPath + ".jpeg";
             result["capture"] = path;
             TriggerGetCatchSocket();
-            isSocketMessage = false;
         }
     } else {
         if (modResult == 0) {
