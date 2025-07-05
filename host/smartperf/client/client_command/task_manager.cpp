@@ -434,7 +434,20 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     }
 
     if (type == CommandType::CT_PID) {
-        processIds_ = std::get<int32_t>(value);
+        processIds_ = std::to_string(std::get<int32_t>(value));
+        std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
+        FILE *fd = popen(getProcPkg.c_str(), "r");
+        if (fd == nullptr) {
+            return;
+        }
+        char buf[1024] = {'\0'};
+        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+            processName_ = buf;
+        }
+        if (pclose(fd) = -1) {
+            LOGE("Error: Failed to close file");
+            return;
+        }
     }
 
     FPS::GetInstance().SetProcessId(processIds_);

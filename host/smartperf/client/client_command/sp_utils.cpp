@@ -42,6 +42,7 @@
 #include "include/profiler_fps.h"
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
+#include "parameters.h"
 
 #ifdef ARKTEST_ENABLE
 #include "test_server_client.h"
@@ -367,15 +368,15 @@ std::string SPUtils::GetDeviceInfoMap()
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
-    resultMap["sn"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::SN));
-    resultMap["deviceTypeName"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME));
-    resultMap["brand"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    resultMap["sn"] = OHOS::system::GetParameter((DEVICE_CMD_MAP.at(DeviceCmd::SN)), "Unknown");
+    resultMap["deviceTypeName"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME), "Unknown");
+    resultMap["brand"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::BRAND), "Unknown");
     resultMap["board"] = "hw";
-    resultMap["version"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::VERSION));
-    resultMap["abilist"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    resultMap["name"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::NAME));
-    resultMap["model"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::MODEL));
-    resultMap["fullname"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME));
+    resultMap["version"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::VERSION), "Unknown");
+    resultMap["abilist"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST), "Unknown");
+    resultMap["name"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::NAME), "Unknown");
+    resultMap["model"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::MODEL), "Unknown");
+    resultMap["fullname"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME), "Unknown");
     resultMap["daemonPerfVersion"] = SMART_PERF_VERSION;
     return resultMap;
 }
@@ -765,8 +766,8 @@ bool SPUtils::IsFindForeGround(const std::string &line)
 
 bool SPUtils::IsFindAbilist()
 {
-    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    std::string brand = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    std::string abilist = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST), "Unknown");
+    std::string brand = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::BRAND), "Unknown");
     if (abilist.find("arm") != std::string::npos && brand.find("HUA") != std::string::npos) {
         return true;
     } else if (abilist.find("arm") != std::string::npos && brand.find("HUA") == std::string::npos) {
