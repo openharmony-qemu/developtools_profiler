@@ -444,7 +444,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
         while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
             processName_ = buf;
         }
-        if (pclose(fd) = -1) {
+        if (pclose(fd) == -1) {
             LOGE("Error: Failed to close file");
             return;
         }
