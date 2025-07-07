@@ -338,12 +338,6 @@ std::string SPUtils::GetRadarComplete()
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
-static std::string GetSplitOne(std::string cmd)
-{
-    std::string result;
-    SPUtils::LoadCmd(cmd, result);
-    return result;
-}
 
 std::string SPUtils::GetDeviceInfoMap()
 {
