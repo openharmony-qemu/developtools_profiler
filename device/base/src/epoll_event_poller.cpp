@@ -63,7 +63,7 @@ bool EpollEventPoller::RemoveFileDescriptor(int fd)
 
     auto ctx = it->second;
     CHECK_NOTNULL(ctx, false, "ctx null!");
-    CHECK_TRUE(RemoveContextLocked(ctx), false, "remove context for %d failed!", fd);
+    CHECK_TRUE(UpdateEvent(EPOLL_CTL_DEL, ctx), false, "update fd %d ctx FAILED!", ctx->fd);
     return Notify();
 }
 
@@ -71,13 +71,6 @@ bool EpollEventPoller::AddContextLocked(const EventContextPtr& ctx)
 {
     context_[ctx->fd] = ctx;
     return UpdateEvent(EPOLL_CTL_ADD, ctx);
-}
-
-bool EpollEventPoller::RemoveContextLocked(const EventContextPtr& ctx)
-{
-    context_.erase(ctx->fd);
-    CHECK_TRUE(UpdateEvent(EPOLL_CTL_DEL, ctx), false, "update fd %d ctx FAILED!", ctx->fd);
-    return true;
 }
 
 static std::string EpollOpName(int op)
@@ -209,14 +202,14 @@ bool EpollEventPoller::Finalize()
     }
     for (auto ctxPtr : contextVec) {
         PROFILER_LOG_DEBUG(LOG_CORE, "remove context for %d", ctxPtr->fd);
-        RemoveContextLocked(ctxPtr);
+        UpdateEvent(EPOLL_CTL_DEL, ctxPtr);
     }
 
     for (int fd : fileDescriptors_) {
         close(fd);
     }
     fileDescriptors_.clear();
-
+    context_.clear();
     epollFd_ = INVALID_FD;
     eventFd_ = INVALID_FD;
     state_ = INITIAL;

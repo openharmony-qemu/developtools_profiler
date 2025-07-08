@@ -61,7 +61,6 @@ private:
     void HandleEvent(uint32_t events, const EventContext& ctx);
 
     bool AddContextLocked(const EventContextPtr& ctx);
-    bool RemoveContextLocked(const EventContextPtr& ctx);
 
     void OnNotify();
     bool Notify(uint64_t value = 1);
