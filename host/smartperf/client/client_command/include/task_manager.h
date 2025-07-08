@@ -56,6 +56,7 @@ public:
     void SetRecordState(bool record);
     void DeleteTask(SpProfiler* task);
     void SetFileTitle();
+    void InitDataCsv();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);

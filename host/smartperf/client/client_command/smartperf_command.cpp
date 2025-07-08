@@ -152,6 +152,7 @@ std::string SmartPerfCommand::ExecCommand()
     RAM &ram = RAM::GetInstance();
     ram.SetFirstFlag();
     taskMgr_.DeleteTask(&AISchedule::GetInstance());
+    taskMgr_.InitDataCsv();
     taskMgr_.Start();
     taskMgr_.Wait();
     taskMgr_.Stop();

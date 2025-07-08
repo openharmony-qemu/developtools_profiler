@@ -621,4 +621,28 @@ void TaskManager::DeleteTask(SpProfiler* task)
         }
     }
 }
+
+void TaskManager::InitDataCsv()
+{
+    if (!SPUtils::FileAccess(fileName_)) {
+        std::ofstream file(fileName_);
+        if (file) {
+            std::string chmodCmd = "chmod 777 " + fileName_;
+            std::string cmdResult;
+            SPUtils::LoadCmd(chmodCmd, cmdResult);
+            file.close();
+        } else {
+            LOGE("Failed to creat file");
+            return;
+        }
+    } else {
+        std::ofstream file(fileName_, std::ios::trunc);
+        if (!file) {
+            LOGE("Unable to open file");
+            return;
+        }
+        file.close();
+        LOGD("CreatPath already exists: %s", fileName_.c_str());
+    }
+}
 }
