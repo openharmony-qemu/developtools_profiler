@@ -82,10 +82,10 @@ HWTEST_F(StartupDelayTest, GetHisysIdAndKillTest01, TestSize.Level1)
     ASSERT_TRUE(true);
 }
 
-HWTEST_F(StartupDelayTest, GetSpTcpTest01, TestSize.Level1)
+HWTEST_F(StartupDelayTest, KillSpProcessTest01, TestSize.Level1)
 {
     StartUpDelay startUpDelay;
-    bool result = startUpDelay.GetSpTcp();
+    bool result = startUpDelay.KillSpProcess();
     EXPECT_FALSE(result);
 }
 

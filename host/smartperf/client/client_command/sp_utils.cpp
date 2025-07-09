@@ -39,7 +39,6 @@
 #include "include/GPU.h"
 #include "include/Power.h"
 #include "include/DDR.h"
-#include "include/profiler_fps.h"
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
 #include "parameters.h"
@@ -777,7 +776,6 @@ void SPUtils::SetRkFlag()
         OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
         OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
         OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
         OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
     }
 }
@@ -812,7 +810,7 @@ bool SPUtils::GetIsGameApp(const std::string& pkg)
     LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
-        LOGD("ProfilerFPS::fd is empty");
+        LOGD("FPS::fd is empty");
         return false;
     }
     char buf[1024] = {'\0'};
@@ -953,6 +951,17 @@ bool SPUtils::IsFindDHGame(const std::string &pkg)
     }
     pclose(fd);
     return isdhGame;
+}
+
+std::string SPUtils::GetSurface()
+{
+    std::string cmdResult;
+    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    LoadCmd(dumperSurface, cmdResult);
+    size_t positionLeft = cmdResult.find("[");
+    size_t positionRight = cmdResult.find("]");
+    size_t positionNum = 1;
+    return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 }
 }

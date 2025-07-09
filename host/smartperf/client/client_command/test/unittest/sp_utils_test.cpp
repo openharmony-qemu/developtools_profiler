@@ -290,7 +290,7 @@ HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest01, TestSize.Level1)
     std::string outOfRangeString = "";
     bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
     EXPECT_FALSE(result);
-    EXPECT_EQ(errorInfo, "option parameter out of range");
+    EXPECT_EQ(errorInfo, "option requires an argument");
 }
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest02, TestSize.Level1)

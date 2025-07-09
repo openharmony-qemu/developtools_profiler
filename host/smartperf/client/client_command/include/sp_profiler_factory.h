@@ -24,7 +24,6 @@ public:
     static SpProfiler *GetProfilerItemContinue(MessageType messageType);
     static void SetProfilerPkg(const std::string &pkg);
     static void SetProfilerPidByPkg(std::string &pid, std::string pids = "");
-    static void SetProfilerGameLayer(const std::string &isGameView);
     static void SetByTrace(const std::string& message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);
     static SpProfiler *GetCmdProfilerItemContinue(CommandType commandType, bool cmdFlag);

@@ -97,7 +97,7 @@ void StartUpDelay::GetHisysIdAndKill() const
         SPUtils::LoadCmd(killCmd + hisysIdVec[i], str);
     }
 }
-bool StartUpDelay::GetSpTcp() const
+bool StartUpDelay::KillSpProcess() const
 {
     std::string resultPid;
     std::string str;

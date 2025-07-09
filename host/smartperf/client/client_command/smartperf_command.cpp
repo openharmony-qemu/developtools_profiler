@@ -71,7 +71,7 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
 {
     EnableWriteLogAndDeleteOldLogFiles();
     OHOS::SmartPerf::StartUpDelay sd;
-    sd.GetSpTcp();
+    sd.KillSpProcess();
     std::string pidStr = sd.GetPidByPkg("SP_daemon");
     std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
     std::string result = "";
