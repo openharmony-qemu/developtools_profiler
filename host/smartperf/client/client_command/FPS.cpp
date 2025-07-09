@@ -542,7 +542,7 @@ std::string FPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, const st
     } else {
         StartUpDelay startUpDelay;
         if (startUpDelay.GetPidParams().empty()) {
-            gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line);
+            gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line, endPos);
         }
         for (const auto& pid : startUpDelay.GetPidParams()) {
             gameLayer = GetSurfaceId(gameLayer, nodeId, pid, line, endPos);
