@@ -434,7 +434,20 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     }
 
     if (type == CommandType::CT_PID) {
-        processIds_ = std::get<int32_t>(value);
+        processIds_ = std::to_string(std::get<int32_t>(value));
+        std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
+        FILE *fd = popen(getProcPkg.c_str(), "r");
+        if (fd == nullptr) {
+            return;
+        }
+        char buf[1024] = {'\0'};
+        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+            processName_ = buf;
+        }
+        if (pclose(fd) == -1) {
+            LOGE("Error: Failed to close file");
+            return;
+        }
     }
 
     FPS::GetInstance().SetProcessId(processIds_);
@@ -606,6 +619,30 @@ void TaskManager::DeleteTask(SpProfiler* task)
             priorityTask_.erase(iter);
             return;
         }
+    }
+}
+
+void TaskManager::InitDataCsv()
+{
+    if (!SPUtils::FileAccess(fileName_)) {
+        std::ofstream file(fileName_);
+        if (file) {
+            std::string chmodCmd = "chmod 777 " + fileName_;
+            std::string cmdResult;
+            SPUtils::LoadCmd(chmodCmd, cmdResult);
+            file.close();
+        } else {
+            LOGE("Failed to creat file");
+            return;
+        }
+    } else {
+        std::ofstream file(fileName_, std::ios::trunc);
+        if (!file) {
+            LOGE("Unable to open file");
+            return;
+        }
+        file.close();
+        LOGD("CreatPath already exists: %s", fileName_.c_str());
     }
 }
 }

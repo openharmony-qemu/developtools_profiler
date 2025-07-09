@@ -570,6 +570,9 @@ std::string ProfilerFPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, 
         LOGD("ProfilerFPS::GetLayerName::processId: (%s)", processId.c_str());
     } else {
         StartUpDelay startUpDelay;
+        if (startUpDelay.GetPidParams().empty()) {
+            gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line);
+        }
         for (const auto& pid : startUpDelay.GetPidParams()) {
             gameLayer = GetSurfaceId(gameLayer, nodeId, pid, line);
             if (!gameLayer.empty()) {

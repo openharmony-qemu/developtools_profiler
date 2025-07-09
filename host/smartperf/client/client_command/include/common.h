@@ -316,14 +316,14 @@ enum class DeviceCmd {
     FULL_NAME,
 };
 const std::unordered_map<DeviceCmd, std::string> DEVICE_CMD_MAP = {
-    { DeviceCmd::SN, std::string("param get ohos.boot.sn") },
-    { DeviceCmd::DEVICET_NAME, std::string("param get ohos.boot.hardware") },
-    { DeviceCmd::BRAND, std::string("param get const.product.brand") },
-    { DeviceCmd::VERSION, std::string("param get const.product.software.version") },
-    { DeviceCmd::ABILIST, std::string("param get const.product.cpu.abilist") },
-    { DeviceCmd::NAME, std::string("param get const.product.name") },
-    { DeviceCmd::MODEL, std::string("param get const.product.model") },
-    { DeviceCmd::FULL_NAME, std::string("param get const.ohos.fullname") },
+    { DeviceCmd::SN, std::string("ohos.boot.sn") },
+    { DeviceCmd::DEVICET_NAME, std::string("ohos.boot.hardware") },
+    { DeviceCmd::BRAND, std::string("const.product.brand") },
+    { DeviceCmd::VERSION, std::string("const.product.software.version") },
+    { DeviceCmd::ABILIST, std::string("const.product.cpu.abilist") },
+    { DeviceCmd::NAME, std::string("const.product.name") },
+    { DeviceCmd::MODEL, std::string("const.product.model") },
+    { DeviceCmd::FULL_NAME, std::string("const.ohos.fullname") },
 };
 
 enum class HidumperCmd {
