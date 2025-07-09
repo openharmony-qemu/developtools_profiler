@@ -33,7 +33,6 @@
 #include "include/common.h"
 #include "include/FPS.h"
 #include "include/sp_task.h"
-#include "include/profiler_fps.h"
 #include "include/CPU.h"
 #include "include/navigation.h"
 #include "include/AI_schedule.h"
@@ -44,6 +43,7 @@
 #include "Capture.h"
 #include <sys/syscall.h>
 #include <filesystem>
+#include "include/sdk_data_recv.h"
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -452,8 +452,6 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
-    ProfilerFPS::GetInstance().SetProcessId(processIds_);
-    ProfilerFPS::GetInstance().SetPackageName(processName_);
     RAM::GetInstance().SetProcessId(processIds_);
     RAM::GetInstance().SetPackageName(processName_);
     CPU::GetInstance().SetProcessId(processIds_);

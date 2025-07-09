@@ -19,13 +19,14 @@
 #include <sstream>
 #include "include/smartperf_command.h"
 #include "include/editor_command.h"
-#include "include/profiler_fps.h"
+#include "include/FPS.h"
 #include "include/client_control.h"
 #include "include/sp_utils.h"
 #include "include/sp_log.h"
 #include "include/common.h"
 #include "parameters.h"
 #include "task_manager.h"
+#include "include/startup_delay.h"
 
 constexpr const char *VERSION_TYPE = "const.logsystem.versiontype";
 static std::string GetOptions(const std::vector<std::string> &argv)
@@ -169,7 +170,7 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         OHOS::SmartPerf::EditorCommand(argc, vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-profilerfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetFPS(vec);
+        OHOS::SmartPerf::FPS::GetInstance().GetFPS(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-start") == 0) {
         OHOS::SmartPerf::SPUtils::KillStartDaemon();
@@ -207,7 +208,7 @@ static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::str
         std::cout << OHOS::SmartPerf::SPUtils::GetDeviceInfoMap() << std::endl;
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-ohtestfps") == 0) {
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().GetOhFps(vec);
+        OHOS::SmartPerf::FPS::GetInstance().GetOhFps(vec);
         return 0;
     } else if (argc > 1 && strcmp(argv[1], "-recordcapacity") == 0) {
         RecordCapacity();
@@ -247,6 +248,8 @@ int main(int argc, char *argv[])
     }
 
     OHOS::SmartPerf::SmartPerfCommand cmd(vec);
+    OHOS::SmartPerf::StartUpDelay sd;
+    sd.KillSpProcess();
     std::cout << cmd.ExecCommand() << std::endl;
     return 0;
 }

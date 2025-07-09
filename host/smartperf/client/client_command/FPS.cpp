@@ -23,13 +23,13 @@
 #include "include/sp_utils.h"
 #include "include/FPS.h"
 #include "include/startup_delay.h"
-#include "include/profiler_fps.h"
 #include "include/sp_log.h"
 #include "include/common.h"
 #include <sys/wait.h>
 #include <sys/types.h>
 #include "include/GameEvent.h"
 #include "transaction/rs_interfaces.h"
+#include "include/ByTrace.h"
 namespace OHOS {
 namespace SmartPerf {
 bool HAVE_CATON = false;
@@ -40,6 +40,7 @@ std::map<std::string, std::string> FPS::ItemData()
     if (surfaceViewName.length() > 0) {
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
     } else {
+        fpsInfo.currDumpTimeStamps.clear();
         fpsInfoResult = GetFpsInfo();
     }
     prevResultFpsInfo = fpsInfoResult;
@@ -49,33 +50,41 @@ std::map<std::string, std::string> FPS::ItemData()
         result["fps"] = "NA";
         result["fpsJitters"] = "NA";
     } else {
-        const int fullFrame = 120;
-        const int maxFullFrame = 123;
-        if (fpsInfoResult.fps > fullFrame && fpsInfoResult.fps < maxFullFrame) {
-            fpsInfoResult.fps = fullFrame;
-        }
-        result["fps"] = std::to_string(fpsInfoResult.fps);
-        std::string jitterStr = "";
-        std::string split = "";
-        for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
-            if (i > 0) {
-                split = ";;";
-            }
-            jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
-        }
-        if (hapNeedCatonInfo && fpsInfoResult.jitters.size() > 0) {
-            CalcFatalCaton(fpsInfoResult.jitters);
-            result["fpsJitters"] = "";
-        } else {
-            result["fpsJitters"] = jitterStr;
-        }
-        LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
-            std::to_string(fpsInfoResult.fps).c_str(),
-            std::to_string(fpsInfoResult.curTime).c_str(),
-            jitterStr.c_str());
-        SetFpsCurrentFpsTime(fpsInfoResult);
+        GetFpsAndJitters(fpsInfoResult, result);
     }
     LOGI("FPS:ItemData map size(%u)", result.size());
+    return result;
+}
+
+std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
+    std::map<std::string, std::string> &result)
+{
+    const int fullFrame = 120;
+    const int maxFullFrame = 123;
+    if (fpsInfoResult.fps > fullFrame && fpsInfoResult.fps < maxFullFrame) {
+        fpsInfoResult.fps = fullFrame;
+    }
+    result["fps"] = std::to_string(fpsInfoResult.fps);
+    std::string jitterStr = "";
+    std::string split = "";
+    for (size_t i = 0; i < fpsInfoResult.jitters.size(); i++) {
+        if (i > 0) {
+            split = ";;";
+        }
+        jitterStr += split + std::to_string(fpsInfoResult.jitters[i]);
+    }
+    if (hapNeedCatonInfo && inGameSceneNum > eleven) {
+        CalcFatalCaton(fpsInfoResult.jitters);
+    }
+    result["fpsJitters"] = jitterStr;
+    LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
+        std::to_string(fpsInfoResult.fps).c_str(),
+        std::to_string(fpsInfoResult.curTime).c_str(),
+        jitterStr.c_str());
+    SetFpsCurrentFpsTime(fpsInfoResult);
+    if (isCatchTrace > 0) {
+        ByTrace::GetInstance().CheckFpsJitters(fpsInfoResult.jitters, fpsInfoResult.fps);
+    }
     return result;
 }
 
@@ -117,7 +126,6 @@ void FPS::StartExecutionOnce(bool isPause)
         return;
     }
     isGameApp = SPUtils::GetIsGameApp(pkgName);
-    firstDump = true;
     catonNum = 0;
 }
 
@@ -153,59 +161,66 @@ void FPS::SetLayerName(const std::string& sName)
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
     OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
-    fpsInfoMax = GetSurfaceFrame(sName);
-    return fpsInfoMax;
+    fpsInfoData = GetSurfaceFrame(sName);
+    return fpsInfoData;
 }
 
 FpsInfo FPS::GetFpsInfo()
 {
     processFlag = false;
-    fpsInfoMax.fps = 0;
-    if (pkgName.empty()) {
-        return fpsInfoMax;
-    }
-    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
+    fpsInfoData.fps = 0;
     if (isGameApp) {
-        if (firstDump) {
-            gameLayerName = profilerFps.GetGameLayer();
+        if (gameLayerName.empty()) {
+            gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
-                firstDump = true;
-                fpsInfoMax.fps = 0;
-                fpsInfoMax.jitters.clear();
-                return fpsInfoMax;
-            } else {
-                firstDump = false;
+                fpsInfoData.fps = 0;
+                fpsInfoData.jitters.clear();
+                return fpsInfoData;
             }
         }
         GetGameScenStatus();
         OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
-        fpsInfoMax = GetSurfaceFrame(gameLayerName);
-        if (fpsInfoMax.fps == 0) {
+        fpsInfoData = GetSurfaceFrame(gameLayerName);
+        if (fpsInfoData.fps == 0) {
             return GetChangedLayerFps();
         } else {
-            return fpsInfoMax;
+            return fpsInfoData;
         }
     } else {
-        bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
-        if (onTop) {
-            std::string uniteLayer;
-            if (!rkFlag && !isOtherDevice) {
-                uniteLayer = "UniRender";
-            } else {
-                uniteLayer = profilerFps.GetSurface();
-            }
-            OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
-            fpsInfoMax = GetSurfaceFrame(uniteLayer);
+        std::string uniteLayer;
+        if (ohFlag) {
+            uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
+        } else if (!rkFlag && !isOtherDevice) {
+            uniteLayer = "UniRender";
         } else {
-            LOGE("FPS:app is in the background");
-            if (processId.empty()) {
-                processFlag = true;
-            }
-            fpsInfoMax.fps = 0;
-            fpsInfoMax.jitters.clear();
+            uniteLayer = OHOS::SmartPerf::SPUtils::GetSurface();
+            isNeedDump = true;
+        }
+        if (isSections || pkgName.find("sceneboard") != std::string::npos) {
+            OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
+            fpsInfoData = GetSurfaceFrame(uniteLayer);
+        } else {
+            fpsInfoData = GetAppFps(uniteLayer);
         }
     }
-    return fpsInfoMax;
+    return fpsInfoData;
+}
+
+FpsInfo FPS::GetAppFps(std::string &uniteLayer)
+{
+    bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
+    if (onTop) {
+        OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
+        fpsInfoData = GetSurfaceFrame(uniteLayer);
+    } else {
+        LOGD("FPS::app is in the background");
+        if (processId.empty()) {
+            processFlag = true;
+        }
+        fpsInfoData.fps = 0;
+        fpsInfoData.jitters.clear();
+    }
+    return fpsInfoData;
 }
 
 bool FPS::SetOtherDeviceFlag()
@@ -216,18 +231,18 @@ bool FPS::SetOtherDeviceFlag()
 
 FpsInfo FPS::GetChangedLayerFps()
 {
-    ProfilerFPS &profilerFps = ProfilerFPS::GetInstance();
-    gameLayerName = profilerFps.GetGameLayer();
+    gameLayerName = GetGameLayer();
     if (gameLayerName.empty()) {
+        //start-stop -VIEW -profilerfps ohtest rk3568 historyHap
         if (processId.empty()) {
             processFlag = true;
         }
-        fpsInfoMax.fps = 0;
-        fpsInfoMax.jitters.clear();
+        fpsInfoData.fps = 0;
+        fpsInfoData.jitters.clear();
     } else {
-        fpsInfoMax = GetSurfaceFrame(gameLayerName);
+        fpsInfoData = GetSurfaceFrame(gameLayerName);
     }
-    return fpsInfoMax;
+    return fpsInfoData;
 }
 
 FpsInfo FPS::GetSurfaceFrame(const std::string& name)
@@ -235,15 +250,10 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     if (name == "") {
         return FpsInfo();
     }
-    static std::map<std::string, FpsInfo> fpsMap;
-    if (fpsMap.count(name) == 0) {
-        FpsInfo tmp;
-        tmp.fps = 0;
-        fpsMap[name] = tmp;
-    }
-    fpsInfo = fpsMap[name];
-    fpsInfo.fps = 0;
-    fpsInfo.currTimeStamps.clear();
+    FpsInfo tmpFps;
+    tmpFps.fps = 0;
+    tmpFps.jitters.clear();
+    fpsInfo = tmpFps;
     fpsNum = 0;
     prevScreenTimestamp = -1;
     struct timespec time1 = { 0 };
@@ -251,7 +261,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
-    if (name == "UniRender" || isNeedDump) {
+    if (name == "UniRender" || isNeedDump || isHistoryHap) {
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs(name);
@@ -298,6 +308,9 @@ void FPS::ReadDataFromPipe(int fd)
 {
     char tmp[1024];
     bool isBreak = false;
+    if (isSections) {
+        GetTimeDiff();
+    }
     FILE *fp = fdopen(fd, "r");
     if (!fp) {
         LOGE("FPS::Failed to open file descriptor");
@@ -319,7 +332,7 @@ void FPS::ReadDataFromPipe(int fd)
         }
     }
     (void)fclose(fp);
-    if (!hapLowFpsFlag) {
+    if (!hapLowFpsFlag || !isLowCurFps) {
         CalcJitters();
     }
 }
@@ -352,9 +365,7 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
             break;
         }
     }
-    if (!hapLowFpsFlag || (hapNeedCatonInfo && catonNum == 0 && inGameSceneNum > eleven)) {
-        CalcJitters();
-    }
+    CalcJitters();
     return fpsInfo;
 }
 
@@ -366,7 +377,7 @@ bool FPS::CalcFpsAndJitters(bool isBreak)
         isBreak = true;
         fpsNum++;
         fpsInfo.fps = fpsNum;
-        fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
+        fpsInfo.currDumpTimeStamps.push_back(curScreenTimestamp);
     } else {
         findFpsCurTime = false;
     }
@@ -376,20 +387,22 @@ bool FPS::CalcFpsAndJitters(bool isBreak)
 void FPS::CalcJitters()
 {
     bool isOrder = true;
-    if (fpsInfo.currTimeStamps.size() > 1) {
-        isOrder = fpsInfo.currTimeStamps[1] - fpsInfo.currTimeStamps[0] > 0;
+    if (fpsInfo.currDumpTimeStamps.size() > 1) {
+        isOrder = fpsInfo.currDumpTimeStamps[1] - fpsInfo.currDumpTimeStamps[0] > 0;
     }
     if (isOrder) {
-        for (size_t i = 0; i < fpsInfo.currTimeStamps.size(); i++) {
-            curScreenTimestamp = fpsInfo.currTimeStamps[i];
+        for (size_t i = 0; i < fpsInfo.currDumpTimeStamps.size(); i++) {
+            curScreenTimestamp = fpsInfo.currDumpTimeStamps[i];
+            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter = CalculateJitter();
             fpsInfo.jitters.push_back(jitter);
             prevlastScreenTimestamp = curScreenTimestamp;
             prevScreenTimestamp = curScreenTimestamp;
         }
     } else {
-        for (size_t i = fpsInfo.currTimeStamps.size(); i > 0 ; i--) {
-            curScreenTimestamp = fpsInfo.currTimeStamps[i - 1];
+        for (size_t i = fpsInfo.currDumpTimeStamps.size(); i > 0 ; i--) {
+            curScreenTimestamp = fpsInfo.currDumpTimeStamps[i - 1];
+            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter = CalculateJitter();
             fpsInfo.jitters.push_back(jitter);
             prevlastScreenTimestamp = curScreenTimestamp;
@@ -467,6 +480,304 @@ std::string FPS::GetHardenRefreshrate(std::string &screenInfo) const
         }
     }
     return value;
+}
+
+std::string FPS::GetGameLayer()
+{
+    std::string gameLayer = "";
+    if (processId.empty()) {
+        LOGE("FPS::processId is empty");
+        return gameLayer;
+    }
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_RS_TREE);
+    uint64_t nodeId;
+    std::string start = "SURFACE_NODE[";
+    std::string end = "],";
+    char buf[1024] = {'\0'};
+    FILE *fd = popen(dumperSurface.c_str(), "r");
+    if (fd == nullptr) {
+        LOGE("FPS::fd is nullptr");
+        return gameLayer;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        size_t startPos = line.find(start);
+        size_t endPos = line.find_first_of(end);
+        if (startPos != std::string::npos && endPos != std::string::npos) {
+            nodeIdStr = line.substr(startPos + start.length(), endPos - startPos - start.length());
+        }
+        if (line.find(pkgName) != std::string::npos ||
+            (line.find("ShellAssistantAnco") != std::string::npos && line.find("Surface") != std::string::npos)) {
+            pclose(fd);
+            return nodeIdStr;
+        }
+        const int kShiftAmount = 32;
+        if (!nodeIdStr.empty()) {
+            std::stringstream ss(nodeIdStr);
+            ss >> nodeId;
+            if (ss.fail() || !ss.eof()) {
+                pclose(fd);
+                return gameLayer;
+            }
+            nodeId = nodeId >> kShiftAmount;
+            gameLayer = GetLayerName(gameLayer, nodeId, line, endPos);
+            if (!gameLayer.empty()) {
+                break;
+            }
+        }
+    }
+    if (pclose(fd) == -1) {
+        LOGE("FPS Error: Failed to close file");
+        return gameLayer;
+    }
+    LOGD("FPS::gameLayer: (%s)", gameLayer.c_str());
+    return gameLayer;
+}
+
+std::string FPS::GetLayerName(std::string &gameLayer, uint64_t &nodeId, const std::string& line, size_t &endPos)
+{
+    if (isPreset) {
+        gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line, endPos);
+        LOGD("FPS::GetLayerName::processId: (%s)", processId.c_str());
+    } else {
+        StartUpDelay startUpDelay;
+        if (startUpDelay.GetPidParams().empty()) {
+            gameLayer = GetSurfaceId(gameLayer, nodeId, processId, line);
+        }
+        for (const auto& pid : startUpDelay.GetPidParams()) {
+            gameLayer = GetSurfaceId(gameLayer, nodeId, pid, line, endPos);
+            if (!gameLayer.empty()) {
+                break;
+            }
+        }
+    }
+    return gameLayer;
+}
+
+std::string FPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
+    const std::string& line, size_t &endPos)
+{
+    if (std::to_string(nodeId) == surfaceId &&
+        line.find("VisibleRegion [Empty], OpaqueRegion [Empty]") != std::string::npos) {
+        if (isHistoryHap) {
+            size_t layerStartPos = line.find("Name [");
+            size_t layerEndPos = line.find("], hasConsumer");
+            if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
+                return gameLayer;
+            }
+            layerStartPos += six;
+            gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
+        } else {
+            gameLayer = nodeIdStr;
+        }
+    }
+    LOGD("FPS::GetSurfaceId::gameLayer: (%s)", gameLayer.c_str());
+    return gameLayer;
+}
+
+void FPS::SetTraceCatch()
+{
+    isCatchTrace = 1;
+}
+
+void FPS::GetOhFps(std::vector<std::string>& v)
+{
+    if (v[number] == "") {
+        printf("the args of num must be not-null!\n");
+    } else {
+        this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
+        if (this->num < 0) {
+            printf("set num:%d not vaild arg\n", this->num);
+        }
+        printf("set num:%d success\n", this->num);
+        ohFlag = true;
+        int sectionsNum;
+        if (static_cast<int>(v.size()) < four) {
+            sectionsNum = 0;
+        } else {
+            sectionsNum = SPUtilesTye::StringToSometype<int>(v[four].c_str());
+        }
+        for (int i = 0; i < this->num; i++) {
+            GetResultFPS(sectionsNum);
+        }
+    }
+    printf("SP_daemon exec finished!\n");
+}
+
+void FPS::GetTimeDiff()
+{
+    long long clockRealTime = 0;
+    long long clockMonotonicRaw = 0;
+    const int two = 2;
+    std::string strRealTime;
+    const std::string cmd = CMD_COMMAND_MAP.at(CmdCommand::TIMESTAMPS);
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        return;
+    }
+    char buf[1024] = {'\0'};
+    while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+        std::string line(buf);
+        std::vector<std::string> params;
+        SPUtils::StrSplit(line, " ", params);
+        if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockRealTime = std::stoll(strRealTime);
+            currRealTime = clockRealTime;
+        } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
+            strRealTime = params[two];
+            strRealTime.erase(strRealTime.find('.'), 1);
+            clockMonotonicRaw = std::stoll(strRealTime);
+        }
+    }
+    if (pclose(fd) == -1) {
+        LOGE("Error: Failed to close file");
+        return;
+    }
+    fpsInfo.currTimeDiff = clockRealTime - clockMonotonicRaw;
+}
+
+void FPS::GetResultFPS(int sectionsNum)
+{
+    isNeedDump = true;
+    isSections = true;
+    struct timeval start;
+    struct timeval end;
+    gettimeofday(&start, nullptr);
+    FpsInfo fpsInfoResult = GetFpsInfo();
+    unsigned long runTime;
+    if (fpsInfoResult.fps == 0) {
+        if (lastCurrTime == 0) {
+            long long currTime = (fpsInfoResult.currTimeDump / msClear) * msClear + fpsInfoResult.currTimeDiff;
+            lastCurrTime = currTime / oneSec;
+            printf("fps:%d|%lld\n", fpsInfoResult.fps, currTime / oneSec);
+        } else {
+            printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime + oneThousand);
+            lastCurrTime = lastCurrTime + oneThousand;
+        }
+    } else {
+        long long currTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + fpsInfoResult.currTimeDiff;
+        lastCurrTime = currTime / oneSec;
+        printf("fps:%d|%lld\n", fpsInfoResult.fps, lastCurrTime);
+    }
+    prevResultFpsInfo = fpsInfoResult;
+    if (sectionsNum != 0 && fpsInfoResult.fps != 0) {
+        GetSectionsFps(fpsInfoResult, sectionsNum);
+    }
+    time_t now = time(nullptr);
+    if (now == -1) {
+        LOGE("Failed to get current time.");
+        return;
+    }
+    char *dt = ctime(&now);
+    LOGD("printf time is: %s", dt);
+    fflush(stdout);
+    gettimeofday(&end, nullptr);
+    runTime = end.tv_sec * 1e6 - start.tv_sec * 1e6 + end.tv_usec - start.tv_usec;
+    LOGD("printf time is runTime: %s", std::to_string(runTime).c_str());
+    if (runTime < sleepTime) {
+        usleep(sleepTime - runTime);
+    }
+    OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
+}
+
+void FPS::GetSectionsFps(FpsInfo &fpsInfoResult, int nums) const
+{
+    int msCount = 0;
+    long long msJiange = 0;
+    if (nums != 0) {
+        msJiange = msClear / nums;
+    }
+    long long msStartTime = (fpsInfoResult.currTimeStamps[0] / msClear) * msClear + msJiange;
+    long long currLastTime = lastCurrTime;
+    long long harTime = msJiange / 1000000;
+    int printCount = 0;
+    long long currTimeStart = 0;
+    long long currTimeLast = 0;
+    for (size_t i = 0; i < fpsInfoResult.currTimeStamps.size(); i++) {
+        long long currTime = fpsInfoResult.currTimeStamps[i];
+        if (currTime <= msStartTime) {
+            if (msCount == 0) {
+                currTimeStart = currTime;
+            }
+            currTimeLast = currTime;
+            msCount++;
+        } else {
+            while (currTime > msStartTime) {
+                PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
+                printCount++;
+                msCount = 1;
+                msStartTime += msJiange;
+                currLastTime += harTime;
+                currTimeLast = currTime;
+                currTimeStart = currTime;
+            }
+        }
+        if (i == (static_cast<size_t>(fpsInfoResult.currTimeStamps.size()) - 1)) {
+            PrintSections(msCount, currTimeLast, currTimeStart, currLastTime);
+            currTimeLast = currTime;
+            printCount++;
+            GetSectionsPrint(printCount, currLastTime, nums, harTime);
+        }
+    }
+}
+
+void FPS::PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const
+{
+    int conversionFps = 1000000;
+    int conversionTime = 1000;
+    long long times = 120;
+    int fpsNums = 0;
+    if (msCount == 0) {
+        fpsNums = 0;
+    } else {
+        fpsNums = msCount - 1;
+    }
+    double timeN = (currTimeLast - currTimeStart) * 1.0 / conversionTime;
+    if (timeN == 0) {
+        printf("sectionsFps:%d|%lld\n", 0, currLastTime);
+        return;
+    }
+    double fpsSections = (fpsNums * conversionFps) / timeN;
+    int fpsSectionsInt = round(fpsSections);
+    if (fpsSectionsInt > static_cast<int>(times)) {
+        fpsSectionsInt = static_cast<int>(times);
+    }
+    printf("sectionsFps:%d|%lld\n", fpsSectionsInt, currLastTime);
+}
+
+void FPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const
+{
+    if (printCount < numb) {
+        for (int i = 0; i < numb - printCount; i++) {
+            msStartTime += harTime;
+            printf("sectionsFps:%d|%lld\n", 0, msStartTime);
+        }
+    }
+}
+
+void FPS::GetFPS(std::vector<std::string>& v)
+{
+    if (v[number] == "") {
+        printf("the args of num must be not-null!\n");
+    } else {
+        this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
+        if (this->num < 0) {
+            printf("set num:%d not valid arg\n", this->num);
+        }
+        printf("set num:%d success\n", this->num);
+        int sectionsNum = (static_cast<int>(v.size()) >= four) ?
+                            SPUtilesTye::StringToSometype<int>(v[four].c_str()) : 0;
+        if (sectionsNum > ten) {
+            printf("set sectionsNum:%d not valid arg \n", sectionsNum);
+        } else {
+            for (int i = 0; i < this->num; i++) {
+                GetResultFPS(sectionsNum);
+            }
+        }
+    }
+    printf("SP_daemon exec finished!\n");
 }
 }
 }

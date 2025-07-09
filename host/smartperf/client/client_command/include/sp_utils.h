@@ -168,6 +168,7 @@ void TarFiles(const std::string& tarStr);
 std::string ExecuteCommand(const std::string& command);
 size_t GetFileSize(std::string filePath);
 bool IsFindDHGame(const std::string &pkg);
+std::string GetSurface();
 };
 }
 }

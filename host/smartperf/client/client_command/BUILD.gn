@@ -64,7 +64,6 @@ ohos_executable("SP_daemon") {
     "parse_click_response_trace.cpp",
     "parse_radar.cpp",
     "parse_slide_fps_trace.cpp",
-    "profiler_fps.cpp",
     "sdk_data_recv.cpp",
     "service_plugin.cpp",
     "smartperf_command.cpp",

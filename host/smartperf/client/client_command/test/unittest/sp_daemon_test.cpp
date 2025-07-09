@@ -26,7 +26,6 @@
 #include "Power.h"
 #include "Capture.h"
 #include "Network.h"
-#include "profiler_fps.h"
 #include "parse_click_complete_trace.h"
 #include "parse_click_response_trace.h"
 #include "parse_slide_fps_trace.h"
