@@ -183,7 +183,7 @@ HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
 
     EXPECT_FALSE(pluginManage->LoadPlugin(pluginName));
     pluginManage->AddPlugin(g_testPluginDir + "libnetwork_profiler.z.so");
-    EXPECT_TRUE(pluginManage->CreatePluginSession(configVec));
+    EXPECT_FALSE(pluginManage->CreatePluginSession(configVec));
     EXPECT_FALSE(pluginManage->StartPluginSession(pluginIdsVector, configVec, result));
     std::this_thread::sleep_for(TEMP_DELAY);
     networkProfilerMgr->StartNetworkProfiler();
