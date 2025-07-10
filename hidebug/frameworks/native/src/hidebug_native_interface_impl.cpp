@@ -177,11 +177,11 @@ std::optional<HiDebug_NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMem
     }
 
     HiDebug_NativeMemInfo nativeMemInfo;
-    int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
-    nativeMemInfo.pss = static_cast<uint32_t>(pssInfo);
-    nativeMemInfo.rss = collectResult.data.rss;
-    nativeMemInfo.sharedDirty = collectResult.data.sharedDirty;
-    nativeMemInfo.privateDirty = collectResult.data.privateDirty;
+    nativeMemInfo.pss = static_cast<uint32_t>(collectResult.data.pss) +
+        static_cast<uint32_t>(collectResult.data.swapPss);
+    nativeMemInfo.rss = static_cast<uint32_t>(collectResult.data.rss);
+    nativeMemInfo.sharedDirty = static_cast<uint32_t>(collectResult.data.sharedDirty);
+    nativeMemInfo.privateDirty = static_cast<uint32_t>(collectResult.data.privateDirty);
     nativeMemInfo.sharedClean = static_cast<uint32_t>(collectResult.data.sharedClean);
     nativeMemInfo.privateClean = collectResult.data.privateClean;
 
