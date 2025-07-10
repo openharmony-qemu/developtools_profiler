@@ -58,6 +58,7 @@ private:
 private:
     static NetworkProfiler* instance_;
     int32_t clockType_{0};
+    bool isDeveloperMode_{false};
 };
 } // OHOS::Developtools::Profiler
 #define NetworkProfilerIns OHOS::Developtools::Profiler::NetworkProfiler::GetInstance()

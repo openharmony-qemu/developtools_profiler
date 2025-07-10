@@ -22,6 +22,7 @@
 #include <sys/prctl.h>
 
 #include "logging.h"
+#include "parameters.h"
 
 namespace {
 CachedHandle g_cachedHandle;
@@ -61,6 +62,7 @@ NetworkProfiler::NetworkProfiler()
 {
     pid_ = getprocpid();
     processName_ = GetProcessNameByPid(pid_);
+    isDeveloperMode_ = OHOS::system::GetBoolParameter("const.security.developermode.state", false);
 }
 
 NetworkProfiler::~NetworkProfiler() {}
@@ -87,6 +89,9 @@ bool NetworkProfiler::IsProfilerEnable()
 
 void NetworkProfiler::CheckNetworkProfilerParam()
 {
+    if (!isDeveloperMode_) {
+        return;
+    }
     if (UNEXPECTANTLY(g_cachedHandle == nullptr)) {
         std::unique_lock<std::mutex> lock(g_mtx);
         if (g_cachedHandle == nullptr) {
