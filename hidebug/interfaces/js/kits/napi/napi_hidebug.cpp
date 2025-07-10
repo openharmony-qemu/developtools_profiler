@@ -589,14 +589,8 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     return appMemoryLimit;
 }
 
-napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
+napi_value ConvertToJsNativeMemInfo(napi_env env, const HiDebug_NativeMemInfo& nativeMemInfo)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    HiDebug_NativeMemInfo nativeMemInfo{};
-    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
-    if (nativeMemInfoOption) {
-        nativeMemInfo = nativeMemInfoOption.value();
-    }
     napi_value memInfo;
     napi_create_object(env, &memInfo);
 
@@ -627,8 +621,59 @@ napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
     napi_value vss;
     napi_create_bigint_uint64(env, nativeMemInfo.vss, &vss);
     napi_set_named_property(env, memInfo, "vss", vss);
-
     return memInfo;
+}
+
+napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    return memInfoOption ? ConvertToJsNativeMemInfo(env, *memInfoOption) : ConvertToJsNativeMemInfo(env, {});
+}
+
+napi_value GetAppNativeMemInfoWithCache(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfoWithCache");
+    constexpr auto paramNum = 1;
+    size_t argc = paramNum;
+    napi_value argv = nullptr ;
+    napi_get_cb_info(env, info, &argc, &argv, nullptr, nullptr);
+    bool forceRefresh = false;
+    if (argc > paramNum || (argc == paramNum && !OHOS::HiviewDFX::GetNapiBoolValue(env, argv, forceRefresh))) {
+        constexpr auto paramErrorMessage = "Invalid argument";
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage);
+        return CreateUndefined(env);
+    }
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
+    return memInfoOption ? ConvertToJsNativeMemInfo(env, *memInfoOption) : ConvertToJsNativeMemInfo(env, {});
+}
+
+class GetAppNativeMemInfoAsyncTask : public AsyncTask {
+public:
+    GetAppNativeMemInfoAsyncTask() : AsyncTask("getAppNativeMemInfoAsync"),
+        apiInvokeRecorder_("getAppNativeMemInfoAsync") {}
+
+protected:
+    void Work(napi_env env) override
+    {
+        result_ = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    }
+
+    void Done(napi_env env, napi_status status) override
+    {
+        napi_value ret = result_ ? ConvertToJsNativeMemInfo(env, *result_) : ConvertToJsNativeMemInfo(env, {});
+        napi_resolve_deferred(env, deferred_, ret);
+    }
+
+private:
+    std::optional<HiDebug_NativeMemInfo> result_{};
+    ApiInvokeRecorder apiInvokeRecorder_;
+};
+
+napi_value GetAppNativeMemInfoAsync(napi_env env, napi_callback_info info)
+{
+    return AsyncTask::GetPromise<GetAppNativeMemInfoAsyncTask>(env);
 }
 
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
@@ -664,9 +709,9 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     uint32_t limitSize = 0;
     std::vector<uint64_t> tags;
     if (!GetTraceParam(env, info, traceFlag, limitSize, tags)) {
-        std::string paramErrorMessage = "Invalid argument";
+        constexpr auto paramErrorMessage = "Invalid argument";
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage);
     }
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
     std::string file;
@@ -676,23 +721,23 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
         return result;
     }
     if (ret == HIDEBUG_INVALID_ARGUMENT) {
-        std::string errorMessage = "Invalid argument";
+        constexpr auto errorMessage = "Invalid argument";
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage.c_str());
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage);
     }
     if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
-        std::string errorMessage = "Capture trace already enabled.";
+        constexpr auto errorMessage = "Capture trace already enabled.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::HAVA_ALREADY_TRACE);
-        napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage.c_str());
+        napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage);
     }
     if (ret == HIDEBUG_NO_PERMISSION) {
-        std::string errorMessage = "No write permission on the file.";
+        constexpr auto errorMessage = "No write permission on the file.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::WITHOUT_WRITE_PERMISSON);
-        napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage.c_str());
+        napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage);
     }
-    std::string errorMessage = "Abnormal trace status.";
+    constexpr auto errorMessage = "Abnormal trace status.";
     apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-    napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
+    napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage);
     return CreateUndefined(env);
 }
 
@@ -1161,6 +1206,8 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getSystemCpuUsage", GetSystemCpuUsage),
         DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit),
         DECLARE_NAPI_FUNCTION("getAppNativeMemInfo", GetAppNativeMemInfo),
+        DECLARE_NAPI_FUNCTION("getAppNativeMemInfoWithCache", GetAppNativeMemInfoWithCache),
+        DECLARE_NAPI_FUNCTION("getAppNativeMemInfoAsync", GetAppNativeMemInfoAsync),
         DECLARE_NAPI_FUNCTION("getSystemMemInfo", GetSystemMemInfo),
         DECLARE_NAPI_FUNCTION("startAppTraceCapture", StartAppTraceCapture),
         DECLARE_NAPI_FUNCTION("stopAppTraceCapture", StopAppTraceCapture),

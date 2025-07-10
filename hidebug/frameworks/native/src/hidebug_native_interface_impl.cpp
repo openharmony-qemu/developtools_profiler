@@ -38,6 +38,41 @@ namespace HiviewDFX {
 #undef LOG_TAG
 #define LOG_TAG "HiDebug_Native_Interface"
 
+namespace {
+constexpr int64_t SECOND_TO_NANOSECOND = 1000 * 1000 * 1000;
+
+bool GetNativeMemInfo(HiDebug_NativeMemInfo& nativeMemInfo)
+{
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
+        return false;
+    }
+    int pid = getprocpid();
+    auto collectResult = collector->CollectProcessMemory(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return false;
+    }
+    nativeMemInfo.pss = static_cast<uint32_t>(collectResult.data.pss) +
+        static_cast<uint32_t>(collectResult.data.swapPss);
+    nativeMemInfo.rss = static_cast<uint32_t>(collectResult.data.rss);
+    nativeMemInfo.sharedDirty = static_cast<uint32_t>(collectResult.data.sharedDirty);
+    nativeMemInfo.privateDirty = static_cast<uint32_t>(collectResult.data.privateDirty);
+    nativeMemInfo.sharedClean = static_cast<uint32_t>(collectResult.data.sharedClean);
+    nativeMemInfo.privateClean = collectResult.data.privateClean;
+
+    auto collectVss = collector->CollectProcessVss(pid);
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
+        return false;
+    }
+    nativeMemInfo.vss = static_cast<uint32_t>(collectVss.data);
+    return true;
+}
+}
+
 class HidebugNativeInterfaceImpl : public HidebugNativeInterface {
 public:
     HidebugNativeInterfaceImpl() = default;
@@ -51,7 +86,7 @@ public:
     int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimit> GetAppMemoryLimit() override;
-    std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() override;
+    std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo(bool withCache) override;
     std::optional<SysMemory> GetSystemMemInfo() override;
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
@@ -123,7 +158,7 @@ std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
 {
     static CachedValue<double> cachedCpuUsage;
     HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
-    constexpr const int64_t effectiveTime = 2 * 1000 * 1000 * 1000; // 2s
+    constexpr int64_t effectiveTime = 2 * SECOND_TO_NANOSECOND;
     return cachedCpuUsage.GetOrUpdateCachedValue(effectiveTime, [](double& cachedValue) {
         std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
         if (!collector) {
@@ -157,41 +192,14 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
     MemoryLimit memoryLimit;
     memoryLimit.vssLimit = collectResult.data.vssLimit;
     memoryLimit.rssLimit = collectResult.data.rssLimit;
-
     return memoryLimit;
 }
 
-std::optional<HiDebug_NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMemInfo()
+std::optional<HiDebug_NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMemInfo(bool withCache)
 {
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (!collector) {
-        HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
-        return {};
-    }
-    int pid = getprocpid();
-    auto collectResult = collector->CollectProcessMemory(pid);
-    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
-                    static_cast<int>(collectResult.retCode));
-        return {};
-    }
-
-    HiDebug_NativeMemInfo nativeMemInfo;
-    nativeMemInfo.pss = static_cast<uint32_t>(collectResult.data.pss) +
-        static_cast<uint32_t>(collectResult.data.swapPss);
-    nativeMemInfo.rss = static_cast<uint32_t>(collectResult.data.rss);
-    nativeMemInfo.sharedDirty = static_cast<uint32_t>(collectResult.data.sharedDirty);
-    nativeMemInfo.privateDirty = static_cast<uint32_t>(collectResult.data.privateDirty);
-    nativeMemInfo.sharedClean = static_cast<uint32_t>(collectResult.data.sharedClean);
-    nativeMemInfo.privateClean = collectResult.data.privateClean;
-
-    auto collectVss = collector->CollectProcessVss(pid);
-    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
-        return {};
-    }
-    nativeMemInfo.vss = static_cast<uint32_t>(collectVss.data);
-    return nativeMemInfo;
+    static CachedValue<HiDebug_NativeMemInfo> cachedNativeMemInfo;
+    constexpr int64_t effectiveTime = 5 * 60 * SECOND_TO_NANOSECOND;
+    return cachedNativeMemInfo.GetOrUpdateCachedValue(withCache ? effectiveTime : 0, GetNativeMemInfo);
 }
 
 std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
@@ -261,7 +269,7 @@ bool HidebugNativeInterfaceImpl::IsDebuggerConnected()
 std::optional<int32_t> HidebugNativeInterfaceImpl::GetGraphicsMemory()
 {
     static CachedValue<int32_t> cachedGraphicUsage;
-    constexpr const int64_t effectiveTime = 2 * 1000 * 1000 * 1000; // 2s
+    constexpr int64_t effectiveTime = 2 * SECOND_TO_NANOSECOND; // 2s
     return cachedGraphicUsage.GetOrUpdateCachedValue(effectiveTime, [](int32_t& cachedValue) {
         auto collector = UCollectClient::MemoryCollector::Create();
         if (!collector) {

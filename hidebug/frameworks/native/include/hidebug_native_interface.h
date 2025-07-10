@@ -48,7 +48,7 @@ public:
     virtual HiDebug_ErrorCode StopAppTraceCapture() = 0;
     virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
     virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
-    virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo() = 0;
+    virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo(bool withCache = false) = 0;
     virtual std::optional<SysMemory> GetSystemMemInfo() = 0;
     virtual bool IsDebuggerConnected() = 0;
     virtual std::optional<int32_t> GetGraphicsMemory() = 0;

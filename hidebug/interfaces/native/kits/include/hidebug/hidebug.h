@@ -102,6 +102,17 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo);
 void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo);
 
 /**
+ * @brief Obtains the memory info of application process. The application memory info cache is refresh every 5 minute.
+ *        It will be forced to refresh when input ture of forceRefresh parameter.
+ *
+ * @param nativeMemInfo Indicates the pointer to {@link HiDebug_NativeMemInfo}.
+ *        If there is no data in structure after the function.The Possible reason is system error.
+ * @param forceRefresh It's true when application memory info cache need to refresh.
+ * @since 12
+ */
+void OH_HiDebug_GetAppNativeMemInfoWithCache(HiDebug_NativeMemInfo *nativeMemInfo, bool forceRefresh);
+
+/**
  * @brief Obtains the memory limit of application process.
  *
  * @param memoryLimit Indicates the pointer to {@link HiDebug_MemoryLimit}

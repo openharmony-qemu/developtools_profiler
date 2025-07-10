@@ -99,23 +99,20 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
     memoryLimit->rssLimit = collectResult->rssLimit;
 }
 
-void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
+void OH_HiDebug_GetAppNativeMemInfoWithCache(HiDebug_NativeMemInfo *nativeMemInfo, bool forceRefresh)
 {
     if (!nativeMemInfo) {
         return;
     }
-    auto nativeMemoryInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
-    if (!nativeMemoryInfo) {
-        return;
+    auto nativeMemoryInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
+    if (nativeMemoryInfo) {
+        *nativeMemInfo = *nativeMemoryInfo;
     }
+}
 
-    nativeMemInfo->pss = static_cast<uint32_t>(nativeMemoryInfo->pss);
-    nativeMemInfo->vss = static_cast<uint32_t>(nativeMemoryInfo->vss);
-    nativeMemInfo->rss = static_cast<uint32_t>(nativeMemoryInfo->rss);
-    nativeMemInfo->sharedDirty = static_cast<uint32_t>(nativeMemoryInfo->sharedDirty);
-    nativeMemInfo->privateDirty = static_cast<uint32_t>(nativeMemoryInfo->privateDirty);
-    nativeMemInfo->sharedClean = static_cast<uint32_t>(nativeMemoryInfo->sharedClean);
-    nativeMemInfo->privateClean = static_cast<uint32_t>(nativeMemoryInfo->privateClean);
+void OH_HiDebug_GetAppNativeMemInfo(HiDebug_NativeMemInfo *nativeMemInfo)
+{
+    OH_HiDebug_GetAppNativeMemInfoWithCache(nativeMemInfo, true);
 }
 
 void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
