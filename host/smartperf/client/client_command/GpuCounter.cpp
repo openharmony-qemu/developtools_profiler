@@ -157,7 +157,7 @@ namespace OHOS {
             std::unique_lock<std::mutex> lock(realtimeDataLock);
             std::map<std::string, std::string> gpuCounterDataMap = {};
             if (gpuCounterRealtimeData.size() > 0) {
-                gpuCounterDataMap.insert("gpuCounterData", gpuCounterRealtimeData);
+                gpuCounterDataMap.insert({"gpuCounterData", gpuCounterRealtimeData});
                 gpuCounterRealtimeData.clear();
             }
             return gpuCounterDataMap;
