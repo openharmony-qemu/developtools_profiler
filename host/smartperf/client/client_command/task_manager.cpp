@@ -146,7 +146,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
             }
             case CommandType::CT_GC: {
                 GpuCounterProcess(val);
-                [[fallthrough]];
+                break;
             }
             default:
                 break;
@@ -269,7 +269,6 @@ void TaskManager::Start(bool record)
         LOGD("No mission");
         return;
     }
-
     ProcessOnceTask(true);
     running_ = true;
     if (record) {
@@ -284,31 +283,28 @@ void TaskManager::Start(bool record)
                 break;
             }
             LOGD("data index: %u", dataIndex_);
-
             std::map<std::string, std::string> currDatas;
             currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
             if (recordData) {
                 datas_.emplace(dataIndex_,
                     std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
             }
-
             for (auto& item : priorityTask_) {
                 currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
             }
-
             std::vector<std::future<std::map<std::string, std::string>>> result;
             for (auto& item : normalTask_) {
                 result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
             }
-
             for (auto& item : result) {
                 currDatas.merge(item.get());
             }
-
+            for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
+                currDatas.insert(item);
+            }
             if (nextTime_ != nullptr) {
                 *nextTime_ = SPUtils::GetCurTime();
             }
-
             ProcessCurrentBatch(currDatas);
             auto loopEnd = std::chrono::steady_clock::now();
             SaveRegularly(loopEnd);

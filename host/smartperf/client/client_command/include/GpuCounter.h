@@ -57,6 +57,7 @@ namespace OHOS {
             void SetFrequency(const int& freq);
             std::mutex &GetGpuCounterLock();
             void SetIsPause(bool isPause);
+            std::map<std::string, std::string> GetGpuRealtimeData();
         private:
             GpuCounter() {};
             GpuCounter(const GpuCounter &);
