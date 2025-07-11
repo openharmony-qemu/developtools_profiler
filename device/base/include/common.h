@@ -59,7 +59,6 @@ bool CheckCmdLineArgValid(const std::string& cmdLine);
 int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
                              std::string errorMessage);
 std::string GetProcessNameByPid(int32_t pid);
-bool IsValidUTF8(const std::string &str);
 
 static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
@@ -70,6 +69,21 @@ enum ErrorType {
     RET_MSG_EMPTY,
     RET_FAIL = -1,
     RET_SUCC = 0,
+};
+
+class SpinLock {
+public:
+    void Lock()
+    {
+        while (flag.test_and_set(std::memory_order_acquire)) {}
+    }
+
+    void Unlock()
+    {
+        flag.clear(std::memory_order_release);
+    }
+private:
+    std::atomic_flag flag = ATOMIC_FLAG_INIT;
 };
 } // COMMON
 #endif // COMMON_H

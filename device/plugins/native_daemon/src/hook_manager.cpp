@@ -32,6 +32,8 @@
 #include "utilities.h"
 #include "virtual_runtime.h"
 #include "native_memory_profiler_sa_service.h"
+#include "hook_record.h"
+#include "hook_record_factory.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -45,17 +47,20 @@ const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t MAX_PID_COUNT = 4;
 constexpr int32_t SIMP_NMD = 3;
+constexpr int DOUBLE = 2;
+static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
+static thread_local uint32_t g_rawStackCount = 0;
 }
 
 HookManager::~HookManager()
 {
     hookService_ = nullptr;
     for (const auto& item : hookCtx_) {
-        if (item->eventPoller != nullptr) {
-            item->eventPoller = nullptr;
+        for (size_t i = 0; i < item->shareMemoryBlockList.size(); ++i) {
+            item->shareMemoryBlockList[i] = nullptr;
         }
-        if (item->shareMemoryBlock != nullptr) {
-            item->shareMemoryBlock = nullptr;
+        for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
+            item->eventPollerList[i] = nullptr;
         }
         if (item->stackPreprocess != nullptr) {
             item->stackPreprocess = nullptr;
@@ -213,7 +218,7 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
 
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
-    clientConfig.shareMemorySize = static_cast<uint32_t>(hookConfig_.smb_pages() * PAGE_BYTES);
+    clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / SHARED_MEMORY_NUM) * PAGE_BYTES;
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -230,6 +235,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
+    clientConfig.targetSoName = hookConfig_.target_so_name();
     clientConfig.printNmd = printMallocNmd_;
     clientConfig.nmdType = static_cast<int>(nmdParamInfo_.type);
     clientConfig.largestSize = largestSize_;
@@ -248,32 +254,38 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     if (ctx == nullptr) {
         return false;
     }
-    if (ctx->pid > 0) {
-        ctx->smbName = "hooknativesmb_" + std::to_string(ctx->pid);
-    } else if (!ctx->processName.empty()) {
-        ctx->smbName = "hooknativesmb_" + ctx->processName;
-    } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext context error, pid: %d, process name: %s",
-            ctx->pid, ctx->processName.c_str());
-        return false;
-    }
+
     // create smb and eventNotifier
-    uint32_t bufferSize = static_cast<uint32_t>(hookConfig_.smb_pages()) * PAGE_BYTES; /* bufferConfig.pages() */
-    ctx->shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(ctx->smbName, bufferSize);
-    CHECK_TRUE(ctx->shareMemoryBlock != nullptr, false, "CreateMemoryBlockLocal FAIL %s", ctx->smbName.c_str());
+    uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / SHARED_MEMORY_NUM) * PAGE_BYTES;
 
-    ctx->eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
-    CHECK_NOTNULL(ctx->eventNotifier, false, "create EventNotifier for %s failed!", ctx->smbName.c_str());
+    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        std::string smbName = "";
+        if (ctx->pid > 0) {
+            smbName = "hooknativesmb_" + std::to_string(ctx->pid) + ":" + std::to_string(i);
+        } else if (!ctx->processName.empty()) {
+            smbName = "hooknativesmb_" + ctx->processName + ":" + std::to_string(i);
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext context error, pid: %d, process name: %s",
+                ctx->pid, ctx->processName.c_str());
+            return false;
+        }
+        ctx->smbNames.push_back(smbName);
+        auto shareMemoryBlock = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(smbName, bufferSize);
+        CHECK_TRUE(shareMemoryBlock != nullptr, false, "CreateMemoryBlockLocal FAIL %s", smbName.c_str());
+        ctx->shareMemoryBlockList.push_back(shareMemoryBlock);
+        auto eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
+        CHECK_NOTNULL(eventNotifier, false, "create EventNotifier for %s failed!", smbName.c_str());
+        ctx->eventNotifierList.push_back(eventNotifier);
+        PROFILER_LOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", shareMemoryBlock->GetfileDescriptor(),
+                          eventNotifier->GetFd());
+        // start event poller task
+        auto eventPoller = std::make_shared<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
+        CHECK_NOTNULL(eventPoller, false, "create event poller FAILED!");
 
-    // start event poller task
-    ctx->eventPoller = std::make_unique<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
-    CHECK_NOTNULL(ctx->eventPoller, false, "create event poller FAILED!");
-
-    ctx->eventPoller->Init();
-    ctx->eventPoller->Start();
-
-    PROFILER_LOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", ctx->shareMemoryBlock->GetfileDescriptor(),
-                      ctx->eventNotifier->GetFd());
+        eventPoller->Init();
+        eventPoller->Start();
+        ctx->eventPollerList.push_back(eventPoller);
+    }
 
     ctx->isRecordAccurately = hookConfig_.record_accurately();
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig filter size = %d, malloc disable = %d mmap disable = %d",
@@ -290,25 +302,30 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
-        ctx->eventPoller->AddFileDescriptor(
-            ctx->eventNotifier->GetFd(),
-            std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
-            ctx->eventNotifier, ctx->shareMemoryBlock));
+        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            ctx->eventPollerList[i]->AddFileDescriptor(
+                ctx->eventNotifierList[i]->GetFd(),
+                std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
+                ctx->eventNotifierList[i], ctx->shareMemoryBlockList[i]));
+        }
     } else {
         ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
         CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
-        ctx->eventPoller->AddFileDescriptor(
-            ctx->eventNotifier->GetFd(),
-            [this, &ctx] { this->ReadShareMemory(ctx); });
+        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            ctx->eventPollerList[i]->AddFileDescriptor(
+                ctx->eventNotifierList[i]->GetFd(),
+                [this, &ctx, i] { this->ReadShareMemory(ctx, i); });
+        }
     }
     if (isProtobufSerialize_ || isSaService_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
+    ctx->stackPreprocess->SetFactory(factory_);
     return true;
 }
 
@@ -410,18 +427,15 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-    if (hookConfig_.fp_unwind() && hookConfig_.record_accurately()
-        && hookConfig_.blocked() && hookConfig_.offline_symbolization()
-        && hookConfig_.statistics_interval() > 0
-        && hookConfig_.sample_interval() > 1
-        && !hookConfig_.js_stack_report()) {
+    if (hookConfig_.fp_unwind() && hookConfig_.offline_symbolization()
+        && hookConfig_.statistics_interval() > 0) {
         noDataQueue_ = true;
     }
 
     if (!isSaService_) {
         CreateWriter();
     }
-
+    factory_ = std::make_shared<HookRecordFactory>(hookConfig_);
     for (const auto& item : hookCtx_) {
         CHECK_TRUE(HandleHookContext(item), false, "handle hook context failed"); // Create the required resources.
     }
@@ -443,55 +457,45 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
 
 void HookManager::HookManagerCtx::FlushStackArray()
 {
-    if (rawDataArray.size() > 0 && stackData != nullptr) {
-        if (!stackData->PutRawStackArray(rawDataArray, rawStackCount)) {
+    if (g_rawDataArray.size() > 0 && stackData != nullptr) {
+        if (!stackData->PutRawStackArray(g_rawDataArray, g_rawStackCount)) {
             PROFILER_LOG_INFO(LOG_CORE, "PutRawStackArray error");
         }
-        rawStackCount = 0;
-        rawDataArray = {};
+        g_rawStackCount = 0;
+        g_rawDataArray = {};
     }
 }
 
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
-                                     std::shared_ptr<StackDataRepeater::RawStack>& rawStack)
+                                     std::shared_ptr<HookRecord>& hookRecord)
 {
-    if (hookCtx == nullptr || rawStack == nullptr) {
+    if (hookCtx == nullptr || hookRecord == nullptr) {
         return;
     }
-    hookCtx->rawDataArray[hookCtx->rawStackCount] = rawStack;
-    ++hookCtx->rawStackCount;
-    if (hookCtx->rawStackCount == CACHE_ARRAY_SIZE) {
+    g_rawDataArray[g_rawStackCount] = hookRecord;
+    ++g_rawStackCount;
+    if (g_rawStackCount == CACHE_ARRAY_SIZE) {
         hookCtx->FlushStackArray();
     }
 }
 
-void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx)
+void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex)
 {
-    CHECK_NOTNULL(hookCtx->shareMemoryBlock, NO_RETVAL, "smb is null!");
-    hookCtx->eventNotifier->Take();
-    int rawRealSize = 0;
+    std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = hookCtx->shareMemoryBlockList[sharedMemoryIndex];
+    CHECK_NOTNULL(shareMemoryBlock, NO_RETVAL, "smb is null!");
+    hookCtx->eventNotifierList[sharedMemoryIndex]->Take();
     while (true) {
-        auto rawStack = hookCtx->stackData->GetRawStack();
-        bool ret = hookCtx->shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            if (size == sizeof(void*)) {
-                if (data) {
-                    CHECK_TRUE(memcpy_s(&rawStack->freeData, sizeof(rawStack->freeData), data, size) == EOK, false,
-                               "memcpy_s freeData failed!");
-                }
-                rawStack->baseStackData = nullptr;
+        std::shared_ptr<HookRecord> hookRecord = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        bool ret = shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
+            hookRecord = factory_->GetHookRecord(data, size);
+            rawStack = hookRecord->GetRawStack();
+            uint16_t type = hookRecord->GetType();
+            if (type == FREE_MSG_SIMP) {
                 return true;
             }
-            rawStack->freeData = 0;
-            CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
 
-            rawStack->baseStackData = std::make_unique<uint8_t[]>(size);
-            CHECK_TRUE(memcpy_s(rawStack->baseStackData.get(), size, data, size) == EOK, false,
-                       "memcpy_s raw data failed!");
-
-            rawStack->stackConext = reinterpret_cast<BaseStackRawData*>(rawStack->baseStackData.get());
-
-            if (rawStack->stackConext->type == NMD_MSG && printMallocNmd_) {
-                rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
+            if (type == NMD_MSG && printMallocNmd_) {
                 const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
                 if (nmdParamInfo_.type == SIMP_NMD) {
                     simplifiedNmd_ = std::string(nmdResult);
@@ -503,61 +507,49 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
                     (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
                 }
                 return true;
-            } else if (rawStack->stackConext->type == END_MSG) {
+            } else if (type == END_MSG) {
                 return true;
             }
-            rawStack->data = rawStack->baseStackData.get() + sizeof(BaseStackRawData);
             rawStack->reportFlag = true;
-            if (rawStack->stackConext->type == MEMORY_TAG || rawStack->stackConext->type == THREAD_NAME_MSG ||
-                rawStack->stackConext->type == MMAP_FILE_TYPE || rawStack->stackConext->type == PR_SET_VMA_MSG ||
-                rawStack->stackConext->type == JS_STACK_MSG) {
+            if (type == MEMORY_TAG || type == THREAD_NAME_MSG ||
+                type == MMAP_FILE_TYPE || type == PR_SET_VMA_MSG ||
+                type == JS_STACK_MSG) {
                 return true;
             }
             rawStack->reduceStackFlag = false;
             if (hookConfig_.fp_unwind()) {
-                rawStack->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
-                if (rawStack->stackConext->jsChainId > 0) {
-                    rawStack->jsStackData = hookCtx->stackPreprocess->GetJsRawStack(rawStack->stackConext->jsChainId);
+                if (rawStack->stackContext->jsChainId > 0) {
+                    rawStack->jsStackData = hookCtx->stackPreprocess->GetJsRawStack(rawStack->stackContext->jsChainId);
                 }
                 return true;
-            } else {
-                rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
-            }
-
-            rawStack->stackSize = size - rawRealSize;
-            if (rawStack->stackSize > 0) {
-                rawStack->stackData = rawStack->baseStackData.get() + rawRealSize;
             }
             return true;
         });
         if (!ret) {
             break;
         }
-        if (rawStack->baseStackData == nullptr) {
-            FlushRawStackArray(hookCtx, rawStack);
-            continue;
-        }
-        if (rawStack->stackConext->type == MEMORY_TAG) {
+        uint16_t type = hookRecord->GetType();
+        if (type == MEMORY_TAG) {
             std::string tagName = reinterpret_cast<char*>(rawStack->data);
-            hookCtx->stackPreprocess->SaveMemTag(rawStack->stackConext->tagId, tagName);
+            hookCtx->stackPreprocess->SaveMemTag(rawStack->stackContext->tagId, tagName);
             continue;
-        } else if (rawStack->stackConext->type == JS_STACK_MSG) {
-            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackConext->jsChainId,
+        } else if (type == JS_STACK_MSG) {
+            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackContext->jsChainId,
                                                      reinterpret_cast<char*>(rawStack->data));
             continue;
-        } else if (rawStack->stackConext->type == END_MSG) {
+        } else if (type == END_MSG) {
             hookCtx->FlushStackArray();
-            if (!hookCtx->stackData->PutRawStack(rawStack, hookCtx->isRecordAccurately)) {
+            if (!hookCtx->stackData->PutRawStack(hookRecord, hookCtx->isRecordAccurately)) {
                 break;
             }
             if (!hookCtx->stackData->PutRawStack(nullptr, false)) {
                 break;
             }
             continue;
-        } else if (rawStack->stackConext->type == NMD_MSG) {
+        } else if (type == NMD_MSG) {
             continue;
         }
-        FlushRawStackArray(hookCtx, rawStack);
+        FlushRawStackArray(hookCtx, hookRecord);
     }
 }
 
@@ -569,16 +561,16 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if (item->eventPoller != nullptr) {
-            PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset!");
-            if (item->eventNotifier != nullptr) {
-                item->eventPoller->RemoveFileDescriptor(item->eventNotifier->GetFd());
+        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            if (item->eventPollerList[i] && item->eventNotifierList[i]) {
+                PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %d", i);
+                item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
+                item->eventPollerList[i]->Stop();
+                item->eventPollerList[i]->Finalize();
             }
-            item->eventPoller->Stop();
-            item->eventPoller->Finalize();
-        }
-        if (item->shareMemoryBlock != nullptr) {
-            ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbName);
+            if (item->shareMemoryBlockList[i]) {
+                ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbNames[i]);
+            }
         }
         if (item->stackData != nullptr) {
             item->stackData->ClearCache();
@@ -733,6 +725,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_js_stack_report(config->jsStackReport_);
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
+    hookConfig_.set_target_so_name(config->targetSoName_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -826,6 +819,7 @@ std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
     args << "js_stack_report: " << std::to_string(traceConfig.js_stack_report()) << ", ";
     args << "max_js_stack_depth: " << std::to_string(traceConfig.max_js_stack_depth()) << ", ";
     args << "filter_napi_name: " << traceConfig.filter_napi_name() << ", ";
+    args << "target_so_name: " << traceConfig.target_so_name() << ", ";
     for (const auto& pid : traceConfig.expand_pids()) {
         args << "expand_pids: " << std::to_string(pid) << ", ";
     }
@@ -843,7 +837,7 @@ void HookManager::WriteHookConfig()
     }
 }
 
-std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
+std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
 {
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
@@ -851,10 +845,15 @@ std::pair<int, int> HookManager::GetFds(int32_t pid, const std::string& name)
                 item->pid = pid;
             }
             item->stackPreprocess->SetPid(pid);
-            return {item->eventNotifier->GetFd(), item->shareMemoryBlock->GetfileDescriptor()};
+            std::vector<int> fds;
+            for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+                fds.push_back(item->eventNotifierList[i]->GetFd());
+                fds.push_back(item->shareMemoryBlockList[i]->GetfileDescriptor());
+            }
+            return fds;
         }
     }
-    return {-1, -1};
+    return std::vector<int>(-1, SHARED_MEMORY_NUM * DOUBLE);
 }
 
 void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)

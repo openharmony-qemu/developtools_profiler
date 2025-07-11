@@ -31,18 +31,20 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
-const int STACK_DATA_SIZE = 40000;
-const int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
-const int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
-const int32_t MIN_STACK_DEPTH = 6;
+constexpr int STACK_DATA_SIZE = 400000;
+constexpr int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
+constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
+constexpr int32_t MIN_STACK_DEPTH = 6;
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
-const uint32_t  MMAP_FILE_TYPE = (1u << 8);
 // default max js stack depth
 const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
+constexpr int SHARED_MEMORY_NUM = 3;
+constexpr uint64_t DWARF_ERROR_ID = 999999;
+constexpr uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 }
 }
 }
@@ -73,8 +75,21 @@ enum {
     THREAD_NAME_MSG,
     PR_SET_VMA_MSG,
     JS_STACK_MSG,
+    MMAP_FILE_TYPE,
     NMD_MSG,
     END_MSG,
+    FREE_MSG_SIMP,
+    UNKNOWN,
+};
+
+enum SymbolType {
+    NATIVE_SYMBOL,
+    JS_SYMBOL,
+};
+
+struct Range {
+    uint64_t start;
+    uint64_t end;
 };
 
 struct alignas(8) MmapFileRawData { // 8 is 8 bit
@@ -162,6 +177,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         largestSize = 0;
         secondLargestSize = 0;
         maxGrowthSize = 0;
+        targetSoName = "";
     }
 
     std::string ToString()
@@ -204,5 +220,6 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t largestSize = 0;
     uint32_t secondLargestSize = 0;
     uint32_t maxGrowthSize = 0;
+    std::string targetSoName;
 };
 #endif // HOOK_COMMON_H

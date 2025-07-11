@@ -286,24 +286,38 @@ HWTEST_F(SPdaemonUtilsTest, VeriyParameterTest05, TestSize.Level1)
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest01, TestSize.Level1)
 {
-    std::string errorInfo;
-    EXPECT_FALSE(SPUtils::IntegerVerification("", errorInfo));
-    EXPECT_NE(errorInfo, "option requires an argument");
+    std::string errorInfo = "";
+    std::string outOfRangeString = "";
+    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(errorInfo, "option requires an argument");
 }
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest02, TestSize.Level1)
 {
-    std::string errorInfo;
-    std::string longString(11, '1');
-    EXPECT_FALSE(SPUtils::IntegerVerification(longString, errorInfo));
-    EXPECT_NE(errorInfo, "invalid option parameters");
+    std::string errorInfo = "";
+    std::string outOfRangeString = "123a456";
+    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(errorInfo, "invalid option parameters");
 }
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest03, TestSize.Level1)
 {
-    std::string errorInfo;
-    EXPECT_FALSE(SPUtils::IntegerVerification("123a456", errorInfo));
-    EXPECT_NE(errorInfo, "invalid option parameters");
+    std::string errorInfo = "";
+    std::string outOfRangeString = "12345678901";
+    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
+    EXPECT_FALSE(result);
+    EXPECT_EQ(errorInfo, "invalid option parameters");
+}
+
+HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest04, TestSize.Level1)
+{
+    std::string errorInfo = "";
+    std::string outOfRangeString = "000123";
+    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(errorInfo.empty());
 }
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest05, TestSize.Level1)

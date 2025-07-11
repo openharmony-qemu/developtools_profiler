@@ -44,16 +44,16 @@ std::map<std::string, std::string> Capture::ItemData()
             path = screenCapPath + ".jpeg";
             result["capture"] = path;
             TriggerGetCatchSocket();
-            isSocketMessage = false;
         }
     } else {
-        if (modResult == 1) {
+        if (modResult == 0) {
             path = screenCapPath + ".png";
             result["capture"] = path;
             TriggerGetCatch();
         }
     }
     result["capture"] = path;
+    LOGI("Capture:ItemData map size(%u)", result.size());
     return result;
 }
 

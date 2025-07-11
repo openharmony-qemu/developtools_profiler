@@ -72,6 +72,7 @@ std::string VirtualRuntime::ReadThreadName(pid_t tid)
 
 VirtualThread &VirtualRuntime::UpdateThread(pid_t pid, pid_t tid, const std::string name)
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     pid_ = pid;
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
@@ -127,8 +128,9 @@ void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
 }
 
 bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
-                                   bool onlyjs)
+                                   SymbolType type)
 {
+    std::lock_guard<std::mutex> guard(mtx_);
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
 #endif
@@ -138,8 +140,11 @@ bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>&
     perf_callchain_context perfCallchainContext = PERF_CONTEXT_MAX;
     for (auto callFrameIt = callFrames.begin() + offset; callFrameIt != callFrames.end(); ++callFrameIt) {
         auto &callFrame = callFrameIt.operator*();
-        if (onlyjs && !callFrame.isJsFrame_) {
+        if (type == SymbolType::JS_SYMBOL && !callFrame.isJsFrame_) {
            // only symbolize arkts frame
+            continue;
+        }
+        if (type == SymbolType::NATIVE_SYMBOL && callFrame.isJsFrame_) {
             continue;
         }
         if (callFrame.ip_ >= PERF_CONTEXT_MAX) {
@@ -215,9 +220,9 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     const auto startTime = steady_clock::now();
 #endif
     // if we have userstack ?
-    int offset = 0;
     auto &thread = UpdateThread(pid, tid);
     if (stack_size > 0) {
+        std::lock_guard<std::mutex> guard(mtx_);
         callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr, stack_size, callFrames, maxStackLevel,
             hookConfig_.js_stack_report() > 0 ? hookConfig_.max_js_stack_depth() : 0,
             hookConfig_.js_stack_report() > 0);
@@ -226,7 +231,6 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
             return false;
         }
         // Do not symbolize the first two frame, cause the two frame implement by tool itself
-        offset = FILTER_STACK_DEPTH;
 #ifdef HIPERF_DEBUG_TIME
         unwindCallStackTimes_ += duration_cast<microseconds>(steady_clock::now() - startTime);
 #endif
@@ -234,34 +238,6 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
 #ifdef HIPERF_DEBUG_TIME
     unwindFromRecordTimes_ += duration_cast<microseconds>(steady_clock::now() - startTime);
 #endif
-    if (hookConfig_.offline_symbolization()) {
-        // only get js symbol if report js frame and offline symbolization for dwarf mode
-        if (hookConfig_.js_stack_report() > 0 && !hookConfig_.fp_unwind()) {
-            GetSymbolName(pid, tid, callFrames, offset, true, true);
-        }
-        return true;
-    }
-    if (!GetSymbolName(pid, tid, callFrames, offset, true)) {
-#ifdef TRY_UNWIND_TWICE
-        HLOGD("clear and unwind one more time");
-        if (!thread.ParseMap(processMaps_, true)) {
-            GetSymbolName(pid, tid, callFrames, offset, false);
-            return false;
-        }
-        if (stack_size > 0) {
-            callFrames.clear();
-            callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr,
-                stack_size, callFrames, maxStackLevel, 0, hookConfig_.js_stack_report() > 0);
-        }
-        if (callFrames.size() <= FILTER_STACK_DEPTH) {
-            callFrames.clear();
-            return false;
-        }
-        if (!GetSymbolName(pid, tid, callFrames, offset, false)) {
-            return false;
-        }
-#endif
-    }
     return true;
 }
 
@@ -548,6 +524,7 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
 
 void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
+    std::lock_guard<std::mutex> guard(mtx_);
     if (info.size() != INFO_SIZE) {
         return;
     }

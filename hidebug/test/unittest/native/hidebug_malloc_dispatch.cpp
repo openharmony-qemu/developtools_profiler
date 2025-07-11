@@ -13,9 +13,9 @@
  * limitations under the License.
  */
 
-#include <stddef.h>
-#include <stdint.h>
-#include <stdio.h>
+#include <cstddef>
+#include <cstdint>
+#include <cstdio>
 #include <sys/mman.h>
 #include <unistd.h>
 #include <thread>
@@ -114,25 +114,29 @@ void TestMalloc()
 }
 void TestMmap()
 {
-    char* p_map = nullptr;
-    p_map = (char*)mmap(NULL, 100, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
-    if (p_map == MAP_FAILED) {
+    char* mapPtr = nullptr;
+    const size_t bufferSize = 100;  // 100 : the size of memory
+    mapPtr = (char*)mmap(nullptr, bufferSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+    if (mapPtr == MAP_FAILED) {
         printf("mmap failed\n");
         return;
     }
-    sprintf(p_map, "%s", "hi, this is test mmap");
-    printf("p_map = %s\n", p_map);
-    munmap(p_map, 100);
+    int len = snprintf_s(mapPtr, bufferSize, bufferSize - 1, "%s", "hi, this is test mmap");
+    if (len < 0) {
+        printf("snprintf_s failed\n");
+    }
+    printf("mapPtr = %s\n", mapPtr);
+    munmap(mapPtr, bufferSize);
 }
 
 void TestCalloc()
 {
-    int* ptr = (int*)calloc(5, sizeof(int));
+    int* ptr = (int*)calloc(5, sizeof(int));  // 5 : the length of array
     if (ptr == nullptr) {
         printf("calloc failed\n");
         return;
     }
-    for (size_t i = 0; i < 5; ++i) {
+    for (size_t i = 0; i < 5; ++i) {  // 5 : the length of array
         ptr[i] = i * i;
         printf("ptr[%zu] = %d\n", i, ptr[i]);
     }
@@ -141,22 +145,22 @@ void TestCalloc()
 
 void TestRealloc()
 {
-    int* ptr = (int*)malloc(5 * sizeof(int));
+    int* ptr = (int*)malloc(5 * sizeof(int)); // 5 : the length of array
     if (ptr == nullptr) {
         printf("malloc failed\n");
         return;
     }
-    for (size_t i = 0; i < 5; ++i) {
+    for (size_t i = 0; i < 5; ++i) { // 5 : the length of array
         ptr[i] = i * i;
         printf("ptr[%zu] = %d\n", i, ptr[i]);
     }
-    int* newPtr = (int*)realloc(ptr, 10 * sizeof(int));
+    int* newPtr = (int*)realloc(ptr, 10 * sizeof(int)); // 10 : the length of array
     if (newPtr == nullptr) {
         printf("realloc failed\n");
         free(ptr);
         return;
     }
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < 10; ++i) { // 10 : the length of array
         newPtr[i] = i * i;
         printf("newPtr[%zu] = %d\n", i, newPtr[i]);
     }
@@ -198,15 +202,15 @@ void TestNewFunc()
     printf("ptr = %d\n", *ptr);
     delete ptr;
     ptr = nullptr;
-    int* ptr2 = new int[10];
+    int* ptr2 = new int[10]; // 10 : the length of array
     if (ptr2 == nullptr) {
         printf("new failed\n");
         return;
     }
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < 10; ++i) { // 10 : the length of array
         ptr2[i] = i * i;
     }
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < 10; ++i) { // 10 : the length of array
         printf("ptr2[%zu] = %d\n", i, ptr2[i]);
     }
     delete[] ptr2;
@@ -226,7 +230,7 @@ void TestNewFunc()
     }
     delete test;
     test = nullptr;
-    std::vector<int>* vec = new std::vector<int>(10);
+    std::vector<int>* vec = new std::vector<int>(10); // 10 : the length of vector
     if (vec == nullptr) {
         printf("new failed\n");
         return;
@@ -244,10 +248,10 @@ void TestNewFunc()
         printf("new failed\n");
         return;
     }
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < 10; ++i) { // 10 : test 10 times
         (*map)[i] = i * i;
     }
-    for (size_t i = 0; i < 10; ++i) {
+    for (size_t i = 0; i < 10; ++i) { // 10 : test 10 times
         printf("map[%zu] = %d\n", i, (*map)[i]);
     }
     delete map;
@@ -288,7 +292,7 @@ int main(int argc, char* argv[])
     TestRealloc();
     // test muti-threads
     std::vector<std::thread> vecThreads;
-    for (size_t i = 0; i < 10; i++) {
+    for (size_t i = 0; i < 10; i++) { // 10 : test 10 threads
         vecThreads.push_back(std::thread(TestMutilThread, i));
     }
     for (auto& thread : vecThreads) {

@@ -97,6 +97,14 @@ def get_target_stack(result):
     return malloc_release_stack, small_malloc_stack
 
 
+def get_target_so(result, target_so_name):
+    file_id = 0
+    for row in result:
+        if target_so_name in row[1]:
+            file_id = row[0]
+    return file_id
+
+
 def check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval):
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
@@ -176,12 +184,19 @@ def check_library_result(statistics, startup, offline, sample_interval, dwarf, f
     return check_destroyed and check_exists
 
 
-def check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval):
+def check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval,
+                 target_so_name=""):
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM data_dict')
     result = cursor.fetchall()
     malloc_release_stack, small_malloc_stack = get_target_stack(result)
+    if target_so_name != "":
+        target_so_id = get_target_so(result, target_so_name)
+        cursor.execute('SELECT DISTINCT callchain_id FROM native_hook_frame WHERE callchain_id NOT IN\
+                        ( SELECT callchain_id FROM native_hook_frame WHERE file_id = ' + str(target_so_name) + ' )')
+        result = cursor.fetchall()
+        return (len(result) == 0)
     cursor.execute('SELECT * FROM native_hook_frame')
     result = cursor.fetchall()
     callstack_ids_destroyed = []
@@ -270,7 +285,7 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
 
 
 def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False,
-                            callframe_compress=True, string_compress=True):
+                            callframe_compress=True, string_compress=True, target_so_name=""):
     try:
         subprocess.check_output(r"del .\..\inputfiles\nativehook\config.txt", text=True, encoding="utf-8")
         subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
@@ -315,6 +330,8 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
 
     if not string_compress:
         modified_content = modified_content.replace('string_compress: true', 'string_compress: false')
+    if target_so_name != "":
+        modified_content = modified_content.replace('target_so_name: ""', 'target_so_name: "' + target_so_name + '"')
 
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     mode = stat.S_IWUSR | stat.S_IRUSR
@@ -354,7 +371,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
 
     if response_library:
         return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
-    return check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval)
+    return check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval, target_so_name)
 
 
 def check_nativehook_multipleprocess(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False):
@@ -757,6 +774,11 @@ class TestNativehook:
     def test_statistics_depth_five(self):
         assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False)
 
+    @pytest.mark.L0
+    def test_statistics_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")
+
     @pytest.mark.L1
     def test_js_sample(self):
         assert check_nativehook_result(0, False, True, SAMPLE_SMALL, False, True, 0, DEPTH_TEN, CLICK_TWICE)
@@ -940,6 +962,51 @@ class TestNativehook:
     @pytest.mark.L1
     def test_sa_multi(self):
         assert check_sa_result(False, False, True)
+
+    @pytest.mark.L1
+    def test_nonstatistics_target_so(self):
+        assert check_nativehook_result(0, False, False, 0, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")
+
+    @pytest.mark.L1
+    def test_statistics_dwarf_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libc++_shared.so")
+                            
+    @pytest.mark.L1
+    def test_statistics_js_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")
+
+    @pytest.mark.L1
+    def test_statistics_dwarf_js_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, 0, True, True, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libc++_shared.so")
+    
+    @pytest.mark.L1
+    def test_statistics_sample_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")
+    
+    @pytest.mark.L1
+    def test_sample_dwarf_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, True, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libc++_shared.so")
+
+    @pytest.mark.L1
+    def test_nonstatistics_dwarf_target_so(self):
+        assert check_nativehook_result(0, False, False, 0, True, False, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")
+
+    @pytest.mark.L1
+    def test_nonstatistics_js_target_so(self):
+        assert check_nativehook_result(0, False, False, 0, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libc++_shared.so")
+
+    @pytest.mark.L1
+    def test_sample_js_target_so(self):
+        assert check_nativehook_result(STATISTICS_INTERVAL, False, False, SAMPLE_SMALL, False, True, 0, DEPTH_FIVE, CLICK_THREETIMES, 0, False, False, False,
+                                       "libentry.so")        
 
     @pytest.mark.L2
     def test_js_statistics_depth_five_dwarf(self):

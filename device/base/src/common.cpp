@@ -29,7 +29,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <sys/stat.h>
-
+#include <atomic>
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
@@ -875,80 +875,5 @@ std::string GetProcessNameByPid(int32_t pid)
         procName = processName;
     }
     return procName;
-}
-
-bool IsValidUTF8(const std::string& str)
-{
-    const uint8_t* data = reinterpret_cast<const uint8_t*>(str.data());
-    size_t len = str.size();
-    size_t i = 0;
-    while (i < len) {
-        uint8_t current = data[i];
-        if (current <= 0x7F) {
-            i++;
-            continue;
-        }
-        // process mutil bytes
-        if (current >= 0xC2 && current <= 0xDF) {
-            if (i + 1 >= len) { // 1:offset 1 bytes
-                return false;
-            }
-            uint8_t b2 = data[i + 1];
-            if ((b2 & 0xC0) != 0x80) {
-                return false;
-            }  // 检查后续字节格式
-            uint32_t codepoint = ((current & 0x1F) << 6) | (b2 & 0x3F);
-            if (codepoint < 0x80 || codepoint > 0x07FF) {
-                return false;
-            }
-            i += 2; // process 2 bytes
-        } else if (current >= 0xE0 && current <= 0xEF) {
-            if (i + 2 >= len) { // 2: offset 2 bytes
-                return false;
-            }
-            uint8_t b2 = data[i + 1];
-            uint8_t b3 = data[i + 2];
-            if ((b2 & 0xC0) != 0x80 || (b3 & 0xC0) != 0x80) {
-                return false;
-            }
-            // 处理特殊范围
-            if (current == 0xE0 && b2 < 0xA0) {
-                return false;
-            }  // 过短编码检查
-            if (current == 0xED && b2 > 0x9F) {
-                return false;
-            }  // 代理对检查
-            uint32_t codepoint = ((current & 0x0F) << 12) | ((b2 & 0x3F) << 6) | (b3 & 0x3F);
-            if (codepoint < 0x0800 || (codepoint >= 0xD800 && codepoint <= 0xDFFF)) {
-                return false;
-            }
-            i += 3; // process 3 bytes
-        } else if (current >= 0xF0 && current <= 0xF4) {
-            if (i + 3 >= len) { // 3: offset 3 bytes
-                return false;
-            }
-            uint8_t b2 = data[i + 1];
-            uint8_t b3 = data[i + 2];
-            uint8_t b4 = data[i + 3];
-            if ((b2 & 0xC0) != 0x80 || (b3 & 0xC0) != 0x80 || (b4 & 0xC0) != 0x80) {
-                return false;
-            }
-            // 处理特殊范围
-            if (current == 0xF0 && b2 < 0x90) {
-                return false;
-            }  // 过短编码检查
-            if (current == 0xF4 && b2 > 0x8F) {
-                return false;
-            }  // 超过U+10FFFF检查
-            uint32_t codepoint = ((current & 0x07) << 18) | ((b2 & 0x3F) << 12) | ((b3 & 0x3F) << 6) | (b4 & 0x3F);
-            if (codepoint < 0x10000 || codepoint > 0x10FFFF) {
-                return false;
-            }
-            i += 4; // process 4 bytes
-        } else {
-            return false;
-        }
-    }
-    return true;
 }
 } // namespace COMMON

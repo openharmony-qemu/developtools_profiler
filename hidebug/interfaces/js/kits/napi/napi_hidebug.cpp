@@ -74,6 +74,7 @@ constexpr int FD_MIN = 10;
 constexpr int FD_MAX = 10000;
 constexpr int THREAD_MIN = 1;
 constexpr int THREAD_MAX = 1000;
+constexpr int TRIM_LEVEL_MAX = 1;
 constexpr int ENABLE_ARGS_NO_PARAMS = 0;
 constexpr int ENABLE_ARGS_ONE_PARAMS = 1;
 constexpr int ENABLE_ARGS_TWO_PARAMS = 2;
@@ -1066,7 +1067,7 @@ napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
         gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
         HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
         apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMTIT);
-        paramErrorMessage = "Failed to enable gwp asan grayscale.";
+        paramErrorMessage = "The number of GWP-ASAN applications of this device overflowed after last boot.";
         napi_throw_error(env, std::to_string(ErrorCode::OVER_ENABLE_LIMTIT).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
@@ -1087,6 +1088,52 @@ napi_value GetGwpAsanGrayscaleState(napi_env env, napi_callback_info info)
     napi_value ret;
     napi_create_uint32(env, result, &ret);
     return ret;
+}
+
+static std::string GetJsRawHeapTrimLevelParam(napi_env env, napi_callback_info info, uint32_t &level)
+{
+    size_t argc = ENABLE_ARGS_ONE_PARAMS;
+    napi_value argv = nullptr;
+    napi_get_cb_info(env, info, &argc, &argv, nullptr, nullptr);
+    std::string paramErrorMessage;
+    if (argc != ENABLE_ARGS_ONE_PARAMS) {
+        paramErrorMessage = "Param type error, wrong number of parameters.";
+        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
+        return paramErrorMessage;
+    }
+    if (!MatchValueType(env, argv, napi_number)) {
+        paramErrorMessage = "Param type error, invalid num.";
+        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
+        return paramErrorMessage;
+    }
+    if (napi_get_value_uint32(env, argv, &level) != napi_ok ||
+        level > TRIM_LEVEL_MAX) {
+        paramErrorMessage = "Param type error, invalid an unsigned num or "
+            "exceeding the maximum value: " + std::to_string(TRIM_LEVEL_MAX);
+        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
+        return paramErrorMessage;
+    }
+    return paramErrorMessage;
+}
+
+napi_value SetJsRawHeapTrimLevel(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("setJsRawHeapTrimLevel");
+    uint32_t level = 0;
+    std::string paramErrorMessage = GetJsRawHeapTrimLevelParam(env, info, level);
+    if (!paramErrorMessage.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(),
+            paramErrorMessage.c_str());
+        return CreateUndefined(env);
+    }
+
+    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
+    if (engine) {
+        engine->SetRawHeapTrimLevel(level);
+        HILOG_DEBUG(LOG_CORE, "SetRawHeapTrimLevel to level: %{public}d success", level);
+    }
+    return CreateUndefined(env);
 }
 
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
@@ -1127,6 +1174,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("enableGwpAsanGrayscale", EnableGwpAsanGrayscale),
         DECLARE_NAPI_FUNCTION("disableGwpAsanGrayscale", DisableGwpAsanGrayscale),
         DECLARE_NAPI_FUNCTION("getGwpAsanGrayscaleState", GetGwpAsanGrayscaleState),
+        DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

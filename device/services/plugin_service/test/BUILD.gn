@@ -36,6 +36,7 @@ ohos_unittest("plugin_service_ut") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
+    "abseil-cpp:absl_cord",
     "abseil-cpp:absl_log",
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
@@ -64,6 +65,7 @@ ohos_unittest("plugin_service_module_test") {
     "-Dprotected=public",  #allow test code access private members
   ]
   external_deps = [
+    "abseil-cpp:absl_cord",
     "abseil-cpp:absl_log",
     "grpc:gpr",
     "hilog:libhilog_base",

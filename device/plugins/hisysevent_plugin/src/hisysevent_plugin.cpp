@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include "utf8_validity.h"
 
 namespace {
 using namespace OHOS::Developtools::Profiler;
@@ -215,8 +216,7 @@ inline bool HisyseventPlugin::ParseSyseventLineInfo(const char* data, size_t len
 {
     CHECK_TRUE(data != nullptr && len >= MIN_STRING_LEN, false, "NOTE %s: param invalid", __func__);
     size_t dataLen = strlen(data) > 1 ? strlen(data) - 1 : 0;
-    std::string syseventInfo = std::string(data, dataLen);
-    if (COMMON::IsValidUTF8(syseventInfo)) {
+    if (utf8_range::IsStructurallyValid({data, dataLen})) {
         auto* info = hisyseventInfoProto->add_info();
         info->set_id(id_);
         size_t len = strlen(data) > 1 ? strlen(data) - 1 : 0;

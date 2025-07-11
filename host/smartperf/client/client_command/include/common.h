@@ -132,6 +132,7 @@ enum class CommandType {
     CT_GE,
     CT_CI,
     CT_FC,
+    CT_HCI,
 };
 enum class CommandHelp {
     HELP,
@@ -188,6 +189,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-ge"), CommandType::CT_GE },
     { std::string("-ci"), CommandType::CT_CI },
     { std::string("-fc"), CommandType::CT_FC },
+    { std::string("-HCI"), CommandType::CT_HCI },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -220,6 +222,9 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_LF, std::string("-lockfreq") },
     { CommandType::CT_AS, std::string("-aischedule") },
     { CommandType::CT_GE, std::string("-ge") },
+    { CommandType::CT_CI, std::string("-ci") },
+    { CommandType::CT_FC, std::string("-fc") },
+    { CommandType::CT_HCI, std::string("-HCI") },
 };
 
 
@@ -311,14 +316,14 @@ enum class DeviceCmd {
     FULL_NAME,
 };
 const std::unordered_map<DeviceCmd, std::string> DEVICE_CMD_MAP = {
-    { DeviceCmd::SN, std::string("param get ohos.boot.sn") },
-    { DeviceCmd::DEVICET_NAME, std::string("param get ohos.boot.hardware") },
-    { DeviceCmd::BRAND, std::string("param get const.product.brand") },
-    { DeviceCmd::VERSION, std::string("param get const.product.software.version") },
-    { DeviceCmd::ABILIST, std::string("param get const.product.cpu.abilist") },
-    { DeviceCmd::NAME, std::string("param get const.product.name") },
-    { DeviceCmd::MODEL, std::string("param get const.product.model") },
-    { DeviceCmd::FULL_NAME, std::string("param get const.ohos.fullname") },
+    { DeviceCmd::SN, std::string("ohos.boot.sn") },
+    { DeviceCmd::DEVICET_NAME, std::string("ohos.boot.hardware") },
+    { DeviceCmd::BRAND, std::string("const.product.brand") },
+    { DeviceCmd::VERSION, std::string("const.product.software.version") },
+    { DeviceCmd::ABILIST, std::string("const.product.cpu.abilist") },
+    { DeviceCmd::NAME, std::string("const.product.name") },
+    { DeviceCmd::MODEL, std::string("const.product.model") },
+    { DeviceCmd::FULL_NAME, std::string("const.ohos.fullname") },
 };
 
 enum class HidumperCmd {
@@ -330,6 +335,7 @@ enum class HidumperCmd {
     DUMPER_A_A,
     DUMPER_NAV,
     DUMPER_MEM,
+    DUMPER_RS_TREE,
 };
 const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_DUBAI_B, std::string("hidumper -s 1213 -a '-b'") },
@@ -341,6 +347,7 @@ const std::unordered_map<HidumperCmd, std::string> HIDUMPER_CMD_MAP = {
     { HidumperCmd::DUMPER_A_A, std::string("hidumper -s WindowManagerService -a '-a'") },
     { HidumperCmd::DUMPER_NAV, std::string("hidumper -s WindowManagerService -a '-w ") },
     { HidumperCmd::DUMPER_MEM, std::string("hidumper --mem ") },
+    { HidumperCmd::DUMPER_RS_TREE, std::string("hidumper -s 10 -a RSTree | grep SURFACE_NODE") },
 };
 
 enum class HisyseventCmd {

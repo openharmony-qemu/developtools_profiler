@@ -31,17 +31,18 @@ public:
     ~UnixSocketServer();
 
     int socketHandle_;
-    bool StartServer(const std::string& addrname, ServiceEntry& p);
+    bool StartServer(const std::string& addrname, ServiceEntry& p, void (*callback)(int) = nullptr);
     void RemoveContext(int fd);
     std::string sAddrName_;
     // private:
     ServiceEntry* serviceEntry_;
 
 private:
-    void UnixSocketAccept();
+    void UnixSocketAccept(void (*callback)(int) = nullptr);
     std::map<int, std::shared_ptr<ClientConnection>> socketClients_;
     std::thread acceptThread_;
     std::mutex mtx_;
+    int epfd_ = -1;
 };
 
 #endif

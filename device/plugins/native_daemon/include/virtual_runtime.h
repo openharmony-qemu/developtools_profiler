@@ -81,7 +81,7 @@ public:
                      std::vector<CallFrame>& callFrames,
                      size_t maxStackLevel);
     bool GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
-                       bool onlyjs = false);
+                       SymbolType type = SymbolType::NATIVE_SYMBOL);
     void ClearMaps();
     void FillMapsCache(std::string& currentFileName, std::shared_ptr<DfxMap> mapItem);
     void HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid);
@@ -205,6 +205,7 @@ private:
     std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
     std::unordered_map<std::string_view, uint32_t> jsUrlMap_; // Key is js url , value is filePathId
+    std::mutex mtx_;
 };
 } // namespace NativeDaemon
 } // namespace Developtools

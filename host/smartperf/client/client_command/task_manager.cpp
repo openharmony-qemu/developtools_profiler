@@ -33,16 +33,17 @@
 #include "include/common.h"
 #include "include/FPS.h"
 #include "include/sp_task.h"
-#include "include/profiler_fps.h"
 #include "include/CPU.h"
 #include "include/navigation.h"
 #include "include/AI_schedule.h"
 #include "include/Threads.h"
 #include "include/FileDescriptor.h"
 #include "include/GpuCounter.h"
+#include "include/hiperf.h"
 #include "Capture.h"
 #include <sys/syscall.h>
 #include <filesystem>
+#include "include/sdk_data_recv.h"
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -77,12 +78,6 @@ TaskManager::TaskManager(bool isIPC)
     if (isIPC) {
         Capture::GetInstance().SocketMessage();
     }
-}
-
-TaskManager::~TaskManager()
-{
-    Stop();
-    dataFile_.close();
 }
 
 void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
@@ -151,6 +146,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
             }
             case CommandType::CT_GC: {
                 GpuCounterProcess(val);
+                [[fallthrough]];
             }
             default:
                 break;
@@ -182,6 +178,7 @@ void TaskManager::AddTask(SpProfiler* task, bool priority)
     if (task == nullptr) {
         return;
     }
+    LOGD("Start the collection in the start/stop mode");
     priority ? priorityTask_.emplace_back(task) : normalTask_.emplace_back(task);
 }
 
@@ -246,7 +243,8 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
         return;
     }
 
-    if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE)) {
+    if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE) &&
+        !(SpProfilerFactory::editorFlag)) {
         std::unique_lock<std::mutex> lock(mtx_);
         if (savingFile_) {
             LOGD("Saving file");
@@ -295,7 +293,7 @@ void TaskManager::Start(bool record)
             }
 
             for (auto& item : priorityTask_) {
-                currDatas.merge(TaskFun(item, dataIndex_, recordData));
+                currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
             }
 
             std::vector<std::future<std::map<std::string, std::string>>> result;
@@ -334,7 +332,6 @@ void TaskManager::WriteToCSV()
         LOGD("datas is empty or saveFlag: %d", saveFlag_);
         return;
     }
-
     if (!dataFile_.is_open()) {
         char filePath[PATH_MAX] = {0};
         if (realpath(fileName_.c_str(), filePath) == nullptr) {
@@ -344,23 +341,14 @@ void TaskManager::WriteToCSV()
             }
             LOGE("The file %s does not exist, will create", fileName_.c_str());
         }
-        dataFile_.open(filePath, std::ios::out | std::ios::trunc);
+        dataFile_.open(filePath, std::ios::out | std::ios::app);
         if (!dataFile_.is_open()) {
             LOGE("The file open fail");
             return;
         }
-        for (const auto& [id, m] : datas_) {
-            for (const auto& [k, _] : m) {
-                titles_.insert(k);
-            }
-        }
-    
-        for (const auto& field : titles_) {
-            dataFile_ << field << ",";
-        }
-        dataFile_ << "\n";
+        LOGD("The file will write data size = (%u)", datas_.size());
+        SetFileTitle();
     }
-
     for (auto& [_, v] : datas_) {
         for (auto& item : titles_) {
             auto it = v.find(item);
@@ -371,11 +359,27 @@ void TaskManager::WriteToCSV()
         }
         dataFile_ << "\n";
     }
-    dataFile_.flush();
+    dataFile_.close();
 
     if (!running_) {
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
     }
+}
+
+void TaskManager::SetFileTitle()
+{
+    if (firstSetTitle_) {
+        for (const auto& [id, m] : datas_) {
+            for (const auto& [k, _] : m) {
+                titles_.insert(k);
+            }
+        }
+        for (const auto& field : titles_) {
+            dataFile_ << field << ",";
+        }
+        dataFile_ << "\n";
+    }
+    firstSetTitle_ = false;
 }
 
 void TaskManager::Stop(bool pause)
@@ -383,12 +387,21 @@ void TaskManager::Stop(bool pause)
     isPause_ = pause;
     running_ = false;
     if (mainLoop_.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            running_ = false;
+        }
         mainLoop_.join();
     }
     if (scheduleSaveDataTh_.joinable()) {
+        {
+            std::lock_guard<std::mutex> lock(mtx_);
+            running_ = false;
+        }
         scheduleSaveDataTh_.join();
     }
     if (!pause) {
+        LOGD("Start/Stop Collection End");
         threadPool_.Stop();
     } else {
         ScheduleSaveData(true);
@@ -421,13 +434,24 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     }
 
     if (type == CommandType::CT_PID) {
-        processIds_ = std::get<int32_t>(value);
+        processIds_ = std::to_string(std::get<int32_t>(value));
+        std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
+        FILE *fd = popen(getProcPkg.c_str(), "r");
+        if (fd == nullptr) {
+            return;
+        }
+        char buf[1024] = {'\0'};
+        while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
+            processName_ = buf;
+        }
+        if (pclose(fd) == -1) {
+            LOGE("Error: Failed to close file");
+            return;
+        }
     }
 
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
-    ProfilerFPS::GetInstance().SetProcessId(processIds_);
-    ProfilerFPS::GetInstance().SetPackageName(processName_);
     RAM::GetInstance().SetProcessId(processIds_);
     RAM::GetInstance().SetPackageName(processName_);
     CPU::GetInstance().SetProcessId(processIds_);
@@ -438,6 +462,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     Threads::GetInstance().SetPackageName(processName_);
     FileDescriptor::GetInstance().SetProcessId(processIds_);
     FileDescriptor::GetInstance().SetPackageName(processName_);
+    Hiperf::GetInstance().SetProcessId(processIds_);
 }
 
 void TaskManager::RegisterThreadLocal(ThreadLocal* local)
@@ -572,7 +597,6 @@ void TaskManager::SetRecordState(bool record)
         if (scheduleSaveDataTh_.joinable()) {
             scheduleSaveDataTh_.join();
         }
-        dataFile_.close();
     }
 }
 
@@ -593,6 +617,30 @@ void TaskManager::DeleteTask(SpProfiler* task)
             priorityTask_.erase(iter);
             return;
         }
+    }
+}
+
+void TaskManager::InitDataCsv()
+{
+    if (!SPUtils::FileAccess(fileName_)) {
+        std::ofstream file(fileName_);
+        if (file) {
+            std::string chmodCmd = "chmod 777 " + fileName_;
+            std::string cmdResult;
+            SPUtils::LoadCmd(chmodCmd, cmdResult);
+            file.close();
+        } else {
+            LOGE("Failed to creat file");
+            return;
+        }
+    } else {
+        std::ofstream file(fileName_, std::ios::trunc);
+        if (!file) {
+            LOGE("Unable to open file");
+            return;
+        }
+        file.close();
+        LOGD("CreatPath already exists: %s", fileName_.c_str());
     }
 }
 }

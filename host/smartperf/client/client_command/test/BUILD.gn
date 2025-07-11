@@ -45,13 +45,13 @@ ohos_unittest("sp_daemon_ut") {
     "../editor_command.cpp",
     "../effective.cpp",
     "../heartbeat.cpp",
+    "../hiperf.cpp",
     "../lock_frequency.cpp",
     "../navigation.cpp",
     "../parse_click_complete_trace.cpp",
     "../parse_click_response_trace.cpp",
     "../parse_radar.cpp",
     "../parse_slide_fps_trace.cpp",
-    "../profiler_fps.cpp",
     "../sdk_data_recv.cpp",
     "../service_plugin.cpp",
     "../sp_log.cpp",
@@ -74,7 +74,6 @@ ohos_unittest("sp_daemon_ut") {
     "unittest/parse_radar_test.cpp",
     "unittest/parse_slide_fps_trace_test.cpp",
     "unittest/power_test.cpp",
-    "unittest/profiler_fps_test.cpp",
     "unittest/ram_test.cpp",
     "unittest/sdk_data_recv_test.cpp",
     "unittest/smartperf_main_test.cpp",
@@ -88,12 +87,9 @@ ohos_unittest("sp_daemon_ut") {
   ]
   include_dirs = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command/include",
-    "//third_party/googletest/googletest/include/gtest",
   ]
   deps = [
     "${OHOS_PROFILER_DIR}/host/smartperf/client/client_command:SP_daemon",
-    "//third_party/googletest:gtest",
-    "//third_party/libpng:libpng",
   ]
   external_deps = [
     "ability_base:want",
@@ -107,6 +103,7 @@ ohos_unittest("sp_daemon_ut") {
     "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "libpng:libpng",
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",

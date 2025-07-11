@@ -22,9 +22,6 @@ StackDataRepeater::StackDataRepeater(size_t maxSize)
     maxSize_ = maxSize;
     closed_ = false;
     reducedStackCount_ = 0;
-    for (int index = 0; index < CACHE_DATA_SIZE; ++index) {
-        rawDataCacheQueue_.emplace_back(std::make_shared<RawStack>());
-    }
 }
 
 StackDataRepeater::~StackDataRepeater()
@@ -32,27 +29,7 @@ StackDataRepeater::~StackDataRepeater()
     Close();
 }
 
-RawStackPtr StackDataRepeater::GetRawStack()
-{
-    std::unique_lock<std::mutex> lock(cacheMutex_);
-    if (!rawDataCacheQueue_.empty()) {
-        RawStackPtr rawStack = rawDataCacheQueue_.back();
-        rawDataCacheQueue_.pop_back();
-        return rawStack;
-    }
-    return std::make_shared<RawStack>();
-}
-
-void StackDataRepeater::ReturnRawStack(RawStackPtr rawStack)
-{
-    std::unique_lock<std::mutex> lock(cacheMutex_);
-    if (rawDataCacheQueue_.size() <= CACHE_DATA_SIZE) {
-        rawStack->Reset();
-        rawDataCacheQueue_.push_back(rawStack);
-    }
-}
-
-bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<RawStack>, CACHE_ARRAY_SIZE>& rawDataArray,
+bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE>& rawDataArray,
                                          uint32_t batchCount)
 {
     std::unique_lock<std::mutex> lock(mutex_);
@@ -99,12 +76,12 @@ void StackDataRepeater::Close()
     itemCondVar_.notify_all();
 }
 
-bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAccurately)
+bool StackDataRepeater::PutRawStack(const HookRecordPtr& hookData, bool isRecordAccurately)
 {
     bool needInsert = true;
     std::unique_lock<std::mutex> lock(mutex_);
 
-    if ((rawData == nullptr) && (rawDataQueue_.size() > 0)) {
+    if ((hookData == nullptr) && (rawDataQueue_.size() > 0)) {
         PROFILER_LOG_INFO(LOG_CORE, "no need put nullptr if queue has data, rawDataQueue_.size() = %zu",
                           rawDataQueue_.size());
         return true;
@@ -116,24 +93,24 @@ bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAcc
         return false;
     }
 
-    if (__builtin_expect((rawData != nullptr) && !isRecordAccurately, true)) {
-        if (rawData->stackConext->type == FREE_MSG) {
-            auto temp = mallocMap_.find(rawData->stackConext->addr);
+    if (__builtin_expect((hookData != nullptr) && !isRecordAccurately, true)) {
+        if (hookData->GetType() == FREE_MSG || hookData->GetType() == FREE_MSG_SIMP) {
+            auto temp = mallocMap_.find(hookData->GetAddr());
             // true  : pair of malloc and free matched, both malloc and free will be ignored
             // false : can not match, send free's data anyway
             if (temp != mallocMap_.end()) {
-                temp->second->reportFlag = false; // will be ignore later
-                mallocMap_.erase(rawData->stackConext->addr);
+                temp->second->GetRawStack()->reportFlag = false; // will be ignore later
+                mallocMap_.erase(hookData->GetAddr());
                 needInsert = false;
             }
-        } else if (rawData->stackConext->type == MALLOC_MSG) {
-            mallocMap_.insert(std::pair<void*, std::shared_ptr<RawStack>>(rawData->stackConext->addr, rawData));
+        } else if (hookData->GetType() == MALLOC_MSG) {
+            mallocMap_.insert(std::pair<uint64_t, std::shared_ptr<HookRecord>>(hookData->GetAddr(), hookData));
         }
         if (needInsert) {
-            rawDataQueue_.push_back(rawData);
+            rawDataQueue_.push_back(hookData);
         }
     } else {
-        rawDataQueue_.push_back(rawData);
+        rawDataQueue_.push_back(hookData);
     }
 
     lock.unlock();
@@ -141,8 +118,8 @@ bool StackDataRepeater::PutRawStack(const RawStackPtr& rawData, bool isRecordAcc
     return true;
 }
 
-RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
-                                           RawStackPtr batchRawStack[], uint32_t statInterval, bool& isTimeOut)
+HookRecordPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
+                                             HookRecordPtr batchRawStack[], uint32_t statInterval, bool& isTimeOut)
 {
     uint32_t rawDataQueueSize = 0;
     std::unique_lock<std::mutex> lock(mutex_);
@@ -163,18 +140,20 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
     if (closed_) {
         return nullptr;
     }
-    RawStackPtr result = nullptr;
+    HookRecordPtr hookData = nullptr;
+    RawStackPtr rawStack = nullptr;
     rawDataQueueSize = rawDataQueue_.size();
     int resultSize = rawDataQueueSize > batchCount ? batchCount : rawDataQueueSize;
     bool needReduceStack = rawDataQueueSize >= SPEED_UP_THRESHOLD;
     for (int i = 0; i < resultSize; i++) {
-        result = rawDataQueue_.front();
+        hookData = rawDataQueue_.front();
         rawDataQueue_.pop_front();
-        batchRawStack[i] = result;
-        if ((result != nullptr) && (result->stackConext != nullptr) && (result->stackConext->type == MALLOC_MSG)) {
-            mallocMap_.erase(result->stackConext->addr);
+        batchRawStack[i] = hookData;
+        rawStack = hookData->GetRawStack();
+        if ((hookData != nullptr) && (hookData->GetType() == MALLOC_MSG)) {
+            mallocMap_.erase(hookData->GetAddr());
             if (needReduceStack) {
-                result->reduceStackFlag = true;
+                rawStack->reduceStackFlag = true;
                 reducedStackCount_++;
             }
         }
@@ -182,5 +161,5 @@ RawStackPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId, u
 
     lock.unlock();
     slotCondVar_.notify_one();
-    return result;
+    return hookData;
 }

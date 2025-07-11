@@ -20,7 +20,8 @@
 #include <memory>
 #include <string>
 #include <vector>
-
+#include "hook_record_factory.h"
+#include "hook_record.h"
 #include "buffer_writer.h"
 #include "manager_interface.h"
 #include "epoll_event_poller.h"
@@ -62,15 +63,13 @@ public:
         ~HookManagerCtx() {}
         int32_t pid = -1;
         std::string processName;
-        std::string smbName;
-        std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = nullptr;
-        std::shared_ptr<EventNotifier> eventNotifier = nullptr;
-        std::unique_ptr<EpollEventPoller> eventPoller = nullptr;
+        std::vector<std::shared_ptr<ShareMemoryBlock>> shareMemoryBlockList;
+        std::vector<std::shared_ptr<EventNotifier>> eventNotifierList;
+        std::vector<std::shared_ptr<EpollEventPoller>> eventPollerList;
+        std::vector<std::string> smbNames;
         std::shared_ptr<StackDataRepeater> stackData = nullptr;
         std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
         bool isRecordAccurately = false;
-        std::array<std::shared_ptr<StackDataRepeater::RawStack>, CACHE_ARRAY_SIZE> rawDataArray = {};
-        uint32_t rawStackCount = 0;
         void FlushStackArray();
     };
     HookManager() = default;
@@ -98,14 +97,14 @@ public:
     void SethookStandalone(bool);
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
-    void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx);
+    void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void WriteHookConfig();
     std::string GetCmdArgs(NativeHookConfig traceConfig);
-    std::pair<int, int> GetFds(int32_t pid, const std::string& name);
+    std::vector<int> GetFds(int32_t pid, const std::string& name);
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
         isSaService_ = saFlag;
@@ -136,7 +135,7 @@ public:
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
-                            std::shared_ptr<StackDataRepeater::RawStack>& rawStack);
+                            std::shared_ptr<HookRecord>& hookRecord);
     std::string simplifiedNmd_;
     volatile bool nmdComplete_ = false;
 
@@ -172,6 +171,7 @@ private:
     uint32_t largestSize_ = 0;
     uint32_t secondLargestSize_ = 0;
     uint32_t maxGrowthSize_ = 0;
+    std::shared_ptr<HookRecordFactory> factory_{nullptr};
 };
 }
 #endif // AGENT_MANAGER_H

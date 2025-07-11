@@ -48,6 +48,7 @@ ohos_unittest("hiprofiler_plugins_ut") {
   }
   configs = [ ":cflags_config" ]
   external_deps = [
+    "abseil-cpp:absl_cord",
     "abseil-cpp:absl_log",
     "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",

@@ -435,7 +435,6 @@ template <typename T> void sched_wakeup_func(T& msg, uint8_t data[], size_t size
     msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
     msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_prio(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_success(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_target_cpu(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_wakeup,
@@ -456,7 +455,6 @@ template <typename T> void sched_wakeup_new_func(T& msg, uint8_t data[], size_t 
     msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     int16_t prio = FtraceFieldParser::ParseIntField<int16_t>(format.fields, i++, data, size);
     msg->set_prio(static_cast<int32_t>(prio));
-    msg->set_success(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     int8_t targetCpu = FtraceFieldParser::ParseIntField<int8_t>(format.fields, i++, data, size);
     msg->set_target_cpu(static_cast<int32_t>(targetCpu));
 }
@@ -477,7 +475,6 @@ template <typename T> void sched_waking_func(T& msg, uint8_t data[], size_t size
     msg->set_comm(FtraceFieldParser::ParseStrField(format.fields, i++, data, size));
     msg->set_pid(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_prio(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
-    msg->set_success(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
     msg->set_target_cpu(FtraceFieldParser::ParseIntField<int32_t>(format.fields, i++, data, size));
 }
 REGISTER_FTRACE_EVENT_PARSE_FUNCTION(sched_waking,

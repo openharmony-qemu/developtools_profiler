@@ -15,7 +15,6 @@
 #ifndef SP_THREAD_SOCKET_H
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
-#include "profiler_fps.h"
 #include "sp_task.h"
 #include <thread>
 namespace OHOS {
@@ -86,7 +85,6 @@ public:
     int FileSocketConnect();
     int SendFile(const std::string& filePath);
     void StartHapCollecting(SpServerSocket &spSocket);
-    void LowPowerFps(SpServerSocket &spSocket, std::map<std::string, std::string> data);
     void RemoveToken(std::string &recvMessage);
 
 private:

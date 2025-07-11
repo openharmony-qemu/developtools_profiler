@@ -23,12 +23,15 @@ struct FpsInfo {
     int fps;
     std::vector<long long> jitters;
     std::vector<long long> currTimeStamps;
+    std::vector<long long> currDumpTimeStamps;
     int curTime;
+    long long currTimeDiff;
     long long currTimeDump;
     void Clear()
     {
         fps = 0;
         curTime = 0;
+        currTimeDiff = 0;
         jitters.clear();
     }
     bool operator == (const FpsInfo &other) const
@@ -50,6 +53,7 @@ struct FpsInfo {
     {
         fps = 0;
         curTime = 0;
+        currTimeDiff = 0;
         currTimeDump = 0;
     }
 };
@@ -68,7 +72,7 @@ public:
     bool CalcFpsAndJitters(bool isBreak);
     long long CalculateJitter() const;
     FpsInfo fpsInfo;
-    FpsInfo fpsInfoMax;
+    FpsInfo fpsInfoData;
     FpsInfo prevResultFpsInfo;
     static FPS &GetInstance()
     {
@@ -85,13 +89,36 @@ public:
     std::string FindFpsRefreshrate();
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
     void CalcJitters();
-    static inline bool firstDump = false;
     static inline bool isGameApp = false;
+    static inline bool isNeedDump = false;
+    static inline bool isPreset = false;
+    static inline bool isLowCurFps = false;
+    static inline bool isHistoryHap = false;
     bool SetOtherDeviceFlag();
     bool hapLowFpsFlag = false;
     bool hapNeedCatonInfo = false;
     int catonNum = 0;
     void CalcFatalCaton(std::vector<long long>& jitters);
+    void GetGameScenStatus();
+    FpsInfo GetFpsInfoByDump(const std::string& name);
+    FpsInfo GetFpsInfoByRs(const std::string& name);
+    std::map<std::string, std::string> GetFpsAndJitters(FpsInfo &fpsInfoResult,
+        std::map<std::string, std::string> &result);
+    void SetTraceCatch();
+    std::string GetGameLayer();
+    std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, const std::string& line, size_t &endPos);
+    std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
+        const std::string& line, size_t &endPos);
+    FpsInfo GetAppFps(std::string &uniteLayer);
+
+    // sections
+    void GetOhFps(std::vector<std::string>& v);
+    void GetTimeDiff();
+    void GetResultFPS(int sectionsNum);
+    void GetSectionsFps(FpsInfo &fpsInfoResult, int nums) const;
+    void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
+    void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
+    void GetFPS(std::vector<std::string>& v);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -115,6 +142,26 @@ private:
     std::string processId = "";
     std::string gameLayerName;
     bool isOtherDevice = false;
+    int inGameSceneNum = 0;
+    int eleven = 11;
+
+    int num = 1;
+    int number = 2;
+    bool ohFlag = false;
+    int four = 4;
+    int ten = 10;
+    long long lastCurrTime = 0;
+    long long msClear = 1000000000;
+    long oneSec = 1000000;
+    long long oneThousand = 1000;
+    long long currRealTime = 0;
+    unsigned long sleepTime = 950000;
+    unsigned long sleepNowTime = 10000;
+
+    bool isSections = false;
+    int isCatchTrace = 0;
+    std::string nodeIdStr = "";
+    int six = 6;
 };
 }
 }

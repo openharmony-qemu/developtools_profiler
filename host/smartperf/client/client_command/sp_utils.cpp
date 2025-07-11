@@ -39,9 +39,9 @@
 #include "include/GPU.h"
 #include "include/Power.h"
 #include "include/DDR.h"
-#include "include/profiler_fps.h"
 #include "include/FileDescriptor.h"
 #include "include/Threads.h"
+#include "parameters.h"
 
 #ifdef ARKTEST_ENABLE
 #include "test_server_client.h"
@@ -58,7 +58,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
-const std::string SMART_PERF_VERSION = "1.0.8";
+const std::string SMART_PERF_VERSION = "1.0.9";
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -337,12 +337,6 @@ std::string SPUtils::GetRadarComplete()
     LoadCmd(cmd, curRadar);
     return curRadar;
 }
-static std::string GetSplitOne(std::string cmd)
-{
-    std::string result;
-    SPUtils::LoadCmd(cmd, result);
-    return result;
-}
 
 std::string SPUtils::GetDeviceInfoMap()
 {
@@ -367,15 +361,15 @@ std::string SPUtils::GetDeviceInfoMap()
 std::map<std::string, std::string> SPUtils::GetDeviceInfo()
 {
     std::map<std::string, std::string> resultMap;
-    resultMap["sn"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::SN));
-    resultMap["deviceTypeName"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME));
-    resultMap["brand"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    resultMap["sn"] = OHOS::system::GetParameter((DEVICE_CMD_MAP.at(DeviceCmd::SN)), "Unknown");
+    resultMap["deviceTypeName"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME), "Unknown");
+    resultMap["brand"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::BRAND), "Unknown");
     resultMap["board"] = "hw";
-    resultMap["version"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::VERSION));
-    resultMap["abilist"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    resultMap["name"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::NAME));
-    resultMap["model"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::MODEL));
-    resultMap["fullname"] = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME));
+    resultMap["version"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::VERSION), "Unknown");
+    resultMap["abilist"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST), "Unknown");
+    resultMap["name"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::NAME), "Unknown");
+    resultMap["model"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::MODEL), "Unknown");
+    resultMap["fullname"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::FULL_NAME), "Unknown");
     resultMap["daemonPerfVersion"] = SMART_PERF_VERSION;
     return resultMap;
 }
@@ -765,8 +759,8 @@ bool SPUtils::IsFindForeGround(const std::string &line)
 
 bool SPUtils::IsFindAbilist()
 {
-    std::string abilist = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST));
-    std::string brand = GetSplitOne(DEVICE_CMD_MAP.at(DeviceCmd::BRAND));
+    std::string abilist = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST), "Unknown");
+    std::string brand = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::BRAND), "Unknown");
     if (abilist.find("arm") != std::string::npos && brand.find("HUA") != std::string::npos) {
         return true;
     } else if (abilist.find("arm") != std::string::npos && brand.find("HUA") == std::string::npos) {
@@ -782,7 +776,6 @@ void SPUtils::SetRkFlag()
         OHOS::SmartPerf::FPS::GetInstance().SetRkFlag();
         OHOS::SmartPerf::Power::GetInstance().SetRkFlag();
         OHOS::SmartPerf::GPU::GetInstance().SetRkFlag();
-        OHOS::SmartPerf::ProfilerFPS::GetInstance().SetRkFlag();
         OHOS::SmartPerf::DDR::GetInstance().SetRkFlag();
     }
 }
@@ -817,7 +810,7 @@ bool SPUtils::GetIsGameApp(const std::string& pkg)
     LOGD("SPUtils::GetIsGameApp cmd (%s)", cmd.c_str());
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
-        LOGD("ProfilerFPS::fd is empty");
+        LOGD("FPS::fd is empty");
         return false;
     }
     char buf[1024] = {'\0'};
@@ -827,7 +820,7 @@ bool SPUtils::GetIsGameApp(const std::string& pkg)
             continue;
         }
         if (line.find("bundleName unknown") != std::string::npos) {
-            isGame = false;
+            isGame = IsFindDHGame(pkg);
             break;
         } else {
             std::vector<std::string> params;
@@ -938,6 +931,37 @@ size_t SPUtils::GetFileSize(std::string filePath)
         return 0;
     }
     return static_cast<size_t>(statbuf.st_size);
+}
+
+bool SPUtils::IsFindDHGame(const std::string &pkg)
+{
+    bool isdhGame = false;
+    const std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    char buf[1024] = {'\0'};
+    FILE *fd = popen(dumperSurface.c_str(), "r");
+    if (fd == nullptr) {
+        return isdhGame;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line = buf;
+        if (line.find(pkg) != std::string::npos || line.find("ShellAssistantAnco") != std::string::npos) {
+            isdhGame = true;
+            break;
+        }
+    }
+    pclose(fd);
+    return isdhGame;
+}
+
+std::string SPUtils::GetSurface()
+{
+    std::string cmdResult;
+    std::string dumperSurface = HIDUMPER_CMD_MAP.at(HidumperCmd::DUMPER_SURFACE);
+    LoadCmd(dumperSurface, cmdResult);
+    size_t positionLeft = cmdResult.find("[");
+    size_t positionRight = cmdResult.find("]");
+    size_t positionNum = 1;
+    return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
 }
 }
 }

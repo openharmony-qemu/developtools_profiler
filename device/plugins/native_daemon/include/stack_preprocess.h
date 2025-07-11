@@ -22,7 +22,9 @@
 #include <algorithm>
 #include <mutex>
 #include <variant>
-
+#include <numeric>
+#include "hook_record_factory.h"
+#include "hook_record.h"
 #include "logging.h"
 #include "nocopyable.h"
 #include "stack_data_repeater.h"
@@ -34,27 +36,43 @@
 #include "native_hook_result.pbencoder.h"
 #include "safe_map.h"
 #include "schedule_task_manager.h"
+#include "common.h"
+#include "stack_builder.h"
 
+namespace OHOS::Developtools::NativeDaemon {
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
+
+struct RecordStatistic {
+    uint32_t pid {0};
+    uint32_t callstackId {0};
+    uint32_t tagId {0};
+    RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
+    uint64_t applyCount {0};
+    uint64_t releaseCount {0};
+    uint64_t applySize {0};
+    uint64_t releaseSize {0};
+};
+
+struct CallStackHash {
+    uint64_t operator()(const std::vector<uint64_t>& stack) const
+    {
+        return std::accumulate(stack.begin(), stack.end(), 0);
+    }
+};
+
+
 class StackPreprocess : public std::enable_shared_from_this<StackPreprocess> {
 public:
-    struct RecordStatistic {
-        uint32_t pid {0};
-        uint32_t callstackId {0};
-        uint32_t tagId {0};
-        RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
-        uint64_t applyCount {0};
-        uint64_t releaseCount {0};
-        uint64_t applySize {0};
-        uint64_t releaseSize {0};
-    };
-
     explicit StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
         clockid_t pluginDataClockId, FILE* fpHookData = nullptr, bool isHookStandalone = false,
         bool isSaService = false, bool isProtobufSerialize = true);
     ~StackPreprocess();
     void SetWriter(const std::shared_ptr<Writer>& writer);
     void SetWriter(const WriterStructPtr& writer);
+    void SetFactory(std::shared_ptr<HookRecordFactory> factory)
+    {
+        factory_ = factory;
+    }
     bool StartTakeResults();
     bool StopTakeResults();
     void FinishTraceFile();
@@ -123,10 +141,10 @@ private:
 private:
     void TakeResults();
     template <typename T>
-    void SetHookData(RawStackPtr rawStack, T& stackData);
+    void SetHookData(HookRecordPtr hookRecord, T& stackData);
     template <typename T>
-    void SetHookData(RawStackPtr rawStack, std::vector<CallFrame>& callFrames, T& stackData);
-    void WriteFrames(RawStackPtr RawStack, const std::vector<CallFrame>& callFrames);
+    void SetHookData(HookRecordPtr hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
+    void WriteFrames(HookRecordPtr hookRecord, const std::vector<CallFrame>& callFrames);
     template <typename T>
     void SetFrameInfo(T& frame, CallFrame& callFrame);
     template <typename T>
@@ -152,7 +170,7 @@ private:
     template <typename T>
     uint32_t SetCallStackMap(T& stackData);
     template <typename T>
-    uint32_t GetCallStackId(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
+    uint32_t GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     uint32_t FindCallStackId(std::vector<uint64_t>& callStack);
     template <typename T>
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
@@ -161,26 +179,22 @@ private:
     void SetEventFrame(const ReportEventBaseData& rawStack, T* event, uint32_t stackMapId,
                        const std::string& type = "");
     template <typename T>
-    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames, T& stackData);
+    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     template <typename T>
-    void SetAllocStatisticsFrame(const RawStackPtr& rawStack, T& stackData);
+    void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData);
     template <typename T>
-    void SetApplyAndReleaseMatchFrame(RawStackPtr rawStack, std::vector<CallFrame>& callFrames, T& stackData);
+    void SetApplyAndReleaseMatchFrame(HookRecordPtr hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     void IntervalFlushRecordStatistics();
     void IntervalFlushApplyAndReleaseMatchData();
-    bool HandleNoStackEvent(RawStackPtr& rawStack);
+    bool HandleNoStackEvent(HookRecordPtr& hookRecord);
     bool SetFreeStatisticsData(uint64_t addr);
-    void SetAllocStatisticsData(const RawStackPtr& rawStack, size_t stackId, bool isExists = false);
+    void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
-    size_t ComputeAlign(size_t size);
     void ReportOfflineSymbolizationData();
 
     RandomWriteCtx* StartReport();
     int32_t FinishReport();
-    void FillFpNativeIp(RawStackPtr& rawData);
-    void FillFpJsData(RawStackPtr& rawData);
-    void FillDwarfErrorStack();
     void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
@@ -198,17 +212,13 @@ private:
     uint32_t eventCnts_ = 0;
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
-    std::vector<CallFrame> callFrames_;
-    std::vector<uint64_t> callStack_;
     // Key is callStack_, value is call stack id
-    std::map<std::vector<uint64_t>, uint32_t> callStackMap_;
+    std::unordered_map<std::vector<uint64_t>, uint32_t, CallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
     // Key is call stack id, value is recordstatistic data pointer
     std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_;
-    // Key is alloc or mmap address, value first is mallocsize, second is recordstatistic data pointer
-    std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> allocAddrMap_;
     // Key is alloc or mmap address, value is ReportEventBaseData list iterator
     std::unordered_map<uint64_t, std::list<ReportEventBaseData>::iterator> applyAndReleaseMatchIntervallMap_;
     std::list<ReportEventBaseData> applyAndReleaseMatchPeriodListData_;
@@ -222,6 +232,9 @@ private:
     bool isHookStandaloneSerialize_ {false};
     int32_t pid_ {-1};
     std::mutex mtx_;
+    std::mutex memTagMtx_;
+    std::mutex jsMapMtx_;
+    COMMON::SpinLock spinLock_;
     bool isSaService_{false};
     std::mutex allocAddrMapMtx_;
     bool isProtobufSerialize_{true};
@@ -236,11 +249,13 @@ private:
     std::set<std::string> jsStackSet_ = {};
     bool unwindFailReport_ = true;
     std::vector<std::string> prctlPeriodTags_; // applyAndReleaseMatchInterval mode used
-    std::vector<std::string> fpJsCallStacks_;
     std::atomic<uint64_t> napiIndex_{1};
+    std::atomic<int> endMsgCount_ {0};
     ScheduleTaskManager scheduleTaskManager_;
     uint32_t nmdFd_ = 0;
     uint32_t dataFlushSize_ = 0;
+    std::shared_ptr<HookRecordFactory> factory_{nullptr};
 };
+}
 
 #endif // STACK_PREPROCESS_H

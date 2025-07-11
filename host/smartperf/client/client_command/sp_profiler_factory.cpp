@@ -20,7 +20,6 @@
 #include "include/GetLog.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
-#include "include/profiler_fps.h"
 #include "include/RAM.h"
 #include "include/Network.h"
 #include "include/Power.h"
@@ -35,8 +34,10 @@
 #include "include/Threads.h"
 #include "include/GpuCounter.h"
 #include "effective.h"
-#include "cpu_info.h"
-#include "lock_frequency.h"
+#include "include/cpu_info.h"
+#include "include/lock_frequency.h"
+#include "include/hiperf.h"
+#include "include/sdk_data_recv.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -49,7 +50,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItem(MessageType messageType)
             break;
         case MessageType::GET_FPS_AND_JITTERS:
         case MessageType::GET_CUR_FPS:
-            profiler = &ProfilerFPS::GetInstance();
+            profiler = &FPS::GetInstance();
             break;
         case MessageType::GET_GPU_FREQ:
         case MessageType::GET_GPU_LOAD:
@@ -89,7 +90,7 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
             profiler = &Power::GetInstance();
             break;
         case MessageType::CATCH_TRACE_CONFIG:
-            ProfilerFPS::GetInstance().SetTraceCatch();
+            FPS::GetInstance().SetTraceCatch();
             break;
         case MessageType::GET_CAPTURE:
             Capture::GetInstance().SocketMessage();
@@ -109,7 +110,6 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
     FPS::GetInstance().SetPackageName(pkg);
-    ProfilerFPS::GetInstance().SetPackageName(pkg);
     RAM::GetInstance().SetPackageName(pkg);
     CPU::GetInstance().SetPackageName(pkg);
     Threads::GetInstance().SetPackageName(pkg);
@@ -120,7 +120,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS::GetInstance().SetProcessId(pid);
-    ProfilerFPS::GetInstance().SetProcessId(pid);
+    Hiperf::GetInstance().SetProcessId(pid);
     RAM::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     CPU::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     Navigation::GetInstance().SetProcessId(pid);
@@ -128,11 +128,6 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
     Threads::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     FileDescriptor::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     CPUInfo::GetInstance().SetPids(pids.empty() ? pid : pids);
-}
-
-void SpProfilerFactory::SetProfilerGameLayer(const std::string &isGameView)
-{
-    ProfilerFPS::GetInstance().SetGameLayer(isGameView);
 }
 
 void SpProfilerFactory::SetByTrace(const std::string& message)
@@ -205,7 +200,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &Navigation::GetInstance();
             break;
         case CommandType::CT_TTRACE:
-            ProfilerFPS::GetInstance().SetTraceCatch();
+            FPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_AS:
             profiler = &AISchedule::GetInstance();
@@ -258,6 +253,10 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         }
         case CommandType::CT_LF: {
             profiler = &LockFrequency::GetInstance();
+            break;
+        }
+        case CommandType::CT_HCI: {
+            profiler = &Hiperf::GetInstance();
             break;
         }
         default:

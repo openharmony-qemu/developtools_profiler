@@ -38,24 +38,54 @@ constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 100;
 constexpr int32_t NMD_WAIT_TIMES = 50;
+constexpr int VEC_SHIFT = 2;
+
+static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
+static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
+static std::mutex g_mtx;
+static ScheduleTaskManager g_scheduleTaskManager;
+static bool g_hasStartupMode{false};
+static int32_t g_taskNum{0};
+static std::shared_ptr<ServiceEntry> g_serviceEntry{nullptr};
+static int32_t g_delayedShutdownTimerFd{-1};
+static std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> g_nmdPidType;
+static std::unordered_map<pid_t, int> g_pidFds;
+static std::mutex g_pidFdMtx;
+static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
 {
     serviceName_ = "HookService";
-    serviceEntry_ = std::make_shared<ServiceEntry>();
-    if (!serviceEntry_->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH)) {
-        serviceEntry_ = nullptr;
+    g_serviceEntry = std::make_shared<ServiceEntry>();
+    if (!g_serviceEntry->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH,
+                                     reinterpret_cast<void (*)(int)>(&ClientDisconnectCallback))) {
+        g_serviceEntry = nullptr;
         PROFILER_LOG_ERROR(LOG_CORE, "Start IPC Service FAIL");
         return;
     }
-    serviceEntry_->RegisterService(*this);
+    g_serviceEntry->RegisterService(*this);
     DelayedShutdown(false);
 }
 
 NativeMemoryProfilerSaService::~NativeMemoryProfilerSaService()
 {
-    serviceEntry_ = nullptr;
+    g_serviceEntry = nullptr;
+}
+
+void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
+{
+    std::unique_lock<std::mutex> lock(g_pidFdMtx);
+    pid_t pidval = 0;
+    for (auto iter = g_pidFds.begin(); iter != g_pidFds.end(); ++iter) {
+        if (iter->second == socketFd) {
+            pidval = iter->first;
+            break;
+        }
+    }
+    PROFILER_LOG_ERROR(LOG_CORE, "ClientDisconnectCallback get pid: %d", static_cast<int>(pidval));
+    lock.unlock();
+    StopHook(static_cast<uint32_t>(pidval));
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -99,7 +129,7 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
 {
     if (config->printNmd_) {
         std::lock_guard<std::mutex> guard(nmdMtx_);
-        nmdPidType_[config->nmdPid_] = std::make_pair(0, config->nmdType_);
+        g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
         }
@@ -112,7 +142,7 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
 {
     if (config->printNmd_) {
         std::lock_guard<std::mutex> guard(nmdMtx_);
-        nmdPidType_[config->nmdPid_] = std::make_pair(0, config->nmdType_);
+        g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
         }
@@ -136,7 +166,7 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
 {
     if (config->printNmd_) {
         std::lock_guard<std::mutex> guard(nmdMtx_);
-        nmdPidType_[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
+        g_nmdPidType[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
         }
@@ -150,12 +180,12 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
 
 void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
 {
-    std::unique_lock<std::mutex> lock(pidFdMtx_);
-    if ((pidFds_.find(pid) != pidFds_.end()) && (pidFds_[pid] != 0)) {
-        int socketFd = pidFds_[pid];
-        pidFds_.erase(pid);
+    std::unique_lock<std::mutex> lock(g_pidFdMtx);
+    if ((g_pidFds.find(pid) != g_pidFds.end()) && (g_pidFds[pid] != 0)) {
+        int socketFd = g_pidFds[pid];
+        g_pidFds.erase(pid);
         lock.unlock();
-        serviceEntry_->RemoveContext(socketFd);
+        g_serviceEntry->RemoveContext(socketFd);
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::CloseSocketFd pid invalid");
     }
@@ -167,13 +197,13 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return;
     }
-    std::lock_guard<std::mutex> guard(mtx_);
+    std::lock_guard<std::mutex> guard(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
-        if (auto taskIter = pidCtx_.find(pid); taskIter != pidCtx_.end()) {
+        if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
             config = taskIter->second;
         }
-    } else if (auto taskIter = nameAndFilePathCtx_.find(name); taskIter != nameAndFilePathCtx_.end()) {
+    } else if (auto taskIter = g_nameAndFilePathCtx.find(name); taskIter != g_nameAndFilePathCtx.end()) {
         config = taskIter->second;
         pid = static_cast<pid_t>(config->hookMgr->GetPid());
     }
@@ -185,20 +215,20 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
     CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
-    nameAndFilePathCtx_.erase(config->processName);
-    nameAndFilePathCtx_.erase(config->filePath);
-    pidCtx_.erase(config->pid);
-    pidInfo_.erase(static_cast<pid_t>(pid));
-    if (nmdPidType_.find(config->pid) != nmdPidType_.end()) {
-        nmdPidType_.erase(config->pid);
+    g_nameAndFilePathCtx.erase(config->processName);
+    g_nameAndFilePathCtx.erase(config->filePath);
+    g_pidCtx.erase(config->pid);
+    g_pidInfo.erase(static_cast<pid_t>(pid));
+    if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
+        g_nmdPidType.erase(config->pid);
     }
     if (config->isStartupMode) {
-        hasStartupMode_ = false;
+        g_hasStartupMode = false;
     }
     if (config->fd > 0) {
         close(config->fd);
     }
-    if (--taskNum_ == 0) {
+    if (--g_taskNum == 0) {
         PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
         StringViewMemoryHold::GetInstance().Clear();
         DelayedShutdown(false);
@@ -242,7 +272,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      uint32_t fd, std::shared_ptr<HookManager>& hook,
                                                      std::string& args)
 {
-    std::lock_guard<std::mutex> guard(mtx_);
+    std::lock_guard<std::mutex> guard(g_mtx);
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
@@ -286,8 +316,8 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     }
     if (config->pid_ > 0) {
         std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
-        if (nmdPidType_.find(config->pid_) != nmdPidType_.end()) {
-            hook->SetNmdInfo(nmdPidType_[config->pid_]);
+        if (g_nmdPidType.find(config->pid_) != g_nmdPidType.end()) {
+            hook->SetNmdInfo(g_nmdPidType[config->pid_]);
         }
     }
     if (hook->CreatePluginSession() != RET_OK) {
@@ -298,9 +328,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     if (!config->printNmdOnly_) {
         hook->WriteHookConfig();
     }
-    hook->StartPluginSession(&pidInfo_);
+    hook->StartPluginSession(&g_pidInfo);
 
-    int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+    int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
         [this, config] { this->StopHook(config->pid_, config->processName_); },
         config->duration_ * TIME_BASE,
         true);
@@ -315,21 +345,21 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
                                      config->startupMode_, fd);
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create TaskConfig");
-    if (!hasStartupMode_ && config->startupMode_) {
-        hasStartupMode_ = true;
+    if (!g_hasStartupMode && config->startupMode_) {
+        g_hasStartupMode = true;
         startupModeProcessName_ = config->processName_;
     }
 
     if (configCtx->pid > 0) {
-        pidCtx_[configCtx->pid] = configCtx;
+        g_pidCtx[configCtx->pid] = configCtx;
     } else if (!configCtx->processName.empty()) {
-        nameAndFilePathCtx_[configCtx->processName] = configCtx;
+        g_nameAndFilePathCtx[configCtx->processName] = configCtx;
     }
 
     if (fd == 0) {
-        nameAndFilePathCtx_[configCtx->filePath] = configCtx;
+        g_nameAndFilePathCtx[configCtx->filePath] = configCtx;
     }
-    ++taskNum_;
+    ++g_taskNum;
     DelayedShutdown(true);
     COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_SUCC, "success");
     return RET_OK;
@@ -397,12 +427,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
 
 bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
-    if (taskNum_ + 1 > MAX_TASK_NUM) {
+    if (g_taskNum + 1 > MAX_TASK_NUM) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
         return false;
     }
 
-    if (hasStartupMode_ && config->startupMode_) {
+    if (g_hasStartupMode && config->startupMode_) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: tasks with an existing startup mode, name: %s",
             startupModeProcessName_.c_str());
         return false;
@@ -410,12 +440,12 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
 
     if (config->pid_ > 0) {
         config->processName_.clear();
-        if (pidCtx_.find(config->pid_) != pidCtx_.end()) {
+        if (g_pidCtx.find(config->pid_) != g_pidCtx.end()) {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
             return false;
         }
     } else if (!config->processName_.empty()) {
-        if (nameAndFilePathCtx_.find(config->processName_) != nameAndFilePathCtx_.end()) {
+        if (g_nameAndFilePathCtx.find(config->processName_) != g_nameAndFilePathCtx.end()) {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, process name: %s",
                               config->processName_.c_str());
             return false;
@@ -430,7 +460,7 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
     }
 
     if (!config->filePath_.empty()) {
-        if (nameAndFilePathCtx_.find(config->filePath_) != nameAndFilePathCtx_.end()) {
+        if (g_nameAndFilePathCtx.find(config->filePath_) != g_nameAndFilePathCtx.end()) {
             PROFILER_LOG_ERROR(LOG_CORE,
                                "NativeMemoryProfilerSaService: File %s is being used.", config->filePath_.c_str());
             return false;
@@ -444,18 +474,18 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
 
 void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std::string& name)
 {
-    std::lock_guard<std::mutex> guard(mtx_);
-    if (auto iter = pidCtx_.find(pid); iter != pidCtx_.end()) {
+    std::lock_guard<std::mutex> guard(g_mtx);
+    if (auto iter = g_pidCtx.find(pid); iter != g_pidCtx.end()) {
         iter->second->processName = name;
-        nameAndFilePathCtx_[name] = iter->second;
+        g_nameAndFilePathCtx[name] = iter->second;
         if (iter->second->isStartupMode) {
-            hasStartupMode_ = false;
+            g_hasStartupMode = false;
         }
-    } else if (auto it = nameAndFilePathCtx_.find(name); it != nameAndFilePathCtx_.end()) {
+    } else if (auto it = g_nameAndFilePathCtx.find(name); it != g_nameAndFilePathCtx.end()) {
         it->second->pid = pid;
-        pidCtx_[pid] = it->second;
+        g_pidCtx[pid] = it->second;
         if (it->second->isStartupMode) {
-            hasStartupMode_ = false;
+            g_hasStartupMode = false;
         }
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: fill TaskConfig context failed");
@@ -484,11 +514,11 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
     if (bundleName.substr(0, 2) == "./") { // 2: size, Command line programs will be prefixed with "./"
         bundleName = bundleName.substr(2); // 2: point
     }
-    bool startupMode = hasStartupMode_;
+    bool startupMode = g_hasStartupMode;
     FillTaskConfigContext(peerConfig, bundleName); // Save the relevant context for subsequent inspection
 
-    std::lock_guard<std::mutex> guard(mtx_);
-    if (auto iter = pidCtx_.find(peerConfig); iter != pidCtx_.end()) {
+    std::lock_guard<std::mutex> guard(g_mtx);
+    if (auto iter = g_pidCtx.find(peerConfig); iter != g_pidCtx.end()) {
         if (!startupMode) {
             int socketHandle = context.GetSocketHandle();
             struct ucred cred;
@@ -497,19 +527,13 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
                 PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc getsockopt failed");
                 return false;
             }
-            if (!((pidInfo_.find(cred.pid) != pidInfo_.end()) && (pidInfo_[cred.pid].first == cred.uid) &&
-                (pidInfo_[cred.pid].second == cred.gid))) {
+            if (!((g_pidInfo.find(cred.pid) != g_pidInfo.end()) && (g_pidInfo[cred.pid].first == cred.uid) &&
+                (g_pidInfo[cred.pid].second == cred.gid))) {
                 PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc process uid gid check failed");
                 return false;
             }
         }
-        auto [eventFd, smbFd] = iter->second->hookMgr->GetFds(peerConfig, bundleName);
         iter->second->hookMgr->SetPid(peerConfig);
-        if (eventFd == smbFd) {
-            PROFILER_LOG_ERROR(LOG_CORE,
-                               "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
-            return false;
-        }
         PROFILER_LOG_INFO(LOG_CORE,
             "ProtocolProc, receive message from hook client, and send hook config to process %d, name: %s",
             peerConfig, bundleName.c_str());
@@ -520,15 +544,25 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         }
         clientConfig.isSaMode = true;
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
-        context.SendFileDescriptor(smbFd);
-        context.SendFileDescriptor(eventFd);
+        std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName);
+        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            int eventFd = fdVec[i * VEC_SHIFT];
+            int smbFd = fdVec[i * VEC_SHIFT + 1];
+            if (eventFd == smbFd) {
+                PROFILER_LOG_ERROR(LOG_CORE,
+                    "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
+                return false;
+            }
+            context.SendFileDescriptor(smbFd);
+            context.SendFileDescriptor(eventFd);
+        }
         iter->second->hookMgr->ResetStartupParam();
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
         return false;
     }
-    std::unique_lock<std::mutex> socketLock(pidFdMtx_);
-    pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
+    std::unique_lock<std::mutex> socketLock(g_pidFdMtx);
+    g_pidFds[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
     socketLock.unlock();
     return true;
 }
@@ -536,10 +570,10 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
 void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
 {
     if (cancel) {
-        scheduleTaskManager_.UnscheduleTask(delayedShutdownTimerFd_);
-        delayedShutdownTimerFd_ = -1;
+        g_scheduleTaskManager.UnscheduleTask(g_delayedShutdownTimerFd);
+        g_delayedShutdownTimerFd = -1;
     } else {
-        int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+        int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
             []() {
                 int ret = SystemSetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
                 if (ret < 0) {
@@ -553,7 +587,7 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
             PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService:DelayedShutdown Schedule Task failed");
             return;
         }
-        delayedShutdownTimerFd_ = timerFd;
+        g_delayedShutdownTimerFd = timerFd;
     }
 }
 } // namespace OHOS::Developtools::NativeDaemon

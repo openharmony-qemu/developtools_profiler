@@ -57,13 +57,13 @@ ohos_executable("SP_daemon") {
     "editor_command.cpp",
     "effective.cpp",
     "heartbeat.cpp",
+    "hiperf.cpp",
     "lock_frequency.cpp",
     "navigation.cpp",
     "parse_click_complete_trace.cpp",
     "parse_click_response_trace.cpp",
     "parse_radar.cpp",
     "parse_slide_fps_trace.cpp",
-    "profiler_fps.cpp",
     "sdk_data_recv.cpp",
     "service_plugin.cpp",
     "smartperf_command.cpp",
@@ -97,7 +97,6 @@ ohos_executable("SP_daemon") {
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
-  deps = [ "//third_party/libpng:libpng" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [
@@ -112,6 +111,7 @@ ohos_executable("SP_daemon") {
     "image_framework:image_native",
     "init:libbegetutil",
     "ipc:ipc_core",
+    "libpng:libpng",
     "samgr:samgr_proxy",
     "window_manager:libdm",
     "window_manager:libwm",

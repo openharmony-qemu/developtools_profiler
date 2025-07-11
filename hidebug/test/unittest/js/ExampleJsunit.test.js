@@ -707,7 +707,7 @@ describe("HidebugJsTest", function () {
             hidebug.stopProfiling();
             let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
             expect(fs.accessSync(path2)).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -737,7 +737,7 @@ describe("HidebugJsTest", function () {
             hidebug.stopJsCpuProfiling();
             let path2 = "/proc/self/root/data/storage/el2/base/files/" + filename2 + ".json";
             expect(fs.accessSync(path2)).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -771,7 +771,7 @@ describe("HidebugJsTest", function () {
         try {
             let graphicMemory = await hidebug.getGraphicsMemory();
             expect(graphicMemory >= 0).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -788,7 +788,7 @@ describe("HidebugJsTest", function () {
         try {
             let graphicMemory = hidebug.getGraphicsMemorySync();
             expect(graphicMemory >= 0).assertTrue();
-        } catch (err) {
+        } catch (error) {
             console.info(error.code);
             console.info(error.message);
             expect(false).assertTrue();
@@ -807,5 +807,69 @@ describe("HidebugJsTest", function () {
         }).catch(error => {
             expect(error.code === "401").assertTrue();
         });
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_037
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_037', 0, function () {
+        console.info("---------------------------HidebugJsTest_037----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(2);
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_038
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_038', 0, function () {
+        console.info("---------------------------HidebugJsTest_038----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel("abc");
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_039
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_039', 0, function () {
+        console.info("---------------------------HidebugJsTest_039----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(1);
+            expect(true).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_040
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_040', 0, function () {
+        console.info("---------------------------HidebugJsTest_040----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(1, 2);
+            expect().assertFail();
+        } catch (error) {
+            console.info(error.code);
+            expect(error.code === "401").assertTrue();
+        }
     })
 })
