@@ -104,9 +104,9 @@ void OH_HiDebug_GetAppNativeMemInfoWithCache(HiDebug_NativeMemInfo *nativeMemInf
     if (!nativeMemInfo) {
         return;
     }
-    auto nativeMemoryInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
-    if (nativeMemoryInfo) {
-        *nativeMemInfo = *nativeMemoryInfo;
+    auto memInfoOption = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
+    if (memInfoOption) {
+        *nativeMemInfo = *memInfoOption;
     }
 }
 
