@@ -248,7 +248,7 @@ describe("HidebugJsTest", function () {
         })
     })
 
-        /**
+    /**
      * @tc.name: HidebugJsTest_009
      * @tc.desc: getAppNativeMemInfo的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
      * @tc.type: FUNC
@@ -265,6 +265,95 @@ describe("HidebugJsTest", function () {
                 expect(nativeMemInfo.privateDirty >= 0).assertTrue();
                 expect(nativeMemInfo.sharedClean >= 0).assertTrue();
                 expect(nativeMemInfo.privateClean >= 0).assertTrue();
+            } catch (error) {
+                console.info(error.code);
+                console.info(error.message);
+                expect(false).assertTrue();
+            }
+        })
+
+        /**
+         * @tc.name:
+         * @tc.desc: getAppNativeMemInfoAsync的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+         * @tc.type: FUNC
+         * @tc.require: issueI5VY8L
+         */
+        it('HidebugJsTest_getAppNativeMemInfoAsync', 0, async function () {
+            console.info("---------------------------HidebugJsTest_getAppNativeMemInfoAsync----------------------------------");
+            try {
+                let nativeMemInfo = await hidebug.getAppNativeMemInfoAsync();
+                expect(nativeMemInfo.pss >= 0).assertTrue();
+                expect(nativeMemInfo.vss >= 0).assertTrue();
+                expect(nativeMemInfo.rss >= 0).assertTrue();
+                expect(nativeMemInfo.sharedDirty >= 0).assertTrue();
+                expect(nativeMemInfo.privateDirty >= 0).assertTrue();
+                expect(nativeMemInfo.sharedClean >= 0).assertTrue();
+                expect(nativeMemInfo.privateClean >= 0).assertTrue();
+            } catch (error) {
+                console.info(error.code);
+                console.info(error.message);
+                expect(false).assertTrue();
+            }
+        })
+
+        /**
+         * @tc.name:
+         * @tc.desc: getAppNativeMemInfoWithCache的异常参数测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+         * @tc.type: FUNC
+         * @tc.require: issueI5VY8L
+         */
+        it('HidebugJsTest_getAppNativeMemInfoWithCache1', 0, async function () {
+            console.info("---------------------------HidebugJsTest_getAppNativeMemInfoWithCache1----------------------------------");
+            try {
+                hidebug.getAppNativeMemInfoWithCache("TEST");
+            } catch (error) {
+                console.info(error.code);
+                console.info(error.message);
+                expect(error.code === "401").assertTrue();
+            }
+        })
+
+        /**
+         * @tc.name:
+         * @tc.desc: getAppNativeMemInfoWithCache的异常参数测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+         * @tc.type: FUNC
+         * @tc.require: issueI5VY8L
+         */
+        it('HidebugJsTest_getAppNativeMemInfoWithCache2', 0, async function () {
+            console.info("---------------------------HidebugJsTest_getAppNativeMemInfoWithCache2----------------------------------");
+            try {
+                hidebug.getAppNativeMemInfoWithCache("", "");
+            } catch (error) {
+                console.info(error.code);
+                console.info(error.message);
+                expect(error.code === "401").assertTrue();
+            }
+        })
+
+        function assertNativeMemInfoEqual(nativeMemInfoA, nativeMemInfoB) {
+            expect(nativeMemInfoA.pss === nativeMemInfoB.pss).assertTrue();
+            expect(nativeMemInfoA.vss === nativeMemInfoB.vss).assertTrue();
+            expect(nativeMemInfoA.rss === nativeMemInfoB.rss).assertTrue();
+            expect(nativeMemInfoA.sharedDirty === nativeMemInfoB.sharedDirty).assertTrue();
+            expect(nativeMemInfoA.privateDirty === nativeMemInfoB.privateDirty).assertTrue();
+            expect(nativeMemInfoA.sharedClean === nativeMemInfoB.sharedClean).assertTrue();
+            expect(nativeMemInfoA.privateClean === nativeMemInfoB.privateClean).assertTrue();
+        }
+
+        /**
+         * @tc.name:
+         * @tc.desc: getAppNativeMemInfoWithCache的正常测试, getVss()/getPss()/getSharedDirty()/getPrivateDirty()的更新版本
+         * @tc.type: FUNC
+         * @tc.require: issueI5VY8L
+         */
+        it('HidebugJsTest_getAppNativeMemInfoWithCache3', 0, async function () {
+            console.info("---------------------------HidebugJsTest_getAppNativeMemInfoWithCache3----------------------------------");
+            try {
+                let nativeMemInfo1 = hidebug.getAppNativeMemInfoWithCache(true);
+                let nativeMemInfo2 = hidebug.getAppNativeMemInfoWithCache(false);
+                let nativeMemInfo3 = hidebug.getAppNativeMemInfoWithCache();
+                assertNativeMemInfoEqual(nativeMemInfo1, nativeMemInfo2);
+                assertNativeMemInfoEqual(nativeMemInfo1, nativeMemInfo3);
             } catch (error) {
                 console.info(error.code);
                 console.info(error.message);

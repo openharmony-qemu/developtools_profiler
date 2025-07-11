@@ -271,6 +271,26 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetAppNativeMemInfo1, TestSize.Level1)
 }
 
 /**
+ * @tc.name: OH_HiDebug_GetAppNativeMemInfoWithCache1
+ * @tc.desc: test OH_HiDebug_GetAppNativeMemInfoWithCache. get application process memory info
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetAppNativeMemInfoWithCache1, TestSize.Level1)
+{
+    HiDebug_NativeMemInfo nativeMemInfo;
+    OH_HiDebug_GetAppNativeMemInfoWithCache(&nativeMemInfo, true);
+    HiDebug_NativeMemInfo cachedNativeMemInfo;
+    OH_HiDebug_GetAppNativeMemInfoWithCache(&cachedNativeMemInfo, false);
+    ASSERT_EQ(nativeMemInfo.pss, cachedNativeMemInfo.pss);
+    ASSERT_EQ(nativeMemInfo.vss, cachedNativeMemInfo.vss);
+    ASSERT_EQ(nativeMemInfo.rss, cachedNativeMemInfo.rss);
+    ASSERT_EQ(nativeMemInfo.sharedDirty, cachedNativeMemInfo.sharedDirty);
+    ASSERT_EQ(nativeMemInfo.privateDirty, cachedNativeMemInfo.privateDirty);
+    ASSERT_EQ(nativeMemInfo.sharedClean, cachedNativeMemInfo.sharedClean);
+    ASSERT_EQ(nativeMemInfo.privateClean, cachedNativeMemInfo.privateClean);
+}
+
+/**
  * @tc.name: OH_HiDebug_GetSystemMemInfo1
  * @tc.desc: test OH_HiDebug_GetSystemMemInfo. get system memory info
  * @tc.type: FUNC
