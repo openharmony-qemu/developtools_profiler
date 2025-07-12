@@ -61,11 +61,11 @@ bool GetNativeMemInfo(HiDebug_NativeMemInfo& nativeMemInfo)
     nativeMemInfo.sharedDirty = static_cast<uint32_t>(collectResult.data.sharedDirty);
     nativeMemInfo.privateDirty = static_cast<uint32_t>(collectResult.data.privateDirty);
     nativeMemInfo.sharedClean = static_cast<uint32_t>(collectResult.data.sharedClean);
-    nativeMemInfo.privateClean = collectResult.data.privateClean;
+    nativeMemInfo.privateClean = static_cast<uint32_t>(collectResult.data.privateClean);
 
     auto collectVss = collector->CollectProcessVss(pid);
-    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectResult.retCode));
+    if (collectVss.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectVss.retCode));
         return false;
     }
     nativeMemInfo.vss = static_cast<uint32_t>(collectVss.data);
