@@ -12,7 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "include/GameEvent.h"
+#include "interface/GameEvent.h"
+#include "interface/GameServicePlugin.h"
 
 #include <string>
 #include <map>

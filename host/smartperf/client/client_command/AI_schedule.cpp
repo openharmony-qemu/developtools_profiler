@@ -13,12 +13,13 @@
  * limitations under the License.
  */
 #include "AI_schedule.h"
-
+#include "interface/GameServicePlugin.h"
 #include <string>
 #include <map>
 #include <service_plugin.h>
 #include <sp_log.h>
 #include <dlfcn.h>
+
 
 namespace OHOS {
 namespace SmartPerf {

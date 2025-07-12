@@ -18,7 +18,7 @@
 #include "include/sp_log.h"
 #include "include/sp_utils.h"
 #include "include/GpuCounter.h"
-#include "include/GpuCounterCallback.h"
+#include "interface/GpuCounterCallback.h"
 
 namespace OHOS {
     namespace SmartPerf {

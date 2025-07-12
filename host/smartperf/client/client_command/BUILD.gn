@@ -28,7 +28,23 @@ config("config") {
   cflags_cc = [ "-fexceptions" ]
 }
 
-config("public_config") {
+ohos_shared_library("smartperf_daemon") {
+  sanitize = {
+    boundary_sanitize = true
+    integer_overflow = true
+    cfi = true
+    debug = false
+    stack_protector_ret = true
+    ubsan = true
+  }
+  configs = [ ":config" ]
+  sources = []
+  include_dirs = [
+    "interface"
+  ]
+
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
 }
 
 ohos_executable("SP_daemon") {
@@ -97,6 +113,9 @@ ohos_executable("SP_daemon") {
   ]
   include_dirs = [ "include" ]
   configs = [ ":config" ]
+  deps = [
+    ":smartperf_daemon"
+  ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
   external_deps = [

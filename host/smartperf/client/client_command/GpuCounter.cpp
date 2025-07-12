@@ -21,8 +21,9 @@
 #include <dlfcn.h>
 #include "include/sp_log.h"
 #include "include/GpuCounter.h"
-#include "include/GpuCounterCallback.h"
 #include "include/service_plugin.h"
+#include "interface/GpuCounterCallback.h"
+#include "interface/GameServicePlugin.h"
 
 namespace OHOS {
     namespace SmartPerf {

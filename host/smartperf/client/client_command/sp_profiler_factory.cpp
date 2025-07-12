@@ -16,7 +16,7 @@
 #include "include/AI_schedule.h"
 #include "include/CPU.h"
 #include "include/DDR.h"
-#include "include/GameEvent.h"
+#include "interface/GameEvent.h"
 #include "include/GetLog.h"
 #include "include/GPU.h"
 #include "include/FPS.h"
