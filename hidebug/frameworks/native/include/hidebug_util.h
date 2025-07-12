@@ -36,19 +36,19 @@ public:
     std::optional<T> GetOrUpdateCachedValue(int64_t effectiveTime, std::function<bool(T &)> getValue)
     {
         int64_t currentTime = GetElapsedNanoSecondsSinceBoot();
-        if (currentTime <= expirationTime_) {
+        if (currentTime <= updateTime_ + effectiveTime) {
             return cachedValue_;
         }
         if (getValue(cachedValue_)) {
-            expirationTime_ = currentTime + effectiveTime;
+            updateTime_ = currentTime;
             return cachedValue_;
         }
         return {};
-    };
+    }
 
 private:
     T cachedValue_;
-    int64_t expirationTime_ = -1;
+    int64_t updateTime_ = INT64_MIN;
 };
 
 enum class DirectoryType {
