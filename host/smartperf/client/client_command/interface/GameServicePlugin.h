@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #ifndef GAME_SERVICE_PLUGIN
- #define GAME_SERVICE_PLUGIN
+#ifndef GAME_SERVICE_PLUGIN
+#define GAME_SERVICE_PLUGIN
 
 #include <string>
 #include <map>
@@ -21,20 +21,20 @@
 #include "GpuCounterCallback.h"
 
 namespace OHOS {
-   namespace SmartPerf {
-       class GameServicePlugin {
-           public:
-               uint32_t version;
-               const char *pluginName;
-   
-               virtual int32_t StartGetGpuPerfInfo(int64_t duration, int64_t collectDur,
-                   std::unique_ptr <GpuCounterCallback> callback) = 0;
-               virtual int32_t StopGetGpuPerfInfo() = 0;
-               virtual std::map<std::string, std::string> GetSystemFunctionStatus(
-                   std::map<std::string, std::string> &queryParams) = 0;
-               virtual int32_t RegisterGameEventListener(std::unique_ptr<GameEventCallback> callback) = 0;
-               virtual int32_t UnregisterGameEventListener() = 0;
-           };
-   }
+    namespace SmartPerf {
+        class GameServicePlugin {
+        public:
+            uint32_t version;
+            const char *pluginName;
+
+            virtual int32_t StartGetGpuPerfInfo(int64_t duration, int64_t collectDur,
+                std::unique_ptr <GpuCounterCallback> callback) = 0;
+            virtual int32_t StopGetGpuPerfInfo() = 0;
+            virtual std::map<std::string, std::string> GetSystemFunctionStatus(
+                std::map<std::string, std::string> &queryParams) = 0;
+            virtual int32_t RegisterGameEventListener(std::unique_ptr<GameEventCallback> callback) = 0;
+            virtual int32_t UnregisterGameEventListener() = 0;
+        };
+    }
 }
 #endif
