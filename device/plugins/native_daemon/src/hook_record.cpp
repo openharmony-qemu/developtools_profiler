@@ -145,7 +145,9 @@ void MmapRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInf
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto mmapEvent = protoData->mutable_mmap_event();
-        mmapEvent->set_type(hookInfo.tagName);
+        if (hookInfo.tagName != "") {
+            mmapEvent->set_type(hookInfo.tagName);
+        }
         HookRecord::SetSize(mmapEvent);
         HookRecord::SetEventFrame(mmapEvent, hookInfo);
         }, stackData);
@@ -155,7 +157,9 @@ void MmapFilePageRecord::SerializeData(NativeHookProto stackData, SerializeInfo&
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto mmapEvent = protoData->mutable_mmap_event();
-        hookInfo.tagName = MMAP_FILE_PAGE_PREFIX + hookInfo.tagName;
+        if (hookInfo.tagName != "") {
+            mmapEvent->set_type(MMAP_FILE_PAGE_PREFIX + hookInfo.tagName);
+        }
         HookRecord::SetSize(mmapEvent);
         HookRecord::SetEventFrame(mmapEvent, hookInfo);
         }, stackData);
@@ -186,6 +190,9 @@ void MemoryUsingRecord::SerializeData(NativeHookProto stackData, SerializeInfo& 
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto memUsingEvent = protoData->mutable_mmap_event();
+        if (hookInfo.tagName != "") {
+            memUsingEvent->set_type(hookInfo.tagName);
+        }
         HookRecord::SetSize(memUsingEvent);
         HookRecord::SetEventFrame(memUsingEvent, hookInfo);
         }, stackData);

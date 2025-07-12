@@ -235,9 +235,6 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(HookRecordPtr ho
     if (!hookConfig_->offline_symbolization()) {
         builder_->FillNativeSymbols(callFrames_, hookRecord);
     }
-    if (hookConfig_->statistics_interval() > 0) {
-        builder_->FillStatsVirtualFrames(callFrames_, hookRecord);
-    }
     return callFrames_;
 }
 
