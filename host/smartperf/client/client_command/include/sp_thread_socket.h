@@ -16,6 +16,7 @@
 #define SP_THREAD_SOCKET_H
 #include "sp_server_socket.h"
 #include "sp_task.h"
+#include "ByTrace.h"
 #include <thread>
 namespace OHOS {
 namespace SmartPerf {
@@ -86,7 +87,7 @@ public:
     int SendFile(const std::string& filePath);
     void StartHapCollecting(SpServerSocket &spSocket);
     void RemoveToken(std::string &recvMessage);
-
+    void HandleMsgTrace(std::string& recvMessage);
 private:
     bool flagRunning = false;
     bool socketConnect = true;
@@ -108,6 +109,7 @@ private:
     std::thread udpStartCollect;
 
     std::shared_ptr<TaskManager> taskMgr_ {nullptr};
+    ByTrace &bytrace = ByTrace::GetInstance();
 };
 }
 }

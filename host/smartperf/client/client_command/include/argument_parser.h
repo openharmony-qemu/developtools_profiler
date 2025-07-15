@@ -130,6 +130,7 @@ private:
         {"-DDR", {ArgumentParser::ArgType::BOOL}},
         {"-NET", {ArgumentParser::ArgType::BOOL}},
         {"-HCI", {ArgumentParser::ArgType::BOOL}},
+        {"-trace", {ArgumentParser::ArgType::BOOL}},
     };
     std::unordered_map<std::string, ArgValue> values_;
     std::vector<std::string> errors_;

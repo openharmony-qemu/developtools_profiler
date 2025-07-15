@@ -36,8 +36,7 @@ enum class MessageType {
     GET_TEMPERATURE,
     GET_POWER,
     GET_CAPTURE,
-    CATCH_TRACE_CONFIG,
-    CATCH_TRACE_CMD,
+    CATCH_ONE_TRACE,
     SET_DUBAI_DB,
     START_DUBAI_DB,
     CATCH_NETWORK_TRAFFIC,
@@ -53,7 +52,6 @@ enum class MessageType {
     GET_PROCESS_FDS,
     START_GPU_COUNTER,
     SAVE_GPU_COUNTER,
-    CATCH_TRACE_FINISH,
     APP_RECEIVE_DATA_ON,
     APP_RECEIVE_DATA_OFF,
     GET_INDEX_INFO
@@ -73,8 +71,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_POWER, std::string("get_power") },
     { MessageType::GET_CAPTURE, std::string("get_capture") },
     { MessageType::GET_MEMORY_INFO, std::string("get_memory") },
-    { MessageType::CATCH_TRACE_CONFIG, std::string("catch_trace_config") },
-    { MessageType::CATCH_TRACE_CMD, std::string("catch_trace_cmd") },
+    { MessageType::CATCH_ONE_TRACE, std::string("catch_one_trace") },
     { MessageType::SET_DUBAI_DB, std::string("set_dubai_db") },
     { MessageType::START_DUBAI_DB, std::string("start_dubai_db") },
     { MessageType::CATCH_NETWORK_TRAFFIC, std::string("catch_network_traffic") },
@@ -90,7 +87,6 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_PROCESS_FDS, std::string("get_process_fds") },
     { MessageType::START_GPU_COUNTER, std::string("start_gpu_counter") },
     { MessageType::SAVE_GPU_COUNTER, std::string("save_gpu_counter") },
-    { MessageType::CATCH_TRACE_FINISH, std::string("catch_trace_finish") },
     { MessageType::APP_START_COLLECT, std::string("app_start_collect") },
     { MessageType::APP_STOP_COLLECT, std::string("app_stop_collect") },
     { MessageType::APP_RECEIVE_DATA_ON, std::string("app_receive_data_on") },
@@ -114,7 +110,7 @@ enum class CommandType {
     CT_P,
     CT_PRINT,
     CT_R,
-    CT_TTRACE,
+    CT_TRACE,
     CT_THREADS,
     CT_SNAPSHOT,
     CT_HW,
@@ -166,7 +162,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-print"), CommandType::CT_PRINT },
     { std::string("-r"), CommandType::CT_R },
     { std::string("-RAM"), CommandType::CT_R },
-    { std::string("-trace"), CommandType::CT_TTRACE },
+    { std::string("-trace"), CommandType::CT_TRACE },
     { std::string("-threads"), CommandType::CT_THREADS },
     { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
     { std::string("-SCREEN"), CommandType::CT_SNAPSHOT },
@@ -205,7 +201,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_P, std::string("-p") },
     { CommandType::CT_PRINT, std::string("-print") },
     { CommandType::CT_R, std::string("-r") },
-    { CommandType::CT_TTRACE, std::string("-trace") },
+    { CommandType::CT_TRACE, std::string("-trace") },
     { CommandType::CT_THREADS, std::string("-threads") },
     { CommandType::CT_SNAPSHOT, std::string("-snapshot") },
     { CommandType::CT_HW, std::string("-hw") },
@@ -237,12 +233,6 @@ const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::SERVER, std::string("-server") },
     { CommandHelp::EDITORSERVER, std::string("-editorServer") },
     { CommandHelp::DEVICESERVER, std::string("-deviceServer") },
-};
-
-enum class TraceStatus {
-    TRACE_START,
-    TRACE_FINISH,
-    TRACE_NO
 };
 
 enum class CmdCommand {

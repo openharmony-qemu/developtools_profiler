@@ -401,6 +401,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         RemoveToken(recvBuf);
         if (recvBuf.find("init::") != std::string::npos) {
             LOGD("UDP recv : %s", recvBuf.c_str());
+            HandleMsgTrace(recvBuf);
             UdpStartInitFunc(recvBuf, spSocket);
             break;
         }
@@ -432,6 +433,20 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             HandleUDPMsg(spSocket, data, retCode, iterator);
         }
         break;
+    }
+}
+
+void SpThreadSocket::HandleMsgTrace(std::string& recvMessage)
+{
+    const std::string traceWord = "-trace::";
+    const size_t startPos = recvMessage.find(traceWord);
+    const size_t tarceLength = traceWord.length();
+    const size_t colonLength = 2;
+    if (startPos != std::string::npos) {
+        size_t tracePos = startPos + tarceLength;
+        size_t endPos = recvMessage.find(" ", startPos);
+        bytrace.jittersAndLowFps = recvMessage.substr(tracePos, endPos - tracePos);
+        recvMessage.erase(tracePos - colonLength, colonLength + bytrace.jittersAndLowFps.length());
     }
 }
 
@@ -661,9 +676,9 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (profiler == nullptr && (iterator->first == MessageType::GET_DAEMON_VERSION)) {
         retCode = "Version: " + SPUtils::GetVersion();
         spSocket.Sendto(retCode);
-    } else if (iterator->first == MessageType::CATCH_TRACE_CONFIG ||
-        iterator->first == MessageType::CATCH_TRACE_CMD) {
-        SpProfilerFactory::SetByTrace(SplitMsg(recvBuf));
+    } else if (iterator->first == MessageType::CATCH_ONE_TRACE) {
+        bytrace.hiviewTrace = SplitMsg(recvBuf);
+        bytrace.CpTraceFile();
     } else if (iterator->first == MessageType::GET_CPU_NUM) {
         retCode = SPUtils::GetCpuNum();
         spSocket.Sendto(retCode);
@@ -758,6 +773,7 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
         if (taskMgr_ != nullptr) {
             taskMgr_->AddTask(&SdkDataRecv::GetInstance(), false);
         }
+        bytrace.ClearTraceFiles();
         StartHapCollecting(spSocket);
     } else if (iterator->first == MessageType::APP_RECEIVE_DATA_ON) {
         if (taskMgr_ != nullptr) {
