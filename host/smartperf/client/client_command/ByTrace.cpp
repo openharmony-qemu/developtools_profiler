@@ -62,7 +62,7 @@ void ByTrace::SetByTrace() const
 
 void ByTrace::ClearTraceFiles() const
 {
-    if (!st::filesystem::exists(traceCpPath_)) {
+    if (!std::filesystem::exists(traceCpPath_)) {
         SPUtils::CreateDir(traceCpPath_);
     } else {
         RemoveTraceFiles();
