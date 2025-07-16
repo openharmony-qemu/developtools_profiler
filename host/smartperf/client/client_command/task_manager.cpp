@@ -431,7 +431,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 
     if (type == CommandType::CT_PID) {
         processIds_ = std::to_string(std::get<int32_t>(value));
-        std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
+        const std::string getProcPkg = "cat /proc/" + processIds_ + "/cmdline";
         FILE *fd = popen(getProcPkg.c_str(), "r");
         if (fd == nullptr) {
             return;

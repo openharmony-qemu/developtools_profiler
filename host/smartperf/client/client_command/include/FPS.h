@@ -161,7 +161,6 @@ private:
     bool isSections = false;
     int isCatchTrace = 0;
     std::string nodeIdStr = "";
-    int six = 6;
 };
 }
 }
