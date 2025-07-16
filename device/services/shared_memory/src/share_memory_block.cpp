@@ -188,14 +188,15 @@ int8_t* ShareMemoryBlock::GetCurrentFreeMemory(uint32_t size)
     uint32_t realSize = size + PIECE_HEAD_LEN + PIECE_HEAD_LEN;
 
     uint32_t wp = header_->info.writeOffset_.load();
+    uint32_t rp = header_->info.readOffset_.load();
     if (wp + realSize > header_->info.memorySize_) {  // 后面部分放不下，从头开始放
-        if (header_->info.readOffset_.load() == 0) {
+        if (rp == 0) {
             return nullptr;
         }
         *((uint32_t*)(&header_->data[wp])) = INVALID_LENGTH;
         wp = 0;
     }
-    if (wp < header_->info.readOffset_.load() && header_->info.readOffset_.load() < wp + realSize) {  //
+    if (wp < rp && rp <= wp + realSize) {  //
         return nullptr;
     }
 
