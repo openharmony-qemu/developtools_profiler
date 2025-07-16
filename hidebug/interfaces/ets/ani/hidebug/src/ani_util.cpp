@@ -20,12 +20,12 @@ namespace HiviewDFX {
 void AniUtil::ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t errCode)
 {
     ani_module hiDebugModule = nullptr;
-    if (env->FindModule("L@ohos/hidebug;", &hiDebugModule) != ANI_OK) {
+    if (env->FindModule("@ohos.hidebug", &hiDebugModule) != ANI_OK) {
         return;
     }
     ani_function createErrorFn = nullptr;
     if (env->Module_FindFunction(hiDebugModule, "createVoidBusinessError",
-        "DLstd/core/String;:L@ohos/base/BusinessError;", &createErrorFn) != ANI_OK) {
+        "dC{std.core.String}:C{@ohos.base.BusinessError}", &createErrorFn) != ANI_OK) {
         return;
     }
     ani_double errCodeAni = static_cast<ani_double>(errCode);
@@ -52,12 +52,12 @@ ani_object AniUtil::CreateUndefined(ani_env *env)
 ani_status AniUtil::ToAniBigInt(ani_env *env, uint64_t uint64Val, ani_object &aniBigInt)
 {
     ani_class bigIntCls = nullptr;
-    ani_status status = env->FindClass("Lescompat/BigInt;", &bigIntCls);
+    ani_status status = env->FindClass("escompat.BigInt", &bigIntCls);
     if (status != ANI_OK) {
         return status;
     }
     ani_method ctorMethod = nullptr;
-    status = env->Class_FindMethod(bigIntCls, "<ctor>", "Lstd/core/String;:V", &ctorMethod);
+    status = env->Class_FindMethod(bigIntCls, "<ctor>", "C{std.core.String}:", &ctorMethod);
     if (status != ANI_OK) {
         return status;
     }
