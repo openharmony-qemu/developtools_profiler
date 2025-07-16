@@ -21,6 +21,10 @@
 #include "include/ByTrace.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+
+namespace {
+constexpr long long RM_10000 = 10000;
+}
 namespace OHOS {
 namespace SmartPerf {
 std::map<std::string, std::string> ByTrace::ItemData()
@@ -32,7 +36,7 @@ void ByTrace::SetTraceConfig(long long mThreshold, int mLowfps) const
 {
     threshold = mThreshold;
     lowfps = mLowfps;
-    LOGD("ByTrace::SetTraceConfig mThreshold(%lld), mLowfps(%d)", mThreshold, mLowfps);
+    LOGD("ByTrace::SetTraceConfig threshold(%lld), lowfps(%d)", threshold, lowfps);
 }
 
 void ByTrace::SetByTrace() const
@@ -68,9 +72,9 @@ void ByTrace::ClearTraceFiles() const
 void ByTrace::RemoveTraceFiles() const
 {
     if (std::filesystem::is_directory(traceCpPath_)) {
-        for (const auto& entry : std::filesystem::is_directory(traceCpPath_)) {
+        for (const auto& entry : std::filesystem::directory_iterator(traceCpPath_)) {
             if (!entry.is_directory()) {
-                std::filesystem::remove(entry.patn());
+                std::filesystem::remove(entry.path());
             }
         }
     }

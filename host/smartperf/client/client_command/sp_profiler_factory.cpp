@@ -89,9 +89,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
         case MessageType::GET_POWER:
             profiler = &Power::GetInstance();
             break;
-        case MessageType::CATCH_TRACE_CONFIG:
-            FPS::GetInstance().SetTraceCatch();
-            break;
         case MessageType::GET_CAPTURE:
             Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
@@ -134,33 +131,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
 {
     SpProfiler *profiler = nullptr;
     switch (commandType) {
-        case CommandType::CT_NET:
-            profiler = &Network::GetInstance();
-            break;
-        case CommandType::CT_NAV:
-            profiler = &Navigation::GetInstance();
-            break;
-        case CommandType::CT_TRACE:
-            profiler = &ByTrace::GetInstance();
-            ByTrace::GetInstance().SetByTrace();
-            FPS::GetInstance().SetTraceCatch();
-            break;
-        case CommandType::CT_AS:
-            profiler = &AISchedule::GetInstance();
-            break;
-        default:
-            break;
-    }
-    if (profiler == nullptr) {
-        profiler = GetCmdProfilerItemOption(commandType, cmdFlag);
-    }
-    return profiler;
-}
-
-SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType, bool cmdFlag)
-{
-    SpProfiler *profiler = nullptr;
-    switch (commandType) {
         case CommandType::CT_C:
             if (cmdFlag) {
                 profiler = &CPU::GetInstance();
@@ -187,6 +157,33 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             if (cmdFlag) {
                 profiler = &RAM::GetInstance();
             }
+            break;
+        default:
+            break;
+    }
+    if (profiler == nullptr) {
+        profiler = GetCmdProfilerItemOption(commandType, cmdFlag);
+    }
+    return profiler;
+}
+
+SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType, bool cmdFlag)
+{
+    SpProfiler *profiler = nullptr;
+    switch (commandType) {
+        case CommandType::CT_NET:
+            profiler = &Network::GetInstance();
+            break;
+        case CommandType::CT_NAV:
+            profiler = &Navigation::GetInstance();
+            break;
+        case CommandType::CT_TRACE:
+            profiler = &ByTrace::GetInstance();
+            ByTrace::GetInstance().SetByTrace();
+            FPS::GetInstance().SetTraceCatch();
+            break;
+        case CommandType::CT_AS:
+            profiler = &AISchedule::GetInstance();
             break;
         default:
             break;

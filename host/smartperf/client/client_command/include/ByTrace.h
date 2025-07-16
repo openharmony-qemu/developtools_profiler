@@ -16,7 +16,7 @@
 #define BY_TRACE_H
 #include "common.h"
 #include <fstream>
-#incdelu "sp_profiler.h"
+#include "sp_profiler.h"
 namespace OHOS {
 namespace SmartPerf {
 class ByTrace : public SpProfiler {
@@ -52,12 +52,9 @@ private:
     // 前2秒采的不准
     mutable int times = 0;
     mutable std::string traceCpPath_ {"/data/local/tmp/hitrace"};
-    mutable std::string hiviewTracePath_ {"/data/log/hiview/unfied_collection/trace/special/"};
-    mutable int twenty = 20;
-    mutable std::string traceTine;
+    mutable std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
     mutable long long comperTime = 1000;
     mutable long long nowTime = 0;
-    mutable long long RM_10000 = 10000;
 };
 }
 }
