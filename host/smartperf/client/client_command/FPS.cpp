@@ -560,12 +560,13 @@ std::string FPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const st
     if (std::to_string(nodeId) == surfaceId &&
         line.find("VisibleRegion [Empty], OpaqueRegion [Empty]") != std::string::npos) {
         if (isHistoryHap) {
+            size_t startSixpos = 6;
             size_t layerStartPos = line.find("Name [");
             size_t layerEndPos = line.find("], hasConsumer");
             if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
                 return gameLayer;
             }
-            layerStartPos += six;
+            layerStartPos += startSixpos;
             gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
         } else {
             gameLayer = nodeIdStr;
@@ -623,12 +624,12 @@ void FPS::GetTimeDiff()
         if (params[0].find("CLOCK_REALTIME") != std::string::npos && clockRealTime == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockRealTime = std::stoll(strRealTime);
+            clockRealTime = SPUtilesTye::StringToSometype<long long>(strRealTime);
             currRealTime = clockRealTime;
         } else if (params[0].find("CLOCK_MONOTONIC_RAW") != std::string::npos && clockMonotonicRaw == 0) {
             strRealTime = params[two];
             strRealTime.erase(strRealTime.find('.'), 1);
-            clockMonotonicRaw = std::stoll(strRealTime);
+            clockMonotonicRaw = SPUtilesTye::StringToSometype<long long>(strRealTime);
         }
     }
     if (pclose(fd) == -1) {
