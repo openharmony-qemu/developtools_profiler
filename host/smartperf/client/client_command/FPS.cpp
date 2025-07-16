@@ -560,13 +560,13 @@ std::string FPS::GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const st
     if (std::to_string(nodeId) == surfaceId &&
         line.find("VisibleRegion [Empty], OpaqueRegion [Empty]") != std::string::npos) {
         if (isHistoryHap) {
-            size_t startSixpos = 6;
+            size_t startSixPos = 6;
             size_t layerStartPos = line.find("Name [");
             size_t layerEndPos = line.find("], hasConsumer");
             if (layerEndPos - layerStartPos <= 1 && layerEndPos > endPos) {
                 return gameLayer;
             }
-            layerStartPos += startSixpos;
+            layerStartPos += startSixPos;
             gameLayer = line.substr(layerStartPos, layerEndPos - layerStartPos);
         } else {
             gameLayer = nodeIdStr;
