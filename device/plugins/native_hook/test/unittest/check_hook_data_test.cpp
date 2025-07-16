@@ -22,6 +22,7 @@
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
 #include "buffer_splitter.h"
+#include "common.h"
 #include "logging.h"
 #include "parameters.h"
 #include <fstream>
@@ -504,6 +505,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
             char delimiter = ';';
             Getdata(totalbuffer, hookVec, delimiter);
 
+            if (hookVec.size() < 6) {
+                continue;
+            }
             if (hookVec[0] == "malloc" && !isFirstHook) {
                 for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
                     EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
@@ -511,6 +515,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Lev
                 delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
                 ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+                ASSERT_TRUE(COMMON::IsNumeric(hookVec[4].c_str()));
                 ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE); // 4: fifth hook data, default malloc size
 
                 addr = hookVec[addrPos];
@@ -571,6 +576,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
             char delimiter = ';';
             Getdata(totalbuffer, hookVec, delimiter);
 
+            if (hookVec.size() < 6) {
+                continue;
+            }
             if (hookVec[0] == "malloc" && !isFirstHook) {
                 for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
                     EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
@@ -578,6 +586,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0090, Function | MediumTest | Lev
                 delimiter = '\n';
                 EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
                 ASSERT_EQ(static_cast<int>(hookVec.size()), MALLOC_VEC_SIZE);
+                ASSERT_TRUE(COMMON::IsNumeric(hookVec[4].c_str()));
                 ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_CALLOC_SIZE); // 4: fifth hook data, default malloc size
 
                 addr = hookVec[addrPos];
@@ -639,6 +648,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
             char delimiter = ';';
             Getdata(totalbuffer, hookVec, delimiter);
 
+            if (hookVec.size() < 6) {
+                continue;
+            }
             if (hookVec[0] == "malloc" && !isFirstHook) {
                 for (int i = 0; i < MALLOC_GET_DATE_SIZE; i++) {
                     EXPECT_TRUE(Getdata(totalbuffer, hookVec, delimiter));
@@ -650,12 +662,14 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
                 if (isRealloc) {
                     reallocAddr = hookVec[addrPos];
                     // 4: fifth hook data, default malloc size
+                    ASSERT_TRUE(COMMON::IsNumeric(hookVec[4].c_str()));
                     ASSERT_GE(atoi(hookVec[4].c_str()), DEFAULT_REALLOC_SIZE);
                     EXPECT_GE(depth, REALLOC_DEPTH);
                     isFirstHook = false;
                 } else {
                     mallocAddr = hookVec[addrPos];
                     // 4: fifth hook data, default malloc size
+                    ASSERT_TRUE(COMMON::IsNumeric(hookVec[4].c_str()));
                     ASSERT_EQ(atoi(hookVec[4].c_str()), DEFAULT_MALLOC_SIZE);
                 }
 
@@ -711,7 +725,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         uint8_t mallocPos = 0;
         uint8_t mallocSizePos = 6;
@@ -719,6 +733,9 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         while (getline(infile, buf))
         {
             std::vector<std::string>& resultVec = StringSplit(buf);
+            if (resultVec.size() < static_cast<size_t>(mallocSizePos)) {
+                continue;
+            }
             if (resultVec[mallocPos] == "malloc") {
                 if (resultVec[mallocSizePos] == std::to_string(LIBA_MALLOC_SIZE)) {
                     std::cout << buf << std::endl;
@@ -764,7 +781,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string expectCallStackId;
         std::string statisticsCallStackId;
@@ -793,6 +810,8 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
             getline(infile, buf);
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -821,7 +840,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string symTable;
         std::string strTable;
@@ -872,7 +891,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         bool findSymbolName;
         bool findfilePath;
@@ -921,7 +940,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         bool findFrameInfo;
         bool findSymbolNameId;
@@ -962,7 +981,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         bool findFrameInfo;
         bool findSymbolName;
@@ -1004,7 +1023,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         uint16_t ipCount = 0;
 
@@ -1050,7 +1069,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string expectCallStackId;
         std::string statisticsCallStackId;
@@ -1079,6 +1098,8 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
             getline(infile, buf);
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -1107,7 +1128,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         bool findSymbolName;
         bool findfilePath;
@@ -1159,7 +1180,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string expectCallStackId;
         std::string statisticsCallStackId;
@@ -1188,6 +1209,8 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
             getline(infile, buf);
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -1218,7 +1241,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
 
         std::ifstream infile;
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string expectCallStackId;
         std::string statisticsCallStackId;
@@ -1247,6 +1270,8 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
             getline(infile, buf);
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -1276,7 +1301,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
         std::ifstream infile;
         outFile_ = "/data/local/tmp/test_dump_file.htrace";
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         std::string expectCallStackId;
         std::string statisticsCallStackId;
@@ -1305,6 +1330,8 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
             getline(infile, buf);
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
         uint16_t applyCount = std::atoi(resultVec[1].c_str());
         std::cout << "applyCount: " << applyCount << std::endl;
         EXPECT_TRUE(applyCount > 0);
@@ -1333,7 +1360,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
         std::ifstream infile;
         outFile_ = "/data/local/tmp/test_dump_file0.htrace";
         infile.open(outFile_, std::ios::in);
-        EXPECT_TRUE(infile.is_open());
+        ASSERT_TRUE(infile.is_open());
         std::string buf;
         bool nmdResult = false;
         while (getline(infile, buf)) {
