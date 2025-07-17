@@ -12,10 +12,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <map>
-
 #ifndef GAME_EVENT_CALLBACK_H
 #define GAME_EVENT_CALLBACK_H
+
+#include <map>
 namespace OHOS {
     namespace SmartPerf {
         class GameEventCallback {
