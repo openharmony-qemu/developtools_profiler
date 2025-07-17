@@ -16,7 +16,7 @@
 #include <thread>
 #include <cstring>
 #include <iterator>
-#include "interface/GameEvent.h"
+#include "include/GameEvent.h"
 #include "unistd.h"
 #include "include/heartbeat.h"
 #include "include/sp_utils.h"

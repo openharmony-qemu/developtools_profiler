@@ -19,8 +19,6 @@
 #include "string"
 #include "map"
 #include "thread"
-#include "../interface/GameEvent.h"
-#include "../interface/GpuCounterCallback.h"
 #include "sp_profiler.h"
 
 namespace OHOS {

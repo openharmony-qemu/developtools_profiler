@@ -27,7 +27,7 @@
 #include "include/common.h"
 #include <sys/wait.h>
 #include <sys/types.h>
-#include "interface/GameEvent.h"
+#include "include/GameEvent.h"
 #include "transaction/rs_interfaces.h"
 #include "include/ByTrace.h"
 namespace OHOS {

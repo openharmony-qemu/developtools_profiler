@@ -12,12 +12,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef GAME_SERVICE_PLUGIN
-#define GAME_SERVICE_PLUGIN
+#ifndef GAME_SERVICE_PLUGIN_H
+#define GAME_SERVICE_PLUGIN_H
 
 #include <string>
 #include <map>
-#include "GameEvent.h"
+#include "GameEventCallback.h"
 #include "GpuCounterCallback.h"
 
 namespace OHOS {

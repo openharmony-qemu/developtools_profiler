@@ -89,7 +89,7 @@
             "header_base": "//developtools/profiler/host/smartperf/client/client_command/interface",
             "header_files": [
               "GameServicePlugin.h",
-              "GameEvent.h",
+              "GameEventCallback.h",
               "GpuCounterCallback.h"
             ]
           },

@@ -24,7 +24,7 @@
 #include <climits>
 #include "parameters.h"
 #include "GpuCounter.h"
-#include "../interface/GameEvent.h"
+#include "GameEvent.h"
 #include "task_manager.h"
 
 namespace OHOS {

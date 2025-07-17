@@ -24,7 +24,7 @@
 #include <map>
 #include <mutex>
 #include <climits>
-#include "interface/GameEvent.h"
+#include "include/GameEvent.h"
 #include "parameters.h"
 #include "include/sp_csv_util.h"
 #include "include/sdk_data_recv.h"

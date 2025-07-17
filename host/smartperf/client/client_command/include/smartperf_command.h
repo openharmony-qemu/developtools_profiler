@@ -21,7 +21,7 @@
 #include "common.h"
 #include "sp_utils.h"
 #include "GpuCounter.h"
-#include "../interface/GameEvent.h"
+#include "GameEvent.h"
 #include "task_manager.h"
 
 namespace OHOS {
