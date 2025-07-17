@@ -164,6 +164,28 @@ std::string FtraceFsOps::GetSavedTgids() const
     return ReadTraceFile("/saved_tgids");
 }
 
+int FtraceFsOps::GetTgidFromStatus(int pid) const
+{
+    std::string statusPath = "/proc/" + std::to_string(pid) + "/status";
+    std::ifstream statusFile(statusPath);
+    if (!statusFile.is_open()) {
+        return -1;
+    }
+    std::string line;
+    while (std::getline(statusFile, line)) {
+        if (line.find("Tgid:") == 0) {
+            std::istringstream iss(line);
+            std::string key;
+            int tgid = 0;
+            if (iss >> key >> tgid) {
+                return tgid;
+            }
+            break;
+        }
+    }
+    return -1;
+}
+
 std::string FtraceFsOps::GetProcessComm(int pid)
 {
     std::string path = "/proc/" + std::to_string(pid) + "/comm";

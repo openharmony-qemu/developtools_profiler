@@ -17,7 +17,9 @@
 
 #include <string>
 #include <vector>
-
+#include <iostream>
+#include <fstream>
+#include <sstream>
 #include "ftrace_namespace.h"
 
 #ifndef MOCKABLE
@@ -45,6 +47,7 @@ public:
     bool SetSavedCmdLinesSize(uint32_t size);
     MOCKABLE std::string GetSavedCmdLines() const;
     MOCKABLE std::string GetSavedTgids() const;
+    MOCKABLE int GetTgidFromStatus(int pid) const;
     MOCKABLE std::string GetPerCpuStats(int cpu) const;
     MOCKABLE std::string GetRawTracePath(int cpu) const;
     std::string GetHmRawTracePath() const;

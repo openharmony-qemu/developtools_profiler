@@ -491,7 +491,10 @@ bool FtraceParser::ParseSavedTgid(const std::string& savedTgid)
     std::stringstream sin(savedTgid);
     // kernel format code with: "%d %d\n"
     while (sin >> pid >> tgid) {
-        tgidDict_[pid] = tgid;
+        std::string filePath = "/proc/" + std::to_string(pid) + "/status";
+        if (access(filePath.c_str(), F_OK) == 0) {
+            tgidDict_[pid] = tgid;
+        }
     }
 
     if (tgidDict_.size() == 0) {
@@ -525,6 +528,26 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
         PROFILER_LOG_WARN(LOG_CORE, "ParseSavedCmdlines: parsed cmdlines: %zu", commDict_.size());
     }
     return retval;
+}
+
+// parse /sys/kernel/debug/tracing/saved_tgids
+// refers kernel function saved_tgids_show
+void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, int targetPid)
+{
+    int32_t pid = 0;
+    int32_t tgid = 0;
+    std::stringstream sin(savedTgidsPath);
+    // kernel format code with: "%d %d\n"
+    while (sin >> pid >> tgid) {
+        if (pid == targetPid) {
+            tgidDict_[pid] = tgid;
+            break;
+        }
+    }
+
+    if (tgidDict_.size() == 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
+    }
 }
 
 bool FtraceParser::ParsePaddingData(const FtraceEventHeader& eventHeader)
