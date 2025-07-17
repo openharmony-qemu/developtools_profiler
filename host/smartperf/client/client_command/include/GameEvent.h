@@ -15,18 +15,12 @@
 
 #ifndef GAME_EVENT_H
 #define GAME_EVENT_H
+#include "../interface/GameEventCallback.h"
 #include "sp_profiler.h"
 #include <string>
 
 namespace OHOS {
 namespace SmartPerf {
-class GameEventCallback {
-    public:
-    GameEventCallback() = default;
-    virtual ~GameEventCallback() = default;
-    virtual void OnGameEvent(int32_t type, std::map<std::string, std::string> &params) = 0;
-};
-
 class GameEventCallbackImpl  : public GameEventCallback {
     public:
     GameEventCallbackImpl() {};

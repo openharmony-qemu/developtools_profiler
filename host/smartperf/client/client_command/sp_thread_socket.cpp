@@ -775,13 +775,13 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
             LOGD("Pause Collection");
             SPUtils::CreateDir(gpuCounterfilePath);
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
-            GpuCounter::GetInstance().GetInstance().SetIsPause(true);
+            GpuCounter::GetInstance().SetIsPause(true);
             taskMgr_->Stop(true);
         }
     } else if (iterator->first == MessageType::APP_RESUME_COLLECT) {
         LOGD("Resuming Collection");
         StartHapCollecting(spSocket);
-        GpuCounter::GetInstance().GetInstance().SetIsPause(false);
+        GpuCounter::GetInstance().SetIsPause(false);
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, indexFilePath);

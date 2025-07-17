@@ -19,7 +19,7 @@
 #include "string"
 #include "vector"
 #include "sp_profiler.h"
-#include "GpuCounterCallback.h"
+#include "../interface/GpuCounterCallback.h"
 #include "thread"
 #include "mutex"
 

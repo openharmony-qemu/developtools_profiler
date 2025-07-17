@@ -19,26 +19,10 @@
 #include "string"
 #include "map"
 #include "thread"
-#include "GameEvent.h"
-#include "GpuCounterCallback.h"
 #include "sp_profiler.h"
 
 namespace OHOS {
     namespace SmartPerf {
-        class GameServicePlugin {
-        public:
-            uint32_t version;
-            const char *pluginName;
-
-            virtual int32_t StartGetGpuPerfInfo(int64_t duration, int64_t collectDur,
-                std::unique_ptr <GpuCounterCallback> callback) = 0;
-            virtual int32_t StopGetGpuPerfInfo() = 0;
-            virtual std::map<std::string, std::string> GetSystemFunctionStatus(
-                std::map<std::string, std::string> &queryParams) = 0;
-            virtual int32_t RegisterGameEventListener(std::unique_ptr<GameEventCallback> callback) = 0;
-            virtual int32_t UnregisterGameEventListener() = 0;
-        };
-
         class ServicePluginHandler : public SpProfiler {
         public:
             enum ServicePluginType {

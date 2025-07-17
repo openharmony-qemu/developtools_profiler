@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "include/GameEvent.h"
+#include "interface/GameServicePlugin.h"
 
 #include <string>
 #include <map>
