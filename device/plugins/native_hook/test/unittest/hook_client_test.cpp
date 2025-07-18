@@ -24,6 +24,7 @@ using namespace testing::ext;
 namespace {
 constexpr uint32_t g_size = 1024;
 constexpr uint32_t g_resize = 2048;
+constexpr unsigned int WAIT_THREAD_TIME = 3;
 const std::string MEM_FILTER("persist.hiviewdfx.profiler.mem.filter");
 
 class NativeHookTest : public ::testing::Test {
@@ -85,6 +86,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
     ohos_malloc_hook_free(mallocBlack5);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -115,6 +117,7 @@ HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
     ohos_malloc_hook_free(reallocBlack2);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -141,6 +144,7 @@ HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
     ohos_malloc_hook_free(callocBlack2);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -159,6 +163,7 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
     ohos_malloc_hook_free(vallocBlack);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -177,6 +182,7 @@ HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level1)
     ohos_malloc_hook_free(alignedAllocBlack);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -206,6 +212,7 @@ HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
     ohos_malloc_hook_free(reallocBlack);
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -221,6 +228,7 @@ HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level1)
     ohos_malloc_hook_finalize();
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
@@ -233,6 +241,7 @@ HWTEST_F(NativeHookTest, FailureTest, TestSize.Level1)
     EXPECT_TRUE(ohos_malloc_hook_initialize(nullptr, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /**
