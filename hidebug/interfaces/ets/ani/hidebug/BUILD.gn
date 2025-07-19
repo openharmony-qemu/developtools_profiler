@@ -17,6 +17,7 @@ import("//build/ohos/ace/ace.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
 ohos_shared_library("hidebug_ani") {
+  shlib_type = "ani"
   include_dirs = [
     "./include/",
     "$hidebug_path/frameworks/native/include",
