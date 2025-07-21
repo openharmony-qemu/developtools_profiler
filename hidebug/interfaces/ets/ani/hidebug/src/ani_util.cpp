@@ -25,10 +25,10 @@ void AniUtil::ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t er
     }
     ani_function createErrorFn = nullptr;
     if (env->Module_FindFunction(hiDebugModule, "createVoidBusinessError",
-        "dC{std.core.String}:C{@ohos.base.BusinessError}", &createErrorFn) != ANI_OK) {
+        "iC{std.core.String}:C{@ohos.base.BusinessError}", &createErrorFn) != ANI_OK) {
         return;
     }
-    ani_double errCodeAni = static_cast<ani_double>(errCode);
+    ani_int errCodeAni = static_cast<ani_int>(errCode);
     ani_string msgAni = nullptr;
     if (ANI_OK != env->String_NewUTF8(msg.c_str(), msg.size(), &msgAni)) {
         return;
