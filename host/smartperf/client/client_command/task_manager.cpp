@@ -65,11 +65,8 @@ ThreadLocal::~ThreadLocal()
     if (g_mgr == nullptr || (datasA_.empty() && datasB_.empty())) {
         return;
     }
-    if (switch_) {
-        g_mgr->CollectData(datasA_);
-    } else {
-        g_mgr->CollectData(datasB_);
-    }
+    g_mgr->CollectData(datasA_);
+    g_mgr->CollectData(datasB_);
 }
 
 TaskManager::TaskManager(bool isIPC)
@@ -168,9 +165,8 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
 void TaskManager::AddTask(const std::string& argv)
 {
     LOGD("AddTask argv (%s)", argv.c_str());
-    ArgumentParser parameter;
-    parameter.Parse(argv);
-    AddTask(parameter.Values());
+    parameter_.Parse(argv);
+    AddTask(parameter_.Values());
 }
 
 void TaskManager::AddTask(SpProfiler* task, bool priority)
@@ -217,6 +213,21 @@ std::map<std::string, std::string> TaskManager::TaskFun(SpProfiler* pro, uint32_
     return mapRes;
 }
 
+void TaskManager::CollectThreadsData()
+{
+    for (auto& item : threadLocals_) {
+        if (item == nullptr) {
+            continue;
+        }
+
+        std::map<uint32_t, std::map<std::string, std::string>>& datas =
+            (running_ ^ item->switch_) ? item->datasA_ : item->datasB_;
+
+        CollectData(datas);
+        std::map<uint32_t, std::map<std::string, std::string>>().swap(datas);
+    }
+}
+
 void TaskManager::StartSaveFileThread()
 {
     if (scheduleSaveDataTh_.joinable()) {
@@ -228,10 +239,10 @@ void TaskManager::StartSaveFileThread()
         while (running_ && recordData_) {
             std::unique_lock<std::mutex> lock(scheduleSaveDataMtx_);
             scheduleSaveDataCond_.wait(lock);
-            if (!running_) {
-                break;
-            }
-            ScheduleSaveData();
+            CollectThreadsData();
+            WriteToCSV();
+            std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
+            savingFile_ = false;
         }
         LOGD("The data saving thread exits");
     });
@@ -242,7 +253,6 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
     if (!recordData_) {
         return;
     }
-
     if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE) &&
         !(SpProfilerFactory::editorFlag)) {
         std::unique_lock<std::mutex> lock(mtx_);
@@ -315,9 +325,7 @@ void TaskManager::Start(bool record)
         }
         LOGD("main loop exit");
         ProcessOnceTask(false);
-        running_ = false;
         finishCond_.notify_all();
-        scheduleSaveDataCond_.notify_all();
     });
 }
 
@@ -389,25 +397,26 @@ void TaskManager::Stop(bool pause)
         }
         mainLoop_.join();
     }
+
     if (scheduleSaveDataTh_.joinable()) {
         {
             std::lock_guard<std::mutex> lock(mtx_);
             running_ = false;
         }
+        scheduleSaveDataCond_.notify_all();
         scheduleSaveDataTh_.join();
     }
+
     if (!pause) {
         LOGD("Start/Stop Collection End");
         threadPool_.Stop();
-    } else {
-        ScheduleSaveData(true);
     }
 }
 
 void TaskManager::Wait()
 {
     std::unique_lock<std::mutex> lock(finishMtx_);
-    finishCond_.wait(lock, [this] { return !running_.load(); });
+    finishCond_.wait(lock);
 }
 
 void TaskManager::CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas)
@@ -511,30 +520,6 @@ void TaskManager::ProcessCurrentBatch(std::map<std::string, std::string>& data)
     }
 }
 
-void TaskManager::ScheduleSaveData(bool switchFlag)
-{
-    for (auto& item : threadLocals_) {
-        if (item == nullptr) {
-            continue;
-        }
-        if (switchFlag) {
-            item->switch_ = !item->switch_;
-        }
-        std::map<uint32_t, std::map<std::string, std::string>>& datas = item->switch_ ? item->datasB_ : item->datasA_;
-        for (auto& [k, v] : datas) {
-            if (v.empty()) {
-                continue;
-            }
-            datas_[k].merge(v);
-        }
-        std::map<uint32_t, std::map<std::string, std::string>>().swap(datas);
-    }
-
-    WriteToCSV();
-    std::map<uint32_t, std::map<std::string, std::string>>().swap(datas_);
-    savingFile_ = false;
-}
-
 void TaskManager::EnableIPCCallback()
 {
     ipcDataRecv_ = true;
@@ -566,14 +551,14 @@ void TaskManager::ProcessOnceTask(bool start)
         if (item == nullptr) {
             continue;
         }
-        start ? item->StartExecutionOnce(isPause_) : item->FinishtExecutionOnce(isPause_);
+        start ? item->StartExecutionOnce(isPause_.load()) : item->FinishtExecutionOnce(isPause_.load());
     }
 
     for (auto& item : normalTask_) {
         if (item == nullptr) {
             continue;
         }
-        start ? item->StartExecutionOnce(isPause_) : item->FinishtExecutionOnce(isPause_);
+        start ? item->StartExecutionOnce(isPause_.load()) : item->FinishtExecutionOnce(isPause_.load());
     }
 }
 
@@ -582,13 +567,13 @@ void TaskManager::SetRecordState(bool record)
     if (record) {
         LOGD("Start saving data regularly");
         currentTimePoint_ = std::chrono::steady_clock::now();
-        recordData_ = record;
+        recordData_ = true;
         StartSaveFileThread();
     } else {
         LOGD("Turn off timing to save data");
         auto time = currentTimePoint_ + std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE + 1);
         SaveRegularly(time);
-        recordData_ = record;
+        recordData_ = false;
 
         if (scheduleSaveDataTh_.joinable()) {
             scheduleSaveDataTh_.join();
@@ -638,5 +623,10 @@ void TaskManager::InitDataCsv()
         file.close();
         LOGD("CreatPath already exists: %s", fileName_.c_str());
     }
+}
+
+ArgumentParser& TaskManager::GetArgumentParser()
+{
+    return parameter_;
 }
 }
