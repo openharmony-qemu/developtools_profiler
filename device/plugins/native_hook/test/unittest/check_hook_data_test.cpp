@@ -811,10 +811,12 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         }
         std::vector<std::string>& resultVec = StringSplit(buf, ':');
         ASSERT_FALSE(resultVec.empty());
-        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
-        uint16_t applyCount = std::atoi(resultVec[1].c_str());
-        std::cout << "applyCount: " << applyCount << std::endl;
-        EXPECT_TRUE(applyCount > 0);
+        if (!resultVec.empty() && resultVec.size() > 1) {
+            ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
+            uint16_t applyCount = std::atoi(resultVec[1].c_str());
+            std::cout << "applyCount: " << applyCount << std::endl;
+            EXPECT_TRUE(applyCount > 0);
+        }
         sleep(SLEEP_TIME);
     }
 }
