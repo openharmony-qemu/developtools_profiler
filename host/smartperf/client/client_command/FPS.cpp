@@ -87,7 +87,7 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
         if (!fpsInfoResult.jitters.empty()) {
             auto maxElement = std::max_element(fpsInfoResult.jitters.begin(), fpsInfoResult.jitters.end());
             maxJitters = *maxElement / oneSec;
-        } 
+        }
         ByTrace::GetInstance().CheckFpsJitters(maxJitters, fpsInfoResult.fps);
     }
     return result;

@@ -745,10 +745,6 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
         GetSocketPort(recvBuf);
         std::unique_lock<std::mutex> lock(GpuCounter::GetInstance().GetGpuCounterLock());
         ConnectAndSendFile(spSocket, gpuCounterfilePath + "/gpu_counter.csv");
-    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
-        tracefilePath = "";
-        GetSocketPort(recvBuf);
-        ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::APP_STOP_COLLECT) {
         if (taskMgr_ != nullptr) {
             // UDP (device) 停止时，设置GPU_COUNTER保存路径
