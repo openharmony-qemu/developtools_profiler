@@ -84,8 +84,8 @@ void ByTrace::CpTraceFile() const
 {
     std::string result;
     std::string cpResult;
-    const std::string cpHiviewTracePatn = hiviewTracePath_ + hiviewTrace;
-    const std::string cpTrace = "cp -r " + cpHiviewTracePatn + " " + traceCpPath_;
+    const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
+    const std::string cpTrace = "cp -r " + cpHiviewTracePath + " " + traceCpPath_;
     SPUtils::LoadCmd(cpTrace, result);
     if (!result.empty()) {
         const std::string tracePathChmod = "chmod 777 " + traceCpPath_;
@@ -98,7 +98,7 @@ void ByTrace::CheckFpsJitters(long long& jitters, int cfps) const
     times++;
     int two = 2;
     if (times > two) {
-        long long nowTime = SPUtils::GetCurTime();
+        nowTime = SPUtils::GetCurTime();
         if (lastEnableTime > 0) {
             long long diff =
                 lastEnableTime > nowTime ? (LLONG_MAX - lastEnableTime + nowTime) : (nowTime - lastEnableTime);
