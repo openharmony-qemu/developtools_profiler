@@ -24,6 +24,10 @@
 #define LOG_TAG "Hiprofiler"
 #endif
 
+#ifndef HIPROFILER_LOG_TAG
+#define HIPROFILER_LOG_TAG "Hiprofiler"
+#endif
+
 #define PROFILER_SUBSYSTEM 0xD002D0C
 #ifndef LOG_DOMAIN
 #define LOG_DOMAIN PROFILER_SUBSYSTEM
@@ -153,13 +157,17 @@ static inline std::string StringFormat(const char* fmt, ...)
 
 #ifdef HAVE_HILOG
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
-    HILOG_BASE_DEBUG(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    (void)HiLogBasePrint(type, LOG_DEBUG, PROFILER_SUBSYSTEM, HIPROFILER_LOG_TAG, \
+                         "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_INFO(type, fmt, ...) \
-    HILOG_BASE_INFO(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    (void)HiLogBasePrint(type, LOG_INFO, PROFILER_SUBSYSTEM, HIPROFILER_LOG_TAG, \
+                         "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_WARN(type, fmt, ...) \
-    HILOG_BASE_WARN(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    (void)HiLogBasePrint(type, LOG_WARN, PROFILER_SUBSYSTEM, HIPROFILER_LOG_TAG, \
+                         "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #define HILOG_PRINT_ERROR(type, fmt, ...) \
-    HILOG_BASE_ERROR(type, "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
+    (void)HiLogBasePrint(type, LOG_ERROR, PROFILER_SUBSYSTEM, HIPROFILER_LOG_TAG, \
+                         "%{public}s", logging::StringFormat(fmt, ##__VA_ARGS__).c_str())
 #else
 #define HILOG_PRINT_DEBUG(type, fmt, ...) \
     HiLogPrint(type, LOG_DEBUG, LOG_DOMAIN, LOG_TAG, fmt, ##__VA_ARGS__)
