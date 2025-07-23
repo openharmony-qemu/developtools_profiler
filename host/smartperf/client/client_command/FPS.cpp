@@ -175,7 +175,7 @@ FpsInfo FPS::GetFpsInfo()
             std::string processId = "";
             std::string processIds = "";
             OHOS::SmartPerf::StartUpDelay sp;
-            processId = sp.FetPidByPkg(pkgName, &processIds);
+            processId = sp.GetPidByPkg(pkgName, &processIds);
             SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
