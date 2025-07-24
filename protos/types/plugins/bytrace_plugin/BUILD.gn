@@ -63,7 +63,6 @@ config("bytrace_plugin_protos_config") {
 ohos_source_set("bytrace_plugin_protos_cpp") {
   deps = [ ":bytrace_plugin_protos_protoc" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -76,7 +75,6 @@ ohos_source_set("bytrace_plugin_protos_cpp") {
 ohos_source_set("bytrace_plugin_protos_cpp_standard") {
   deps = [ ":bytrace_plugin_protos_protoc" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

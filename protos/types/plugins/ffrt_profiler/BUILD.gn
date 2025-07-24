@@ -73,7 +73,6 @@ action("ffrt_profiler_data_cpp_gen") {
 ohos_source_set("ffrt_profiler_cpp") {
   deps = [ ":ffrt_profiler_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -95,7 +94,6 @@ ohos_source_set("ffrt_profiler_encoder") {
 ohos_source_set("ffrt_profiler_cpp_standard") {
   deps = [ ":ffrt_profiler_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

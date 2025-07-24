@@ -83,7 +83,6 @@ action("hilog_data_cpp_gen") {
 ohos_source_set("hilog_data_cpp") {
   deps = [ ":hilog_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -96,7 +95,6 @@ ohos_source_set("hilog_data_cpp") {
 ohos_source_set("hilog_data_cpp_standard") {
   deps = [ ":hilog_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -110,7 +108,6 @@ ohos_source_set("hilog_plugin_config_cpp_standard") {
   deps = [ ":hilog_data_cpp_gen" ]
 
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

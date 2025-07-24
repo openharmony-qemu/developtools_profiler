@@ -58,7 +58,6 @@ ohos_unittest("xpowerplugin_ut") {
     "googletest:gtest",
     "hilog:libhilog_base",
     "hisysevent:libhisysevent",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

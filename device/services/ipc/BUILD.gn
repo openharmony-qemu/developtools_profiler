@@ -34,7 +34,6 @@ ohos_source_set("ipc") {
     "bounds_checking_function:libsec_shared",
     "init:libbegetutil",
     "protobuf:protobuf_lite_static",
-    "protobuf:protobuf_static",
   ]
 
   if (current_toolchain != host_toolchain) {
@@ -56,7 +55,6 @@ ohos_executable("protoc_gen_ipc") {
   external_deps = [
     "abseil-cpp:absl_base_static",
     "protobuf:protobuf_lite_static",
-    "protobuf:protobuf_static",
     "protobuf:protoc_static_lib(${host_toolchain})",
   ]
   install_enable = false
@@ -75,7 +73,6 @@ ohos_executable("protoencoder_plugin") {
   external_deps = [
     "abseil-cpp:absl_base_static",
     "protobuf:protobuf_lite_static",
-    "protobuf:protobuf_static",
     "protobuf:protoc_static_lib(${host_toolchain})",
   ]
   install_enable = false

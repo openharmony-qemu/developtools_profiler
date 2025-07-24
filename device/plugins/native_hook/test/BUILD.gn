@@ -81,7 +81,7 @@ ohos_unittest("nativehook_ut") {
     "googletest:gtest",
     "hilog:libhilog_base",
     "init:libbegetutil",
-    "protobuf:protobuf_lite",
+    "protobuf:protobuf",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
