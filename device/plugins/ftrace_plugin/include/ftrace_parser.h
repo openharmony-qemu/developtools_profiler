@@ -21,7 +21,7 @@
 #include <regex>
 #include <string>
 #include <vector>
-
+#include <unordered_set>
 #include "logging.h"
 #include "ftrace_common_type.h"
 #include "ftrace_field_parser.h"
@@ -82,6 +82,7 @@ public:
     }
 
     bool ParseSavedTgid(const std::string& savedTgid);
+    void ParseTargetedSavedTgid(const std::string& savedTgid, int targetPid);
     bool ParseSavedCmdlines(const std::string& savedCmdlines);
 
     void SetDebugOn(bool value);
@@ -90,6 +91,11 @@ public:
             size_t dataSize, P& parseEventCtx)
     {
         return ParseFtraceEvent(ftraceEvent, data, dataSize, parseEventCtx);
+    }
+
+    void ParseTidGid()
+    {
+        ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids());
     }
 
 private:
@@ -155,15 +161,20 @@ private:
             int tgid = 0;
             if (tgidDict_.count(pid) > 0) {
                 tgid = tgidDict_[pid];
-                ftraceEvent.set_tgid(tgid);
             } else {
-                ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids());
-                if (auto itm = tgidDict_.find(pid); itm != tgidDict_.end()) {
-                    tgid = itm->second;
-                    ftraceEvent.set_tgid(tgid);
+                int tgid = FtraceFsOps::GetInstance().GetTgidFromStatus(pid);
+                if (tgid == -1) {
+                    tgid = 0;
+                    ParseTargetedSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids(), pid);
+                    auto itm = tgidDict_.find(pid);
+                    if (itm != tgidDict_.end()) {
+                        tgid = itm->second;
+                    }
+                } else {
+                    tgidDict_[pid] = tgid;
                 }
             }
-
+            ftraceEvent.set_tgid(tgid);
             std::string comm;
             if (auto it = commDict_.find(pid); it != commDict_.end()) {
                 comm = it->second;

@@ -339,8 +339,6 @@ void FlowController::CaptureWorkOnNomalModeInner()
             long nbytes = ReadEventData(i);
             rawDataBytes[i] = nbytes;
         }
-        // parse ftrace metadata
-        ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
         // parse ftrace percpu event data
         for (size_t i = 0; i < rawDataBytes.size(); i++) {
             if (flushCacheData_ && !keepRunning_) {
@@ -389,6 +387,7 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
     pthread_setname_np(pthread_self(), "HmTraceReader");
     PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
+    ftraceParser_->ParseTidGid();
     while (keepRunning_) {
         std::this_thread::sleep_for(tracePeriod);
         if (flushCacheData_ && !keepRunning_) {
@@ -396,7 +395,6 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
             return;
         }
         long rawDataBytes = HmReadEventData();
-        ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
         if (flushCacheData_ && !keepRunning_) {
             PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
@@ -449,8 +447,6 @@ void FlowController::CaptureWorkOnDelayMode()
         }
         writeDataCount++;
         if (writeDataCount == PARSE_CMDLINE_COUNT) {
-            // parse ftrace metadata
-            ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
             writeDataCount = 0;
         }
     }
