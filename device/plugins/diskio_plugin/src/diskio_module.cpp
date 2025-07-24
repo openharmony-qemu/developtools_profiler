@@ -40,6 +40,9 @@ static int DiskioPluginReportResult(uint8_t* bufferData, uint32_t bufferSize)
 static int DiskioPluginReportResultOptimize(RandomWriteCtx* randomWrite)
 {
     std::lock_guard<std::mutex> guard(g_taskMutex);
+    if (g_plugin == nullptr) {
+        return -1;
+    }
     return g_plugin->ReportOptimize(randomWrite);
 }
 
