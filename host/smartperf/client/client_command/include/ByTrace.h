@@ -38,12 +38,7 @@ public:
     void CpTraceFile() const;
     static inline std::string jittersAndLowFps = "";
     static inline std::string hiviewTrace = "";
-
-private:
-    ByTrace() {};
-    ByTrace(const ByTrace &);
-    ByTrace &operator = (const ByTrace &);
-
+public:
     // 抓trace触发条件:默认 某一帧的某个jitter>100 ms触发
     mutable long long threshold = 100;
     mutable long long lastEnableTime = 0;
@@ -52,9 +47,14 @@ private:
     // 前2秒采的不准
     mutable int times = 0;
     mutable std::string traceCpPath_ {"/data/local/tmp/hitrace"};
-    mutable std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
     mutable long long comperTime = 1000;
     mutable long long nowTime = 0;
+private:
+    ByTrace() {};
+    ByTrace(const ByTrace &);
+    ByTrace &operator = (const ByTrace &);
+
+    mutable std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
 };
 }
 }
