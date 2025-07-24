@@ -14,81 +14,107 @@
  */
 #include <iostream>
 #include <sstream>
+#include <filesystem>
 #include <thread>
 #include "unistd.h"
 #include "include/sp_utils.h"
 #include "include/ByTrace.h"
 #include "include/sp_log.h"
 #include "include/common.h"
+
+namespace {
+constexpr long long RM_10000 = 10000;
+}
 namespace OHOS {
 namespace SmartPerf {
-void ByTrace::SetTraceConfig(int mSum, int mInterval, long long mThreshold, int mLowfps, int mCurNum) const
+std::map<std::string, std::string> ByTrace::ItemData()
 {
-    sum = mSum;
-    interval = mInterval;
+    return std::map<std::string, std::string>();
+}
+
+void ByTrace::SetTraceConfig(long long mThreshold, int mLowfps) const
+{
     threshold = mThreshold;
     lowfps = mLowfps;
-    curNum = mCurNum;
-    LOGD("ByTrace::SetTraceConfig mSum(%d) mInterval(%d) mThreshold(%lld) mLowfps(%d) mCurNum(%d)",
-        mSum, mInterval, mThreshold, mLowfps, mCurNum);
+    LOGD("ByTrace::SetTraceConfig threshold(%lld), lowfps(%d)", threshold, lowfps);
 }
-void ByTrace::ThreadGetTrace() const
+
+void ByTrace::SetByTrace() const
 {
-    std::string result;
-    std::string cmdString;
-    if (SPUtils::IsHmKernel()) {
-        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_1024);
-    } else {
-        cmdString = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_2048);
-    }
-    std::string time = std::to_string(SPUtils::GetCurTime());
-    std::string traceFile = "/data/local/tmp/sptrace_" + time + ".ftrace";
-    std::string traceCmdExe = cmdString + traceFile;
-    SPUtils::LoadCmd(traceCmdExe, result);
-    LOGD("TRACE threadGetTrace  CMD(%s)", traceCmdExe.c_str());
-}
-TraceStatus ByTrace::CheckFpsJitters(std::vector<long long>& jitters, int cfps) const
-{
-    times++;
-    int two = 2;
-    long long curTime = SPUtils::GetCurTime();
-    LOGD("Bytrace get curTime : %lld", curTime);
-    if (curNum <= sum && currentTrigger < 0 && times > two) {
-        for (const long long& jitter : jitters) {
-            long long normalJitter = jitter / 1e6;
-            if (normalJitter > threshold || cfps < lowfps) {
-                TriggerCatch(curTime);
-            }
+    std::vector<std::string> values;
+    std::string delimiter = "||";
+    std::string delim = "=";
+    SPUtils::StrSplit(jittersAndLowFps, delimiter, values);
+    long long mThreshold = 0;
+    int lowFps = 0;
+    for (std::string& vItem : values) {
+        std::vector<std::string> vItems;
+        SPUtils::StrSplit(vItem, delim, vItems);
+        if (vItems[0] == "fpsJitterTime") {
+            mThreshold = SPUtilesTye::StringToSometype<int>(vItems[1]);
+        }
+        if (vItems[0] == "lowFps") {
+            lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
         }
     }
-    if ((curTime - lastTriggerTime) / 1e3 > interval && currentTrigger == 1) {
-        currentTrigger = -1;
-    }
-    return TraceStatus::TRACE_FINISH;
+    SetTraceConfig(mThreshold, lowFps);
 }
-void ByTrace::TriggerCatch(long long curTime) const
+
+void ByTrace::ClearTraceFiles() const
 {
-    if ((curTime - lastTriggerTime) / 1e3 > interval && !CheckHitraceId()) {
-        std::thread tStart([this] { this->ThreadGetTrace(); });
-        currentTrigger = 1;
-        lastTriggerTime = curTime;
-        curNum++;
-        tStart.detach();
+    if (!std::filesystem::exists(traceCpPath_)) {
+        SPUtils::CreateDir(traceCpPath_);
+    } else {
+        RemoveTraceFiles();
     }
 }
 
-bool ByTrace::CheckHitraceId() const
+void ByTrace::RemoveTraceFiles() const
+{
+    if (std::filesystem::is_directory(traceCpPath_)) {
+        for (const auto& entry : std::filesystem::directory_iterator(traceCpPath_)) {
+            if (!entry.is_directory()) {
+                std::filesystem::remove(entry.path());
+            }
+        }
+    }
+}
+
+void ByTrace::CpTraceFile() const
 {
     std::string result;
-    std::string hitrace = CMD_COMMAND_MAP.at(CmdCommand::HITRACE_CMD);
-    SPUtils::LoadCmd(hitrace, result);
-    if (result.empty()) {
-        return false;
+    std::string cpResult;
+    const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
+    const std::string cpTrace = "cp -r " + cpHiviewTracePath + " " + traceCpPath_;
+    SPUtils::LoadCmd(cpTrace, result);
+    if (!result.empty()) {
+        const std::string tracePathChmod = "chmod 777 " + traceCpPath_;
+        SPUtils::LoadCmd(tracePathChmod, cpResult);
     }
-    if (result.find("-t") != std::string::npos) {
-        return true;
+}
+
+void ByTrace::CheckFpsJitters(long long& jitters, int cfps) const
+{
+    times++;
+    int two = 2;
+    if (times > two) {
+        nowTime = SPUtils::GetCurTime();
+        if (lastEnableTime > 0) {
+            long long diff =
+                lastEnableTime > nowTime ? (LLONG_MAX - lastEnableTime + nowTime) : (nowTime - lastEnableTime);
+            LOGD("ByTrace::Time difference: %lld ms", diff);
+            if (diff > RM_10000) {
+            LOGW("ByTrace::Time difference exceeded threshold, resetting start capture time.");
+            lastEnableTime = 0;
+        }
+        }
     }
-    return false;
+    if (cfps < lowfps || jitters > threshold) {
+        if (lastEnableTime == 0) {
+            lastEnableTime = nowTime;
+            ipcCallback_("surfaceCaton");
+        }
+    }
 }
 }
 }

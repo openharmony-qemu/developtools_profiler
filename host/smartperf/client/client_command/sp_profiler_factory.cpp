@@ -89,9 +89,6 @@ SpProfiler *SpProfilerFactory::GetProfilerItemContinue(MessageType messageType)
         case MessageType::GET_POWER:
             profiler = &Power::GetInstance();
             break;
-        case MessageType::CATCH_TRACE_CONFIG:
-            FPS::GetInstance().SetTraceCatch();
-            break;
         case MessageType::GET_CAPTURE:
             Capture::GetInstance().SocketMessage();
             profiler = &Capture::GetInstance();
@@ -130,38 +127,6 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
     CPUInfo::GetInstance().SetPids(pids.empty() ? pid : pids);
 }
 
-void SpProfilerFactory::SetByTrace(const std::string& message)
-{
-    std::vector<std::string> values;
-    std::string delimiter = "||";
-    std::string delim = "=";
-    SPUtils::StrSplit(message, delimiter, values);
-    int mSum = 0;
-    int mInterval = 0;
-    long long mThreshold = 0;
-    int lowFps = 0;
-    for (std::string& vItem : values) {
-        std::vector<std::string> vItems;
-        SPUtils::StrSplit(vItem, delim, vItems);
-        if (vItems[0] == "traceSum") {
-            mSum = SPUtilesTye::StringToSometype<int>(vItems[1]);
-        }
-        if (vItems[0] == "fpsJitterTime") {
-            mThreshold = SPUtilesTye::StringToSometype<int>(vItems[1]);
-        }
-        if (vItems[0] == "catchInterval") {
-            mInterval = SPUtilesTye::StringToSometype<int>(vItems[1]);
-        }
-        if (vItems[0] == "lowFps") {
-            lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
-        }
-    }
-    const ByTrace &bTrace = ByTrace::GetInstance();
-    if (message.find("traceSum") != std::string::npos) {
-        int mCurNum = 1;
-        bTrace.SetTraceConfig(mSum, mInterval, mThreshold, lowFps, mCurNum);
-    }
-}
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
@@ -193,13 +158,28 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
                 profiler = &RAM::GetInstance();
             }
             break;
+        default:
+            break;
+    }
+    if (profiler == nullptr) {
+        profiler = GetCmdProfilerItemOption(commandType, cmdFlag);
+    }
+    return profiler;
+}
+
+SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType, bool cmdFlag)
+{
+    SpProfiler *profiler = nullptr;
+    switch (commandType) {
         case CommandType::CT_NET:
             profiler = &Network::GetInstance();
             break;
         case CommandType::CT_NAV:
             profiler = &Navigation::GetInstance();
             break;
-        case CommandType::CT_TTRACE:
+        case CommandType::CT_TRACE:
+            ByTrace::GetInstance().SetByTrace();
+            profiler = &ByTrace::GetInstance();
             FPS::GetInstance().SetTraceCatch();
             break;
         case CommandType::CT_AS:

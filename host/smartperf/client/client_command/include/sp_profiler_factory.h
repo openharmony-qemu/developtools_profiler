@@ -24,8 +24,8 @@ public:
     static SpProfiler *GetProfilerItemContinue(MessageType messageType);
     static void SetProfilerPkg(const std::string &pkg);
     static void SetProfilerPidByPkg(std::string &pid, std::string pids = "");
-    static void SetByTrace(const std::string& message);
     static SpProfiler *GetCmdProfilerItem(CommandType commandType, bool cmdFlag);
+    static SpProfiler *GetCmdProfilerItemOption(CommandType commandType, bool cmdFlag);
     static SpProfiler *GetCmdProfilerItemContinue(CommandType commandType, bool cmdFlag);
     static inline bool editorFlag = false;
 };
