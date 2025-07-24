@@ -93,12 +93,19 @@ static bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
-bool IsLegalSoName(const std::string &fileName)
+bool IsLegalSoName(const char *fileName)
 {
-    if (fileName.front() == '[' || fileName.back() == ']' ||
-        std::strncmp(fileName.c_str(), "/dev/", sizeof("/dev/")) == 0 ||
-        std::strncmp(fileName.c_str(), "/memfd:", sizeof("/memfd:")) == 0 ||
-        std::strncmp(fileName.c_str(), "//anon", sizeof("//anon")) == 0) {
+    if (fileName == nullptr) {
+        return false;
+    }
+    size_t fileNameLength = strlen(fileName);
+    if (fileNameLength == 0) {
+        return false;
+    }
+    if (fileName[0] == '[' || fileName[strlen(fileName) - 1] == ']' ||
+        std::strncmp(fileName, "/dev/", sizeof("/dev/") - 1) == 0 ||
+        std::strncmp(fileName, "/memfd:", sizeof("/memfd:") - 1) == 0 ||
+        std::strncmp(fileName, "//anon", sizeof("//anon") - 1) == 0) {
         return false;
     }
     return true;
@@ -110,7 +117,7 @@ static void GetStandardLibraryRange(std::string& line, bool targeted = false)
     std::vector<std::string> mapTokens = OHOS::Developtools::NativeDaemon::StringSplit(line, " ");
     const std::string& soRange = mapTokens.front();
     std::string& soName = mapTokens.back();
-    if (IsLegalSoName(soName)) {
+    if (IsLegalSoName(soName.c_str())) {
         std::string::size_type concatPos = soRange.find('-');
         uint64_t soStart = static_cast<uint64_t>(strtoll(soRange.c_str(), nullptr, BASE_MAX));
         uint64_t soEnd = static_cast<uint64_t>(strtoll(soRange.c_str() + concatPos + 1, nullptr, BASE_MAX));

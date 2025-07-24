@@ -994,7 +994,7 @@ void hook_free(void (*free_func)(void*), void* p)
 #endif
 }
 
-inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::string& filePath,
+inline void SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath,
                                 const StackRawData& rawdata, std::shared_ptr<HookSocketClient>& holder)
 {
     NameData curRawdata = {{{{0}}}};
@@ -1006,14 +1006,14 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
     if (prot & PROT_EXEC) {
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
-    size_t len = strlen(filePath.c_str()) + 1;
+    size_t len = strlen(filePath) + 1;
     if ((flags & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) && (IsLegalSoName(filePath)) &&
-        (filePath.find("ld-musl") != std::string::npos || filePath.find("libc++") != std::string::npos)) {
+        (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
     if ((flags & MAP_FIXED) && (IsLegalSoName(filePath)) && (!g_ClientConfig.targetSoName.empty()) &&
-       (filePath.find(g_ClientConfig.targetSoName) != std::string::npos)) {
+        strstr(filePath, g_ClientConfig.targetSoName.c_str()) != NULL) {
         uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
         uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
         auto range = targetedRange.load();
@@ -1028,9 +1028,10 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const std::st
         }
         targetedRange.store(range);
     }
-    if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath.c_str(), len) != EOK) {
+    if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath, len) != EOK) {
         return;
     }
+    curRawdata.name[len - 1] = '\0';
     if (flags & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
