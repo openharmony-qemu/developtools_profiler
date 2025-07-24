@@ -23,7 +23,7 @@
 extern "C" {
 #endif
 
-bool IsLegalSoName(const std::string &fileName);
+bool IsLegalSoName(const char *fileName);
 void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
                 const NameData& curRawData);
 bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange);
