@@ -150,7 +150,8 @@ ani_object GetPss(ani_env *env)
     if (collector != nullptr) {
         int pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
+        uint64_t pssInfo = static_cast<uint64_t>(collectResult.data.pss) +
+            static_cast<uint64_t>(collectResult.data.swapPss);
         AniUtil::ToAniBigInt(env, pssInfo, pss);
     } else {
         AniUtil::ToAniBigInt(env, 0, pss);
@@ -166,8 +167,7 @@ ani_object GetSharedDirty(ani_env *env)
     if (collector != nullptr) {
         int pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t sharedDirtyInfo = collectResult.data.sharedDirty;
-        AniUtil::ToAniBigInt(env, sharedDirtyInfo, sharedDirty);
+        AniUtil::ToAniBigInt(env, static_cast<uint64_t>(collectResult.data.sharedDirty), sharedDirty);
     } else {
         AniUtil::ToAniBigInt(env, 0, sharedDirty);
     }
@@ -182,8 +182,7 @@ ani_object GetPrivateDirty(ani_env *env)
     if (collector != nullptr) {
         pid_t pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t privateDirty = collectResult.data.privateDirty;
-        AniUtil::ToAniBigInt(env, privateDirty, privateDirtyValue);
+        AniUtil::ToAniBigInt(env, static_cast<uint64_t>(collectResult.data.privateDirty), privateDirtyValue);
     } else {
         AniUtil::ToAniBigInt(env, 0, privateDirtyValue);
     }
