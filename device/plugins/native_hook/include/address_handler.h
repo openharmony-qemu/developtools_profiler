@@ -26,7 +26,7 @@ public:
 
     virtual ~AddressHandler();
 
-    void SetSuccessor(std::unique_ptr<AddressHandler> successor)
+    void SetSuccessor(std::shared_ptr<AddressHandler> successor)
     {
         successor_ = std::move(successor);
     }
@@ -36,7 +36,7 @@ public:
     std::atomic<uint64_t> count = 0;
 
 protected:
-    std::unique_ptr<AddressHandler> successor_ = nullptr;
+    std::shared_ptr<AddressHandler> successor_ = nullptr;
     Bitpool* addressChecker_ = nullptr;
     int bitPoolSize_ = 0;
 };
