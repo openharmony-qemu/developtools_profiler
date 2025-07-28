@@ -49,6 +49,8 @@ static pthread_key_t g_updateThreadNameCount = 10000;
 static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
+static std::atomic<int> g_sharedMemCount = 1;
+static std::atomic<uint16_t> g_tagId = 0;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
@@ -274,6 +276,7 @@ void* MallocHookStart(void* disableHookCallback)
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler, &targetedRange,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
+    g_sharedMemCount = (g_ClientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     g_hookReady = true;
     return nullptr;
 }
@@ -350,6 +353,7 @@ void* ohos_release_on_end(void*)
     g_wholeAddrHandler = nullptr;
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
+    g_sharedMemCount = 1;
     g_hookReady = false;
     return nullptr;
 }
@@ -542,7 +546,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -637,7 +641,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -737,7 +741,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -845,9 +849,9 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     }
     // 0: Don't unwind the freeData
     holder->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0,
-                                 reinterpret_cast<uint64_t>(freeData.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(freeData.addr) % g_sharedMemCount);
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -908,7 +912,7 @@ void hook_free(void (*free_func)(void*), void* p)
         auto holder = weakClient.lock();
         if ((holder != nullptr) && p) {
             holder->SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
-                                         reinterpret_cast<uint64_t>(p) % SHARED_MEMORY_NUM);
+                                         reinterpret_cast<uint64_t>(p) % g_sharedMemCount);
         }
         free_func(p);
 #ifdef PERFORMANCE_DEBUG
@@ -980,7 +984,7 @@ void hook_free(void (*free_func)(void*), void* p)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1131,8 +1135,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1211,8 +1214,7 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1260,7 +1262,7 @@ int hook_prctl(int(*fn)(int, ...),
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
         holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1321,8 +1323,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % SHARED_MEMORY_NUM);
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1484,7 +1485,7 @@ bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, siz
         auto holder = weakClient.lock();
         bool result = true;
         if (holder != nullptr) {
-            for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            for (int i = 0; i < g_sharedMemCount; ++i) {
                 result &= (holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize, i));
             }
             return result;

@@ -25,8 +25,9 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
 {
     const bool isNoDataQueueMode = (hookConfig_.statistics_interval() > 0 && hookConfig_.fp_unwind() &&
                                     hookConfig_.offline_symbolization());
-    int rawDataCacheSize = isNoDataQueueMode ? SHARED_MEMORY_NUM : RAW_DATA_CACHE_INIT_SIZE;
-    int hookRecordCacheSize = isNoDataQueueMode ? SHARED_MEMORY_NUM : HOOK_RECORD_CACHE_INIT_SIZE;
+    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    int rawDataCacheSize = isNoDataQueueMode ? sharedMemCount : RAW_DATA_CACHE_INIT_SIZE;
+    int hookRecordCacheSize = isNoDataQueueMode ? sharedMemCount : HOOK_RECORD_CACHE_INIT_SIZE;
 
     for (int index = 0; index < rawDataCacheSize; ++index) {
         rawStackCache_.emplace_back(std::make_shared<RawStack>());

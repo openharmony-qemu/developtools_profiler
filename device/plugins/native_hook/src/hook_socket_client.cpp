@@ -83,9 +83,11 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *samp
     : pid_(pid), config_(config), sampler_(sampler), targetedRange_(targetedRange),
       disableHookCallback_(disableHookCallback)
 {
-    smbFds_.reserve(SHARED_MEMORY_NUM);
-    eventFds_.reserve(SHARED_MEMORY_NUM);
-    stackWriterList_.reserve(SHARED_MEMORY_NUM);
+    g_disableHook = true;
+    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    smbFds_.reserve(sharedMemCount);
+    eventFds_.reserve(sharedMemCount);
+    stackWriterList_.reserve(sharedMemCount);
     unixSocketClient_ = nullptr;
     serviceName_ = "HookService";
     Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
@@ -100,6 +102,7 @@ HookSocketClient::~HookSocketClient()
         stackWriterList_[i] = nullptr;
     }
     unixSocketClient_ = nullptr;
+    g_disableHook = true;
 }
 
 bool HookSocketClient::Connect(const std::string addrname)
@@ -126,7 +129,8 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     sampler_->InitSampling(config_->sampleInterval);
-    for (size_t i = 0; i < SHARED_MEMORY_NUM; ++i) {
+    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    for (size_t i = 0; i < sharedMemCount; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();
         int eventfd = context.ReceiveFileDiscriptor();
         smbFds_.push_back(smbfd);

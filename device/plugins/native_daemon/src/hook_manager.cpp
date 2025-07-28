@@ -218,7 +218,8 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
 
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
-    clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / SHARED_MEMORY_NUM) * PAGE_BYTES;
+    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -233,6 +234,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
+    clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
     clientConfig.targetSoName = hookConfig_.target_so_name();
@@ -256,9 +258,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     }
 
     // create smb and eventNotifier
-    uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / SHARED_MEMORY_NUM) * PAGE_BYTES;
+    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
 
-    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+    for (int i = 0; i < sharedMemCount; ++i) {
         std::string smbName = "";
         if (ctx->pid > 0) {
             smbName = "hooknativesmb_" + std::to_string(ctx->pid) + ":" + std::to_string(i);
@@ -302,7 +305,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
         ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
-        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        for (int i = 0; i < sharedMemCount; ++i) {
             ctx->eventPollerList[i]->AddFileDescriptor(
                 ctx->eventNotifierList[i]->GetFd(),
                 std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
@@ -314,7 +317,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
             fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
         ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
-        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        for (int i = 0; i < sharedMemCount; ++i) {
             ctx->eventPollerList[i]->AddFileDescriptor(
                 ctx->eventNotifierList[i]->GetFd(),
                 [this, &ctx, i] { this->ReadShareMemory(ctx, i); });
@@ -561,7 +564,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        for (int i = 0; i < item->eventPollerList.size(); ++i) {
             if (item->eventPollerList[i] && item->eventNotifierList[i]) {
                 PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %d", i);
                 item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
@@ -837,7 +840,7 @@ void HookManager::WriteHookConfig()
     }
 }
 
-std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
+std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name, int sharedMemCount)
 {
     for (const auto& item : hookCtx_) {
         if (item->pid == pid || item->processName == name) {
@@ -846,14 +849,14 @@ std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name)
             }
             item->stackPreprocess->SetPid(pid);
             std::vector<int> fds;
-            for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+            for (int i = 0; i < sharedMemCount; ++i) {
                 fds.push_back(item->eventNotifierList[i]->GetFd());
                 fds.push_back(item->shareMemoryBlockList[i]->GetfileDescriptor());
             }
             return fds;
         }
     }
-    return std::vector<int>(-1, SHARED_MEMORY_NUM * DOUBLE);
+    return std::vector<int>(-1, sharedMemCount * DOUBLE);
 }
 
 void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)

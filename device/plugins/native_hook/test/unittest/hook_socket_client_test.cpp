@@ -106,8 +106,8 @@ HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level1)
     auto size = sizeof(clientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
-    ASSERT_EQ(hookClient.GetSmbFds().size(), OHOS::Developtools::NativeDaemon::SHARED_MEMORY_NUM);
-    ASSERT_EQ(hookClient.GetEventFds().size(), OHOS::Developtools::NativeDaemon::SHARED_MEMORY_NUM);
+    ASSERT_EQ(hookClient.GetSmbFds().size(), 1);
+    ASSERT_EQ(hookClient.GetEventFds().size(), 1);
 }
 
 /*
