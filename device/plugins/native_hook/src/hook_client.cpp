@@ -346,17 +346,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     if (!InitTheadKey()) {
         return false;
     }
-    constexpr int paramBufferLen = 128;
-    char paramOutBuf[paramBufferLen] = {0};
-    int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
-    if (ret > 0) {
-        int min = 0;
-        int max = 0;
-        if (sscanf_s(paramOutBuf, "%d,%d", &min, &max) == 2) { // 2: two parameters.
-            g_maxSize = max > 0 ? static_cast<uint32_t>(max) : INT_MAX;
-            g_ClientConfig.filterSize = min > 0 ? min : 0;
-        }
-    }
     return true;
 }
 
@@ -1502,7 +1491,7 @@ static bool IsPidChanged(void)
     if (g_isPidChanged) {
         return true;
     }
-    int pid = getprocpid();
+    int pid = getpid();
     // hap app after pid namespace used
     if (pid == PID_NAMESPACE_ID) {
         return false;
