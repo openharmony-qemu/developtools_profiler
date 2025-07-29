@@ -49,6 +49,7 @@ static pthread_key_t g_updateThreadNameCount = 10000;
 static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
+static std::atomic<uint16_t> g_tagId = 0;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
@@ -67,6 +68,7 @@ static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
+std::mutex g_tagIdMutex;
 std::mutex g_usableSizeMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
@@ -208,6 +210,31 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         }
     }
     return tagId;
+}
+
+uint16_t __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<HookSocketClient>& client,
+                                                     const char* tagName)
+{
+    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
+        return 0;
+    }
+
+    std::unique_lock<std::mutex> lock(g_tagIdMutex);
+    NameData tagData = {{{{0}}}};
+    tagData.type = MEMORY_TAG;
+    ++g_tagId;
+    if (g_tagId.load() == 0) {
+        ++g_tagId;
+    }
+    tagData.tagId = g_tagId.load();
+    lock.unlock();
+    if (strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName) != EOK) {
+        return 0;
+    }
+    if (client != nullptr) {
+        client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
+    }
+    return tagData.tagId;
 }
 
 static bool IsPidChanged(void);
@@ -1125,9 +1152,9 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             SendMmapFileRawData(prot, flags, offset, fileName, rawdata, holder);
             char* p = strrchr(fileName, '/');
             if (p != nullptr) {
-                rawdata.tagId = GetTagId(holder, &fileName[p - fileName + 1]);
+                rawdata.tagId = GetMmapTagId(holder, &fileName[p - fileName + 1]);
             } else {
-                rawdata.tagId = GetTagId(holder, fileName);
+                rawdata.tagId = GetMmapTagId(holder, fileName);
             }
         }
     }
