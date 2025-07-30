@@ -543,6 +543,7 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
             PROFILER_LOG_INFO(LOG_CORE, "The file is too large :file length file(%zu)", fileLength_);
             return false;
         }
+        
         if (!RemapFile()) {
             return false;
         }
