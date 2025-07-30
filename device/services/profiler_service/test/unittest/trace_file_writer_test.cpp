@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <unistd.h>
 #include <vector>
+#include <fcntl.h>
 
 #include "common_types.pb.h"
 #include "logging.h"
