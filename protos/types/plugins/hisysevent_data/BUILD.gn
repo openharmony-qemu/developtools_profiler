@@ -86,7 +86,6 @@ ohos_source_set("hisysevent_data_cpp") {
   deps = [ ":hisysevent_data_cpp_gen" ]
 
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -99,7 +98,6 @@ ohos_source_set("hisysevent_data_cpp") {
 ohos_source_set("hisysevent_data_cpp_standard") {
   deps = [ ":hisysevent_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -112,7 +110,6 @@ ohos_source_set("hisysevent_data_cpp_standard") {
 ohos_source_set("hisysevent_plugin_config_cpp_standard") {
   deps = [ ":hisysevent_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

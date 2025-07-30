@@ -70,7 +70,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "hilog:libhilog_base",
     "init:libbegetutil",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf_lite",
+    "protobuf:protobuf",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

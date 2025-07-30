@@ -74,7 +74,6 @@ ohos_source_set("stream_data_cpp") {
   deps = [ ":stream_data_cpp_gen" ]
 
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

@@ -62,7 +62,7 @@ ohos_executable("hiprofiler_cmd") {
     "grpc:grpc",
     "grpc:grpcxx",
     "init:libbegetutil",
-    "protobuf:protobuf_lite",
+    "protobuf:protobuf",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]

@@ -83,7 +83,6 @@ action("process_data_cpp_gen") {
 ohos_source_set("process_data_cpp") {
   deps = [ ":process_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -96,7 +95,6 @@ ohos_source_set("process_data_cpp") {
 ohos_source_set("process_data_cpp_standard") {
   deps = [ ":process_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -109,7 +107,6 @@ ohos_source_set("process_data_cpp_standard") {
 ohos_source_set("process_plugin_config_cpp_standard") {
   deps = [ ":process_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

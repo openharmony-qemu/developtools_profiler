@@ -62,7 +62,6 @@ ohos_source_set("proto_example_source") {
   sources = example_codegen_all
   external_deps = [
     "protobuf:protobuf_lite_static",
-    "protobuf:protobuf_static",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
