@@ -1111,9 +1111,9 @@ napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
     if (!EnableGwpAsanGrayscale(gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
         gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
         HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
-        apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMTIT);
+        apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMIT);
         paramErrorMessage = "The number of GWP-ASAN applications of this device overflowed after last boot.";
-        napi_throw_error(env, std::to_string(ErrorCode::OVER_ENABLE_LIMTIT).c_str(), paramErrorMessage.c_str());
+        napi_throw_error(env, std::to_string(ErrorCode::OVER_ENABLE_LIMIT).c_str(), paramErrorMessage.c_str());
         return CreateUndefined(env);
     }
     return CreateUndefined(env);
