@@ -150,4 +150,40 @@ HWTEST_F(TraceFileWriterTest, SplitFileWriter, TestSize.Level1)
     auto writerTemp = std::make_shared<TraceFileWriter>(testPathTemp, true, 0, 1);
     EXPECT_NE(writerTemp, nullptr);
 }
+
+/**
+ * @tc.name: server
+ * @tc.desc: remap
+ * @tc.type: FUNC
+ */
+HWTEST_F(TraceFileWriterTest, RemapFile, TestSize.Level1)
+{
+    path = "remap-test.bin";
+    int fd = open(path.c_str(), O_RDWR | O_CREAT, 0644);
+    if (fd == -1) {
+        perror("open");
+        return;
+    }
+    auto writer = std::make_shared<TraceFileWriter>(fd);
+    EXPECT_NE(writer, nullptr);
+    uint32_t applySize = 1024 * 1024;  // 1MB
+    char temp[1024] = {"this is a test ,this is a test ,this is a test, this is a test\n"};
+    for (size_t i = 0; i < 2000; i++) {  // 2000: loop count
+        uint8_t* memory = nullptr;
+        uint32_t offset = 0;
+        writer->GetMemory(applySize, &memory, &offset);
+        if (i < 1023) {  // 1023: remap critical point
+            EXPECT_NE(memory, nullptr);
+            if (memcpy_s(memory, applySize, temp, sizeof(temp)) != EOK) {
+                PROFILER_LOG_INFO(LOG_CORE, "memcpy_s failed,apply size %u", applySize);
+                continue;
+            }
+            writer->FinishReport(applySize);
+        } else {
+            EXPECT_EQ(memory, nullptr);
+        }
+    }
+    EXPECT_GE(writer->fileLength_, 1024 * 1024 * 1024);
+    close(fd);
+}
 } // namespace
