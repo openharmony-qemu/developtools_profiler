@@ -261,6 +261,7 @@ enum class CmdCommand {
     CP,
     TAR,
     GET_HILOG,
+    CPU_FREQ,
 };
 
 const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
@@ -293,6 +294,7 @@ const std::unordered_map<CmdCommand, std::string> CMD_COMMAND_MAP = {
     { CmdCommand::CP, std::string("cp ") },
     { CmdCommand::TAR, std::string("tar -czf ") },
     { CmdCommand::GET_HILOG, std::string("timeout 1s hilog > ") },
+    { CmdCommand::CPU_FREQ, std::string("/sys/devices/system/cpu/cpufreq/") },
 };
 
 enum class DeviceCmd {
