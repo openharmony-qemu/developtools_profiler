@@ -49,6 +49,7 @@ public:
     void GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, std::string> &processCpuInfo) const;
     void SetPackageName(const std::string &pName);
     void SetProcessId(const std::string &pid);
+    std::map<std::string, std::string> GetCpuCoreCurFreqs();
 
 private:
     CPU() {};

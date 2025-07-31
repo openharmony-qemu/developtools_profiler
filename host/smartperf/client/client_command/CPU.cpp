@@ -27,6 +27,7 @@
 #include "collect_result.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include <dirent.h>
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -81,6 +82,12 @@ std::map<std::string, std::string> CPU::ItemData()
             }
         }
     }
+
+    std::map<std::string, std::string> cpuCoreCurFreqs = GetCpuCoreCurFreqs();
+    for (const auto& item : cpuCoreCurFreqs) {
+        result[item.first] = item.second;
+    }
+
     LOGI("CPU:ItemData map size(%u)", result.size());
     return result;
 }
@@ -206,6 +213,37 @@ void CPU::GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, 
         processCpuInfo["ChildProcUCpuUsage"] = "NA";
         processCpuInfo["ChildProcSCpuUsage"] = "NA";
     }
+}
+
+std::map<std::string, std::string> CPU::GetCpuCoreCurFreqs()
+{
+    std::map<std::string, std::string> cpuCoreCurFreqs;
+    std::vector<std::string> policyFiles;
+    std::string basePath = CMD_COMMAND_MAP.at(CmdCommand::CPU_FREQ);
+    DIR *dir = opendir(basePath.c_str());
+    if (dir == nullptr) {
+        LOGE("CPU::CPU_FREQ dir open failed.");
+        return cpuCoreCurFreqs;
+    }
+    while (true) {
+        struct dirent *ptr = readdir(dir);
+        if (ptr == nullptr) {
+            break;
+        }
+        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
+            continue;
+        }
+        std::string clusterName = std::string(ptr->d_name);
+        policyFiles.push_back(SPUtils::IncludePathDelimiter(basePath) + clusterName);
+    }
+    closedir(dir);
+    for (size_t i = 0; i < policyFiles.size(); i++) {
+        std::string curFreq;
+        SPUtils::LoadFile(policyFiles[i] + "/cpuinfo_cur_freq", curFreq);
+        std::string nameBase = "cpu" + std::to_string(i) + "_";
+        cpuCoreCurFreqs[nameBase + "curFrequency"] = curFreq;
+    }
+    return cpuCoreCurFreqs;
 }
 }
 }
