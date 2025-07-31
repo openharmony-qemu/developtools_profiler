@@ -27,6 +27,7 @@
 #include "collect_result.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/common.h"
 #include <dirent.h>
 
 using namespace OHOS::HiviewDFX;
@@ -75,7 +76,7 @@ void CPU::GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult
     std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
     const size_t oneHundred = 100;
     if (workLoads.empty()) {
-        return cpuUsageResult;
+        return;
     }
     for (size_t i = 0; i < workLoads.size(); i++) {
         std::string cpuIdStr = workLoads[i].cpuId;
