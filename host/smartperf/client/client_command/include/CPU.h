@@ -50,7 +50,8 @@ public:
     void SetPackageName(const std::string &pName);
     void SetProcessId(const std::string &pid);
     std::map<std::string, std::string> GetCpuCoreCurFreqs();
-
+    void GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult);
+    void GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult);
 private:
     CPU() {};
     CPU(const CPU &);

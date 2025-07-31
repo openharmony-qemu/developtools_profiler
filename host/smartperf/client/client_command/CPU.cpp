@@ -39,41 +39,9 @@ std::map<std::string, std::string> CPU::ItemData()
 {
     usleep(twenty * thousand);
     std::map<std::string, std::string> result;
-    std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
-    for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
-        std::string cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
-        std::string cpuId = std::to_string(cpuFreqInfo[i].cpuId);
-        result["cpu" + cpuId + "Frequency"] = cpuFreqStr;
-    }
-    std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
-    const size_t oneHundred = 100;
-    if (workLoads.empty()) {
-        return result;
-    }
-    for (size_t i = 0; i < workLoads.size(); i++) {
-        std::string cpuIdStr = workLoads[i].cpuId;
-        std::string userUsageStr = std::to_string(workLoads[i].userUsage * oneHundred);
-        std::string niceUsageStr = std::to_string(workLoads[i].niceUsage * oneHundred);
-        std::string systemUsageStr = std::to_string(workLoads[i].systemUsage * oneHundred);
-        std::string idleUsageStr = std::to_string(workLoads[i].idleUsage * oneHundred);
-        std::string ioWaitUsageStr = std::to_string(workLoads[i].ioWaitUsage * oneHundred);
-        std::string irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
-        std::string softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
-        std::string totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
-            workLoads[i].systemUsage + workLoads[i].ioWaitUsage + workLoads[i].irqUsage + workLoads[i].softIrqUsage) *
-            oneHundred);
-        if (cpuIdStr == cpustr) {
-            cpuIdStr = totalcpu;
-        }
-        result[cpuIdStr + "userUsage"] = userUsageStr;
-        result[cpuIdStr + "niceUsage"] = niceUsageStr;
-        result[cpuIdStr + "systemUsage"] = systemUsageStr;
-        result[cpuIdStr + "idleUsage"] = idleUsageStr;
-        result[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
-        result[cpuIdStr + "irqUsage"] = irqUsageStr;
-        result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
-        result[cpuIdStr + "Usage"] = totalUsageStr;
-    }
+
+    GetCpuFreqItemData(result);
+    GetCpuUsageItemData(result);
     if ((!packageName.empty() || !processId.empty())) {
         std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
         if (!processCpuInfo.empty()) {
@@ -90,6 +58,49 @@ std::map<std::string, std::string> CPU::ItemData()
 
     LOGI("CPU:ItemData map size(%u)", result.size());
     return result;
+}
+
+void GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult)
+{
+    std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
+    for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
+        std::string cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
+        std::string cpuId = std::to_string(cpuFreqInfo[i].cpuId);
+        cpuFreqResult["cpu" + cpuId + "Frequency"] = cpuFreqStr;
+    }
+}
+
+void GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult)
+{
+    std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
+    const size_t oneHundred = 100;
+    if (workLoads.empty()) {
+        return cpuUsageResult;
+    }
+    for (size_t i = 0; i < workLoads.size(); i++) {
+        std::string cpuIdStr = workLoads[i].cpuId;
+        std::string userUsageStr = std::to_string(workLoads[i].userUsage * oneHundred);
+        std::string niceUsageStr = std::to_string(workLoads[i].niceUsage * oneHundred);
+        std::string systemUsageStr = std::to_string(workLoads[i].systemUsage * oneHundred);
+        std::string idleUsageStr = std::to_string(workLoads[i].idleUsage * oneHundred);
+        std::string ioWaitUsageStr = std::to_string(workLoads[i].ioWaitUsage * oneHundred);
+        std::string irqUsageStr = std::to_string(workLoads[i].irqUsage * oneHundred);
+        std::string softIrqUsageStr = std::to_string(workLoads[i].softIrqUsage * oneHundred);
+        std::string totalUsageStr = std::to_string((workLoads[i].userUsage + workLoads[i].niceUsage +
+            workLoads[i].systemUsage + workLoads[i].ioWaitUsage + workLoads[i].irqUsage + workLoads[i].softIrqUsage) *
+            oneHundred);
+        if (cpuIdStr == cpustr) {
+            cpuIdStr = totalcpu;
+        }
+        cpuUsageResult[cpuIdStr + "userUsage"] = userUsageStr;
+        cpuUsageResult[cpuIdStr + "niceUsage"] = niceUsageStr;
+        cpuUsageResult[cpuIdStr + "systemUsage"] = systemUsageStr;
+        cpuUsageResult[cpuIdStr + "idleUsage"] = idleUsageStr;
+        cpuUsageResult[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
+        cpuUsageResult[cpuIdStr + "irqUsage"] = irqUsageStr;
+        cpuUsageResult[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
+        cpuUsageResult[cpuIdStr + "Usage"] = totalUsageStr;
+    }
 }
 
 void CPU::SetPackageName(const std::string &pName)
@@ -225,7 +236,8 @@ std::map<std::string, std::string> CPU::GetCpuCoreCurFreqs()
         LOGE("CPU::CPU_FREQ dir open failed.");
         return cpuCoreCurFreqs;
     }
-    while (true) {
+    bool isCpuCoreCurFreqs = true;
+    while (isCpuCoreCurFreqs) {
         struct dirent *ptr = readdir(dir);
         if (ptr == nullptr) {
             break;

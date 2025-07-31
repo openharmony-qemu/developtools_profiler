@@ -456,7 +456,7 @@ std::string FPS::FindFpsRefreshrate()
         while ((pos = screenInfo.find(";")) != std::string::npos) {
             token = screenInfo.substr(0, pos);
             screenInfo.erase(0, pos + 1);
-            if (token.find("current_fps:") != std::string::npos) {
+            if (token.find("current_fps:") != std::string::npos || token.find("lcd_fps:") != std::string::npos) {
                 value = token.substr(token.find(":") + 1);
                 break;
             }
