@@ -274,6 +274,10 @@ int main(int argc, char* argv[])
             }
         } else {
             if (!COMMON::GetDeveloperMode()) {
+                if (lockFileFd > 0) {
+                    flock(lockFileFd, LOCK_UN);
+                    close(lockFileFd);
+                }
                 return 0;
             }
             if (!COMMON::IsBetaVersion()) {
@@ -323,6 +327,10 @@ int main(int argc, char* argv[])
         }
     } else {
         if (!COMMON::GetDeveloperMode()) {
+            if (lockFileFd > 0) {
+                flock(lockFileFd, LOCK_UN);
+                close(lockFileFd);
+            }
             return 0;
         }
         auto hookManager = std::make_shared<HookManager>();
