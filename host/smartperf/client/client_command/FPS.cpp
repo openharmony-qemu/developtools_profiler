@@ -30,6 +30,7 @@
 #include "include/GameEvent.h"
 #include "transaction/rs_interfaces.h"
 #include "include/ByTrace.h"
+#include "include/sp_profiler_factory.h"
 namespace OHOS {
 namespace SmartPerf {
 bool HAVE_CATON = false;
@@ -176,6 +177,10 @@ FpsInfo FPS::GetFpsInfo()
     fpsInfoData.fps = 0;
     if (isGameApp) {
         if (gameLayerName.empty()) {
+            std::string processIds = "";
+            OHOS::SmartPerf::StartUpDelay sp;
+            processId = sp.GetPidByPkg(pkgName, &processIds);
+            SpProfilerFactory::SetProfilerPidByPkg(processId, processIds);
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
                 fpsInfoData.fps = 0;
@@ -413,6 +418,9 @@ void FPS::CalcJitters()
             prevlastScreenTimestamp = curScreenTimestamp;
             prevScreenTimestamp = curScreenTimestamp;
         }
+    }
+    if (!fpsInfo.jitters.empty()) {
+        fpsInfo.jitters.erase(fpsInfo.jitters.begin());
     }
 }
         
