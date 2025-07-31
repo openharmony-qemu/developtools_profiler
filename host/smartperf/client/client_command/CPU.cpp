@@ -60,7 +60,7 @@ std::map<std::string, std::string> CPU::ItemData()
     return result;
 }
 
-void GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult)
+void CPU::GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult)
 {
     std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
@@ -70,7 +70,7 @@ void GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult)
     }
 }
 
-void GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult)
+void CPU::GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult)
 {
     std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
     const size_t oneHundred = 100;
