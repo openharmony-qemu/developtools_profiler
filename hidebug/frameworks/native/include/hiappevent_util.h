@@ -15,7 +15,6 @@
 
 #ifndef HIAPPEVENT_UTIL_H_
 #define HIAPPEVENT_UTIL_H_
-#include <cstdint>
 #include <memory>
 #include <mutex>
 #include <string>
