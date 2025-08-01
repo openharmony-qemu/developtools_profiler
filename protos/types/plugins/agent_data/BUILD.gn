@@ -70,7 +70,6 @@ action("agent_data_cpp_gen") {
 ohos_source_set("agent_data_cpp") {
   deps = [ ":agent_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

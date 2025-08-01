@@ -42,6 +42,7 @@ AddressHandler::~AddressHandler()
 {
     delete [] addressChecker_;
     addressChecker_ = nullptr;
+    successor_ = nullptr;
 }
 
 LowAddrHandler::LowAddrHandler() : AddressHandler(BITPOOL_SIZE_FIRST) {};

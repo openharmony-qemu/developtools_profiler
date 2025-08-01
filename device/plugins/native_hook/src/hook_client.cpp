@@ -69,6 +69,7 @@ static Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
+std::mutex g_tagIdMutex;
 std::mutex g_usableSizeMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 constexpr int UPDATE_THEARD_NAME = 1000;
@@ -98,9 +99,9 @@ static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
-std::unique_ptr<WholeAddrHandler> g_wholeAddrHandler = nullptr;
-std::unique_ptr<MidAddrHandler> g_midPartHandler = nullptr;
-std::unique_ptr<LowAddrHandler> g_addrHandler = nullptr;
+std::shared_ptr<WholeAddrHandler> g_wholeAddrHandler = nullptr;
+std::shared_ptr<MidAddrHandler> g_midPartHandler = nullptr;
+std::shared_ptr<LowAddrHandler> g_addrHandler = nullptr;
 
 const MallocDispatchType* GetDispatch()
 {
@@ -212,6 +213,31 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
     return tagId;
 }
 
+uint16_t __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<HookSocketClient>& client,
+                                                     const char* tagName)
+{
+    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
+        return 0;
+    }
+
+    std::unique_lock<std::mutex> lock(g_tagIdMutex);
+    NameData tagData = {{{{0}}}};
+    tagData.type = MEMORY_TAG;
+    ++g_tagId;
+    if (g_tagId.load() == 0) {
+        ++g_tagId;
+    }
+    tagData.tagId = g_tagId.load();
+    lock.unlock();
+    if (strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName) != EOK) {
+        return 0;
+    }
+    if (client != nullptr) {
+        client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
+    }
+    return tagData.tagId;
+}
+
 static bool IsPidChanged(void);
 
 /* 返回值：true：该size大小需要过滤，不记录trace信息； fasle：不需要过滤，按正常流程记录trace信息 */
@@ -259,11 +285,13 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
-    g_wholeAddrHandler = std::make_unique<WholeAddrHandler>();
-    g_midPartHandler = std::make_unique<MidAddrHandler>();
-    g_addrHandler = std::make_unique<LowAddrHandler>();
+    g_wholeAddrHandler = std::make_shared<WholeAddrHandler>();
+    g_midPartHandler = std::make_shared<MidAddrHandler>();
+    g_addrHandler = std::make_shared<LowAddrHandler>();
     g_midPartHandler->SetSuccessor(std::move(g_wholeAddrHandler));
     g_addrHandler->SetSuccessor(std::move(g_midPartHandler));
+    g_wholeAddrHandler = nullptr;
+    g_midPartHandler = nullptr;
     g_mallocTimes = 0;
     g_hookClient.reset();
     g_hookPid = GetRealPid();
@@ -320,17 +348,6 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
     if (!InitTheadKey()) {
         return false;
     }
-    constexpr int paramBufferLen = 128;
-    char paramOutBuf[paramBufferLen] = {0};
-    int ret = GetParameter("persist.hiviewdfx.profiler.mem.filter", "", paramOutBuf, paramBufferLen);
-    if (ret > 0) {
-        int min = 0;
-        int max = 0;
-        if (sscanf_s(paramOutBuf, "%d,%d", &min, &max) == 2) { // 2: two parameters.
-            g_maxSize = max > 0 ? static_cast<uint32_t>(max) : INT_MAX;
-            g_ClientConfig.filterSize = min > 0 ? min : 0;
-        }
-    }
     return true;
 }
 
@@ -349,8 +366,6 @@ void* ohos_release_on_end(void*)
         g_hookClient->Flush();
     }
     g_addrHandler = nullptr;
-    g_midPartHandler = nullptr;
-    g_wholeAddrHandler = nullptr;
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
     g_sharedMemCount = 1;
@@ -536,8 +551,10 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = ret;
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -631,8 +648,10 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = len;
     rawdata.addr = ret;
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -731,8 +750,10 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = number * size;
     rawdata.addr = pRet;
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
@@ -829,8 +850,10 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = pRet;
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-        g_addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
     int realSize = 0;
     int freeRealSize = 0;
@@ -890,8 +913,10 @@ void hook_free(void (*free_func)(void*), void* p)
         struct timespec start = {};
         clock_gettime(CLOCK_REALTIME, &start);
 #endif
-        if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-            if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
+        std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+        auto addrHandler = weakHandler.lock();
+        if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+            if (!addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
                 free_func(p);
 #ifdef PERFORMANCE_DEBUG
                 g_mallocTimes++;
@@ -940,8 +965,10 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.mallocDisable || IsPidChanged()) {
         return;
     }
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (g_addrHandler != nullptr)) {
-        if (!g_addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        if (!addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
             return;
         }
     }
@@ -1117,9 +1144,9 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             SendMmapFileRawData(prot, flags, offset, fileName, rawdata, holder);
             char* p = strrchr(fileName, '/');
             if (p != nullptr) {
-                rawdata.tagId = GetTagId(holder, &fileName[p - fileName + 1]);
+                rawdata.tagId = GetMmapTagId(holder, &fileName[p - fileName + 1]);
             } else {
-                rawdata.tagId = GetTagId(holder, fileName);
+                rawdata.tagId = GetMmapTagId(holder, fileName);
             }
         }
     }
@@ -1464,7 +1491,7 @@ static bool IsPidChanged(void)
     if (g_isPidChanged) {
         return true;
     }
-    int pid = getprocpid();
+    int pid = getpid();
     // hap app after pid namespace used
     if (pid == PID_NAMESPACE_ID) {
         return false;

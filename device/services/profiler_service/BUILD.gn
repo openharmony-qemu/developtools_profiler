@@ -56,7 +56,6 @@ ohos_source_set("profiler_service") {
     "grpc:grpc",
     "grpc:grpcxx",
     "openssl:libcrypto_shared",
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   if (current_toolchain != host_toolchain) {

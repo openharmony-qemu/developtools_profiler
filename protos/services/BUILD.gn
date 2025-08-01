@@ -99,7 +99,6 @@ foreach(proto, profiler_service_type_proto) {
 ohos_source_set("profiler_service_type_source") {
   deps = [ ":all_type_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -112,7 +111,6 @@ ohos_source_set("profiler_service_type_source") {
 ohos_source_set("profiler_service_all_type_source") {
   deps = [ ":all_type_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -241,7 +239,6 @@ ohos_source_set("plugin_service_proto") {
   ]
   public_deps = [ "${OHOS_PROFILER_DIR}/device/services/ipc:ipc" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [
@@ -268,7 +265,6 @@ ohos_source_set("proto_services_cpp") {
 ohos_source_set("common_types_lite_proto") {
   deps = [ ":all_type_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]

@@ -417,14 +417,15 @@ int ShareMemoryBlock::GetfileDescriptor()
 bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerSize,
     const int8_t* payload, uint32_t payloadSize, const std::function<bool()>& callback)
 {
-    CHECK_NOTNULL(header_, false, "header not ready!");
+    if (header_ == nullptr) {
+        return false;
+    }
     pthread_mutex_lock(&header_->info.mutex_);
     int8_t* rawMemory = GetFreeMemory(headerSize + payloadSize);
     if (rawMemory == nullptr) {
         while (true) {
             if (rawMemory == nullptr) {
                 if ((callback && callback()) || (g_timeCount > waitTime_)) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %d", g_timeCount.load());
                     pthread_mutex_unlock(&header_->info.mutex_);
                     return false;
                 }

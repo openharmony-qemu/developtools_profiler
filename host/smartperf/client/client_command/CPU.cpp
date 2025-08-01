@@ -27,6 +27,8 @@
 #include "collect_result.h"
 #include "include/startup_delay.h"
 #include "include/sp_log.h"
+#include "include/common.h"
+#include <dirent.h>
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::HiviewDFX::UCollectUtil;
@@ -38,16 +40,43 @@ std::map<std::string, std::string> CPU::ItemData()
 {
     usleep(twenty * thousand);
     std::map<std::string, std::string> result;
+
+    GetCpuFreqItemData(result);
+    GetCpuUsageItemData(result);
+    if ((!packageName.empty() || !processId.empty())) {
+        std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
+        if (!processCpuInfo.empty()) {
+            for (const auto& item : processCpuInfo) {
+                result.insert(item);
+            }
+        }
+    }
+
+    std::map<std::string, std::string> cpuCoreCurFreqs = GetCpuCoreCurFreqs();
+    for (const auto& item : cpuCoreCurFreqs) {
+        result[item.first] = item.second;
+    }
+
+    LOGI("CPU:ItemData map size(%u)", result.size());
+    return result;
+}
+
+void CPU::GetCpuFreqItemData(std::map<std::string, std::string> &cpuFreqResult)
+{
     std::vector<CpuFreqs> cpuFreqInfo = GetCpuFreq();
     for (size_t i = 0; i < cpuFreqInfo.size(); i++) {
         std::string cpuFreqStr = std::to_string(cpuFreqInfo[i].curFreq);
         std::string cpuId = std::to_string(cpuFreqInfo[i].cpuId);
-        result["cpu" + cpuId + "Frequency"] = cpuFreqStr;
+        cpuFreqResult["cpu" + cpuId + "Frequency"] = cpuFreqStr;
     }
+}
+
+void CPU::GetCpuUsageItemData(std::map<std::string, std::string> &cpuUsageResult)
+{
     std::vector<CpuUsageInfos> workLoads = GetCpuUsage();
     const size_t oneHundred = 100;
     if (workLoads.empty()) {
-        return result;
+        return;
     }
     for (size_t i = 0; i < workLoads.size(); i++) {
         std::string cpuIdStr = workLoads[i].cpuId;
@@ -64,25 +93,15 @@ std::map<std::string, std::string> CPU::ItemData()
         if (cpuIdStr == cpustr) {
             cpuIdStr = totalcpu;
         }
-        result[cpuIdStr + "userUsage"] = userUsageStr;
-        result[cpuIdStr + "niceUsage"] = niceUsageStr;
-        result[cpuIdStr + "systemUsage"] = systemUsageStr;
-        result[cpuIdStr + "idleUsage"] = idleUsageStr;
-        result[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
-        result[cpuIdStr + "irqUsage"] = irqUsageStr;
-        result[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
-        result[cpuIdStr + "Usage"] = totalUsageStr;
+        cpuUsageResult[cpuIdStr + "userUsage"] = userUsageStr;
+        cpuUsageResult[cpuIdStr + "niceUsage"] = niceUsageStr;
+        cpuUsageResult[cpuIdStr + "systemUsage"] = systemUsageStr;
+        cpuUsageResult[cpuIdStr + "idleUsage"] = idleUsageStr;
+        cpuUsageResult[cpuIdStr + "ioWaitUsage"] = ioWaitUsageStr;
+        cpuUsageResult[cpuIdStr + "irqUsage"] = irqUsageStr;
+        cpuUsageResult[cpuIdStr + "softIrqUsage"] = softIrqUsageStr;
+        cpuUsageResult[cpuIdStr + "Usage"] = totalUsageStr;
     }
-    if ((!packageName.empty() || !processId.empty())) {
-        std::map<std::string, std::string> processCpuInfo = CPU::GetSysProcessCpuLoad();
-        if (!processCpuInfo.empty()) {
-            for (const auto& item : processCpuInfo) {
-                result.insert(item);
-            }
-        }
-    }
-    LOGI("CPU:ItemData map size(%u)", result.size());
-    return result;
 }
 
 void CPU::SetPackageName(const std::string &pName)
@@ -206,6 +225,38 @@ void CPU::GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, 
         processCpuInfo["ChildProcUCpuUsage"] = "NA";
         processCpuInfo["ChildProcSCpuUsage"] = "NA";
     }
+}
+
+std::map<std::string, std::string> CPU::GetCpuCoreCurFreqs()
+{
+    std::map<std::string, std::string> cpuCoreCurFreqs;
+    std::vector<std::string> policyFiles;
+    std::string basePath = CMD_COMMAND_MAP.at(CmdCommand::CPU_FREQ);
+    DIR *dir = opendir(basePath.c_str());
+    if (dir == nullptr) {
+        LOGE("CPU::CPU_FREQ dir open failed.");
+        return cpuCoreCurFreqs;
+    }
+    bool isCpuCoreCurFreqs = true;
+    while (isCpuCoreCurFreqs) {
+        struct dirent *ptr = readdir(dir);
+        if (ptr == nullptr) {
+            break;
+        }
+        if ((strcmp(ptr->d_name, ".") == 0) || (strcmp(ptr->d_name, "..") == 0)) {
+            continue;
+        }
+        std::string clusterName = std::string(ptr->d_name);
+        policyFiles.push_back(SPUtils::IncludePathDelimiter(basePath) + clusterName);
+    }
+    closedir(dir);
+    for (size_t i = 0; i < policyFiles.size(); i++) {
+        std::string curFreq;
+        SPUtils::LoadFile(policyFiles[i] + "/cpuinfo_cur_freq", curFreq);
+        std::string nameBase = "cpu" + std::to_string(i) + "_";
+        cpuCoreCurFreqs[nameBase + "curFrequency"] = curFreq;
+    }
+    return cpuCoreCurFreqs;
 }
 }
 }

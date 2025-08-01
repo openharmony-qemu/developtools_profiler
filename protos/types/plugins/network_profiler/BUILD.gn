@@ -74,7 +74,6 @@ action("network_profiler_data_cpp_gen") {
 ohos_source_set("network_profiler_cpp") {
   deps = [ ":network_profiler_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
@@ -96,7 +95,6 @@ ohos_source_set("network_profiler_encoder") {
 ohos_source_set("network_profiler_cpp_standard") {
   deps = [ ":network_profiler_data_cpp_gen" ]
   external_deps = [
-    "protobuf:protobuf",
     "protobuf:protobuf_lite",
   ]
   include_dirs = [ "$proto_out_dir" ]
