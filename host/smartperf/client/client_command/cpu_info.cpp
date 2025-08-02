@@ -32,16 +32,22 @@ std::map<std::string, std::string> CPUInfo::ItemData()
 {
     Stop();
     std::map<std::string, std::string> result;
+    GetCpuInfoBuffer(result);
+    Start();
+    LOGI("CPUInfo:ItemData map size(%u)", result.size());
+    return result;
+}
+
+void CPUInfo::GetCpuInfoBuffer(std::map<std::string, std::string> &bufferResult)
+{
     std::istringstream stream(buffer_);
     std::string line;
-
     uint64_t cpu_cycles_total = 0;
     uint64_t instructions_total = 0;
     double cpi_total = 0.0;
     size_t cpu_cycles_count = 0;
     size_t instructions_count = 0;
     size_t cpi_count = 0;
-
     auto trim = [](std::string& s) {
         s.erase(0, s.find_first_not_of(" \t"));
         s.erase(s.find_last_not_of(" \t") + 1);
@@ -54,12 +60,10 @@ std::map<std::string, std::string> CPUInfo::ItemData()
         total += SPUtilesTye::StringToSometype<uint64_t>(number_str);
         ++count;
     };
-
     while (std::getline(stream, line)) {
         if (line.find(SPUtils::GetProductName() + "-cpu-cycles") != std::string::npos) {
             findData(line, cpu_cycles_total, cpu_cycles_count);
         }
-
         if (line.find(SPUtils::GetProductName() + "-instructions") != std::string::npos) {
             findData(line, instructions_total, instructions_count);
 
@@ -77,18 +81,13 @@ std::map<std::string, std::string> CPUInfo::ItemData()
             }
         }
     }
-
     cpu_cycles_count == 0 ? "" :
-        result[SPUtils::GetProductName() + "-cpu-cycles"] =
+        bufferResult[SPUtils::GetProductName() + "-cpu-cycles"] =
             std::to_string(static_cast<double>(cpu_cycles_total) / cpu_cycles_count);
     instructions_count == 0 ? "" :
-        result[SPUtils::GetProductName() + "-instructions"] =
+        bufferResult[SPUtils::GetProductName() + "-instructions"] =
             std::to_string(static_cast<double>(instructions_total) / instructions_count);
-    cpi_count == 0 ? "" : result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
-
-    Start();
-    LOGI("CPUInfo:ItemData map size(%u)", result.size());
-    return result;
+    cpi_count == 0 ? "" : bufferResult["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
 }
 
 void CPUInfo::StartExecutionOnce(bool isPause)

@@ -38,6 +38,7 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
+    void GetCpuInfoBuffer(std::map<std::string, std::string> &bufferResult);
 private:
     std::vector<std::string> pids_;
     std::thread th_;
