@@ -21,6 +21,7 @@
 #include "vector"
 #include <map>
 #include "sp_profiler.h"
+#include "sp_utils.h"
 namespace OHOS {
 namespace SmartPerf {
 class Hiperf : public SpProfiler {

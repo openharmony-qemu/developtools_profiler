@@ -59,8 +59,8 @@ const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
 const std::string SMART_PERF_VERSION = "1.0.9";
-const std::string LOWERCASE_H(1, static_cast(char)104);
-const std::string LOWERCASE_W(1, static_cast(char)119);
+const std::string LOWERCASE_H(1, static_cast<char>(104));
+const std::string LOWERCASE_W(1, static_cast<char>(119));
 const std::string PRODUCT_NAME = LOWERCASE_H + LOWERCASE_W;
 bool SPUtils::FileAccess(const std::string &fileName)
 {
@@ -965,6 +965,11 @@ std::string SPUtils::GetSurface()
     size_t positionRight = cmdResult.find("]");
     size_t positionNum = 1;
     return cmdResult.substr(positionLeft + positionNum, positionRight - positionLeft - positionNum);
+}
+
+std::string SPUtils::GetProductName()
+{
+    return PRODUCT_NAME;
 }
 }
 }
