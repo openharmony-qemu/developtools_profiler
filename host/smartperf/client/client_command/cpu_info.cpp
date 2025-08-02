@@ -25,7 +25,8 @@
 namespace OHOS {
 namespace SmartPerf {
 namespace {
-const std::string HIPERF_CMD = "/bin/hiperf stat -e hw-instructions,hw-cpu-cycles -d 1 -i 500 ";
+const std::string HIPERF_CMD = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
+    SPUtils::GetProductName() + "-cpu-cycles -d 1 -i 500 ";
 }
 std::map<std::string, std::string> CPUInfo::ItemData()
 {
@@ -55,11 +56,11 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     };
 
     while (std::getline(stream, line)) {
-        if (line.find("hw-cpu-cycles") != std::string::npos) {
+        if (line.find(SPUtils::GetProductName() + "-cpu-cycles") != std::string::npos) {
             findData(line, cpu_cycles_total, cpu_cycles_count);
         }
 
-        if (line.find("hw-instructions") != std::string::npos) {
+        if (line.find(SPUtils::GetProductName() + "-instructions") != std::string::npos) {
             findData(line, instructions_total, instructions_count);
 
             size_t comment_pos = line.find("|");
@@ -78,9 +79,11 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     }
 
     cpu_cycles_count == 0 ? "" :
-        result["hw-cpu-cycles"] = std::to_string(static_cast<double>(cpu_cycles_total) / cpu_cycles_count);
+        result[SPUtils::GetProductName() + "-cpu-cycles"] =
+            std::to_string(static_cast<double>(cpu_cycles_total) / cpu_cycles_count);
     instructions_count == 0 ? "" :
-        result["hw-instructions"] = std::to_string(static_cast<double>(instructions_total) / instructions_count);
+        result[SPUtils::GetProductName() + "-instructions"] =
+            std::to_string(static_cast<double>(instructions_total) / instructions_count);
     cpi_count == 0 ? "" : result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
 
     Start();

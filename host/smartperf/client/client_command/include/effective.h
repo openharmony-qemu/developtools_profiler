@@ -101,7 +101,7 @@ private:
         is_root: false
         outfile_name: "/data/local/tmp/)";
     std::string strEight_ = R"(.data"
-        record_args: "-f 1000 -a  --cpu-limit 100 -e hw-cpu-cycles,sched:sched_waking )";
+        record_args: "-f 1000 -a  --cpu-limit 100 -e " SPUtils::GetProductName() "-cpu-cycles,sched:sched_waking )";
     std::string strTen_ = R"(--call-stack dwarf --clockid monotonic --offcpu -m 256"
         }
         })";

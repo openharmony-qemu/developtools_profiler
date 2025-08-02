@@ -59,6 +59,9 @@ const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
 const std::string SMART_PERF_VERSION = "1.0.9";
+const std::string LOWERCASE_H(1, (char)104);
+const std::string LOWERCASE_W(1, (char)119);
+const std::string PRODUCT_NAME = LOWERCASE_H + LOWERCASE_W;
 bool SPUtils::FileAccess(const std::string &fileName)
 {
     return (access(fileName.c_str(), F_OK) == 0);
@@ -364,7 +367,7 @@ std::map<std::string, std::string> SPUtils::GetDeviceInfo()
     resultMap["sn"] = OHOS::system::GetParameter((DEVICE_CMD_MAP.at(DeviceCmd::SN)), "Unknown");
     resultMap["deviceTypeName"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::DEVICET_NAME), "Unknown");
     resultMap["brand"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::BRAND), "Unknown");
-    resultMap["board"] = "hw";
+    resultMap["board"] = GetProductName();
     resultMap["version"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::VERSION), "Unknown");
     resultMap["abilist"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::ABILIST), "Unknown");
     resultMap["name"] = OHOS::system::GetParameter(DEVICE_CMD_MAP.at(DeviceCmd::NAME), "Unknown");
