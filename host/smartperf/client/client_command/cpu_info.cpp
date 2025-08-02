@@ -61,25 +61,8 @@ void CPUInfo::GetCpuInfoBuffer(std::map<std::string, std::string> &bufferResult)
         ++count;
     };
     while (std::getline(stream, line)) {
-        if (line.find(SPUtils::GetProductName() + "-cpu-cycles") != std::string::npos) {
-            findData(line, cpu_cycles_total, cpu_cycles_count);
-        }
-        if (line.find(SPUtils::GetProductName() + "-instructions") != std::string::npos) {
-            findData(line, instructions_total, instructions_count);
-
-            size_t comment_pos = line.find("|");
-            if (comment_pos != std::string::npos) {
-                std::string comment = line.substr(comment_pos + 1);
-                trim(comment);
-                size_t cpi_pos = comment.find("cycles per instruction");
-                if (cpi_pos != std::string::npos) {
-                    size_t number_end = comment.find(" ", 0);
-                    std::string cpi_str = comment.substr(0, number_end);
-                    cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
-                    ++cpi_count;
-                }
-            }
-        }
+        HandleCpuInfoData(line, cpu_cycles_total, cpu_cycles_count, instructions_count,
+            cpi_count, cpi_total);
     }
     cpu_cycles_count == 0 ? "" :
         bufferResult[SPUtils::GetProductName() + "-cpu-cycles"] =
@@ -88,6 +71,29 @@ void CPUInfo::GetCpuInfoBuffer(std::map<std::string, std::string> &bufferResult)
         bufferResult[SPUtils::GetProductName() + "-instructions"] =
             std::to_string(static_cast<double>(instructions_total) / instructions_count);
     cpi_count == 0 ? "" : bufferResult["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
+}
+
+void CPUInfo::HandleCpuInfoData(std::string line, uint64_t cpu_cycles_total, size_t cpu_cycles_count,
+    size_t instructions_count, size_t cpi_count, double cpi_total)
+{
+    if (line.find(SPUtils::GetProductName() + "-cpu-cycles") != std::string::npos) {
+        findData(line, cpu_cycles_total, cpu_cycles_count);
+    }
+    if (line.find(SPUtils::GetProductName() + "-instructions") != std::string::npos) {
+        findData(line, instructions_total, instructions_count);
+        size_t comment_pos = line.find("|");
+        if (comment_pos != std::string::npos) {
+            std::string comment = line.substr(comment_pos + 1);
+            trim(comment);
+            size_t cpi_pos = comment.find("cycles per instruction");
+            if (cpi_pos != std::string::npos) {
+                size_t number_end = comment.find(" ", 0);
+                std::string cpi_str = comment.substr(0, number_end);
+                cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
+                ++cpi_count;
+            }
+        }
+    }
 }
 
 void CPUInfo::StartExecutionOnce(bool isPause)
