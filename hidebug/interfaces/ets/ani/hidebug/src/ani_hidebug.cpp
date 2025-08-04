@@ -52,15 +52,7 @@ namespace {
 #define LOG_DOMAIN 0xD002D0A
 #undef LOG_TAG
 #define LOG_TAG "HiDebug_ANI"
-constexpr int BYTE_2_KB_SHIFT_BITS = 10;
-constexpr int PSS_MIN = 1024;
-constexpr int PSS_MAX = 4 * 1024 * 1024;
-constexpr int JS_MIN = 85;
-constexpr int JS_MAX = 95;
-constexpr int FD_MIN = 10;
-constexpr int FD_MAX = 10000;
-constexpr int THREAD_MIN = 1;
-constexpr int THREAD_MAX = 1000;
+
 constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
 enum ErrorCode {
     PERMISSION_ERROR = 201,
@@ -315,7 +307,6 @@ static ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<
 ani_array GetAppThreadCpuUsage(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
-    ani_array result = nullptr;
     std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     return ConvertThreadCpuUsageMapToEts(env, threadMap);
 }
@@ -381,7 +372,6 @@ ani_string StartAppTraceCapture(ani_env *env,
     std::vector<uint64_t> tags;
     if (AniUtil::ParseAniEnum(env, flagAni, traceFlag) != ANI_OK || !GetTraceParam(env, tagsAni, tags)) {
         std::string paramErrorMessage = "Invalid argument";
-        ani_object undefinedResult = AniUtil::CreateUndefined(env);
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
         return nullptr;
@@ -430,12 +420,6 @@ void StopAppTraceCapture(ani_env *env)
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::NO_CAPTURE_TRACE_RUNNING);
         return;
     }
-}
-
-static bool CheckVersionType(const std::string& type, const std::string& key)
-{
-    auto versionType = OHOS::system::GetParameter(key, "unknown");
-    return (versionType.find(type) != std::string::npos);
 }
 
 ani_double GetGraphicsMemorySync(ani_env *env)

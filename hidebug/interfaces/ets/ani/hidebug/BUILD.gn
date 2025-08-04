@@ -26,7 +26,6 @@ ohos_shared_library("hidebug_ani") {
   sources = [
     "./src/ani_hidebug.cpp",
     "./src/ani_util.cpp",
-    "./src/hiappevent_util.cpp",
   ]
 
   deps = [
@@ -40,8 +39,6 @@ ohos_shared_library("hidebug_ani") {
     "bundle_framework:appexecfwk_base",
     "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    "ffrt:libffrt",
-    "hiappevent:hiappevent_innerapi",
     "hidumper:lib_dump_usage",
     "hilog:libhilog",
     "hitrace:hitrace_meter",
