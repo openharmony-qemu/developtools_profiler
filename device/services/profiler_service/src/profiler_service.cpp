@@ -740,7 +740,7 @@ Status ProfilerService::DestroySession(ServerContext* context,
 
     struct stat fileInfo;
     if (stat(ctx->sessionConfig.result_file().c_str(), &fileInfo) == 0) {
-        long result = static_cast<long>(fileInfo.st_size() / BYTE_PER_KB);
+        long result = static_cast<long>(fileInfo.st_size / BYTE_PER_KB);
         PROFILER_LOG_INFO(LOG_CORE, "result file %s size is %ld KB", ctx->sessionConfig.result_file().c_str(), result);
     }
 
