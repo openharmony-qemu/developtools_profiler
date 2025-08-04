@@ -38,7 +38,6 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
-    void GetCpuInfoBuffer(std::map<std::string, std::string> &bufferResult);
     void CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count);
 private:
     std::vector<std::string> pids_;

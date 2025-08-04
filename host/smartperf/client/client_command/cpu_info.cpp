@@ -58,12 +58,12 @@ std::map<std::string, std::string> CPUInfo::ItemData()
         }
     }
     cpu_cycles_count == 0 ? "" :
-        bufferResult[SPUtils::GetProductName() + "-cpu-cycles"] =
+        result[SPUtils::GetProductName() + "-cpu-cycles"] =
             std::to_string(static_cast<double>(cpu_cycles_total) / cpu_cycles_count);
     instructions_count == 0 ? "" :
-        bufferResult[SPUtils::GetProductName() + "-instructions"] =
+        result[SPUtils::GetProductName() + "-instructions"] =
             std::to_string(static_cast<double>(instructions_total) / instructions_count);
-    cpi_count == 0 ? "" : bufferResult["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
+    cpi_count == 0 ? "" : result["cycles per instruction"] = std::to_string(cpi_total / cpi_count);
     Start();
     LOGI("CPUInfo:ItemData map size(%u)", result.size());
     return result;
