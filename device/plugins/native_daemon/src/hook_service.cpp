@@ -129,9 +129,9 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
-
-    std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName);
-    for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+    int sharedMemCount = (clientConfig_.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName, sharedMemCount);
+    for (int i = 0; i < sharedMemCount; ++i) {
         int eventFd = fdVec[i * VEC_SHIFT];
         int smbFd = fdVec[i * VEC_SHIFT + 1];
         if (eventFd == smbFd) {

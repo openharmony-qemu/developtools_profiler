@@ -544,8 +544,9 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         }
         clientConfig.isSaMode = true;
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
-        std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName);
-        for (int i = 0; i < SHARED_MEMORY_NUM; ++i) {
+        int sharedMemCount = (clientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+        std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName, sharedMemCount);
+        for (int i = 0; i < sharedMemCount; ++i) {
             int eventFd = fdVec[i * VEC_SHIFT];
             int smbFd = fdVec[i * VEC_SHIFT + 1];
             if (eventFd == smbFd) {

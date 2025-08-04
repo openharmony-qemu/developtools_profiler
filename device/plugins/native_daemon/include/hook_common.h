@@ -42,7 +42,7 @@ const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
 const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
-constexpr int SHARED_MEMORY_NUM = 1;
+constexpr int SHARED_MEMORY_NUM = 3;
 constexpr uint64_t DWARF_ERROR_ID = 999999;
 constexpr uint64_t SIZE_MASK = 0xFFFFFF0000000000;
 }
@@ -170,6 +170,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         printNmd = false;
         nmdType = -1;
         isSaMode = false;
+        offlineSymbolization = false;
         arktsConfig.jsStackReport = 0;
         arktsConfig.maxJsStackDepth = 0;
         arktsConfig.jsFpunwind = false;
@@ -194,7 +195,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
             << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind
             << ", largestSize: " << largestSize  << ", secondLargestSize: " << secondLargestSize
-            << ", maxGrowthSize: " << maxGrowthSize;
+            << ", maxGrowthSize: " << maxGrowthSize << ", offline:" << offlineSymbolization;
         return ss.str();
     }
 
@@ -216,6 +217,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool printNmd = false;
     int nmdType = -1;
     bool isSaMode = false;
+    bool offlineSymbolization = false;
     ArkTsClientConfig arktsConfig = {0};
     uint32_t largestSize = 0;
     uint32_t secondLargestSize = 0;

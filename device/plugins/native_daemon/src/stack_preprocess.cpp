@@ -302,7 +302,8 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                 return true;
             }  else if (type == END_MSG) {
                 endMsgCount_++;
-                if (endMsgCount_ == SHARED_MEMORY_NUM) {
+                int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+                if (endMsgCount_ == sharedMemCount) {
                     isStopTakeData_ = true;
                 }
                 return true;
