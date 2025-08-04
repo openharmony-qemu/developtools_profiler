@@ -24,10 +24,6 @@
 #include "sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-namespace {
-const std::string HIPERF_CMD = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
-    SPUtils::GetProductName() + "-cpu-cycles -d 1 -i 500 ";
-}
 std::map<std::string, std::string> CPUInfo::ItemData()
 {
     Stop();
@@ -93,7 +89,6 @@ void CPUInfo::StartExecutionOnce(bool isPause)
 {   
     (void)isPause;
     Stop();
-    hiperfCmd_ = HIPERF_CMD;
     if (pids_.empty()) {
         hiperfCmd_ += "-a";
     } else {

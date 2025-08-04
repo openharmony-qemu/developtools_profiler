@@ -42,7 +42,8 @@ public:
 private:
     std::vector<std::string> pids_;
     std::thread th_;
-    std::string hiperfCmd_;
+    std::string hiperfCmd_ = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
+    SPUtils::GetProductName() + "-cpu-cycles -d 1 -i 500 ";
     std::atomic_bool running_ {false};
     std::condition_variable cond_;
     std::mutex mtx_;
