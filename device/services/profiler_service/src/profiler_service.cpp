@@ -15,6 +15,7 @@
 #define LOG_TAG "ProfilerService"
 #include "profiler_service.h"
 #include <algorithm>
+#include <sys/stat.h>
 #include <unistd.h>
 #include "common.h"
 #include "logging.h"
@@ -58,6 +59,7 @@ constexpr int MIN_SESSION_TIMEOUT_MS = 1000;
 constexpr int MAX_SESSION_TIMEOUT_MS = 1000 * 3600;
 constexpr int DEFAULT_KEEP_ALIVE_DELTA = 3000;
 constexpr uint64_t CHECK_HEARTBEAT_INTERVAL = 500;
+constexpr long BYTE_PER_KB = 1024;
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 #ifdef  PERFORMANCE_DEBUG
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
@@ -735,6 +737,12 @@ Status ProfilerService::DestroySession(ServerContext* context,
     CHECK_EXPRESSION_TRUE(pluginSessionManager_->RemovePluginSessions(ctx->pluginNames),
                           "remove plugin session FAILED!");
     PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u done!", request->request_id(), sessionId);
+
+    struct stat fileInfo;
+    if (stat(ctx->sessionConfig.result_file().c_str(), &fileInfo) == 0) {
+        long result = static_cast<long>(fileInfo.st_size() / BYTE_PER_KB);
+        PROFILER_LOG_INFO(LOG_CORE, "result file %s size is %ld KB", ctx->sessionConfig.result_file().c_str(), result);
+    }
 
     if (ctx->sessionConfig.session_mode() == ProfilerSessionConfig::OFFLINE) {
         uint32_t pluginId = 0;
