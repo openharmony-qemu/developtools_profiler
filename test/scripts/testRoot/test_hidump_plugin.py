@@ -76,11 +76,7 @@ class TestHiprofilerHidumpPlugin:
         time.sleep(3)
         subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False,
-                                text=True, encoding="utf-8")
         time.sleep(5)
-        subprocess.check_output(f"hdc shell aa start -a MainAbility -b com.huawei.hmos.calendar", shell=False, 
-                                text=True, encoding="utf-8")
         subprocess.check_output(f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
         time.sleep(1)
         subprocess.check_output(f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")
@@ -186,11 +182,7 @@ class TestHiprofilerHidumpPlugin:
         time.sleep(3)
         subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False,
-                                text=True, encoding="utf-8")
         time.sleep(5)
-        subprocess.check_output(f"hdc shell aa start -a MainAbility -b com.huawei.hmos.calendar", shell=False, 
-                                text=True, encoding="utf-8")
         subprocess.check_output(f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
         time.sleep(1)
         subprocess.check_output(f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")

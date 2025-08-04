@@ -101,7 +101,6 @@ def hidumper_op_nostart_func(ability_name, bundle_name):
 
 
 def nativehook_dwarf_startup(statistics_int, ability_name, bundle_name, op_func):
-    #获得该应用的进程PID com.huawei.hmos.settings
     pid_text = subprocess.run(f"hdc shell pidof '{bundle_name}'", stdout=subprocess.PIPE, text=True, check=True)
     pidinfo = pid_text.stdout
     if pidinfo.strip() != "":
@@ -286,7 +285,7 @@ class TestHiprofilerMemoryPlugin:
             assert nativehook_dwarf_check_data(False)
         else:
             #非统计模式
-            nativehook_dwarf_startup(0, "com.huawei.hmos.settings.MainAbility", "com.huawei.hmos.settings", hap_op_func)
+            nativehook_dwarf_startup(0, "com.ohos.launcher", "com.ohos.launcher", hap_op_func)
             assert nativehook_dwarf_check_data(False)
 
     @pytest.mark.L0
@@ -301,7 +300,7 @@ class TestHiprofilerMemoryPlugin:
             assert nativehook_dwarf_check_data(True)
         else:
             #统计模式
-            nativehook_dwarf_startup(10, "com.huawei.hmos.settings.MainAbility", "com.huawei.hmos.settings", hap_op_func)
+            nativehook_dwarf_startup(10, "com.ohos.launcher", "com.ohos.launcher", hap_op_func)
             assert nativehook_dwarf_check_data(True)
 
     @pytest.mark.L0

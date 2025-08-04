@@ -12,7 +12,7 @@
    filter_size: 4096
    smb_pages: 16384
    max_stack_depth: 20
-   process_name: "com.ohos.sceneboard"
+   process_name: "com.ohos.launcher"
    string_compressed: true
    fp_unwind: true
    blocked: true

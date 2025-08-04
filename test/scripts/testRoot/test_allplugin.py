@@ -51,7 +51,7 @@ class TestHiprofilerFtrace:
         with open(r'.\..\outputfiles\test8_result.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
-                if "com.ohos.sceneboard" in line:
+                if "com.ohos.launcher" in line:
                     check_sceneboard = True
                 if "cpu5" in line:
                     check_cpu = True
