@@ -49,7 +49,7 @@ def check_faultlog():
     with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
         lines = file.readlines()
         for line in lines:
-            if "com.ohos.sceneboard" in line and ("syswarning" not in line):
+            if "com.ohos.launcher" in line and ("syswarning" not in line):
                 check = False
             if "render_service" in line:
                 check = False
@@ -96,7 +96,7 @@ class TestHiprofilerReliability:
         subprocess.check_output("hdc shell killall com.example.insight_test_stage")
         subprocess.check_output("hdc shell param set hiview.memleak.test disable")
         subprocess.check_output("hdc shell killall hiview")
-        sceneboard = get_pid("com.ohos.sceneboard")
+        sceneboard = get_pid("com.ohos.launcher")
 
         i = 0
         while i < CLICK_TIMES:
@@ -114,7 +114,7 @@ class TestHiprofilerReliability:
         with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
-                if "com.ohos.sceneboard" in line and ("syswarning" not in line):
+                if "com.ohos.launcher" in line and ("syswarning" not in line):
                     check = False
                 if "render_service" in line:
                     check = False
@@ -160,8 +160,8 @@ class TestHiprofilerReliability:
             task_thread.start()
             i = 0
             time.sleep(SLEEP_TWO)
-            subprocess.check_output("hdc shell killall com.huawei.hmos.settings")
-            subprocess.check_output("hdc shell aa start -a EntryAbility -b com.huawei.hmos.settings")
+            subprocess.check_output("hdc shell killall com.ohos.launcher")
+            subprocess.check_output("hdc shell aa start -a EntryAbility -b com.ohos.launcher")
             time.sleep(SLEEP_FIVE)
             while (i < SWIPE_TIMES):
                 subprocess.check_output("hdc shell uinput -T -m 200 1500 200 200")
@@ -175,7 +175,7 @@ class TestHiprofilerReliability:
         with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
-                if "com.huawei.hmos.settings" in line:
+                if "com.ohos.launcher" in line:
                     check = False
                 if "render_service" in line:
                     check = False

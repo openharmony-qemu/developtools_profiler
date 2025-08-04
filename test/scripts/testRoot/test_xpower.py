@@ -40,8 +40,6 @@ class TestHiprofilerXPowerPlugin:
     def test_xpowerplugin_app(self):
         subprocess.check_output(f"hdc file send ..\\inputfiles\\xpower_plugin\\config_xpower.txt /data/local/tmp/", shell=False,
                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False, 
-                                text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
@@ -85,10 +83,6 @@ class TestHiprofilerXPowerPlugin:
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_total, args=())
         task_thread.start()
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False, 
-                                 text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.photos.MainAbility -b com.huawei.hmos.photos", shell=False, 
-                                 text=True, encoding="utf-8")
         task_thread.join()
         subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower_total.htrace ../outputfiles/ ", shell=False,
                                  text=True, encoding="utf-8")

@@ -384,7 +384,7 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
     with open(r".\..\inputfiles\nativehook\config_multipleprocess_template.txt", 'r') as file:
         content = file.read()
     subprocess.check_output("hdc shell power-shell setmode 602")
-    sceneboard = get_pid("com.ohos.sceneboard")
+    sceneboard = get_pid("com.ohos.launcher")
     modified_content = content.replace('sample_interval: 256', 'sample_interval: ' + str(sample_interval))
     if malloc_match_interval == 0:
         modified_content = modified_content.replace('statistics_interval: 10', 'statistics_interval: ' + str(statistics))
@@ -449,7 +449,7 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
     cursor.execute('SELECT * FROM process')
     result = cursor.fetchall()
     ipid = 0
-    sceneboard = get_pid("com.ohos.sceneboard")
+    sceneboard = get_pid("com.ohos.launcher")
     for row in result:
         if row[PID_INDEX] == int(sceneboard):
             ipid = row[1]
@@ -596,7 +596,7 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
         return False
     
     if (multithread):
-        sceneboard_file = get_profiler_test_trace("com.ohos.sceneboard")
+        sceneboard_file = get_profiler_test_trace("com.ohos.launcher")
         subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + sceneboard_file + " /data/local/tmp/test.htrace")
         subprocess.check_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
         subprocess.check_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
@@ -1124,7 +1124,7 @@ class TestNativehook:
         with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
-                if "com.ohos.sceneboard" in line and ("syswarning" not in line):
+                if "com.ohos.launcher" in line and ("syswarning" not in line):
                     check = False
                 if "com.example.insight_test_stage" in line:
                     check = False

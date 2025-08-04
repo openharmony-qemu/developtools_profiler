@@ -11,7 +11,7 @@ request_id: 1
   sample_interval:2000
   is_protobuf_serialize:true
   config_data {
-   bundle_name: "com.huawei.hmos.settings"
+   bundle_name: "com.ohos.launcher"
    message_type: REAL_BATTERY
    message_type: APP_STATISTIC
    message_type: APP_DETAIL

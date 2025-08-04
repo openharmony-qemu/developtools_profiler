@@ -138,12 +138,8 @@ class TestHiprofilerMemoryPlugin:
             time.sleep(2)
             pid_text = subprocess.run(f"hdc shell pidof 'com.ohos.settings'", stdout=subprocess.PIPE, text=True, check=True)
         else:
-            #打开系统设置的应用
-            subprocess.check_output(f"hdc shell aa start -a com.huawei.hmos.settings.MainAbility -b com.huawei.hmos.settings", shell=False, 
-                                text=True, encoding="utf-8")
-            time.sleep(2)
             #获得该应用的进程PID
-            pid_text = subprocess.run(f"hdc shell pidof 'com.huawei.hmos.settings'", stdout=subprocess.PIPE, text=True, check=True)
+            pid_text = subprocess.run(f"hdc shell pidof 'com.ohos.launcher'", stdout=subprocess.PIPE, text=True, check=True)
         pidinfo = pid_text.stdout
         #读文本文件,修改对应的pid
         file_content = Template('request_id: 1                             \n'

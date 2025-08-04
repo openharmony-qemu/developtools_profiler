@@ -167,9 +167,6 @@ Total GPU memory usage:
     8367072 bytes, 7.98 MB (7.98 MB is purgeable)
 
 ---------------
-Skia GPU Caches:com.huawei.hmsapp.intelligententryMainWindowExtAbility0 12605729013761
-  skia/gr_text_blob_cache:
-    Other: 3.33 KB (1 entry)
 Total GPU memory usage:
     3408 bytes, 3.33 KB (0.00 bytes is purgeable)
 

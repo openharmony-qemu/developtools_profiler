@@ -37,6 +37,6 @@ class TestHiprofilerReliability:
                     check = False
                 if "com.example.insight_test_stage" in line:
                     check = False
-                if "com.ohos.sceneboard" in line:
+                if "com.ohos.launcher" in line:
                     check = False
         assert check == True

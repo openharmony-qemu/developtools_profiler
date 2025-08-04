@@ -11,7 +11,7 @@ plugin_configs {
   save_file: false
   smb_pages: 16384
   max_stack_depth: 8
-  process_name: "com.huawei.hmos.settings"
+  process_name: "com.ohos.launcher"
   string_compressed: true
   fp_unwind: false
   blocked: true
