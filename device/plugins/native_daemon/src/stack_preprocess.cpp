@@ -220,10 +220,6 @@ bool StackPreprocess::HandleNoStackEvent(HookRecordPtr& hookRecord)
         BaseStackRawData* mmapRawData = rawData->stackContext;
         std::string filePath(reinterpret_cast<char *>(rawData->data));
         COMMON::AdaptSandboxPath(filePath, rawData->stackContext->pid);
-        PROFILER_LOG_DEBUG(LOG_CORE, "MMAP_FILE_TYPE curMmapAddr=%p, MAP_FIXED=%d, "
-                    "PROT_EXEC=%d, offset=%" PRIu64 ", filePath=%s",
-                    mmapRawData->addr, mmapRawData->mmapArgs.flags & MAP_FIXED,
-                    mmapRawData->mmapArgs.flags & PROT_EXEC, mmapRawData->mmapArgs.offset, filePath.data());
         std::lock_guard<std::mutex> guard(mtx_);
         runtime_instance->HandleMapInfo({reinterpret_cast<uint64_t>(mmapRawData->addr),
             mmapRawData->mallocSize, mmapRawData->mmapArgs.flags, mmapRawData->mmapArgs.offset}, filePath,
