@@ -14,7 +14,6 @@
  */
 
 #include "cpu_info.h"
-#include "sp_utils.h"
 
 #include <string>
 #include <regex>

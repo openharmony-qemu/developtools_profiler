@@ -17,6 +17,7 @@
 #define CPU_INFO_H
 
 #include "sp_profiler.h"
+#include "sp_utils.h"
 #include <string>
 #include <vector>
 #include <thread>
