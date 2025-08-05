@@ -186,7 +186,7 @@ class TestCustomClass {
         temp_ = 10;
         printf("TestCustomClass constructor\n");
     }
-    ~TestCustomClass() 
+    ~TestCustomClass()
     {
         printf("TestCustomClass destructor\n");
     }

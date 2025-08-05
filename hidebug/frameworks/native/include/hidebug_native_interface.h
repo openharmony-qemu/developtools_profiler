@@ -19,15 +19,12 @@
 #include <map>
 #include <memory>
 #include <optional>
-#include "resource/memory.h"
+
+#include "hidebug_native_type.h"
 #include "hidebug/hidebug_type.h"
 
 namespace OHOS {
 namespace HiviewDFX {
-enum MemoryState {
-    MEMORY_FAILED = -1,
-    MEMORY_SUCCESS = 0,
-};
 
 class HidebugNativeInterface {
 public:
@@ -43,13 +40,14 @@ public:
 
     virtual double GetCpuUsage() = 0;
     virtual std::map<uint32_t, double> GetAppThreadCpuUsage() = 0;
-    virtual HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
+    virtual TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) = 0;
-    virtual HiDebug_ErrorCode StopAppTraceCapture() = 0;
+    virtual TraceErrorCode StopAppTraceCapture() = 0;
     virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
-    virtual std::optional<MemoryLimit> GetAppMemoryLimit() = 0;
-    virtual std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo(bool withCache = false) = 0;
-    virtual std::optional<SysMemory> GetSystemMemInfo() = 0;
+    virtual std::optional<MemoryLimitInfo> GetAppMemoryLimit() = 0;
+    virtual std::optional<NativeMemInfo> GetAppNativeMemInfo(bool withCache = false) = 0;
+    virtual std::optional<uint64_t> GetVss() = 0;
+    virtual std::optional<SystemMemoryInfo> GetSystemMemInfo() = 0;
     virtual bool IsDebuggerConnected() = 0;
     virtual std::optional<int32_t> GetGraphicsMemory() = 0;
 };

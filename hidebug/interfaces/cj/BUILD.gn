@@ -31,16 +31,12 @@ ohos_shared_library("cj_hidebug_ffi") {
   deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]
 
   external_deps = [
-    "hidumper:lib_dump_usage",
     "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "hiview:libucollection_utility",
     "init:libbegetutil",
     "ipc:ipc_core",
     "napi:cj_bind_ffi",
     "napi:cj_bind_native",
     "samgr:samgr_proxy",
-    "storage_service:storage_manager_acl",
   ]
 
   innerapi_tags = [ "platformsdk" ]

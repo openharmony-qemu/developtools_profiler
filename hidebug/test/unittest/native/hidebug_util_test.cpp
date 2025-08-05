@@ -212,5 +212,26 @@ HWTEST_F(HidebugUtilTest, IsDeveloperOptionsEnabledTest, TestSize.Level1)
     IsDeveloperOptionsEnabled();
     ASSERT_TRUE(true);
 }
+
+/**
+ * @tc.name: CheckVersionTypeTest
+ * @tc.desc: test CheckVersionType.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugUtilTest, CheckVersionTypeTest, TestSize.Level1)
+{
+    ASSERT_TRUE(CheckVersionType("TEST_HIDEBUG_UTIL", "unknown"));
+}
+
+/**
+ * @tc.name: CreateResourceLimitDirTest
+ * @tc.desc: test CreateResourceLimitDir.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugUtilTest, CreateResourceLimitDirTest, TestSize.Level1)
+{
+    ASSERT_TRUE(CreateResourceLimitDir());
+    ASSERT_TRUE(CreateResourceLimitDir());
+}
 }
 }

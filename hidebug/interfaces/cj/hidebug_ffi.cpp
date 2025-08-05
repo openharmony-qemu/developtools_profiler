@@ -27,14 +27,11 @@
 #include <vector>
 #include <parameters.h>
 
-#include "cpu_collector.h"
-#include "dump_usage.h"
 #include "file_ex.h"
 #include "directory_ex.h"
-#include "storage_acl.h"
 #include "hidebug_native_interface.h"
-#include "memory_collector.h"
 #include "hilog/log.h"
+#include "hidebug_util.h"
 #include "system_ability_definition.h"
 #include "iservice_registry.h"
 
@@ -45,8 +42,8 @@ namespace OHOS::HiviewDFX {
 #undef LOG_TAG
 #define LOG_TAG "CJ_HiDebug"
 
-const std::string KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
-const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
+constexpr auto KEY_HIVIEW_USER_TYPE = "const.logsystem.versiontype";
+constexpr auto KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 
 enum ErrorCode {
     MEM_ERROR = 1,
@@ -60,52 +57,17 @@ enum ErrorCode {
     NO_CAPTURE_TRACE_RUNNING = 11400105,
 };
 
-static bool CheckVersionType(const std::string& type, const std::string& key)
-{
-    auto versionType = OHOS::system::GetParameter(key, "unknown");
-    return (versionType.find(type) != std::string::npos);
-}
-
-static bool CreateSanBoxDir()
-{
-    constexpr mode_t defaultLogDirMode = 0x0770;
-    const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
-    if (!OHOS::FileExists(reourceLimitDir)) {
-        OHOS::ForceCreateDirectory(reourceLimitDir);
-        OHOS::ChangeModeDirectory(reourceLimitDir, defaultLogDirMode);
-    }
-    if (OHOS::StorageDaemon::AclSetAccess(reourceLimitDir, "g:1201:rwx") != 0) {
-        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
-        return false;
-    }
-    return true;
-}
-
 extern "C" {
     uint64_t FfiHidebugGetPss()
     {
-        std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-        if (collector != nullptr) {
-            int pid = getprocpid();
-            auto collectResult = collector->CollectProcessMemory(pid);
-            int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
-            return static_cast<uint64_t>(pssInfo);
-        } else {
-            return 0;
-        }
+        auto natveMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+        return natveMemInfoOption ? static_cast<uint64_t>(natveMemInfoOption->pss) : 0;
     }
 
     uint64_t FfiHidebugGetVss()
     {
-        std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-        if (collector != nullptr) {
-            pid_t pid = getprocpid();
-            auto collectResult = collector->CollectProcessVss(pid);
-            uint64_t vssInfo = collectResult.data;
-            return vssInfo;
-        } else {
-            return 0;
-        }
+        auto vssOption = HidebugNativeInterface::GetInstance().GetVss();
+        return vssOption ? vssOption.value() : 0;
     }
 
     uint64_t FfiHidebugGetNativeHeapSize()
@@ -128,35 +90,19 @@ extern "C" {
 
     uint64_t FfiHidebugGetSharedDirty()
     {
-        std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-        if (collector != nullptr) {
-            int pid = getprocpid();
-            auto collectResult = collector->CollectProcessMemory(pid);
-            int32_t sharedDirtyInfo = collectResult.data.sharedDirty;
-            return static_cast<uint64_t>(sharedDirtyInfo);
-        } else {
-            return 0;
-        }
+        auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+        return nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->sharedDirty) : 0;
     }
 
     uint64_t FfiHidebugGetPrivateDirty()
     {
-        std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-        if (collector != nullptr) {
-            pid_t pid = getprocpid();
-            auto collectResult = collector->CollectProcessMemory(pid);
-            int32_t privateDirty = collectResult.data.privateDirty;
-            return static_cast<uint64_t>(privateDirty);
-        } else {
-            return 0;
-        }
+        auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+        return nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->privateDirty) : 0;
     }
 
     double FfiHidebugGetCpuUsage()
     {
-        std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-        pid_t pid = getprocpid();
-        return dumpUsage->GetCpuUsage(pid);
+        return HidebugNativeInterface::GetInstance().GetCpuUsage();
     }
 
     double FfiHidebugGetSystemCpuUsage(int32_t &code)
@@ -198,10 +144,9 @@ extern "C" {
             code = ErrorCode::MEM_ERROR;
             return info;
         }
-
-        info.totalMem = static_cast<uint64_t>(systemMemInfo->memTotal);
-        info.freeMem = static_cast<uint64_t>(systemMemInfo->memFree);
-        info.availableMem = static_cast<uint64_t>(systemMemInfo->memAvailable);
+        info.totalMem = static_cast<uint64_t>(systemMemInfo->totalMem);
+        info.freeMem = static_cast<uint64_t>(systemMemInfo->freeMem);
+        info.availableMem = static_cast<uint64_t>(systemMemInfo->availableMem);
         return info;
     }
 
@@ -233,7 +178,6 @@ extern "C" {
         }
         limit.rssLimit = memoryLimit->rssLimit;
         limit.vssLimit = memoryLimit->vssLimit;
-
         return limit;
     }
 
@@ -268,7 +212,7 @@ extern "C" {
             [](uint64_t a, uint64_t b) { return a | b; });
         std::string file;
         code = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, flag, limitSize, file);
-        if (code != HIDEBUG_SUCCESS || file.empty()) {
+        if (code != TRACE_SUCCESS || file.empty()) {
             return nullptr;
         }
         auto len = file.length() + 1;
@@ -300,12 +244,10 @@ extern "C" {
             HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. No this system ability.");
             return ErrorCode::SYSTEM_STATUS_ABNORMAL;
         }
-        auto result =
-            HidebugNativeInterface::GetInstance().GetMemoryLeakResource(std::string(type), value, enableDebugLog);
-        if (result == MemoryState::MEMORY_FAILED) {
-            return 0;
+        if (HidebugNativeInterface::GetInstance().GetMemoryLeakResource(std::string(type), value, enableDebugLog)
+            == NATIVE_SUCCESS) {
+            CreateResourceLimitDir();
         }
-        CreateSanBoxDir();
         return 0;
     }
 

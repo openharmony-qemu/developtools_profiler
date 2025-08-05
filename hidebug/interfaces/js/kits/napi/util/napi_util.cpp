@@ -15,9 +15,6 @@
 
 #include "napi_util.h"
 
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "hilog/log.h"
@@ -63,15 +60,49 @@ napi_value CreateUndefined(napi_env env)
 bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType)
 {
     napi_valuetype valueType = napi_undefined;
-    napi_typeof(env, value, &valueType);
+    if (napi_typeof(env, value, &valueType) != napi_ok) {
+        return false;
+    }
     return valueType == targetType;
+}
+
+bool GetNapiArrayLength(napi_env env, napi_value value, uint32_t& ret)
+{
+    bool isArray = false;
+    if (napi_is_array(env, value, &isArray) != napi_ok || !isArray) {
+        return false;
+    }
+    return napi_get_array_length(env, value, &ret) == napi_ok;
+}
+
+bool GetNapiInt32Value(napi_env env, napi_value value, int32_t& ret)
+{
+    if (MatchValueType(env, value, napi_number)) {
+        return napi_get_value_int32(env, value, &ret) == napi_ok;
+    }
+    return false;
+}
+
+bool GetNapiUint32Value(napi_env env, napi_value value, uint32_t& ret)
+{
+    if (MatchValueType(env, value, napi_number)) {
+        return napi_get_value_uint32(env, value, &ret) == napi_ok;
+    }
+    return false;
+}
+
+bool GetNapiDoubleValue(napi_env env, napi_value value, double& ret)
+{
+    if (MatchValueType(env, value, napi_number)) {
+        return napi_get_value_double(env, value, &ret) == napi_ok;
+    }
+    return false;
 }
 
 bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret)
 {
     if (MatchValueType(env, value, napi_boolean)) {
-        napi_get_value_bool(env, value, &ret);
-        return true;
+        return napi_get_value_bool(env, value, &ret) == napi_ok;
     }
     return false;
 }
@@ -95,6 +126,15 @@ bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t
     ret = std::string(bufLen, '\0');
     return napi_get_value_string_utf8(env, value, &ret[0], bufLen + 1, &bufLen) == napi_ok;
 }
+
+bool GetNapiObjectProperty(napi_env env, napi_value value, const std::string& propertyName, napi_value& ret)
+{
+    bool hasProperty = false;
+    if (napi_has_named_property(env, value, propertyName.c_str(), &hasProperty) != napi_ok || !hasProperty) {
+        return false;
+    }
+    return napi_get_named_property(env, value, propertyName.c_str(), &ret) == napi_ok;
+};
 
 bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName)
 {

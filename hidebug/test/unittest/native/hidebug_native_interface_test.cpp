@@ -38,14 +38,26 @@ protected:
 };
 
 /**
- * @tc.name: OH_HiDebug_GetGraphicsMemory
- * @tc.desc: test OH_HiDebug_GetRealNanoSecondsTimestamp. get graphics memory.
+ * @tc.name: IsDebuggerConnectedTest
+ * @tc.desc: test IsDebuggerConnectedTest.
  * @tc.type: FUNC
  */
 HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level0)
 {
     auto& interface = HidebugNativeInterface::GetInstance();
     ASSERT_FALSE(interface.IsDebuggerConnected());
+}
+
+/**
+ * @tc.name: GetVssTest
+ * @tc.desc: test GetVssTest. get vss memory.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetVssTest, TestSize.Level0)
+{
+    auto vssInfo = HidebugNativeInterface::GetInstance().GetVss();
+    ASSERT_FALSE(vssInfo);
+    ASSERT_GE(vssInfo.value(), 0);
 }
 
 #ifdef __aarch64__
@@ -57,7 +69,7 @@ HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level0)
 HWTEST_F(HidebugNativeInterfaceTest, GetMemoryLeakResourceTest, TestSize.Level1)
 {
     auto& interface = HidebugNativeInterface::GetInstance();
-    ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), MemoryState::MEMORY_SUCCESS);
+    ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), NATIVE_SUCCESS);
 }
 #endif
 }

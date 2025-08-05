@@ -16,8 +16,7 @@
 #include "hidebug/hidebug.h"
 
 #include <memory>
-#include <vector>
-#include <unistd.h>
+#include <string>
 
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
@@ -91,12 +90,11 @@ void OH_HiDebug_GetAppMemoryLimit(HiDebug_MemoryLimit *memoryLimit)
     if (!memoryLimit) {
         return;
     }
-    auto collectResult = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
-    if (!collectResult) {
-        return;
+    auto memoryLimitOption = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
+    if (memoryLimitOption) {
+        memoryLimit->vssLimit = memoryLimitOption->vssLimit;
+        memoryLimit->rssLimit = memoryLimitOption->rssLimit;
     }
-    memoryLimit->vssLimit = collectResult->vssLimit;
-    memoryLimit->rssLimit = collectResult->rssLimit;
 }
 
 void OH_HiDebug_GetAppNativeMemInfoWithCache(HiDebug_NativeMemInfo *nativeMemInfo, bool forceRefresh)
@@ -106,7 +104,13 @@ void OH_HiDebug_GetAppNativeMemInfoWithCache(HiDebug_NativeMemInfo *nativeMemInf
     }
     auto memInfoOption = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
     if (memInfoOption) {
-        *nativeMemInfo = *memInfoOption;
+        nativeMemInfo->pss = memInfoOption->pss;
+        nativeMemInfo->rss = memInfoOption->rss;
+        nativeMemInfo->sharedDirty = memInfoOption->sharedDirty;
+        nativeMemInfo->privateDirty = memInfoOption->privateDirty;
+        nativeMemInfo->sharedClean = memInfoOption->sharedClean;
+        nativeMemInfo->privateClean = memInfoOption->privateClean;
+        nativeMemInfo->vss = memInfoOption->vss;
     }
 }
 
@@ -121,13 +125,29 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
         return;
     }
     auto sysMemInfo = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetSystemMemInfo();
-    if (!sysMemInfo) {
-        return;
+    if (sysMemInfo) {
+        systemMemInfo->totalMem = sysMemInfo->totalMem;
+        systemMemInfo->freeMem = sysMemInfo->freeMem;
+        systemMemInfo->availableMem = sysMemInfo->availableMem;
     }
+}
 
-    systemMemInfo->totalMem = static_cast<uint32_t>(sysMemInfo->memTotal);
-    systemMemInfo->freeMem = static_cast<uint32_t>(sysMemInfo->memFree);
-    systemMemInfo->availableMem = static_cast<uint32_t>(sysMemInfo->memAvailable);
+inline HiDebug_ErrorCode ConvertTraceErrorCode(OHOS::HiviewDFX::TraceErrorCode traceErrorCode)
+{
+    switch (traceErrorCode) {
+        case OHOS::HiviewDFX::TRACE_SUCCESS:
+            return HIDEBUG_SUCCESS;
+        case OHOS::HiviewDFX::TRACE_INVALID_ARGUMENT:
+            return HIDEBUG_INVALID_ARGUMENT;
+        case OHOS::HiviewDFX::TRACE_CAPTURED_ALREADY:
+            return HIDEBUG_TRACE_CAPTURED_ALREADY;
+        case OHOS::HiviewDFX::TRACE_NO_PERMISSION:
+            return HIDEBUG_NO_PERMISSION;
+        case OHOS::HiviewDFX::NO_TRACE_RUNNING:
+            return HIDEBUG_NO_TRACE_RUNNING;
+        default:
+            return HIDEBUG_TRACE_ABNORMAL;
+    }
 }
 
 HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
@@ -139,8 +159,8 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
     auto& nativeInterface = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance();
     std::string file;
     auto ret = nativeInterface.StartAppTraceCapture(tags, flag, limitSize, file);
-    if (ret != HIDEBUG_SUCCESS) {
-        return ret;
+    if (ret != OHOS::HiviewDFX::TRACE_SUCCESS) {
+        return ConvertTraceErrorCode(ret);
     }
     if (strcpy_s(fileName, length, file.c_str()) != EOK) {
         nativeInterface.StopAppTraceCapture();
@@ -149,10 +169,9 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
     return HIDEBUG_SUCCESS;
 }
 
-
 HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
 {
-    return OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().StopAppTraceCapture();
+    return ConvertTraceErrorCode(OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().StopAppTraceCapture());
 }
 
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)

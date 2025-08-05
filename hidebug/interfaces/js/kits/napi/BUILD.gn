@@ -25,7 +25,7 @@ ohos_shared_library("hidebug") {
   sources = [
     "napi_hidebug.cpp",
     "napi_hidebug_dump.cpp",
-    "napi_hidebug_gc.cpp",
+    "napi_hidebug_vm.cpp",
     "napi_hidebug_init.cpp",
     "util/napi_util.cpp",
   ]
@@ -33,23 +33,16 @@ ohos_shared_library("hidebug") {
   deps = [ "$hidebug_path/frameworks/native:hidebug_native" ]
 
   external_deps = [
-    "ability_base:configuration",
-    "ability_base:want",
     "ability_runtime:app_context",
-    "bundle_framework:appexecfwk_base",
-    "bundle_framework:appexecfwk_core",
     "c_utils:utils",
-    "hidumper:lib_dump_usage",
     "hilog:libhilog",
     "hisysevent:libhisysevent",
     "hitrace:hitrace_meter",
     "hiview:libfaultlogger",
-    "hiview:libucollection_utility",
     "init:libbegetutil",
     "ipc:ipc_core",
     "napi:ace_napi",
     "samgr:samgr_proxy",
-    "storage_service:storage_manager_acl",
   ]
 
   relative_install_dir = "module"

@@ -13,24 +13,14 @@
  * limitations under the License.
  */
 
-#include <algorithm>
-#include <cerrno>
 #include <codecvt>
-#include <fstream>
 #include <string>
-#include <memory>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
 #include <malloc.h>
 #include <parameters.h>
-#include <unistd.h>
 
 #include "application_context.h"
 #include "context.h"
-#include "cpu_collector.h"
 #include "directory_ex.h"
-#include "dump_usage.h"
 #include "faultlogger_client.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
@@ -38,16 +28,14 @@
 #include "hidebug_util.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
-#include "memory_collector.h"
 #include "napi_hidebug_dump.h"
 #include "napi_hidebug_init.h"
 #include "napi/native_api.h"
 #include "napi/native_node_api.h"
 #include "native_engine/native_engine.h"
 #include "refbase.h"
-#include "storage_acl.h"
 #include "system_ability_definition.h"
-#include "napi_hidebug_gc.h"
+#include "napi_hidebug_vm.h"
 #include "napi_util.h"
 #include "error_code.h"
 
@@ -58,23 +46,12 @@ namespace {
 #define LOG_DOMAIN 0xD002D0A
 #undef LOG_TAG
 #define LOG_TAG "HiDebug_NAPI"
-constexpr int ONE_VALUE_LIMIT = 1;
-constexpr int ARRAY_INDEX_FIRST = 0;
-constexpr int ARRAY_INDEX_SECOND = 1;
 constexpr int REMOVE_NAPI_WRAP_PARAM_COUNT = 2;
 constexpr int NAME_LEN = 128;
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 constexpr int FIRST_POS = 0;
 constexpr int SECOND_POS = 1;
 constexpr int THIRD_POS = 2;
-constexpr int PSS_MIN = 1024;
-constexpr int PSS_MAX = 4 * 1024 * 1024;
-constexpr int JS_MIN = 85;
-constexpr int JS_MAX = 95;
-constexpr int FD_MIN = 10;
-constexpr int FD_MAX = 10000;
-constexpr int THREAD_MIN = 1;
-constexpr int THREAD_MAX = 1000;
 constexpr int TRIM_LEVEL_MAX = 1;
 constexpr int ENABLE_ARGS_NO_PARAMS = 0;
 constexpr int ENABLE_ARGS_ONE_PARAMS = 1;
@@ -82,20 +59,9 @@ constexpr int ENABLE_ARGS_TWO_PARAMS = 2;
 constexpr double DEFAULT_SAMPLE_RATE = 2500;
 constexpr double DEFAULT_MAX_SIMUTANEOUS_ALLOCATIONS = 1000;
 constexpr int DEFAULT_DURATION = 7;
-const std::string SLASH_STR = "/";
-const std::string JSON_FILE = ".json";
-const std::string KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
-
-const std::unordered_set<std::string> RESOURCE_TYPE_LIST{
-    "pss_memory",
-    "js_heap",
-    "fd",
-    "thread"
-};
-static std::map<std::string, std::pair<int, int>> limitResource = {
-    {{"pss_memory", {PSS_MIN, PSS_MAX}}, {"js_heap", {JS_MIN, JS_MAX}},
-        {"fd", {FD_MIN, FD_MAX}}, {"thread", {THREAD_MIN, THREAD_MAX}}}
-};
+constexpr auto SLASH_STR = "/";
+constexpr auto JSON_FILE = ".json";
+constexpr auto KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
 
 struct GwpAsanParams {
     bool alwaysEnabled = false;
@@ -105,55 +71,35 @@ struct GwpAsanParams {
 };
 }
 
-static bool IsArrayForNapiValue(napi_env env, napi_value param, uint32_t &arraySize)
-{
-    bool isArray = false;
-    arraySize = 0;
-    if (napi_is_array(env, param, &isArray) != napi_ok || isArray == false) {
-        return false;
-    }
-    if (napi_get_array_length(env, param, &arraySize) != napi_ok) {
-        return false;
-    }
-    return true;
-}
-
 static bool GetDumpParam(napi_env env, napi_callback_info info,
     int& serviceId, int& fd, std::vector<std::u16string>& args)
 {
-    const int valueNum = 3;
+    constexpr int valueNum = 3;
     size_t argc = valueNum;
     napi_value argv[valueNum] = {nullptr};
     napi_value thisVar = nullptr;
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argc != valueNum) {
-        HILOG_ERROR(LOG_CORE, "invalid number = %{public}d of params.", ONE_VALUE_LIMIT);
+        HILOG_ERROR(LOG_CORE, "invalid number = %{public}zu of params.", argc);
         return false;
     }
-    int thirdPos = 2;
-    if (!MatchValueType(env, argv[0], napi_number) &&
-        !MatchValueType(env, argv[1], napi_number) &&
-        !MatchValueType(env, argv[thirdPos], napi_object)) {
-        HILOG_ERROR(LOG_CORE, "params type error.");
-        return false;
-    }
-    if (napi_get_value_int32(env, argv[0], &serviceId) != napi_ok) {
+    if (!GetNapiInt32Value(env, argv[FIRST_POS], serviceId)) {
         HILOG_ERROR(LOG_CORE, "Get input serviceId failed.");
         return false;
     }
-    if (napi_get_value_int32(env, argv[1], &fd) != napi_ok) {
+    if (!GetNapiInt32Value(env, argv[SECOND_POS], fd)) {
         HILOG_ERROR(LOG_CORE, "Get input fd failed.");
         return false;
     }
     uint32_t arraySize = 0;
-    if (!IsArrayForNapiValue(env, argv[thirdPos], arraySize)) {
+    if (!GetNapiArrayLength(env, argv[THIRD_POS], arraySize)) {
         HILOG_ERROR(LOG_CORE, "Get input args failed.");
         return false;
     }
     for (uint32_t i = 0; i < arraySize; i++) {
         napi_value jsValue = nullptr;
-        if (napi_get_element(env, argv[thirdPos], i, &jsValue) != napi_ok) {
+        if (napi_get_element(env, argv[THIRD_POS], i, &jsValue) != napi_ok) {
             HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
             return false;
         }
@@ -173,7 +119,7 @@ static bool GetDumpParam(napi_env env, napi_callback_info info,
 static bool GetTraceParam(napi_env env, napi_callback_info info,
     uint32_t& traceFlag, uint32_t& limitSize, std::vector<uint64_t>& tags)
 {
-    const int valueNum = 3;
+    constexpr int valueNum = 3;
     size_t argc = valueNum;
     napi_value argv[valueNum] = {nullptr};
     napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -181,14 +127,8 @@ static bool GetTraceParam(napi_env env, napi_callback_info info,
         HILOG_ERROR(LOG_CORE, "invalid numbers of params!");
         return false;
     }
-    if (!MatchValueType(env, argv[FIRST_POS], napi_object) &&
-        !MatchValueType(env, argv[SECOND_POS], napi_number) &&
-        !MatchValueType(env, argv[THIRD_POS], napi_number)) {
-        HILOG_ERROR(LOG_CORE, "params type error.");
-        return false;
-    }
     uint32_t arraySize = 0;
-    if (!IsArrayForNapiValue(env, argv[FIRST_POS], arraySize)) {
+    if (!GetNapiArrayLength(env, argv[FIRST_POS], arraySize)) {
         HILOG_ERROR(LOG_CORE, "Get input tags failed.");
         return false;
     }
@@ -206,11 +146,11 @@ static bool GetTraceParam(napi_env env, napi_callback_info info,
         }
         tags.push_back(tag);
     }
-    if (napi_get_value_uint32(env, argv[SECOND_POS], &traceFlag) != napi_ok) {
+    if (!GetNapiUint32Value(env, argv[SECOND_POS], traceFlag)) {
         HILOG_ERROR(LOG_CORE, "Get input traceFlag failed.");
         return false;
     }
-    if (napi_get_value_uint32(env, argv[THIRD_POS], &limitSize) != napi_ok) {
+    if (!GetNapiUint32Value(env, argv[THIRD_POS], limitSize)) {
         HILOG_ERROR(LOG_CORE, "Get input limitSize failed.");
         return false;
     }
@@ -298,49 +238,28 @@ napi_value StopJsCpuProfiling(napi_env env, napi_callback_info info)
 
 napi_value GetPss(napi_env env, napi_callback_info info)
 {
-    napi_value pss;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        int pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        int32_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
-        napi_create_bigint_uint64(env, pssInfo, &pss);
-    } else {
-        napi_create_bigint_uint64(env, 0, &pss);
-    }
-    return pss;
+    napi_value retValue = nullptr;
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    napi_create_bigint_uint64(env, memInfoOption ? static_cast<uint64_t>(memInfoOption->pss) : 0, &retValue);
+    return retValue;
 }
 
 napi_value GetSharedDirty(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSharedDirty");
-    napi_value sharedDirty;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        int pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        int32_t sharedDirtyInfo = collectResult.data.sharedDirty;
-        napi_create_bigint_uint64(env, sharedDirtyInfo, &sharedDirty);
-    } else {
-        napi_create_bigint_uint64(env, 0, &sharedDirty);
-    }
-    return sharedDirty;
+    napi_value retValue = nullptr;
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    napi_create_bigint_uint64(env, memInfoOption ? static_cast<uint64_t>(memInfoOption->sharedDirty) : 0, &retValue);
+    return retValue;
 }
 
 napi_value GetPrivateDirty(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getPrivateDirty");
-    napi_value privateDirtyValue;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        pid_t pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        int32_t privateDirty = collectResult.data.privateDirty;
-        napi_create_bigint_uint64(env, privateDirty, &privateDirtyValue);
-    } else {
-        napi_create_bigint_uint64(env, 0, &privateDirtyValue);
-    }
-    return privateDirtyValue;
+    napi_value retValue = nullptr;
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    napi_create_bigint_uint64(env, memInfoOption ? static_cast<uint64_t>(memInfoOption->privateDirty) : 0, &retValue);
+    return retValue;
 }
 
 napi_value GetCpuUsage(napi_env env, napi_callback_info info)
@@ -349,38 +268,36 @@ napi_value GetCpuUsage(napi_env env, napi_callback_info info)
     constexpr uint32_t limitSize = 100;
     static MultipleRecordReporter multipleRecordReporter(reportTimeOutSec, limitSize);
     ApiInvokeRecorder apiInvokeRecorder("getCpuUsage", multipleRecordReporter);
-    napi_value cpuUsageValue;
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    pid_t pid = getprocpid();
-    double cpuUsage = dumpUsage->GetCpuUsage(pid);
-    napi_create_double(env, cpuUsage, &cpuUsageValue);
-    return cpuUsageValue;
+    double cpuUsage = HidebugNativeInterface::GetInstance().GetCpuUsage();
+    napi_value retValue = nullptr;
+    napi_create_double(env, cpuUsage, &retValue);
+    return retValue;
 }
 
 napi_value GetNativeHeapSize(napi_env env, napi_callback_info info)
 {
     struct mallinfo mi = mallinfo();
-    napi_value nativeHeapSize;
-    napi_create_bigint_uint64(env, uint64_t(mi.uordblks + mi.fordblks), &nativeHeapSize);
-    return nativeHeapSize;
+    napi_value retValue = nullptr;
+    napi_create_bigint_uint64(env, uint64_t(mi.uordblks + mi.fordblks), &retValue);
+    return retValue;
 }
 
 napi_value GetNativeHeapAllocatedSize(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapAllocatedSize");
     struct mallinfo mi = mallinfo();
-    napi_value nativeHeapAllocatedSize;
-    napi_create_bigint_uint64(env, uint64_t(mi.uordblks), &nativeHeapAllocatedSize);
-    return nativeHeapAllocatedSize;
+    napi_value retValue = nullptr;
+    napi_create_bigint_uint64(env, uint64_t(mi.uordblks), &retValue);
+    return retValue;
 }
 
 napi_value GetNativeHeapFreeSize(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapFreeSize");
     struct mallinfo mi = mallinfo();
-    napi_value nativeHeapFreeSize;
-    napi_create_bigint_uint64(env, uint64_t(mi.fordblks), &nativeHeapFreeSize);
-    return nativeHeapFreeSize;
+    napi_value retValue = nullptr;
+    napi_create_bigint_uint64(env, uint64_t(mi.fordblks), &retValue);
+    return retValue;
 }
 
 static napi_value GetServiceDump(napi_env env, napi_callback_info info)
@@ -414,17 +331,10 @@ static napi_value GetServiceDump(napi_env env, napi_callback_info info)
 napi_value GetVss(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVss");
-    napi_value vss;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        pid_t pid = getprocpid();
-        auto collectResult = collector->CollectProcessVss(pid);
-        uint64_t vssInfo = collectResult.data;
-        napi_create_bigint_uint64(env, vssInfo, &vss);
-    } else {
-        napi_create_bigint_uint64(env, 0, &vss);
-    }
-    return vss;
+    napi_value retValue = nullptr;
+    auto vssInfoOption = HidebugNativeInterface::GetInstance().GetVss();
+    napi_create_bigint_uint64(env, vssInfoOption ? vssInfoOption.value() : 0, &retValue);
+    return retValue;
 }
 
 static napi_value GetSystemCpuUsage(napi_env env, napi_callback_info info)
@@ -452,8 +362,8 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     void *data = nullptr;
     napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
     if (argc != REMOVE_NAPI_WRAP_PARAM_COUNT ||
-        (!MatchValueType(env, argv[ARRAY_INDEX_FIRST], napi_object) ||
-        !MatchValueType(env, argv[ARRAY_INDEX_SECOND], napi_boolean))) {
+        (!MatchValueType(env, argv[FIRST_POS], napi_object) ||
+        !MatchValueType(env, argv[SECOND_POS], napi_boolean))) {
         HILOG_DEBUG(LOG_CORE, "RemoveNapiWrap Failed to parse parameters, argc %{public}d", (int)argc);
         std::string paramErrorMessage = "The parameter check failed.";
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
@@ -461,13 +371,13 @@ static napi_value RemoveNapiWrap(napi_env env, napi_callback_info info)
     }
 
     // remove jsObj's wrap
-    auto jsObj = argv[ARRAY_INDEX_FIRST];
+    auto jsObj = argv[FIRST_POS];
     void *nativePtr = nullptr;
     napi_remove_wrap(env, jsObj, (void **)&nativePtr);
 
     // remove jsObj's properties wrap
     bool needRemoveProperty = false;
-    napi_get_value_bool(env, argv[ARRAY_INDEX_SECOND], &needRemoveProperty);
+    napi_get_value_bool(env, argv[SECOND_POS], &needRemoveProperty);
     if (needRemoveProperty) {
         napi_value allPropertyNames = nullptr;
         napi_object_get_keys(env, jsObj, &allPropertyNames);
@@ -525,11 +435,11 @@ static void ConvertThreadCpuUsageToJs(napi_env env, napi_value &result, uint32_t
 {
     napi_create_object(env, &result);
 
-    napi_value threadId;
+    napi_value threadId = nullptr;
     napi_create_uint32(env, threadIdValue, &threadId);
     napi_set_named_property(env, result, "threadId", threadId);
 
-    napi_value cpuUsage;
+    napi_value cpuUsage = nullptr;
     napi_create_double(env, cpuUsageValue, &cpuUsage);
     napi_set_named_property(env, result, "cpuUsage", cpuUsage);
 }
@@ -538,7 +448,7 @@ static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const
 {
     napi_create_array(env, &result);
     size_t idx = 0;
-    for (const auto[threadId, cpuUsage] : threadMap) {
+    for (const auto& [threadId, cpuUsage] : threadMap) {
         napi_value obj = nullptr;
         ConvertThreadCpuUsageToJs(env, obj, threadId, cpuUsage);
         napi_set_element(env, result, idx, obj);
@@ -549,7 +459,7 @@ static void ConvertThreadCpuUsageMapToJs(napi_env env, napi_value &result, const
 napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppThreadCpuUsage");
-    napi_value result;
+    napi_value result = nullptr;
     std::map<uint32_t, double> threadMap = HidebugNativeInterface::GetInstance().GetAppThreadCpuUsage();
     ConvertThreadCpuUsageMapToJs(env, result, threadMap);
     return result;
@@ -558,19 +468,18 @@ napi_value GetAppThreadCpuUsage(napi_env env, napi_callback_info info)
 napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
-    napi_value appMemoryLimit;
+    napi_value appMemoryLimit = nullptr;
     napi_create_object(env, &appMemoryLimit);
-    MemoryLimit memoryLimit{};
     auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
     if (memoryLimitOption) {
-        memoryLimit = memoryLimitOption.value();
+        memoryLimitOption.emplace();
     }
-    napi_value rssLimit;
-    napi_create_bigint_uint64(env, memoryLimit.rssLimit, &rssLimit);
+    napi_value rssLimit = nullptr;
+    napi_create_bigint_uint64(env, memoryLimitOption->rssLimit, &rssLimit);
     napi_set_named_property(env, appMemoryLimit, "rssLimit", rssLimit);
 
-    napi_value vssLimit;
-    napi_create_bigint_uint64(env, memoryLimit.vssLimit, &vssLimit);
+    napi_value vssLimit = nullptr;
+    napi_create_bigint_uint64(env, memoryLimitOption->vssLimit, &vssLimit);
     napi_set_named_property(env, appMemoryLimit, "vssLimit", vssLimit);
     uint64_t vmHeapLimitValue{0};
     uint64_t vmTotalHeapSizeValue{0};
@@ -579,47 +488,46 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
         vmHeapLimitValue = engine->GetHeapLimitSize();
         vmTotalHeapSizeValue = engine->GetProcessHeapLimitSize();
     }
-    napi_value vmHeapLimit;
+    napi_value vmHeapLimit = nullptr;
     vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmHeapLimitValue, &vmHeapLimit);
     napi_set_named_property(env, appMemoryLimit, "vmHeapLimit", vmHeapLimit);
-    napi_value vmTotalHeapSize;
+    napi_value vmTotalHeapSize = nullptr;
     vmTotalHeapSizeValue = vmTotalHeapSizeValue >> BYTE_2_KB_SHIFT_BITS;
     napi_create_bigint_uint64(env, vmTotalHeapSizeValue, &vmTotalHeapSize);
     napi_set_named_property(env, appMemoryLimit, "vmTotalHeapSize", vmTotalHeapSize);
     return appMemoryLimit;
 }
 
-napi_value ConvertToJsNativeMemInfo(napi_env env, const HiDebug_NativeMemInfo& nativeMemInfo)
+napi_value ConvertToJsNativeMemInfo(napi_env env, const NativeMemInfo& nativeMemInfo)
 {
-    napi_value memInfo;
+    napi_value memInfo = nullptr;
     napi_create_object(env, &memInfo);
-
-    napi_value pss;
+    napi_value pss = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.pss, &pss);
     napi_set_named_property(env, memInfo, "pss", pss);
 
-    napi_value rss;
+    napi_value rss = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.rss, &rss);
     napi_set_named_property(env, memInfo, "rss", rss);
 
-    napi_value sharedDirty;
+    napi_value sharedDirty = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.sharedDirty, &sharedDirty);
     napi_set_named_property(env, memInfo, "sharedDirty", sharedDirty);
 
-    napi_value privateDirty;
+    napi_value privateDirty = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.privateDirty, &privateDirty);
     napi_set_named_property(env, memInfo, "privateDirty", privateDirty);
 
-    napi_value sharedClean;
+    napi_value sharedClean = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.sharedClean, &sharedClean);
     napi_set_named_property(env, memInfo, "sharedClean", sharedClean);
 
-    napi_value privateClean;
+    napi_value privateClean = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.privateClean, &privateClean);
     napi_set_named_property(env, memInfo, "privateClean", privateClean);
 
-    napi_value vss;
+    napi_value vss = nullptr;
     napi_create_bigint_uint64(env, nativeMemInfo.vss, &vss);
     napi_set_named_property(env, memInfo, "vss", vss);
     return memInfo;
@@ -628,7 +536,7 @@ napi_value ConvertToJsNativeMemInfo(napi_env env, const HiDebug_NativeMemInfo& n
 napi_value GetAppNativeMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    auto memInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
     return memInfoOption ? ConvertToJsNativeMemInfo(env, *memInfoOption) : ConvertToJsNativeMemInfo(env, {});
 }
 
@@ -658,17 +566,17 @@ public:
 protected:
     void Work(napi_env env) override
     {
-        result_ = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+        result_ = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
     }
 
     void Done(napi_env env, napi_status status) override
     {
-        napi_value ret = result_ ? ConvertToJsNativeMemInfo(env, *result_) : ConvertToJsNativeMemInfo(env, {});
+        napi_value ret = result_ ? ConvertToJsNativeMemInfo(env, result_.value()) : ConvertToJsNativeMemInfo(env, {});
         napi_resolve_deferred(env, deferred_, ret);
     }
 
 private:
-    std::optional<HiDebug_NativeMemInfo> result_{};
+    std::optional<NativeMemInfo> result_{};
     ApiInvokeRecorder apiInvokeRecorder_;
 };
 
@@ -680,24 +588,23 @@ napi_value GetAppNativeMemInfoAsync(napi_env env, napi_callback_info info)
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
-    SysMemory systemMemInfo{};
     auto systemMemInfoOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
     if (systemMemInfoOption) {
-        systemMemInfo = systemMemInfoOption.value();
+        systemMemInfoOption.emplace();
     }
-    napi_value sysMemInfo;
+    napi_value sysMemInfo = nullptr;
     napi_create_object(env, &sysMemInfo);
 
-    napi_value totalMem;
-    napi_create_bigint_uint64(env, systemMemInfo.memTotal, &totalMem);
+    napi_value totalMem = nullptr;
+    napi_create_bigint_uint64(env, static_cast<uint64_t>(systemMemInfoOption->totalMem), &totalMem);
     napi_set_named_property(env, sysMemInfo, "totalMem", totalMem);
 
-    napi_value freeMem;
-    napi_create_bigint_uint64(env, systemMemInfo.memFree, &freeMem);
+    napi_value freeMem = nullptr;
+    napi_create_bigint_uint64(env, static_cast<uint64_t>(systemMemInfoOption->freeMem), &freeMem);
     napi_set_named_property(env, sysMemInfo, "freeMem", freeMem);
 
-    napi_value availableMem;
-    napi_create_bigint_uint64(env, systemMemInfo.memAvailable, &availableMem);
+    napi_value availableMem = nullptr;
+    napi_create_bigint_uint64(env, static_cast<uint64_t>(systemMemInfoOption->availableMem), &availableMem);
     napi_set_named_property(env, sysMemInfo, "availableMem", availableMem);
     return sysMemInfo;
 }
@@ -705,7 +612,7 @@ napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("startAppTraceCapture");
-    napi_value result;
+    napi_value result = nullptr;
     uint32_t traceFlag = 0;
     uint32_t limitSize = 0;
     std::vector<uint64_t> tags;
@@ -717,24 +624,27 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
     std::string file;
     auto ret = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, traceFlag, limitSize, file);
-    if (ret == HIDEBUG_SUCCESS) {
+    if (ret == TRACE_SUCCESS) {
         napi_create_string_utf8(env, file.c_str(), NAPI_AUTO_LENGTH, &result);
         return result;
     }
-    if (ret == HIDEBUG_INVALID_ARGUMENT) {
+    if (ret == TRACE_INVALID_ARGUMENT) {
         constexpr auto errorMessage = "Invalid argument";
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), errorMessage);
+        return CreateUndefined(env);
     }
-    if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
+    if (ret == TRACE_CAPTURED_ALREADY) {
         constexpr auto errorMessage = "Capture trace already enabled.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::HAVA_ALREADY_TRACE);
         napi_throw_error(env, std::to_string(ErrorCode::HAVA_ALREADY_TRACE).c_str(), errorMessage);
+        return CreateUndefined(env);
     }
-    if (ret == HIDEBUG_NO_PERMISSION) {
+    if (ret == TRACE_NO_PERMISSION) {
         constexpr auto errorMessage = "No write permission on the file.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::WITHOUT_WRITE_PERMISSON);
         napi_throw_error(env, std::to_string(ErrorCode::WITHOUT_WRITE_PERMISSON).c_str(), errorMessage);
+        return CreateUndefined(env);
     }
     constexpr auto errorMessage = "Abnormal trace status.";
     apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
@@ -745,13 +655,13 @@ napi_value StartAppTraceCapture(napi_env env, napi_callback_info info)
 napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
-    auto ret = HidebugNativeInterface::GetInstance().StopAppTraceCapture();
-    if (ret == HIDEBUG_TRACE_ABNORMAL) {
+    const auto ret = HidebugNativeInterface::GetInstance().StopAppTraceCapture();
+    if (ret == TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errorMessage.c_str());
     }
-    if (ret == HIDEBUG_NO_TRACE_RUNNING) {
+    if (ret == NO_TRACE_RUNNING) {
         std::string errorMessage = "No capture trace running";
         apiInvokeRecorder.SetErrorCode(ErrorCode::NO_CAPTURE_TRACE_RUNNING);
         napi_throw_error(env, std::to_string(ErrorCode::NO_CAPTURE_TRACE_RUNNING).c_str(), errorMessage.c_str());
@@ -759,96 +669,36 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
-napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info)
-{
-    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStats");
-    napi_value vmRunTimeStats;
-    napi_create_object(env, &vmRunTimeStats);
-    for (const auto &[k, v] : GC::vmGcMap_) {
-        napi_set_named_property(env, vmRunTimeStats, k.c_str(), v(env));
-    }
-    return vmRunTimeStats;
-}
-
-napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info)
-{
-    ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
-    std::string param;
-    if (!GetTheOnlyStringParam(env, info, param)) {
-        std::string paramErrorMessage = "Invalid parameter, a string parameter required.";
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        return CreateUndefined(env);
-    }
-    if (GC::vmGcMap_.find(param) == GC::vmGcMap_.end()) {
-        std::string paramErrorMessage = "Invalid parameter, unknown property.";
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        return CreateUndefined(env);
-    }
-    return GC::vmGcMap_.at(param)(env);
-}
-
 static bool JudgeValueRange(const std::string &type, int32_t value)
 {
-    if (limitResource.find(type) != limitResource.end()) {
-        auto limitValue = limitResource[type];
-        if (value >= limitValue.first && value <= limitValue.second) {
-            return true;
-        }
+    if (type == "pss_memory") {
+        constexpr int pssMin = 1024;
+        constexpr int pssMax = 4 * 1024 * 1024;
+        return value >= pssMin && value <= pssMax;
     }
+    if (type == "js_memory") {
+        constexpr int jsMin = 85;
+        constexpr int jsMax = 95;
+        return value >= jsMin && value <= jsMax;
+    }
+    if (type == "fd_memory") {
+        constexpr int fdMin = 10;
+        constexpr int fdMax = 10000;
+        return value >= fdMin && value <= fdMax;
+    }
+    if (type == "thread_memory") {
+        constexpr int threadMin = 1;
+        constexpr int threadMax = 1000;
+        return value >= threadMin && value <= threadMax;
+    }
+    HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
     return false;
-}
-
-static bool CheckFilenameParamLength(napi_env env, napi_value *argv, size_t &bufLen)
-{
-    napi_status status = napi_get_value_string_utf8(env, argv[FIRST_POS], nullptr, 0, &bufLen);
-    if (status != napi_ok) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input filename param length failed.");
-        return false;
-    }
-    const int bufMax = 128;
-    if (bufLen > bufMax || bufLen == 0) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. input filename param length is illegal.");
-        return false;
-    }
-    return true;
-}
-
-static bool CheckResourceType(napi_env env, napi_value *argv, size_t &bufLen, std::string &type)
-{
-    std::vector<char> buf(bufLen + 1, 0);
-    napi_get_value_string_utf8(env, argv[FIRST_POS], buf.data(), bufLen + 1, &bufLen);
-    type = std::string(buf.data());
-    if (type.empty()) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
-        return false;
-    }
-    auto findType = std::find(RESOURCE_TYPE_LIST.begin(), RESOURCE_TYPE_LIST.end(), type);
-    if (findType == RESOURCE_TYPE_LIST.end()) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
-        return false;
-    }
-    return true;
-}
-
-static bool CheckInputValue(napi_env env, napi_value *argv, std::string &type, int32_t &value)
-{
-    if (napi_get_value_int32(env, argv[SECOND_POS], &value) != napi_ok || value < 0) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
-        return false;
-    }
-    if (!JudgeValueRange(type, value)) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. The value range is invalid.");
-        return false;
-    }
-    return true;
 }
 
 static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std::string& type,
     int32_t& value, bool& enabledDebugLog)
 {
-    const int valueNum = 3;
+    constexpr int valueNum = 3;
     size_t argc = valueNum;
     napi_value argv[valueNum] = { nullptr };
     napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
@@ -856,60 +706,36 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
         HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Invalid numbers of params!");
         return false;
     }
-    if (!MatchValueType(env, argv[FIRST_POS], napi_string) &&
-        !MatchValueType(env, argv[SECOND_POS], napi_number) &&
-        !MatchValueType(env, argv[THIRD_POS], napi_boolean)) {
-        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam params type error.");
+    constexpr int paramMaxLen = 128;
+    if (!GetNapiStringValue(env, argv[FIRST_POS], type, paramMaxLen)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Resource type is invalid.");
         return false;
     }
-    size_t bufLen = 0;
-    if (!CheckFilenameParamLength(env, argv, bufLen)) {
+    if (!GetNapiInt32Value(env, argv[SECOND_POS], value)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Input value error.");
         return false;
     }
-    if (!CheckResourceType(env, argv, bufLen, type)) {
+    if (!JudgeValueRange(type, value)) {
+        HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. The value range is invalid.");
         return false;
     }
-    if (!CheckInputValue(env, argv, type, value)) {
-        return false;
-    }
-    if (napi_get_value_bool(env, argv[THIRD_POS], &enabledDebugLog) != napi_ok) {
+    if (!GetNapiBoolValue(env, argv[THIRD_POS], enabledDebugLog)) {
         HILOG_ERROR(LOG_CORE, "GetAppResourceLimitParam failed. Get input enabledDebugLog failed.");
         return false;
     }
     return true;
 }
 
-static bool CreateSanBoxDir()
-{
-    constexpr mode_t defaultLogDirMode = 0770;
-    const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
-    if (!OHOS::FileExists(reourceLimitDir)) {
-        OHOS::ForceCreateDirectory(reourceLimitDir);
-        OHOS::ChangeModeDirectory(reourceLimitDir, defaultLogDirMode);
-    }
-    if (OHOS::StorageDaemon::AclSetAccess(reourceLimitDir, "g:1201:rwx") != 0) {
-        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
-        return false;
-    }
-    return true;
-}
-
-static bool CheckVersionType(const std::string& type, const std::string& key)
-{
-    auto versionType = OHOS::system::GetParameter(key, "unknown");
-    return (versionType.find(type) != std::string::npos);
-}
-
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
-    CreateSanBoxDir();
+    CreateResourceLimitDir();
     if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
         apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);
         return CreateUndefined(env);
     }
-    std::string type = "";
+    std::string type;
     int32_t value = 0;
     bool enabledDebugLog = false;
     if (!GetAppResourceLimitParam(env, info, type, value, enabledDebugLog)) {
@@ -933,10 +759,8 @@ napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return CreateUndefined(env);
     }
-    auto result = HidebugNativeInterface::GetInstance().GetMemoryLeakResource(type, value, enabledDebugLog);
-    if (result == MemoryState::MEMORY_FAILED) {
+    if (HidebugNativeInterface::GetInstance().GetMemoryLeakResource(type, value, enabledDebugLog) != NATIVE_SUCCESS) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return CreateUndefined(env);
     }
     return CreateUndefined(env);
 }
@@ -1001,61 +825,38 @@ napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
-bool CheckTypeForNapiValue(napi_env env, napi_value value, napi_valuetype expectType)
-{
-    napi_valuetype valueType = napi_undefined;
-    if (napi_typeof(env, value, &valueType) != napi_ok) {
-        return false;
-    }
-    return valueType == expectType;
-}
-
 bool ParseGwpAsanOptions(napi_env env, napi_value value, GwpAsanParams& gwpAsanParams)
 {
-    if (!CheckTypeForNapiValue(env, value, napi_object)) {
+    if (!MatchValueType(env, value, napi_object)) {
         HILOG_ERROR(LOG_CORE, "The type of options must be GwpAsanOptions.");
         return false;
     }
-    bool hasProperty = false;
-    napi_valuetype valueType = napi_undefined;
 
     //alwaysEnabled?: bool
-    napi_has_named_property(env, value, "alwaysEnabled", &hasProperty);
-    if (hasProperty) {
-        napi_value nAlwaysEnabled = nullptr;
-        napi_get_named_property(env, value, "alwaysEnabled", &nAlwaysEnabled);
-        napi_typeof(env, nAlwaysEnabled, &valueType);
-        if (valueType != napi_boolean) {
+    napi_value nAlwaysEnabled = nullptr;
+    if (GetNapiObjectProperty(env, value, "alwaysEnabled", nAlwaysEnabled)) {
+        if (!GetNapiBoolValue(env, nAlwaysEnabled, gwpAsanParams.alwaysEnabled)) {
             HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
             return false;
         }
-        napi_get_value_bool(env, nAlwaysEnabled, &gwpAsanParams.alwaysEnabled);
     }
 
     //sampleRate?: number
-    napi_has_named_property(env, value, "sampleRate", &hasProperty);
-    if (hasProperty) {
-        napi_value nSampleRate = nullptr;
-        napi_get_named_property(env, value, "sampleRate", &nSampleRate);
-        napi_typeof(env, nSampleRate, &valueType);
-        if (valueType != napi_number) {
+    napi_value nSampleRate = nullptr;
+    if (GetNapiObjectProperty(env, value, "sampleRate", nSampleRate)) {
+        if (!GetNapiDoubleValue(env, nSampleRate, gwpAsanParams.sampleRate)) {
             HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
             return false;
         }
-        napi_get_value_double(env, nSampleRate, &gwpAsanParams.sampleRate);
     }
 
     //maxSimutaneousAllocations?: number
-    napi_has_named_property(env, value, "maxSimutaneousAllocations", &hasProperty);
-    if (hasProperty) {
-        napi_value nMaxSimutaneousAllocations = nullptr;
-        napi_get_named_property(env, value, "maxSimutaneousAllocations", &nMaxSimutaneousAllocations);
-        napi_typeof(env, nMaxSimutaneousAllocations, &valueType);
-        if (valueType != napi_number) {
-            HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
+    napi_value nMaxSimutaneousAllocations = nullptr;
+    if (GetNapiObjectProperty(env, value, "maxSimutaneousAllocations", nMaxSimutaneousAllocations)) {
+        if (!GetNapiDoubleValue(env, nMaxSimutaneousAllocations, gwpAsanParams.maxSimutaneousAllocations)) {
+            HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
             return false;
         }
-        napi_get_value_double(env, nMaxSimutaneousAllocations, &gwpAsanParams.maxSimutaneousAllocations);
     }
     if (gwpAsanParams.sampleRate <= 0 || gwpAsanParams.maxSimutaneousAllocations <= 0) {
         HILOG_ERROR(LOG_CORE, "sampleRate or maxSimutaneousAllocations must be greater than 0");
@@ -1073,44 +874,28 @@ bool UpdateGwpAsanParams(napi_env env, napi_callback_info info, GwpAsanParams& g
     size_t argc = ENABLE_ARGS_TWO_PARAMS;
     napi_value argv[ENABLE_ARGS_TWO_PARAMS] = { nullptr };
     napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
-    bool paramsResult = false;
     switch (argc) {
-        case ENABLE_ARGS_NO_PARAMS: {
-            return true;
-        }
-        case ENABLE_ARGS_ONE_PARAMS: {
-            if (!ParseGwpAsanOptions(env, argv[ARRAY_INDEX_FIRST], gwpAsanParams)) {
-                paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
-                paramsResult = false;
-                break;
-            }
-            paramsResult = true;
-            break;
-        }
-        case ENABLE_ARGS_TWO_PARAMS: {
-            if (!ParseGwpAsanOptions(env, argv[ARRAY_INDEX_FIRST], gwpAsanParams)) {
-                paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
-                paramsResult = false;
-                break;
-            }
-            if (!CheckTypeForNapiValue(env, argv[ARRAY_INDEX_SECOND], napi_number) ||
-                napi_get_value_int32(env, argv[ARRAY_INDEX_SECOND], &gwpAsanParams.duration) != napi_ok ||
+        case ENABLE_ARGS_TWO_PARAMS:
+            if (!GetNapiInt32Value(env, argv[SECOND_POS],gwpAsanParams.duration ) ||
                 gwpAsanParams.duration <= 0) {
                 paramErrorMessage = "Invalid parameter, set duration must be a num.";
-                paramsResult = false;
-                break;
+                return false;
             }
-            paramsResult = true;
-            break;
-        }
+            [[fallthrough]];
+        case ENABLE_ARGS_ONE_PARAMS:
+            if (!ParseGwpAsanOptions(env, argv[FIRST_POS], gwpAsanParams)) {
+                paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
+                return false;
+            }
+            [[fallthrough]];
+        case ENABLE_ARGS_NO_PARAMS:
+            return true;
         default: {
             paramErrorMessage = "Invalid parameter, the number of parameters "
                 "cannot exceed two.";
-            paramsResult = false;
-            break;
+            return false;
         }
     }
-    return paramsResult;
 }
 
 napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
@@ -1147,7 +932,7 @@ napi_value GetGwpAsanGrayscaleState(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getGwpAsanGrayscaleState");
     auto result = GetGwpAsanGrayscaleState();
-    napi_value ret;
+    napi_value ret = nullptr;
     napi_create_uint32(env, result, &ret);
     return ret;
 }

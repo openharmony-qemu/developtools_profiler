@@ -14,34 +14,22 @@
  */
 
 #include <algorithm>
-#include <cerrno>
 #include <codecvt>
-#include <fstream>
 #include <string>
 #include <memory>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <ctime>
 #include <malloc.h>
 #include <parameters.h>
-#include <unistd.h>
 
 #include "ani_util.h"
 #include "application_context.h"
 #include "context.h"
-#include "cpu_collector.h"
 #include "directory_ex.h"
-#include "dump_usage.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
 #include "hilog/log.h"
 #include "iservice_registry.h"
-#include "memory_collector.h"
-#include "native_engine/native_engine.h"
 #include "refbase.h"
-#include "storage_acl.h"
 #include "system_ability_definition.h"
 
 using namespace OHOS;
@@ -137,15 +125,8 @@ static bool GetTraceParam(ani_env *env, ani_array_double tagsAni, std::vector<ui
 ani_object GetPss(ani_env *env)
 {
     ani_object pss = nullptr;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        int pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t pssInfo = collectResult.data.pss + collectResult.data.swapPss;
-        AniUtil::ToAniBigInt(env, pssInfo, pss);
-    } else {
-        AniUtil::ToAniBigInt(env, 0, pss);
-    }
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    AniUtil::ToAniBigInt(env, nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->pss) : 0, pss);
     return pss;
 }
 
@@ -153,15 +134,9 @@ ani_object GetSharedDirty(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSharedDirty");
     ani_object sharedDirty = nullptr;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        int pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t sharedDirtyInfo = collectResult.data.sharedDirty;
-        AniUtil::ToAniBigInt(env, sharedDirtyInfo, sharedDirty);
-    } else {
-        AniUtil::ToAniBigInt(env, 0, sharedDirty);
-    }
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    AniUtil::ToAniBigInt(env,
+        nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->sharedDirty) : 0, sharedDirty);
     return sharedDirty;
 }
 
@@ -169,26 +144,15 @@ ani_object GetPrivateDirty(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getPrivateDirty");
     ani_object privateDirtyValue = nullptr;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        pid_t pid = getprocpid();
-        auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t privateDirty = collectResult.data.privateDirty;
-        AniUtil::ToAniBigInt(env, privateDirty, privateDirtyValue);
-    } else {
-        AniUtil::ToAniBigInt(env, 0, privateDirtyValue);
-    }
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
+    AniUtil::ToAniBigInt(env, nativeMemInfoOption ? nativeMemInfoOption->privateDirty : 0, privateDirtyValue);
     return privateDirtyValue;
 }
 
 ani_double GetCpuUsage(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getCpuUsage");
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    pid_t pid = getprocpid();
-    double cpuUsage = dumpUsage->GetCpuUsage(pid);
-    ani_double cpuUsageValue = static_cast<ani_double>(cpuUsage);
-    return cpuUsageValue;
+    return static_cast<ani_double>(HidebugNativeInterface::GetInstance().GetCpuUsage());
 }
 
 ani_object GetNativeHeapSize(ani_env *env)
@@ -248,15 +212,8 @@ ani_object GetVss(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVss");
     ani_object vss = nullptr;
-    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
-    if (collector != nullptr) {
-        pid_t pid = getprocpid();
-        auto collectResult = collector->CollectProcessVss(pid);
-        uint64_t vssInfo = collectResult.data;
-        AniUtil::ToAniBigInt(env, vssInfo, vss);
-    } else {
-        AniUtil::ToAniBigInt(env, 0, vss);
-    }
+    auto vssInfoOption = HidebugNativeInterface::GetInstance().GetVss();
+    AniUtil::ToAniBigInt(env, vssInfoOption ? vssInfoOption.value() : 0, vss);
     return vss;
 }
 
@@ -269,8 +226,7 @@ static ani_double GetSystemCpuUsage(ani_env *env)
         AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return 0;
     }
-    ani_double retMsg = static_cast<ani_double>(cpuUsageOptional.value());
-    return retMsg;
+    return static_cast<ani_double>(cpuUsageOptional.value());
 }
 
 static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
@@ -296,7 +252,7 @@ static ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<
         return result;
     }
     ani_size idx = 0;
-    for (const auto[threadId, cpuUsage] : threadMap) {
+    for (const auto& [threadId, cpuUsage] : threadMap) {
         ani_object obj = ConvertThreadCpuUsageToEts(env, cls, threadId, cpuUsage);
         env->Array_Set_Ref(result, idx, static_cast<ani_ref>(obj));
         idx++;
@@ -314,10 +270,9 @@ ani_array GetAppThreadCpuUsage(ani_env *env)
 ani_object GetAppNativeMemInfo(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    HiDebug_NativeMemInfo nativeMemInfo{};
     auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
-    if (nativeMemInfoOption) {
-        nativeMemInfo = nativeMemInfoOption.value();
+    if (!nativeMemInfoOption) {
+        nativeMemInfoOption.emplace();
     }
 
     ani_class cls = nullptr;
@@ -328,23 +283,22 @@ ani_object GetAppNativeMemInfo(ani_env *env)
         env->Object_New(cls, ctorMethod, &memInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "pss", nativeMemInfo.pss);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "rss", nativeMemInfo.rss);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedDirty", nativeMemInfo.sharedDirty);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateDirty", nativeMemInfo.privateDirty);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedClean", nativeMemInfo.sharedClean);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateClean", nativeMemInfo.privateClean);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "vss", nativeMemInfo.vss);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "pss", nativeMemInfoOption->pss);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "rss", nativeMemInfoOption->rss);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedDirty", nativeMemInfoOption->sharedDirty);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateDirty", nativeMemInfoOption->privateDirty);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedClean", nativeMemInfoOption->sharedClean);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateClean", nativeMemInfoOption->privateClean);
+    AniUtil::SetNamedPropertyBigInt(env, memInfo, "vss", nativeMemInfoOption->vss);
     return memInfo;
 }
 
 ani_object GetSystemMemInfo(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
-    SysMemory systemMemInfo{};
-    auto systemMemInfoOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
-    if (systemMemInfoOption) {
-        systemMemInfo = systemMemInfoOption.value();
+    auto sysMemOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
+    if (!sysMemOption) {
+        sysMemOption.emplace();
     }
 
     ani_class cls = nullptr;
@@ -356,9 +310,9 @@ ani_object GetSystemMemInfo(ani_env *env)
         return AniUtil::CreateUndefined(env);
     }
 
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "totalMem", systemMemInfo.memTotal);
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "freeMem", systemMemInfo.memFree);
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "availableMem", systemMemInfo.memAvailable);
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "totalMem", static_cast<uint64_t>(sysMemOption->totalMem));
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "freeMem", static_cast<uint64_t>(sysMemOption->freeMem));
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "availableMem", static_cast<uint64_t>(sysMemOption->availableMem));
     return sysMemInfo;
 }
 
@@ -379,21 +333,21 @@ ani_string StartAppTraceCapture(ani_env *env,
     uint64_t tag = std::accumulate(tags.begin(), tags.end(), 0ull, [](uint64_t a, uint64_t b) { return a | b; });
     std::string file;
     auto ret = HidebugNativeInterface::GetInstance().StartAppTraceCapture(tag, traceFlag, limitSize, file);
-    if (ret == HIDEBUG_SUCCESS) {
+    if (ret == TRACE_SUCCESS) {
         env->String_NewUTF8(file.c_str(), file.size(), &result);
         return result;
     }
-    if (ret == HIDEBUG_INVALID_ARGUMENT) {
+    if (ret == TRACE_INVALID_ARGUMENT) {
         std::string errorMessage = "Invalid argument";
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::PARAMETER_ERROR);
     }
-    if (ret == HIDEBUG_TRACE_CAPTURED_ALREADY) {
+    if (ret == TRACE_CAPTURED_ALREADY) {
         std::string errorMessage = "Capture trace already enabled.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::HAVA_ALREADY_TRACE);
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::HAVA_ALREADY_TRACE);
     }
-    if (ret == HIDEBUG_NO_PERMISSION) {
+    if (ret == TRACE_NO_PERMISSION) {
         std::string errorMessage = "No write permission on the file.";
         apiInvokeRecorder.SetErrorCode(ErrorCode::WITHOUT_WRITE_PERMISSON);
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::WITHOUT_WRITE_PERMISSON);
@@ -408,13 +362,13 @@ void StopAppTraceCapture(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
     auto ret = HidebugNativeInterface::GetInstance().StopAppTraceCapture();
-    if (ret == HIDEBUG_TRACE_ABNORMAL) {
+    if (ret == TRACE_ABNORMAL) {
         std::string errorMessage = "The status of the trace is abnormal";
         apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::SYSTEM_STATUS_ABNORMAL);
         return;
     }
-    if (ret == HIDEBUG_NO_TRACE_RUNNING) {
+    if (ret == NO_TRACE_RUNNING) {
         std::string errorMessage = "No capture trace running";
         apiInvokeRecorder.SetErrorCode(ErrorCode::NO_CAPTURE_TRACE_RUNNING);
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::NO_CAPTURE_TRACE_RUNNING);

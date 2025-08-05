@@ -26,7 +26,10 @@
 #include <unistd.h>
 
 #include "application_context.h"
+#include "directory_ex.h"
+#include "file_ex.h"
 #include "parameters.h"
+#include "storage_acl.h"
 
 #include "hilog/log.h"
 
@@ -211,6 +214,27 @@ bool IsDebuggableHap()
 bool IsDeveloperOptionsEnabled()
 {
     return OHOS::system::GetBoolParameter("const.security.developermode.state", false);
+}
+
+bool CheckVersionType(const std::string& type, const std::string& key)
+{
+    auto versionType = OHOS::system::GetParameter(key, "unknown");
+    return (versionType.find(type) != std::string::npos);
+}
+
+bool CreateResourceLimitDir()
+{
+    constexpr mode_t defaultLogDirMode = 0770;
+    const std::string resourceLimitDir = "/data/storage/el2/log/resourcelimit/";
+    if (!OHOS::FileExists(resourceLimitDir)) {
+        OHOS::ForceCreateDirectory(resourceLimitDir);
+        OHOS::ChangeModeDirectory(resourceLimitDir, defaultLogDirMode);
+    }
+    if (OHOS::StorageDaemon::AclSetAccess(resourceLimitDir, "g:1201:rwx") != 0) {
+        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
+        return false;
+    }
+    return true;
 }
 }
 }
