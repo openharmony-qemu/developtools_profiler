@@ -194,10 +194,8 @@ export class TIndexInfo {
   public voltageNow: String;
   //ram
   public pss: String;
-  //HWCPipeGPU
   public cacheMisses: String;
   public instructions: String;
-  //HWCPipeGPU
   public gpuCycles: String;
   public vertexComputeCycles: String;
   public fragmentCycles: String;

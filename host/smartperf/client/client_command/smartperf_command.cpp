@@ -41,6 +41,7 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string>& argv)
     taskMgr_.AddTask(argv);
     LOGD("SmartPerfCommand::SmartPerfCommand size(%u)", argv.size());
     if (argv.size() == oneParam) {
+        SPUtils::KillStartDaemon();
         SpThreadSocket::GetInstance().SetNeedUdpToken(false);
         DeviceServer(true);
     }

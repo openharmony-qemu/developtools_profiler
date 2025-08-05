@@ -17,6 +17,7 @@
 #define CPU_INFO_H
 
 #include "sp_profiler.h"
+#include "sp_utils.h"
 #include <string>
 #include <vector>
 #include <thread>
@@ -38,10 +39,12 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
+    void CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count);
 private:
     std::vector<std::string> pids_;
     std::thread th_;
-    std::string hiperfCmd_;
+    std::string hiperfCmd_ = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
+    SPUtils::GetProductName() + "-cpu-cycles -d 1 -i 500 ";
     std::atomic_bool running_ {false};
     std::condition_variable cond_;
     std::mutex mtx_;

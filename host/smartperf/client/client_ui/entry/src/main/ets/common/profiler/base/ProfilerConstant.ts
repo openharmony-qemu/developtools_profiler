@@ -44,7 +44,7 @@ export enum CollectorType {
   TYPE_GPU = 'GPU',
   TYPE_DDR = 'DDR',
   TYPE_FPS = 'FPS',
-  TYPE_HW_COUNTER = 'HW_COUNTER',
+  TYPE_COUNTER = 'COUNTER',
   TYPE_POWER = 'POWER',
   TYPE_TEMPERATURE = 'TEMP',
   TYPE_RAM = 'RAM',

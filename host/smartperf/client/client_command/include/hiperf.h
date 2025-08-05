@@ -21,6 +21,7 @@
 #include "vector"
 #include <map>
 #include "sp_profiler.h"
+#include "sp_utils.h"
 namespace OHOS {
 namespace SmartPerf {
 class Hiperf : public SpProfiler {
@@ -50,7 +51,9 @@ private:
     std::string processId_;
     std::mutex hiperfLock_;
     std::map<std::string, std::string> hiperfData_ = {};
-    std::vector<std::string> collectNodes_ = {std::string("hw-cpu-cycles"), std::string("hw-instructions")};
+    const std::string cpuCycles = SPUtils::GetProductName() + "-cpu-cycles";
+    const std::string inStructions = SPUtils::GetProductName() + "-instructions";
+    std::vector<std::string> collectNodes_ = {cpuCycles, inStructions};
     bool hiperfFirstCollect_ = true;
 };
 }

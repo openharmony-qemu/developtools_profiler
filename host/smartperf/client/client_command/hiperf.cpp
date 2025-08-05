@@ -17,7 +17,6 @@
 #include <iostream>
 #include <cctype>
 #include "include/hiperf.h"
-#include "include/sp_utils.h"
 #include "include/sp_log.h"
 #include "include/sp_thread_socket.h"
 namespace OHOS {
