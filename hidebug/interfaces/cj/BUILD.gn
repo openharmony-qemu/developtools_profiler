@@ -40,6 +40,7 @@ ohos_shared_library("cj_hidebug_ffi") {
     "napi:cj_bind_ffi",
     "napi:cj_bind_native",
     "samgr:samgr_proxy",
+    "storage_service:storage_manager_acl",
   ]
 
   innerapi_tags = [ "platformsdk" ]

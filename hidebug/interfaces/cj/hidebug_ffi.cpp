@@ -31,6 +31,7 @@
 #include "dump_usage.h"
 #include "file_ex.h"
 #include "directory_ex.h"
+#include "storage_acl.h"
 #include "hidebug_native_interface.h"
 #include "memory_collector.h"
 #include "hilog/log.h"
@@ -63,6 +64,21 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 {
     auto versionType = OHOS::system::GetParameter(key, "unknown");
     return (versionType.find(type) != std::string::npos);
+}
+
+static bool CreateSanBoxDir()
+{
+    constexpr mode_t defaultLogDirMode = 0x0770;
+    const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
+    if (!OHOS::FileExists(reourceLimitDir)) {
+        OHOS::ForceCreateDirectory(reourceLimitDir);
+        OHOS::ChangeModeDirectory(reourceLimitDir, defaultLogDirMode);
+    }
+    if (OHOS::StorageDaemon::AclSetAccess(reourceLimitDir, "g:1201:rwx") != 0) {
+        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
+        return false;
+    }
+    return true;
 }
 
 extern "C" {
@@ -289,6 +305,7 @@ extern "C" {
         if (result == MemoryState::MEMORY_FAILED) {
             return 0;
         }
+        CreateSanBoxDir();
         return 0;
     }
 

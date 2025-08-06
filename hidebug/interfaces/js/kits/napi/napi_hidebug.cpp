@@ -45,6 +45,7 @@
 #include "napi/native_node_api.h"
 #include "native_engine/native_engine.h"
 #include "refbase.h"
+#include "storage_acl.h"
 #include "system_ability_definition.h"
 #include "napi_hidebug_gc.h"
 #include "napi_util.h"
@@ -878,6 +879,21 @@ static bool GetAppResourceLimitParam(napi_env env, napi_callback_info info, std:
     return true;
 }
 
+static bool CreateSanBoxDir()
+{
+    constexpr mode_t defaultLogDirMode = 0770;
+    const std::string reourceLimitDir = "/data/storage/el2/log/resourcelimit/";
+    if (!OHOS::FileExists(reourceLimitDir)) {
+        OHOS::ForceCreateDirectory(reourceLimitDir);
+        OHOS::ChangeModeDirectory(reourceLimitDir, defaultLogDirMode);
+    }
+    if (OHOS::StorageDaemon::AclSetAccess(reourceLimitDir, "g:1201:rwx") != 0) {
+        HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
+        return false;
+    }
+    return true;
+}
+
 static bool CheckVersionType(const std::string& type, const std::string& key)
 {
     auto versionType = OHOS::system::GetParameter(key, "unknown");
@@ -887,6 +903,7 @@ static bool CheckVersionType(const std::string& type, const std::string& key)
 napi_value SetAppResourceLimit(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("setAppResourceLimit");
+    CreateSanBoxDir();
     if (!IsBetaVersion() && !CheckVersionType("enable", KEY_HIVIEW_DEVELOP_TYPE)) {
         HILOG_ERROR(LOG_CORE, "SetAppResourceLimit failed. Not developer options or beta versions");
         apiInvokeRecorder.SetErrorCode(ErrorCode::VERSION_ERROR);

@@ -49,6 +49,7 @@ ohos_shared_library("hidebug") {
     "ipc:ipc_core",
     "napi:ace_napi",
     "samgr:samgr_proxy",
+    "storage_service:storage_manager_acl",
   ]
 
   relative_install_dir = "module"
