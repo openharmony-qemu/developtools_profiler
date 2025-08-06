@@ -540,7 +540,6 @@ bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offse
 {
     if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) >= fileLength_) {
         if ((fileLength_ + DEFULT_PAGES * pageSize_) > GB_TO_BYTE) {
-            PROFILER_LOG_INFO(LOG_CORE, "The file is too large :file length file(%zu)", fileLength_);
             return false;
         }
         
