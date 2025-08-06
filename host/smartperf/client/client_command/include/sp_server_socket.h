@@ -39,6 +39,7 @@ public:
     // 关闭
     void Close();
     std::string RecvBuf() const;
+    bool IsValid();
 
 private:
     int sock = -1;

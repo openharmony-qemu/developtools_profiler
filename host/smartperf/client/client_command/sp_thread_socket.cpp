@@ -465,7 +465,11 @@ void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket
         taskMgr_->WriteToCSV();
     }
     taskMgr_ = std::make_shared<TaskManager>(true);
-    auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
+    auto lambdaTask = [spSocket = std::ref(spSocket)](const std::string &data) mutable {
+        if (spSocket.get().IsValid()) {
+            spSocket.get().Sendto(data);
+        }
+    };
     taskMgr_->SetIPCCallback(lambdaTask);
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
