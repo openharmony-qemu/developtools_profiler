@@ -88,10 +88,8 @@ std::map<std::string, std::string> RAM::ItemData()
         } else {
             procRamInfomation = ProcMemNaInfo();
         }
-        result = {};
         result.merge(procRamInfomation);
     } else if (!packageName.empty() && processId.empty()) {
-        result = {};
         result.merge(RAM::ProcMemNaInfo());
     }
     LOGI("RAM:ItemData map size(%u)", result.size());
