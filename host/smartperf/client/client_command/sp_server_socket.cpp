@@ -144,7 +144,7 @@ bool SpServerSocket::IsValid()
     }
     int error = 0;
     socklen_t len = sizeof(error);
-    if (getsocket(sock, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
+    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
         return false;
     }
     return (error == 0);
