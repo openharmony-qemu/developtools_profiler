@@ -26,10 +26,12 @@ NUM_ARGS=$#
 LAST_ARG_INDEX=$(($NUM_ARGS))
 # 获取最后一个参数
 INDEP_COMPLIER=${!LAST_ARG_INDEX}
-if [[ "$INDEP_COMPLIER" == true ]]; then
-  PROTOC=$PROJECT_TOP/binarys/third_party/protobuf/innerapis/protoc/clang_x64/libs/protoc
-else
-  PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
+
+PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
+if ![ -e $PROTOC ] ; then
+  if [[ "$INDEP_COMPLIER" == true ]]; then
+    PROTOC=$PROJECT_TOP/binarys/third_party/protobuf/innerapis/protoc/clang_x64/libs/protoc
+  fi
 fi
 
 OPT_PLUGIN_PATH=$PROJECT_TOP/$2/developtools/hiprofiler/protoencoder_plugin
