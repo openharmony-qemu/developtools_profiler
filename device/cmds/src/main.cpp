@@ -404,14 +404,6 @@ bool StartDependentProcess()
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "1");
     std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
-
-    std::string content = "";
-    GetCapabilities(content, true);
-    if (content == "") {
-        printf("Please confirm whether the plugin exists\n");
-        return false;
-    }
-
     return true;
 }
 
