@@ -172,6 +172,7 @@ private:
     uint32_t largestSize_ = 0;
     uint32_t secondLargestSize_ = 0;
     uint32_t maxGrowthSize_ = 0;
+    int32_t maxProcessCount_ = 4;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
 };
 }

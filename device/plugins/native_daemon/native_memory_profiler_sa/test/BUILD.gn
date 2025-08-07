@@ -129,6 +129,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "access_token:libaccesstoken_sdk",
     "access_token:libtokensetproc_shared",
     "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
     "c_utils:utils",
     "faultloggerd:libdfx_dumpcatcher",
     "googletest:gtest",

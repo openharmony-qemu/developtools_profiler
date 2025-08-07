@@ -74,6 +74,8 @@ private:
 
 private:
     std::mutex nmdMtx_;
+    int32_t taskNum_{0};
+    int32_t taskMaxNum_ = 4;
     std::string startupModeProcessName_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
