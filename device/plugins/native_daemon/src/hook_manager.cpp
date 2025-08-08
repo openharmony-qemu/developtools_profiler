@@ -42,10 +42,10 @@ constexpr uint32_t PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
+const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
-constexpr int32_t MAX_PID_COUNT = 4;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
@@ -107,8 +107,10 @@ bool HookManager::CheckProcess()
             return false;
         }
     } else {
-        if (hookCtx_.size() > static_cast<size_t>(MAX_PID_COUNT)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, MAX_PID_COUNT);
+        auto maxPidCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
+        maxProcessCount_ = maxPidCount > 0 ? maxPidCount : maxProcessCount_;
+        if (hookCtx_.size() > static_cast<size_t>(maxProcessCount_)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: The maximum allowed is to set %d PIDs.", __func__, maxProcessCount_);
             return false;
         }
     }

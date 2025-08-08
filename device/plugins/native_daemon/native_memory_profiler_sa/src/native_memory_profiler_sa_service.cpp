@@ -30,9 +30,9 @@
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr int32_t TIME_BASE = 1000;
-constexpr int32_t MAX_TASK_NUM = 4;
 const std::string FILE_PATH_HEAD = "/data/local/tmp/native_memory_";
 const std::string FILE_PATH_TAIL = ".htrace";
+const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int32_t DELAYED_SHUTDOWN_TIME = 20;
 constexpr int FILE_MODE = 0644;
 constexpr int32_t SIMP_NMD = 3;
@@ -427,7 +427,9 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
 
 bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
-    if (g_taskNum + 1 > MAX_TASK_NUM) {
+    auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
+    taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
+    if (taskNum_ + 1 > taskMaxNum_) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
         return false;
     }
