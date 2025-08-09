@@ -110,7 +110,7 @@ private:
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
 
-    ~SpTreadSocket()
+    ~SpThreadSocket()
     {
         if (udpStartCollect.joinable()) {
             udpStartCollect.join();

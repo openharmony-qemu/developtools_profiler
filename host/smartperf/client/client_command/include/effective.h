@@ -20,7 +20,6 @@
 #include <string>
 #include <thread>
 #include <climits>
-
 namespace OHOS {
 namespace SmartPerf {
 class Effective : public SpProfiler {

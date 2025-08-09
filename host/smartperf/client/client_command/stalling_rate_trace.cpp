@@ -100,7 +100,7 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
-        LOGD("no app list Dynamic"); //没有APP list 泳道
+        LOGD("no app list Dynamic"); //没有APP list泳道
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
@@ -120,7 +120,7 @@ void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
         if (swiperFrameLossRate > 0) {
-            LOGD("no app list hitchTime"); //没有APP list卡顿次数
+            LOGD("no app list hitchTime"); //没有app list卡顿次数
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
             frameLossRate = tabsFrameLossRate;

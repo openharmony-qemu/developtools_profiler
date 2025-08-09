@@ -94,7 +94,7 @@ void ByTrace::RemoveTraceFiles() const
 
 void ByTrace::CpTraceFile() const
 {
-    if (!std::filesystem::exists(traceCpPath_)) {e
+    if (!std::filesystem::exists(traceCpPath_)) {
         SPUtils::CreateDir(traceCpPath_);
     }
     if (!std::filesystem::is_directory(traceCpPath_)) {

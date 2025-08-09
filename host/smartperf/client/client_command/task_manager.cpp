@@ -289,6 +289,7 @@ void TaskManager::Start(bool record)
         MainLoop();
     });
 }
+
 void TaskManager::MainLoop()
 {
     while (running_) {
