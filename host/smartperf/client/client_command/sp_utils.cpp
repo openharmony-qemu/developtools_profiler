@@ -853,10 +853,11 @@ int& SPUtils::GetTtyDeviceFd()
 
 void SPUtils::GetTestsaPlugin(int command)
 {
-#ifdef ARKTEST_ENABLE
+    #ifdef ARKTEST_ENABLE
+    //Call the function
     std::string stopJsonString = "{\"command\": \"stopCollect\"}";
     OHOS::testserver::TestServerClient::GetInstance().SpDaemonProcess(command, stopJsonString);
-#endif
+    #endif
 }
 
 void SPUtils::KillStartDaemon()

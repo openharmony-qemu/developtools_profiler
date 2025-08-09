@@ -72,5 +72,56 @@ HWTEST_F(SPdaemonFpsTest, GetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
     EXPECT_TRUE(ret);
 }
 
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest01, TestSize.Level0)
+{
+    FPS &fps = FPS::GetInstance();
+    FpsInfo fpsInfoResult;
+    fpsInfoResult.fps = 124;
+    fpsInfoResult.jitters = {10, 20, 30};
+    std::map<std::string, std::string> result;
+
+    auto actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
+
+    EXPECT_EQ(fpsInfoResult.fps, 124);
+    EXPECT_EQ(actualResult["fps"], "124");
+    EXPECT_EQ(actualResult["fpsJitters"], "10;;20;;30");
+}
+
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest02, TestSize.Level0)
+{
+    FPS &fps = FPS::GetInstance();
+    FpsInfo fpsInfoResult;
+    fpsInfoResult.jitters = {100, 200, 300};
+    std::map<std::string, std::string> result;
+
+    std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
+
+    EXPECT_EQ(actualResult["fpsJitters"], "100;;200;;300");
+}
+
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest03, TestSize.Level0)
+{
+    FPS &fps = FPS::GetInstance();
+    FpsInfo fpsInfoResult;
+    std::map<std::string, std::string> result;
+
+    std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
+
+    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end());
+}
+
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest04, TestSize.Level0)
+{
+    FPS &fps = FPS::GetInstance();
+    FpsInfo fpsInfoResult;
+    fpsInfoResult.fps = 120;
+    fpsInfoResult.jitters = {100, 200, 300};
+    std::map<std::string, std::string> result;
+
+    std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
+
+    EXPECT_NE(actualResult.find("fps"), actualResult.end());
+    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end());
+}
 }
 }

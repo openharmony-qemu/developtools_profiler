@@ -27,34 +27,31 @@ public:
         return instance;
     }
     std::map<std::string, std::string> ItemData() override;
-    // trace配置
-    void SetTraceConfig(long long mThreshold, int mLowfps) const;
     // 校验fps-jitters
-    void CheckFpsJitters(long long& jitters, int cfps) const;
-    // 触发trace
-    void SetByTrace() const;
+    void CheckFpsJitters(long long& jitters, int cfps);
+    void SetByTrace();
     void ClearTraceFiles() const;
     void RemoveTraceFiles() const;
     void CpTraceFile() const;
+    long long GetThreshold() const;
+    int GetLowFps() const;
+    void SendSurfaceCaton(long long& jitters, int cfps);
     static inline std::string jittersAndLowFps = "";
     static inline std::string hiviewTrace = "";
 public:
-    // 抓trace触发条件:默认 某一帧的某个jitter>100 ms触发
-    mutable long long threshold = 100;
-    mutable long long lastEnableTime = 0;
-    // 低帧触发
-    mutable int lowfps = -1;
-    // 前2秒采的不准
-    mutable int times = 0;
-    mutable std::string traceCpPath_ {"/data/local/tmp/hitrace"};
-    mutable long long comperTime = 1000;
-    mutable long long nowTime = 0;
+    long long lastEnableTime = 0;
+    std::string traceCpPath_ {"/data/local/tmp/hitrace"};
+    long long nowTime = 0;
+    int times = 0;
 private:
     ByTrace() {};
     ByTrace(const ByTrace &);
     ByTrace &operator = (const ByTrace &);
 
-    mutable std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
+    const std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
+
+    long long jitterTimesTaken = 0;
+    int lowFps = -1;
 };
 }
 }

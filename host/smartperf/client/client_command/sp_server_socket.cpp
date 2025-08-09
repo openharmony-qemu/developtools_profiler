@@ -136,18 +136,5 @@ std::string SpServerSocket::RecvBuf() const
     return recvBuf;
 }
 
-bool SpServerSocket::IsValid()
-{
-    if (sock < 0) {
-        LOGE("SpServerSocket::Init Socket Create Failed");
-        return false;
-    }
-    int error = 0;
-    socklen_t len = sizeof(error);
-    if (getsockopt(sock, SOL_SOCKET, SO_ERROR, &error, &len) < 0) {
-        return false;
-    }
-    return (error == 0);
-}
 }
 }

@@ -25,7 +25,8 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace OHOS::SmartPerf {
+namespace OHOS {
+namespace SmartPerf {
 class CPUInfo : public SpProfiler {
 public:
     static CPUInfo &GetInstance()
@@ -39,8 +40,8 @@ public:
     void SetPids(const std::string& pids);
     void Start();
     void Stop();
-    void CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count);
 private:
+    void CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count);
     std::vector<std::string> pids_;
     std::thread th_;
     std::string hiperfCmd_ = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
@@ -51,5 +52,5 @@ private:
     std::string buffer_;
 };
 }
-
+}
 #endif // CPU_INFO_H

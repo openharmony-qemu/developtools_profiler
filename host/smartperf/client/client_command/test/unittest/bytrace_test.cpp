@@ -36,48 +36,50 @@ public:
     void TearDown() {}
 };
 
-HWTEST_F(ByTraceTest, SetTraceConfigTest, TestSize.Level1)
-{
-    ByTrace &byTrace = ByTrace::GetInstance();
-    long long threshold = 200;
-    int lowfps = 10;
-    byTrace.SetTraceConfig(threshold, lowfps);
-    EXPECT_EQ(byTrace.threshold, threshold);
-    EXPECT_EQ(byTrace.lowfps, lowfps);
-}
-
 HWTEST_F(ByTraceTest, SetByTraceTest01, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
     byTrace.jittersAndLowFps = "";
     byTrace.SetByTrace();
-    EXPECT_EQ(byTrace.threshold, 0);
-    EXPECT_EQ(byTrace.lowfps, 0);
+    long long jitterTimes = byTrace.GetThreshold();
+    int lowFps = byTrace.GetLowFps();
+    EXPECT_EQ(jitterTimes, 0);
+    EXPECT_EQ(lowFps, -1);
 }
 
 HWTEST_F(ByTraceTest, SetByTraceTest02, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
-    byTrace.jittersAndLowFps = "fpsJitterTime=100||lowFps=10";
+    byTrace.jittersAndLowFps = "fpsJitterTime=100||lowFps=20";
     byTrace.SetByTrace();
-    EXPECT_EQ(byTrace.threshold, 100);
-    EXPECT_EQ(byTrace.lowfps, 10);
+    long long jitterTimes = byTrace.GetThreshold();
+    int lowFps = byTrace.GetLowFps();
+    EXPECT_EQ(jitterTimes, 100);
+    EXPECT_EQ(lowFps, 20);
+}
+
+HWTEST_F(ByTraceTest, SetByTraceTest03, TestSize.Level1)
+{
+    ByTrace &byTrace = ByTrace::GetInstance();
+    byTrace.jittersAndLowFps = "fpsJitterTime=100";
+    byTrace.SetByTrace();
+    EXPECT_EQ(byTrace.GetThreshold(), 100);
+    EXPECT_EQ(byTrace.GetLowFps(), 20);
 }
 
 HWTEST_F(ByTraceTest, ClearTraceFilesTest, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
     byTrace.traceCpPath_ = "/data/local/tmp/hitrace";
-    std::filesystem::remove_all(byTrace.traceCpPath_);
     byTrace.ClearTraceFiles();
-    EXPECT_TRUE(std::filesystem::exists(byTrace.traceCpPath_));
+    EXPECT_FALSE(std::filesystem::exists(byTrace.traceCpPath_));
 }
 
 HWTEST_F(ByTraceTest, RemoveTraceFiles01, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
     byTrace.traceCpPath_ = "/data/local/tmp/hitrace";
-    std::filesystem::directory_iterator(traceCpPath_);
+    std::filesystem::create_directory(byTrace.traceCpPath_);
     std::ofstream file(byTrace.traceCpPath_ + "/test_file.txt");
     file << "test content";
     file.close();
@@ -89,18 +91,31 @@ HWTEST_F(ByTraceTest, RemoveTraceFiles02, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
     byTrace.traceCpPath_ = "/data/local/tmp/hitrace";
+    std::filesystem::remove_all(byTrace.traceCpPath_);
     byTrace.RemoveTraceFiles();
-    EXPECT_TRUE(std::filesystem::exists(byTrace.traceCpPath_));
+    EXPECT_FALSE(std::filesystem::exists(byTrace.traceCpPath_));
 }
 
-HWTEST_F(ByTraceTest, CheckFpsJittersTest, TestSize.Level1)
+HWTEST_F(ByTraceTest, CheckFpsJittersTest01, TestSize.Level1)
 {
     ByTrace &byTrace = ByTrace::GetInstance();
-    long long jitters = 101;
-    int cfps = 10;
-    byTrace.SetTraceConfig(100, 20);
+    long long jitters = 0;
+    int cfps = 60;
+    byTrace.times = 3;
     byTrace.lastEnableTime = 1000;
-    byTrace.nowTime = 500;
+    byTrace.nowTime = 2000;
+    byTrace.CheckFpsJitters(jitters, cfps);
+    EXPECT_EQ(byTrace.lastEnableTime, 0);
+}
+
+HWTEST_F(ByTraceTest, CheckFpsJittersTest02, TestSize.Level1)
+{
+    ByTrace &byTrace = ByTrace::GetInstance();
+    long long jitters = 0;
+    int cfps = 60;
+    byTrace.times = 1;
+    byTrace.lastEnableTime = 1000;
+    byTrace.nowTime = 1001;
     byTrace.CheckFpsJitters(jitters, cfps);
     EXPECT_EQ(byTrace.lastEnableTime, 1000);
 }

@@ -41,7 +41,7 @@ public:
         std::string cmdResult;
         SPUtils::LoadCmd(CMD_COMMAND_MAP.at(CmdCommand::USER_PERMISSIONS), cmdResult);
         outFile.open(path.c_str(), std::ios::out | std::ios::trunc);
-        if (SPUtils::GetPathPermissions(path) && outFile.is_open() && path == "/data/local/tmp/data.csv" && 
+        if (SPUtils::GetPathPermissions(path) && outFile.is_open() && path == "/data/local/tmp/data.csv" &&
             (cmdResult == "root" || cmdResult == "shell"))  {
             std::string cmd = "chmod 777 " + path;
             SPUtils::LoadCmd(cmd, cmdResult);
@@ -134,6 +134,7 @@ public:
         std::string partitionName = "/data";
         std::string dirName = "/data/local/tmp";
         struct statfs partitionStat;
+        
         if (statfs(partitionName.c_str(), &partitionStat) != 0) {
             LOGE("Get remain partition size failed, partitionName = %{public}s", partitionName.c_str());
             return;

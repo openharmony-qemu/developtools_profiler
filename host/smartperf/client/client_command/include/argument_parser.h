@@ -115,7 +115,6 @@ private:
         {"-lockfreq", {ArgumentParser::ArgType::BOOL}},
         {"-nav", {ArgumentParser::ArgType::BOOL}},
         {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
-        {"-aischedule", {ArgumentParser::ArgType::BOOL, "get AI schedule status"}},
 
         // UDP
         {"-CPU", {ArgumentParser::ArgType::BOOL}},
@@ -130,7 +129,7 @@ private:
         {"-DDR", {ArgumentParser::ArgType::BOOL}},
         {"-NET", {ArgumentParser::ArgType::BOOL}},
         {"-HCI", {ArgumentParser::ArgType::BOOL}},
-        {"-trace", {ArgumentParser::ArgType::BOOL}},
+        {"-TRACE", {ArgumentParser::ArgType::BOOL}},
     };
     std::unordered_map<std::string, ArgValue> values_;
     std::vector<std::string> errors_;

@@ -59,6 +59,9 @@ namespace OHOS {
             OHOS::system::SetParameter("debug.smartperf.sdkdataenable", "1");
             collectRunring = true;
             WLOGI("Starting sdkdata collection in new thread");
+            if (th_.joinable()) {
+                th_.join();
+            }
             th_ = std::thread([this]() { ServerThread(); });
         }
 

@@ -14,7 +14,6 @@
  */
 #ifndef DUBAI_H
 #define DUBAI_H
-#include <string>
 namespace OHOS {
 namespace SmartPerf {
 class Dubai {
@@ -26,7 +25,7 @@ public:
     }
     // dubai db转移smartperf 沙箱
     static void MoveDubaiDb();
-    // testsa自拉起SP db文件转移到local
+    // testsa自拉起SP dubai db转移到local
     static void MoveDubaiDb(const std::string &path);
     // dubai -b
     static void DumpDubaiBegin();

@@ -23,7 +23,7 @@
 #include "include/common.h"
 
 namespace {
-constexpr long long RM_10000 = 10000;
+constexpr long long TIME_DIFF_THRESHOLD = 10000;
 }
 namespace OHOS {
 namespace SmartPerf {
@@ -32,39 +32,51 @@ std::map<std::string, std::string> ByTrace::ItemData()
     return std::map<std::string, std::string>();
 }
 
-void ByTrace::SetTraceConfig(long long mThreshold, int mLowfps) const
+long long ByTrace::GetThreshold() const
 {
-    threshold = mThreshold;
-    lowfps = mLowfps;
-    LOGD("ByTrace::SetTraceConfig threshold(%lld), lowfps(%d)", threshold, lowfps);
+    long long jitters = jitterTimesTaken;
+    return jitters;
 }
 
-void ByTrace::SetByTrace() const
+int ByTrace::GetLowFps() const
+{
+    int lowfps = lowFps;
+    return lowfps;
+}
+
+void ByTrace::SetByTrace()
 {
     std::vector<std::string> values;
     std::string delimiter = "||";
     std::string delim = "=";
+    size_t boundSize = 2;
     SPUtils::StrSplit(jittersAndLowFps, delimiter, values);
-    long long mThreshold = 0;
-    int lowFps = 0;
+    bool jitterTimesTakenSet = false;
+    bool lowFpsSet = false;
     for (std::string& vItem : values) {
         std::vector<std::string> vItems;
         SPUtils::StrSplit(vItem, delim, vItems);
-        if (vItems[0] == "fpsJitterTime") {
-            mThreshold = SPUtilesTye::StringToSometype<int>(vItems[1]);
-        }
-        if (vItems[0] == "lowFps") {
-            lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
+        if (vItems.size() >= boundSize) {
+            if (vItems[0] == "fpsJitterTime") {
+                jitterTimesTaken = SPUtilesTye::StringToSometype<int>(vItems[1]);
+                jitterTimesTakenSet = true;
+            }
+            if (vItems[0] == "lowFps") {
+                lowFps = SPUtilesTye::StringToSometype<int>(vItems[1]);
+                lowFpsSet = true;
+            }
         }
     }
-    SetTraceConfig(mThreshold, lowFps);
+    if (!jitterTimesTakenSet || !lowFpsSet) {
+        LOGE("ByTrace::Missing required parameters in jittersAndLowFps");
+        return;
+    }
+    LOGD("ByTrace::SetByTrace jitterTimesTaken(%lld), lowFps(%d)", jitterTimesTaken, lowFps);
 }
 
 void ByTrace::ClearTraceFiles() const
 {
-    if (!std::filesystem::exists(traceCpPath_)) {
-        SPUtils::CreateDir(traceCpPath_);
-    } else {
+    if (std::filesystem::exists(traceCpPath_)) {
         RemoveTraceFiles();
     }
 }
@@ -82,34 +94,54 @@ void ByTrace::RemoveTraceFiles() const
 
 void ByTrace::CpTraceFile() const
 {
+    if (!std::filesystem::exists(traceCpPath_)) {
+        SPUtils::CreateDir(traceCpPath_);
+    }
+    if (!std::filesystem::is_directory(traceCpPath_)) {
+        LOGE("Destination path is not a directory.");
+        return;
+    }
     std::string result;
     std::string cpResult;
+    constexpr const char* cpCommand = "cp -r ";
+    constexpr const char* chmodCommand = "chmod 777 ";
     const std::string cpHiviewTracePath = hiviewTracePath_ + hiviewTrace;
-    const std::string cpTrace = "cp -r " + cpHiviewTracePath + " " + traceCpPath_;
-    SPUtils::LoadCmd(cpTrace, result);
-    if (!result.empty()) {
-        const std::string tracePathChmod = "chmod 777 " + traceCpPath_;
-        SPUtils::LoadCmd(tracePathChmod, cpResult);
+    const std::string cpTrace = cpCommand + cpHiviewTracePath + " " + traceCpPath_;
+    if (!SPUtils::LoadCmd(cpTrace, result)) {
+        LOGE("Copy failed.");
+        return;
     }
+    std::string tracePathChmod = chmodCommand + traceCpPath_;
+    if (!SPUtils::LoadCmd(tracePathChmod, result)) {
+        LOGE("Chmod failed.");
+        return;
+    }
+    LOGD("ByTrace::CpTraceFile result = (%s)", result.c_str());
 }
 
-void ByTrace::CheckFpsJitters(long long& jitters, int cfps) const
+void ByTrace::CheckFpsJitters(long long& jitters, int cfps)
 {
     times++;
-    int two = 2;
+    const int two = 2;
     if (times > two) {
         nowTime = SPUtils::GetCurTime();
         if (lastEnableTime > 0) {
             long long diff =
-                lastEnableTime > nowTime ? (LLONG_MAX - lastEnableTime + nowTime) : (nowTime - lastEnableTime);
-            LOGD("ByTrace::Time difference: %lld ms", diff);
-            if (diff > RM_10000) {
-            LOGW("ByTrace::Time difference exceeded threshold, resetting start capture time.");
-            lastEnableTime = 0;
+                (nowTime >= lastEnableTime) ? (nowTime - lastEnableTime) : (LLONG_MAX - lastEnableTime + nowTime + 1);
+            LOGD("ByTrace::Time difference: %llu ms", diff);
+            if (diff > TIME_DIFF_THRESHOLD) {
+                LOGW("ByTrace::Time difference exceeded threshold, resetting start capture time.");
+                lastEnableTime = 0;
+            }
         }
-        }
+        SendSurfaceCaton(jitters, cfps);
     }
-    if (cfps < lowfps || jitters > threshold) {
+}
+
+void ByTrace::SendSurfaceCaton(long long& jitters, int cfps)
+{
+    if (cfps < lowFps || jitters > jitterTimesTaken) {
+        LOGD("ByTrace::SendSurfaceCaton jitters(%lld), cfps(%d)", jitters, cfps);
         if (lastEnableTime == 0) {
             lastEnableTime = nowTime;
             ipcCallback_("surfaceCaton");
