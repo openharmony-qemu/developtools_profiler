@@ -21,7 +21,8 @@
 #include <thread>
 #include <climits>
 
-namespace OHOS::SmartPerf {
+namespace OHOS{
+namespace SmartPerf {
 class Effective : public SpProfiler {
 public:
     static Effective &GetInstance()
@@ -108,5 +109,5 @@ private:
     std::string conFig_ = R"(CONFIG)";
 };
 }
-
+}
 #endif

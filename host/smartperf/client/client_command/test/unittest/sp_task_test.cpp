@@ -27,6 +27,7 @@
 #include "sp_task.h"
 #include "parameters.h"
 #include "GPU.h"
+#include "effective.h"
 using namespace testing::ext;
 using namespace std;
 

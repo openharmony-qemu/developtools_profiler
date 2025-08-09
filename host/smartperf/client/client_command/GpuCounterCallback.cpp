@@ -249,13 +249,10 @@ namespace OHOS {
                     gpuCounter.pop_back();
                     continue;
                 }
-
                 backData->duration = durationTime;
-
                 std::string gpuPerfInfoItemStr = GetGpuPerfInfoItem(backData);
                 gpuCounterInstance.GetGpuCounterData().push_back(gpuPerfInfoItemStr);
                 gpuCounterInstance.GetGpuCounterSaveReportData().push_back(gpuPerfInfoItemStr);
-
                 GetRealTime(backData);
             }
 

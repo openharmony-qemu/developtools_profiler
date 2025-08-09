@@ -35,7 +35,7 @@ public:
 
 class TaskManager {
 public:
-    TaskManager(bool isIPC = false);
+    explicit TaskManager(bool isIPC = false);
 
     void AddTask(const std::unordered_map<std::string, ArgumentParser::ArgValue>& argv);
     void AddTask(const std::string& argv);
@@ -68,15 +68,16 @@ private:
     void SaveRegularly(std::chrono::steady_clock::time_point& loopEnd);
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
     void ProcessOnceTask(bool start);
+    void MainLoop();
     void GpuCounterProcess(const ArgumentParser::ArgValue& value);
-    void SpecialKeyProcess(const std::string& specKey);
+    void SpecialKeyProcess(const std::string specKey);
 
     ThreadPool threadPool_ {4};
     int32_t collectCount_ {-1};
     std::atomic_bool running_ {false};
     std::thread mainLoop_;
-    std::vector<SpProfiler *> normalTask_;
-    std::vector<SpProfiler *> priorityTask_;
+    std::set<SpProfiler *> normalTask_;
+    std::set<SpProfiler *> priorityTask_;
     std::map<uint32_t, std::map<std::string, std::string>> datas_;
     std::mutex mtx_;
     std::string fileName_ {"/data/local/tmp/data.csv"};

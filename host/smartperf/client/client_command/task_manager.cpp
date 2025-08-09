@@ -101,7 +101,7 @@ void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
     }
 }
 
-void TaskManager::SpecialKeyProcess(const std::string& specKey)
+void TaskManager::SpecialKeyProcess(const std::string specKey)
 {
     if (specKey == "-LOW_POWER") {
         FPS::GetInstance().hapLowFpsFlag = true;
@@ -155,9 +155,9 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
         }
         pro->ipcCallback_ = ipcCallback_;
         if (iter->second == CommandType::CT_C || iter->second == CommandType::CT_P) {
-            priorityTask_.emplace_back(pro);
+            priorityTask_.insert(pro);
         } else {
-            normalTask_.emplace_back(pro);
+            normalTask_.insert(pro);
         }
     }
 }
@@ -175,7 +175,7 @@ void TaskManager::AddTask(SpProfiler* task, bool priority)
         return;
     }
     LOGD("Start the collection in the start/stop mode");
-    priority ? priorityTask_.emplace_back(task) : normalTask_.emplace_back(task);
+    priority ? priorityTask_.insert(task) : normalTask_.insert(task);
 }
 
 void TaskManager::AddTask(std::vector<std::string>& argv)
@@ -219,10 +219,8 @@ void TaskManager::CollectThreadsData()
         if (item == nullptr) {
             continue;
         }
-
         std::map<uint32_t, std::map<std::string, std::string>>& datas =
             (running_ ^ item->switch_) ? item->datasA_ : item->datasB_;
-
         CollectData(datas);
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas);
     }
@@ -253,6 +251,7 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
     if (!recordData_) {
         return;
     }
+
     if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE) &&
         !(SpProfilerFactory::editorFlag)) {
         std::unique_lock<std::mutex> lock(mtx_);

@@ -85,7 +85,7 @@ void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_total, size_t
 }
 
 void CPUInfo::StartExecutionOnce(bool isPause)
-{   
+{
     (void)isPause;
     Stop();
     if (pids_.empty()) {

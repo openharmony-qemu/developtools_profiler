@@ -453,7 +453,6 @@ void SPTask::ClearStopFlag()
         gpuCounter.GetInstance().SaveData(outGpuCounterDataPath);
     }
 
-    gpuCounter.GetGpuCounterData().clear();
     Capture::GetInstance().SetCollectionNum();
     KillHiperfCmd();
 }

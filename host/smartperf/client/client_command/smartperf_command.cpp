@@ -54,9 +54,8 @@ SmartPerfCommand::SmartPerfCommand(std::vector<std::string>& argv)
             }
             if (argv[1].find("-editorServer") != std::string::npos) {
                 WLOGI("############################# Found '-editorServer' argument in argv");
+                std::string token = argv[1].substr(serverCommandLength, argv[1].length() - serverCommandLength);
                 SPUtils::KillStartDaemon();
-                const size_t tokenStartPosition = 14;
-                std::string token = argv[1].substr(tokenStartPosition, argv[1].length() - tokenStartPosition);
                 HelpCommand(CommandHelp::EDITORSERVER, token);
             } else if (argv[1].find("-deviceServer") != std::string::npos) {
                 WLOGI("############################# Found '-deviceServer' argument in argv");

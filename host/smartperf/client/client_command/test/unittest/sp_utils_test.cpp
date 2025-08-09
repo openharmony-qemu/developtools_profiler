@@ -296,18 +296,15 @@ HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest01, TestSize.Level1)
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest02, TestSize.Level1)
 {
     std::string errorInfo = "";
-    std::string outOfRangeString = "123a456";
-    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
-    EXPECT_FALSE(result);
+    std::string longString(11, '1');
+    EXPECT_FALSE(SPUtils::IntegerVerification(longString, errorInfo));
     EXPECT_EQ(errorInfo, "invalid option parameters");
 }
 
 HWTEST_F(SPdaemonUtilsTest, IntegerValueVerificationTest03, TestSize.Level1)
 {
     std::string errorInfo = "";
-    std::string outOfRangeString = "12345678901";
-    bool result = SPUtils::IntegerVerification(outOfRangeString, errorInfo);
-    EXPECT_FALSE(result);
+    EXPECT_FALSE(SPUtils::IntegerVerification("123a456", errorInfo));
     EXPECT_EQ(errorInfo, "invalid option parameters");
 }
 

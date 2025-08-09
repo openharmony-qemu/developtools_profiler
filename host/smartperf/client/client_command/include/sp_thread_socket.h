@@ -110,6 +110,7 @@ private:
 
     std::shared_ptr<TaskManager> taskMgr_ {nullptr};
     ByTrace &bytrace = ByTrace::GetInstance();
+    bool firstFlag = true;
 };
 }
 }

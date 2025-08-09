@@ -179,8 +179,8 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             break;
         case CommandType::CT_TRACE:
             ByTrace::GetInstance().SetByTrace();
-            profiler = &ByTrace::GetInstance();
             FPS::GetInstance().SetTraceCatch();
+            profiler = &ByTrace::GetInstance();
             break;
         case CommandType::CT_AS:
             profiler = &AISchedule::GetInstance();

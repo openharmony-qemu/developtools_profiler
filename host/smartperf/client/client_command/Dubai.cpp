@@ -60,11 +60,11 @@ void Dubai::MoveDubaiDb()
 void Dubai::MoveDubaiDb(const std::string &path)
 {
     std::string result;
-    const std::string dubaiLocalPath = "/data/local/tmp/dubai";
+    const std::string dubaiLocalPath = "/data/local/tmp/dubai/";
     SPUtils::CreateDir(dubaiLocalPath);
     const std::string cpDubai = "cp " + path + " " + dubaiLocalPath;
     const std::string dubaiPathChmod = "chmod 777 " + dubaiLocalPath + "dubai.db";
-    LOGD("cpDubai:(%s), dubaiPathChmod:(%s)",
+    LOGD("cpDubai: (%s), dubaiPathChmod: (%s)",
         cpDubai.c_str(), dubaiPathChmod.c_str());
     if (!IsFileAccessible(path)) {
         sleep(1);
