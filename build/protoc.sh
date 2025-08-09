@@ -28,7 +28,7 @@ LAST_ARG_INDEX=$(($NUM_ARGS))
 INDEP_COMPLIER=${!LAST_ARG_INDEX}
 
 PROTOC=$PROJECT_TOP/$2/thirdparty/protobuf/protoc
-if ![ -e $PROTOC ] ; then
+if [ ! -e $PROTOC ] ; then
   if [[ "$INDEP_COMPLIER" == true ]]; then
     PROTOC=$PROJECT_TOP/binarys/third_party/protobuf/innerapis/protoc/clang_x64/libs/protoc
   fi
