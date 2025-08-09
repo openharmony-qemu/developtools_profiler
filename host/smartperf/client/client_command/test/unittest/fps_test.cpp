@@ -72,7 +72,7 @@ HWTEST_F(SPdaemonFpsTest, GetFpsCurrentFpsTimeTestCase001, TestSize.Level1)
     EXPECT_TRUE(ret);
 }
 
-HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest01, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest01, TestSize.Level0)
 {
     FPS &fps = FPS::GetInstance();
     FpsInfo fpsInfoResult;
@@ -87,7 +87,7 @@ HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest01, TestSize.Level1)
     EXPECT_EQ(actualResult["fpsJitters"], "10;;20;;30");
 }
 
-HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest02, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest02, TestSize.Level0)
 {
     FPS &fps = FPS::GetInstance();
     FpsInfo fpsInfoResult;
@@ -96,10 +96,10 @@ HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest02, TestSize.Level1)
 
     std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
 
-    EXPECT_EQ(actualResult["fpsJitters"], "100;;200;;300");
+    EXPECT_EQ(actualResult["fpsJitters"], "100;;200;;300"); 
 }
 
-HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest03, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest03, TestSize.Level0)
 {
     FPS &fps = FPS::GetInstance();
     FpsInfo fpsInfoResult;
@@ -107,10 +107,10 @@ HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest03, TestSize.Level1)
 
     std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
 
-    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end());
+    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end()); 
 }
 
-HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest04, TestSize.Level1)
+HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest04, TestSize.Level0)
 {
     FPS &fps = FPS::GetInstance();
     FpsInfo fpsInfoResult;
@@ -121,7 +121,7 @@ HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest04, TestSize.Level1)
     std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
 
     EXPECT_NE(actualResult.find("fps"), actualResult.end());
-    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end());
+    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end()); 
 }
 }
 }

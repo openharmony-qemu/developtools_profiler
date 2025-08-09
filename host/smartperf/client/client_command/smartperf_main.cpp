@@ -113,6 +113,35 @@ static void SocketStopCommand()
     cc.SocketStop();
 }
 
+static void SocketStartCommand(int argc, char *argv[])
+{
+    OHOS::SmartPerf::SPUtils::KillStartDaemon();
+    std::string startStr = "";
+    std::string endStr = "";
+    std::string pidCmd = OHOS::SmartPerf::CMD_COMMAND_MAP.at(OHOS::SmartPerf::CmdCommand::PIDOF_SP);
+    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, startStr);
+    OHOS::SmartPerf::ClientControl cc;
+    cc.StartSPDaemon();
+    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, endStr);
+    std::vector<std::string> startParams;
+    std::vector<std::string> endParams;
+    OHOS::SmartPerf::SPUtils::StrSplit(startStr, " ", startParams);
+    OHOS::SmartPerf::SPUtils::StrSplit(endStr, " ", endParams);
+    std::string result;
+    const int maxExpectedArgs = 100;
+    for (int i = 2; i < argc && i < maxExpectedArgs; i++) {
+        result += argv[i];
+        if (i != argc - 1) {
+            result += " ";
+        }
+    }
+    if (startParams.size() == endParams.size()) {
+        std::cout << "The last collection is interrupted." << std::endl;
+        std::cout << "SP_daemon -start " << result << " started collecting..." << std::endl;
+    }
+    cc.SocketStart(result);
+}
+
 static void RecordCapacity()
 {
     const std::string capacityRmPath = "/sys/class/power_supply/Battery/capacity_rm";
@@ -164,34 +193,6 @@ static void RecordCapacity()
     outFile.close();
 }
 
-static void SocketStartCommand(int argc, char *argv[])
-{
-    OHOS::SmartPerf::SPUtils::KillStartDaemon();
-    std::string startStr = "";
-    std::string endStr = "";
-    std::string pidCmd = OHOS::SmartPerf::CMD_COMMAND_MAP.at(OHOS::SmartPerf::CmdCommand::PIDOF_SP);
-    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, startStr);
-    OHOS::SmartPerf::ClientControl cc;
-    cc.StartSPDaemon();
-    OHOS::SmartPerf::SPUtils::LoadCmd(pidCmd, endStr);
-    std::vector<std::string> startParams;
-    std::vector<std::string> endParams;
-    OHOS::SmartPerf::SPUtils::StrSplit(startStr, " ", startParams);
-    OHOS::SmartPerf::SPUtils::StrSplit(endStr, " ", endParams);
-    std::string result;
-    const int maxExpectedArgs = 100;
-    for (int i = 2; i < argc && i < maxExpectedArgs; i++) {
-        result += argv[i];
-        if (i != argc - 1) {
-            result += " ";
-        }
-    }
-    if (startParams.size() == endParams.size()) {
-        std::cout << "The last collection is interrupted." << std::endl;
-        std::cout << "SP_daemon -start " << result << " started collecting..." << std::endl;
-    }
-    cc.SocketStart(result);
-}
 static int ProcessSpecificParameter(int argc, char *argv[], std::vector<std::string> &vec)
 {
     if (argc > 1 && strcmp(argv[1], "-editor") == 0) {

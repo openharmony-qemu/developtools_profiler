@@ -96,7 +96,7 @@ void TaskManager::GpuCounterProcess(const ArgumentParser::ArgValue& value)
         GpuCounter::GetInstance().SetFrequency(frequency);
     } else {
         LOGW("GPU_COUNTER frequency must be a factor of 50 and in range [50,1000], " +
-            "this frequency is %d, set to 50", frequency);
+             "this frequency is %d, set to 50", frequency);
         GpuCounter::GetInstance().SetFrequency(defaultFreq);
     }
 }
@@ -219,8 +219,10 @@ void TaskManager::CollectThreadsData()
         if (item == nullptr) {
             continue;
         }
+
         std::map<uint32_t, std::map<std::string, std::string>>& datas =
             (running_ ^ item->switch_) ? item->datasA_ : item->datasB_;
+
         CollectData(datas);
         std::map<uint32_t, std::map<std::string, std::string>>().swap(datas);
     }
@@ -275,7 +277,6 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
 void TaskManager::Start(bool record)
 {
     if (priorityTask_.empty() && normalTask_.empty()) {
-        LOGD("No mission");
         return;
     }
     ProcessOnceTask(true);
@@ -285,47 +286,53 @@ void TaskManager::Start(bool record)
         SetRecordState(true);
     }
     mainLoop_ = std::thread([this]() {
-        while (running_) {
-            auto loopStart = std::chrono::steady_clock::now();
-            bool recordData = recordData_.load();
-            if (dataIndex_++ == collectCount_) {
-                break;
-            }
-            LOGD("data index: %u", dataIndex_);
-            std::map<std::string, std::string> currDatas;
-            currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
-            if (recordData) {
-                datas_.emplace(dataIndex_,
-                    std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
-            }
-            for (auto& item : priorityTask_) {
-                currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
-            }
-            std::vector<std::future<std::map<std::string, std::string>>> result;
-            for (auto& item : normalTask_) {
-                result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
-            }
-            for (auto& item : result) {
-                currDatas.merge(item.get());
-            }
-            for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
-                currDatas.insert(item);
-            }
-            if (nextTime_ != nullptr) {
-                *nextTime_ = SPUtils::GetCurTime();
-            }
-            ProcessCurrentBatch(currDatas);
-            auto loopEnd = std::chrono::steady_clock::now();
-            SaveRegularly(loopEnd);
-            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
-            if (elapsed < std::chrono::seconds(1)) {
-                std::this_thread::sleep_for(std::chrono::seconds(1) - elapsed);
-            }
-        }
-        LOGD("main loop exit");
-        ProcessOnceTask(false);
-        finishCond_.notify_all();
+        MainLoop();
     });
+}
+void TaskManager::MainLoop()
+{
+    while (running_) {
+        auto loopStart = std::chrono::steady_clock::now();
+        bool recordData = recordData_.load();
+        if (dataIndex_++ == collectCount_) {
+            break;
+        }
+        LOGD("data index: %u", dataIndex_);
+        std::map<std::string, std::string> currDatas;
+        currDatas.emplace("timestamp", std::to_string(SPUtils::GetCurTime()));
+        if (recordData) {
+            datas_.emplace(dataIndex_,
+                std::map<std::string, std::string>{{"timestamp", std::to_string(SPUtils::GetCurTime())}});
+        }
+        for (auto& item : priorityTask_) {
+            currDatas.merge(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData).get());
+        }
+        std::vector<std::future<std::map<std::string, std::string>>> result;
+        for (auto& item : normalTask_) {
+            result.emplace_back(threadPool_.PushTask(&TaskManager::TaskFun, this, item, dataIndex_, recordData));
+        }
+        for (auto& item : result) {
+            currDatas.merge(item.get());
+        }
+        for (auto& item : OHOS::SmartPerf::GpuCounter::GetInstance().GetGpuRealtimeData()) {
+            currDatas.insert(item);
+        }
+        if (nextTime_ != nullptr) {
+            *nextTime_ = SPUtils::GetCurTime();
+        }
+        ProcessCurrentBatch(currDatas);
+        auto loopEnd = std::chrono::steady_clock::now();
+        SaveRegularly(loopEnd);
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
+        if (elapsed < std::chrono::seconds(1)) {
+            std::this_thread::sleep_for(std::chrono::seconds(1) - elapsed);
+        }
+    }
+    LOGD("main loop exit");
+    ProcessOnceTask(false);
+    running_ = false;
+    finishCond_.notify_all();
+    scheduleSaveDataCond_.notify_all();
 }
 
 void TaskManager::WriteToCSV()
@@ -396,7 +403,6 @@ void TaskManager::Stop(bool pause)
         }
         mainLoop_.join();
     }
-
     if (scheduleSaveDataTh_.joinable()) {
         {
             std::lock_guard<std::mutex> lock(mtx_);
@@ -405,7 +411,6 @@ void TaskManager::Stop(bool pause)
         scheduleSaveDataCond_.notify_all();
         scheduleSaveDataTh_.join();
     }
-
     if (!pause) {
         LOGD("Start/Stop Collection End");
         threadPool_.Stop();
@@ -415,7 +420,7 @@ void TaskManager::Stop(bool pause)
 void TaskManager::Wait()
 {
     std::unique_lock<std::mutex> lock(finishMtx_);
-    finishCond_.wait(lock);
+    finishCond_.wait(lock, [this] { return !running_.load(); });
 }
 
 void TaskManager::CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas)

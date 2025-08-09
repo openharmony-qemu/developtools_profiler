@@ -100,15 +100,15 @@ void StallingRateTrace::JudgFrameRate()
     bool tabsDynamicExists = hasDynamic(appTabsDynamicFinishTime, appTabsDynamicStartTime);
 
     if (!appListDynamicExists) {
-        LOGD("no app list Dynamic"); //NO APP list_lane
+        LOGD("no app list Dynamic"); //没有APP list 泳道
         frameLossRate = swiperDynamicExists ? swiperFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!swiperDynamicExists) {
-        LOGD("no swiper Dynamic"); //NO swiper_lane
+        LOGD("no swiper Dynamic"); //没有swiper 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         tabsDynamicExists ? tabsFrameLossRate : -1;
     } else if (!tabsDynamicExists) {
-        LOGD("no tabs Dynamic"); //NO tabs_lane
+        LOGD("no tabs Dynamic"); //没有tabs 泳道
         frameLossRate = appListDynamicExists ? appFrameLossRate :
                         swiperDynamicExists ? swiperFrameLossRate : -1;
     } else {
@@ -120,7 +120,7 @@ void StallingRateTrace::MultiLaneFrameRate()
 {
     if (appFrameLossRate == 0) {
         if (swiperFrameLossRate > 0) {
-            LOGD("no app list hitchTime"); //NO APP list Number of lags
+            LOGD("no app list hitchTime"); //没有APP list卡顿次数
             frameLossRate = swiperFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
             frameLossRate = tabsFrameLossRate;
@@ -128,7 +128,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (swiperFrameLossRate == 0) {
-        LOGD("no swiper list hitchTime"); //NO swiper Number of lags
+        LOGD("no swiper list hitchTime"); //没有swiper list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (tabsFrameLossRate > 0) {
@@ -137,7 +137,7 @@ void StallingRateTrace::MultiLaneFrameRate()
             frameLossRate = 0;
         }
     } else if (tabsFrameLossRate == 0) {
-        LOGD("no tabs list hitchTime"); //NO tabs Number of lags
+        LOGD("no tabs list hitchTime"); //没有tabs list卡顿次数
         if (appFrameLossRate > 0) {
             frameLossRate = appFrameLossRate;
         } else if (swiperFrameLossRate > 0) {

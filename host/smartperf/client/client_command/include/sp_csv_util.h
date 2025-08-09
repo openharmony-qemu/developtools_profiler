@@ -134,7 +134,7 @@ public:
         std::string partitionName = "/data";
         std::string dirName = "/data/local/tmp";
         struct statfs partitionStat;
-
+        
         if (statfs(partitionName.c_str(), &partitionStat) != 0) {
             LOGE("Get remain partition size failed, partitionName = %{public}s", partitionName.c_str());
             return;

@@ -78,14 +78,14 @@ HWTEST_F(DubaiTest, DubaiMoveTest, TestSize.Level1)
 
 HWTEST_F(DubaiTest, CallMoveDubaiDbFinished01, TestSize.Level1)
 {
-    OHOS::SmartPerf::Dubai::isDumpDubaiFinish  = false;
+    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = false;
     std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
     EXPECT_EQ(result, "get_dubai_db");
 }
 
 HWTEST_F(DubaiTest, CallMoveDubaiDbFinished02, TestSize.Level1)
 {
-    OHOS::SmartPerf::Dubai::isDumpDubaiFinish  = true;
+    OHOS::SmartPerf::Dubai::isDumpDubaiFinish = true;
     std::string result = OHOS::SmartPerf::Dubai::GetInstance().CallMoveDubaiDbFinished();
     EXPECT_EQ(result, "get_dubai_db");
 }

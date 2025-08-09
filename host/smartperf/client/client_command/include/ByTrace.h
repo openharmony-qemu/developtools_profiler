@@ -28,13 +28,13 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     // 校验fps-jitters
-    void CheckFpsJitters(long long& jitters, int cfps) const;
-    void SetByTrace() const;
+    void CheckFpsJitters(long long& jitters, int cfps);
+    void SetByTrace();
     void ClearTraceFiles() const;
     void RemoveTraceFiles() const;
     void CpTraceFile() const;
     long long GetThreshold() const;
-    int GetLowFps () const;
+    int GetLowFps() const;
     void SendSurfaceCaton(long long& jitters, int cfps);
     static inline std::string jittersAndLowFps = "";
     static inline std::string hiviewTrace = "";
@@ -49,7 +49,7 @@ private:
     ByTrace &operator = (const ByTrace &);
 
     const std::string hiviewTracePath_ {"/data/log/hiview/unified_collection/trace/special/"};
-    
+
     long long jitterTimesTaken = 0;
     int lowFps = -1;
 };

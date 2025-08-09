@@ -115,7 +115,6 @@ private:
         {"-lockfreq", {ArgumentParser::ArgType::BOOL}},
         {"-nav", {ArgumentParser::ArgType::BOOL}},
         {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
-        {"-aischedule", {ArgumentParser::ArgType::BOOL, "get AI schedule status"}},
 
         // UDP
         {"-CPU", {ArgumentParser::ArgType::BOOL}},

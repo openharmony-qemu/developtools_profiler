@@ -21,7 +21,7 @@
 #include <thread>
 #include <climits>
 
-namespace OHOS{
+namespace OHOS {
 namespace SmartPerf {
 class Effective : public SpProfiler {
 public:

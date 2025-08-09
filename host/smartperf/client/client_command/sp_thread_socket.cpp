@@ -24,7 +24,6 @@
 #include <map>
 #include <mutex>
 #include <climits>
-#include "include/GameEvent.h"
 #include "parameters.h"
 #include "include/sp_csv_util.h"
 #include "include/sdk_data_recv.h"
@@ -40,6 +39,7 @@
 #include "include/Network.h"
 #include "include/startup_delay.h"
 #include "include/Dubai.h"
+#include "include/GameEvent.h"
 #include "include/GetLog.h"
 #include "include/RAM.h"
 #include "include/FPS.h"
@@ -399,10 +399,10 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             return;
         }
         RemoveToken(recvBuf);
-        if (recvBuf.find("init::") != std::string::npos) {
-            LOGD("UDP recv : %s", recvBuf.c_str());
+        if (recvBuf.find("init::") != std::string::npos && firstFlag) {
             HandleMsgTrace(recvBuf);
             UdpStartInitFunc(recvBuf, spSocket);
+            firstFlag = false;
             break;
         }
         if (!SPUtils::IsSubString(recvBuf, iterator->second)) {
@@ -438,7 +438,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
 
 void SpThreadSocket::HandleMsgTrace(std::string& recvMessage)
 {
-    const std::string traceWord = "-trace::";
+    const std::string traceWord = "-TRACE::";
     const size_t startPos = recvMessage.find(traceWord);
     const size_t tarceLength = traceWord.length();
     const size_t colonLength = 2;
@@ -465,11 +465,7 @@ void SpThreadSocket::UdpStartInitFunc(const std::string& recvBuf, SpServerSocket
         taskMgr_->WriteToCSV();
     }
     taskMgr_ = std::make_shared<TaskManager>(true);
-    auto lambdaTask = [spSocket = std::ref(spSocket)](const std::string &data) mutable {
-        if (spSocket.get().IsValid()) {
-            spSocket.get().Sendto(data);
-        }
-    };
+    auto lambdaTask = [&spSocket](const std::string &data) { spSocket.Sendto(data); };
     taskMgr_->SetIPCCallback(lambdaTask);
     taskMgr_->AddTask(recvBuf);
     spTask.SetAppCmd(recvBuf);
@@ -565,10 +561,11 @@ void SpThreadSocket::ConnectAndSendFile(SpServerSocket &spSocket, const std::str
             return;
         }
         std::string sendFileSizeMsg = "SendFileSize:::" + std::to_string(fileSize);
-        LOGD("UDP START sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
+        LOGI("UDP START sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
         spSocket.Sendto(sendFileSizeMsg);
-        LOGD("UDP Sendto sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
+        LOGI("UDP Sendto sendFileSizeMsg = %s", sendFileSizeMsg.c_str());
     });
+
     std::thread sendFileThread([this, filePath]() {
         int fileSocket = -1;
         int connectCount = 0;

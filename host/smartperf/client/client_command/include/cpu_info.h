@@ -25,7 +25,7 @@
 #include <atomic>
 #include <condition_variable>
 
-namespace OHOS{
+namespace OHOS {
 namespace SmartPerf {
 class CPUInfo : public SpProfiler {
 public:

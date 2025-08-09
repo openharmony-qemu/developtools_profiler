@@ -18,6 +18,7 @@
 #include "sp_task.h"
 #include "ByTrace.h"
 #include <thread>
+#include "GpuCounter.h"
 namespace OHOS {
 namespace SmartPerf {
 enum class SocketConnectType {
@@ -93,6 +94,7 @@ private:
     bool socketConnect = true;
     std::string checkToken = "";    // 拉起测试时校验
     bool isNeedUdpToken = true;     // 如果是hdc shell拉起，不需要校验token以兼容旧版本
+    GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
     const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice";
@@ -108,6 +110,12 @@ private:
     SPTask &spTask = SPTask::GetInstance();
     std::thread udpStartCollect;
 
+    ~SpTreadSocket()
+    {
+        if (udpStartCollect.joinable()) {
+            udpStartCollect.join();
+        }
+    }
     std::shared_ptr<TaskManager> taskMgr_ {nullptr};
     ByTrace &bytrace = ByTrace::GetInstance();
     bool firstFlag = true;
