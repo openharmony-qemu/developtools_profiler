@@ -121,7 +121,7 @@ HWTEST_F(SPdaemonFpsTest, GetFpsAndJittersTest04, TestSize.Level0)
     std::map<std::string, std::string> actualResult = fps.GetFpsAndJitters(fpsInfoResult, result);
 
     EXPECT_NE(actualResult.find("fps"), actualResult.end());
-    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end()); 
+    EXPECT_NE(actualResult.find("fpsJitters"), actualResult.end());
 }
 }
 }
