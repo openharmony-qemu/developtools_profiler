@@ -24,7 +24,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <regex>
-#include <unordered_set>
 
 #include "common.h"
 #include "file_utils.h"
@@ -768,7 +767,7 @@ bool FlowController::AddPlatformEventsToParser(void)
     return true;
 }
 
-std::string FlowController::GetCmdArgs(TracePluginConfig traceConfig)
+std::string FlowController::GetCmdArgs(const TracePluginConfig& traceConfig)
 {
     std::stringstream args;
     for (const auto& event : traceConfig.ftrace_events()) {

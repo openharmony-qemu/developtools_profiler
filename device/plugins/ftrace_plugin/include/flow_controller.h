@@ -25,13 +25,12 @@
 #include "result_transporter.h"
 #include "trace_collector_client.h"
 #include "trace_plugin_config.pb.h"
-
+#include <unordered_set>
 #include <atomic>
 #include <cstdint>
 #include <iostream>
 #include <mutex>
 #include <thread>
-#include <unordered_set>
 
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 
@@ -81,7 +80,7 @@ private:
     void EnableTraceEvents(void);
     void DisableTraceEvents(void);
     void DisableAllCategories(void);
-    std::string GetCmdArgs(TracePluginConfig traceConfig);
+    std::string GetCmdArgs(const TracePluginConfig& traceConfig);
 
     template <typename T> bool ReportClockTimes(T& tracePluginResult);
 

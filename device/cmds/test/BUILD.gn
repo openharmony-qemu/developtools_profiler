@@ -64,6 +64,7 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "abseil-cpp:absl_log",
     "abseil-cpp:absl_sync",
     "bounds_checking_function:libsec_shared",
+    "googletest:gtest",
     "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",

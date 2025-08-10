@@ -207,7 +207,7 @@ bool NetworkProfilerManager::StartNetworkProfiler()
     return true;
 }
 
-std::string NetworkProfilerManager::GetCmdArgs(NetworkProfilerConfig traceConfig)
+std::string NetworkProfilerManager::GetCmdArgs(const NetworkProfilerConfig& traceConfig)
 {
     std::stringstream args;
     for (const auto& p : traceConfig.pid()) {

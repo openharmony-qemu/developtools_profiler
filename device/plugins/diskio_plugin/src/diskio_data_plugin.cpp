@@ -47,7 +47,7 @@ DiskioDataPlugin::~DiskioDataPlugin()
     }
 }
 
-std::string DiskioDataPlugin::GetCmdArgs(DiskioConfig protoConfig)
+std::string DiskioDataPlugin::GetCmdArgs(const DiskioConfig& protoConfig)
 {
     std::string args;
     args += "report_io_stats: " + std::to_string(protoConfig.report_io_stats());

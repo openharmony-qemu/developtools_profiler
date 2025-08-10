@@ -204,7 +204,7 @@ int MemoryDataPlugin::Start(const uint8_t* configData, uint32_t configSize)
 }
 
 
-std::string MemoryDataPlugin::GetCmdArgs(MemoryConfig protoConfig)
+std::string MemoryDataPlugin::GetCmdArgs(const MemoryConfig& protoConfig)
 {
     std::stringstream args;
     args << "report_process_tree: " << (protoConfig.report_process_tree() ? "true" : "false") << ", ";
