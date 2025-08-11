@@ -187,6 +187,7 @@ extern "C" {
             arr.head[idx] = CThreadCpuUsage{ .threadId = id, .cpuUsage = usage };
             idx++;
         }
+        arr.size = idx;
         return arr;
     }
 
