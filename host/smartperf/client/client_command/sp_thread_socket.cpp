@@ -685,6 +685,10 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (iterator->first == MessageType::CATCH_ONE_TRACE) {
         bytrace.hiviewTrace = SplitMsg(recvBuf);
         bytrace.CpTraceFile();
+    } else if (iterator->first == MessageType::CATCH_TRACE_FINISH) {
+        tracefilePath = "";
+        GetSocketPort(recvBuf);
+        ConnectAndSendFile(spSocket, tracefilePath);
     } else if (iterator->first == MessageType::GET_CPU_NUM) {
         retCode = SPUtils::GetCpuNum();
         spSocket.Sendto(retCode);
