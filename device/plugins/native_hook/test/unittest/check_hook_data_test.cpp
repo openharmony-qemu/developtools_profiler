@@ -32,6 +32,7 @@
 #pragma clang optimize off
 
 using namespace testing::ext;
+using namespace OHOS::Security::AccessToken;
 
 namespace {
 constexpr int DEFAULT_MALLOC_SIZE = 10;
@@ -58,6 +59,9 @@ constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
 const std::string TEST_PROC_NAME = "hiview";
+static AccessTokenID g_selfTokenId;
+std::mutex g_lockSetToken;
+uint64_t g_shellTokenId = 0;
 #ifdef __aarch64__
 const std::string DEFAULT_LIBA_PATH("/system/lib64/liba.z.so");
 const std::string DEFAULT_LIBB_PATH("/system/lib64/libb.z.so");
@@ -71,12 +75,94 @@ typedef void (*DepthFreeSo)(int depth, char *p);
 
 using StaticSpace = struct {
     int data[DATA_SIZE];
-} ;
+};
+
+class MockNativeToken {
+public:
+    explicit MockNativeToken(const std::string& process);
+    ~MockNativeToken();
+private:
+    uint64_t selfToken_;
+};
+
+static MockNativeToken* g_mock = nullptr;
+
+void SetTestEvironment(uint64_t shellTokenId)
+{
+    std::lock_guard<std::mutex> lock(g_lockSetToken);
+    g_shellTokenId = shellTokenId;
+}
+
+void ResetTestEvironment()
+{
+    std::lock_guard<std::mutex> lock(g_lockSetToken);
+    g_shellTokenId = 0;
+}
+
+uint64_t GetShellTokenId()
+{
+    std::lock_guard<std::mutex> lock(g_lockSetToken);
+    return g_shellTokenId;
+}
+
+static AccessTokenID GetNativeTokenIdFromProcess(const std::string &process)
+{
+    uint64_t selfTokenId = GetSelfTokenID();
+    EXPECT_EQ(0, SetSelfTokenID(GetShellTokenId())); // set shell token
+
+    std::string dumpInfo;
+    AtmToolsParamInfo info;
+    info.processName = process;
+    AccessTokenKit::DumpTokenInfo(info, dumpInfo);
+    size_t pos = dumpInfo.find("\"tokenID\": ");
+    if (pos == std::string::npos) {
+        return 0;
+    }
+    pos += std::string("\"tokenID\": ").length();
+    std::string numStr;
+    while (pos < dumpInfo.length() && std::isdigit(dumpInfo[pos])) {
+        numStr += dumpInfo[pos];
+        ++pos;
+    }
+    // restore
+    EXPECT_EQ(0, SetSelfTokenID(selfTokenId));
+
+    std::istringstream iss(numStr);
+    AccessTokenID tokenID;
+    iss >> tokenID;
+    return tokenID;
+}
+
+MockNativeToken::MockNativeToken(const std::string& process)
+{
+    selfToken_ = GetSelfTokenID();
+    uint32_t tokenId = GetNativeTokenIdFromProcess(process);
+    SetSelfTokenID(tokenId);
+}
+
+MockNativeToken::~MockNativeToken()
+{
+    SetSelfTokenID(selfToken_);
+}
 
 class CheckHookDataTest : public ::testing::Test {
 public:
-    static void SetUpTestCase() {}
-    static void TearDownTestCase() {}
+    static void SetUpTestCase()
+    {
+        g_selfTokenId = GetSelfTokenID();
+        SetTestEvironment(g_selfTokenId);
+        g_mock = new (std::nothrow) MockNativeToken(TEST_PROC_NAME);
+    }
+
+    static void TearDownTestCase()
+    {
+        if (g_mock != nullptr) {
+            delete g_mock;
+            g_mock = nullptr;
+        }
+        SetSelfTokenID(g_selfTokenId);
+        ResetTestEvironment();
+    }
     void StartDaemonProcessArgs()
     {
         outFile_ = DEFAULT_PATH + "hooktest_"+ outFileType_ + mode_[modeIndex_] + ".txt";

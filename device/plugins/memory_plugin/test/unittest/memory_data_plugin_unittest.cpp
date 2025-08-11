@@ -1101,7 +1101,7 @@ HWTEST_F(MemoryDataPluginTest, TestWriteGpuDumpInfo, TestSize.Level1)
     plugin.SetPath(const_cast<char*>(g_path.c_str()));
     plugin.WriteGpuDumpInfo(memoryData);
 
-    const int size = 23;
+    const int size = 22;
     ASSERT_EQ(memoryData.gpudumpinfo().size(), size);
 
     auto gpuDumpAllInfo = memoryData.gpudumpinfo(0);
@@ -1299,7 +1299,7 @@ HWTEST_F(MemoryDataPluginTest, TestGpuData, TestSize.Level1)
     const int processesSize = 2;
     const int ashmemSize = 4;
     const int dmaSize = 17;
-    const int dumpSize = 23;
+    const int dumpSize = 22;
     const uint64_t gpuLimitSize = 301989888;
     const uint64_t usedSize = 45064738;
     EXPECT_EQ(memoryData.processesinfo().size(), processesSize);
