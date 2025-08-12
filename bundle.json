@@ -13,7 +13,8 @@
     "name": "hiprofiler",
     "subsystem": "developtools",
     "features": [
-      "hiprofiler_SmartPerf"
+      "hiprofiler_SmartPerf",
+      "hiprofiler_sandbox_log_path_mapping"
     ],
     "syscap": [
       "SystemCapability.HiviewDFX.HiProfiler.HiDebug"

@@ -30,7 +30,7 @@
 #include <unistd.h>
 #include <vector>
 #include <future>
-
+#include "ipc_skeleton.h"
 #include "common.h"
 #include "command_line.h"
 #include "google/protobuf/text_format.h"
@@ -42,6 +42,8 @@
 using google::protobuf::TextFormat;
 
 namespace {
+constexpr int USER_ID_MOD = 200000;
+constexpr int APP_ID_THRESH = 20000000;
 constexpr int ADDR_BUFFER_SIZE = 128;
 constexpr int MS_PER_S = 1000;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
@@ -52,6 +54,7 @@ const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace"
 const std::string HIPROFILERD_NAME("hiprofilerd");
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 const std::string NATIVE_DAEMON_NAME("native_daemon");
+const std::string SANDBOX_PATH_ROOT("/storage/Users/currentUser/");
 
 uint32_t g_sampleDuration = 0;
 std::condition_variable g_sessionCv;
@@ -97,6 +100,51 @@ uint16_t GetServicePort()
     return COMMON::GetServicePort();
 }
 
+template <typename T>
+std::string GetSandboxFileName(const std::string& outputFile, T sessionConfig)
+{
+    std::string fileName;
+    if (!outputFile.empty()) {
+        fileName = outputFile;
+        sessionConfig->set_result_file(fileName);
+    } else if (sessionConfig->result_file() == "") {
+        fileName = SANDBOX_PATH_ROOT + "hiprofiler_data.htrace";
+        char* outputPathEnv = std::getenv("TMPDIR");
+        if (outputPathEnv != nullptr && strlen(outputPathEnv) > 0) {
+            fileName = outputPathEnv;
+            fileName += "/hiprofiler_data.htrace";
+        }
+        sessionConfig->set_result_file(fileName);
+    } else {
+        fileName = sessionConfig->result_file();
+    }
+    return fileName;
+}
+
+template <typename T>
+void HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
+{
+    int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
+    if (callingUid > APP_ID_THRESH) {
+        std::string fileName = GetSandboxFileName(outputFile, sessionConfig);
+        if ((fileName.substr(0, SANDBOX_PATH_ROOT.size()) == SANDBOX_PATH_ROOT)) {
+            int32_t userId = callingUid / USER_ID_MOD;
+            fileName.replace(0, SANDBOX_PATH_ROOT.size(),
+                             "/storage/media/" + std::to_string(userId) + "/local/files/Docs/");
+        } else {
+            printf("Filepath unable to write!\n");
+            return;
+        }
+        sessionConfig->set_result_file(COMMON::CanonicalizeSpecPath(fileName.c_str()));
+    } else {
+        if (!outputFile.empty()) {
+            sessionConfig->set_result_file(outputFile);
+        } else if (sessionConfig->result_file() == "") {
+            sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
+        }
+    }
+}
+
 std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& config,
                                                         const std::string& keepSecond,
                                                         const std::string& outputFile)
@@ -127,13 +175,16 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
     } else if (sessionConfig->sample_duration() <= 0) {
         sessionConfig->set_sample_duration(DEFAULT_SESSION_TIME_S * MS_PER_S);
     }
+#if defined(is_sandbox) && is_sandbox
+    HandleSandboxFilename(outputFile, sessionConfig);
+#else
     if (!outputFile.empty()) {
         sessionConfig->set_result_file(outputFile);
     } else if (sessionConfig->result_file() == "") {
         sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
     }
-    printf("keepSecond: %us, outputFileName: %s\n", sessionConfig->sample_duration() / MS_PER_S,
-        sessionConfig->result_file().c_str());
+#endif
+    printf("keepSecond: %us\n", sessionConfig->sample_duration() / MS_PER_S);
 
     g_sampleDuration = sessionConfig->sample_duration();
     for (int i = 0; i < request->plugin_configs().size(); i++) {
@@ -420,15 +471,31 @@ void KillDependentProcess()
 bool ParseConfig(const std::string& configFile, std::string& config)
 {
     std::string configFileWithPath = configFile;
+    bool adaptSandbox = false;
+#if defined(is_sandbox) && is_sandbox
+    int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
+    if (callingUid > APP_ID_THRESH) {
+        adaptSandbox = true;
+    }
+#endif
     if (configFile.find('/') == std::string::npos) {
-        std::string path("/data/local/tmp/");
-        configFileWithPath = path + configFile; // add default path
+        if (adaptSandbox) {
+            configFileWithPath = SANDBOX_PATH_ROOT + configFile;
+        } else {
+            std::string defaultPath("/data/local/tmp/");
+            configFileWithPath = defaultPath + configFile; // add default path
+        }
     }
 
     printf("Read config from %s\n", configFileWithPath.c_str());
-    std::vector<std::string> validPaths = { "/data/local/tmp/" };
+    std::vector<std::string> validPaths {};
+    if (adaptSandbox) {
+        validPaths.push_back(SANDBOX_PATH_ROOT);
+    } else {
+        validPaths.push_back("/data/local/tmp/");
+    }
     if (!COMMON::ReadFile(configFileWithPath, validPaths, config)) {
-        printf("Read %s fail, please place it under \'/data/local/tmp/\'.\n", configFile.c_str());
+        printf("Read %s fail, please place it under %s.\n", configFile.c_str(), validPaths[0].c_str());
         return false;
     }
     config = ParsePluginConfig::GetInstance().GetPluginsConfig(config);

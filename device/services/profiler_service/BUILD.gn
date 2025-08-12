@@ -62,6 +62,9 @@ ohos_source_set("profiler_service") {
     external_deps += [ "hilog:libhilog_base" ]
   }
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
+  if (hiprofiler_sandbox_log_path_mapping) {
+    defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
+  }
 }
 
 ohos_prebuilt_etc("hiprofilerd.cfg") {

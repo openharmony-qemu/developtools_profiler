@@ -216,7 +216,6 @@ bool TraceFileWriter::WriteHeader()
         splitFilePaths_.push(path_);
         DeleteOldSplitFile();
     }
-
     stream_ = std::ofstream(path_, std::ios_base::out | std::ios_base::binary);
     CHECK_TRUE(stream_.is_open(), false, "open %s failed, %d!", path_.c_str(), errno);
 
