@@ -187,7 +187,7 @@ extern "C" {
             arr.head[idx] = CThreadCpuUsage{ .threadId = id, .cpuUsage = usage };
             idx++;
         }
-        arr.size = idx;
+        arr.size = static_cast<int64_t>(idx);
         return arr;
     }
 
