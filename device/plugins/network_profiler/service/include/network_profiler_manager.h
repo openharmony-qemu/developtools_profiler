@@ -78,7 +78,7 @@ public:
     bool ResetWriter(uint32_t pluginId) override;
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
     bool RegisterAgentPlugin(const std::string& pluginPath);
-    std::string GetCmdArgs(NetworkProfilerConfig traceConfig);
+    std::string GetCmdArgs(const NetworkProfilerConfig& traceConfig);
 
 private:
     bool CheckConfig();

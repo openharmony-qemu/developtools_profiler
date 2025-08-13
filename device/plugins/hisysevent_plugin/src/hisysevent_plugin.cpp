@@ -83,7 +83,7 @@ int HisyseventPlugin::Start(const uint8_t* configData, uint32_t configSize)
     return 0;
 }
 
-std::string HisyseventPlugin::GetCmdArgs(HisyseventConfig protoConfig)
+std::string HisyseventPlugin::GetCmdArgs(const HisyseventConfig& protoConfig)
 {
     std::string args;
     args += "msg: " + protoConfig.msg() + ", ";

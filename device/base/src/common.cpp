@@ -840,8 +840,8 @@ bool CheckCmdLineArgValid(const std::string& cmdLine)
     return true;
 }
 
-int PluginWriteToHisysevent(std::string pluginName, std::string caller, std::string args, int errorCode,
-                            std::string errorMessage)
+int PluginWriteToHisysevent(const std::string& pluginName, const std::string& caller, const std::string& args,
+                            int errorCode, const std::string& errorMessage)
 {
     return HiSysEventWrite(OHOS::HiviewDFX::HiSysEvent::Domain::PROFILER, "HIPROFILER_USAGE",
         OHOS::HiviewDFX::HiSysEvent::EventType::BEHAVIOR,
@@ -859,9 +859,15 @@ std::string GetProcessNameByPid(int32_t pid)
     if (!cmdlineFile) {
         return "";
     }
+    if (cmdlineFile.fail()) {
+        return "";
+    }
 
     std::string processName;
     std::getline(cmdlineFile, processName, '\0');
+    if (processName.empty()) {
+        return "";
+    }
 
     static constexpr size_t headSize = 2;
     if (processName.substr(0, headSize) == "./") {

@@ -56,8 +56,8 @@ bool IsBetaVersion();
 std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);
 bool CheckWhiteList(const std::string& cmdPath);
 bool CheckCmdLineArgValid(const std::string& cmdLine);
-int PluginWriteToHisysevent (std::string pluginName, std::string caller, std::string args, int errorCode,
-                             std::string errorMessage);
+int PluginWriteToHisysevent (const std::string& pluginName, const std::string& caller, const std::string &args,
+                             const int errorCode, const std::string &errorMessage);
 std::string GetProcessNameByPid(int32_t pid);
 
 static const std::string STATE_VERSION = "1.0";

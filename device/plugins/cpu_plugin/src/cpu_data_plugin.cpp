@@ -70,7 +70,7 @@ CpuDataPlugin::~CpuDataPlugin()
     minFrequencyVec_.clear();
 }
 
-std::string CpuDataPlugin::GetCmdArgs(CpuConfig protoConfig)
+std::string CpuDataPlugin::GetCmdArgs(const CpuConfig& protoConfig)
 {
     std::stringstream args;
     args << "pid: " << COMMON::GetProcessNameByPid(protoConfig.pid());

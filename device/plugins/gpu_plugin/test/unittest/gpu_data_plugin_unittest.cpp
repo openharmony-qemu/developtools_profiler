@@ -237,7 +237,7 @@ HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
 
     // Serialize config
     GpuConfig protoConfig;
-    protoConfig.set_pid("11001");
+    protoConfig.set_pid(11001);
     protoConfig.set_report_gpu_data_array(true);
     int configLength = protoConfig.ByteSizeLong();
     ASSERT_NE(configLength, 0);

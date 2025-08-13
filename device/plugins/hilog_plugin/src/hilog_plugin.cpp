@@ -69,7 +69,7 @@ HilogPlugin::~HilogPlugin()
     PROFILER_LOG_INFO(LOG_CORE, "%s: success!", __func__);
 }
 
-std::string HilogPlugin::GetCmdArgs(HilogConfig protoConfig)
+std::string HilogPlugin::GetCmdArgs(const HilogConfig& protoConfig)
 {
     std::stringstream args;
     args << "log_level: " << std::to_string(protoConfig.log_level()) << ", ";
