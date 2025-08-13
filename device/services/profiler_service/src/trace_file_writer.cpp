@@ -55,6 +55,7 @@ TraceFileWriter::TraceFileWriter(int32_t fd) : fd_(fd)
         TraceFileWriterCtx* writeCtx = reinterpret_cast<TraceFileWriterCtx*>(ctx);
         return writeCtx->write->Seek(offset);
     };
+
     CHECK_TRUE(fd_ != 0, NO_RETVAL, "only-nmd mode, no need to use TraceFileWriter");
     if (write(fd_, &header_, sizeof(header_)) != sizeof(header_)) {
         PROFILER_LOG_ERROR(LOG_CORE, "write initial header failed!, error: %s", strerror(errno));
@@ -563,7 +564,9 @@ bool TraceFileWriter::Seek(uint32_t offset)
 
 void TraceFileWriter::FinishReport(int32_t size)
 {
-    CHECK_TRUE(fileMapAddr_ != MAP_FAILED, NO_RETVAL, "FinishReport fileMapAddr not mapped!");
+    if (fileMapAddr_ == MAP_FAILED) {
+        return;
+    }
     auto realSize = PIECE_HEAD_LEN + size;
     CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
         realSize, strerror(errno));

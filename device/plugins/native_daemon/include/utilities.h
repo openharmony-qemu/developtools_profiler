@@ -300,7 +300,7 @@ float Percentage(const T &a, const T &b)
 }
 
 bool PowerOfTwo(int n);
-int GetValueFromJsonFile(const std::string& filePath, const std::string key);
+int GetValueFromJsonFile(const std::string& filePath, const std::string& key);
 
 #define INDENT_ONE_LEVEL (indent + 1)
 #define INDENT_TWO_LEVEL (indent + 2)

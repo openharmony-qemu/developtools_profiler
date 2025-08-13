@@ -27,8 +27,8 @@ void StackBuilder::FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, Ho
     callFrames.emplace_back(rawStack->stackContext->mallocSize | SIZE_MASK);
 }
 
-FpStackBuilder::FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime)
-    : StackBuilder(config, runtime)
+FpStackBuilder::FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime,
+                               std::mutex& mtx) : StackBuilder(config, runtime, mtx)
 {
     if (hookConfig_->fp_unwind() && hookConfig_->js_stack_report() > 0) {
         g_fpJsCallStacks.reserve(hookConfig_->max_js_stack_depth());
@@ -39,6 +39,7 @@ void FpStackBuilder::PrepareUnwind(HookRecordPtr hookRecord)
 {
     auto rawData = hookRecord->GetRawStack();
     if (runtimeInstance_ != nullptr) {
+        std::lock_guard<std::mutex> guard(mtx_);
         runtimeInstance_->UpdateThread(rawData->stackContext->pid, rawData->stackContext->tid);
     }
 }
@@ -127,8 +128,8 @@ bool FpStackBuilder::IsRecordInfoValid(HookRecordPtr hookRecord)
     return hookRecord->IsValid();
 }
 
-DwarfStackBuilder::DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime)
-    : StackBuilder(config, runtime)
+DwarfStackBuilder::DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime,
+                                     std::mutex& mtx) : StackBuilder(config, runtime, mtx)
 {
     minStackDepth_ = std::min(hookConfig_->max_stack_depth(), MIN_STACK_DEPTH);
     if (hookConfig_->blocked()) {
@@ -156,9 +157,11 @@ void DwarfStackBuilder::FillIps(std::vector<CallFrame>& callFrames, HookRecordPt
     if (memcpy_s(g_u64regs.data(), sizeof(uint64_t) * PERF_REG_ARM64_MAX, rawData->data,
         sizeof(uint64_t) * PERF_REG_ARM64_MAX) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s regs failed");
+        return;
     }
 #endif
     const size_t unwindDepth = rawData->reduceStackFlag ? minStackDepth_ : stackDepth_;
+    std::lock_guard<std::mutex> guard(mtx_);
     runtimeInstance_->UnwindStack(g_u64regs, rawData->stackData, rawData->stackSize,
                                   rawData->stackContext->pid, rawData->stackContext->tid, callFrames, unwindDepth);
 }
@@ -169,6 +172,7 @@ void DwarfStackBuilder::FillJsSymbols(std::vector<CallFrame>& callFrames, HookRe
         return;
     }
     auto rawData = hookRecord->GetRawStack();
+    std::lock_guard<std::mutex> guard(mtx_);
     runtimeInstance_->GetSymbolName(rawData->stackContext->pid, rawData->stackContext->tid, callFrames,
                                     FILTER_STACK_DEPTH, true, SymbolType::JS_SYMBOL);
 }
@@ -179,6 +183,7 @@ void DwarfStackBuilder::FillNativeSymbols(std::vector<CallFrame>& callFrames, Ho
     if (callFrames.size() <= FILTER_STACK_DEPTH) {
         return;
     }
+    std::lock_guard<std::mutex> guard(mtx_);
     runtimeInstance_->GetSymbolName(rawData->stackContext->pid, rawData->stackContext->tid, callFrames,
                                     FILTER_STACK_DEPTH, true, SymbolType::NATIVE_SYMBOL);
 }
@@ -201,13 +206,13 @@ void DwarfStackBuilder::ReplaceErrStack(std::vector<CallFrame>& callFrames)
     jsCallFrame.filePath_ = "no-file-path";
 }
 
-BuildStackDirector::BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime)
-    : hookConfig_(config)
+BuildStackDirector::BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime,
+                                       std::mutex& mtx) : hookConfig_(config)
 {
     if (hookConfig_->fp_unwind()) {
-        builder_ = std::make_shared<FpStackBuilder>(hookConfig_, runtime);
+        builder_ = std::make_shared<FpStackBuilder>(hookConfig_, runtime, mtx);
     } else {
-        builder_ = std::make_shared<DwarfStackBuilder>(hookConfig_, runtime);
+        builder_ = std::make_shared<DwarfStackBuilder>(hookConfig_, runtime, mtx);
     }
 }
 

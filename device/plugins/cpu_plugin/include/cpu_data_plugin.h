@@ -23,7 +23,6 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-
 #include "cpu_plugin_config.pb.h"
 #include "cpu_plugin_result.pb.h"
 #include "logging.h"

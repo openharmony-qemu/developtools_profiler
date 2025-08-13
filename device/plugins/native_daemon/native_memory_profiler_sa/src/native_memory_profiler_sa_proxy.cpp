@@ -88,7 +88,7 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     XCollieCallback callbackFunc = [](void *) {
         int pidVal = 0;
         if (!COMMON::IsProcessExist("native_daemon", pidVal)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop native_daemon doesn't exist!");
+            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy native_daemon doesn't exist!");
         } else {
             HiviewDFX::DfxDumpCatcher dumplog;
             std::string msg = "";

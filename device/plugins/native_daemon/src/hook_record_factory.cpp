@@ -210,6 +210,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
         uint64_t freeAddr = 0;
         if (memcpy_s(&freeAddr, sizeof(freeAddr), sharedMemData, size) != EOK) {
             PROFILER_LOG_ERROR(LOG_CORE, "GetHookRecord memcpy failed");
+            return nullptr;
         }
         auto freeRecord = GetRecordFromCache(freeRecordSimpCache_, FREE_MSG_SIMP);
         freeRecord->SetAddr(freeAddr);
@@ -239,7 +240,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     if (hookConfig_.fp_unwind()) {
         rawStack->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
     } else {
-        int rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
+        size_t rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
         rawStack->stackSize = size - rawRealSize;
         if (rawStack->stackSize > 0) {
             rawStack->stackData = rawStack->baseStackData.get() + rawRealSize;

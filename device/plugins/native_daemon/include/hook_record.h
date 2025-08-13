@@ -35,7 +35,7 @@ struct RawStack {
     std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
     BaseStackRawData* stackContext = nullptr; // points to the foundation type data
     union {
-        uint8_t* stackData;
+        uint8_t* stackData; //cannot initializa mutiple members of union
         const char* jsStackData = nullptr;
     };
     uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
@@ -57,7 +57,7 @@ struct RawStack {
 };
 
 struct SerializeInfo {
-    std::vector<CallFrame>* callFrames;
+    std::vector<CallFrame>* callFrames = nullptr;
     uint32_t stackMapId = 0;
     std::string tagName = "";
     NativeHookConfig* config = nullptr;
@@ -96,7 +96,7 @@ public:
     template <typename T>
     void SetSize(T* event);
 
-    virtual ~HookRecord() {};
+    virtual ~HookRecord() = default;
     RawStackPtr rawStack_ = nullptr;
 };
 
@@ -104,15 +104,14 @@ using HookRecordPtr = STD_PTR(shared, OHOS::Developtools::NativeDaemon::HookReco
 
 class FreeRecord : public HookRecord {
 public:
-    FreeRecord() {};
+    FreeRecord() = default;
     FreeRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
-    ~FreeRecord() {};
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class FreeRecordSimp : public HookRecord {
 public:
-    FreeRecordSimp() {};
+    FreeRecordSimp() = default;
     FreeRecordSimp(uint64_t freeAddr) : freeAddr_(freeAddr) {};
     ~FreeRecordSimp() {};
     uint16_t GetType() override
@@ -146,47 +145,47 @@ private:
 
 class MallocRecord : public HookRecord {
 public:
-    MallocRecord() {};
+    MallocRecord() = default;
     MallocRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MmapRecord : public HookRecord {
 public:
-    MmapRecord() {};
+    MmapRecord() = default;
     MmapRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MmapFilePageRecord : public HookRecord {
 public:
     MmapFilePageRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MunmapRecord : public HookRecord {
 public:
-    MunmapRecord() {};
+    MunmapRecord() = default;
     MunmapRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class PrSetVmaRecord : public HookRecord {
 public:
     PrSetVmaRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MemoryUsingRecord : public HookRecord {
 public:
     MemoryUsingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MemoryUnusingRecord : public HookRecord {
 public:
     MemoryUnusingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
-    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo);
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class NmdRecord : public HookRecord {
@@ -196,7 +195,7 @@ public:
 
 class JsRecord : public HookRecord {
 public:
-    JsRecord() {};
+    JsRecord() = default;
     JsRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
 };
 

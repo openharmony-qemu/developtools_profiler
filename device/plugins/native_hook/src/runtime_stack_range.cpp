@@ -155,6 +155,7 @@ bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLi
         if (strstr(mapInfo, targetedLib.c_str()) != nullptr) {
             std::string lineStr = mapInfo;
             GetStandardLibraryRange(lineStr, true);
+            ret = true;
         }
     }
     if (fclose(fp) != 0) {

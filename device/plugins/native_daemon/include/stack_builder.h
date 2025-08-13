@@ -24,9 +24,9 @@ namespace OHOS::Developtools::NativeDaemon {
 class StackBuilder {
 public:
     StackBuilder() = delete;
-    StackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime)
-        : hookConfig_(config), runtimeInstance_(runtime) {};
-    virtual ~StackBuilder() {};
+    StackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx)
+        : hookConfig_(config), runtimeInstance_(runtime), mtx_(mtx) {};
+    virtual ~StackBuilder() = default;
     virtual void PrepareUnwind(HookRecordPtr hookRecord) {};
     virtual void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
     virtual void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
@@ -36,19 +36,20 @@ public:
     virtual void ReplaceErrStack(std::vector<CallFrame>& callFrames) {};
 
 protected:
-    NativeHookConfig* hookConfig_;
+    NativeHookConfig* hookConfig_{nullptr};
     std::shared_ptr<VirtualRuntime> runtimeInstance_{nullptr};
+    std::mutex& mtx_;
 };
 
 class FpStackBuilder : public StackBuilder {
 public:
     FpStackBuilder() = delete;
-    FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
-    void PrepareUnwind(HookRecordPtr hookRecord);
-    void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    bool IsRecordInfoValid(HookRecordPtr hookRecord);
+    FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
+    void PrepareUnwind(HookRecordPtr hookRecord) override;
+    void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void FillJsFrame(CallFrame& jsCallFrame);
 
 private:
@@ -58,12 +59,12 @@ private:
 class DwarfStackBuilder : public StackBuilder {
 public:
     DwarfStackBuilder() = delete;
-    DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
-    void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
-    bool IsRecordInfoValid(HookRecordPtr hookRecord);
-    void ReplaceErrStack(std::vector<CallFrame>& callFrames);
+    DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
+    void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
+    void ReplaceErrStack(std::vector<CallFrame>& callFrames) override;
 
 private:
     size_t stackDepth_ = 0;
@@ -73,7 +74,7 @@ private:
 class BuildStackDirector {
 public:
     BuildStackDirector() = delete;
-    BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime);
+    BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
     std::vector<CallFrame>& ConstructCallFrames(HookRecordPtr hookRecord);
     void SetBuilder(std::shared_ptr<StackBuilder> builder)
     {
@@ -83,7 +84,7 @@ public:
 
 private:
     std::shared_ptr<StackBuilder> builder_{nullptr};
-    NativeHookConfig* hookConfig_;
+    NativeHookConfig* hookConfig_ {nullptr};
     std::vector<CallFrame> callFrames_;
 };
 }

@@ -104,7 +104,7 @@ public:
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void WriteHookConfig();
     void DumpNmdInfo(const char* nmdResult);
-    std::string GetCmdArgs(NativeHookConfig traceConfig);
+    std::string GetCmdArgs(const NativeHookConfig& traceConfig);
     std::vector<int> GetFds(int32_t pid, const std::string& name, int sharedMemCount);
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
     {
