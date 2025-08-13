@@ -876,7 +876,7 @@ bool UpdateGwpAsanParams(napi_env env, napi_callback_info info, GwpAsanParams& g
     napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     switch (argc) {
         case ENABLE_ARGS_TWO_PARAMS:
-            if (!GetNapiInt32Value(env, argv[SECOND_POS],gwpAsanParams.duration ) ||
+            if (!GetNapiInt32Value(env, argv[SECOND_POS], gwpAsanParams.duration) ||
                 gwpAsanParams.duration <= 0) {
                 paramErrorMessage = "Invalid parameter, set duration must be a num.";
                 return false;

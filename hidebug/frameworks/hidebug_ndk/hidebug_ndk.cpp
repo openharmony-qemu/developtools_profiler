@@ -132,7 +132,7 @@ void OH_HiDebug_GetSystemMemInfo(HiDebug_SystemMemInfo *systemMemInfo)
     }
 }
 
-inline HiDebug_ErrorCode ConvertTraceErrorCode(OHOS::HiviewDFX::TraceErrorCode traceErrorCode)
+HiDebug_ErrorCode ConvertTraceErrorCode(OHOS::HiviewDFX::TraceErrorCode traceErrorCode)
 {
     switch (traceErrorCode) {
         case OHOS::HiviewDFX::TRACE_SUCCESS:

@@ -55,8 +55,9 @@ HWTEST_F(HidebugNativeInterfaceTest, IsDebuggerConnectedTest, TestSize.Level0)
  */
 HWTEST_F(HidebugNativeInterfaceTest, GetVssTest, TestSize.Level0)
 {
-    auto vssInfo = HidebugNativeInterface::GetInstance().GetVss();
-    ASSERT_FALSE(vssInfo);
+    auto& interface = HidebugNativeInterface::GetInstance();
+    auto vssInfo = interface.GetVss();
+    ASSERT_TRUE(vssInfo);
     ASSERT_GE(vssInfo.value(), 0);
 }
 

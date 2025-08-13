@@ -161,7 +161,7 @@ TraceErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, u
     if (flag != TraceFlag::FLAG_MAIN_THREAD && flag != TraceFlag::FLAG_ALL_THREAD) {
         return TRACE_INVALID_ARGUMENT;
     }
-    auto ret =StartCaptureAppTrace(static_cast<TraceFlag>(flag), tags, limitsize, file);
+    auto ret = StartCaptureAppTrace(static_cast<TraceFlag>(flag), tags, limitsize, file);
     if (ret == RET_SUCC) {
         return TRACE_SUCCESS;
     }

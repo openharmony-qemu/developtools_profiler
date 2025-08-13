@@ -19,6 +19,7 @@ module_output_path = "hiprofiler/hidebug/"
 ohos_unittest("hidebug_test") {
   module_out_path = module_output_path
   sources = [
+    "hiappevent_util_test.cpp",
     "hidebug_backtrace_test.cpp",
     "hidebug_native_interface_test.cpp",
     "hidebug_test.cpp",
