@@ -80,8 +80,8 @@ public:
     bool IsRecordUnwindable(HookRecordPtr);
 
 private:
-    std::shared_ptr<StackBuilder> builder_ {nullptr};
-    NativeHookConfig* hookConfig_ {nullptr};
+    std::shared_ptr<StackBuilder> builder_{nullptr};
+    NativeHookConfig* hookConfig_{nullptr};
     std::vector<CallFrame> callFrames_;
 };
 }
