@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef STACK_BUILDER_TEST
-#define STACK_BUILDER_TEST
+#ifndef STACK_BUILDER_TEST_H
+#define STACK_BUILDER_TEST_H
  
 #include <gtest/gtest.h>
 #include <hilog_base/log_base.h>

@@ -17,6 +17,7 @@
 #include <grpcpp/health_check_service_interface.h>
 #include <gtest/gtest.h>
 #include <thread>
+
 #include "command_poller.h"
 #include "grpc/impl/codegen/log.h"
 #include "logging.h"

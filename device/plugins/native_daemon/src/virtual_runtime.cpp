@@ -72,7 +72,6 @@ std::string VirtualRuntime::ReadThreadName(pid_t tid)
 
 VirtualThread &VirtualRuntime::UpdateThread(pid_t pid, pid_t tid, const std::string name)
 {
-    std::lock_guard<std::mutex> guard(mtx_);
     pid_ = pid;
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
@@ -130,7 +129,6 @@ void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
 bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
                                    SymbolType type)
 {
-    std::lock_guard<std::mutex> guard(mtx_);
 #ifdef HIPERF_DEBUG_TIME
     const auto startTime = steady_clock::now();
 #endif
@@ -222,7 +220,6 @@ bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
     // if we have userstack ?
     auto &thread = UpdateThread(pid, tid);
     if (stack_size > 0) {
-        std::lock_guard<std::mutex> guard(mtx_);
         callstack_.UnwindCallStack(thread, &regs[0], regs.size(), stack_addr, stack_size, callFrames, maxStackLevel,
             hookConfig_.js_stack_report() > 0 ? hookConfig_.max_js_stack_depth() : 0,
             hookConfig_.js_stack_report() > 0);
@@ -524,7 +521,6 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
 
 void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
-    std::lock_guard<std::mutex> guard(mtx_);
     if (info.size() != INFO_SIZE) {
         return;
     }

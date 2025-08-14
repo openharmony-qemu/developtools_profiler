@@ -535,10 +535,11 @@ HWTEST_F(FfrtPofilerTest, TestFunction022, TestSize.Level1)
 //  */
 HWTEST_F(FfrtPofilerTest, TestFunction023, TestSize.Level1)
 {
-    StartProcess(FFRT_TEST_EXE, "100");
-    std::string cmd = CreateCommand(OUTPUT_PATH, 10, "pid", std::to_string(ffrtPrfolerExePid_));
-    auto res = GetProcessName(ffrtPrfolerExePid_);
-    EXPECT_EQ(res, "ffrt_profiler_ut");
+    std::string pid_str;
+    RunCommand("pidof render_service", pid_str);
+    auto pid_service = stoi(pid_str);
+    auto res = GetProcessName(pid_service);
+    EXPECT_EQ(res, "render_service");
 }
 
 // /**

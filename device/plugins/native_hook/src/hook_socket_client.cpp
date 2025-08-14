@@ -79,9 +79,10 @@ static void NmdWriteStat(void *arg, const char *buf)
 }
 
 HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
-                                   std::atomic<Range>* targetedRange, void (*disableHookCallback)())
+                                   std::atomic<Range>* targetedRange, std::atomic<int>* memCount,
+                                   void (*disableHookCallback)())
     : pid_(pid), config_(config), sampler_(sampler), targetedRange_(targetedRange),
-      disableHookCallback_(disableHookCallback)
+      sharedMemCount_(memCount), disableHookCallback_(disableHookCallback)
 {
     g_disableHook = true;
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
@@ -130,7 +131,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     std::string configStr = config_->ToString();
     sampler_->InitSampling(config_->sampleInterval);
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
-    for (size_t i = 0; i < sharedMemCount; ++i) {
+    for (int i = 0; i < sharedMemCount; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();
         int eventfd = context.ReceiveFileDiscriptor();
         smbFds_.push_back(smbfd);
@@ -142,6 +143,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     }
     nmdType_ = config_->nmdType;
     g_disableHook = false;
+    if (sharedMemCount_ != nullptr) {
+        *sharedMemCount_ = sharedMemCount;
+    }
     largestSize_ = config_->largestSize;
     secondLargestSize_ = config_->secondLargestSize;
     maxGrowthSize_ = config_->maxGrowthSize;
@@ -153,8 +157,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     } else if (nmdType_ == SIMP_NMD) {
         SendSimplifiedNmdInfo();
     }
-    if (!config_->targetSoName.empty()) {
-        ParseTargetedMaps(*targetedRange_, config_->targetSoName);
+    if (!config_->targetSoName.empty() && !ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
+        return false;
     }
     return true;
 }
@@ -203,7 +208,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
 
 void HookSocketClient::Flush()
 {
-    for (int i = 0; i < stackWriterList_.size(); ++i) {
+    for (size_t i = 0; i < stackWriterList_.size(); ++i) {
         if (stackWriterList_[i] == nullptr || unixSocketClient_ == nullptr) {
             return;
         }
