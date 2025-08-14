@@ -19,9 +19,11 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
+#include <mutex>
 #include <string>
+#include <vector>
 
+#include "hidebug_native_type.h"
 namespace OHOS {
 namespace HiviewDFX {
 
@@ -33,21 +35,32 @@ template<typename T>
 class CachedValue {
 public:
     CachedValue() = default;
-    std::optional<T> GetOrUpdateCachedValue(int64_t effectiveTime, std::function<bool(T &)> getValue)
+    std::pair<int, T> GetOrUpdateCachedValue(int64_t effectiveTime, std::function<int(T &)> getValue)
     {
+        std::pair<int, T> ret;
         int64_t currentTime = GetElapsedNanoSecondsSinceBoot();
-        if (currentTime <= updateTime_ + effectiveTime) {
-            return cachedValue_;
+        if (currentTime > updateTime_ + effectiveTime) {
+            std::unique_lock<std::mutex> lock(updateValueMutex_);
+            if (currentTime > updateTime_ + effectiveTime) {
+                ret.first = getValue(ret.second);
+                if (ret.first == NATIVE_SUCCESS) {
+                    std::unique_lock<std::mutex> lockCacheValue(cachedValueMutex_);
+                    cachedValue_ = ret.second;
+                    updateTime_ = currentTime;
+                }
+                return ret;
+            }
         }
-        if (getValue(cachedValue_)) {
-            updateTime_ = currentTime;
-            return cachedValue_;
-        }
-        return {};
+        std::unique_lock<std::mutex> lockCacheValue(cachedValueMutex_);
+        ret.second = cachedValue_;
+        ret.first = NATIVE_SUCCESS;
+        return ret;
     }
 
 private:
     T cachedValue_;
+    std::mutex cachedValueMutex_;
+    std::mutex updateValueMutex_;
     int64_t updateTime_ = INT64_MIN;
 };
 
@@ -93,6 +106,10 @@ bool IsBetaVersion();
 bool IsDebuggableHap();
 
 bool IsDeveloperOptionsEnabled();
+
+bool CheckVersionType(const std::string& type, const std::string& key);
+
+bool CreateResourceLimitDir();
 }
 }
 #endif // HIDEBUG_UTIL_H_

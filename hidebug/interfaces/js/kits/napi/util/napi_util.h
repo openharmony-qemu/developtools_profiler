@@ -18,6 +18,7 @@
 
 #include "napi/native_api.h"
 
+#include <cstdint>
 #include <functional>
 #include <string>
 #include <type_traits>
@@ -33,9 +34,19 @@ napi_value CreateUndefined(napi_env env);
 
 bool MatchValueType(napi_env env, napi_value value, napi_valuetype targetType);
 
+bool GetNapiArrayLength(napi_env env, napi_value value, uint32_t& ret);
+
+bool GetNapiInt32Value(napi_env env, napi_value value, int32_t& ret);
+
+bool GetNapiUint32Value(napi_env env, napi_value value, uint32_t& ret);
+
+bool GetNapiDoubleValue(napi_env env, napi_value value, double& ret);
+
 bool GetNapiBoolValue(napi_env env, napi_value value, bool& ret);
 
 bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t maxSize);
+
+bool GetNapiObjectProperty(napi_env env, napi_value value, const std::string& propertyName, napi_value& ret);
 
 bool GetTheOnlyStringParam(napi_env env, napi_callback_info info, std::string &fileName);
 

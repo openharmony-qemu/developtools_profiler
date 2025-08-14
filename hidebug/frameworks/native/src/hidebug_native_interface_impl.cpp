@@ -41,19 +41,24 @@ namespace HiviewDFX {
 namespace {
 constexpr int64_t SECOND_TO_NANOSECOND = 1000 * 1000 * 1000;
 
-bool GetNativeMemInfo(HiDebug_NativeMemInfo& nativeMemInfo)
+int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
         HILOG_ERROR(LOG_CORE, "GetAppNativeMemInfo Failed");
-        return false;
+        return NATIVE_FAIL;
     }
     int pid = getprocpid();
     auto collectResult = collector->CollectProcessMemory(pid);
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "CollectProcessMemory Failed,retCode = %{public}d",
                     static_cast<int>(collectResult.retCode));
-        return false;
+        return NATIVE_FAIL;
+    }
+    auto collectVss = collector->CollectProcessVss(pid);
+    if (collectVss.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectVss.retCode));
+        return NATIVE_FAIL;
     }
     nativeMemInfo.pss = static_cast<uint32_t>(collectResult.data.pss) +
         static_cast<uint32_t>(collectResult.data.swapPss);
@@ -62,14 +67,42 @@ bool GetNativeMemInfo(HiDebug_NativeMemInfo& nativeMemInfo)
     nativeMemInfo.privateDirty = static_cast<uint32_t>(collectResult.data.privateDirty);
     nativeMemInfo.sharedClean = static_cast<uint32_t>(collectResult.data.sharedClean);
     nativeMemInfo.privateClean = static_cast<uint32_t>(collectResult.data.privateClean);
-
-    auto collectVss = collector->CollectProcessVss(pid);
-    if (collectVss.retCode != UCollect::UcError::SUCCESS) {
-        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectVss.retCode));
-        return false;
-    }
     nativeMemInfo.vss = static_cast<uint32_t>(collectVss.data);
-    return true;
+    return NATIVE_SUCCESS;
+}
+
+int GetGraphicMemoryInfo(int32_t& graphicMemoryInfo)
+{
+    auto collector = UCollectClient::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed");
+        return NATIVE_FAIL;
+    }
+    auto collectResult = collector->GetGraphicUsage();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS || collectResult.data < 0) {
+        HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return NATIVE_FAIL;
+    }
+    graphicMemoryInfo = collectResult.data;
+    return NATIVE_SUCCESS;
+}
+
+int GetSystemCpuUsageInfo(double& cpuUsage)
+{
+    std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed");
+        return NATIVE_FAIL;
+    }
+    auto collectResult = collector->GetSysCpuUsage();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, retCode: %{public}d",
+                    static_cast<int>(collectResult.retCode));
+        return NATIVE_FAIL;
+    }
+    cpuUsage = collectResult.data;
+    return NATIVE_SUCCESS;
 }
 }
 
@@ -80,14 +113,15 @@ public:
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
-    HiDebug_ErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
+    TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
-    HiDebug_ErrorCode StopAppTraceCapture() override;
+    TraceErrorCode StopAppTraceCapture() override;
     int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
-    std::optional<MemoryLimit> GetAppMemoryLimit() override;
-    std::optional<HiDebug_NativeMemInfo> GetAppNativeMemInfo(bool withCache) override;
-    std::optional<SysMemory> GetSystemMemInfo() override;
+    std::optional<MemoryLimitInfo> GetAppMemoryLimit() override;
+    std::optional<uint64_t> GetVss() override;
+    std::optional<NativeMemInfo> GetAppNativeMemInfo(bool withCache) override;
+    std::optional<SystemMemoryInfo> GetSystemMemInfo() override;
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
 private:
@@ -104,9 +138,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
     std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
     pid_t pid = getprocpid();
-    float tmpCpuUsage = dumpUsage->GetCpuUsage(pid);
-    double cpuUsage = static_cast<double>(tmpCpuUsage);
-    return cpuUsage;
+    return dumpUsage->GetCpuUsage(pid);
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
@@ -123,35 +155,38 @@ std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
     return threadMap;
 }
 
-HiDebug_ErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
+TraceErrorCode HidebugNativeInterfaceImpl::StartAppTraceCapture(uint64_t tags, uint32_t flag,
     uint32_t limitsize, std::string &file)
 {
-    auto ret = StartCaptureAppTrace((TraceFlag)flag, tags, limitsize, file);
+    if (flag != TraceFlag::FLAG_MAIN_THREAD && flag != TraceFlag::FLAG_ALL_THREAD) {
+        return TRACE_INVALID_ARGUMENT;
+    }
+    auto ret = StartCaptureAppTrace(static_cast<TraceFlag>(flag), tags, limitsize, file);
     if (ret == RET_SUCC) {
-        return HIDEBUG_SUCCESS;
+        return TRACE_SUCCESS;
     }
     if (ret == RET_FAIL_INVALID_ARGS) {
-        return HIDEBUG_INVALID_ARGUMENT;
+        return TRACE_INVALID_ARGUMENT;
     }
     if (ret == RET_STARTED) {
-        return HIDEBUG_TRACE_CAPTURED_ALREADY;
+        return TRACE_CAPTURED_ALREADY;
     }
     if (ret == RET_FAIL_MKDIR || ret == RET_FAIL_SETACL || ret == RET_FAIL_EACCES || ret == RET_FAIL_ENOENT) {
-        return HIDEBUG_NO_PERMISSION;
+        return TRACE_NO_PERMISSION;
     }
-    return HIDEBUG_TRACE_ABNORMAL;
+    return TRACE_ABNORMAL;
 }
 
-HiDebug_ErrorCode HidebugNativeInterfaceImpl::StopAppTraceCapture()
+TraceErrorCode HidebugNativeInterfaceImpl::StopAppTraceCapture()
 {
     auto ret = StopCaptureAppTrace();
     if (ret == RET_SUCC) {
-        return HIDEBUG_SUCCESS;
+        return TRACE_SUCCESS;
     }
     if (ret == RET_STOPPED) {
-        return HIDEBUG_NO_TRACE_RUNNING;
+        return NO_TRACE_RUNNING;
     }
-    return HIDEBUG_TRACE_ABNORMAL;
+    return TRACE_ABNORMAL;
 }
 
 std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
@@ -159,24 +194,14 @@ std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
     static CachedValue<double> cachedCpuUsage;
     HILOG_INFO(LOG_CORE, "GetSystemCpuUsage");
     constexpr int64_t effectiveTime = 2 * SECOND_TO_NANOSECOND;
-    return cachedCpuUsage.GetOrUpdateCachedValue(effectiveTime, [](double& cachedValue) {
-        std::shared_ptr<UCollectClient::CpuCollector> collector = UCollectClient::CpuCollector::Create();
-        if (!collector) {
-            HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed");
-            return false;
-        }
-        auto collectResult = collector->GetSysCpuUsage();
-        if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-            HILOG_ERROR(LOG_CORE, "GetSystemCpuUsage Failed, retCode: %{public}d",
-                        static_cast<int>(collectResult.retCode));
-            return false;
-        }
-        cachedValue = collectResult.data;
-        return true;
-    });
+    auto ret = cachedCpuUsage.GetOrUpdateCachedValue(effectiveTime, GetSystemCpuUsageInfo);
+    if (ret.first == NATIVE_SUCCESS) {
+        return ret.second;
+    }
+    return {};
 }
 
-std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
+std::optional<MemoryLimitInfo> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
 {
     auto collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
@@ -189,20 +214,40 @@ std::optional<MemoryLimit> HidebugNativeInterfaceImpl::GetAppMemoryLimit()
         return {};
     }
 
-    MemoryLimit memoryLimit;
+    MemoryLimitInfo memoryLimit;
     memoryLimit.vssLimit = collectResult.data.vssLimit;
     memoryLimit.rssLimit = collectResult.data.rssLimit;
     return memoryLimit;
 }
 
-std::optional<HiDebug_NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMemInfo(bool withCache)
+std::optional<NativeMemInfo> HidebugNativeInterfaceImpl::GetAppNativeMemInfo(bool withCache)
 {
-    static CachedValue<HiDebug_NativeMemInfo> cachedNativeMemInfo;
+    static CachedValue<NativeMemInfo> cachedNativeMemInfo;
     constexpr int64_t effectiveTime = 5 * 60 * SECOND_TO_NANOSECOND;
-    return cachedNativeMemInfo.GetOrUpdateCachedValue(withCache ? effectiveTime : 0, GetNativeMemInfo);
+    auto ret = cachedNativeMemInfo.GetOrUpdateCachedValue(withCache ? effectiveTime : 0, GetNativeMemInfo);
+    if (ret.first == NATIVE_SUCCESS) {
+        return ret.second;
+    }
+    return {};
 }
 
-std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
+std::optional<uint64_t> HidebugNativeInterfaceImpl::GetVss()
+{
+    std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
+    if (!collector) {
+        HILOG_ERROR(LOG_CORE, "GetVssInfo Failed");
+        return {};
+    }
+    int pid = getprocpid();
+    auto collectVss = collector->CollectProcessVss(pid);
+    if (collectVss.retCode != UCollect::UcError::SUCCESS) {
+        HILOG_ERROR(LOG_CORE, "CollectProcessVss Failed,retCode = %{public}d", static_cast<int>(collectVss.retCode));
+        return {};
+    }
+    return collectVss.data;
+}
+
+std::optional<SystemMemoryInfo> HidebugNativeInterfaceImpl::GetSystemMemInfo()
 {
     std::shared_ptr<UCollectUtil::MemoryCollector> collector = UCollectUtil::MemoryCollector::Create();
     if (!collector) {
@@ -215,12 +260,11 @@ std::optional<SysMemory> HidebugNativeInterfaceImpl::GetSystemMemInfo()
                     static_cast<int>(collectResult.retCode));
         return {};
     }
-
-    SysMemory sysMemInfo;
-    sysMemInfo.memTotal = collectResult.data.memTotal;
-    sysMemInfo.memFree = collectResult.data.memFree;
-    sysMemInfo.memAvailable = collectResult.data.memAvailable;
-    return sysMemInfo;
+    SystemMemoryInfo systemMemoryInfo{};
+    systemMemoryInfo.totalMem = static_cast<uint32_t>(collectResult.data.memTotal);
+    systemMemoryInfo.freeMem = static_cast<uint32_t>(collectResult.data.memFree);
+    systemMemoryInfo.availableMem = static_cast<uint32_t>(collectResult.data.memAvailable);
+    return systemMemoryInfo;
 }
 
 int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
@@ -230,7 +274,7 @@ int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
     auto memoryCollect = UCollectClient::MemoryCollector::Create();
     if (!memoryCollect) {
         HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, return result");
-        return MemoryState::MEMORY_FAILED;
+        return NATIVE_FAIL;
     }
     UCollectClient::MemoryCaller memoryCaller;
     memoryCaller.pid = getprocpid();
@@ -241,10 +285,10 @@ int HidebugNativeInterfaceImpl::GetMemoryLeakResource(const std::string& type,
     if (result.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "GetMemoryLeakResource Failed, retCode: %{public}d, return the last result",
             static_cast<int>(result.retCode));
-        return MemoryState::MEMORY_FAILED;
+        return NATIVE_FAIL;
     }
     HILOG_DEBUG(LOG_CORE, "GetMemoryLeakResource Success, retCode: %{public}d", static_cast<int>(result.retCode));
-    return MemoryState::MEMORY_SUCCESS;
+    return NATIVE_SUCCESS;
 }
 
 bool HidebugNativeInterfaceImpl::IsDebuggerConnected()
@@ -270,21 +314,11 @@ std::optional<int32_t> HidebugNativeInterfaceImpl::GetGraphicsMemory()
 {
     static CachedValue<int32_t> cachedGraphicUsage;
     constexpr int64_t effectiveTime = 2 * SECOND_TO_NANOSECOND; // 2s
-    return cachedGraphicUsage.GetOrUpdateCachedValue(effectiveTime, [](int32_t& cachedValue) {
-        auto collector = UCollectClient::MemoryCollector::Create();
-        if (!collector) {
-            HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed");
-            return false;
-        }
-        auto collectResult = collector->GetGraphicUsage();
-        if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-            HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
-                        static_cast<int>(collectResult.retCode));
-            return false;
-        }
-        cachedValue = collectResult.data;
-        return true;
-    });
+    auto ret = cachedGraphicUsage.GetOrUpdateCachedValue(effectiveTime, GetGraphicMemoryInfo);
+    if (ret.first == NATIVE_SUCCESS) {
+        return ret.second;
+    }
+    return {};
 }
 }
 }

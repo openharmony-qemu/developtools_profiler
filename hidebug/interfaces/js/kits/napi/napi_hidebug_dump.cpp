@@ -24,7 +24,6 @@
 #include <sys/statvfs.h>
 
 #include "application_context.h"
-#include "common.h"
 #include "error_code.h"
 #include "hiappevent_util.h"
 #include "hidebug_util.h"

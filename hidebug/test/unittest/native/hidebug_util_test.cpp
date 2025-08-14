@@ -212,5 +212,34 @@ HWTEST_F(HidebugUtilTest, IsDeveloperOptionsEnabledTest, TestSize.Level1)
     IsDeveloperOptionsEnabled();
     ASSERT_TRUE(true);
 }
+
+/**
+ * @tc.name: CheckVersionTypeTest
+ * @tc.desc: test CheckVersionType.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugUtilTest, CheckVersionTypeTest, TestSize.Level1)
+{
+    constexpr auto testKey = "TEST_HIDEBUG_UTIL";
+    constexpr auto testValue1 = "unknown";
+    constexpr auto testValue2 = "unknown2";
+    ASSERT_TRUE(CheckVersionType(testValue1, testKey));
+    ASSERT_FALSE(CheckVersionType(testValue2, testKey));
+}
+
+/**
+ * @tc.name: CreateResourceLimitDirTest
+ * @tc.desc: test CreateResourceLimitDir.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugUtilTest, CreateResourceLimitDirTest, TestSize.Level1)
+{
+    auto ret1 = CreateResourceLimitDir();
+    ASSERT_TRUE(ret1);
+    auto ret2 = CreateResourceLimitDir();
+    ASSERT_TRUE(ret2);
+    constexpr auto resourceLimitDir = "/data/storage/el2/log/resourcelimit/";
+    ASSERT_EQ(access(resourceLimitDir, F_OK), 0);
+}
 }
 }

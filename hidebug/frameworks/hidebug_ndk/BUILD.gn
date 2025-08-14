@@ -32,8 +32,6 @@ ohos_shared_library("ohhidebug") {
     "bounds_checking_function:libsec_shared",
     "faultloggerd:libbacktrace_local",
     "hilog:libhilog",
-    "hitrace:hitrace_meter",
-    "hiview:libucollection_utility",
   ]
 
   innerapi_tags = [ "ndk" ]

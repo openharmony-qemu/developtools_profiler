@@ -65,7 +65,7 @@ void SingleRecordReporter::ReportRecord(const std::string& apiName, int errorCod
         event.AddParam("sdk_name", std::string("PerformanceAnalysisKit"));
         event.AddParam("begin_time", beginTime);
         event.AddParam("end_time", endTime);
-        event.AddParam("result", static_cast<int>(errorCode == 0));
+        event.AddParam("result", errorCode ? 1 : 0);
         event.AddParam("error_code", errorCode);
         Write(event);
     };

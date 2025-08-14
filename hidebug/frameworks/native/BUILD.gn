@@ -75,5 +75,6 @@ ohos_shared_library("hidebug_native") {
     "hiview:libucollection_utility",
     "init:libbegetutil",
     "ipc:ipc_single",
+    "storage_service:storage_manager_acl",
   ]
 }

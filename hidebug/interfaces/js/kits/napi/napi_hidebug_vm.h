@@ -24,15 +24,8 @@
 
 namespace OHOS {
 namespace HiviewDFX {
-class GC {
-public:
-    static napi_value GetGcCount(napi_env env);
-    static napi_value GetGcTime(napi_env env);
-    static napi_value GetGcBytesAllocated(napi_env env);
-    static napi_value GetGcBytesFreed(napi_env env);
-    static napi_value GetFullGcLongTimeCount(napi_env env);
-    static std::map<std::string, napi_value (*)(napi_env value)> vmGcMap_;
-};
+napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info);
+napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info);
 }
 }
 #endif //HIVIEWDFX_NAPI_HIDEBUG_GC_H
