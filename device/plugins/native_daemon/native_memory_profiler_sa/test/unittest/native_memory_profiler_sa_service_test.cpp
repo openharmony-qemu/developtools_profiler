@@ -18,25 +18,42 @@
 
 #include <gtest/gtest.h>
 #include <memory>
-
+#include "test_common.h"
 #include "init_param.h"
 #include "native_memory_profiler_sa_service.h"
 #include "utilities.h"
-
+#include "token_setproc.h"
+#include "accesstoken_kit.h"
+using namespace OHOS::Security::AccessToken;
 using namespace testing::ext;
 
 namespace {
 const std::string TEST_PROC_NAME = "hiview";
+const std::string TEST_NATIVE_NAME = "foundation";
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 constexpr uint32_t TEST_DURATION = 10;
 constexpr uint32_t TEST_SHARE_MEMORY_SIZE = 4096;
+static AccessTokenID g_selfTokenId;
+static TEST_COMMON::MockNativeToken* g_mock = nullptr;
 }
 
 class NativeMemoryProfilerSaServiceTest : public testing::Test {
 public:
-    static void SetUpTestCase(void) {}
-    static void TearDownTestCase(void)
+    static void SetUpTestCase()
     {
+        g_selfTokenId = GetSelfTokenID();
+        TEST_COMMON::SetTestEvironment(g_selfTokenId);
+        g_mock = new (std::nothrow) TEST_COMMON::MockNativeToken(TEST_PROC_NAME);
+    }
+
+    static void TearDownTestCase()
+    {
+        if (g_mock != nullptr) {
+            delete g_mock;
+            g_mock = nullptr;
+        }
+        SetSelfTokenID(g_selfTokenId);
+        TEST_COMMON::ResetTestEvironment();
         SystemSetParameter(NATIVE_PARAM.c_str(), "0");
     }
     void SetUp() {}
@@ -54,7 +71,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
-    int32_t pid = GetProcessPid(TEST_PROC_NAME);
+    int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
     EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = TEST_DURATION;
@@ -86,7 +103,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
-    int32_t pid = GetProcessPid(TEST_PROC_NAME);
+    int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
     EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = TEST_DURATION;
@@ -114,7 +131,7 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
-    int32_t pid = GetProcessPid(TEST_PROC_NAME);
+    int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
     EXPECT_NE(pid, 0);
     config->pid_ = pid;
     config->duration_ = TEST_DURATION;

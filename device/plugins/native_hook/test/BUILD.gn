@@ -48,6 +48,7 @@ ohos_unittest("nativehook_ut") {
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
   ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:mock_test_source",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
     "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook_source",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
