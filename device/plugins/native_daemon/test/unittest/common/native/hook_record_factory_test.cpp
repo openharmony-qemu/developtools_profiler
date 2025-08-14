@@ -31,7 +31,6 @@ public:
     static void TearDownTestCase(void);
     void SetUp();
     void TearDown();
-    const std::size_t size_ {20};
 };
 
 void HookRecordFactoryTest::SetUpTestCase(void) {}
@@ -92,7 +91,7 @@ HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level1)
         std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
         EXPECT_EQ(hookRecord->GetType(), MALLOC_MSG);
     }
-    delete data;
+    delete[] data;
 }
 
 /*

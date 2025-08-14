@@ -35,7 +35,7 @@ struct RawStack {
     std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
     BaseStackRawData* stackContext = nullptr; // points to the foundation type data
     union {
-        uint8_t* stackData; //cannot initializa mutiple members of union
+        uint8_t* stackData; //cannot initialize mutiple members of union
         const char* jsStackData = nullptr;
     };
     uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
@@ -69,22 +69,15 @@ class HookRecord {
 public:
     HookRecord() = default;
     HookRecord(RawStackPtr rawStack) : rawStack_(rawStack){};
-
     virtual uint16_t GetType();
-
     virtual void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo){};
-
     virtual void Reset();
-
     virtual bool IsValid();
-
     virtual uint64_t GetAddr();
-
     RawStackPtr GetRawStack()
     {
         return rawStack_;
     }
-
     virtual void SetAddr(uint64_t addr);
 
     template <typename T>
@@ -113,27 +106,22 @@ class FreeRecordSimp : public HookRecord {
 public:
     FreeRecordSimp() = default;
     FreeRecordSimp(uint64_t freeAddr) : freeAddr_(freeAddr) {};
-    ~FreeRecordSimp() {};
     uint16_t GetType() override
     {
         return FREE_MSG_SIMP;
     }
-
     void Reset() override
     {
         freeAddr_ = 0;
     }
-
     uint64_t GetAddr() override
     {
         return freeAddr_;
     }
-
     void SetAddr(uint64_t freeAddr) override
     {
         freeAddr_ = freeAddr;
     }
-
     bool IsValid() override
     {
         return (freeAddr_ != 0);

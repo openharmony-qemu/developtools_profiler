@@ -158,7 +158,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         SendSimplifiedNmdInfo();
     }
     if (!config_->targetSoName.empty() && !ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
-        PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient ParseTargetedMaps failed!");
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
         return false;
     }
     return true;

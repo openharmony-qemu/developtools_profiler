@@ -243,7 +243,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     printMallocNmd_ = hookConfig_.dump_nmd() ? hookConfig_.dump_nmd() : printMallocNmd_;
     clientConfig.nmdType = (printMallocNmd_ && hookConfig_.dump_nmd()) ? ONLY_NMD_TYPE :
         static_cast<int>(nmdParamInfo_.type);
-    const std::string soName = hookConfig_.target_so_name();
+    const std::string& soName = hookConfig_.target_so_name();
     if (soName.length() < PATH_MAX && !COMMON::ContainsSpecialChars(soName)) {
         clientConfig.targetSoName = hookConfig_.target_so_name();
     }

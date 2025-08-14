@@ -116,7 +116,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1
 
 /*
  * @tc.name: DwarfStackBuilderReplaceErrStackTest
- * @tc.desc: test DwarfStackBuilder::ReplaceErrStac.
+ * @tc.desc: test DwarfStackBuilder::ReplaceErrStack
  * @tc.type: FUNC
  */
 HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1)

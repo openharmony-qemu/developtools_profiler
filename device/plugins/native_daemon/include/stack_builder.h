@@ -51,9 +51,6 @@ public:
     void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void FillJsFrame(CallFrame& jsCallFrame);
-
-private:
-    std::mutex mtx_;
 };
 
 class DwarfStackBuilder : public StackBuilder {
@@ -83,7 +80,7 @@ public:
     bool IsRecordUnwindable(HookRecordPtr);
 
 private:
-    std::shared_ptr<StackBuilder> builder_{nullptr};
+    std::shared_ptr<StackBuilder> builder_ {nullptr};
     NativeHookConfig* hookConfig_ {nullptr};
     std::vector<CallFrame> callFrames_;
 };

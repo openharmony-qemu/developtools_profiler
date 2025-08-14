@@ -278,7 +278,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
             }
             CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
             hookRecord = factory_->GetHookRecord(data, size, false);
-            CHECK_NOTNULL(hookRecord, false, "hookRecord invalid");
+            CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
             rawData = hookRecord->GetRawStack();
             uint16_t type = hookRecord->GetType();
             if (isStopTakeData_) {
@@ -1279,7 +1279,6 @@ bool StackPreprocess::FlushRecordStatistics()
         spinLock_.Unlock();
         return false;
     }
-    spinLock_.Lock();
     std::visit([&](auto& stackData) {
         FlushData(stackData);
         }, stackData_);

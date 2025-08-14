@@ -57,7 +57,7 @@ std::string StringReplace(std::string source, const std::string &from, const std
 int GetValueFromJsonFile(const std::string& filePath, const std::string& key)
 {
     std::ifstream inFile(filePath, std::ios::in);
-    int result = -1; //默认返回值
+    int result = -1; // 默认返回值
     if (!inFile.is_open()) {
         HLOGE("parse json file: %s is not existed.", filePath.c_str());
         return result;
@@ -80,8 +80,10 @@ int GetValueFromJsonFile(const std::string& filePath, const std::string& key)
             HLOGE("ParseJson: hiprofiler_hook_process_count item is illegal.");
             break;
         }
-        result = valueNode->valueint; //获取整数值
+        result = valueNode->valueint; // 获取整数值
     } while (false);
+
+    // 释放 cJSON 结构体占用的内存
     cJSON_Delete(jsonNode);
     return result;
 }
