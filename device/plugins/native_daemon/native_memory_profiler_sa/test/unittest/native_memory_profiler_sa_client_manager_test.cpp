@@ -22,26 +22,41 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
+#include "test_common.h"
 #include "init_param.h"
 #include "native_memory_profiler_sa_client_manager.h"
 #include "utilities.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
-
+using namespace OHOS::Security::AccessToken;
 using namespace testing::ext;
 
 namespace {
 const std::string NATIVE_PARAM = "hiviewdfx.hiprofiler.native_memoryd.start";
 const std::string TEST_PROC_NAME = "hiview";
+const std::string TEST_NATIVE_NAME = "foundation";
 const int NMD_ONLY_TYPE = 2;
+static AccessTokenID g_selfTokenId;
+static TEST_COMMON::MockNativeToken* g_mock = nullptr;
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
 public:
-    static void SetUpTestCase(void) {}
-    static void TearDownTestCase(void)
+    static void SetUpTestCase()
     {
+        g_selfTokenId = GetSelfTokenID();
+        TEST_COMMON::SetTestEvironment(g_selfTokenId);
+        g_mock = new (std::nothrow) TEST_COMMON::MockNativeToken(TEST_PROC_NAME);
+    }
+
+    static void TearDownTestCase()
+    {
+        if (g_mock != nullptr) {
+            delete g_mock;
+            g_mock = nullptr;
+        }
+        SetSelfTokenID(g_selfTokenId);
+        TEST_COMMON::ResetTestEvironment();
         SystemSetParameter(NATIVE_PARAM.c_str(), "0");
     }
     void SetUp() {}
@@ -56,9 +71,6 @@ public:
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest001, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
-    using namespace OHOS::Security::AccessToken;
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
-    SetSelfTokenID(tokenID);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
 
@@ -86,7 +98,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     sleep(1);
 
     using namespace OHOS::Developtools::NativeDaemon;
-    int32_t pid = GetProcessPid(TEST_PROC_NAME);
+    int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
     EXPECT_NE(pid, 0);
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
@@ -98,7 +110,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(config), RET_OK);
     sleep(2);
-    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_PROC_NAME), RET_OK);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Stop(TEST_NATIVE_NAME), RET_OK);
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
     sleep(1);
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "2"), 0);
@@ -130,10 +142,6 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest003, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
-    using namespace OHOS::Security::AccessToken;
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
-    SetSelfTokenID(tokenID);
-
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, 0, NMD_ONLY_TYPE, true), RET_ERR);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, 0, 1), RET_ERR);
 }
@@ -146,10 +154,6 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest004, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
-    using namespace OHOS::Security::AccessToken;
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
-    SetSelfTokenID(tokenID);
-
     std::vector<SimplifiedMemStats> memStats;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(0, memStats), RET_ERR);
 }
@@ -162,10 +166,6 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest005, TestSize.Level3)
 {
     using namespace OHOS::Developtools::NativeDaemon;
-    using namespace OHOS::Security::AccessToken;
-    AccessTokenID tokenID = AccessTokenKit::GetNativeTokenId(TEST_PROC_NAME);
-    SetSelfTokenID(tokenID);
-
     SimplifiedMemConfig config;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, 100, config), RET_ERR);
 }
