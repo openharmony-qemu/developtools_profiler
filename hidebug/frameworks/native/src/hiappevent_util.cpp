@@ -77,7 +77,7 @@ MultipleRecordReporter::MultipleRecordReporter(uint32_t timeout, uint32_t limitV
 
 void MultipleRecordReporter::ReportRecord(const std::string& apiName, int errorCode, int64_t beginTime, int64_t endTime)
 {
-    if (processId_ < 0) {
+    if (processId_ < 0 || (timeout_ == 0 && limitValue_ == 0)) {
         return;
     }
     std::unique_lock<std::mutex> lock(mutex_);
@@ -87,8 +87,8 @@ void MultipleRecordReporter::ReportRecord(const std::string& apiName, int errorC
     minCostTime_ = std::min(minCostTime_, costTime);
     totalCostTime_ += costTime;
     constexpr int64_t secondToNanosecond = 1 * 1000 * 1000 * 1000;
-    if (records_.size() >= limitValue_ ||
-        lastReportTime_ + timeout_ * secondToNanosecond < GetElapsedNanoSecondsSinceBoot()) {
+    if ((limitValue_ > 0 && records_.size() >= limitValue_) ||
+        (timeout_ > 0 && lastReportTime_ + timeout_ * secondToNanosecond < GetElapsedNanoSecondsSinceBoot())) {
         UploadRecordData(apiName);
         lastReportTime_ = GetElapsedNanoSecondsSinceBoot();
         records_.assign({});

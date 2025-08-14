@@ -961,4 +961,22 @@ describe("HidebugJsTest", function () {
             expect(error.code === "401").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_041
+     * @tc.desc: getAppVMObjectUsed
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_041', 0, function () {
+        console.info("---------------------------HidebugJsTest_041----------------------------------");
+        try {
+            let ret = hidebug.getAppVMObjectUsed();
+            console.info(`HidebugJsTest_041 getAppVMObjectUsed ret：: ${ret}`);
+            expect(ret > 0).asserTrue();
+        } catch (error) {
+            console.error(error.code);
+            console.error(error.message);
+            expect().assertFail();
+        }
+    })
 })
