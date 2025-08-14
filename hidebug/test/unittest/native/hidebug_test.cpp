@@ -292,6 +292,25 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemory, TestSize.Level1)
 }
 
 /**
+ * @tc.name: OH_HiDebug_GetGraphicsMemorySummary
+ * @tc.desc: test OH_HiDebug_GetGraphicsMemorySummary. get graphics memorySummary.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemorySummary, TestSize.Level1)
+{
+    constexpr uint32_t testIntervalNormal = 300;
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalNormal, nullptr), HIDEBUG_INVALID_ARGUMENT);
+    HiDebug_GraphicsMemorySummary summary{};
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalNormal, &summary), HIDEBUG_SUCCESS);
+    constexpr uint32_t testIntervalMin = 1;
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalMin, &summary), HIDEBUG_SUCCESS);
+    constexpr uint32_t testIntervalMax = 3601;
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalMax, &summary), HIDEBUG_SUCCESS);
+    EXPECT_GE(summary.gl, 0);
+    EXPECT_GE(summary.graph, 0);
+}
+
+/**
  * @tc.name: OH_HiDebug_SetMallocDispatchTable
  * @tc.desc: test OH_HiDebug_SetMallocDispatchTable. set malloc dispatch table.
  * @tc.type: FUNC

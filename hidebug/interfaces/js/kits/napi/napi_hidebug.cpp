@@ -569,10 +569,10 @@ protected:
         result_ = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
     }
 
-    void Done(napi_env env, napi_status status) override
+    bool Done(napi_env env, napi_status status, napi_value& ret)  override
     {
-        napi_value ret = result_ ? ConvertToJsNativeMemInfo(env, result_.value()) : ConvertToJsNativeMemInfo(env, {});
-        napi_resolve_deferred(env, deferred_, ret);
+        ret = result_ ? ConvertToJsNativeMemInfo(env, result_.value()) : ConvertToJsNativeMemInfo(env, {});
+        return true;
     }
 
 private:
@@ -582,7 +582,7 @@ private:
 
 napi_value GetAppNativeMemInfoAsync(napi_env env, napi_callback_info info)
 {
-    return AsyncTask::GetPromise<GetAppNativeMemInfoAsyncTask>(env);
+    return AsyncTask::GetPromise<GetAppNativeMemInfoAsyncTask>(env, info);
 }
 
 napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
@@ -786,18 +786,16 @@ protected:
         result_ = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
     }
 
-    void Done(napi_env env, napi_status status) override
+    bool Done(napi_env env, napi_status status, napi_value& ret) override
     {
         if (result_) {
-            napi_value ret;
             napi_create_int32(env, result_.value(), &ret);
-            napi_resolve_deferred(env, deferred_, ret);
-        } else {
-            constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
-            apiInvokeRecorder_.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-            napi_reject_deferred(env, deferred_,
-                CreateErrorMessage(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL), errMsg));
+            return true;
         }
+        apiInvokeRecorder_.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+        ret = CreateErrorMessage(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL), errMsg);
+        return false;
     }
 
 private:
@@ -807,7 +805,62 @@ private:
 
 napi_value GetGraphicsMemory(napi_env env, napi_callback_info info)
 {
-    return AsyncTask::GetPromise<GraphicAsyncTask>(env);
+    return AsyncTask::GetPromise<GraphicAsyncTask>(env, info);
+}
+
+
+class GraphicsMemorySummaryAsyncTask : public AsyncTask {
+public:
+    GraphicsMemorySummaryAsyncTask() : AsyncTask("graphicMemorySummaryAsyncTask"),
+        apiInvokeRecorder_("getGraphicsMemorySummary") {}
+protected:
+    napi_value InitAsyncTask(napi_env env, napi_callback_info info) override
+    {
+        constexpr auto paramNum = 1;
+        size_t argc = paramNum;
+        napi_value argv = nullptr ;
+        napi_get_cb_info(env, info, &argc, &argv, nullptr, nullptr);
+        int argInterval = 0;
+        if (argc > paramNum || (argc == paramNum && !GetNapiInt32Value(env, argv, argInterval))) {
+            constexpr auto paramErrorMessage = "Invalid argument";
+            return CreateErrorMessage(env, std::to_string(ErrorCode::PARAMETER_ERROR), paramErrorMessage);
+        }
+        interval_ = static_cast<uint32_t>(argInterval);
+        return nullptr;
+    }
+
+    void Work(napi_env env) override
+    {
+        result_ = HidebugNativeInterface::GetInstance().GetGraphicsMemorySummary(interval_);
+    }
+
+    bool Done(napi_env env, napi_status status, napi_value& ret) override
+    {
+        if (!result_) {
+            constexpr auto errMsg = "Failed to get the application memory due to a remote exception";
+            apiInvokeRecorder_.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+            ret = CreateErrorMessage(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL), errMsg);
+            return false;
+        }
+        napi_create_object(env, &ret);
+        napi_value gl = nullptr;
+        napi_create_int32(env, static_cast<int32_t>(result_->gl), &gl);
+        napi_set_named_property(env, ret, "gl", gl);
+        napi_value graph = nullptr;
+        napi_create_bigint_uint64(env, static_cast<uint64_t>(result_->graph), &graph);
+        napi_set_named_property(env, ret, "graph", graph);
+        return true;
+    }
+
+private:
+    std::optional<GraphicsMemorySummary> result_{};
+    ApiInvokeRecorder apiInvokeRecorder_;
+    uint32_t interval_{0};
+};
+
+napi_value GetGraphicsMemorySummary(napi_env env, napi_callback_info info)
+{
+    return AsyncTask::GetPromise<GraphicsMemorySummaryAsyncTask>(env, info);
 }
 
 napi_value GetGraphicsMemorySync(napi_env env, napi_callback_info info)
@@ -1020,6 +1073,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("isDebugState", IsDebugState),
         DECLARE_NAPI_FUNCTION("getGraphicsMemory", GetGraphicsMemory),
         DECLARE_NAPI_FUNCTION("getGraphicsMemorySync", GetGraphicsMemorySync),
+        DECLARE_NAPI_FUNCTION("getGraphicsMemorySummary", GetGraphicsMemorySummary),
         DECLARE_NAPI_FUNCTION("dumpJsRawHeapData", DumpJsRawHeapData),
         DECLARE_NAPI_FUNCTION("enableGwpAsanGrayscale", EnableGwpAsanGrayscale),
         DECLARE_NAPI_FUNCTION("disableGwpAsanGrayscale", DisableGwpAsanGrayscale),

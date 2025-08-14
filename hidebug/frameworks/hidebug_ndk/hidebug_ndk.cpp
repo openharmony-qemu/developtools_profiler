@@ -187,6 +187,20 @@ HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)
     return HIDEBUG_SUCCESS;
 }
 
+HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemorySummary(uint32_t interval, HiDebug_GraphicsMemorySummary *summary)
+{
+    if (summary == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    auto ret = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().GetGraphicsMemorySummary(interval);
+    if (!ret) {
+        return HIDEBUG_TRACE_ABNORMAL;
+    }
+    summary->gl = ret->gl;
+    summary->graph = ret->graph;
+    return HIDEBUG_SUCCESS;
+}
+
 HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *newDispatchTable)
 {
 #ifdef HOOK_ENABLE

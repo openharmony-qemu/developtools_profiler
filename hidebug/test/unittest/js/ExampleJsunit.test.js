@@ -1004,7 +1004,24 @@ describe("HidebugJsTest", function () {
         try {
             let ret = hidebug.getAppVMObjectUsed();
             console.info(`HidebugJsTest_043 getAppVMObjectUsed ret：: ${ret}`);
-            expect(ret > 0).asserTrue();
+            expect(ret > 0).assertTrue();
+        } catch (error) {
+            console.error(error.code);
+            console.error(error.message);
+            expect().assertFail();
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_044
+     * @tc.desc: getAppVMObjectUsed
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_044', 0, async function () {
+        console.info("---------------------------HidebugJsTest_044----------------------------------");
+        try {
+            let ret = await hidebug.getGraphicsMemorySummary();
+            expect(ret.gl >= 0 && ret.graph >= 0).assertTrue();
         } catch (error) {
             console.error(error.code);
             console.error(error.message);

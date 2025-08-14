@@ -94,6 +94,18 @@ struct SystemMemoryInfo {
      */
     uint32_t availableMem = 0;
 };
+
+typedef struct GraphicsMemorySummary {
+    /**
+     * GL memory
+     */
+    uint32_t gl = 0;
+
+    /**
+     * graph memory
+     */
+    uint32_t graph = 0;
+} GraphicsMemorySummary;
 }
 }
 
