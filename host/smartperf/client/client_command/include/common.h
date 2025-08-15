@@ -222,6 +222,27 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_HCI, std::string("-HCI") },
 };
 
+const std::unordered_map<std::string, CommandType> COMMAND_SHELL_MAP = {
+    { std::string("-N"), CommandType::CT_N },
+    { std::string("-PKG"), CommandType::CT_PKG },
+    { std::string("-PID"), CommandType::CT_PID },
+    { std::string("-threads"), CommandType::CT_THREADS },
+    { std::string("-c"), CommandType::CT_C },
+    { std::string("-ci"), CommandType::CT_CI },
+    { std::string("-g"), CommandType::CT_G },
+    { std::string("-f"), CommandType::CT_F },
+    { std::string("-t"), CommandType::CT_T },
+    { std::string("-p"), CommandType::CT_P },
+    { std::string("-print"), CommandType::CT_PRINT },
+    { std::string("-r"), CommandType::CT_R },
+    { std::string("-snapshot"), CommandType::CT_SNAPSHOT },
+    { std::string("-net"), CommandType::CT_NET },
+    { std::string("-VIEW"), CommandType::CT_VIEW },
+    { std::string("-OUT"), CommandType::CT_OUT },
+    { std::string("-d"), CommandType::CT_D },
+    { std::string("-fl"), CommandType::CT_FL },
+    { std::string("-ftl"), CommandType::CT_FTL },
+};
 
 const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
     { CommandHelp::HELP, std::string("--help") },

@@ -95,7 +95,7 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     ) {
         keys.insert(argv[1].substr(1).c_str());
     }
-    for (auto& a : OHOS::SmartPerf::COMMAND_MAP) {
+    for (auto& a : OHOS::SmartPerf::COMMAND_SHELL_MAP) {
         keys.insert(a.first.substr(1)); // No prefix required '-'
     }
 
@@ -104,6 +104,8 @@ static bool g_checkCmdParam(std::vector<std::string> &argv, std::string &errorIn
     keys.erase("f2");
     keys.erase("fl");
     keys.erase("ftl");
+    keys.erase("editorServer");
+    keys.erase("deviceServer");
     return OHOS::SmartPerf::SPUtils::VeriyParameter(keys, str, errorInfo);
 }
 
