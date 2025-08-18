@@ -116,41 +116,13 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
     for (auto& [key, val] : argv) {
         auto iter = COMMAND_MAP.find(key);
         if (iter == COMMAND_MAP.end()) {
-            auto iter = COMMAND_SHELL_MAP.find(key);;
+            auto iter = COMMAND_SHELL_MAP.find(key);
         }
         if (iter == COMMAND_MAP.end() || iter == COMMAND_SHELL_MAP.end()) {
             continue;
         }
         SpecialKeyProcess(key);
-        switch (iter->second) {
-            case CommandType::CT_N: {
-                collectCount_ = std::get<int>(val);
-                continue;
-            }
-            case CommandType::CT_PKG:
-            case CommandType::CT_PID: {
-                GetProcessInfo(iter->second, val);
-                continue;
-            }
-            case CommandType::CT_PRINT: {
-                printDataInfo_ = true;
-                continue;
-            }
-            case CommandType::CT_VIEW: {
-                FPS::GetInstance().SetLayerName(std::get<std::string>(val));
-                continue;
-            }
-            case CommandType::CT_OUT: {
-                SetFilePath(std::get<std::string>(val));
-                continue;
-            }
-            case CommandType::CT_GC: {
-                GpuCounterProcess(val);
-                break;
-            }
-            default:
-                break;
-        }
+        HandleCommandType(iter->second, val);
 
         SpProfiler* pro = SpProfilerFactory::GetCmdProfilerItem(iter->second, true);
         if (pro == nullptr) {
@@ -162,6 +134,39 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
         } else {
             normalTask_.insert(pro);
         }
+    }
+}
+
+void TaskManager::HandleCommandType(CommandType cmdType, const ArgumentParser::ArgValue& val)
+{
+    switch (cmdType) {
+        case CommandType::CT_N: {
+            collectCount_ = std::get<int>(val);
+            continue;
+        }
+        case CommandType::CT_PKG:
+        case CommandType::CT_PID: {
+            GetProcessInfo(cmdType, val);
+            continue;
+        }
+        case CommandType::CT_PRINT: {
+            printDataInfo_ = true;
+            continue;
+        }
+        case CommandType::CT_VIEW: {
+            FPS::GetInstance().SetLayerName(std::get<std::string>(val));
+            continue;
+        }
+        case CommandType::CT_OUT: {
+            SetFilePath(std::get<std::string>(val));
+            continue;
+        }
+        case CommandType::CT_GC: {
+            GpuCounterProcess(val);
+            break;
+        }
+        default:
+            break;
     }
 }
 
