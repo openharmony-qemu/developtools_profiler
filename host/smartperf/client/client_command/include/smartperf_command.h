@@ -49,6 +49,7 @@ public:
         " -print          start mode print log \n"
         " -r              get process memory and total memory \n"
         " -snapshot       get screen capture\n"
+        " -nav            get page navigation information\n"
         " -net            get uplink and downlink traffic\n"
         " -start          collection start command \n"
         " -stop           collection stop command \n"

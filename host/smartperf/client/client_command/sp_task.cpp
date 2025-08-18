@@ -339,6 +339,9 @@ bool SPTask::CheckTcpParam(const std::string& str, std::string &errorInfo)
     for (auto& a : COMMAND_MAP) {
         keys.insert(a.first.substr(1)); // 不需要前面的'-'
     }
+    for (auto& a : COMMAND_SHELL_MAP) {
+        keys.insert(a.first.substr(1));
+    }
     bool isValid = SPUtils::VeriyParameter(keys, params, errorInfo);
     if (isValid) {
         LOGD("Init parameter validation successful");

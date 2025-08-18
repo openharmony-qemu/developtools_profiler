@@ -116,6 +116,9 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
     for (auto& [key, val] : argv) {
         auto iter = COMMAND_MAP.find(key);
         if (iter == COMMAND_MAP.end()) {
+            auto iter = COMMAND_SHELL_MAP.find(key);;
+        }
+        if (iter == COMMAND_MAP.end() || iter == COMMAND_SHELL_MAP.end()) {
             continue;
         }
         SpecialKeyProcess(key);
