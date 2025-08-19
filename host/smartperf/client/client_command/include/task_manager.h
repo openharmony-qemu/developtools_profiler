@@ -71,7 +71,7 @@ private:
     void MainLoop();
     void GpuCounterProcess(const ArgumentParser::ArgValue& value);
     void SpecialKeyProcess(const std::string specKey);
-
+    void HandleCommandType(CommandType cmdType, const ArgumentParser::ArgValue& val);
     ThreadPool threadPool_ {4};
     int32_t collectCount_ {-1};
     std::atomic_bool running_ {false};

@@ -517,12 +517,39 @@ bool SPUtils::IntegerVerification(const std::string& str, std::string& errorInfo
 
 bool SPUtils::VeriyParameter(std::set<std::string> &keys, const std::string& param, std::string &errorInfo)
 {
-    std::string keyParam;
-    std::string valueParm;
     std::vector<std::string> out;
-    std::vector<std::string> subOut;
     std::map<std::string, std::string> mapInfo;
 
+    if (!IsInvalidInputfromComParam(param, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    SPUtils::StrSplit(param, "-", out);
+    if (!RemSpaceAndTraPara(out, mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    if (!VeriyKey(keys, mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    if (!VerifyValueStr(mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+
+    if (!IntegerValueVerification(keys, mapInfo, errorInfo)) {
+        LOGE("%s", errorInfo.c_str());
+        return false;
+    }
+    return true;
+}
+
+bool SPUtils::IsInvalidInputfromComParam(const std::string& param, std::string &errorInfo)
+{
     if (param.empty()) {
         errorInfo = "The parameter cannot be empty";
         return false;
@@ -532,9 +559,30 @@ bool SPUtils::VeriyParameter(std::set<std::string> &keys, const std::string& par
         LOGE("-PKG and -PID cannot be used together with");
         return false;
     }
-    SPUtils::StrSplit(param, "-", out);
+    const size_t paramLength = 1;
+    if (param.length() == paramLength && param[0] == '-') {
+        errorInfo = "invalid parameter -- '" + param + "'";
+        return false;
+    }
+    std::string commandShell;
+    for (const auto& a : COMMAND_SHELL_MAP) {
+        commandShell = a.first.substr(1);
+    }
+    if (param.find("--") != std::string::npos && param.find(commandShell)) {
+        errorInfo = "invalid parameter -- '" + param + "'";
+        return false;
+    }
+    return true;
+}
 
-    for (auto it = out.begin(); it != out.end(); ++it) { // Parsing keys and values
+bool SPUtils::RemSpaceAndTraPara(std::vector<std::string>& outParam, std::map<std::string, std::string>& mapInfo,
+    std::string &errorInfo)
+{
+    std::string keyParam;
+    std::string valueParm;
+    std::vector<std::string> subOut;
+
+    for (auto it = outParam.begin(); it != outParam.end(); ++it) { // Parsing keys and values
         subOut.clear();
         SPUtils::StrSplit(*it, " ", subOut);
         if (mapInfo.end() != mapInfo.find(subOut[0])) {
@@ -553,21 +601,6 @@ bool SPUtils::VeriyParameter(std::set<std::string> &keys, const std::string& par
             SPUtils::RemoveSpace(keyParam);
             mapInfo[keyParam] = "";
         }
-    }
-
-    if (!VeriyKey(keys, mapInfo, errorInfo)) {
-        LOGE("%s", errorInfo.c_str());
-        return false;
-    }
-
-    if (!VerifyValueStr(mapInfo, errorInfo)) {
-        LOGE("%s", errorInfo.c_str());
-        return false;
-    }
-
-    if (!IntegerValueVerification(keys, mapInfo, errorInfo)) {
-        LOGE("%s", errorInfo.c_str());
-        return false;
     }
     return true;
 }

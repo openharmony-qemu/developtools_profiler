@@ -148,6 +148,9 @@ bool VeriyKey(std::set<std::string>& keys, std::map<std::string, std::string>& m
 bool VerifyValueStr(std::map<std::string, std::string>& mapInfo, std::string& errorInfo);
 bool IntegerValueVerification(std::set<std::string> &keys, std::map<std::string, std::string> &mapInfo,
     std::string &errorInfo);
+bool RemSpaceAndTraPara(std::vector<std::string>& outParam, std::map<std::string, std::string>& mapInfo,
+    std::string &errorInfo);
+bool IsInvalidInputfromComParam(const std::string& param, std::string &errorInfo);
 bool IsHmKernel();
 std::string GetCpuNum();
 void GetCurrentTime(int prevTime);
