@@ -57,11 +57,11 @@ std::vector<std::string> ParseCommandArgs(std::string &command)
 std::vector<std::string> PushCommandArgs(std::vector<std::string>& commandArgs)
 {
     std::vector<std::string> configs;
-    if (COMMAND_MAP.end() != COMMAND_MAP.find(commandArgs[i])) {
-        configs.push_back(commandArgs[i]);
-    }
-    if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(commandArgs[i])) {
-        configs.push_back(commandArgs[i]);
+    for (size_t i = 0; i < args.size(); i++) {
+        if (COMMAND_MAP.end() != COMMAND_MAP.find(commandArgs[i]) ||
+            COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(commandArgs[i])) {
+            configs.push_back(commandArgs[i]);
+        }
     }
     return configs;
 }
