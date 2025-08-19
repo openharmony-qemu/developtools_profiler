@@ -41,6 +41,7 @@ public:
         " -c              get device CPU frequency and CPU usage, process CPU usage and CPU load .. \n"
         " -ci             get cpu instructions and cycles \n"
         " -g              get device GPU frequency and GPU load  \n"
+        " -gc             get gpu counter default frequency is 50 \n"
         " -f              get app refresh fps(frames per second) and fps jitters and refreshrate \n"
         " -profilerfps    get refresh fps and timestamp \n"
         " -sections       set collection time period(using with profilerfps)\n"
