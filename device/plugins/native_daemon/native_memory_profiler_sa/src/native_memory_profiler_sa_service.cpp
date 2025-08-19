@@ -269,7 +269,7 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
 }
 
 int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
-                                                     uint32_t fd, std::shared_ptr<HookManager>& hook,
+                                                     uint32_t& fd, std::shared_ptr<HookManager>& hook,
                                                      std::string& args)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
@@ -417,9 +417,12 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     }
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
-
+    bool isInputZeroFd = (fd == 0); // when fd is 0, need to bring fd out of function to close.
     int32_t ret = StartHookLock(config, fd, hook, args);
     if (ret != RET_OK) {
+        if (isInputZeroFd && fd > 0) {
+            close(fd);
+        }
         return ret;
     }
 
