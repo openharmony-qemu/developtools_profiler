@@ -54,6 +54,18 @@ std::vector<std::string> ParseCommandArgs(std::string &command)
     return args;
 }
 
+std::vector<std::string> PushCommandArgs(std::vector<std::string>& commandArgs)
+{
+    std::vector<std::string> configs;
+    if (COMMAND_MAP.end() != COMMAND_MAP.find(commandArgs[i])) {
+        configs.push_back(commandArgs[i]);
+    }
+    if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(commandArgs[i])) {
+        configs.push_back(commandArgs[i]);
+    }
+    return configs;
+}
+
 // init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
 static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
 {
@@ -88,7 +100,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
                 isFPS = true;
             }
-            PushCommandArgs(configs, args);
+            configs = PushCommandArgs(args);
         }
     }
     if (snf.isEffective && (!isFPS)) {
@@ -103,16 +115,6 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     }
     taskInfo = { sessionId, pkg, pid, configs, interval, snf, isPrint };
     return ExceptionMsg::NO_ERR;
-}
-
-void SPTask::PushCommandArgs(std::vector<std::string>& configs, std::vector<std::string>& args)
-{
-    if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
-        configs.push_back(args[i]);
-    }
-    if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(args[i])) {
-        configs.push_back(args[i]);
-    }
 }
 
 ErrCode SPTask::InitTask(const std::string &recvStr)
