@@ -116,7 +116,7 @@ void TaskManager::AddTask(const std::unordered_map<std::string, ArgumentParser::
     for (auto& [key, val] : argv) {
         auto iter = COMMAND_MAP.find(key);
         if (iter == COMMAND_MAP.end()) {
-            auto iter = COMMAND_SHELL_MAP.find(key);
+            iter = COMMAND_SHELL_MAP.find(key);
         }
         if (iter == COMMAND_MAP.end() || iter == COMMAND_SHELL_MAP.end()) {
             continue;
@@ -142,24 +142,24 @@ void TaskManager::HandleCommandType(CommandType cmdType, const ArgumentParser::A
     switch (cmdType) {
         case CommandType::CT_N: {
             collectCount_ = std::get<int>(val);
-            continue;
+            break;
         }
         case CommandType::CT_PKG:
         case CommandType::CT_PID: {
             GetProcessInfo(cmdType, val);
-            continue;
+            break;
         }
         case CommandType::CT_PRINT: {
             printDataInfo_ = true;
-            continue;
+            break;
         }
         case CommandType::CT_VIEW: {
             FPS::GetInstance().SetLayerName(std::get<std::string>(val));
-            continue;
+            break;
         }
         case CommandType::CT_OUT: {
             SetFilePath(std::get<std::string>(val));
-            continue;
+            break;
         }
         case CommandType::CT_GC: {
             GpuCounterProcess(val);
