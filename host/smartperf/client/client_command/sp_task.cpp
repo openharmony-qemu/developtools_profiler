@@ -88,12 +88,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
                 isFPS = true;
             }
-            if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
-                configs.push_back(args[i]);
-            }
-            if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(args[i])) {
-                configs.push_back(args[i]);
-            }
+            PushCommandArgs(configs, args);
         }
     }
     if (snf.isEffective && (!isFPS)) {
@@ -108,6 +103,16 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
     }
     taskInfo = { sessionId, pkg, pid, configs, interval, snf, isPrint };
     return ExceptionMsg::NO_ERR;
+}
+
+void SPTask::PushCommandArgs(std::vector<std::string>& configs, std::vector<std::string>& args)
+{
+    if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
+        configs.push_back(args[i]);
+    }
+    if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(args[i])) {
+        configs.push_back(args[i]);
+    }
 }
 
 ErrCode SPTask::InitTask(const std::string &recvStr)
