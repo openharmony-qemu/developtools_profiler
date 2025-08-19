@@ -93,6 +93,7 @@ private:
     void SetProfilerPid();
     std::map<std::string, std::string> SetTaskInfo();
     void EnablePrint();
+
 private:
     TaskInfo curTaskInfo;
     long long startTime = 0;
