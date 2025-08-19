@@ -91,6 +91,9 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (COMMAND_MAP.end() != COMMAND_MAP.find(args[i])) {
                 configs.push_back(args[i]);
             }
+            if (COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(args[i])) {
+                configs.push_back(args[i]);
+            }
         }
     }
     if (snf.isEffective && (!isFPS)) {
