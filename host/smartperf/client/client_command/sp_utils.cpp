@@ -564,9 +564,13 @@ bool SPUtils::IsInvalidInputfromComParam(const std::string& param, std::string &
         errorInfo = "invalid parameter -- '" + param + "'";
         return false;
     }
-    std::string commandShell;
+    std::string commandShell = "";
     for (const auto& a : COMMAND_SHELL_MAP) {
         commandShell = a.first.substr(1);
+    }
+    if (commandShell.empty()) {
+        LOGE("commandShell is NULL!");
+        return false;
     }
     if (param.find("--") != std::string::npos && param.find(commandShell)) {
         errorInfo = "invalid parameter -- '" + param + "'";
