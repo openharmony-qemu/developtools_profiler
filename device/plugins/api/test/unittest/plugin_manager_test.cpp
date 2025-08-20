@@ -42,20 +42,20 @@ std::string g_testPluginDir("/system/lib/");
 #endif
 
 class PluginManagerTest : public ::testing::Test {
-protected:
+   protected:
     static constexpr auto TEMP_DELAY = std::chrono::milliseconds(20);
-    static void SetUpTestCase()
+    void SetUp() override
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
 #ifdef COVERAGE_TEST
-        const int coverageSleepTime = DEFAULT_SLEEP_TIME * 5; // sleep 5s
+        const int coverageSleepTime = DEFAULT_SLEEP_TIME * 5;  // sleep 5s
         std::this_thread::sleep_for(std::chrono::milliseconds(coverageSleepTime));
 #else
         std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME));
 #endif
     }
 
-    static void TearDownTestCase()
+    void TearDown() override
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     }
@@ -191,5 +191,82 @@ HWTEST_F(PluginManagerTest, networkprofilerPlugin, TestSize.Level1)
     networkProfilerMgr->StartNetworkProfiler();
     EXPECT_FALSE(pluginManage->ReportPluginBasicData(pluginIdsVector));
     EXPECT_FALSE(pluginManage->StopPluginSession(pluginIdsVector));
+}
+
+/**
+ * @tc.name: plugin
+ * @tc.desc: Plug-in PullState test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginManagerTest, PullState, TestSize.Level1)
+{
+    auto pluginManage = std::make_shared<PluginManager>();
+    auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
+    EXPECT_TRUE(commandPoller->OnConnect());
+    pluginManage->SetCommandPoller(commandPoller);
+    std::string pluginName = "memory-plugin";
+    EXPECT_FALSE(pluginManage->LoadPlugin(pluginName));
+    EXPECT_FALSE(pluginManage->UnloadPlugin(pluginName));
+    EXPECT_TRUE(pluginManage->AddPlugin(g_testPluginDir + SUCCESS_PLUGIN_NAME));
+    EXPECT_TRUE(pluginManage->LoadPlugin(pluginName));
+
+    std::vector<ProfilerPluginConfig> configVec;
+    PluginResult result;
+    const uint8_t configData[] = {0x30, 0x01, 0x38, 0x01, 0x42, 0x01, 0x01};
+    ProfilerPluginConfig config;
+    uint32_t pluginId = pluginManage->pluginIds_[pluginName];
+    const std::vector<uint32_t> pluginIdsVector = {pluginId};
+    config.set_name(pluginName);
+    config.set_config_data((const void*)configData, 7);
+    config.set_sample_interval(DEFAULT_SLEEP_TIME);
+
+    configVec.push_back(config);
+    EXPECT_TRUE(pluginManage->CreatePluginSession(configVec));
+    EXPECT_TRUE(pluginManage->StartPluginSession(pluginIdsVector, configVec, result));
+    std::this_thread::sleep_for(TEMP_DELAY);
+
+    EXPECT_TRUE(pluginManage->pluginIds_.size() > 0);
+    EXPECT_TRUE(pluginManage->pluginIds_.find(pluginName) != pluginManage->pluginIds_.end());
+    EXPECT_TRUE(pluginManage->PullState(pluginId));
+    EXPECT_TRUE(pluginManage->pluginModules_.find(pluginId) != pluginManage->pluginModules_.end());
+    auto pluginModule = pluginManage->pluginModules_[pluginId];
+    EXPECT_TRUE(pluginModule->BindFunctions());
+    EXPECT_TRUE(pluginManage->UnloadPlugin(pluginName));
+    EXPECT_FALSE(pluginManage->PullState(pluginId));
+
+    EXPECT_TRUE(pluginManage->ResetWriter(pluginId));
+    EXPECT_TRUE(pluginManage->RemovePlugin(g_testPluginDir + SUCCESS_PLUGIN_NAME));
+    EXPECT_FALSE(pluginManage->ResetWriter(pluginId));
+    EXPECT_TRUE(pluginManage->StopAllPluginSession());
+}
+
+/**
+ * @tc.name: plugin
+ * @tc.desc: Plug-in PullResult test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(PluginManagerTest, PullResult, TestSize.Level1)
+{
+    auto pluginManage = std::make_shared<PluginManager>();
+    auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
+    EXPECT_TRUE(commandPoller->OnConnect());
+    pluginManage->SetCommandPoller(commandPoller);
+    std::string pluginName = "memory-plugin";
+    EXPECT_FALSE(pluginManage->LoadPlugin(pluginName));
+    EXPECT_FALSE(pluginManage->UnloadPlugin(pluginName));
+    EXPECT_TRUE(pluginManage->AddPlugin(g_testPluginDir + SUCCESS_PLUGIN_NAME));
+    EXPECT_TRUE(pluginManage->LoadPlugin(pluginName));
+    EXPECT_TRUE(pluginManage->pluginIds_.find(pluginName) != pluginManage->pluginIds_.end());
+    uint32_t pluginId = pluginManage->pluginIds_[pluginName];
+    EXPECT_TRUE(pluginManage->CreateWriter("memory-plugin", DEFAULT_BUFFER_SIZE, -1, -1, true));
+    EXPECT_TRUE(pluginManage->PullResult(pluginId, true));
+    EXPECT_FALSE(pluginManage->PullResult(pluginId, false));
+    auto pluginModule = pluginManage->pluginModules_[pluginId];
+    EXPECT_TRUE(pluginModule != nullptr);
+    std::shared_ptr<BufferWriter> writer =
+        std::make_shared<BufferWriter>("test", "1.01", DEFAULT_BUFFER_SIZE, -1, -1, 0);
+    pluginModule->RegisterWriter(writer, false);
+    EXPECT_TRUE(pluginModule->GetWriter() != nullptr);
+    EXPECT_FALSE(pluginManage->PullResult(pluginId, false));
 }
 } // namespace
