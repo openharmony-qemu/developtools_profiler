@@ -961,4 +961,36 @@ describe("HidebugJsTest", function () {
             expect(error.code === "401").assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_041
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_041', 0, function () {
+        console.info("---------------------------HidebugJsTest_041----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(hidebug.JsRawHeapTrimLevel.TRIM_LEVEL_1);
+            expect(true).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            expect(false).toBe(true);
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_042
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_042', 0, function () {
+        console.info("---------------------------HidebugJsTest_042----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(hidebug.JsRawHeapTrimLevel.TRIM_LEVEL_2);
+            expect(true).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            expect(false).toBe(true);
+        }
+    })
 })
