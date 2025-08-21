@@ -54,16 +54,12 @@ std::vector<std::string> ParseCommandArgs(std::string &command)
     return args;
 }
 
-std::vector<std::string> PushCommandArgs(std::vector<std::string>& commandArgs)
+void PushCommandArgs(std::vector<std::string>& configVec, std::vector<std::string>& commandArgs, size_t& index)
 {
-    std::vector<std::string> configs;
-    for (size_t i = 0; i < commandArgs.size(); i++) {
-        if (COMMAND_MAP.end() != COMMAND_MAP.find(commandArgs[i]) ||
-            COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(commandArgs[i])) {
-            configs.push_back(commandArgs[i]);
-        }
+    if (COMMAND_MAP.end() != COMMAND_MAP.find(commandArgs[index]) ||
+        COMMAND_SHELL_MAP.end() != COMMAND_SHELL_MAP.find(commandArgs[index])) {
+        configVec.push_back(commandArgs[index]);
     }
-    return configs;
 }
 
 // init::-SESSIONID 12345678 -INTERVAL 1000 -PKG ohos.samples.ecg -c -g -t -p -f -r -fl 30
@@ -100,7 +96,7 @@ static ExceptionMsg ParseToTask(std::string command, TaskInfo &taskInfo)
             if (args[i] == COMMAND_MAP_REVERSE.at(CommandType::CT_F)) { // 判断用户设置是否有-f
                 isFPS = true;
             }
-            configs = PushCommandArgs(args);
+            PushCommandArgs(configs, args, i);
         }
     }
     if (snf.isEffective && (!isFPS)) {
