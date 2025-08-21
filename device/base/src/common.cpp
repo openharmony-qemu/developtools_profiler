@@ -30,6 +30,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <atomic>
+#include <regex>
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
@@ -244,6 +245,12 @@ bool CheckSubscribeVersion(const std::string& version)
         PROFILER_LOG_INFO(LOG_CORE, "current version doesn't support event push");
         return false;
     }
+}
+
+bool ContainsSpecialChars(const std::string& input)
+{
+    std::regex specialCharsPattern("[\'\"\\n]");
+    return std::regex_search(input, specialCharsPattern);
 }
 
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi)
@@ -868,7 +875,6 @@ std::string GetProcessNameByPid(int32_t pid)
     if (processName.empty()) {
         return "";
     }
-
     static constexpr size_t headSize = 2;
     if (processName.substr(0, headSize) == "./") {
         processName = processName.substr(headSize);

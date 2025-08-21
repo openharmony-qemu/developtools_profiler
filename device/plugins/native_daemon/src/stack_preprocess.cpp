@@ -50,7 +50,7 @@ using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::Profiler;
 
 static thread_local std::vector<uint64_t> g_callStack;
-static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap = {};
+static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
@@ -249,7 +249,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
     if (g_director == nullptr) {
-        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance);
+        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance, mtx_);
     }
     while (!isStopTakeData_) {
         bool ret = shareMemoryBlock->TakeData(
@@ -278,6 +278,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
             }
             CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
             hookRecord = factory_->GetHookRecord(data, size, false);
+            CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
             rawData = hookRecord->GetRawStack();
             uint16_t type = hookRecord->GetType();
             if (isStopTakeData_) {
@@ -357,7 +358,7 @@ void StackPreprocess::TakeResults()
     }
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, start!", gettid());
     if (g_director == nullptr) {
-        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance);
+        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance, mtx_);
     }
     while (1) {
         HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
@@ -989,10 +990,10 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
             break;
     }
 
-    fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
+    fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;%zu\n", tag.c_str(),
         rawStack->stackContext->pid, rawStack->stackContext->tid,
         static_cast<int64_t>(rawStack->stackContext->ts.tv_sec),
-        rawStack->stackContext->ts.tv_nsec, hookRecord->GetAddr(), rawStack->stackContext->mallocSize);
+        rawStack->stackContext->ts.tv_nsec, rawStack->stackContext->mallocSize);
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     for (; idx < callFrames.size(); ++idx) {
         (void)fprintf(fpHookData_, "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
@@ -1272,11 +1273,12 @@ void StackPreprocess::GetSymbols(const std::string& filePath, ElfSymbolTable& sy
 
 bool StackPreprocess::FlushRecordStatistics()
 {
+    spinLock_.Lock();
     std::lock_guard<std::mutex> guard(mtx_);
     if (statisticsPeriodData_.empty()) {
+        spinLock_.Unlock();
         return false;
     }
-    spinLock_.Lock();
     std::visit([&](auto& stackData) {
         FlushData(stackData);
         }, stackData_);

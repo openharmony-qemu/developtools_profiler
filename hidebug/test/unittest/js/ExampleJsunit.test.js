@@ -964,14 +964,46 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_041
-     * @tc.desc: getAppVMObjectUsed
+     * @tc.desc: setJsRawHeapTrimLevel
      * @tc.type: FUNC
      */
     it('HidebugJsTest_041', 0, function () {
         console.info("---------------------------HidebugJsTest_041----------------------------------");
         try {
+            hidebug.setJsRawHeapTrimLevel(hidebug.JsRawHeapTrimLevel.TRIM_LEVEL_1);
+            expect(true).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            expect(false).toBe(true);
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_042
+     * @tc.desc: setJsRawHeapTrimLevel
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_042', 0, function () {
+        console.info("---------------------------HidebugJsTest_042----------------------------------");
+        try {
+            hidebug.setJsRawHeapTrimLevel(hidebug.JsRawHeapTrimLevel.TRIM_LEVEL_2);
+            expect(true).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            expect(false).toBe(true);
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_043
+     * @tc.desc: getAppVMObjectUsed
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_043', 0, function () {
+        console.info("---------------------------HidebugJsTest_043----------------------------------");
+        try {
             let ret = hidebug.getAppVMObjectUsed();
-            console.info(`HidebugJsTest_041 getAppVMObjectUsed ret：: ${ret}`);
+            console.info(`HidebugJsTest_043 getAppVMObjectUsed ret：: ${ret}`);
             expect(ret > 0).asserTrue();
         } catch (error) {
             console.error(error.code);

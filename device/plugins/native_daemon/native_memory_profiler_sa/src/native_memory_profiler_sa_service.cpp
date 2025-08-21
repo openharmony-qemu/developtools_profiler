@@ -178,7 +178,7 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
     return RET_OK;
 }
 
-void NativeMemoryProfilerSaService::CloseSocketFd(int pid)
+void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
 {
     std::unique_lock<std::mutex> lock(g_pidFdMtx);
     if ((g_pidFds.find(pid) != g_pidFds.end()) && (g_pidFds[pid] != 0)) {
@@ -273,6 +273,10 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      std::string& args)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
+    if (COMMON::GetProcessNameByPid(config->pid_) == "hiview") {
+        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: process name is hiview, return false");
+        return RET_ERR;
+    }
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
@@ -429,7 +433,7 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
 {
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
-    if (taskNum_ + 1 > taskMaxNum_) {
+    if (g_taskNum + 1 > taskMaxNum_) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
         return false;
     }

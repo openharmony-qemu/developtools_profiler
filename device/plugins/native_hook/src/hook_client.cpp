@@ -213,7 +213,7 @@ uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
     return tagId;
 }
 
-uint16_t __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<HookSocketClient>& client,
+uint16_t inline __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<HookSocketClient>& client,
                                                      const char* tagName)
 {
     if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
@@ -301,10 +301,10 @@ void* MallocHookStart(void* disableHookCallback)
     } else {
         g_ClientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler, &targetedRange,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
+                                                          &targetedRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
     }
-    g_sharedMemCount = (g_ClientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     g_hookReady = true;
     return nullptr;
 }

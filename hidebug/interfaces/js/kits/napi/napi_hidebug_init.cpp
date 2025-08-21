@@ -26,7 +26,10 @@ namespace HiviewDFX {
 namespace {
 constexpr int32_t MAIN_THREAD = 1;
 constexpr int32_t ALL_THREADS = 2;
+constexpr uint32_t TRIM_LEVEL_1 = 0;
+constexpr uint32_t TRIM_LEVEL_2 = 1;
 const std::string TRACE_FLAG_CLASS_NAME = "TraceFlag";
+const std::string JS_RAW_HEAP_TRIM_LEVEL_NAME = "JsRawHeapTrimLevel";
 const std::string TAGS_CLASS_NAME = "tags";
 
 napi_value ClassConstructor(napi_env env, napi_callback_info info)
@@ -52,6 +55,15 @@ napi_value CreateInt32(const napi_env env, int32_t num)
     return intValue;
 }
 
+napi_value CreateUint32(const napi_env env, uint32_t num)
+{
+    napi_value intValue = nullptr;
+    if (napi_create_uint32(env, num, &intValue) != napi_ok) {
+        return nullptr;
+    }
+    return intValue;
+}
+
 napi_value CreateBigintUint64(const napi_env env, uint64_t num)
 {
     napi_value intValue = nullptr;
@@ -65,6 +77,13 @@ void InitTraceFlagVector(napi_env env, std::vector<std::pair<const char*, napi_v
 {
     traceFlagVector.emplace_back("MAIN_THREAD", CreateInt32(env, MAIN_THREAD));
     traceFlagVector.emplace_back("ALL_THREADS", CreateInt32(env, ALL_THREADS));
+}
+
+void InitJsRawHeapTrimLevelVector(napi_env env,
+                                  std::vector<std::pair<const char*, napi_value>>& jsRawHeapTrimLevelVector)
+{
+    jsRawHeapTrimLevelVector.emplace_back("TRIM_LEVEL_1", CreateUint32(env, TRIM_LEVEL_1));
+    jsRawHeapTrimLevelVector.emplace_back("TRIM_LEVEL_2", CreateUint32(env, TRIM_LEVEL_2));
 }
 
 void InitTagsVector(napi_env env, std::vector<std::pair<const char*, napi_value>>& tagsVector)
@@ -111,6 +130,8 @@ void InitConstClassByName(napi_env env, napi_value exports, const std::string& n
         InitTraceFlagVector(env, propertyVector);
     } else if (name == TAGS_CLASS_NAME) {
         InitTagsVector(env, propertyVector);
+    } else if (name == JS_RAW_HEAP_TRIM_LEVEL_NAME) {
+        InitJsRawHeapTrimLevelVector(env, propertyVector);
     } else {
         return;
     }
@@ -132,6 +153,7 @@ napi_value InitNapiClass(napi_env env, napi_value exports)
 {
     InitConstClassByName(env, exports, TRACE_FLAG_CLASS_NAME);
     InitConstClassByName(env, exports, TAGS_CLASS_NAME);
+    InitConstClassByName(env, exports, JS_RAW_HEAP_TRIM_LEVEL_NAME);
     return exports;
 }
 

@@ -14,16 +14,16 @@
  */
 #include "address_handler.h"
 namespace {
-constexpr int BITPOOL_SIZE_FIRST = 1000 * 1024;
-constexpr int BITPOOL_SIZE_SECOND = 200 * 1024;
-constexpr int BITPOOL_SIZE_TOTAL_ADDR = 1000 * 1024;
-constexpr int FIRST_HASH = 16;
-constexpr int SECOND_HASH = 13;
-constexpr int DIVIDE_VAL = 64;
-constexpr int SHIFT_VAL = 16;
-constexpr int SPIN_SHIFT_FIRST = 30;
-constexpr int SPIN_SHIFT_SECOND = 27;
-constexpr int SPIN_SHIFT_THIRD = 31;
+constexpr uint64_t BITPOOL_SIZE_FIRST = 1000 * 1024;
+constexpr uint64_t BITPOOL_SIZE_SECOND = 200 * 1024;
+constexpr uint64_t BITPOOL_SIZE_TOTAL_ADDR = 1000 * 1024;
+constexpr uint64_t FIRST_HASH = 16;
+constexpr uint64_t SECOND_HASH = 13;
+constexpr uint64_t DIVIDE_VAL = 64;
+constexpr uint64_t SHIFT_VAL = 16;
+constexpr uint64_t SPIN_SHIFT_FIRST = 30;
+constexpr uint64_t SPIN_SHIFT_SECOND = 27;
+constexpr uint64_t SPIN_SHIFT_THIRD = 31;
 constexpr uint64_t SPIN_FIRST_SALT = 0x9e3779b97f4a7c15;
 constexpr uint64_t SPIN_SECOND_SALT = 0xbf58476d1ce4e5b9;
 constexpr uint64_t SPIN_THIRD_SALT = 0x94d049bb133111eb;
@@ -32,7 +32,7 @@ constexpr uint32_t MUR_FIRST_SALT = 0x85ebca6b;
 constexpr uint32_t MUR_SECOND_SALT = 0xc2b2ae35;
 }
 
-AddressHandler::AddressHandler(int poolSize)
+AddressHandler::AddressHandler(uint64_t poolSize)
 {
     bitPoolSize_ = poolSize;
     addressChecker_ = new Bitpool [poolSize] {{0}};

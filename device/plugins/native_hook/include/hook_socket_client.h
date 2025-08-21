@@ -26,8 +26,8 @@ class Sampling;
 class HookSocketClient : public ServiceBase {
 public:
     HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
-                    std::atomic<Range>* targetedRange = nullptr,
-                    void (*disableHookCallback)() = nullptr);
+                     std::atomic<Range>* targetedRange = nullptr, std::atomic<int>* memCount = nullptr,
+                     void (*disableHookCallback)() = nullptr);
     ~HookSocketClient();
     bool Connect(const std::string addrname);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
@@ -62,6 +62,7 @@ private:
     ClientConfig *config_ = nullptr;
     Sampling *sampler_ = nullptr;
     std::atomic<Range>* targetedRange_ = nullptr;
+    std::atomic<int>* sharedMemCount_ = nullptr;
     std::vector<std::shared_ptr<StackWriter>> stackWriterList_;
     void (*disableHookCallback_)(){nullptr};
     uint32_t largestSize_ = 0;

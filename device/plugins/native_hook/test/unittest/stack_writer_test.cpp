@@ -265,6 +265,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutTwoSmbTest, TestSize.Level1)
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
+    EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
     EXPECT_TRUE(writer1->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1),
         reinterpret_cast<void*>(buffer1), sizeof(buffer1), nullptr));
     EXPECT_TRUE(writer2->WriteWithPayloadTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2),
@@ -333,6 +334,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutTwoSmbTest, TestSize.Level1)
     auto writer1 = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     auto writer2 = std::make_shared<StackWriter>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory(), -1, true);
     EXPECT_NE(writer1->shareMemoryBlock_, nullptr);
+    EXPECT_NE(writer2->shareMemoryBlock_, nullptr);
     EXPECT_TRUE(writer1->WriteTimeout(reinterpret_cast<void*>(buffer1), sizeof(buffer1)));
     EXPECT_TRUE(writer2->WriteTimeout(reinterpret_cast<void*>(buffer2), sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));

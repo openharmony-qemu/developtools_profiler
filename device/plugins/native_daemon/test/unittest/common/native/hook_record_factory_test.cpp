@@ -23,19 +23,26 @@ using namespace testing::ext;
 using namespace std;
 
 namespace OHOS::Developtools::NativeDaemon {
+NativeHookConfig g_hookConfig;
+std::shared_ptr<HookRecordFactory> g_factory = nullptr;
 class HookRecordFactoryTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
     void SetUp();
     void TearDown();
-    const std::size_t size_ {20};
 };
 
 void HookRecordFactoryTest::SetUpTestCase(void) {}
 void HookRecordFactoryTest::TearDownTestCase(void) {}
-void HookRecordFactoryTest::SetUp() {}
-void HookRecordFactoryTest::TearDown() {}
+void HookRecordFactoryTest::SetUp()
+{
+    g_factory = std::make_shared<HookRecordFactory>(g_hookConfig);
+}
+void HookRecordFactoryTest::TearDown()
+{
+    g_factory = nullptr;
+}
 
 /*
  * @tc.name: GetFreeSimpRecord
@@ -44,12 +51,10 @@ void HookRecordFactoryTest::TearDown() {}
  */
 HWTEST_F(HookRecordFactoryTest, GetFreeSimpRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     int8_t addr = 1;
     int8_t data[] = {addr};
     uint32_t dataSize = sizeof(void *);
-    std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
+    std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
     EXPECT_EQ(hookRecord->GetType(), FREE_MSG_SIMP);
 }
 
@@ -60,16 +65,15 @@ HWTEST_F(HookRecordFactoryTest, GetFreeSimpRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, GetJsRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = JS_STACK_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
         EXPECT_EQ(hookRecord->GetType(), JS_STACK_MSG);
     }
+    delete[] data;
 }
 
 /*
@@ -79,16 +83,15 @@ HWTEST_F(HookRecordFactoryTest, GetJsRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = MALLOC_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
         EXPECT_EQ(hookRecord->GetType(), MALLOC_MSG);
     }
+    delete[] data;
 }
 
 /*
@@ -98,16 +101,15 @@ HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, GetNmdRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = NMD_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
         EXPECT_EQ(hookRecord->GetType(), NMD_MSG);
     }
+    delete[] data;
 }
 
 /*
@@ -117,16 +119,15 @@ HWTEST_F(HookRecordFactoryTest, GetNmdRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, GetFreeRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = FREE_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
         EXPECT_EQ(hookRecord->GetType(), FREE_MSG);
     }
+    delete[] data;
 }
 
 /*
@@ -136,18 +137,17 @@ HWTEST_F(HookRecordFactoryTest, GetFreeRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, ReturnMallocRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = MALLOC_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
-        EXPECT_EQ(factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE - 1);
-        factory->SaveHookRecord(hookRecord);
-        EXPECT_EQ(factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
+        EXPECT_EQ(g_factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE - 1);
+        g_factory->SaveHookRecord(hookRecord);
+        EXPECT_EQ(g_factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
     }
+    delete[] data;
 }
 
 /*
@@ -157,18 +157,17 @@ HWTEST_F(HookRecordFactoryTest, ReturnMallocRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, ReturnMmapRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = MMAP_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
-        EXPECT_EQ(factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE - 1);
-        factory->SaveHookRecord(hookRecord);
-        EXPECT_EQ(factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
+        EXPECT_EQ(g_factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE - 1);
+        g_factory->SaveHookRecord(hookRecord);
+        EXPECT_EQ(g_factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
     }
+    delete[] data;
 }
 
 /*
@@ -178,19 +177,18 @@ HWTEST_F(HookRecordFactoryTest, ReturnMmapRecord, TestSize.Level1)
  */
 HWTEST_F(HookRecordFactoryTest, ReturnEndRecord, TestSize.Level1)
 {
-    NativeHookConfig hookConfig;
-    std::shared_ptr<HookRecordFactory> factory = std::make_shared<HookRecordFactory>(hookConfig);
     StackRawData rawdata;
     rawdata.type = END_MSG;
     uint32_t dataSize = sizeof(StackRawData);
     int8_t* data = new int8_t[sizeof(StackRawData)];
     if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
-        std::shared_ptr<HookRecord> hookRecord = factory->GetHookRecord(data, dataSize);
-        EXPECT_EQ(factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
-        EXPECT_EQ(factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
-        factory->SaveHookRecord(hookRecord);
-        EXPECT_EQ(factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
-        EXPECT_EQ(factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
+        EXPECT_EQ(g_factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        EXPECT_EQ(g_factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        g_factory->SaveHookRecord(hookRecord);
+        EXPECT_EQ(g_factory->mallocRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
+        EXPECT_EQ(g_factory->mmapRecordCache_.size(), HOOK_RECORD_CACHE_INIT_SIZE);
     }
+    delete[] data;
 }
 }

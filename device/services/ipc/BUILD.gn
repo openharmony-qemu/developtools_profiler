@@ -53,7 +53,6 @@ ohos_executable("protoc_gen_ipc") {
   include_dirs = [ "include" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   external_deps = [
-    "abseil-cpp:absl_base_static",
     "protobuf:protobuf_lite_static",
     "protobuf:protoc_static_lib(${host_toolchain})",
   ]
@@ -71,7 +70,6 @@ ohos_executable("protoencoder_plugin") {
   include_dirs = [ "include" ]
   public_configs = [ "${OHOS_PROFILER_DIR}/device/base:hiprofiler_test_config" ]
   external_deps = [
-    "abseil-cpp:absl_base_static",
     "protobuf:protobuf_lite_static",
     "protobuf:protoc_static_lib(${host_toolchain})",
   ]

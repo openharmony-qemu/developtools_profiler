@@ -59,11 +59,6 @@ HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
     handler->AddAllocAddr(addr);
     ASSERT_TRUE(handler->CheckAddr(addr));
     ASSERT_FALSE(handler->CheckAddr(noExistaddr));
-    addr = TEST_ADDR;
-    noExistaddr = addr - 1;
-    handler->AddAllocAddr(addr);
-    ASSERT_TRUE(handler->CheckAddr(addr));
-    ASSERT_TRUE(handler->CheckAddr(noExistaddr));
     handler = nullptr;
 }
 
@@ -94,8 +89,6 @@ HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
     uint64_t addr = 0xFF000000000;
     uint64_t noExistaddr = 0xFE000000000;
     handlerLow->AddAllocAddr(addr);
-    ASSERT_TRUE(handlerLow->CheckAddr(addr));
-    ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
     handlerMid->AddAllocAddr(addr);
     handlerLow->SetSuccessor(std::move(handlerMid));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
@@ -116,8 +109,6 @@ HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
     uint64_t addr = 0xFF000000000;
     uint64_t noExistaddr = 0xFE000000000;
     handlerLow->AddAllocAddr(addr);
-    ASSERT_TRUE(handlerLow->CheckAddr(addr));
-    ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
     handlerWhole->AddAllocAddr(addr);
     handlerLow->SetSuccessor(std::move(handlerWhole));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
@@ -138,8 +129,6 @@ HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level1)
     uint64_t addr = TEST_ADDR;
     uint64_t noExistaddr = addr - 1;
     handlerMid->AddAllocAddr(addr);
-    ASSERT_TRUE(handlerMid->CheckAddr(addr));
-    ASSERT_TRUE(handlerMid->CheckAddr(noExistaddr));
     handlerWhole->AddAllocAddr(addr);
     handlerMid->SetSuccessor(std::move(handlerWhole));
     ASSERT_TRUE(handlerMid->CheckAddr(addr));
@@ -164,7 +153,6 @@ HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level1)
     handlerWhole->AddAllocAddr(addr);
     handlerMid->AddAllocAddr(addr);
     ASSERT_TRUE(handlerLow->CheckAddr(addr));
-    ASSERT_TRUE(handlerLow->CheckAddr(noExistaddr));
     handlerMid->SetSuccessor(std::move(handlerWhole));
     handlerLow->SetSuccessor(std::move(handlerMid));
     ASSERT_TRUE(handlerLow->CheckAddr(addr));

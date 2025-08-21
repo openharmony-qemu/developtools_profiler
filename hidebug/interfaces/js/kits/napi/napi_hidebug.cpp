@@ -471,7 +471,7 @@ napi_value GetAppMemoryLimit(napi_env env, napi_callback_info info)
     napi_value appMemoryLimit = nullptr;
     napi_create_object(env, &appMemoryLimit);
     auto memoryLimitOption = HidebugNativeInterface::GetInstance().GetAppMemoryLimit();
-    if (memoryLimitOption) {
+    if (!memoryLimitOption) {
         memoryLimitOption.emplace();
     }
     napi_value rssLimit = nullptr;
@@ -589,7 +589,7 @@ napi_value GetSystemMemInfo(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemMemInfo");
     auto systemMemInfoOption = HidebugNativeInterface::GetInstance().GetSystemMemInfo();
-    if (systemMemInfoOption) {
+    if (!systemMemInfoOption) {
         systemMemInfoOption.emplace();
     }
     napi_value sysMemInfo = nullptr;
@@ -854,7 +854,7 @@ bool ParseGwpAsanOptions(napi_env env, napi_value value, GwpAsanParams& gwpAsanP
     napi_value nMaxSimutaneousAllocations = nullptr;
     if (GetNapiObjectProperty(env, value, "maxSimutaneousAllocations", nMaxSimutaneousAllocations)) {
         if (!GetNapiDoubleValue(env, nMaxSimutaneousAllocations, gwpAsanParams.maxSimutaneousAllocations)) {
-            HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
+            HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
             return false;
         }
     }

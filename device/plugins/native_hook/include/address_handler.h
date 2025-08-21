@@ -12,8 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef ADDRESS_HANDLER
-#define ADDRESS_HANDLER
+#ifndef ADDRESS_HANDLER_H
+#define ADDRESS_HANDLER_H
 #include "logging.h"
 
 struct Bitpool {
@@ -22,8 +22,7 @@ struct Bitpool {
 
 class AddressHandler {
 public:
-    AddressHandler(int poolSize);
-
+    AddressHandler(uint64_t poolSize);
     virtual ~AddressHandler();
 
     void SetSuccessor(std::shared_ptr<AddressHandler> successor)
@@ -33,21 +32,18 @@ public:
 
     virtual void AddAllocAddr(uint64_t addr) = 0;
     virtual bool CheckAddr(uint64_t addr) = 0;
-    std::atomic<uint64_t> count = 0;
 
 protected:
     std::shared_ptr<AddressHandler> successor_ = nullptr;
     Bitpool* addressChecker_ = nullptr;
-    int bitPoolSize_ = 0;
+    uint64_t bitPoolSize_ = 0;
 };
 
 class LowAddrHandler : public AddressHandler {
 public:
     LowAddrHandler();
     void AddAllocAddr(uint64_t addr) override;
-
     bool CheckAddr(uint64_t addr) override;
-
     //MurmurHash
     uint32_t HashFunc(uint32_t addrKey);
 };
@@ -56,9 +52,7 @@ class MidAddrHandler : public AddressHandler {
 public:
     MidAddrHandler();
     void AddAllocAddr(uint64_t addr) override;
-
     bool CheckAddr(uint64_t addr) override;
-
     //Fnv1aHash
     uint32_t HashFunc(uint32_t addrKey);
 };
@@ -67,9 +61,7 @@ class WholeAddrHandler : public AddressHandler {
 public:
     WholeAddrHandler();
     void AddAllocAddr(uint64_t addr) override;
-
     bool CheckAddr(uint64_t addr) override;
-
     //SplitMix64
     uint64_t HashFunc(uint64_t addrKey);
 };

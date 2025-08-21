@@ -24,13 +24,13 @@ using namespace testing::ext;
 using namespace std;
 
 namespace OHOS::Developtools::NativeDaemon {
+static std::mutex g_mtx;
 class StackBuilderTest : public testing::Test {
 public:
     static void SetUpTestCase(void);
     static void TearDownTestCase(void);
     void SetUp();
     void TearDown();
-    const std::size_t size_ {20};
 };
 
 void StackBuilderTest::SetUpTestCase(void) {}
@@ -49,7 +49,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
     hookConfig.set_offline_symbolization(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime);
+    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime, g_mtx);
     std::vector<CallFrame> frames;
     RawStackPtr rawData = std::make_shared<RawStack>();
     rawData->fpDepth = 1;
@@ -71,7 +71,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillJsSymbolsTest, TestSize.Level1)
     hookConfig.set_offline_symbolization(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime);
+    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime, g_mtx);
     std::vector<CallFrame> frames;
     RawStackPtr rawData = std::make_shared<RawStack>();
     rawData->fpDepth = 1;
@@ -98,7 +98,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1
     hookConfig.set_offline_symbolization(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime);
+    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime, g_mtx);
     std::vector<CallFrame> frames;
     RawStackPtr rawData = std::make_shared<RawStack>();
     rawData->fpDepth = 1;
@@ -111,12 +111,12 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1
     baseData.jsChainId = 1;
     rawData->stackContext = &baseData;
     builder->FillJsSymbols(frames, hookRecord);
-    EXPECT_NE(frames.size(), 2);
+    EXPECT_EQ(frames.size(), 1);
 }
 
 /*
  * @tc.name: DwarfStackBuilderReplaceErrStackTest
- * @tc.desc: test DwarfStackBuilder::FillIps normal case.
+ * @tc.desc: test DwarfStackBuilder::ReplaceErrStack
  * @tc.type: FUNC
  */
 HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1)
@@ -125,7 +125,7 @@ HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1
     hookConfig.set_offline_symbolization(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto builder = std::make_shared<DwarfStackBuilder>(&hookConfig, runtime);
+    auto builder = std::make_shared<DwarfStackBuilder>(&hookConfig, runtime, g_mtx);
     std::vector<CallFrame> frames;
     RawStackPtr rawData = std::make_shared<RawStack>();
     rawData->fpDepth = 1;
@@ -149,8 +149,8 @@ HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level1)
     hookConfig.set_js_stack_report(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime);
-    auto director = std::make_shared<BuildStackDirector>(&hookConfig, runtime);
+    auto builder = std::make_shared<FpStackBuilder>(&hookConfig, runtime, g_mtx);
+    auto director = std::make_shared<BuildStackDirector>(&hookConfig, runtime, g_mtx);
     director->SetBuilder(builder);
     RawStackPtr rawData = std::make_shared<RawStack>();
     rawData->fpDepth = 1;
@@ -178,7 +178,7 @@ HWTEST_F(StackBuilderTest, DirectorTestFalse, TestSize.Level1)
     hookConfig.set_js_stack_report(true);
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime =
     std::make_shared<OHOS::Developtools::NativeDaemon::VirtualRuntime>(hookConfig);
-    auto director = std::make_shared<BuildStackDirector>(&hookConfig, runtime);
+    auto director = std::make_shared<BuildStackDirector>(&hookConfig, runtime, g_mtx);
     RawStackPtr rawData = std::make_shared<RawStack>();
     BaseStackRawData baseData;
     baseData.type = PR_SET_VMA_MSG;

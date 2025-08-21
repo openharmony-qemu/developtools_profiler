@@ -241,8 +241,12 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
     printMallocNmd_ = hookConfig_.dump_nmd() ? hookConfig_.dump_nmd() : printMallocNmd_;
-    clientConfig.nmdType = printMallocNmd_ ? ONLY_NMD_TYPE : static_cast<int>(nmdParamInfo_.type);
-    clientConfig.targetSoName = hookConfig_.target_so_name();
+    clientConfig.nmdType = (printMallocNmd_ && hookConfig_.dump_nmd()) ? ONLY_NMD_TYPE :
+        static_cast<int>(nmdParamInfo_.type);
+    const std::string& soName = hookConfig_.target_so_name();
+    if (soName.length() < PATH_MAX && !COMMON::ContainsSpecialChars(soName)) {
+        clientConfig.targetSoName = hookConfig_.target_so_name();
+    }
     clientConfig.printNmd = printMallocNmd_;
     clientConfig.largestSize = largestSize_;
     clientConfig.secondLargestSize = secondLargestSize_;
@@ -516,6 +520,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         std::shared_ptr<RawStack> rawStack = nullptr;
         bool ret = shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
             hookRecord = factory_->GetHookRecord(data, size);
+            CHECK_NOTNULL(hookRecord, false, "ReadShareMemory hookRecord invalid!");
             rawStack = hookRecord->GetRawStack();
             uint16_t type = hookRecord->GetType();
             if (type == FREE_MSG_SIMP) {
@@ -819,7 +824,7 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
     }
 }
 
-std::string HookManager::GetCmdArgs(NativeHookConfig traceConfig)
+std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
 {
     std::stringstream args;
     args << "pid: " << COMMON::GetProcessNameByPid(traceConfig.pid()) << ", ";
@@ -883,7 +888,7 @@ std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name, int s
             return fds;
         }
     }
-    return std::vector<int>(-1, sharedMemCount * DOUBLE);
+    return std::vector<int>(sharedMemCount * DOUBLE, -1);
 }
 
 void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
