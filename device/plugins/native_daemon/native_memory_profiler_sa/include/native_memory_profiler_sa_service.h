@@ -65,7 +65,7 @@ public:
 private:
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     int32_t StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
-                          uint32_t fd, std::shared_ptr<HookManager>& hook, std::string& args);
+                          uint32_t& fd, std::shared_ptr<HookManager>& hook, std::string& args);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
     bool CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
