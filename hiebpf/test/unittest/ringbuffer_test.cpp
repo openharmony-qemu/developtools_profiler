@@ -444,7 +444,7 @@ HWTEST_F(RingbufferTest, Resize, TestSize.Level1)
     EXPECT_EQ(ret, putStr.size());
     char buff[size + 1];
     ret = memset_s(buff, sizeof(buff), 0, sizeof(buff));
-    EXPECT_EQ(ret, EOK);
+    ASSERT_EQ(ret == EOK);
     ret = ringBuffer->Get(buff, size);
     EXPECT_EQ(ret, size);
     EXPECT_STREQ(buff, destStr.c_str());
