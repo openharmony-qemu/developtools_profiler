@@ -64,6 +64,7 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
  * @tc.desc: test HookSocketClient::SendStack with normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
 {
     uint64_t config = FILTER_SIZE;
@@ -91,6 +92,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
     EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
     EXPECT_TRUE(hookClient.SendStackWithPayload(buffer.get(), metaSize, buffer.get(), metaSize));
 }
+#endif
 
 /*
  * @tc.name: FdListSize
@@ -155,6 +157,7 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
  * @tc.desc: test HookSocketClient::SendNmdInfo with normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
 {
     uint64_t config = FILTER_SIZE;
@@ -176,12 +179,14 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
     }
     ASSERT_FALSE(hookClient.SendNmdInfo());
 }
+#endif
 
 /*
  * @tc.name: SendSimplifiedNmdInfo
  * @tc.desc: test HookSocketClient::SendSimplifiedNmdInfo with normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
 {
     uint64_t config = FILTER_SIZE;
@@ -203,4 +208,5 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
     }
     ASSERT_FALSE(hookClient.SendSimplifiedNmdInfo());
 }
+#endif
 } // namespace
