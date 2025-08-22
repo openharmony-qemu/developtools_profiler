@@ -103,7 +103,11 @@ void EbpfConverter::StartParsing()
         return;
     }
     char magic[HEADER_MAGIC + 1];
-    (void)memset_s(magic, sizeof(magic), 0, sizeof(magic));
+    if (memset_s(magic, sizeof(magic), 0, sizeof(magic)) != EOK) {
+        close(fd_);
+        std::cout << "memset_s error at StartParsing" << std::endl;
+        return;
+    }
     CHK(Read(reinterpret_cast<void*>(&magic), sizeof(magic) - 1));
     outData_ << "magic: " << magic << '\n';
     HeaderDataItem header = {};
@@ -253,7 +257,10 @@ void EbpfConverter::EventMapsParsing()
     EventMaps maps = {};
     CHK(Read(reinterpret_cast<void*>(&maps), EVENT_MAPS_FIXED_SIZE));
     char fileName[maps.fileNameLen + 1];
-    (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
+    if (memset_s(fileName, sizeof(fileName), 0, sizeof(fileName)) != EOK) {
+        std::cout << "memset error at EventMapsParsing" << std::endl;
+        return;
+    }
     if (maps.fileNameLen > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         CHK(Read(reinterpret_cast<void*>(fileName), dataLen));
@@ -333,7 +340,12 @@ void EbpfConverter::SymbolInfoParsing()
         }
     }
     char fileName[info.fileNameSize + 1];
-    (void)memset_s(fileName, sizeof(fileName), 0, sizeof(fileName));
+    if (memset_s(fileName, sizeof(fileName), 0, sizeof(fileName)) != EOK) {
+        std::cout << "memset error at SymbolInfoParsing" << std::endl;
+        delete[] info.symTab;
+        info.symTab = nullptr;
+        return;
+    }
     if (info.fileNameSize > 0) {
         size_t dataLen = sizeof(fileName) > 1 ? sizeof(fileName) - 1 : 0;
         if (!Read(reinterpret_cast<void*>(&fileName), dataLen)) {
