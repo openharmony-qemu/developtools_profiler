@@ -17,15 +17,13 @@
 #ifndef HIVIEWDFX_NAPI_HIDEBUG_GC_H
 #define HIVIEWDFX_NAPI_HIDEBUG_GC_H
 
-#include <map>
-#include <string>
-
 #include "napi/native_node_api.h"
 
 namespace OHOS {
 namespace HiviewDFX {
 napi_value GetVMRuntimeStats(napi_env env, napi_callback_info info);
 napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info);
+napi_value GetAppVMObjectUsed(napi_env env, napi_callback_info info);
 }
 }
 #endif //HIVIEWDFX_NAPI_HIDEBUG_GC_H
