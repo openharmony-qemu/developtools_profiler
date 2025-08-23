@@ -43,6 +43,7 @@ constexpr uint32_t BUFFER_SIZE = 1024;
 constexpr uint32_t SMB1_SIZE = 10 * 4096;
 constexpr int FILE_SIZE = 2000;
 constexpr int MOBILE_BIT = 32;
+constexpr int SLEEP_TIME = 3;
 const std::string WRITER_NAME = "NetworkProfilerWriterTest";
 void* g_smbAddr = nullptr;
 int g_smbFd1 = 0;
@@ -133,7 +134,7 @@ public:
 
         int processNum = fork();
         if (processNum == 0) {
-            sleep(3);
+            sleep(SLEEP_TIME);
             execl(name.c_str(), name.c_str(), args.c_str(), NULL);
             _exit(1);
         } else if (processNum < 0) {
