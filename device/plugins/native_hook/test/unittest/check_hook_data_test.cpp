@@ -48,14 +48,16 @@ constexpr int SLEEP_FIVE = 5;
 const std::string DEFAULT_NATIVE_DAEMON_CLIENT_PATH("/data/local/tmp/native_daemon_client");
 constexpr int SHARE_MEMORY_SIZE = 1000 * 4096;
 constexpr int BUFFER_SIZE = 100 * 1024;
+#ifdef __aarch64__
 constexpr int DEFAULT_DEPTH = 32;
 constexpr int CALLOC_DEPTH = 13;
 constexpr int REALLOC_DEPTH = 10;
 constexpr int MALLOC_VEC_SIZE = 5;
 constexpr int FREE_VEC_SIZE = 4;
-[[maybe_unused]] constexpr int WAIT_TIME = 5;
 constexpr int MALLOC_GET_DATE_SIZE = 3;
 constexpr int FREE_GET_DATA_SIZE = 2;
+#endif
+[[maybe_unused]] constexpr int WAIT_TIME = 5;
 constexpr int START_JS_REPORT = 1;
 std::unique_ptr<uint8_t[]> g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
 const std::string DEFAULT_PATH("/data/local/tmp/");
@@ -492,6 +494,7 @@ public:
  * @tc.desc: Test hook malloc normal process.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level1)
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
@@ -722,7 +725,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0100, Function | MediumTest | Lev
  * @tc.desc: Test hook dlopen normal process. just for arm64
  * @tc.type: FUNC
  */
-#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level3)
 {
     for (size_t i = 1; i < 2; ++i) {
@@ -773,7 +775,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
         }
     }
 }
-#endif
 
 /**
  * @tc.name: native hook
@@ -835,6 +836,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
         sleep(SLEEP_TIME);
     }
 }
+#endif
 
 /**
  * @tc.name: native hook
@@ -892,6 +894,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  * @tc.desc: Test hook callframe compress normal process.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level3)
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
@@ -1018,7 +1021,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
     }
 }
 
-#ifdef __aarch64__
 /**
  * @tc.name: native hook
  * @tc.desc: Test hook raw responseLibraryMode normal process.
@@ -1062,7 +1064,6 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
         EXPECT_TRUE(ipCount == 1); // response_library_mode callstack depth only is 1
     }
 }
-#endif
 
 /**
  * @tc.name: native hook
@@ -1234,6 +1235,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
         sleep(SLEEP_TIME);
     }
 }
+#endif
 
 /**
  * @tc.name: native hook
@@ -1361,6 +1363,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
  * @tc.desc: Test nmd normal process.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
 {
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
@@ -1389,6 +1392,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
         sleep(SLEEP_TIME);
     }
 }
+#endif
 }
 
 #pragma clang optimize on

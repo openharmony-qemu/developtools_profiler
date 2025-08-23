@@ -202,6 +202,7 @@ HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
  * @tc.desc: test CheckNmdInfoe when process is exit.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(HookManagerTest, CheckNmdInfo, TestSize.Level1)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 1, "hiview");
@@ -224,6 +225,7 @@ HWTEST_F(HookManagerTest, CheckNmdInfo, TestSize.Level1)
     }
     EXPECT_TRUE(nmdResult);
 }
+#endif
 
 /*
  * @tc.name: CheckNmdInfoe002

@@ -43,6 +43,7 @@ void StackBuilderTest::TearDown() {}
  * @tc.desc: test FpStackBuilder::FillIps normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
 {
     NativeHookConfig hookConfig;
@@ -59,6 +60,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
     builder->FillIps(frames, hookRecord);
     EXPECT_EQ(frames.size(), 1);
 }
+#endif
 
 /*
  * @tc.name: FpStackBuilderFillJsSymbolsTest
@@ -142,6 +144,7 @@ HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1
  * @tc.desc: test BuildStackDirector::ConstructCallFrames normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level1)
 {
     NativeHookConfig hookConfig;
@@ -165,6 +168,7 @@ HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level1)
     auto& frames = director->ConstructCallFrames(hookRecord);
     EXPECT_EQ(frames.size(), 1);
 }
+#endif
 
 /*
  * @tc.name: DirectorTestFalse

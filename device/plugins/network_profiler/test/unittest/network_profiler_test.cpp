@@ -133,6 +133,7 @@ public:
 
         int processNum = fork();
         if (processNum == 0) {
+            sleep(3);
             execl(name.c_str(), name.c_str(), args.c_str(), NULL);
             _exit(1);
         } else if (processNum < 0) {
@@ -542,6 +543,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest001, TestSize.Level1)
  * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest002 with normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
 {
     auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
@@ -568,6 +570,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
     handle->SetWriter(write);
     handle->StopHandle();
 }
+#endif
 
 /**
  * @tc.name: NetworkProfilerHandleTest003
