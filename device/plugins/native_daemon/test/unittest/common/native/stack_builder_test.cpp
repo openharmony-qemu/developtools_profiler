@@ -60,7 +60,6 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
     builder->FillIps(frames, hookRecord);
     EXPECT_EQ(frames.size(), 1);
 }
-#endif
 
 /*
  * @tc.name: FpStackBuilderFillJsSymbolsTest
@@ -115,6 +114,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1
     builder->FillJsSymbols(frames, hookRecord);
     EXPECT_EQ(frames.size(), 1);
 }
+#endif
 
 /*
  * @tc.name: DwarfStackBuilderReplaceErrStackTest
