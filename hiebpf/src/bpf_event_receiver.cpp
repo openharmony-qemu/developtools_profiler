@@ -206,7 +206,10 @@ void BPFEventReceiver::WriteEventMaps(uint32_t pid)
         mapItem->fileNameLen = item.fileName_.size() + 1;
         char* tmp = reinterpret_cast<char*>(dest);
         char* fileName = tmp + sizeof(FixedMapTLVItem);
-        (void)strncpy_s(fileName, mapItem->fileNameLen, item.fileName_.c_str(), item.fileName_.size());
+        if (strncpy_s(fileName, mapItem->fileNameLen, item.fileName_.c_str(), item.fileName_.size()) < 0) {
+            HHLOGE(true, "BPFEventReceiver::WriteEventMaps error");
+            return;
+        }
         file->Submit(dest);
         WriteSymbolInfo(item.fileName_);
     }
@@ -307,7 +310,10 @@ int BPFEventReceiver::EncodeFSTraceEvent(
                -1, "failed to copy fstrace type name");
     CHECK_TRUE(ConvertFSTraceArgsToArray(item->args_, &cmplt_event->start_event) == 0, -1,
                "failed to convert fstrace event args");
-    (void)memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->comm, MAX_COMM_LEN);
+    if (memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->comm, MAX_COMM_LEN) != EOK) {
+        HHLOGE(true, "BPFEventReceiver::EncodeFSTraceEvent memcpy_s error");
+        return -1;
+    }
     if (item->nips_ != 0) {
         int ret = memcpy_s(reinterpret_cast<__u64*>((reinterpret_cast<char *>(item) +
                            sizeof(struct FixedFSTraceTLVItem))), item->nips_ * sizeof(__u64),
@@ -343,7 +349,10 @@ int BPFEventReceiver::EncodePFTraceEvent(
                          gPFTraceTypeTable[item->type_].c_str(),
                          gPFTraceTypeTable[item->type_].size()) == EOK,
                -1, "failed to copy pftrace type name");
-    (void)memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->comm, MAX_COMM_LEN);
+    if (memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->comm, MAX_COMM_LEN) != EOK) {
+        HHLOGE(true, "BPFEventReceiver::EncodePFTraceEvent memcpy_s error");
+        return -1;
+    }
     if (item->nips_ != 0) {
         int ret = memcpy_s(reinterpret_cast<__u64*>((reinterpret_cast<char *>(item) +
                            sizeof(struct FixedPFTraceTLVItem))), item->nips_ * sizeof(__u64),
@@ -365,7 +374,10 @@ int BPFEventReceiver::EncodeBIOTraceEvent(
     item->itemLen_ = itemLen - sizeof(uint32_t) * DOUBLE;
     item->pid_ = cmplt_event->start_event.tgid;
     item->tid_ = cmplt_event->start_event.pid;
-    (void)memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->start_event.comm, MAX_COMM_LEN);
+    if (memcpy_s(item->comm_, MAX_COMM_LEN, cmplt_event->start_event.comm, MAX_COMM_LEN) != EOK) {
+        HHLOGE(true, "BPFEventReceiver::EncodeBIOTraceEvent memcpy_s error");
+        return -1;
+    }
     item->stime_ = cmplt_event->start_event.stime;
     item->ctime_ = cmplt_event->ctime;
     item->prio_ = cmplt_event->prio;

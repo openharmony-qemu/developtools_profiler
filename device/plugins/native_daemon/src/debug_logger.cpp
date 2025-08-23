@@ -97,6 +97,10 @@ int DebugLogger::Log(DebugLevel level, const std::string &logTag, const char *fm
     std::string buffer(DEFAULT_STRING_BUF_SIZE, '\0');
     va_start(va, fmt);
     ret = vsnprintf_s(buffer.data(), buffer.size(), buffer.size() - 1, fmt, va);
+    if (ret < 0) {
+        va_end(va);
+        return -1;
+    }
     va_end(va);
 #ifdef HIPERF_DEBUG_TIME
     logSprintfTimes_ += duration_cast<microseconds>(steady_clock::now() - startSprintf);

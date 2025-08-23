@@ -242,8 +242,12 @@ static std::string GetTimeString()
     if (used >= TIME_STRING_MAX_LENGTH) {
         return "";
     }
-    (void)snprintf_s(&timeStr[used], sizeof(timeStr) - used, sizeof(timeStr) - used - 1, ".%03ld",
+    int ret = snprintf_s(&timeStr[used], sizeof(timeStr) - used, sizeof(timeStr) - used - 1, ".%03ld",
         ts.tv_nsec / NS_PER_MS_LOG);
+    if (ret < 0) {
+        HILOG_BASE_ERROR(LOG_CORE, "GetTimeString snprintf_s error");
+        return "";
+    }
     return timeStr;
 }
 #endif // !HAVE_HILOG

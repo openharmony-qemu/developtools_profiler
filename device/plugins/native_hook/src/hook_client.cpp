@@ -1137,7 +1137,10 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         rawdata.type = MMAP_FILE_PAGE_MSG;
         char path[FD_PATH_LENGTH] = {0};
         char fileName[MAX_HOOK_PATH + 1] = {0};
-        (void)snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd);
+        if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
+            return nullptr;
+        }
         ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
         if (len != -1) {
             fileName[len] = '\0';
