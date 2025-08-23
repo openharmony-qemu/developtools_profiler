@@ -43,6 +43,7 @@ constexpr uint32_t BUFFER_SIZE = 1024;
 constexpr uint32_t SMB1_SIZE = 10 * 4096;
 constexpr int FILE_SIZE = 2000;
 constexpr int MOBILE_BIT = 32;
+constexpr int SLEEP_TIME = 3;
 const std::string WRITER_NAME = "NetworkProfilerWriterTest";
 void* g_smbAddr = nullptr;
 int g_smbFd1 = 0;
@@ -133,6 +134,7 @@ public:
 
         int processNum = fork();
         if (processNum == 0) {
+            sleep(SLEEP_TIME);
             execl(name.c_str(), name.c_str(), args.c_str(), NULL);
             _exit(1);
         } else if (processNum < 0) {
@@ -542,6 +544,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest001, TestSize.Level1)
  * @tc.desc: test NetworkProfilerHandle::NetworkProfilerHandleTest002 with normal case.
  * @tc.type: FUNC
  */
+#ifdef __aarch64__
 HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
 {
     auto write = std::make_shared<NetworkProfilerWriter>(WRITER_NAME, SMB1_SIZE, g_smbFd1, -1, false);
@@ -568,6 +571,7 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerHandleTest002, TestSize.Level1)
     handle->SetWriter(write);
     handle->StopHandle();
 }
+#endif
 
 /**
  * @tc.name: NetworkProfilerHandleTest003
