@@ -97,3 +97,76 @@ ohos_executable("hiprofiler_plugins") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }
+
+config("hidebug_native_config") {
+  visibility = [ ":*" ]
+  include_dirs = [ "include" ]
+}
+
+ohos_source_set("libhidebug_source") {
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  include_dirs = [ "./include" ]
+  if (build_variant == "root") {
+    defines = [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
+  }
+  sources = [ "./src/hidebug_base.c" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "hichecker:libhichecker",
+    "hilog:libhilog",
+    "init:libbegetutil",
+  ]
+}
+
+ohos_shared_library("libhidebug") {
+  public_configs = [ ":hidebug_native_config" ]
+
+  deps =
+      [ "//developtools/profiler/device/plugins/api:libhidebug_source" ]
+
+  if (!is_asan && !is_debug) {
+    version_script = "../api/libhidebug.map"
+  }
+
+  external_deps = [
+    "hilog:libhilog",
+    "init:libbegetutil",
+  ]
+
+  cflags = [ "-fstack-protector-strong" ]
+
+  install_images = [
+    "system",
+    "updater",
+  ]
+
+  output_extension = "so"
+
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}
+
+ohos_static_library("libhidebug_init") {
+  public_configs = [ ":hidebug_native_config" ]
+
+  defines = [ "HIDEBUG_IN_INIT" ]
+
+  if (build_variant == "root") {
+    defines += [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
+  }
+
+  include_dirs = [ "./include" ]
+
+  sources = [ "./src/hidebug_base.c" ]
+
+  external_deps = [
+    "bounds_checking_function:libsec_static",
+    "cJSON:cjson",
+    "init:libinit_module_engine",
+  ]
+
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+}

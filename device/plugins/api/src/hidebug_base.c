@@ -30,8 +30,8 @@
 #ifdef HIDEBUG_IN_INIT
 #include "init_module_engine.h"
 #include "init_log.h"
-#define HIDEBUG_LOGE(...) INIT_LOGE(__VA_ARGS__)
-#define HIDEBUG_LOGI(...) INIT_LOGI(__VA_ARGS__)
+#define PROFILER_LOGE(...) INIT_LOGE(__VA_ARGS__)
+#define PROFILER_LOGI(...) INIT_LOGI(__VA_ARGS__)
 #define LOG_PRIV_PUBLIC ""
 #else
 #include <parameter.h>
@@ -44,8 +44,8 @@
 #define LOG_DOMAIN 0xD002D0A
 #define LOG_TAG "HiDebug_Native"
 
-#define HIDEBUG_LOGE(...) HILOG_ERROR(LOG_CORE, __VA_ARGS__)
-#define HIDEBUG_LOGI(...) HILOG_INFO(LOG_CORE, __VA_ARGS__)
+#define PROFILER_LOGE(...) HILOG_ERROR(LOG_CORE, __VA_ARGS__)
+#define PROFILER_LOGI(...) HILOG_INFO(LOG_CORE, __VA_ARGS__)
 #define LOG_PRIV_PUBLIC "{public}"
 #endif
 
@@ -67,22 +67,22 @@ struct Params {
 static void ParseKeyValue(const char *input, uint32_t *paramCnt, struct Params *result, const uint32_t paramSize)
 {
     if (*paramCnt >= paramSize) {
-        HIDEBUG_LOGE("Parameters is Full.");
+        PROFILER_LOGE("Parameters is Full.");
         return;
     }
     const char *colonPos = strchr(input, COLON_CHR);
     if (colonPos == NULL) {
-        HIDEBUG_LOGE("params is illegal.");
+        PROFILER_LOGE("params is illegal.");
         return;
     }
     errno_t err = strncpy_s(result[*paramCnt].key, MAX_PARA_LEN, input, colonPos - input);
     if (err != EOK) {
-        HIDEBUG_LOGE("strncpy_s copy key strings failed.");
+        PROFILER_LOGE("strncpy_s copy key strings failed.");
         return;
     }
     err = strncpy_s(result[*paramCnt].value, MAX_PARA_LEN, colonPos + 1, strlen(colonPos + 1));
     if (err != EOK) {
-        HIDEBUG_LOGE("strncpy_s copy value strings failed.");
+        PROFILER_LOGE("strncpy_s copy value strings failed.");
         return;
     }
     (*paramCnt)++;
@@ -127,7 +127,7 @@ static bool QueryParams(const char *queryName, char *result, const uint32_t size
 static bool ConcatenateParamName(char* queryName, const size_t size, const char* serviceName)
 {
     if (strcat_s(queryName, size, serviceName) != EOK) {
-        HIDEBUG_LOGE("strcat_s query name failed.");
+        PROFILER_LOGE("strcat_s query name failed.");
         return false;
     }
     return true;
@@ -143,7 +143,7 @@ static bool InitHiDebugEnvParams(const char *queryName)
     uint32_t paramsCnt = SplitParams(paramOutBuf, params, MAX_PARA_CNT);
     for (uint32_t i = 0; i < paramsCnt; ++i) {
         if (setenv(params[i].key, params[i].value, 1) != 0) { // 1 : overwrite
-            HIDEBUG_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
+            PROFILER_LOGE("setenv failed, err: %" LOG_PRIV_PUBLIC "s", strerror(errno));
         }
     }
     return paramsCnt > 0;
@@ -235,13 +235,13 @@ static bool MatchMallocHookStartupProp(const char *thisName)
     }
     retLen = GetMallocHookStartupValue(paramOutBuf, targetProcName, PARAM_BUF_LEN);
     if (retLen == -1) {
-        HIDEBUG_LOGE("malloc hook parse startup value failed");
+        PROFILER_LOGE("malloc hook parse startup value failed");
         return false;
     }
 
     const int targetProcNameSize = strlen(targetProcName);
     if (strncmp(targetProcName, "init", targetProcNameSize) == 0) {
-        HIDEBUG_LOGI("malloc hook: this target proc '%" LOG_PRIV_PUBLIC "s' no hook", targetProcName);
+        PROFILER_LOGI("malloc hook: this target proc '%" LOG_PRIV_PUBLIC "s' no hook", targetProcName);
         return false;
     }
 
@@ -257,19 +257,19 @@ static int SetupMallocHookAtStartup(const char *thisName)
     if (!MatchMallocHookStartupProp(thisName)) {
         return 0;
     }
-    HIDEBUG_LOGI("malloc send hook signal.");
+    PROFILER_LOGI("malloc send hook signal.");
     return raise(hookSignal);
 }
 
 bool InitEnvironmentParam(const char *inputName)
 {
     if (inputName == NULL) {
-        HIDEBUG_LOGE("input service name is null.");
+        PROFILER_LOGE("input service name is null.");
         return false;
     }
     const char *serviceName = FilterServiceName(inputName);
     if (*serviceName == '\0') {
-        HIDEBUG_LOGE("input service name is illegal.");
+        PROFILER_LOGE("input service name is illegal.");
         return false;
     }
 #ifndef HIDEBUG_IN_INIT

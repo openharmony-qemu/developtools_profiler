@@ -83,19 +83,6 @@ static void* TestCustomRealloc(void* ptr, size_t size)
 }
 
 /**
- * @tc.name: InitEnvironmentParam
- * @tc.desc: test InitEnvironmentParam
- * @tc.type: FUNC
- */
-HWTEST_F(HidebugTest, InitEnvironmentParam1, TestSize.Level1)
-{
-    system("param set hiviewdfx.debugenv.hidebug_test aaa:bbb");
-    EXPECT_TRUE(InitEnvironmentParam("hidebug_test"));
-    EXPECT_FALSE(InitEnvironmentParam("hidebug_test/"));
-    EXPECT_FALSE(InitEnvironmentParam(nullptr));
-}
-
-/**
  * @tc.name: OH_HiDebug_GetAppCpuUsage1
  * @tc.desc: test OH_HiDebug_GetAppCpuUsage.get app cpu usage
  * @tc.type: FUNC

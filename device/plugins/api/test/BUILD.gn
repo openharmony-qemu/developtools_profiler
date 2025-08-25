@@ -33,12 +33,14 @@ ohos_unittest("hiprofiler_plugins_ut") {
   deps = [
     "${OHOS_PROFILER_DIR}/device/services/plugin_service:hiprofiler_plugin_service",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
+    "${OHOS_PROFILER_DIR}/device/plugins/api:libhidebug",
     "../:plugins_sources",
   ]
   include_dirs = [ "${OHOS_PROFILER_DIR}/device/base/include" ]
   sources = [
     "unittest/buffer_write_test.cpp",
     "unittest/command_poller_test.cpp",
+    "unittest/hidebug_base_test.cpp",
     "unittest/plugin_manager_test.cpp",
     "unittest/plugin_module_test.cpp",
     "unittest/writer_adapter_test.cpp",
