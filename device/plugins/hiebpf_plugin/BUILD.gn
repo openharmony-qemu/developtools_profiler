@@ -40,6 +40,7 @@ ohos_source_set("hiebpfplugin_source") {
     ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
+      "c_utils:utils",
       "hilog:libhilog_base",
       "init:libbegetutil",
       "openssl:libcrypto_shared",
