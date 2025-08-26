@@ -62,7 +62,6 @@
         "openssl",
         "zlib",
         "grpc",
-        "storage_service",
         "abseil-cpp",
         "netmanager_base"
       ],

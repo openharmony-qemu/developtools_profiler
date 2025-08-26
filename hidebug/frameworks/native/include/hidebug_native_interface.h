@@ -50,6 +50,7 @@ public:
     virtual std::optional<SystemMemoryInfo> GetSystemMemInfo() = 0;
     virtual bool IsDebuggerConnected() = 0;
     virtual std::optional<int32_t> GetGraphicsMemory() = 0;
+    virtual std::optional<GraphicsMemorySummary> GetGraphicsMemorySummary(uint32_t interval) = 0;
 };
 }
 }

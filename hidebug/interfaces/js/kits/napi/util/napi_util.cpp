@@ -160,9 +160,15 @@ std::string GetFileNameParam(napi_env env, napi_callback_info info)
     return fileName;
 }
 
-bool AsyncTask::CreatePromise(napi_env env, napi_value &promise)
+bool AsyncTask::CreatePromise(napi_env env, napi_callback_info info, napi_value& promise)
 {
     if (napi_create_promise(env, &deferred_, &promise) != napi_ok) {
+        promise = nullptr;
+        return false;
+    }
+    napi_value err = InitAsyncTask(env, info);
+    if (err) {
+        napi_reject_deferred(env, deferred_, err);
         return false;
     }
     napi_value resourceName;
@@ -176,16 +182,30 @@ bool AsyncTask::CreatePromise(napi_env env, napi_value &promise)
     return napi_queue_async_work(env, worker_) == napi_ok;
 }
 
+napi_value AsyncTask::InitAsyncTask(napi_env env, napi_callback_info info)
+{
+    return nullptr;
+}
+
+napi_deferred AsyncTask::GetDeferred()
+{
+    return deferred_;
+}
+
 void AsyncTask::ExecuteCallBack(napi_env env, void* data)
 {
-    auto asyncTaskPtr = reinterpret_cast<AsyncTask *>(data);
-    asyncTaskPtr->Work(env);
+    reinterpret_cast<AsyncTask *>(data)->Work(env);
 }
 
 void AsyncTask::CompletedCallBack(napi_env env, napi_status status, void* data)
 {
     auto asyncTaskPtr = reinterpret_cast<AsyncTask *>(data);
-    asyncTaskPtr->Done(env, status);
+    napi_value msg = nullptr;
+    if (asyncTaskPtr->Done(env, status, msg)) {
+        napi_resolve_deferred(env, asyncTaskPtr->GetDeferred(), msg);
+    } else {
+        napi_reject_deferred(env, asyncTaskPtr->GetDeferred(), msg);
+    }
     napi_delete_async_work(env, asyncTaskPtr->worker_);
     delete asyncTaskPtr;
 }

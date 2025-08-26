@@ -57,17 +57,16 @@ public:
     virtual ~AsyncTask() = default;
 
     template<typename T, typename = typename std::enable_if<std::is_base_of<AsyncTask, T>::value>::type>
-    static napi_value GetPromise(napi_env env, std::function<void(T*)> setReqParam = [](T*) {})
+    static napi_value GetPromise(napi_env env, napi_callback_info info)
     {
         napi_value promise = nullptr;
         T* asyncTask = new (std::nothrow) T();
         if (asyncTask == nullptr) {
             return nullptr;
         }
-        setReqParam(asyncTask);
-        if (!asyncTask->CreatePromise(env, promise)) {
+        if (!asyncTask->CreatePromise(env, info, promise)) {
             delete asyncTask;
-            return nullptr;
+            return promise;
         }
         return promise;
     };
@@ -77,10 +76,11 @@ protected:
     napi_deferred deferred_ = nullptr;
     std::string resourceName_;
     virtual void Work(napi_env env) = 0;
-    virtual void Done(napi_env env, napi_status status) = 0;
-
+    virtual bool Done(napi_env env, napi_status status, napi_value& ret) = 0;
+    virtual napi_value InitAsyncTask(napi_env env, napi_callback_info info);
 private:
-    bool CreatePromise(napi_env env, napi_value& promise);
+    virtual napi_deferred GetDeferred() final;
+    virtual bool CreatePromise(napi_env env, napi_callback_info info, napi_value& promise) final;
     static void ExecuteCallBack(napi_env env, void* data);
     static void CompletedCallBack(napi_env env, napi_status status, void* data);
 };

@@ -71,7 +71,7 @@ int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
     return NATIVE_SUCCESS;
 }
 
-int GetGraphicMemoryInfo(int32_t& graphicMemoryInfo)
+int GetGraphicMemoryInfo(GraphicsMemorySummary& graphicMemoryInfo)
 {
     auto collector = UCollectClient::MemoryCollector::Create();
     if (!collector) {
@@ -79,12 +79,14 @@ int GetGraphicMemoryInfo(int32_t& graphicMemoryInfo)
         return NATIVE_FAIL;
     }
     auto collectResult = collector->GetGraphicUsage();
-    if (collectResult.retCode != UCollect::UcError::SUCCESS || collectResult.data < 0) {
+    if (collectResult.retCode != UCollect::UcError::SUCCESS ||
+        collectResult.data.gl < 0 || collectResult.data.graph < 0) {
         HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
                     static_cast<int>(collectResult.retCode));
         return NATIVE_FAIL;
     }
-    graphicMemoryInfo = collectResult.data;
+    graphicMemoryInfo.gl = static_cast<uint32_t>(collectResult.data.gl);
+    graphicMemoryInfo.graph = static_cast<uint32_t>(collectResult.data.graph);
     return NATIVE_SUCCESS;
 }
 
@@ -124,6 +126,7 @@ public:
     std::optional<SystemMemoryInfo> GetSystemMemInfo() override;
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
+    std::optional<GraphicsMemorySummary> GetGraphicsMemorySummary(uint32_t interval) override;
 private:
     static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
 };
@@ -312,8 +315,24 @@ bool HidebugNativeInterfaceImpl::IsDebuggerConnected()
 
 std::optional<int32_t> HidebugNativeInterfaceImpl::GetGraphicsMemory()
 {
-    static CachedValue<int32_t> cachedGraphicUsage;
-    constexpr int64_t effectiveTime = 2 * SECOND_TO_NANOSECOND; // 2s
+    constexpr int64_t effectiveTime = 2; // 2s
+    auto ret = GetGraphicsMemorySummary(effectiveTime);
+    if (ret) {
+        return static_cast<int32_t>(ret->gl + ret->graph);
+    }
+    return {};
+}
+
+std::optional<GraphicsMemorySummary> HidebugNativeInterfaceImpl::GetGraphicsMemorySummary(uint32_t interval)
+{
+    constexpr uint32_t minInterval = 2;
+    constexpr uint32_t maxInterval = 3600;
+    constexpr uint32_t defaultInterval = 300;
+    if (interval < minInterval || interval > maxInterval) {
+        interval = defaultInterval;
+    }
+    static CachedValue<GraphicsMemorySummary> cachedGraphicUsage;
+    int64_t effectiveTime = static_cast<int64_t>(interval) * SECOND_TO_NANOSECOND;
     auto ret = cachedGraphicUsage.GetOrUpdateCachedValue(effectiveTime, GetGraphicMemoryInfo);
     if (ret.first == NATIVE_SUCCESS) {
         return ret.second;
