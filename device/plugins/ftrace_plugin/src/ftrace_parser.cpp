@@ -532,19 +532,18 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
 
 // parse /sys/kernel/debug/tracing/saved_tgids
 // refers kernel function saved_tgids_show
-void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, int targetPid)
+void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, std::set<int>& targetPidVect)
 {
     int32_t pid = 0;
     int32_t tgid = 0;
     std::stringstream sin(savedTgidsPath);
     // kernel format code with: "%d %d\n"
     while (sin >> pid >> tgid) {
-        if (pid == targetPid) {
+        auto it = std::find(targetPidVect.begin(), targetPidVect.end(), pid);
+        if (it != targetPidVect.end()) {
             tgidDict_[pid] = tgid;
-            break;
         }
     }
-
     if (tgidDict_.size() == 0) {
         PROFILER_LOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
     }

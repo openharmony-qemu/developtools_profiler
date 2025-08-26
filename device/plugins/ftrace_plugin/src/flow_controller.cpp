@@ -460,6 +460,35 @@ static inline int RmqEntryTotalSize(unsigned int size)
     return sizeof(struct RmqEntry) + ((size + RMQ_ENTRY_ALIGN_MASK) & (~RMQ_ENTRY_ALIGN_MASK));
 }
 
+template <typename E>
+bool FlowController::HmParseEventForPid(uint8_t* &data, std::set<int>& pidList)
+{
+    struct RmqConsumerData* rmqData = reinterpret_cast<struct RmqConsumerData*>(data);
+    struct RmqEntry* event;
+    auto curPtr = rmqData->data;
+    auto endPtr = rmqData->data + rmqData->length;
+    while (curPtr < endPtr) {
+        event = reinterpret_cast<struct RmqEntry*>(curPtr);
+        unsigned int evtSize = event->size;
+        if (evtSize == 0U) {
+            break;
+        }
+        struct HmTraceHeader* header = reinterpret_cast<struct HmTraceHeader*>(event->data);
+        auto parseEventCtx = SubEventParser<E>::GetInstance().GetParseEventCtx(header->commonType);
+        if (parseEventCtx == nullptr) {
+            curPtr += RmqEntryTotalSize(evtSize);
+            continue;
+        }
+        int pid = ftraceParser_->ParseFtraceEventForPid(reinterpret_cast<uint8_t*>(header), evtSize, parseEventCtx);
+        if (pid != 0) {
+            pidList.insert(pid);
+        }
+        curPtr += RmqEntryTotalSize(evtSize);
+    }
+    data += PAGE_SIZE;
+    return true;
+}
+
 template <typename T, typename E>
 bool FlowController::HmParseEventData(T* traceResult, uint8_t*& data, E* ftraceEvent)
 {
@@ -500,6 +529,18 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
     CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
     auto buffer = ftraceBuffers_[0].get();
     auto endPtr = buffer + dataSize;
+    std::set<int> eventPidList = {};
+    for (auto dataPid = buffer; dataPid < endPtr;) {
+        if (resultWriter_->isProtobufSerialize) {
+            HmParseEventForPid<FtraceEvent>(dataPid, eventPidList);
+        } else {
+            HmParseEventForPid<ProtoEncoder::FtraceEvent>(dataPid, eventPidList);
+        }
+    }
+    // update tgidDict_
+    if (!eventPidList.empty()) {
+        ftraceParser_->ParseTargetedSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids(), eventPidList);
+    }
 
     for (auto data = buffer; data < endPtr;) {
         if (resultWriter_->isProtobufSerialize) {
