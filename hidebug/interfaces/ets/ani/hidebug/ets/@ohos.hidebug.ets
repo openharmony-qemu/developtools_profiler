@@ -23,7 +23,7 @@ function createVoidBusinessError(code: number, msg: string): BusinessError<void>
 }
 
 export namespace hidebug {
-  loadLibrary("hidebug_ani");
+  loadLibraryWithPermissionCheck("hidebug_ani", "@ohos.hidebug");
   export native function getNativeHeapSize(): bigint;
 
   export native function getNativeHeapAllocatedSize(): bigint;
