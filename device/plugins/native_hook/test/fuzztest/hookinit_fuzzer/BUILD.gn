@@ -1,0 +1,69 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2025. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+#####################hydra-fuzz###################
+import("//build/test.gni")
+import("../../../../../base/config.gni")
+
+##############################fuzztest##########################################
+
+
+# HookInitFuzzTest
+ohos_fuzztest("HookInitFuzzTest") {
+  module_out_path = hiprofiler_fuzz_output_path
+  cflags = [
+    "-g",
+    "-O0",
+    "-Wno-unused-variable",
+    "-fno-omit-frame-pointer",
+    "-DFUZZ_TEST",
+  ]
+  deps = [
+    "${OHOS_PROFILER_DIR}/device/base:mock_test_source",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:native_hook_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
+  ]
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
+    "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
+    "c_utils:utils",
+    "faultloggerd:libunwinder",
+    "googletest:gtest",
+    "hilog:libhilog_base",
+    "init:libbegetutil",
+    "protobuf:protobuf",
+  ]
+  include_dirs = [
+    "../../../include",
+    "../../../../api/include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/base/include",
+  ]
+  fuzz_config_file = "."
+  sources = [ "hookinit_fuzzer.cpp" ]
+}
+
+###############################################################################
+group("fuzztest") {
+  testonly = true
+  deps = []
+  deps += [
+    # deps file
+    ":HookInitFuzzTest"
+  ]
+}
+###############################################################################
