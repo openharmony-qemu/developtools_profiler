@@ -189,6 +189,7 @@
         <preparer>
             <option name="push" value="plugins/gpu_plugin/test/utresources/info/1/gpustat1.txt -> /data/local/tmp/resource/" src="res"/>
             <option name="push" value="plugins/gpu_plugin/test/utresources/info/2/gpustat2.txt -> /data/local/tmp/resource/" src="res"/>
+            <option name="push" value="plugins/gpu_plugin/test/utresources/info/3/gpustat3.txt -> /data/local/tmp/resource/" src="res"/>
         </preparer>
     </target>
     <target name="ffrt_profiler_ut">

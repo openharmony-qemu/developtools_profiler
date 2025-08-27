@@ -390,6 +390,28 @@ bool IsNumeric(const std::string& str)
     return true;
 }
 
+bool StoiCheck(const std::string& str)
+{
+    if (str.empty()) {
+        return false;
+    }
+    for (char charac : str) {
+        if (!isdigit(charac)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StoiCheck FAILED!");
+            return false;
+        }
+    }
+
+    const std::string intMaxStr = std::to_string(INT_MAX);
+    if (str.length() < intMaxStr.length()) {
+        return true;
+    }
+    if (str.length() > intMaxStr.length()) {
+        return false;
+    }
+    return str <= intMaxStr;
+}
+
 int CustomPclose(FILE* fp, int fds[], volatile pid_t& childPid, bool needUnblock)
 {
     PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);

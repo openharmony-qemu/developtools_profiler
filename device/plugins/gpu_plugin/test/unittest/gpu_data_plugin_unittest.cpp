@@ -252,4 +252,24 @@ HWTEST_F(GpuDataPluginTest, TestPluginReadArrayData, TestSize.Level1)
 #endif
 }
 
+/**
+ * @tc.name: gpu plugin
+ * @tc.desc: test ReadFile abnormal scenario
+ * @tc.type: FUNC
+ */
+HWTEST_F(GpuDataPluginTest, TestReadFileAbnormal, TestSize.Level1)
+{
+#if defined(__LP64__)
+    GpuDataPlugin gpuPlugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    gpuPlugin.SetWriter(&writer);
+    gpuPlugin.running_ = true;
+    gpuPlugin.resultWriter_->isProtobufSerialize = true;
+    g_path = GetFullPath(DEFAULT_TEST_PATH) + "/gpustat3.txt";
+    gpuPlugin.file_.open(g_path);
+    EXPECT_EQ(gpuPlugin.ReadFile(), 0);
+    gpuPlugin.file_.close();
+#endif
+}
+
 } // namespace
