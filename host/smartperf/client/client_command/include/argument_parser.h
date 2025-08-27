@@ -113,7 +113,7 @@ private:
         {"-fl", {ArgumentParser::ArgType::INT, "set fps"}},
         {"-ftl", {ArgumentParser::ArgType::INT, "set frameTime"}},
         {"-lockfreq", {ArgumentParser::ArgType::BOOL}},
-        {"-nav", {ArgumentParser::ArgType::BOOL}},
+        {"-nav", {ArgumentParser::ArgType::BOOL, "get page navigation information"}},
         {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
 
         // UDP

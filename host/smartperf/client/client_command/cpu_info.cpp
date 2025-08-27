@@ -64,7 +64,7 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     return result;
 }
 
-void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count)
+void CPUInfo::CalculateCPIInfo(const std::string line, double &cpiTotal, size_t &cpiCount)
 {
     auto trim = [](std::string& s) {
         s.erase(0, s.find_first_not_of(" \t"));
@@ -79,7 +79,7 @@ void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_total, size_t
             size_t number_end = comment.find(" ", 0);
             std::string cpi_str = comment.substr(0, number_end);
             cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
-            ++cpi_count;
+            ++cpiCount;
         }
     }
 }
