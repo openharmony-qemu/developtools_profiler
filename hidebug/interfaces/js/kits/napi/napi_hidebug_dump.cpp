@@ -24,7 +24,9 @@
 #include <sys/statvfs.h>
 
 #include "application_context.h"
+#include "directory_ex.h"
 #include "error_code.h"
+#include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_util.h"
 #include "hisysevent.h"
@@ -82,6 +84,9 @@ bool InitRawHeapFile(std::string& fileName)
         return false;
     }
     fileName = filePath + SLASH_STR + RAW_HEAP_RECORD_FILE;
+    if (OHOS::FileExists(fileName)) {
+        return true;
+    }
     constexpr unsigned fileMode = 0700;
     return CreateDirectory(fileName, fileMode);
 }
