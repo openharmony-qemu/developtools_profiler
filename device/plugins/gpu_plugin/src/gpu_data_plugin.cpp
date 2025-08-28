@@ -159,13 +159,7 @@ int GpuDataPlugin::ReadFile()
     if (line == "") {
         return RET_FAIL;
     }
-    for (char charac : line) {
-        if (!isdigit(charac)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "invalid file content for (%s)", GPU_PATH.c_str());
-            return RET_FAIL;
-        }
-    }
-    return stoi(line);
+    return COMMON::StoiCheck(line) ? stoi(line) : 0;
 }
 
 uint64_t GpuDataPlugin::GetBootTime()
