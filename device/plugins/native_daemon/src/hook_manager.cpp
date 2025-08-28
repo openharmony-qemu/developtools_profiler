@@ -596,7 +596,7 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        for (int i = 0; i < item->eventPollerList.size(); ++i) {
+        for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
             if (item->eventPollerList[i] && item->eventNotifierList[i]) {
                 PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %d", i);
                 item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
