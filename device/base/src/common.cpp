@@ -261,20 +261,6 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
 #endif  // HOOK_ENABLE
 }
 
-bool HandleExistPath(const char* src, char* resolvedPath)
-{
-    if (strstr(src, "/proc/") == src && strstr(src, "/data/storage") != nullptr) { // for sandbox
-        if (strncpy_s(resolvedPath, sizeof(resolvedPath), src, strlen(src)) != EOK) {
-            PROFILER_LOG_ERROR(LOG_CORE, "Error: strncpy_s %s failed", src);
-            return false;
-        }
-    } else if (realpath(src, resolvedPath) == nullptr) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Error: realpath %s failed with errno: %s", src, strerror(errno));
-        return false;
-    }
-    return true;
-}
-
 std::string CanonicalizeSpecPath(const char* src)
 {
     if (src == nullptr) {
@@ -287,13 +273,19 @@ std::string CanonicalizeSpecPath(const char* src)
     char resolvedPath[PATH_MAX] = { 0 };
     struct stat st;
     if (stat(src, &st) == 0) {
-        if (!HandleExistPath(src, resolvedPath)) {
+        if (strstr(src, "/proc/") == src && strstr(src, "/data/storage") != nullptr) { // for sandbox
+            if (strncpy_s(resolvedPath, sizeof(resolvedPath), src, strlen(src)) != EOK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Error: strncpy_s %s failed", src);
+                return "";
+            }
+        } else if (realpath(src, resolvedPath) == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Error: realpath %s failed with errno: %s", src, strerror(errno));
             return "";
         }
     } else {
         std::string fileName(src);
         if (fileName.find("..") == std::string::npos) {
-            if (sprintf_s(resolvedPath, PATH_MAX, "%s", src) != EOK) {
+            if (sprintf_s(resolvedPath, PATH_MAX, "%s", src) == -1) {
                 PROFILER_LOG_ERROR(LOG_CORE, "Error: sprintf_s %s failed", src);
                 return "";
             }
