@@ -12,10 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef HOOK_INIT_FUZZER
 #define HOOK_INIT_FUZZER
-
 
 #define FUZZ_PROJECT_NAME "hookinit_fuzzer"
 #include <cstring>

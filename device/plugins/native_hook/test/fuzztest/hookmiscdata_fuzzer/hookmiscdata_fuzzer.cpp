@@ -12,9 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "hookmiscdata_fuzzer.h"
-
 
 namespace OHOS {
 enum class MISC_TYPE : uint32_t {
@@ -106,7 +104,6 @@ bool FuzzMallocHookSendHookMiscData(const uint8_t* data, size_t size)
 }
 
 } // namespace OHOS
-
 
 /* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)

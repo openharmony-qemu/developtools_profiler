@@ -12,10 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #ifndef HOOK_MISC_DATA_FUZZER
 #define HOOK_MISC_DATA_FUZZER
-
 
 #define FUZZ_PROJECT_NAME "hookmiscdata_fuzzer"
 #include <cstring>

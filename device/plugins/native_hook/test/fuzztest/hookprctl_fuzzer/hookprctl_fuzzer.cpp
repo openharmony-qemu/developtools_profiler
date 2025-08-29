@@ -12,9 +12,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 #include "hookprctl_fuzzer.h"
-
 
 namespace OHOS {
 int GenerateRandomOption(const uint8_t* data, size_t size, size_t& offset)
