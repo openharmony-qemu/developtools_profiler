@@ -475,6 +475,11 @@ int main(int argc, char* argv[])
         if (option == -1) {
             break;  // CONFIG.
         }
+        std::string optionStr("qtohlskc");
+        if (optionStr.find(option) == std::string::npos) {
+            printf("invalid param\n");
+            return -1;
+        }
         if (option == 'c' && strcmp(optarg, "-") == 0) {
             std::string content;
             std::istreambuf_iterator<char> begin(std::cin);
