@@ -12,6 +12,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import urlConfig  from './url.json';
+
 export enum TestMode {
   ONLINE,
   BRIGHTNESS,
@@ -144,12 +146,11 @@ export class QuestionItem {
     this.question = question;
   }
 }
-
-export const DOCUMENTATION_URL = 'https://gitee.com/openharmony/developtools_profiler/blob/master/host/smartperf/client/client_ui/README_zh.md';
+export const configReadme = urlConfig.usageUrl;
 export const questionList = new Array(
   new QuestionItem(
     '1.SP工具怎么使用',
-    '如何使用可以查看以下地址: + DOCUMENTATION_URL'
+    '有关详细指南, 请访问以下地址: ' + configReadme
   ),
   new QuestionItem('2.SP工具支持FPS采集吗?', '可以, fps依赖Hidumper能力..'),
   new QuestionItem('3.SP工具支持RAM采集吗?', 'ram采集目前是 读取进程节点内存信息中的PSS值...'),
@@ -158,7 +159,7 @@ export const questionList = new Array(
   new QuestionItem('6.报告页的值是怎么算的?', '最终以一场测试结果的平均值为准'),
   new QuestionItem(
     '7.SP后续规划?',
-    '集成更多采集能力,如trace采集,counter采集,网络采集等等;优化数据展示方式,报告上传网站端,在线分析性能功耗问题'
+    '集成更多采集能力, 如trace采集, counter采集, 网络采集等等; 优化数据展示方式, 报告上传网站端, 在线分析性能功耗问题'
   )
 );
 
