@@ -62,11 +62,15 @@ ohos_executable("hiprofiler_cmd") {
     "grpc:grpcxx",
     "grpc:gpr",
     "init:libbegetutil",
+    "ipc:ipc_core",
     "protobuf:protobuf",
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog_base" ]
+    if (hiprofiler_sandbox_log_path_mapping) {
+      defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
+    }
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

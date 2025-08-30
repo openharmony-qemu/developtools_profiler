@@ -248,6 +248,25 @@ HWTEST_F(CommonTest, WriteFileFailed, TestSize.Level1)
 
 /**
  * @tc.name: CommonTest
+ * @tc.desc: CanonicalizeSpecPath.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CanonicalizeSpecPath, TestSize.Level0)
+{
+    EXPECT_EQ(CanonicalizeSpecPath(nullptr), "");
+    EXPECT_EQ(CanonicalizeSpecPath("/data/local/tmp/test/../test.txt"), "");
+    EXPECT_EQ(CanonicalizeSpecPath(""), "");
+    EXPECT_EQ(CanonicalizeSpecPath("/data/local/tmp/nonexistent.txt"), "/data/local/tmp/nonexistent.txt");
+    string largePath = "./";
+    for (int i = 0; i < 512; i++) { // 512: loop size
+        largePath += "testpath";
+    }
+    largePath += ".txt";
+    EXPECT_EQ(CanonicalizeSpecPath(largePath.c_str()), "");
+}
+
+/**
+ * @tc.name: CommonTest
  * @tc.desc: GetTimeStr.
  * @tc.type: FUNC
  */

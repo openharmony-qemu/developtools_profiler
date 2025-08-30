@@ -268,6 +268,43 @@ void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2&
 #endif  // HOOK_ENABLE
 }
 
+std::string CanonicalizeSpecPath(const char* src)
+{
+    if (src == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Error: CanonicalizeSpecPath failed");
+        return "";
+    } else if (strlen(src) + 1 >= PATH_MAX) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Error: CanonicalizeSpecPath %s failed", src);
+        return "";
+    }
+    char resolvedPath[PATH_MAX] = { 0 };
+    struct stat st;
+    if (stat(src, &st) == 0) {
+        if (strstr(src, "/proc/") == src && strstr(src, "/data/storage") != nullptr) { // for sandbox
+            if (strncpy_s(resolvedPath, sizeof(resolvedPath), src, strlen(src)) != EOK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Error: strncpy_s %s failed", src);
+                return "";
+            }
+        } else if (realpath(src, resolvedPath) == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Error: realpath %s failed with errno: %s", src, strerror(errno));
+            return "";
+        }
+    } else {
+        std::string fileName(src);
+        if (fileName.find("..") == std::string::npos) {
+            if (sprintf_s(resolvedPath, PATH_MAX, "%s", src) == -1) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Error: sprintf_s %s failed", src);
+                return "";
+            }
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "Error: find .. %s failed", src);
+            return "";
+        }
+    }
+    std::string res(resolvedPath);
+    return res;
+}
+
 bool GetDeveloperMode()
 {
     bool developerMode = OHOS::system::GetBoolParameter("const.security.developermode.state", true);
