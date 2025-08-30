@@ -73,9 +73,8 @@ std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
                 {"ark.gc.fullgc-longtime-count", ark::dfx::GetFullGCLongTimeCount}
             };
 }
-}
 
-static bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySize)
+bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySize)
 {
     ani_boolean isArray = ANI_FALSE;
     ani_class cls = nullptr;
@@ -95,7 +94,7 @@ static bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySiz
     return true;
 }
 
-static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16string> &args)
+bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16string> &args)
 {
     ani_int arraySize = 0;
     if (!IsArrayForAniValue(env, argsAni, arraySize)) {
@@ -119,7 +118,7 @@ static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16s
     return true;
 }
 
-static bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
+bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(static_cast<ani_array>(tagsAni), &arraySize) != ANI_OK) {
@@ -225,7 +224,7 @@ ani_object GetNativeHeapFreeSize(ani_env *env)
     return nativeHeapFreeSize;
 }
 
-static void GetServiceDump(ani_env *env,
+void GetServiceDump(ani_env *env,
     ani_int serviceIdAni, ani_int fdAni, ani_object argsAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getServiceDump");
@@ -268,7 +267,7 @@ ani_object GetVss(ani_env *env)
     return vss;
 }
 
-static ani_double GetSystemCpuUsage(ani_env *env)
+ani_double GetSystemCpuUsage(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
@@ -281,7 +280,7 @@ static ani_double GetSystemCpuUsage(ani_env *env)
     return retMsg;
 }
 
-static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
+ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
 {
     ani_method ctorMethod = nullptr;
     ani_object obj = nullptr;
@@ -294,7 +293,7 @@ static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32
     return obj;
 }
 
-static ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
+ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
 {
     ani_class cls = nullptr;
     ani_size aniSize = static_cast<ani_size>(threadMap.size());
@@ -414,7 +413,7 @@ ani_string StartAppTraceCapture(ani_env *env,
     return nullptr;
 }
 
-static ani_boolean IsDebugState(ani_env *env)
+ani_boolean IsDebugState(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("isDebugState");
     bool debugState = ark::ArkDebugNativeAPI::IsDebugModeEnabled() ||
@@ -454,7 +453,7 @@ ani_int GetGraphicsMemorySync(ani_env *env)
     return 0;
 }
 
-static bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
+bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
 {
     if (AniUtil::ParseAniString(env, filenameAni, fileName) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Failed to parse ani_string filename");
@@ -469,7 +468,7 @@ static bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::str
     return true;
 }
 
-static ani_object GetAppVMMemoryInfo(ani_env *env)
+ani_object GetAppVMMemoryInfo(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
     ani_class cls = nullptr;
@@ -496,7 +495,7 @@ static ani_object GetAppVMMemoryInfo(ani_env *env)
     return vMMemoryInfo;
 }
 
-static ani_object GetAppMemoryLimit(ani_env *env)
+ani_object GetAppMemoryLimit(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
     ani_class cls = nullptr;
@@ -523,7 +522,7 @@ static ani_object GetAppMemoryLimit(ani_env *env)
     return appMemoryLimit;
 }
 
-static ani_object GetVMRuntimeStats(ani_env *env)
+ani_object GetVMRuntimeStats(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStats");
     ani_class cls = nullptr;
@@ -556,7 +555,7 @@ static ani_object GetVMRuntimeStats(ani_env *env)
     return vmRunTimeStats;
 }
 
-static ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
+ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
     std::string param;
@@ -577,7 +576,7 @@ static ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
     return static_cast<ani_long>((target->second)(g_currentVm));
 }
 
-static std::string StartCpuProfiler(const std::string& fileName)
+std::string StartCpuProfiler(const std::string& fileName)
 {
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
@@ -600,7 +599,7 @@ static std::string StartCpuProfiler(const std::string& fileName)
     return "";
 }
 
-static void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
+void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
     std::string fileName;
@@ -619,14 +618,14 @@ static void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
     }
 }
 
-static void StopJsCpuProfiling(ani_env *env)
+void StopJsCpuProfiling(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
     if (!ark::ArkDebugNativeAPI::StopProfiling()) {
         HILOG_ERROR(LOG_CORE, "failed stopJsCpuProfiling");
     }
 }
-
+}
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
     g_currentVm = vm;
