@@ -43,7 +43,9 @@ size_t GetTestCount(const uint8_t* data, size_t size)
 {
     if (size >= sizeof(size_t)) {
         size_t test_count;
-        memcpy_s(&test_count, sizeof(test_count), data, sizeof(test_count));
+        if (memcpy_s(&test_count, sizeof(test_count), data, sizeof(test_count) != EOK)) {
+            return 10; // default test count
+        }
         return test_count % 100; // litmit test count
     }
     return 10; // default test count
@@ -99,29 +101,6 @@ void HookSetBoundaryTests()
     }
 }
 
-void HookSetMultithreadedTests(size_t test_count)
-{
-    std::vector<std::thread> threads;
-    const int thread_count = 4;
-    
-    for (int i = 0; i < thread_count; ++i) {
-        threads.emplace_back([i, test_count]() {
-            for (size_t j = 0; j < test_count; ++j) {
-                bool flag = (j + i) % 2 == 0;
-                bool old_flag = ohos_malloc_hook_set_hook_flag(flag);
-                bool current_flag = ohos_malloc_hook_get_hook_flag();
-                
-                g_test_recorder.record_result(old_flag);
-                g_test_recorder.record_result(current_flag);
-            }
-        });
-    }
-    
-    for (auto& thread : threads) {
-        thread.join();
-    }
-}
-
 bool FuzzHookSetTests(const uint8_t* data, size_t size)
 {
     if (data == nullptr || size == 0) {
@@ -131,16 +110,12 @@ bool FuzzHookSetTests(const uint8_t* data, size_t size)
     size_t test_count = GetTestCount(data, size);
     HookSetTests(test_count, data, size);
     HookSetBoundaryTests();
-    // HookSetMultithreadedTests(test_count);
     return g_test_recorder.get_last_result();
 }
-
 } // namespace OHOS
 
-/* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    /* Run your code on data */
     OHOS::FuzzHookSetTests(data, size);
     return 0;
 }

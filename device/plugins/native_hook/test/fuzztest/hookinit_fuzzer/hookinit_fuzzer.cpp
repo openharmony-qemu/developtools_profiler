@@ -70,11 +70,8 @@ bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
 }
 } // namespace OHOS
 
-
-/* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    /* Run your code on data */
     OHOS::FuzzMallocHookInitialize(data, size);
     return 0;
 }

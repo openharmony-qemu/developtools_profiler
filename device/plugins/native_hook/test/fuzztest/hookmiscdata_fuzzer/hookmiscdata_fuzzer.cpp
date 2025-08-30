@@ -19,6 +19,7 @@ enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
     OTHER_TYPE = 1000,
 };
+
 uint64_t GenerateRandomId(const uint8_t* data, size_t size, size_t& offset)
 {
     offset = (offset + sizeof(uint64_t)) % size;
@@ -105,10 +106,8 @@ bool FuzzMallocHookSendHookMiscData(const uint8_t* data, size_t size)
 
 } // namespace OHOS
 
-/* Fuzzer entry point */
 extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
-    /* Run your code on data */
     OHOS::FuzzMallocHookSendHookMiscData(data, size);
     return 0;
 }
