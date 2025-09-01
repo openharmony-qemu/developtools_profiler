@@ -837,16 +837,13 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Lev
     EXPECT_TRUE(RunCommand(cmd, content));
     std::string destStr = "invalid param";
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
-
     cmd = DEFAULT_HIPROFILER_CMD_PATH + " XXX%$ --config ";
     content = "";
     EXPECT_TRUE(RunCommand(cmd, content));
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
-
     cmd = DEFAULT_HIPROFILER_CMD_PATH + " @X8&C -s ";
     content = "";
     EXPECT_TRUE(RunCommand(cmd, content));
     destStr = "unknown param";
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
-
 }
