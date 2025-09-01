@@ -819,3 +819,34 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Lev
     cmd = "rm " + DEFAULT_PATH + outFileName + "*.htrace";
     system(cmd.c_str());
 }
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with test -s -c.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Level1)
+{
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " test -c ";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    std::string destStr = "invalid param";
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
+
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " XXX%$ --config ";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
+
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " @X8&C -s ";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    destStr = "unknown param";
+    EXPECT_TRUE(content.find(destStr) != std::string::npos);
+
+}
