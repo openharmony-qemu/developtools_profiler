@@ -15,7 +15,7 @@ import("//build/test.gni")
 import("../../base/config.gni")
 import("../../plugins/ftrace_plugin/ftrace.gni")
 
-module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
+module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}"
 config("module_private_config") {
   visibility = [ ":*" ]
   if (current_toolchain != host_toolchain) {
