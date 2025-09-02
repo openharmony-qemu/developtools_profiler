@@ -113,5 +113,9 @@ group("fuzztest") {
     "services/profiler_service/test/fuzztest/profilerkeepsession_fuzzer:fuzztest",
     "services/profiler_service/test/fuzztest/profilerstartsession_fuzzer:fuzztest",
     "services/profiler_service/test/fuzztest/profilerstopsession_fuzzer:fuzztest",
+    "plugins/network_profiler/test/fuzztest/protocolproc_fuzzer:fuzztest",
+    "plugins/network_profiler/test/fuzztest/setconfig_fuzzer:fuzztest",
+    "plugins/ffrt_profiler/test/fuzztest/protocolproc_fuzzer:fuzztest",
+    "plugins/ffrt_profiler/test/fuzztest/setconfig_fuzzer:fuzztest",
   ]
 }
