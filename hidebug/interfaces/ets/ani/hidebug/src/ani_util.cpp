@@ -14,9 +14,15 @@
  */
 
 #include "ani_util.h"
+#include "hilog/log.h"
 
 namespace OHOS {
 namespace HiviewDFX {
+#undef LOG_DOMAIN
+#define LOG_DOMAIN 0xD002D0A
+#undef LOG_TAG
+#define LOG_TAG "HiDebug_ANI_UTIL"
+
 void AniUtil::ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t errCode)
 {
     ani_module hiDebugModule = nullptr;
@@ -49,24 +55,30 @@ ani_object AniUtil::CreateUndefined(ani_env *env)
     return static_cast<ani_object>(undefinedRef);
 }
 
-ani_status AniUtil::ToAniBigInt(ani_env *env, uint64_t uint64Val, ani_object &aniBigInt)
+ani_status AniUtil::ToAniBigInt(ani_env *env, int64_t int64Val, ani_object &aniBigInt)
 {
-    ani_class bigIntCls = nullptr;
-    ani_status status = env->FindClass("escompat.BigInt", &bigIntCls);
-    if (status != ANI_OK) {
-        return status;
-    }
-    ani_method ctorMethod = nullptr;
-    status = env->Class_FindMethod(bigIntCls, "<ctor>", "C{std.core.String}:", &ctorMethod);
-    if (status != ANI_OK) {
-        return status;
-    }
-    ani_string aniBigIntStr = nullptr;
-    status = env->String_NewUTF8(std::to_string(uint64Val).c_str(), std::to_string(uint64Val).size(), &aniBigIntStr);
-    if (status != ANI_OK) {
-        return status;
-    }
-    return env->Object_New(bigIntCls, ctorMethod, &aniBigInt, aniBigIntStr);
+    static std::pair<ani_class, ani_method> bigIntCreator = [env] {
+        std::pair<ani_class, ani_method> bigIntCreator{};
+        ani_class bigIntClass = nullptr;
+        constexpr auto className = "escompat.BigInt";
+        ani_status status = env->FindClass("escompat.BigInt", &bigIntClass);
+        if (status != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "Failed find class %{public}s for %{public}d.", className, status);
+            return bigIntCreator;
+        }
+        status = env->GlobalReference_Create(bigIntClass, reinterpret_cast<ani_ref *>(&bigIntCreator.first));
+        if (status != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "Failed created global reference for %{public}d.", status);
+            return bigIntCreator;
+        }
+        ani_method ctorMethod = nullptr;
+        status = env->Class_FindMethod(bigIntClass, "<ctor>", "l:", &bigIntCreator.second);
+        if (status != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "Failed find the constructer of %{public}s for %{public}d.", className, status);
+        }
+        return bigIntCreator;
+    }();
+    return env->Object_New(bigIntCreator.first, bigIntCreator.second, &aniBigInt, int64Val);
 }
 
 ani_status AniUtil::ParseAniString(ani_env *env, ani_string aniStr, std::string &str)
@@ -104,15 +116,24 @@ ani_status AniUtil::SetNamedPropertyNumber(ani_env *env, ani_object object, cons
     return status;
 }
 
-ani_status AniUtil::SetNamedPropertyBigInt(ani_env *env, ani_object object, const std::string& name, uint64_t value)
+ani_status AniUtil::SetNamedPropertyBigInt(ani_env *env, ani_object object, const std::string& name, int64_t value)
 {
     ani_object aniBigInt = nullptr;
     ani_status status = AniUtil::ToAniBigInt(env, value, aniBigInt);
     if (status != ANI_OK) {
         return status;
     }
-    status = env->Object_SetPropertyByName_Ref(object, name.c_str(), static_cast<ani_ref>(aniBigInt));
+    status = env->Object_SetPropertyByName_Ref(object, name.c_str(), aniBigInt);
     return status;
+}
+ani_vm* AniUtil::GetAniVm(ani_env *env)
+{
+    ani_vm* vm = nullptr;
+    auto status = env->GetVM(&vm);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed get vm for %{public}d.", status);
+    }
+    return vm;
 }
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -61,8 +61,6 @@ constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
 constexpr auto SLASH_STR = "/";
 constexpr auto JSON_FILE = ".json";
 
-static ani_vm* g_currentVm = nullptr;
-
 std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
 {
     return {
@@ -73,36 +71,15 @@ std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
                 {"ark.gc.fullgc-longtime-count", ark::dfx::GetFullGCLongTimeCount}
             };
 }
-}
 
-static bool IsArrayForAniValue(ani_env *env, ani_object param, ani_int &arraySize)
+bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args)
 {
-    ani_boolean isArray = ANI_FALSE;
-    ani_class cls = nullptr;
-    ani_static_method isArrayMethod = nullptr;
-    if (env->FindClass("escompat.Array", &cls) != ANI_OK ||
-        env->Class_FindStaticMethod(cls, "isArray", "C{std.core.Object}:z", &isArrayMethod) != ANI_OK ||
-        env->Class_CallStaticMethod_Boolean(cls, isArrayMethod, &isArray, param) != ANI_OK ||
-        isArray == ANI_FALSE) {
+    ani_size arraySize = 0;
+    if (env->Array_GetLength(argsAni, &arraySize) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Get input tags size failed.");
         return false;
     }
-
-    ani_double length = 0;
-    if (env->Object_GetPropertyByName_Double(param, "length", &length) != ANI_OK) {
-        return false;
-    }
-    arraySize = static_cast<ani_int>(length);
-    return true;
-}
-
-static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16string> &args)
-{
-    ani_int arraySize = 0;
-    if (!IsArrayForAniValue(env, argsAni, arraySize)) {
-        HILOG_ERROR(LOG_CORE, "Get input args failed.");
-        return false;
-    }
-    for (ani_int i = 0; i < arraySize; i++) {
+    for (ani_size i = 0; i < arraySize; i++) {
         ani_ref aniValue = nullptr;
         if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "i:C{std.core.Object}", &aniValue, i) != ANI_OK) {
             HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
@@ -119,7 +96,7 @@ static bool GetDumpParam(ani_env *env, ani_object argsAni, std::vector<std::u16s
     return true;
 }
 
-static bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
+bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(static_cast<ani_array>(tagsAni), &arraySize) != ANI_OK) {
@@ -150,8 +127,7 @@ ani_object GetPss(ani_env *env)
     if (collector != nullptr) {
         int pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        uint64_t pssInfo = static_cast<uint64_t>(collectResult.data.pss) +
-            static_cast<uint64_t>(collectResult.data.swapPss);
+        auto pssInfo = static_cast<int64_t>(collectResult.data.pss + collectResult.data.swapPss);
         AniUtil::ToAniBigInt(env, pssInfo, pss);
     } else {
         AniUtil::ToAniBigInt(env, 0, pss);
@@ -167,7 +143,7 @@ ani_object GetSharedDirty(ani_env *env)
     if (collector != nullptr) {
         int pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        AniUtil::ToAniBigInt(env, static_cast<uint64_t>(collectResult.data.sharedDirty), sharedDirty);
+        AniUtil::ToAniBigInt(env, static_cast<int64_t>(collectResult.data.sharedDirty), sharedDirty);
     } else {
         AniUtil::ToAniBigInt(env, 0, sharedDirty);
     }
@@ -182,7 +158,7 @@ ani_object GetPrivateDirty(ani_env *env)
     if (collector != nullptr) {
         pid_t pid = getprocpid();
         auto collectResult = collector->CollectProcessMemory(pid);
-        AniUtil::ToAniBigInt(env, static_cast<uint64_t>(collectResult.data.privateDirty), privateDirtyValue);
+        AniUtil::ToAniBigInt(env, static_cast<int64_t>(collectResult.data.privateDirty), privateDirtyValue);
     } else {
         AniUtil::ToAniBigInt(env, 0, privateDirtyValue);
     }
@@ -203,7 +179,7 @@ ani_object GetNativeHeapSize(ani_env *env)
 {
     struct mallinfo mi = mallinfo();
     ani_object nativeHeapSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.uordblks + mi.fordblks), nativeHeapSize);
+    AniUtil::ToAniBigInt(env, static_cast<int64_t>(mi.uordblks) + static_cast<int64_t>(mi.fordblks), nativeHeapSize);
     return nativeHeapSize;
 }
 
@@ -212,7 +188,7 @@ ani_object GetNativeHeapAllocatedSize(ani_env *env)
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapAllocatedSize");
     struct mallinfo mi = mallinfo();
     ani_object nativeHeapAllocatedSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.uordblks), nativeHeapAllocatedSize);
+    AniUtil::ToAniBigInt(env, mi.uordblks, nativeHeapAllocatedSize);
     return nativeHeapAllocatedSize;
 }
 
@@ -221,12 +197,12 @@ ani_object GetNativeHeapFreeSize(ani_env *env)
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapFreeSize");
     struct mallinfo mi = mallinfo();
     ani_object nativeHeapFreeSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.fordblks), nativeHeapFreeSize);
+    AniUtil::ToAniBigInt(env, mi.fordblks, nativeHeapFreeSize);
     return nativeHeapFreeSize;
 }
 
-static void GetServiceDump(ani_env *env,
-    ani_int serviceIdAni, ani_int fdAni, ani_object argsAni)
+void GetServiceDump(ani_env *env,
+    ani_int serviceIdAni, ani_int fdAni, ani_array argsAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getServiceDump");
     int serviceAbilityId = static_cast<int>(serviceIdAni);
@@ -260,15 +236,14 @@ ani_object GetVss(ani_env *env)
     if (collector != nullptr) {
         pid_t pid = getprocpid();
         auto collectResult = collector->CollectProcessVss(pid);
-        uint64_t vssInfo = collectResult.data;
-        AniUtil::ToAniBigInt(env, vssInfo, vss);
+        AniUtil::ToAniBigInt(env, static_cast<int64_t>(collectResult.data), vss);
     } else {
         AniUtil::ToAniBigInt(env, 0, vss);
     }
     return vss;
 }
 
-static ani_double GetSystemCpuUsage(ani_env *env)
+ani_double GetSystemCpuUsage(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSystemCpuUsage");
     auto cpuUsageOptional = HidebugNativeInterface::GetInstance().GetSystemCpuUsage();
@@ -281,7 +256,7 @@ static ani_double GetSystemCpuUsage(ani_env *env)
     return retMsg;
 }
 
-static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
+ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t threadIdValue, double cpuUsageValue)
 {
     ani_method ctorMethod = nullptr;
     ani_object obj = nullptr;
@@ -294,7 +269,7 @@ static ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32
     return obj;
 }
 
-static ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
+ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
 {
     ani_class cls = nullptr;
     ani_size aniSize = static_cast<ani_size>(threadMap.size());
@@ -365,9 +340,9 @@ ani_object GetSystemMemInfo(ani_env *env)
         return AniUtil::CreateUndefined(env);
     }
 
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "totalMem", systemMemInfo.memTotal);
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "freeMem", systemMemInfo.memFree);
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "availableMem", systemMemInfo.memAvailable);
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "totalMem", static_cast<int64_t>(systemMemInfo.memTotal));
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "freeMem", static_cast<int64_t>(systemMemInfo.memFree));
+    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "availableMem", static_cast<int64_t>(systemMemInfo.memAvailable));
     return sysMemInfo;
 }
 
@@ -414,7 +389,7 @@ ani_string StartAppTraceCapture(ani_env *env,
     return nullptr;
 }
 
-static ani_boolean IsDebugState(ani_env *env)
+ani_boolean IsDebugState(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("isDebugState");
     bool debugState = ark::ArkDebugNativeAPI::IsDebugModeEnabled() ||
@@ -454,7 +429,7 @@ ani_int GetGraphicsMemorySync(ani_env *env)
     return 0;
 }
 
-static bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
+bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
 {
     if (AniUtil::ParseAniString(env, filenameAni, fileName) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Failed to parse ani_string filename");
@@ -469,7 +444,7 @@ static bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::str
     return true;
 }
 
-static ani_object GetAppVMMemoryInfo(ani_env *env)
+ani_object GetAppVMMemoryInfo(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
     ani_class cls = nullptr;
@@ -480,23 +455,17 @@ static ani_object GetAppVMMemoryInfo(ani_env *env)
         env->Object_New(cls, ctorMethod, &vMMemoryInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
-
-    uint64_t totalHeapValue = ark::dfx::GetHeapTotalSize(g_currentVm);
-    totalHeapValue = totalHeapValue >> BYTE_2_KB_SHIFT_BITS;
+    ani_vm* vm = AniUtil::GetAniVm(env);
+    auto totalHeapValue = static_cast<int64_t>(ark::dfx::GetHeapTotalSize(vm) >> BYTE_2_KB_SHIFT_BITS);
     AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "totalHeap", totalHeapValue);
-
-    uint64_t heapUsedValue = ark::dfx::GetHeapUsedSize(g_currentVm);
-    heapUsedValue = heapUsedValue >> BYTE_2_KB_SHIFT_BITS;
+    auto heapUsedValue = static_cast<int64_t>(ark::dfx::GetHeapUsedSize(vm) >> BYTE_2_KB_SHIFT_BITS);
     AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "heapUsed", heapUsedValue);
-
-    uint64_t allArraySizeValue = ark::dfx::GetArrayBufferSize(g_currentVm);
-    allArraySizeValue = allArraySizeValue >> BYTE_2_KB_SHIFT_BITS;
+    auto allArraySizeValue = static_cast<int64_t>(ark::dfx::GetArrayBufferSize(vm) >> BYTE_2_KB_SHIFT_BITS);
     AniUtil::SetNamedPropertyBigInt(env, vMMemoryInfo, "allArraySize", allArraySizeValue);
-
     return vMMemoryInfo;
 }
 
-static ani_object GetAppMemoryLimit(ani_env *env)
+ani_object GetAppMemoryLimit(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
     ani_class cls = nullptr;
@@ -512,18 +481,17 @@ static ani_object GetAppMemoryLimit(ani_env *env)
     if (memoryLimitOption) {
         memoryLimit = memoryLimitOption.value();
     }
-    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "rssLimit", memoryLimit.rssLimit);
-    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vssLimit", memoryLimit.vssLimit);
-    uint64_t vmHeapLimitValue = ark::dfx::GetHeapLimitSize(g_currentVm);
-    vmHeapLimitValue = vmHeapLimitValue >> BYTE_2_KB_SHIFT_BITS;
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "rssLimit", static_cast<int64_t>(memoryLimit.rssLimit));
+    AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vssLimit", static_cast<int64_t>(memoryLimit.vssLimit));
+    ani_vm* vm = AniUtil::GetAniVm(env);
+    int64_t vmHeapLimitValue = static_cast<int64_t>(ark::dfx::GetHeapLimitSize(vm) >> BYTE_2_KB_SHIFT_BITS);
     AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vmHeapLimit", vmHeapLimitValue);
-    uint64_t vmTotalHeapSizeValue = ark::dfx::GetProcessHeapLimitSize(g_currentVm);
-    vmTotalHeapSizeValue = vmTotalHeapSizeValue >> BYTE_2_KB_SHIFT_BITS;
+    int64_t vmTotalHeapSizeValue = static_cast<int64_t>(ark::dfx::GetProcessHeapLimitSize(vm) >> BYTE_2_KB_SHIFT_BITS);
     AniUtil::SetNamedPropertyBigInt(env, appMemoryLimit, "vmTotalHeapSize", vmTotalHeapSizeValue);
     return appMemoryLimit;
 }
 
-static ani_object GetVMRuntimeStats(ani_env *env)
+ani_object GetVMRuntimeStats(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStats");
     ani_class cls = nullptr;
@@ -544,19 +512,20 @@ static ani_object GetVMRuntimeStats(ani_env *env)
     ani_method longCtor = nullptr;
     env->Class_FindMethod(longClass, "<ctor>", "l:", &longCtor);
     auto vmGcMap = GetVmGcMap();
+    ani_vm* vm = AniUtil::GetAniVm(env);
     for (const auto &[k, targetFunction] : vmGcMap) {
         ani_string aniKey = nullptr;
         if (ANI_OK != env->String_NewUTF8(k.c_str(), k.size(), &aniKey)) {
             HILOG_ERROR(LOG_CORE, "create new value string failed");
         }
         ani_object longObject = nullptr;
-        env->Object_New(longClass, longCtor, &longObject, static_cast<ani_long>(targetFunction(g_currentVm)));
+        env->Object_New(longClass, longCtor, &longObject, static_cast<ani_long>(targetFunction(vm)));
         env->Object_CallMethod_Void(vmRunTimeStats, setMethod, aniKey, longObject);
     }
     return vmRunTimeStats;
 }
 
-static ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
+ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVMRuntimeStat");
     std::string param;
@@ -574,10 +543,10 @@ static ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         return 0;
     }
-    return static_cast<ani_long>((target->second)(g_currentVm));
+    return static_cast<ani_long>((target->second)(AniUtil::GetAniVm(env)));
 }
 
-static std::string StartCpuProfiler(const std::string& fileName)
+std::string StartCpuProfiler(const std::string& fileName)
 {
     auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
     if (context == nullptr) {
@@ -600,7 +569,7 @@ static std::string StartCpuProfiler(const std::string& fileName)
     return "";
 }
 
-static void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
+void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
     std::string fileName;
@@ -619,17 +588,16 @@ static void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
     }
 }
 
-static void StopJsCpuProfiling(ani_env *env)
+void StopJsCpuProfiling(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
     if (!ark::ArkDebugNativeAPI::StopProfiling()) {
         HILOG_ERROR(LOG_CORE, "failed stopJsCpuProfiling");
     }
 }
-
+}
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
-    g_currentVm = vm;
     ani_env *env = nullptr;
     if (ANI_OK != vm->GetEnv(ANI_VERSION_1, &env)) {
         return ANI_ERROR;
