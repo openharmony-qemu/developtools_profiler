@@ -33,7 +33,7 @@ T GenerateRandomNumber(const uint8_t* data, size_t size, size_t& offset)
     if (memcpy_s(&arg, sizeof(arg), data + offset, sizeof(arg)) != EOK) {
         return 0;
     }
-    offset = (offset + sizeof(T)) % size;
+    offset = (size > 0) ? (offset + sizeof(T)) % size : 0;
     return arg;
 }
 
