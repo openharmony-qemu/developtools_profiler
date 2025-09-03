@@ -369,6 +369,8 @@ void* ohos_release_on_end(void*)
     g_hookClient = nullptr;
     g_ClientConfig.Reset();
     g_sharedMemCount = 1;
+    std::unique_lock<std::mutex> lock(g_tagMapMutex);
+    g_memTagMap.clear();
     g_hookReady = false;
     return nullptr;
 }
