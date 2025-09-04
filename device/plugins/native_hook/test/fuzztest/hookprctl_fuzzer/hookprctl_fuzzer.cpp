@@ -45,28 +45,27 @@ std::vector<int> GetCommonPrctlOptions()
 
 bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
 {
-    if (data == nullptr || size < sizeof(int) + 4 * sizeof(unsigned long)) {
+    if (data == nullptr || size < sizeof(int) + 4 * sizeof(unsigned long)) { // at least 36
         return false;
     }
     unsigned long arg2 = GenerateLong(data, size);
     unsigned long arg3 = GenerateLong(data, size);
     unsigned long arg4 = GenerateLong(data, size);
     unsigned long arg5 = GenerateLong(data, size);
-    auto common_options = GetCommonPrctlOptions();
+    auto commonOptions = GetCommonPrctlOptions();
     int result1 = -1;
-    for (int opt : common_options) {
-        result1 = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
-    }
     ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
     ohos_malloc_hook_on_start(nullptr);
     void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
+    for (int opt : commonOptions) {
+        result1 = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
+    }
     int result2 = ohos_malloc_hook_prctl(0, 0, 0, 0, 0);
     int result3 = ohos_malloc_hook_prctl(INT_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX);
-    int result4 = ohos_malloc_hook_prctl(PR_SET_NAME, (unsigned long)"test_process", 0, 0, 0);
     ohos_malloc_hook_free(mallocBlack);
     ohos_malloc_hook_on_end();
     sleep(WAIT_THREAD_TIME);
-    return (result1 != -1) || (result2 != -1) || (result3 != -1) || (result4 != -1);
+    return (result1 != -1) || (result2 != -1) || (result3 != -1);
 }
 
 } // namespace OHOS

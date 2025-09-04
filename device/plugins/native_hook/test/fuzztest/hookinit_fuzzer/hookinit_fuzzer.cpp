@@ -20,18 +20,18 @@ bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size, size_t& offset)
     if (data == nullptr || size == 0) {
         return nullptr;
     }
-    static bool static_bool = false;
-    static bool static_bool_array[2] = {false, true};
+    static bool staticBool = false;
+    static bool staticBoolArray[2] = {false, true};
     offset = (offset + sizeof(uint8_t)) % size;
-    uint8_t choice = data[offset] % 3; // 0: nullptr, 1: &static_bool, 2: static_bool_array
+    uint8_t choice = data[offset] % 3; // 0: nullptr, 1: &staticBool, 2: staticBoolArray
     
     switch (choice) {
-        case 0:
+        case 0: // 0: nullptr
             return nullptr;
-        case 1:
-            return &static_bool;
-        case 2:
-            return &static_bool_array[0];
+        case 1: // 1: &staticBool
+            return &staticBool;
+        case 2: // 2: staticBoolArray
+            return &staticBoolArray[0];
         default:
             return nullptr;
     }
@@ -39,7 +39,7 @@ bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size, size_t& offset)
 
 const char* GenerateRandomString(const uint8_t* data, size_t size, size_t& offset)
 {
-    static std::vector<std::string> static_strings = {
+    static std::vector<std::string> staticStrings = {
         "",
         "default",
         "test_config",
@@ -47,8 +47,8 @@ const char* GenerateRandomString(const uint8_t* data, size_t size, size_t& offse
         "fuzz_test_string"
     };
     offset = (offset + sizeof(uint8_t)) % size;
-    size_t choice = data[offset] % static_strings.size();
-    return static_strings[choice].c_str();
+    size_t choice = data[offset] % staticStrings.size();
+    return staticStrings[choice].c_str();
 }
 
 bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
@@ -58,13 +58,13 @@ bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
     }
 
     size_t offset = 0;
-    bool* bool_ptr = GenerateRandomBoolPtr(data, size, offset);
-    const char* char_ptr = GenerateRandomString(data, size, offset);
-    bool result1 = ohos_malloc_hook_initialize(nullptr, bool_ptr, char_ptr);
-    bool result2 = ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, bool_ptr, char_ptr);
+    bool* boolPtr = GenerateRandomBoolPtr(data, size, offset);
+    const char* charPtr = GenerateRandomString(data, size, offset);
+    bool result1 = ohos_malloc_hook_initialize(nullptr, boolPtr, charPtr);
+    bool result2 = ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, boolPtr, charPtr);
     bool result3 = ohos_malloc_hook_initialize(nullptr, nullptr, "");
-    std::string long_str(256, 'a');
-    bool result4 = ohos_malloc_hook_initialize(nullptr, nullptr, long_str.c_str());
+    std::string longStr(256, 'a'); // test input 256
+    bool result4 = ohos_malloc_hook_initialize(nullptr, nullptr, longStr.c_str());
     bool result5 = ohos_malloc_hook_initialize(nullptr, nullptr, nullptr);
     return result1 || result2 || result3 || result4 || result5;
 }

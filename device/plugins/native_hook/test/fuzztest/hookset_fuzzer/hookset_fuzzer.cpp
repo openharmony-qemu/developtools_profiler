@@ -15,66 +15,66 @@
 #include "hookset_fuzzer.h"
 
 namespace OHOS {
-class TestResultRecorder {
+class HookSetFuzzer {
 private:
     mutable std::mutex mutex;  // 添加 mutable 关键字
     std::vector<bool> results;
     
 public:
-    void record_result(bool result) {
+    void RecordResult(bool result) {
         std::lock_guard<std::mutex> lock(mutex);
         results.push_back(result);
     }
     
-    bool get_last_result() const {
+    bool GetLastResult() const {
         std::lock_guard<std::mutex> lock(mutex);
         return results.empty() ? false : results.back();
     }
     
-    size_t get_total_tests() const {
+    size_t GetTotalTests() const {
         std::lock_guard<std::mutex> lock(mutex);
         return results.size();
     }
 };
 
-static TestResultRecorder g_test_recorder;
+static HookSetFuzzer g_test_recorder;
 
 size_t GetTestCount(const uint8_t* data, size_t size)
 {
     if (size >= sizeof(size_t)) {
-        size_t test_count;
-        if (memcpy_s(&test_count, sizeof(test_count), data, sizeof(test_count) != EOK)) {
+        size_t testCount;
+        if (memcpy_s(&testCount, sizeof(testCount), data, sizeof(testCount) != EOK)) {
             return 10; // default test count
         }
-        return test_count % 100; // litmit test count
+        return testCount % 100; // litmit test count
     }
     return 10; // default test count
 }
 
-bool VerifyStateConsistency(bool expected_flag, bool actual_flag, bool old_flag, bool current_flag)
+bool VerifyStateConsistency(bool expectedFlag, bool actualFlag, bool oldFlag, bool currentFlag)
 {
     bool result = true;
-    result &= (actual_flag == expected_flag);
-    result &= (old_flag == current_flag);
+    result &= (actualFlag == expectedFlag);
+    result &= (oldFlag == currentFlag);
     return result;
 }
 
 
-void HookSetTests(size_t test_count, const uint8_t* data, size_t size)
+void HookSetTests(size_t testCount, const uint8_t* data, size_t size)
 {
-    bool current_flag = ohos_malloc_hook_get_hook_flag();
-    g_test_recorder.record_result(current_flag);
+    bool currentFlag = ohos_malloc_hook_get_hook_flag();
+    g_test_recorder.RecordResult(currentFlag);
 
-    for (size_t i = 0; i < test_count; ++i) {
-        bool next_flag = (data[i % size] & 0x01) != 0;
-        bool old_flag = ohos_malloc_hook_set_hook_flag(next_flag);
-        bool retrieved_flag = ohos_malloc_hook_get_hook_flag();
-        g_test_recorder.record_result(old_flag);
-        g_test_recorder.record_result(retrieved_flag);
-        if (!VerifyStateConsistency(next_flag, retrieved_flag, old_flag, current_flag)) {
+    for (size_t i = 0; i < testCount; ++i) {
+        bool nextFlag = (data[i % size] & 0x01) != 0;
+        bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
+        bool retrievedFlag = ohos_malloc_hook_get_hook_flag();
+        g_test_recorder.RecordResult(oldFlag);
+        g_test_recorder.RecordResult(retrievedFlag);
+        if (!VerifyStateConsistency(nextFlag, retrievedFlag, oldFlag, currentFlag)) {
             return;
         }
-        current_flag = next_flag;
+        currentFlag = nextFlag;
     }
 }
 
@@ -85,19 +85,19 @@ void HookSetBoundaryTests()
     bool result3 = ohos_malloc_hook_set_hook_flag(false);
     bool result4 = ohos_malloc_hook_get_hook_flag();
 
-    g_test_recorder.record_result(result1);
-    g_test_recorder.record_result(result2);
-    g_test_recorder.record_result(result3);
-    g_test_recorder.record_result(result4);
+    g_test_recorder.RecordResult(result1);
+    g_test_recorder.RecordResult(result2);
+    g_test_recorder.RecordResult(result3);
+    g_test_recorder.RecordResult(result4);
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) { // 5 times
         bool flag = ohos_malloc_hook_set_hook_flag(true);
-        g_test_recorder.record_result(flag);
+        g_test_recorder.RecordResult(flag);
     }
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i) { // 5 times
         bool flag = ohos_malloc_hook_set_hook_flag(false);
-        g_test_recorder.record_result(flag);
+        g_test_recorder.RecordResult(flag);
     }
 }
 
@@ -107,10 +107,10 @@ bool FuzzHookSetTests(const uint8_t* data, size_t size)
         return false;
     }
 
-    size_t test_count = GetTestCount(data, size);
-    HookSetTests(test_count, data, size);
+    size_t testCount = GetTestCount(data, size);
+    HookSetTests(testCount, data, size);
     HookSetBoundaryTests();
-    return g_test_recorder.get_last_result();
+    return g_test_recorder.GetLastResult();
 }
 } // namespace OHOS
 

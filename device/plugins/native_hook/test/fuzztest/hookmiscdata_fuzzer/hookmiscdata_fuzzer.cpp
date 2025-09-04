@@ -58,9 +58,9 @@ size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
     
     size_t stackSize;
     memcpy_s(&stackSize, sizeof(stackSize), data + offset, sizeof(stackSize));
-    
-    if (stackSize > 1024 * 1024) {
-        stackSize = 1024 * 1024;
+    size_t maxStackSize = 1024 * 1024; // set max size to 1024KB
+    if (stackSize > maxStackSize) { 
+        stackSize = maxStackSize;
     }
     
     return stackSize;
@@ -72,13 +72,13 @@ uint32_t GenerateRandomType(const uint8_t* data, size_t size, size_t& offset)
     uint8_t choice = data[offset] % 4; // 0: JS_STACK_DATA, 1: 其他类型, 2: 边界值, 3: 最大值
     
     switch (choice) {
-        case 0:
+        case 0: // 0: JS_STACK_DATA
             return static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA);
-        case 1:
+        case 1: // 1: 其他类型
             return static_cast<uint32_t>(MISC_TYPE::OTHER_TYPE);
-        case 2:
+        case 2: // 2: 边界值
             return 0xFFFFFFFF;
-        case 3:
+        case 3: // 3: 最大值
             return 0;
         default:
             return static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA);
@@ -96,8 +96,8 @@ bool FuzzMallocHookSendHookMiscData(const uint8_t* data, size_t size)
     size_t stackSize = GenerateRandomStackSize(data, size, offset);
     uint32_t type = GenerateRandomType(data, size, offset);
     bool result1 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, type);
-    bool result2 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, 
-                                                       static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA));
+    bool result2 = ohos_malloc_hook_send_hook_misc_data(
+        id, stackPtr, stackSize, static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA));
     bool result3 = ohos_malloc_hook_send_hook_misc_data(id, nullptr, 0, type);
     bool result4 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, 1024 * 1024, type);
     bool result5 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, 0xFFFFFFFF);
