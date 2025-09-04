@@ -15,8 +15,8 @@
 #include "address_handler.h"
 namespace {
 constexpr uint64_t BITPOOL_SIZE_FIRST = 1000 * 1024;
-constexpr uint64_t BITPOOL_SIZE_SECOND = 200 * 1024;
-constexpr uint64_t BITPOOL_SIZE_TOTAL_ADDR = 1000 * 1024;
+constexpr uint64_t BITPOOL_SIZE_SECOND = 100 * 1024;
+constexpr uint64_t BITPOOL_SIZE_TOTAL_ADDR = 200 * 1024;
 constexpr uint64_t FIRST_HASH = 16;
 constexpr uint64_t SECOND_HASH = 13;
 constexpr uint64_t DIVIDE_VAL = 64;
