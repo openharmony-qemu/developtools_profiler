@@ -62,7 +62,6 @@ bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
     void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
     int result2 = ohos_malloc_hook_prctl(0, 0, 0, 0, 0);
     int result3 = ohos_malloc_hook_prctl(INT_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX);
-    int result4 = 1;
     int result4 = ohos_malloc_hook_prctl(PR_SET_NAME, (unsigned long)"test_process", 0, 0, 0);
     ohos_malloc_hook_free(mallocBlack);
     ohos_malloc_hook_on_end();
