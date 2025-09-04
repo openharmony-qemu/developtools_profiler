@@ -13,30 +13,15 @@
  * limitations under the License.
  */
 #include "hookprctl_fuzzer.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
-int GenerateRandomOption(const uint8_t* data, size_t size, size_t& offset)
+constexpr unsigned int WAIT_THREAD_TIME = 3;
+unsigned long GenerateLong(const uint8_t* data, size_t size)
 {
-    offset = (offset + sizeof(int)) % size;
-    
-    int option;
-    memcpy_s(&option, sizeof(option), data + offset, sizeof(option));
-    if (option < 0 || option > 0x10000) { // 0x1000 cover all value
-        option = PR_SET_NAME;
-    }
-    
-    return option;
-}
-
-unsigned long GenerateRandomArg(const uint8_t* data, size_t size, size_t& offset)
-{
-    offset = (offset + sizeof(unsigned long)) % size;
-    
-    unsigned long arg;
-    if (memcpy_s(&arg, sizeof(arg), data + offset, sizeof(arg)) != EOK) {
-        return 0;
-    }
-    return arg;
+    FuzzedDataProvider provider(data, size);
+    auto argLong = provider.ConsumeIntegral<unsigned long>();
+    return argLong;
 }
 
 std::vector<int> GetCommonPrctlOptions()
@@ -63,24 +48,27 @@ bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
     if (data == nullptr || size < sizeof(int) + 4 * sizeof(unsigned long)) {
         return false;
     }
-    size_t offset = 0;
-    int option = GenerateRandomOption(data, size, offset);
-    unsigned long arg2 = GenerateRandomArg(data, size, offset);
-    unsigned long arg3 = GenerateRandomArg(data, size, offset);
-    unsigned long arg4 = GenerateRandomArg(data, size, offset);
-    unsigned long arg5 = GenerateRandomArg(data, size, offset);
+    unsigned long arg2 = GenerateLong(data, size);
+    unsigned long arg3 = GenerateLong(data, size);
+    unsigned long arg4 = GenerateLong(data, size);
+    unsigned long arg5 = GenerateLong(data, size);
     auto common_options = GetCommonPrctlOptions();
-    int result1 = ohos_malloc_hook_prctl(option, arg2, arg3, arg4, arg5);
+    int result1 = -1;
     for (int opt : common_options) {
-        int result = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
-        (void)result;
+        result1 = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
     }
+    ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
+    ohos_malloc_hook_on_start(nullptr);
+    void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
     int result2 = ohos_malloc_hook_prctl(0, 0, 0, 0, 0);
     int result3 = ohos_malloc_hook_prctl(INT_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX);
+    int result4 = 1;
     int result4 = ohos_malloc_hook_prctl(PR_SET_NAME, (unsigned long)"test_process", 0, 0, 0);
+    ohos_malloc_hook_free(mallocBlack);
+    ohos_malloc_hook_on_end();
+    sleep(WAIT_THREAD_TIME);
     return (result1 != -1) || (result2 != -1) || (result3 != -1) || (result4 != -1);
 }
-
 
 } // namespace OHOS
 
