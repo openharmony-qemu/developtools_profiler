@@ -13,42 +13,44 @@
  * limitations under the License.
  */
 #include "hookinit_fuzzer.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
-bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size, size_t& offset)
+
+enum class PointerChoice {
+    Null,           // 空指针
+    SingleValue,    // 单个值的指针
+    ArrayValue,      // 数组指针
+    Count
+};
+
+bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size)
 {
     if (data == nullptr || size == 0) {
         return nullptr;
     }
     static bool staticBool = false;
     static bool staticBoolArray[2] = {false, true};
-    offset = (offset + sizeof(uint8_t)) % size;
-    uint8_t choice = data[offset] % 3; // 0: nullptr, 1: &staticBool, 2: staticBoolArray
+    FuzzedDataProvider provider(data, size);
+    uint8_t choice = provider.ConsumeIntegral<uint8_t>();
     
     switch (choice) {
-        case 0: // 0: nullptr
+        case PointerOptions::Null:
             return nullptr;
-        case 1: // 1: &staticBool
+        case PointerOptions::SingleValue:
             return &staticBool;
-        case 2: // 2: staticBoolArray
+        case PointerOptions::ArrayValue:
             return &staticBoolArray[0];
         default:
             return nullptr;
     }
 }
 
-const char* GenerateRandomString(const uint8_t* data, size_t size, size_t& offset)
+const char* GenerateRandomString(const uint8_t* data, size_t size)
 {
-    static std::vector<std::string> staticStrings = {
-        "",
-        "default",
-        "test_config",
-        "malloc_hook_config",
-        "fuzz_test_string"
-    };
-    offset = (offset + sizeof(uint8_t)) % size;
-    size_t choice = data[offset] % staticStrings.size();
-    return staticStrings[choice].c_str();
+    FuzzedDataProvider provider(data, size);
+    std::string randString = provider.ConsumeRandomLengthString();
+    return randString.c_str();
 }
 
 bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
@@ -58,8 +60,8 @@ bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
     }
 
     size_t offset = 0;
-    bool* boolPtr = GenerateRandomBoolPtr(data, size, offset);
-    const char* charPtr = GenerateRandomString(data, size, offset);
+    bool* boolPtr = GenerateRandomBoolPtr(data, size);
+    const char* charPtr = GenerateRandomString(data, size);
     bool result1 = ohos_malloc_hook_initialize(nullptr, boolPtr, charPtr);
     bool result2 = ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, boolPtr, charPtr);
     bool result3 = ohos_malloc_hook_initialize(nullptr, nullptr, "");

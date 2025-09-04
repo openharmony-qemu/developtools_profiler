@@ -13,8 +13,10 @@
  * limitations under the License.
  */
 #include "hookset_fuzzer.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
+constexpr size_t LIMITED_TEST_COUNT_DIV = 100;
 class HookSetFuzzer {
 public:
     void RecordResult(bool result)
@@ -39,18 +41,13 @@ private:
     std::vector<bool> results;
 };
 
-static HookSetFuzzer g_test_recorder;
+static HookSetFuzzer g_testRecorder;
 
 size_t GetTestCount(const uint8_t* data, size_t size)
 {
-    if (size >= sizeof(size_t)) {
-        size_t testCount;
-        if (memcpy_s(&testCount, sizeof(testCount), data, sizeof(testCount) != EOK)) {
-            return 10; // default test count
-        }
-        return testCount % 100; // litmit test count
-    }
-    return 10; // default test count
+    FuzzedDataProvider provider(data, size);
+    size_t testCount = provider.ConsumeIntegral<size_t>();
+    return testCount % LIMITED_TEST_COUNT_DIV; // litmit test count
 }
 
 bool VerifyStateConsistency(bool expectedFlag, bool actualFlag, bool oldFlag, bool currentFlag)
@@ -64,15 +61,16 @@ bool VerifyStateConsistency(bool expectedFlag, bool actualFlag, bool oldFlag, bo
 
 void HookSetTests(size_t testCount, const uint8_t* data, size_t size)
 {
+    FuzzedDataProvider provider(data, size);
     bool currentFlag = ohos_malloc_hook_get_hook_flag();
-    g_test_recorder.RecordResult(currentFlag);
+    g_testRecorder.RecordResult(currentFlag);
 
-    for (size_t i = 0; i < testCount; ++i) {
-        bool nextFlag = (data[i % size] & 0x01) != 0;
+    for (size_t i = 0; i < testCount; ++i) { 
+        bool nextFlag = provider.ConsumeBoolean();
         bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
         bool retrievedFlag = ohos_malloc_hook_get_hook_flag();
-        g_test_recorder.RecordResult(oldFlag);
-        g_test_recorder.RecordResult(retrievedFlag);
+        g_testRecorder.RecordResult(oldFlag);
+        g_testRecorder.RecordResult(retrievedFlag);
         if (!VerifyStateConsistency(nextFlag, retrievedFlag, oldFlag, currentFlag)) {
             return;
         }
@@ -87,19 +85,19 @@ void HookSetBoundaryTests()
     bool result3 = ohos_malloc_hook_set_hook_flag(false);
     bool result4 = ohos_malloc_hook_get_hook_flag();
 
-    g_test_recorder.RecordResult(result1);
-    g_test_recorder.RecordResult(result2);
-    g_test_recorder.RecordResult(result3);
-    g_test_recorder.RecordResult(result4);
+    g_testRecorder.RecordResult(result1);
+    g_testRecorder.RecordResult(result2);
+    g_testRecorder.RecordResult(result3);
+    g_testRecorder.RecordResult(result4);
 
-    for (int i = 0; i < 5; ++i) { // 5 times
+    for (int i = 0; i < FUZZ_DEFAULT_TEST_COUNT; ++i) {
         bool flag = ohos_malloc_hook_set_hook_flag(true);
-        g_test_recorder.RecordResult(flag);
+        g_testRecorder.RecordResult(flag);
     }
 
-    for (int i = 0; i < 5; ++i) { // 5 times
+    for (int i = 0; i < FUZZ_DEFAULT_TEST_COUNT; ++i) {
         bool flag = ohos_malloc_hook_set_hook_flag(false);
-        g_test_recorder.RecordResult(flag);
+        g_testRecorder.RecordResult(flag);
     }
 }
 
@@ -112,7 +110,7 @@ bool FuzzHookSetTests(const uint8_t* data, size_t size)
     size_t testCount = GetTestCount(data, size);
     HookSetTests(testCount, data, size);
     HookSetBoundaryTests();
-    return g_test_recorder.GetLastResult();
+    return g_testRecorder.GetLastResult();
 }
 } // namespace OHOS
 

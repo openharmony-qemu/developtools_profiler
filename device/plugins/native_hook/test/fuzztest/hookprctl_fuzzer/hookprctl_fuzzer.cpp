@@ -45,7 +45,7 @@ std::vector<int> GetCommonPrctlOptions()
 
 bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
 {
-    if (data == nullptr || size < sizeof(int) + 4 * sizeof(unsigned long)) { // at least 36
+    if (data == nullptr) {
         return false;
     }
     unsigned long arg2 = GenerateLong(data, size);

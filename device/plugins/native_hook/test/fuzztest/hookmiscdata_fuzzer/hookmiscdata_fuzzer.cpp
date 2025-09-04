@@ -15,36 +15,53 @@
 #include "hookmiscdata_fuzzer.h"
 
 namespace OHOS {
-enum class MISC_TYPE : uint32_t {
+enum class MiscType : uint32_t {
     JS_STACK_DATA = 1,
     OTHER_TYPE = 1000,
 };
 
+enum class PointerChoice {
+    NULL_CHOICE,
+    SINGLE_VALUE,
+    EMPTY_STRING,
+    ALIGNED_BUFFER,
+    COUNT
+};
+
+enum class StackChoice {
+    JS_STACK_DATA,
+    OTHER_TYPE,
+    EDGE_VALUE,
+    MAX_VALUE,
+    COUNT
+};
+
+constexpr size_t DEFAULT_BUFFER_SIZE = 64;
+constexpr size_t DEFAULT_ALIGNED_SIZE = 8;
+constexpr size_t MAX_STACK_SIZE = 1024 * 1024;
+
 uint64_t GenerateRandomId(const uint8_t* data, size_t size, size_t& offset)
 {
-    offset = (offset + sizeof(uint64_t)) % size;
-    
-    uint64_t id;
-    memcpy_s(&id, sizeof(id), data + offset, sizeof(id));
-    return id;
+    FuzzedDataProvider provider(data, size);
+    return provider.ConsumeIntegral<uint64_t>();
 }
 
 const char* GenerateRandomStackPtr(const uint8_t* data, size_t size, size_t& offset)
 {
-    offset = (offset + sizeof(uint8_t)) % size;
-    uint8_t choice = data[offset] % 4; // 0: nullptr, 1: 有效指针, 2: 空字符串, 3: 特殊值
+    FuzzedDataProvider provider(data, size);
+    uint8_t choice = provider.ConsumeIntegral<uint8_t>();
     
     switch (choice) {
-        case 0:
+        case PointerChoice::NULL_CHOICE:
             return nullptr;
-        case 1: {
-            static char buffer[64];
+        case PointerChoice::SINGLE_VALUE: {
+            static char buffer[DEFAULT_BUFFER_SIZE];
             return buffer;
         }
-        case 2:
+        case PointerChoice::EMPTY_STRING:
             return "";
-        case 3: {
-            static char alignedBuffer[64] __attribute__((aligned(8)));
+        case PointerChoice::ALIGNED_BUFFER: {
+            static char alignedBuffer[DEFAULT_BUFFER_SIZE] __attribute__((aligned(DEFAULT_ALIGNED_SIZE)));
             return alignedBuffer;
         }
         default:
@@ -54,13 +71,10 @@ const char* GenerateRandomStackPtr(const uint8_t* data, size_t size, size_t& off
 
 size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
 {
-    offset = (offset + sizeof(size_t)) % size;
-    
-    size_t stackSize;
-    memcpy_s(&stackSize, sizeof(stackSize), data + offset, sizeof(stackSize));
-    size_t maxStackSize = 1024 * 1024; // set max size to 1024KB
-    if (stackSize > maxStackSize) {
-        stackSize = maxStackSize;
+    FuzzedDataProvider provider(data, size);
+    size_t stackSize = provider.ConsumeIntegral<size_t>();
+    if (stackSize > MAX_STACK_SIZE) {
+        stackSize = MAX_STACK_SIZE;
     }
     
     return stackSize;
@@ -68,20 +82,21 @@ size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
 
 uint32_t GenerateRandomType(const uint8_t* data, size_t size, size_t& offset)
 {
-    offset = (offset + sizeof(uint8_t)) % size;
-    uint8_t choice = data[offset] % 4; // 0: JS_STACK_DATA, 1: 其他类型, 2: 边界值, 3: 最大值
+    FuzzedDataProvider provider(data, size);
+    uint8_t choiceRaw = provider.ConsumeIntegral<uint8_t>();
+    uint8_t choice = choiceRaw % StackChoice::COUNT;
     
     switch (choice) {
-        case 0: // 0: JS_STACK_DATA
-            return static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA);
-        case 1: // 1: 其他类型
-            return static_cast<uint32_t>(MISC_TYPE::OTHER_TYPE);
-        case 2: // 2: 边界值
+        case StackChoice::JS_STACK_DATA:
+            return static_cast<uint32_t>(MiscType::JS_STACK_DATA);
+        case StackChoice:
+            return static_cast<uint32_t>(MiscType::OTHER_TYPE);
+        case StackChoice::EDGE_VALUE:
             return 0xFFFFFFFF;
-        case 3: // 3: 最大值
+        case StackChoice::MAX_VALUE:
             return 0;
         default:
-            return static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA);
+            return static_cast<uint32_t>(MiscType::JS_STACK_DATA);
     }
 }
 
@@ -97,9 +112,9 @@ bool FuzzMallocHookSendHookMiscData(const uint8_t* data, size_t size)
     uint32_t type = GenerateRandomType(data, size, offset);
     bool result1 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, type);
     bool result2 = ohos_malloc_hook_send_hook_misc_data(
-        id, stackPtr, stackSize, static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA));
+        id, stackPtr, stackSize, static_cast<uint32_t>(MiscType::JS_STACK_DATA));
     bool result3 = ohos_malloc_hook_send_hook_misc_data(id, nullptr, 0, type);
-    bool result4 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, 1024 * 1024, type);
+    bool result4 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, MAX_STACK_SIZE, type);
     bool result5 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, 0xFFFFFFFF);
     return result1 || result2 || result3 || result4 || result5;
 }
