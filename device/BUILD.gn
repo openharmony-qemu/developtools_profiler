@@ -117,5 +117,6 @@ group("fuzztest") {
     "plugins/network_profiler/test/fuzztest/setconfig_fuzzer:fuzztest",
     "plugins/ffrt_profiler/test/fuzztest/protocolproc_fuzzer:fuzztest",
     "plugins/ffrt_profiler/test/fuzztest/setconfig_fuzzer:fuzztest",
+    "cmds/test/fuzztest/hiprofilercmd_fuzzer:fuzztest",
   ]
 }
