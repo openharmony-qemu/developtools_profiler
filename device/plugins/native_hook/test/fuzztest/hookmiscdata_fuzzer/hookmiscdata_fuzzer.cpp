@@ -44,8 +44,8 @@ const char* GenerateRandomStackPtr(const uint8_t* data, size_t size, size_t& off
         case 2:
             return "";
         case 3: {
-            static char aligned_buffer[64] __attribute__((aligned(8)));
-            return aligned_buffer;
+            static char alignedBuffer[64] __attribute__((aligned(8)));
+            return alignedBuffer;
         }
         default:
             return nullptr;
@@ -59,7 +59,7 @@ size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
     size_t stackSize;
     memcpy_s(&stackSize, sizeof(stackSize), data + offset, sizeof(stackSize));
     size_t maxStackSize = 1024 * 1024; // set max size to 1024KB
-    if (stackSize > maxStackSize) { 
+    if (stackSize > maxStackSize) {
         stackSize = maxStackSize;
     }
     

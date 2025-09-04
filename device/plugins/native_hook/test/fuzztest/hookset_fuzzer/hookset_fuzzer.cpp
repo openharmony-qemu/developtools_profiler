@@ -16,25 +16,27 @@
 
 namespace OHOS {
 class HookSetFuzzer {
-private:
-    mutable std::mutex mutex;  // 添加 mutable 关键字
-    std::vector<bool> results;
-    
 public:
-    void RecordResult(bool result) {
+    void RecordResult(bool result)
+    {
         std::lock_guard<std::mutex> lock(mutex);
         results.push_back(result);
     }
     
-    bool GetLastResult() const {
+    bool GetLastResult() const
+    {
         std::lock_guard<std::mutex> lock(mutex);
         return results.empty() ? false : results.back();
     }
     
-    size_t GetTotalTests() const {
+    size_t GetTotalTests() const
+    {
         std::lock_guard<std::mutex> lock(mutex);
         return results.size();
     }
+private:
+    mutable std::mutex mutex;
+    std::vector<bool> results;
 };
 
 static HookSetFuzzer g_test_recorder;
