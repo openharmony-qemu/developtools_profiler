@@ -27,6 +27,10 @@
 
 namespace OHOS {
     namespace SmartPerf {
+        GpuCounter::GpuCounter()
+            : gpuCounterData(std::make_unique<std::vector<std::string>>()),
+              gpuCounterSaveReportData(std::make_unique<std::vector<std::string>>()) {}
+
         std::map<std::string, std::string> GpuCounter::ItemData()
         {
             std::map<std::string, std::string> gpuCounterDataMap;
@@ -45,7 +49,7 @@ namespace OHOS {
             SaveData(savePathDirectory_);
             StopCollect();
             if (!isPause_) {
-                gpuCounterData.clear();
+                gpuCounterData->clear();
             }
         }
 
@@ -81,7 +85,7 @@ namespace OHOS {
 
             if (type == GC_START && gcStatus == GC_INIT) {
                 if (!isPause_) {
-                    gpuCounterData.clear();
+                    gpuCounterData->clear();
                     gpuCounterRealtimeData.clear();
                 }
                 int ret = servicePlugin()->StartGetGpuPerfInfo(duration, frequency, std::move(gpuCounterCallback));
@@ -104,7 +108,7 @@ namespace OHOS {
         {
             // device与editor采集都会走tcp stop时的SaveData，但是deivce同时会走FinishtExecutionOnce导致SaveData执行两次
             // 目前device在第一次保存数据后会清空，第二次SaveData实际不生效
-            if (gcStatus != GC_RUNNING || gpuCounterData.size() <= 0 || path.empty()) {
+            if (gcStatus != GC_RUNNING || gpuCounterData->size() <= 0 || path.empty()) {
                 return;
             }
             savePathDirectory_ = path;
@@ -137,27 +141,27 @@ namespace OHOS {
                 "memoryBandwidthPercentage\r";
             outFile << title << std::endl;
             std::unique_lock<std::mutex> lock(realtimeDataLock);
-            for (unsigned int i = 0; i < gpuCounterSaveReportData.size() - 1; i++) {
-                outFile << gpuCounterSaveReportData[i] << std::endl;
+            for (const auto& data : *gpuCounterSaveReportData) {
+                outFile << data << std::endl;
             }
             outFile.close();
         }
 
         std::vector<std::string> &GpuCounter::GetGpuCounterData()
         {
-            return gpuCounterData;
+            return *gpuCounterData;
         }
 
         std::vector<std::string> &GpuCounter::GetGpuCounterSaveReportData()
         {
-            return gpuCounterSaveReportData;
+            return *gpuCounterSaveReportData;
         }
 
         std::map<std::string, std::string> GpuCounter::GetGpuRealtimeData()
         {
             std::unique_lock<std::mutex> lock(realtimeDataLock);
             std::map<std::string, std::string> gpuCounterDataMap = {};
-            if (gpuCounterRealtimeData.size() > 0) {
+            if (!gpuCounterRealtimeData.empty()) {
                 gpuCounterDataMap.insert({"gpuCounterData", gpuCounterRealtimeData});
                 gpuCounterRealtimeData.clear();
             }
