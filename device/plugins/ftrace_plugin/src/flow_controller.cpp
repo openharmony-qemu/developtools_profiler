@@ -388,7 +388,7 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
     ftraceParser_->ParseTidGid();
     while (keepRunning_) {
-        std::this_thread::sleep_for(tracePeriod);
+        auto start = std::chrono::steady_clock::now();
         if (flushCacheData_ && !keepRunning_) {
             PROFILER_LOG_INFO(LOG_CORE, "flushCacheData_ is true, return");
             return;
@@ -400,11 +400,25 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
         }
         if (rawDataBytes == 0) {
             PROFILER_LOG_INFO(LOG_CORE, "Get hm raw data is 0 bytes.");
+            auto duration =
+                std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+            if (tracePeriod > duration) {
+                std::this_thread::sleep_for(tracePeriod - duration);
+            }
             continue;
         }
         if (!HmParseEventDataOnNomalMode(rawDataBytes)) {
             PROFILER_LOG_ERROR(LOG_CORE, "HmParseEventData failed!");
         }
+        auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+        if (tracePeriod > duration) {
+            std::this_thread::sleep_for(tracePeriod - duration);
+        }
+    }
+    // read last data
+    long rawLastDataBytes = HmReadEventData();
+    if (rawLastDataBytes > 0 && !HmParseEventDataOnNomalMode(rawLastDataBytes)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HmParseEventData failed!");
     }
     tansporter_->Flush();
     PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode done!");
