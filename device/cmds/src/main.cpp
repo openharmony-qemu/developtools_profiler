@@ -493,7 +493,7 @@ bool ParseConfig(const std::string& configFile, std::string& config)
     printf("Read config from %s\n", configFileWithPath.c_str());
     std::vector<std::string> validPaths {};
     if (adaptSandbox) {
-        validPaths.push_back(SANDBOX_PATH_ROOT);
+        validPaths.push_back("/data/storage/el2/base/cache/");
     } else {
         validPaths.push_back("/data/local/tmp/");
     }
