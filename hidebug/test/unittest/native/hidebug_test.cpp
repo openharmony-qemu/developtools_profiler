@@ -19,7 +19,6 @@
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
-#include "hidebug_base.h"
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "securec.h"

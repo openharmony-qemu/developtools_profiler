@@ -41,8 +41,8 @@
 
 #undef LOG_DOMAIN
 #undef LOG_TAG
-#define LOG_DOMAIN 0xD002D0A
-#define LOG_TAG "HiDebug_Native"
+#define LOG_DOMAIN 0xD002D0C
+#define LOG_TAG "Hiprofiler"
 
 #define PROFILER_LOGE(...) HILOG_ERROR(LOG_CORE, __VA_ARGS__)
 #define PROFILER_LOGI(...) HILOG_INFO(LOG_CORE, __VA_ARGS__)
