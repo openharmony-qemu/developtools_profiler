@@ -59,12 +59,12 @@ namespace OHOS {
             void SetIsPause(bool isPause);
             std::map<std::string, std::string> GetGpuRealtimeData();
         private:
-            GpuCounter() {};
+            GpuCounter();
             GpuCounter(const GpuCounter &);
             GpuCounter &operator = (const GpuCounter &);
             GcStatus gcStatus = GC_INIT;
-            std::vector<std::string> gpuCounterData;
-            std::vector<std::string> gpuCounterSaveReportData;
+            std::unique_ptr<std::vector<std::string>> gpuCounterData;
+            std::unique_ptr<std::vector<std::string>> gpuCounterSaveReportData;
             std::mutex realtimeDataLock;
             std::mutex gpuCounterLock;
             std::string gpuCounterRealtimeData;
