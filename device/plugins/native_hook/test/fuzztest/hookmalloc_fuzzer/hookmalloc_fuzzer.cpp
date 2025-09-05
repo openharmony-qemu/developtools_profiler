@@ -29,10 +29,10 @@ bool FuzzMallocHookTest(const uint8_t* data, size_t size)
     ohos_malloc_hook_on_start(nullptr);
 
     void* mallocBlack = ohos_malloc_hook_malloc(sizeHook);
-    void* reallocBlack = ohos_malloc_hook_realloc(mallocBlack, sizeHook*2);
-    void* callocBlack = ohos_malloc_hook_calloc(sizeHook, sizeHook*2);
+    void* reallocBlack = ohos_malloc_hook_realloc(mallocBlack, sizeHook * 2);
+    void* callocBlack = ohos_malloc_hook_calloc(sizeHook, sizeHook * 2);
     void* vallocBlack = ohos_malloc_hook_valloc(sizeHook);
-    void* alignedAllocBlack = ohos_malloc_hook_aligned_alloc(sizeHook, sizeHook*2);
+    void* alignedAllocBlack = ohos_malloc_hook_aligned_alloc(sizeHook, sizeHook * 2);
 
     ohos_malloc_hook_free(alignedAllocBlack);
     ohos_malloc_hook_free(vallocBlack);
