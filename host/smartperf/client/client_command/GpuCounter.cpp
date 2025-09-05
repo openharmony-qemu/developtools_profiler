@@ -27,9 +27,9 @@
 
 namespace OHOS {
     namespace SmartPerf {
-        GpuCounter::GpuCounter() :
-            gpuCounterData(std::make_unique<std::vector<std::string>>()),
-            gpuCounterSaveReportData(std::make_unique<std::vector<std::string>>()) {}
+        GpuCounter::GpuCounter()
+            : gpuCounterData(std::make_unique<std::vector<std::string>>()),
+              gpuCounterSaveReportData(std::make_unique<std::vector<std::string>>()) {}
 
         std::map<std::string, std::string> GpuCounter::ItemData()
         {
