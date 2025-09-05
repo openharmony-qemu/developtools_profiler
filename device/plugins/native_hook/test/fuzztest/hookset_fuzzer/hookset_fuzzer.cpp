@@ -66,7 +66,7 @@ void HookSetTests(size_t testCount, const uint8_t* data, size_t size)
     bool currentFlag = ohos_malloc_hook_get_hook_flag();
     g_testRecorder.RecordResult(currentFlag);
 
-    for (size_t i = 0; i < testCount; ++i) { 
+    for (size_t i = 0; i < testCount; ++i) {
         bool nextFlag = provider.ConsumeBool();
         bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
         bool retrievedFlag = ohos_malloc_hook_get_hook_flag();

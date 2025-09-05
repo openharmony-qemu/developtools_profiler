@@ -49,7 +49,7 @@ bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size)
 std::string GenerateRandomString(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
-    return provider.ConsumeRandomLengthString();;
+    return provider.ConsumeRandomLengthString();
 }
 
 bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
