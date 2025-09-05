@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "hookmiscdata_fuzzer.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
 enum class MiscType : uint32_t {
@@ -21,7 +22,7 @@ enum class MiscType : uint32_t {
 };
 
 enum class PointerChoice {
-    NULL_CHOICE,
+    NULL_CHOICE = 1,
     SINGLE_VALUE,
     EMPTY_STRING,
     ALIGNED_BUFFER,
@@ -29,7 +30,7 @@ enum class PointerChoice {
 };
 
 enum class StackChoice {
-    JS_STACK_DATA,
+    JS_STACK_DATA = 0,
     OTHER_TYPE,
     EDGE_VALUE,
     MAX_VALUE,
@@ -40,27 +41,27 @@ constexpr size_t DEFAULT_BUFFER_SIZE = 64;
 constexpr size_t DEFAULT_ALIGNED_SIZE = 8;
 constexpr size_t MAX_STACK_SIZE = 1024 * 1024;
 
-uint64_t GenerateRandomId(const uint8_t* data, size_t size, size_t& offset)
+uint64_t GenerateRandomId(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     return provider.ConsumeIntegral<uint64_t>();
 }
 
-const char* GenerateRandomStackPtr(const uint8_t* data, size_t size, size_t& offset)
+const char* GenerateRandomStackPtr(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     uint8_t choice = provider.ConsumeIntegral<uint8_t>();
     
     switch (choice) {
-        case PointerChoice::NULL_CHOICE:
+        case static_cast<uint8_t>(PointerChoice::NULL_CHOICE):
             return nullptr;
-        case PointerChoice::SINGLE_VALUE: {
+        case static_cast<uint8_t>(PointerChoice::SINGLE_VALUE): {
             static char buffer[DEFAULT_BUFFER_SIZE];
             return buffer;
         }
-        case PointerChoice::EMPTY_STRING:
+        case static_cast<uint8_t>(PointerChoice::EMPTY_STRING):
             return "";
-        case PointerChoice::ALIGNED_BUFFER: {
+        case static_cast<uint8_t>(PointerChoice::ALIGNED_BUFFER): {
             static char alignedBuffer[DEFAULT_BUFFER_SIZE] __attribute__((aligned(DEFAULT_ALIGNED_SIZE)));
             return alignedBuffer;
         }
@@ -69,7 +70,7 @@ const char* GenerateRandomStackPtr(const uint8_t* data, size_t size, size_t& off
     }
 }
 
-size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
+size_t GenerateRandomStackSize(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     size_t stackSize = provider.ConsumeIntegral<size_t>();
@@ -80,20 +81,20 @@ size_t GenerateRandomStackSize(const uint8_t* data, size_t size, size_t& offset)
     return stackSize;
 }
 
-uint32_t GenerateRandomType(const uint8_t* data, size_t size, size_t& offset)
+uint32_t GenerateRandomType(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     uint8_t choiceRaw = provider.ConsumeIntegral<uint8_t>();
-    uint8_t choice = choiceRaw % StackChoice::COUNT;
+    uint8_t choice = choiceRaw % static_cast<uint8_t>(StackChoice::COUNT);
     
     switch (choice) {
-        case StackChoice::JS_STACK_DATA:
+        case static_cast<uint8_t>(StackChoice::JS_STACK_DATA):
             return static_cast<uint32_t>(MiscType::JS_STACK_DATA);
-        case StackChoice:
+        case static_cast<uint8_t>(StackChoice::OTHER_TYPE):
             return static_cast<uint32_t>(MiscType::OTHER_TYPE);
-        case StackChoice::EDGE_VALUE:
+        case static_cast<uint8_t>(StackChoice::EDGE_VALUE):
             return 0xFFFFFFFF;
-        case StackChoice::MAX_VALUE:
+        case static_cast<uint8_t>(StackChoice::MAX_VALUE):
             return 0;
         default:
             return static_cast<uint32_t>(MiscType::JS_STACK_DATA);
@@ -105,11 +106,10 @@ bool FuzzMallocHookSendHookMiscData(const uint8_t* data, size_t size)
     if (data == nullptr || size < sizeof(uint64_t) + sizeof(size_t) + sizeof(uint32_t)) {
         return false;
     }
-    size_t offset = 0;
-    uint64_t id = GenerateRandomId(data, size, offset);
-    const char* stackPtr = GenerateRandomStackPtr(data, size, offset);
-    size_t stackSize = GenerateRandomStackSize(data, size, offset);
-    uint32_t type = GenerateRandomType(data, size, offset);
+    uint64_t id = GenerateRandomId(data, size);
+    const char* stackPtr = GenerateRandomStackPtr(data, size);
+    size_t stackSize = GenerateRandomStackSize(data, size);
+    uint32_t type = GenerateRandomType(data, size);
     bool result1 = ohos_malloc_hook_send_hook_misc_data(id, stackPtr, stackSize, type);
     bool result2 = ohos_malloc_hook_send_hook_misc_data(
         id, stackPtr, stackSize, static_cast<uint32_t>(MiscType::JS_STACK_DATA));

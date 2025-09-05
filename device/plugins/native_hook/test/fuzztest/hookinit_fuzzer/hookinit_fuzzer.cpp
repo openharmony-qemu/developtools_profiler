@@ -18,10 +18,10 @@
 namespace OHOS {
 
 enum class PointerChoice {
-    Null,           // 空指针
-    SingleValue,    // 单个值的指针
-    ArrayValue,      // 数组指针
-    Count
+    NULL_VALUE,           // 空指针
+    SINGLE_VALUE,    // 单个值的指针
+    ARRAY_VALUE,      // 数组指针
+    COUNT
 };
 
 bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size)
@@ -35,22 +35,21 @@ bool* GenerateRandomBoolPtr(const uint8_t* data, size_t size)
     uint8_t choice = provider.ConsumeIntegral<uint8_t>();
     
     switch (choice) {
-        case PointerOptions::Null:
+        case static_cast<uint8_t>(PointerChoice::NULL_VALUE):
             return nullptr;
-        case PointerOptions::SingleValue:
+        case static_cast<uint8_t>(PointerChoice::SINGLE_VALUE):
             return &staticBool;
-        case PointerOptions::ArrayValue:
+        case static_cast<uint8_t>(PointerChoice::ARRAY_VALUE):
             return &staticBoolArray[0];
         default:
             return nullptr;
     }
 }
 
-const char* GenerateRandomString(const uint8_t* data, size_t size)
+std::string GenerateRandomString(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
-    std::string randString = provider.ConsumeRandomLengthString();
-    return randString.c_str();
+    return provider.ConsumeRandomLengthString();;
 }
 
 bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
@@ -59,11 +58,10 @@ bool FuzzMallocHookInitialize(const uint8_t* data, size_t size)
         return false;
     }
 
-    size_t offset = 0;
     bool* boolPtr = GenerateRandomBoolPtr(data, size);
-    const char* charPtr = GenerateRandomString(data, size);
-    bool result1 = ohos_malloc_hook_initialize(nullptr, boolPtr, charPtr);
-    bool result2 = ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, boolPtr, charPtr);
+    std::string charString = GenerateRandomString(data, size);
+    bool result1 = ohos_malloc_hook_initialize(nullptr, boolPtr, charString.c_str());
+    bool result2 = ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, boolPtr, charString.c_str());
     bool result3 = ohos_malloc_hook_initialize(nullptr, nullptr, "");
     std::string longStr(256, 'a'); // test input 256
     bool result4 = ohos_malloc_hook_initialize(nullptr, nullptr, longStr.c_str());

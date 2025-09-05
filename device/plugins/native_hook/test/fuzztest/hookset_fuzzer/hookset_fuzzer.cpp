@@ -17,6 +17,7 @@
 
 namespace OHOS {
 constexpr size_t LIMITED_TEST_COUNT_DIV = 100;
+constexpr size_t FUZZ_DEFAULT_REPEAT_COUNT = 10;
 class HookSetFuzzer {
 public:
     void RecordResult(bool result)
@@ -66,7 +67,7 @@ void HookSetTests(size_t testCount, const uint8_t* data, size_t size)
     g_testRecorder.RecordResult(currentFlag);
 
     for (size_t i = 0; i < testCount; ++i) { 
-        bool nextFlag = provider.ConsumeBoolean();
+        bool nextFlag = provider.ConsumeBool();
         bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
         bool retrievedFlag = ohos_malloc_hook_get_hook_flag();
         g_testRecorder.RecordResult(oldFlag);
@@ -90,12 +91,12 @@ void HookSetBoundaryTests()
     g_testRecorder.RecordResult(result3);
     g_testRecorder.RecordResult(result4);
 
-    for (int i = 0; i < FUZZ_DEFAULT_TEST_COUNT; ++i) {
+    for (int i = 0; i < FUZZ_DEFAULT_REPEAT_COUNT; ++i) {
         bool flag = ohos_malloc_hook_set_hook_flag(true);
         g_testRecorder.RecordResult(flag);
     }
 
-    for (int i = 0; i < FUZZ_DEFAULT_TEST_COUNT; ++i) {
+    for (int i = 0; i < FUZZ_DEFAULT_REPEAT_COUNT; ++i) {
         bool flag = ohos_malloc_hook_set_hook_flag(false);
         g_testRecorder.RecordResult(flag);
     }
