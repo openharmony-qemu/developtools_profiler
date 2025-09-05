@@ -43,6 +43,9 @@ constexpr size_t MAX_STACK_SIZE = 1024 * 1024;
 
 uint64_t GenerateRandomId(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
     FuzzedDataProvider provider(data, size);
     return provider.ConsumeIntegral<uint64_t>();
 }
@@ -72,6 +75,9 @@ const char* GenerateRandomStackPtr(const uint8_t* data, size_t size)
 
 size_t GenerateRandomStackSize(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
     FuzzedDataProvider provider(data, size);
     size_t stackSize = provider.ConsumeIntegral<size_t>();
     if (stackSize > MAX_STACK_SIZE) {
@@ -83,6 +89,9 @@ size_t GenerateRandomStackSize(const uint8_t* data, size_t size)
 
 uint32_t GenerateRandomType(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
     FuzzedDataProvider provider(data, size);
     uint8_t choiceRaw = provider.ConsumeIntegral<uint8_t>();
     uint8_t choice = choiceRaw % static_cast<uint8_t>(StackChoice::COUNT);

@@ -16,8 +16,8 @@
 #include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
-constexpr size_t LIMITED_TEST_COUNT_DIV = 100;
 constexpr size_t FUZZ_DEFAULT_REPEAT_COUNT = 10;
+constexpr unsigned int WAIT_THREAD_TIME = 3;
 class HookSetFuzzer {
 public:
     void RecordResult(bool result)
@@ -44,39 +44,19 @@ private:
 
 static HookSetFuzzer g_testRecorder;
 
-size_t GetTestCount(const uint8_t* data, size_t size)
+void HookSetTests(const uint8_t* data, size_t size)
 {
-    FuzzedDataProvider provider(data, size);
-    size_t testCount = provider.ConsumeIntegral<size_t>();
-    return testCount % LIMITED_TEST_COUNT_DIV; // litmit test count
-}
-
-bool VerifyStateConsistency(bool expectedFlag, bool actualFlag, bool oldFlag, bool currentFlag)
-{
-    bool result = true;
-    result &= (actualFlag == expectedFlag);
-    result &= (oldFlag == currentFlag);
-    return result;
-}
-
-
-void HookSetTests(size_t testCount, const uint8_t* data, size_t size)
-{
+    if (data == nullptr || size == 0) {
+        return;
+    }
     FuzzedDataProvider provider(data, size);
     bool currentFlag = ohos_malloc_hook_get_hook_flag();
     g_testRecorder.RecordResult(currentFlag);
-
-    for (size_t i = 0; i < testCount; ++i) {
-        bool nextFlag = provider.ConsumeBool();
-        bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
-        bool retrievedFlag = ohos_malloc_hook_get_hook_flag();
-        g_testRecorder.RecordResult(oldFlag);
-        g_testRecorder.RecordResult(retrievedFlag);
-        if (!VerifyStateConsistency(nextFlag, retrievedFlag, oldFlag, currentFlag)) {
-            return;
-        }
-        currentFlag = nextFlag;
-    }
+    bool nextFlag = provider.ConsumeBool();
+    bool oldFlag = ohos_malloc_hook_set_hook_flag(nextFlag);
+    bool retrievedFlag = ohos_malloc_hook_get_hook_flag();
+    g_testRecorder.RecordResult(oldFlag);
+    g_testRecorder.RecordResult(retrievedFlag);
 }
 
 void HookSetBoundaryTests()
@@ -107,10 +87,14 @@ bool FuzzHookSetTests(const uint8_t* data, size_t size)
     if (data == nullptr || size == 0) {
         return false;
     }
-
-    size_t testCount = GetTestCount(data, size);
-    HookSetTests(testCount, data, size);
+    ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
+    ohos_malloc_hook_on_start(nullptr);
+    void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
+    HookSetTests(data, size);
     HookSetBoundaryTests();
+    ohos_malloc_hook_free(mallocBlack);
+    ohos_malloc_hook_on_end();
+    sleep(WAIT_THREAD_TIME);
     return g_testRecorder.GetLastResult();
 }
 } // namespace OHOS

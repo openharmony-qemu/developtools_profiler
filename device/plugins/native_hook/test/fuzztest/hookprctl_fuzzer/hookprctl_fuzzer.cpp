@@ -19,6 +19,9 @@ namespace OHOS {
 constexpr unsigned int WAIT_THREAD_TIME = 3;
 unsigned long GenerateLong(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return 0;
+    }
     FuzzedDataProvider provider(data, size);
     auto argLong = provider.ConsumeIntegral<unsigned long>();
     return argLong;
@@ -45,7 +48,7 @@ std::vector<int> GetCommonPrctlOptions()
 
 bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
 {
-    if (data == nullptr) {
+    if (data == nullptr || size == 0) {
         return false;
     }
     unsigned long arg2 = GenerateLong(data, size);
