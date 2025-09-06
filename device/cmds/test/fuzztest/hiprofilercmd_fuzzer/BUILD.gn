@@ -29,7 +29,7 @@ ohos_fuzztest("HiprofilerCmdFuzzTest") {
   sources = [ "hiprofilercmd_fuzzer.cpp" ]
 
   external_deps = [
-
+    "googletest:gtest",
   ]
 }
 

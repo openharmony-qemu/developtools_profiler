@@ -14,7 +14,7 @@
  */
 
 #include "hiprofilercmd_fuzzer.h"
-
+#include "fuzzer/FuzzedDataProvider.h"
 #include <string>
 
 
@@ -30,13 +30,20 @@ bool RunCommand(const std::string& cmd, std::string& content)
     }
     return true;
 }
+
+std::string GenerateRandomString(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size == 0) {
+        return "";
+    }
+    FuzzedDataProvider provider(data, size);
+    return provider.ConsumeRandomLengthString();
+}
+
 bool HiprofilerCmdFuzzTest(const uint8_t* data, size_t size)
 {
-    uint32_t offset = 0;
-    const uint32_t maxSize = 32;
-    std::string configPara = std::string(reinterpret_cast<const char*>(data + offset), maxSize);
-    offset += maxSize;
-    std::string outPara = std::string(reinterpret_cast<const char*>(data + offset), maxSize);
+    std::string configPara = GenerateRandomString(data, size);
+    std::string outPara = GenerateRandomString(data, size);
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -c " + configPara + " -o " + outPara + " -s";
     std::string content = "";
     RunCommand(cmd, content);

@@ -19,33 +19,23 @@
 #include <cstdint>
 #include "network_profiler_manager.h"
 #include "network_profiler_socket_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 using namespace OHOS::Developtools::Profiler;
 
 namespace OHOS {
-template <typename T>
-T GenerateRandomNumber(const uint8_t* data, size_t size, size_t& offset)
-{
-    if (offset + sizeof(T) > size) {
-        return 0;
-    }
-    T arg;
-    if (memcpy_s(&arg, sizeof(arg), data + offset, sizeof(arg)) != EOK) {
-        return 0;
-    }
-    offset = (size > 0) ? (offset + sizeof(T)) % size : 0;
-    return arg;
-}
-
 void NetworkSetConfigFuzzTest(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return;
+    }
+    FuzzedDataProvider provider(data, size);
     auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     auto socketService = std::make_shared<NetworkProfilerSocketService>(networkProfilerMgr);
-    size_t offset = 0;
-    int32_t shmSize = GenerateRandomNumber<int32_t>(data, size, offset);
-    int32_t flushCount = GenerateRandomNumber<int32_t>(data, size, offset);
-    bool block = GenerateRandomNumber<bool>(data, size, offset);
-    int32_t clockType = GenerateRandomNumber<int32_t>(data, size, offset);
+    int32_t shmSize = provider.ConsumeIntegral<int32_t>();
+    int32_t flushCount = provider.ConsumeIntegral<int32_t>();
+    bool block = provider.ConsumeBool();
+    int32_t clockType = provider.ConsumeIntegral<int32_t>();
     socketService->SetConfig(shmSize, flushCount, block, clockType);
 }
 } // namespace OHOS

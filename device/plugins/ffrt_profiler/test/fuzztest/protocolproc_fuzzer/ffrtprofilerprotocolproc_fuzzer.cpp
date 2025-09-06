@@ -21,34 +21,25 @@
 #include "socket_context.h"
 #include "ffrt_profiler_manager.h"
 #include "ffrt_profiler_socket_service.h"
+#include "fuzzer/FuzzedDataProvider.h"
+
 
 using namespace OHOS::Developtools::Profiler;
 
 namespace OHOS {
-template<typename T>
-T GenerateRandomNumber(const uint8_t* data, size_t size, size_t& offset)
-{
-    if (offset + sizeof(T) > size) {
-        return 0;
-    }
-    T arg;
-    if (memcpy_s(&arg, sizeof(arg), data + offset, sizeof(arg)) != EOK) {
-        return 0;
-    }
-    offset = (size > 0) ? (offset + sizeof(T)) % size : 0;
-    return arg;
-}
-
 bool FfrtProtocolProcFuzzTest(const uint8_t* data, size_t size)
 {
+    if (data == nullptr || size == 0) {
+        return false;
+    }
+    FuzzedDataProvider provider(data, size);
     auto ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     auto socketService = std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
     SocketContext socketContext;
-    size_t offset = 0;
-    int8_t config = GenerateRandomNumber<int8_t>(data, size, offset);
-    uint32_t pnum = GenerateRandomNumber<uint32_t>(data, size, offset);
+    int8_t config = provider.ConsumeIntegral<int8_t>();
+    uint32_t pnum = provider.ConsumeIntegral<uint32_t>();
     auto ptr = reinterpret_cast<const int8_t*>(&config);
-    uint32_t sizeTemp = GenerateRandomNumber<uint32_t>(data, size, offset);
+    uint32_t sizeTemp = provider.ConsumeIntegral<uint32_t>();
     bool ret2 = socketService->ProtocolProc(socketContext, pnum, ptr, sizeTemp);
     return ret2;
 }
