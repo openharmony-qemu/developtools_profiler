@@ -62,7 +62,6 @@ HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
     ASSERT_FALSE(handler->CheckAddr(noExistaddr));
     handler = nullptr;
 }
-#endif
 
 /**
  * @tc.name: WholeAddrHandlerTest
@@ -104,7 +103,6 @@ HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test LowAddrHandler and WholeAddrHandler.
  * @tc.type: FUNC
  */
-#ifdef __aarch64__
 HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
 {
     std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
@@ -119,7 +117,6 @@ HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
     handlerLow = nullptr;
     handlerWhole = nullptr;
 }
-#endif
 
 /**
  * @tc.name: MidWholeAddrHandlerTest
@@ -165,4 +162,5 @@ HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level1)
     handlerMid = nullptr;
     handlerWhole = nullptr;
 }
+#endif
 }

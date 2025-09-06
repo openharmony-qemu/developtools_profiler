@@ -93,15 +93,15 @@ constexpr uintptr_t MAX_UNWIND_ADDR_RANGE = 16 * 1024;
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 constexpr int TEMP_IP = 100;
+std::shared_ptr<AddressHandler> g_wholeAddrHandler = nullptr;
+std::shared_ptr<AddressHandler> g_midPartHandler = nullptr;
 #endif
+std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
 static bool g_isPidChanged = false;
 static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
-std::shared_ptr<WholeAddrHandler> g_wholeAddrHandler = nullptr;
-std::shared_ptr<MidAddrHandler> g_midPartHandler = nullptr;
-std::shared_ptr<LowAddrHandler> g_addrHandler = nullptr;
 
 const MallocDispatchType* GetDispatch()
 {
@@ -285,13 +285,15 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
+    g_addrHandler = std::make_shared<LowAddrHandler>();
+#ifdef __aarch64__
     g_wholeAddrHandler = std::make_shared<WholeAddrHandler>();
     g_midPartHandler = std::make_shared<MidAddrHandler>();
-    g_addrHandler = std::make_shared<LowAddrHandler>();
     g_midPartHandler->SetSuccessor(std::move(g_wholeAddrHandler));
     g_addrHandler->SetSuccessor(std::move(g_midPartHandler));
     g_wholeAddrHandler = nullptr;
     g_midPartHandler = nullptr;
+#endif
     g_mallocTimes = 0;
     g_hookClient.reset();
     g_hookPid = GetRealPid();
