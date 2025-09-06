@@ -16,9 +16,9 @@ import("//build/test.gni")
 import("../../../../../base/config.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("NetworkSetConfigFuzzTest") {
+ohos_fuzztest("NetworkProtocolProcFuzzTest") {
   module_out_path = hiprofiler_fuzz_output_path
-  fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/test/fuzztest/setconfig_fuzzer"
+  fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/test/fuzztest/networkprotocolproc_fuzzer"
   include_dirs = [
     "../../../service/include",
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
@@ -30,7 +30,7 @@ ohos_fuzztest("NetworkSetConfigFuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "networksetconfig_fuzzer.cpp" ]
+  sources = [ "networkprotocolproc_fuzzer.cpp" ]
   deps = [
     "../../../service:network_profiler_service",
     "${OHOS_PROFILER_DIR}/device/plugins/api:plugins_sources",
@@ -50,7 +50,7 @@ group("fuzztest") {
   deps = []
   deps += [
     # deps file
-    ":NetworkSetConfigFuzzTest",
+    ":NetworkProtocolProcFuzzTest",
   ]
 }
 ###############################################################################
