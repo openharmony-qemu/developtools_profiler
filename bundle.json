@@ -87,21 +87,21 @@
       "inner_kits": [
         {
           "header": {
-            "header_base": "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
+            "header_base": "//developtools/profiler/device/plugins/api/include",
             "header_files": [
               "hidebug_base.h"
             ]
           },
-          "name": "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug"
+          "name": "//developtools/profiler/device/plugins/api:libhidebug"
         },
         {
           "header": {
-            "header_base": "//developtools/profiler/hidebug/interfaces/native/innerkits/include",
+            "header_base": "//developtools/profiler/device/plugins/api/include",
             "header_files": [
               "hidebug_base.h"
             ]
           },
-          "name": "//developtools/profiler/hidebug/interfaces/native/innerkits:libhidebug_init"
+          "name": "//developtools/profiler/device/plugins/api:libhidebug_init"
         },
         {
           "header": {

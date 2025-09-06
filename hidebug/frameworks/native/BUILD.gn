@@ -14,23 +14,6 @@
 import("//build/ohos.gni")
 import("//developtools/profiler/hidebug/hidebug.gni")
 
-ohos_source_set("libhidebug_source") {
-  part_name = "${OHOS_PROFILER_PART_NAME}"
-  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
-  include_dirs = [ "../../interfaces/native/innerkits/include" ]
-  if (build_variant == "root") {
-    defines = [ "HIDEBUG_BUILD_VARIANT_ROOT" ]
-  }
-  sources = [ "hidebug_base.c" ]
-
-  external_deps = [
-    "c_utils:utils",
-    "hichecker:libhichecker",
-    "hilog:libhilog",
-    "init:libbegetutil",
-  ]
-}
-
 ohos_source_set("libhidebug_init_source") {
   part_name = "${OHOS_PROFILER_PART_NAME}"
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

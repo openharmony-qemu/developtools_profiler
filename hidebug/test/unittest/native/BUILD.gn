@@ -29,7 +29,6 @@ ohos_unittest("hidebug_test") {
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
     "$hidebug_path/frameworks/native:hidebug_native",
-    "$hidebug_path/interfaces/native/innerkits:libhidebug",
   ]
 
   external_deps = [

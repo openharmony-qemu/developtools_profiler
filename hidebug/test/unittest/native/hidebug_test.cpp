@@ -19,7 +19,6 @@
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
-#include "hidebug_base.h"
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "securec.h"
@@ -80,19 +79,6 @@ static void* TestCustomRealloc(void* ptr, size_t size)
 {
     HiDebug_MallocDispatch* original = (HiDebug_MallocDispatch*)OH_HiDebug_GetDefaultMallocDispatchTable();
     return original->realloc(ptr, size);
-}
-
-/**
- * @tc.name: InitEnvironmentParam
- * @tc.desc: test InitEnvironmentParam
- * @tc.type: FUNC
- */
-HWTEST_F(HidebugTest, InitEnvironmentParam1, TestSize.Level1)
-{
-    system("param set hiviewdfx.debugenv.hidebug_test aaa:bbb");
-    EXPECT_TRUE(InitEnvironmentParam("hidebug_test"));
-    EXPECT_FALSE(InitEnvironmentParam("hidebug_test/"));
-    EXPECT_FALSE(InitEnvironmentParam(nullptr));
 }
 
 /**
