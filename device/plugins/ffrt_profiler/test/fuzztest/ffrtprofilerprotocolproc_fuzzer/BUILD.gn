@@ -16,9 +16,9 @@ import("//build/test.gni")
 import("../../../../../base/config.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("FfrtProfilerSetConfigFuzzTest") {
+ohos_fuzztest("FfrtProtocolProcFuzzTest") {
   module_out_path = hiprofiler_fuzz_output_path
-  fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/ffrt_profiler/test/fuzztest/ffrtsetconfig_fuzzer"
+  fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/ffrt_profiler/test/fuzztest/ffrtprofilerprotocolproc_fuzzer"
   include_dirs = [
     "../../../service/include",
     "${OHOS_PROFILER_DIR}/device/plugins/api/include",
@@ -30,7 +30,7 @@ ohos_fuzztest("FfrtProfilerSetConfigFuzzTest") {
     "-Wno-unused-variable",
     "-fno-omit-frame-pointer",
   ]
-  sources = [ "ffrtprofilersetconfig_fuzzer.cpp" ]
+  sources = [ "ffrtprofilerprotocolproc_fuzzer.cpp" ]
   deps = [
     "../../../service:ffrt_profiler_service",
     "${OHOS_PROFILER_DIR}/device/plugins/api:plugins_sources",
@@ -50,7 +50,7 @@ group("fuzztest") {
   deps = []
   deps += [
     # deps file
-    ":FfrtProfilerSetConfigFuzzTest",
+    ":FfrtProtocolProcFuzzTest",
   ]
 }
 ###############################################################################

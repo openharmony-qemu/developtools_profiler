@@ -29,7 +29,7 @@ using namespace OHOS::Developtools::Profiler;
 namespace OHOS {
 bool NetworkProtocolProcFuzzTest(const uint8_t* data, size_t size)
 {
-    if (data == nullptr || size == 0) {
+     if (data == nullptr || size == 0) {
         return false;
     }
     FuzzedDataProvider provider(data, size);
