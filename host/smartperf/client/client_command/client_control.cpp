@@ -43,7 +43,7 @@ int ClientControl::SocketStart(const std::string &args)
     LOGD("start-stop recv : %s", buffer);
     char dest[arraySize] = {0};
     size_t i = 0;
-    for (i; buffer[i] != '\0' && i < arraySize - 1; i++) {
+    for (; buffer[i] != '\0' && i < arraySize - 1; i++) {
         dest[i] = buffer[i];
     }
     dest[i] = '\0';
@@ -65,7 +65,7 @@ int ClientControl::SocketStop()
     read(clientSocket, buffer, numBuff);
     char dest[arraySize] = {0};
     size_t i = 0;
-    for (i; buffer[i] != '\0' && i < arraySize - 1; i++) {
+    for (; buffer[i] != '\0' && i < arraySize - 1; i++) {
         dest[i] = buffer[i];
     }
     dest[i] = '\0';
