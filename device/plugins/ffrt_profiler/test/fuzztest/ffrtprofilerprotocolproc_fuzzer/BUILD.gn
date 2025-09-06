@@ -16,7 +16,7 @@ import("//build/test.gni")
 import("../../../../../base/config.gni")
 
 ##############################fuzztest##########################################
-ohos_fuzztest("FfrtProtocolProcFuzzTest") {
+ohos_fuzztest("FfrtProfilerProtocolProcFuzzTest") {
   module_out_path = hiprofiler_fuzz_output_path
   fuzz_config_file = "${OHOS_PROFILER_DIR}/device/plugins/ffrt_profiler/test/fuzztest/ffrtprofilerprotocolproc_fuzzer"
   include_dirs = [
@@ -50,7 +50,7 @@ group("fuzztest") {
   deps = []
   deps += [
     # deps file
-    ":FfrtProtocolProcFuzzTest",
+    ":FfrtProfilerProtocolProcFuzzTest",
   ]
 }
 ###############################################################################
