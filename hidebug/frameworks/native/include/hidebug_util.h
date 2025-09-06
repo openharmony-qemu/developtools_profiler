@@ -16,7 +16,6 @@
 #ifndef HIDEBUG_UTIL_H_
 #define HIDEBUG_UTIL_H_
 
-#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -40,14 +39,14 @@ public:
     {
         std::pair<int, T> ret;
         int64_t currentTime = GetElapsedNanoSecondsSinceBoot();
-        if (currentTime > updateTime_.load(std::memory_order_relaxed) + effectiveTime) {
+        if (currentTime > updateTime_ + effectiveTime) {
             std::unique_lock<std::mutex> lock(updateValueMutex_);
-            if (currentTime > updateTime_.load(std::memory_order_acquire) + effectiveTime) {
+            if (currentTime > updateTime_ + effectiveTime) {
                 ret.first = getValue(ret.second);
                 if (ret.first == NATIVE_SUCCESS) {
                     std::unique_lock<std::mutex> lockCacheValue(cachedValueMutex_);
                     cachedValue_ = ret.second;
-                    updateTime_.store(currentTime, std::memory_order_release);
+                    updateTime_ = currentTime;
                 }
                 return ret;
             }
@@ -62,7 +61,7 @@ private:
     T cachedValue_;
     std::mutex cachedValueMutex_;
     std::mutex updateValueMutex_;
-    std::atomic<int64_t> updateTime_ = INT64_MIN;
+    int64_t updateTime_ = INT64_MIN;
 };
 
 enum class DirectoryType {
