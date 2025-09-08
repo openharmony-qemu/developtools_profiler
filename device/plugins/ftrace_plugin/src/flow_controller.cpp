@@ -475,7 +475,7 @@ static inline int RmqEntryTotalSize(unsigned int size)
 }
 
 template <typename E>
-bool FlowController::HmParseEventForPid(uint8_t* &data, std::set<int>& pidList)
+bool FlowController::HmParseEventForPid(uint8_t* &data, std::unordered_set<int>& pidList)
 {
     struct RmqConsumerData* rmqData = reinterpret_cast<struct RmqConsumerData*>(data);
     struct RmqEntry* event;
@@ -543,7 +543,7 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
     CHECK_NOTNULL(resultWriter_, false, "%s: resultWriter_ nullptr", __func__);
     auto buffer = ftraceBuffers_[0].get();
     auto endPtr = buffer + dataSize;
-    std::set<int> eventPidList = {};
+    std::unordered_set<int> eventPidList = {};
     for (auto dataPid = buffer; dataPid < endPtr;) {
         if (resultWriter_->isProtobufSerialize) {
             HmParseEventForPid<FtraceEvent>(dataPid, eventPidList);

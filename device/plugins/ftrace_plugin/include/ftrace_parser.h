@@ -83,7 +83,7 @@ public:
     }
 
     bool ParseSavedTgid(const std::string& savedTgid);
-    void ParseTargetedSavedTgid(const std::string& savedTgid, std::set<int>& targetPidVect);
+    void ParseTargetedSavedTgid(const std::string& savedTgid, std::unordered_set<int>& targetPidVect);
     bool ParseSavedCmdlines(const std::string& savedCmdlines);
 
     void SetDebugOn(bool value);

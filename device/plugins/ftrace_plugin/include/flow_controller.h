@@ -77,7 +77,7 @@ private:
     bool HmParseEventData(T* tracePluginResult, uint8_t* &data, E* ftraceEvent);
     
     template <typename E>
-    bool HmParseEventForPid(uint8_t* &data, std::set<int>& pidList);
+    bool HmParseEventForPid(uint8_t* &data, std::unordered_set<int>& pidList);
 
     bool AddPlatformEventsToParser(void);
     void EnableTraceEvents(void);

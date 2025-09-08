@@ -532,7 +532,7 @@ bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
 
 // parse /sys/kernel/debug/tracing/saved_tgids
 // refers kernel function saved_tgids_show
-void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, std::set<int>& targetPidVect)
+void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, std::unordered_set<int>& targetPidVect)
 {
     int32_t pid = 0;
     int32_t tgid = 0;
