@@ -47,7 +47,7 @@ bool HiprofilerCmdFuzzTest(const uint8_t* data, size_t size)
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -c " + configPara + " -o " + outPara + " -s";
     std::string content = "";
     RunCommand(cmd, content);
-    cmd = DEFAULT_HIPROFILER_CMD_PATH + " " + configPara + " -c " + +" -o " + outPara + " -k -s";
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " " + configPara + " -c " + " -o " + outPara + " -k -s";
     RunCommand(cmd, content);
     return true;
 }
