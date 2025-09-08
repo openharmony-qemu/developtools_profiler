@@ -17,6 +17,7 @@
 
 namespace OHOS {
 constexpr unsigned int WAIT_THREAD_TIME = 3;
+constexpr size_t MAX_MALLOC_SIZE = 1024 * 1024 * 1024; // bigger may over rss litmit
 bool FuzzMallocHookTest(const uint8_t* data, size_t size)
 {
     if (data == nullptr || size == 0) {
@@ -24,7 +25,7 @@ bool FuzzMallocHookTest(const uint8_t* data, size_t size)
     }
 
     FuzzedDataProvider provider(data, size);
-    auto sizeHook = provider.ConsumeIntegral<size_t>();
+    auto sizeHook = provider.ConsumeIntegral<size_t>() % MAX_MALLOC_SIZE;
     ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
     ohos_malloc_hook_on_start(nullptr);
 
