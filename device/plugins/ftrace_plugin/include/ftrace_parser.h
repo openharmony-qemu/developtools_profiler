@@ -101,7 +101,7 @@ public:
         auto& fields = parseEventCtx->format.commonFields;
         pid = FtraceFieldParser::ParseIntField<int32_t>(fields, index.pid, data, dataSize);
         // check pid exist in tgidDict_
-        if (tgidDict_.count(pid) <= 0) {
+        if (tgidDict_.count(pid) == 0) {
             return pid;
         }
         return 0;
