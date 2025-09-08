@@ -27,6 +27,7 @@ std::map<std::string, std::string> Temperature::ItemData()
     std::vector<std::string> dirs;
     if (dp == nullptr) {
         LOGE("Open directory failed!");
+        return {};
     }
     while ((dirp = readdir(dp)) != nullptr) {
         if (strcmp(dirp->d_name, ".") != 0 && strcmp(dirp->d_name, "..") != 0) {

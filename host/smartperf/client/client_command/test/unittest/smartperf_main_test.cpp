@@ -38,7 +38,7 @@ public:
     void TearDown() {}
 };
 
-std::string &g_getOptions(std::vector<std::string> &argv)
+std::string g_getOptions(std::vector<std::string> &argv)
 {
     std::string str = "";
     std::string strFlag;
