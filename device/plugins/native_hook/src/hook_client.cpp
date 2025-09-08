@@ -84,21 +84,16 @@ constexpr int STATUS_LINE_SIZE = 512;
 constexpr int PID_NAMESPACE_ID = 1; // 1: pid is 1 after pid namespace used
 constexpr int FD_PATH_LENGTH = 64;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
-constexpr int FIRST_HASH = 16;
-constexpr int SECOND_HASH = 13;
 constexpr int THRESHOLD = 256;
-constexpr int DIVIDE_VAL = 64;
 constexpr uintptr_t MAX_UNWIND_ADDR_RANGE = 16 * 1024;
 //5: fp mode is used, response_library_mode maximum stack depth
 #if defined(__aarch64__)
 constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
-constexpr int TEMP_IP = 100;
 std::shared_ptr<AddressHandler> g_wholeAddrHandler = nullptr;
 std::shared_ptr<AddressHandler> g_midPartHandler = nullptr;
 #endif
 std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
 static bool g_isPidChanged = false;
-static struct mallinfo2 g_miStart = {0};
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;

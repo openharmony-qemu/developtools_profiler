@@ -146,11 +146,6 @@ bool ParseTargetedMaps(std::atomic<Range>& targetedRange, std::string targetedLi
         return ret;
     }
     char mapInfo[256] = {0}; // 256: map info size
-    int pos = 0;
-    uint64_t begin = 0;
-    uint64_t end = 0;
-    uint64_t offset = 0;
-    char perms[5] = {0}; // 5:rwxp
     while (fgets(mapInfo, sizeof(mapInfo), fp) != nullptr) {
         if (strstr(mapInfo, targetedLib.c_str()) != nullptr) {
             std::string lineStr = mapInfo;

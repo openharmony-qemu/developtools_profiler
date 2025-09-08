@@ -30,7 +30,6 @@
 #include <iostream>
 
 namespace {
-constexpr int FLUSH_FLAG = 20;
 constexpr int ONLY_NMD_TYPE = 2;
 constexpr int SIMP_NMD = 3;
 std::atomic<bool> g_disableHook = true;
