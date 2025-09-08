@@ -26,6 +26,7 @@ const std::string SO_PATH = "libdiskiodataplugin.z.so";
 const std::string DEFAULT_BIN_PATH("/data/local/tmp/diskiodataplugintest");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 constexpr int WRITE_KB = 1000;
+constexpr ssize_t FWRITE_ERROR_VAL = -1;
 
 std::string g_path;
 std::string g_testPath;
@@ -54,8 +55,8 @@ string Getexepath()
 {
     char buf[PATH_MAX] = "";
     std::string path = "/proc/self/exe";
-    size_t rslt = readlink(path.c_str(), buf, sizeof(buf));
-    if (rslt < 0 || (rslt >= sizeof(buf))) {
+    ssize_t rslt = readlink(path.c_str(), buf, sizeof(buf));
+    if (rslt == FWRITE_ERROR_VAL || (rslt >= sizeof(buf))) {
         return "";
     }
     buf[rslt] = '\0';

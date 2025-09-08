@@ -72,7 +72,7 @@ protected:
 
 long WriteFunc(WriterStructPtr writer, ConstVoidPtr data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
 

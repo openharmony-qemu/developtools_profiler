@@ -29,6 +29,7 @@ constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 const int US_PER_S = 1000000;
 constexpr uint32_t PAGE_SIZE = 4 * 1024;
 constexpr int LINE_SIZE = 1000;
+constexpr ssize_t FWRITE_ERROR_VAL = -1;
 
 std::string g_path;
 
@@ -342,8 +343,8 @@ string Getexepath()
 {
     char buf[PATH_MAX] = "";
     std::string path = "/proc/self/exe";
-    size_t rslt = readlink(path.c_str(), buf, sizeof(buf));
-    if (rslt < 0 || (rslt >= sizeof(buf))) {
+    ssize_t rslt = readlink(path.c_str(), buf, sizeof(buf));
+    if (rslt == FWRITE_ERROR_VAL || (rslt >= sizeof(buf))) {
         return "";
     }
     buf[rslt] = '\0';
@@ -756,7 +757,7 @@ HWTEST_F(MemoryDataPluginTest, TestpluginMemoryService, TestSize.Level1)
 
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
     return 0;

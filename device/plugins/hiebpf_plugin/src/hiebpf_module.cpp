@@ -61,7 +61,7 @@ static int32_t HiebpfSessionStart(const uint8_t* configData, uint32_t configSize
     std::lock_guard<std::mutex> guard(g_taskMutex);
     CHECK_TRUE(!g_releaseResources, 0, "%s: hiebpf released resources, return", __func__);
     PROFILER_LOG_DEBUG(LOG_CORE, "enter");
-    if (configData == nullptr || configSize < 0) {
+    if (configData == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "Parameter error");
         return RET_ERR;
     }

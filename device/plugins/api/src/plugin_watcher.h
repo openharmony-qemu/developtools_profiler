@@ -30,7 +30,7 @@ using PluginManagerPtr = STD_PTR(shared, PluginManager);
 class PluginWatcher {
 public:
     explicit PluginWatcher(const PluginManagerPtr& pluginManager);
-    ~PluginWatcher();
+    virtual ~PluginWatcher();
     bool ScanPlugins(const std::string& pluginDir);
     bool WatchPlugins(const std::string& pluginDir);
 

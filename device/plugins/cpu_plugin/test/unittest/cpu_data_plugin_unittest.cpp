@@ -36,6 +36,7 @@ constexpr int CORE_NUM = 6;
 constexpr int THREAD_NUM = 7;
 constexpr int FIRST_THREAD_NUM = 5;
 constexpr int SECOND_THREAD_NUM = 6;
+constexpr ssize_t FWRITE_ERROR_VAL = -1;
 const int PERCENT = 100;
 
 struct TestSystemStat {
@@ -156,8 +157,8 @@ string Getexepath()
 {
     char buf[PATH_MAX] = "";
     std::string path = "/proc/self/exe";
-    size_t rslt = readlink(path.c_str(), buf, sizeof(buf));
-    if (rslt < 0 || (rslt >= sizeof(buf))) {
+    ssize_t rslt = readlink(path.c_str(), buf, sizeof(buf));
+    if (rslt == FWRITE_ERROR_VAL || (rslt >= sizeof(buf))) {
         return "";
     }
     buf[rslt] = '\0';

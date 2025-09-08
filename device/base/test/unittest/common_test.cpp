@@ -39,7 +39,7 @@ protected:
         }
 
         size_t len = fwrite(const_cast<char*>(fileContent.c_str()), 1, fileContent.length(), file);
-        if (len < 0) {
+        if (len != fileContent.length()) {
             std::string errorMsg = GetErrorMsg();
             PROFILER_LOG_ERROR(LOG_CORE, "WriteFile: fwrite() fail, %s", errorMsg.c_str());
             (void)fclose(file);

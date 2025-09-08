@@ -34,6 +34,7 @@ const unsigned long long EXPECT_VAL = 12;
 const unsigned long long SLEEP_TIME = 2;
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
 #endif
+constexpr ssize_t FWRITE_ERROR_VAL = -1;
 
 struct TestVmstat {
     int64_t pgpgin;
@@ -57,8 +58,8 @@ string Getexepath()
 {
     char buf[PATH_MAX] = "";
     std::string path = "/proc/self/exe";
-    size_t rslt = readlink(path.c_str(), buf, sizeof(buf));
-    if (rslt < 0 || (rslt >= sizeof(buf))) {
+    ssize_t rslt = readlink(path.c_str(), buf, sizeof(buf));
+    if (rslt == FWRITE_ERROR_VAL || (rslt >= sizeof(buf))) {
         return "";
     }
     buf[rslt] = '\0';
@@ -81,7 +82,7 @@ std::string GetFullPath(std::string path)
 
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
 
