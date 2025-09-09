@@ -57,7 +57,7 @@ constexpr auto QUOTA_VALUE_LENGTH = 256;
 constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int64_t MS_TO_NS = 1000 * 1000;
 constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
-std::atomic<int> g_dumpingCount = 0;
+std::atomic<int> g_dumpingCount{0};
 
 constexpr std::pair<int, const char*> DumpErrCodeMap[]  = {
     {ErrorCode::PARAMETER_ERROR, "Invalid parameter."},

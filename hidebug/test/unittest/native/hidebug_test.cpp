@@ -14,7 +14,9 @@
  */
 
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <thread>
 
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
@@ -375,4 +377,49 @@ HWTEST_F(HidebugTest, OH_HiDebug_SetMallocDispatchTableAlloc, TestSize.Level1)
     DesCustomMalloc(current);
 }
 
+/**
+ * @tc.name: OH_HiDebug_RequestThreadLiteSampling test.
+ * @tc.desc: test OH_HiDebug_RequestThreadLiteSampling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest, TestSize.Level0)
+{
+    auto callback = [] (const char* stacks) {};
+    ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(nullptr, callback), HIDEBUG_INVALID_ARGUMENT);
+    HiDebug_ProcessSamplerConfig config;
+    ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, nullptr), HIDEBUG_INVALID_ARGUMENT);
+    config.duration = 999;
+    ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_INVALID_ARGUMENT);
+    config.tids = nullptr;
+    ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_INVALID_ARGUMENT);
+}
+
+/**
+ * @tc.name: OH_HiDebug_RequestThreadLiteSampling test.
+ * @tc.desc: test OH_HiDebug_RequestThreadLiteSampling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest2, TestSize.Level1)
+{
+    auto callback = [] (const char* stacks) {
+        ASSERT_NE(stacks, nullptr);
+        ASSERT_GT(std::strlen(stacks), 0);
+    };
+    uint32_t tid = static_cast<uint32_t>(gettid());
+    HiDebug_ProcessSamplerConfig config{
+        .tids = &tid,
+        .size = 1,
+        .duration = 1500,
+        .frequency = 0,
+        .reserved = 0
+    };
+    std::thread([&] {
+        ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_SUCCESS);
+    }).detach();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    std::thread([&] {
+        ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_UNDER_SAMPLING);
+    }).detach();
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+}
 } // namespace
