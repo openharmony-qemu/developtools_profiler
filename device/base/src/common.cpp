@@ -704,8 +704,12 @@ std::string GetTimeStr()
 
     char buffer[32] = {0};
     // 1900: count of years
-    (void)sprintf_s(buffer, sizeof(buffer), "%04d%02d%02d_%02d%02d%02d", tmTime.tm_year + 1900, tmTime.tm_mon + 1,
+    int ret = sprintf_s(buffer, sizeof(buffer), "%04d%02d%02d_%02d%02d%02d", tmTime.tm_year + 1900, tmTime.tm_mon + 1,
         tmTime.tm_mday, tmTime.tm_hour, tmTime.tm_min, tmTime.tm_sec);
+    if (ret < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetTimeStr sprintf_s error");
+        return "";
+    }
     std::string timeStr(buffer);
     return timeStr;
 }
