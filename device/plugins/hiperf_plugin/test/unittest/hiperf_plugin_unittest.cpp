@@ -44,7 +44,7 @@ public:
 
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
 

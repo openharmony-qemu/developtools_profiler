@@ -26,6 +26,7 @@ namespace {
 const std::string DEFAULT_TEST_PATH("/data/local/tmp/");
 const std::string DEFAULT_NET_PATH("/proc/net/xt_qtaguid/stats");
 constexpr uint32_t BUF_SIZE = 4 * 1024 * 1024;
+constexpr ssize_t FWRITE_ERROR_VAL = -1;
 
 std::string g_path;
 
@@ -67,8 +68,8 @@ string Getexepath()
 {
     char buf[PATH_MAX] = "";
     std::string path = "/proc/self/exe";
-    size_t rslt = readlink(path.c_str(), buf, sizeof(buf));
-    if (rslt < 0 || (rslt >= sizeof(buf))) {
+    ssize_t rslt = readlink(path.c_str(), buf, sizeof(buf));
+    if (rslt == FWRITE_ERROR_VAL || (rslt >= sizeof(buf))) {
         return "";
     }
     buf[rslt] = '\0';
@@ -225,7 +226,7 @@ HWTEST_F(NetworkPluginTest, TestParseFromArrayOfPluginStart, TestSize.Level1)
 
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
     return 0;

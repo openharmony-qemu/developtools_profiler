@@ -78,7 +78,7 @@ void HookService::CloseSocketFd(pid_t pid)
 
 bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
-    if (size != sizeof(int)) {
+    if (size != sizeof(int) || hookMgr_ == nullptr) {
         return false;
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
@@ -111,7 +111,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         return false;
     }
     firstProcess_ = false;
-    if (!(hookMgr_ && hookMgr_->GetHookConfig().startup_mode())) {
+    if (!(hookMgr_->GetHookConfig().startup_mode())) {
         int socketHandle = context.GetSocketHandle();
         struct ucred cred;
         socklen_t len = sizeof(struct ucred);

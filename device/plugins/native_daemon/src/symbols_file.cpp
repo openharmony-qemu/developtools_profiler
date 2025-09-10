@@ -748,7 +748,7 @@ public:
         }
         hapExtracted_ = true;
         HLOGD("the symbol file is %s.", filePath_.c_str());
-        if (StringEndsWith(filePath_, ".hap") && map_->IsMapExec()) {
+        if (StringEndsWith(filePath_, ".hap") && map_ != nullptr && map_->IsMapExec()) {
             HLOGD("map is exec not abc file , the symbol file is:%s", map_->name.c_str());
             return false;
         }

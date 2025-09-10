@@ -493,7 +493,7 @@ protected:
             return;
         }
         size_t len = fwrite(const_cast<char*>(str.c_str()), 1, BLOCK_LEN, writeFp);
-        if (len < 0) {
+        if (len != BLOCK_LEN) {
             PROFILER_LOG_ERROR(LOG_CORE, "fwrite() error");
             if (fclose(writeFp) != 0) {
                 PROFILER_LOG_ERROR(LOG_CORE, "fclose() error");

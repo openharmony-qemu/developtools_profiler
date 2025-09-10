@@ -248,6 +248,8 @@ bool HookSocketClient::SendNmdInfo()
         stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
                                                      reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
                                                      std::bind(&HookSocketClient::PeerIsConnected, this));
+    } else {
+        return false;
     }
     stackWriterList_[0]->Flush();
     free(nmdBuf);
@@ -271,6 +273,8 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
         stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
                                                      reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
                                                      std::bind(&HookSocketClient::PeerIsConnected, this));
+    } else {
+        return false;
     }
     stackWriterList_[0]->Flush();
     free(nmdBuf);

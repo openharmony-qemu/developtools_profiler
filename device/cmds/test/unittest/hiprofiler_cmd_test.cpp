@@ -172,7 +172,7 @@ public:
         }
 
         size_t len = fwrite(const_cast<char*>(configStr.c_str()), 1, configStr.length(), writeFp);
-        if (len < 0) {
+        if (len != configStr.length()) {
             const int bufSize = 256;
             char buf[bufSize] = { 0 };
             strerror_r(errno, buf, bufSize);

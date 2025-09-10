@@ -35,7 +35,7 @@ const int DEFAULT_WAIT = 9;
 std::vector<OptimizeReport> g_protoXpower;
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
-    if (writer == nullptr || data == nullptr || size <= 0) {
+    if (writer == nullptr || data == nullptr || size == 0) {
         return -1;
     }
 
