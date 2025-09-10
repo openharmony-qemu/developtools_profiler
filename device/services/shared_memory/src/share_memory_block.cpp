@@ -426,7 +426,7 @@ bool ShareMemoryBlock::PutWithPayloadSync(const int8_t* header, uint32_t headerS
         while (true) {
             if (rawMemory == nullptr) {
                 if ((callback && callback()) || (g_timeCount > waitTime_)) {
-	                HILOG_BASE_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %{public}d",
+                    HILOG_BASE_ERROR(LOG_CORE, "PutWithPayloadSync exit with g_timeCount %{public}d",
                         g_timeCount.load());
                     pthread_mutex_unlock(&header_->info.mutex_);
                     return false;
