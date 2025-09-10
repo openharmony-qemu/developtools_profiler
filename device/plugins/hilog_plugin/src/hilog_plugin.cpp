@@ -223,8 +223,12 @@ void HilogPlugin::Run(void)
     struct tm* pTime = localtime(&startTm);
     char startTime[FILE_NAME_LEN] = {0};
     if (pTime != nullptr) {
-        (void)snprintf_s(startTime, FILE_NAME_LEN, FILE_NAME_LEN - 1, "%02d-%02d %02d:%02d:%02d",
-                         pTime->tm_mon + 1, pTime->tm_mday, pTime->tm_hour, pTime->tm_min, pTime->tm_sec);
+        int res = snprintf_s(startTime, FILE_NAME_LEN, FILE_NAME_LEN - 1, "%02d-%02d %02d:%02d:%02d",
+            pTime->tm_mon + 1, pTime->tm_mday, pTime->tm_hour, pTime->tm_min, pTime->tm_sec);
+        if (res < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HilogPlugin::Run snprintf_s error");
+            return;
+        }
     }
 
     while (running_) {
