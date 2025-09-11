@@ -78,8 +78,8 @@ void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_total, size_t
         if (cpi_pos != std::string::npos) {
             size_t number_end = comment.find(" ", 0);
             std::string cpi_str = comment.substr(0, number_end);
-            cpi_Total += SPUtilesTye::StringToSometype<double>(cpi_str);
-            ++cpi_Count;
+            cpi_total += SPUtilesTye::StringToSometype<double>(cpi_str);
+            ++cpi_count;
         }
     }
 }
