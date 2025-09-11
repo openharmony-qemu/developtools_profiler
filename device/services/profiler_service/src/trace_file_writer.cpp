@@ -539,7 +539,7 @@ bool TraceFileWriter::RemapFile()
 
 bool TraceFileWriter::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
 {
-    if ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) >= fileLength_) {
+    while ((fileWriteLength_ + PIECE_HEAD_LEN + messageWriteOffset_ + size) >= fileLength_) {
         if ((fileLength_ + DEFULT_PAGES * pageSize_) > GB_TO_BYTE) {
             return false;
         }

@@ -46,7 +46,10 @@ void* HiebpfDataFile::Reserve(const std::size_t size)
     }
     char* buffer = static_cast<char *>(mapAddr_);
     buffer += offset_;
-    (void)memset_s(buffer, size, 0, size);
+    if (memset_s(buffer, size, 0, size) != EOK) {
+        HHLOGE(true, "HiebpfDataFile::Reserve memset_s failed");
+        return nullptr;
+    }
     uint32_t *tracer = reinterpret_cast<uint32_t *>(buffer);
     (*tracer) = BADTRACE;
     uint32_t *len = tracer + 1;

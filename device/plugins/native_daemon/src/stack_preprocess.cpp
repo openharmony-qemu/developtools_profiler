@@ -966,10 +966,10 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
     if (hookRecord->GetType() == PR_SET_VMA_MSG) {
         const std::string prefix = "Anonymous:";
         std::string tagName(reinterpret_cast<char*>(rawStack->data));
-        fprintf(fpHookData_, "prctl;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ":tag:%s\n",
+        fprintf(fpHookData_, "prctl;%u;%u;%" PRId64 ";%ld;tag:%s\n",
             rawStack->stackContext->pid, rawStack->stackContext->tid,
             static_cast<int64_t>(rawStack->stackContext->ts.tv_sec), rawStack->stackContext->ts.tv_nsec,
-            hookRecord->GetAddr(), (prefix + tagName).c_str());
+            (prefix + tagName).c_str());
         return;
     }
     std::string tag = "";
@@ -990,10 +990,10 @@ void StackPreprocess::WriteFrames(HookRecordPtr hookRecord, const std::vector<Ca
             break;
     }
 
-    fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;0x%" PRIx64 ";%zu\n", tag.c_str(),
+    fprintf(fpHookData_, "%s;%u;%u;%" PRId64 ";%ld;%zu\n", tag.c_str(),
         rawStack->stackContext->pid, rawStack->stackContext->tid,
         static_cast<int64_t>(rawStack->stackContext->ts.tv_sec),
-        rawStack->stackContext->ts.tv_nsec, hookRecord->GetAddr(), rawStack->stackContext->mallocSize);
+        rawStack->stackContext->ts.tv_nsec, rawStack->stackContext->mallocSize);
     size_t idx = hookConfig_.fp_unwind() ? 0 : FILTER_STACK_DEPTH;
     for (; idx < callFrames.size(); ++idx) {
         (void)fprintf(fpHookData_, "0x%" PRIx64 ";0x%" PRIx64 ";%s;%s;0x%" PRIx64 ";%" PRIu64 "\n",
