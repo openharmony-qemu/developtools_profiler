@@ -64,7 +64,7 @@ std::map<std::string, std::string> CPUInfo::ItemData()
     return result;
 }
 
-void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_Total, size_t &cpi_Count)
+void CPUInfo::CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count)
 {
     auto trim = [](std::string& s) {
         s.erase(0, s.find_first_not_of(" \t"));

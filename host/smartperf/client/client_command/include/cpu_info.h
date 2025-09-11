@@ -41,7 +41,7 @@ public:
     void Start();
     void Stop();
 private:
-    void CalculateCPIInfo(const std::string line, double &cpi_Total, size_t &cpi_Count);
+    void CalculateCPIInfo(const std::string line, double &cpi_total, size_t &cpi_count);
     std::vector<std::string> pids_;
     std::thread th_;
     std::string hiperfCmd_ = "/bin/hiperf stat -e " + SPUtils::GetProductName() + "-instructions," +
