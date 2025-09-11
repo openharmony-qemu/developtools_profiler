@@ -96,7 +96,7 @@ bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &
     return true;
 }
 
-bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &tags)
+bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
 {
     ani_size arraySize = 0;
     if (env->Array_GetLength(static_cast<ani_array>(tagsAni), &arraySize) != ANI_OK) {
@@ -107,16 +107,29 @@ bool GetTraceParam(ani_env *env, ani_array_long tagsAni, std::vector<uint64_t> &
         HILOG_ERROR(LOG_CORE, "The length of tags array exceeds the limit.");
         return false;
     }
-    ani_long *aniValues = new ani_long[arraySize];
-    if (env->Array_GetRegion_Long(tagsAni, 0, arraySize, aniValues) != ANI_OK) {
+    ani_class longClass {};
+    ani_method toLong {};
+    ani_status status = env->FindClass("std.core.Long", &longClass);
+    if (status != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Get input tags value failed.");
-        delete []aniValues;
         return false;
     }
+    status = env->Class_FindMethod(longClass, "toLong", ":l", &toLong);
     for (ani_size i = 0; i < arraySize; i++) {
-        tags.push_back(static_cast<uint64_t>(aniValues[i]));
+        ani_ref longRef {};
+        ani_long longValue {};
+        status = env->Array_Get(tagsAni, i, &longRef);
+        if (status != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "Array_Get failed, status: %{public}d", status);
+            return false;
+        }
+        status = env->Object_CallMethod_Long(static_cast<ani_object>(longRef), toLong, &longValue);
+        if (status != ANI_OK) {
+            HILOG_ERROR(LOG_CORE, "Invoke toLong, status: %{public}d", status);
+            return false;
+        }
+        tags.push_back(static_cast<uint64_t>(longValue));
     }
-    delete []aniValues;
     return true;
 }
 
@@ -269,19 +282,20 @@ ani_object ConvertThreadCpuUsageToEts(ani_env *env, ani_class cls, uint32_t thre
     return obj;
 }
 
-ani_array_ref ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
+ani_array ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, double> &threadMap)
 {
     ani_class cls = nullptr;
     ani_size aniSize = static_cast<ani_size>(threadMap.size());
-    ani_array_ref result = nullptr;
+    ani_array result = nullptr;
+    ani_ref undefinedRef {};
     if (env->FindClass("@ohos.hidebug.hidebug.ThreadCpuUsageImpl", &cls) != ANI_OK ||
-        env->Array_New_Ref(static_cast<ani_type>(cls), aniSize, nullptr, &result) != ANI_OK) {
+        env->Array_New(aniSize, undefinedRef, &result) != ANI_OK) {
         return result;
     }
     ani_size idx = 0;
     for (const auto[threadId, cpuUsage] : threadMap) {
         ani_object obj = ConvertThreadCpuUsageToEts(env, cls, threadId, cpuUsage);
-        env->Array_Set_Ref(result, idx, static_cast<ani_ref>(obj));
+        env->Array_Set(result, idx, static_cast<ani_ref>(obj));
         idx++;
     }
     return result;
@@ -347,7 +361,7 @@ ani_object GetSystemMemInfo(ani_env *env)
 }
 
 ani_string StartAppTraceCapture(ani_env *env,
-    ani_array_long tagsAni, ani_enum_item flagAni, ani_int limitSizeAni)
+    ani_array tagsAni, ani_enum_item flagAni, ani_int limitSizeAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("startAppTraceCapture");
     ani_string result = nullptr;
