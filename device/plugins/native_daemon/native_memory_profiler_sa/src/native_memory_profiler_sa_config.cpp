@@ -16,8 +16,35 @@
 #include "native_memory_profiler_sa_config.h"
 #include "define_macro.h"
 #include "logging.h"
-
+#include <vector>
 namespace OHOS::Developtools::NativeDaemon {
+
+static bool WriteGpuRange(Parcel& parcel, const std::vector<std::vector<uint64_t>>& gpuRange)
+{
+    for (size_t i = 0; i < gpuRange.size(); ++i) {
+        for (size_t j = 0; j < gpuRange[i].size(); ++j) {
+            WRITEUINT64(parcel, gpuRange[i][j]);
+        }
+    }
+    return true;
+}
+
+static bool ReadGpuRange(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config)
+{
+    std::vector<std::vector<uint64_t>> gpuRange;
+    for (size_t i = 0; i < GPU_TYPE_SIZE; ++i) {
+        std::vector<uint64_t> rangeVec;
+        for (size_t j = 0; j < GPU_RANGE_SIZE * 2; ++j) { //2: double
+            uint64_t readVal = 0;
+            READUINT64(parcel, readVal);
+            rangeVec.push_back(readVal);
+        }
+        gpuRange.push_back(rangeVec);
+    }
+    std::swap(config->gpuRange_, gpuRange);
+    return true;
+}
+
 bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
 {
     WRITEINT32(parcel, pid_);
@@ -39,6 +66,8 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEBOOL(parcel, recordAccurately_);
     WRITEBOOL(parcel, startupMode_);
     WRITEBOOL(parcel, memtraceEnable_);
+    WRITEUINT64(parcel, traceMask_);
+    WriteGpuRange(parcel, gpuRange_);
     WRITEBOOL(parcel, offlineSymbolization_);
     WRITEBOOL(parcel, callframeCompress_);
     WRITEUINT32(parcel, statisticsInterval_);
@@ -86,6 +115,8 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->recordAccurately_);
     READBOOL(parcel, config->startupMode_);
     READBOOL(parcel, config->memtraceEnable_);
+    READUINT64(parcel, config->traceMask_);
+    ReadGpuRange(parcel, config);
     READBOOL(parcel, config->offlineSymbolization_);
     READBOOL(parcel, config->callframeCompress_);
     READUINT32(parcel, config->statisticsInterval_);

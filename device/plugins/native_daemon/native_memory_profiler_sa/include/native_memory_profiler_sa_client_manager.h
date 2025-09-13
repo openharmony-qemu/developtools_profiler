@@ -18,7 +18,7 @@
 
 #include "i_native_memory_profiler_sa.h"
 #include <iservice_registry.h>
-
+#include <map>
 #include <memory>
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -36,6 +36,13 @@ struct SimplifiedMemConfig {
     size_t sampleSize = 0;
 };
 
+using Range = std::pair<uint64_t, uint64_t>;
+
+struct MemSaConfig {
+    uint64_t mask = 0;
+    std::map<std::string, std::pair<Range, Range>> hookSizes;
+};
+
 class NativeMemoryProfilerSaClientManager {
 public:
     enum class NativeMemProfilerType : int32_t {
@@ -50,6 +57,7 @@ public:
     static int32_t GetMallocStats(int fd, int pid, int type, bool printNmdOnly = false);
     static int32_t StartPrintSimplifiedNmd(pid_t pid, std::vector<SimplifiedMemStats>& memStats);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
+    static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
     static sptr<IRemoteObject> GetRemoteService();
 
 private:

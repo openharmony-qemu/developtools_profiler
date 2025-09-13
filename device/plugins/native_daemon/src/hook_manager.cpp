@@ -219,6 +219,28 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
     return true;
 }
 
+unsigned long long HookManager::ConvertTagToMask()
+{
+    unsigned long long resMask = 0;
+    if (hookConfig_.restrace_tag().size() > 0) {
+        for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
+            std::string resTag = hookConfig_.restrace_tag(i);
+            if (resTag == TAG_RES_GPU_VK) {
+                resMask |= RES_GPU_VK;
+            } else if (resTag == TAG_RES_GPU_GLES_IMAGE) {
+                resMask |= RES_GPU_GLES_IMAGE;
+            } else if (resTag == TAG_RES_GPU_GLES_BUFFER) {
+                resMask |= RES_GPU_GLES_BUFFER;
+            } else if (resTag == TAG_RES_GPU_CL_IMAGE) {
+                resMask |= RES_GPU_CL_IMAGE;
+            } else if (resTag == TAG_RES_GPU_CL_BUFFER) {
+                resMask |= RES_GPU_CL_BUFFER;
+            }
+        }
+    }
+    return resMask;
+}
+
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
@@ -235,6 +257,11 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
+    if (saMode_) {
+        clientConfig.traceMask = traceMask_;
+    } else {
+        clientConfig.traceMask = ConvertTagToMask();
+    }
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
@@ -751,6 +778,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_record_accurately(config->recordAccurately_);
     hookConfig_.set_startup_mode(config->startupMode_);
     hookConfig_.set_memtrace_enable(config->memtraceEnable_);
+    traceMask_ = config->traceMask_;
     hookConfig_.set_offline_symbolization(config->offlineSymbolization_);
     hookConfig_.set_callframe_compress(config->callframeCompress_);
     hookConfig_.set_statistics_interval(config->statisticsInterval_);

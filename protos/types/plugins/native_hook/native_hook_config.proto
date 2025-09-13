@@ -49,4 +49,5 @@ message NativeHookConfig {
     string filter_napi_name = 29;
     bool dump_nmd = 30;
     string target_so_name = 31;
+    repeated string restrace_tag = 32;
 }

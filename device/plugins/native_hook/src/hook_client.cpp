@@ -50,7 +50,7 @@ static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 static std::atomic<int> g_sharedMemCount = 1;
-static std::atomic<uint16_t> g_tagId = 0;
+static std::atomic<uint16_t> g_tagId = GPU_TYPE_COUNT + 1;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
@@ -179,40 +179,30 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
     return ret;
 }
 
-uint32_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName)
+uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName,
+                                                        unsigned long long mask = 0)
 {
     if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
         return 0;
     }
-    uint32_t tagId = 0;
-    bool isNewTag = false;
-    std::unique_lock<std::mutex> lock(g_tagMapMutex);
-    auto it = g_memTagMap.find(tagName);
-    if (it == g_memTagMap.end()) {
-        isNewTag = true;
-        tagId = g_memTagMap.size() + 1;
-        g_memTagMap[tagName] = tagId;
-    } else {
-        tagId = it->second;
-    }
-    lock.unlock();
-    if (isNewTag) {
-        NameData tagData = {{{{0}}}};
-        tagData.type = MEMORY_TAG;
-        tagData.tagId = tagId;
-        strcpy_s(tagData.name, MAX_HOOK_PATH + 1, tagName);
-        if (client != nullptr) {
-            client->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
+    switch (mask) {
+        case RES_GPU_VK: {
+            return static_cast<uint16_t>(GPU_VK_INDEX + 1);
         }
-    }
-    return tagId;
-}
-
-uint16_t inline __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<HookSocketClient>& client,
-                                                     const char* tagName)
-{
-    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
-        return 0;
+        case RES_GPU_GLES_IMAGE: {
+            return static_cast<uint16_t>(GPU_GLES_IMAGE_INDEX + 1);
+        }
+        case RES_GPU_GLES_BUFFER: {
+            return static_cast<uint16_t>(GPU_GLES_BUFFER_INDEX + 1);
+        }
+        case RES_GPU_CL_IMAGE: {
+            return static_cast<uint16_t>(GPU_CL_IMAGE_INDEX + 1);
+        }
+        case RES_GPU_CL_BUFFER: {
+            return static_cast<uint16_t>(GPU_CL_BUFFER_INDEX + 1);
+        }
+        default:
+            break;
     }
 
     std::unique_lock<std::mutex> lock(g_tagIdMutex);
@@ -220,7 +210,7 @@ uint16_t inline __attribute__((always_inline)) GetMmapTagId(std::shared_ptr<Hook
     tagData.type = MEMORY_TAG;
     ++g_tagId;
     if (g_tagId.load() == 0) {
-        ++g_tagId;
+        g_tagId = GPU_TYPE_COUNT + 1;
     }
     tagData.tagId = g_tagId.load();
     lock.unlock();
@@ -1082,10 +1072,11 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         if ((fd <= 0) || IsPidChanged()) {
             return ret;
         }
-    } else {
-        if (g_ClientConfig.mmapDisable || IsPidChanged()) {
-            return ret;
-        }
+    } else if (IsPidChanged()) {
+        return ret;
+    } else if ((g_ClientConfig.mmapDisable) && ((g_ClientConfig.memtraceEnable ||
+               (!g_ClientConfig.mallocDisable)) && fd <= 0)) {
+        return ret;
     }
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
@@ -1146,9 +1137,9 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             SendMmapFileRawData(prot, flags, offset, fileName, rawdata, holder);
             char* p = strrchr(fileName, '/');
             if (p != nullptr) {
-                rawdata.tagId = GetMmapTagId(holder, &fileName[p - fileName + 1]);
+                rawdata.tagId = GetTagId(holder, &fileName[p - fileName + 1]);
             } else {
-                rawdata.tagId = GetMmapTagId(holder, fileName);
+                rawdata.tagId = GetTagId(holder, fileName);
             }
         }
     }
@@ -1309,7 +1300,7 @@ int hook_prctl(int(*fn)(int, ...),
 
 void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
 {
-    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
+    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged() || g_ClientConfig.isSaMode) {
         return;
     }
 #ifdef PERFORMANCE_DEBUG
@@ -1353,6 +1344,120 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
+}
+
+bool CheckSizeRange(size_t size, unsigned long long type)
+{
+    switch (type) {
+        case RES_GPU_VK:
+            if (((size >= g_ClientConfig.gpuRange.gpuVk[0]) && (size <= g_ClientConfig.gpuRange.gpuVk[1]))
+                || ((size >= g_ClientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT])
+                && (size <= g_ClientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT + 1]))) {
+                return true;
+            }
+            break;
+        case RES_GPU_GLES_IMAGE:
+            if (((size >= g_ClientConfig.gpuRange.gpuGlesImage[0]) && (size <= g_ClientConfig.gpuRange.gpuGlesImage[1]))
+                || ((size >= g_ClientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT])
+                && (size <= g_ClientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT + 1]))) {
+                return true;
+            }
+            break;
+        case RES_GPU_GLES_BUFFER:
+            if (((size >= g_ClientConfig.gpuRange.gpuGlesBuffer[0])
+                && (size <= g_ClientConfig.gpuRange.gpuGlesBuffer[1]))
+                || ((size >= g_ClientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT])
+                && (size <= g_ClientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT + 1]))) {
+                return true;
+            }
+            break;
+        case RES_GPU_CL_IMAGE:
+            if (((size >= g_ClientConfig.gpuRange.gpuClImage[0]) && (size <= g_ClientConfig.gpuRange.gpuClImage[1]))
+                || ((size >= g_ClientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT])
+                && (size <= g_ClientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT + 1]))) {
+                return true;
+            }
+            break;
+        case RES_GPU_CL_BUFFER:
+            if (((size >= g_ClientConfig.gpuRange.gpuClBuffer[0]) && (size <= g_ClientConfig.gpuRange.gpuClBuffer[1]))
+                || ((size >= g_ClientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT])
+                && (size <= g_ClientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT + 1]))) {
+                return true;
+            }
+            break;
+        default:
+            break;
+    }
+    return false;
+}
+
+void hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+{
+    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
+        return;
+    }
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return;
+    }
+    int stackSize = 0;
+    StackRawData rawdata = {{{{0}}}};
+    uintptr_t stackPtr = 0;
+    int fpStackDepth = 0;
+    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+    unsigned long long combineVal = mask & g_ClientConfig.traceMask;
+    if (combineVal == 0) {
+        return;
+    }
+    if ((g_ClientConfig.isSaMode) && (!(((combineVal & RES_GPU_VK) && (CheckSizeRange(size, RES_GPU_VK)))
+        || ((combineVal & RES_GPU_GLES_IMAGE) && (CheckSizeRange(size, RES_GPU_GLES_IMAGE)))
+        || ((combineVal & RES_GPU_GLES_BUFFER) && (CheckSizeRange(size, RES_GPU_GLES_BUFFER)))
+        || ((combineVal & RES_GPU_CL_IMAGE) && (CheckSizeRange(size, RES_GPU_CL_IMAGE)))
+        || ((combineVal & RES_GPU_CL_BUFFER) && (CheckSizeRange(size, RES_GPU_CL_BUFFER)))))) {
+        return;
+    }
+    if (isUsing) {
+        if (g_ClientConfig.fpunwind) {
+#ifdef __aarch64__
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+                return;
+            }
+#endif
+        } else {
+            stackSize = GetStackSize(stackPtr, rawdata);
+        }
+    }
+    rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
+    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
+    rawdata.mallocSize = size;
+    rawdata.addr = addr;
+    rawdata.tagId = isUsing ? GetTagId(holder, tag, mask) : 0;
+    int realSize = 0;
+    if (g_ClientConfig.fpunwind) {
+        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    }
+    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1460,6 +1565,13 @@ void ohos_malloc_hook_memtrace(void* addr, size_t size, const char* tag, bool is
 {
     __set_hook_flag(false);
     hook_memtrace(addr, size, tag, isUsing);
+    __set_hook_flag(true);
+}
+
+void ohos_malloc_hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+{
+    __set_hook_flag(false);
+    hook_restrace(mask, addr, size, tag, isUsing);
     __set_hook_flag(true);
 }
 

@@ -91,6 +91,9 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
     if (hookConfig_.save_file() && fpHookData_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "If you need to save the file, please set the file_name");
     }
+    if (hookConfig_.memtrace_enable()) {
+        InitializeGpuData();
+    }
     PROFILER_LOG_INFO(LOG_CORE, "isHookStandaloneSerialize_ = %d", isHookStandaloneSerialize_);
 }
 
@@ -105,6 +108,15 @@ StackPreprocess::~StackPreprocess()
     }
     runtime_instance = nullptr;
     fpHookData_ = nullptr;
+}
+
+void StackPreprocess::InitializeGpuData()
+{
+    SaveMemTag(GPU_VK_INDEX + 1, TAG_RES_GPU_VK);
+    SaveMemTag(GPU_GLES_IMAGE_INDEX + 1, TAG_RES_GPU_GLES_IMAGE);
+    SaveMemTag(GPU_GLES_BUFFER_INDEX + 1, TAG_RES_GPU_GLES_BUFFER);
+    SaveMemTag(GPU_CL_IMAGE_INDEX + 1, TAG_RES_GPU_CL_IMAGE);
+    SaveMemTag(GPU_CL_BUFFER_INDEX + 1, TAG_RES_GPU_CL_BUFFER);
 }
 
 void StackPreprocess::FinishTraceFile()
@@ -940,7 +952,17 @@ inline void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRec
                 break;
             }
             case MEMORY_USING_MSG: {
-                record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                std::string tagName;
+                GetMemTag(rawStack->stackContext->tagId, tagName);
+                if (tagName == TAG_RES_GPU_VK) {
+                    record.type = RecordStatisticsEvent::GPU_VK;
+                } else if ((tagName == TAG_RES_GPU_GLES_IMAGE) || (tagName == TAG_RES_GPU_GLES_BUFFER)) {
+                    record.type = RecordStatisticsEvent::GPU_GLES;
+                } else if ((tagName == TAG_RES_GPU_CL_IMAGE) || (tagName == TAG_RES_GPU_CL_BUFFER)) {
+                    record.type = RecordStatisticsEvent::GPU_CL;
+                } else {
+                    record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                }
                 record.tagId = rawStack->stackContext->tagId;
                 break;
             }

@@ -89,6 +89,9 @@ public:
     template <typename T>
     void SetSize(T* event);
 
+    template <typename T>
+    void SetTraceType(T* event, std::string tagName);
+
     virtual ~HookRecord() = default;
     RawStackPtr rawStack_ = nullptr;
 };

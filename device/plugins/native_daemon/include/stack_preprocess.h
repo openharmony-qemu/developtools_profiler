@@ -191,6 +191,7 @@ private:
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
+    void InitializeGpuData();
     void ReportOfflineSymbolizationData();
 
     RandomWriteCtx* StartReport();

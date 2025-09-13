@@ -14,7 +14,7 @@
  */
 
 #include "native_memory_profiler_sa_client_manager.h"
-
+#include "memory_trace.h"
 #include "native_memory_profiler_sa_proxy.h"
 
 #include "logging.h"
@@ -207,6 +207,16 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
     return RET_OK;
 }
 
+std::vector<uint64_t> ConvertToVec(std::pair<Range, Range> range)
+{
+    std::vector<uint64_t> result;
+    result.push_back(range.first.first);
+    result.push_back(range.first.second);
+    result.push_back(range.second.first);
+    result.push_back(range.second.second);
+    return result;
+}
+
 int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config)
 {
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
@@ -230,5 +240,36 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     }
     NativeMemoryProfilerSaProxy proxy(service);
     return proxy.DumpData(fd, nConfig);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start invalid pid with MemSaConfig");
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+    config->pid_ = static_cast<int32_t>(pid);
+    config->duration_ = duration;
+    config->statisticsInterval_ = FIVE_MINUTES;
+    config->jsStackReport_ = false;
+    config->mallocDisable_ = true;
+    config->mmapDisable_ = true;
+    config->memtraceEnable_ = true;
+    config->traceMask_ = saConfig.mask;
+    config->shareMemorySize_ = CALL_STACK_SMS;
+    std::vector<std::vector<uint64_t>> gpuRange;
+    gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_VK]));
+    gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_IMAGE]));
+    gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
+    gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_IMAGE]));
+    gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
+    std::swap(config->gpuRange_, gpuRange);
+    auto service = GetRemoteService();
+    if (service == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Start, GetRemoteService failed");
+        return RET_ERR;
+    }
+    NativeMemoryProfilerSaProxy proxy(service);
+    return proxy.DumpData(fd, config);
 }
 } // namespace OHOS::Developtools::NativeDaemon
