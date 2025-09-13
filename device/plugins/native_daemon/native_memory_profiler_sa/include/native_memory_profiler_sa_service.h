@@ -71,9 +71,11 @@ private:
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void SetGpuConfig(ClientConfig& clientConfig);
 
 private:
     std::mutex nmdMtx_;
+    std::mutex gpuMtx_;
     std::string startupModeProcessName_;
     int32_t taskMaxNum_ = 4;
 };

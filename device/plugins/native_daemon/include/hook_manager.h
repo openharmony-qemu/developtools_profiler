@@ -143,8 +143,10 @@ public:
 private:
     int pid_ = -1; // for SA mode
     bool printMallocNmd_ = false;
+    unsigned long long traceMask_ = 0;
     bool saMode_ = false;
     bool CheckProcess();
+    unsigned long long ConvertTagToMask();
     bool CheckProcessName();
     void CheckHapEncryped();
     void SetHookData(HookContext& hookContext, struct timespec ts,

@@ -28,10 +28,8 @@
 using namespace testing::ext;
 
 namespace {
-constexpr int MOBILE_BIT = 32;
-constexpr int32_t FILTER_SIZE = 100;
-constexpr int32_t SMB_SIZE = 409600;
 static ClientConfig g_ClientConfigTest = {0};
+constexpr unsigned int WAIT_THREAD_TIME = 5;
 
 class HookSocketClientTest : public ::testing::Test {
 public:
@@ -48,15 +46,14 @@ public:
  */
 HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
 {
-    uint64_t config = FILTER_SIZE;
-    config <<= MOBILE_BIT;
-    config |= SMB_SIZE;
+    ClientConfig config;
     Sampling sampler;
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(uint64_t);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
+    sleep(WAIT_THREAD_TIME);
 }
 
 /*
@@ -67,9 +64,7 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
 #ifdef __aarch64__
 HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
 {
-    uint64_t config = FILTER_SIZE;
-    config <<= MOBILE_BIT;
-    config |= SMB_SIZE;
+    ClientConfig config;
     Sampling sampler;
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
@@ -91,6 +86,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
     hookClient.unixSocketClient_ = std::make_shared<UnixSocketClient>();
     EXPECT_FALSE(hookClient.SendStack(buffer.get(), metaSize));
     EXPECT_TRUE(hookClient.SendStackWithPayload(buffer.get(), metaSize, buffer.get(), metaSize));
+    sleep(WAIT_THREAD_TIME);
 }
 #endif
 
@@ -105,11 +101,12 @@ HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level1)
     SocketContext socketContext;
     Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(clientConfig);
+    auto size = sizeof(ClientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetSmbFds().size(), 1);
     ASSERT_EQ(hookClient.GetEventFds().size(), 1);
+    sleep(WAIT_THREAD_TIME);
 }
 
 /*
@@ -123,13 +120,14 @@ HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level1)
     SocketContext socketContext;
     Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(clientConfig);
+    auto size = sizeof(ClientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> smbFds = hookClient.GetSmbFds();
     for (size_t i = 0; i < smbFds.size(); ++i) {
         ASSERT_EQ(smbFds[i], -1);
     }
+    sleep(WAIT_THREAD_TIME);
 }
 
 /*
@@ -143,13 +141,14 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
     SocketContext socketContext;
     Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
-    auto size = sizeof(clientConfig);
+    auto size = sizeof(ClientConfig);
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> eventFds = hookClient.GetEventFds();
     for (size_t i = 0; i < eventFds.size(); ++i) {
         ASSERT_EQ(eventFds[i], -1);
     }
+    sleep(WAIT_THREAD_TIME);
 }
 
 /*
@@ -160,9 +159,7 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
 #ifdef __aarch64__
 HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
 {
-    uint64_t config = FILTER_SIZE;
-    config <<= MOBILE_BIT;
-    config |= SMB_SIZE;
+    ClientConfig config;
     Sampling sampler;
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
@@ -178,6 +175,7 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
     ASSERT_FALSE(hookClient.SendNmdInfo());
+    sleep(WAIT_THREAD_TIME);
 }
 
 /*
@@ -187,9 +185,7 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
  */
 HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
 {
-    uint64_t config = FILTER_SIZE;
-    config <<= MOBILE_BIT;
-    config |= SMB_SIZE;
+    ClientConfig config;
     Sampling sampler;
     HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
     SocketContext socketContext;
@@ -205,6 +201,7 @@ HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
         PROFILER_LOG_ERROR(LOG_CORE, "memcpy_s ts failed");
     }
     ASSERT_FALSE(hookClient.SendSimplifiedNmdInfo());
+    sleep(WAIT_THREAD_TIME);
 }
 #endif
 } // namespace

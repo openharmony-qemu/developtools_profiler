@@ -125,6 +125,38 @@ message SymbolTable {
     int32 pid = 7;
 }
 
+enum TraceType {
+    FD = 0;
+    THREAD = 1;
+    GPU_VK = 2;
+    GPU_GLES = 3;
+    GPU_CL = 4;
+    OTHER = 5;
+};
+
+message TraceAllocEvent {
+    int32 pid = 1;
+    int32 tid = 2;
+    uint64 addr = 3;
+    TraceType trace_type = 4;
+    string tag_name = 5;
+    uint64 size = 6;
+    repeated Frame frame_info = 7;
+    uint32 thread_name_id = 8;
+    uint32 stack_id = 9;
+}
+
+message TraceFreeEvent {
+    int32 pid = 1;
+    int32 tid = 2;
+    uint64 addr = 3;
+    TraceType trace_type = 4;
+    string tag_name = 5;
+    repeated Frame frame_info = 6;
+    uint32 thread_name_id = 7;
+    uint32 stack_id = 8;
+}
+
 message RecordStatisticsEvent {
     uint32 pid = 1;
     uint32 callstack_id = 2;
@@ -133,6 +165,11 @@ message RecordStatisticsEvent {
         MMAP = 1;
         FILE_PAGE_MSG = 2;
         MEMORY_USING_MSG = 3;
+        FD = 4;
+        THREAD = 5;
+        GPU_VK = 6;
+        GPU_GLES = 7;
+        GPU_CL = 8;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;
@@ -159,6 +196,8 @@ message NativeHookData {
         FrameMap frame_map = 13;
         StackMap stack_map = 14;
         RecordStatisticsEvent statistics_event = 15;
+        TraceAllocEvent trace_alloc_event = 16;
+        TraceFreeEvent trace_free_event = 17;
     }
 }
 

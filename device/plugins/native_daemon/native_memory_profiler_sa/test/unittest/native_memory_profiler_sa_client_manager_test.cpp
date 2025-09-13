@@ -169,4 +169,16 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     SimplifiedMemConfig config;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, 100, config), RET_ERR);
 }
+
+/**
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest006
+ * @tc.desc: Test get stack info with MemSaConfig
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest006, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemSaConfig config;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, 100, config), RET_ERR);
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

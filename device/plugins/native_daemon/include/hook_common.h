@@ -24,7 +24,7 @@
 
 #include "register.h"
 #include "utilities.h"
-
+#include <memory_trace.h>
 #define MAX_THREAD_NAME (32)
 #define MAX_UNWIND_DEPTH (100)
 
@@ -38,6 +38,13 @@ constexpr int32_t MIN_STACK_DEPTH = 6;
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
+const size_t GPU_TYPE_COUNT = 5;
+const size_t GPU_RANGE_COUNT = 2;
+const size_t GPU_VK_INDEX = 0;
+const size_t GPU_GLES_IMAGE_INDEX = 1;
+const size_t GPU_GLES_BUFFER_INDEX = 2;
+const size_t GPU_CL_IMAGE_INDEX = 3;
+const size_t GPU_CL_BUFFER_INDEX = 4;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
@@ -149,6 +156,14 @@ struct alignas(8) ArkTsClientConfig { // 8 is 8 bit
         char filterNapiName[64] = {""};
 };
 
+struct alignas(8) GpuRange { // 8 is 8 bit
+    uint64_t gpuVk [OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2] = {0};
+    uint64_t gpuGlesImage [OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2] = {0};
+    uint64_t gpuGlesBuffer [OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2] = {0};
+    uint64_t gpuClImage [OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2] = {0};
+    uint64_t gpuClBuffer [OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2] = {0};
+};
+
 struct alignas(8) ClientConfig { // 8 is 8 bit
     void Reset()
     {
@@ -175,6 +190,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         arktsConfig.maxJsStackDepth = 0;
         arktsConfig.jsFpunwind = false;
         arktsConfig.filterNapiName[0] = '\0';
+        traceMask = 0;
+        ResetGpuRange(gpuRange);
         largestSize = 0;
         secondLargestSize = 0;
         maxGrowthSize = 0;
@@ -199,6 +216,17 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         return ss.str();
     }
 
+    void ResetGpuRange(GpuRange& gpuRange)
+    {
+        for (int i = 0; i < OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2; i++) { //2: double
+            gpuRange.gpuVk[i] = 0;
+            gpuRange.gpuGlesImage[i] = 0;
+            gpuRange.gpuGlesBuffer[i] = 0;
+            gpuRange.gpuClImage[i] = 0;
+            gpuRange.gpuClBuffer[i] = 0;
+        }
+    }
+
     int32_t filterSize = -1;
     uint32_t shareMemorySize = 0;
     uint32_t sampleInterval = 0;
@@ -219,6 +247,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool isSaMode = false;
     bool offlineSymbolization = false;
     ArkTsClientConfig arktsConfig = {0};
+    unsigned long long traceMask = 0;
+    GpuRange gpuRange = {};
     uint32_t largestSize = 0;
     uint32_t secondLargestSize = 0;
     uint32_t maxGrowthSize = 0;

@@ -18,6 +18,7 @@
 #include "hook_client.h"
 #include "musl_preinit_common.h"
 #include "init_param.h"
+#include <memory_trace.h>
 
 using namespace testing::ext;
 
@@ -161,6 +162,41 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
     EXPECT_EQ(vallocBlack, nullptr);
 
     ohos_malloc_hook_free(vallocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook memtrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookMemtraceTest, TestSize.Level1)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_memtrace(mem, 1, TAG_RES_GPU_VK, true);
+    ohos_malloc_hook_memtrace(mem, 1, TAG_RES_GPU_VK, false);
+    delete[] mem;
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest, TestSize.Level1)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, true);
+    ohos_malloc_hook_restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, false);
+    delete[] mem;
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);

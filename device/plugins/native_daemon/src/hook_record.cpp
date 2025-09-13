@@ -124,6 +124,31 @@ void HookRecord::SetSize(T* event)
     event->set_size(size);
 }
 
+template <typename T>
+void HookRecord::SetTraceType(T* event, std::string tagName)
+{
+    if (event == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "hookRecord SetTraceType invalid event");
+        return;
+    }
+    if ((GetType() != MEMORY_USING_MSG) && (GetType() != MEMORY_UNUSING_MSG)) {
+        return;
+    }
+    if (tagName == TAG_RES_GPU_VK) {
+        event->set_trace_type(TraceType::GPU_VK);
+    } else if (tagName == TAG_RES_GPU_GLES_IMAGE) {
+        event->set_trace_type(TraceType::GPU_GLES);
+    } else if (tagName == TAG_RES_GPU_GLES_BUFFER) {
+        event->set_trace_type(TraceType::GPU_GLES);
+    } else if (tagName == TAG_RES_GPU_CL_IMAGE) {
+        event->set_trace_type(TraceType::GPU_CL);
+    } else if (tagName == TAG_RES_GPU_CL_BUFFER) {
+        event->set_trace_type(TraceType::GPU_CL);
+    } else {
+        event->set_trace_type(TraceType::OTHER);
+    }
+}
+
 void FreeRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo)
 {
     std::visit([this, &hookInfo](auto protoData) {
@@ -189,21 +214,22 @@ void PrSetVmaRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hoo
 void MemoryUsingRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo)
 {
     std::visit([this, &hookInfo](auto protoData) {
-        auto memUsingEvent = protoData->mutable_mmap_event();
+        auto traceAllocEvent = protoData->mutable_trace_alloc_event();
         if (hookInfo.tagName != "") {
-            memUsingEvent->set_type(hookInfo.tagName);
+            traceAllocEvent->set_tag_name(hookInfo.tagName);
         }
-        HookRecord::SetSize(memUsingEvent);
-        HookRecord::SetEventFrame(memUsingEvent, hookInfo);
+        HookRecord::SetTraceType(traceAllocEvent, hookInfo.tagName);
+        HookRecord::SetSize(traceAllocEvent);
+        HookRecord::SetEventFrame(traceAllocEvent, hookInfo);
         }, stackData);
 }
 
 void MemoryUnusingRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo)
 {
     std::visit([this, &hookInfo](auto protoData) {
-        auto munmapEvent = protoData->mutable_munmap_event();
-        HookRecord::SetSize(munmapEvent);
-        HookRecord::SetEventFrame(munmapEvent, hookInfo);
+        auto traceFreeEvent = protoData->mutable_trace_free_event();
+        HookRecord::SetTraceType(traceFreeEvent, hookInfo.tagName);
+        HookRecord::SetEventFrame(traceFreeEvent, hookInfo);
         }, stackData);
 }
 }

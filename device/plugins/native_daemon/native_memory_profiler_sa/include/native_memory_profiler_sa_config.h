@@ -22,6 +22,8 @@ namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr uint32_t DEFAULT_DURATION = 20;
 constexpr uint8_t  DEFAULT_STACK_DAPTH = 30;
+const size_t GPU_TYPE_SIZE = 5;
+const size_t GPU_RANGE_SIZE = 3;
 }
 class NativeMemoryProfilerSaConfig : public Parcelable {
 public:
@@ -49,6 +51,9 @@ public:
     bool recordAccurately_{true};
     bool startupMode_{false};
     bool memtraceEnable_{false};
+    uint64_t traceMask_{0};
+    std::vector<std::vector<uint64_t>> gpuRange_ {GPU_TYPE_SIZE, std::vector<uint64_t>(GPU_RANGE_SIZE * 2, 0)};
+    //2: double
     bool offlineSymbolization_{true};
     bool callframeCompress_{true};
     uint32_t statisticsInterval_{0};

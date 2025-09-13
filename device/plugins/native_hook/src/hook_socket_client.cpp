@@ -126,6 +126,8 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         return true;
     }
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
+    PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %llu",
+                       config_->memtraceEnable, config_->traceMask);
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     sampler_->InitSampling(config_->sampleInterval);

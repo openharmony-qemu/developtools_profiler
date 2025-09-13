@@ -52,6 +52,8 @@ static std::unordered_map<uint32_t, std::pair<uint32_t, uint32_t>> g_nmdPidType;
 static std::unordered_map<pid_t, int> g_pidFds;
 static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
+static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
+//2: double
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -147,6 +149,10 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
             return RET_OK;
         }
     }
+    if (config->memtraceEnable_) {
+        std::lock_guard<std::mutex> guard(gpuMtx_);
+        g_gpuRange = config->gpuRange_;
+    }
     return StartHook(config, 0, reply);
 }
 
@@ -170,6 +176,10 @@ int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<Nat
         if (!config->printNmdOnly_) {
             return RET_OK;
         }
+    }
+    if (config->memtraceEnable_) {
+        std::lock_guard<std::mutex> guard(gpuMtx_);
+        g_gpuRange = config->gpuRange_;
     }
     if (StartHook(config, fd) == RET_ERR) {
         close(fd);
@@ -501,6 +511,18 @@ void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std
     }
 }
 
+void NativeMemoryProfilerSaService::SetGpuConfig(ClientConfig& clientConfig)
+{
+    std::lock_guard<std::mutex> guard(gpuMtx_);
+    for (int i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: double
+        clientConfig.gpuRange.gpuVk[i] = g_gpuRange[GPU_VK_INDEX][i];
+        clientConfig.gpuRange.gpuGlesImage[i] = g_gpuRange[GPU_GLES_IMAGE_INDEX][i];
+        clientConfig.gpuRange.gpuGlesBuffer[i] = g_gpuRange[GPU_GLES_BUFFER_INDEX][i];
+        clientConfig.gpuRange.gpuClImage[i] = g_gpuRange[GPU_CL_IMAGE_INDEX][i];
+        clientConfig.gpuRange.gpuClBuffer[i] = g_gpuRange[GPU_CL_BUFFER_INDEX][i];
+    }
+}
+
 bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf,
     const uint32_t size)
 {
@@ -548,6 +570,7 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             peerConfig, bundleName.c_str());
         ClientConfig clientConfig;
         iter->second->hookMgr->GetClientConfig(clientConfig);
+        SetGpuConfig(clientConfig);
         if (iter->second->hookMgr->GetNoDataQueueFlag()) {
             clientConfig.freeEventOnlyAddrEnable = true;
         }
