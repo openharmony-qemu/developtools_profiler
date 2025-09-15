@@ -105,7 +105,6 @@ group("fuzztest") {
     "plugins/hiperf_plugin/test/fuzztest/hiperfstartplugin_fuzzer:fuzztest",
     "plugins/memory_plugin/test/fuzztest/memorystartplugin_fuzzer:fuzztest",
     "plugins/native_daemon/native_memory_profiler_sa/test/fuzztest/nativedaemonsa_fuzzer:fuzztest",
-    "plugins/native_hook/test/fuzztest:fuzztest",
     "plugins/network_plugin/test/fuzztest/networkstartplugin_fuzzer:fuzztest",
     "services/profiler_service/test/fuzztest/profilercreatesession_fuzzer:fuzztest",
     "services/profiler_service/test/fuzztest/profilerdestroysession_fuzzer:fuzztest",
@@ -120,4 +119,9 @@ group("fuzztest") {
     "plugins/ffrt_profiler/test/fuzztest/ffrtprofilersetconfig_fuzzer:fuzztest",
     "cmds/test/fuzztest/hiprofilercmd_fuzzer:fuzztest",
   ]
+  if (is_ohos && use_musl && !is_asan) {
+    deps += [
+      "plugins/native_hook/test/fuzztest:fuzztest",
+    ]
+  }
 }
