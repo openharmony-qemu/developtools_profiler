@@ -67,7 +67,10 @@ std::string GetLoopbackAddress()
     struct ifaddrs* ifAddrStruct = nullptr;
     void* tmpAddrPtr = nullptr;
 
-    getifaddrs(&ifAddrStruct);
+    if (getifaddrs(&ifAddrStruct) == -1) { // -1 : fail
+        printf("error: %s\n", COMMON::GetErrorMsg().c_str());
+        return "";
+    }
     while (ifAddrStruct != nullptr) {
         if (ifAddrStruct->ifa_addr == nullptr) {
             ifAddrStruct = ifAddrStruct->ifa_next;
