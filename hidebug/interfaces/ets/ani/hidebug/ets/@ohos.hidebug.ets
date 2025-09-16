@@ -24,19 +24,48 @@ function createVoidBusinessError(code: number, msg: string): BusinessError<void>
 
 export namespace hidebug {
   loadLibraryWithPermissionCheck("hidebug_ani", "@ohos.hidebug");
-  export native function getNativeHeapSize(): bigint;
 
-  export native function getNativeHeapAllocatedSize(): bigint;
+  native function getNativeHeapSizeAdapter(): long;
 
-  export native function getNativeHeapFreeSize(): bigint;
+  export function getNativeHeapSize(): bigint {
+    return new bigint(getNativeHeapSizeAdapter());
+  }
 
-  export native function getVss(): bigint;
+  native function getNativeHeapAllocatedSizeAdapter(): long;
 
-  export native function getPss(): bigint;
+  export function getNativeHeapAllocatedSize(): bigint {
+    return new bigint(getNativeHeapAllocatedSizeAdapter());
+  }
 
-  export native function getSharedDirty(): bigint;
+  native function getNativeHeapFreeSizeAdapter(): long;
 
-  export native function getPrivateDirty(): bigint;
+  export function getNativeHeapFreeSize(): bigint {
+    return new bigint(getNativeHeapFreeSizeAdapter());
+  }
+
+  native function getVssAdapter(): long;
+
+  export function getVss(): bigint {
+     return new bigint(getVssAdapter());
+  }
+
+  native function getPssAdapter(): long;
+
+  export function getPss(): bigint {
+    return new bigint(getPssAdapter());
+  }
+
+  native function getSharedDirtyAdapter(): long;
+
+  export function getSharedDirty(): bigint {
+    return new bigint(getSharedDirtyAdapter());
+  }
+
+  native function getPrivateDirtyAdapter(): long;
+
+  export function getPrivateDirty(): bigint {
+    return new bigint(getPrivateDirtyAdapter());
+  }
 
   export native function getCpuUsage(): number;
 
@@ -68,7 +97,22 @@ export namespace hidebug {
     availableMem: bigint;
   }
 
-  export native function getSystemMemInfo(): SystemMemInfo;
+  class SystemMemInfoAdapter {
+    totalMem: long;
+    freeMem: long;
+    availableMem: long;
+  }
+
+  native function getSystemMemInfoAdapter() : SystemMemInfoAdapter;
+
+  export function getSystemMemInfo(): SystemMemInfo {
+    let systemMemoryInfo = getSystemMemInfoAdapter();
+    let retValue = new SystemMemInfoImpl();
+    retValue.totalMem = new bigint(systemMemoryInfo.totalMem);
+    retValue.freeMem = new bigint(systemMemoryInfo.freeMem);
+    retValue.availableMem = new bigint(systemMemoryInfo.availableMem);
+    return retValue;
+  }
 
   export interface NativeMemInfo {
     pss: bigint;
@@ -90,7 +134,30 @@ export namespace hidebug {
     privateClean: bigint;
   }
 
-  export native function getAppNativeMemInfo(): NativeMemInfo;
+  class NativeMemInfoAdapter {
+    pss: long;
+    vss: long;
+    rss: long;
+    sharedDirty: long;
+    privateDirty: long;
+    sharedClean: long;
+    privateClean: long;
+  }
+
+  native function getAppNativeMemInfoAdapter(): NativeMemInfoAdapter;
+
+  export function getAppNativeMemInfo(): NativeMemInfo {
+    let nativeMemoryInfo = getAppNativeMemInfoAdapter();
+    let retValue = new NativeMemInfoImpl();
+    retValue.pss = new bigint(nativeMemoryInfo.pss);
+    retValue.vss = new bigint(nativeMemoryInfo.vss);
+    retValue.rss = new bigint(nativeMemoryInfo.rss);
+    retValue.sharedDirty = new bigint(nativeMemoryInfo.sharedDirty);
+    retValue.privateDirty = new bigint(nativeMemoryInfo.privateDirty);
+    retValue.sharedClean = new bigint(nativeMemoryInfo.sharedClean);
+    retValue.privateClean = new bigint(nativeMemoryInfo.privateClean);
+    return retValue;
+  }
 
   export enum TraceFlag {
     MAIN_THREAD = 1,
