@@ -564,6 +564,10 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
                 return false;
             }
         }
+        if (iter->second->hookMgr == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "hook manager is null");
+            return false;
+        }
         iter->second->hookMgr->SetPid(peerConfig);
         PROFILER_LOG_INFO(LOG_CORE,
             "ProtocolProc, receive message from hook client, and send hook config to process %d, name: %s",
