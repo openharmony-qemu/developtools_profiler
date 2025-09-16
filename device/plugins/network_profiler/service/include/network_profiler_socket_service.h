@@ -30,6 +30,9 @@ class NetworkProfilerSocketService : public ServiceBase {
 public:
     NetworkProfilerSocketService(std::shared_ptr<NetworkProfilerManager> networkMgr);
     ~NetworkProfilerSocketService();
+    /*
+    parameter buf is address of the integer, parameter size is the size of the integer
+    */
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     void SetConfig(int32_t shmSize, int32_t flushCount, bool block, int32_t clockType);
 private:

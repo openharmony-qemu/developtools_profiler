@@ -36,7 +36,7 @@ bool FfrtProtocolProcFuzzTest(const uint8_t* data, size_t size)
     auto ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
     auto socketService = std::make_shared<FfrtProfilerSocketService>(ffrtProfilerMgr);
     SocketContext socketContext;
-    int8_t config = provider.ConsumeIntegral<int8_t>();
+    int config = provider.ConsumeIntegral<int>();
     uint32_t pnum = provider.ConsumeIntegral<uint32_t>();
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     uint32_t sizeTemp = provider.ConsumeIntegral<uint32_t>();
