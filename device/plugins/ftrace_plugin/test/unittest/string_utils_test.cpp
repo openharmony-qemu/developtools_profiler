@@ -59,7 +59,7 @@ protected:
  * @tc.desc: test StringUtils::EndsWith with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, EndsWithNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, EndsWithNormal, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string ext = ".txt";
@@ -73,7 +73,7 @@ HWTEST_F(StringUtilsTest, EndsWithNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::EndsWith with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, EndsWithFalse, TestSize.Level1)
+HWTEST_F(StringUtilsTest, EndsWithFalse, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string ext = "txt";
@@ -86,7 +86,7 @@ HWTEST_F(StringUtilsTest, EndsWithFalse, TestSize.Level1)
  * @tc.desc: test StringUtils::StartsWith with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, StartsWithNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, StartsWithNormal, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string pre = "abb";
@@ -100,7 +100,7 @@ HWTEST_F(StringUtilsTest, StartsWithNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::StartsWith with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, StartsWithFalse, TestSize.Level1)
+HWTEST_F(StringUtilsTest, StartsWithFalse, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string pre = "abb";
@@ -114,7 +114,7 @@ HWTEST_F(StringUtilsTest, StartsWithFalse, TestSize.Level1)
  * @tc.desc: test StringUtils::StartsWith with random input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, StartsWithRandomize, TestSize.Level1)
+HWTEST_F(StringUtilsTest, StartsWithRandomize, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         std::string str = RandomString(STR_MAX_SIZE);
@@ -132,7 +132,7 @@ HWTEST_F(StringUtilsTest, StartsWithRandomize, TestSize.Level1)
  * @tc.desc: test StringUtils::Contains with normal input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, ContainsNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, ContainsNormal, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string target = "de";
@@ -149,7 +149,7 @@ HWTEST_F(StringUtilsTest, ContainsNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::Contains with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, ContainsFalse, TestSize.Level1)
+HWTEST_F(StringUtilsTest, ContainsFalse, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     std::string target = "de";
@@ -166,7 +166,7 @@ HWTEST_F(StringUtilsTest, ContainsFalse, TestSize.Level1)
  * @tc.desc: test StringUtils::Contains with random input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, ContainsRandomize, TestSize.Level1)
+HWTEST_F(StringUtilsTest, ContainsRandomize, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         std::string str = RandomString(STR_MAX_SIZE);
@@ -184,7 +184,7 @@ HWTEST_F(StringUtilsTest, ContainsRandomize, TestSize.Level1)
  * @tc.desc: test StringUtils::Strip with normal input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, StripNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, StripNormal, TestSize.Level0)
 {
     std::string str = "abbcccdefgh.txt";
     EXPECT_EQ(StringUtils::Strip(str + " "), str);
@@ -200,7 +200,7 @@ HWTEST_F(StringUtilsTest, StripNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::Strip with random input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, StripRandomize, TestSize.Level1)
+HWTEST_F(StringUtilsTest, StripRandomize, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         std::string str = RandomString(STR_MAX_SIZE);
@@ -223,7 +223,7 @@ HWTEST_F(StringUtilsTest, StripRandomize, TestSize.Level1)
  * @tc.desc: test StringUtils::Join with normal input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, JoinNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, JoinNormal, TestSize.Level0)
 {
     std::vector<std::string> parts = {"a", "bb", "ccc", "dddd"};
     std::string joined;
@@ -240,7 +240,7 @@ HWTEST_F(StringUtilsTest, JoinNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::Join with random input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, JoinRandomize, TestSize.Level1)
+HWTEST_F(StringUtilsTest, JoinRandomize, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         std::vector<std::string> parts;
@@ -262,7 +262,7 @@ HWTEST_F(StringUtilsTest, JoinRandomize, TestSize.Level1)
  * @tc.desc: test StringUtils::Split with normal input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, SplitNormal, TestSize.Level1)
+HWTEST_F(StringUtilsTest, SplitNormal, TestSize.Level0)
 {
     std::vector<std::string> parts = {"a", "bb", "ccc", "dddd"};
     std::string joined;
@@ -279,7 +279,7 @@ HWTEST_F(StringUtilsTest, SplitNormal, TestSize.Level1)
  * @tc.desc: test StringUtils::Split with random input.
  * @tc.type: FUNC
  */
-HWTEST_F(StringUtilsTest, SplitRandomize, TestSize.Level1)
+HWTEST_F(StringUtilsTest, SplitRandomize, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         std::vector<std::string> parts;

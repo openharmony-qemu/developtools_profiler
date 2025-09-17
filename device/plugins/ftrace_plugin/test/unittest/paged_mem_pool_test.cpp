@@ -46,7 +46,7 @@ protected:
  * @tc.desc: test PagedMemPool:: normal with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(PagedMemPoolTest, PagedMemPoolNormal, TestSize.Level1)
+HWTEST_F(PagedMemPoolTest, PagedMemPoolNormal, TestSize.Level0)
 {
     size_t blockSize = 8;
     size_t maxCacheSize = 2;
@@ -67,7 +67,7 @@ HWTEST_F(PagedMemPoolTest, PagedMemPoolNormal, TestSize.Level1)
  * @tc.desc: test PagedMemPool:: normal with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(PagedMemPoolTest, PagedMemPoolfreeListSize, TestSize.Level1)
+HWTEST_F(PagedMemPoolTest, PagedMemPoolfreeListSize, TestSize.Level0)
 {
     size_t blockSize = 8;
     size_t maxCacheSize = 2;
@@ -95,7 +95,7 @@ HWTEST_F(PagedMemPoolTest, PagedMemPoolfreeListSize, TestSize.Level1)
  * @tc.desc: test PagedMemPool:: normal with rand case.
  * @tc.type: FUNC
  */
-HWTEST_F(PagedMemPoolTest, PagedMemPoolNormalRand, TestSize.Level1)
+HWTEST_F(PagedMemPoolTest, PagedMemPoolNormalRand, TestSize.Level0)
 {
     size_t blockSize = RandomNumber();
     size_t maxCacheSize = RandomNumber();

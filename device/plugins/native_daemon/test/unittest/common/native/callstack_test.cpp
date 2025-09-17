@@ -46,7 +46,7 @@ void CallStackTest::TearDown() {}
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(CallStackTest, UnwindCallStack, TestSize.Level1)
+HWTEST_F(CallStackTest, UnwindCallStack, TestSize.Level0)
 {
     std::vector<u64> regs;
     std::vector<u8> data;

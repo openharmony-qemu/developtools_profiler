@@ -73,7 +73,7 @@ protected:
  * @tc.desc: test FtraceFieldParser::ParseIntField with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFieldParserTest, ParseIntField1, TestSize.Level1)
+HWTEST_F(FtraceFieldParserTest, ParseIntField1, TestSize.Level0)
 {
     for (int i = 0; i < NROUNDS; i++) {
         int expect = i + 1;
@@ -88,7 +88,7 @@ HWTEST_F(FtraceFieldParserTest, ParseIntField1, TestSize.Level1)
  * @tc.desc: test FtraceFieldParser::ParseIntField with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFieldParserTest, ParseIntField2, TestSize.Level1)
+HWTEST_F(FtraceFieldParserTest, ParseIntField2, TestSize.Level0)
 {
     for (int i = 0; i < NROUNDS; i++) {
         int expect = i + 1;
@@ -103,7 +103,7 @@ HWTEST_F(FtraceFieldParserTest, ParseIntField2, TestSize.Level1)
  * @tc.desc: test FtraceFieldParser::ParseIntField with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFieldParserTest, ParseStrField1, TestSize.Level1)
+HWTEST_F(FtraceFieldParserTest, ParseStrField1, TestSize.Level0)
 {
     for (int i = 0; i < NROUNDS; i++) {
         std::string expect = std::to_string(i + 1);
@@ -118,7 +118,7 @@ HWTEST_F(FtraceFieldParserTest, ParseStrField1, TestSize.Level1)
  * @tc.desc: test FtraceFieldParser::ParseIntField with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFieldParserTest, ParseStrField2, TestSize.Level1)
+HWTEST_F(FtraceFieldParserTest, ParseStrField2, TestSize.Level0)
 {
     for (int i = 0; i < NROUNDS; i++) {
         std::string expect = std::to_string(i + 1);

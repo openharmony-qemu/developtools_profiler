@@ -95,7 +95,7 @@ void FinishReportFunc(WriterStructPtr writer, int32_t size)
  * @tc.desc: test FlowController::SetWriter.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, SetWriter, TestSize.Level1)
+HWTEST_F(FlowControllerTest, SetWriter, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     WriterStruct writer = {WriteFunc, FlushFunc};
@@ -107,7 +107,7 @@ HWTEST_F(FlowControllerTest, SetWriter, TestSize.Level1)
  * @tc.desc: test FlowController::LoadConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, LoadConfig, TestSize.Level1)
+HWTEST_F(FlowControllerTest, LoadConfig, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -136,7 +136,7 @@ HWTEST_F(FlowControllerTest, LoadConfig, TestSize.Level1)
  * @tc.desc: test FlowController::LoadConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, SetMinBufForLoadConfig, TestSize.Level1)
+HWTEST_F(FlowControllerTest, SetMinBufForLoadConfig, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -158,7 +158,7 @@ HWTEST_F(FlowControllerTest, SetMinBufForLoadConfig, TestSize.Level1)
  * @tc.desc: test FlowController::LoadConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, SetMaxBufForLoadConfig, TestSize.Level1)
+HWTEST_F(FlowControllerTest, SetMaxBufForLoadConfig, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -180,7 +180,7 @@ HWTEST_F(FlowControllerTest, SetMaxBufForLoadConfig, TestSize.Level1)
  * @tc.desc: test FlowController::LoadConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, SetTracePeriodForLoadConfig, TestSize.Level1)
+HWTEST_F(FlowControllerTest, SetTracePeriodForLoadConfig, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -204,7 +204,7 @@ HWTEST_F(FlowControllerTest, SetTracePeriodForLoadConfig, TestSize.Level1)
  * @tc.desc: test FlowController::LoadConfig.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, SetHitraceAppForLoadConfig, TestSize.Level1)
+HWTEST_F(FlowControllerTest, SetHitraceAppForLoadConfig, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -228,7 +228,7 @@ HWTEST_F(FlowControllerTest, SetHitraceAppForLoadConfig, TestSize.Level1)
  * @tc.desc: test FlowController::StartCapture.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
+HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -268,7 +268,7 @@ HWTEST_F(FlowControllerTest, StartCapture, TestSize.Level1)
  * @tc.desc: test FlowController::hitrace_apps.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, HitraceApps, TestSize.Level1)
+HWTEST_F(FlowControllerTest, HitraceApps, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -311,7 +311,7 @@ HWTEST_F(FlowControllerTest, HitraceApps, TestSize.Level1)
  * @tc.desc: test FlowController::StartCaptureWithBinder.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, StartCaptureWithBinder, TestSize.Level1)
+HWTEST_F(FlowControllerTest, StartCaptureWithBinder, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::FlowController controller;
     TracePluginConfig config;
@@ -351,7 +351,7 @@ HWTEST_F(FlowControllerTest, StartCaptureWithBinder, TestSize.Level1)
  * @tc.desc: test Framework.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level1)
+HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level0)
 {
     std::string path = std::string("libftrace_plugin.z.so");
     auto handle = dlopen(path.c_str(), RTLD_LAZY);
@@ -388,7 +388,7 @@ HWTEST_F(FlowControllerTest, TestFramework, TestSize.Level1)
  * @tc.desc: test ftrace plugin based on resource files.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, TestFrameworkWithFile, TestSize.Level1)
+HWTEST_F(FlowControllerTest, TestFrameworkWithFile, TestSize.Level0)
 {
     // set writer
     WriterStruct writer = {WriteFunc, FlushFunc};
@@ -418,7 +418,7 @@ HWTEST_F(FlowControllerTest, TestFrameworkWithFile, TestSize.Level1)
  * @tc.desc: test ftrace plugin encoder based on resource files.
  * @tc.type: FUNC
  */
-HWTEST_F(FlowControllerTest, TestFrameworkEncoder, TestSize.Level1)
+HWTEST_F(FlowControllerTest, TestFrameworkEncoder, TestSize.Level0)
 {
     g_buffer = std::make_unique<uint8_t[]>(BUFFER_SIZE);
     ASSERT_NE(g_buffer.get(), nullptr);

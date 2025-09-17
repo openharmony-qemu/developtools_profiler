@@ -462,7 +462,7 @@ public:
  * @tc.desc: Test hiprofiler_cmd with -h -q.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -496,7 +496,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -c file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -547,7 +547,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -c string.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level0)
 {
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libftrace_plugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
@@ -579,7 +579,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -s -l -k.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -598,7 +598,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0140, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -l -k.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -615,7 +615,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0150, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -k.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
@@ -632,7 +632,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0160, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with proto encoder.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Level0)
 {
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libftrace_plugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
@@ -664,7 +664,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with ctrl+c.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level0)
 {
     std::string content = "";
     std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " -s";
@@ -710,7 +710,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with -c string.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Level0)
 {
     std::string cmd = "cp " + DEFAULT_SO_PATH + "libhiperfplugin.z.so " + DEFAULT_PATH;
     system(cmd.c_str());
@@ -743,7 +743,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split Htrace file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level0)
 {
     std::string outFileName = "split_htrace";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -767,7 +767,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split hiperf file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level0)
 {
     std::string outFileName = "split_hiperf";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -801,7 +801,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with split hiebpf file.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Level0)
 {
     std::string outFileName = "split_htrace";
     std::string outFile = DEFAULT_PATH + outFileName + ".htrace";
@@ -825,7 +825,7 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Lev
  * @tc.desc: Test hiprofiler_cmd with test -s -c.
  * @tc.type: FUNC
  */
-HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Level1)
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Level0)
 {
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);

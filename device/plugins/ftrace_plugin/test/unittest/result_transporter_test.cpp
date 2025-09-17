@@ -63,7 +63,7 @@ bool FlushFunc(WriterStructPtr writer)
  * @tc.desc: test ResultTransporter::IsFlushTime.
  * @tc.type: FUNC
  */
-HWTEST_F(ResultTransporterTest, IsFlushTimeInvalidParam, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, IsFlushTimeInvalidParam, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::ResultTransporter reporter("", nullptr);
     reporter.SetFlushInterval(WAIT_MS);
@@ -77,7 +77,7 @@ HWTEST_F(ResultTransporterTest, IsFlushTimeInvalidParam, TestSize.Level1)
  * @tc.desc: test ResultTransporter::IsFlushTime.
  * @tc.type: FUNC
  */
-HWTEST_F(ResultTransporterTest, IsFlushTimeTrue, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, IsFlushTimeTrue, TestSize.Level0)
 {
     WriterStruct writer = {WriteFunc, FlushFunc};
     OHOS::Profiler::Plugins::ResultTransporter reporter(name_, static_cast<WriterStructPtr>(&writer));
@@ -90,7 +90,7 @@ HWTEST_F(ResultTransporterTest, IsFlushTimeTrue, TestSize.Level1)
  * @tc.desc: test ResultTransporter::IsFlushTime.
  * @tc.type: FUNC
  */
-HWTEST_F(ResultTransporterTest, IsFlushTimeFalse, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, IsFlushTimeFalse, TestSize.Level0)
 {
     WriterStruct writer = {WriteFunc, FlushFunc};
     OHOS::Profiler::Plugins::ResultTransporter reporter(name_, static_cast<WriterStructPtr>(&writer));
@@ -105,7 +105,7 @@ HWTEST_F(ResultTransporterTest, IsFlushTimeFalse, TestSize.Level1)
  * @tc.desc: test ResultTransporter::Submit.
  * @tc.type: FUNC
  */
-HWTEST_F(ResultTransporterTest, WriteInvalidParam, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, WriteInvalidParam, TestSize.Level0)
 {
     OHOS::Profiler::Plugins::ResultTransporter reporter("", nullptr);
     auto packet = std::make_unique<TracePluginResult>();
@@ -117,7 +117,7 @@ HWTEST_F(ResultTransporterTest, WriteInvalidParam, TestSize.Level1)
  * @tc.desc: test ResultTransporter::Submit.
  * @tc.type: FUNC
  */
-HWTEST_F(ResultTransporterTest, FlushInvalidParam, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, FlushInvalidParam, TestSize.Level0)
 {
     WriterStruct flush = {WriteFunc, nullptr};
     OHOS::Profiler::Plugins::ResultTransporter reporter(name_, static_cast<WriterStructPtr>(&flush));
@@ -133,7 +133,7 @@ HWTEST_F(ResultTransporterTest, FlushInvalidParam, TestSize.Level1)
  * @tc.desc: test ResultTransporter::Submit.
  * @tc.type: FUNCquit
  */
-HWTEST_F(ResultTransporterTest, WriteFalse, TestSize.Level1)
+HWTEST_F(ResultTransporterTest, WriteFalse, TestSize.Level0)
 {
     WriterStruct writer = {WriteFunc, FlushFunc};
     OHOS::Profiler::Plugins::ResultTransporter reporter(name_, static_cast<WriterStructPtr>(&writer));

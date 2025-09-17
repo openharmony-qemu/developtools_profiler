@@ -55,7 +55,7 @@ void StackPreprocessTest::TearDown(void)
 @tc.desc: test StackPreprocess with overcceeding max matching interval.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessTest, StackPreprocessTest001, TestSize.Level1)
+HWTEST_F(StackPreprocessTest, StackPreprocessTest001, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_malloc_free_matching_interval(MAX_MATCH_INTERVAL + 1);
@@ -68,7 +68,7 @@ HWTEST_F(StackPreprocessTest, StackPreprocessTest001, TestSize.Level1)
 @tc.desc: test StackPreprocess with overcceeding max matching cnt.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessTest, StackPreprocessTest002, TestSize.Level1)
+HWTEST_F(StackPreprocessTest, StackPreprocessTest002, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_malloc_free_matching_cnt(MAX_MATCH_CNT + 1);
@@ -81,7 +81,7 @@ HWTEST_F(StackPreprocessTest, StackPreprocessTest002, TestSize.Level1)
 @tc.desc: test StackPreprocess with save_file set to true but no file pointer provided.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessTest, StackPreprocessTest003, TestSize.Level1)
+HWTEST_F(StackPreprocessTest, StackPreprocessTest003, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_save_file(true);

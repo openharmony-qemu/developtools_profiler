@@ -40,7 +40,7 @@ public:
  * @tc.desc: test HookService::ProtocolProc with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level1)
+HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level0)
 {
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);

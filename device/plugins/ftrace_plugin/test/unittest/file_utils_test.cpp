@@ -50,7 +50,7 @@ protected:
  * @tc.desc: test FileUtils::ReadFile with fd.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, ReadFileFromFd, TestSize.Level1)
+HWTEST_F(FileUtilsTest, ReadFileFromFd, TestSize.Level0)
 {
     int fd = open(path_.c_str(), O_RDONLY);
     ASSERT_GT(fd, 0);
@@ -65,7 +65,7 @@ HWTEST_F(FileUtilsTest, ReadFileFromFd, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with invalid fd.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, ReadFileFromInvalidFd, TestSize.Level1)
+HWTEST_F(FileUtilsTest, ReadFileFromInvalidFd, TestSize.Level0)
 {
     int fd = -1;
     std::string text = FileUtils::ReadFile(fd);
@@ -77,7 +77,7 @@ HWTEST_F(FileUtilsTest, ReadFileFromInvalidFd, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, ReadFileFromPath, TestSize.Level1)
+HWTEST_F(FileUtilsTest, ReadFileFromPath, TestSize.Level0)
 {
     std::string text = FileUtils::ReadFile(path_);
     EXPECT_EQ(text, data_);
@@ -88,7 +88,7 @@ HWTEST_F(FileUtilsTest, ReadFileFromPath, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with invalid path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, ReadFileFromInvalidPath, TestSize.Level1)
+HWTEST_F(FileUtilsTest, ReadFileFromInvalidPath, TestSize.Level0)
 {
     std::string path = "file-name-that-not-exists.txt";
     std::string text = FileUtils::ReadFile(path);
@@ -100,7 +100,7 @@ HWTEST_F(FileUtilsTest, ReadFileFromInvalidPath, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, WriteFileWithPath, TestSize.Level1)
+HWTEST_F(FileUtilsTest, WriteFileWithPath, TestSize.Level0)
 {
     std::string path = "temp.txt";
 
@@ -119,7 +119,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithPath, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, WriteFileWithInvalidPath, TestSize.Level1)
+HWTEST_F(FileUtilsTest, WriteFileWithInvalidPath, TestSize.Level0)
 {
     std::string path = "dir_not_exists/temp.txt";
 
@@ -132,7 +132,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithInvalidPath, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, WriteFileWithPathOptions, TestSize.Level1)
+HWTEST_F(FileUtilsTest, WriteFileWithPathOptions, TestSize.Level0)
 {
     std::string path = "temp.txt";
 
@@ -151,7 +151,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithPathOptions, TestSize.Level1)
  * @tc.desc: test FileUtils::ReadFile with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, WriteFileWithInvalidPathOptions, TestSize.Level1)
+HWTEST_F(FileUtilsTest, WriteFileWithInvalidPathOptions, TestSize.Level0)
 {
     std::string path = "dir_not_exists/temp.txt";
 
@@ -164,7 +164,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithInvalidPathOptions, TestSize.Level1)
  * @tc.desc: test FileUtils::ListDir with path.
  * @tc.type: FUNC
  */
-HWTEST_F(FileUtilsTest, ListDirNormal, TestSize.Level1)
+HWTEST_F(FileUtilsTest, ListDirNormal, TestSize.Level0)
 {
     std::string path = "/";
 

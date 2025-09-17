@@ -43,7 +43,7 @@ void RegisterTest::TearDown() {}
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, GetSupportedRegMask, TestSize.Level1)
+HWTEST_F(RegisterTest, GetSupportedRegMask, TestSize.Level0)
 {
     EXPECT_NE(GetSupportedRegMask(ArchType::ARCH_X86), GetSupportedRegMask(ArchType::ARCH_X86_64));
     EXPECT_NE(GetSupportedRegMask(ArchType::ARCH_ARM), GetSupportedRegMask(ArchType::ARCH_ARM64));
@@ -71,7 +71,7 @@ HWTEST_F(RegisterTest, GetSupportedRegMask, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetIP, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetIP, TestSize.Level0)
 {
 #if defined(target_cpu_x86_64)
     EXPECT_EQ(RegisterGetIP(ArchType::ARCH_X86_64), PERF_REG_X86_IP);
@@ -87,7 +87,7 @@ HWTEST_F(RegisterTest, RegisterGetIP, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetSP, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetSP, TestSize.Level0)
 {
 #if defined(target_cpu_x86_64)
     EXPECT_EQ(RegisterGetSP(ArchType::ARCH_X86_64), PERF_REG_X86_IP);
@@ -103,7 +103,7 @@ HWTEST_F(RegisterTest, RegisterGetSP, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetValue, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetValue, TestSize.Level0)
 {
     uint64_t value = 0;
     const u64 registers[4] = {1, 2, 3, 4};
@@ -123,7 +123,7 @@ HWTEST_F(RegisterTest, RegisterGetValue, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetSPValue, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetSPValue, TestSize.Level0)
 {
     uint64_t value = 0;
     uint64_t value2 = 0;
@@ -142,7 +142,7 @@ HWTEST_F(RegisterTest, RegisterGetSPValue, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetIPValue, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetIPValue, TestSize.Level0)
 {
     uint64_t value = 0;
     uint64_t value2 = 0;
@@ -161,7 +161,7 @@ HWTEST_F(RegisterTest, RegisterGetIPValue, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(RegisterTest, RegisterGetName, TestSize.Level1)
+HWTEST_F(RegisterTest, RegisterGetName, TestSize.Level0)
 {
     for (unsigned i = 0; i < PERF_REG_ARM64_MAX; i++) {
         EXPECT_EQ(RegisterGetName(i).empty(), false);

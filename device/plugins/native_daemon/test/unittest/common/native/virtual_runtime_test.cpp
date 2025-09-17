@@ -63,7 +63,7 @@ void VirtualRuntimeTest::TearDown()
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualRuntimeTest, SetSymbolsPaths, TestSize.Level1)
+HWTEST_F(VirtualRuntimeTest, SetSymbolsPaths, TestSize.Level0)
 {
     std::vector<std::string> symbolsSearchPaths;
     runtime_->SetSymbolsPaths(symbolsSearchPaths);
@@ -95,7 +95,7 @@ HWTEST_F(VirtualRuntimeTest, SetSymbolsPaths, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualRuntimeTest, GetSymbolsFiles, TestSize.Level1)
+HWTEST_F(VirtualRuntimeTest, GetSymbolsFiles, TestSize.Level0)
 {
     EXPECT_EQ(runtime_->GetSymbolsFiles().size(), 0u);
     runtime_->UpdateSymbols(TEST_FILE_ELF_FULL_PATH, nullptr);
@@ -148,7 +148,7 @@ void VirtualRuntimeTest::PrepareUserSymbol()
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level1)
+HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level0)
 {
     DfxSymbol symbol;
     PrepareKernelSymbol();
@@ -173,7 +173,7 @@ HWTEST_F(VirtualRuntimeTest, GetSymbol, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualRuntimeTest, GetThread, TestSize.Level1)
+HWTEST_F(VirtualRuntimeTest, GetThread, TestSize.Level0)
 {
     runtime_->GetThread(1, 2);
     runtime_->GetThread(3, 4);

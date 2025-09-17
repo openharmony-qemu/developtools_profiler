@@ -36,7 +36,7 @@ void HashListTest::TearDownTestCase(void) {}
 void HashListTest::SetUp() {}
 void HashListTest::TearDown() {}
 
-HWTEST_F(HashListTest, size, TestSize.Level1)
+HWTEST_F(HashListTest, size, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     ASSERT_TRUE(hashList.empty());
@@ -48,7 +48,7 @@ HWTEST_F(HashListTest, size, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, empty, TestSize.Level1)
+HWTEST_F(HashListTest, empty, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     EXPECT_TRUE(hashList.empty());
@@ -58,7 +58,7 @@ HWTEST_F(HashListTest, empty, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, count, TestSize.Level1)
+HWTEST_F(HashListTest, count, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     std::size_t temp {125};
@@ -69,7 +69,7 @@ HWTEST_F(HashListTest, count, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, begin, TestSize.Level1)
+HWTEST_F(HashListTest, begin, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -82,7 +82,7 @@ HWTEST_F(HashListTest, begin, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, cbegin, TestSize.Level1)
+HWTEST_F(HashListTest, cbegin, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -95,7 +95,7 @@ HWTEST_F(HashListTest, cbegin, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, end, TestSize.Level1)
+HWTEST_F(HashListTest, end, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -109,7 +109,7 @@ HWTEST_F(HashListTest, end, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, cend, TestSize.Level1)
+HWTEST_F(HashListTest, cend, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -124,7 +124,7 @@ HWTEST_F(HashListTest, cend, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, rbegin, TestSize.Level1)
+HWTEST_F(HashListTest, rbegin, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -137,7 +137,7 @@ HWTEST_F(HashListTest, rbegin, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, crbegin, TestSize.Level1)
+HWTEST_F(HashListTest, crbegin, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -150,7 +150,7 @@ HWTEST_F(HashListTest, crbegin, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, rend, TestSize.Level1)
+HWTEST_F(HashListTest, rend, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -164,7 +164,7 @@ HWTEST_F(HashListTest, rend, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, crend, TestSize.Level1)
+HWTEST_F(HashListTest, crend, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -179,7 +179,7 @@ HWTEST_F(HashListTest, crend, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, front, TestSize.Level1)
+HWTEST_F(HashListTest, front, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -194,7 +194,7 @@ HWTEST_F(HashListTest, front, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, back, TestSize.Level1)
+HWTEST_F(HashListTest, back, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -208,7 +208,7 @@ HWTEST_F(HashListTest, back, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, subscription, TestSize.Level1)
+HWTEST_F(HashListTest, subscription, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -221,7 +221,7 @@ HWTEST_F(HashListTest, subscription, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, find, TestSize.Level1)
+HWTEST_F(HashListTest, find, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -237,7 +237,7 @@ HWTEST_F(HashListTest, find, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, push_front, TestSize.Level1)
+HWTEST_F(HashListTest, push_front, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     constexpr std::size_t size_ {20};
@@ -248,7 +248,7 @@ HWTEST_F(HashListTest, push_front, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, push_back, TestSize.Level1)
+HWTEST_F(HashListTest, push_back, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     constexpr std::size_t size_ {20};
@@ -259,7 +259,7 @@ HWTEST_F(HashListTest, push_back, TestSize.Level1)
     }
 }
 
-HWTEST_F(HashListTest, pop_front, TestSize.Level1)
+HWTEST_F(HashListTest, pop_front, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -274,7 +274,7 @@ HWTEST_F(HashListTest, pop_front, TestSize.Level1)
     EXPECT_TRUE(hashList.empty());
 }
 
-HWTEST_F(HashListTest, pop_back, TestSize.Level1)
+HWTEST_F(HashListTest, pop_back, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {
@@ -289,7 +289,7 @@ HWTEST_F(HashListTest, pop_back, TestSize.Level1)
     EXPECT_TRUE(hashList.empty());
 }
 
-HWTEST_F(HashListTest, erase, TestSize.Level1)
+HWTEST_F(HashListTest, erase, TestSize.Level0)
 {
     HashList<std::size_t, std::size_t> hashList {size_};
     for (std::size_t curSize = 0; curSize < size_; ++curSize) {

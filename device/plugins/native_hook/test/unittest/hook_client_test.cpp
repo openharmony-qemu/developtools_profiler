@@ -41,7 +41,7 @@ public:
  * @tc.desc: Test hook malloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -95,7 +95,7 @@ HWTEST_F(NativeHookTest, NormalMallocHookTest, TestSize.Level1)
  * @tc.desc: Test hook realloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -126,7 +126,7 @@ HWTEST_F(NativeHookTest, NormalHookReallocTest, TestSize.Level1)
  * @tc.desc: Test hook calloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -153,7 +153,7 @@ HWTEST_F(NativeHookTest, NormalHookCallocTest, TestSize.Level1)
  * @tc.desc: Test hook valloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -172,7 +172,7 @@ HWTEST_F(NativeHookTest, NormalHookVallocTest, TestSize.Level1)
  * @tc.desc: Test hook memtrace normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookMemtraceTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookMemtraceTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -189,7 +189,7 @@ HWTEST_F(NativeHookTest, NormalHookMemtraceTest, TestSize.Level1)
  * @tc.desc: Test hook restrace normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookRestraceTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookRestraceTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -207,7 +207,7 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest, TestSize.Level1)
  * @tc.desc: Test hook aligned alloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -226,7 +226,7 @@ HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level1)
  * @tc.desc: Test multi hook malloc normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -256,7 +256,7 @@ HWTEST_F(NativeHookTest, NormalTest, TestSize.Level1)
  * @tc.desc: Test other process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -272,7 +272,7 @@ HWTEST_F(NativeHookTest, NormalOtherTest, TestSize.Level1)
  * @tc.desc: Test failure process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, FailureTest, TestSize.Level1)
+HWTEST_F(NativeHookTest, FailureTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(nullptr, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
@@ -285,7 +285,7 @@ HWTEST_F(NativeHookTest, FailureTest, TestSize.Level1)
  * @tc.desc: Test set and get malloc hook flag.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, MallocHookFlag, TestSize.Level1)
+HWTEST_F(NativeHookTest, MallocHookFlag, TestSize.Level0)
 {
     bool flag = true;
     bool flagPrev = ohos_malloc_hook_set_hook_flag(flag);
