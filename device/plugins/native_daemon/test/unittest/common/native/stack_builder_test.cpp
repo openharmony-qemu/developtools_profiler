@@ -44,7 +44,7 @@ void StackBuilderTest::TearDown() {}
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
+HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);
@@ -66,7 +66,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillIpTest, TestSize.Level1)
  * @tc.desc: test FpStackBuilder::FillJsSymbols normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackBuilderTest, FpStackBuilderFillJsSymbolsTest, TestSize.Level1)
+HWTEST_F(StackBuilderTest, FpStackBuilderFillJsSymbolsTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);
@@ -93,7 +93,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillJsSymbolsTest, TestSize.Level1)
  * @tc.desc: test FpStackBuilder::FillJsSymbols error case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1)
+HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);
@@ -121,7 +121,7 @@ HWTEST_F(StackBuilderTest, FpStackBuilderFillWrongJsSymbolsTest, TestSize.Level1
  * @tc.desc: test DwarfStackBuilder::ReplaceErrStack
  * @tc.type: FUNC
  */
-HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1)
+HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);
@@ -145,7 +145,7 @@ HWTEST_F(StackBuilderTest, DwarfStackBuilderReplaceErrStackTest, TestSize.Level1
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level1)
+HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);
@@ -175,7 +175,7 @@ HWTEST_F(StackBuilderTest, DirectorTest, TestSize.Level1)
  * @tc.desc: test BuildStackDirector::IsRecordUnwindable false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackBuilderTest, DirectorTestFalse, TestSize.Level1)
+HWTEST_F(StackBuilderTest, DirectorTestFalse, TestSize.Level0)
 {
     NativeHookConfig hookConfig;
     hookConfig.set_offline_symbolization(true);

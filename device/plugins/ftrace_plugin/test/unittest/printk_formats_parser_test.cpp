@@ -153,7 +153,7 @@ protected:
  * @tc.desc: test PrintkFormatsParser::PrintkFormatsParser with false case
  * @tc.type: FUNC
  */
-HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserFalse, TestSize.Level1)
+HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserFalse, TestSize.Level0)
 {
     std::string input = "test";
     EXPECT_FALSE(PrintkFormatsParser::GetInstance().Parse(input));
@@ -167,7 +167,7 @@ HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserFalse, TestSize.Level1)
  * @tc.desc: test PrintkFormatsParser:: normal with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormal, TestSize.Level1)
+HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormal, TestSize.Level0)
 {
     EXPECT_TRUE(PrintkFormatsParser::GetInstance().Parse(NORMAL_PRINTK_FORMATS));
 
@@ -185,7 +185,7 @@ HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormal, TestSize.Level1)
  * @tc.desc: test PrintkFormatsParser:: normal with Symbols case.
  * @tc.type: FUNC
  */
-HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserSymbolsNormal, TestSize.Level1)
+HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserSymbolsNormal, TestSize.Level0)
 {
     std::string input = "1 : \"test\"";
     EXPECT_NE(input, "");
@@ -201,7 +201,7 @@ HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserSymbolsNormal, TestSize.Lev
  * @tc.desc: test PrintkFormatsParser:: normal with rand case.
  * @tc.type: FUNC
  */
-HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormalRand, TestSize.Level1)
+HWTEST_F(PrintkFormatsParserTest, PrintkFormatsParserNormalRand, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         // 组成

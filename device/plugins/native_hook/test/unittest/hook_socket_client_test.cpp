@@ -44,7 +44,7 @@ public:
  * @tc.desc: test HookSocketClient::ProtocolProc with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level0)
 {
     ClientConfig config;
     Sampling sampler;
@@ -62,7 +62,7 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level1)
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level0)
 {
     ClientConfig config;
     Sampling sampler;
@@ -95,7 +95,7 @@ HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level1)
  * @tc.desc: test fd list size with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
@@ -114,7 +114,7 @@ HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level1)
  * @tc.desc: test HookSocketClient::GetSmbFds with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
@@ -135,7 +135,7 @@ HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level1)
  * @tc.desc: test HookSocketClient::GetEventFds with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
@@ -157,7 +157,7 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level1)
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level0)
 {
     ClientConfig config;
     Sampling sampler;
@@ -183,7 +183,7 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level1)
  * @tc.desc: test HookSocketClient::SendSimplifiedNmdInfo with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level1)
+HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
 {
     ClientConfig config;
     Sampling sampler;

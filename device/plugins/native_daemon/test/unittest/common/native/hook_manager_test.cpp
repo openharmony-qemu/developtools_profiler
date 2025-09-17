@@ -89,7 +89,7 @@ bool RunCommand(const std::string& cmd, std::string& content)
  * @tc.desc: test HookManager::RegisterAgentPlugin with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, RegisterPlugin, TestSize.Level1)
+HWTEST_F(HookManagerTest, RegisterPlugin, TestSize.Level0)
 {
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
@@ -106,7 +106,7 @@ HWTEST_F(HookManagerTest, RegisterPlugin, TestSize.Level1)
  * @tc.desc: test HookManager::LoadPlugin with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, LoadPlugin, TestSize.Level1)
+HWTEST_F(HookManagerTest, LoadPlugin, TestSize.Level0)
 {
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
@@ -125,7 +125,7 @@ HWTEST_F(HookManagerTest, LoadPlugin, TestSize.Level1)
  * @tc.desc: test HookManager::UnloadPlugin with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, UnloadPlugin, TestSize.Level1)
+HWTEST_F(HookManagerTest, UnloadPlugin, TestSize.Level0)
 {
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
@@ -144,7 +144,7 @@ HWTEST_F(HookManagerTest, UnloadPlugin, TestSize.Level1)
  * @tc.desc: test HookManager process with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, PluginSession, TestSize.Level1)
+HWTEST_F(HookManagerTest, PluginSession, TestSize.Level0)
 {
     std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
     ASSERT_TRUE(hookManager != nullptr);
@@ -176,7 +176,7 @@ HWTEST_F(HookManagerTest, PluginSession, TestSize.Level1)
  * @tc.desc: test CheckProcess with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
+HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level0)
 {
     HookManager hookManager;
     NativeHookConfig nativeConfig;
@@ -203,7 +203,7 @@ HWTEST_F(HookManagerTest, CheckProcess, TestSize.Level1)
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(HookManagerTest, CheckNmdInfo, TestSize.Level1)
+HWTEST_F(HookManagerTest, CheckNmdInfo, TestSize.Level0)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 1, "hiview");
     std::string ret;
@@ -232,7 +232,7 @@ HWTEST_F(HookManagerTest, CheckNmdInfo, TestSize.Level1)
  * @tc.desc: test CheckNmdInfoe002 when process is not exit.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerTest, CheckNmdInfo002, TestSize.Level1)
+HWTEST_F(HookManagerTest, CheckNmdInfo002, TestSize.Level0)
 {
     std::string cmd = CreateCommand(OUTPUT_PATH, 1, "test_profiler");
     std::string ret;

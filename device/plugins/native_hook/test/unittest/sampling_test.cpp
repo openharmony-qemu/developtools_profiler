@@ -33,7 +33,7 @@ public:
  * @tc.desc: test Sampler::InitSampling with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SamplerTest, InitSampling001, TestSize.Level1)
+HWTEST_F(SamplerTest, InitSampling001, TestSize.Level0)
 {
     Sampling sampler;
     sampler.InitSampling(512);
@@ -45,7 +45,7 @@ HWTEST_F(SamplerTest, InitSampling001, TestSize.Level1)
  * @tc.desc: test Sampler::InitSampling with abnormal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SamplerTest, InitSampling002, TestSize.Level1)
+HWTEST_F(SamplerTest, InitSampling002, TestSize.Level0)
 {
     Sampling sampler;
     sampler.SetRandomEngineSeed(1);
@@ -58,7 +58,7 @@ HWTEST_F(SamplerTest, InitSampling002, TestSize.Level1)
  * @tc.desc: test Sampler::InitSampling with boundary case.
  * @tc.type: FUNC
  */
-HWTEST_F(SamplerTest, InitSampling003, TestSize.Level1)
+HWTEST_F(SamplerTest, InitSampling003, TestSize.Level0)
 {
     Sampling sampler;
     sampler.InitSampling(1);
@@ -72,7 +72,7 @@ HWTEST_F(SamplerTest, InitSampling003, TestSize.Level1)
  * @tc.desc: test Sampler::Reset with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SamplerTest, Reset, TestSize.Level1)
+HWTEST_F(SamplerTest, Reset, TestSize.Level0)
 {
     Sampling sampler;
     sampler.InitSampling(4096);

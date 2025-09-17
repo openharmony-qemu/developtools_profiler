@@ -114,7 +114,7 @@ void UtilitiesTest::ExitThreads()
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringReplace, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringReplace, TestSize.Level0)
 {
     const std::string testString = "1234567890";
     EXPECT_EQ(StringReplace(testString, "1", ""), "234567890");
@@ -134,7 +134,7 @@ HWTEST_F(UtilitiesTest, StringReplace, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringSplit, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringSplit, TestSize.Level0)
 {
     std::string testString = "1,23,456,7890,";
     size_t testSize = testString.size();
@@ -157,7 +157,7 @@ HWTEST_F(UtilitiesTest, StringSplit, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, SubStringCount, TestSize.Level1)
+HWTEST_F(UtilitiesTest, SubStringCount, TestSize.Level0)
 {
     std::string testString = "1,22,333,4444,";
     EXPECT_EQ(SubStringCount(testString, ""), testString.size());
@@ -179,7 +179,7 @@ HWTEST_F(UtilitiesTest, SubStringCount, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringEndsWith, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringEndsWith, TestSize.Level0)
 {
     std::string testString = "1,22,333,4444,";
     EXPECT_EQ(StringEndsWith(testString, ""), true);
@@ -196,7 +196,7 @@ HWTEST_F(UtilitiesTest, StringEndsWith, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringStartsWith, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringStartsWith, TestSize.Level0)
 {
     std::string testString = "1,22,333,4444,";
     EXPECT_EQ(StringStartsWith(testString, ""), true);
@@ -213,7 +213,7 @@ HWTEST_F(UtilitiesTest, StringStartsWith, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, VectorToString, TestSize.Level1)
+HWTEST_F(UtilitiesTest, VectorToString, TestSize.Level0)
 {
     EXPECT_EQ(VectorToString<std::string>(
         {}), "<empty>");
@@ -251,7 +251,7 @@ HWTEST_F(UtilitiesTest, VectorToString, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, BufferToHexString, TestSize.Level1)
+HWTEST_F(UtilitiesTest, BufferToHexString, TestSize.Level0)
 {
     const unsigned char buf[] = "12345678";
 
@@ -288,7 +288,7 @@ HWTEST_F(UtilitiesTest, BufferToHexString, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, HexDump, TestSize.Level1)
+HWTEST_F(UtilitiesTest, HexDump, TestSize.Level0)
 {
     const unsigned char buf[] = "12345678";
     ScopeDebugLevel tempLogLevel(LEVEL_MUCH, true);
@@ -313,7 +313,7 @@ HWTEST_F(UtilitiesTest, HexDump, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringTrim, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringTrim, TestSize.Level0)
 {
     std::string test;
     EXPECT_STREQ(StringTrim(test = " a ").c_str(), "a");
@@ -332,7 +332,7 @@ HWTEST_F(UtilitiesTest, StringTrim, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, RecordStdout, TestSize.Level1)
+HWTEST_F(UtilitiesTest, RecordStdout, TestSize.Level0)
 {
     StdoutRecord stdoutRecord;
 
@@ -356,7 +356,7 @@ HWTEST_F(UtilitiesTest, RecordStdout, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, IsDigits, TestSize.Level1)
+HWTEST_F(UtilitiesTest, IsDigits, TestSize.Level0)
 {
     EXPECT_EQ(IsDigits(""), false);
     EXPECT_EQ(IsDigits("1"), true);
@@ -374,7 +374,7 @@ HWTEST_F(UtilitiesTest, IsDigits, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, IsHexxDigits, TestSize.Level1)
+HWTEST_F(UtilitiesTest, IsHexxDigits, TestSize.Level0)
 {
     EXPECT_EQ(IsHexDigits(""), false);
     EXPECT_EQ(IsHexDigits("1"), true);
@@ -394,7 +394,7 @@ HWTEST_F(UtilitiesTest, IsHexxDigits, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, IsSameCommand, TestSize.Level1)
+HWTEST_F(UtilitiesTest, IsSameCommand, TestSize.Level0)
 {
     EXPECT_EQ(IsSameCommand("", ""), false);
     EXPECT_EQ(IsSameCommand("a", ""), false);
@@ -411,7 +411,7 @@ HWTEST_F(UtilitiesTest, IsSameCommand, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, CompressFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, CompressFile, TestSize.Level0)
 {
     std::string srcPath = "./resource/testdata/elf_test_stripped_broken";
     std::string destPath = "./test.gz";
@@ -428,7 +428,7 @@ HWTEST_F(UtilitiesTest, CompressFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, UncompressFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, UncompressFile, TestSize.Level0)
 {
     std::string gzipPath = "./test.gz";
     std::string dataPath = "./test";
@@ -446,7 +446,7 @@ HWTEST_F(UtilitiesTest, UncompressFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, StringPrintf, TestSize.Level1)
+HWTEST_F(UtilitiesTest, StringPrintf, TestSize.Level0)
 {
     EXPECT_STREQ(StringPrintf("").c_str(), "");
     EXPECT_STREQ(StringPrintf("123").c_str(), "123");
@@ -467,7 +467,7 @@ HWTEST_F(UtilitiesTest, StringPrintf, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetEntriesInDir, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetEntriesInDir, TestSize.Level0)
 {
     std::vector<std::string> dirFileInfo;
     dirFileInfo = GetEntriesInDir("./");
@@ -479,7 +479,7 @@ HWTEST_F(UtilitiesTest, GetEntriesInDir, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetSubDirs, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetSubDirs, TestSize.Level0)
 {
     std::vector<std::string> subDirFileInfo;
     subDirFileInfo = GetSubDirs("../");
@@ -491,7 +491,7 @@ HWTEST_F(UtilitiesTest, GetSubDirs, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, IsDir, TestSize.Level1)
+HWTEST_F(UtilitiesTest, IsDir, TestSize.Level0)
 {
     bool ret = IsDir("../");
     EXPECT_EQ(ret, true);
@@ -502,7 +502,7 @@ HWTEST_F(UtilitiesTest, IsDir, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, IsPath, TestSize.Level1)
+HWTEST_F(UtilitiesTest, IsPath, TestSize.Level0)
 {
     bool ret = IsPath("./");
     EXPECT_EQ(ret, true);
@@ -513,7 +513,7 @@ HWTEST_F(UtilitiesTest, IsPath, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, PlatformPathConvert, TestSize.Level1)
+HWTEST_F(UtilitiesTest, PlatformPathConvert, TestSize.Level0)
 {
     EXPECT_GE(PlatformPathConvert("./").length(), 0u);
 }
@@ -523,7 +523,7 @@ HWTEST_F(UtilitiesTest, PlatformPathConvert, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, ToHex, TestSize.Level1)
+HWTEST_F(UtilitiesTest, ToHex, TestSize.Level0)
 {
     unsigned char hVal = 'G';
     EXPECT_STREQ(ToHex(hVal, 1, true).c_str(), "0x47");
@@ -534,7 +534,7 @@ HWTEST_F(UtilitiesTest, ToHex, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, CopyFromBufferAndMove, TestSize.Level1)
+HWTEST_F(UtilitiesTest, CopyFromBufferAndMove, TestSize.Level0)
 {
     unsigned char *buffer = new unsigned char[4];
     buffer[0] = '1';
@@ -551,7 +551,7 @@ HWTEST_F(UtilitiesTest, CopyFromBufferAndMove, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, ReadIntFromProcFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, ReadIntFromProcFile, TestSize.Level0)
 {
     std::string strPath = "/proc/sys/kernel/perf_cpu_time_max_percent";
     int strLen = 0;
@@ -563,7 +563,7 @@ HWTEST_F(UtilitiesTest, ReadIntFromProcFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, WriteIntToProcFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, WriteIntToProcFile, TestSize.Level0)
 {
     std::string strPath = "./hiperf_log.txt";
     int strVal = 0;
@@ -575,7 +575,7 @@ HWTEST_F(UtilitiesTest, WriteIntToProcFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, ReadFileToString, TestSize.Level1)
+HWTEST_F(UtilitiesTest, ReadFileToString, TestSize.Level0)
 {
     std::string strPath = "./hiperf_log.txt";
     EXPECT_NE(ReadFileToString(strPath).length(), 0u);
@@ -586,7 +586,7 @@ HWTEST_F(UtilitiesTest, ReadFileToString, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, WriteStringToFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, WriteStringToFile, TestSize.Level0)
 {
     std::string strPath = "./hiperf_log.txt";
     std::string content = "0";
@@ -598,7 +598,7 @@ HWTEST_F(UtilitiesTest, WriteStringToFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, Percentage, TestSize.Level1)
+HWTEST_F(UtilitiesTest, Percentage, TestSize.Level0)
 {
     EXPECT_EQ(Percentage(99, 100), 99);
 }
@@ -608,7 +608,7 @@ HWTEST_F(UtilitiesTest, Percentage, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, PowerOfTwo, TestSize.Level1)
+HWTEST_F(UtilitiesTest, PowerOfTwo, TestSize.Level0)
 {
     EXPECT_EQ(PowerOfTwo(1), true);
 }
@@ -618,7 +618,7 @@ HWTEST_F(UtilitiesTest, PowerOfTwo, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level0)
 {
     StartThreads(1);
     std::vector<pid_t> tids = GetSubthreadIDs(getpid());
@@ -636,7 +636,7 @@ HWTEST_F(UtilitiesTest, GetSubthreadIDs, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level0)
 {
     std::string filePath = TEST_PATH + "hiprofiler_cfg.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
@@ -648,7 +648,7 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile_FileNotFound, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_FileNotFound, TestSize.Level0)
 {
     std::string filePath = TEST_PATH + "hiprofiler_cfg22.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
@@ -660,7 +660,7 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile_FileNotFound, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidKey, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidKey, TestSize.Level0)
 {
     std::string filePath = TEST_PATH + "hiprofiler_cfg.json";
     auto res = GetValueFromJsonFile(filePath, "test");
@@ -672,7 +672,7 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidKey, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidFormat, TestSize.Level1)
+HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidFormat, TestSize.Level0)
 {
     std::string filePath = TEST_PATH +"hiprofiler_cfg_2.json";
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");

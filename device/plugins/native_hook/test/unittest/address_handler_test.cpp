@@ -36,7 +36,7 @@ public:
  * @tc.desc: Test LowAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, LowAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, LowAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<LowAddrHandler> handler = std::make_unique<LowAddrHandler>();
     uint64_t noExistaddr = TEST_ADDR - 1;
@@ -52,7 +52,7 @@ HWTEST_F(AddressHandlerTest, LowAddrHandlerTest, TestSize.Level1)
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<MidAddrHandler> handler = std::make_unique<MidAddrHandler>();
     uint64_t addr = 0xFF00000;
@@ -68,7 +68,7 @@ HWTEST_F(AddressHandlerTest, MidAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test WholeAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, WholeAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, WholeAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<WholeAddrHandler> handler = std::make_unique<WholeAddrHandler>();
     uint64_t noExistaddr = TEST_ADDR - 1;
@@ -83,7 +83,7 @@ HWTEST_F(AddressHandlerTest, WholeAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test LowAddrHandler and MidAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
     std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();
@@ -103,7 +103,7 @@ HWTEST_F(AddressHandlerTest, LowMidAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test LowAddrHandler and WholeAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
     std::unique_ptr<WholeAddrHandler> handlerWhole = std::make_unique<WholeAddrHandler>();
@@ -123,7 +123,7 @@ HWTEST_F(AddressHandlerTest, LowWholeAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test MidAddrHandler and WholeAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();
     std::unique_ptr<WholeAddrHandler> handlerWhole = std::make_unique<WholeAddrHandler>();
@@ -143,7 +143,7 @@ HWTEST_F(AddressHandlerTest, MidWholeAddrHandlerTest, TestSize.Level1)
  * @tc.desc: Test LowAddrHandler, MidAddrHandler and WholeAddrHandler.
  * @tc.type: FUNC
  */
-HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level1)
+HWTEST_F(AddressHandlerTest, AllAddrHandlerTest, TestSize.Level0)
 {
     std::unique_ptr<LowAddrHandler> handlerLow = std::make_unique<LowAddrHandler>();
     std::unique_ptr<MidAddrHandler> handlerMid = std::make_unique<MidAddrHandler>();

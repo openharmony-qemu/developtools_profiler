@@ -136,7 +136,7 @@ int VirtualThreadTest::PhdrCallBack(struct dl_phdr_info *info, size_t size, void
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, ParseMap, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, ParseMap, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
 
@@ -161,7 +161,7 @@ HWTEST_F(VirtualThreadTest, ParseMap, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, CreateMapItem, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, CreateMapItem, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
@@ -198,7 +198,7 @@ HWTEST_F(VirtualThreadTest, CreateMapItem, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, InheritMaps, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, InheritMaps, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
 
@@ -233,7 +233,7 @@ HWTEST_F(VirtualThreadTest, InheritMaps, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, FindMapByAddr, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, FindMapByAddr, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
@@ -274,7 +274,7 @@ HWTEST_F(VirtualThreadTest, FindMapByAddr, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, FindMapByFileInfo, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, FindMapByFileInfo, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();
@@ -317,7 +317,7 @@ HWTEST_F(VirtualThreadTest, FindMapByFileInfo, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, FindSymbolsFileByMap, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, FindSymbolsFileByMap, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> files;
     files["1.elf"] = std::make_unique<SymbolsFile>(SYMBOL_UNKNOW_FILE, "1.elf");
@@ -354,7 +354,7 @@ HWTEST_F(VirtualThreadTest, FindSymbolsFileByMap, TestSize.Level1)
  * @tc.desc:
  * @tc.type: FUNC
  */
-HWTEST_F(VirtualThreadTest, ReadRoMemory, TestSize.Level1)
+HWTEST_F(VirtualThreadTest, ReadRoMemory, TestSize.Level0)
 {
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles;
     std::shared_ptr<VirtualRuntime> runtime = std::make_shared<VirtualRuntime>();

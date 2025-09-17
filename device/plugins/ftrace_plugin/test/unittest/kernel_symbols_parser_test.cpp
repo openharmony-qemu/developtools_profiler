@@ -101,7 +101,7 @@ void visitor(const KernelSymbol& kernelSymbol)
  * @tc.desc: test KernelSymbolParser:: normal with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserSingle, TestSize.Level1)
+HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserSingle, TestSize.Level0)
 {
     std::unique_ptr<KernelSymbolsParser> kernelSymbols = std::make_unique<KernelSymbolsParser>();
     EXPECT_NE(kernelSymbols, nullptr);
@@ -117,7 +117,7 @@ HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserSingle, TestSize.Level1)
  * @tc.desc: test KernelSymbolsParser:: normal with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalMulti, TestSize.Level1)
+HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalMulti, TestSize.Level0)
 {
     std::unique_ptr<KernelSymbolsParser> kernelSymbols = std::make_unique<KernelSymbolsParser>();
     EXPECT_NE(kernelSymbols, nullptr);
@@ -133,7 +133,7 @@ HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalMulti, TestSize.Level
  * @tc.desc: test KernelSymbolsParser::KernelSymbolsParser with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalFalse, TestSize.Level1)
+HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalFalse, TestSize.Level0)
 {
     std::unique_ptr<KernelSymbolsParser> kernelSymbols = std::make_unique<KernelSymbolsParser>();
     EXPECT_NE(kernelSymbols, nullptr);
@@ -149,7 +149,7 @@ HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalFalse, TestSize.Level
  * @tc.desc: test KernelSymbolsParser::KernelSymbolsParser with other case.
  * @tc.type: FUNC
  */
-HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalOther, TestSize.Level1)
+HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalOther, TestSize.Level0)
 {
     std::unique_ptr<KernelSymbolsParser> kernelSymbols = std::make_unique<KernelSymbolsParser>();
     EXPECT_NE(kernelSymbols, nullptr);
@@ -168,7 +168,7 @@ HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalOther, TestSize.Level
  * @tc.desc: test KernelSymbolsParser:: normal with rand case.
  * @tc.type: FUNC
  */
-HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalRand, TestSize.Level1)
+HWTEST_F(KernelSymbolsParserTest, KernelSymbolsParserNormalRand, TestSize.Level0)
 {
     for (int i = 0; i < ROUNDS; i++) {
         // 组成

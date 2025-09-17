@@ -76,7 +76,7 @@ protected:
  * @tc.desc: test SubEventParser::IsSupport with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SubEventParserTest, IsSupportName, TestSize.Level1)
+HWTEST_F(SubEventParserTest, IsSupportName, TestSize.Level0)
 {
     EXPECT_FALSE(SubEventParser::GetInstance().IsSupport("xxx"));
     EXPECT_TRUE(SubEventParser::GetInstance().IsSupport("sched_switch"));
@@ -87,7 +87,7 @@ HWTEST_F(SubEventParserTest, IsSupportName, TestSize.Level1)
  * @tc.desc: test SubEventParser::SetupEvent with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SubEventParserTest, SetupEvent, TestSize.Level1)
+HWTEST_F(SubEventParserTest, SetupEvent, TestSize.Level0)
 {
     EventFormat format;
     FtraceParser ftraceParser;
@@ -105,7 +105,7 @@ HWTEST_F(SubEventParserTest, SetupEvent, TestSize.Level1)
  * @tc.desc: test SubEventParser::IsSupport with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SubEventParserTest, IsSupportId, TestSize.Level1)
+HWTEST_F(SubEventParserTest, IsSupportId, TestSize.Level0)
 {
     EventFormat format;
     FtraceParser ftraceParser;
@@ -124,7 +124,7 @@ HWTEST_F(SubEventParserTest, IsSupportId, TestSize.Level1)
  * @tc.desc: test SubEventParser::ParseEvent with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(SubEventParserTest, ParseEvent, TestSize.Level1)
+HWTEST_F(SubEventParserTest, ParseEvent, TestSize.Level0)
 {
     EventFormat format;
     FtraceParser ftraceParser;

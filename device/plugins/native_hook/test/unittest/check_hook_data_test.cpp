@@ -495,7 +495,7 @@ public:
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0080, Function | MediumTest | Level0)
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 30;
@@ -781,7 +781,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0110, Function | MediumTest | Lev
  * @tc.desc: Test hook statistics data normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Level0)
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
@@ -843,7 +843,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0120, Function | MediumTest | Lev
  * @tc.desc: Test hook offline symbolization data normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0130, Function | MediumTest | Level0)
 {
     for (size_t i = 0; i < 2; ++i) {
         unwindDepth_ = 10;
@@ -1070,7 +1070,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0170, Function | MediumTest | Lev
  * @tc.desc: Test hook statistics data normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0180, Function | MediumTest | Level0)
 {
     for (size_t i = 0; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
@@ -1180,7 +1180,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0190, Function | MediumTest | Lev
  * @tc.desc: Test hook js statistics data normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Level0)
 {
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
@@ -1242,7 +1242,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0200, Function | MediumTest | Lev
  * @tc.desc: Test no data queue normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Level0)
 {
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
@@ -1303,7 +1303,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0210, Function | MediumTest | Lev
  * @tc.desc: Test dumpdata normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Level0)
 {
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         unwindDepth_ = 10;
@@ -1364,7 +1364,7 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0220, Function | MediumTest | Lev
  * @tc.type: FUNC
  */
 #ifdef __aarch64__
-HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level1)
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Level0)
 {
     for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
         modeIndex_ = i;

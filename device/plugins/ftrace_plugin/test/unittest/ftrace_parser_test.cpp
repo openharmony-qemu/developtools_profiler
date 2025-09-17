@@ -100,7 +100,7 @@ bool FlushFunc(WriterStructPtr writer)
  * @tc.desc: test FtraceParser::Init with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, Init, TestSize.Level1)
+HWTEST_F(FtraceParserTest, Init, TestSize.Level0)
 {
     FtraceParser parser;
     EXPECT_TRUE(parser.Init());
@@ -111,7 +111,7 @@ HWTEST_F(FtraceParserTest, Init, TestSize.Level1)
  * @tc.desc: test FtraceParser::Init with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, SetupEvent, TestSize.Level1)
+HWTEST_F(FtraceParserTest, SetupEvent, TestSize.Level0)
 {
     FtraceParser parser;
     EXPECT_TRUE(parser.SetupEvent("sched", "sched_switch"));
@@ -122,7 +122,7 @@ HWTEST_F(FtraceParserTest, SetupEvent, TestSize.Level1)
  * @tc.desc: test FtraceParser::ParseSavedTgid with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, ParseSavedTgid, TestSize.Level1)
+HWTEST_F(FtraceParserTest, ParseSavedTgid, TestSize.Level0)
 {
     FtraceParser parser;
     EXPECT_TRUE(parser.ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids()));
@@ -133,7 +133,7 @@ HWTEST_F(FtraceParserTest, ParseSavedTgid, TestSize.Level1)
  * @tc.desc: test FtraceParser::ParseSavedCmdlines with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, ParseSavedCmdlines, TestSize.Level1)
+HWTEST_F(FtraceParserTest, ParseSavedCmdlines, TestSize.Level0)
 {
     FtraceParser parser;
     EXPECT_TRUE(parser.ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines()));
@@ -144,7 +144,7 @@ HWTEST_F(FtraceParserTest, ParseSavedCmdlines, TestSize.Level1)
  * @tc.desc: test FtraceParser::ParsePerCpuStatus with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level1)
+HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         FtraceParser parser;
@@ -161,7 +161,7 @@ HWTEST_F(FtraceParserTest, ParsePerCpuStatus, TestSize.Level1)
  * @tc.desc: test SubEventParser::ParsePage with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level1)
+HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level0)
 {
     std::vector<uint8_t> buffer(PAGE_SIZE, 0);
     std::string traceRaw;

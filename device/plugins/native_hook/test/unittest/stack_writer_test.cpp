@@ -115,7 +115,7 @@ void RandData(uint8_t* data, int size)
  * @tc.desc: Write data to shared memory through writer.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteaNormalTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteaNormalTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1);
     EXPECT_NE(write->shareMemoryBlock_, nullptr);
@@ -139,7 +139,7 @@ HWTEST_F(StackWriterTest, WriteaNormalTest, TestSize.Level1)
  * @tc.desc: Write failure process.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteaFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteaFalseTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1);
     EXPECT_EQ(write->shareMemoryBlock_, nullptr);
@@ -163,7 +163,7 @@ HWTEST_F(StackWriterTest, WriteaFalseTest, TestSize.Level1)
  * @tc.desc: Write data to shared memory through writer.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteProcessTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteProcessTest, TestSize.Level0)
 {
     uint8_t data[BUFFER_SIZE];
     RandData(data, BUFFER_SIZE);
@@ -197,7 +197,7 @@ HWTEST_F(StackWriterTest, WriteProcessTest, TestSize.Level1)
  * @tc.desc: Write data to shared memory with blocked mode.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, true);
     EXPECT_NE(write->shareMemoryBlock_, nullptr);
@@ -224,7 +224,7 @@ HWTEST_F(StackWriterTest, WriterSyncTest, TestSize.Level1)
  * @tc.desc: test WriteWithPayloadTimeout with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutNormalTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutNormalTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1, false);
     EXPECT_NE(write->shareMemoryBlock_, nullptr);
@@ -240,7 +240,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutNormalTest, TestSize.Level1)
  * @tc.desc: test WriteWithPayloadTimeout with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutFalseTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1, true);
     EXPECT_EQ(write->shareMemoryBlock_, nullptr);
@@ -258,7 +258,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutFalseTest, TestSize.Level1)
  * @tc.desc: test WriteWithPayloadTimeout with two shared memory block.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutTwoSmbTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutTwoSmbTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -278,7 +278,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutTwoSmbTest, TestSize.Level1)
  * @tc.desc: test WriteWithPayloadTimeout with three shared memory block.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -303,7 +303,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbTest, TestSize.Level1)
  * @tc.desc: test WriteWithPayloadTimeout with three shared memory block false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbFalseTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -327,7 +327,7 @@ HWTEST_F(StackWriterTest, WriteWithPayloadTimeoutMultiSmbFalseTest, TestSize.Lev
  * @tc.desc: test WriteTimeout with two shared memory block.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteTimeoutTwoSmbTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteTimeoutTwoSmbTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -345,7 +345,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutTwoSmbTest, TestSize.Level1)
  * @tc.desc: test WriteTimeout with three shared memory block.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -367,7 +367,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbTest, TestSize.Level1)
  * @tc.desc: test WriteTimeout with three shared memory block false case.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbFalseTest, TestSize.Level0)
 {
     uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
     uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
@@ -391,7 +391,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutMultiSmbFalseTest, TestSize.Level1)
  * @tc.desc: Write data to shared memory through writer.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteTimeoutNormalTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteTimeoutNormalTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, g_smbFd, -1);
     EXPECT_NE(write->shareMemoryBlock_, nullptr);
@@ -408,7 +408,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutNormalTest, TestSize.Level1)
  * @tc.desc: WriteTimeout failure test.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, WriteTimeoutFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, WriteTimeoutFalseTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>(PLUGIN_NAME, SMB_SIZE, 0, -1);
     EXPECT_EQ(write->shareMemoryBlock_, nullptr);
@@ -425,7 +425,7 @@ HWTEST_F(StackWriterTest, WriteTimeoutFalseTest, TestSize.Level1)
  * @tc.desc: StackWriter failure test.
  * @tc.type: FUNC
  */
-HWTEST_F(StackWriterTest, StackWriterFalseTest, TestSize.Level1)
+HWTEST_F(StackWriterTest, StackWriterFalseTest, TestSize.Level0)
 {
     auto write = std::make_shared<StackWriter>("", SMB_SIZE, 0, -1);
     EXPECT_EQ(write->shareMemoryBlock_, nullptr);

@@ -92,7 +92,7 @@ bool FlushFunc(WriterStructPtr writer)
  * @tc.desc: test FtraceFsOps::GetFtraceRoot with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetFtraceRoot, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetFtraceRoot, TestSize.Level0)
 {
     std::string path = FtraceFsOps::GetInstance().GetFtraceRoot();
     ASSERT_STRNE(path.c_str(), "");
@@ -104,7 +104,7 @@ HWTEST_F(FtraceFsOpsTest, GetFtraceRoot, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetKernelSymbols with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetKernelSymbols, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetKernelSymbols, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetKernelSymbols();
     EXPECT_STRNE(content.c_str(), "");
@@ -115,7 +115,7 @@ HWTEST_F(FtraceFsOpsTest, GetKernelSymbols, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPrintkFormats with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsNormal, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetPrintkFormats();
     EXPECT_STRNE(content.c_str(), "");
@@ -126,7 +126,7 @@ HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPrintkFormats with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -143,7 +143,7 @@ HWTEST_F(FtraceFsOpsTest, GetPrintkFormatsFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetProcessComm with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetProcessCommNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetProcessCommNormal, TestSize.Level0)
 {
     int32_t pid = getpid();
     std::string content = FtraceFsOps::GetInstance().GetProcessComm(pid);
@@ -155,7 +155,7 @@ HWTEST_F(FtraceFsOpsTest, GetProcessCommNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetProcessComm with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetProcessCommFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetProcessCommFalse, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetProcessComm(-1);
     EXPECT_STREQ(content.c_str(), "");
@@ -166,7 +166,7 @@ HWTEST_F(FtraceFsOpsTest, GetProcessCommFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetThreadComm with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetThreadCommNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetThreadCommNormal, TestSize.Level0)
 {
     int32_t pid = getpid();
     std::string content = FtraceFsOps::GetInstance().GetThreadComm(pid, pid);
@@ -178,7 +178,7 @@ HWTEST_F(FtraceFsOpsTest, GetThreadCommNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetThreadComm with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetThreadCommFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetThreadCommFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     std::string content = ftraceFsOps.GetThreadComm(-1, -1);
@@ -197,7 +197,7 @@ HWTEST_F(FtraceFsOpsTest, GetThreadCommFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetSavedCmdLines with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesNormal, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetSavedCmdLines();
     EXPECT_STRNE(content.c_str(), "");
@@ -208,7 +208,7 @@ HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetSavedCmdLines with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -225,7 +225,7 @@ HWTEST_F(FtraceFsOpsTest, GetSavedCmdLinesFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetSavedTgids with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetSavedTgidsNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetSavedTgidsNormal, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetSavedTgids();
     EXPECT_STRNE(content.c_str(), "");
@@ -236,7 +236,7 @@ HWTEST_F(FtraceFsOpsTest, GetSavedTgidsNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetSavedTgids with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetSavedTgidsFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetSavedTgidsFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -253,7 +253,7 @@ HWTEST_F(FtraceFsOpsTest, GetSavedTgidsFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPerCpuStats with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         std::string content = FtraceFsOps::GetInstance().GetPerCpuStats(0);
@@ -266,7 +266,7 @@ HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPerCpuStats with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsFalse, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         FtraceFsOps ftraceFsOps;
@@ -288,7 +288,7 @@ HWTEST_F(FtraceFsOpsTest, GetPerCpuStatsFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetRawTracePath with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetRawTracePath, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetRawTracePath, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetRawTracePath(0);
     EXPECT_STRNE(content.c_str(), "");
@@ -299,7 +299,7 @@ HWTEST_F(FtraceFsOpsTest, GetRawTracePath, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPageHeaderFormat with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         std::string content = FtraceFsOps::GetInstance().GetPageHeaderFormat();
@@ -312,7 +312,7 @@ HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPageHeaderFormat with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -329,7 +329,7 @@ HWTEST_F(FtraceFsOpsTest, GetPageHeaderFormatFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetEventDataFormat with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetEventDataFormatNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetEventDataFormatNormal, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetEventDataFormat("irq", "softirq_entry");
     EXPECT_STRNE(content.c_str(), "");
@@ -340,7 +340,7 @@ HWTEST_F(FtraceFsOpsTest, GetEventDataFormatNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetEventDataFormat with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetEventDataFormatFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetEventDataFormatFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     std::string content = ftraceFsOps.GetEventDataFormat("test_type", "test_name");
@@ -360,7 +360,7 @@ HWTEST_F(FtraceFsOpsTest, GetEventDataFormatFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPlatformEvents with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPlatformEventsNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPlatformEventsNormal, TestSize.Level0)
 {
     std::vector<std::pair<std::string, std::string>> event = FtraceFsOps::GetInstance().GetPlatformEvents();
     EXPECT_GT(event.size(), static_cast<size_t>(0));
@@ -371,7 +371,7 @@ HWTEST_F(FtraceFsOpsTest, GetPlatformEventsNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetPlatformEvents with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetPlatformEventsFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetPlatformEventsFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -388,7 +388,7 @@ HWTEST_F(FtraceFsOpsTest, GetPlatformEventsFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::ClearTraceBuffer with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, ClearTraceBufferNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, ClearTraceBufferNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().ClearTraceBuffer());
 }
@@ -398,7 +398,7 @@ HWTEST_F(FtraceFsOpsTest, ClearTraceBufferNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::ClearTraceBuffer with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, ClearTraceBufferFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, ClearTraceBufferFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -413,7 +413,7 @@ HWTEST_F(FtraceFsOpsTest, ClearTraceBufferFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetRecordCmdOption with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordCmdOption(true));
@@ -431,7 +431,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetRecordCmdOption with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -448,7 +448,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordCmdOptionFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetRecordTgidOption with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         EXPECT_TRUE(FtraceFsOps::GetInstance().SetRecordTgidOption(true));
@@ -467,7 +467,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetRecordTgidOption with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -484,7 +484,7 @@ HWTEST_F(FtraceFsOpsTest, SetRecordTgidOptionFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetBufferSizeKb with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         EXPECT_TRUE(FtraceFsOps::GetInstance().SetBufferSizeKb(4000));
@@ -505,7 +505,7 @@ HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetBufferSizeKb with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -520,7 +520,7 @@ HWTEST_F(FtraceFsOpsTest, SetBufferSizeKbFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetTraceClock with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetTraceClockNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetTraceClockNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().SetTraceClock("boot"));
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/trace_clock";
@@ -533,7 +533,7 @@ HWTEST_F(FtraceFsOpsTest, SetTraceClockNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::SetTraceClock with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, SetTraceClockFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, SetTraceClockFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -548,7 +548,7 @@ HWTEST_F(FtraceFsOpsTest, SetTraceClockFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::GetTraceClock with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, GetTraceClock, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, GetTraceClock, TestSize.Level0)
 {
     std::string content = FtraceFsOps::GetInstance().GetTraceClock();
     EXPECT_STRNE(content.c_str(), "");
@@ -559,7 +559,7 @@ HWTEST_F(FtraceFsOpsTest, GetTraceClock, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::AppendSetEvent with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, AppendSetEventNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, AppendSetEventNormal, TestSize.Level0)
 {
     if (!FtraceFsOps::GetInstance().IsHmKernel()) {
         EXPECT_TRUE(FtraceFsOps::GetInstance().ClearSetEvent());
@@ -575,7 +575,7 @@ HWTEST_F(FtraceFsOpsTest, AppendSetEventNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::AppendSetEvent with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, AppendSetEventFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, AppendSetEventFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -590,7 +590,7 @@ HWTEST_F(FtraceFsOpsTest, AppendSetEventFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::EnableEvent with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, EnableEventNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, EnableEventNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().EnableEvent("sched", "sched_switch"));
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/events/sched/sched_switch/enable";
@@ -603,7 +603,7 @@ HWTEST_F(FtraceFsOpsTest, EnableEventNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::EnableEvent with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, EnableEventFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, EnableEventFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -618,7 +618,7 @@ HWTEST_F(FtraceFsOpsTest, EnableEventFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::DisableEvent with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, DisableEventNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, DisableEventNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().DisableEvent("sched", "sched_switch"));
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/events/sched/sched_switch/enable";
@@ -631,7 +631,7 @@ HWTEST_F(FtraceFsOpsTest, DisableEventNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::DisableEvent with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, DisableEventFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, DisableEventFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -646,7 +646,7 @@ HWTEST_F(FtraceFsOpsTest, DisableEventFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::EnableTracing with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, EnableTracingNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, EnableTracingNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().EnableTracing());
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/tracing_on";
@@ -659,7 +659,7 @@ HWTEST_F(FtraceFsOpsTest, EnableTracingNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::EnableTracing with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, EnableTracingFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, EnableTracingFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");
@@ -674,7 +674,7 @@ HWTEST_F(FtraceFsOpsTest, EnableTracingFalse, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::DisableTracing with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, DisableTracingNormal, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, DisableTracingNormal, TestSize.Level0)
 {
     EXPECT_TRUE(FtraceFsOps::GetInstance().DisableTracing());
     std::string path = FtraceFsOps::GetInstance().ftraceRoot_ + "/tracing_on";
@@ -687,7 +687,7 @@ HWTEST_F(FtraceFsOpsTest, DisableTracingNormal, TestSize.Level1)
  * @tc.desc: test FtraceFsOps::DisableTracing with false case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceFsOpsTest, DisableTracingFalse, TestSize.Level1)
+HWTEST_F(FtraceFsOpsTest, DisableTracingFalse, TestSize.Level0)
 {
     FtraceFsOps ftraceFsOps;
     ftraceFsOps.SetFtraceRoot("");

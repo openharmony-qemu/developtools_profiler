@@ -49,7 +49,7 @@ void HookRecordFactoryTest::TearDown()
  * @tc.desc: test HookRecordFactory::GetHookRecord with free simple message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetFreeSimpRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, GetFreeSimpRecord, TestSize.Level0)
 {
     int8_t addr = 1;
     int8_t data[] = {addr};
@@ -63,7 +63,7 @@ HWTEST_F(HookRecordFactoryTest, GetFreeSimpRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::GetHookRecord with js message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetJsRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, GetJsRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = JS_STACK_MSG;
@@ -81,7 +81,7 @@ HWTEST_F(HookRecordFactoryTest, GetJsRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::GetHookRecord with malloc message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = MALLOC_MSG;
@@ -99,7 +99,7 @@ HWTEST_F(HookRecordFactoryTest, GetMallocRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::GetHookRecord with jemalloc stats message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetNmdRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, GetNmdRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = NMD_MSG;
@@ -117,7 +117,7 @@ HWTEST_F(HookRecordFactoryTest, GetNmdRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::GetHookRecord with free message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, GetFreeRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, GetFreeRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = FREE_MSG;
@@ -135,7 +135,7 @@ HWTEST_F(HookRecordFactoryTest, GetFreeRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::SaveHookRecord with malloc message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, ReturnMallocRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, ReturnMallocRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = MALLOC_MSG;
@@ -155,7 +155,7 @@ HWTEST_F(HookRecordFactoryTest, ReturnMallocRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::SaveHookRecord with mmap message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, ReturnMmapRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, ReturnMmapRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = MMAP_MSG;
@@ -175,7 +175,7 @@ HWTEST_F(HookRecordFactoryTest, ReturnMmapRecord, TestSize.Level1)
  * @tc.desc: test HookRecordFactory::SaveHookRecord with end message.
  * @tc.type: FUNC
  */
-HWTEST_F(HookRecordFactoryTest, ReturnEndRecord, TestSize.Level1)
+HWTEST_F(HookRecordFactoryTest, ReturnEndRecord, TestSize.Level0)
 {
     StackRawData rawdata;
     rawdata.type = END_MSG;

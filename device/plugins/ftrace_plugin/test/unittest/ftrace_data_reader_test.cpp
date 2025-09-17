@@ -75,7 +75,7 @@ protected:
  * @tc.desc: test FtraceDataReader::Read with normal case.
  * @tc.type: FUNC
  */
-HWTEST_F(FtraceDataReaderTest, ReadNormal, TestSize.Level1)
+HWTEST_F(FtraceDataReaderTest, ReadNormal, TestSize.Level0)
 {
     FtraceDataReader reader(path_);
     std::vector<uint8_t> zeros(PAGE_SIZE, 0);
