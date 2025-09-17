@@ -977,4 +977,30 @@ HWTEST_F(CpuDataPluginTest, TestPid, TestSize.Level1)
     plugin1.Stop();
     plugin2.Stop();
 }
+
+/**
+ * @tc.name: cpu plugin
+ * @tc.desc: cpu system information test for SetSystemCpuUsage.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CpuDataPluginTest, TestSetSystemCpuUsage, TestSize.Level1)
+{
+    CpuData cpuData;
+    CpuDataPlugin cpuPlugin;
+    CpuTimeData cpuTimeData = {1966195, 1702753, 2345678, 1458898};
+    CpuLoadData cpuLoadData;
+    cpuPlugin.SetSystemCpuUsage(*cpuData.mutable_cpu_usage_info(), cpuLoadData, cpuTimeData);
+    CpuUsageInfo cpuUsageInfo1 = cpuData.cpu_usage_info();
+    EXPECT_EQ(cpuUsageInfo1.prev_system_cpu_time_ms(), 0);
+    EXPECT_EQ(cpuUsageInfo1.prev_system_boot_time_ms(), 0);
+    EXPECT_EQ(cpuUsageInfo1.system_cpu_time_ms(), 2345678);
+    EXPECT_EQ(cpuUsageInfo1.system_boot_time_ms(), 1458898);
+    EXPECT_EQ(cpuUsageInfo1.cores_size(), 0);
+    cpuPlugin.SetCpuCoreInfo("cpu 5", *cpuData.mutable_cpu_usage_info(), cpuTimeData);
+    cpuUsageInfo1 = cpuData.cpu_usage_info();
+    ASSERT_EQ(cpuUsageInfo1.cores_size(), 1);
+    CpuCoreUsageInfo cpuCoreUsageInfo = cpuUsageInfo1.cores()[0];
+    EXPECT_EQ(cpuCoreUsageInfo.cpu_core(), 5); // 5: cpu core
+}
+
 } // namespace

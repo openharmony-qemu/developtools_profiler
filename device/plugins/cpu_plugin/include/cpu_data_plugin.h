@@ -121,6 +121,10 @@ private:
         path_ = path;
     }
     void SetFreqPath(std::string path);
+    template <typename T>
+    bool SetSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadData, CpuTimeData& cpuTimeData);
+    template <typename T>
+    bool SetCpuCoreInfo(const std::string& cpuUsageStr, T& cpuUsageInfo, CpuTimeData& cpuTimeData);
 
 private:
     /* data */

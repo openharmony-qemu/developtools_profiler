@@ -83,6 +83,9 @@ private:
     bool CheckConfig();
     bool HandleFfrtProfilerContext(const std::shared_ptr<FfrtProfilerCtx>& ctx);
     clockid_t GetClockId(FfrtProfilerConfig::ClockId clockType);
+    bool CheckPid(std::set<int32_t>& pidCache);
+    bool CheckStartupProcessName();
+    bool CheckRestartProcessName(std::set<int32_t>& pidCache);
 
 private:
     std::shared_ptr<FfrtProfilerSocketService> socketService_{nullptr};

@@ -227,6 +227,7 @@ private:
     bool RemoveSpaces(char** p);
     uint32_t ParseLineFields(const std::string& line);
     uint32_t ParseLineFields(const std::string& line, std::string& name);
+    void SetIoInfo(std::shared_ptr<DiskStats>& ioInfo, const std::string& name);
 
 private:
     std::mutex mutex_;
