@@ -36,7 +36,7 @@ bool NetworkProtocolProcFuzzTest(const uint8_t* data, size_t size)
     auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
     auto socketService = std::make_shared<NetworkProfilerSocketService>(networkProfilerMgr);
     SocketContext socketContext;
-    int8_t config = provider.ConsumeIntegral<int8_t>();
+    int config = provider.ConsumeIntegral<int>();
     uint32_t pnum = provider.ConsumeIntegral<uint32_t>();
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     bool ret1 = socketService->ProtocolProc(socketContext, pnum, ptr, sizeof(int));
