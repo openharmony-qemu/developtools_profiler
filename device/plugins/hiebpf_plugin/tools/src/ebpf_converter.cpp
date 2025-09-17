@@ -91,49 +91,10 @@ EbpfConverter::~EbpfConverter()
     }
 }
 
-void EbpfConverter::StartParsing()
+void EbpfConverter::WriteEventParsingToFile(FILE *file)
 {
-    if (access(inputPath_.c_str(), R_OK) != 0) {
-        std::cout << "the input file path is invalid" << std::endl;
-        return;
-    }
-    fd_ = open(inputPath_.c_str(), O_RDONLY);
-    if (fd_ < 0) {
-        std::cout << "open " << inputPath_ << " failed" << std::endl;
-        return;
-    }
-    char magic[HEADER_MAGIC + 1];
-    if (memset_s(magic, sizeof(magic), 0, sizeof(magic)) != EOK) {
-        close(fd_);
-        std::cout << "memset_s error at StartParsing" << std::endl;
-        return;
-    }
-    CHK(Read(reinterpret_cast<void*>(&magic), sizeof(magic) - 1));
-    outData_ << "magic: " << magic << '\n';
-    HeaderDataItem header = {};
-    CHK(Read(reinterpret_cast<void*>(&header), sizeof(header)));
-    outData_  << "headSize: " << header.headSize << '\n' << "version: " << header.version << '\n'
-        << "clock: " << header.clock << '\n' << "cmdLineLen: " << header.cmdLineLen;
-
-    char cmdline[header.cmdLineLen + 1];
-    if (header.cmdLineLen > 0) {
-        size_t dataLen = sizeof(cmdline) > 1 ? static_cast<size_t>(sizeof(cmdline) - 1) : 0;
-        CHK(Read(reinterpret_cast<void*>(cmdline), dataLen));
-        outData_ << "\ncmdline: " << cmdline << '\n';
-    }
-    fileSize_ = lseek(fd_, header.headSize, SEEK_SET);
-
-    FILE *file = fopen(outputPath_.c_str(), "w");
-    if (file == nullptr) {
-        std::cout << "create " << outputPath_ << " failed" << std::endl;
-        return;
-    }
-
-    while (true) {
-        uint32_t type = 0;
-        if (read(fd_, reinterpret_cast<void*>(&type), sizeof(type)) <= 0) {
-            break;
-        }
+    uint32_t type = 0;
+    while (read(fd_, reinterpret_cast<void*>(&type), sizeof(type)) > 0) {
         switch (type) {
             case MAPSTRACE: {
                 EventMapsParsing();
@@ -176,6 +137,61 @@ void EbpfConverter::StartParsing()
     }
     fd_ = -1;
     fileSize_ = 0;
+}
+
+bool EbpfConverter::ReadMagicHeader()
+{
+    if (access(inputPath_.c_str(), R_OK) != 0) {
+        std::cout << "the input file path is invalid" << std::endl;
+        return false;
+    }
+    fd_ = open(inputPath_.c_str(), O_RDONLY);
+    if (fd_ < 0) {
+        std::cout << "open " << inputPath_ << " failed" << std::endl;
+        return false;
+    }
+    char magic[HEADER_MAGIC + 1];
+    if (memset_s(magic, sizeof(magic), 0, sizeof(magic)) != EOK) {
+        close(fd_);
+        std::cout << "memset_s error at StartParsing" << std::endl;
+        return false;
+    }
+    if (!Read(reinterpret_cast<void*>(&magic), sizeof(magic) - 1)) {
+        close(fd_);
+        return false;
+    }
+    outData_ << "magic: " << magic << '\n';
+    HeaderDataItem header = {};
+    if (!Read(reinterpret_cast<void*>(&header), sizeof(header))) {
+        close(fd_);
+        return false;
+    }
+    outData_  << "headSize: " << header.headSize << '\n' << "version: " << header.version << '\n'
+        << "clock: " << header.clock << '\n' << "cmdLineLen: " << header.cmdLineLen;
+    char cmdline[header.cmdLineLen + 1];
+    if (header.cmdLineLen > 0) {
+        size_t dataLen = sizeof(cmdline) > 1 ? static_cast<size_t>(sizeof(cmdline) - 1) : 0;
+        if (!Read(reinterpret_cast<void*>(cmdline), dataLen)) {
+            close(fd_);
+            return false;
+        }
+        outData_ << "\ncmdline: " << cmdline << '\n';
+    }
+    fileSize_ = lseek(fd_, header.headSize, SEEK_SET);
+    return true;
+}
+
+void EbpfConverter::StartParsing()
+{
+    if (!ReadMagicHeader()) {
+        return;
+    }
+    FILE *file = fopen(outputPath_.c_str(), "w");
+    if (file == nullptr) {
+        std::cout << "create " << outputPath_ << " failed" << std::endl;
+        return;
+    }
+    WriteEventParsingToFile(file);
     std::cout << "Data read successfully, output..." << std::endl;
     size_t len = outData_.str().size();
     if (fwrite(outData_.str().c_str(), 1, len, file) != len) {

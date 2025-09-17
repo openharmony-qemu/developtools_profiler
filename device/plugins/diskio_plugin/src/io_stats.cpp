@@ -155,6 +155,54 @@ bool IoStats::ParseIoStats()
     return true;
 }
 
+void IoStats::SetIoInfo(std::shared_ptr<DiskStats>& ioInfo, const std::string& name)
+{
+    int index = 0;
+    ioInfo->major_ = fields_[index];
+    index++;
+    ioInfo->minor_ = fields_[index];
+    index++;
+    ioInfo->deviceName_ = name;
+
+    ioInfo->rSucc_ = fields_[index];
+    index++;
+    ioInfo->rMerged_ = fields_[index];
+    index++;
+    ioInfo->rSectors_ = fields_[index];
+    index++;
+    ioInfo->timeOfRead_ = fields_[index];
+    index++;
+
+    ioInfo->wSucc_ = fields_[index];
+    index++;
+    ioInfo->wMerged_ = fields_[index];
+    index++;
+    ioInfo->wSectors_ = fields_[index];
+    index++;
+    ioInfo->timeOfWrite_ = fields_[index];
+    index++;
+
+    ioInfo->ios_ = fields_[index];
+    index++;
+    ioInfo->timeOfIo_ = fields_[index];
+    index++;
+    ioInfo->weighted_ = fields_[index];
+    index++;
+
+    ioInfo->dSucc_ = fields_[index];
+    index++;
+    ioInfo->dMerged_ = fields_[index];
+    index++;
+    ioInfo->dSectors_ = fields_[index];
+    index++;
+    ioInfo->timeOfd_ = fields_[index];
+    index++;
+
+    ioInfo->flushSucc_ = fields_[index];
+    index++;
+    ioInfo->timeOfFlush_ = fields_[index];
+}
+
 bool IoStats::GetIoStats(std::string& line)
 {
     std::string name;
@@ -162,51 +210,7 @@ bool IoStats::GetIoStats(std::string& line)
     CHECK_NOTNULL(ioInfo, false, "create DiskStats FAILED!");
 
     if (ParseLineFields(line, name) > 0) {
-        int index = 0;
-        ioInfo->major_ = fields_[index];
-        index++;
-        ioInfo->minor_ = fields_[index];
-        index++;
-        ioInfo->deviceName_ = name;
-
-        ioInfo->rSucc_ = fields_[index];
-        index++;
-        ioInfo->rMerged_  = fields_[index];
-        index++;
-        ioInfo->rSectors_ = fields_[index];
-        index++;
-        ioInfo->timeOfRead_ = fields_[index];
-        index++;
-
-        ioInfo->wSucc_ = fields_[index];
-        index++;
-        ioInfo->wMerged_  = fields_[index];
-        index++;
-        ioInfo->wSectors_ = fields_[index];
-        index++;
-        ioInfo->timeOfWrite_ = fields_[index];
-        index++;
-
-        ioInfo->ios_ = fields_[index];
-        index++;
-        ioInfo->timeOfIo_ = fields_[index];
-        index++;
-        ioInfo->weighted_ = fields_[index];
-        index++;
-
-        ioInfo->dSucc_ = fields_[index];
-        index++;
-        ioInfo->dMerged_ = fields_[index];
-        index++;
-        ioInfo->dSectors_ = fields_[index];
-        index++;
-        ioInfo->timeOfd_ = fields_[index];
-        index++;
-
-        ioInfo->flushSucc_ = fields_[index];
-        index++;
-        ioInfo->timeOfFlush_ = fields_[index];
-
+        SetIoInfo(ioInfo, name);
         ioDatas_.push_back(ioInfo);
         fields_.clear();
         return true;
@@ -238,7 +242,6 @@ bool IoStats::GetIoStats(std::string& line)
     debugIoInfo->deviceName_ = std::string(name);
     ioDatas_.push_back(debugIoInfo);
 #endif
-
     return false;
 }
 

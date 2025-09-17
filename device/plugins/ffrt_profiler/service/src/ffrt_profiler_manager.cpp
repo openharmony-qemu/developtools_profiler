@@ -56,27 +56,31 @@ void FfrtProfilerManager::Init()
     RegisterAgentPlugin("ffrt-profiler");
 }
 
-bool FfrtProfilerManager::CheckConfig()
+bool FfrtProfilerManager::CheckPid(std::set<int32_t>& pidCache)
 {
-    std::set<int32_t> pidCache;
     for (const auto& pid : config_.pid()) {
-        if (pid > 0) {
-            struct stat statBuf;
-            std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
-            if (stat(pidPath.c_str(), &statBuf) != 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
-                return false;
-            } else {
-                auto [iter, ret] = pidCache.emplace(pid);
-                if (ret) {
-                    ffrtCtx_.emplace_back(std::make_shared<FfrtProfilerCtx>(pid));
-                    paramValue_ += std::to_string(pid) + ",";
-                }
-                continue;
+        if (pid <= 0) {
+            continue;
+        }
+        struct stat statBuf;
+        std::string pidPath = "/proc/" + std::to_string(pid) + "/status";
+        if (stat(pidPath.c_str(), &statBuf) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s: hook process does not exist", __func__);
+            return false;
+        } else {
+            auto [iter, ret] = pidCache.emplace(pid);
+            if (ret) {
+                ffrtCtx_.emplace_back(std::make_shared<FfrtProfilerCtx>(pid));
+                paramValue_ += std::to_string(pid) + ",";
             }
+            continue;
         }
     }
+    return true;
+}
 
+bool FfrtProfilerManager::CheckStartupProcessName()
+{
     for (const auto& name : config_.startup_process_name()) {
         if (name.empty()) {
             continue;
@@ -91,20 +95,23 @@ bool FfrtProfilerManager::CheckConfig()
             ffrtCtx_.emplace_back(std::make_shared<FfrtProfilerCtx>(name));
         }
     }
+    return true;
+}
 
+bool FfrtProfilerManager::CheckRestartProcessName(std::set<int32_t>& pidCache)
+{
     for (const auto& name : config_.restart_process_name()) {
         if (name.empty()) {
             continue;
         }
-
         int pidValue = -1;
         bool isExist = COMMON::IsProcessExist(name, pidValue);
         if (isExist) {
             auto [iter, ret] = pidCache.emplace(pidValue);
             if (!ret) {
                 PROFILER_LOG_ERROR(LOG_CORE,
-                    "FfrtProfilerManager process %s pid is %d, duplicate of pid list in config",
-                    name.c_str(), pidValue);
+                                   "FfrtProfilerManager process %s pid is %d, duplicate of pid list in config",
+                                   name.c_str(), pidValue);
                 return false;
             }
             paramValue_ += name + ",";
@@ -114,11 +121,27 @@ bool FfrtProfilerManager::CheckConfig()
             return false;
         }
     }
+    return true;
+}
 
+bool FfrtProfilerManager::CheckConfig()
+{
+    std::set<int32_t> pidCache;
+    if (!CheckPid(pidCache)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CheckPid failed");
+        return false;
+    }
+    if (!CheckStartupProcessName()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CheckStartupProcessName failed");
+        return false;
+    }
+    if (!CheckRestartProcessName(pidCache)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CheckRestartProcessName failed");
+        return false;
+    }
     if (config_.flush_interval() == 0) {
         config_.set_flush_interval(1);
     }
-
     if (config_.clock_id() == FfrtProfilerConfig::UNKNOW) {
         PROFILER_LOG_ERROR(LOG_CORE, "FfrtProfilerManager clock_id is unknow");
         return false;

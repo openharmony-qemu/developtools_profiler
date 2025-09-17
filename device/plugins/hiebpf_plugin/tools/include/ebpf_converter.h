@@ -37,6 +37,8 @@ private:
     void EventMemParsing();
     void EventStrParsing();
     void EventBIOParsing();
+    void WriteEventParsingToFile(FILE *file);
+    bool ReadMagicHeader();
     std::pair<std::string, std::vector<std::string>> GetSymbolInfo(uint64_t pid, uint64_t ip);
 public:
     static std::pair<bool, std::string> CheckNotExistsFilePath(const std::string& filePath);

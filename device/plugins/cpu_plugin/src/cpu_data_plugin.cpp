@@ -433,6 +433,63 @@ bool CpuDataPlugin::GetSystemCpuTime(std::vector<std::string>& cpuUsageVec, CpuT
 }
 
 template <typename T>
+bool CpuDataPlugin::SetSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadData, CpuTimeData& cpuTimeData)
+{
+    cpuUsageInfo.set_prev_system_cpu_time_ms(prevCpuTimeData_.systemUsageTime);
+    cpuUsageInfo.set_prev_system_boot_time_ms(prevCpuTimeData_.systemBootTime);
+    cpuUsageInfo.set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
+    cpuUsageInfo.set_system_boot_time_ms(cpuTimeData.systemBootTime);
+    bool isTest = false;
+    if (strncmp(path_.c_str(), "/proc/", strlen("/proc/")) != 0) {
+        isTest = true;  // UT needs report load data for the first time
+    }
+    if ((protoConfig_.report_process_info() && prevCpuTimeData_.systemBootTime != 0) || isTest) {
+        cpuLoadData.userLoad = static_cast<double>(cpuTimeData.userModeUsageTime - prevCpuTimeData_.userModeUsageTime) /
+                               static_cast<double>(cpuTimeData.systemBootTime - prevCpuTimeData_.systemBootTime) *
+                               PERCENT;
+        cpuLoadData.sysLoad =
+            static_cast<double>(cpuTimeData.systemModeUsageTime - prevCpuTimeData_.systemModeUsageTime) /
+            static_cast<double>(cpuTimeData.systemBootTime - prevCpuTimeData_.systemBootTime) * PERCENT;
+        cpuLoadData.totalLoad = static_cast<double>(cpuTimeData.systemUsageTime - prevCpuTimeData_.systemUsageTime) /
+                                static_cast<double>(cpuTimeData.systemBootTime - prevCpuTimeData_.systemBootTime) *
+                                PERCENT;
+    }
+    prevCpuTimeData_ = cpuTimeData;
+    if (pid_ < 0 && protoConfig_.report_process_info()) {
+        return false;
+    }
+    return true;
+}
+
+template <typename T>
+bool CpuDataPlugin::SetCpuCoreInfo(const std::string& cpuUsageStr, T& cpuUsageInfo, CpuTimeData& cpuTimeData)
+{
+    size_t cpuLength = strlen("cpu");
+    std::string core = std::string(cpuUsageStr.c_str() + cpuLength, cpuUsageStr.size() - cpuLength);
+    if (!COMMON::IsNumeric(core)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "WriteSystemCpuUsage core is not numeric");
+        return false;
+    }
+    int32_t coreNum = atoi(core.c_str());
+    // 第一次获取数据时需要将前一个数据置为0
+    if (prevCoreSystemCpuTimeMap_.size() == static_cast<size_t>(coreNum)) {
+        prevCoreSystemCpuTimeMap_[coreNum] = 0;
+        prevCoreSystemBootTimeMap_[coreNum] = 0;
+    }
+    auto* cpuCore = cpuUsageInfo.add_cores();
+    cpuCore->set_cpu_core(coreNum);
+    cpuCore->set_prev_system_cpu_time_ms(prevCoreSystemCpuTimeMap_[coreNum]);
+    cpuCore->set_prev_system_boot_time_ms(prevCoreSystemBootTimeMap_[coreNum]);
+    cpuCore->set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
+    cpuCore->set_system_boot_time_ms(cpuTimeData.systemBootTime);
+
+    SetCpuFrequency(*cpuCore, coreNum);
+    prevCoreSystemCpuTimeMap_[coreNum] = cpuTimeData.systemUsageTime;
+    prevCoreSystemBootTimeMap_[coreNum] = cpuTimeData.systemBootTime;
+    return true;
+}
+
+template <typename T>
 void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadData, const char* pFile, uint32_t fileLen)
 {
     std::vector<std::string> cpuUsageVec;
@@ -445,7 +502,6 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
         if (!totalbuffer.CurWord() || strncmp(totalbuffer.CurWord(), "cpu", cpuLength) != 0) {
             return;
         }
-
         for (int i = 0; i < SYSTEM_STAT_COUNT; i++) {
             if (!totalbuffer.CurWord()) {
                 return;
@@ -454,64 +510,20 @@ void CpuDataPlugin::WriteSystemCpuUsage(T& cpuUsageInfo, CpuLoadData& cpuLoadDat
             cpuUsageVec.push_back(curWord);
             totalbuffer.NextWord(' ');
         }
-
         // 获取数据失败返回
         CpuTimeData cpuTimeData;
         if (!GetSystemCpuTime(cpuUsageVec, cpuTimeData)) {
             return;
         }
-
         if (strcmp(cpuUsageVec[0].c_str(), "cpu") == 0) {
-            cpuUsageInfo.set_prev_system_cpu_time_ms(prevCpuTimeData_.systemUsageTime);
-            cpuUsageInfo.set_prev_system_boot_time_ms(prevCpuTimeData_.systemBootTime);
-            cpuUsageInfo.set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
-            cpuUsageInfo.set_system_boot_time_ms(cpuTimeData.systemBootTime);
-            bool isTest = false;
-            if (strncmp(path_.c_str(), "/proc/", strlen("/proc/")) != 0) {
-                isTest = true; // UT needs report load data for the first time
-            }
-            if ((protoConfig_.report_process_info() && prevCpuTimeData_.systemBootTime != 0) || isTest) {
-                cpuLoadData.userLoad = static_cast<double>(cpuTimeData.userModeUsageTime -
-                    prevCpuTimeData_.userModeUsageTime) /
-                    static_cast<double>(cpuTimeData.systemBootTime -
-                    prevCpuTimeData_.systemBootTime) * PERCENT;
-                cpuLoadData.sysLoad = static_cast<double>(cpuTimeData.systemModeUsageTime -
-                    prevCpuTimeData_.systemModeUsageTime) /
-                    static_cast<double>(cpuTimeData.systemBootTime -
-                    prevCpuTimeData_.systemBootTime) * PERCENT;
-                cpuLoadData.totalLoad = static_cast<double>(cpuTimeData.systemUsageTime -
-                    prevCpuTimeData_.systemUsageTime) /
-                    static_cast<double>(cpuTimeData.systemBootTime -
-                    prevCpuTimeData_.systemBootTime) * PERCENT;
-            }
-            prevCpuTimeData_ = cpuTimeData;
-            if (pid_ < 0 && protoConfig_.report_process_info()) {
+            if (!SetSystemCpuUsage(cpuUsageInfo, cpuLoadData, cpuTimeData)) {
                 return;
             }
         } else {
-            std::string core = std::string(cpuUsageVec[0].c_str() + cpuLength, cpuUsageVec[0].size() - cpuLength);
-            if (!COMMON::IsNumeric(core)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "WriteSystemCpuUsage core is not numeric");
+            if (!SetCpuCoreInfo(cpuUsageVec[0], cpuUsageInfo, cpuTimeData)) {
                 return;
             }
-            int32_t coreNum = atoi(core.c_str());
-            // 第一次获取数据时需要将前一个数据置为0
-            if (prevCoreSystemCpuTimeMap_.size() == static_cast<size_t>(coreNum)) {
-                prevCoreSystemCpuTimeMap_[coreNum] = 0;
-                prevCoreSystemBootTimeMap_[coreNum] = 0;
-            }
-            auto* cpuCore = cpuUsageInfo.add_cores();
-            cpuCore->set_cpu_core(coreNum);
-            cpuCore->set_prev_system_cpu_time_ms(prevCoreSystemCpuTimeMap_[coreNum]);
-            cpuCore->set_prev_system_boot_time_ms(prevCoreSystemBootTimeMap_[coreNum]);
-            cpuCore->set_system_cpu_time_ms(cpuTimeData.systemUsageTime);
-            cpuCore->set_system_boot_time_ms(cpuTimeData.systemBootTime);
-
-            SetCpuFrequency(*cpuCore, coreNum);
-            prevCoreSystemCpuTimeMap_[coreNum] = cpuTimeData.systemUsageTime;
-            prevCoreSystemBootTimeMap_[coreNum] = cpuTimeData.systemBootTime;
         }
-
         cpuUsageVec.clear();
     }
 }

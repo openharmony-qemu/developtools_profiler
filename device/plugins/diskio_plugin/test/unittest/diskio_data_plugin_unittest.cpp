@@ -257,5 +257,10 @@ HWTEST_F(DiskioDataPluginTest, TestIOStats, TestSize.Level1)
     IoStats ioStatsIoReportEx(DiskioConfig::IO_REPORT_EX);
     EXPECT_TRUE(ioStatsIoReportEx.GetIoData());
     EXPECT_TRUE(ioStatsIoReportEx.PutPluginStatsData(statsData));
+
+    auto ioInfo = std::make_shared<DiskStats>();
+    ioStats.fields_.assign(19, 100);
+    ioStats.SetIoInfo(ioInfo, "nr_free_pages");
+    EXPECT_EQ(ioInfo->timeOfFlush_, 100);
 }
 } // namespace

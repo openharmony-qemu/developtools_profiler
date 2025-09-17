@@ -491,27 +491,18 @@ static int CommandParse(int argc, char** argv)
     }
     return opterr;
 }
-} // namespace
 
-int main(int argc, char* argv[])
+
+static pthread_t** CreateThreadArray(int typeNum)
 {
-    // 参数解析
-    int ret = CommandParse(argc, argv);
-    if (ret == -1) {
-        return 0;
+    if (typeNum <= 0) {
+        printf("fail:malloc %d memory", typeNum);
+        return nullptr;
     }
-    int typeNum = BitMapNum(g_hookFlag);
-    printf(" g_hookFlag =  [%u] \n", g_hookFlag);
-    if (typeNum == 0) {
-        // 未设置type时默认启动alloc
-        g_hookFlag |= ALLOC_FLAG;
-        typeNum++;
-    }
-
     pthread_t** thrArrayList = static_cast<pthread_t**>(malloc(sizeof(pthread_t*) * typeNum));
     if (thrArrayList == nullptr) {
         printf("malloc thrArrayList fail\n");
-        return 0;
+        return nullptr;
     }
     int type = 0;
     if ((g_hookFlag & ALLOC_FLAG) != 0) {
@@ -528,8 +519,8 @@ int main(int argc, char* argv[])
         }
         int idx;
         for (idx = 0; idx < threadNum; ++idx) {
-            int result = pthread_create((thrArrayList[type]) + idx, nullptr,
-                ThreadFuncC, static_cast<void*>(&mallocSize));
+            int result =
+                pthread_create((thrArrayList[type]) + idx, nullptr, ThreadFuncC, static_cast<void*>(&mallocSize));
             if (result != 0) {
                 printf("Creating thread failed.\n");
             }
@@ -541,7 +532,6 @@ int main(int argc, char* argv[])
         int threadNum = g_threadNum;
         // 初始化
         MmapInit();
-
         thrArrayList[type] = static_cast<pthread_t*>(malloc(sizeof(pthread_t) * threadNum));
         if (thrArrayList[type] == nullptr) {
             printf("new thread failed.\n");
@@ -549,20 +539,37 @@ int main(int argc, char* argv[])
 
         int idx;
         for (idx = 0; idx < threadNum; ++idx) {
-            int result = pthread_create((thrArrayList[type]) + idx,
-                nullptr, ThreadMmap, nullptr);
+            int result = pthread_create((thrArrayList[type]) + idx, nullptr, ThreadMmap, nullptr);
             if (result != 0) {
                 printf("Creating thread failed.\n");
             }
         }
     }
+    return thrArrayList;
+}
+} // namespace
 
+int main(int argc, char* argv[])
+{
+    // 参数解析
+    int ret = CommandParse(argc, argv);
+    if (ret == -1) {
+        return 0;
+    }
+    int typeNum = BitMapNum(g_hookFlag);
+    printf(" g_hookFlag =  [%u] \n", g_hookFlag);
+    if (typeNum == 0) {
+        // 未设置type时默认启动alloc
+        g_hookFlag |= ALLOC_FLAG;
+        typeNum++;
+    }
+    pthread_t** thrArrayList = CreateThreadArray(typeNum);
     while (getchar() != '\n') {
         usleep(RESPONSE_SPEED);
     };
     g_runing = 0;
     int idx;
-    for (type = 0; type < typeNum; type++) {
+    for (int type = 0; type < typeNum; type++) {
         for (idx = 0; idx < g_threadNum; ++idx) {
             pthread_join((thrArrayList[type])[idx], nullptr);
         }

@@ -667,4 +667,27 @@ HWTEST_F(FfrtPofilerTest, TestFunction030, TestSize.Level1)
     ffrtProfilerMgr->SetConfig(config);
     EXPECT_TRUE(ffrtProfilerMgr->CheckConfig());
 }
+
+/**
+ * @tc.name: ffrt plugin
+ * @tc.desc:  FfrtPofiler FfrtProfilerManager check config
+ * @tc.type: FUNC
+ */
+HWTEST_F(FfrtPofilerTest, TestFunction040, TestSize.Level1)
+{
+    std::shared_ptr<FfrtProfilerManager> ffrtProfilerMgr = std::make_shared<FfrtProfilerManager>();
+    FfrtProfilerConfig config;
+    std::set<int32_t> pidCache;
+    int32_t pid = -1;
+    config.add_pid(pid);
+    config.add_pid(ffrtPrfolerExePid_);
+    config.add_startup_process_name("");
+    config.add_startup_process_name("test_name002");
+    config.add_restart_process_name("");
+    config.set_clock_id(FfrtProfilerConfig::MONOTONIC);
+    ffrtProfilerMgr->SetConfig(config);
+    EXPECT_TRUE(ffrtProfilerMgr->CheckPid(pidCache));
+    EXPECT_TRUE(ffrtProfilerMgr->CheckStartupProcessName());
+    EXPECT_TRUE(ffrtProfilerMgr->CheckRestartProcessName(pidCache));
+}
 }
