@@ -15,7 +15,7 @@
 
 import { BusinessError } from '@ohos.base';
 
-function createVoidBusinessError(code: number, msg: string): BusinessError<void> {
+function createVoidBusinessError(code: int, msg: string): BusinessError<void> {
   let error = new BusinessError<void>();
   error.code = code;
   error.message = msg;
