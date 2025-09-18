@@ -122,31 +122,24 @@ static bool GetTraceParam(ani_env *env, ani_array_double tagsAni, std::vector<ui
     return true;
 }
 
-ani_object GetPss(ani_env *env)
+ani_long GetPss(ani_env *env)
 {
-    ani_object pss = nullptr;
     auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
-    AniUtil::ToAniBigInt(env, nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->pss) : 0, pss);
-    return pss;
+    return nativeMemInfoOption ? static_cast<ani_long>(nativeMemInfoOption->pss) : 0;
 }
 
-ani_object GetSharedDirty(ani_env *env)
+ani_long GetSharedDirty(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getSharedDirty");
-    ani_object sharedDirty = nullptr;
     auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
-    AniUtil::ToAniBigInt(env,
-        nativeMemInfoOption ? static_cast<uint64_t>(nativeMemInfoOption->sharedDirty) : 0, sharedDirty);
-    return sharedDirty;
+    return nativeMemInfoOption ? static_cast<ani_long>(nativeMemInfoOption->sharedDirty) : 0;
 }
 
-ani_object GetPrivateDirty(ani_env *env)
+ani_long GetPrivateDirty(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getPrivateDirty");
-    ani_object privateDirtyValue = nullptr;
     auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(false);
-    AniUtil::ToAniBigInt(env, nativeMemInfoOption ? nativeMemInfoOption->privateDirty : 0, privateDirtyValue);
-    return privateDirtyValue;
+    return nativeMemInfoOption ? static_cast<ani_long>(nativeMemInfoOption->privateDirty) : 0;
 }
 
 ani_double GetCpuUsage(ani_env *env)
@@ -155,30 +148,24 @@ ani_double GetCpuUsage(ani_env *env)
     return static_cast<ani_double>(HidebugNativeInterface::GetInstance().GetCpuUsage());
 }
 
-ani_object GetNativeHeapSize(ani_env *env)
+ani_long GetNativeHeapSize(ani_env *env)
 {
     struct mallinfo mi = mallinfo();
-    ani_object nativeHeapSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.uordblks + mi.fordblks), nativeHeapSize);
-    return nativeHeapSize;
+    return static_cast<ani_long>(mi.uordblks + mi.fordblks);
 }
 
-ani_object GetNativeHeapAllocatedSize(ani_env *env)
+ani_long GetNativeHeapAllocatedSize(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapAllocatedSize");
     struct mallinfo mi = mallinfo();
-    ani_object nativeHeapAllocatedSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.uordblks), nativeHeapAllocatedSize);
-    return nativeHeapAllocatedSize;
+    return static_cast<ani_long>(mi.uordblks);
 }
 
-ani_object GetNativeHeapFreeSize(ani_env *env)
+ani_long GetNativeHeapFreeSize(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getNativeHeapFreeSize");
     struct mallinfo mi = mallinfo();
-    ani_object nativeHeapFreeSize = nullptr;
-    AniUtil::ToAniBigInt(env, uint64_t(mi.fordblks), nativeHeapFreeSize);
-    return nativeHeapFreeSize;
+    return static_cast<ani_long>(mi.fordblks);
 }
 
 static void GetServiceDump(ani_env *env,
@@ -208,13 +195,11 @@ static void GetServiceDump(ani_env *env,
     HILOG_INFO(LOG_CORE, "Dump result: %{public}d", dumpResult);
 }
 
-ani_object GetVss(ani_env *env)
+ani_long GetVss(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getVss");
-    ani_object vss = nullptr;
     auto vssInfoOption = HidebugNativeInterface::GetInstance().GetVss();
-    AniUtil::ToAniBigInt(env, vssInfoOption ? vssInfoOption.value() : 0, vss);
-    return vss;
+    return vssInfoOption ? static_cast<ani_long>(vssInfoOption.value()) : 0;
 }
 
 static ani_double GetSystemCpuUsage(ani_env *env)
@@ -278,18 +263,26 @@ ani_object GetAppNativeMemInfo(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object memInfo = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/NativeMemInfoImpl;", &cls) != ANI_OK ||
+    if (env->FindClass("L@ohos/hidebug/hidebug/NativeMemInfoAdapter;", &cls) != ANI_OK ||
         env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &memInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "pss", nativeMemInfoOption->pss);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "rss", nativeMemInfoOption->rss);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedDirty", nativeMemInfoOption->sharedDirty);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateDirty", nativeMemInfoOption->privateDirty);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "sharedClean", nativeMemInfoOption->sharedClean);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "privateClean", nativeMemInfoOption->privateClean);
-    AniUtil::SetNamedPropertyBigInt(env, memInfo, "vss", nativeMemInfoOption->vss);
+    env->Object_SetPropertyByName_Long(memInfo, "pss",
+        static_cast<ani_long>(nativeMemInfoOption->pss));
+    env->Object_SetPropertyByName_Long(memInfo, "rss",
+        static_cast<ani_long>(nativeMemInfoOption->rss));
+    env->Object_SetPropertyByName_Long(memInfo, "sharedDirty",
+        static_cast<ani_long>(nativeMemInfoOption->sharedDirty));
+    env->Object_SetPropertyByName_Long(memInfo, "privateDirty",
+        static_cast<ani_long>(nativeMemInfoOption->privateDirty));
+    env->Object_SetPropertyByName_Long(memInfo, "sharedClean",
+        static_cast<ani_long>(nativeMemInfoOption->sharedClean));
+    env->Object_SetPropertyByName_Long(memInfo, "sharedClean",
+        static_cast<ani_long>(nativeMemInfoOption->sharedClean));
+    env->Object_SetPropertyByName_Long(memInfo, "privateClean",
+        static_cast<ani_long>(nativeMemInfoOption->privateClean));
+    env->Object_SetPropertyByName_Long(memInfo, "vss", static_cast<ani_long>(nativeMemInfoOption->vss));
     return memInfo;
 }
 
@@ -304,15 +297,14 @@ ani_object GetSystemMemInfo(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object sysMemInfo = nullptr;
-    if (env->FindClass("L@ohos/hidebug/hidebug/SystemMemInfoImpl;", &cls) != ANI_OK ||
+    if (env->FindClass("L@ohos/hidebug/hidebug/SystemMemInfoAdapter;", &cls) != ANI_OK ||
         env->Class_FindMethod(cls, "<ctor>", ":V", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &sysMemInfo) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
     }
-
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "totalMem", static_cast<uint64_t>(sysMemOption->totalMem));
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "freeMem", static_cast<uint64_t>(sysMemOption->freeMem));
-    AniUtil::SetNamedPropertyBigInt(env, sysMemInfo, "availableMem", static_cast<uint64_t>(sysMemOption->availableMem));
+    env->Object_SetPropertyByName_Long(sysMemInfo, "totalMem", static_cast<ani_long>(sysMemOption->totalMem));
+    env->Object_SetPropertyByName_Long(sysMemInfo, "freeMem", static_cast<ani_long>(sysMemOption->freeMem));
+    env->Object_SetPropertyByName_Long(sysMemInfo, "availableMem", static_cast<ani_long>(sysMemOption->availableMem));
     return sysMemInfo;
 }
 
@@ -400,23 +392,23 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
     std::array methods = {
-        ani_native_function {"getPss", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPss)},
-        ani_native_function {"getSharedDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetSharedDirty)},
-        ani_native_function {"getPrivateDirty", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetPrivateDirty)},
+        ani_native_function {"getPssAdapter", ":J", reinterpret_cast<void *>(GetPss)},
+        ani_native_function {"getSharedDirtyAdapter", ":J", reinterpret_cast<void *>(GetSharedDirty)},
+        ani_native_function {"getPrivateDirtyAdapter", ":J", reinterpret_cast<void *>(GetPrivateDirty)},
         ani_native_function {"getCpuUsage", ":D", reinterpret_cast<void *>(GetCpuUsage)},
         ani_native_function {"getServiceDump", "DDLescompat/Array;:V", reinterpret_cast<void *>(GetServiceDump)},
-        ani_native_function {"getNativeHeapSize", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetNativeHeapSize)},
-        ani_native_function {"getNativeHeapAllocatedSize", ":Lescompat/BigInt;",
+        ani_native_function {"getNativeHeapSizeAdapter", ":J", reinterpret_cast<void *>(GetNativeHeapSize)},
+        ani_native_function {"getNativeHeapAllocatedSizeAdapter", ":J",
             reinterpret_cast<void *>(GetNativeHeapAllocatedSize)},
-        ani_native_function {"getNativeHeapFreeSize", ":Lescompat/BigInt;",
+        ani_native_function {"getNativeHeapFreeSizeAdapter", ":J",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
-        ani_native_function {"getVss", ":Lescompat/BigInt;", reinterpret_cast<void *>(GetVss)},
+        ani_native_function {"getVssAdapter", ":J", reinterpret_cast<void *>(GetVss)},
         ani_native_function {"getAppThreadCpuUsage", ":[L@ohos/hidebug/hidebug/ThreadCpuUsage;",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":D", reinterpret_cast<void *>(GetSystemCpuUsage)},
-        ani_native_function {"getAppNativeMemInfo", ":L@ohos/hidebug/hidebug/NativeMemInfo;",
+        ani_native_function {"getAppNativeMemInfoAdapter", ":L@ohos/hidebug/hidebug/NativeMemInfoAdapter;",
             reinterpret_cast<void *>(GetAppNativeMemInfo)},
-        ani_native_function {"getSystemMemInfo", ":L@ohos/hidebug/hidebug/SystemMemInfo;",
+        ani_native_function {"getSystemMemInfoAdapter", ":L@ohos/hidebug/hidebug/SystemMemInfoAdapter;",
             reinterpret_cast<void *>(GetSystemMemInfo)},
         ani_native_function {"startAppTraceCapture", "[DL@ohos/hidebug/hidebug/TraceFlag;D:Lstd/core/String;",
             reinterpret_cast<void *>(StartAppTraceCapture)},

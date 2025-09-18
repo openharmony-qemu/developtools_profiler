@@ -27,11 +27,9 @@ class AniUtil {
 public:
     static void ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t errCode = HIDEBUG_DEFAULT_ERROR_CODE);
     static ani_object CreateUndefined(ani_env *env);
-    static ani_status ToAniBigInt(ani_env *env, uint64_t uint64Val, ani_object &aniBigInt);
     static ani_status ParseAniString(ani_env *env, ani_string aniStr, std::string &str);
     static ani_status ParseAniEnum(ani_env *env, ani_enum_item enumItem, uint32_t &value);
     static ani_status SetNamedPropertyNumber(ani_env *env, ani_object object, const std::string& name, double value);
-    static ani_status SetNamedPropertyBigInt(ani_env *env, ani_object object, const std::string& name, uint64_t value);
 };
 } // namespace HiviewDFX
 } // namespace OHOS

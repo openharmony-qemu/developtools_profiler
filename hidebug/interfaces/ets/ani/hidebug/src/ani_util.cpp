@@ -49,26 +49,6 @@ ani_object AniUtil::CreateUndefined(ani_env *env)
     return static_cast<ani_object>(undefinedRef);
 }
 
-ani_status AniUtil::ToAniBigInt(ani_env *env, uint64_t uint64Val, ani_object &aniBigInt)
-{
-    ani_class bigIntCls = nullptr;
-    ani_status status = env->FindClass("Lescompat/BigInt;", &bigIntCls);
-    if (status != ANI_OK) {
-        return status;
-    }
-    ani_method ctorMethod = nullptr;
-    status = env->Class_FindMethod(bigIntCls, "<ctor>", "Lstd/core/String;:V", &ctorMethod);
-    if (status != ANI_OK) {
-        return status;
-    }
-    ani_string aniBigIntStr = nullptr;
-    status = env->String_NewUTF8(std::to_string(uint64Val).c_str(), std::to_string(uint64Val).size(), &aniBigIntStr);
-    if (status != ANI_OK) {
-        return status;
-    }
-    return env->Object_New(bigIntCls, ctorMethod, &aniBigInt, aniBigIntStr);
-}
-
 ani_status AniUtil::ParseAniString(ani_env *env, ani_string aniStr, std::string &str)
 {
     ani_size srcSize = 0;
@@ -101,17 +81,6 @@ ani_status AniUtil::SetNamedPropertyNumber(ani_env *env, ani_object object, cons
 {
     ani_double aniNumber = static_cast<ani_double>(value);
     ani_status status = env->Object_SetPropertyByName_Double(object, name.c_str(), aniNumber);
-    return status;
-}
-
-ani_status AniUtil::SetNamedPropertyBigInt(ani_env *env, ani_object object, const std::string& name, uint64_t value)
-{
-    ani_object aniBigInt = nullptr;
-    ani_status status = AniUtil::ToAniBigInt(env, value, aniBigInt);
-    if (status != ANI_OK) {
-        return status;
-    }
-    status = env->Object_SetPropertyByName_Ref(object, name.c_str(), static_cast<ani_ref>(aniBigInt));
     return status;
 }
 } // namespace HiviewDFX
