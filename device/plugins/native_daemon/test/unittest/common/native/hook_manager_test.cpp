@@ -26,6 +26,7 @@ using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 const int SMB_PAGES = 16384;
+const int TEST_MAX_JS_STACK_DEPTH = 10;
 class HookManagerTest : public ::testing::Test {
 public:
     static void SetUpTestCase()
@@ -240,5 +241,23 @@ HWTEST_F(HookManagerTest, CheckNmdInfo002, TestSize.Level0)
     EXPECT_TRUE(ret.find("FAIL") == std::string::npos);
     std::string filePath = "/data/local/tmp/test_profiler.txt";
     EXPECT_EQ(access(filePath.c_str(), F_OK), -1);
+}
+
+/*
+ * @tc.name: CheckHapEncryped
+ * @tc.desc: test CheckHapEncryped when saMode_ and fp_unwind are both true.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, CheckHapEncryped, TestSize.Level0)
+{
+    std::shared_ptr<HookManager> hookManager = std::make_shared<HookManager>();
+    ASSERT_TRUE(hookManager != nullptr);
+    hookManager->saMode_ = true;
+    hookManager->hookConfig_.set_fp_unwind(true);
+    hookManager->hookConfig_.set_js_stack_report(1);
+    hookManager->hookConfig_.set_max_js_stack_depth(TEST_MAX_JS_STACK_DEPTH);
+    hookManager->CheckHapEncryped();
+    EXPECT_EQ(hookManager->hookConfig_.js_stack_report(), 1);
+    EXPECT_EQ(hookManager->hookConfig_.max_js_stack_depth(), TEST_MAX_JS_STACK_DEPTH);
 }
 } // namespace
