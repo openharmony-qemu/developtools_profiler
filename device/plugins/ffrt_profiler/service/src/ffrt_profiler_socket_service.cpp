@@ -53,13 +53,14 @@ bool FfrtProfilerSocketService::ProtocolProc(SocketContext &context, uint32_t pn
     if (size != sizeof(int)) {
         return false;
     }
-    int pid = *const_cast<int *>(reinterpret_cast<const int *>(buf));
-    if (pid == -1) {
+    int pid = -1;
+    if (memcpy_s(&pid, sizeof(int), buf, size) != EOK) {
         return false;
     }
-
+    if (pid <= 0) {
+        return false;
+    }
     std::string bundleName = GetProcessName(pid);
-
     std::lock_guard<std::mutex> lock(mtx_);
     auto [eventFd, smbFd] = ffrtMgr_->GetFfrtProfilerCtx(pid, bundleName);
     if (eventFd == 0 && smbFd == 0) {
