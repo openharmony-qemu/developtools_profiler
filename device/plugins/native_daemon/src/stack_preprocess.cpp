@@ -894,7 +894,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     hookData->set_tv_sec(rawStack->stackContext->ts.tv_sec);
     hookData->set_tv_nsec(rawStack->stackContext->ts.tv_nsec);
     std::string tagName = "";
-    if (type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG) {
+    if (type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG || type == MEMORY_UNUSING_MSG) {
         GetMemTag(rawStack->stackContext->tagId, tagName);
     }
     SerializeInfo hookInfo = {&callFrames, stackMapId, tagName, &hookConfig_};
