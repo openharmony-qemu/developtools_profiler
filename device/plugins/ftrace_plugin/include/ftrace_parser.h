@@ -22,6 +22,7 @@
 #include <string>
 #include <vector>
 #include <unordered_set>
+#include <set>
 #include "logging.h"
 #include "ftrace_common_type.h"
 #include "ftrace_field_parser.h"
@@ -82,10 +83,29 @@ public:
     }
 
     bool ParseSavedTgid(const std::string& savedTgid);
-    void ParseTargetedSavedTgid(const std::string& savedTgid, int targetPid);
+    void ParseTargetedSavedTgid(const std::string& savedTgid, std::unordered_set<int>& targetPidVect);
     bool ParseSavedCmdlines(const std::string& savedCmdlines);
 
     void SetDebugOn(bool value);
+    template <typename E>
+    int ParseFtraceEventForPid(uint8_t data[], size_t dataSize, E& parseEventCtx)
+    {
+        CHECK_TRUE(
+            dataSize >= parseEventCtx->format.eventSize, false,
+            "FtraceParser::ParseFtraceEvent, dataSize not enough! event name is %s,eventSize is %u, dataSize is %zd",
+            parseEventCtx->format.eventName.c_str(), parseEventCtx->format.eventSize, dataSize);
+
+        int pid = 0;
+        auto& index = parseEventCtx->format.commonIndex;
+        CHECK_TRUE(IsValidIndex(index.pid), false, "pid index %d invalid!", index.pid);
+        auto& fields = parseEventCtx->format.commonFields;
+        pid = FtraceFieldParser::ParseIntField<int32_t>(fields, index.pid, data, dataSize);
+        // check pid exist in tgidDict_
+        if (tgidDict_.count(pid) == 0) {
+            return pid;
+        }
+        return 0;
+    }
 
     template <typename T, typename P> bool HmParseFtraceEvent(T& ftraceEvent, uint8_t data[],
             size_t dataSize, P& parseEventCtx)
@@ -161,18 +181,6 @@ private:
             int tgid = 0;
             if (tgidDict_.count(pid) > 0) {
                 tgid = tgidDict_[pid];
-            } else {
-                int tgid = FtraceFsOps::GetInstance().GetTgidFromStatus(pid);
-                if (tgid == -1) {
-                    tgid = 0;
-                    ParseTargetedSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids(), pid);
-                    auto itm = tgidDict_.find(pid);
-                    if (itm != tgidDict_.end()) {
-                        tgid = itm->second;
-                    }
-                } else {
-                    tgidDict_[pid] = tgid;
-                }
             }
             ftraceEvent.set_tgid(tgid);
             std::string comm;
