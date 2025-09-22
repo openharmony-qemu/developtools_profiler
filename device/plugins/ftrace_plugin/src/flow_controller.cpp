@@ -592,7 +592,7 @@ long FlowController::ReadEventData(int cpuid)
     long nbytes = 0;
     long used = 0;
     long rest = bufferSize;
-    while ((nbytes = reader->Read(&buffer[used], rest)) > 0 && used < bufferSize) {
+    while (used < bufferSize && (nbytes = reader->Read(&buffer[used], rest)) > 0) {
         CHECK_TRUE(used % PAGE_SIZE == 0, used, "used invalid!");
         used += nbytes;
         rest -= nbytes;
