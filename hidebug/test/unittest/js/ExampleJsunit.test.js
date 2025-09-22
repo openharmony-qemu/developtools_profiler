@@ -996,14 +996,14 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_043
-     * @tc.desc: getAppVMObjectUsed
+     * @tc.desc: getAppVMObjectUsedSize
      * @tc.type: FUNC
      */
     it('HidebugJsTest_043', 0, function () {
         console.info("---------------------------HidebugJsTest_043----------------------------------");
         try {
-            let ret = hidebug.getAppVMObjectUsed();
-            console.info(`HidebugJsTest_043 getAppVMObjectUsed ret：: ${ret}`);
+            let ret = hidebug.getAppVMObjectUsedSize();
+            console.info(`HidebugJsTest_043 getAppVMObjectUsedSize ret：: ${ret}`);
             expect(ret > 0).assertTrue();
         } catch (error) {
             console.error(error.code);
@@ -1014,7 +1014,7 @@ describe("HidebugJsTest", function () {
 
     /**
      * @tc.name: HidebugJsTest_044
-     * @tc.desc: getAppVMObjectUsed
+     * @tc.desc: getGraphicsMemorySummary
      * @tc.type: FUNC
      */
     it('HidebugJsTest_044', 0, async function () {

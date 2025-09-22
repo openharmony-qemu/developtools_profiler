@@ -1057,7 +1057,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getVss", GetVss),
         DECLARE_NAPI_FUNCTION("removeNapiWrap", RemoveNapiWrap),
         DECLARE_NAPI_FUNCTION("getAppVMMemoryInfo", GetAppVMMemoryInfo),
-        DECLARE_NAPI_FUNCTION("getAppVMObjectUsed", GetAppVMObjectUsed),
+        DECLARE_NAPI_FUNCTION("getAppVMObjectUsedSize", GetAppVMObjectUsedSize),
         DECLARE_NAPI_FUNCTION("getAppThreadCpuUsage", GetAppThreadCpuUsage),
         DECLARE_NAPI_FUNCTION("getSystemCpuUsage", GetSystemCpuUsage),
         DECLARE_NAPI_FUNCTION("getAppMemoryLimit", GetAppMemoryLimit),
