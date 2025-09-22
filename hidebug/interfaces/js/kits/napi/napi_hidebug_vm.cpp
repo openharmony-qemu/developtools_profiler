@@ -109,11 +109,11 @@ napi_value GetVMRuntimeStat(napi_env env, napi_callback_info info)
     return target->second(env);
 }
 
-napi_value GetAppVMObjectUsed(napi_env env, napi_callback_info info)
+napi_value GetAppVMObjectUsedSize(napi_env env, napi_callback_info info)
 {
     constexpr uint32_t limitSize = 100;
     static MultipleRecordReporter multipleRecordReporter(0, limitSize);
-    ApiInvokeRecorder apiInvokeRecorder("getAppVMObjectUsed", multipleRecordReporter);
+    ApiInvokeRecorder apiInvokeRecorder("getAppVMObjectUsedSize", multipleRecordReporter);
     uint64_t vmObjectUsed{0};
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     if (engine) {
