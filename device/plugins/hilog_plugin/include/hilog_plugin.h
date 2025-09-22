@@ -21,6 +21,7 @@
 #include "hilog_plugin_result.pb.h"
 #include "logging.h"
 #include "plugin_module_api.h"
+#include "hilog_plugin_result.pbencoder.h"
 
 #include <atomic>
 #include <mutex>
@@ -56,6 +57,9 @@ private:
     bool RemoveSpaces(char** p);
     bool FindFirstSpace(char** p);
     std::string GetCmdArgs(const HilogConfig& protoConfig);
+    bool FindTagString(char*& pTmp, char*& end, int& npos);
+    void StartLoopFetchData(std::unique_ptr<uint8_t[]>& buffer, std::unique_ptr<HilogInfo>& dataProto,
+                            std::unique_ptr<OHOS::Developtools::Profiler::ProtoEncoder::HilogInfo>& hilogInfo, std::string startTime);
 
     bool StringToL(const char* word, long& value);
     // for ut

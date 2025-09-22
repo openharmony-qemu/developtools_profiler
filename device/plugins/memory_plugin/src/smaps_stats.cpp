@@ -211,6 +211,36 @@ bool SmapsStats::ParseMapHead(std::string& line, MapPiecesInfo& head, SmapsHeadI
     return true;
 }
 
+void SmapsStats::SetPssInfoField(MemUsageInfo& memusage, std::string strfield, const char* c)
+{
+    if (MatchHead(strfield, "Pss:")) {
+        memusage.pss = strtoull(c, nullptr, DEC_BASE);
+    } else if (MatchHead(strfield, "Private_Clean:")) {
+        uint64_t prcl = strtoull(c, nullptr, DEC_BASE);
+        memusage.privateClean = prcl;
+        memusage.uss += prcl;
+    } else if (MatchHead(strfield, "Private_Dirty:")) {
+        uint64_t prdi = strtoull(c, nullptr, DEC_BASE);
+        memusage.privateDirty = prdi;
+        memusage.uss += prdi;
+    }
+}
+
+void SmapsStats::SetSharedAndSwap(MemUsageInfo& memusage, std::string strfield, const char* c)
+{
+    if (MatchHead(strfield, "Size:")) {
+        memusage.vss = strtoull(c, nullptr, DEC_BASE);
+    } else if (MatchHead(strfield, "Shared_Clean:")) {
+        memusage.sharedClean = strtoull(c, nullptr, DEC_BASE);
+    } else if (MatchHead(strfield, "Shared_Dirty:")) {
+        memusage.sharedDirty = strtoull(c, nullptr, DEC_BASE);
+    } else if (MatchHead(strfield, "Swap:")) {
+        memusage.swap = strtoull(c, nullptr, DEC_BASE);
+    } else if (MatchHead(strfield, "SwapPss:")) {
+        memusage.swapPss = strtoull(c, nullptr, DEC_BASE);
+    }
+}
+
 bool SmapsStats::GetMemUsageField(std::string& line, MemUsageInfo& memusage)
 {
     char field[64];
@@ -223,30 +253,10 @@ bool SmapsStats::GetMemUsageField(std::string& line, MemUsageInfo& memusage)
         std::string strfield(field);
         switch (field[0]) {
             case 'P':
-                if (MatchHead(strfield, "Pss:")) {
-                    memusage.pss = strtoull(c, nullptr, DEC_BASE);
-                } else if (MatchHead(strfield, "Private_Clean:")) {
-                    uint64_t prcl = strtoull(c, nullptr, DEC_BASE);
-                    memusage.privateClean = prcl;
-                    memusage.uss += prcl;
-                } else if (MatchHead(strfield, "Private_Dirty:")) {
-                    uint64_t prdi = strtoull(c, nullptr, DEC_BASE);
-                    memusage.privateDirty = prdi;
-                    memusage.uss += prdi;
-                }
+                SetPssInfoField(memusage, strfield, c);
                 break;
             case 'S':
-                if (MatchHead(strfield, "Size:")) {
-                    memusage.vss = strtoull(c, nullptr, DEC_BASE);
-                } else if (MatchHead(strfield, "Shared_Clean:")) {
-                    memusage.sharedClean = strtoull(c, nullptr, DEC_BASE);
-                } else if (MatchHead(strfield, "Shared_Dirty:")) {
-                    memusage.sharedDirty = strtoull(c, nullptr, DEC_BASE);
-                } else if (MatchHead(strfield, "Swap:")) {
-                    memusage.swap = strtoull(c, nullptr, DEC_BASE);
-                } else if (MatchHead(strfield, "SwapPss:")) {
-                    memusage.swapPss = strtoull(c, nullptr, DEC_BASE);
-                }
+                SetSharedAndSwap(memusage, strfield, c);
                 break;
             case 'R':
                 if (MatchHead(strfield, "Rss:")) {
@@ -263,7 +273,6 @@ bool SmapsStats::GetMemUsageField(std::string& line, MemUsageInfo& memusage)
         }
         return true;
     }
-
     return false;
 }
 

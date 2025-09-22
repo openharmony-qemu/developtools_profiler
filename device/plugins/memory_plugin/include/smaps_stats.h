@@ -319,6 +319,65 @@ private:
     int GetTotalPss();
     int GetTotalSwappedOutPss();
     void ReviseStatsData();
+    void SetPssInfoField(MemUsageInfo& memusage, std::string strfield, const char* c);
+    void SetSharedAndSwap(MemUsageInfo& memusage, std::string strfield, const char* c);
+    template<typename T, typename S>
+    void SetMapHeadInfo(T& processMemoryInfo, S smapsInfo, SmapsHeadInfo& smapsHeadInfo)
+    {
+        smapsInfo = processMemoryInfo.add_smapinfo();
+        if (!COMMON::IsUserMode()) {
+            smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
+            smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
+            smapsInfo->set_path(smapsHeadInfo.path);
+            smapsInfo->set_permission(smapsHeadInfo.permission);
+        } else {
+            smapsInfo->set_start_addr("");
+            smapsInfo->set_end_addr("");
+            smapsInfo->set_path("");
+            smapsInfo->set_permission("");
+        }
+        smapsInfo->set_category(ParseCategory(smapsHeadInfo));
+    }
+
+    template <typename T, typename S>
+    void SetSmapsInfo(T& processMemoryInfo, S smapsInfo, MemUsageInfo& memusage)
+    {
+        if (smapsInfo == nullptr) {
+            smapsInfo = processMemoryInfo.add_smapinfo();
+        }
+        smapsInfo->set_size(memusage.vss);
+        smapsInfo->set_rss(memusage.rss);
+        smapsInfo->set_pss(memusage.pss);
+        smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
+        smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
+        smapsInfo->set_reside(static_cast<double>(memusage.rss) / memusage.vss * PERCENT);
+        smapsInfo->set_private_clean(memusage.privateClean);
+        smapsInfo->set_private_dirty(memusage.privateDirty);
+        smapsInfo->set_shared_clean(memusage.sharedClean);
+        smapsInfo->set_shared_dirty(memusage.sharedDirty);
+        smapsInfo->set_swap(memusage.swap);
+        smapsInfo->set_swap_pss(memusage.swapPss);
+    }
+
+    template <typename T, typename S>
+    void SetSmapsRollupInfo(T& processMemoryInfo, S smapsInfo, MemUsageInfo& memusage)
+    {
+        if (smapsInfo == nullptr) {
+            smapsInfo = processMemoryInfo.add_smapinfo();
+        }
+        smapsInfo->set_size(memusage.vss);
+        smapsInfo->set_rss(memusage.rss);
+        smapsInfo->set_pss(memusage.pss);
+        smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
+        smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
+        smapsInfo->set_reside(0);
+        smapsInfo->set_private_clean(memusage.privateClean);
+        smapsInfo->set_private_dirty(memusage.privateDirty);
+        smapsInfo->set_shared_clean(memusage.sharedClean);
+        smapsInfo->set_shared_dirty(memusage.sharedDirty);
+        smapsInfo->set_swap(memusage.swap);
+        smapsInfo->set_swap_pss(memusage.swapPss);
+    }
 
     template <typename T, typename S>
     bool ReadVmemareasFile(const std::string& path, T& processMemoryInfo, S smapsInfo,
@@ -344,19 +403,7 @@ private:
                 ParseMapHead(line, mappic, smapsHeadInfo);
                 findMapHead = true;
                 if (isReportSmaps) {
-                    smapsInfo = processMemoryInfo.add_smapinfo();
-                    if (!COMMON::IsUserMode()) {
-                        smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
-                        smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
-                        smapsInfo->set_path(smapsHeadInfo.path);
-                        smapsInfo->set_permission(smapsHeadInfo.permission);
-                    } else {
-                        smapsInfo->set_start_addr("");
-                        smapsInfo->set_end_addr("");
-                        smapsInfo->set_path("");
-                        smapsInfo->set_permission("");
-                    }
-                    smapsInfo->set_category(ParseCategory(smapsHeadInfo));
+                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
                 }
                 continue;
             }
@@ -365,24 +412,9 @@ private:
                     continue;
                 }
                 if (isReportSmaps) {
-                    if (smapsInfo == nullptr) {
-                        smapsInfo = processMemoryInfo.add_smapinfo();
-                    }
-                    smapsInfo->set_size(memusage.vss);
-                    smapsInfo->set_rss(memusage.rss);
-                    smapsInfo->set_pss(memusage.pss);
-                    smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
-                    smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
-                    smapsInfo->set_reside(static_cast<double>(memusage.rss) / memusage.vss * PERCENT);
-                    smapsInfo->set_private_clean(memusage.privateClean);
-                    smapsInfo->set_private_dirty(memusage.privateDirty);
-                    smapsInfo->set_shared_clean(memusage.sharedClean);
-                    smapsInfo->set_shared_dirty(memusage.sharedDirty);
-                    smapsInfo->set_swap(memusage.swap);
-                    smapsInfo->set_swap_pss(memusage.swapPss);
+                    SetSmapsInfo<T, S>(processMemoryInfo, smapsInfo, memusage);
                 }
             }
-
             if (isReportApp) {
                 CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
             }
@@ -390,13 +422,12 @@ private:
             lastline_ = false;
         } while (!input.eof());
         input.close();
-
         return true;
     }
 
     template <typename T, typename S>
-    bool ReadVmemFromSmapsrollup(const std::string& path, T& processMemoryInfo, S smapsInfo,
-                           bool isReportApp, bool isReportSmaps)
+    bool ReadVmemFromSmapsrollup(const std::string& path, T& processMemoryInfo, S smapsInfo, bool isReportApp,
+                                 bool isReportSmaps)
     {
         bool findMapHead = false;
         MapPiecesInfo mappic = {0};
@@ -418,19 +449,7 @@ private:
                 ParseMapHead(line, mappic, smapsHeadInfo);
                 findMapHead = true;
                 if (isReportSmaps) {
-                    smapsInfo = processMemoryInfo.add_smapinfo();
-                    if (!COMMON::IsUserMode()) {
-                        smapsInfo->set_start_addr(smapsHeadInfo.startAddrStr);
-                        smapsInfo->set_end_addr(smapsHeadInfo.endAddrStr);
-                        smapsInfo->set_path(smapsHeadInfo.path);
-                        smapsInfo->set_permission(smapsHeadInfo.permission);
-                    } else {
-                        smapsInfo->set_start_addr("");
-                        smapsInfo->set_end_addr("");
-                        smapsInfo->set_path("");
-                        smapsInfo->set_permission("");
-                    }
-                    smapsInfo->set_category(ParseCategory(smapsHeadInfo));
+                   SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
                 }
                 continue;
             }
@@ -438,29 +457,13 @@ private:
                 GetMemFromSmapsrollup(line, memusage);
             }
         } while (!input.eof());
-
         if (isReportSmaps) {
-            if (smapsInfo == nullptr) {
-                smapsInfo = processMemoryInfo.add_smapinfo();
-            }
-            smapsInfo->set_size(memusage.vss);
-            smapsInfo->set_rss(memusage.rss);
-            smapsInfo->set_pss(memusage.pss);
-            smapsInfo->set_dirty(memusage.privateDirty + memusage.sharedDirty);
-            smapsInfo->set_swapper(memusage.swap + memusage.swapPss);
-            smapsInfo->set_reside(0);
-            smapsInfo->set_private_clean(memusage.privateClean);
-            smapsInfo->set_private_dirty(memusage.privateDirty);
-            smapsInfo->set_shared_clean(memusage.sharedClean);
-            smapsInfo->set_shared_dirty(memusage.sharedDirty);
-            smapsInfo->set_swap(memusage.swap);
-            smapsInfo->set_swap_pss(memusage.swapPss);
+            SetSmapsRollupInfo<T, S>(processMemoryInfo, smapsInfo, memusage);
         }
         if (isReportApp) {
             CollectVmemAreasData(mappic, memusage, prevEnd, prevHeap);
         }
         input.close();
-
         return true;
     }
 

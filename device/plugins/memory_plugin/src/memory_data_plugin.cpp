@@ -1197,22 +1197,8 @@ template <typename T> void MemoryDataPlugin::SetRSImageDumpInfo(T& rsDumpInfo, i
             break;
     }
 }
-
-template <typename T> void MemoryDataPlugin::WriteGpuDumpInfo(T& dataProto)
+template <typename T> void MemoryDataPlugin::ProcessGpuDumpInfo(T& dataProto, std::string& content)
 {
-    std::string content = "";
-    if (!protoConfig_.report_fake_data()) {
-        if (strcmp(testpath_, "/proc") == 0) {
-            content = RunCommand("hidumper -s 10 '-a dumpMem'");
-        } else {
-            // for UT
-            content = ReadFile(std::string(testpath_) + "/dumpMem.txt");
-        }
-    } else {
-        content = ReadFile(FAKE_DATA_PATH + "/dumpMem.txt");
-    }
-    CHECK_TRUE(content != "", NO_RETVAL, "hidumper no data!");
-
     BufferSplitter totalBuffer((const char*)content.c_str(), content.size() + 1);
     do {
         std::string line = totalBuffer.CurLine();
@@ -1259,6 +1245,23 @@ template <typename T> void MemoryDataPlugin::WriteGpuDumpInfo(T& dataProto)
             break;
         }
     } while (totalBuffer.NextLine());
+}
+
+template <typename T> void MemoryDataPlugin::WriteGpuDumpInfo(T& dataProto)
+{
+    std::string content = "";
+    if (!protoConfig_.report_fake_data()) {
+        if (strcmp(testpath_, "/proc") == 0) {
+            content = RunCommand("hidumper -s 10 '-a dumpMem'");
+        } else {
+            // for UT
+            content = ReadFile(std::string(testpath_) + "/dumpMem.txt");
+        }
+    } else {
+        content = ReadFile(FAKE_DATA_PATH + "/dumpMem.txt");
+    }
+    CHECK_TRUE(content != "", NO_RETVAL, "hidumper no data!");
+    ProcessGpuDumpInfo<T>(dataProto, content);
 }
 
 bool MemoryDataPlugin::isRenderService(int pid)
