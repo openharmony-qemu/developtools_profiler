@@ -20,6 +20,7 @@
 #include <vector>
 #include <sys/types.h>
 #include <unistd.h>
+#include <dirent.h>
 
 
 namespace COMMON {
@@ -62,6 +63,8 @@ int PluginWriteToHisysevent (const std::string& pluginName, const std::string& c
                              const int errorCode, const std::string& errorMessage);
 std::string GetProcessNameByPid(int32_t pid);
 bool StoiCheck(const std::string& str);
+std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr);
+bool CheckPopenParams(const std::vector<std::string>& command, const char* type);
 static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
     RET_NO_PERMISSION,
