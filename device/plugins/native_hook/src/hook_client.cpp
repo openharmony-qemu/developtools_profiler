@@ -1425,7 +1425,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if (combineVal == 0) {
         return;
     }
-    if ((g_ClientConfig.isSaMode) && (!(((combineVal & RES_GPU_VK) && (CheckSizeRange(size, RES_GPU_VK)))
+    if ((g_ClientConfig.isSaMode && isUsing) && (!(((combineVal & RES_GPU_VK) && (CheckSizeRange(size, RES_GPU_VK)))
         || ((combineVal & RES_GPU_GLES_IMAGE) && (CheckSizeRange(size, RES_GPU_GLES_IMAGE)))
         || ((combineVal & RES_GPU_GLES_BUFFER) && (CheckSizeRange(size, RES_GPU_GLES_BUFFER)))
         || ((combineVal & RES_GPU_CL_IMAGE) && (CheckSizeRange(size, RES_GPU_CL_IMAGE)))
@@ -1449,7 +1449,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
-    rawdata.tagId = isUsing ? GetTagId(holder, tag, mask) : 0;
+    rawdata.tagId = GetTagId(holder, tag, mask);
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
