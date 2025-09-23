@@ -260,6 +260,28 @@ void OH_HiDebug_DestroyBacktraceObject(HiDebug_Backtrace_Object object);
  * @since 21
  */
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemorySummary(uint32_t interval, HiDebug_GraphicsMemorySummary *summary);
+
+
+typedef void (*OH_HiDebug_ThreadLiteSamplingCallback)(const char* stacks);
+
+/**
+ * Requests stack sampling for the current process.
+ * The calling thread is blocked until the sampling is complete.
+ *
+ * @param config Sampling configuration parameters.
+ * @param stacksCallback Callback of the sampling stack. This function is called after the sampling to pass
+ * the sampling stack information.
+ * @returns { HiDebug_ErrorCode } Returns the error code of the stack sampling.
+ * @return Result code.
+ *         {@link HIDEBUG_SUCCESS } The operation is successful.
+ *         {@link HIDEBUG_INVALID_ARGUMENT } Invalid argument.
+ *         {@link HIDEBUG_NOT_SUPPORTED } The device does not support sampling.
+ *         {@link HIDEBUG_UNDER_SAMPLING } The sampling is in progress.
+ *         {@link HIDEBUG_RESOURCE_UNAVAILABLE } Resource unavailable.
+ * @since 22
+ */
+HiDebug_ErrorCode OH_HiDebug_RequestThreadLiteSampling(
+    HiDebug_ProcessSamplerConfig* config, OH_HiDebug_ThreadLiteSamplingCallback stacksCallback);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
