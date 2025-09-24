@@ -630,7 +630,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
-    sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
+    sptr<AppExecFwk::IBundleMgr> proxy = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     AppExecFwk::ApplicationInfo appInfo;
     bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::GET_APPLICATION_INFO_WITH_DISABLE,
                                          AppExecFwk::Constants::ANY_USERID, appInfo);
@@ -662,7 +662,7 @@ bool CheckApplicationEncryped(int pid, const std::string& processName)
     CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
-    sptr<BundleMgrProxy> proxy = iface_cast<BundleMgrProxy>(remoteObject);
+    sptr<AppExecFwk::IBundleMgr> proxy = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
     AppExecFwk::ApplicationInfo appInfo;
     bool ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO,
                                          AppExecFwk::Constants::ANY_USERID, appInfo);
