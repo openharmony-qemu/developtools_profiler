@@ -14,7 +14,6 @@
  */
 #include "hilog_plugin.h"
 #include "securec.h"
-
 #include <fcntl.h>
 #include <cinttypes>
 #include <csignal>
@@ -358,12 +357,12 @@ template <typename T> bool HilogPlugin::SetHilogLineDetails(const char* data, T&
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin:RemoveSpaces failed!");
     int npos = 1;
     if (!FindTagString(pTmp, end, npos)) {
-         return false;
-     }
+        return false;
+    }
     detail->set_tag(std::string(end, end + npos - 1));
     pTmp++;
     CHECK_TRUE(RemoveSpaces(&pTmp), false, "HilogPlugin: RemoveSpaces failed!");
-    size_t dataLen = strlen(pTmp) > 1 ? strlen(pTmp) -1 : 0;
+    size_t dataLen = strlen(pTmp) > 1 ? strlen(pTmp) - 1 : 0;
     if (utf8_range::IsStructurallyValid({pTmp, dataLen})) {
         hilogLineInfo.set_context(pTmp, dataLen);  // - \n
     } else {

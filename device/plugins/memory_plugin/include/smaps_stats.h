@@ -449,7 +449,7 @@ private:
                 ParseMapHead(line, mappic, smapsHeadInfo);
                 findMapHead = true;
                 if (isReportSmaps) {
-                   SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
+                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
                 }
                 continue;
             }

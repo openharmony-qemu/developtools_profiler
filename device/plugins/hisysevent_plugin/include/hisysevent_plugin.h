@@ -17,6 +17,7 @@
 
 #include "hisysevent_plugin_config.pb.h"
 #include "hisysevent_plugin_result.pb.h"
+#include "hisysevent_plugin_result.pbencoder.h"
 #include "common.h"
 #include "logging.h"
 #include "plugin_module_api.h"
@@ -41,12 +42,14 @@ private:
     std::string GetFullCmd();
     bool InitHisyseventCmd();
     std::string GetCmdArgs(const HisyseventConfig& protoConfig);
-
-    template <typename T> bool ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto);
-
-    template <typename T> bool WriteResult(const T hisyseventInfoProto);
-
-    template <typename T> void FlushDataOptimize(const T hisyseventInfoProto);
+    template <typename T>
+    bool ParseSyseventLineInfo(const char* data, size_t len, T hisyseventInfoProto);
+    template <typename T>
+    bool WriteResult(const T hisyseventInfoProto);
+    template <typename T>
+    void FlushDataOptimize(const T hisyseventInfoProto);
+    void StartLoopReadData(std::unique_ptr<uint8_t[]>& buffer, std::unique_ptr<HisyseventInfo>& dataProto,
+                           std::unique_ptr<OHOS::Developtools::Profiler::ProtoEncoder::HisyseventInfo>& hisyseventInfo);
 
 private:
     std::atomic<uint64_t> id_;
