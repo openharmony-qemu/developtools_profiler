@@ -132,7 +132,7 @@ std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr)
         return {false, ""};
     }
     char filePath[FILE_PATH_SIZE] = {0};
-    int len = snprintf_s(filePath, FILE_PATH_SIZE, sizeof(filePath) - 1, "/proc/%s/cmdline", ptr->d_name);
+    int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
     if (len < 0) {
         PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
         return {false, ""};
@@ -154,7 +154,9 @@ std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr)
     } else {
         fullProcess = str;
     }
-    fclose(fp);
+    if (fclose(fp) != 0) {
+        return {false, ""};
+    }
     return {true, fullProcess};
 }
 bool IsProcessExist(const std::string& processName, int& pid)
