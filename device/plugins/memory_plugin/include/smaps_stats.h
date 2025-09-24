@@ -322,7 +322,7 @@ private:
     void SetPssInfoField(MemUsageInfo& memusage, std::string strfield, const char* c);
     void SetSharedAndSwap(MemUsageInfo& memusage, std::string strfield, const char* c);
     template<typename T, typename S>
-    void SetMapHeadInfo(T& processMemoryInfo, S smapsInfo, SmapsHeadInfo& smapsHeadInfo)
+    void SetMapHeadInfo(T& processMemoryInfo, S& smapsInfo, SmapsHeadInfo& smapsHeadInfo)
     {
         smapsInfo = processMemoryInfo.add_smapinfo();
         if (!COMMON::IsUserMode()) {
@@ -340,7 +340,7 @@ private:
     }
 
     template <typename T, typename S>
-    void SetSmapsInfo(T& processMemoryInfo, S smapsInfo, MemUsageInfo& memusage)
+    void SetSmapsInfo(T& processMemoryInfo, S& smapsInfo, MemUsageInfo& memusage)
     {
         if (smapsInfo == nullptr) {
             smapsInfo = processMemoryInfo.add_smapinfo();
@@ -360,7 +360,7 @@ private:
     }
 
     template <typename T, typename S>
-    void SetSmapsRollupInfo(T& processMemoryInfo, S smapsInfo, MemUsageInfo& memusage)
+    void SetSmapsRollupInfo(T& processMemoryInfo, S& smapsInfo, MemUsageInfo& memusage)
     {
         if (smapsInfo == nullptr) {
             smapsInfo = processMemoryInfo.add_smapinfo();
