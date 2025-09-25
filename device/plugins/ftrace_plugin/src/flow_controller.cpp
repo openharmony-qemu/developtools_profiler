@@ -370,7 +370,7 @@ long FlowController::HmReadEventData()
     long nbytes = 0;
     long used = 0;
     long rest = bufferSize;
-    while ((nbytes = reader->Read(&buffer[used], rest)) > 0 && used < bufferSize) {
+    while (used < bufferSize && (nbytes = reader->Read(&buffer[used], rest)) > 0) {
         used += nbytes;
         rest -= nbytes;
     }

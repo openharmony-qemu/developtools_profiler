@@ -135,7 +135,7 @@ struct PerCpuStats {
 
 struct FieldFormat {
     uint16_t offset = 0;
-    uint16_t size = 0;
+    size_t size = 0;
     uint8_t isSigned = 0;
     EventFieldType filedType = FIELD_TYPE_INVALID;
     ProtoFieldType protoType = PROTO_TYPE_UNKNOWN;
