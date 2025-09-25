@@ -144,10 +144,10 @@ export namespace hidebug {
     privateClean: long;
   }
 
-  native function getAppNativeMemInfoAdapter(): NativeMemInfoAdapter;
+  native function getAppNativeMemInfoAdapter(forceRefresh: boolean): NativeMemInfoAdapter;
 
-  export function getAppNativeMemInfo(): NativeMemInfo {
-    let nativeMemoryInfo = getAppNativeMemInfoAdapter();
+  export function getAppNativeMemInfoWithCache(forceRefresh?: boolean): NativeMemInfo {
+    let nativeMemoryInfo = getAppNativeMemInfoAdapter(forceRefresh === true);
     let retValue = new NativeMemInfoImpl();
     retValue.pss = new bigint(nativeMemoryInfo.pss);
     retValue.vss = new bigint(nativeMemoryInfo.vss);
@@ -157,6 +157,21 @@ export namespace hidebug {
     retValue.sharedClean = new bigint(nativeMemoryInfo.sharedClean);
     retValue.privateClean = new bigint(nativeMemoryInfo.privateClean);
     return retValue;
+  }
+
+  export function getAppNativeMemInfo(): NativeMemInfo {
+    return getAppNativeMemInfoWithCache();
+  }
+
+  export function getAppNativeMemInfoAsync(): Promise<NativeMemInfo> {
+    return new Promise<NativeMemInfo>((resolve: (v: NativeMemInfo) => void,
+      reject: (e: BusinessError<void>) => void) => {
+        taskpool.execute(getAppNativeMemInfo).then((ret: NullishType): void => {
+          resolve(ret as NativeMemInfo);
+        }).catch((err: Object | null | undefined) => {
+          reject(err as BusinessError);
+        });
+      });
   }
 
   export interface VMMemoryInfo {
@@ -280,5 +295,37 @@ export namespace hidebug {
     });
   }
 
-  export native function getGraphicsMemorySync(): int;
+  interface GraphicsMemorySummary {
+    gl: int;
+    graph: int;
+  }
+
+  class GraphicsMemorySummaryImpl implements GraphicsMemorySummary {
+    gl: int;
+    graph: int;
+  }
+
+  native function getGraphicsMemoryAdapter(interval: int): GraphicsMemorySummary;
+
+  export function getGraphicsMemorySummary(interval?: int): Promise<GraphicsMemorySummary> {
+    return new Promise<GraphicsMemorySummary>((resolve: (v: GraphicsMemorySummary) => void,
+      reject: (e: BusinessError<void>) => void) => {
+        taskpool.execute(() => {
+          if (interval === undefined) {
+            return getGraphicsMemoryAdapter(300);
+          } else {
+            return getGraphicsMemoryAdapter(interval as int);
+          }
+        }).then((ret: NullishType): void => {
+          resolve(ret as GraphicsMemorySummary);
+        }).catch((err: Object | null | undefined) => {
+          reject(err as BusinessError);
+        });
+      });
+  }
+
+  export function getGraphicsMemorySync(): int {
+    let graphicMemory = getGraphicsMemoryAdapter(2);
+    return graphicMemory.gl + graphicMemory.graph;
+  }
 }

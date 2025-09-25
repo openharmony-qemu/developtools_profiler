@@ -247,10 +247,10 @@ ani_array GetAppThreadCpuUsage(ani_env *env)
     return ConvertThreadCpuUsageMapToEts(env, threadMap);
 }
 
-ani_object GetAppNativeMemInfo(ani_env *env)
+ani_object GetAppNativeMemInfoAdapter(ani_env *env, ani_boolean forceRefresh)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppNativeMemInfo");
-    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo();
+    auto nativeMemInfoOption = HidebugNativeInterface::GetInstance().GetAppNativeMemInfo(!forceRefresh);
     if (!nativeMemInfoOption) {
         nativeMemInfoOption.emplace();
     }
@@ -363,17 +363,30 @@ void StopAppTraceCapture(ani_env *env)
     }
 }
 
-ani_int GetGraphicsMemorySync(ani_env *env)
+ani_object GetGraphicsMemoryAdapter(ani_env *env, ani_int interval)
 {
-    ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemorySync");
-    std::optional<int32_t> result = HidebugNativeInterface::GetInstance().GetGraphicsMemory();
-    if (result) {
-        return static_cast<ani_int>(result.value());
-    }
+    ApiInvokeRecorder apiInvokeRecorder("getGraphicsMemory");
+    do {
+        auto result = HidebugNativeInterface::GetInstance().GetGraphicsMemorySummary(static_cast<uint32_t>(interval));
+        if (!result) {
+            break;
+        }
+        ani_class cls = nullptr;
+        ani_method ctorMethod = nullptr;
+        ani_object graphicMemorySummary = nullptr;
+        if (env->FindClass("@ohos.hidebug.hidebug.GraphicsMemorySummaryImpl", &cls) != ANI_OK ||
+            env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
+            env->Object_New(cls, ctorMethod, &graphicMemorySummary) != ANI_OK) {
+            break;
+        }
+        env->Object_SetPropertyByName_Int(graphicMemorySummary, "gl", result->gl);
+        env->Object_SetPropertyByName_Int(graphicMemorySummary, "graph", result->graph);
+        return graphicMemorySummary;
+    } while (false);
     constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
     AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
     apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-    return 0;
+    return AniUtil::CreateUndefined(env);
 }
 
 bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fileName)
@@ -523,15 +536,16 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getAppThreadCpuUsage", ":C{escompat.Array}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},
-        ani_native_function {"getAppNativeMemInfoAdapter", ":C{@ohos.hidebug.hidebug.NativeMemInfoAdapter}",
-            reinterpret_cast<void *>(GetAppNativeMemInfo)},
+        ani_native_function {"getAppNativeMemInfoAdapter", "z:C{@ohos.hidebug.hidebug.NativeMemInfoAdapter}",
+            reinterpret_cast<void *>(GetAppNativeMemInfoAdapter)},
         ani_native_function {"getSystemMemInfoAdapter", ":C{@ohos.hidebug.hidebug.SystemMemInfoAdapter}",
             reinterpret_cast<void *>(GetSystemMemInfo)},
         ani_native_function {"startAppTraceCapture",
             "C{escompat.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
-        ani_native_function {"getGraphicsMemorySync", ":i", reinterpret_cast<void *>(GetGraphicsMemorySync)},
+        ani_native_function {"getGraphicsMemoryAdapter", "i:C{@ohos.hidebug.hidebug.GraphicsMemorySummary}",
+            reinterpret_cast<void *>(GetGraphicsMemoryAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {
