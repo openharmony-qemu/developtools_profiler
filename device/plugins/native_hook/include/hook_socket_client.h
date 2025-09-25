@@ -52,6 +52,10 @@ public:
     {
         return nmdType_;
     }
+    bool GetConnectState()
+    {
+        return connectState_.load();
+    }
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
@@ -69,6 +73,7 @@ private:
     uint32_t secondLargestSize_ = 0;
     uint32_t maxGrowthSize_ = 0;
     uint32_t sampleInterval_ = 0;
+    std::atomic<bool> connectState_ = false;
 };
 
 #endif // HOOK_SOCKET_CLIENT

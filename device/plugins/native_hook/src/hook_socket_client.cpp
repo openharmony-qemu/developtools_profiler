@@ -90,7 +90,7 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *samp
     stackWriterList_.reserve(sharedMemCount);
     unixSocketClient_ = nullptr;
     serviceName_ = "HookService";
-    Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
+    connectState_ = Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
 }
 
 HookSocketClient::~HookSocketClient()
