@@ -20,6 +20,7 @@ import time
 import os
 import threading
 import sqlite3
+from tools.utils import run_and_get_output
 
 
 def get_file_size(file_path):
@@ -28,27 +29,31 @@ def get_file_size(file_path):
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower.txt -o /data/local/tmp/test_xpower.htrace -t 30 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower.txt -o /data/local/tmp/test_xpower.htrace -t 30 -s -k"')
 
 
 def task_total():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower_total.txt -o /data/local/tmp/test_xpower_total.htrace -t 35 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_xpower_total.txt -o /data/local/tmp/test_xpower_total.htrace -t 35 -s -k"')
 
 
 class TestHiprofilerXPowerPlugin:
     @pytest.mark.L0
     def test_xpowerplugin_app(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\xpower_plugin\\config_xpower.txt /data/local/tmp/", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\xpower_plugin\config_xpower.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower.htrace ../outputfiles/ ", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test_xpower.htrace ../outputfiles/ ", shell=False,
+            text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_xpower.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_xpower.htrace -e ../outputfiles/test_xpower.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_xpower.db')
@@ -79,17 +84,19 @@ class TestHiprofilerXPowerPlugin:
 
     @pytest.mark.L0
     def test_xpowerplugin_total(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\xpower_plugin\\config_xpower_total.txt /data/local/tmp/", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\xpower_plugin\config_xpower_total.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_total, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_xpower_total.htrace ../outputfiles/ ", shell=False,
-                                 text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test_xpower_total.htrace ../outputfiles/ ", shell=False,
+            text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_xpower_total.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_xpower_total.htrace -e ../outputfiles/test_xpower_total.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_xpower_total.db')

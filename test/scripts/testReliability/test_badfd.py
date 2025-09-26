@@ -29,8 +29,10 @@ TOUCH_TIMES = 67
 
 
 def get_daemon_pid():
-    subprocess.check_output(f"hdc shell ps -ef | grep daemon > /data/local/tmp/daemon.txt")
-    subprocess.check_output(f"hdc file recv /data/local/tmp/daemon.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc shell ps -ef | grep daemon > /data/local/tmp/daemon.txt")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/daemon.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
     check = True
     with open(r'.\..\outputfiles\daemon.txt', 'r') as file:
         lines = file.readlines()
@@ -43,16 +45,19 @@ def get_daemon_pid():
 class TestHiprofilerReliability:
     @pytest.mark.L0
     def test_badfd(self):
-        subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace")
+        run_and_get_output("hdc shell rm /data/local/tmp/test.htrace")
         try:
-            subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
-            subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+            run_and_get_output(
+                r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+            run_and_get_output(
+                r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
         except Exception as e:
             print(f"An error occurred: {e}")
             pass
-        subprocess.check_output("hdc target mount", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell reboot", text=True, encoding="utf-8")
+        run_and_get_output("hdc target mount", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell reboot", text=True, encoding="utf-8")
         time.sleep(SLEEP_TWENTY)
         j = 0
         while j < WAIT_TIMES:
@@ -64,25 +69,25 @@ class TestHiprofilerReliability:
                 break
         
         #解除锁屏
-        subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
         time.sleep(SLEEP_FIVE)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
         time.sleep(SLEEP_FIVE)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
 
-        subprocess.check_output("hdc shell power-shell setmode 602")
+        run_and_get_output("hdc shell power-shell setmode 602")
         
-        subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-        subprocess.check_output("hdc shell param set hiview.memleak.test enable")
-        subprocess.check_output("hdc shell killall hiview")
+        run_and_get_output("hdc shell killall com.example.insight_test_stage")
+        run_and_get_output("hdc shell param set hiview.memleak.test enable")
+        run_and_get_output("hdc shell killall hiview")
 
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+        run_and_get_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         process = subprocess.Popen(['hdc', 'shell', 'dmesg -w | grep avc > /data/local/tmp/avc.txt'])
         process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep BADFD > /data/local/tmp/daemonhilog.txt'])
         time.sleep(1)
         touch_button("模板测试")
         time.sleep(1)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
         time.sleep(1)
         touch_button("Allocations_Js_Depth")
         i = 0
@@ -95,8 +100,10 @@ class TestHiprofilerReliability:
             i += 1
         process.terminate()
         process_hilog.terminate()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/avc.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/daemonhilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/avc.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/daemonhilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = True
         with open(r'.\..\outputfiles\avc.txt', 'r') as file:
             lines = file.readlines()

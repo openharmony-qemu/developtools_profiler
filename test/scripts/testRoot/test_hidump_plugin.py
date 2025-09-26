@@ -20,6 +20,7 @@ import time
 import threading
 import sqlite3
 import os
+from tools.utils import run_and_get_output
 
 
 def get_file_size(file_path):
@@ -28,19 +29,19 @@ def get_file_size(file_path):
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper.txt -o /data/local/tmp/test_hidumper.htrace -t 30 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper.txt -o /data/local/tmp/test_hidumper.htrace -t 30 -s -k"')
 
 
 def task_nosec():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_nosec.txt -o /data/local/tmp/test_hidumper_nosec.htrace -t 30 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_nosec.txt -o /data/local/tmp/test_hidumper_nosec.htrace -t 30 -s -k"')
 
 
 def task_section_60():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_60.txt -o /data/local/tmp/test_hidumper_60.htrace -t 30 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_60.txt -o /data/local/tmp/test_hidumper_60.htrace -t 30 -s -k"')
 
 
 def task_fps():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_fps.txt -o /data/local/tmp/test_hidumper_fps.htrace -t 30 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hidumper_fps.txt -o /data/local/tmp/test_hidumper_fps.htrace -t 30 -s -k"')
 
 
 def check_process():
@@ -62,8 +63,9 @@ class TestHiprofilerHidumpPlugin:
     # 将一秒分成10段 section 为10
     @pytest.mark.L0
     def test_hidump_plugin(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper.txt /data/local/tmp/", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\hidumper_plugin\config_hidumper.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         # 唤醒屏幕
@@ -74,12 +76,12 @@ class TestHiprofilerHidumpPlugin:
         # 解锁屏幕
         subprocess.check_call("hdc shell uinput -T -g 100 100 500 500", shell=False)
         time.sleep(3)
-        subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
+        run_and_get_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
                                 text=True, encoding="utf-8")
         time.sleep(5)
-        subprocess.check_output(f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
         time.sleep(1)
-        subprocess.check_output(f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")
         
         task_thread.join()
         subprocess.run(f'hdc file recv /data/local/tmp/test_hidumper.htrace ../outputfiles/', shell=False,
@@ -87,7 +89,7 @@ class TestHiprofilerHidumpPlugin:
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_hidumper.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_hidumper.htrace -e ../outputfiles/test_hidumper.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_hidumper.db')
@@ -112,8 +114,9 @@ class TestHiprofilerHidumpPlugin:
     #不分段场景
     @pytest.mark.L0
     def test_hidump_plugin_nosec(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper_nosec.txt /data/local/tmp/", shell=False,
-                                 text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\hidumper_plugin\config_hidumper_nosec.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_nosec, args=())
         task_thread.start()
         task_thread.join()
@@ -122,7 +125,7 @@ class TestHiprofilerHidumpPlugin:
         # 检查文件大小 能正常抓到trace
         file_size = get_file_size(f"../outputfiles/test_hidumper_nosec.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_hidumper_nosec.htrace -e ../outputfiles/test_hidumper_nosec.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_hidumper_nosec.db')
@@ -140,8 +143,9 @@ class TestHiprofilerHidumpPlugin:
     #验证hidumper进程和Sp_damon 进程能否正常拉起和结束
     @pytest.mark.L0
     def test_hidumper_process(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper.txt /data/local/tmp/", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\hidumper_plugin\config_hidumper.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         time.sleep(2)
@@ -168,8 +172,9 @@ class TestHiprofilerHidumpPlugin:
     # 将一秒分成60段 section 为60
     @pytest.mark.L0
     def test_hidump_plugin_section_60(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper_60.txt /data/local/tmp/", shell=False,
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\hidumper_plugin\config_hidumper_60.txt /data/local/tmp/", shell=False,
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_section_60, args=())
         task_thread.start()
         # 唤醒屏幕
@@ -180,20 +185,24 @@ class TestHiprofilerHidumpPlugin:
         # 解锁屏幕
         subprocess.check_call("hdc shell uinput -T -g 100 100 500 500", shell=False)
         time.sleep(3)
-        subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            f"hdc shell uitest uiInput keyEvent Home", shell=False, 
+            text=True, encoding="utf-8")
         time.sleep(5)
-        subprocess.check_output(f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(
+            f"hdc shell uinput -T -c 650 2447", shell=False, text=True, encoding="utf-8")
         time.sleep(1)
-        subprocess.check_output(f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(
+            f"hdc shell uinput -T -c 104 1532", shell=False, text=True, encoding="utf-8")
         
         task_thread.join()
-        subprocess.run(f'hdc file recv /data/local/tmp/test_hidumper_60.htrace ../outputfiles/', shell=False,
+        subprocess.run(
+            r"hdc file recv /data/local/tmp/test_hidumper_60.htrace ..\outputfiles\ ", shell=False,
                        text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_hidumper_60.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_hidumper_60.htrace -e ../outputfiles/test_hidumper_60.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_hidumper_60.db')
@@ -208,7 +217,7 @@ class TestHiprofilerHidumpPlugin:
     #report_fps 为false
     @pytest.mark.L0
     def test_hidump_plugin_fps(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper_fps.txt /data/local/tmp/", shell=False,
+        run_and_get_output(f"hdc file send ..\\inputfiles\\hidumper_plugin\\config_hidumper_fps.txt /data/local/tmp/", shell=False,
                                  text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_fps, args=())
         task_thread.start()
@@ -218,7 +227,7 @@ class TestHiprofilerHidumpPlugin:
         # 检查文件大小 能正常抓到trace
         file_size = get_file_size(f"../outputfiles/test_hidumper_fps.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_hidumper_fps.htrace -e ../outputfiles/test_hidumper_fps.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_hidumper_fps.db')

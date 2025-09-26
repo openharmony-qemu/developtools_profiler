@@ -20,27 +20,29 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import MID_TRACE_EXPECTED_SIZE_2, SMALL_TRACE_EXPECTED_SIZE_2
+from tools.utils import run_and_get_output
 
+MID_TRACE_EXPECTED_SIZE_2 = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf.txt -o /data/local/tmp/test_hiperf.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf.txt -o /data/local/tmp/test_hiperf.htrace -t 10 -s -k"')
 
 
 def task2():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf2.txt -o /data/local/tmp/test_hiperf2.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf2.txt -o /data/local/tmp/test_hiperf2.htrace -t 10 -s -k"')
 
 
 def task3():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf3.txt -o /data/local/tmp/test_hiperf3.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf3.txt -o /data/local/tmp/test_hiperf3.htrace -t 10 -s -k"')
 
 
 def task4():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf4.txt -o /data/local/tmp/test_hiperf4.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf4.txt -o /data/local/tmp/test_hiperf4.htrace -t 10 -s -k"')
 
 
 def task5():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf5.txt -o /data/local/tmp/test_hiperf5.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hiperf5.txt -o /data/local/tmp/test_hiperf5.htrace -t 10 -s -k"')
 
 
 class TestHiprofilerhiperfPlugin:

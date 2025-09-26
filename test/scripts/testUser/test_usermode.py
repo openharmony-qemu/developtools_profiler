@@ -36,37 +36,37 @@ SIZE_INDEX = 4
 
 def task(index):
     indexstr = str(index)
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
+    run_and_get_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
 
 
 def malloctest():
-    subprocess.check_output("hdc shell chmod 777 /data/local/tmp/malloctest")
-    subprocess.check_output("hdc shell ./data/local/tmp/malloctest 10 1024 1000000 > /data/local/tmp/malloctest.txt")
+    run_and_get_output("hdc shell chmod 777 /data/local/tmp/malloctest")
+    run_and_get_output("hdc shell ./data/local/tmp/malloctest 10 1024 1000000 > /data/local/tmp/malloctest.txt")
 
 
 class TestHiprofilerUserMode:
     @pytest.mark.L0
     def test_usermode_nativehook_debug_app(self):
-        subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config1.txt /data/local/tmp/", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell power-shell setmode 602")
-        subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-        subprocess.check_output("hdc shell rm /data/local/tmp/test1.htrace")
+        run_and_get_output(r"hdc file send .\..\inputfiles\nativehook\config1.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell power-shell setmode 602")
+        run_and_get_output("hdc shell killall com.example.insight_test_stage")
+        run_and_get_output("hdc shell rm /data/local/tmp/test1.htrace")
         task_thread = threading.Thread(target=task, args=(1, ))
         task_thread.start()
         time.sleep(SLEEP_TWO)
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+        run_and_get_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         time.sleep(SLEEP_FOUR)
         touch_button("模板测试")
         time.sleep(SLEEP_TWO)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
         time.sleep(1)
         touch_button("Allocations_Js_Depth")
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
+        run_and_get_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         result = False
         with open(r'.\..\outputfiles\tmp.txt', 'r') as file:
             lines = file.readlines()
@@ -78,19 +78,19 @@ class TestHiprofilerUserMode:
     @pytest.mark.L0
     def test_usermode_nondebug_app(self):
         # 校验命令行输出
-        subprocess.check_output("hdc shell rm /data/local/tmp/test7.htrace")
-        subprocess.check_output("hdc shell rm /data/local/tmp/tmp.txt")
-        subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell rm /data/local/tmp/test7.htrace")
+        run_and_get_output("hdc shell rm /data/local/tmp/tmp.txt")
+        run_and_get_output(r"hdc file send .\..\inputfiles\nativehook\config7.txt /data/local/tmp/", text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=(CONFIG_SCENEBOARD, ))
         task_thread.start()
         time.sleep(SLEEP_TWO)
-        subprocess.check_output("hdc shell uitest uinput drag 100 800 100 100 1000")
+        run_and_get_output("hdc shell uitest uinput drag 100 800 100 100 1000")
         time.sleep(1)
-        subprocess.check_output("hdc shell uitest uinput drag 100 100 800 100 1000")
+        run_and_get_output("hdc shell uitest uinput drag 100 100 800 100 1000")
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test7.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test7.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
+        run_and_get_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         result = False
         with open(r'.\..\outputfiles\tmp.txt', 'r') as file:
             lines = file.readlines()
@@ -101,21 +101,21 @@ class TestHiprofilerUserMode:
 
     @pytest.mark.L0
     def test_usermode_network_profiler_debugapp(self):
-        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell killall com.example.myapplication523")
+        run_and_get_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell killall com.example.myapplication523")
         task_thread = threading.Thread(target=task, args=(CONFIG_NETWORK_PROFILER, ))
         time.sleep(SLEEP_TWO)
         task_thread.start()
         time.sleep(SLEEP_TWO)
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.myapplication523")
+        run_and_get_output("hdc shell aa start -a EntryAbility -b com.example.myapplication523")
         time.sleep(SLEEP_THREE)
         touch_button("http_request")
         task_thread.join()
   
-        subprocess.check_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
-        subprocess.check_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
+        run_and_get_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         count = 0
         with open(r'.\..\outputfiles\test10_result.txt', 'r') as file:
             lines = file.readlines()
@@ -127,23 +127,23 @@ class TestHiprofilerUserMode:
 
     @pytest.mark.L0
     def test_usermode_network_profiler_nondebugapp(self):
-        subprocess.check_output("hdc shell rm /data/local/tmp/test12.htrace")
-        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config12.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell rm /data/local/tmp/test12.htrace")
+        run_and_get_output(r"hdc file send .\..\inputfiles\network_profiler\config12.txt /data/local/tmp/", text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=(CONFIG_NETWORK_PROFILER_NONDEBUG, ))
         time.sleep(SLEEP_TWO)
         task_thread.start()
         time.sleep(SLEEP_THREE)
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.tencent.mtthm")
+        run_and_get_output("hdc shell aa start -a EntryAbility -b com.tencent.mtthm")
         time.sleep(SLEEP_FIVE)
-        subprocess.check_output("hdc shell uinput -T -c 850 1550")
+        run_and_get_output("hdc shell uinput -T -c 850 1550")
         time.sleep(SLEEP_TWO)
         touch_button("微信")
         task_thread.join()
   
-        subprocess.check_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
-        subprocess.check_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test12.htrace > /data/local/tmp/test12_result.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test12.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test12_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
+        run_and_get_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test12.htrace > /data/local/tmp/test12_result.txt")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test12.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(f"hdc file recv /data/local/tmp/test12_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         count = 0
         with open(r'.\..\outputfiles\test12_result.txt', 'r') as file:
             lines = file.readlines()
@@ -154,8 +154,8 @@ class TestHiprofilerUserMode:
 
     @pytest.mark.L0
     def test_usermode_kernel_symbols(self):
-        subprocess.check_output(r"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        run_and_get_output(r"hdc file recv /data/local/tmp/test1.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(r".\..\inputfiles\trace_streamer_db.exe .\..\outputfiles\test1.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
         conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM data_dict')

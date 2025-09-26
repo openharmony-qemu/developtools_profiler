@@ -27,6 +27,13 @@ SMALL_FILE_EXPECTED_SIZE_2 = 5 * 1024
 MID_FILE_EXPECTED_SIZE = 100 * 1024
 
 
+def run_and_get_output(input, text=True, encoding="utf-8", shell = False):
+    output = subprocess.check_output(input.split(), text=text, encoding=encoding, shell=shell)
+    print(f"input cmd: {input}")
+    print(f"output: {output}")
+    return output
+
+
 def get_path_by_attribute(tree, key, value):
     attributes = tree['attributes']
     if attributes is None:
@@ -59,14 +66,14 @@ def get_location_by_text(tree, text):
 
 
 def touch(dx, dy):
-    output = subprocess.check_output(f"hdc shell uitest uiInput click {dx} {dy}")
+    run_and_get_output(f"hdc shell uitest uiInput click {dx} {dy}")
 
 
 def get_layout_tree():
     output = subprocess.check_output("hdc shell uitest dumpLayout", text=True)
     path = output.strip().split(":")[-1]
-    subprocess.check_output(f"hdc file recv {path} .\..\inputfiles\layout.json")
-    subprocess.check_output("hdc shell rm " + path)
+    run_and_get_output(f"hdc file recv {path} .\..\inputfiles\layout.json")
+    run_and_get_output("hdc shell rm " + path)
     with open(".\..\inputfiles\layout.json", encoding="utf-8") as f:
         tree = json.load(f)
     return tree
@@ -79,8 +86,8 @@ def touch_button(text):
 
 
 def get_pid(name):
-    subprocess.check_output("hdc shell ps -ef | grep " + name + " > /data/local/tmp/pids.txt")
-    subprocess.check_output(f"hdc file recv /data/local/tmp/pids.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output("hdc shell ps -ef | grep " + name + " > /data/local/tmp/pids.txt")
+    run_and_get_output(f"hdc file recv /data/local/tmp/pids.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
     with open(r'.\..\outputfiles\pids.txt', 'r') as file:
         lines = file.readlines()
         for line in lines:

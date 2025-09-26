@@ -21,6 +21,7 @@ import threading
 import sqlite3
 from string import Template
 import os
+from tools.utils import run_and_get_output
 
 
 def get_file_size(file_path):
@@ -29,16 +30,16 @@ def get_file_size(file_path):
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_plugin.txt -o /data/local/tmp/test_memory_kernel.htrace -t 60 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_plugin.txt -o /data/local/tmp/test_memory_kernel.htrace -t 60 -s -k"')
 
 
 
 def task_vminfo():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_vmeminfo.txt -o /data/local/tmp/test_memory_vmeminfo.htrace -t 60 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_vmeminfo.txt -o /data/local/tmp/test_memory_vmeminfo.htrace -t 60 -s -k"')
 
 
 def task_vmtracker():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_vmtracker.txt -o /data/local/tmp/test_memory_vmtracker.htrace -t 60 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_memory_vmtracker.txt -o /data/local/tmp/test_memory_vmtracker.htrace -t 60 -s -k"')
 
 
 def write_str_file(file_path, large_string):
@@ -52,7 +53,7 @@ class TestHiprofilerMemoryPlugin:
     # 检查内核的 memory info 
     @pytest.mark.L0
     def test_memory_plugin_kernel(self):
-        subprocess.check_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_plugin.txt /data/local/tmp/", shell=False,
+        run_and_get_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_plugin.txt /data/local/tmp/", shell=False,
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
@@ -63,7 +64,7 @@ class TestHiprofilerMemoryPlugin:
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_memory_kernel.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_memory_kernel.htrace -e ../outputfiles/test_memory_kernel.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_memory_kernel.db')
@@ -91,7 +92,7 @@ class TestHiprofilerMemoryPlugin:
     # 检查内核的 virture memory info stats
     @pytest.mark.L0
     def test_memory_plugin_vmeminfo(self):
-        subprocess.check_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_vmeminfo.txt /data/local/tmp/", shell=False,
+        run_and_get_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_vmeminfo.txt /data/local/tmp/", shell=False,
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_vminfo, args=())
         task_thread.start()
@@ -102,7 +103,7 @@ class TestHiprofilerMemoryPlugin:
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_memory_vmeminfo.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_memory_vmeminfo.htrace -e ../outputfiles/test_memory_vmeminfo.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_memory_vmeminfo.db')
@@ -134,7 +135,7 @@ class TestHiprofilerMemoryPlugin:
         sys_bit = subprocess.run(f"hdc shell getconf LONG_BIT", stdout=subprocess.PIPE, text=True, check=True)
         sysinfo = sys_bit.stdout
         if sysinfo.strip() == "32":
-            subprocess.check_output(f"hdc shell aa start -a com.ohos.settings.MainAbility -b com.ohos.settings", shell=False, text=True, encoding="utf-8")
+            run_and_get_output(f"hdc shell aa start -a com.ohos.settings.MainAbility -b com.ohos.settings", shell=False, text=True, encoding="utf-8")
             time.sleep(2)
             pid_text = subprocess.run(f"hdc shell pidof 'com.ohos.settings'", stdout=subprocess.PIPE, text=True, check=True)
         else:
@@ -170,7 +171,7 @@ class TestHiprofilerMemoryPlugin:
         #写入文件
         write_str_file("../inputfiles/memory_plugin/config_memory_vmtracker.txt", vmfile)
 
-        subprocess.check_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_vmtracker.txt /data/local/tmp/", shell=False,
+        run_and_get_output(f"hdc file send ..\inputfiles\memory_plugin\config_memory_vmtracker.txt /data/local/tmp/", shell=False,
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_vmtracker, args=())
         task_thread.start()
@@ -180,7 +181,7 @@ class TestHiprofilerMemoryPlugin:
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_memory_vmtracker.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_memory_vmtracker.htrace -e ../outputfiles/test_memory_vmtracker.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_memory_vmtracker.db')

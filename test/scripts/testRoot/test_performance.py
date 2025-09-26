@@ -33,18 +33,22 @@ LISTENURI_INDEX = 3
 
 def task(index):
     indexstr = str(index)
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
+    run_and_get_output(
+        r"hdc shell hiprofiler_cmd -c /data/local/tmp/config" + indexstr + ".txt -o /data/local/tmp/test" + indexstr + ".htrace -t 20 -s -k")
 
 
 def malloctest():
-    subprocess.check_output("hdc shell chmod 777 /data/local/tmp/malloctest")
-    subprocess.check_output("hdc shell ./data/local/tmp/malloctest 10 1024 1000000 > /data/local/tmp/malloctest.txt")
+    run_and_get_output(
+        r"hdc shell chmod 777 /data/local/tmp/malloctest")
+    run_and_get_output(
+        r"hdc shell ./data/local/tmp/malloctest 10 1024 1000000 > /data/local/tmp/malloctest.txt")
 
 
 class TestHiprofilerMalloctime:
     @pytest.mark.L0
     def test_malloctime(self):
-        subprocess.check_output(f"hdc file send .\inputfiles\nativehook\config6.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send .\inputfiles\nativehook\config6.txt /data/local/tmp/", text=True, encoding="utf-8")
         malloc_thread = threading.Thread(target=malloctest)
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         malloc_thread.start()
@@ -54,7 +58,8 @@ class TestHiprofilerMalloctime:
         malloc_thread.join()
         task_thread.join()
   
-        subprocess.check_output(f"hdc file recv /data/local/tmp/malloctest.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/malloctest.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         malloctime = 0
 
         with open(r'.\..\outputfiles\malloctest.txt', 'r') as file:
@@ -67,8 +72,10 @@ class TestHiprofilerMalloctime:
         port = 0
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         task_thread.start()
-        subprocess.check_output("hdc shell hiprofiler_cmd -q > /data/local/tmp/cmdtmp.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/cmdtmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell hiprofiler_cmd -q > /data/local/tmp/cmdtmp.txt")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/cmdtmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = False
         with open(r'.\..\outputfiles\cmdtmp.txt', 'r') as file:
             lines = file.readlines()
@@ -77,8 +84,10 @@ class TestHiprofilerMalloctime:
                     port = int(line[PORT_INDEX:])
                 
             
-        subprocess.check_output("hdc shell netstat -anp | grep " + str(port) + " > /data/local/tmp/uri.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/uri.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            "hdc shell netstat -anp | grep " + str(port) + r" > /data/local/tmp/uri.txt")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/uri.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         check = False
         with open(r'.\..\outputfiles\uri.txt', 'r') as file:
             lines = file.readlines()

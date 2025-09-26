@@ -20,19 +20,25 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_TRACE_EXPECTED_SIZE_3, MID_TRACE_EXPECTED_SIZE
+from tools.utils import run_and_get_output
 
+SMALL_TRACE_EXPECTED_SIZE_3 = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
+MID_TRACE_EXPECTED_SIZE = 1 * 1024
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio.txt -o /data/local/tmp/test_diskio.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio.txt -o /data/local/tmp/test_diskio.htrace -t 10 -s -k"')
 
 
 def task_ex():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio_ex.txt -o /data/local/tmp/test_diskio_ex.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio_ex.txt -o /data/local/tmp/test_diskio_ex.htrace -t 10 -s -k"')
 
 
 def task_no_report():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio_no_report.txt -o /data/local/tmp/test_diskio_no_report.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_diskio_no_report.txt -o /data/local/tmp/test_diskio_no_report.htrace -t 10 -s -k"')
 
 
 class TestHiprofilerDiskioPlugin:

@@ -21,6 +21,7 @@ import threading
 import sqlite3
 from string import Template
 import os
+from tools.utils import run_and_get_output
 
 
 def get_pid_by_process_name(process_name):
@@ -42,7 +43,7 @@ def get_file_size(file_path):
 
 
 def task_nativehook_dwarf():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/inputfiles/nativehook/config_nativehook_dwarf.txt -o /data/local/tmp/test_nativehook_dwarf.htrace -t 60 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/inputfiles/nativehook/config_nativehook_dwarf.txt -o /data/local/tmp/test_nativehook_dwarf.htrace -t 60 -s -k"')
 
 
 def write_str_file(file_path, large_string):
@@ -68,10 +69,10 @@ def check_process_offline():
 
 def hap_op_func(ability_name, bundle_name):
     #打开系统设置的应用com.ohos.settings.MainAbility  com.ohos.settings
-    subprocess.check_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
+    run_and_get_output(f"hdc shell uitest uiInput keyEvent Home", shell=False, 
                                 text=True, encoding="utf-8")
     time.sleep(1)
-    subprocess.check_output(f"hdc shell aa start -a {ability_name} -b {bundle_name}", shell=False, 
+    run_and_get_output(f"hdc shell aa start -a {ability_name} -b {bundle_name}", shell=False, 
                                 text=True, encoding="utf-8")
     time.sleep(2)
 
@@ -80,9 +81,9 @@ def hidumper_op_func(ability_name, bundle_name):
     pid_text = subprocess.run(f"hdc shell pidof '{bundle_name}'", stdout=subprocess.PIPE, text=True, check=True)
     pidinfo = pid_text.stdout
     if pidinfo.strip() != "":
-        subprocess.check_output(f"hdc shell kill " + pidinfo.strip(), shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell kill " + pidinfo.strip(), shell=False, text=True, encoding="utf-8")
     #拉起hidumper
-    subprocess.check_output(f"hdc shell hidumper -h", shell=False, text=True, encoding="utf-8")
+    run_and_get_output(f"hdc shell hidumper -h", shell=False, text=True, encoding="utf-8")
 
 
 def hidumper_prepare_func(ability_name, bundle_name):
@@ -90,23 +91,23 @@ def hidumper_prepare_func(ability_name, bundle_name):
     pidinfo = pid_text.stdout
     #进程存在
     if pidinfo.strip() != "":
-        subprocess.check_output(f"hdc shell hidumper -lc", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell hidumper -lc", shell=False, text=True, encoding="utf-8")
     else:
-        subprocess.check_output(f"hdc shell hidumper -h", shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell hidumper -h", shell=False, text=True, encoding="utf-8")
 
 
 def hidumper_op_nostart_func(ability_name, bundle_name):
-    subprocess.check_output(f"hdc shell hidumper -lc", shell=False, text=True, encoding="utf-8")
-    subprocess.check_output(f"hdc shell hidumper -c", shell=False, text=True, encoding="utf-8")
+    run_and_get_output(f"hdc shell hidumper -lc", shell=False, text=True, encoding="utf-8")
+    run_and_get_output(f"hdc shell hidumper -c", shell=False, text=True, encoding="utf-8")
 
 
 def nativehook_dwarf_startup(statistics_int, ability_name, bundle_name, op_func):
     pid_text = subprocess.run(f"hdc shell pidof '{bundle_name}'", stdout=subprocess.PIPE, text=True, check=True)
     pidinfo = pid_text.stdout
     if pidinfo.strip() != "":
-        subprocess.check_output(f"hdc shell kill " + pidinfo.strip(), shell=False, text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell kill " + pidinfo.strip(), shell=False, text=True, encoding="utf-8")
     #删除cppcrash
-    subprocess.check_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", shell=False, text=True, encoding="utf-8")
+    run_and_get_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", shell=False, text=True, encoding="utf-8")
     #dwarf 统计模式
     file_content = Template('request_id: 1                       \n'
                             'session_config {                    \n'
@@ -138,7 +139,7 @@ def nativehook_dwarf_startup(statistics_int, ability_name, bundle_name, op_func)
     #写入文件
     write_str_file("./inputfiles/nativehook/config_nativehook_dwarf.txt", vmfile)
 
-    subprocess.check_output(f"hdc file send ./inputfiles/nativehook/config_nativehook_dwarf.txt /data/local/tmp/", shell=False,
+    run_and_get_output(f"hdc file send ./inputfiles/nativehook/config_nativehook_dwarf.txt /data/local/tmp/", shell=False,
                             text=True, encoding="utf-8")
     task_thread = threading.Thread(target=task_nativehook_dwarf, args=())
     task_thread.start()
@@ -168,7 +169,7 @@ def nativehook_dwarf_startup(statistics_int, ability_name, bundle_name, op_func)
 def nativehook_dwarf_no_startup(prepare_op_func, statistics_int, ability_name, bundle_name, op_func):
     prepare_op_func(ability_name, bundle_name)
     #删除cppcrash
-    subprocess.check_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", shell=False, text=True, encoding="utf-8")
+    run_and_get_output(f"hdc shell rm -f /data/log/faultlog/faultlogger/cppcrash-*", shell=False, text=True, encoding="utf-8")
     #dwarf
     file_content = Template('request_id: 1                       \n'
                             'session_config {                    \n'
@@ -200,7 +201,7 @@ def nativehook_dwarf_no_startup(prepare_op_func, statistics_int, ability_name, b
     #写入文件
     write_str_file("./inputfiles/nativehook/config_nativehook_dwarf.txt", vmfile)
 
-    subprocess.check_output(f"hdc file send ./inputfiles/nativehook/config_nativehook_dwarf.txt /data/local/tmp/", shell=False,
+    run_and_get_output(f"hdc file send ./inputfiles/nativehook/config_nativehook_dwarf.txt /data/local/tmp/", shell=False,
                             text=True, encoding="utf-8")
     task_thread = threading.Thread(target=task_nativehook_dwarf, args=())
     task_thread.start()
@@ -228,7 +229,7 @@ def nativehook_dwarf_no_startup(prepare_op_func, statistics_int, ability_name, b
 
 
 def nativehook_dwarf_check_data(statistics_flag):
-    subprocess.check_output(r"./inputfiles/trace_streamer_db.exe ./outputfiles/test_nativehook_dwarf.htrace -e ./outputfiles/test_nativehook_dwarf.db")
+    run_and_get_output(r"./inputfiles/trace_streamer_db.exe ./outputfiles/test_nativehook_dwarf.htrace -e ./outputfiles/test_nativehook_dwarf.db")
     # 连接数据库文件
     conn = sqlite3.connect(r'./outputfiles/test_nativehook_dwarf.db')
     # # 创建游标对象

@@ -20,31 +20,42 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_TRACE_EXPECTED_SIZE, SMALL_TRACE_EXPECTED_SIZE_2, MID_TRACE_EXPECTED_SIZE, MID_TRACE_EXPECTED_SIZE_2
+from tools.utils import run_and_get_output
+
+SMALL_TRACE_EXPECTED_SIZE = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
+MID_TRACE_EXPECTED_SIZE = 1 * 1024
+MID_TRACE_EXPECTED_SIZE_2 = 1 * 1024
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process.txt -o /data/local/tmp/test_process.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process.txt -o /data/local/tmp/test_process.htrace -t 10 -s -k"')
 
 
 def task2():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process2.txt -o /data/local/tmp/test_process2.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process2.txt -o /data/local/tmp/test_process2.htrace -t 10 -s -k"')
 
 
 def task3():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process3.txt -o /data/local/tmp/test_process3.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process3.txt -o /data/local/tmp/test_process3.htrace -t 10 -s -k"')
 
 
 def task4():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process4.txt -o /data/local/tmp/test_process4.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process4.txt -o /data/local/tmp/test_process4.htrace -t 10 -s -k"')
 
 
 def task5():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process5.txt -o /data/local/tmp/test_process5.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process5.txt -o /data/local/tmp/test_process5.htrace -t 10 -s -k"')
 
 
 def task6():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process6.txt -o /data/local/tmp/test_process6.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_process6.txt -o /data/local/tmp/test_process6.htrace -t 10 -s -k"')
 
 
 class TestHiprofilerProcessPlugin:

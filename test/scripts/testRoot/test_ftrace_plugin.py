@@ -20,6 +20,7 @@ import time
 import os
 import threading
 import sqlite3
+from tools.utils import run_and_get_output
 
 
 def get_file_size(file_path):
@@ -28,32 +29,35 @@ def get_file_size(file_path):
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace.txt -o /data/local/tmp/test_ftrace.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace.txt -o /data/local/tmp/test_ftrace.htrace -t 10 -s -k"')
 
 
 def task_event():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace_event.txt -o /data/local/tmp/test_ftrace_event.htrace -t 10 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace_event.txt -o /data/local/tmp/test_ftrace_event.htrace -t 10 -s -k"')
 
 
 def task_freq():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace_freq.txt -o /data/local/tmp/test_ftrace_freq.htrace -t 30 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_ftrace_freq.txt -o /data/local/tmp/test_ftrace_freq.htrace -t 30 -s -k"')
 
 
 class TestHiprofilerFtracePlugin:
     @pytest.mark.L0
     def test_ftraceplugin(self):
-        subprocess.check_output(r'hdc file send ..\\inputfiles\\ftrace\\config_ftrace.txt /data/local/tmp/',
+        run_and_get_output(r'hdc file send ..\\inputfiles\\ftrace\\config_ftrace.txt /data/local/tmp/',
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
 
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace.htrace ../outputfiles/ ",
+        run_and_get_output(f"hdc file recv /data/local/tmp/test_ftrace.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_ftrace.htrace -e ../outputfiles/test_ftrace.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_ftrace.db')
@@ -70,18 +74,18 @@ class TestHiprofilerFtracePlugin:
     
     @pytest.mark.L0
     def test_ftrace_events(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_event.txt /data/local/tmp/",
+        run_and_get_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_event.txt /data/local/tmp/",
                                 text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_event, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ../outputfiles/ ",
+        run_and_get_output(f"hdc file recv /data/local/tmp/test_ftrace_event.htrace ../outputfiles/ ",
                                 text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace_event.htrace")
         assert (file_size > 1024)
         assert (file_size < 1024 * 1024 * 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_ftrace_event.htrace -e ../outputfiles/test_ftrace_event.db")
         # 连接数据库文件
         conn = sqlite3.connect(r'../outputfiles/test_ftrace_event.db')
@@ -121,17 +125,19 @@ class TestHiprofilerFtracePlugin:
     
     @pytest.mark.L0
     def test_ftrace_freq(self):
-        subprocess.check_output(f"hdc file send ..\\inputfiles\\ftrace\\config_ftrace_freq.txt /data/local/tmp/",
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send ..\inputfiles\ftrace\config_ftrace_freq.txt /data/local/tmp/",
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task_freq, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ../outputfiles/ ",
-                                text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test_ftrace_freq.htrace ../outputfiles/ ",
+            text=True, encoding="utf-8")
         # 检查文件大小
         file_size = get_file_size(f"../outputfiles/test_ftrace_freq.htrace")
         assert (file_size > 1024)
-        subprocess.check_output(
+        run_and_get_output(
             r"../inputfiles/trace_streamer_db.exe ../outputfiles/test_ftrace_freq.htrace -e ../outputfiles/test_ftrace_freq.db")
     
         # 连接数据库文件

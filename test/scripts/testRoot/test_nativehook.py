@@ -71,16 +71,20 @@ MATCH_INTERVAL = 10
 
 def task_template(extend=False):
     if extend:
-        subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
+        run_and_get_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
     else:
-        subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
+        run_and_get_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
 
 
 def task_multiple_template(extend=False):
     if extend:
-        subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
+        run_and_get_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
     else:
-        subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
+        run_and_get_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config_multipleprocess.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
 
 
 def get_target_stack(result):
@@ -105,7 +109,8 @@ def get_target_so(result, target_so_name):
     return file_id
 
 
-def check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval):
+def check_library_result(statistics, startup, offline, sample_interval,
+                         dwarf, filtersize, depth, touchtimes, malloc_match_interval):
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
     cursor.execute('SELECT * FROM data_dict')
@@ -184,7 +189,8 @@ def check_library_result(statistics, startup, offline, sample_interval, dwarf, f
     return check_destroyed and check_exists
 
 
-def check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval,
+def check_result(statistics, startup, offline, sample_interval, dwarf,
+                 js_report, filtersize, depth, touchtimes, malloc_match_interval,
                  target_so_name=""):
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
@@ -196,7 +202,10 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
         cursor.execute('SELECT DISTINCT callchain_id FROM native_hook_frame WHERE callchain_id NOT IN\
                         ( SELECT callchain_id FROM native_hook_frame WHERE file_id = ' + str(target_so_name) + ' )')
         result = cursor.fetchall()
-        return (len(result) == 0)
+        if len(result) != 0:
+            print(f"Target SO name check failed - Expected: 0 callchain IDs, Actual: {len(result)} callchain IDs")
+            return False
+        return True
     cursor.execute('SELECT * FROM native_hook_frame')
     result = cursor.fetchall()
     callstack_ids_destroyed = []
@@ -217,15 +226,20 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
         callstack_ids_exists = callstack_ids_native
     if depth == DEPTH_FIVE and (not dwarf) and js_report:
         if len(callstack_ids_destroyed) != 0:
+            print(f"Depth five check failed for destroyed callstacks - Expected: 0, Actual: {len(callstack_ids_destroyed)}")
             return False
         if len(callstack_ids_exists) != 0:
+            print(f"Depth five check failed for existing callstacks - Expected: 0, Actual: {len(callstack_ids_exists)}")
             return False
         return True
     if len(callstack_ids_destroyed) == 0 and (malloc_match_interval != 0):
+        print(f"Callstack destroyed check failed - Expected: >0 destroyed callstack IDs, Actual: {len(callstack_ids_destroyed)} when malloc_match_interval={malloc_match_interval}")
         return False
     if (sample_interval < FILTER_THRESH and filtersize < FILTER_THRESH) and len(callstack_ids_exists) == 0:
+        print(f"Callstack exists check failed - Expected: >0 existing callstack IDs, Actual: {len(callstack_ids_exists)} when sample_interval={sample_interval} < {FILTER_THRESH} and filtersize={filtersize} < {FILTER_THRESH}")
         return False
     if (sample_interval >= FILTER_THRESH or filtersize >= FILTER_THRESH) and len(callstack_ids_exists) != 0 and js_report:
+        print(f"JS report check failed - Expected: 0 existing callstack IDs, Actual: {len(callstack_ids_exists)} when sample_interval={sample_interval} >= {FILTER_THRESH} or filtersize={filtersize} >= {FILTER_THRESH}")
         return False
     check_destroyed = False
     check_exists = False
@@ -265,8 +279,11 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
                     times_exists += 1
         if malloc_match_interval != 0:
             if times_destroyed != 0:
+                print(f"Malloc match interval check failed - Expected: 0 destroyed allocations, Actual: {times_destroyed} when malloc_match_interval={malloc_match_interval}")
                 return False
         elif times_destroyed != (touchtimes * MALLOC_TIMES) and (not ((sample_interval >= FILTER_THRESH) or (filtersize >= FILTER_THRESH))):
+            expected_times = touchtimes * MALLOC_TIMES
+            print(f"Times destroyed check failed - Expected: {expected_times}, Actual: {times_destroyed} when touchtimes={touchtimes}, MALLOC_TIMES={MALLOC_TIMES}")
             return False
         for row in result:
             if row[ADDR_INDEX] in malloc_addrs and row[ALLOC_INDEX] == (DESTROY_SIZE / MALLOC_TIMES) and row[TYPE_INDEX] == "FreeEvent":
@@ -287,24 +304,24 @@ def check_result(statistics, startup, offline, sample_interval, dwarf, js_report
 def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False,
                             callframe_compress=True, string_compress=True, target_so_name=""):
     try:
-        subprocess.check_output(r"del .\..\inputfiles\nativehook\config.txt", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\inputfiles\layout.json", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace")
-        subprocess.check_output("hdc shell rm /data/log/faultlog/faultlogger/*")
+        run_and_get_output(r"del .\..\inputfiles\nativehook\config.txt", text=True, encoding="utf-8")
+        run_and_get_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+        run_and_get_output(r"del .\..\inputfiles\layout.json", text=True, encoding="utf-8")
+        run_and_get_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        run_and_get_output("hdc shell rm /data/local/tmp/test.htrace")
+        run_and_get_output("hdc shell rm /data/log/faultlog/faultlogger/*")
     except Exception as e:
         print(f"An error occurred: {e}")
         pass
 
     with open(r".\..\inputfiles\nativehook\config_template.txt", 'r') as file:
         content = file.read()
-    subprocess.check_output("hdc shell power-shell setmode 602")
+    run_and_get_output("hdc shell power-shell setmode 602")
     modified_content = content.replace('sample_interval: 256', 'sample_interval: ' + str(sample_interval))
     if malloc_match_interval == 0:
         modified_content = modified_content.replace('statistics_interval: 10', 'statistics_interval: ' + str(statistics))
     else:
-        modified_content = modified_content.replace('statistics_interval: 10', 'statistics_interval: ' + str(statistics) + '\n' + 
+        modified_content = modified_content.replace('statistics_interval: 10', 'statistics_interval: ' + str(statistics) + '\n' +
                                                     "    malloc_free_matching_interval: " + str(malloc_match_interval))
     modified_content = modified_content.replace('filter_size: 500', 'filter_size: ' + str(filtersize))
     modified_content = modified_content.replace('max_js_stack_depth: 20', 'max_js_stack_depth: ' + str(depth))
@@ -338,7 +355,7 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     with os.fdopen(os.open(r".\..\inputfiles\nativehook\config.txt", flags, mode), 'w') as file:
         file.write(modified_content)
 
-    subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config.txt /data/local/tmp/", text=True, encoding="utf-8")
+    run_and_get_output(r"hdc file send .\..\inputfiles\nativehook\config.txt /data/local/tmp/", text=True, encoding="utf-8")
 
     task_thread = None
     if (dwarf or startup):
@@ -348,14 +365,14 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     task_thread.start()
     time.sleep(SLEEP_TWO)
     if (startup):
-        subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+        run_and_get_output("hdc shell killall com.example.insight_test_stage")
+        run_and_get_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         time.sleep(SLEEP_FOUR)
         if (dwarf):
             time.sleep(SLEEP_FOUR)
         touch_button("模板测试")
         time.sleep(1)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
+        run_and_get_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
         time.sleep(1)
         touch_button("Allocations_Js_Depth")
 
@@ -366,24 +383,36 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
         i += 1
     task_thread.join()
 
-    subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        r".\..\inputfiles\trace_streamer_nativehook.exe"
+        r" .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     if response_library:
-        return check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
-    return check_result(statistics, startup, offline, sample_interval, dwarf, js_report, filtersize, depth, touchtimes, malloc_match_interval, target_so_name)
+        return check_library_result(statistics, startup, offline, sample_interval, dwarf,
+                                    filtersize, depth, touchtimes, malloc_match_interval)
+    return check_result(statistics, startup, offline, sample_interval, dwarf, js_report,
+                        filtersize, depth, touchtimes, malloc_match_interval, target_so_name)
 
 
-def check_nativehook_multipleprocess(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False):
-    subprocess.check_output(r"del .\..\inputfiles\nativehook\config_multipleprocess.txt", text=True, encoding="utf-8")
-    subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
-    subprocess.check_output(r"del .\..\inputfiles\layout.json", text=True, encoding="utf-8")
-    subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
-    subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace")
+def check_nativehook_multipleprocess(statistics, startup, offline, sample_interval, dwarf,
+                                     filtersize, depth, touchtimes, malloc_match_interval=0, response_library=False):
+    run_and_get_output(
+        r"del .\..\inputfiles\nativehook\config_multipleprocess.txt", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"del .\..\inputfiles\layout.json", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc shell rm /data/local/tmp/test.htrace")
 
     with open(r".\..\inputfiles\nativehook\config_multipleprocess_template.txt", 'r') as file:
         content = file.read()
-    subprocess.check_output("hdc shell power-shell setmode 602")
+    run_and_get_output(
+        "hdc shell power-shell setmode 602")
     sceneboard = get_pid("com.ohos.launcher")
     modified_content = content.replace('sample_interval: 256', 'sample_interval: ' + str(sample_interval))
     if malloc_match_interval == 0:
@@ -411,7 +440,8 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
     with os.fdopen(os.open(r".\..\inputfiles\nativehook\config_multipleprocess.txt", flags, mode), 'w') as file:
         file.write(modified_content)
 
-    subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config_multipleprocess.txt /data/local/tmp/", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc file send .\..\inputfiles\nativehook\config_multipleprocess.txt /data/local/tmp/", text=True, encoding="utf-8")
     task_thread = None
     if (dwarf or startup):
         task_thread = threading.Thread(target=task_multiple_template, args=(True,))
@@ -420,12 +450,15 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
     task_thread.start()
     time.sleep(SLEEP_TWO)
     if (startup):
-        subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+        run_and_get_output(
+            "hdc shell killall com.example.insight_test_stage")
+        run_and_get_output(
+            "hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
         time.sleep(SLEEP_FOUR)
         touch_button("模板测试")
         time.sleep(1)
-        subprocess.check_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
+        run_and_get_output(
+            "hdc shell uitest uiInput drag 100 800 100 100 1000")
         time.sleep(1)
         touch_button("Allocations_Js_Depth")
 
@@ -435,14 +468,19 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
         touch_button("small-malloc(depth 7)")
         i += 1
     task_thread.join()
-    subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        r".\..\inputfiles\trace_streamer_nativehook.exe "
+        r".\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
     
     first_process = False
     if response_library:
-        first_process = check_library_result(statistics, startup, offline, sample_interval, dwarf, filtersize, depth, touchtimes, malloc_match_interval)
+        first_process = check_library_result(statistics, startup, offline, sample_interval, dwarf,
+                                             filtersize, depth, touchtimes, malloc_match_interval)
     else:
-        first_process = check_result(statistics, startup, offline, sample_interval, dwarf, True, filtersize, depth, touchtimes, malloc_match_interval)
+        first_process = check_result(statistics, startup, offline, sample_interval, dwarf, True,
+                                     filtersize, depth, touchtimes, malloc_match_interval)
     
     conn = sqlite3.connect(r'./../outputfiles/nativehook.db')
     cursor = conn.cursor()
@@ -474,8 +512,10 @@ def check_nativehook_multipleprocess(statistics, startup, offline, sample_interv
 
 
 def get_profiler_test_trace(process):
-    subprocess.check_output("hdc shell ls -lh /data/log/reliability/resource_leak/memory_leak/ > /data/local/tmp/leak.txt")
-    subprocess.check_output(r"hdc file recv /data/local/tmp/leak.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        "hdc shell ls -lh /data/log/reliability/resource_leak/memory_leak/ > /data/local/tmp/leak.txt")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/leak.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
     with open(r'.\..\outputfiles\leak.txt', 'r') as file:
         lines = file.readlines()
         for line in lines:
@@ -484,8 +524,10 @@ def get_profiler_test_trace(process):
     return ""
 
 def get_nmd_file(process):
-    subprocess.check_output("hdc shell ls -lh /data/log/reliability/resource_leak/memory_leak/ > /data/local/tmp/leak.txt")
-    subprocess.check_output(r"hdc file recv /data/local/tmp/leak.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc shell ls -lh /data/log/reliability/resource_leak/memory_leak/ > /data/local/tmp/leak.txt")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/leak.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
     with open(r'.\..\outputfiles\leak.txt', 'r') as file:
         lines = file.readlines()
         for line in lines:
@@ -505,21 +547,29 @@ def check_file_size(output):
 
 def check_sa_result(kill_process=False, check_dump_catch=False, multithread=False):
     try:
-        subprocess.check_output(r"hdc shell rm /data/local/tmp/test.htrace")
-        subprocess.check_output("hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
-        subprocess.check_output(r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
-        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell rm /data/local/tmp/test.htrace")
+        run_and_get_output(
+            r"hdc shell rm /data/log/reliability/resource_leak/memory_leak/*")
+        run_and_get_output(
+            r"del .\..\outputfiles\nativehook.db ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
     except Exception as e:
         print(f"An error occurred: {e}")
         pass
-    subprocess.check_output("hdc target mount")
+    run_and_get_output("hdc target mount")
     if not multithread:
-        subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send .\..\inputfiles\process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
     else:
-        subprocess.check_output(f"hdc file send .\..\inputfiles\process_resource_limit_multi.json /data/local/tmp/", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell mv /data/local/tmp/process_resource_limit_multi.json /data/local/tmp/process_resource_limit.json", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc shell cp -f /data/local/tmp/process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
-    subprocess.check_output("hdc shell reboot", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file send .\..\inputfiles\process_resource_limit_multi.json /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell mv /data/local/tmp/process_resource_limit_multi.json /data/local/tmp/process_resource_limit.json", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell cp -f /data/local/tmp/process_resource_limit.json /system/variant/phone/base/etc/efficiency_manager", text=True, encoding="utf-8")
+    run_and_get_output("hdc shell reboot", text=True, encoding="utf-8")
     time.sleep(SLEEP_TWENTY)
     j = 0
     while j < SA_WAIT_TIMES:
@@ -531,23 +581,33 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
             break
     
     #解除锁屏
-    subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+    run_and_get_output(
+        "hdc shell uitest uiInput drag 100 500 100 100 1000")
     time.sleep(SLEEP_FIVE)
-    subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+    run_and_get_output(
+        "hdc shell uitest uiInput drag 100 500 100 100 1000")
     time.sleep(SLEEP_FIVE)
-    subprocess.check_output("hdc shell uitest uiInput drag 100 500 100 100 1000")
+    run_and_get_output(
+        "hdc shell uitest uiInput drag 100 500 100 100 1000")
 
-    subprocess.check_output("hdc shell power-shell setmode 602")
+    run_and_get_output(
+        "hdc shell power-shell setmode 602")
     
-    subprocess.check_output("hdc shell killall com.example.insight_test_stage")
-    subprocess.check_output("hdc shell param set hiview.memleak.test enable")
-    subprocess.check_output("hdc shell killall hiview")
-    subprocess.check_output("hdc shell uitest uiInput click 100 200")
-    subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
+    run_and_get_output(
+        "hdc shell killall com.example.insight_test_stage")
+    run_and_get_output(
+        "hdc shell param set hiview.memleak.test enable")
+    run_and_get_output(
+        "hdc shell killall hiview")
+    run_and_get_output(
+        "hdc shell uitest uiInput click 100 200")
+    run_and_get_output(
+        "hdc shell aa start -a EntryAbility -b com.example.insight_test_stage")
     time.sleep(SLEEP_FOUR)
     touch_button("模板测试")
     time.sleep(1)
-    subprocess.check_output("hdc shell uitest uiInput drag 100 800 100 100 1000")
+    run_and_get_output(
+        "hdc shell uitest uiInput drag 100 800 100 100 1000")
     time.sleep(1)
     touch_button("Allocations_Js_Depth")
     i = 0
@@ -561,19 +621,21 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
             wait_time += 1
         if (wait_time == KILL_PROCESS_TIME):
             if (kill_process):
-                subprocess.check_output("hdc shell killall com.example.insight_test_stage")
+                run_and_get_output(
+                    "hdc shell killall com.example.insight_test_stage")
                 time.sleep(SLEEP_TWENTY)
                 break
             if check_dump_catch:
                 pid = get_pid("native_daemon")
-                subprocess.check_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
+                run_and_get_output("hdc shell echo " + str(pid) + " > /dev/frz/Frozen/procs")
                 process_hilog = subprocess.Popen(['hdc', 'shell', 'hilog | grep Hiprofiler > /data/local/tmp/sahilog.txt'])
         touch_button("malloc-release(depth 6)")
         touch_button("small-malloc(depth 7)")
         i += 1
     if (check_dump_catch):
         process_hilog.terminate()
-        subprocess.check_output(f"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/sahilog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         with open(r'.\..\outputfiles\sahilog.txt', 'r') as file:
             lines = file.readlines()
             for line in lines:
@@ -584,8 +646,10 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
     nmdfile = get_nmd_file("com.example.insight_test_stage")
     if nmdfile == "":
         return False
-    subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + nmdfile + " /data/local/tmp/nmd.txt")
-    subprocess.check_output(f"hdc file recv /data/local/tmp/nmd.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + nmdfile + " /data/local/tmp/nmd.txt")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/nmd.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
     nmd_result = False
     with open(r'.\..\outputfiles\nmd.txt', 'r') as file:
         lines = file.readlines()
@@ -597,9 +661,13 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
     
     if (multithread):
         sceneboard_file = get_profiler_test_trace("com.ohos.launcher")
-        subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + sceneboard_file + " /data/local/tmp/test.htrace")
-        subprocess.check_output("hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell cp /data/log/reliability/resource_leak/memory_leak/" +
+            sceneboard_file + r" /data/local/tmp/test.htrace")
+        run_and_get_output(
+            r"hdc shell ls -lh /data/local/tmp/ > /data/local/tmp/tmp.txt")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/tmp.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         result = False
         with open(r'.\..\outputfiles\tmp.txt', 'r') as file:
             lines = file.readlines()
@@ -609,9 +677,15 @@ def check_sa_result(kill_process=False, check_dump_catch=False, multithread=Fals
         if not result:
             return False
 
-    subprocess.check_output("hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename + " /data/local/tmp/test.htrace")
-    subprocess.check_output(r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-    subprocess.check_output(r".\..\inputfiles\trace_streamer_nativehook.exe .\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+    run_and_get_output(
+        r"hdc shell cp /data/log/reliability/resource_leak/memory_leak/" + filename +
+        r" /data/local/tmp/test.htrace")
+    run_and_get_output(
+        r"hdc file recv /data/local/tmp/test.htrace .\..\outputfiles\ ",
+        text=True, encoding="utf-8")
+    run_and_get_output(
+        r".\..\inputfiles\trace_streamer_nativehook.exe "
+        r".\..\outputfiles\test.htrace -e .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
 
     return check_result(SA_STATISTICS, False, True, SA_SAMPLE, False, 0, 0, DEPTH_TWENTY, 0, 0)
 
@@ -1118,8 +1192,9 @@ class TestNativehook:
 
     @pytest.mark.L2
     def test_appfreeze(self):
-        subprocess.check_output(f"hdc shell ls -lh /data/log/faultlog/faultlogger/ > /data/local/tmp/faultlog.txt")
-        subprocess.check_output(r"hdc file recv /data/local/tmp/faultlog.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(f"hdc shell ls -lh /data/log/faultlog/faultlogger/ > /data/local/tmp/faultlog.txt")
+        run_and_get_output(r"hdc file recv /data/local/tmp/faultlog.txt .\..\outputfiles\ ",
+                           text=True, encoding="utf-8")
         check = True
         with open(r'.\..\outputfiles\faultlog.txt', 'r') as file:
             lines = file.readlines()
