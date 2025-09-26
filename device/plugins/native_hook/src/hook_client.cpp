@@ -270,15 +270,6 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     }
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
-    g_addrHandler = std::make_shared<LowAddrHandler>();
-#ifdef __aarch64__
-    g_wholeAddrHandler = std::make_shared<WholeAddrHandler>();
-    g_midPartHandler = std::make_shared<MidAddrHandler>();
-    g_midPartHandler->SetSuccessor(std::move(g_wholeAddrHandler));
-    g_addrHandler->SetSuccessor(std::move(g_midPartHandler));
-    g_wholeAddrHandler = nullptr;
-    g_midPartHandler = nullptr;
-#endif
     g_mallocTimes = 0;
     g_hookClient.reset();
     g_hookPid = GetRealPid();
@@ -291,6 +282,17 @@ void* MallocHookStart(void* disableHookCallback)
         g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
                                                           &targetedRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
+        if (g_hookClient->GetConnectState()) {
+            g_addrHandler = std::make_shared<LowAddrHandler>();
+#ifdef __aarch64__
+            g_wholeAddrHandler = std::make_shared<WholeAddrHandler>();
+            g_midPartHandler = std::make_shared<MidAddrHandler>();
+            g_midPartHandler->SetSuccessor(std::move(g_wholeAddrHandler));
+            g_addrHandler->SetSuccessor(std::move(g_midPartHandler));
+            g_wholeAddrHandler = nullptr;
+            g_midPartHandler = nullptr;
+#endif
+        }
     }
     g_hookReady = true;
     return nullptr;
