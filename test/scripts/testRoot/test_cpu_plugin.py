@@ -20,36 +20,45 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_TRACE_EXPECTED_SIZE_3, SMALL_TRACE_EXPECTED_SIZE_2
+from tools.utils import run_and_get_output
+
+SMALL_TRACE_EXPECTED_SIZE_3 = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu.txt -o /data/local/tmp/test_cpu.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu.txt -o /data/local/tmp/test_cpu.htrace -t 15 -s -k"')
 
 
 def task_invalid_pid():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_invalid_pid.txt -o /data/local/tmp/test_cpu2.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_invalid_pid.txt -o /data/local/tmp/test_cpu2.htrace -t 15 -s -k"')
 
 
 def task_no_pid():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_no_pid.txt -o /data/local/tmp/test_cpu3.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_no_pid.txt -o /data/local/tmp/test_cpu3.htrace -t 15 -s -k"')
 
 
 def task_process_is_false():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_process_is_false.txt -o /data/local/tmp/test_cpu4.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_cpu_process_is_false.txt -o /data/local/tmp/test_cpu4.htrace -t 15 -s -k"')
 
 
 class TestHiprofilerCpuPlugin:
 
     @pytest.mark.L0
     def test_cpu_plugin(self):
-        subprocess.run(r'hdc file send ..\inputfiles\cpu_plugin\config_cpu.txt /data/local/tmp',
-                                text=True, encoding="utf-8")
+        subprocess.run(
+            r'hdc file send ..\inputfiles\cpu_plugin\config_cpu.txt /data/local/tmp',
+            text=True, encoding="utf-8")
         task_thread = threading.Thread(target=task, args=())
         task_thread.start()
         task_thread.join()
-        subprocess.run(r'hdc file recv /data/local/tmp/test_cpu.htrace ..\outputfiles',
-                         text=True, encoding="utf-8")
+        subprocess.run(
+            r'hdc file recv /data/local/tmp/test_cpu.htrace ..\outputfiles',
+            text=True, encoding="utf-8")
 
         subprocess.run(
             r'..\inputfiles\trace_streamer_db.exe ..\outputfiles\test_cpu.htrace -e ..\outputfiles\test_cpu.db')

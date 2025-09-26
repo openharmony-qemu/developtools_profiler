@@ -20,20 +20,25 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_FILE_EXPECTED_SIZE
+from tools.utils import run_and_get_output
 
+SMALL_FILE_EXPECTED_SIZE = 1 * 1024
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent.txt -o /data/local/tmp/test_hisysevent.htrace -t 20 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent.txt -o /data/local/tmp/test_hisysevent.htrace -t 20 -s -k"')
 
 
 def task2():
-    subprocess.check_output(f'hdc shell "echo 11 > /sys/devices/platform/modem_power/state"')
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent2.txt -o /data/local/tmp/test_hisysevent2.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "echo 11 > /sys/devices/platform/modem_power/state"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent2.txt -o /data/local/tmp/test_hisysevent2.htrace -t 15 -s -k"')
 
 
 def task3():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent3.txt -o /data/local/tmp/test_hisysevent3.htrace -t 30 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hisysevent3.txt -o /data/local/tmp/test_hisysevent3.htrace -t 30 -s -k"')
 
 
 class TestHiprofilerHisyseventPlugin:

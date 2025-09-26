@@ -20,6 +20,7 @@ import threading
 import time
 sys.path.append("..")
 from tools.utils import touch_button
+from tools.utils import run_and_get_output
 
 
 SLEEP_TWO = 2
@@ -33,19 +34,22 @@ THRESH = 25000000000
 
 def task(index):
     indexstr = str(index)
-    subprocess.check_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config10.txt -o /data/local/tmp/test" + indexstr + ".htrace -t 30 -s -k")
+    run_and_get_output("hdc shell hiprofiler_cmd -c /data/local/tmp/config10.txt -o /data/local/tmp/test" + indexstr + ".htrace -t 30 -s -k")
 
 
 class TestHiprofilerNetworkProfiler:
     @pytest.mark.L0
     def test_network_profiler_multiple_times(self):
-        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell killall com.example.myapplication523")
+        run_and_get_output(
+            r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output(
+            "hdc shell killall com.example.myapplication523")
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         time.sleep(SLEEP_TWO)
         task_thread.start()
         time.sleep(SLEEP_THREE)
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.myapplication523")
+        run_and_get_output(
+            "hdc shell aa start -a EntryAbility -b com.example.myapplication523")
         time.sleep(SLEEP_FIVE)
         touch_button("http_request")
         time.sleep(SLEEP_TWO)
@@ -54,10 +58,14 @@ class TestHiprofilerNetworkProfiler:
         touch_button("http_request")
         task_thread.join()
   
-        subprocess.check_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
-        subprocess.check_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell chmod 777 /data/local/tmp/hookDecoder")
+        run_and_get_output(
+            r"hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         count = 0
         with open(r'.\..\outputfiles\test10_result.txt', 'r') as file:
             lines = file.readlines()
@@ -69,25 +77,35 @@ class TestHiprofilerNetworkProfiler:
 
     @pytest.mark.L0
     def test_network_profiler_one_time(self):
-        subprocess.check_output("hdc shell rm /data/local/tmp/test10.htrace")
-        subprocess.check_output("hdc shell rm /data/local/tmp/test10_result.txt")
-        subprocess.check_output("hdc shell killall com.example.myapplication523")
-        subprocess.check_output(r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
-        subprocess.check_output("hdc shell killall com.example.myapplication523")
+        run_and_get_output(
+            r"hdc shell rm /data/local/tmp/test10.htrace")
+        run_and_get_output(
+            r"hdc shell rm /data/local/tmp/test10_result.txt")
+        run_and_get_output(
+            r"hdc shell killall com.example.myapplication523")
+        run_and_get_output(
+            r"hdc file send .\..\inputfiles\network_profiler\config10.txt /data/local/tmp/", text=True, encoding="utf-8")
+        run_and_get_output(
+            "hdc shell killall com.example.myapplication523")
         task_thread = threading.Thread(target=task, args=(CONFIG_INDEX, ))
         time.sleep(SLEEP_TWO)
         task_thread.start()
         time.sleep(SLEEP_THREE)
-        subprocess.check_output("hdc shell aa start -a EntryAbility -b com.example.myapplication523")
+        run_and_get_output(
+            "hdc shell aa start -a EntryAbility -b com.example.myapplication523")
         time.sleep(SLEEP_FIVE)
         touch_button("http_request")
         time.sleep(SLEEP_TWO)
         task_thread.join()
   
-        subprocess.check_output("hdc shell chmod 777 /data/local/tmp/hookDecoder")
-        subprocess.check_output("hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
-        subprocess.check_output(f"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc shell chmod 777 /data/local/tmp/hookDecoder")
+        run_and_get_output(
+            r"hdc shell ./data/local/tmp/hookDecoder -f /data/local/tmp/test10.htrace > /data/local/tmp/test10_result.txt")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test10.htrace .\..\outputfiles\ ", text=True, encoding="utf-8")
+        run_and_get_output(
+            r"hdc file recv /data/local/tmp/test10_result.txt .\..\outputfiles\ ", text=True, encoding="utf-8")
         count = 0
         with open(r'.\..\outputfiles\test10_result.txt', 'r') as file:
             lines = file.readlines()

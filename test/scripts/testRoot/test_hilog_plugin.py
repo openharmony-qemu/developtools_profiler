@@ -20,23 +20,28 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_TRACE_EXPECTED_SIZE, SMALL_TRACE_EXPECTED_SIZE_2, SMALL_TRACE_EXPECTED_SIZE_3
+from tools.utils import run_and_get_output
+
+
+SMALL_TRACE_EXPECTED_SIZE_3 = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
+MID_TRACE_EXPECTED_SIZE = 1 * 1024
 
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog.txt -o /data/local/tmp/test_hilog.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog.txt -o /data/local/tmp/test_hilog.htrace -t 10 -s -k"')
 
 
 def task2():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog2.txt -o /data/local/tmp/test_hilog2.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog2.txt -o /data/local/tmp/test_hilog2.htrace -t 10 -s -k"')
 
 
 def task3():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog3.txt -o /data/local/tmp/test_hilog3.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog3.txt -o /data/local/tmp/test_hilog3.htrace -t 10 -s -k"')
 
 
 def task4():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog4.txt -o /data/local/tmp/test_hilog4.htrace -t 10 -s -k"')
+    run_and_get_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_hilog4.txt -o /data/local/tmp/test_hilog4.htrace -t 10 -s -k"')
 
 
 class TestHiprofilerHilogPlugin:

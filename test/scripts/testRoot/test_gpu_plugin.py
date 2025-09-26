@@ -20,19 +20,24 @@ import subprocess
 import sys
 import threading
 sys.path.append("..")
-from tools.utils import SMALL_TRACE_EXPECTED_SIZE, SMALL_TRACE_EXPECTED_SIZE_2
+from tools.utils import run_and_get_output
 
+SMALL_TRACE_EXPECTED_SIZE = 1 * 1024
+SMALL_TRACE_EXPECTED_SIZE_2 = 1024 * 1024 * 1024
 
 def task():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu.txt -o /data/local/tmp/test_gpu.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu.txt -o /data/local/tmp/test_gpu.htrace -t 15 -s -k"')
 
 
 def task_process_report_is_false():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu_report_process_is_false.txt -o /data/local/tmp/test_gpu2.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu_report_process_is_false.txt -o /data/local/tmp/test_gpu2.htrace -t 15 -s -k"')
 
 
 def task_no_pid():
-    subprocess.check_output(f'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu_no_pid.txt -o /data/local/tmp/test_gpu3.htrace -t 15 -s -k"')
+    run_and_get_output(
+        r'hdc shell "hiprofiler_cmd -c /data/local/tmp/config_gpu_no_pid.txt -o /data/local/tmp/test_gpu3.htrace -t 15 -s -k"')
 
 
 class TestHiprofilerGpuPlugin:
