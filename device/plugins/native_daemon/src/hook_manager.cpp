@@ -638,6 +638,9 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
                 ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbNames[i]);
             }
         }
+        if (item->stackPreprocess != nullptr) {
+            item->stackPreprocess->FinishTraceFile();
+        }
         if (item->stackData != nullptr) {
             item->stackData->ClearCache();
         }
@@ -694,7 +697,6 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->Close();
         }
-        item->stackPreprocess->FinishTraceFile();
     }
     return true;
 }
