@@ -54,6 +54,7 @@ ohos_executable("xpowerdecoder") {
     "test/xpower_main.cpp",
   ]
   deps = [
+    "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/device/services/profiler_service:profiler_service",
     "${OHOS_PROFILER_DIR}/protos/services:proto_services_cpp",
     "${OHOS_PROFILER_DIR}/protos/types/plugins/xpower_data:xpower_data_cpp",
@@ -68,6 +69,8 @@ ohos_executable("xpowerdecoder") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "cJSON:cjson_static",
+      "c_utils:utils",
+      "grpc:gpr",
       "hilog:libhilog_base",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
