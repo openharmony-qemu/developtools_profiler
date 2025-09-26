@@ -189,13 +189,49 @@ HWTEST_F(NativeHookTest, NormalHookMemtraceTest, TestSize.Level0)
  * @tc.desc: Test hook restrace normal process.
  * @tc.type: FUNC
  */
-HWTEST_F(NativeHookTest, NormalHookRestraceTest, TestSize.Level0)
+HWTEST_F(NativeHookTest, NormalHookRestraceTest001, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     char* mem = new char[1];
     ohos_malloc_hook_restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, true);
     ohos_malloc_hook_restrace(RES_GPU_VK, mem, 1, TAG_RES_GPU_VK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest002, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_FD_OPEN, mem, 1, TAG_RES_FD_OPEN, true);
+    ohos_malloc_hook_restrace(RES_FD_OPEN, mem, 1, TAG_RES_FD_OPEN, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest003, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_THREAD_PTHREAD, mem, 1, TAG_RES_THREAD_PTHREAD, true);
+    ohos_malloc_hook_restrace(RES_THREAD_PTHREAD, mem, 1, TAG_RES_THREAD_PTHREAD, false);
     delete[] mem;
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());

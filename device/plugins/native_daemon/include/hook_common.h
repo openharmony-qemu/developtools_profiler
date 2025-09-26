@@ -39,12 +39,22 @@ constexpr int32_t MIN_STACK_DEPTH = 6;
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
+const size_t RESTRACE_TYPE_COUNT = 14;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
 const size_t GPU_GLES_BUFFER_INDEX = 2;
 const size_t GPU_CL_IMAGE_INDEX = 3;
 const size_t GPU_CL_BUFFER_INDEX = 4;
+const size_t FD_OPEN_INDEX = 5;
+const size_t FD_EPOLL_INDEX = 6;
+const size_t FD_EVENTFD_INDEX = 7;
+const size_t FD_SOCKET_INDEX = 8;
+const size_t FD_PIPE_INDEX = 9;
+const size_t FD_DUP_INDEX = 10;
+const size_t FD_MASK_INDEX = 11;
+const size_t THREAD_PTHREAD_INDEX = 12;
+const size_t THREAD_MASK_INDEX = 13;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth

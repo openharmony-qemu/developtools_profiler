@@ -189,6 +189,8 @@ private:
     bool HandleNoStackEvent(HookRecordPtr& hookRecord);
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
+    void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
     void InitializeGpuData();

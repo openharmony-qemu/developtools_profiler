@@ -50,7 +50,7 @@ static pthread_once_t g_onceFlag;
 namespace {
 static std::atomic<uint64_t> g_mallocTimes = 0;
 static std::atomic<int> g_sharedMemCount = 1;
-static std::atomic<uint16_t> g_tagId = GPU_TYPE_COUNT + 1;
+static std::atomic<uint16_t> g_tagId = RESTRACE_TYPE_COUNT + 1;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
@@ -179,12 +179,8 @@ bool inline __attribute__((always_inline)) UpdateThreadName(std::shared_ptr<Hook
     return ret;
 }
 
-uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName,
-                                                        unsigned long long mask = 0)
+uint16_t GetPredefinedTagId(unsigned long long mask)
 {
-    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
-        return 0;
-    }
     switch (mask) {
         case RES_GPU_VK: {
             return static_cast<uint16_t>(GPU_VK_INDEX + 1);
@@ -201,8 +197,46 @@ uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         case RES_GPU_CL_BUFFER: {
             return static_cast<uint16_t>(GPU_CL_BUFFER_INDEX + 1);
         }
-        default:
-            break;
+        case RES_FD_OPEN: {
+            return static_cast<uint16_t>(FD_OPEN_INDEX + 1);
+        }
+        case RES_FD_EPOLL: {
+            return static_cast<uint16_t>(FD_EPOLL_INDEX + 1);
+        }
+        case RES_FD_EVENTFD: {
+            return static_cast<uint16_t>(FD_EVENTFD_INDEX + 1);
+        }
+        case RES_FD_SOCKET: {
+            return static_cast<uint16_t>(FD_SOCKET_INDEX + 1);
+        }
+        case RES_FD_PIPE: {
+            return static_cast<uint16_t>(FD_PIPE_INDEX + 1);
+        }
+        case RES_FD_DUP: {
+            return static_cast<uint16_t>(FD_DUP_INDEX + 1);
+        }
+        case RES_FD_MASK: {
+            return static_cast<uint16_t>(FD_MASK_INDEX + 1);
+        }
+        case RES_THREAD_PTHREAD: {
+            return static_cast<uint16_t>(THREAD_PTHREAD_INDEX + 1);
+        }
+        case RES_THREAD_MASK: {
+            return static_cast<uint16_t>(THREAD_MASK_INDEX + 1);
+        }
+        default: return -1;
+    }
+}
+
+uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSocketClient>& client, const char* tagName,
+                                                        unsigned long long mask = 0)
+{
+    if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
+        return 0;
+    }
+    uint16_t predefinedId = GetPredefinedTagId(mask);
+    if (predefinedId != -1) {
+        return predefinedId;
     }
 
     std::unique_lock<std::mutex> lock(g_tagIdMutex);
@@ -210,7 +244,7 @@ uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
     tagData.type = MEMORY_TAG;
     ++g_tagId;
     if (g_tagId.load() == 0) {
-        g_tagId = GPU_TYPE_COUNT + 1;
+        g_tagId.store(RESTRACE_TYPE_COUNT + 1);
     }
     tagData.tagId = g_tagId.load();
     lock.unlock();
@@ -1402,6 +1436,44 @@ bool CheckSizeRange(size_t size, unsigned long long type)
     return false;
 }
 
+bool CheckRestraceConditions(uint32_t combineVal, size_t size)
+{
+    return ((combineVal & RES_GPU_VK) && CheckSizeRange(size, RES_GPU_VK)) ||
+           ((combineVal & RES_GPU_GLES_IMAGE) && CheckSizeRange(size, RES_GPU_GLES_IMAGE)) ||
+           ((combineVal & RES_GPU_GLES_BUFFER) && CheckSizeRange(size, RES_GPU_GLES_BUFFER)) ||
+           ((combineVal & RES_GPU_CL_IMAGE) && CheckSizeRange(size, RES_GPU_CL_IMAGE)) ||
+           ((combineVal & RES_GPU_CL_BUFFER) && CheckSizeRange(size, RES_GPU_CL_BUFFER)) ||
+           (combineVal & RES_FD_MASK) || (combineVal & RES_THREAD_MASK);
+}
+
+int CollectStackInfo(bool isUsing, StackRawData& rawdata, uintptr_t& stackPtr, int& fpStackDepth)
+{
+    int stackSize = 0;
+
+    if (isUsing) {
+        if (g_ClientConfig.fpunwind) {
+#ifdef __aarch64__
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+                return -1;
+            }
+#endif
+        } else {
+            stackSize = GetStackSize(stackPtr, rawdata);
+        }
+    }
+    return stackSize;
+}
+
+int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
+{
+    if (g_ClientConfig.fpunwind) {
+        return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    } else {
+        return sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    }
+}
+
 void hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
 {
     if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
@@ -1416,33 +1488,20 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if (holder == nullptr) {
         return;
     }
-    int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
     uintptr_t stackPtr = 0;
-    int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
     unsigned long long combineVal = mask & g_ClientConfig.traceMask;
     if (combineVal == 0) {
         return;
     }
-    if ((g_ClientConfig.isSaMode && isUsing) && (!(((combineVal & RES_GPU_VK) && (CheckSizeRange(size, RES_GPU_VK)))
-        || ((combineVal & RES_GPU_GLES_IMAGE) && (CheckSizeRange(size, RES_GPU_GLES_IMAGE)))
-        || ((combineVal & RES_GPU_GLES_BUFFER) && (CheckSizeRange(size, RES_GPU_GLES_BUFFER)))
-        || ((combineVal & RES_GPU_CL_IMAGE) && (CheckSizeRange(size, RES_GPU_CL_IMAGE)))
-        || ((combineVal & RES_GPU_CL_BUFFER) && (CheckSizeRange(size, RES_GPU_CL_BUFFER)))))) {
+    if ((g_ClientConfig.isSaMode && isUsing) && (!CheckRestraceConditions(combineVal, size))) {
         return;
     }
-    if (isUsing) {
-        if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return;
-            }
-#endif
-        } else {
-            stackSize = GetStackSize(stackPtr, rawdata);
-        }
+    int fpStackDepth = 0;
+    int stackSize = CollectStackInfo(isUsing, rawdata, stackPtr, fpStackDepth);
+    if (stackSize == -1) {
+        return;
     }
     rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
     rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
@@ -1450,12 +1509,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     rawdata.mallocSize = size;
     rawdata.addr = addr;
     rawdata.tagId = GetTagId(holder, tag, mask);
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-    }
+    int realSize = CalculateRealSize(fpStackDepth, rawdata);
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
