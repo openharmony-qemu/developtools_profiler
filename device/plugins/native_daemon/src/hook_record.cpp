@@ -144,7 +144,14 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         event->set_trace_type(TraceType::GPU_CL);
     } else if (tagName == TAG_RES_GPU_CL_BUFFER) {
         event->set_trace_type(TraceType::GPU_CL);
-    } else {
+    } else if (tagName == TAG_RES_FD_OPEN || tagName == TAG_RES_FD_EPOLL ||
+               tagName == TAG_RES_FD_EVENTFD || tagName == TAG_RES_FD_SOCKET ||
+               tagName == TAG_RES_FD_PIPE || tagName == TAG_RES_FD_DUP ||
+               tagName == TAG_RES_FD_ALL) {
+        event->set_trace_type(TraceType::FD);
+    } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
+        event->set_trace_type(TraceType::THREAD);
+    }  else {
         event->set_trace_type(TraceType::OTHER);
     }
 }

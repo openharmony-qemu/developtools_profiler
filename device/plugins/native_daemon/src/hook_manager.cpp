@@ -235,6 +235,24 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_GPU_CL_IMAGE;
             } else if (resTag == TAG_RES_GPU_CL_BUFFER) {
                 resMask |= RES_GPU_CL_BUFFER;
+            } else if (resTag == TAG_RES_FD_OPEN) {
+                resMask |= RES_FD_OPEN;
+            } else if (resTag == TAG_RES_FD_EPOLL) {
+                resMask |= RES_FD_EPOLL;
+            } else if (resTag == TAG_RES_FD_EVENTFD) {
+                resMask |= RES_FD_EVENTFD;
+            } else if (resTag == TAG_RES_FD_SOCKET) {
+                resMask |= RES_FD_SOCKET;
+            } else if (resTag == TAG_RES_FD_PIPE) {
+                resMask |= RES_FD_PIPE;
+            } else if (resTag == TAG_RES_FD_DUP) {
+                resMask |= RES_FD_DUP;
+            } else if (resTag == TAG_RES_FD_ALL) {
+                resMask |= RES_FD_MASK;
+            } else if (resTag == TAG_RES_THREAD_PTHREAD) {
+                resMask |= RES_THREAD_PTHREAD;
+            } else if (resTag == TAG_RES_THREAD_ALL) {
+                resMask |= RES_THREAD_MASK;
             }
         }
     }

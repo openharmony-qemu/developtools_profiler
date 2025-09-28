@@ -117,6 +117,15 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(GPU_GLES_BUFFER_INDEX + 1, TAG_RES_GPU_GLES_BUFFER);
     SaveMemTag(GPU_CL_IMAGE_INDEX + 1, TAG_RES_GPU_CL_IMAGE);
     SaveMemTag(GPU_CL_BUFFER_INDEX + 1, TAG_RES_GPU_CL_BUFFER);
+    SaveMemTag(FD_OPEN_INDEX + 1, TAG_RES_FD_OPEN);
+    SaveMemTag(FD_EPOLL_INDEX + 1, TAG_RES_FD_EPOLL);
+    SaveMemTag(FD_EVENTFD_INDEX + 1, TAG_RES_FD_EVENTFD);
+    SaveMemTag(FD_SOCKET_INDEX + 1, TAG_RES_FD_SOCKET);
+    SaveMemTag(FD_PIPE_INDEX + 1, TAG_RES_FD_PIPE);
+    SaveMemTag(FD_DUP_INDEX + 1, TAG_RES_FD_DUP);
+    SaveMemTag(FD_MASK_INDEX + 1, TAG_RES_FD_ALL);
+    SaveMemTag(THREAD_PTHREAD_INDEX + 1, TAG_RES_THREAD_PTHREAD);
+    SaveMemTag(THREAD_MASK_INDEX + 1, TAG_RES_THREAD_ALL);
 }
 
 void StackPreprocess::FinishTraceFile()
@@ -918,64 +927,81 @@ inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
     return false;
 }
 
+inline void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+{
+    auto recordIter = recordStatisticsMap_.find(stackId);
+    if (recordIter != recordStatisticsMap_.end()) {
+        auto& record = recordIter->second;
+        auto rawStack = hookRecord->GetRawStack();
+        ++record.applyCount;
+        record.applySize += rawStack->stackContext->mallocSize;
+        g_allocAddrMap[hookRecord->GetAddr()] =
+            std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
+        statisticsPeriodData_[stackId] = &recordIter->second;
+    }
+}
+
+void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+{
+    auto rawStack = hookRecord->GetRawStack();
+    RecordStatistic record;
+    record.pid = rawStack->stackContext->pid;
+    record.callstackId = stackId;
+    record.applyCount = 1;
+    record.applySize = rawStack->stackContext->mallocSize;
+
+    switch (hookRecord->GetType()) {
+        case MALLOC_MSG:
+            record.type = RecordStatisticsEvent::MALLOC;
+            break;
+        case MMAP_MSG:
+            record.type = RecordStatisticsEvent::MMAP;
+            break;
+        case MMAP_FILE_PAGE_MSG:
+            record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
+            break;
+        case MEMORY_USING_MSG: {
+            std::string tagName;
+            GetMemTag(rawStack->stackContext->tagId, tagName);
+            bool fdLeakTag = tagName == TAG_RES_FD_OPEN || tagName == TAG_RES_FD_EPOLL ||
+                       tagName == TAG_RES_FD_EVENTFD || tagName == TAG_RES_FD_SOCKET ||
+                       tagName == TAG_RES_FD_PIPE || tagName == TAG_RES_FD_DUP ||
+                       tagName == TAG_RES_FD_ALL;
+            if (tagName == TAG_RES_GPU_VK) {
+                record.type = RecordStatisticsEvent::GPU_VK;
+            } else if ((tagName == TAG_RES_GPU_GLES_IMAGE) || (tagName == TAG_RES_GPU_GLES_BUFFER)) {
+                record.type = RecordStatisticsEvent::GPU_GLES;
+            } else if ((tagName == TAG_RES_GPU_CL_IMAGE) || (tagName == TAG_RES_GPU_CL_BUFFER)) {
+                record.type = RecordStatisticsEvent::GPU_CL;
+            } else if (fdLeakTag) {
+                record.type = RecordStatisticsEvent::FD;
+            } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
+                record.type = RecordStatisticsEvent::THREAD;
+            } else {
+                record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+            }
+            record.tagId = rawStack->stackContext->tagId;
+            break;
+        }
+        default:
+            PROFILER_LOG_ERROR(LOG_CORE, "SetAllocStatisticsData event type error");
+            break;
+    }
+
+    auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
+    g_allocAddrMap[hookRecord->GetAddr()] =
+        std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
+    statisticsPeriodData_[stackId] = &recordIter->second;
+}
+
 inline void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists)
 {
     auto rawStack = hookRecord->GetRawStack();
     // if the record exists, it is updated.Otherwise Add
     if (isExists) {
-        auto recordIter = recordStatisticsMap_.find(stackId);
-        if (recordIter != recordStatisticsMap_.end()) {
-            auto& record = recordIter->second;
-            ++record.applyCount;
-            record.applySize += rawStack->stackContext->mallocSize;
-            g_allocAddrMap[hookRecord->GetAddr()] =
-                std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-            statisticsPeriodData_[stackId] = &recordIter->second;
-        }
+        UpdateAllocStatistics(hookRecord, stackId);
     } else {
-        RecordStatistic record;
-        record.pid = rawStack->stackContext->pid;
-        record.callstackId = stackId;
-        record.applyCount = 1;
-        record.applySize = rawStack->stackContext->mallocSize;
-        switch (hookRecord->GetType()) {
-            case MALLOC_MSG: {
-                record.type = RecordStatisticsEvent::MALLOC;
-                break;
-            }
-            case MMAP_MSG: {
-                record.type = RecordStatisticsEvent::MMAP;
-                break;
-            }
-            case MMAP_FILE_PAGE_MSG: {
-                record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
-                break;
-            }
-            case MEMORY_USING_MSG: {
-                std::string tagName;
-                GetMemTag(rawStack->stackContext->tagId, tagName);
-                if (tagName == TAG_RES_GPU_VK) {
-                    record.type = RecordStatisticsEvent::GPU_VK;
-                } else if ((tagName == TAG_RES_GPU_GLES_IMAGE) || (tagName == TAG_RES_GPU_GLES_BUFFER)) {
-                    record.type = RecordStatisticsEvent::GPU_GLES;
-                } else if ((tagName == TAG_RES_GPU_CL_IMAGE) || (tagName == TAG_RES_GPU_CL_BUFFER)) {
-                    record.type = RecordStatisticsEvent::GPU_CL;
-                } else {
-                    record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
-                }
-                record.tagId = rawStack->stackContext->tagId;
-                break;
-            }
-            default: {
-                PROFILER_LOG_ERROR(LOG_CORE, "SetAllocStatisticsData event type error");
-                break;
-            }
-        }
-
-        auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
-        g_allocAddrMap[hookRecord->GetAddr()] =
-            std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-        statisticsPeriodData_[stackId] = &recordIter->second;
+        AddAllocStatistics(hookRecord, stackId);
     }
 }
 
