@@ -31,7 +31,6 @@
 #include "iservice_registry.h"
 #include "refbase.h"
 #include "heap_helpers.h"
-#include "debugger_helpers.h"
 #include "system_ability_definition.h"
 
 using namespace OHOS;
@@ -44,8 +43,6 @@ namespace {
 #define LOG_TAG "HiDebug_ANI"
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
-constexpr auto SLASH_STR = "/";
-constexpr auto JSON_FILE = ".json";
 
 std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
 {
@@ -348,15 +345,6 @@ ani_string StartAppTraceCapture(ani_env *env,
     return nullptr;
 }
 
-ani_boolean IsDebugState(ani_env *env)
-{
-    ApiInvokeRecorder apiInvokeRecorder("isDebugState");
-    bool debugState = ark::dfx::IsDebugModeEnabled() ||
-        HidebugNativeInterface::GetInstance().IsDebuggerConnected();
-    ani_boolean result = static_cast<ani_boolean>(debugState);
-    return result;
-}
-
 void StopAppTraceCapture(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("stopAppTraceCapture");
@@ -503,56 +491,6 @@ ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
     }
     return static_cast<ani_long>((target->second)(AniUtil::GetAniVm(env)));
 }
-
-std::string StartCpuProfiler(const std::string& fileName)
-{
-    auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
-    if (context == nullptr) {
-        return "Get ApplicationContext failed.";
-    }
-    std::string filesDir = context->GetFilesDir();
-    if (filesDir.empty()) {
-        return "Get App files dir failed.";
-    }
-    std::string filePath = filesDir + SLASH_STR + fileName + JSON_FILE;
-    if (!IsLegalPath(filePath)) {
-        return "input fileName is illegal.";
-    }
-    if (!CreateFile(filePath)) {
-        return "file created failed.";
-    }
-    if (!ark::dfx::StartProfiling(filePath)) {
-        return "failed start profiler.";
-    }
-    return "";
-}
-
-void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
-{
-    ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
-    std::string fileName;
-    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
-        return;
-    }
-    HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
-    auto errMsg = StartCpuProfiler(fileName);
-    if (!errMsg.empty()) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return;
-    }
-}
-
-void StopJsCpuProfiling(ani_env *env)
-{
-    ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
-    if (!ark::dfx::StopProfiling()) {
-        HILOG_ERROR(LOG_CORE, "failed stopJsCpuProfiling");
-    }
-}
 }
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
@@ -592,11 +530,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"startAppTraceCapture",
             "C{escompat.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
-        ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
-        ani_native_function {"startJsCpuProfiling", "C{std.core.String}:",
-            reinterpret_cast<void *>(StartJsCpuProfiling)},
-        ani_native_function {"stopJsCpuProfiling", ":", reinterpret_cast<void *>(StopJsCpuProfiling)},
         ani_native_function {"getGraphicsMemorySync", ":i", reinterpret_cast<void *>(GetGraphicsMemorySync)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
