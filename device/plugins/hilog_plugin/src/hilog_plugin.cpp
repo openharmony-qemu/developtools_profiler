@@ -49,18 +49,17 @@ HilogPlugin::HilogPlugin() : fp_(nullptr, nullptr) {}
 HilogPlugin::~HilogPlugin()
 {
     PROFILER_LOG_INFO(LOG_CORE, "%s: ready!", __func__);
-    std::unique_lock<std::mutex> locker(mutex_);
-    if (running_) {
-        running_ = false;
+    if (running_.load()) {
+        running_.store(false);
         if (workThread_.joinable()) {
             workThread_.join();
         }
     }
-    locker.unlock();
-
+    std::unique_lock<std::mutex> locker(mutex_);
     if (protoConfig_.need_record()) {
         g_fileCache.Close();
     }
+    locker.unlock();
     if (fp_ != nullptr) {
         fp_.reset();
     }
@@ -106,10 +105,7 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
     CHECK_NOTNULL(resultWriter_->write, -1, "HilogPlugin: Writer.write is no set!!");
     CHECK_NOTNULL(resultWriter_->flush, -1, "HilogPlugin: Writer.flush is no set!!");
     g_id = 1;
-    std::unique_lock<std::mutex> locker(mutex_);
-    running_ = true;
-    locker.unlock();
-
+    running_.store(true);
     int oldPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
     fcntl(fileno(fp_.get()), F_SETPIPE_SZ, oldPipeSize * PIPE_SIZE_RATIO);
     int pipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
@@ -125,13 +121,12 @@ int HilogPlugin::Start(const uint8_t* configData, uint32_t configSize)
 int HilogPlugin::Stop()
 {
     PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: ready stop thread!");
-    std::unique_lock<std::mutex> locker(mutex_);
-    running_ = false;
+    running_.store(false);
     COMMON::CustomPUnblock(pipeFds_);
-    locker.unlock();
     if (workThread_.joinable()) {
         workThread_.join();
     }
+    std::unique_lock<std::mutex> locker(mutex_);
     if (protoConfig_.need_record() && !dataBuffer_.empty()) {
         g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
         dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
@@ -141,7 +136,7 @@ int HilogPlugin::Stop()
         g_fileCache.Close();
     }
     fp_.reset();
-
+    locker.unlock();
     PROFILER_LOG_INFO(LOG_CORE, "HilogPlugin: stop success!");
     return 0;
 }
@@ -157,7 +152,6 @@ bool HilogPlugin::OpenLogFile()
     char name[FILE_NAME_LEN] = {0};
     GetDateTime(name, sizeof(name));
     CHECK_TRUE(g_fileCache.Open(name), false, "HilogPlugin:%s failed!", __func__);
-
     return true;
 }
 
@@ -208,7 +202,7 @@ void HilogPlugin::InitHilogCmd()
 void HilogPlugin::StartLoopFetchData(std::unique_ptr<uint8_t[]>& buffer, std::unique_ptr<HilogInfo>& dataProto,
                                      std::unique_ptr<ProtoEncoder::HilogInfo>& hilogInfo, std::string startTime)
 {
-    while (running_) {
+    while (running_.load()) {
         if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_BUFFER_LEN - 1, fp_.get()) == nullptr) {
             continue;
         }
@@ -238,8 +232,10 @@ void HilogPlugin::StartLoopFetchData(std::unique_ptr<uint8_t[]>& buffer, std::un
             }
         }
         if (protoConfig_.need_record() && dataBuffer_.size() >= BYTE_BUFFER_SIZE) {
+            std::unique_lock<std::mutex> locker(mutex_);
             g_fileCache.Write(dataBuffer_.data(), dataBuffer_.size());
             dataBuffer_.erase(dataBuffer_.begin(), dataBuffer_.end());
+            locker.unlock();
         }
     }
 }

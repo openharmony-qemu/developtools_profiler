@@ -133,8 +133,8 @@ std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr)
     }
     char filePath[FILE_PATH_SIZE] = {0};
     int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
-    if (len < 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+    if (len < 0 || len >= FILE_PATH_SIZE - 1) {
+        PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had been cut off");
         return {false, ""};
     }
     FILE* fp = fopen(filePath, "r");
