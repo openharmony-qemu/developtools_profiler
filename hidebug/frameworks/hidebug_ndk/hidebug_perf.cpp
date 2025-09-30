@@ -36,7 +36,7 @@ bool CheckPerfArgs(const HiDebug_ProcessSamplerConfig& config, LitePerfConfig& l
         return false;
     }
     litePerfConfig.durationMs = std::min(config.duration, durationMax);
-    constexpr uint32_t frequencyMax = 1000;
+    constexpr uint32_t frequencyMax = 200;
     constexpr uint32_t frequencyMin = 1;
     if (config.frequency < frequencyMin || config.frequency > frequencyMax) {
         constexpr int32_t frequencyDefault = 100;
