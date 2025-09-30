@@ -99,8 +99,10 @@ HookSocketClient::~HookSocketClient()
         if (stackWriterList_[i]) {
             stackWriterList_[i]->Flush();
         }
-        stackWriterList_[i] = nullptr;
     }
+    stackWriterList_.clear();
+    eventFds_.clear();
+    smbFds_.clear();
     unixSocketClient_ = nullptr;
     g_disableHook = true;
 }
@@ -187,7 +189,8 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
     }
-    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
+    std::weak_ptr<StackWriter> stackWriterWeakPtr = stackWriterList_[smbIndex];
+    auto stackWriter = stackWriterWeakPtr.lock();
     if (stackWriter == nullptr || unixSocketClient_ == nullptr || g_disableHook) {
         return false;
     } else if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
