@@ -38,6 +38,7 @@
 #include "parse_plugin_config.h"
 #include "profiler_service.grpc.pb.h"
 #include "trace_plugin_config.pb.h"
+#include <sys/stat.h>
 
 using google::protobuf::TextFormat;
 
@@ -125,18 +126,25 @@ std::string GetSandboxFileName(const std::string& outputFile, T sessionConfig)
 }
 
 template <typename T>
-void HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
+bool HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
 {
     int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
     if (callingUid > APP_ID_THRESH) {
         std::string fileName = GetSandboxFileName(outputFile, sessionConfig);
         if ((fileName.substr(0, SANDBOX_PATH_ROOT.size()) == SANDBOX_PATH_ROOT)) {
+            size_t lastSlash = fileName.find_last_of('/');
+            std::string pathName = fileName.substr(0, lastSlash + 1);
+            struct stat st;
+            if (stat(pathName.c_str(), &st) != 0) {
+                printf("Filepath unable to write!\n");
+                return false;
+            }
             int32_t userId = callingUid / USER_ID_MOD;
             fileName.replace(0, SANDBOX_PATH_ROOT.size(),
                              "/storage/media/" + std::to_string(userId) + "/local/files/Docs/");
         } else {
-            printf("Filepath unable to write!\n");
-            return;
+            printf("Filepath unable to write! Please place it under /storage/Users/currentUser/. \n");
+            return false;
         }
         sessionConfig->set_result_file(COMMON::CanonicalizeSpecPath(fileName.c_str()));
     } else {
@@ -146,6 +154,7 @@ void HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
             sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
         }
     }
+    return true;
 }
 
 std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& config,
@@ -179,7 +188,9 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
         sessionConfig->set_sample_duration(DEFAULT_SESSION_TIME_S * MS_PER_S);
     }
 #if defined(is_sandbox) && is_sandbox
-    HandleSandboxFilename(outputFile, sessionConfig);
+    if (!HandleSandboxFilename(outputFile, sessionConfig)) {
+        return nullptr;
+    }
 #else
     if (!outputFile.empty()) {
         sessionConfig->set_result_file(outputFile);
@@ -493,7 +504,7 @@ bool ParseConfig(const std::string& configFile, std::string& config)
     printf("Read config from %s\n", configFileWithPath.c_str());
     std::vector<std::string> validPaths {};
     if (adaptSandbox) {
-        validPaths.push_back("/data/storage/el2/base/cache/");
+        validPaths.push_back(SANDBOX_PATH_ROOT);
     } else {
         validPaths.push_back("/data/local/tmp/");
     }
