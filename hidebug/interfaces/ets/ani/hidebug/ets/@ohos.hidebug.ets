@@ -188,6 +188,12 @@ export namespace hidebug {
     return ret;
   }
 
+  native function getAppVMObjectUsedSizeAdapter(): long;
+
+  export function getAppVMObjectUsedSize(): bigint {
+    return new bigint(getAppVMObjectUsedSizeAdapter());
+  }
+
   export interface MemoryLimit {
     rssLimit: bigint;
     vssLimit: bigint;
