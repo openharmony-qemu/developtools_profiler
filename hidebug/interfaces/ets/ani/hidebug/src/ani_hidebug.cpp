@@ -425,6 +425,12 @@ ani_object GetAppVMMemoryInfo(ani_env *env)
     return vMMemoryInfo;
 }
 
+ani_long GetAppVMObjectUsedSize(ani_env *env)
+{
+    ani_vm* vm = AniUtil::GetAniVm(env);
+    return static_cast<ani_long>(ark::dfx::GetHeapUsedSize(vm) >> BYTE_2_KB_SHIFT_BITS);
+}
+
 ani_object GetAppMemoryLimit(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppMemoryLimit");
@@ -518,6 +524,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
     std::array methods = {
         ani_native_function {"getAppVMMemoryInfoAdapter", ":C{@ohos.hidebug.hidebug.VMMemoryInfoAdapter}",
             reinterpret_cast<void *>(GetAppVMMemoryInfo)},
+        ani_native_function {"getAppVMObjectUsedSizeAdapter", ":l", reinterpret_cast<void *>(GetAppVMObjectUsedSize)},
         ani_native_function {"getMemoryLimitImplAdapter", ":C{@ohos.hidebug.hidebug.MemoryLimitImplAdapter}",
             reinterpret_cast<void *>(GetAppMemoryLimit)},
         ani_native_function {"getVMRuntimeStats", ":C{escompat.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
