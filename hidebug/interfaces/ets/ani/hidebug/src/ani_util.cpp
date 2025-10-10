@@ -60,8 +60,8 @@ ani_status AniUtil::ToAniBigInt(ani_env *env, int64_t int64Val, ani_object &aniB
     static std::pair<ani_class, ani_method> bigIntCreator = [env] {
         std::pair<ani_class, ani_method> bigIntCreator{};
         ani_class bigIntClass = nullptr;
-        constexpr auto className = "escompat.BigInt";
-        ani_status status = env->FindClass("escompat.BigInt", &bigIntClass);
+        constexpr auto className = "std.core.BigInt";
+        ani_status status = env->FindClass("std.core.BigInt", &bigIntClass);
         if (status != ANI_OK) {
             HILOG_ERROR(LOG_CORE, "Failed find class %{public}s for %{public}d.", className, status);
             return bigIntCreator;
