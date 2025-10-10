@@ -195,8 +195,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         DisableHook();
         return false;
     }
-    std::weak_ptr<StackWriter> stackWriterWeakPtr = stackWriterList_[smbIndex];
-    auto stackWriter = stackWriterWeakPtr.lock();
+    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
     if (!stackWriter) {
         return false;
     }
