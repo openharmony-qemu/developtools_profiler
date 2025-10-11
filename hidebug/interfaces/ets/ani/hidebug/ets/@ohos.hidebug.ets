@@ -334,4 +334,16 @@ export namespace hidebug {
     let graphicMemory = getGraphicsMemoryAdapter(2);
     return graphicMemory.gl + graphicMemory.graph;
   }
+
+  export interface GwpAsanOptions {
+    alwaysEnabled?: boolean;
+    sampleRate?: int;
+    maxSimutaneousAllocations?: int;
+  }
+
+  export native function enableGwpAsanGrayscale(options?: GwpAsanOptions, duration?: int): void;
+
+  export native function disableGwpAsanGrayscale(): void;
+
+  export native function getGwpAsanGrayscaleState(): int;
 }

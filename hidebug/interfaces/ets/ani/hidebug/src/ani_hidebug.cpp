@@ -23,6 +23,7 @@
 #include "context.h"
 #include "directory_ex.h"
 #include "error_code.h"
+#include "faultlogger_client.h"
 #include "file_ex.h"
 #include "hiappevent_util.h"
 #include "hidebug_native_interface.h"
@@ -54,6 +55,13 @@ std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
                 {"ark.gc.fullgc-longtime-count", ark::dfx::GetFullGCLongTimeCount}
             };
 }
+
+struct GwpAsanParams {
+    bool alwaysEnabled = false;
+    int32_t sampleRate = 2500;
+    int32_t maxSimutaneousAllocations = 1000;
+    int32_t duration = 7;
+};
 
 bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args)
 {
@@ -510,7 +518,139 @@ ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
     }
     return static_cast<ani_long>((target->second)(AniUtil::GetAniVm(env)));
 }
+
+bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwpAsanParams)
+{
+    ani_boolean isUndefined;
+    ani_ref alwaysEnabledRef = nullptr;
+    if (env->Object_GetPropertyByName_Ref(optionsObj, "alwaysEnabled", &alwaysEnabledRef) == ANI_OK) {
+        ani_boolean alwaysEnabledAni = false;
+        env->Reference_IsUndefined(alwaysEnabledRef, &isUndefined);
+        if (!isUndefined) {
+            if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(alwaysEnabledRef),
+                "unboxed", ":Z", &alwaysEnabledAni) != ANI_OK) {
+                HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
+                return false;
+            }
+            gwpAsanParams.alwaysEnabled = static_cast<bool>(alwaysEnabledAni);
+        }
+    }
+
+    ani_ref sampleRatedRef = nullptr;
+    if (env->Object_GetPropertyByName_Ref(optionsObj, "sampleRate", &sampleRatedRef) == ANI_OK) {
+        ani_int sampleRateAni = 0;
+        env->Reference_IsUndefined(sampleRatedRef, &isUndefined);
+        if (!isUndefined) {
+            if (env->Object_CallMethodByName_Int(static_cast<ani_object>(sampleRatedRef),
+                "unboxed", ":I", &sampleRateAni) != ANI_OK) {
+                HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
+                return false;
+            }
+            gwpAsanParams.sampleRate = static_cast<int32_t>(sampleRateAni);
+        }
+    }
+
+    ani_ref slotRef = nullptr;
+    if (env->Object_GetPropertyByName_Ref(optionsObj, "maxSimutaneousAllocations", &slotRef) == ANI_OK) {
+        ani_int slotAni = 0;
+        env->Reference_IsUndefined(slotRef, &isUndefined);
+        if (!isUndefined) {
+            if (env->Object_CallMethodByName_Int(static_cast<ani_object>(slotRef),
+                "unboxed", ":I", &slotAni) != ANI_OK) {
+                HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
+                return false;
+            }
+            gwpAsanParams.maxSimutaneousAllocations = static_cast<int32_t>(slotAni);
+        }
+    }
+
+    if (gwpAsanParams.sampleRate <= 0 || gwpAsanParams.maxSimutaneousAllocations <= 0) {
+        HILOG_ERROR(LOG_CORE, "sampleRate or maxSimutaneousAllocations must be greater than 0");
+        return false;
+    }
+
+    HILOG_DEBUG(LOG_CORE, "Parse GwpAsanOptions success, alwaysEnabled: %{public}d, sampleRate: %{public}d,"
+        " maxSimutaneousAllocations: %{public}d",
+        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate, gwpAsanParams.maxSimutaneousAllocations);
+    return true;
 }
+
+bool UpdateGwpAsanParams(ani_env *env, ani_object optionsObj, ani_object durationObj,
+    GwpAsanParams& gwpAsanParams, std::string& paramErrorMessage)
+{
+    ani_boolean isUndefined;
+    env->Reference_IsUndefined(durationObj, &isUndefined);
+    if (isUndefined == ANI_FALSE) {
+        ani_int durationAni;
+        env->Object_CallMethodByName_Int(durationObj, "unboxed", ":i", &durationAni);
+        if (durationAni < 0) {
+            paramErrorMessage = "Invalid parameter, duration must be greater than 0.";
+            return false;
+        }
+        gwpAsanParams.duration = static_cast<int32_t>(durationAni);
+    }
+
+    env->Reference_IsUndefined(optionsObj, &isUndefined);
+    if (isUndefined == ANI_FALSE) {
+        if (!ParseGwpAsanOptions(env, optionsObj, gwpAsanParams)) {
+            paramErrorMessage = "Invalid parameter, parse gwpAsanOptions error.";
+            return false;
+        }
+    }
+    return true;
+}
+
+void EnableGwpAsanGrayscaleAni(ani_env *env, ani_object optionsObj, ani_object durationObj)
+{
+    ApiInvokeRecorder apiInvokeRecorder("enableGwpAsanGrayscale");
+    GwpAsanParams gwpAsanParams;
+    std::string paramErrorMessage;
+    if (!UpdateGwpAsanParams(env, optionsObj, durationObj, gwpAsanParams, paramErrorMessage)) {
+        HILOG_ERROR(LOG_CORE, "EnableGwpAsanGrayscale failed. Invalid params!");
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        return;
+    }
+    if (!EnableGwpAsanGrayscale(gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
+        HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
+        apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMIT);
+        paramErrorMessage = "The number of GWP-ASAN applications of this device overflowed after last boot.";
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::OVER_ENABLE_LIMIT);
+        return;
+    }
+    return;
+}
+
+void DisableGwpAsanGrayscaleAni(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("disableGwpAsanGrayscale");
+    DisableGwpAsanGrayscale();
+    return;
+}
+
+ani_int GetGwpAsanGrayscaleStateAni(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getGwpAsanGrayscaleState");
+    auto result = GetGwpAsanGrayscaleState();
+    ani_int ret = static_cast<ani_int>(result);
+    return ret;
+}
+}
+
+static ani_status BindGwpMethods(ani_env *env, ani_namespace nameSpace)
+{
+    std::array gwpMethods = {
+        ani_native_function {"enableGwpAsanGrayscale", nullptr,
+            reinterpret_cast<void *>(EnableGwpAsanGrayscaleAni)},
+        ani_native_function {"disableGwpAsanGrayscale", ":",
+            reinterpret_cast<void *>(DisableGwpAsanGrayscaleAni)},
+        ani_native_function {"getGwpAsanGrayscaleState", ":i",
+            reinterpret_cast<void *>(GetGwpAsanGrayscaleStateAni)},
+    };
+    return env->Namespace_BindNativeFunctions(nameSpace, gwpMethods.data(), gwpMethods.size());
+}
+
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
     ani_env *env = nullptr;
@@ -555,6 +695,10 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
             reinterpret_cast<void *>(GetGraphicsMemoryAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
+    if (ANI_OK != retCode) {
+        return retCode;
+    }
+    retCode = BindGwpMethods(env, nameSpace);
     if (ANI_OK != retCode) {
         return retCode;
     }
