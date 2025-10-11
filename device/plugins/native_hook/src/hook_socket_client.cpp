@@ -256,6 +256,7 @@ bool HookSocketClient::SendNmdInfo()
                                                      reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
                                                      std::bind(&HookSocketClient::PeerIsConnected, this));
     } else {
+        free(nmdBuf);
         return false;
     }
     stackWriterList_[0]->Flush();
@@ -281,6 +282,7 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
                                                      reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
                                                      std::bind(&HookSocketClient::PeerIsConnected, this));
     } else {
+        free(nmdBuf);
         return false;
     }
     stackWriterList_[0]->Flush();
