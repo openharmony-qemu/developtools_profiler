@@ -25,6 +25,10 @@ function createVoidBusinessError(code: int, msg: string): BusinessError<void> {
 export namespace hidebug {
   loadLibraryWithPermissionCheck("hidebug_ani", "@ohos.hidebug");
 
+  export native function startJsCpuProfiling(filename: string): void;
+
+  export native function stopJsCpuProfiling(): void;
+
   native function getNativeHeapSizeAdapter(): long;
 
   export function getNativeHeapSize(): bigint {
@@ -290,6 +294,8 @@ export namespace hidebug {
   export native function startAppTraceCapture(tags: long[], flag: TraceFlag, limitSize: int): string;
 
   export native function stopAppTraceCapture(): void;
+
+  export native function isDebugState(): boolean;
 
   export function getGraphicsMemory(): Promise<int> {
     return new Promise<int>((resolve: (v: int) => void, reject: (e: BusinessError<void>) => void) => {

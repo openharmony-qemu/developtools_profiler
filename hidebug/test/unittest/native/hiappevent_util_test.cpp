@@ -73,5 +73,28 @@ HWTEST_F(HiAppEventUtilTest, MultipleRecordReporterTest, TestSize.Level0)
     }
     ASSERT_TRUE(success);
 }
+
+/**
+ * @tc.name: MultipleRecordReporterTest2
+ * @tc.desc: test MultipleRecordReporter2.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiAppEventUtilTest, MultipleRecordReporterTest2, TestSize.Level0)
+{
+    bool success = false;
+    {
+        MultipleRecordReporter multipleRecordReporter(0, 0);
+        multipleRecordReporter.ReportRecord("MultipleRecordReporterTest2", 0, 0, 0);
+        MultipleRecordReporter timeRepoter(1, 0);
+        timeRepoter.ReportRecord("MultipleRecordReporterTest2", 0, 0, 0);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        timeRepoter.ReportRecord("MultipleRecordReporterTest2", 0, 0, 0);
+        MultipleRecordReporter countReporter(0, 2);
+        countReporter.ReportRecord("MultipleRecordReporterTest2", 0, 0, 0);
+        countReporter.ReportRecord("MultipleRecordReporterTest2", 0, 0, 0);
+        success = true;
+    }
+    ASSERT_TRUE(success);
+}
 }
 }
