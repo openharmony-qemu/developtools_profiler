@@ -179,7 +179,7 @@ export namespace hidebug {
 
   export function getGraphicsMemory(): Promise<int> {
     return new Promise<int>((resolve: (v: int) => void, reject: (e: BusinessError<void>) => void) => {
-      taskpool.execute(getGraphicsMemorySync).then((ret: NullishType): void => {
+      taskpool.execute(getGraphicsMemorySync).then((ret: Any): void => {
         resolve(ret as int);
       }).catch((err: Object | null | undefined) => {
         reject(err as BusinessError);
