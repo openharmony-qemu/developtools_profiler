@@ -161,10 +161,7 @@ HWTEST_F(TraceFileWriterTest, RemapFile, TestSize.Level1)
 {
     path = "remap-test.bin";
     int fd = open(path.c_str(), O_RDWR | O_CREAT, 0644);
-    if (fd == -1) {
-        perror("open");
-        return;
-    }
+    ASSERT_GE(fd, 0);
     auto writer = std::make_shared<TraceFileWriter>(fd);
     EXPECT_NE(writer, nullptr);
     uint32_t applySize = 1024 * 1024;  // 1MB

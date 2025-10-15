@@ -13,8 +13,6 @@
  * limitations under the License.
  */
 #include "hisysevent_plugin.h"
-#include "hisysevent_plugin_result.pbencoder.h"
-
 #include <cinttypes>
 #include <csignal>
 #include <cstdio>
@@ -110,26 +108,9 @@ int HisyseventPlugin::Stop()
     return 0;
 }
 
-void HisyseventPlugin::Run(void)
+void HisyseventPlugin::StartLoopReadData(std::unique_ptr<uint8_t[]>& buffer, std::unique_ptr<HisyseventInfo>& dataProto,
+                                         std::unique_ptr<ProtoEncoder::HisyseventInfo>& hisyseventInfo)
 {
-    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
-    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_STRING_LEN);
-
-    PROFILER_LOG_INFO(LOG_CORE,
-                      "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
-
-    fcntl(fileno(fp_.get()), F_SETPIPE_SZ, PIPE_SIZE);
-    int aPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
-    PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, aPipeSize=%d, PIPE_SIZE=%d}", fileno(fp_.get()), aPipeSize, PIPE_SIZE);
-
-    std::unique_ptr<HisyseventInfo> dataProto = nullptr;
-    std::unique_ptr<ProtoEncoder::HisyseventInfo> hisyseventInfo = nullptr;
-    if (resultWriter_->isProtobufSerialize) {
-        dataProto = std::make_unique<HisyseventInfo>();
-    } else {
-        hisyseventInfo = std::make_unique<ProtoEncoder::HisyseventInfo>(resultWriter_->startReport(resultWriter_));
-    }
-
     while (running_) {
         char* cptr = nullptr;
         if (fgets(reinterpret_cast<char*>(buffer.get()), MAX_STRING_LEN, fp_.get()) != nullptr) {
@@ -142,7 +123,6 @@ void HisyseventPlugin::Run(void)
             if (!ParseSyseventLineInfo(cptr, strlen(cptr), dataProto.get())) {
                 continue;
             }
-
             if (dataProto->ByteSizeLong() >= BYTE_BUFFER_SIZE) {
                 WriteResult(dataProto.get());
                 dataProto->clear_info();
@@ -151,7 +131,6 @@ void HisyseventPlugin::Run(void)
             if (!ParseSyseventLineInfo(cptr, strlen(cptr), hisyseventInfo.get())) {
                 continue;
             }
-
             if (hisyseventInfo->Size() >= BYTE_BUFFER_SIZE) {
                 FlushDataOptimize(hisyseventInfo.get());
                 hisyseventInfo.reset();
@@ -160,7 +139,25 @@ void HisyseventPlugin::Run(void)
             }
         }
     }
+}
 
+void HisyseventPlugin::Run(void)
+{
+    PROFILER_LOG_INFO(LOG_CORE, "BEGN %s: ready!", __func__);
+    std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(MAX_STRING_LEN);
+    PROFILER_LOG_INFO(LOG_CORE,
+                      "NOTE hisysevent_plugin_result.proto->HisyseventInfo:dataProto;Ready to output the result!");
+    fcntl(fileno(fp_.get()), F_SETPIPE_SZ, PIPE_SIZE);
+    int aPipeSize = fcntl(fileno(fp_.get()), F_GETPIPE_SZ);
+    PROFILER_LOG_INFO(LOG_CORE, "{fp = %d, aPipeSize=%d, PIPE_SIZE=%d}", fileno(fp_.get()), aPipeSize, PIPE_SIZE);
+    std::unique_ptr<HisyseventInfo> dataProto = nullptr;
+    std::unique_ptr<ProtoEncoder::HisyseventInfo> hisyseventInfo = nullptr;
+    if (resultWriter_->isProtobufSerialize) {
+        dataProto = std::make_unique<HisyseventInfo>();
+    } else {
+        hisyseventInfo = std::make_unique<ProtoEncoder::HisyseventInfo>(resultWriter_->startReport(resultWriter_));
+    }
+    StartLoopReadData(buffer, dataProto, hisyseventInfo);
     if (resultWriter_->isProtobufSerialize) {
         WriteResult(dataProto.get());
         dataProto.reset();
@@ -168,7 +165,6 @@ void HisyseventPlugin::Run(void)
         FlushDataOptimize(hisyseventInfo.get());
         hisyseventInfo.reset();
     }
-
     PROFILER_LOG_INFO(LOG_CORE, "END %s: success!", __func__);
 }
 

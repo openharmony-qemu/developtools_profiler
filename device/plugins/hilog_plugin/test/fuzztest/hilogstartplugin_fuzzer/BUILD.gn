@@ -40,6 +40,7 @@ ohos_fuzztest("HilogStartPluginFuzzTest") {
     "../../../../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
+    "${OHOS_PROFILER_DIR}/proto_encoder/include/",
   ]
 }
 

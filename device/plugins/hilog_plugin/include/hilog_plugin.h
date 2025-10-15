@@ -21,6 +21,7 @@
 #include "hilog_plugin_result.pb.h"
 #include "logging.h"
 #include "plugin_module_api.h"
+#include "hilog_plugin_result.pbencoder.h"
 
 #include <atomic>
 #include <mutex>
@@ -44,18 +45,21 @@ private:
 
     bool OpenLogFile();
     int GetDateTime(char* psDateTime, uint32_t size);
-
-    template <typename T> void ParseLogLineInfo(const char* data, size_t len, T& hilogLineInfo);
-
-    template <typename T> void ParseLogLineData(const char* data, size_t len, T hilogInfoProto);
-
-    template <typename T> bool SetHilogLineDetails(const char* data, T& hilogLineInfo);
-
-    bool TimeStringToNS(const char* data, struct timespec *ts);
+    template <typename T>
+    void ParseLogLineInfo(const char* data, size_t len, T& hilogLineInfo);
+    template <typename T>
+    void ParseLogLineData(const char* data, size_t len, T hilogInfoProto);
+    template <typename T>
+    bool SetHilogLineDetails(const char* data, T& hilogLineInfo);
+    bool TimeStringToNS(const char* data, struct timespec* ts);
     bool FindFirstNum(char** p);
     bool RemoveSpaces(char** p);
     bool FindFirstSpace(char** p);
     std::string GetCmdArgs(const HilogConfig& protoConfig);
+    bool FindTagString(char*& pTmp, char*& end, int& npos);
+    void StartLoopFetchData(std::unique_ptr<uint8_t[]>& buffer, std::unique_ptr<HilogInfo>& dataProto,
+                            std::unique_ptr<OHOS::Developtools::Profiler::ProtoEncoder::HilogInfo>& hilogInfo,
+                            std::string startTime);
 
     bool StringToL(const char* word, long& value);
     // for ut
@@ -65,8 +69,10 @@ private:
         return;
     }
 
-    template <typename T> void FlushData(const T hilogLineProto);
-    template <typename T> void FlushDataOptimize(const T hilogLineProto);
+    template <typename T>
+    void FlushData(const T hilogLineProto);
+    template <typename T>
+    void FlushDataOptimize(const T hilogLineProto);
 
 private:
     HilogConfig protoConfig_;
@@ -77,7 +83,7 @@ private:
     std::thread workThread_;
     std::atomic<bool> running_ = true;
     std::vector<std::string> fullCmd_;
-    std::unique_ptr<FILE, std::function<int (FILE*)>> fp_;
+    std::unique_ptr<FILE, std::function<int(FILE*)>> fp_;
     std::unique_ptr<FileCache> fileCache_ = nullptr;
     int pipeFds_[2] = {-1, -1};
     volatile pid_t childPid_ = -1;

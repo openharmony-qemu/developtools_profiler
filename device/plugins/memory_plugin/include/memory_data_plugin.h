@@ -397,6 +397,7 @@ private:
     template <typename T> void WriteAppsummary(T& processMemoryInfo, SmapsStats& smapInfo);
 
     template <typename T> void SetProcessInfo(T& processMemoryInfo, int key, const char* word);
+    template <typename T> void ProcessGpuDumpInfo(T& dataProto, std::string& content);
 
     bool StringToUll(const char* word, uint64_t& value);
 

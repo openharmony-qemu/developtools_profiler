@@ -18,7 +18,6 @@
 #include <array>
 #include <cinttypes>
 #include <csignal>
-#include <dirent.h>
 #include <fstream>
 #include <iostream>
 #include <parameter.h>
@@ -127,6 +126,39 @@ bool IsProcessRunning(int& lockFileFd)
     return false;
 }
 
+std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr)
+{
+    if (ptr == nullptr) {
+        return {false, ""};
+    }
+    char filePath[FILE_PATH_SIZE] = {0};
+    int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
+    if (len < 0 || len >= FILE_PATH_SIZE - 1) {
+        PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had been cut off");
+        return {false, ""};
+    }
+    FILE* fp = fopen(filePath, "r");
+    if (fp == nullptr) {
+        return {false, ""};
+    }
+    char buf[BUFFER_SIZE] = {0};
+    if (fgets(buf, sizeof(buf) - 1, fp) == nullptr) {
+        fclose(fp);
+        return {false, ""};
+    }
+    std::string str(buf);
+    size_t found = str.rfind("/");
+    std::string fullProcess;
+    if (found != std::string::npos) {
+        fullProcess = str.substr(found + 1);
+    } else {
+        fullProcess = str;
+    }
+    if (fclose(fp) != 0) {
+        return {false, ""};
+    }
+    return {true, fullProcess};
+}
 bool IsProcessExist(const std::string& processName, int& pid)
 {
     DIR* dir = opendir("/proc");
@@ -143,35 +175,14 @@ bool IsProcessExist(const std::string& processName, int& pid)
         if (!IsNumeric(std::string(ptr->d_name))) {
             continue;
         }
-        char filePath[FILE_PATH_SIZE] = {0};
-        int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%s/cmdline", ptr->d_name);
-        if (len < 0) {
-            PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+        auto [retFlag, fullProcess] = ReadProcessNameFromDir(ptr);
+        if (!retFlag) {
             continue;
-        }
-        FILE* fp = fopen(filePath, "r");
-        if (fp == nullptr) {
-            continue;
-        }
-        char buf[BUFFER_SIZE] = {0};
-        if (fgets(buf, sizeof(buf) - 1, fp) == nullptr) {
-            fclose(fp);
-            continue;
-        }
-        std::string str(buf);
-        size_t found = str.rfind("/");
-        std::string fullProcess;
-        if (found != std::string::npos) {
-            fullProcess = str.substr(found + 1);
-        } else {
-            fullProcess = str;
         }
         if (fullProcess == processName) {
             pidValue = atoi(ptr->d_name);
-            fclose(fp);
             break;
         }
-        fclose(fp);
     }
     closedir(dir);
     if (pidValue != INVALID_PID) {
@@ -332,31 +343,37 @@ inline int CustomFdFclose(FILE** fp)
     return ret;
 }
 
-FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
-                  volatile pid_t& childPid, bool needUnblock)
+bool CheckPopenParams(const std::vector<std::string>& command, const char* type)
 {
-    PROFILER_LOG_DEBUG(LOG_CORE, "BEGN %s: ready!", __func__);
     if (command.size() < MIN_CMD_ARGV || command.size() > MAX_CMD_ARGV || type == nullptr || strlen(type) != 1) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s: param invalid", __func__);
-        return nullptr;
+        return false;
     }
-
     // only allow "r" or "w"
     if ((type[0] != 'r' && type[0] != 'w')) {
         errno = EINVAL;
-        return  nullptr;
+        return  false;
     }
     // check whitelist
     if (!CheckWhiteList(command[0])) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s: command not in whitelist!", __func__);
-        return nullptr;
+        return false;
     }
     // check cmd arg valid
     for (auto& item : command) {
         if (!CheckCmdLineArgValid(item)) {
             PROFILER_LOG_ERROR(LOG_CORE, "%s: command arg invalid : %s", __func__, item.c_str());
-            return nullptr;
+            return false;
         }
+    }
+    return true;
+}
+
+FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
+                  volatile pid_t& childPid, bool needUnblock)
+{
+    if (!CheckPopenParams(command, type)) {
+        return nullptr;
     }
     CHECK_TRUE(pipe(fds) == 0, nullptr, "Pipe open failed!");
     pid_t pid = fork();
@@ -364,14 +381,12 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
         perror("fork");
         exit(1);
     }
-
     if (pid == 0) {
         // execve : the last argv must be nullptr.
         std::vector<char*> argv(command.size() + 1, nullptr);
         for (size_t i = 0, cmdSize = command.size(); i < cmdSize; i++) {
             argv[i] = const_cast<char*>(command[i].data());
         }
-
         if (strncmp(type, "r", strlen(type)) == 0) {
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
             dup2(fds[WRITE], STDOUT_FILENO); // Redirect stdout to pipe
@@ -381,7 +396,6 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
             dup2(fds[READ], STDIN_FILENO); // Redirect stdin to pipe
             CHECK_TRUE(CustomFdClose(fds[READ]) == 0, nullptr, "CustomFdClose failed!");
         }
-
         setpgid(pid, pid);
         // exe path = argv[0]; exe name = argv[1]
         if (execv(argv[0], &argv[1]) == -1) {
@@ -389,7 +403,6 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
             exit(EXIT_FAILURE);
         }
     }
-
     if (!needUnblock) {
         if (strncmp(type, "r", strlen(type)) == 0) {
             // Close the WRITE end of the pipe since parent's fd is read-only
@@ -401,15 +414,12 @@ FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int
                 __func__, __LINE__, strerror(errno));
         }
     }
-
     // Make sure the parent pipe reads and writes exist;CustomPUnblock will use.
     childPid = pid;
     if (strncmp(type, "r", strlen(type)) == 0) {
         PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[READ]: success!", __func__);
         return fdopen(fds[READ], "r");
     }
-
-    PROFILER_LOG_DEBUG(LOG_CORE, "END %s fds[WRITE]: success!", __func__);
     return fdopen(fds[WRITE], "w");
 }
 
