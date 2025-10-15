@@ -228,7 +228,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
 
     void ResetGpuRange(GpuRange& gpuRange)
     {
-        for (int i = 0; i < OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2; i++) { //2: double
+        for (size_t i = 0; i < OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2; i++) { //2: double
             gpuRange.gpuVk[i] = 0;
             gpuRange.gpuGlesImage[i] = 0;
             gpuRange.gpuGlesBuffer[i] = 0;

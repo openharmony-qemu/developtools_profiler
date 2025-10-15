@@ -514,7 +514,7 @@ void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std
 void NativeMemoryProfilerSaService::SetGpuConfig(ClientConfig& clientConfig)
 {
     std::lock_guard<std::mutex> guard(gpuMtx_);
-    for (int i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: double
+    for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: double
         clientConfig.gpuRange.gpuVk[i] = g_gpuRange[GPU_VK_INDEX][i];
         clientConfig.gpuRange.gpuGlesImage[i] = g_gpuRange[GPU_GLES_IMAGE_INDEX][i];
         clientConfig.gpuRange.gpuGlesBuffer[i] = g_gpuRange[GPU_GLES_BUFFER_INDEX][i];
