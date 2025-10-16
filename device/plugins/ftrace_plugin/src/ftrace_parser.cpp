@@ -239,7 +239,7 @@ bool FtraceParser::ParseFieldFormat(const std::string& fieldLine, EventFormat& f
         fieldInfo.offset = atoi(offsetStr.c_str());
     }
     if (COMMON::IsNumeric(sizeStr)) {
-        fieldInfo.size = atoi(sizeStr.c_str());
+        fieldInfo.size = static_cast<size_t>(atoi(sizeStr.c_str()));
     }
     if (COMMON::IsNumeric(signedStr)) {
         fieldInfo.isSigned = atoi(signedStr.c_str());
