@@ -388,7 +388,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 void HookManager::CheckHapEncryped()
 {
     if (saMode_ && hookConfig_.fp_unwind()) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "sa Mode, the encrypted app is allowed to use fp unwind to catch js stack.");
+        PROFILER_LOG_DEBUG(LOG_CORE, "unwind js stack");
         return;
     }
     for (const auto& pid : hookConfig_.expand_pids()) {
@@ -400,7 +400,7 @@ void HookManager::CheckHapEncryped()
     }
     const std::string processName = hookConfig_.process_name();
     if (!processName.empty() && COMMON::CheckApplicationEncryped(0, processName)) {
-        PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
+        PROFILER_LOG_INFO(LOG_CORE, "unwind js stack is not supported");
         hookConfig_.set_js_stack_report(0);
         hookConfig_.set_max_js_stack_depth(0);
     }
