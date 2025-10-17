@@ -343,7 +343,7 @@ bool FtraceParser::ParseFieldType(const std::string& type, FieldFormat& field)
 
     // for flex array with __data_loc mark, likes: __data_loc char[] name; __data_loc __u8[] buf;
     if (std::regex_match(typeName, flexDataLocArrayRegex_)) {
-        CHECK_TRUE(field.size == sizeof(uint32_t), false, "__data_loc %s, size: %hu", typeName.c_str(), field.size);
+        CHECK_TRUE(field.size == sizeof(uint32_t), false, "__data_loc %s, size: %zu", typeName.c_str(), field.size);
         field.filedType = FIELD_TYPE_DATALOC;
         return true;
     }
@@ -585,6 +585,9 @@ bool FtraceParser::ParseTimeStamp(const FtraceEventHeader& eventHeader)
 
 bool FtraceParser::ReadInc(uint8_t* start[], uint8_t end[], void* outData, size_t outSize)
 {
+    if (outSize > static_cast<size_t>(std::numeric_limits<ptrdiff_t>::max())) {
+        return false;
+    }
     if ((end - *start) < static_cast<ptrdiff_t>(outSize)) {
         return false;
     }

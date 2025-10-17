@@ -570,7 +570,10 @@ void TraceFileWriter::FinishReport(int32_t size)
     auto realSize = PIECE_HEAD_LEN + size;
     CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
         realSize, strerror(errno));
-
+    if (mapOffset_ >=  fileLength_) {
+        PROFILER_LOG_ERROR(LOG_CORE, "FinishReport (%zu:%zu) data file failed", mapOffset_, fileLength_);
+        return;
+    }
     // write data length
     *(reinterpret_cast<int*>((&reinterpret_cast<uint8_t*>(fileMapAddr_)[mapOffset_]))) = size;
     mapOffset_ += static_cast<uint64_t>(realSize);
