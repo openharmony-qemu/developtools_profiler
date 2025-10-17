@@ -237,7 +237,7 @@ ani_array ConvertThreadCpuUsageMapToEts(ani_env *env, const std::map<uint32_t, d
     ani_class cls = nullptr;
     ani_size aniSize = static_cast<ani_size>(threadMap.size());
     ani_array result = nullptr;
-    ani_ref undefinedRef {};
+    ani_ref undefinedRef = AniUtil::CreateUndefined(env);
     if (env->FindClass("@ohos.hidebug.hidebug.ThreadCpuUsageImpl", &cls) != ANI_OK ||
         env->Array_New(aniSize, undefinedRef, &result) != ANI_OK) {
         return result;
@@ -457,7 +457,7 @@ ani_object GetAppMemoryLimit(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object appMemoryLimit = nullptr;
-    if (env->FindClass("@ohos.hidebug.hidebug.MemoryLimitAdapter", &cls) != ANI_OK ||
+    if (env->FindClass("@ohos.hidebug.hidebug.MemoryLimitImplAdapter", &cls) != ANI_OK ||
         env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &appMemoryLimit) != ANI_OK) {
         return AniUtil::CreateUndefined(env);
