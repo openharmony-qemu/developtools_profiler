@@ -169,6 +169,7 @@ Note:If the text contains special characters, please escape them according to th
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_1" desc="the ftrace test file, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_2" desc="the ftrace test file, the file is self-developed"/>
                 <filteritem type="filepath" name="device/plugins/ftrace_plugin/test/unittest/resource/test_raw_3" desc="the ftrace test file, the file is self-developed"/>
+                <filteritem type="filepath" name="host/smartperf/client/client_ui/entry/src/main/resources/base/media/*.png" desc="the binary file for test, the file is self-developed"/>
             </filefilter>
         </filefilterlist>
     </oatconfig>
