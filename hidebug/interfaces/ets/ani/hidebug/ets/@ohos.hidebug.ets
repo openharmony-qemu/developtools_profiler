@@ -239,10 +239,10 @@ export namespace hidebug {
   export function getAppMemoryLimit(): MemoryLimit {
     let memoryLimit = getMemoryLimitImplAdapter();
     let ret = new MemoryLimitImpl();
-    ret.rssLimit = new bigint(ret.rssLimit);
-    ret.vssLimit = new bigint(ret.vssLimit);
-    ret.vmHeapLimit = new bigint(ret.vmHeapLimit);
-    ret.vmTotalHeapSize = new bigint(ret.vmTotalHeapSize);
+    ret.rssLimit = new bigint(memoryLimit.rssLimit);
+    ret.vssLimit = new bigint(memoryLimit.vssLimit);
+    ret.vmHeapLimit = new bigint(memoryLimit.vmHeapLimit);
+    ret.vmTotalHeapSize = new bigint(memoryLimit.vmTotalHeapSize);
     return ret;
   }
 
