@@ -114,4 +114,80 @@ HWTEST_F(ScheduleTaskManagerTest, UnscheduleTask, TestSize.Level1)
     EXPECT_LE(abs(count.load() - expected), thresh);
     EXPECT_TRUE(scheduleTaskManager.UnscheduleTask(taskFd));
 }
+
+/**
+ * @tc.name: HandleEpollEventsStop
+ * @tc.desc: Test HandleEpollEvents when stop event is received
+ * @tc.type: FUNC
+ */
+HWTEST_F(ScheduleTaskManagerTest, HandleEpollEventsStop, TestSize.Level1)
+{
+    int pipefd[2];
+    ASSERT_NE(pipe(pipefd), -1);
+    int readFd = pipefd[0];
+    int writeFd = pipefd[1];
+    int epollFd = epoll_create1(0);
+    ASSERT_NE(epollFd, -1);
+
+    struct epoll_event ev;
+    ev.events = EPOLLIN;
+    ev.data.fd = readFd;
+    ASSERT_EQ(epoll_ctl(epollFd, EPOLL_CTL_ADD, readFd, &ev), 0);
+
+    ScheduleTaskManager manager;
+    manager.stopFd_ = readFd;
+    manager.epollFd_ = epollFd;
+
+    std::thread t([writeFd]() {
+        usleep(10000); // 等待10ms
+        char buf = 1;
+        write(writeFd, &buf, 1);
+    });
+
+    bool result = manager.HandleEpollEvents();
+    EXPECT_FALSE(result);
+
+    t.join();
+    close(writeFd);
+    close(readFd);
+    close(epollFd);
+}
+
+/**
+ * @tc.name: HandleSingleEventBadFd
+ * @tc.desc: handle single event with bad fd
+ * @tc.type: FUNC
+ */
+HWTEST_F(ScheduleTaskManagerTest, HandleSingleEventBadFd, TestSize.Level1)
+{
+    ScheduleTaskManager manager;
+    int badFd = -1;
+    struct epoll_event event;
+    event.data.fd = badFd;
+    event.events = EPOLLIN;
+    bool taskCalled = false;
+    manager.tasks_[badFd] = [&taskCalled]() { taskCalled = true; };
+    manager.HandleSingleEvent(event);
+    EXPECT_FALSE(taskCalled);
+}
+
+/**
+ * @tc.name: HandleSingleEventFdErased
+ * @tc.desc: handle single event with fd erased
+ * @tc.type: FUNC
+ */
+HWTEST_F(ScheduleTaskManagerTest, HandleSingleEventFdErased, TestSize.Level1)
+{
+    ScheduleTaskManager manager;
+    int fd = 123;
+    bool taskCalled = false;
+    manager.tasks_[fd] = [&taskCalled]() { taskCalled = true; };
+    struct epoll_event event;
+    event.data.fd = fd;
+    event.events = EPOLLIN;
+    manager.tasks_.erase(fd);
+    bool result = manager.HandleSingleEvent(event);
+    EXPECT_FALSE(result);
+    EXPECT_FALSE(taskCalled);
+}
 } // namespace
