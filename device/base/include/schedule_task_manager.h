@@ -23,6 +23,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <sys/epoll.h>
 #include <thread>
 #include <unordered_map>
 
@@ -56,6 +57,8 @@ public:
 
 private:
     void ScheduleThread();
+    bool HandleEpollEvents();
+    bool HandleSingleEvent(const epoll_event& event);
     void HandleSingleTask(int32_t fd, std::function<void(void)> callback);
     bool DeleteTask(const int32_t timerFd);
 

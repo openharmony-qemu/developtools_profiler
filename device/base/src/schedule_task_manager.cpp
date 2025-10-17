@@ -112,7 +112,9 @@ bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
 {
     std::unique_lock<std::mutex> lock(mtx_);
     if (auto iter = tasks_.find(timerFd); iter != tasks_.end()) {
+        tasks_.erase(timerFd);
         epoll_ctl(epollFd_, EPOLL_CTL_DEL, timerFd, NULL);
+        close(timerFd);
         return true;
     }
     return false;
@@ -121,27 +123,52 @@ bool ScheduleTaskManager::DeleteTask(const int32_t timerFd)
 void ScheduleTaskManager::ScheduleThread()
 {
     pthread_setname_np(pthread_self(), "SchedTaskMgr");
-    uint64_t exp;
     while (runScheduleThread_) {
-        struct epoll_event events[EPOLL_EVENT_MAX];
-        int32_t nfd = epoll_wait(epollFd_, events, EPOLL_EVENT_MAX, -1);
-        if (nfd > 0) {
-            for (int32_t i = 0; i < nfd; ++i) {
-                if (events[i].data.fd == stopFd_) {
-                    return;
-                }
-                int32_t ret = read(events[i].data.fd, &exp, sizeof(uint64_t));
-                if (ret == sizeof(uint64_t)) {
-                    std::unique_lock<std::mutex> lock(mtx_);
-                    if (tasks_.find(events[i].data.fd) != tasks_.end() && tasks_[events[i].data.fd] != nullptr) {
-                        auto funcTask = tasks_[events[i].data.fd];
-                        lock.unlock();
-                        funcTask();
-                    }
-                }
-            }
+        if (!HandleEpollEvents()) {
+            return;
         }
     }
+}
+
+bool ScheduleTaskManager::HandleEpollEvents()
+{
+    struct epoll_event events[EPOLL_EVENT_MAX];
+    int32_t nfd = epoll_wait(epollFd_, events, EPOLL_EVENT_MAX, -1);
+    if (nfd > 0) {
+        for (int32_t i = 0; i < nfd; ++i) {
+            if (events[i].data.fd == stopFd_) {
+                return false;
+            }
+            HandleSingleEvent(events[i]);
+        }
+    }
+    return true;
+}
+
+bool ScheduleTaskManager::HandleSingleEvent(const epoll_event& event)
+{
+    if (event.data.fd == stopFd_) {
+        return false;
+    }
+    std::unique_lock<std::mutex> lock(mtx_);
+    uint64_t exp;
+    auto it = tasks_.find(event.data.fd);
+    if (it == tasks_.end()) {
+        PROFILER_LOG_WARN(LOG_CORE, "ScheduleTaskManager timerfd:%d not found", event.data.fd);
+        return false;
+    }
+    int32_t ret = read(event.data.fd, &exp, sizeof(uint64_t));
+    if (ret != sizeof(uint64_t)) {
+        PROFILER_LOG_WARN(LOG_CORE, "ScheduleTaskManager timerfd:%d read failed", event.data.fd);
+        return false;
+    }
+    if (it->second == nullptr) {
+        return false;
+    }
+    auto funcTask = it->second;
+    lock.unlock();
+    funcTask();
+    return true;
 }
 
 void ScheduleTaskManager::HandleSingleTask(int32_t fd, std::function<void(void)> callback)
