@@ -645,7 +645,7 @@ bool UpdateGwpAsanParams(ani_env *env, ani_object optionsObj, ani_object duratio
     if (isUndefined == ANI_FALSE) {
         ani_int durationAni;
         env->Object_CallMethodByName_Int(durationObj, "unboxed", ":i", &durationAni);
-        if (durationAni < 0) {
+        if (durationAni <= 0) {
             paramErrorMessage = "Invalid parameter, duration must be greater than 0.";
             return false;
         }
