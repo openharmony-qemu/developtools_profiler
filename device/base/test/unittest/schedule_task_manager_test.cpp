@@ -149,8 +149,6 @@ HWTEST_F(ScheduleTaskManagerTest, HandleEpollEventsStop, TestSize.Level1)
 
     t.join();
     close(writeFd);
-    close(readFd);
-    close(epollFd);
 }
 
 /**
