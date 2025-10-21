@@ -131,9 +131,6 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         PROFILER_LOG_ERROR(LOG_CORE, "hookRecord SetTraceType invalid event");
         return;
     }
-    if ((GetType() != MEMORY_USING_MSG) && (GetType() != MEMORY_UNUSING_MSG)) {
-        return;
-    }
     if (tagName == TAG_RES_GPU_VK) {
         event->set_trace_type(TraceType::GPU_VK);
     } else if (tagName == TAG_RES_GPU_GLES_IMAGE) {
