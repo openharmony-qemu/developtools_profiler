@@ -52,6 +52,7 @@ constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
 constexpr int DEFAULT_SESSION_TIME_S = 10;
 constexpr uint32_t INT_MAX_LEN = 10;
 const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
+const std::string DEFAULT_OUTPUT_ROOT = "/data/local/tmp/";
 const std::string HIPROFILERD_NAME("hiprofilerd");
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 const std::string NATIVE_DAEMON_NAME("native_daemon");
@@ -143,7 +144,7 @@ bool HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
             fileName.replace(0, SANDBOX_PATH_ROOT.size(),
                              "/storage/media/" + std::to_string(userId) + "/local/files/Docs/");
         } else {
-            printf("Filepath unable to write! Please place it under /storage/Users/currentUser/. \n");
+            printf("Filepath unable to write! Please use /storage/Users/currentUser/ at the beginning.\n");
             return false;
         }
         sessionConfig->set_result_file(COMMON::CanonicalizeSpecPath(fileName.c_str()));
@@ -152,6 +153,10 @@ bool HandleSandboxFilename(const std::string& outputFile, T sessionConfig)
             sessionConfig->set_result_file(outputFile);
         } else if (sessionConfig->result_file() == "") {
             sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
+        }
+        if (sessionConfig->result_file().substr(0, DEFAULT_OUTPUT_ROOT.size()) != DEFAULT_OUTPUT_ROOT) {
+            printf("Filepath unable to write! Please use /data/local/tmp/ at the beginning.\n");
+            return false;
         }
     }
     return true;
@@ -196,6 +201,10 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
         sessionConfig->set_result_file(outputFile);
     } else if (sessionConfig->result_file() == "") {
         sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
+    }
+    if (sessionConfig->result_file().substr(0, DEFAULT_OUTPUT_ROOT.size()) != DEFAULT_OUTPUT_ROOT) {
+        printf("Filepath unable to write! Please use /data/local/tmp/ at the beginning.\n");
+        return nullptr;
     }
 #endif
     printf("keepSecond: %us\n", sessionConfig->sample_duration() / MS_PER_S);
