@@ -663,7 +663,8 @@ void StackPreprocess::SetEventFrame(const ReportEventBaseData& rawStack,
         event->set_type(type);
     }
 
-    if constexpr (!std::is_same<T, ::FreeEvent>::value && !std::is_same<T, ProtoEncoder::FreeEvent>::value) {
+    if constexpr (!std::is_same<T, ::FreeEvent>::value && !std::is_same<T, ProtoEncoder::FreeEvent>::value &&
+                  !std::is_same<T, ::TraceFreeEvent>::value && !std::is_same<T, ProtoEncoder::TraceFreeEvent>::value) {
         auto size = static_cast<uint64_t>(rawStack.mallocSize);
 #ifdef USE_JEMALLOC
     if constexpr (std::is_same<T, ::AllocEvent>::value || std::is_same<T, ProtoEncoder::AllocEvent>::value) {
@@ -1484,13 +1485,23 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
                 tagEvent->set_tag(prefix + prctlPeriodTags_[rawStack.tagId]);
                 tagEvent->set_pid(pid_);
             } else if (rawStack.type == MEMORY_USING_MSG) {
-                auto mmapEvent = hookData->mutable_mmap_event();
+                auto traceAllocEvent = hookData->mutable_trace_alloc_event();
                 std::string tagName;
                 GetMemTag(rawStack.tagId, tagName);
-                SetEventFrame(rawStack, mmapEvent, rawStack.stackMapId, tagName);
+                if (tagName != "") {
+                    traceAllocEvent->set_tag_name(tagName);
+                }
+                HookRecord::SetTraceType(traceAllocEvent, tagName);
+                SetEventFrame(rawStack, traceAllocEvent, rawStack.stackMapId, tagName);
             } else if (rawStack.type == MEMORY_UNUSING_MSG) {
-                auto munmapEvent = hookData->mutable_munmap_event();
-                SetEventFrame(rawStack, munmapEvent, rawStack.stackMapId);
+                auto traceFreeEvent = hookData->mutable_trace_free_event();
+                std::string tagName;
+                GetMemTag(rawStack.tagId, tagName);
+                if (tagName != "") {
+                    traceFreeEvent->set_tag_name(tagName);
+                }
+                HookRecord::SetTraceType(traceFreeEvent, tagName);
+                SetEventFrame(rawStack, traceFreeEvent, rawStack.stackMapId);
             }
         }
         FlushData(stackData);
