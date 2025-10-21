@@ -424,6 +424,56 @@ bool GetTheOnlyStringParam(ani_env *env, ani_string filenameAni, std::string &fi
     return true;
 }
 
+std::string StartCpuProfiler(const std::string& fileName)
+{
+    auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
+    if (context == nullptr) {
+        return "Get ApplicationContext failed.";
+    }
+    std::string filesDir = context->GetFilesDir();
+    if (filesDir.empty()) {
+        return "Get App files dir failed.";
+    }
+    std::string filePath = filesDir + SLASH_STR + fileName + JSON_FILE;
+    if (!IsLegalPath(filePath)) {
+        return "input fileName is illegal.";
+    }
+    if (!CreateFile(filePath)) {
+        return "file created failed.";
+    }
+    if (!ark::ArkDebugNativeAPI::StartProfiling(filePath)) {
+        return "failed start profiler.";
+    }
+    return "";
+}
+
+void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
+{
+    ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
+    std::string fileName;
+    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
+        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
+        return;
+    }
+    HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
+    auto errMsg = StartCpuProfiler(fileName);
+    if (!errMsg.empty()) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return;
+    }
+}
+
+void StopJsCpuProfiling(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
+    if (!ark::ArkDebugNativeAPI::StopProfiling()) {
+        HILOG_ERROR(LOG_CORE, "failed stopJsCpuProfiling");
+    }
+}
+
 ani_object GetAppVMMemoryInfo(ani_env *env)
 {
     ApiInvokeRecorder apiInvokeRecorder("getAppVMMemoryInfo");
@@ -587,58 +637,8 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
     return true;
 }
 
-std::string StartCpuProfiler(const std::string& fileName)
-{
-    auto context = OHOS::AbilityRuntime::Context::GetApplicationContext();
-    if (context == nullptr) {
-        return "Get ApplicationContext failed.";
-    }
-    std::string filesDir = context->GetFilesDir();
-    if (filesDir.empty()) {
-        return "Get App files dir failed.";
-    }
-    std::string filePath = filesDir + SLASH_STR + fileName + JSON_FILE;
-    if (!IsLegalPath(filePath)) {
-        return "input fileName is illegal.";
-    }
-    if (!CreateFile(filePath)) {
-        return "file created failed.";
-    }
-    if (!ark::ArkDebugNativeAPI::StartProfiling(filePath)) {
-        return "failed start profiler.";
-    }
-    return "";
-}
-
-void StartJsCpuProfiling(ani_env *env, ani_string fileNameAni)
-{
-    ApiInvokeRecorder apiInvokeRecorder("startJsCpuProfiling");
-    std::string fileName;
-    if (!GetTheOnlyStringParam(env, fileNameAni, fileName)) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        AniUtil::ThrowErrorMessage(env, paramErrorMessage, ErrorCode::PARAMETER_ERROR);
-        return;
-    }
-    HILOG_INFO(LOG_CORE, "filename: %{public}s.", fileName.c_str());
-    auto errMsg = StartCpuProfiler(fileName);
-    if (!errMsg.empty()) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
-        return;
-    }
-}
-
-void StopJsCpuProfiling(ani_env *env)
-{
-    ApiInvokeRecorder apiInvokeRecorder("stopJsCpuProfiling");
-    if (!ark::ArkDebugNativeAPI::StopProfiling()) {
-        HILOG_ERROR(LOG_CORE, "failed stopJsCpuProfiling");
-    }
-}
-
 bool UpdateGwpAsanParams(ani_env *env, ani_object optionsObj, ani_object durationObj,
-                         GwpAsanParams& gwpAsanParams, std::string& paramErrorMessage)
+    GwpAsanParams& gwpAsanParams, std::string& paramErrorMessage)
 {
     ani_boolean isUndefined;
     env->Reference_IsUndefined(durationObj, &isUndefined);

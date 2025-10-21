@@ -25,25 +25,38 @@ namespace HiviewDFX {
 
 void AniUtil::ThrowErrorMessage(ani_env *env, const std::string &msg, int32_t errCode)
 {
-    ani_module hiDebugModule = nullptr;
-    if (env->FindModule("@ohos.hidebug", &hiDebugModule) != ANI_OK) {
+    ani_class cls {};
+    constexpr auto businessErrorClassName = "@ohos.base.BusinessError";
+    if (env->FindClass(businessErrorClassName, &cls) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "find class %{public}s failed", businessErrorClassName);
         return;
     }
-    ani_function createErrorFn = nullptr;
-    if (env->Module_FindFunction(hiDebugModule, "createVoidBusinessError",
-        "iC{std.core.String}:C{@ohos.base.BusinessError}", &createErrorFn) != ANI_OK) {
+    ani_method ctor {};
+    if (env->Class_FindMethod(cls, "<ctor>", ":", &ctor) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "find method BusinessError constructor failed");
         return;
     }
-    ani_int errCodeAni = static_cast<ani_int>(errCode);
-    ani_string msgAni = nullptr;
-    if (ANI_OK != env->String_NewUTF8(msg.c_str(), msg.size(), &msgAni)) {
+    ani_object error {};
+    if (env->Object_New(cls, ctor, &error) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "new object %{public}s failed", businessErrorClassName);
         return;
     }
-    ani_ref errRef = nullptr;
-    if (env->Function_Call_Ref(createErrorFn, &errRef, errCodeAni, msgAni) != ANI_OK) {
+    if (env->Object_SetPropertyByName_Int(error, "code_", static_cast<ani_int>(errCode)) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "set property BusinessError.code_ failed");
         return;
     }
-    env->ThrowError(static_cast<ani_error>(errRef));
+    ani_string messageRef {};
+    if (env->String_NewUTF8(msg.c_str(), msg.size(), &messageRef) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "new message string failed");
+        return;
+    }
+    if (env->Object_SetPropertyByName_Ref(error, "message", static_cast<ani_ref>(messageRef)) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "set property BusinessError.message failed");
+        return;
+    }
+    if (env->ThrowError(static_cast<ani_error>(error)) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "throwError ani_error object failed");
+    }
 }
 
 ani_object AniUtil::CreateUndefined(ani_env *env)
