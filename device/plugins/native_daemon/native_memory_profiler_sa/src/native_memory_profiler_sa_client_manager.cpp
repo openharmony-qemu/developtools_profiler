@@ -264,8 +264,8 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_GLES_BUFFER]));
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_IMAGE]));
         gpuRange.push_back(ConvertToVec(saConfig.hookSizes[TAG_RES_GPU_CL_BUFFER]));
+        std::swap(config->gpuRange_, gpuRange);
     }
-    std::swap(config->gpuRange_, gpuRange);
     auto service = GetRemoteService();
     if (service == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Start, GetRemoteService failed");
