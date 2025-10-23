@@ -42,7 +42,7 @@ std::map<std::string, std::string> FPS::ItemData()
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
     } else {
         fpsInfo.currDumpTimeStamps.clear();
-        fpsInfo.presentFenceCurrDumpTimeStamps.clear();
+        fpsInfo.presentFenceTimeStamps.clear();
         fpsInfoResult = GetFpsInfo();
     }
     prevResultFpsInfo = fpsInfoResult;
@@ -373,15 +373,16 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
         LOGD("FPS fpsInfoResult GetRefreshInfoToSP: %s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, true, presentFenceCurScreenTimestamp);
+        // when GetRefreshInfo data is empty, get GetRefreshInfoToSP to calc jitters.
         if (fpsInfo.currDumpTimeStamps.empty()) {
-            LOGD("fpsInfo.presentFenceTimeStamps.empty");
+            LOGD("FPS::fosInfo.currDumpTimeStamps.empty");
             CalcJitters(fpsInfo.presentFenceTimeStamps, presentFenceCurScreenTimestamp);
         }
     } else {
         //jitters
         pid_t pid = std::atoi(processId.c_str());
-        LOGD("FPS::GetFpsInfoByRs pid: (%lld)", pid);
-        std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoTo(pid);
+        LOGD("FPS::GetFpsInfoByRs pid: (%d)", pid);
+        std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfo(pid);
         LOGD("FPS fpsInfoResult GetRefreshInfo: %s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, false, curScreenTimestamp);
         CalcJitters(fpsInfo.currDumpTimeStamps, curScreenTimestamp);
@@ -416,12 +417,12 @@ bool FPS::CalcFpsAndJitters(bool isBreak, long long &curScreenTimestamp, bool is
 void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curScreenTimestamp)
 {
     bool isOrder = true;
-    if (fpsInfo.currDumpTimeStamps.size() > 1) {
-        isOrder = fpsInfo.currDumpTimeStamps[1] - fpsInfo.currDumpTimeStamps[0] > 0;
+    if (currDumpTimeStamps.size() > 1) {
+        isOrder = currDumpTimeStamps[1] - currDumpTimeStamps[0] > 0;
     }
     if (isOrder) {
-        for (size_t i = 0; i < fpsInfo.currDumpTimeStamps.size(); i++) {
-            curScreenTimestamp = fpsInfo.currDumpTimeStamps[i];
+        for (size_t i = 0; i < currDumpTimeStamps.size(); i++) {
+            curScreenTimestamp = currDumpTimeStamps[i];
             fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter = CalculateJitter(curScreenTimestamp);
             fpsInfo.jitters.push_back(jitter);
@@ -429,8 +430,8 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
             prevScreenTimestamp = curScreenTimestamp;
         }
     } else {
-        for (size_t i = fpsInfo.currDumpTimeStamps.size(); i > 0 ; i--) {
-            curScreenTimestamp = fpsInfo.currDumpTimeStamps[i - 1];
+        for (size_t i = currDumpTimeStamps.size(); i > 0 ; i--) {
+            curScreenTimestamp = currDumpTimeStamps[i - 1];
             fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter = CalculateJitter(curScreenTimestamp);
             fpsInfo.jitters.push_back(jitter);
