@@ -97,6 +97,22 @@ public:
     }
 };
 
+long WriteFunc(WriterStruct* writer, const void* data, size_t size)
+{
+    if (writer == nullptr || data == nullptr || size == 0) {
+        return -1;
+    }
+    return 0;
+}
+
+bool FlushFunc(WriterStruct* writer)
+{
+    if (writer == nullptr) {
+        return false;
+    }
+    return true;
+}
+
 string Getexepath()
 {
     char buf[PATH_MAX] = "";
@@ -419,6 +435,43 @@ HWTEST_F(ProcessDataPluginTest, TestPluginReportAnomaly, TestSize.Level1)
     ProcessConfig processConfig;
     processConfig.set_report_process_tree(true);
     EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    EXPECT_EQ(processPlugin->Stop(), 0);
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin Optimize test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginReportOptimize, TestSize.Level1)
+{
+    RandomWriteCtx writeCtx = {
+        [](RandomWriteCtx*, uint32_t, uint8_t**, uint32_t*) -> bool { return false; },
+        [](RandomWriteCtx*, uint32_t) -> bool { return false; }
+        };
+
+    std::string path = std::string(SO_PATH);
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+    EXPECT_NE(handle, nullptr);
+    PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
+    EXPECT_NE(plugin, nullptr);
+    EXPECT_STREQ(plugin->name, "process-plugin");
+
+    g_path = g_testPath + "/other/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+    
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    std::vector<uint8_t> dataBuffer(plugin->resultBufferSizeHint);
+    EXPECT_EQ(plugin->callbacks->onRegisterWriterStruct(&writer), 0);
+    EXPECT_NE(plugin->callbacks->onPluginReportResultOptimize(&writeCtx), 0);
+    processPlugin->ReportOptimize(&writeCtx);
 
     EXPECT_EQ(processPlugin->Stop(), 0);
 }
