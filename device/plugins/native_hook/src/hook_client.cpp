@@ -1339,6 +1339,9 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged() || g_ClientConfig.isSaMode) {
         return;
     }
+    if (g_ClientConfig.traceMask > 0) {
+        return;
+    }
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
