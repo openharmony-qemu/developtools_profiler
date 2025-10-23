@@ -24,6 +24,7 @@ struct FpsInfo {
     std::vector<long long> jitters;
     std::vector<long long> currTimeStamps;
     std::vector<long long> currDumpTimeStamps;
+    std::vector<long long> presentFenceTimeStamps;
     int curTime;
     long long currTimeDiff;
     long long currTimeDump;
@@ -68,9 +69,8 @@ public:
     void SetLayerName(const std::string& sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    FpsInfo GetChangedLayerFps();
-    bool CalcFpsAndJitters(bool isBreak);
-    long long CalculateJitter() const;
+    bool CalcFpsAndJitters(bool isBreak, long long &curScreenTimestamp, bool isGetRefreshInfoToSP);
+    long long CalculateJitter(long long &curScreenTimestamp) const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoData;
     FpsInfo prevResultFpsInfo;
@@ -88,7 +88,7 @@ public:
     void SetRkFlag();
     std::string FindFpsRefreshrate();
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
-    void CalcJitters();
+    void CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curScreenTimestamp);
     static inline bool isGameApp = false;
     static inline bool isNeedDump = false;
     static inline bool isPreset = false;
@@ -110,6 +110,8 @@ public:
     std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
         const std::string& line, size_t &endPos);
     FpsInfo GetAppFps(std::string &uniteLayer);
+    void GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curScreenTimestamp);
+    void GetSystemClockGettime();
 
     // sections
     void GetOhFps(std::vector<std::string>& v);
@@ -129,6 +131,7 @@ private:
     bool refresh = false;
     long long mod = 1e9;
     long long curScreenTimestamp = 0;
+    long long presentFenceCurScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
     long long prevlastScreenTimestamp = 0;
     int fpsNum = 0;
@@ -161,6 +164,7 @@ private:
     bool isSections = false;
     int isCatchTrace = 0;
     std::string nodeIdStr = "";
+    bool isUniRender = false;
 };
 }
 }
