@@ -31,6 +31,8 @@
 #include "parse_slide_fps_trace.h"
 #include "DDR.h"
 #include "navigation.h"
+#include <ctime>
+#include <sys/time.h>
 using namespace testing::ext;
 using namespace std;
 
@@ -111,10 +113,14 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     std::string surfaceViewName;
     FpsInfo fpsInfoResult;
 
+    long long mod = 1e9;
+    struct timespec time1 = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &time1);
+    long long currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters(true);
+    fps.CalcFpsAndJitters(true, currTimeDump, true);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
