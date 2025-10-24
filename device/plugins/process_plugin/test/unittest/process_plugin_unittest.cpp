@@ -527,4 +527,56 @@ HWTEST_F(ProcessDataPluginTest, TestPluginCpuUsageData, TestSize.Level1)
 
     EXPECT_EQ(processPlugin->Stop(), 0);
 }
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin WriteCpuUsageData test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginWriteCpuUsageData, TestSize.Level1)
+{
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_cpu(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    for (int32_t pid : processPlugin->pids_) {
+        processPlugin->cpuTime_.insert({pid, pid});
+    }
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin WriteProcessInfo test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginWriteProcessInfo, TestSize.Level1)
+{
+    int32_t testPid = 123456;
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_cpu(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    auto* processinfo = processData.add_processesinfo();
+    auto* cpuInfo = processinfo->mutable_cpuinfo();
+    EXPECT_FALSE(processPlugin->WriteThreadData(testPid, *cpuInfo));
+
+    processPlugin->SetPath(g_path + "test/");
+    EXPECT_FALSE(PluginCpuinfoStub(processData, processConfig, false));
+    for (int32_t pid : processPlugin->pids_) {
+        processPlugin->WriteProcessInfo(processData, pid);
+    }
+}
 } // namespace
