@@ -69,8 +69,8 @@ public:
     void SetLayerName(const std::string& sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    bool CalcFpsAndJitters(bool isBreak, long long &curScreenTimestamp, bool isGetRefreshInfoToSP);
-    long long CalculateJitter(long long &curScreenTimestamp) const;
+    bool CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRefreshInfoToSP);
+    long long CalculateJitter(long long &curTimestamp) const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoData;
     FpsInfo prevResultFpsInfo;
@@ -88,7 +88,7 @@ public:
     void SetRkFlag();
     std::string FindFpsRefreshrate();
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
-    void CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curScreenTimestamp);
+    void CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curTimestamp);
     static inline bool isGameApp = false;
     static inline bool isNeedDump = false;
     static inline bool isPreset = false;
@@ -110,7 +110,7 @@ public:
     std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
         const std::string& line, size_t &endPos);
     FpsInfo GetAppFps(std::string &uniteLayer);
-    void GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curScreenTimestamp);
+    void GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curTimestamp);
     void GetSystemClockGettime();
 
     // sections

@@ -331,7 +331,7 @@ void FPS::ReadDataFromPipe(int fd)
     }
 }
 
-void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curScreenTimestamp)
+void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curTimestamp)
 {
     bool isBreak = false;
     std::stringstream iss;
@@ -339,23 +339,23 @@ void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long l
     std::string timeStampLine;
     while (getline(iss, timeStampLine, '\n')) {
         timeStampLine.erase(0, timeStampLine.find_first_not_of(' '));
-        curScreenTimestamp = 0;
+        curTimestamp = 0;
         if (timeStampLine.empty()) {
             continue;
         }
         std::stringstream ss;
         ss.clear();
         ss << timeStampLine;
-        ss >> curScreenTimestamp;
-        if (curScreenTimestamp == 0) {
+        ss >> curTimestamp;
+        if (curTimestamp == 0) {
             continue;
         }
         if (presentFence) {
-            if (CalcFpsAndJitters(isBreak, curScreenTimestamp, true)) {
+            if (CalcFpsAndJitters(isBreak, curTimestamp, true)) {
                 break;
             }
         } else {
-            if (CalcFpsAndJitters(isBreak, curScreenTimestamp, false)) {
+            if (CalcFpsAndJitters(isBreak, curTimestamp, false)) {
                 break;
             }
         }
@@ -365,7 +365,7 @@ void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long l
 FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
 {
     if (!name.empty()) {
-       //fps
+       // fps
         uint64_t nodeId;
         std::istringstream s(name);
         s >> nodeId;
@@ -379,7 +379,7 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
             CalcJitters(fpsInfo.presentFenceTimeStamps, presentFenceCurScreenTimestamp);
         }
     } else {
-        //jitters
+        // jitters
         pid_t pid = std::atoi(processId.c_str());
         LOGD("FPS::GetFpsInfoByRs pid: (%d)", pid);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfo(pid);
@@ -390,31 +390,30 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
     return fpsInfo;
 }
 
-bool FPS::CalcFpsAndJitters(bool isBreak, long long &curScreenTimestamp, bool isGetRefreshInfoToSP)
+bool FPS::CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRefreshInfoToSP)
 {
-    long long onScreenTime = curScreenTimestamp / mod;
+    long long onScreenTime = curTimestamp / mod;
     bool findFpsCurTime = (onScreenTime == fpsInfo.curTime);
     if (findFpsCurTime) {
         isBreak = true;
         if (isGetRefreshInfoToSP) {
             fpsNum++;
             fpsInfo.fps = fpsNum;
-            fpsInfo.presentFenceTimeStamps.push_back(curScreenTimestamp);
+            fpsInfo.presentFenceTimeStamps.push_back(curTimestamp);
         } else if (isUniRender) {
             fpsNum++;
             fpsInfo.fps = fpsNum;
-            fpsInfo.currDumpTimeStamps.push_back(curScreenTimestamp);
+            fpsInfo.currDumpTimeStamps.push_back(curTimestamp);
         } else {
-            fpsInfo.currDumpTimeStamps.push_back(curScreenTimestamp);
+            fpsInfo.currDumpTimeStamps.push_back(curTimestamp);
         }
-
     } else {
         findFpsCurTime = false;
     }
     return isBreak && !findFpsCurTime;
 }
 
-void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curScreenTimestamp)
+void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curTimestamp)
 {
     bool isOrder = true;
     if (currDumpTimeStamps.size() > 1) {
@@ -422,21 +421,21 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
     }
     if (isOrder) {
         for (size_t i = 0; i < currDumpTimeStamps.size(); i++) {
-            curScreenTimestamp = currDumpTimeStamps[i];
-            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-            long long jitter = CalculateJitter(curScreenTimestamp);
+            curTimestamp = currDumpTimeStamps[i];
+            fpsInfo.currTimeStamps.push_back(curTimestamp);
+            long long jitter = CalculateJitter(curTimestamp);
             fpsInfo.jitters.push_back(jitter);
-            prevlastScreenTimestamp = curScreenTimestamp;
-            prevScreenTimestamp = curScreenTimestamp;
+            prevlastScreenTimestamp = curTimestamp;
+            prevScreenTimestamp = curTimestamp;
         }
     } else {
         for (size_t i = currDumpTimeStamps.size(); i > 0 ; i--) {
-            curScreenTimestamp = currDumpTimeStamps[i - 1];
-            fpsInfo.currTimeStamps.push_back(curScreenTimestamp);
-            long long jitter = CalculateJitter(curScreenTimestamp);
+            curTimestamp = currDumpTimeStamps[i - 1];
+            fpsInfo.currTimeStamps.push_back(curTimestamp);
+            long long jitter = CalculateJitter(curTimestamp);
             fpsInfo.jitters.push_back(jitter);
-            prevlastScreenTimestamp = curScreenTimestamp;
-            prevScreenTimestamp = curScreenTimestamp;
+            prevlastScreenTimestamp = curTimestamp;
+            prevScreenTimestamp = curTimestamp;
         }
     }
     if (!fpsInfo.jitters.empty()) {
@@ -444,17 +443,17 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
     }
 }
         
-long long FPS::CalculateJitter(long long &curScreenTimestamp) const
+long long FPS::CalculateJitter(long long &curTimestamp) const
 {
     long long jitter;
     if (prevScreenTimestamp == -1) {
-        if (prevlastScreenTimestamp != 0 && (curScreenTimestamp - prevlastScreenTimestamp) < mod) {
-            jitter = curScreenTimestamp - prevlastScreenTimestamp;
+        if (prevlastScreenTimestamp != 0 && (curTimestamp - prevlastScreenTimestamp) < mod) {
+            jitter = curTimestamp - prevlastScreenTimestamp;
         } else {
-            jitter = curScreenTimestamp % mod;
+            jitter = curTimestamp % mod;
         }
     } else {
-        jitter = curScreenTimestamp - prevScreenTimestamp;
+        jitter = curTimestamp - prevScreenTimestamp;
     }
     return jitter;
 }
