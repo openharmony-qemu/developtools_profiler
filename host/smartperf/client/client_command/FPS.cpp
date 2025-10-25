@@ -197,8 +197,7 @@ FpsInfo FPS::GetFpsInfo()
         GetGameScenStatus();
         OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
         GetSystemClockGettime();
-        fpsInfoData = GetSurfaceFrame("");
-        if (gameLayerName.empty()) {
+        if (gameLayerName.empty() || prevResultFpsInfo.fps == 0) {
             gameLayerName = GetGameLayer();
             if (gameLayerName.empty()) {
                 fpsInfoData.fps = 0;
@@ -257,6 +256,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
     if (name == "UniRender" || isNeedDump || isHistoryHap) {
         fpsInfo = GetFpsInfoByDump(name);
     } else {
+        fpsInfo = GetFpsInfoByRs("");
         fpsInfo = GetFpsInfoByRs(name);
     }
     return fpsInfo;
@@ -350,14 +350,8 @@ void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long l
         if (curTimestamp == 0) {
             continue;
         }
-        if (presentFence) {
-            if (CalcFpsAndJitters(isBreak, curTimestamp, true)) {
-                break;
-            }
-        } else {
-            if (CalcFpsAndJitters(isBreak, curTimestamp, false)) {
-                break;
-            }
+        if (CalcFpsAndJitters(isBreak, curTimestamp, presentFence)){
+            break;
         }
     }
 }
