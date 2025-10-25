@@ -41,9 +41,9 @@ constexpr uint32_t FRAME_DEPTH = 2; // add two frames
 constexpr uint32_t FLUSH_BASELINE_SA = (1U << 20);
 #ifdef PERFORMANCE_DEBUG
 constexpr uint32_t LONG_TIME_THRESHOLD = 1000000;
+#endif
 static std::atomic<uint64_t> timeCost = 0;
 static std::atomic<uint64_t> unwindTimes = 0;
-#endif
 
 using namespace OHOS::Developtools::NativeDaemon;
 using namespace OHOS::HiviewDFX;
@@ -267,110 +267,237 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                                            const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
 {
     eventNotifier->Take();
+    InitializeDirector();
+    
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-    if (g_director == nullptr) {
-        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance, mtx_);
-    }
+    
     while (!isStopTakeData_) {
         bool ret = shareMemoryBlock->TakeData(
             [&](const int8_t data[], uint32_t size) -> bool {
-#ifdef PERFORMANCE_DEBUG
-            struct timespec start = {};
-            clock_gettime(CLOCK_REALTIME, &start);
-#endif
-            if (size == sizeof(uint64_t)) {
-                uint64_t addr = *reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data));
-                SetFreeStatisticsData(addr);
-#ifdef PERFORMANCE_DEBUG
-                struct timespec end = {};
-                clock_gettime(CLOCK_REALTIME, &end);
-                uint64_t curTimeCost = (end.tv_sec - start.tv_sec) * MAX_MATCH_CNT * MAX_MATCH_CNT * MAX_MATCH_CNT +
-                    (end.tv_nsec - start.tv_nsec);
-                timeCost += curTimeCost;
-                unwindTimes++;
-                if (unwindTimes % LOG_PRINT_TIMES == 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE,
-                                       "unwindTimes %" PRIu64" cost time = %" PRIu64" mean cost = %" PRIu64"\n",
-                                       unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
-                }
-#endif
-                return true;
-            }
-            CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
-            hookRecord = factory_->GetHookRecord(data, size, false);
-            CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
-            rawData = hookRecord->GetRawStack();
-            uint16_t type = hookRecord->GetType();
-            if (isStopTakeData_) {
-                return false;
-            } else if (type == MEMORY_TAG) {
-                std::string tagName = reinterpret_cast<char*>(rawData->data);
-                SaveMemTag(rawData->stackContext->tagId, tagName);
-                return true;
-            } else if (HandleNoStackEvent(hookRecord)) {
-                return true;
-            } else if (type == MUNMAP_MSG) {
-                std::lock_guard<std::mutex> guard(mtx_);
-                runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
-            } else if (type == NMD_MSG) {
-                const char* nmdResult = reinterpret_cast<const char*>(rawData->data);
-                lseek(nmdFd_, 0, SEEK_END);
-                (void)write(nmdFd_, nmdResult, strlen(nmdResult));
-                return true;
-            }  else if (type == END_MSG) {
-                endMsgCount_++;
-                int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
-                if (endMsgCount_ == sharedMemCount) {
-                    isStopTakeData_ = true;
-                }
-                return true;
-            } else if (type == JS_STACK_MSG) {
-                SaveJsRawStack(rawData->stackContext->jsChainId, reinterpret_cast<char*>(rawData->data));
-                return true;
-            }
-            if (rawData->stackContext->jsChainId > 0) {
-                rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
-            }
-            auto& callFrames = g_director->ConstructCallFrames(hookRecord);
-            ReportOfflineSymbolizationData();
-            std::visit([&](auto& stackData) {
-                if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    SetHookData(hookRecord, callFrames, stackData);
-                } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
-                    WriteFrames(hookRecord, callFrames);
-                } else if (!hookConfig_.save_file()) {
-                    SetHookData(hookRecord, callFrames, stackData);
-                }
-                }, stackData_);
-            IntervalFlushRecordStatistics();
-#ifdef PERFORMANCE_DEBUG
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            uint64_t curTimeCost = (end.tv_sec - start.tv_sec) * MAX_MATCH_CNT * MAX_MATCH_CNT * MAX_MATCH_CNT +
-                (end.tv_nsec - start.tv_nsec);
-            if (curTimeCost >= LONG_TIME_THRESHOLD) {
-                PROFILER_LOG_ERROR(LOG_CORE, "bigTimeCost %" PRIu64 " event=%d fpDepth=%u",
-                            curTimeCost, type, rawData->fpDepth);
-            }
-            timeCost += curTimeCost;
-            unwindTimes++;
-            if (unwindTimes % LOG_PRINT_TIMES == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "unwindTimes %" PRIu64" cost time = %" PRIu64" mean cost = %" PRIu64"\n",
-                    unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
-            }
-#endif
-            if (hookRecord != nullptr) {
-                factory_->SaveHookRecord(std::move(hookRecord));
-                hookRecord = nullptr;
-            }
-            return true;
-        });
+                return ProcessSharedMemoryData(data, size, rawData, hookRecord);
+            });
         if (!ret) {
+            PROFILER_LOG_INFO(LOG_CORE, "Stop taking data from shared memory");
             break;
         }
     }
 }
+
+void StackPreprocess::InitializeDirector()
+{
+    if (g_director == nullptr) {
+        g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance, mtx_);
+    }
+}
+
+#ifdef NATIVE_DAEMON_UNITTEST
+std::shared_ptr<BuildStackDirector> StackPreprocess::GetDirectorForTest()
+{
+    return g_director;
+}
+
+void StackPreprocess::SetDirectorForTest(std::shared_ptr<BuildStackDirector> director)
+{
+    g_director = director;
+}
+#endif
+
+bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size,
+    RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord)
+{
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
+    if (size == sizeof(uint64_t)) {
+        return ProcessAddressData(data);
+    }
+    
+    if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
+        return false;
+    }
+
+    uint16_t type = hookRecord->GetType();
+    if (isStopTakeData_) {
+        return false;
+    }
+
+    if (ProcessSpecialEventTypes(type, hookRecord, rawData)) {
+        return true;
+    }
+
+    return ProcessRegularStackData(hookRecord, rawData);
+}
+
+bool StackPreprocess::ProcessAddressData(const int8_t data[])
+{
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
+    uint64_t addr = *reinterpret_cast<uint64_t *>(const_cast<int8_t *>(data));
+    SetFreeStatisticsData(addr);
+
+#ifdef PERFORMANCE_DEBUG
+    LogPerformanceMetrics(start, "address processing");
+#endif
+    unwindTimes++;
+    if (unwindTimes % LOG_PRINT_TIMES == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Performance metrics - Times: %" PRIu64
+                    " Total Cost: %" PRIu64 " Mean Cost: %" PRIu64,
+                    unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
+    }
+    return true;
+}
+
+bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
+                                             std::shared_ptr<HookRecord>& hookRecord,
+                                             RawStackPtr& rawData)
+{
+    CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
+    hookRecord = factory_->GetHookRecord(data, size, false);
+    CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
+    rawData = hookRecord->GetRawStack();
+    return true;
+}
+
+bool StackPreprocess::ProcessSpecialEventTypes(uint16_t type,
+                                               std::shared_ptr<HookRecord>& hookRecord,
+                                               RawStackPtr& rawData)
+{
+    switch (type) {
+        case MEMORY_TAG:
+            return ProcessMemoryTag(rawData);
+        case MUNMAP_MSG:
+            return ProcessMunmapMsg(hookRecord);
+        case NMD_MSG:
+            return ProcessNmdMsg(rawData);
+        case END_MSG:
+            return ProcessEndMsg();
+        case JS_STACK_MSG:
+            return ProcessJsStackMsg(rawData);
+        default:
+            return HandleNoStackEvent(hookRecord);
+    }
+}
+
+bool StackPreprocess::ProcessMemoryTag(RawStackPtr& rawData)
+{
+    if (rawData == nullptr) {
+        return false;
+    }
+    std::string tagName = reinterpret_cast<char*>(rawData->data);
+    SaveMemTag(rawData->stackContext->tagId, tagName);
+    return true;
+}
+
+bool StackPreprocess::ProcessMunmapMsg(std::shared_ptr<HookRecord>& hookRecord)
+{
+    std::lock_guard<std::mutex> guard(mtx_);
+    runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
+    return true;
+}
+
+bool StackPreprocess::ProcessNmdMsg(RawStackPtr& rawData)
+{
+    if (rawData == nullptr) {
+        return false;
+    }
+    const char* nmdResult = reinterpret_cast<const char*>(rawData->data);
+    lseek(nmdFd_, 0, SEEK_END);
+    (void)write(nmdFd_, nmdResult, strlen(nmdResult));
+    return true;
+}
+
+bool StackPreprocess::ProcessEndMsg()
+{
+    endMsgCount_++;
+    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    if (endMsgCount_ == sharedMemCount) {
+        PROFILER_LOG_INFO(LOG_CORE, "Received all END_MSG, stopping data collection");
+        isStopTakeData_ = true;
+    }
+    return true;
+}
+
+bool StackPreprocess::ProcessJsStackMsg(RawStackPtr& rawData)
+{
+    if (rawData == nullptr) {
+        return false;
+    }
+    SaveJsRawStack(rawData->stackContext->jsChainId, reinterpret_cast<char*>(rawData->data));
+    return true;
+}
+
+bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord,
+                                              RawStackPtr& rawData)
+{
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+
+    if (rawData->stackContext->jsChainId > 0) {
+        rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
+    }
+
+    auto& callFrames = g_director->ConstructCallFrames(hookRecord);
+    ReportOfflineSymbolizationData();
+
+    std::visit(
+        [&](auto& stackData) {
+            ProcessStackData(hookRecord, callFrames, stackData);
+        }, stackData_);
+
+    IntervalFlushRecordStatistics();
+
+#ifdef PERFORMANCE_DEBUG
+    LogPerformanceMetrics(start, "stack processing", hookRecord->GetType(), rawData->fpDepth);
+#endif
+
+    if (hookRecord != nullptr) {
+        factory_->SaveHookRecord(std::move(hookRecord));
+        hookRecord = nullptr;
+    }
+    return true;
+}
+
+template <typename T>
+void StackPreprocess::ProcessStackData(std::shared_ptr<HookRecord>& hookRecord,
+                                       std::vector<CallFrame>& callFrames,
+                                       T& stackData)
+{
+    if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
+        SetHookData(hookRecord, callFrames, stackData);
+    } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
+        WriteFrames(hookRecord, callFrames);
+    } else if (!hookConfig_.save_file()) {
+        SetHookData(hookRecord, callFrames, stackData);
+    }
+}
+
+#ifdef PERFORMANCE_DEBUG
+void StackPreprocess::LogPerformanceMetrics(const struct timespec& start,
+                                            const std::string& operation,
+                                            uint16_t type,
+                                            uint32_t fpDepth)
+{
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    uint64_t curTimeCost = (end.tv_sec - start.tv_sec) * MAX_MATCH_CNT * MAX_MATCH_CNT * MAX_MATCH_CNT +
+        (end.tv_nsec - start.tv_nsec);
+
+    if (curTimeCost >= LONG_TIME_THRESHOLD) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Long time cost for %s: %" PRIu64 " event=%d fpDepth=%u",
+                    operation.c_str(), curTimeCost, type, fpDepth);
+    }
+
+    timeCost += curTimeCost;
+}
+#endif
 
 void StackPreprocess::TakeResults()
 {

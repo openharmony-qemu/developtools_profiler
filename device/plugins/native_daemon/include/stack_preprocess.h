@@ -94,6 +94,13 @@ public:
     void ReportBasicData();
     void WriteHookConfig();
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
+    void InitializeDirector();
+#ifdef NATIVE_DAEMON_UNITTEST
+    static std::shared_ptr<BuildStackDirector> GetDirectorForTest();
+    static void SetDirectorForTest(std::shared_ptr<BuildStackDirector> director);
+#endif
+    bool ProcessSharedMemoryData(const int8_t data[], uint32_t size,
+        RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord);
     void SetNmdFd(uint32_t fd)
     {
         nmdFd_ = fd;
@@ -164,6 +171,8 @@ private:
     void Flush(const uint8_t* src, size_t size);
     void GetSymbols(const std::string& filePath, ElfSymbolTable& symbols);
     template <typename T>
+    void ProcessStackData(std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
+    template <typename T>
     void FillOfflineCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
     template <typename T>
     void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
@@ -199,6 +208,17 @@ private:
     RandomWriteCtx* StartReport();
     int32_t FinishReport();
     void FillNapiStack(std::string& tagName, std::vector<CallFrame>& callFrames, uint64_t napiIndex);
+    bool ProcessAddressData(const int8_t data[]);
+    bool ValidateAndPrepareData(const int8_t data[],
+        uint32_t size, std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
+    bool ProcessSpecialEventTypes(uint16_t type, std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
+    bool ProcessMemoryTag(RawStackPtr& rawData);
+    bool ProcessMunmapMsg(std::shared_ptr<HookRecord>& hookRecord);
+    bool ProcessNmdMsg(RawStackPtr& rawData);
+    bool ProcessEndMsg();
+    bool ProcessJsStackMsg(RawStackPtr& rawData);
+    bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
+    void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::shared_ptr<Writer> writer_ = nullptr;
