@@ -97,6 +97,22 @@ public:
     }
 };
 
+long WriteFunc(WriterStruct* writer, const void* data, size_t size)
+{
+    if (writer == nullptr || data == nullptr || size == 0) {
+        return -1;
+    }
+    return 0;
+}
+
+bool FlushFunc(WriterStruct* writer)
+{
+    if (writer == nullptr) {
+        return false;
+    }
+    return true;
+}
+
 string Getexepath()
 {
     char buf[PATH_MAX] = "";
@@ -238,7 +254,7 @@ HWTEST_F(ProcessDataPluginTest, TestPluginReportCpu, TestSize.Level1)
  * @tc.desc: process plugin test for report diskio.
  * @tc.type: FUNC
  */
-HWTEST_F(ProcessDataPluginTest, TestPluginReportDiskio, TestSize.Level1)
+HWTEST_F(ProcessDataPluginTest, TestPluginReportDiskio001, TestSize.Level1)
 {
     g_path = g_testPath + "/proc/";
     processPlugin = std::make_shared<ProcessDataPlugin>();
@@ -261,6 +277,29 @@ HWTEST_F(ProcessDataPluginTest, TestPluginReportDiskio, TestSize.Level1)
         EXPECT_EQ(diskinfo.cancelled_wbytes(), g_diskioData[i].cancelledWbytes);
     }
 
+    EXPECT_EQ(processPlugin->Stop(), 0);
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin test for report diskio.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginReportDiskio002, TestSize.Level1)
+{
+    int testPid = 123456;
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_diskio(true);
+    auto* processinfo = processData.add_processesinfo();
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+    
+    EXPECT_FALSE(processPlugin->WriteDiskioData(testPid, *processinfo));
     EXPECT_EQ(processPlugin->Stop(), 0);
 }
 
@@ -421,5 +460,123 @@ HWTEST_F(ProcessDataPluginTest, TestPluginReportAnomaly, TestSize.Level1)
     EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
 
     EXPECT_EQ(processPlugin->Stop(), 0);
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin Optimize test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginReportOptimize, TestSize.Level1)
+{
+    RandomWriteCtx writeCtx = {
+        [](RandomWriteCtx*, uint32_t, uint8_t**, uint32_t*) -> bool { return false; },
+        [](RandomWriteCtx*, uint32_t) -> bool { return false; }
+        };
+
+    std::string path = std::string(SO_PATH);
+    void* handle = dlopen(path.c_str(), RTLD_LAZY);
+    EXPECT_NE(handle, nullptr);
+    PluginModuleStruct* plugin = reinterpret_cast<PluginModuleStruct*>(dlsym(handle, "g_pluginModule"));
+    EXPECT_NE(plugin, nullptr);
+    EXPECT_STREQ(plugin->name, "process-plugin");
+
+    g_path = g_testPath + "/other/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+    
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    std::vector<uint8_t> dataBuffer(plugin->resultBufferSizeHint);
+    EXPECT_EQ(plugin->callbacks->onRegisterWriterStruct(&writer), 0);
+    EXPECT_NE(plugin->callbacks->onPluginReportResultOptimize(&writeCtx), 0);
+    processPlugin->ReportOptimize(&writeCtx);
+
+    EXPECT_EQ(processPlugin->Stop(), 0);
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin CpuUsageData test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginCpuUsageData, TestSize.Level1)
+{
+    uint64_t cpuTime = 0;
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_diskio(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    std::string line = "11 (test) S 1 1865 1780 1025 \0 1780 4194304 0 7 0 4394 726278144 0"; 
+    processPlugin->GetCpuUsageData(line, cpuTime);
+    line = "11 (test) S 1 1865 1780 1025 \n 1780 4194304 3233 0 94 726278144 0";
+    processPlugin->GetCpuUsageData(line, cpuTime);
+    line = "\n 11 (test) S 1 1865 1780 1025 \n";
+    char* value = const_cast<char*>(line.c_str());
+    EXPECT_FALSE(processPlugin->FindFirstNum(&value));
+
+    EXPECT_EQ(processPlugin->Stop(), 0);
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin WriteCpuUsageData test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginWriteCpuUsageData, TestSize.Level1)
+{
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_cpu(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    for (int32_t pid : processPlugin->pids_) {
+        processPlugin->cpuTime_.insert({pid, pid});
+    }
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+}
+
+/**
+ * @tc.name: process plugin
+ * @tc.desc: process plugin WriteProcessInfo test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(ProcessDataPluginTest, TestPluginWriteProcessInfo, TestSize.Level1)
+{
+    int32_t testPid = 123456;
+    g_path = g_testPath + "/proc/";
+    processPlugin = std::make_shared<ProcessDataPlugin>();
+    processPlugin->SetPath(g_path);
+
+    ProcessData processData;
+    ProcessConfig processConfig;
+    processConfig.set_report_process_tree(true);
+    processConfig.set_report_cpu(true);
+    EXPECT_TRUE(PluginCpuinfoStub(processData, processConfig, false));
+
+    auto* processinfo = processData.add_processesinfo();
+    auto* cpuInfo = processinfo->mutable_cpuinfo();
+    EXPECT_FALSE(processPlugin->WriteThreadData(testPid, *cpuInfo));
+
+    processPlugin->SetPath(g_path + "test/");
+    EXPECT_FALSE(PluginCpuinfoStub(processData, processConfig, false));
+    for (int32_t pid : processPlugin->pids_) {
+        processPlugin->WriteProcessInfo(processData, pid);
+    }
 }
 } // namespace
