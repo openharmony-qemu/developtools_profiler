@@ -177,7 +177,7 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
 
     do {
         totalbuffer.NextWord(' ');
-        std::string curWord = (totalbuffer.CurWord() ! = nullptr) ?
+        std::string curWord = (totalbuffer.CurWord() != nullptr) ?
             std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize()) : "";
         if (strcmp(curWord.c_str(), "pgpgin") == 0) {
             if (!totalbuffer.NextWord('\n')) {
