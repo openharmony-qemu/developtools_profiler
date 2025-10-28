@@ -511,7 +511,7 @@ ani_object GetVMRuntimeStats(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object vmRunTimeStats = nullptr;
-    if (env->FindClass("escompat.Record", &cls) != ANI_OK ||
+    if (env->FindClass("std.core.Record", &cls) != ANI_OK ||
         env->Class_FindMethod(cls, "<ctor>", nullptr, &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &vmRunTimeStats, nullptr) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "failed to init record.");
@@ -621,39 +621,30 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         return ANI_ERROR;
     }
     std::array methods = {
-        ani_native_function {"getAppVMMemoryInfo", ":C{@ohos.hidebug.hidebug.VMMemoryInfo}",
-            reinterpret_cast<void *>(GetAppVMMemoryInfo)},
-        ani_native_function {"getAppMemoryLimit", ":C{@ohos.hidebug.hidebug.MemoryLimit}",
-            reinterpret_cast<void *>(GetAppMemoryLimit)},
-        ani_native_function {"getVMRuntimeStats", ":C{escompat.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
-        ani_native_function {"getVMRuntimeStat", "C{std.core.String}:l", reinterpret_cast<void *>(GetVMRuntimeStat)},
-        ani_native_function {"getPss", ":C{std.core.BigInt}", reinterpret_cast<void *>(GetPss)},
-        ani_native_function {"getSharedDirty", ":C{std.core.BigInt}", reinterpret_cast<void *>(GetSharedDirty)},
-        ani_native_function {"getPrivateDirty", ":C{std.core.BigInt}", reinterpret_cast<void *>(GetPrivateDirty)},
-        ani_native_function {"getCpuUsage", ":d", reinterpret_cast<void *>(GetCpuUsage)},
-        ani_native_function {"getServiceDump", "iiC{escompat.Array}:", reinterpret_cast<void *>(GetServiceDump)},
-        ani_native_function {"getNativeHeapSize", ":C{std.core.BigInt}", reinterpret_cast<void *>(GetNativeHeapSize)},
-        ani_native_function {"getNativeHeapAllocatedSize", ":C{std.core.BigInt}",
+        ani_native_function {"getAppVMMemoryInfo", nullptr, reinterpret_cast<void *>(GetAppVMMemoryInfo)},
+        ani_native_function {"getAppMemoryLimit", nullptr, reinterpret_cast<void *>(GetAppMemoryLimit)},
+        ani_native_function {"getVMRuntimeStats", nullptr, reinterpret_cast<void *>(GetVMRuntimeStats)},
+        ani_native_function {"getVMRuntimeStat", nullptr, reinterpret_cast<void *>(GetVMRuntimeStat)},
+        ani_native_function {"getPss", nullptr, reinterpret_cast<void *>(GetPss)},
+        ani_native_function {"getSharedDirty", nullptr, reinterpret_cast<void *>(GetSharedDirty)},
+        ani_native_function {"getPrivateDirty", nullptr, reinterpret_cast<void *>(GetPrivateDirty)},
+        ani_native_function {"getCpuUsage", nullptr, reinterpret_cast<void *>(GetCpuUsage)},
+        ani_native_function {"getServiceDump", nullptr, reinterpret_cast<void *>(GetServiceDump)},
+        ani_native_function {"getNativeHeapSize", nullptr, reinterpret_cast<void *>(GetNativeHeapSize)},
+        ani_native_function {"getNativeHeapAllocatedSize", nullptr,
             reinterpret_cast<void *>(GetNativeHeapAllocatedSize)},
-        ani_native_function {"getNativeHeapFreeSize", ":C{std.core.BigInt}",
-            reinterpret_cast<void *>(GetNativeHeapFreeSize)},
-        ani_native_function {"getVss", ":C{std.core.BigInt}", reinterpret_cast<void *>(GetVss)},
-        ani_native_function {"getAppThreadCpuUsage", ":C{escompat.Array}",
-            reinterpret_cast<void *>(GetAppThreadCpuUsage)},
-        ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},
-        ani_native_function {"getAppNativeMemInfo", ":C{@ohos.hidebug.hidebug.NativeMemInfo}",
-            reinterpret_cast<void *>(GetAppNativeMemInfo)},
-        ani_native_function {"getSystemMemInfo", ":C{@ohos.hidebug.hidebug.SystemMemInfo}",
-            reinterpret_cast<void *>(GetSystemMemInfo)},
-        ani_native_function {"startAppTraceCapture",
-            "C{escompat.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
-            reinterpret_cast<void *>(StartAppTraceCapture)},
-        ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
-        ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
-        ani_native_function {"startJsCpuProfiling", "C{std.core.String}:",
-            reinterpret_cast<void *>(StartJsCpuProfiling)},
-        ani_native_function {"stopJsCpuProfiling", ":", reinterpret_cast<void *>(StopJsCpuProfiling)},
-        ani_native_function {"getGraphicsMemorySync", ":i", reinterpret_cast<void *>(GetGraphicsMemorySync)},
+        ani_native_function {"getNativeHeapFreeSize", nullptr, reinterpret_cast<void *>(GetNativeHeapFreeSize)},
+        ani_native_function {"getVss", nullptr, reinterpret_cast<void *>(GetVss)},
+        ani_native_function {"getAppThreadCpuUsage", nullptr, reinterpret_cast<void *>(GetAppThreadCpuUsage)},
+        ani_native_function {"getSystemCpuUsage", nullptr, reinterpret_cast<void *>(GetSystemCpuUsage)},
+        ani_native_function {"getAppNativeMemInfo", nullptr, reinterpret_cast<void *>(GetAppNativeMemInfo)},
+        ani_native_function {"getSystemMemInfo", nullptr, reinterpret_cast<void *>(GetSystemMemInfo)},
+        ani_native_function {"startAppTraceCapture", nullptr, reinterpret_cast<void *>(StartAppTraceCapture)},
+        ani_native_function {"isDebugState", nullptr, reinterpret_cast<void *>(IsDebugState)},
+        ani_native_function {"stopAppTraceCapture", nullptr, reinterpret_cast<void *>(StopAppTraceCapture)},
+        ani_native_function {"startJsCpuProfiling", nullptr, reinterpret_cast<void *>(StartJsCpuProfiling)},
+        ani_native_function {"stopJsCpuProfiling", nullptr, reinterpret_cast<void *>(StopJsCpuProfiling)},
+        ani_native_function {"getGraphicsMemorySync", nullptr, reinterpret_cast<void *>(GetGraphicsMemorySync)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {
