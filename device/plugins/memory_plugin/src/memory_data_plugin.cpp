@@ -1201,7 +1201,7 @@ template <typename T> void MemoryDataPlugin::ProcessGpuDumpInfo(T& dataProto, st
 {
     BufferSplitter totalBuffer((const char*)content.c_str(), content.size() + 1);
     do {
-        std::string line = (totalbuffer.CurLine() != nullptr) ?
+        std::string line = (totalBuffer.CurLine() != nullptr) ?
             totalBuffer.CurLine() : "";
         if (strncmp(line.c_str(), RS_IMAGE_CACHE_START_STR.c_str(), RS_IMAGE_CACHE_START_STR.size()) == 0) {
             totalBuffer.NextLine(); // data starts from the next line
@@ -1372,7 +1372,7 @@ template <typename T> void MemoryDataPlugin::WriteManagerServiceInfo(T& dataProt
 
     BufferSplitter totalBuffer((const char*)content.c_str(), content.size() + 1);
     do {
-        std::string line = (totalbuffer.CurLine() != nullptr) ?
+        std::string line = (totalBuffer.CurLine() != nullptr) ?
             totalBuffer.CurLine() : "";
         if (strncmp(line.c_str(), MGR_SVC_START_STR.c_str(), MGR_SVC_START_STR.size()) == 0) {
             totalBuffer.NextLine();
