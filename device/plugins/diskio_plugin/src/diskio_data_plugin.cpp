@@ -177,10 +177,8 @@ template <typename T> void DiskioDataPlugin::SetDiskioData(T& diskioData, const 
 
     do {
         totalbuffer.NextWord(' ');
-        std::string curWord = "";
-        if (totalbuffer.CurWord() != nullptr) {
-            curWord = std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize());
-        }
+        std::string curWord = (totalbuffer.CurWord() ! = nullptr) ?
+            std::string(totalbuffer.CurWord(), totalbuffer.CurWordSize()) : "";
         if (strcmp(curWord.c_str(), "pgpgin") == 0) {
             if (!totalbuffer.NextWord('\n')) {
                 PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to get pgpgin, CurWord() = %s",
