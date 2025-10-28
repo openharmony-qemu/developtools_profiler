@@ -30,6 +30,7 @@ using namespace testing::ext;
 namespace {
 const std::string DEFAULT_RECORD_FILE("/data/local/tmp/");
 const int DEFAULT_WAIT = 10;
+const int BUF_MAX_LEN = 64;
 
 class HidumpPluginUnittest : public ::testing::Test {
 public:
@@ -246,4 +247,69 @@ HWTEST_F(HidumpPluginUnittest, TestPbEncoderData, TestSize.Level1)
     EXPECT_EQ(plugin.Stop(), 0);
 }
 
+/**
+ * @tc.name: TestGetCmdArgs001
+ * @tc.desc: test command args.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestGetCmdArgs001, TestSize.Level1)
+{
+    HidumpConfig config;
+    HidumpPlugin plugin;
+    config.set_report_fps(true);
+    plugin.SetConfig(config);
+    std::string expectedArgs = "sections: 0, report_fps: true";
+    std::string actualArgs = plugin.GetCmdArgs(config);
+    EXPECT_STREQ(actualArgs.c_str(), expectedArgs.c_str());
+}
+
+/**
+ * @tc.name: TestStartFpNullAdnWriteNull
+ * @tc.desc: test start function and write function is null.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestStartFpNullAdnWriteNull, TestSize.Level1)
+{
+    HidumpConfig config;
+    HidumpPlugin plugin;
+    config.set_report_fps(true);
+    int ret = plugin.Start(nullptr, 0);
+    EXPECT_EQ(ret, -1);
+}
+
+/**
+ * @tc.name: TestAllParseInfo
+ * @tc.desc: test ParseHidumpInfo with all info.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidumpPluginUnittest, TestAllParseInfo, TestSize.Level1)
+{
+    HidumpConfig config;
+    HidumpPlugin plugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    plugin.SetWriter(&writer);
+    std::vector<std::string> testTrueCases = {
+        "fps:123|1501960484673", // strncmp == 0
+        "sectionsFps:123|1501960484673", // strncmp == 0
+    };
+    std::vector<std::string> testFalseCases = {
+        "zzz:123|1501960484673", // strncmp > 0
+        "aaaFps:123|1501960484673", // strncpm < 0
+        "zzzFps:123|1501960484673", // strncpm > 0
+        "invalid:123|1501960484673", // else
+        "inaccessible or not found", // fps command not found
+    };
+    for (const auto& input : testTrueCases) {
+        HidumpInfo dataProto;
+        char buf[BUF_MAX_LEN] = {0};
+        ASSERT_EQ(strncpy_s(buf, sizeof(buf), input.c_str(), input.size()), EOK);
+        EXPECT_TRUE(plugin.ParseHidumpInfo(dataProto, buf, sizeof(buf)));
+    }
+    for (const auto& input : testFalseCases) {
+        HidumpInfo dataProto;
+        char buf[BUF_MAX_LEN] = {0};
+        ASSERT_EQ(strncpy_s(buf, sizeof(buf), input.c_str(), input.size()), EOK);
+        EXPECT_FALSE(plugin.ParseHidumpInfo(dataProto, buf, sizeof(buf)));
+    }
+}
 } // namespace

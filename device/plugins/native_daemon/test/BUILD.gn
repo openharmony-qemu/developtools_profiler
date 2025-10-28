@@ -25,6 +25,7 @@ sources_base = [
   "unittest/common/native/hook_record_factory_test.cpp",
   "unittest/common/native/hook_service_test.cpp",
   "unittest/common/native/register_test.cpp",
+  "unittest/common/native/stack_data_repeater_test.cpp",
   "unittest/common/native/stack_preprocess_test.cpp",
   "unittest/common/native/stack_builder_test.cpp",
   "unittest/common/native/symbols_file_test.cpp",
