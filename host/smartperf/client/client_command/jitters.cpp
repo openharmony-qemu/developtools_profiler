@@ -35,7 +35,7 @@ std::map<std::string, std::string> Jitters::ItemData()
     jittersInfo.currDumpTimeStamps.clear();
     if (pkgName.empty() || processId.empty()) {
         result["fpsJitters"] = "NA";
-    } else if (!pkgName.empty() || processId.empty()) {
+    } else if (!pkgName.empty() && processId.empty()) {
         result["fpsJitters"] = "";
     } else {
         JittersInfo jittersInfoResult = GetJittersInfo();
@@ -47,7 +47,7 @@ std::map<std::string, std::string> Jitters::ItemData()
                 split = ";;";
             }
             jitterStr += split + std::to_string(jittersInfoResult.jitters[i]);
-        }
+        };
         result["fpsJitters"] = jitterStr;
         LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
             std::to_string(jittersInfoResult.fps).c_str(),
@@ -81,7 +81,7 @@ JittersInfo Jitters::GetJittersInfo()
     bool onTop = OHOS::SmartPerf::SPUtils::IsForeGround(pkgName);
     if (onTop) {
         OHOS::SmartPerf::SPUtils::GetCurrentTime(prevResultFpsInfo.curTime);
-        jittersInfoData = GetSurfaceFrame(uniteLayer);
+        jittersInfoData = GetJittersByDump(uniteLayer);
     } else {
         jittersInfoData.jitters.clear();
     }
@@ -95,8 +95,8 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
     tmpFps.jitters.clear();
     jittersInfo = tmpFps;
     bool isBreak = false;
-    std::string command = "fps " + name;
-    std::string cmd = "hidumper -s 10 -a \"" + command + "\"";
+    std::string commond = "fps " + name;
+    std::string cmd = "hidumper -s 10 -a \"" + commond + "\"";
     FILE *fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         LOGE("Failed to open hidumper file");
@@ -104,10 +104,10 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
     }
     fpsNum = 0;
     prevScreenTimestamp = -1;
-    struct timespec time1 = { 0 };
-    clock_gettime(CLOCK_MONOTONIC, &time1);
-    jittersInfo.curTime = static_cast<int>(time1.tv_sec - 1);
-    LOGD("jittersInfo.curTime: (%d),", jittersInfo.curTime);
+    struct timespec sysTime = { 0 };
+    clock_gettime(CLOCK_MONOTONIC, &sysTime);
+    jittersInfo.curTime = static_cast<int>(sysTime.tv_sec - 1);
+    LOGD("jittersInfo.curTime: (%d)", jittersInfo.curTime);
     char tmp[1024];
     std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
@@ -129,6 +129,7 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
         LOGE("Error::Failed to close file");
         return jittersInfo;
     }
+    return jittersInfo;
 }
 
 bool Jitters::CalcFpsAndJitters(bool isBreak)
@@ -162,7 +163,7 @@ void Jitters::CalcJitters()
             prevScreenTimestamp = curScreenTimestamp;
         }
     } else {
-        for (size_t i = jittersInfo.currDumpTimeStamps.size(); i > 0 ; i--) {
+        for (size_t i = jittersInfo.currDumpTimeStamps.size(); i > 0; i--) {
             curScreenTimestamp = jittersInfo.currDumpTimeStamps[i - 1];
             jittersInfo.currTimeStamps.push_back(curScreenTimestamp);
             long long jitter = CalculateJitter();

@@ -31,7 +31,7 @@ struct JittersInfo {
         curTime = 0;
         jitters.clear();
     }
-    bool operator == (const FpsInfo &other) const
+    bool operator == (const JittersInfo &other) const
     {
         if (fps != other.fps) {
             return false;
