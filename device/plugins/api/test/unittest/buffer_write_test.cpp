@@ -161,7 +161,6 @@ HWTEST_F(BufferWriteTest, WriteTest, TestSize.Level1)
     uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
     EXPECT_TRUE(write->Write(buffer1, sizeof(buffer1)));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
-
     EXPECT_TRUE(write->Write(buffer2, sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 
@@ -186,7 +185,6 @@ HWTEST_F(BufferWriteTest, WriteMessageTest, TestSize.Level1)
     configData.set_sample_interval(1000);
     size_t size = configData.ByteSizeLong();
     configData.SerializeToArray(data, size);
-
     EXPECT_TRUE(write->WriteMessage(configData, "111"));
     EXPECT_TRUE(CheckMessage(data, size));
 
@@ -195,10 +193,8 @@ HWTEST_F(BufferWriteTest, WriteMessageTest, TestSize.Level1)
     stateData.set_state(ProfilerPluginState::IN_SESSION);
     size = stateData.ByteSizeLong();
     stateData.SerializeToArray(data, size);
-
     EXPECT_TRUE(write->WriteMessage(stateData, "111"));
     EXPECT_TRUE(CheckMessage(data, size));
-
 
     ProfilerPluginData pluginData;
     pluginData.set_name("test");
@@ -210,8 +206,15 @@ HWTEST_F(BufferWriteTest, WriteMessageTest, TestSize.Level1)
     pluginData.set_tv_nsec(ts.tv_nsec);
     size = pluginData.ByteSizeLong();
     pluginData.SerializeToArray(data, size);
-
     EXPECT_TRUE(write->WriteMessage(pluginData, "111"));
     EXPECT_TRUE(CheckMessage(data, size));
+    write->UseMemory(size);
+    write->ResetPos();
+    write->shareMemoryBlock_ = nullptr;
+    EXPECT_FALSE(write->WriteMessage(pluginData, "111"));
+    EXPECT_EQ(write->StartReport(), nullptr);
+    write->FinishReport(size);
+    write->UseMemory(size);
+    write->ResetPos();
 }
 } // namespace

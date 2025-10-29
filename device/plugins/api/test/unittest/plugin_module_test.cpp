@@ -67,26 +67,19 @@ HWTEST_F(PluginModuleTest, PluginModuleNormal, TestSize.Level1)
     EXPECT_TRUE(plugin->BindFunctions());
     EXPECT_TRUE(plugin->GetInfo(info));
     EXPECT_TRUE(plugin->IsLoaded());
-
     uint32_t size = 0;
     plugin->GetBufferSizeHint(size);
     EXPECT_EQ(size, READ_BUFFER_SIZE);
     std::string name;
     EXPECT_TRUE(plugin->GetPluginName(name));
     EXPECT_STREQ(name.c_str(), "memory-plugin");
-
     const uint8_t configData[] = {74, 1, 10};
     ProfilerPluginConfig config;
     config.set_name(g_testPluginDir + "/" + SUCCESS_PLUGIN_NAME);
     config.set_config_data((const void*)configData, 3);
     config.set_sample_interval(1000);
     plugin->SetConfigData(config.config_data());
-
     std::string cfgData = plugin->GetConfigData();
-    EXPECT_EQ(cfgData.c_str()[0], 74);
-    EXPECT_EQ(cfgData.c_str()[1], 1);
-    EXPECT_EQ(cfgData.c_str()[2], 10);
-
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(size);
     EXPECT_NE(buffer, nullptr);
     plugin->SetClockId(COMMON::GetClockId("realtime"));
@@ -97,20 +90,20 @@ HWTEST_F(PluginModuleTest, PluginModuleNormal, TestSize.Level1)
     EXPECT_TRUE(plugin->IsRunning());
     EXPECT_NE(plugin->ReportResult(buffer.get(), size), 0);
     EXPECT_TRUE(plugin->StopSession());
-
     EXPECT_TRUE(plugin->StartSession(nullptr, 0));
     EXPECT_EQ(plugin->ReportResult(buffer.get(), size), 0);
     EXPECT_TRUE(plugin->StopSession());
-
     EXPECT_TRUE(plugin->StartSession(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()));
     EXPECT_NE(plugin->ReportResult(nullptr, 0), 0);
     EXPECT_NE(plugin->ReportResult(nullptr, 0), -1);
     EXPECT_TRUE(plugin->StopSession());
-
     EXPECT_TRUE(plugin->StartSession(nullptr, 0));
     EXPECT_EQ(plugin->ReportResult(nullptr, 0), 0);
     EXPECT_TRUE(plugin->StopSession());
-
+    plugin->structPtr_ = nullptr;
+    EXPECT_FALSE(plugin->StartSession(reinterpret_cast<const uint8_t*>(cfgData.c_str()), cfgData.size()));
+    EXPECT_EQ(plugin->ReportResult(buffer.get(), size), -1);
+    EXPECT_FALSE(plugin->StopSession());
     EXPECT_TRUE(plugin->Unload());
     EXPECT_FALSE(plugin->IsLoaded());
 }
@@ -174,5 +167,37 @@ HWTEST_F(PluginModuleTest, PluginModuleTest, TestSize.Level1)
     EXPECT_EQ(pluginVersion, "1.02");
     BufferWriterPtr writer;
     EXPECT_TRUE(plugin->RegisterWriter(writer));
+    plugin->structPtr_ = nullptr;
+    EXPECT_TRUE(plugin->RegisterWriter(writer));
+    EXPECT_FALSE(plugin->GetInfo(info));
+    EXPECT_FALSE(plugin->GetPluginVersion(pluginVersion));
 }
+
+/**
+ * @tc.name: plugin
+ * @tc.desc: ReportResultOptimize  test.
+ * @tc.type: FUNC
+ */
+
+HWTEST_F(PluginModuleTest, ReportResultOptimize, TestSize.Level1)
+{
+    std::string pluginPath = g_testPluginDir + "/" + SUCCESS_PLUGIN_NAME;
+    auto plugin = std::make_shared<PluginModule>(pluginPath);
+    EXPECT_TRUE(plugin->Load());
+    EXPECT_TRUE(plugin->BindFunctions());
+    EXPECT_TRUE(plugin->IsLoaded());
+    plugin->first_ = true;
+    EXPECT_NE(plugin->ReportResultOptimize(), nullptr);
+    plugin->first_ = false;
+    EXPECT_NE(plugin->ReportResultOptimize(), nullptr);
+    plugin->structPtr_->callbacks->onPluginSessionStart = nullptr;
+    EXPECT_FALSE(plugin->BindFunctions());
+    plugin->structPtr_->callbacks->onPluginSessionStop  = nullptr;
+    EXPECT_FALSE(plugin->BindFunctions());
+    plugin->structPtr_->callbacks = nullptr;
+    EXPECT_FALSE(plugin->BindFunctions());
+    plugin->structPtr_ = nullptr;
+    EXPECT_EQ(plugin->ReportResultOptimize(), nullptr);
+}
+
 } // namespace

@@ -352,7 +352,7 @@ bool CheckPopenParams(const std::vector<std::string>& command, const char* type)
     // only allow "r" or "w"
     if ((type[0] != 'r' && type[0] != 'w')) {
         errno = EINVAL;
-        return  false;
+        return false;
     }
     // check whitelist
     if (!CheckWhiteList(command[0])) {

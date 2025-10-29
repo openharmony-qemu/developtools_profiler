@@ -20,10 +20,12 @@
 #include "plugin_manager.h"
 #include "plugin_service.ipc.h"
 #include "socket_context.h"
+#include "parameters.h"
 
 using namespace testing::ext;
 
 namespace {
+constexpr int DEFAULT_SLEEP_TIME = 1000;
 class PluginManagerStub final : public ManagerInterface {
 public:
     bool LoadPlugin(const std::string& pluginPath) override
@@ -119,6 +121,22 @@ private:
     CommandPollerPtr commandPoller_;
 };
 
+static void StartHiprofilerService()
+{
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
+#ifdef COVERAGE_TEST
+    const int coverageSleepTime = DEFAULT_SLEEP_TIME * 5;  // sleep 5s
+    std::this_thread::sleep_for(std::chrono::milliseconds(coverageSleepTime));
+#else
+    std::this_thread::sleep_for(std::chrono::milliseconds(DEFAULT_SLEEP_TIME));
+#endif
+}
+
+static void StopHiprofilerService()
+{
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
+}
+
 class CommandPollerTest : public ::testing::Test {
 protected:
     static void SetUpTestCase() {}
@@ -210,4 +228,84 @@ HWTEST_F(CommandPollerTest, DestoryCmdTest, TestSize.Level1)
     EXPECT_FALSE(commandPoller->OnDestroySessionCmd(failed2Cmd));
     EXPECT_FALSE(commandPoller->OnDestroySessionCmd(failed3Cmd));
 }
+
+HWTEST_F(CommandPollerTest, RefreshSessionCmd, TestSize.Level1)
+{
+    StartHiprofilerService();
+    auto pluginManage = std::make_shared<PluginManagerStub>();
+    auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
+    EXPECT_TRUE(commandPoller->OnConnect());
+    pluginManage->SetCommandPoller(commandPoller);
+    ProfilerPluginState state;
+    commandPoller->PushResult(state, 1);
+    RefreshSessionCmd refreshCmd;
+    refreshCmd.add_plugin_ids(1);
+    EXPECT_TRUE(commandPoller->OnReportBasicDataCmd(refreshCmd));
+    StopHiprofilerService();
+}
+
+HWTEST_F(CommandPollerTest, GetCommandResponse, TestSize.Level1)
+{
+    StartHiprofilerService();
+    auto pluginManage = std::make_shared<PluginManagerStub>();
+    auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
+    EXPECT_TRUE(commandPoller->OnConnect());
+    pluginManage->SetCommandPoller(commandPoller);
+    SocketContext ctx;
+    GetCommandResponse cmdResponse;
+    cmdResponse.set_command_id(1);
+    EXPECT_FALSE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    CreateSessionCmd* csc = cmdResponse.mutable_create_session_cmd();
+    csc->add_buffer_sizes(1024);  // 1024: buffer size
+    csc->add_plugin_configs()->set_name("existplugin");
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    cmdResponse.clear_create_session_cmd();
+    csc = cmdResponse.mutable_create_session_cmd();
+    csc->add_buffer_sizes(0);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+
+    DestroySessionCmd* dsc = cmdResponse.mutable_destroy_session_cmd();
+    dsc->add_plugin_ids(1);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    cmdResponse.clear_destroy_session_cmd();
+    dsc = cmdResponse.mutable_destroy_session_cmd();
+    dsc->add_plugin_ids(0);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+
+    StartSessionCmd* ssc = cmdResponse.mutable_start_session_cmd();
+    ssc->add_plugin_ids(1);
+    ssc->add_plugin_configs()->set_name("existplugin");
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    cmdResponse.clear_start_session_cmd();
+    ssc = cmdResponse.mutable_start_session_cmd();
+    ssc->add_plugin_ids(0);
+    ssc->add_plugin_configs()->set_name("notexistplugin");
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    StopHiprofilerService();
+}
+
+HWTEST_F(CommandPollerTest, GetCommandResponse2, TestSize.Level1)
+{
+    StartHiprofilerService();
+    auto pluginManage = std::make_shared<PluginManagerStub>();
+    auto commandPoller = std::make_shared<CommandPoller>(pluginManage);
+    EXPECT_TRUE(commandPoller->OnConnect());
+    pluginManage->SetCommandPoller(commandPoller);
+    SocketContext ctx;
+    GetCommandResponse cmdResponse;
+    StopSessionCmd* stopSessionCmd = cmdResponse.mutable_stop_session_cmd();
+    stopSessionCmd->add_plugin_ids(1);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+
+    cmdResponse.clear_stop_session_cmd();
+    stopSessionCmd = cmdResponse.mutable_stop_session_cmd();
+    stopSessionCmd->add_plugin_ids(0);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+
+    RefreshSessionCmd* refreshSessionCmd = cmdResponse.mutable_refresh_session_cmd();
+    refreshSessionCmd->add_plugin_ids(1);
+    EXPECT_TRUE(commandPoller->OnGetCommandResponse(ctx, cmdResponse));
+    StopHiprofilerService();
+}
+
 } // namespace

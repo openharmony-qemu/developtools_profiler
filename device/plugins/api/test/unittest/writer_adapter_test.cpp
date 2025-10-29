@@ -96,6 +96,17 @@ HWTEST_F(WriterAdapterTest, StartReportFuncTest, TestSize.Level1)
     WriterAdapter writerAdapter;
     writerAdapter.SetWriter(write);
     EXPECT_NE(writerAdapter.GetWriter(), nullptr);
+    const uint8_t data[] = {0x0A, 0x05, 0x31, 0x32, 0x33, 0x34, 0x35};
+    const int len = 7;
+    EXPECT_GE(WriterAdapter::WriteFunc(reinterpret_cast<WriterStruct*>(&writerAdapter), data, len), 0);
+    writerAdapter.SetWriter(nullptr);
+    EXPECT_EQ(WriterAdapter::WriteFunc(reinterpret_cast<WriterStruct*>(&writerAdapter), data, len), 0);
+    EXPECT_EQ(WriterAdapter::WriteFunc(nullptr, data, len), 0);
+    EXPECT_FALSE(writerAdapter.FlushFunc(reinterpret_cast<WriterStruct*>(&writerAdapter)));
+    EXPECT_EQ(WriterAdapter::StartReportFunc(nullptr), nullptr);
+
+    writerAdapter.SetWriter(write);
+    EXPECT_TRUE(writerAdapter.FlushFunc(reinterpret_cast<WriterStruct*>(&writerAdapter)));
     auto ctx = WriterAdapter::StartReportFunc(reinterpret_cast<WriterStruct*>(&writerAdapter));
     EXPECT_NE(ctx, nullptr);
     WriterAdapter::FinishReportFunc(reinterpret_cast<WriterStruct*>(&writerAdapter), 32);
