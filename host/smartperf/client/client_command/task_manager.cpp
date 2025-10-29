@@ -44,6 +44,7 @@
 #include <sys/syscall.h>
 #include <filesystem>
 #include "include/sdk_data_recv.h"
+#include "include/jitters.h"
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -470,6 +471,8 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
 
     FPS::GetInstance().SetProcessId(processIds_);
     FPS::GetInstance().SetPackageName(processName_);
+    Jitters::GetInstance().SetProcessId(processIds_);
+    Jitters::GetInstance().SetPackageName(processName_);
     RAM::GetInstance().SetProcessId(processIds_);
     RAM::GetInstance().SetPackageName(processName_);
     CPU::GetInstance().SetProcessId(processIds_);

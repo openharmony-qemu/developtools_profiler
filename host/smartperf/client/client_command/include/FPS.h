@@ -94,6 +94,7 @@ public:
     static inline bool isPreset = false;
     static inline bool isLowCurFps = false;
     static inline bool isHistoryHap = false;
+    static inline bool isStartStop = false;
     bool SetOtherDeviceFlag();
     bool hapLowFpsFlag = false;
     bool hapNeedCatonInfo = false;

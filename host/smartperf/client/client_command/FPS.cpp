@@ -78,7 +78,9 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
     if (hapNeedCatonInfo && inGameSceneNum > eleven) {
         CalcFatalCaton(fpsInfoResult.jitters);
     }
-    result["fpsJitters"] = jitterStr;
+    if (!isStartStop) {
+        result["fpsJitters"] = jitterStr;
+    }
     LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
         std::to_string(fpsInfoResult.fps).c_str(),
         std::to_string(fpsInfoResult.curTime).c_str(),
@@ -327,7 +329,9 @@ void FPS::ReadDataFromPipe(int fd)
     }
     (void)fclose(fp);
     if (!hapLowFpsFlag || !isLowCurFps) {
-        CalcJitters(fpsInfo.currDumpTimeStamps, curScreenTimestamp);
+        if (!isStartStop) {
+            CalcJitters(fpsInfo.currDumpTimeStamps, curScreenTimestamp);
+        }
     }
 }
 
@@ -350,7 +354,7 @@ void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long l
         if (curTimestamp == 0) {
             continue;
         }
-        if (CalcFpsAndJitters(isBreak, curTimestamp, presentFence)){
+        if (CalcFpsAndJitters(isBreak, curTimestamp, presentFence)) {
             break;
         }
     }
@@ -394,7 +398,7 @@ bool FPS::CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRef
             fpsNum++;
             fpsInfo.fps = fpsNum;
             fpsInfo.presentFenceTimeStamps.push_back(curTimestamp);
-        } else if (isUniRender) {
+        } else if (isUniRender || isNeedDump) {
             fpsNum++;
             fpsInfo.fps = fpsNum;
             fpsInfo.currDumpTimeStamps.push_back(curTimestamp);
