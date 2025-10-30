@@ -38,6 +38,7 @@
 #include "include/lock_frequency.h"
 #include "include/hiperf.h"
 #include "include/sdk_data_recv.h"
+#include "include/jitters.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -107,6 +108,7 @@ void SpProfilerFactory::SetProfilerPkg(const std::string &pkg)
 {
     LOGD("SpProfilerFactory setPKG:%s", pkg.c_str());
     FPS::GetInstance().SetPackageName(pkg);
+    Jitters::GetInstance().SetPackageName(pkg);
     RAM::GetInstance().SetPackageName(pkg);
     CPU::GetInstance().SetPackageName(pkg);
     Threads::GetInstance().SetPackageName(pkg);
@@ -117,6 +119,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 {
     LOGD("SpProfilerFactory setPID:%s", pid.c_str());
     FPS::GetInstance().SetProcessId(pid);
+    Jitters::GetInstance().SetProcessId(pid);
     Hiperf::GetInstance().SetProcessId(pid);
     RAM::GetInstance().SetProcessId(pids.empty() ? pid : pids);
     CPU::GetInstance().SetProcessId(pids.empty() ? pid : pids);
@@ -184,6 +187,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             break;
         case CommandType::CT_AS:
             profiler = &AISchedule::GetInstance();
+            break;
+        case CommandType::CT_JITTERS:
+            profiler = &Jitters::GetInstance();
             break;
         default:
             break;

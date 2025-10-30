@@ -63,6 +63,7 @@ ohos_executable("SP_daemon") {
     "editor_command.cpp",
     "effective.cpp",
     "heartbeat.cpp",
+    "jitters.cpp",
     "hiperf.cpp",
     "lock_frequency.cpp",
     "navigation.cpp",
