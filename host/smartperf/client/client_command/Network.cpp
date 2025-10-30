@@ -74,7 +74,7 @@ std::map<std::string, std::string> Network::GetNetworkInfoDev()
         return networkInfo;
     }
     while (fgets(buff, LARGE_BUFF_MAX_LEN, fp) != nullptr) {
-        if (strstr(buff, "rmnet0")) {
+        if (strstr(buff, "rmnet0") && PerciseMatch(buff, "mnet0")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
                 (void)fclose(fp);
@@ -82,7 +82,7 @@ std::map<std::string, std::string> Network::GetNetworkInfoDev()
             }
             GetCurNetwork(rmnetCurRx, rmnetCurTx);
         }
-        if (strstr(buff, "eth0")) {
+        if (strstr(buff, "eth0") && PerciseMatch(buff, "eth0")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
                 (void)fclose(fp);
@@ -90,7 +90,7 @@ std::map<std::string, std::string> Network::GetNetworkInfoDev()
             }
             GetCurNetwork(ethCurRx, ethCurTx);
         }
-        if (strstr(buff, "wlan0")) {
+        if (strstr(buff, "wlan0") && PerciseMatch(buff, "wlan0")) {
             if (sscanf_s(buff, "%*s%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld%lld%*lld%*lld%*lld%*lld%*lld%*lld%*lld",
                 &curRx, &curTx) < 0) {
                 (void)fclose(fp);
@@ -172,6 +172,20 @@ void Network::ClearHapFlag()
     ethCurTx = 0;
     wlanCurRx = 0;
     wlanCurTx = 0;
+}
+
+bool Network::PerciseMatch(const char *buff, const std::string &netStr)
+{
+    std::string line(buff);
+    bool matchFlag = false;
+    size_t colonPos = line.find(':');
+    if (colonPos != std::string::npos) {
+        std::string interFace = line.substr(1, conlonPos - 1);
+        if (strcmp(interFace.c_str(), netStr.c_str()) == 0) {
+            matchFlag = true;
+        }
+    }
+    return matchFlag;
 }
 }
 }

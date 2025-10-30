@@ -43,19 +43,19 @@ namespace SmartPerf {
 class RAM : public SpProfiler {
 public:
     std::map<std::string, std::string> GetSysRamInfo() const;
-    std::map<std::string, std::string> GetRamInfo() const;
-    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string& pid, size_t index) const;
+    std::map<std::string, std::string> GetRamInfo();
+    std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string& pid, size_t index);
     std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
-        const std::string pid, size_t index) const;
+        const std::string pid, size_t index);
     void FillPssRamInfo(size_t index, std::string pid, const PssValues &pssValues,
         std::map<std::string, std::string> &pssRamInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string>& paramsInfo,
         const std::string& pid, size_t index) const;
     std::map<std::string, std::string> ProcMemNaInfo() const;
     std::map<std::string, std::string> ChildProcMemNaInfo() const;
-    void SetRamValue(std::promise<std::map<std::string, std::string>> p, std::string ramPid, size_t index) const;
-    std::map<std::string, std::string> CollectRam(const std::string& ramPid, size_t index) const;
-    std::future<std::map<std::string, std::string>> AsyncCollectRam(const std::string& ramPid, size_t index) const;
+    void SetRamValue(std::promise<std::map<std::string, std::string>> p, std::string ramPid, size_t index);
+    std::map<std::string, std::string> CollectRam(const std::string& ramPid, size_t index);
+    std::future<std::map<std::string, std::string>> AsyncCollectRam(const std::string& ramPid, size_t index);
     void CheckFutureRam(std::future<std::map<std::string, std::string>> &fdsResult,
         std::map<std::string, std::string> &dataMap, const std::string& pid, size_t index) const;
     static RAM &GetInstance()
@@ -65,8 +65,8 @@ public:
     }
     std::map<std::string, std::string> ItemData() override;
     void SetPackageName(const std::string &pName);
-    void ThreadGetPss() const;
-    void TriggerGetPss() const;
+    void ThreadGetPss();
+    void TriggerGetPss();
     void SetFirstFlag();
     void SetHapFirstFlag();
     void SetProcessId(const std::string &pid);

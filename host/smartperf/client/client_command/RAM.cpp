@@ -90,18 +90,23 @@ std::map<std::string, std::string> RAM::ItemData()
         }
         result.merge(procRamInfomation);
     } else if (!packageName.empty() && processId.empty()) {
+        std::string processIds = "";
+        std::string pid = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        pid = sp.GetPidByPkg(packageName, &processIds);
+        SetProcessId(pid);
         result.merge(RAM::ProcMemNaInfo());
     }
     LOGI("RAM:ItemData map size(%u)", result.size());
     return result;
 }
 
-void RAM::ThreadGetPss() const
+void RAM::ThreadGetPss()
 {
     procRamInfoLast = RAM::GetRamInfo();
 }
 
-void RAM::TriggerGetPss() const
+void RAM::TriggerGetPss()
 {
     std::thread([this]() {
         this->ThreadGetPss();
@@ -189,7 +194,7 @@ void RAM::SetProcessId(const std::string &pid)
     LOGD("RAM SetProcessId (%s)", pid.c_str());
 }
 
-std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, size_t index) const
+std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, size_t index)
 {
     std::map<std::string, std::string> emptyprocRamInfo;
 
@@ -226,12 +231,12 @@ std::map<std::string, std::string> RAM::CollectRam(const std::string& ramPid, si
 }
 
 void RAM::SetRamValue(std::promise<std::map<std::string, std::string>> p,
-    std::string ramPid, size_t index) const
+    std::string ramPid, size_t index)
 {
     p.set_value(CollectRam(ramPid, index));
 }
 
-std::future<std::map<std::string, std::string>> RAM::AsyncCollectRam(const std::string& ramPid, size_t index) const
+std::future<std::map<std::string, std::string>> RAM::AsyncCollectRam(const std::string& ramPid, size_t index)
 {
     std::promise<std::map<std::string, std::string>> p;
     std::future<std::map<std::string, std::string>> futureResult = p.get_future();
@@ -254,7 +259,7 @@ void RAM::CheckFutureRam(std::future<std::map<std::string, std::string>> &fdsRes
     }
 }
 
-std::map<std::string, std::string> RAM::GetRamInfo() const
+std::map<std::string, std::string> RAM::GetRamInfo()
 {
     std::map<std::string, std::string> dataMap;
     std::vector<std::future<std::map<std::string, std::string>>>
@@ -275,7 +280,7 @@ std::map<std::string, std::string> RAM::GetRamInfo() const
     return dataMap;
 }
 
-std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string& pid, size_t index) const
+std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::string& pid, size_t index)
 {
     std::vector<std::string> paramsInfo;
     std::map<std::string, std::string> pssRamInfo = ParsePssValues(fd, paramsInfo, pid, index);
@@ -291,13 +296,17 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::strin
 }
 
 std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
-    std::string pid, size_t index) const
+    std::string pid, size_t index)
 {
     std::map<std::string, std::string> pssRamInfo;
     struct PssValues pss;
     char buf[1024] = {'\0'};
     while ((fgets(buf, sizeof(buf), fd)) != nullptr) {
         std::string line(buf);
+        if (line.find("No such process") != std::string::npos) {
+            processId.clear();
+            return pssRamInfo;
+        }
         if (line[0] == '-') {
             continue;
         }
