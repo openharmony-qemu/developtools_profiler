@@ -180,7 +180,7 @@ bool Network::PerciseMatch(const char *buff, const std::string &netStr)
     bool matchFlag = false;
     size_t colonPos = line.find(':');
     if (colonPos != std::string::npos) {
-        std::string interFace = line.substr(1, conlonPos - 1);
+        std::string interFace = line.substr(1, colonPos - 1);
         if (strcmp(interFace.c_str(), netStr.c_str()) == 0) {
             matchFlag = true;
         }
