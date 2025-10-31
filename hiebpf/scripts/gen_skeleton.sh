@@ -43,7 +43,7 @@ do
     echo "current bpf object directory name: "${obj_set}
     BPF_OBJ_DIR=${BASE_DIR}"/"${obj_set}
     echo "current bpf object directory path: "${BPF_OBJ_DIR}
-    BPF_OBJECTS=$(ls ${BPF_OBJ_DIR} | grep '\.bpf\.o')
+    BPF_OBJECTS=$(ls ${BPF_OBJ_DIR} | grep '\.bpf\.o$')
     echo "bpf object file names: "${BPF_OBJECTS}
     for obj in ${BPF_OBJECTS}
     do
