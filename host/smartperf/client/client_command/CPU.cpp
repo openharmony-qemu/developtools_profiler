@@ -183,6 +183,11 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad()
             }
         }
     } else {
+        std::string processIds = "";
+        std::string pid = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        pid = sp.GetPidByPkg(packageName, &processIds);
+        SetProcessId(pid);
         processCpuInfo["ProcId"] = "NA";
         processCpuInfo["ProcAppName"] = packageName;
         processCpuInfo["ProcCpuLoad"] = "NA";
@@ -202,11 +207,7 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad()
 void CPU::GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo)
 {
     if (processCpuInfo.find("ProcAppName") != processCpuInfo.end() && processCpuInfo["ProcAppName"].empty()) {
-        std::string processIds = "";
-        std::string pid = "";
-        OHOS::SmartPerf::StartUpDelay sp;
-        pid = sp.GetPidByPkg(packageName, &processIds);
-        SetProcessId(pid);
+        processId.clear();
         processCpuInfo["ProcId"] = "0";
         processCpuInfo["ProcAppName"] = packageName;
         processCpuInfo["ProcCpuLoad"] = "0";
