@@ -35,6 +35,7 @@ public:
     void ClearHapFlag();
     void ThreadFunctions();
     std::map<std::string, std::string> GetNetworkInfoDev();
+    bool PerciseMatch(const char *buff, const std::string &netStr);
 private:
     Network() {};
     Network(const Network &);

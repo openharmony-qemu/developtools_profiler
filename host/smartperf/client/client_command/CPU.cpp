@@ -156,7 +156,7 @@ std::vector<CpuUsageInfos> CPU::GetCpuUsage()
     return workload;
 }
 
-std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
+std::map<std::string, std::string> CPU::GetSysProcessCpuLoad()
 {
     std::map<std::string, std::string> processCpuInfo;
     const size_t oneHundred = 100;
@@ -183,6 +183,11 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
             }
         }
     } else {
+        std::string processIds = "";
+        std::string pid = "";
+        OHOS::SmartPerf::StartUpDelay sp;
+        pid = sp.GetPidByPkg(packageName, &processIds);
+        SetProcessId(pid);
         processCpuInfo["ProcId"] = "NA";
         processCpuInfo["ProcAppName"] = packageName;
         processCpuInfo["ProcCpuLoad"] = "NA";
@@ -199,9 +204,10 @@ std::map<std::string, std::string> CPU::GetSysProcessCpuLoad() const
     return processCpuInfo;
 }
 
-void CPU::GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo) const
+void CPU::GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo)
 {
     if (processCpuInfo.find("ProcAppName") != processCpuInfo.end() && processCpuInfo["ProcAppName"].empty()) {
+        processId.clear();
         processCpuInfo["ProcId"] = "0";
         processCpuInfo["ProcAppName"] = packageName;
         processCpuInfo["ProcCpuLoad"] = "0";

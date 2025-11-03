@@ -58,6 +58,7 @@ public:
     void SetFileTitle();
     void InitDataCsv();
     ArgumentParser& GetArgumentParser();
+    void SetFileTitleFlag();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);

@@ -44,8 +44,8 @@ public:
     std::map<std::string, std::string> ItemData() override;
     std::vector<CpuFreqs> GetCpuFreq();
     std::vector<CpuUsageInfos> GetCpuUsage();
-    std::map<std::string, std::string> GetSysProcessCpuLoad() const;
-    void GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo) const;
+    std::map<std::string, std::string> GetSysProcessCpuLoad();
+    void GetSysProcessCpuLoadContinue(std::map<std::string, std::string> &processCpuInfo);
     void GetSysChildProcessCpuLoad(size_t processIdSize, std::map<std::string, std::string> &processCpuInfo) const;
     void SetPackageName(const std::string &pName);
     void SetProcessId(const std::string &pid);
