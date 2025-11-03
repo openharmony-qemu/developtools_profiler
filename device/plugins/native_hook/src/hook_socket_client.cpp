@@ -100,8 +100,10 @@ HookSocketClient::~HookSocketClient()
         if (stackWriterList_[i]) {
             stackWriterList_[i]->Flush();
         }
-        stackWriterList_[i] = nullptr;
     }
+    stackWriterList_.clear();
+    eventFds_.clear();
+    smbFds_.clear();
     unixSocketClient_ = nullptr;
     g_disableHook = true;
 }
@@ -186,14 +188,17 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
     if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
         return false;
     }
-    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
-    if (stackWriter == nullptr || unixSocketClient_ == nullptr || g_disableHook) {
+    if (g_disableHook || unixSocketClient_ == nullptr) {
         return false;
-    } else if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
+    }
+    if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
         DisableHook();
         return false;
     }
-
+    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
+    if (!stackWriter) {
+        return false;
+    }
     bool ret = stackWriter->WriteWithPayloadTimeout(data, size, payload, payloadSize,
                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
     if (!ret && config_->isBlocked) {
