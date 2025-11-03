@@ -288,9 +288,12 @@ std::map<std::string, std::string> RAM::GetPssRamInfo(FILE *fd, const std::strin
     pssRamInfo.insert(std::make_move_iterator(sumRamInfo.begin()), std::make_move_iterator(sumRamInfo.end()));
     if (paramsInfo.empty()) {
         for (auto &pss : pssRamInfo) {
-            pss.second = pid + ":" + "0" + "|";
+            if (processId.size() > 1) {
+                pss.second = pid + ":" + "0" + "|";
+            } else {
+                pss.second = "NA";
+            }
         }
-        return pssRamInfo;
     }
     return pssRamInfo;
 }
