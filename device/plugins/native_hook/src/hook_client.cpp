@@ -224,7 +224,7 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         case RES_THREAD_MASK: {
             return static_cast<uint16_t>(THREAD_MASK_INDEX + 1);
         }
-        default: return -1;
+        default: return 0;
     }
 }
 
@@ -235,7 +235,7 @@ uint16_t inline __attribute__((always_inline)) GetTagId(std::shared_ptr<HookSock
         return 0;
     }
     uint16_t predefinedId = GetPredefinedTagId(mask);
-    if (predefinedId != -1) {
+    if (predefinedId != 0) {
         return predefinedId;
     }
 
