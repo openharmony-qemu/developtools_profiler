@@ -294,6 +294,12 @@ HWTEST_F(HidebugTest, OH_HiDebug_GetGraphicsMemorySummary, TestSize.Level1)
     EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalMin, &summary), HIDEBUG_SUCCESS);
     constexpr uint32_t testIntervalMax = 3601;
     EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testIntervalMax, &summary), HIDEBUG_SUCCESS);
+    HiDebug_GraphicsMemorySummary tmpSummary = summary;
+    constexpr uint32_t testInterval = 5;
+    usleep(4800000);
+    EXPECT_EQ(OH_HiDebug_GetGraphicsMemorySummary(testInterval, &summary), HIDEBUG_SUCCESS);
+    EXPECT_EQ(summary.gl, tmpSummary.gl);
+    EXPECT_EQ(summary.graph, tmpSummary.graph);
     EXPECT_GE(summary.gl, 0);
     EXPECT_GE(summary.graph, 0);
 }
