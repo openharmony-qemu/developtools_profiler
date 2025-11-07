@@ -304,7 +304,7 @@ void StackPreprocess::SetDirectorForTest(std::shared_ptr<BuildStackDirector> dir
 #endif
 
 bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size,
-    RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord)
+                                              RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord)
 {
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
@@ -322,12 +322,21 @@ bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size
     uint16_t type = hookRecord->GetType();
     if (isStopTakeData_) {
         return false;
-    }
-
-    if (ProcessSpecialEventTypes(type, hookRecord, rawData)) {
+    } else if (type == MEMORY_TAG) {
+        return ProcessMemoryTag(rawData);
+    } else if (HandleNoStackEvent(hookRecord)) {
+        return true;
+    } else if (type == MUNMAP_MSG) {
+        std::lock_guard<std::mutex> guard(mtx_);
+        runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
+    } else if (type == NMD_MSG) {
+        return ProcessNmdMsg(rawData);
+    }  else if (type == END_MSG) {
+        return ProcessEndMsg();
+    } else if (type == JS_STACK_MSG) {
+        SaveJsRawStack(rawData->stackContext->jsChainId, reinterpret_cast<char*>(rawData->data));
         return true;
     }
-
     return ProcessRegularStackData(hookRecord, rawData);
 }
 
@@ -364,48 +373,15 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
     return true;
 }
 
-bool StackPreprocess::ProcessSpecialEventTypes(uint16_t type,
-                                               std::shared_ptr<HookRecord>& hookRecord,
-                                               RawStackPtr& rawData)
-{
-    switch (type) {
-        case MEMORY_TAG:
-            return ProcessMemoryTag(rawData);
-        case MUNMAP_MSG:
-            return ProcessMunmapMsg(hookRecord);
-        case NMD_MSG:
-            return ProcessNmdMsg(rawData);
-        case END_MSG:
-            return ProcessEndMsg();
-        case JS_STACK_MSG:
-            return ProcessJsStackMsg(rawData);
-        default:
-            return HandleNoStackEvent(hookRecord);
-    }
-}
-
 bool StackPreprocess::ProcessMemoryTag(RawStackPtr& rawData)
 {
-    if (rawData == nullptr) {
-        return false;
-    }
     std::string tagName = reinterpret_cast<char*>(rawData->data);
     SaveMemTag(rawData->stackContext->tagId, tagName);
     return true;
 }
 
-bool StackPreprocess::ProcessMunmapMsg(std::shared_ptr<HookRecord>& hookRecord)
-{
-    std::lock_guard<std::mutex> guard(mtx_);
-    runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
-    return true;
-}
-
 bool StackPreprocess::ProcessNmdMsg(RawStackPtr& rawData)
 {
-    if (rawData == nullptr) {
-        return false;
-    }
     const char* nmdResult = reinterpret_cast<const char*>(rawData->data);
     lseek(nmdFd_, 0, SEEK_END);
     (void)write(nmdFd_, nmdResult, strlen(nmdResult));
@@ -420,15 +396,6 @@ bool StackPreprocess::ProcessEndMsg()
         PROFILER_LOG_INFO(LOG_CORE, "Received all END_MSG, stopping data collection");
         isStopTakeData_ = true;
     }
-    return true;
-}
-
-bool StackPreprocess::ProcessJsStackMsg(RawStackPtr& rawData)
-{
-    if (rawData == nullptr) {
-        return false;
-    }
-    SaveJsRawStack(rawData->stackContext->jsChainId, reinterpret_cast<char*>(rawData->data));
     return true;
 }
 

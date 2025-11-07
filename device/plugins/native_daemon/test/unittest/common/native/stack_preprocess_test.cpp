@@ -180,35 +180,6 @@ HWTEST_F(StackPreprocessTest, ValidateAndPrepareDataValidTest, TestSize.Level0)
 }
 
 /*
-@tc.name: ProcessSpecialEventTypesTest
-@tc.desc: test ProcessSpecialEvent with available TAGs.
-@tc.type: FUNC
-*/
-HWTEST_F(StackPreprocessTest, ProcessSpecialEventTypesTest, TestSize.Level0)
-{
-    NativeHookConfig hookConfig;
-    StackPreprocess preprocess(nullptr, hookConfig, 0);
-    RawStackPtr rawData = std::make_shared<RawStack>();
-    rawData->fpDepth = 1;
-    uint8_t ip = 16;
-    rawData->data = &ip;
-    std::shared_ptr<HookRecord> hookRecord = std::make_shared<HookRecord>(rawData);
-    BaseStackRawData baseData;
-    rawData->stackContext = &baseData;
-
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(MEMORY_TAG, hookRecord, rawData));
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(MUNMAP_MSG, hookRecord, rawData));
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(NMD_MSG, hookRecord, rawData));
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(END_MSG, hookRecord, rawData));
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(JS_STACK_MSG, hookRecord, rawData));
-    EXPECT_FALSE(preprocess.ProcessSpecialEventTypes(UNKNOWN, hookRecord, rawData));
-    rawData.reset();
-    EXPECT_FALSE(preprocess.ProcessSpecialEventTypes(MEMORY_TAG, hookRecord, rawData));
-    EXPECT_FALSE(preprocess.ProcessSpecialEventTypes(NMD_MSG, hookRecord, rawData));
-    EXPECT_FALSE(preprocess.ProcessSpecialEventTypes(JS_STACK_MSG, hookRecord, rawData));
-}
-
-/*
 @tc.name: ProcessEndMsgNotEqualTest
 @tc.desc: test ProcessEndMsg count not equal.
 @tc.type: FUNC
@@ -222,28 +193,6 @@ HWTEST_F(StackPreprocessTest, ProcessEndMsgNotEqualTest, TestSize.Level0)
     preprocess.endMsgCount_ = SHARED_MEMORY_NUM;
     preprocess.ProcessEndMsg();
     EXPECT_FALSE(preprocess.isStopTakeData_.load());
-}
-
-/*
-@tc.name: HandleNoStackEventTest
-@tc.desc: test HandleNoStackEvent with no stack TAGs.
-@tc.type: FUNC
-*/
-HWTEST_F(StackPreprocessTest, HandleNoStackEventTest, TestSize.Level0)
-{
-    NativeHookConfig hookConfig;
-    StackPreprocess preprocess(nullptr, hookConfig, 0);
-    RawStackPtr rawData = std::make_shared<RawStack>();
-    rawData->fpDepth = 1;
-    uint8_t ip = 16;
-    rawData->data = &ip;
-    std::shared_ptr<HookRecord> hookRecord = std::make_shared<HookRecord>(rawData);
-    BaseStackRawData baseData;
-    rawData->stackContext = &baseData;
-    hookRecord->rawStack_->stackContext->type = MMAP_FILE_TYPE;
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(MMAP_FILE_TYPE, hookRecord, rawData));
-    hookRecord->rawStack_->stackContext->type = THREAD_NAME_MSG;
-    EXPECT_TRUE(preprocess.ProcessSpecialEventTypes(THREAD_NAME_MSG, hookRecord, rawData));
 }
 
 /*
