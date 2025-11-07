@@ -47,6 +47,7 @@ public:
                 if (ret.first == NATIVE_SUCCESS) {
                     std::unique_lock<std::mutex> lockCacheValue(cachedValueMutex_);
                     cachedValue_ = ret.second;
+                    currentTime = GetElapsedNanoSecondsSinceBoot();
                     updateTime_.store(currentTime, std::memory_order_release);
                 }
                 return ret;
