@@ -50,6 +50,10 @@ public:
         servaddr.sin_family = AF_INET;
         servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
         servaddr.sin_port = htons(TCP_PORT);
+        if (::bind(sockfd, reinterpret_cast<struct sockaddr *>(&servaddr), sizeof(servaddr)) < 0) {
+            printf("Init Socket Bind failed prot(%d)", TCP_PORT);
+            return -1;
+        }
 
         if (connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr)) < 0) {
             printf("connect failed: %s", strerror(errno));
@@ -77,7 +81,6 @@ HWTEST_F(SPdaemonSdkDataTest, ItemDataTestCase, TestSize.Level1)
  */
 HWTEST_F(SPdaemonSdkDataTest, ServerThreadTestCase, TestSize.Level1)
 {
-    SdkDataRecv::GetInstance().StartExecutionOnce(false);
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     int sockfd = ConnectSdkServer();
     EXPECT_NE(sockfd, -1);
@@ -88,7 +91,6 @@ HWTEST_F(SPdaemonSdkDataTest, ServerThreadTestCase, TestSize.Level1)
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     close(sockfd);
-    SdkDataRecv::GetInstance().FinishtExecutionOnce(false);
     EXPECT_EQ(SdkDataRecv::GetInstance().sdkVec_.size(), 0);
 }
 }
