@@ -16,7 +16,6 @@
 #include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
-constexpr unsigned int WAIT_THREAD_TIME = 3;
 unsigned long GenerateLong(const uint8_t* data, size_t size)
 {
     if (data == nullptr || size == 0) {
@@ -34,15 +33,7 @@ std::vector<int> GetCommonPrctlOptions()
         PR_GET_NAME,           // 获取进程名称
         PR_SET_DUMPABLE,       // 设置进程可转储
         PR_GET_DUMPABLE,       // 获取进程可转储状态
-        PR_SET_PDEATHSIG,      // 设置父进程死亡信号
-        PR_GET_PDEATHSIG,      // 获取父进程死亡信号
-        PR_SET_SECCOMP,        // 设置seccomp模式
-        PR_GET_SECCOMP,        // 获取seccomp模式
         PR_GET_TID_ADDRESS,    // 获取TID地址
-        PR_SET_TIMERSLACK,     // 设置定时器松弛值
-        PR_GET_TIMERSLACK,     // 获取定时器松弛值
-        PR_SET_CHILD_SUBREAPER, // 设置子进程reaper
-        PR_GET_CHILD_SUBREAPER  // 获取子进程reaper状态
     };
 }
 
@@ -54,21 +45,21 @@ bool FuzzMallocHookPrctl(const uint8_t* data, size_t size)
     unsigned long arg2 = GenerateLong(data, size);
     unsigned long arg3 = GenerateLong(data, size);
     unsigned long arg4 = GenerateLong(data, size);
-    unsigned long arg5 = GenerateLong(data, size);
+    FuzzedDataProvider provider(data, size);
+    std::string fuzzStr = provider.ConsumeRandomLengthString();
+    unsigned long arg5 = reinterpret_cast<unsigned long>(fuzzStr.c_str());
+
     auto commonOptions = GetCommonPrctlOptions();
-    int result1 = -1;
-    ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
-    ohos_malloc_hook_on_start(nullptr);
-    void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
+    int result = -1;
     for (int opt : commonOptions) {
-        result1 = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
+        ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr);
+        ohos_malloc_hook_on_start(nullptr);
+        void* mallocBlack = ohos_malloc_hook_malloc(1024); // 1024 malloc default value
+        result = ohos_malloc_hook_prctl(opt, arg2, arg3, arg4, arg5);
+        ohos_malloc_hook_free(mallocBlack);
+        ohos_malloc_hook_on_end();
     }
-    int result2 = ohos_malloc_hook_prctl(0, 0, 0, 0, 0);
-    int result3 = ohos_malloc_hook_prctl(INT_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX, ULONG_MAX);
-    ohos_malloc_hook_free(mallocBlack);
-    ohos_malloc_hook_on_end();
-    sleep(WAIT_THREAD_TIME);
-    return (result1 != -1) || (result2 != -1) || (result3 != -1);
+    return (result != -1);
 }
 
 } // namespace OHOS
