@@ -26,4 +26,5 @@ message HiperfPluginConfig {
     };
     LogLevel log_level = 4; // set log level, default is NO_LOG
     string split_outfile_name = 5;
+    uint32 duration = 6;
 }

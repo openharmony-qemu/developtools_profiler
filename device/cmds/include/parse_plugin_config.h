@@ -47,6 +47,7 @@ public:
     bool SetSerializeGpuConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeFfrtProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeNetworkProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
+    uint32_t GetHiperfPluginDuration();
     google::protobuf::TextFormat::Parser& GetParser()
     {
         return parser_;

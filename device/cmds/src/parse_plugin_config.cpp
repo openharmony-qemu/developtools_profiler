@@ -351,6 +351,20 @@ bool ParsePluginConfig::SetSerializeHiperfConfig(const std::string& pluginName, 
     return true;
 }
 
+uint32_t ParsePluginConfig::GetHiperfPluginDuration()
+{
+    if (pluginConfigMap.find("hiperf-plugin") == pluginConfigMap.end()) {
+        return 0;
+    }
+    std::string configData = pluginConfigMap["hiperf-plugin"];
+    auto hiperfConfigNolite = std::make_unique<ForStandard::HiperfPluginConfig>();
+    if (!parser_.ParseFromString(configData, hiperfConfigNolite.get())) {
+        printf("hiperf config parse failed!\n");
+        return 0;
+    }
+    return hiperfConfigNolite->duration();
+}
+
 bool ParsePluginConfig::SetSerializeHisyseventConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
     std::string configData = pluginConfigMap[pluginName];

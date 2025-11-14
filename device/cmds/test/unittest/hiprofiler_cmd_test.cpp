@@ -206,13 +206,16 @@ public:
         }
     }
 
-    std::string CreateCommand(const std::string &outFile, int time) const
+    std::string CreateCommand(const std::string &outFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
         cmdStr += "-t " + std::to_string(time) + " \\\n";
+        if (isNonblock) {
+            cmdStr += "--nonblock \\\n";
+        }
         cmdStr += "-k \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -249,13 +252,16 @@ public:
         return cmdStr;
     }
 
-    std::string CreateHiperfCommand(const std::string &outFile, int time) const
+    std::string CreateHiperfCommand(const std::string &outFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
         cmdStr += "-t " + std::to_string(time) + " \\\n";
+        if (isNonblock) {
+            cmdStr += "--nonblock \\\n";
+        }
         cmdStr += "-k \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -280,13 +286,16 @@ public:
         return cmdStr;
     }
 
-    std::string CreateEncoderCommand(const std::string &outFile, int time) const
+    std::string CreateEncoderCommand(const std::string &outFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd \\\n"
             "-c - \\\n";
         cmdStr += "-k \\\n";
         cmdStr += "-o " + outFile + " \\\n";
+        if (isNonblock) {
+            cmdStr += "--nonblock \\\n";
+        }
         cmdStr += "-t " + std::to_string(time) + " \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -322,12 +331,15 @@ public:
         return cmdStr;
     }
 
-    std::string CreateSplitHtraceCommand(const std::string &outFile, int time) const
+    std::string CreateSplitHtraceCommand(const std::string &outFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd -s -k \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
+        if (isNonblock) {
+            cmdStr += "-nonblock \\\n";
+        }
         cmdStr += "-t " + std::to_string(time) + " \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -360,12 +372,15 @@ public:
         return cmdStr;
     }
 
-    std::string CreateSplitNetworkProfilerCommand(const std::string &outFile, int time) const
+    std::string CreateSplitNetworkProfilerCommand(const std::string &outFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd -s -k \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
+        if (isNonblock) {
+            cmdStr += "-nonblock \\\n";
+        }
         cmdStr += "-t " + std::to_string(time) + " \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -390,12 +405,15 @@ public:
     }
 
     std::string CreateSplitHiperfCommand(const std::string &outFile, const std::string &perfFile,
-                                    const std::string &perfSplitFile, int time) const
+                                    const std::string &perfSplitFile, int time, bool isNonblock = false) const
     {
         std::string cmdStr =
             "hiprofiler_cmd -s -k \\\n"
             "-c - \\\n";
         cmdStr += "-o " + outFile + " \\\n";
+        if (isNonblock) {
+            cmdStr += "-nonblock \\\n";
+        }
         cmdStr += "-t " + std::to_string(time) + " \\\n"
             "<<CONFIG\n"
             "request_id: 1\n"
@@ -846,4 +864,56 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0250, Function | MediumTest | Lev
     EXPECT_TRUE(RunCommand(cmd, content));
     destStr = "unknown param";
     EXPECT_TRUE(content.find(destStr) != std::string::npos);
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with -b ftrace plugin.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0260, Function | MediumTest | Level0)
+{
+    std::string content = "";
+    StartServerStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    std::string outFile = DEFAULT_PATH + "trace.htrace";
+    int time = 3;  // 3: sleep 3s
+    std::string cmd = CreateCommand(outFile, time, true);
+    EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(time);
+    EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
+    cmd = "rm " + outFile;
+    system(cmd.c_str());
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with -b hiperf plugin.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Level0)
+{
+    std::string content = "";
+    StartServerStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    std::string outFile = DEFAULT_PATH + "trace.htrace";
+    int time = 10;  // 10: sleep 10s
+    std::string cmd = CreateHiperfCommand(outFile, time, true);
+    EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(time);
+    EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
+    cmd = "rm " + outFile;
+    system(cmd.c_str());
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
 }

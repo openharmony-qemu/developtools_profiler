@@ -189,4 +189,19 @@ HWTEST_F(HiperfPluginUnittest, TestCheckOutputFile, TestSize.Level1)
 
     CheckRecordFile(DEFAULT_OUT_PATH);
 }
+
+HWTEST_F(HiperfPluginUnittest, TestDurationHiperf, TestSize.Level1)
+{
+    HiperfPluginConfig config;
+    config.set_log_level(HiperfPluginConfig_LogLevel_DEBUG);
+    config.set_outfile_name(DEFAULT_OUT_PATH);
+    config.set_duration(10);
+    config.set_record_args("-a -c 0 --cpu-limit 100 -e hw-cpu-cycles --call-stack dwarf");
+    std::vector<uint8_t> buffer(config.ByteSizeLong());
+    ASSERT_TRUE(config.SerializeToArray(buffer.data(), buffer.size()));
+    ASSERT_EQ(HiperfPluginSessionStart(buffer.data(), buffer.size()), 0);
+    sleep(DEFAULT_WAIT);
+    ASSERT_EQ(HiperfPluginSessionStop(), 0) << "hiperf should return ok";
+}
+
 } // namespace

@@ -38,6 +38,7 @@
 #include "parse_plugin_config.h"
 #include "profiler_service.grpc.pb.h"
 #include "trace_plugin_config.pb.h"
+#include "logging.h"
 #include <sys/stat.h>
 
 using google::protobuf::TextFormat;
@@ -65,6 +66,8 @@ bool g_exitProcessFlag = false;
 
 std::mutex g_keepSessionMutex;
 std::mutex g_sessionMutex;
+int g_pipefd[2];
+
 
 std::string GetLoopbackAddress()
 {
@@ -208,7 +211,6 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
     }
 #endif
     printf("keepSecond: %us\n", sessionConfig->sample_duration() / MS_PER_S);
-
     g_sampleDuration = sessionConfig->sample_duration();
     for (int i = 0; i < request->plugin_configs().size(); i++) {
         auto pluginConfig = request->mutable_plugin_configs(i);
@@ -216,14 +218,19 @@ std::unique_ptr<CreateSessionRequest> MakeCreateRequest(const std::string& confi
             printf("set %s plugin config failed\n", pluginConfig->name().c_str());
             return nullptr;
         }
+        if (pluginConfig->name() == "hiperf-plugin") {
+            uint32_t perfTime = ParsePluginConfig::GetInstance().GetHiperfPluginDuration();
+            if (perfTime > 0 && perfTime * MS_PER_S > sessionConfig->sample_duration()) {
+                printf("hiperf-plugin duration must be less than sample duration\n");
+                return nullptr;
+            }
+        }
     }
-
     content.clear();
     if (!TextFormat::PrintToString(*request.get(), &content)) {
         printf("config message format FAILED!\n");
         return nullptr;
     }
-
     return request;
 }
 
@@ -283,7 +290,6 @@ uint32_t CreateSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, co
         printf("CreateSession FAIL\n");
         return 0;
     }
-
     return createResponse.session_id();
 }
 
@@ -299,7 +305,6 @@ bool CheckStartSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, ui
         printf("StartSession FAIL\n");
         return false;
     }
-
     return true;
 }
 
@@ -313,7 +318,6 @@ bool CheckStopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uin
     if (!status.ok()) {
         return false;
     }
-
     printf("StopSession done!\n");
     return true;
 }
@@ -328,7 +332,6 @@ bool CheckDestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, 
     if (!status.ok()) {
         return false;
     }
-
     printf("DestroySession done!\n");
     return true;
 }
@@ -343,7 +346,6 @@ void StartThread(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t
         grpc::ClientContext keepContext;
         KeepSessionResponse keepResponse;
         profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
-
         std::unique_lock<std::mutex> lck(g_keepSessionMutex);
         g_keepSessionCv.wait_for(lck, std::chrono::seconds(KEEP_SESSION_SLEEP_SECOND));
     }
@@ -358,7 +360,7 @@ void StopThread(std::thread& keepSessionThread, std::atomic<bool>& sendHeart)
     }
 }
 
-bool DoCapture(const std::string& config, const std::string& keepSecond, const std::string& outputFile)
+bool DoCapture(const std::string& config, const std::string& keepSecond, const std::string& outputFile, bool isNonBlock)
 {
     auto profilerStub = GetProfilerServiceStub();
     if (profilerStub == nullptr) {
@@ -382,7 +384,6 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         // session has been created, need to destroy the session.
         return CheckDestroySession(profilerStub, sessionId);
     }
-
     // start keepSessionThread, in order to ensure the sessionId is valid.
     std::atomic<bool> sendHeart = true;
     std::thread keepSessionThread(StartThread, std::ref(profilerStub), std::ref(sessionId), std::ref(sendHeart));
@@ -392,12 +393,16 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         StopThread(keepSessionThread, sendHeart);
         return CheckDestroySession(profilerStub, sessionId);
     }
-
     if (!CheckStartSession(profilerStub, sessionId)) {
         StopThread(keepSessionThread, sendHeart);
         return false;
     }
-
+    if (isNonBlock) {
+        close(g_pipefd[0]);
+        uint32_t sigFlag = 1;
+        write(g_pipefd[1], &sigFlag, sizeof(sigFlag));
+        close(g_pipefd[1]);
+    }
     if (!g_exitProcessFlag) {
         // waiting for the collection time to end or signal wakeup.
         printf("tracing %u ms....\n", g_sampleDuration);
@@ -405,12 +410,10 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         std::unique_lock<std::mutex> lck(g_sessionMutex);
         g_sessionCv.wait_for(lck, std::chrono::milliseconds(g_sampleDuration));
     }
-
     bool ret = false;
     if (CheckStopSession(profilerStub, sessionId) && CheckDestroySession(profilerStub, sessionId)) {
         ret = true;
     }
-
     StopThread(keepSessionThread, sendHeart);
     return ret;
 }
@@ -424,6 +427,7 @@ struct DataContext {
     bool isShowPluginList = false;
     bool isStartProcess = false;
     bool isKillProcess = false;
+    bool isNonBlock = false;
 };
 
 void ParseCmdline(CommandLine& cmdLine, DataContext& data)
@@ -436,6 +440,7 @@ void ParseCmdline(CommandLine& cmdLine, DataContext& data)
     cmdLine.AddParamSwitch("--start", "-s", data.isStartProcess, "start dependent process");
     cmdLine.AddParamSwitch("--kill", "-k", data.isKillProcess, "kill dependent process");
     cmdLine.AddParamText("--config", "-c", data.configFile, "start trace by config file");
+    cmdLine.AddParamSwitch("--nonblock", "", data.isNonBlock, "start capture without block");
 }
 
 int CheckGrpcMsgSend()
@@ -491,6 +496,16 @@ void KillDependentProcess()
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
 }
 
+void StartCaptureTraceFile(std::string& config,  DataContext& data)
+{
+    if (DoCapture(config, data.traceKeepSecond, data.outputFile, data.isNonBlock)) {
+        printf("DONE\n");
+    }
+    if (data.isKillProcess) {
+        KillDependentProcess();
+    }
+}
+
 bool ParseConfig(const std::string& configFile, std::string& config)
 {
     std::string configFileWithPath = configFile;
@@ -544,7 +559,7 @@ int main(int argc, char* argv[])
         return -1;
     }
     signal(SIGINT, SignalHandler);
-
+    int optionIndex = 0;
     std::string config = "";
     while (true) {
         struct option long_options[] = {
@@ -555,16 +570,20 @@ int main(int argc, char* argv[])
             {"list", no_argument, nullptr, 'l'},
             {"start", no_argument,  nullptr, 's'},
             {"kill", no_argument,  nullptr, 'k'},
+            {"nonblock", no_argument,  nullptr, 0},
             {"config", required_argument, nullptr, 'c'},
             {nullptr, 0, nullptr, 0}
         };
-        int option = getopt_long(argc, argv, "c:t:o:qhlsk", long_options, nullptr);
+        int option = getopt_long(argc, argv, "c:t:o:qhlsk", long_options, &optionIndex);
         if (option == -1) {
             break;  // CONFIG.
         }
         std::string optionStr("qtohlskc");
-        if (optionStr.find(option) == std::string::npos) {
+        if (optionIndex == 0 && optionStr.find(option) == std::string::npos) {
             printf("invalid param\n");
+            return -1;
+        } else if (optionIndex > 0 && (strcmp(long_options[optionIndex].name, "nonblock") != 0)) {
+            printf("invalid param: %s\n", long_options[optionIndex].name);
             return -1;
         }
         if (option == 'c' && strcmp(optarg, "-") == 0) {
@@ -579,7 +598,6 @@ int main(int argc, char* argv[])
             }
         }
     }
-
     DataContext data;
     CommandLine& cmdLine = CommandLine::GetInstance();
     ParseCmdline(cmdLine, data);
@@ -643,13 +661,28 @@ int main(int argc, char* argv[])
         }
         return 1;
     }
-    // do capture work
-    if (DoCapture(config, data.traceKeepSecond, data.outputFile)) {
-        printf("DONE\n");
+    if (data.isNonBlock) {
+        if (pipe(g_pipefd) == -1) {
+            printf("pipe error\n");
+            return 0;
+        }
+        pid_t childPid = fork();
+        if (childPid == 0) {
+            close(STDOUT_FILENO);
+            StartCaptureTraceFile(config, data);
+        } else if (childPid > 0) {
+            close(g_pipefd[1]);
+            uint32_t exitFlag = 0;
+            read(g_pipefd[0], &exitFlag, sizeof(exitFlag));
+            if (exitFlag == 1) {
+                printf("Running in nonblock mode: tracing %s s....\n", data.traceKeepSecond.c_str());
+                PROFILER_LOG_INFO(LOG_CORE, "Running in nonblock mode: tracing %s s....\n",
+                                  data.traceKeepSecond.c_str());
+            }
+            close(g_pipefd[0]);
+            return 0;
+        }
     }
-
-    if (data.isKillProcess) {
-        KillDependentProcess();
-    }
+    StartCaptureTraceFile(config, data);
     return 0;
 }
