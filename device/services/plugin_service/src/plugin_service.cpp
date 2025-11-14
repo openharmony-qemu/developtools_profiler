@@ -221,6 +221,15 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
     }
     pluginCtx->profilerPluginState.set_state(ProfilerPluginState::IN_SESSION);
     pluginServiceImpl_->PushCommand(*pluginCtx->context, cmd);
+    auto sem = GetSemaphoreFactory().Create(0);
+    CHECK_NOTNULL(sem, false, "create Semaphore for start plugin session %s FAILED!", pluginName.c_str());
+    waitSemphores_[cmd->command_id()] = sem;
+    // wait on semaphore at most 10 seconds.
+    if (!sem->TimedWait(10)) {
+        // semaphore timeout
+        PROFILER_LOG_DEBUG(LOG_CORE, "=== StartPluginSession Waiting FAIL ===");
+        return false;
+    }
     PROFILER_LOG_INFO(LOG_CORE, "StartPluginSession %s done!", pluginName.c_str());
     return true;
 }

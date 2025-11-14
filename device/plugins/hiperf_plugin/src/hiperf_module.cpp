@@ -21,7 +21,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <vector>
-
+#include <thread>
 #include "common.h"
 #include "hiperf_plugin_config.pb.h"
 #include "hisysevent.h"
@@ -41,12 +41,14 @@ const std::string HIPERF_RECORD_STOP = " --control stop";
 const std::string HIPERF_RECORD_OK = "sampling success";
 const int WAIT_HIPERF_TIME = 10;
 const std::string HIPERF_BIN_PATH = "/system/bin/hiperf";
+const std::string HIPERF_TIME_DURATION = " -d";
 
 std::mutex g_taskMutex;
 bool g_isRoot = false;
 std::string g_logLevel = "";
 HiperfPluginConfig g_config;
 std::shared_ptr<TraceFileWriter> g_splitTraceWriter {nullptr};
+std::thread g_perfThread;
 
 bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>& cmds)
 {
@@ -61,12 +63,17 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
     } else {
         g_logLevel = " --nodebug";
     }
-
     // command of prepare
     std::string traceCmd;
-    auto &prepareCmd = cmds.emplace_back();
+    auto& prepareCmd = cmds.emplace_back();
     prepareCmd = g_isRoot ? SU_ROOT : "";
-    prepareCmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD + HIPERF_RECORD_PREPARE;
+    if (config.duration() > 0) {
+        prepareCmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD + HIPERF_TIME_DURATION + " " +
+                      std::to_string(config.duration());
+    } else {
+        prepareCmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD + HIPERF_RECORD_PREPARE;
+    }
+
     if (!config.outfile_name().empty()) {
         prepareCmd += " -o " + config.outfile_name();
         size_t fileSize = sizeof(g_pluginModule.outFileName);
@@ -76,7 +83,10 @@ bool ParseConfigToCmd(const HiperfPluginConfig& config, std::vector<std::string>
     if (!config.record_args().empty()) {
         prepareCmd += " " + config.record_args();
     }
-
+    if (config.duration() > 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "Hiperf is running in automatic start-stop mode");
+        return true;
+    }
     // command of start
     auto &startCmd = cmds.emplace_back();
     startCmd = g_isRoot ? SU_ROOT : "";
@@ -119,7 +129,8 @@ std::string GetCmdArgs(const HiperfPluginConfig& protoConfig)
     args << "is_root: " << (protoConfig.is_root() ? "true" : "false") << ", ";
     args << "record_args: " << protoConfig.record_args() << ", ";
     args << "split_outfile_name: " << protoConfig.split_outfile_name() << ", ";
-    args << "log_level: " << std::to_string(protoConfig.log_level());
+    args << "log_level: " << std::to_string(protoConfig.log_level()) << ", ";
+    args << "duration: " << std::to_string(protoConfig.duration());
     return args.str();
 }
 } // namespace
@@ -146,12 +157,24 @@ int HiperfPluginSessionStart(const uint8_t* configData, const uint32_t configSiz
     std::vector<std::string> cmds;
     res = ParseConfigToCmd(g_config, cmds);
     CHECK_TRUE(res, -1, "HiperfPluginSessionStart, parse config FAILED!");
-
-    for (const auto &cmd : cmds) {
-        res = RunCommand(cmd);
-        CHECK_TRUE(res, -1, "HiperfPluginSessionStart, RunCommand(%s) FAILED!", cmd.c_str());
+    if (g_config.duration() > 0) {
+        std::string cmdPerf = cmds[0];
+        g_perfThread = std::thread([cmdPerf]() {
+            PROFILER_LOG_INFO(LOG_CORE, "run command: %s", cmdPerf.c_str());
+            std::vector<std::string> cmdArg;
+            COMMON::SplitString(cmdPerf, " ", cmdArg);
+            cmdArg.emplace(cmdArg.begin(), HIPERF_BIN_PATH);
+            volatile pid_t childPid = -1;
+            int pipeFds[2] = {-1, -1};
+            FILE* fp = COMMON::CustomPopen(cmdArg, "r", pipeFds, childPid);
+            COMMON::CustomPclose(fp, pipeFds, childPid);
+        });
+    } else {
+        for (const auto& cmd : cmds) {
+            res = RunCommand(cmd);
+            CHECK_TRUE(res, -1, "HiperfPluginSessionStart, RunCommand(%s) FAILED!", cmd.c_str());
+        }
     }
-
     int ret = COMMON::PluginWriteToHisysevent("hiperf_plugin", "sh", GetCmdArgs(g_config),
                                               COMMON::ErrorType::RET_SUCC, "success");
     PROFILER_LOG_INFO(LOG_CORE, "hisysevent report hiperf_plugin result:%d", ret);
@@ -165,20 +188,25 @@ int HiperfPluginSessionStop(void)
         CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, SetDurationTime failed", __func__);
         g_splitTraceWriter->SetDurationTime();
     }
-
-    std::string cmd;
-    if (g_isRoot) {
-        cmd = SU_ROOT;
+    if (g_config.duration() == 0) {
+        std::string cmd;
+        if (g_isRoot) {
+            cmd = SU_ROOT;
+        }
+        cmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD;
+        cmd += HIPERF_RECORD_STOP;
+        RunCommand(cmd);
+    } else {
+        if (g_perfThread.joinable()) {
+            g_perfThread.join();
+        }
     }
-    cmd += HIPERF_CMD + g_logLevel + HIPERF_RECORD_CMD;
-    cmd += HIPERF_RECORD_STOP;
-    RunCommand(cmd);
-    usleep(SLEEP_TIME); // 250000: wait for perf.data
-
-    if (!g_config.split_outfile_name().empty()) { // write split file.
+    usleep(SLEEP_TIME);  // 250000: wait for perf.data
+    if (!g_config.split_outfile_name().empty()) {  // write split file.
         CHECK_NOTNULL(g_splitTraceWriter, -1, "%s: writer is nullptr, WriteStandaloneFile failed", __func__);
         g_splitTraceWriter->WriteStandalonePluginFile(std::string(g_pluginModule.outFileName),
-            std::string(g_pluginModule.name), std::string(g_pluginModule.version), DataType::HIPERF_DATA);
+                                                      std::string(g_pluginModule.name),
+                                                      std::string(g_pluginModule.version), DataType::HIPERF_DATA);
         g_splitTraceWriter->Finish();
         g_splitTraceWriter.reset();
         g_splitTraceWriter = nullptr;
