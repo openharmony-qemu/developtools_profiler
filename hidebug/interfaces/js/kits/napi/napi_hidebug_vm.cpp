@@ -117,7 +117,8 @@ napi_value GetAppVMObjectUsedSize(napi_env env, napi_callback_info info)
     uint64_t vmObjectUsed{0};
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     if (engine) {
-        vmObjectUsed = static_cast<uint64_t>(engine->GetHeapObjectSize());
+        constexpr int byte2KbShiftBits = 10;
+        vmObjectUsed = static_cast<uint64_t>(engine->GetHeapObjectSize()) >> byte2KbShiftBits;
     }
     napi_value ret;
     napi_create_bigint_uint64(env, vmObjectUsed, &ret);
