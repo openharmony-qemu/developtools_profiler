@@ -15,7 +15,6 @@
 
 #include "spdaemon_fuzzer.h"
 
-#include "FileDescriptor.h"
 #include "Threads.h"
 using namespace OHOS::SmartPerf;
 
@@ -29,15 +28,6 @@ bool FuzzGetThreads(const uint8_t* data, size_t size)
     ths.ItemData();
     return true;
 }
-bool FuzzGetFds(const uint8_t* data, size_t size)
-{
-    FileDescriptor &fds = FileDescriptor::GetInstance();
-    std::string dataArg(reinterpret_cast<const char *>(data), size);
-    fds.SetPackageName(dataArg);
-    fds.SetProcessIdForFuzzTest({dataArg});
-    fds.ItemData();
-    return true;
-}
 } // namespace OHOS
 
 /* Fuzzer entry point */
@@ -45,7 +35,6 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
 {
     /* Run your code on data */
     OHOS::FuzzGetThreads(data, size);
-    OHOS::FuzzGetFds(data, size);
     return 0;
 }
 
