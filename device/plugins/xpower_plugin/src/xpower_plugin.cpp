@@ -222,3 +222,10 @@ int XpowerPlugin::Stop()
     PROFILER_LOG_INFO(LOG_CORE, "%s:stop xpower plugin success", __func__);
     return 0;
 }
+
+#ifdef XPOWER_PLUGIN_UNITTEST
+bool XpowerPlugin::IsListenerHandleValid()
+{
+    return listenerHandle_ != nullptr;
+}
+#endif

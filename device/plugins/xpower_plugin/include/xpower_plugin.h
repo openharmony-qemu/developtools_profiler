@@ -31,7 +31,8 @@ public:
     int Start(const uint8_t* configData, uint32_t configSize);
     int Report(uint8_t* configData, uint32_t configSize);
     int Stop();
-    void OptimizeCallback(const std::uint32_t messageType, const uint8_t* protoData, size_t protoSize);
+    bool IsListenerHandleValid();
+    void OptimizeCallback(const std::uint32_t messageType, const uint8_t *protoData, size_t protoSize);
     void SetWriter(WriterStruct* writer);
     bool StartPowerManager(std::uint32_t messageType, std::string& bundleName);
     std::string GetCmdArgs(const XpowerConfig& traceConfig);
