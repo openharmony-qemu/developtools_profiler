@@ -360,6 +360,22 @@ void StopThread(std::thread& keepSessionThread, std::atomic<bool>& sendHeart)
     }
 }
 
+bool SendExitFlagProcess(bool isNonBlock)
+{
+    if (isNonBlock) {
+        close(g_pipefd[0]);
+        uint32_t sigFlag = 1;
+        int retVal = TEMP_FAILURE_RETRY(write(g_pipefd[1], &sigFlag, sizeof(sigFlag)));
+        if (retVal <= 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "write signal flag failed");
+            close(g_pipefd[1]);
+            return false;
+        }
+        close(g_pipefd[1]);
+    }
+    return true;
+}
+
 bool DoCapture(const std::string& config, const std::string& keepSecond, const std::string& outputFile, bool isNonBlock)
 {
     auto profilerStub = GetProfilerServiceStub();
@@ -397,11 +413,9 @@ bool DoCapture(const std::string& config, const std::string& keepSecond, const s
         StopThread(keepSessionThread, sendHeart);
         return false;
     }
-    if (isNonBlock) {
-        close(g_pipefd[0]);
-        uint32_t sigFlag = 1;
-        write(g_pipefd[1], &sigFlag, sizeof(sigFlag));
-        close(g_pipefd[1]);
+    if (!SendExitFlagProcess(isNonBlock)) {
+        StopThread(keepSessionThread, sendHeart);
+        return false;
     }
     if (!g_exitProcessFlag) {
         // waiting for the collection time to end or signal wakeup.
@@ -582,9 +596,6 @@ int main(int argc, char* argv[])
         if (optionIndex == 0 && optionStr.find(option) == std::string::npos) {
             printf("invalid param\n");
             return -1;
-        } else if (optionIndex > 0 && (strcmp(long_options[optionIndex].name, "nonblock") != 0)) {
-            printf("invalid param: %s\n", long_options[optionIndex].name);
-            return -1;
         }
         if (option == 'c' && strcmp(optarg, "-") == 0) {
             std::string content;
@@ -673,8 +684,11 @@ int main(int argc, char* argv[])
         } else if (childPid > 0) {
             close(g_pipefd[1]);
             uint32_t exitFlag = 0;
-            read(g_pipefd[0], &exitFlag, sizeof(exitFlag));
-            if (exitFlag == 1) {
+            int retVal = TEMP_FAILURE_RETRY(read(g_pipefd[0], &exitFlag, sizeof(exitFlag)));
+            if (retVal != sizeof(exitFlag)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "read exitFlag error");
+            }
+            if (exitFlag == 1) { // 1: exitance flag
                 printf("Running in nonblock mode: tracing %s s....\n", data.traceKeepSecond.c_str());
                 PROFILER_LOG_INFO(LOG_CORE, "Running in nonblock mode: tracing %s s....\n",
                                   data.traceKeepSecond.c_str());
