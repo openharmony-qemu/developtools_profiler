@@ -31,7 +31,6 @@ ohos_fuzztest("SpDaemonFuzzTest") {
     "-DFUZZ_TEST",
   ]
   sources = [
-    "../../../FileDescriptor.cpp",
     "../../../Threads.cpp",
     "../../../sp_log.cpp",
     "spdaemon_fuzzer.cpp",
