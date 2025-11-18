@@ -211,7 +211,6 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
     std::string pluginName = config.name();
     std::tie(pluginId, pluginCtx) = GetPluginContext(pluginName);
     CHECK_NOTNULL(pluginCtx, false, "get PluginContext failed!");
-
     auto cmd = pluginCommandBuilder_->BuildStartSessionCmd(config, pluginId);
     CHECK_TRUE(cmd != nullptr, false, "StartPluginSession BuildStartSessionCmd FAIL %s", pluginName.c_str());
     if (!pluginServiceImpl_->SendHeartBeat(*pluginCtx->context)) {
@@ -224,8 +223,7 @@ bool PluginService::StartPluginSession(const ProfilerPluginConfig& config)
     auto sem = GetSemaphoreFactory().Create(0);
     CHECK_NOTNULL(sem, false, "create Semaphore for start plugin session %s FAILED!", pluginName.c_str());
     waitSemphores_[cmd->command_id()] = sem;
-    // wait on semaphore at most 10 seconds.
-    if (!sem->TimedWait(10)) {
+    if (!sem->TimedWait(10)) { // 10: wait on semaphore at most 10 seconds.
         // semaphore timeout
         PROFILER_LOG_DEBUG(LOG_CORE, "=== StartPluginSession Waiting FAIL ===");
         return false;
