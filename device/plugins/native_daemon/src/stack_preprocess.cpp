@@ -1450,17 +1450,11 @@ bool StackPreprocess::FlushRecordStatistics()
 
 void StackPreprocess::SaveMemTag(uint32_t tagId, const std::string& tagName)
 {
-    std::lock_guard<std::mutex> guard(memTagMtx_);
-    std::string temp;
-    bool res = memTagMap_.Find(tagId, temp);
-    if (!res) {
-        memTagMap_.EnsureInsert(tagId, tagName);
-    }
+    memTagMap_.EnsureInsert(tagId, tagName);
 }
 
 bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 {
-    std::lock_guard<std::mutex> guard(memTagMtx_);
     return memTagMap_.Find(tagId, tagName);
 }
 

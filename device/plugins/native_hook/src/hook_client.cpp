@@ -1375,7 +1375,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
     rawdata.mallocSize = size;
     rawdata.addr = addr;
-    rawdata.tagId = isUsing ? GetTagId(holder, tag) : 0;
+    rawdata.tagId = GetTagId(holder, tag);
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
         realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));

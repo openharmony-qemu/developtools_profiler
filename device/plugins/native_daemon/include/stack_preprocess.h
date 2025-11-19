@@ -252,7 +252,6 @@ private:
     bool isHookStandaloneSerialize_ {false};
     int32_t pid_ {-1};
     std::mutex mtx_;
-    std::mutex memTagMtx_;
     std::mutex jsMapMtx_;
     COMMON::SpinLock spinLock_;
     bool isSaService_{false};

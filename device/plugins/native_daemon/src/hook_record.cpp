@@ -232,6 +232,9 @@ void MemoryUnusingRecord::SerializeData(NativeHookProto stackData, SerializeInfo
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto traceFreeEvent = protoData->mutable_trace_free_event();
+        if (hookInfo.tagName != "") {
+            traceFreeEvent->set_tag_name(hookInfo.tagName);
+        }
         HookRecord::SetTraceType(traceFreeEvent, hookInfo.tagName);
         HookRecord::SetEventFrame(traceFreeEvent, hookInfo);
         }, stackData);
