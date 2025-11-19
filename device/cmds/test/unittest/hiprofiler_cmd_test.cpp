@@ -111,7 +111,7 @@ public:
 
         while (std::getline(statusFile, line)) {
             if (line.find("Groups:") == 0) {
-                groupsLine - line;
+                groupsLine = line;
                 break;
             }
         }
@@ -958,19 +958,22 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0280, Function | MediumTest | Level0)
 {
+    std::string content = "";
     StartServerStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
     StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     sleep(1);
     std::string outFile = DEFAULT_PATH + "trace.htrace";
     int time = 10;
-    std::string cmd = CreateHiperfCommand(outFile, time, true);
-    FILE* pipe = popen(cmd.c_str(), "r");
+    std::string cmd = CreateHiperfCommand(outFile, time);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd.c_str(), "r"), pclose);
     EXPECT_NE(pipe, nullptr);
     std::string logGroupId = "1007";
     EXPECT_TRUE(CheckPluginsGroup(logGroupId));
-    int status = pclose(pipe);
-    EXPECT_EQ(status, 0);
+    std::array<char, READ_BUFFER_SIZE> buffer;
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        content += buffer.data();
+    }
     sleep(time);
     EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
     cmd = "rm " + outFile;
