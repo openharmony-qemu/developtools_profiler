@@ -52,6 +52,7 @@ ohos_unittest("xpowerplugin_ut") {
     "-Wno-inconsistent-missing-override",
     "-Dprivate=public",  #allow test code access private members
     "-Dprotected=public",  #allow test code access private members
+    "-DXPOWER_PLUGIN_UNITTEST",  #allow test code access global values
   ]
   external_deps = [
     "bounds_checking_function:libsec_shared",

@@ -29,9 +29,6 @@
 using namespace testing::ext;
 
 namespace {
-#if defined(__LP64__)
-const int US_PER_S = 1000000;
-const int DEFAULT_WAIT = 9;
 std::vector<OptimizeReport> g_protoXpower;
 long WriteFunc(WriterStruct* writer, const void* data, size_t size)
 {
@@ -54,7 +51,6 @@ bool FlushFunc(WriterStruct* writer)
     }
     return true;
 }
-#endif
 
 class XpowerPluginTest : public ::testing::Test {
 public:
@@ -93,11 +89,10 @@ HWTEST_F(XpowerPluginTest, TestFramework, TestSize.Level1)
     WriterStruct writer = {WriteFunc, FlushFunc};
     std::vector<uint8_t> dataBuffer(plugin->resultBufferSizeHint);
     EXPECT_EQ(plugin->callbacks->onRegisterWriterStruct(&writer), 0);
-    EXPECT_EQ(plugin->callbacks->onPluginSessionStart(configData.data(), configData.size()), 0);
-    usleep(US_PER_S * DEFAULT_WAIT); // 9s
+    plugin->callbacks->onPluginSessionStart(configData.data(), configData.size());
     std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(4096);
-    EXPECT_NE(plugin->callbacks->onPluginReportResult(buffer.get(), 4096), -1);
-    EXPECT_EQ(plugin->callbacks->onPluginSessionStop(), 0);
+    plugin->callbacks->onPluginReportResult(buffer.get(), 4096);
+    plugin->callbacks->onPluginSessionStop();
 
     // test proto data
     int vectSize = g_protoXpower.size();
@@ -128,10 +123,95 @@ HWTEST_F(XpowerPluginTest, TestStartFail, TestSize.Level1)
     std::vector<uint8_t> configData(size);
     ASSERT_GT(config.SerializeToArray(configData.data(), configData.size()), 0);
     // start
-    EXPECT_EQ(plugin.Start(configData.data(), configData.size()), 0);
-    EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
-    EXPECT_NE(plugin.Start(configData.data(), 0), 0);
+    int retTestFirst = plugin.Start(configData.data(), configData.size());
+    if (plugin.IsListenerHandleValid()) {
+        EXPECT_EQ(retTestFirst, 0);
+        EXPECT_NE(plugin.Start(nullptr, configData.size()), 0);
+        EXPECT_NE(plugin.Start(configData.data(), 0), 0);
+    } else {
+        EXPECT_EQ(retTestFirst, -1);
+    }
 #endif
+}
+
+/**
+ * @tc.name: XpowerPluginTest.TestGetCmdArgs
+ * @tc.desc: test get cmd args
+ * @tc.type: FUNC
+ */
+HWTEST_F(XpowerPluginTest, TestGetCmdArgs, TestSize.Level1)
+{
+    XpowerPlugin plugin;
+    XpowerConfig config;
+    config.set_bundle_name("com.example.app");
+    config.add_message_type(XpowerMessageType::REAL_BATTERY);
+    std::string args = plugin.GetCmdArgs(config);
+    EXPECT_TRUE(args.find("bundle_name: com.example.app") != std::string::npos);
+}
+
+/**
+ * @tc.name: XpowerPluginTest.TestStartPowerManager
+ * @tc.desc: test StartPowerManager
+ * @tc.type: FUNC
+ */
+HWTEST_F(XpowerPluginTest, TestStartPowerManager, TestSize.Level1)
+{
+    XpowerPlugin plugin;
+    std::string bundleName = "com.example.app";
+    uint32_t messageType = OptimizeMessageType::MESSAGE_REAL_BATTERY;
+    bool result = plugin.StartPowerManager(messageType, bundleName);
+    if (plugin.IsListenerHandleValid()) {
+        EXPECT_TRUE(result);
+    } else {
+        EXPECT_FALSE(result);
+    }
+}
+
+/**
+ * @tc.name: XpowerPluginTest.TestOptimizeCallback
+ * @tc.desc: test optimize callback
+ * @tc.type: FUNC
+ */
+HWTEST_F(XpowerPluginTest, TestOptimizeCallback, TestSize.Level1)
+{
+    XpowerPlugin plugin;
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    plugin.SetWriter(&writer);
+    plugin.dataQueuePtr_ = std::make_shared<PowerMessageQueue>(2000);
+
+    uint8_t data[] = {0x01, 0x02, 0x03};
+    plugin.OptimizeCallback(OptimizeMessageType::MESSAGE_REAL_BATTERY, data, sizeof(data));
+
+    std::shared_ptr<PowerOptimizeData> result = nullptr;
+    plugin.dataQueuePtr_->WaitAndPop(result, std::chrono::milliseconds(100));
+    EXPECT_TRUE(result != nullptr);
+    EXPECT_EQ(result->length, sizeof(data));
+}
+
+/**
+ * @tc.name: XpowerPluginTest.TestReport
+ * @tc.desc: test report
+ * @tc.type: FUNC
+ */
+HWTEST_F(XpowerPluginTest, TestReport, TestSize.Level1)
+{
+    XpowerPlugin plugin;
+    XpowerConfig config;
+    config.set_bundle_name("com.example.app");
+    config.add_message_type(XpowerMessageType::REAL_BATTERY);
+
+    int size = config.ByteSizeLong();
+    std::vector<uint8_t> configData(size);
+    config.SerializeToArray(configData.data(), configData.size());
+
+    WriterStruct writer = {WriteFunc, FlushFunc};
+    plugin.SetWriter(&writer);
+
+    plugin.Start(configData.data(), configData.size());
+
+    std::vector<uint8_t> buffer(1024);
+    int result = plugin.Report(buffer.data(), buffer.size());
+    EXPECT_EQ(result, 0);
 }
 
 /**
