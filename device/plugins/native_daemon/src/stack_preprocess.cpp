@@ -278,7 +278,6 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
                 return ProcessSharedMemoryData(data, size, rawData, hookRecord);
             });
         if (!ret) {
-            PROFILER_LOG_INFO(LOG_CORE, "Stop taking data from shared memory");
             break;
         }
     }
