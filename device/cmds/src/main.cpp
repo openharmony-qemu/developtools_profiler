@@ -679,7 +679,13 @@ int main(int argc, char* argv[])
         }
         pid_t childPid = fork();
         if (childPid == 0) {
+            close(STDIN_FILENO);
             close(STDOUT_FILENO);
+            close(STDERR_FILENO);
+            if (setsid() < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "setsid error");
+                return 0;
+            }
             StartCaptureTraceFile(config, data);
         } else if (childPid > 0) {
             close(g_pipefd[1]);
@@ -688,7 +694,7 @@ int main(int argc, char* argv[])
             if (retVal != sizeof(exitFlag)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "read exitFlag error");
             }
-            if (exitFlag == 1) { // 1: exitance flag
+            if (exitFlag == 1) {  // 1: exitance flag
                 printf("Running in nonblock mode: tracing %s s....\n", data.traceKeepSecond.c_str());
                 PROFILER_LOG_INFO(LOG_CORE, "Running in nonblock mode: tracing %s s....\n",
                                   data.traceKeepSecond.c_str());
