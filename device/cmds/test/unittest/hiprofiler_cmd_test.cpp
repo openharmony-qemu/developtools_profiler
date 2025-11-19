@@ -16,6 +16,7 @@
 #include <array>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -85,6 +86,38 @@ public:
         while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
             content += buffer.data();
         }
+        return true;
+    }
+
+    bool CheckPluginsGroup(const std::string& group)
+    {
+        std::string pidStr = "";
+        std::string getPidCmd = "pidof hiprofiler_plugins";
+        int maxRetry = 10;
+        while (pidStr.empty() && maxRetry > 0) {
+            RunCommand(getPidCmd, pidStr);
+            maxRetry--;
+        }
+
+        std::stringstream ss(pidStr);
+        int processPid = 0;
+        ss >> processPid;
+        std::string filePath = "/proc/" + std::to_string(processPid) + "/status";
+        std::ifstream statusFile;
+        std::string line;
+        std::string groupsLine;
+        statusFile.open(filePath);
+        CHECK_TRUE(statusFile.is_open(), false, "open hiprofiler_plugins status File failed.");
+
+        while (std::getline(statusFile, line)) {
+            if (line.find("Groups:") == 0) {
+                groupsLine - line;
+                break;
+            }
+        }
+        statusFile.close();
+        CHECK_TRUE(!groupsLine.empty(), false, "read hiprofiler_plugins groups line failed.");
+        CHECK_TRUE(groupsLine.find(group) != std::string::npos, false, "check hiprofiler_plugins log group failed.");
         return true;
     }
 
@@ -908,6 +941,36 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Lev
     int time = 10;  // 10: sleep 10s
     std::string cmd = CreateHiperfCommand(outFile, time, true);
     EXPECT_TRUE(RunCommand(cmd, content));
+    sleep(time);
+    EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
+    cmd = "rm " + outFile;
+    system(cmd.c_str());
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+}
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with log group.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0280, Function | MediumTest | Level0)
+{
+    StartServerStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+    std::string outFile = DEFAULT_PATH + "trace.htrace";
+    int time = 10;
+    std::string cmd = CreateHiperfCommand(outFile, time, true);
+    FILE* pipe = popen(cmd.c_str(), "r");
+    EXPECT_NE(pipe, nullptr);
+    std::string logGroupId = "1007";
+    EXPECT_TRUE(CheckPluginsGroup(logGroupId));
+    int status = pclose(pipe);
+    EXPECT_EQ(status, 0);
     sleep(time);
     EXPECT_EQ(access(outFile.c_str(), F_OK), 0);
     cmd = "rm " + outFile;
