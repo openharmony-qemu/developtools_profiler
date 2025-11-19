@@ -42,6 +42,8 @@ constexpr int VEC_SHIFT = 2;
 
 static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
 static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
+static std::unordered_map<std::string, std::shared_ptr<TraceFileWriter>> g_nameAndFilePathWriterMap;
+static std::unordered_map<int32_t, std::shared_ptr<TraceFileWriter>> g_pidWriterMap;
 static std::mutex g_mtx;
 static ScheduleTaskManager g_scheduleTaskManager;
 static bool g_hasStartupMode{false};
@@ -243,6 +245,9 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         StringViewMemoryHold::GetInstance().Clear();
         DelayedShutdown(false);
     }
+    g_nameAndFilePathWriterMap.erase(config->processName);
+    g_nameAndFilePathWriterMap.erase(config->filePath);
+    g_pidWriterMap.erase(config->pid);
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -292,13 +297,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
     }
     PROFILER_LOG_INFO(LOG_CORE, "file path: %s", config->filePath_.c_str());
-
     if (!CheckConfig(config, fd)) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_MSG_EMPTY,
             "check config failed");
         return RET_ERR;
     }
-
     if (fd == 0) {
         auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
         if (!retFile.first) {
@@ -319,7 +322,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     }
     CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
     writeFile->SetTimeSource();
-
     hook->RegisterWriter(writeFile);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
@@ -366,12 +368,15 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
 
     if (configCtx->pid > 0) {
         g_pidCtx[configCtx->pid] = configCtx;
+        g_pidWriterMap[configCtx->pid] = writeFile;
     } else if (!configCtx->processName.empty()) {
         g_nameAndFilePathCtx[configCtx->processName] = configCtx;
+        g_nameAndFilePathWriterMap[configCtx->processName] = writeFile;
     }
 
     if (fd == 0) {
         g_nameAndFilePathCtx[configCtx->filePath] = configCtx;
+        g_nameAndFilePathWriterMap[configCtx->filePath] = writeFile;
     }
     ++g_taskNum;
     DelayedShutdown(true);
