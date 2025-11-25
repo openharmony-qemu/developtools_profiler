@@ -1187,11 +1187,11 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             return nullptr;
         }
         ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-        if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
-            rawdata.type = MEMORY_USING_MSG;
-        }
         if (len != -1) {
             fileName[len] = '\0';
+            if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
+                rawdata.type = MEMORY_USING_MSG;
+            }
             SendMmapFileRawData(prot, flags, offset, fileName, rawdata, holder);
             char* p = strrchr(fileName, '/');
             if (p != nullptr) {
@@ -1549,17 +1549,14 @@ size_t getDmaSize(void* addr, bool isUsing)
     }
     
     ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-    if (len == FWRITE_ERROR_VAL || (len >= sizeof(fileName)-1)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "readlink faild for fd %d ", fd);
-        return 0;
+    if (len != -1) {
+        fileName[len] = '\0';
+        if (strstr(fileName, "anon_inode:dmabuf") != NULL){
+            std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info";
+            size_t size = findFdSize(filePath, g_hookPid.load(), fd);
+            return size;
+        }
     }
-
-    if (strstr(fileName, "anon_inode:dmabuf") != NULL){
-        std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info"
-        size_t size =findFdSize(filePath,g_hookPid.load(),fd);
-        return size;
-    }
-
     return 0;
 }
 
@@ -1661,7 +1658,7 @@ void hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, si
     rawdata.addr = oldAddr;
     rawdata.newAddr = newAddr;
     rawdata.tagId = GetPredefinedTagId(mask);
-    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), stackSize,
+    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
@@ -1705,7 +1702,7 @@ void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
     rawdata.mallocSize = size;
     rawdata.addr = addr;
     rawdata.tagId = GetPredefinedTagId(mask);
-    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), stackSize,
+    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
@@ -1825,17 +1822,17 @@ void ohos_malloc_hook_restrace(unsigned long long mask, void* addr, size_t size,
     __set_hook_flag(true);
 }
 
-void ohos_malloc_hook_resTraceMove(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+void ohos_malloc_hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize)
 {
     __set_hook_flag(false);
-    hook_resTraceMove(mask, addr, size, tag, isUsing);
+    hook_resTraceMove(mask, oldAddr, newAddr, newSize);
     __set_hook_flag(true);
 }
 
-void ohos_malloc_hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+void ohos_malloc_hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
 {
     __set_hook_flag(false);
-    hook_resTraceFreeRegion(mask, addr, size, tag, isUsing);
+    hook_resTraceFreeRegion(mask, addr, size);
     __set_hook_flag(true);
 }
 
