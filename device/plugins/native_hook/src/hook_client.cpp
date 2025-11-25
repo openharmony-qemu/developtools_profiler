@@ -39,6 +39,10 @@
 #include "sampling.h"
 #include "hitrace/trace.h"
 #include "address_handler.h"
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <cstdint>
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -223,6 +227,21 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         }
         case RES_THREAD_MASK: {
             return static_cast<uint16_t>(THREAD_MASK_INDEX + 1);
+        }
+        case RES_JS_HEAP_MASK: {
+            return static_cast<uint16_t>(JS_HEAP_MASK_INDEX + 1);
+        }
+        case RES_ARKTS_HEAP_MASK: {
+            return static_cast<uint16_t>(ARKTS_HEAP_MASK_INDEX + 1);
+        }
+        case RES_KMP_HEAP_MASK: {
+            return static_cast<uint16_t>(KMP_HEAP_MASK_INDEX + 1);
+        }
+        case RES_RN_HEAP_MASK: {
+            return static_cast<uint16_t>(RN_HEAP_MASK_INDEX + 1);
+        }
+        case RES_DMABUF_MASK: {
+            return static_cast<uint16_t>(DMABUF_MASK_INDEX + 1);
         }
         default: return 0;
     }
@@ -1168,6 +1187,9 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
             return nullptr;
         }
         ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
+        if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
+            rawdata.type = MEMORY_USING_MSG;
+        }
         if (len != -1) {
             fileName[len] = '\0';
             SendMmapFileRawData(prot, flags, offset, fileName, rawdata, holder);
@@ -1479,6 +1501,68 @@ int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
     }
 }
 
+size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t target_fd)
+{
+    std::ifstream file(filename);
+    if (!file) {
+        PROFILER_LOG_ERROR(LOG_CORE, "caon not open errno=%d!!!", errno);
+        return 0;
+    }
+    std::string line;
+    int skip = 1;
+    while (std::getline(file, line)){
+        if (skip > 0) {
+            --skip;
+            continue;
+        }
+        std::istringstream iss(line);
+        std::string col1;
+        uint32_t pid, fd;
+        size_t size;
+        if (!(iss >> col1 >> pid >> fd >> size)) {
+            continue;
+        }
+        if (pid == target_pid && fd == target_fd) {
+            return size;
+        }
+    }
+    return 0;
+}
+
+size_t getDmaSize(void* addr, bool isUsing)
+{
+    if (!isUsing){
+        return 0;
+    }
+    char path[FD_PATH_LENGTH] = {0};
+    char fileName[MAX_HOOK_PATH + 1] = {0};
+    int fd = static_cast<int>(reinterpret_cast<intptr_t>(addr));
+
+    if(fd < 0){
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid fd value");
+        return 0;
+    }
+
+    if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "getDmaSize snprintf_s error");
+        return 0;
+    }
+    
+    ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
+    if (len == FWRITE_ERROR_VAL || (len >= sizeof(fileName)-1)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "readlink faild for fd %d ", fd);
+        return 0;
+    }
+
+    if (strstr(fileName, "anon_inode:dmabuf") != NULL){
+        std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info"
+        size_t size =findFdSize(filePath,g_hookPid.load(),fd);
+        return size;
+    }
+
+    return 0;
+}
+
 void hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
 {
     if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
@@ -1517,6 +1601,22 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     int realSize = CalculateRealSize(fpStackDepth, rawdata);
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+
+    if(mask == RES_FD_DUP){
+        size_t size_new = getDmaSize(addr,isUsing);
+        if(size_new > 0){
+            mask = RES_DMABUF_MASK;
+            rawdata.mallocSize = size_new;
+            rawdata.tagId = GetTagId(holder, tag, mask);
+
+            unsigned long long new_combineVal = mask & g_ClientConfig.traceMask;
+            if(new_combineVal != 0){
+                int new_realSize = CalculateRealSize(fpStackDepth, rawdata);
+                holder->SendStackWithPayload(&rawdata, new_realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+            }
+        }
+    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1529,6 +1629,97 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     }
 #endif
 }
+
+
+void hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize)
+{
+    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
+        return;
+    }
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return;
+    }
+    StackRawData rawdata = {{{{0}}}};
+    uintptr_t stackPtr = 0;
+    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+
+    unsigned long long combineVal = mask & g_ClientConfig.traceMask;
+    if (combineVal == 0) {
+        return;
+    }
+    
+    rawdata.type = MALLOC_ARKTS;
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
+    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
+    rawdata.mallocSize = newSize;
+    rawdata.addr = oldAddr;
+    rawdata.newAddr = newAddr;
+    rawdata.tagId = GetPredefinedTagId(mask);
+    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
+}
+
+void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
+{
+    if (!g_hookReady || !g_ClientConfig.memtraceEnable || IsPidChanged()) {
+        return;
+    }
+#ifdef PERFORMANCE_DEBUG
+    struct timespec start = {};
+    clock_gettime(CLOCK_REALTIME, &start);
+#endif
+    std::weak_ptr<HookSocketClient> weakClient = g_hookClient;
+    auto holder = weakClient.lock();
+    if (holder == nullptr) {
+        return;
+    }
+    StackRawData rawdata = {{{{0}}}};
+    uintptr_t stackPtr = 0;
+    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+
+    unsigned long long combineVal = mask & g_ClientConfig.traceMask;
+    if (combineVal == 0) {
+        return;
+    }
+    
+    rawdata.type = FREE_ARKTS;
+    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
+    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
+    rawdata.mallocSize = size;
+    rawdata.addr = addr;
+    rawdata.tagId = GetPredefinedTagId(mask);
+    holder->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), stackSize,
+                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+#ifdef PERFORMANCE_DEBUG
+    g_mallocTimes++;
+    struct timespec end = {};
+    clock_gettime(CLOCK_REALTIME, &end);
+    g_timeCost += (end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec);
+    if (g_mallocTimes % PRINT_INTERVAL == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "g_mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
+            g_mallocTimes.load(), g_timeCost.load(), g_dataCounts.load(), g_timeCost.load() / g_mallocTimes.load());
+    }
+#endif
+}
+
 
 bool ohos_malloc_hook_initialize(const MallocDispatchType*malloc_dispatch, bool*, const char*)
 {
@@ -1631,6 +1822,20 @@ void ohos_malloc_hook_restrace(unsigned long long mask, void* addr, size_t size,
 {
     __set_hook_flag(false);
     hook_restrace(mask, addr, size, tag, isUsing);
+    __set_hook_flag(true);
+}
+
+void ohos_malloc_hook_resTraceMove(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+{
+    __set_hook_flag(false);
+    hook_resTraceMove(mask, addr, size, tag, isUsing);
+    __set_hook_flag(true);
+}
+
+void ohos_malloc_hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+{
+    __set_hook_flag(false);
+    hook_resTraceFreeRegion(mask, addr, size, tag, isUsing);
     __set_hook_flag(true);
 }
 
