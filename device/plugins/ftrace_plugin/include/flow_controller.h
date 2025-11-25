@@ -84,12 +84,15 @@ private:
     void DisableTraceEvents(void);
     void DisableAllCategories(void);
     std::string GetCmdArgs(const TracePluginConfig& traceConfig);
+    bool ParseCommDictInfo();
 
     template <typename T> bool ReportClockTimes(T& tracePluginResult);
 
     template <typename T> bool ParseKernelSymbols(T& tracePluginResult);
 
     template <typename T> bool ParsePerCpuStatus(T& tracePluginResult, int stage);
+
+    template <typename T> bool ParseCommDict(T& tracePluginResult);
 
     template <typename T, typename E>
     bool ParseFtraceEvent(T* tracePluginResult, int cpuid, uint8_t page[], E* ftraceEvent);

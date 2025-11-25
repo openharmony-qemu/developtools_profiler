@@ -189,4 +189,32 @@ HWTEST_F(FtraceParserTest, ParsePage, TestSize.Level0)
         EXPECT_EQ(close(fd), 0);
     }
 }
+
+/*
+ * @tc.name: TestGetCommDict
+ * @tc.desc: test FtraceParser::GetCommDict with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(FtraceParserTest, TestGetCommDict, TestSize.Level0)
+{
+    FtraceParser parser;
+    auto& dict = parser.GetCommDict();
+    EXPECT_TRUE(dict.empty());
+
+    dict[1] = "value1";
+    dict[2] = "value2";
+
+    EXPECT_EQ(dict.size(), 2);
+    EXPECT_EQ(dict[1], "value1");
+    EXPECT_EQ(dict[2], "value2");
+
+    auto& dict2 = parser.GetCommDict();
+    EXPECT_EQ(dict2.size(), 2);
+    EXPECT_EQ(dict2[1], "value1");
+    EXPECT_EQ(dict2[2], "value2");
+
+    dict2[3] = "value3";
+    EXPECT_EQ(dict.size(), 3);
+    EXPECT_EQ(dict[3], "value3");
+}
 } // namespace
