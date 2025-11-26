@@ -15,12 +15,16 @@
 
 #include <atomic>
 #include <climits>
+#include <cstdint>
 #include <dlfcn.h>
 #include <fcntl.h>
+#include <fstream>
+#include <iostream>
 #include <malloc.h>
+#include <pthread.h>
+#include <sstream>
 #include <string>
 #include <sys/time.h>
-#include <pthread.h>
 #include <sys/prctl.h>
 #include <unordered_map>
 #include <unordered_set>
@@ -39,10 +43,6 @@
 #include "sampling.h"
 #include "hitrace/trace.h"
 #include "address_handler.h"
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cstdint>
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -1604,6 +1604,10 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     int realSize = CalculateRealSize(fpStackDepth, rawdata);
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+<<<<<<< HEAD
+=======
+
+>>>>>>> 05d0549309bc1afe0ccc6346bc2f321d1cfdf998
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
