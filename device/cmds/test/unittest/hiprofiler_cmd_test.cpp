@@ -983,3 +983,38 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0280, Function | MediumTest | Lev
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
     sleep(1);
 }
+
+/**
+ * @tc.name: hiprofiler_cmd
+ * @tc.desc: Test hiprofiler_cmd with long option.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0290, Function | MediumTest | Level0)
+{
+    StopProcessStub(DEFAULT_HIPROFILERD_PATH);
+    sleep(1);
+    StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
+    sleep(1);
+
+    std::string cmd = DEFAULT_HIPROFILER_CMD_PATH + " --start ";
+    std::string content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    std::string destStr = "invalid param";
+    EXPECT_FALSE(content.find(destStr) != std::string::npos);
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " --start --kill ";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_FALSE(content.find(destStr) != std::string::npos);
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " --start --time 30 --kill";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_FALSE(content.find(destStr) != std::string::npos);
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " --start --time 30 --kill --out /data/local/tmp/trace.htrace";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_FALSE(content.find(destStr) != std::string::npos);
+    cmd = DEFAULT_HIPROFILER_CMD_PATH + " --start --kill --list";
+    content = "";
+    EXPECT_TRUE(RunCommand(cmd, content));
+    EXPECT_FALSE(content.find(destStr) != std::string::npos);
+}
