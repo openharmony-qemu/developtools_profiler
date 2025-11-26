@@ -240,6 +240,123 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest003, TestSize.Level0)
 
 /**
  * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest004, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_DMABUF_MASK, mem, 1, TAG_RES_DMABUF_MASK, true);
+    ohos_malloc_hook_restrace(RES_DMABUF_MASK, mem, 1, TAG_RES_DMABUF_MASK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest005, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_ARKTS_HEAP_MASK, mem, 1, TAG_RES_ARKTS_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_ARKTS_HEAP_MASK, mem, 1, TAG_RES_ARKTS_HEAP_MASK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest006, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_JS_HEAP_MASK, mem, 1, TAG_RES_JS_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_JS_HEAP_MASK, mem, 1, TAG_RES_JS_HEAP_MASK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest007, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_KMP_HEAP_MASK, mem, 1, TAG_RES_KMP_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_KMP_HEAP_MASK, mem, 1, TAG_RES_KMP_HEAP_MASK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest008, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_RN_HEAP_MASK, mem, 1, TAG_RES_RN_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_RN_HEAP_MASK, mem, 1, TAG_RES_RN_HEAP_MASK, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+HWTEST_F(NativeHookTest, ResTraceMoveTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* oldMem = new char[g_size];
+    char* newMem = new char[g_resize];
+
+    ohos_malloc_hook_resTraceMove(RES_ARKTS_HEAP_MASK, oldMem, newMem, g_resize);
+
+    delete[] oldMem;
+    delete[] newMem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+HWTEST_F(NativeHookTest, ResTraceFreeRegionTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+
+    char* mem = new char[g_size];
+
+    ohos_malloc_hook_resTraceFreeRegion(RES_ARKTS_HEAP_MASK, mem, g_size);
+
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
  * @tc.desc: Test hook aligned alloc normal process.
  * @tc.type: FUNC
  */

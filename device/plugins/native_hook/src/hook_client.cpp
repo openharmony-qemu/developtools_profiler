@@ -1584,6 +1584,12 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if ((g_ClientConfig.isSaMode && isUsing) && (!CheckRestraceConditions(combineVal, size))) {
         return;
     }
+    if(mask == RES_DMABUF_MASK) {
+        size = getDmaSize(addr, isUsing);
+        if(size == 0){
+            return;
+        }
+    }
     int fpStackDepth = 0;
     int stackSize = CollectStackInfo(isUsing, rawdata, stackPtr, fpStackDepth);
     if (stackSize == -1) {
@@ -1598,22 +1604,6 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     int realSize = CalculateRealSize(fpStackDepth, rawdata);
     holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
                                  reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-
-    if(mask == RES_FD_DUP){
-        size_t size_new = getDmaSize(addr,isUsing);
-        if(size_new > 0){
-            mask = RES_DMABUF_MASK;
-            rawdata.mallocSize = size_new;
-            rawdata.tagId = GetTagId(holder, tag, mask);
-
-            unsigned long long new_combineVal = mask & g_ClientConfig.traceMask;
-            if(new_combineVal != 0){
-                int new_realSize = CalculateRealSize(fpStackDepth, rawdata);
-                holder->SendStackWithPayload(&rawdata, new_realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-            }
-        }
-    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
