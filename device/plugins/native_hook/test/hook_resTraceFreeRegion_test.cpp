@@ -38,14 +38,18 @@ void AllocateMemory(int depth, int size)
         return;
     }
     if (depth == 0) {
-        char* mem = new char[size];
-        restrace(RES_GPU_VK, mem, DEFAULT_VAL, TAG_RES_GPU_VK, true);
-        if (mem == nullptr) {
+        char* buffer = new (std::nothrow) char[size];
+        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
+        if (!buffer) {
+            std::cerr << "AllocateAndFreeRegion: allocation failed, size=" << size << std::endl;
             return;
         }
-        mem[0] = 'a';
-        restrace(RES_GPU_VK, mem, DEFAULT_VAL, TAG_RES_GPU_VK, false);
-        delete[] mem;
+        buffer[0] = 'x';
+        buffer[size - 1] = 'y';
+        resTraceFreeRegion(RES_ARKTS_HEAP_MASK, static_cast<void*>(buffer), static_cast<size_t>(size));
+
+        restrace(RES_ARKTS_HEAP_MASK, buffer, 0, TAG_RES_ARKTS_HEAP_MASK, false);
+        delete[] buffer;
         return;
     }
     AllocateMemory(depth - 1, size);
