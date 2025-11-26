@@ -1433,15 +1433,12 @@ HWTEST_F(ProfilerServicePerformanceTest, DFX_DFR_Hiprofiler_0050, Function | Med
     EXPECT_TRUE(StartPluginSession(sessionId2));
     usleep(TIMEOUT_US);
     EXPECT_EQ(access(HILOG_RESULT_FILE.c_str(), F_OK), 0);
-    EXPECT_TRUE(StopPluginSession(sessionId2));
-    EXPECT_TRUE(DestroyPluginSession(sessionId2));
-    // 销毁会话之后停止心跳发送
     sendHeart2 = false;
     keepSessionThread2.join();
-
+    EXPECT_TRUE(StopPluginSession(sessionId2));
+    EXPECT_TRUE(DestroyPluginSession(sessionId2));
     StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
-
     pluginVec_.clear();
 }
 

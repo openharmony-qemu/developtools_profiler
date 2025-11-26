@@ -195,9 +195,14 @@ HWTEST_F(PluginManagerTest, PluginStreamMode, TestSize.Level1)
     int eventFd = eventfd(0, O_CLOEXEC | O_NONBLOCK);
     EXPECT_TRUE(pluginManage->CreateWriter("hidump-plugin", SMB_SIZE, smbFd, eventFd, true));
     EXPECT_TRUE(pluginManage->StartPluginSession(pluginIdsVector, configVec, result));
-    std::this_thread::sleep_for(std::chrono::seconds(2));  // 2: sleep 2 seconds
     pluginManage->loadedPlugins_.clear();
     auto pluginModule = pluginManage->pluginModules_[it->second];
+    const uint32_t loopCount = 10;
+    uint32_t loopIndex = 0;
+    while (!pluginModule->CheckDataReady() && loopIndex < loopCount) {
+        std::this_thread::sleep_for(std::chrono::seconds(1)); //1: sleep 1 seconds
+        loopIndex++;
+    }
     EXPECT_TRUE(pluginModule->CheckDataReady());
     EXPECT_TRUE(pluginManage->PullState(it->second));
     EXPECT_TRUE(pluginManage->PullResult(it->second));
