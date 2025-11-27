@@ -54,7 +54,7 @@ static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStati
 static thread_local std::set<uint64_t> addrSet;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
-std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size) 
+std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = {};
     auto it = addrSet.lower_bound(addr);
@@ -64,7 +64,7 @@ std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
     return addrs;
 }
 
-void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size) 
+void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = FindAddrs(addr, size);
     for(auto addr : addrs) {
@@ -75,7 +75,7 @@ void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
     }
 }
 
-void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size) 
+void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size)
 {
     auto addrIter = g_allocAddrMap.find(addr);
     if (addrIter != g_allocAddrMap.end()) {
