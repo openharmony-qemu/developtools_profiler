@@ -19,7 +19,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <string>
-#include <securec.h> 
+#include <securec.h>
 #include <memory_trace.h>
 
 #pragma clang optimize off
