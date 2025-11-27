@@ -1501,7 +1501,7 @@ int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
     }
 }
 
-size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t target_fd)
+size_t FindFdSize(const std::string& filename, uint32_t target_pid, uint32_t target_fd)
 {
     std::ifstream file(filename);
     if (!file) {
@@ -1517,7 +1517,8 @@ size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t tar
         }
         std::istringstream iss(line);
         std::string col1;
-        uint32_t pid, fd;
+        uint32_t pid;
+        uint32_t fd;
         size_t size;
         if (!(iss >> col1 >> pid >> fd >> size)) {
             continue;
@@ -1529,7 +1530,7 @@ size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t tar
     return 0;
 }
 
-size_t getDmaSize(void* addr, bool isUsing)
+size_t GetDmaSize(void* addr, bool isUsing)
 {
     if (!isUsing) {
         return 0;
@@ -1553,7 +1554,7 @@ size_t getDmaSize(void* addr, bool isUsing)
         fileName[len] = '\0';
         if (strstr(fileName, "anon_inode:dmabuf") != NULL) {
             std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info";
-            size_t size = findFdSize(filePath, g_hookPid.load(), fd);
+            size_t size = FindFdSize(filePath, g_hookPid.load(), fd);
             return size;
         }
     }
@@ -1585,7 +1586,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
         return;
     }
     if(mask == RES_DMABUF_MASK) {
-        size = getDmaSize(addr, isUsing);
+        size = GetDmaSize(addr, isUsing);
         if (size == 0) {
             return;
         }
