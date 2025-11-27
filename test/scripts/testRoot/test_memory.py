@@ -21,10 +21,52 @@ sys.path.append("..")
 from tools.utils import *
 
 OUTPUT_PATH = "testModule/output"
-LIB_PATH = "/system/lib64"
+LIB_PATH = "/system/lib64/"
+BIN_PATH = "/system/bin/"
+ETC_PATH = "/system/etc/"
 MB_SIZE = 1024
-ROM_THRESH = 9000
+ROM_THRESH = 9907
 SIZE_INDEX = 4
+FOUR_KB = 4
+NO_SUCH_FILE = "No such file or directory"
+
+file_paths = [
+    LIB_PATH + "libcpudataplugin.z.so",
+    LIB_PATH + "libgpudataplugin.z.so",
+    LIB_PATH + "libdiskiodataplugin.z.so",
+    LIB_PATH + "libhidumpplugin.z.so",
+    LIB_PATH + "libhilogplugin.z.so",
+    LIB_PATH + "libhiperfplugin.z.so",
+    LIB_PATH + "libhisyseventplugin.z.so",
+    LIB_PATH + "libmemdataplugin.z.so",
+    LIB_PATH + "libftrace_plugin.z.so",
+    LIB_PATH + "libnetworkplugin.z.so",
+    LIB_PATH + "libprocessplugin.z.so",
+    LIB_PATH + "libxpowerplugin.z.so",
+    LIB_PATH + "libnative_hook.z.so",
+    LIB_PATH + "libnetwork_profiler.z.so",
+    BIN_PATH + "native_daemon",
+    BIN_PATH + "hiprofilerd",
+    BIN_PATH + "hiprofiler_cmd",
+    BIN_PATH + "hiprofiler_plugins",
+    BIN_PATH + "ps",
+    BIN_PATH + "timestamps",
+    ETC_PATH + "init/hiprofiler_daemon.cfg",
+    ETC_PATH + "init/hiprofiler_plugins.cfg",
+    ETC_PATH + "init/hiprofilerd.cfg",
+    ETC_PATH + "param/hiprofiler.para",
+    ETC_PATH + "param/hiprofiler.para.dac",
+    "/system/framework/hidebug.abc",
+    LIB_PATH + "chipset-sdk/libbffrt_profiler.z.so",
+    LIB_PATH + "libhidebug.so",
+    LIB_PATH + "libhidebug_ani.so",
+    LIB_PATH + "libhidebug_native.z.so",
+    LIB_PATH + "libshared_memory.z.so",
+    LIB_PATH + "module/libhidebug.z.so",
+    LIB_PATH + "ndk/libohhidebug.so",
+    LIB_PATH + "platformsdk/libcj_hidebug_ffi.z.so",
+    LIB_PATH + "platformsdk/libnative_daemon_client.z.so"
+]
 
 
 def check_rom(output):
@@ -32,68 +74,27 @@ def check_rom(output):
     multi = False
     if (result[-1] == 'M'):
         multi = True
-    result = float(result[:-1])
+    if (result[-1] == 'M' or result[-1] == 'K'):
+        result = float(result[:-1])
+    else:
+        return float(FOUR_KB)
     if multi:
         result *= MB_SIZE
     return result
     
 
 class TestHiprofilerRom:
+    # 校验rom总值
     @pytest.mark.L0
     def test_rom(self):
-        # 校验命令行输出
-        rom_cpu = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libcpudataplugin*", text=True, encoding="utf-8")
-        rom_cpu = check_rom(rom_cpu)
+        rom_total_size = 0
+        for file_path in file_paths:
+            get_rom_info = subprocess.check_output(f"hdc shell ls -lh " + file_path, text=True, encoding="utf-8")
+            if NO_SUCH_FILE in get_rom_info:
+                continue
+            get_rom_size = check_rom(get_rom_info)
+            rom_total_size += get_rom_size
 
-        rom_gpu = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libgpudataplugin*", text=True, encoding="utf-8")
-        rom_gpu = check_rom(rom_gpu)
+        rom_total_size = round(rom_total_size, 1)
 
-        rom_disk = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libdiskiodataplugin*", text=True, encoding="utf-8")
-        rom_disk = check_rom(rom_disk)
-
-        rom_ftrace = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libftrace_plugin*", text=True, encoding="utf-8")
-        rom_ftrace = check_rom(rom_ftrace)
-
-        rom_hidump = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhidumpplugin*", text=True, encoding="utf-8")
-        rom_hidump = check_rom(rom_hidump)
-
-        rom_hilog = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhilogplugin*", text=True, encoding="utf-8")
-        rom_hilog = check_rom(rom_hilog)
-
-        rom_hiperf = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhiperfplugin*", text=True, encoding="utf-8")
-        rom_hiperf = check_rom(rom_hiperf)
-
-        rom_hisys = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libhisyseventplugin*", text=True, encoding="utf-8")
-        rom_hisys = check_rom(rom_hisys)
-
-        rom_memory = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libmemdataplugin*", text=True, encoding="utf-8")
-        rom_memory = check_rom(rom_memory)
-
-        rom_network = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libnetworkplugin*", text=True, encoding="utf-8")
-        rom_network = check_rom(rom_network)
-
-        rom_process = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libprocessplugin*", text=True, encoding="utf-8")
-        rom_process = check_rom(rom_process)
-
-        rom_xpower = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libxpowerplugin*", text=True, encoding="utf-8")
-        rom_xpower = check_rom(rom_xpower)
-
-        rom_hook = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libnative_hook*", text=True, encoding="utf-8")
-        rom_hook = check_rom(rom_hook)
-
-        rom_netprofiler = subprocess.check_output(f"hdc shell ls -lh /system/lib64/libnetwork_profiler*", text=True, encoding="utf-8")
-        rom_netprofiler = check_rom(rom_netprofiler)
-
-        rom_daemon = subprocess.check_output(f"hdc shell ls -lh /system/bin/native_daemon*", text=True, encoding="utf-8")
-        rom_daemon = check_rom(rom_daemon)
-
-        rom_hiprofilerd = subprocess.check_output(f"hdc shell ls -lh /system/bin/hiprofilerd*", text=True, encoding="utf-8")
-        rom_hiprofilerd = check_rom(rom_hiprofilerd)
-
-        rom_cmd = subprocess.check_output(f"hdc shell ls -lh /system/bin/hiprofiler_cmd*", text=True, encoding="utf-8")
-        rom_cmd = check_rom(rom_cmd)
-
-        rom_plugins = subprocess.check_output(f"hdc shell ls -lh /system/bin/hiprofiler_plugins*", text=True, encoding="utf-8")
-        rom_plugins = check_rom(rom_plugins)
-
-        assert (rom_cpu + rom_gpu + rom_disk + rom_ftrace + rom_hidump + rom_hilog + rom_hiperf + rom_hisys + rom_memory + rom_network + rom_process + rom_xpower + rom_hook + rom_daemon + rom_hiprofilerd + rom_cmd + rom_plugins + rom_netprofiler < ROM_THRESH)
+        assert (rom_total_size < ROM_THRESH)
