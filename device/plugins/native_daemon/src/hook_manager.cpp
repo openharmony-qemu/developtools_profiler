@@ -221,7 +221,7 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
 
 unsigned long long HookManager::ConvertTagToMask()
 {
-    unsigned long long resMask = 0;
+    unsigned long long resMask = RES_SO_MASK;
     if (hookConfig_.restrace_tag().size() > 0) {
         for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
             std::string resTag = hookConfig_.restrace_tag(i);
@@ -253,6 +253,16 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_THREAD_PTHREAD;
             } else if (resTag == TAG_RES_THREAD_ALL) {
                 resMask |= RES_THREAD_MASK;
+            } else if (resTag == TAG_RES_ARKTS_HEAP_MASK) {
+                resMask |= RES_ARKTS_HEAP_MASK;
+            } else if (resTag == TAG_RES_JS_HEAP_MASK) {
+                resMask |= RES_JS_HEAP_MASK;
+            } else if (resTag == TAG_RES_KMP_HEAP_MASK) {
+                resMask |= RES_KMP_HEAP_MASK;
+            } else if (resTag == TAG_RES_RN_HEAP_MASK) {
+                resMask |= RES_RN_HEAP_MASK;
+            } else if (resTag == TAG_RES_DMABUF_MASK) {
+                resMask |= RES_DMABUF_MASK;
             }
         }
     }
@@ -388,7 +398,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 void HookManager::CheckHapEncryped()
 {
     if (saMode_ && hookConfig_.fp_unwind()) {
-        PROFILER_LOG_DEBUG(LOG_CORE, "unwind js stack");
+        PROFILER_LOG_DEBUG(LOG_CORE, "sa Mode, the encrypted app is allowed to use fp unwind to catch js stack.");
         return;
     }
     for (const auto& pid : hookConfig_.expand_pids()) {
@@ -400,7 +410,7 @@ void HookManager::CheckHapEncryped()
     }
     const std::string processName = hookConfig_.process_name();
     if (!processName.empty() && COMMON::CheckApplicationEncryped(0, processName)) {
-        PROFILER_LOG_INFO(LOG_CORE, "unwind js stack is not supported");
+        PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
         hookConfig_.set_js_stack_report(0);
         hookConfig_.set_max_js_stack_depth(0);
     }

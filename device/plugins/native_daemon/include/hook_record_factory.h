@@ -52,6 +52,8 @@ private:
     std::deque<std::shared_ptr<HookRecord>> mmapRecordCache_;
     std::deque<std::shared_ptr<HookRecord>> munmapRecordCache_;
     std::deque<std::shared_ptr<HookRecord>> jsRecordCache_;
+    std::deque<std::shared_ptr<HookRecord>> arkTsFreeRecordCache_;
+    std::deque<std::shared_ptr<HookRecord>> arkTsMallocRecordCache_;
     std::mutex rawStackMutex_;
     std::mutex recordMutex_;
 };

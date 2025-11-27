@@ -148,8 +148,24 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         event->set_trace_type(TraceType::FD);
     } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
         event->set_trace_type(TraceType::THREAD);
-    }  else {
-        event->set_trace_type(TraceType::OTHER);
+    } else if (tagName == TAG_RES_KMP_HEAP_MASK) {
+        event->set_trace_type(TraceType::KMP_HEAP);
+    } else if (tagName == "ashmem") {
+        event->set_trace_type(TraceType::ASHMEM);
+    } else if (tagName == TAG_RES_ARKTS_HEAP_MASK) {
+        event->set_trace_type(TraceType::ARKTS_HEAP);
+    } else if (tagName == TAG_RES_JS_HEAP_MASK) {
+        event->set_trace_type(TraceType::JS_HEAP);
+    } else if (tagName == TAG_RES_RN_HEAP_MASK) {
+        event->set_trace_type(TraceType::RN_HEAP);
+    } else if (tagName == TAG_RES_DMABUF_MASK) {
+        event->set_trace_type(TraceType::DMA);
+    } else {
+        if (tagName.find(".so") != std::string::npos) {
+            event->set_trace_type(TraceType::SO);
+        } else {
+            event->set_trace_type(TraceType::OTHER);
+        }
     }
 }
 

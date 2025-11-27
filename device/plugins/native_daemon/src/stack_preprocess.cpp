@@ -51,7 +51,44 @@ using namespace OHOS::Developtools::Profiler;
 
 static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
+static thread_local std::set<uint64_t> addrSet;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
+
+std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size) 
+{
+    std::vector<uint64_t> addrs = {};
+    auto it = addrSet.lower_bound(addr);
+    for (; it != addrSet.end() && *it < addr + size; ++it) {
+        addrs.push_back(*it);
+    }
+    return addrs;
+}
+
+void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size) 
+{
+    std::vector<uint64_t> addrs = FindAddrs(addr, size);
+    for(auto addr : addrs) {
+        SetFreeStatisticsData(addr);
+        spinLock_.Lock();
+        addrSet.erase(addr);
+        spinLock_.Unlock();
+    }
+}
+
+void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size) 
+{
+    auto addrIter = g_allocAddrMap.find(addr);
+    if (addrIter != g_allocAddrMap.end()) {
+        spinLock_.Lock();
+        auto& record = addrIter->second.second;
+        record->applySize += (size - g_allocAddrMap[addr].first);
+        g_allocAddrMap[new_addr] = std::pair(size, record);
+        addrSet.insert(new_addr);
+        g_allocAddrMap.erase(addr);
+        addrSet.erase(addr);
+        spinLock_.Unlock();
+    }
+}
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
     clockid_t pluginDataClockId, FILE* fpHookData, bool isHookStandalone, bool isSaService, bool isProtobufSerialize)
@@ -126,6 +163,11 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(FD_MASK_INDEX + 1, TAG_RES_FD_ALL);
     SaveMemTag(THREAD_PTHREAD_INDEX + 1, TAG_RES_THREAD_PTHREAD);
     SaveMemTag(THREAD_MASK_INDEX + 1, TAG_RES_THREAD_ALL);
+    SaveMemTag(ARKTS_HEAP_MASK_INDEX + 1, TAG_RES_ARKTS_HEAP_MASK);
+    SaveMemTag(JS_HEAP_MASK_INDEX + 1, TAG_RES_JS_HEAP_MASK);
+    SaveMemTag(KMP_HEAP_MASK_INDEX + 1, TAG_RES_KMP_HEAP_MASK);
+    SaveMemTag(RN_HEAP_MASK_INDEX + 1, TAG_RES_RN_HEAP_MASK);
+    SaveMemTag(DMABUF_MASK_INDEX + 1, TAG_RES_DMABUF_MASK);
 }
 
 void StackPreprocess::FinishTraceFile()
@@ -323,6 +365,16 @@ bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size
         return false;
     } else if (type == MEMORY_TAG) {
         return ProcessMemoryTag(rawData);
+    } else if (type == FREE_ARKTS) {
+        size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+        HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
+        return true;
+    } else if (type == MALLOC_ARKTS) {
+        size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+        auto addr = hookRecord->GetRawStack()->stackContext->addr;
+        auto new_addr = hookRecord->GetRawStack()->stackContext->newAddr;
+        HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(new_addr), size);
+        return true;
     } else if (HandleNoStackEvent(hookRecord)) {
         return true;
     } else if (type == MUNMAP_MSG) {
@@ -505,6 +557,16 @@ void StackPreprocess::TakeResults()
             uint16_t type = hookRecord->GetType();
             if (type == FREE_MSG_SIMP) {
                 SetFreeStatisticsData(hookRecord->GetAddr());
+                continue;
+            } else if (type == FREE_ARKTS) {
+                size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+                HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
+                continue;
+            } else if (type == MALLOC_ARKTS) {
+                size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+                auto addr = hookRecord->GetRawStack()->stackContext->addr;
+                auto new_addr = hookRecord->GetRawStack()->stackContext->newAddr;
+                HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(new_addr), size);
                 continue;
             }
             auto rawData = hookRecord->GetRawStack();
@@ -1031,6 +1093,7 @@ inline void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookReco
         record.applySize += rawStack->stackContext->mallocSize;
         g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
+        addrSet.insert(hookRecord->GetAddr());
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
 }
@@ -1051,9 +1114,13 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
             break;
-        case MMAP_FILE_PAGE_MSG:
+        case MMAP_FILE_PAGE_MSG: {
             record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
+            std::string tagName;
+            GetMemTag(rawStack->stackContext->tagId, tagName);
+            record.tag_name = tagName;
             break;
+        }
         case MEMORY_USING_MSG: {
             std::string tagName;
             GetMemTag(rawStack->stackContext->tagId, tagName);
@@ -1071,8 +1138,25 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
                 record.type = RecordStatisticsEvent::FD;
             } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
                 record.type = RecordStatisticsEvent::THREAD;
+            } else if (tagName == TAG_RES_ARKTS_HEAP_MASK) {
+                record.type = RecordStatisticsEvent::ARKTS_HEAP;
+            } else if (tagName == "ashmem") {
+                record.type = RecordStatisticsEvent::ASHMEM;
+            } else if (tagName == TAG_RES_JS_HEAP_MASK) {
+                record.type = RecordStatisticsEvent::JS_HEAP;
+            } else if (tagName == TAG_RES_KMP_HEAP_MASK) {
+                record.type = RecordStatisticsEvent::KMP_HEAP;
+            } else if (tagName == TAG_RES_DMABUF_MASK) {
+                record.type = RecordStatisticsEvent::DMA;
+            } else if (tagName == TAG_RES_RN_HEAP_MASK) {
+                record.type = RecordStatisticsEvent::RN_HEAP;
             } else {
-                record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                if (tagName.find(".so") != std::string::npos) {
+                    record.type = RecordStatisticsEvent::SO;
+                    record.tag_name = tagName;
+                } else {
+                    record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+                }
             }
             record.tagId = rawStack->stackContext->tagId;
             break;
@@ -1085,6 +1169,7 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
     g_allocAddrMap[hookRecord->GetAddr()] =
         std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
+    addrSet.insert(hookRecord->GetAddr());
     statisticsPeriodData_[stackId] = &recordIter->second;
 }
 
@@ -1439,6 +1524,7 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_release_count(statistics->releaseCount);
             recordEvent->set_apply_size(statistics->applySize);
             recordEvent->set_release_size(statistics->releaseSize);
+            recordEvent->set_tag_name(statistics->tag_name);
         }
         FlushData(stackData);
         }, stackData_);

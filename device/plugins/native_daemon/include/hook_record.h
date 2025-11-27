@@ -194,5 +194,17 @@ class TagRecord : public HookRecord {
 public:
     TagRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
 };
+
+class ArktsFreeRecord : public HookRecord {
+public:
+    ArktsFreeRecord() = default;
+    ArktsFreeRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+};
+
+class ArktsMallocRecord : public HookRecord {
+public:
+    ArktsMallocRecord() = default;
+    ArktsMallocRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+};
 }
 #endif //HOOK_RECORD_H

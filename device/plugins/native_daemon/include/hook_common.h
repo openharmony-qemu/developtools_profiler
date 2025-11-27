@@ -39,7 +39,7 @@ constexpr int32_t MIN_STACK_DEPTH = 6;
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
-const size_t RESTRACE_TYPE_COUNT = 14;
+const size_t RESTRACE_TYPE_COUNT = 20;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
@@ -55,6 +55,12 @@ const size_t FD_DUP_INDEX = 10;
 const size_t FD_MASK_INDEX = 11;
 const size_t THREAD_PTHREAD_INDEX = 12;
 const size_t THREAD_MASK_INDEX = 13;
+const size_t SO_MASK_INDEX = 14;
+const size_t ARKTS_HEAP_MASK_INDEX = 15;
+const size_t JS_HEAP_MASK_INDEX = 16;
+const size_t KMP_HEAP_MASK_INDEX = 17;
+const size_t RN_HEAP_MASK_INDEX = 18;
+const size_t DMABUF_MASK_INDEX = 19;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
@@ -96,6 +102,8 @@ enum {
     NMD_MSG,
     END_MSG,
     FREE_MSG_SIMP,
+    MALLOC_ARKTS,
+    FREE_ARKTS,
     UNKNOWN,
 };
 
@@ -120,6 +128,7 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
         MmapFileRawData mmapArgs;
     };
     void* addr;
+    void* newAddr;
     size_t mallocSize;
     uint64_t jsChainId;
     uint32_t pid;

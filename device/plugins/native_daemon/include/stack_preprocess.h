@@ -51,6 +51,7 @@ struct RecordStatistic {
     uint64_t releaseCount {0};
     uint64_t applySize {0};
     uint64_t releaseSize {0};
+    std::string tag_name = "";
 };
 
 struct CallStackHash {
@@ -200,6 +201,9 @@ private:
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    void HandleDeleteAddr(uint64_t addr, size_t size);
+    std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
+    void HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size);
     unsigned LgFloor(unsigned long x);
     uint64_t PowCeil(uint64_t x);
     void InitializeGpuData();
