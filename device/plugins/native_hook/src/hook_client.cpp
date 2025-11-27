@@ -1501,9 +1501,9 @@ int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
     }
 }
 
-size_t FindFdSize(const std::string& filename, uint32_t target_pid, uint32_t target_fd)
+size_t FindFdSize(const std::string& fileName, uint32_t targePid, uint32_t targetFd)
 {
-    std::ifstream file(filename);
+    std::ifstream file(fileName);
     if (!file) {
         PROFILER_LOG_ERROR(LOG_CORE, "caon not open errno=%d!!!", errno);
         return 0;
@@ -1523,7 +1523,7 @@ size_t FindFdSize(const std::string& filename, uint32_t target_pid, uint32_t tar
         if (!(iss >> col1 >> pid >> fd >> size)) {
             continue;
         }
-        if (pid == target_pid && fd == target_fd) {
+        if (pid == targePid && fd == targetFd) {
             return size;
         }
     }
