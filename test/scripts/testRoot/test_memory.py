@@ -93,6 +93,8 @@ class TestHiprofilerRom:
             if NO_SUCH_FILE in get_rom_info:
                 continue
             get_rom_size = check_rom(get_rom_info)
+            if get_rom_size % FOUR_KB != 0:
+                get_rom_size += 4
             rom_total_size += get_rom_size
 
         rom_total_size = round(rom_total_size, 1)
