@@ -61,7 +61,7 @@ void AllocateMemory(int depth, int size)
 
         resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
 
-        restrace(RES_ARKTS_HEAP_MASK, newMem, 0, TAG_RES_ARKTS_HEAP_MASK, false);
+        restrace(RES_ARKTS_HEAP_MASK, newMem, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, false);
         delete[] oldMem;
         free(newMem);
         return;
