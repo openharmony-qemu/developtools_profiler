@@ -1510,7 +1510,7 @@ size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t tar
     }
     std::string line;
     int skip = 1;
-    while (std::getline(file, line)){
+    while (std::getline(file, line)) {
         if (skip > 0) {
             --skip;
             continue;
@@ -1531,14 +1531,14 @@ size_t findFdSize(const std::string& filename, uint32_t target_pid, uint32_t tar
 
 size_t getDmaSize(void* addr, bool isUsing)
 {
-    if (!isUsing){
+    if (!isUsing) {
         return 0;
     }
     char path[FD_PATH_LENGTH] = {0};
     char fileName[MAX_HOOK_PATH + 1] = {0};
     int fd = static_cast<int>(reinterpret_cast<intptr_t>(addr));
 
-    if(fd < 0){
+    if (fd < 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid fd value");
         return 0;
     }
@@ -1551,7 +1551,7 @@ size_t getDmaSize(void* addr, bool isUsing)
     ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
     if (len != -1) {
         fileName[len] = '\0';
-        if (strstr(fileName, "anon_inode:dmabuf") != NULL){
+        if (strstr(fileName, "anon_inode:dmabuf") != NULL) {
             std::string filePath = "/proc/" + std::to_string(g_hookPid.load()) + "/mm_dmabuf_info";
             size_t size = findFdSize(filePath, g_hookPid.load(), fd);
             return size;
@@ -1586,7 +1586,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     }
     if(mask == RES_DMABUF_MASK) {
         size = getDmaSize(addr, isUsing);
-        if(size == 0){
+        if (size == 0) {
             return;
         }
     }
