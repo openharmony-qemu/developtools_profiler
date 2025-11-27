@@ -52,7 +52,12 @@ void AllocateMemory(int depth, int size)
             return;
         }
 
-        memcpy_s(newMem, static_cast<size_t>(size), oldMem, 1);
+        errno_t ret = memcpy_s(newMem, static_cast<size_t>(size), oldMem, 1);
+        if (ret != EOK) {
+            delete[] oldMem;
+            free(newMem);
+            return;
+        }
 
         resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
 
