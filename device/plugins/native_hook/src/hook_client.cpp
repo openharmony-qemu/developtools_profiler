@@ -1585,7 +1585,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if ((g_ClientConfig.isSaMode && isUsing) && (!CheckRestraceConditions(combineVal, size))) {
         return;
     }
-    if(mask == RES_DMABUF_MASK) {
+    if (mask == RES_DMABUF_MASK) {
         size = GetDmaSize(addr, isUsing);
         if (size == 0) {
             return;
