@@ -323,7 +323,11 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest008, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }
-
+/**
+ * @tc.name: ResTraceMoveTest
+ * @tc.desc: Test memory move.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeHookTest, ResTraceMoveTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
@@ -339,7 +343,11 @@ HWTEST_F(NativeHookTest, ResTraceMoveTest, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }
-
+/**
+ * @tc.name: resTraceFreeRegion
+ * @tc.desc: Test memory region free tracking hook function.
+ * @tc.type: FUNC
+ */
 HWTEST_F(NativeHookTest, ResTraceFreeRegionTest, TestSize.Level0)
 {
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));

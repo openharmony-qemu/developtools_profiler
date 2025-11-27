@@ -38,19 +38,26 @@ void AllocateMemory(int depth, int size)
         return;
     }
     if (depth == 0) {
-        char* oldMem = new char[g_size];
-        char* newMem = new char[g_resize];
-        restrace(RES_GPU_VK, mem, DEFAULT_VAL, TAG_RES_GPU_VK, true);
-        if (mem == nullptr) {
+        char* oldMem = new char[size];
+        if (!oldMem) {
             return;
         }
-        mem[0] = 'a';
-        hook_resTraceMove(RES_ARKTS_HEAP_MASK, oldMem, newMem, g_resize);
+        oldMem[0] = 'a';
+        restrace(RES_ARKTS_HEAP_MASK, oldMem, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
 
+        void* newMem = malloc(static_cast<size_t>(size));
+        if (!newMem) {
+            delete[] oldMem;
+            return;
+        }
 
-        restrace(RES_GPU_VK, mem, DEFAULT_VAL, TAG_RES_GPU_VK, false);
+        std::memcpy(newMem, oldMem, 1);
+
+        resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
+
+        restrace(RES_ARKTS_HEAP_MASK, newMem, 0, TAG_RES_ARKTS_HEAP_MASK, false);
         delete[] oldMem;
-        delete[] newMem;
+        free(newMem);
         return;
     }
     AllocateMemory(depth - 1, size);
