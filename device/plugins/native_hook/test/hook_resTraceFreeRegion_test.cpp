@@ -48,7 +48,7 @@ void AllocateMemory(int depth, int size)
         buffer[size - 1] = 'y';
         resTraceFreeRegion(RES_ARKTS_HEAP_MASK, static_cast<void*>(buffer), static_cast<size_t>(size));
 
-        restrace(RES_ARKTS_HEAP_MASK, buffer, 0, TAG_RES_ARKTS_HEAP_MASK, false);
+        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, false);
         delete[] buffer;
         return;
     }
