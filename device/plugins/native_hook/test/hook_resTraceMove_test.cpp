@@ -19,6 +19,7 @@
 #include <chrono>
 #include <unistd.h>
 #include <string>
+#include <securec.h> 
 #include <memory_trace.h>
 
 #pragma clang optimize off
@@ -51,7 +52,7 @@ void AllocateMemory(int depth, int size)
             return;
         }
 
-        std::copy(oldMem, oldMem + 1, new);
+        memcpy_s(newMem, static_cast<size_t>(size), oldMem, 1);
 
         resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
 
