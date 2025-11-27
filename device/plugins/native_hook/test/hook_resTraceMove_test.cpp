@@ -51,7 +51,7 @@ void AllocateMemory(int depth, int size)
             return;
         }
 
-        std::memcpy(newMem, oldMem, 1);
+        std::copy(oldMem, oldMem + 1, new);
 
         resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
 
