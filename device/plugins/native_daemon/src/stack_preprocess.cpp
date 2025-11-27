@@ -67,7 +67,7 @@ std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = FindAddrs(addr, size);
-    for(auto addr : addrs) {
+    for (auto addr : addrs) {
         SetFreeStatisticsData(addr);
         spinLock_.Lock();
         addrSet.erase(addr);
