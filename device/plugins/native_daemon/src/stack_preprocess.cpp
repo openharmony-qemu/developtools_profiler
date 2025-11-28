@@ -51,14 +51,14 @@ using namespace OHOS::Developtools::Profiler;
 
 static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
-static thread_local std::set<uint64_t> addrSet;
+static thread_local std::set<uint64_t> g_addrSet;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = {};
-    auto it = addrSet.lower_bound(addr);
-    for (; it != addrSet.end() && *it < addr + size; ++it) {
+    auto it = g_addrSet.lower_bound(addr);
+    for (; it != g_addrSet.end() && *it < addr + size; ++it) {
         addrs.push_back(*it);
     }
     return addrs;
@@ -70,7 +70,7 @@ void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
     for (auto addr : addrs) {
         SetFreeStatisticsData(addr);
         spinLock_.Lock();
-        addrSet.erase(addr);
+        g_addrSet.erase(addr);
         spinLock_.Unlock();
     }
 }
@@ -83,9 +83,9 @@ void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t siz
         auto& record = addrIter->second.second;
         record->applySize += (size - g_allocAddrMap[addr].first);
         g_allocAddrMap[newAddr] = std::pair(size, record);
-        addrSet.insert(newAddr);
+        g_addrSet.insert(newAddr);
         g_allocAddrMap.erase(addr);
-        addrSet.erase(addr);
+        g_addrSet.erase(addr);
         spinLock_.Unlock();
     }
 }
@@ -1093,7 +1093,7 @@ inline void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookReco
         record.applySize += rawStack->stackContext->mallocSize;
         g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-        addrSet.insert(hookRecord->GetAddr());
+        g_addrSet.insert(hookRecord->GetAddr());
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
 }
@@ -1169,7 +1169,7 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
     g_allocAddrMap[hookRecord->GetAddr()] =
         std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-    addrSet.insert(hookRecord->GetAddr());
+    g_addrSet.insert(hookRecord->GetAddr());
     statisticsPeriodData_[stackId] = &recordIter->second;
 }
 
