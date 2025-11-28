@@ -37,6 +37,8 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
         mmapRecordCache_.emplace_back(std::make_shared<MmapRecord>());
         munmapRecordCache_.emplace_back(std::make_shared<MunmapRecord>());
         jsRecordCache_.emplace_back(std::make_shared<JsRecord>());
+        arkTsMallocRecordCache_.emplace_back(std::make_shared<ArktsMallocRecord>());
+        arkTsFreeRecordCache_.emplace_back(std::make_shared<ArktsFreeRecord>());
         if (hookConfig_.statistics_interval() > 0) {
             freeRecordSimpCache_.emplace_back(std::make_shared<FreeRecordSimp>());
         } else {
