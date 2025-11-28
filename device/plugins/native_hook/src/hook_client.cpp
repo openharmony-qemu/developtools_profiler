@@ -1501,7 +1501,7 @@ int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
     }
 }
 
-size_t FindFdSize(const std::string& fileName, uint32_t targePid, uint32_t targetFd)
+size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targetFd)
 {
     std::ifstream file(fileName);
     if (!file) {
@@ -1523,7 +1523,7 @@ size_t FindFdSize(const std::string& fileName, uint32_t targePid, uint32_t targe
         if (!(iss >> col1 >> pid >> fd >> size)) {
             continue;
         }
-        if (pid == targePid && fd == targetFd) {
+        if (pid == targetPid && fd == targetFd) {
             return size;
         }
     }
