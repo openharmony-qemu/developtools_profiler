@@ -40,11 +40,12 @@ void AllocateMemoryFreeRegion(int depth, int size)
     }
     if (depth == 0) {
         char* buffer = new (std::nothrow) char[size];
-        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
-        if (buffer==nullptr) {
+        if (buffer == nullptr) {
             std::cerr << "AllocateAndFreeRegion: allocation failed, size=" << size << std::endl;
             return;
         }
+        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
+
         buffer[0] = 'x';
         buffer[size - 1] = 'y';
         resTraceFreeRegion(RES_ARKTS_HEAP_MASK, static_cast<void*>(buffer), static_cast<size_t>(size));
@@ -62,8 +63,8 @@ void AllocateMemoryMove(int depth, int size)
         return;
     }
     if (depth == 0) {
-        char* oldMem = new char[size];
-        if (!oldMem) {
+        char* oldMem = new (std::nothrow) char[size];
+        if (oldMem == nullptr) {
             return;
         }
         oldMem[0] = 'a';
