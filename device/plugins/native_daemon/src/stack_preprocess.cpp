@@ -1118,7 +1118,7 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
             record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
             std::string tagName;
             GetMemTag(rawStack->stackContext->tagId, tagName);
-            record.tag_name = tagName;
+            record.tagName = tagName;
             break;
         }
         case MEMORY_USING_MSG: {
@@ -1153,7 +1153,7 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
             } else {
                 if (tagName.find(".so") != std::string::npos) {
                     record.type = RecordStatisticsEvent::SO;
-                    record.tag_name = tagName;
+                    record.tagName = tagName;
                 } else {
                     record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
                 }
@@ -1524,7 +1524,7 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_release_count(statistics->releaseCount);
             recordEvent->set_apply_size(statistics->applySize);
             recordEvent->set_release_size(statistics->releaseSize);
-            recordEvent->set_tag_name(statistics->tag_name);
+            recordEvent->set_tag_name(statistics->tagName);
         }
         FlushData(stackData);
         }, stackData_);
