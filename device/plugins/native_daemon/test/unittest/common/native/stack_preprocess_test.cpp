@@ -165,6 +165,24 @@ HWTEST_F(StackPreprocessTest, StackPreprocessTestInitializeDirector, TestSize.Le
 }
 
 /*
+@tc.name: MemtagMapTest
+@tc.desc: test memtagMap with valid data.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, MemtagMapTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SaveMemTag(1, "asd");
+    std::string result;
+    preprocess.GetMemTag(1, result);
+    ASSERT_EQ(result, "asd");
+    preprocess.SaveMemTag(1, "qwe");
+    preprocess.GetMemTag(1, result);
+    ASSERT_EQ(result, "qwe");
+}
+
+/*
 @tc.name: ValidateAndPrepareDataValidTest
 @tc.desc: test ProcessMemoryTag with valid data.
 @tc.type: FUNC
