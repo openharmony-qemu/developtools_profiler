@@ -75,15 +75,15 @@ void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
     }
 }
 
-void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size)
+void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t size)
 {
     auto addrIter = g_allocAddrMap.find(addr);
     if (addrIter != g_allocAddrMap.end()) {
         spinLock_.Lock();
         auto& record = addrIter->second.second;
         record->applySize += (size - g_allocAddrMap[addr].first);
-        g_allocAddrMap[new_addr] = std::pair(size, record);
-        addrSet.insert(new_addr);
+        g_allocAddrMap[newAddr] = std::pair(size, record);
+        addrSet.insert(newAddr);
         g_allocAddrMap.erase(addr);
         addrSet.erase(addr);
         spinLock_.Unlock();
@@ -372,8 +372,8 @@ bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size
     } else if (type == MALLOC_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         auto addr = hookRecord->GetRawStack()->stackContext->addr;
-        auto new_addr = hookRecord->GetRawStack()->stackContext->newAddr;
-        HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(new_addr), size);
+        auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
+        HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
         return true;
     } else if (HandleNoStackEvent(hookRecord)) {
         return true;
@@ -565,8 +565,8 @@ void StackPreprocess::TakeResults()
             } else if (type == MALLOC_ARKTS) {
                 size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
                 auto addr = hookRecord->GetRawStack()->stackContext->addr;
-                auto new_addr = hookRecord->GetRawStack()->stackContext->newAddr;
-                HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(new_addr), size);
+                auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
+                HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
                 continue;
             }
             auto rawData = hookRecord->GetRawStack();
