@@ -18,6 +18,7 @@
 #include <mutex>
 #include <chrono>
 #include <unistd.h>
+#include <securec.h>
 #include <string>
 #include <memory_trace.h>
 
@@ -52,7 +53,7 @@ void AllocateMemoryFreeRegion(int depth, int size)
         delete[] buffer;
         return;
     }
-    AllocateMemory(depth - 1, size);
+    AllocateMemoryFreeRegion(depth - 1, size);
 }
 
 void AllocateMemoryMove(int depth, int size)
@@ -88,7 +89,7 @@ void AllocateMemoryMove(int depth, int size)
         free(newMem);
         return;
     }
-    AllocateMemory(depth - 1, size);
+    AllocateMemoryMove(depth - 1, size);
 }
 
 void AllocateMemory(int depth, int size)
