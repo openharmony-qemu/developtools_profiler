@@ -51,7 +51,7 @@ struct RecordStatistic {
     uint64_t releaseCount {0};
     uint64_t applySize {0};
     uint64_t releaseSize {0};
-    std::string tag_name = "";
+    std::string tagName = "";
 };
 
 struct CallStackHash {
