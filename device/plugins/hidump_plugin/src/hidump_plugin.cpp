@@ -71,6 +71,9 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
 {
     PROFILER_LOG_INFO(LOG_CORE, "HidumpPlugin:Start ----> !");
     CHECK_TRUE(protoConfig_.ParseFromArray(configData, configSize) > 0, -1, "HidumpPlugin: ParseFromArray failed");
+    CHECK_NOTNULL(resultWriter_, -1, "HidumpPlugin: Writer is no set!");
+    CHECK_NOTNULL(resultWriter_->write, -1, "HidumpPlugin: Writer.write is no set!");
+    CHECK_NOTNULL(resultWriter_->flush, -1, "HidumpPlugin: Writer.flush is no set!");
     std::vector<std::string> fullCmd;
     fullCmd.push_back("/system/bin/SP_daemon");
     fullCmd.push_back("SP_daemon");
@@ -91,9 +94,6 @@ int HidumpPlugin::Start(const uint8_t* configData, uint32_t configSize)
         PROFILER_LOG_ERROR(LOG_CORE, "HidumpPlugin: CustomPopen(%s) Failed, errno(%d:%s)", FPS_FORMAT, errno, buf);
         return -1;
     }
-    CHECK_NOTNULL(resultWriter_, -1, "HidumpPlugin: Writer is no set!");
-    CHECK_NOTNULL(resultWriter_->write, -1, "HidumpPlugin: Writer.write is no set!");
-    CHECK_NOTNULL(resultWriter_->flush, -1, "HidumpPlugin: Writer.flush is no set!");
     std::unique_lock<std::mutex> locker(mutex_);
     running_ = true;
     writeThread_ = std::thread([this] { this->Loop(); });
