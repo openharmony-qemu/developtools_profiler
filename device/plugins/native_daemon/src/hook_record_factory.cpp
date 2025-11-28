@@ -37,6 +37,8 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
         mmapRecordCache_.emplace_back(std::make_shared<MmapRecord>());
         munmapRecordCache_.emplace_back(std::make_shared<MunmapRecord>());
         jsRecordCache_.emplace_back(std::make_shared<JsRecord>());
+        arkTsMallocRecordCache_.emplace_back(std::make_shared<ArktsMallocRecord>());
+        arkTsFreeRecordCache_.emplace_back(std::make_shared<ArktsFreeRecord>());
         if (hookConfig_.statistics_interval() > 0) {
             freeRecordSimpCache_.emplace_back(std::make_shared<FreeRecordSimp>());
         } else {
@@ -60,6 +62,10 @@ HookRecordPtr CreateCacheItem(int16_t type)
             return std::make_shared<MunmapRecord>();
         case JS_STACK_MSG:
             return std::make_shared<JsRecord>();
+        case MALLOC_ARKTS:
+            return std::make_shared<ArktsMallocRecord>();
+        case FREE_ARKTS:
+            return std::make_shared<ArktsFreeRecord>();
         default:
             PROFILER_LOG_ERROR(LOG_CORE, "CreateItem get unexpected type");
             return nullptr;
@@ -129,6 +135,16 @@ void HookRecordFactory::SaveRecordToCache(uint16_t type, HookRecordPtr hookRecor
         case JS_STACK_MSG:
             if (jsRecordCache_.size() < HOOK_RECORD_CACHE_MAX_SIZE) {
                 jsRecordCache_.push_back(hookRecord);
+            }
+            break;
+        case MALLOC_ARKTS:
+            if (arkTsMallocRecordCache_.size() < HOOK_RECORD_CACHE_MAX_SIZE) {
+                arkTsMallocRecordCache_.push_back(hookRecord);
+            }
+            break;
+        case FREE_ARKTS:
+            if (arkTsFreeRecordCache_.size() < HOOK_RECORD_CACHE_MAX_SIZE) {
+                arkTsFreeRecordCache_.push_back(hookRecord);
             }
             break;
         default:
@@ -222,6 +238,16 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     switch (type) {
         case NMD_MSG:
             return std::make_shared<NmdRecord>(rawStack);
+        case MALLOC_ARKTS: {
+            auto mallocRecord = GetRecordFromCache(arkTsMallocRecordCache_, MALLOC_ARKTS);
+            mallocRecord->rawStack_ = rawStack;
+            return mallocRecord;
+        }
+        case FREE_ARKTS: {
+            auto freeRecord = GetRecordFromCache(arkTsFreeRecordCache_, FREE_ARKTS);
+            freeRecord->rawStack_ = rawStack;
+            return freeRecord;
+        }
         case END_MSG:
         case MEMORY_TAG:
         case THREAD_NAME_MSG:

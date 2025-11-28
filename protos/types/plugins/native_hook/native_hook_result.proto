@@ -131,7 +131,14 @@ enum TraceType {
     GPU_VK = 2;
     GPU_GLES = 3;
     GPU_CL = 4;
-    OTHER = 5;
+    SO = 5;
+    ARKTS_HEAP = 6;
+    JS_HEAP = 7;
+    KMP_HEAP = 8;
+    RN_HEAP = 9;
+    ASHMEM = 10;
+    DMA = 11;
+    OTHER = 12;
 };
 
 message TraceAllocEvent {
@@ -170,6 +177,14 @@ message RecordStatisticsEvent {
         GPU_VK = 6;
         GPU_GLES = 7;
         GPU_CL = 8;
+        SO = 9;
+        ARKTS_HEAP = 10;
+        JS_HEAP = 11;
+        KMP_HEAP = 12;
+        RN_HEAP = 13;
+        ASHMEM = 14;
+        DMA = 15;
+        OTHER = 16;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

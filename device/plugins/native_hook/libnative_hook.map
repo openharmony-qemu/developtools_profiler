@@ -18,6 +18,8 @@
     "ohos_malloc_hook_munmap";
     "ohos_malloc_hook_memtrace";
     "ohos_malloc_hook_restrace";
+    "ohos_malloc_hook_resTraceMove";
+    "ohos_malloc_hook_resTraceFreeRegion";
     "ohos_malloc_hook_prctl";
     "ohos_set_filter_size";
     "ohos_malloc_hook_send_hook_misc_data";

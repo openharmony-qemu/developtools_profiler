@@ -18,6 +18,7 @@
 #include <mutex>
 #include <chrono>
 #include <unistd.h>
+#include <securec.h>
 #include <string>
 #include <memory_trace.h>
 
@@ -31,6 +32,66 @@ constexpr uint64_t COUNT_INDEX = 3;
 constexpr uint64_t SIZE_INDEX = 2;
 constexpr int MAX_SIZE = 1024 * 1024 * 1024;
 constexpr int DEFAULT_VAL = 10;
+
+void AllocateMemoryFreeRegion(int depth, int size)
+{
+    if (size > MAX_SIZE || (size == 0)) {
+        return;
+    }
+    if (depth == 0) {
+        char* buffer = new (std::nothrow) char[size];
+        if (buffer == nullptr) {
+            std::cerr << "AllocateAndFreeRegion: allocation failed, size=" << size << std::endl;
+            return;
+        }
+        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
+
+        buffer[0] = 'x';
+        buffer[size - 1] = 'y';
+        resTraceFreeRegion(RES_ARKTS_HEAP_MASK, static_cast<void*>(buffer), static_cast<size_t>(size));
+
+        restrace(RES_ARKTS_HEAP_MASK, buffer, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, false);
+        delete[] buffer;
+        return;
+    }
+    AllocateMemoryFreeRegion(depth - 1, size);
+}
+
+void AllocateMemoryMove(int depth, int size)
+{
+    if (size > MAX_SIZE || (size == 0)) {
+        return;
+    }
+    if (depth == 0) {
+        char* oldMem = new (std::nothrow) char[size];
+        if (oldMem == nullptr) {
+            return;
+        }
+        oldMem[0] = 'a';
+        restrace(RES_ARKTS_HEAP_MASK, oldMem, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, true);
+
+        void* newMem = malloc(static_cast<size_t>(size));
+        if (!newMem) {
+            delete[] oldMem;
+            return;
+        }
+
+        errno_t ret = memcpy_s(newMem, static_cast<size_t>(size), oldMem, 1);
+        if (ret != EOK) {
+            delete[] oldMem;
+            free(newMem);
+            return;
+        }
+
+        resTraceMove(RES_ARKTS_HEAP_MASK, static_cast<void*>(oldMem), newMem, static_cast<size_t>(size));
+
+        restrace(RES_ARKTS_HEAP_MASK, newMem, DEFAULT_VAL, TAG_RES_ARKTS_HEAP_MASK, false);
+        delete[] oldMem;
+        free(newMem);
+        return;
+    }
+    AllocateMemoryMove(depth - 1, size);
+}
 
 void AllocateMemory(int depth, int size)
 {
@@ -55,6 +116,8 @@ void ThreadFunc(int depth, int count, int size)
 {
     for (int i = 0; i < count; ++i) {
         AllocateMemory(depth, size);
+        AllocateMemoryFreeRegion(depth, size);
+        AllocateMemoryMove(depth, size);
     }
 }
 
