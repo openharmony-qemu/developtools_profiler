@@ -75,6 +75,7 @@ ohos_static_library("shared_memory_lite") {
   if (current_toolchain != host_toolchain) {
     defines += [ "HAVE_HILOG" ]
     external_deps = [
+      "bounds_checking_function:libsec_shared",
       "c_utils:utils",
       "hilog:libhilog_base",
     ]
