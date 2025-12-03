@@ -145,6 +145,7 @@
         "//developtools/profiler/device:unittest",
         "//developtools/profiler/interfaces/kits/test:unittest",
         "//developtools/profiler/hidebug/test/unittest:unittest",
+        "//developtools/profiler/hidebug/test/fuzztest:fuzztest",
         "//developtools/profiler/proto_encoder/test:unittest"
       ]
     }
