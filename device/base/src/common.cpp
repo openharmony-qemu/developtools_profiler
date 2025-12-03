@@ -106,8 +106,8 @@ bool IsProcessRunning(int& lockFileFd)
         PROFILER_LOG_ERROR(LOG_CORE, "%s: get fd flags failed!", __func__);
         return false;
     }
-    flags |= FD_CLOEXEC;
-    if (fcntl(fd, F_SETFD, flags) == -1) {
+    unsigned int flagsValue = static_cast<unsigned int>(flags) | FD_CLOEXEC;
+    if (fcntl(fd, F_SETFD, flagsValue) == -1) {
         close(fd);
         PROFILER_LOG_ERROR(LOG_CORE, "%s: set fd_cloexec failed!", __func__);
         return false;
@@ -563,7 +563,7 @@ int CustomPUnblock(int fds[])
     int stat = fcntl(fds[READ], F_GETFL);
     CHECK_TRUE(stat != -1, -1, "END fcntl(F_GETFL) failed!");
 
-    if (!(stat & O_NONBLOCK)) {
+    if (!(static_cast<unsigned int>(stat) & O_NONBLOCK)) {
         PROFILER_LOG_DEBUG(LOG_CORE, "NOTE %s: ready!Unblock r_fd and close all", __func__);
         const char* eof = "\n\0";
         write(fds[WRITE], eof, strlen(eof) + 1);

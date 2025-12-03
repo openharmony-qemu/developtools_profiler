@@ -690,8 +690,12 @@ int main(int argc, char* argv[])
         } else if (childPid > 0) {
             close(g_pipefd[1]);
             uint32_t exitFlag = 0;
-            int retVal = TEMP_FAILURE_RETRY(read(g_pipefd[0], &exitFlag, sizeof(exitFlag)));
-            if (retVal != sizeof(exitFlag)) {
+            ssize_t retVal = TEMP_FAILURE_RETRY(read(g_pipefd[0], &exitFlag, sizeof(exitFlag)));
+            if (retVal == -1 && errno == EAGAIN) {
+                close(g_pipefd[0]);
+                return 0;
+            }
+            if (static_cast<size_t>(retVal) != sizeof(exitFlag)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "read exitFlag error");
             }
             if (exitFlag == 1) {  // 1: exitance flag

@@ -43,7 +43,7 @@ std::string FileUtils::ReadFile(int fd)
         if (nBytes <= 0) {
             break;
         }
-        count += nBytes;
+        count += static_cast<size_t>(nBytes);
     }
     content.resize(count);
     return content;

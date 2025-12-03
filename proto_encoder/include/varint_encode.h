@@ -103,12 +103,13 @@ inline void EncodeVarintPadding(uint8_t* buf, T v, uint32_t paddingSize)
 {
     uint32_t size = 0;
     paddingSize--;
+    uint64_t value = static_cast<uint64_t>(v);
     while (size < paddingSize) {
-        buf[size] = (VARINT_MASK_PAYLOAD & v) | VARINT_MASK_MSB;
+        buf[size] = (VARINT_MASK_PAYLOAD & value) | VARINT_MASK_MSB;
         size++;
-        v >>= VARINT_PAYLOAD_BITS;
+        value >>= VARINT_PAYLOAD_BITS;
     }
-    buf[size] = (VARINT_MASK_PAYLOAD & v);
+    buf[size] = (VARINT_MASK_PAYLOAD & value);
 }
 } // namespace ProtoEncoder
 } // namespace Profiler
