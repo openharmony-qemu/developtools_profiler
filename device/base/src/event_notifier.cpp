@@ -70,14 +70,21 @@ int EventNotifier::GetFd() const
 uint64_t EventNotifier::Take() const
 {
     uint64_t value = UINT64_MAX;
-    int retval = TEMP_FAILURE_RETRY(read(fd_, &value, sizeof(value)));
-    CHECK_TRUE(retval == sizeof(value), 0, "read value from eventfd %d failed, %d!", fd_, errno);
+    ssize_t retval = TEMP_FAILURE_RETRY(read(fd_, &value, sizeof(value)));
+    if (retval == -1 && errno == EAGAIN) {
+        return 0;
+    }
+    CHECK_TRUE(static_cast<size_t>(retval) == sizeof(value), 0, "read value from eventfd %d failed, %d!", fd_, errno);
     return value;
 }
 
 bool EventNotifier::Post(uint64_t value) const
 {
-    int retval = TEMP_FAILURE_RETRY(write(fd_, &value, sizeof(value)));
-    CHECK_TRUE(retval == sizeof(value), false, "write value to eventfd %d failed, %d!", fd_, errno);
+    ssize_t retval = TEMP_FAILURE_RETRY(write(fd_, &value, sizeof(value)));
+    if (retval == -1 && errno == EAGAIN) {
+        return false;
+    }
+    CHECK_TRUE(static_cast<size_t>(retval) == sizeof(value), false, "write value to eventfd %d failed, %d!", fd_,
+               errno);
     return true;
 }

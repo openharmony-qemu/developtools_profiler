@@ -150,10 +150,12 @@ bool UnixSocketServer::StartServer(const std::string& addrname, ServiceEntry& p,
     CHECK_TRUE(socketHandle_ == -1, false, "StartServer FAIL socketHandle_ != -1");
     int sock = GetControlSocket(addrname.c_str());
     CHECK_TRUE(sock != -1, false, "StartServer FAIL GetControlSocket return : %d", sock);
-
-    CHECK_TRUE(listen(sock, UNIX_SOCKET_LISTEN_COUNT) != -1, close(sock) != 0 && unlink(addrname.c_str()) == 0,
-               "StartServer FAIL listen ERR : %d", errno);
-
+    if (listen(sock, UNIX_SOCKET_LISTEN_COUNT) == -1) {
+        close(sock);
+        unlink(addrname.c_str());
+        PROFILER_LOG_ERROR(LOG_CORE, "StartServer FAIL listen ERR : %d", errno);
+        return false;
+    }
     socketHandle_ = sock;
     acceptThread_ = std::thread([this, callback] { this->UnixSocketAccept(callback); });
     if (acceptThread_.get_id() == std::thread::id()) {

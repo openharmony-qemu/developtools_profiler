@@ -1078,17 +1078,17 @@ inline void SendMmapFileRawData(int prot, int flags, off_t offset, const char* f
     curRawdata.mallocSize = rawdata.mallocSize;
     curRawdata.mmapArgs.offset = offset;
     curRawdata.type = MMAP_FILE_TYPE;
-    if (prot & PROT_EXEC) {
+    if (static_cast<uint32_t>(prot) & PROT_EXEC) {
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
     size_t len = strlen(filePath) + 1;
-    if ((flags & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) && (IsLegalSoName(filePath)) &&
-        (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
+    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) &&
+        (IsLegalSoName(filePath)) && (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
-    if ((flags & MAP_FIXED) && (IsLegalSoName(filePath)) && (!g_ClientConfig.targetSoName.empty()) &&
-        strstr(filePath, g_ClientConfig.targetSoName.c_str()) != NULL) {
+    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (IsLegalSoName(filePath)) &&
+        (!g_ClientConfig.targetSoName.empty()) && strstr(filePath, g_ClientConfig.targetSoName.c_str()) != NULL) {
         uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
         uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
         auto range = targetedRange.load();

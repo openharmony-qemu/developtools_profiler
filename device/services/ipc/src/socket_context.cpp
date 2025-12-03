@@ -89,7 +89,7 @@ bool SocketContext::ReceiveData(int sock, uint8_t* databuf, uint32_t size)
     while (p < size) {
         int ret = recv(sock, &databuf[p], size - p, 0);
         if (ret > 0) {
-            p += ret;
+            p += static_cast<uint32_t>(ret);
         } else if (ret == -1 && errno == EAGAIN) {
             if (++nTimes >= timesToTry) {
                 return false;
