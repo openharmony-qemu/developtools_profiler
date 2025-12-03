@@ -22,7 +22,7 @@
 
 namespace HidebugFuzz {
 constexpr uint8_t MAX_STR_LENGTH = 128;
-void OH_HiDebug_GetGraphicsMemorySummary_Fuzz(const uint8_t* data, size_t size)
+void OhHiDebugGetGraphicsMemorySummaryFuzz(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     int32_t interval = provider.ConsumeIntegral<uint32_t>();
@@ -30,7 +30,7 @@ void OH_HiDebug_GetGraphicsMemorySummary_Fuzz(const uint8_t* data, size_t size)
     OH_HiDebug_GetGraphicsMemorySummary(interval, &summary);
 }
 
-void OH_HiDebug_GetAppNativeMemInfoWithCache_Fuzz(const uint8_t* data, size_t size)
+void OhHiDebugGetAppNativeMemInfoWithCacheFuzz(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     bool flag = provider.ConsumeBool();
@@ -38,7 +38,7 @@ void OH_HiDebug_GetAppNativeMemInfoWithCache_Fuzz(const uint8_t* data, size_t si
     OH_HiDebug_GetAppNativeMemInfoWithCache(&memInfo, flag);
 }
 
-void OH_HiDebug_StartAppTraceCapture_Fuzz(const uint8_t* data, size_t size)
+void OhHiDebugStartAppTraceCaptureFuzz(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     uint32_t fileLength = provider.ConsumeIntegral<uint32_t>();
@@ -81,7 +81,8 @@ void CreateDirectoryFuzz(const uint8_t* data, size_t size)
 {
     FuzzedDataProvider provider(data, size);
     std::string fileName = provider.ConsumeRandomLengthString(MAX_STR_LENGTH);
-    OHOS::HiviewDFX::CreateDirectory(fileName, 0755);
+    constexpr unsigned fileMode = 0755;
+    OHOS::HiviewDFX::CreateDirectory(fileName, fileMode);
 }
 
 void IsLegalPathFuzz(const uint8_t* data, size_t size)
@@ -105,9 +106,9 @@ extern "C" int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size)
     if (data == nullptr || size == 0) {
         return 0;
     }
-    HidebugFuzz::OH_HiDebug_GetGraphicsMemorySummary_Fuzz(data, size);
-    HidebugFuzz::OH_HiDebug_GetAppNativeMemInfoWithCache_Fuzz(data, size);
-    HidebugFuzz::OH_HiDebug_StartAppTraceCapture_Fuzz(data, size);
+    HidebugFuzz::OhHiDebugGetGraphicsMemorySummaryFuzz(data, size);
+    HidebugFuzz::OhHiDebugGetAppNativeMemInfoWithCacheFuzz(data, size);
+    HidebugFuzz::OhHiDebugStartAppTraceCaptureFuzz(data, size);
     HidebugFuzz::SetXAttrFuzz(data, size);
     HidebugFuzz::GetXAttrFuzz(data, size);
     HidebugFuzz::CreateFileFuzz(data, size);
