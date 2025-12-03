@@ -17,6 +17,7 @@ import pytest
 import subprocess
 import re
 import sys
+import math
 sys.path.append("..")
 from tools.utils import *
 
@@ -57,7 +58,7 @@ file_paths = [
     ETC_PATH + "param/hiprofiler.para",
     ETC_PATH + "param/hiprofiler.para.dac",
     "/system/framework/hidebug.abc",
-    LIB_PATH + "chipset-sdk/libbffrt_profiler.z.so",
+    LIB_PATH + "chipset-sdk/libffrt_profiler.z.so",
     LIB_PATH + "libhidebug.so",
     LIB_PATH + "libhidebug_ani.so",
     LIB_PATH + "libhidebug_native.z.so",
@@ -81,7 +82,12 @@ def check_rom(output):
     if multi:
         result *= MB_SIZE
     return result
-    
+
+
+def get_size_result(size):
+    ceil_size = math.ceil(size)
+    return ((ceil_size + 3) // 4) * 4
+
 
 class TestHiprofilerRom:
     # 校验rom总值
@@ -94,9 +100,7 @@ class TestHiprofilerRom:
                 continue
             get_rom_size = check_rom(get_rom_info)
             if get_rom_size % FOUR_KB != 0:
-                get_rom_size += 4
+                get_rom_size = get_size_result(get_rom_size)
             rom_total_size += get_rom_size
-
-        rom_total_size = round(rom_total_size, 1)
 
         assert (rom_total_size < ROM_THRESH)
