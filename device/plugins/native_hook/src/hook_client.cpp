@@ -345,9 +345,9 @@ void* MallocHookStart(void* disableHookCallback)
             g_wholeAddrHandler = nullptr;
             g_midPartHandler = nullptr;
 #endif
+            g_hookReady = true;
         }
     }
-    g_hookReady = true;
     return nullptr;
 }
 
