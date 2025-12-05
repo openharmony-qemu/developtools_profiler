@@ -445,4 +445,20 @@ HWTEST_F(FlowControllerTest, TestFrameworkEncoder, TestSize.Level0)
     sleep(TRACE_TIME);
     EXPECT_EQ(controller.StopCapture(), 0);
 }
+
+/*
+ * @tc.name: TestParseCommDictInfo
+ * @tc.desc: test ftrace plugin parseCommDictInfo.
+ * @tc.type: FUNC
+ */
+HWTEST_F(FlowControllerTest, TestParseCommDictInfo, TestSize.Level0)
+{
+    WriterStruct writer = {WriteFunc, FlushFunc, StartReportFunc, FinishReportFunc, false};
+    OHOS::Profiler::Plugins::FlowController controller;
+    ASSERT_EQ(controller.SetWriter(static_cast<WriterStructPtr>(&writer)), 0);
+    writer.isProtobufSerialize = true;
+    EXPECT_EQ(controller.ParseCommDictInfo(), true);
+    writer.isProtobufSerialize = false;
+    EXPECT_EQ(controller.ParseCommDictInfo(), true);
+}
 } // namespace

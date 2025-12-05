@@ -118,6 +118,11 @@ public:
         ParseSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids());
     }
 
+    std::unordered_map<int32_t, std::string>& GetCommDict()
+    {
+        return commDict_;
+    }
+
 private:
     int GetHeaderPageCommitSize(void);
     bool ParseHeaderPageFormat(const std::string& formatDesc);
@@ -199,6 +204,14 @@ private:
             }
             if (comm.size() > 0) {
                 ftraceEvent.set_comm(comm);
+            }
+            auto it = commDict_.find(tgid);
+            if (it == commDict_.end()) {
+                std::string processComm = FtraceFsOps::GetInstance().GetProcessComm(tgid);
+                if (processComm.size() > 0) {
+                    processComm.pop_back(); // /proc/xxx/comm end with `\n`
+                    commDict_.insert(std::pair<int32_t, std::string>(tgid, processComm));
+                }
             }
         }
 

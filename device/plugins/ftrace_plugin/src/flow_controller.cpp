@@ -701,6 +701,9 @@ int FlowController::StopCapture(void)
         tansporter_->Report(static_cast<size_t>(msgSize));
     }
 
+    // parse comm dict info
+    CHECK_TRUE(ParseCommDictInfo(), -1, "parse commDict info FAILED!");
+
     // disable userspace trace triggers
     // because trace cmd will read trace buffer,
     // so we to this action after polling thread exit.
@@ -712,6 +715,35 @@ int FlowController::StopCapture(void)
     ftraceBuffers_.clear();   // release ftrace event read buffers
     memPool_.reset();         // release memory pool
     return 0;
+}
+
+bool FlowController::ParseCommDictInfo()
+{
+    if (resultWriter_->isProtobufSerialize) {
+        auto traceResult = std::make_unique<TracePluginResult>();
+        CHECK_TRUE(ParseCommDict(traceResult), false, "parse commDict stats FAILED!");
+        CHECK_TRUE(tansporter_->Submit(std::move(traceResult)), false, "report commDict stats FAILED!");
+    } else {
+        auto ctx = resultWriter_->startReport(resultWriter_);
+        CHECK_NOTNULL(ctx, false, "%s: get RandomWriteCtx FAILED!", __func__);
+        auto traceResult = std::make_unique<ProtoEncoder::TracePluginResult>(ctx);
+        CHECK_TRUE(ParseCommDict(traceResult), false, "parse commDict stats FAILED!");
+        int32_t msgSize = traceResult->Finish();
+        resultWriter_->finishReport(resultWriter_, msgSize);
+        tansporter_->Report(static_cast<size_t>(msgSize));
+    }
+    return true;
+}
+
+template <typename T> bool FlowController::ParseCommDict(T& tracePluginResult)
+{
+    CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
+    for (auto& [tid, comm] : ftraceParser_->GetCommDict()) {
+        auto commDictMsg = tracePluginResult->add_comm_dict();
+        commDictMsg->set_tid(tid);
+        commDictMsg->set_comm(comm);
+    }
+    return true;
 }
 
 template <typename T> bool FlowController::ParsePerCpuStatus(T& tracePluginResult, int stage)

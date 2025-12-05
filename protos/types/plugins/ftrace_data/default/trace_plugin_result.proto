@@ -23,6 +23,7 @@ message TracePluginResult {
   repeated SymbolsDetailMsg symbols_detail = 5;
   repeated ClockDetailMsg clocks_detail = 6;
   string version = 7;
+  repeated CommDictMsg comm_dict = 8;
 }
 
 message ClockDetailMsg {
@@ -78,4 +79,9 @@ message FtraceCpuDetailMsg {
   uint32 cpu = 1;
   repeated FtraceEvent event = 2;
   uint64 overwrite = 3;
+}
+
+message CommDictMsg {
+  int32 tid = 1;
+  string comm = 2;
 }
