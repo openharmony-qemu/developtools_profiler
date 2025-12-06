@@ -97,7 +97,7 @@ private:
     template <typename T, typename E>
     bool ParseFtraceEvent(T* tracePluginResult, int cpuid, uint8_t page[], E* ftraceEvent);
 
-    std::string ReloadTraceArgs();
+    void ReloadfilterPids(std::vector<int32_t>& filterPids);
 
     // for UT
     void SetTestInfo(int cpuNum, std::string path)

@@ -229,40 +229,16 @@ bool FlowController::ParseBasicData()
     return true;
 }
 
-std::string FlowController::ReloadTraceArgs()
+void FlowController::ReloadfilterPids(std::vector<int32_t>& filterPids)
 {
-    std::string args;
-    for (size_t i = 0; i < traceCategories_.size(); i++) {
-        if (i == 0) {
-            args += ("tags:" + traceCategories_[i]);
-        } else {
-            args += ("," + traceCategories_[i]);
-        }
-    }
-    int appNum = 0;
     for (size_t i = 0; i < traceApps_.size(); i++) {
         int pidval = 0;
         if (COMMON::IsProcessExist(traceApps_[i], pidval)) {
-            if (appNum == 0) {
-                args += (" filterPids:" + std::to_string(pidval));
-            } else {
-                args += ("," + std::to_string(pidval));
-            }
-            appNum += 1;
+            filterPids.push_back(pidval);
         } else {
             PROFILER_LOG_ERROR(LOG_CORE, "ReloadTraceArgs process %s doesn't exist", traceApps_[i].c_str());
         }
     }
-
-    if (traceClock_.size() > 0) {
-        args += (" clockType:" + traceClock_);
-    }
-
-    if (bufferSizeKb_ > 0) {
-        args += (" bufferSize:" + std::to_string(bufferSizeKb_));
-    }
-    PROFILER_LOG_INFO(LOG_CORE, "trace args: %s", args.c_str());
-    return args;
 }
 
 int FlowController::StartCapture(void)
@@ -312,7 +288,13 @@ int FlowController::StartCapture(void)
     }
 
     // set trace_clock and enable all tag categories with hiview::TraceCollector
-    auto openRet = traceCollector_->OpenRecording(ReloadTraceArgs());
+    OHOS::HiviewDFX::UCollectClient::TraceParam traceParam {
+        .bufferSize = bufferSizeKb_,
+        .clockType = traceClock_.empty() ? traceClock_ : "boot"
+    };
+    std::vector<int32_t> filterPids;
+    ReloadfilterPids(filterPids);
+    auto openRet = traceCollector_->OpenTrace(traceCategories_, traceParam, filterPids);
     if (openRet.retCode != OHOS::HiviewDFX::UCollect::UcError::SUCCESS) {
         PROFILER_LOG_ERROR(LOG_CORE, "Enable tag categories failed, trace error code is %d!", openRet.retCode);
         return -1;
