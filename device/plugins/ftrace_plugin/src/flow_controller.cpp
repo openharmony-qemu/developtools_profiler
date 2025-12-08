@@ -290,7 +290,7 @@ int FlowController::StartCapture(void)
     // set trace_clock and enable all tag categories with hiview::TraceCollector
     OHOS::HiviewDFX::UCollectClient::TraceParam traceParam {
         .bufferSize = bufferSizeKb_,
-        .clockType = traceClock_.empty() ? traceClock_ : "boot"
+        .clockType = traceClock_.empty() ? "boot" : traceClock_
     };
     std::vector<int32_t> filterPids;
     ReloadfilterPids(filterPids);
