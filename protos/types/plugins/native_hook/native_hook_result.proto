@@ -131,14 +131,14 @@ enum TraceType {
     GPU_VK = 2;
     GPU_GLES = 3;
     GPU_CL = 4;
-    SO = 5;
+    OTHER = 5;
     ARKTS_HEAP = 6;
     JS_HEAP = 7;
     KMP_HEAP = 8;
     RN_HEAP = 9;
     ASHMEM = 10;
     DMA = 11;
-    OTHER = 12;
+    SO = 12;
 };
 
 message TraceAllocEvent {

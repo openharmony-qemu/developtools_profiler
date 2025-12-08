@@ -221,7 +221,7 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
 
 unsigned long long HookManager::ConvertTagToMask()
 {
-    unsigned long long resMask = RES_SO_MASK;
+    unsigned long long resMask = 0;
     if (hookConfig_.restrace_tag().size() > 0) {
         for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
             std::string resTag = hookConfig_.restrace_tag(i);
