@@ -194,11 +194,11 @@ std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
         return std::to_string(ErrorSpCode::FILE_OPEN_IS_NULL);
     }
     while (fgets(line.data(), line.size(), fd) != nullptr) {
-        appProcessInfor += line.data;
+        appProcessInfor += line.data();
     }
     int pcloseResult = pclose(fd);
     if (pcloseResult == -1) {
-        return std::to_string(ErrorSpCode::FILE_OPEN_FAILED);
+        return std::to_string(ErrorSpCode::FILE_CLOSE_FAILED);
     }
     return appProcessInfor;
 }
