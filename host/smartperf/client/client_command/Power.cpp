@@ -26,6 +26,8 @@ std::map<std::string, std::string> Power::ItemData()
         SPUtils::LoadFile(currentNowPath, currentNow);
         std::string voltageNow;
         SPUtils::LoadFile(voltageNowPath, voltageNow);
+        std::string battryString;
+        SPUtils::LoadFile(batteryNumPath, battryString);
         if (currentNow.empty()) {
             currentNow = "NA";
         }
@@ -34,7 +36,8 @@ std::map<std::string, std::string> Power::ItemData()
         }
 
         result["currentNow"] = currentNow;
-        result["voltageNow"] = voltageNow;
+        result["voltageNow"] = std::to_string(SPUtilesTye::StringToSometype<int>(voltageNow) *
+            SPUtilesTye::StringToSometype<int>(battryString));
     } else {
         result["failed"] = "RK does not support power acquisition";
         LOGE("failed:RK does not support power acquisition");
