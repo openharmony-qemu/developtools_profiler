@@ -368,7 +368,6 @@ void TaskManager::MainLoop()
             *nextTime_ = SPUtils::GetCurTime();
         }
         ProcessCurrentBatch(currDatas);
-        auto loopEnd = std::chrono::steady_clock::now();
         SaveRegularly(dataIndex_);
         long long loopEnd = SPUtils::GetCurTime();
         long long sleepTime = collectTimes_ * 1000 + baseTime_ - loopEnd;

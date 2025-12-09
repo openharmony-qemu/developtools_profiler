@@ -126,7 +126,6 @@ bool StartUpDelay::KillSpProcess() const
 bool StartUpDelay::GetSpClear(bool isKillTestServer) const
 {
     std::string cmdResult;
-    std::string line;
     std::string curPid = std::to_string(getpid());
     FILE *fd = popen("ps -ef | grep -v grep | grep SP_daemon", "r");
     if (fd == nullptr) {
@@ -213,11 +212,10 @@ std::vector<std::vector<std::string>> StartUpDelay::GetAppProcInfor(const std::s
         return {{std::to_string(ErrorSpCode::DATA_IS_EMPTY), "Not data found for package"}};
     }
     std::istringstream iss(eachRowOfData);
-    std::istringstream issLine;
     std::string line;
     while (std::getline(iss, line)) {
         if (line.find("root") != std::string::npos && line.find("SP_daemon") != std::string::npos) {
-            issLine(line);
+            std::istringstream issLine(line);
             std::string word;
             issLine >> word;
             issLine >> word;
