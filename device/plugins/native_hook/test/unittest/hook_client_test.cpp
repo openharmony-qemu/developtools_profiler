@@ -458,4 +458,19 @@ HWTEST_F(NativeHookTest, MallocHookFlag, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_set_hook_flag(false));
     EXPECT_FALSE(ohos_malloc_hook_get_hook_flag());
 }
+
+/**
+ * @tc.name: SetFilterSizeTest
+ * @tc.desc: Test HookGuard::SetFilterSize basic functionality
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, SetFilterSizeTest, TestSize.Level0)
+{
+    g_ClientConfig.filterSize = -1;
+    EXPECT_FALSE(ohos_set_filter_size(10, nullptr));
+
+    g_ClientConfig.filterSize = 5;
+    EXPECT_TRUE(ohos_set_filter_size(10, nullptr));
+    EXPECT_FALSE(ohos_set_filter_size(3, nullptr));
+}
 } // namespace

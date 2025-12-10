@@ -17,13 +17,39 @@
 #define __OHOS_MALLOC_HOOK_CLIENT_H__
 
 #include <cstdlib>
+#include <pthread.h>
+#include <atomic>
+#include <cstdint>
+#include <mutex>
+#include <unordered_map>
 #include "musl_malloc_dispatch.h"
+#include "hook_common.h"
+#include "hook_socket_client.h"
+
+struct ClientConfig;
+class Sampling;
 
 #define EXPORT_API __attribute__((visibility("default")))
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+extern pthread_key_t g_updateThreadNameCount;
+extern std::atomic<pid_t> g_hookPid;
+extern std::atomic<bool> g_hookReady;
+extern std::atomic<bool> g_isPidChanged;
+extern ClientConfig g_ClientConfig;
+extern Sampling g_sampler;
+extern std::mutex g_usableSizeMapMutex;
+extern std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
+extern std::atomic<Range> g_targetedRange;
+extern std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
+extern std::recursive_timed_mutex g_FilterMapMutex;
+extern std::shared_ptr<HookSocketClient> g_hookClient;
+extern std::atomic<int> g_sharedMemCount;
+
+pid_t GetCurThreadId();
 
 EXPORT_API bool ohos_malloc_hook_initialize(const MallocDispatchType*, bool*, const char*);
 EXPORT_API bool ohos_malloc_hook_get_hook_flag(void);
@@ -48,6 +74,9 @@ EXPORT_API int ohos_malloc_hook_prctl(int option, unsigned long, unsigned long, 
 EXPORT_API bool ohos_set_filter_size(size_t size, void* ret);
 EXPORT_API bool ohos_malloc_hook_send_hook_misc_data(uint64_t, const char*, size_t, uint32_t);
 EXPORT_API void* ohos_malloc_hook_get_hook_config();
+
+void* hook_malloc(void* (*fn)(size_t), size_t size);
+void hook_free(void (*free_func)(void*), void* p);
 
 #ifdef __cplusplus
 }

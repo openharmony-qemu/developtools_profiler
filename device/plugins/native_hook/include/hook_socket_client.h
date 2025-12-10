@@ -41,7 +41,7 @@ public:
     }
     void Flush();
     bool SendStack(const void* data, size_t size);
-    bool SendStackWithPayload(const void* data, size_t size, const void* payload,
+    virtual bool SendStackWithPayload(const void* data, size_t size, const void* payload,
             size_t payloadSize, int smbIndex = 0);
     void DisableHook();
     bool PeerIsConnected();

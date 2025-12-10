@@ -1,0 +1,201 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2021. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include <dlfcn.h>
+#include <gtest/gtest.h>
+#include "hook_client.h"
+#include "hook_socket_client_mock.h"
+#include "musl_preinit_common.h"
+#include "init_param.h"
+#include <memory_trace.h>
+
+using namespace testing::ext;
+
+namespace {
+constexpr uint32_t g_size = 1024;
+constexpr uint32_t g_resize = 2048;
+constexpr unsigned int WAIT_THREAD_TIME = 3;
+
+class HookClientExternTest : public ::testing::Test {
+public:
+    static void SetUpTestCase() {}
+    static void TearDownTestCase() {}
+    void SetUp() {}
+    void TearDown() {}
+
+    void StartMock(std::vector<int> &typeVec, std::vector<int> &sizeVec) {
+        g_hookReady = true;
+        g_ClientConfig.filterSize = 1;
+        std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
+                                                            &g_targetedRange, &g_sharedMemCount);
+        g_hookClient = mockClient;
+
+        EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_)).WillRepeatedly(
+            [&typeVec, &sizeVec] (const void* data, size_t size, const void* payload, size_t payloadSize, int smbIndex) {
+            if (data) {
+                const BaseStackRawData* data_ptr = static_cast<const BaseStackRawData*>(data);
+                typeVec.push_back(data_ptr->type);
+                sizeVec.push_back(data_ptr->mallocSize);
+            }
+            return true;
+        });
+    }
+};
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook malloc normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMallocTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* mallocBlack = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack, nullptr);
+
+    ohos_malloc_hook_free(mallocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    std::vector<int> expectedTypeVec = {8, 0, 1};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedsizeVec = {0, g_size, 0};
+    EXPECT_EQ(sizeVec, expectedsizeVec);
+    sleep(WAIT_THREAD_TIME);
+}
+
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test NormalMallocHookTest process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookReallocTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* mallocBlack = ohos_malloc_hook_malloc(g_size);
+    EXPECT_NE(mallocBlack, nullptr);
+
+    void* reallocBlack = ohos_malloc_hook_realloc(mallocBlack, g_resize);
+    EXPECT_NE(reallocBlack, nullptr);
+
+    ohos_malloc_hook_free(reallocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    std::vector<int> expectedTypeVec = {8, 0, 1, 0, 1};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedsizeVec = {0, g_size, 0, g_resize, 0};
+    EXPECT_EQ(sizeVec, expectedsizeVec);
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test NormalMallocHookTest process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookCallocTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* callocBlack = ohos_malloc_hook_calloc(g_size, g_resize);
+    EXPECT_NE(callocBlack, nullptr);
+
+    ohos_malloc_hook_free(callocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    std::vector<int> expectedTypeVec = {0, 1};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedsizeVec = {g_size * g_resize, 0};
+    EXPECT_EQ(sizeVec, expectedsizeVec);
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test NormalMallocHookTest process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookVallocTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* vallocBlack = ohos_malloc_hook_valloc(g_size);
+    EXPECT_EQ(vallocBlack, nullptr);
+
+    ohos_malloc_hook_free(vallocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    std::vector<int> expectedTypeVec = {1};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedsizeVec = {0};
+    EXPECT_EQ(sizeVec, expectedsizeVec);
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test NormalMallocHookTest process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookAliginedAllocTest, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* alignedAllocBlack = ohos_malloc_hook_aligned_alloc(g_size, g_resize);
+    EXPECT_NE(alignedAllocBlack, nullptr);
+
+    ohos_malloc_hook_free(alignedAllocBlack);
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    std::vector<int> expectedTypeVec = {8, 0, 1};
+    EXPECT_EQ(typeVec, expectedTypeVec);
+    std::vector<int> expectedsizeVec = {0, g_resize, 0};
+    EXPECT_EQ(sizeVec, expectedsizeVec);
+    sleep(WAIT_THREAD_TIME);
+}
+}
+
+// EXPORT_API void* ohos_malloc_hook_mmap(void*, size_t, int, int, int, off_t);
+// EXPORT_API int ohos_malloc_hook_munmap(void*, size_t);
+// EXPORT_API void ohos_malloc_hook_memtrace(void*, size_t, const char*, bool);
+// EXPORT_API void ohos_malloc_hook_restrace(unsigned long long, void*, size_t, const char*, bool);
+// EXPORT_API void ohos_malloc_hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize);
+// EXPORT_API void ohos_malloc_hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size);
+// EXPORT_API int ohos_malloc_hook_prctl(int option, unsigned long, unsigned long, unsigned long, unsigned long);
+// EXPORT_API bool ohos_set_filter_size(size_t size, void* ret);
+// EXPORT_API bool ohos_malloc_hook_send_hook_misc_data(uint64_t, const char*, size_t, uint32_t);
+// EXPORT_API void* ohos_malloc_hook_get_hook_config();

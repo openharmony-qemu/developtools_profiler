@@ -35,10 +35,14 @@ ohos_unittest("nativehook_ut") {
   module_out_path = module_output_path
   sources = [
     "../../memory_plugin/src/buffer_splitter.cpp",
+    "unittest/hook_client_extern_test.cpp",
     "unittest/address_handler_test.cpp",
     "unittest/check_hook_data_test.cpp",
+    "unittest/hook_client_holder_test.cpp",
     "unittest/hook_client_test.cpp",
+    "unittest/hook_guard_test.cpp",
     "unittest/hook_socket_client_test.cpp",
+    "unittest/rawdata_builder_test.cpp",
     "unittest/sampling_test.cpp",
     "unittest/stack_writer_test.cpp",
   ]
@@ -81,6 +85,7 @@ ohos_unittest("nativehook_ut") {
     "c_utils:utils",
     "faultloggerd:libunwinder",
     "googletest:gtest",
+    "googletest:gmock",
     "hilog:libhilog_base",
     "init:libbegetutil",
     "protobuf:protobuf",
