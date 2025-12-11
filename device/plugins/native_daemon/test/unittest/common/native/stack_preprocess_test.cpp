@@ -15,9 +15,12 @@
  */
 
 #include <gtest/gtest.h>
+#include <google/protobuf/text_format.h>
 #include "stack_preprocess.h"
 #include "native_hook_config.pb.h"
 #include "plugin_module_api.h"
+#include "native_hook_result_standard.pb.h"
+#include "trace_file_reader.h"
 
 using namespace std;
 using namespace testing::ext;
@@ -27,6 +30,8 @@ namespace {
 constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
+constexpr size_t MAX_BUFFER_SIZE = 1024 * 1024;
+constexpr uint32_t MAX_ENUM = 9999;
 
 static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
@@ -37,6 +42,7 @@ static void SetUpTestCase(void);
 static void TearDownTestCase(void);
 void SetUp();
 void TearDown();
+void BuildAbnormalData(BatchNativeHookData& testData);
 };
 void StackPreprocessTest::SetUpTestCase(void)
 {
@@ -52,6 +58,24 @@ void StackPreprocessTest::SetUp(void)
 
 void StackPreprocessTest::TearDown(void)
 {
+}
+
+void StackPreprocessTest::BuildAbnormalData(BatchNativeHookData& testData)
+{
+    NativeHookData* event = testData.add_events();
+    event->set_tv_sec(0);
+    event->set_tv_nsec(-1);
+    AllocEvent* allocEvent = event->mutable_alloc_event();
+    allocEvent->set_pid(-1);
+    allocEvent->set_addr(0);
+    allocEvent->clear_frame_info();
+    allocEvent->set_thread_name_id(0);
+
+    NativeHookData* traceEvent = testData.add_events();
+    TraceAllocEvent* traceAlloc = traceEvent->mutable_trace_alloc_event();
+    traceAlloc->set_trace_type(static_cast<TraceType>(MAX_ENUM));
+    traceAlloc->set_tag_name("");
+    traceAlloc->set_size(0);
 }
 
 /*
@@ -423,5 +447,95 @@ HWTEST_F(StackPreprocessTest, GetOfflineMapsMissTest, TestSize.Level0)
     preprocess.SetMapsInfo();
     EXPECT_TRUE(preprocess.stackData_.index() == 0);
     EXPECT_TRUE(preprocess.runtime_instance->GetProcessMaps().empty());
+}
+
+/*
+@tc.name: FlushDataNormalProtoTest
+@tc.desc: test flush data to file.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FlushDataNormalProtoTest, TestSize.Level0)
+{
+    const std::string filePath = "/data/local/tmp/hiprofiler_data_test_temp.htrace";
+    StackPreprocess preprocess(nullptr, NativeHookConfig(), 0);
+    preprocess.buffer_ = std::make_unique<uint8_t[]>(MAX_BUFFER_SIZE);
+    preprocess.bufferSize_ = MAX_BUFFER_SIZE;
+    preprocess.fpHookData_ = fopen(filePath.c_str(), "w");
+    ASSERT_NE(preprocess.fpHookData_, nullptr) << "Failed to open file for writing";
+    preprocess.isHookStandaloneSerialize_ = true;
+
+    BatchNativeHookData testData;
+    NativeHookData* event = testData.add_events();
+    event->set_tv_sec(1234567890);
+    event->set_tv_nsec(987654321);
+
+    preprocess.FlushData(testData);
+
+    std::ifstream file(filePath);
+    ASSERT_TRUE(file.is_open()) << "Failed to open file for reading";
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string fileContent = buffer.str();
+
+    ForStandard::BatchNativeHookData parseData;
+    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent,
+        &parseData)) << "Failed to parse protobuf text format from file";
+    ASSERT_EQ(parseData.events_size(), 1);
+    EXPECT_TRUE(parseData.events(0).tv_sec() == 1234567890);
+    EXPECT_TRUE(parseData.events(0).tv_nsec() == 987654321);
+    int ret = std::remove(filePath.c_str());
+    ASSERT_EQ(ret, 0) << "Failed to delete temporary file";
+}
+
+/*
+@tc.name: FlushDataAbnormalProtoTest
+@tc.desc: test flush data to file.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FlushDataAbnormalProtoTest, TestSize.Level0)
+{
+    const std::string filePath = "/data/local/tmp/hiprofiler_data_test_abnormal.htrace";
+
+    StackPreprocess preprocess(nullptr, NativeHookConfig(), 0);
+    preprocess.buffer_ = std::make_unique<uint8_t[]>(MAX_BUFFER_SIZE);
+    preprocess.bufferSize_ = MAX_BUFFER_SIZE;
+    preprocess.fpHookData_ = fopen(filePath.c_str(), "w");
+    ASSERT_NE(preprocess.fpHookData_, nullptr) << "Failed to open file";
+
+    preprocess.isHookStandaloneSerialize_ = true;
+
+    BatchNativeHookData testData;
+    BuildAbnormalData(testData);
+
+    preprocess.FlushData(testData);
+
+    fclose(preprocess.fpHookData_);
+
+    std::ifstream file(filePath);
+    ASSERT_TRUE(file.is_open()) << "Failed to open file for reading";
+
+    std::stringstream buffer;
+    buffer << file.rdbuf();
+    std::string fileContent = buffer.str();
+
+    ForStandard::BatchNativeHookData parseData;
+    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent,
+        &parseData)) << "Failed to parse protobuf text format from file";
+
+    ASSERT_EQ(parseData.events_size(), 2);
+
+    const auto& firstEvent = parseData.events(0);
+    EXPECT_EQ(firstEvent.alloc_event().pid(), -1);
+    EXPECT_EQ(firstEvent.alloc_event().addr(), 0);
+    EXPECT_EQ(firstEvent.alloc_event().frame_info_size(), 0);
+    EXPECT_EQ(firstEvent.tv_nsec(), 18446744073709551615ULL);
+
+    const auto& secondEvent = parseData.events(1);
+    EXPECT_EQ(secondEvent.trace_alloc_event().trace_type(), MAX_ENUM);
+    EXPECT_EQ(secondEvent.trace_alloc_event().tag_name(), "");
+    EXPECT_EQ(secondEvent.trace_alloc_event().size(), 0);
+
+    int ret = std::remove(filePath.c_str());
+    ASSERT_EQ(ret, 0) << "Failed to delete temporary file";
 }
 }
