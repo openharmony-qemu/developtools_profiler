@@ -39,7 +39,6 @@ ohos_fuzztest("NetworkProtocolProcFuzzTest") {
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
 }

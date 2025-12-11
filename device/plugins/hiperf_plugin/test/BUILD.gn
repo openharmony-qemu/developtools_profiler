@@ -42,7 +42,6 @@ ohos_unittest("hiperfplugin_ut") {
   external_deps = [
     "c_utils:utils",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]

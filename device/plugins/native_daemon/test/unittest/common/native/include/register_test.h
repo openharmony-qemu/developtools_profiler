@@ -17,7 +17,7 @@
 #define HIPERF_REGISTER_TEST
 
 #include <gtest/gtest.h>
-#include <hilog_base/log_base.h>
+#include <log_base.h>
 
 #include "debug_logger.h"
 #include "register.h"

@@ -41,7 +41,6 @@ ohos_source_set("hiebpfplugin_source") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "c_utils:utils",
-      "hilog:libhilog_base",
       "init:libbegetutil",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
@@ -61,7 +60,6 @@ ohos_shared_library("hiebpfplugin") {
       "HAVE_HILOG",
       "LITE_PROTO",
     ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

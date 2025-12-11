@@ -16,6 +16,6 @@
 #ifndef HIPERF_UTILITIES_TEST_H
 #define HIPERF_UTILITIES_TEST_H
 #include <gtest/gtest.h>
-#include <hilog_base/log_base.h>
+#include <log_base.h>
 
 #endif

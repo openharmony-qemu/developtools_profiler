@@ -58,9 +58,6 @@ ohos_source_set("profiler_service") {
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]
-  if (current_toolchain != host_toolchain) {
-    external_deps += [ "hilog:libhilog_base" ]
-  }
   defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
   if (hiprofiler_sandbox_log_path_mapping) {
     defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
@@ -108,7 +105,6 @@ ohos_executable("hiprofilerd") {
       "grpc:gpr",
       "grpc:grpc",
       "grpc:grpcxx",
-      "hilog:libhilog_base",
       "openssl:libcrypto_shared",
       "protobuf:protobuf_lite",
     ]

@@ -32,7 +32,7 @@
         __LINE__, __FUNCTION__, ##__VA_ARGS__
 
 #ifndef CONFIG_NO_HILOG
-#include "hilog_base/log_base.h"
+#include <log_base.h>
 
 static constexpr unsigned int BASE_HIPERF_DOMAIN_ID = 0xD000000;
 static constexpr unsigned int HITRACE_TAG = 0xd03301;

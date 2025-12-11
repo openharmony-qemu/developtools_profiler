@@ -63,9 +63,6 @@ ohos_shared_library("libffrt_profiler") {
   ]
 
   defines = []
-  if (current_toolchain != host_toolchain) {
-    external_deps += [ "hilog:libhilog_base" ]
-  }
 
   install_images = [
     "system",

@@ -35,7 +35,6 @@ ohos_shared_library("bytraceplugin") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }

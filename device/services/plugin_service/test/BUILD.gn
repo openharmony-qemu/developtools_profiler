@@ -43,7 +43,6 @@ ohos_unittest("plugin_service_ut") {
     "c_utils:utils",
     "googletest:gtest",
     "grpc:gpr",
-    "hilog:libhilog_base",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",
   ]
@@ -71,7 +70,6 @@ ohos_unittest("plugin_service_module_test") {
     "abseil-cpp:absl_sync",
     "googletest:gtest",
     "grpc:gpr",
-    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
