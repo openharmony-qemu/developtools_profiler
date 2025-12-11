@@ -431,4 +431,31 @@ HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest2, TestSize.Level1
     }).detach();
     std::this_thread::sleep_for(std::chrono::seconds(1));
 }
+
+/**
+ * @tc.name: OH_HiDebug_SetCrashObj test.
+ * @tc.desc: test OH_HiDebug_SetCrashObj.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_SetCrashObjTest, TestSize.Level0)
+{
+    char data[] = "test crash obj";
+    for (int i = HIDEBUG_CRASHOBJ_STRING; i <= HIDEBUG_CRASHOBJ_MEMORY_4096B; ++i) {
+        uint64_t crashObj = OH_HiDebug_SetCrashObj(static_cast<HiDebug_CrashObjType>(i), data);
+        EXPECT_NE(crashObj, 0);
+        OH_HiDebug_ResetCrashObj(crashObj);
+    }
+}
+
+/**
+ * @tc.name: OH_HiDebug_SetCrashObj fail test.
+ * @tc.desc: test OH_HiDebug_SetCrashObj fail.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_SetCrashObjFailTest, TestSize.Level2)
+{
+    EXPECT_EQ(OH_HiDebug_SetCrashObj(HIDEBUG_CRASHOBJ_STRING, nullptr), 0);
+    char data[] = "test crash obj";
+    EXPECT_EQ(OH_HiDebug_SetCrashObj(static_cast<HiDebug_CrashObjType>(-1), data), 0);
+}
 } // namespace

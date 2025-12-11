@@ -13,14 +13,10 @@
  * limitations under the License.
  */
 
-// #include <atomic>
-// #include <string>
-// #include <vector>
-
-// #include "hidebug_util.h"
 #include "hidebug/hidebug.h"
-#include "hilog/log.h"
+
 #include "dfx_signal_handler.h"
+#include "hilog/log.h"
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN 0xD002D0A
