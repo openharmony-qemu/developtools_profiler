@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -35,10 +34,13 @@
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
+
 #ifndef HIVIEWDFX_HIDEBUG_H
 #define HIVIEWDFX_HIDEBUG_H
+
 #include <stdint.h>
 #include "hidebug_type.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
