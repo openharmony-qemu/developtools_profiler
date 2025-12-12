@@ -440,6 +440,7 @@ HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest2, TestSize.Level1
 HWTEST_F(HidebugTest, OH_HiDebug_SetCrashObjTest, TestSize.Level0)
 {
     char data[] = "test crash obj";
+    OH_HiDebug_SetCrashObj(HIDEBUG_CRASHOBJ_STRING, data);
     for (int i = HIDEBUG_CRASHOBJ_STRING; i <= HIDEBUG_CRASHOBJ_MEMORY_4096B; ++i) {
         uint64_t crashObj = OH_HiDebug_SetCrashObj(static_cast<HiDebug_CrashObjType>(i), data);
         EXPECT_NE(crashObj, 0);
