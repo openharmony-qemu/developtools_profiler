@@ -17,6 +17,9 @@
 windows环境下执行测试用例
 1. Root组用例：
 设备进入root模式，进入scripts/testRoot目录，命令行执行 pytest ./
+注：\
+1. 跑测test_hook_encrypted.py的时候，需要提前进入应用市场下载懂车帝应用，并且将文件里面的com.ohos.dongchedi替换成懂车帝的进程名, 替换对应的aa start命令。提前进入应用并登录。
+2. 跑测test_restrace.py的时候，需要将weather, photos替换成天气应用和相机应用的进程名。
 
 2. User组用例：
 进入华为商城，下载QQ浏览器
