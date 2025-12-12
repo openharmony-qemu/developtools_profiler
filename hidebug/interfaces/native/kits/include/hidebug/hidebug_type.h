@@ -14,17 +14,6 @@
  */
 
 /**
- * @file hidebug_type.h
- *
- * @brief Defines the code of the HiDebug module.
- *
- * @kit PerformanceAnalysisKit
- * @library libohhidebug.so
- * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
- * @since 12
- */
-
-/**
  * @addtogroup HiDebug
  * @{
  *
@@ -32,6 +21,17 @@
  *
  * For example, you can use these code for check result or parameter of HiDebug function.
  *
+ * @since 12
+ */
+
+/**
+ * @file hidebug_type.h
+ *
+ * @brief Defines the code of the HiDebug module.
+ *
+ * @kit PerformanceAnalysisKit
+ * @library libohhidebug.so
+ * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
 
