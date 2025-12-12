@@ -14,17 +14,6 @@
  */
 
 /**
- * @addtogroup HiDebug
- * @{
- *
- * @brief Provides debug code define.
- *
- * For example, you can use these code for check result or parameter of HiDebug function.
- *
- * @since 12
- */
-
-/**
  * @file hidebug_type.h
  *
  * @brief Defines the code of the HiDebug module.
@@ -32,6 +21,17 @@
  * @kit PerformanceAnalysisKit
  * @library libohhidebug.so
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
+ * @since 12
+ */
+
+/**
+ * @addtogroup HiDebug
+ * @{
+ *
+ * @brief Provides debug code define.
+ *
+ * For example, you can use these code for check result or parameter of HiDebug function.
+ *
  * @since 12
  */
 
@@ -78,7 +78,6 @@ typedef enum HiDebug_ErrorCode {
      * @since 22
      */
     HIDEBUG_UNDER_SAMPLING = 11400301,
-
     /**
      * Resource unavailable
      * @since 22
@@ -198,10 +197,10 @@ typedef enum HiDebug_TraceFlag {
 } HiDebug_TraceFlag;
 
 /**
- * @brief Defines structure type of malloc dispatch table.
+ * @brief Defines structure type for MallocDispatch table.
  *
  * @since 20
-*/
+ */
 typedef struct HiDebug_MallocDispatch {
     void* (*malloc)(size_t);
     void* (*calloc)(size_t, size_t);
@@ -386,16 +385,21 @@ typedef struct HiDebug_ProcessSamplerConfig {
 typedef enum HiDebug_CrashObjType {
     /** Null-terminated string */
     HIDEBUG_CRASHOBJ_STRING = 0,
+
     /** 64-byte memory block */
     HIDEBUG_CRASHOBJ_MEMORY_64B = 1,
+
     /** 256-byte memory block */
     HIDEBUG_CRASHOBJ_MEMORY_256B = 2,
+
     /** 1KB memory block */
     HIDEBUG_CRASHOBJ_MEMORY_1024B = 3,
+
     /** 2KB memory block */
     HIDEBUG_CRASHOBJ_MEMORY_2048B = 4,
+
     /** 4KB memory block */
-    HIDEBUG_CRASHOBJ_MEMORY_4096B = 5,
+    HIDEBUG_CRASHOBJ_MEMORY_4096B = 5
 } HiDebug_CrashObjType;
 
 #ifdef __cplusplus

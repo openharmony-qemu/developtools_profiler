@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2024 Huawei Device Co., Ltd.
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -14,17 +15,6 @@
  */
 
 /**
- * @addtogroup HiDebug
- * @{
- *
- * @brief Provides debug functions.
- *
- * For example, you can use these functions to obtain cpu uage, memory, heap, capture trace.
- *
- * @since 12
- */
-
-/**
  * @file hidebug.h
  *
  * @brief Defines the debug functions of the HiDebug module.
@@ -35,12 +25,20 @@
  * @since 12
  */
 
+/**
+ * @addtogroup HiDebug
+ * @{
+ *
+ * @brief Provides debug functions.
+ *
+ * For example, you can use these functions to obtain cpu uage, memory, heap, capture trace.
+ *
+ * @since 12
+ */
 #ifndef HIVIEWDFX_HIDEBUG_H
 #define HIVIEWDFX_HIDEBUG_H
-
 #include <stdint.h>
 #include "hidebug_type.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -166,12 +164,12 @@ HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value);
 
 /**
- * @brief Replace MallocDispatch table with developer customized memory functions.
+ * @brief Replace MallocDispatch table with developer-defined memory allocation functions.
  *
- * @param dispatchTable Indicates pointer of custom dispatch table.
+ * @param dispatchTable A pointer to the MallocDispatch table.
  * @return Result code
- *         {@link HIDEBUG_SUCCESS} Set customized dispatch table success.
- *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument, dispatchTable is null pointer.
+ *         {@link HIDEBUG_SUCCESS} The MallocDispatch table is successfully overriden.
+ *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument, dispatchTable is a null pointer.
  * @since 20
  */
 HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatch *dispatchTable);
@@ -179,8 +177,8 @@ HiDebug_ErrorCode OH_HiDebug_SetMallocDispatchTable(struct HiDebug_MallocDispatc
 /**
  * @brief Obtain current MallocDispatch table.
  *
- * @return  The default dispatch table of malloc function.
-
+ * @return Returns a pointer to MallocDispatch table on success, or NULL on failure.
+ *
  * @since 20
  */
 HiDebug_MallocDispatch* OH_HiDebug_GetDefaultMallocDispatchTable(void);
@@ -247,27 +245,9 @@ HiDebug_Backtrace_Object OH_HiDebug_CreateBacktraceObject(void);
 void OH_HiDebug_DestroyBacktraceObject(HiDebug_Backtrace_Object object);
 
 /**
- * @brief Attaches diagnostic information to the current crash context.
+ * @brief Obtain the graphics memory summary of application.
  *
- * @param type Type of diagnostic data.
- * @param addr Point to the data buffer(must remain valid until crash).
- * @return Handle to the previously set crash object(0 if none).
- * @since 23
- */
-uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr);
-
-/**
- * @brief Detaches diagnostic information to the current crash context.
- *
- * @param crashObj Handle returned by OH_HiDebug_SetCrashObj.
- * @since 23
- */
-void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
-
-/**
- * @brief Create the graphics memory summary of application.
- *
- * @param interval If the cache of graphics memory is older than interval (unit: second), the latest
+ * @param interval If the cache of graphics memory is longer than interval (unit: second), the latest
  *                 graphics memory data will be obtained. The interval value range is 2 seconds to
  *                 3600 seconds, If interval is an invalid value, the default value is 300 seconds.
  * @param summary Indicates value of graphics memory summary, in kibibytes.
@@ -279,7 +259,12 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  */
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemorySummary(uint32_t interval, HiDebug_GraphicsMemorySummary *summary);
 
-
+/**
+ * @brief Defines the callback of the lightweight performance stack.
+ *
+ * @param stacks Stacks.
+ * @since 22
+ */
 typedef void (*OH_HiDebug_ThreadLiteSamplingCallback)(const char* stacks);
 
 /**
@@ -289,7 +274,6 @@ typedef void (*OH_HiDebug_ThreadLiteSamplingCallback)(const char* stacks);
  * @param config Sampling configuration parameters.
  * @param stacksCallback Callback of the sampling stack. This function is called after the sampling to pass
  * the sampling stack information.
- * @returns { HiDebug_ErrorCode } Returns the error code of the stack sampling.
  * @return Result code.
  *         {@link HIDEBUG_SUCCESS } The operation is successful.
  *         {@link HIDEBUG_INVALID_ARGUMENT } Invalid argument.
@@ -300,9 +284,27 @@ typedef void (*OH_HiDebug_ThreadLiteSamplingCallback)(const char* stacks);
  */
 HiDebug_ErrorCode OH_HiDebug_RequestThreadLiteSampling(
     HiDebug_ProcessSamplerConfig* config, OH_HiDebug_ThreadLiteSamplingCallback stacksCallback);
+
+/**
+ * @brief Attaches diagnostic information to the current crash context.
+ *
+ * @param type Type of diagnostic data.
+ * @param addr Point to the data buffer(must remain valid until crash).
+ * @return Handle to the previously set crash object(0 if none).
+ * @since 23
+ */
+uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr);
+
+/**
+ * @brief Detaches diagnostic information from the current crash context.
+ *
+ * @param crashObj Handle returned by OH_HiDebug_SetCrashObj.
+ * @since 23
+ */
+void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
 #ifdef __cplusplus
 }
 #endif // __cplusplus
-/** @} */
 
+/** @} */
 #endif // HIVIEWDFX_HIDEBUG_H
