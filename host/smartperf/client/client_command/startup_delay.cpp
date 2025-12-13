@@ -201,7 +201,7 @@ bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& outpu
         execvp(args[0], const_cast<char *const*>(args.data()));
         LOGE("StartUpDelay::Failed to execute ps ef");
         _exit(1);
-    } else {s
+    } else {
         close(pipefd[1]);
         char buffer[MAX_CHAR_SIZE];
         ssize_t bytesRead;
