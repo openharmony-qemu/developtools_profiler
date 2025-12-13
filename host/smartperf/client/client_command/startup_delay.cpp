@@ -125,7 +125,6 @@ bool StartUpDelay::KillSpProcess() const
 
 bool StartUpDelay::GetSpClear(bool isKillTestServer) const
 {
-    std::string cmdResult;
     std::string curPid = std::to_string(getpid());
     FILE *fd = popen("ps -ef | grep -v grep | grep SP_daemon", "r");
     if (fd == nullptr) {
@@ -180,6 +179,38 @@ void StartUpDelay::ClearOldServer() const
     }
 }
 
+bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& output) const
+{
+    int pipefd[2];
+    if (pipe(pipefd) == -1) {
+        LOGE("FPS::Failed to create pipe");
+        return false;
+    }
+    pid_t pid = fork();
+    if (pid == -1) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return false;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        execvp("sh", "sh", "-c", ("ps -ef | grep -v grep | grep " + pkgName).c_str(), (char*)nullptr);
+        _exit(1);
+    } else {
+        close(pipefd[1]);
+        char buffer[MAX_CHAR_SIZE];
+        ssize_t bytesRead;
+        while (((bytesRead = read(pipefd[0]), buffer, sizeof(buffer))) > 0) {
+            output.append(buffer, bytesRead);
+        }
+        close(pipefd[0]);
+        waitpid(pid, nullptr, 0);    
+    }
+    return true;
+}
+
 std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
 {
     const std::string pkgName = SPUtils::EscapeShellArgs(curPkgName);
@@ -187,17 +218,8 @@ std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
     if (!isInvalidPkgName) {
         return std::to_string(ErrorSpCode::INVALID_PKG_NAME);
     }
-    std::vector<char> line(MAX_CHAR_SIZE);
     std::string appProcessInfor;
-    FILE *fd = popen(("ps -ef | grep -v grep | grep " + pkgName).c_str(), "r");
-    if (fd == nullptr) {
-        return std::to_string(ErrorSpCode::FILE_OPEN_IS_NULL);
-    }
-    while (fgets(line.data(), line.size(), fd) != nullptr) {
-        appProcessInfor += line.data();
-    }
-    int pcloseResult = pclose(fd);
-    if (pcloseResult == -1) {
+    if (!ExecuteCommand(pkgName, appProcessInfor)) {
         return std::to_string(ErrorSpCode::FILE_CLOSE_FAILED);
     }
     return appProcessInfor;
