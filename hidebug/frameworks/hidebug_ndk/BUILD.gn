@@ -21,6 +21,7 @@ ohos_shared_library("ohhidebug") {
 
   sources = [
     "hidebug_backtrace.cpp",
+    "hidebug_crash_obj.cpp",
     "hidebug_ndk.cpp",
     "hidebug_perf.cpp",
   ]
@@ -31,6 +32,7 @@ ohos_shared_library("ohhidebug") {
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "faultloggerd:dfx_signalhandler",
     "faultloggerd:libbacktrace_local",
     "faultloggerd:libdfx_dumpcatcher",
     "hilog:libhilog",

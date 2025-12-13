@@ -46,5 +46,13 @@
     {
         "first_introduced": "20",
         "name": "OH_HiDebug_RestoreMallocDispatchTable"
+    },
+    {
+        "first_introduced": "23",
+        "name": "OH_HiDebug_SetCrashObj"
+    },
+    {
+        "first_introduced": "23",
+        "name": "OH_HiDebug_ResetCrashObj"
     }
 ]
