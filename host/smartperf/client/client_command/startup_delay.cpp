@@ -183,7 +183,6 @@ bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& outpu
 {
     int pipefd[2];
     if (pipe(pipefd) == -1) {
-        LOGE("FPS::Failed to create pipe");
         return false;
     }
     pid_t pid = fork();
@@ -196,17 +195,17 @@ bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& outpu
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        execvp("sh", "sh", "-c", ("ps -ef | grep -v grep | grep " + pkgName).c_str(), (char*)nullptr);
+        execlp("sh", "sh", "-c", ("ps -ef | grep -v grep | grep " + pkgName).c_str(), (char*)nullptr);
         _exit(1);
     } else {
         close(pipefd[1]);
         char buffer[MAX_CHAR_SIZE];
         ssize_t bytesRead;
-        while (((bytesRead = read(pipefd[0]), buffer, sizeof(buffer))) > 0) {
+        while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
             output.append(buffer, bytesRead);
         }
         close(pipefd[0]);
-        waitpid(pid, nullptr, 0);    
+        waitpid(pid, nullptr, 0);
     }
     return true;
 }
@@ -220,7 +219,7 @@ std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
     }
     std::string appProcessInfor;
     if (!ExecuteCommand(pkgName, appProcessInfor)) {
-        return std::to_string(ErrorSpCode::FILE_CLOSE_FAILED);
+        return std::to_string(ErrorSpCode::FILE_OPEN_IS_NULL);
     }
     return appProcessInfor;
 }
