@@ -15,7 +15,6 @@
 
 #include <sys/file.h>
 #include <unistd.h>
-
 #include "common_types.pb.h"
 #include "trace_file_reader.h"
 #include "trace_file_header.h"
@@ -34,7 +33,9 @@ int ParseArgs(int argc, char** argv, UsageHandle usage)
         std::string key = argv[i];
         i++;
         if (i >= argc) {
-            if (usage) usage();
+            if (usage) {
+                usage();
+            }
             break;
         }
         std::string val = argv[i];

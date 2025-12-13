@@ -227,4 +227,3 @@ class TestHiprofilerGpuData:
     def test_tagname_cl(self):
         test_tagname("GPU_CL")
 
-
