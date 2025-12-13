@@ -42,7 +42,7 @@ uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr)
 
     uintptr_t crashObj = DFX_SetCrashObj(type, reinterpret_cast<uintptr_t>(addr));
     if (crashObj == 0) {
-        HILOG_ERROR(LOG_CORE, "failed to set crashObj");
+        HILOG_INFO(LOG_CORE, "set crashObj return 0");
     }
     return static_cast<uint64_t>(crashObj);
 }
@@ -50,8 +50,7 @@ uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr)
 void OH_HiDebug_ResetCrashObj(uint64_t crashObj)
 {
     if (crashObj == 0) {
-        HILOG_ERROR(LOG_CORE, "failed to reset crashObj, crashObj is nullptr");
-        return;
+        HILOG_INFO(LOG_CORE, "reset crashObj to 0");
     }
 
     if (sizeof(uintptr_t) != sizeof(uint64_t)) {
