@@ -181,23 +181,27 @@ void StartUpDelay::ClearOldServer() const
 
 bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& output) const
 {
+    std::string command = "ps -ef | grep -v grep | grep " + pkgName;
+    const std::vector<const char*> args = { "/bin/sh", "-c", command.c_str(), nullptr };
     int pipefd[2];
+    pid_t pid;
     if (pipe(pipefd) == -1) {
+        LOGE("StartUpDelay::Failed to create pipe");
         return false;
     }
-    pid_t pid = fork();
+    pid = fork();
     if (pid == -1) {
-        close(pipefd[0]);
-        close(pipefd[1]);
+        LOGE("StartUpDelay::Failed to fork");
         return false;
     }
     if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        execlp("sh", "sh", "-c", ("ps -ef | grep -v grep | grep " + pkgName).c_str(), (char*)nullptr);
+        execvp(args[0], const_cast<char *const*>(args.data()));
+        LOGE("StartUpDelay::Failed to execute ps ef");
         _exit(1);
-    } else {
+    } else {s
         close(pipefd[1]);
         char buffer[MAX_CHAR_SIZE];
         ssize_t bytesRead;
