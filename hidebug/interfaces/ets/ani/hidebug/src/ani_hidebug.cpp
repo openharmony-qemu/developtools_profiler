@@ -590,7 +590,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(alwaysEnabledRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(alwaysEnabledRef),
-                "unboxed", ":Z", &alwaysEnabledAni) != ANI_OK) {
+                "unboxed", ":z", &alwaysEnabledAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
                 return false;
             }
@@ -604,7 +604,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(sampleRatedRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(sampleRatedRef),
-                "unboxed", ":I", &sampleRateAni) != ANI_OK) {
+                "unboxed", ":i", &sampleRateAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
                 return false;
             }
@@ -618,7 +618,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(slotRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(slotRef),
-                "unboxed", ":I", &slotAni) != ANI_OK) {
+                "unboxed", ":i", &slotAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
                 return false;
             }
