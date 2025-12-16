@@ -66,6 +66,7 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEBOOL(parcel, recordAccurately_);
     WRITEBOOL(parcel, startupMode_);
     WRITEBOOL(parcel, memtraceEnable_);
+    WRITEBOOL(parcel, asyncStackEnable_);
     WRITEUINT64(parcel, traceMask_);
     WriteGpuRange(parcel, gpuRange_);
     WRITEBOOL(parcel, offlineSymbolization_);
@@ -115,6 +116,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->recordAccurately_);
     READBOOL(parcel, config->startupMode_);
     READBOOL(parcel, config->memtraceEnable_);
+    READBOOL(parcel, config->asyncStackEnable_);
     READUINT64(parcel, config->traceMask_);
     ReadGpuRange(parcel, config);
     READBOOL(parcel, config->offlineSymbolization_);
@@ -156,10 +158,10 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         config->mallocFreeMatchingInterval_, config->mallocFreeMatchingCnt_, config->stringCompressed_,
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
     PROFILER_LOG_DEBUG(LOG_CORE,
-        "startupMode: %d, memtraceEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
+        "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
         "statisticsInterval: %d, clockId: %d, targetSoName: %s",
-        config->startupMode_, config->memtraceEnable_, config->offlineSymbolization_, config->callframeCompress_,
-        config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());
+        config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_, config->offlineSymbolization_,
+        config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());
     PROFILER_LOG_DEBUG(LOG_CORE,
         "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());

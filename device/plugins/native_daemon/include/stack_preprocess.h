@@ -94,6 +94,8 @@ public:
     const char* GetJsRawStack(uint64_t jsChainId);
     void ReportBasicData();
     void WriteHookConfig();
+    bool BuildCallFrames(const std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData,
+        std::vector<CallFrame>& callFrames);
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
     void InitializeDirector();
 #ifdef NATIVE_DAEMON_UNITTEST

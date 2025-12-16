@@ -233,6 +233,9 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
     std::string tempMapName;
     std::shared_ptr<DfxMap> prevMap = nullptr;
     for (auto memMapItem : memMaps) {
+        if (virtualruntime_->IsArktsMap(memMapItem)) {
+            virtualruntime_->arktsMapTree_[memMapItem->begin] = memMapItem;
+        }
         if (!update) {
             virtualruntime_->FillMapsCache(tempMapName, memMapItem);
             bool updateNormalSymbol = true;

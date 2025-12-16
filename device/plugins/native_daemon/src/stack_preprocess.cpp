@@ -27,6 +27,7 @@
 #include "native_hook_config_standard.pb.h"
 #include "google/protobuf/text_format.h"
 #include "trace_file_writer.h"
+#include "unique_stack_table.h"
 
 constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
@@ -450,6 +451,43 @@ bool StackPreprocess::ProcessEndMsg()
     return true;
 }
 
+bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRecord,
+    RawStackPtr& rawData,
+    std::vector<CallFrame>& callFrames)
+{
+    if (!hookConfig_.async_stack_enable()) {
+        callFrames = g_director->ConstructCallFrames(hookRecord);
+        return true;
+    }
+
+    auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+
+    std::vector<uintptr_t> syncStackPcs;
+    if (asyncData->syncStackId > 0) {
+        StackId id { asyncData->syncStackId };
+        if (!table->GetPcsByStackId(id, syncStackPcs)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get syncStackPcs Faild");
+        }
+    }
+
+    std::vector<uintptr_t> asyncStackPcs;
+    if (asyncData->asyncStackId > 0) {
+        StackId id { asyncData->asyncStackId };
+        if (!table->GetPcsByStackId(id, asyncStackPcs)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get asyncStackPcs Faild");
+        }
+    }
+
+    if (!syncStackPcs.empty() || !asyncStackPcs.empty()) {
+        callFrames = g_director->ConstructCallFrames(
+            hookRecord, syncStackPcs, asyncStackPcs);
+    }
+
+    return true;
+}
+
 bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord,
                                               RawStackPtr& rawData)
 {
@@ -462,7 +500,11 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
         rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
     }
 
-    auto& callFrames = g_director->ConstructCallFrames(hookRecord);
+    std::vector<CallFrame> callFrames;
+    if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
+        return false;
+    }
+
     ReportOfflineSymbolizationData();
 
     std::visit(
@@ -603,7 +645,12 @@ void StackPreprocess::TakeResults()
             if (eventCnts_ % LOG_PRINT_TIMES == 0) {
                 PROFILER_LOG_INFO(LOG_CORE, "eventCnts_ = %d quene size = %zu\n", eventCnts_, dataRepeater_->Size());
             }
-            auto& callFrames = g_director->ConstructCallFrames(hookRecord);
+
+            std::vector<CallFrame> callFrames;
+            if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
+                continue;
+            }
+
 #ifdef PERFORMANCE_DEBUG
             size_t realFrameDepth = callFrames.size();
 #endif

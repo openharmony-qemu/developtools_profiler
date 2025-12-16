@@ -79,6 +79,11 @@ public:
         return &smbCtx_;
     }
 
+    void* GetMMapBase()
+    {
+        return memoryPoint_;
+    }
+
 private:
     int8_t* GetFreeMemory(uint32_t size);
     bool UseFreeMemory(int8_t* pmem, uint32_t size);

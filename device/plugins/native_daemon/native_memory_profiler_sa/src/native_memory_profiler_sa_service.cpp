@@ -269,6 +269,7 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
     args << "record_accurately: " << (config->recordAccurately_ ? "true" : "false") << ", ";
     args << "startup_mode: " << (config->startupMode_ ? "true" : "false") << ", ";
     args << "memtrace_enable: " << (config->memtraceEnable_ ? "true" : "false") << ", ";
+    args << "asyncStack_enable: " << (config->asyncStackEnable_ ? "true" : "false") << ", ";
     args << "offline_symbolization: " << (config->offlineSymbolization_ ? "true" : "false") << ", ";
     args << "callframe_compress: " << (config->callframeCompress_ ? "true" : "false") << ", ";
     args << "statistics_interval: " << std::to_string(config->statisticsInterval_) << ", ";

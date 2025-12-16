@@ -80,6 +80,7 @@ ohos_source_set("native_hook_source") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog_base" ]
+    external_deps += [ "faultloggerd:libasync_stack" ]
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -133,7 +134,10 @@ ohos_shared_library("native_hook") {
   deps = [ ":native_hook_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
+    external_deps = [
+      "hilog:libhilog_base",
+    ]
+    external_deps += [ "faultloggerd:libasync_stack" ]
   }
   version_script = "libnative_hook.map"
   install_enable = true
