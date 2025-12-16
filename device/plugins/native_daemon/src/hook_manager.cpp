@@ -19,6 +19,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>
+#include "async_stack.h"
 #include "command_poller.h"
 #include "common.h"
 #include "epoll_event_poller.h"
@@ -34,6 +35,7 @@
 #include "native_memory_profiler_sa_service.h"
 #include "hook_record.h"
 #include "hook_record_factory.h"
+#include "unique_stack_table.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -285,6 +287,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.arktsConfig.jsFpunwind = hookConfig_.fp_unwind();
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
+    clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
     if (saMode_) {
         clientConfig.traceMask = traceMask_;
     } else {
@@ -320,7 +323,6 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         return false;
     }
 
-    // create smb and eventNotifier
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
 
@@ -351,6 +353,23 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         eventPoller->Init();
         eventPoller->Start();
         ctx->eventPollerList.push_back(eventPoller);
+    }
+
+    if (hookConfig_.async_stack_enable()) {
+        uniqueTableBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("unique_stack_table",
+            UNIQUE_STACK_TABLE_SIZE);
+        if (uniqueTableBlock_ == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext uniqueTableBlock_ nullptr");
+            return false;
+        }
+        void* memoryBase = uniqueTableBlock_->GetMMapBase();
+        if (memoryBase == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext memoryBase nullptr");
+            return false;
+        }
+        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        // Use faultloggerd to record sync/async stack info.
+        table->SwitchExternalBuffer(memoryBase, UNIQUE_STACK_TABLE_SIZE);
     }
 
     ctx->isRecordAccurately = hookConfig_.record_accurately();
@@ -672,6 +691,10 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->ClearCache();
         }
+        if (uniqueTableBlock_ != nullptr) {
+            ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("unique_stack_table");
+            uniqueTableBlock_ = nullptr;
+        }
     }
     if (fpHookData_) {
         fclose(fpHookData_);
@@ -812,6 +835,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_record_accurately(config->recordAccurately_);
     hookConfig_.set_startup_mode(config->startupMode_);
     hookConfig_.set_memtrace_enable(config->memtraceEnable_);
+    hookConfig_.set_async_stack_enable(config->asyncStackEnable_);
     traceMask_ = config->traceMask_;
     hookConfig_.set_offline_symbolization(config->offlineSymbolization_);
     hookConfig_.set_callframe_compress(config->callframeCompress_);

@@ -186,6 +186,68 @@ HWTEST_F(VirtualRuntimeTest, GetThread, TestSize.Level0)
         }
     }
 }
+
+/**
+ * @tc.name: SymbolizeFrame
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeTest, SymbolizeFrame, TestSize.Level0)
+{
+    PrepareUserSymbol();
+
+    CallFrame callFrame(TEST_USET_VADDR);
+    bool result = runtime_->SymbolizeFrame(callFrame, 1, 1);
+    EXPECT_FALSE(result);
+
+    auto mapEmpty = std::make_shared<DfxMap>();
+    mapEmpty->name = "";
+    mapEmpty->begin = TEST_USET_VADDR;
+    mapEmpty->end = TEST_USET_MAP_BEGIN;
+    runtime_->arktsMapTree_[TEST_USET_VADDR] = mapEmpty;
+    result = runtime_->SymbolizeFrame(callFrame, 1, 1);
+    EXPECT_FALSE(result);
+
+    runtime_->arktsMapTree_.clear();
+
+    auto map = std::make_shared<DfxMap>();
+    map->name = "test.hap";
+    map->begin = TEST_USET_VADDR;
+    map->end = 0x2000;
+    runtime_->arktsMapTree_[TEST_USET_VADDR] = map;
+
+    runtime_->jsUrlMap_["test.hap"] = 1;
+
+    DfxSymbol sym;
+    sym.symbolName_ = "test_func";
+    sym.funcVaddr_ = TEST_USET_VADDR;
+    sym.symbolId_ = 1;
+    sym.symbolNameId_ = 1;
+    sym.filePathId_ = 1;
+    sym.module_ = "test.hap";
+    VirtualRuntime::SymbolCacheKey key(TEST_USET_VADDR, 1);
+    runtime_->userSymbolCache_[key] = sym;
+    
+    result = runtime_->SymbolizeFrame(callFrame, 1, 1);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(callFrame.isJsFrame_);
+    EXPECT_EQ(callFrame.symbolName_, "test_func");
+
+    runtime_->userSymbolCache_.clear();
+    auto mapUser = std::make_shared<DfxMap>();
+    mapUser->name = "user_symbol";
+    mapUser->begin = TEST_USET_MAP_BEGIN;
+    mapUser->end = TEST_USET_MAP_BEGIN + TEST_USET_MAP_LEN;
+    runtime_->arktsMapTree_[TEST_USET_MAP_BEGIN] = mapUser;
+
+    runtime_->jsUrlMap_["user_symbol"] = 2;
+
+    CallFrame callFrame2(TEST_KERNEL_VADDR + TEST_USET_MAP_BEGIN);
+    result = runtime_->SymbolizeFrame(callFrame2, TEST_TID, TEST_TID);
+    EXPECT_TRUE(result);
+    EXPECT_TRUE(callFrame2.isJsFrame_);
+    EXPECT_EQ(callFrame2.symbolName_, "first_user_func");
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

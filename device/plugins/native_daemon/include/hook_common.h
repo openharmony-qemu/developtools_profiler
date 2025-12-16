@@ -35,6 +35,7 @@ constexpr int STACK_DATA_SIZE = 400000;
 constexpr int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
 constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
+constexpr static uint32_t UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
@@ -84,6 +85,7 @@ enum {
     FPUNWIND = (1u << 4),
     BLOCKED = (1u << 5),
     MEMTRACE_ENABLE = (1u << 6),
+    ASYNCSTACK_ENABLE = (1u << 7),
 };
 
 enum {
@@ -135,6 +137,11 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
     uint32_t tid;
     uint16_t type;
     uint16_t tagId;
+};
+
+struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
+    uint64_t syncStackId;
+    uint64_t asyncStackId;
 };
 
 struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
@@ -199,6 +206,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         fpunwind = false;
         isBlocked = false;
         memtraceEnable = false;
+        asyncStackEnable = false;
         responseLibraryMode = false;
         freeEventOnlyAddrEnable = false;
         printNmd = false;
@@ -225,6 +233,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", mallocDisable:" << mallocDisable << ", mmapDisable:" << mmapDisable
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
+            << ", asyncStackEnable:" << asyncStackEnable
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
@@ -259,6 +268,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool fpunwind = false;
     bool isBlocked = false;
     bool memtraceEnable = false;
+    bool asyncStackEnable = false;
     bool responseLibraryMode = false;
     bool freeEventOnlyAddrEnable = false;
     bool printNmd = false;

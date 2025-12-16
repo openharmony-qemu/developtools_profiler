@@ -255,6 +255,7 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     config->mallocDisable_ = true;
     config->mmapDisable_ = true;
     config->memtraceEnable_ = true;
+    config->asyncStackEnable_ = true;
     config->traceMask_ = saConfig.mask;
     config->shareMemorySize_ = CALL_STACK_SMS;
     std::vector<std::vector<uint64_t>> gpuRange;

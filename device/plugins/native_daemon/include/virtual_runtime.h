@@ -92,6 +92,12 @@ public:
     void FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol);
     uint32_t FillArkTsFilePath(std::string_view& jstr);
     uint32_t FindArkTsFilePath(std::string_view& jstr);
+
+    // ArkTS related
+    bool IsArktsMap(const std::shared_ptr<DfxMap>& map) const;
+    std::shared_ptr<DfxMap> FindArktsMapByAddr(uint64_t ip) const;
+    bool SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid);
+    
     bool ArktsGetSymbolCache(CallFrame& callFrame, DfxSymbol &symbol);
     uint32_t GetJsSymbolCacheSize();
     void FillJsSymbolCache(CallFrame& callFrame, const DfxSymbol& symbol);
@@ -181,6 +187,8 @@ private:
     std::unordered_map<std::string, uint32_t> functionMap_;
     std::unordered_map<std::string, std::unique_ptr<SymbolsFile>> symbolsFiles_;
     std::unordered_map<SymbolCacheKey, DfxSymbol, HashPair> userSymbolCache_;
+    std::unordered_map<uint64_t, uint32_t> jsFilePathCache_;
+
     bool GetSymbolCache(uint64_t ip, DfxSymbol &symbol, const VirtualThread &thread);
     void UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol, HashList<uint64_t, DfxSymbol> &cache);
 
@@ -203,6 +211,7 @@ private:
     const NativeHookConfig hookConfig_;
     uint32_t memMapFilePathId_ = 0;
     std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
+    std::map<uint64_t, std::shared_ptr<DfxMap>> arktsMapTree_;
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
     std::unordered_map<std::string_view, uint32_t> jsUrlMap_; // Key is js url , value is filePathId
 };

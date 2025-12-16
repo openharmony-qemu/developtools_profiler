@@ -45,6 +45,7 @@ constexpr uint32_t INFO_SIZE = 4;
 void VirtualRuntime::ClearMaps()
 {
     processMaps_.clear();
+    arktsMapTree_.clear();
 }
 
 VirtualRuntime::VirtualRuntime(const NativeHookConfig& hookConfig): hookConfig_(hookConfig)
@@ -124,6 +125,52 @@ void VirtualRuntime::MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame)
     } else {
         callFrame.offset_ = callFrame.ip_;
     }
+}
+
+bool VirtualRuntime::SymbolizeFrame(CallFrame& callFrame, pid_t pid, pid_t tid)
+{
+    DfxSymbol symbol;
+
+    auto map = FindArktsMapByAddr(callFrame.ip_);
+    if (!map) {
+        return false;
+    }
+
+    if (map->name.empty()) {
+        PROFILER_LOG_INFO(LOG_CORE, "SymbolizeFrame map->name.empty() !!! ");
+        return false;
+    }
+
+    uint32_t jsfilePathId = 0;
+    auto cacheIter = jsFilePathCache_.find(callFrame.ip_);
+    if (cacheIter != jsFilePathCache_.end()) {
+        jsfilePathId = cacheIter->second;
+    } else {
+        std::string_view moduleName = map->name;
+        jsfilePathId = FindArkTsFilePath(moduleName);
+        if (jsfilePathId != 0) {
+            jsFilePathCache_.emplace(callFrame.ip_, jsfilePathId);
+        }
+    }
+
+    auto found = userSymbolCache_.find(std::pair(callFrame.ip_, jsfilePathId));
+    if (jsfilePathId != 0 && found != userSymbolCache_.end()) {
+        symbol = found->second;
+    } else {
+        const perf_callchain_context context = PERF_CONTEXT_MAX;
+        symbol = GetSymbol(callFrame, pid, tid, context);
+    }
+
+    callFrame.isJsFrame_ = true;
+
+    if (!symbol.IsValid()) {
+        PROFILER_LOG_INFO(LOG_CORE, "SymbolizeFrame symbol.IsValid=false !!! ");
+        return false;
+    }
+
+    MakeCallFrame(symbol, callFrame);
+
+    return true;
 }
 
 bool VirtualRuntime::GetSymbolName(pid_t pid, pid_t tid, std::vector<CallFrame>& callFrames, int offset, bool first,
@@ -519,6 +566,43 @@ void VirtualRuntime::FillFileSet(CallFrame& callFrame, const DfxSymbol& symbol)
     }
 }
 
+bool VirtualRuntime::IsArktsMap(const std::shared_ptr<DfxMap>& map) const
+{
+    if (map == nullptr) {
+        PROFILER_LOG_INFO(LOG_CORE, "SymbolizeFrame IsArktsMap map empty !!! ");
+        return false;
+    }
+    const std::string& name = map->name;
+
+    if (IsArkJsFile(name) || (name.find("stub.an") != std::string::npos)) {
+        return true;
+    }
+
+    return false;
+}
+
+
+std::shared_ptr<DfxMap> VirtualRuntime::FindArktsMapByAddr(uint64_t ip) const
+{
+    if (arktsMapTree_.empty()) {
+        return nullptr;
+    }
+
+    auto it = arktsMapTree_.upper_bound(ip);
+    if (it == arktsMapTree_.begin()) {
+        return nullptr;
+    }
+
+    --it;
+
+    const auto &map = it->second;
+    if (map && ip >= map->begin && ip < map->end) {
+        return map;
+    }
+
+    return nullptr;
+}
+
 void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
     if (info.size() != INFO_SIZE) {
@@ -528,6 +612,34 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
     uint64_t length = info[1];
     uint64_t flags = info[SECOND_INDEX];
     uint64_t offset = info[THIRD_INDEX];
+
+    bool isArkTS = (filePath.find(".hap") != std::string::npos) ||
+        (filePath.find("[anon:ArkTS") != std::string::npos) ||
+        (filePath.find("stub.an") != std::string::npos) ||
+        (filePath.find(".hsp") != std::string::npos) ||
+        (filePath.find(".abc") != std::string::npos) ||
+        (filePath.find(".hqf") != std::string::npos);
+    if (isArkTS) {
+        if (mapsCache_.find(begin) == mapsCache_.end()) {
+            soBegin_ = begin;
+            auto mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
+            auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+            memMaps->AddMap(mapItem, true);
+            mapsCache_[begin] = memMaps;
+
+            UpdateHapSymbols(mapItem);
+            UpdateSymbols(filePath, mapItem);
+
+            auto &thread = UpdateThread(pid, tid);
+            processMaps_.emplace_back(mapItem);
+            thread.SortMaps();
+            offlineMapAddr_.push_back(soBegin_);
+            arktsMapTree_[begin] = mapItem;
+
+            return;
+        }
+    }
+
     if (!(flags & MAP_FIXED)) {
         return;
     }
@@ -553,7 +665,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
             curMaps->soEnd_ = begin + length;
             std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length,
                                                                        offset, flags, curMaps->name_);
-            if (mapItem->name.find(".hap") != std::string::npos && (mapItem->prots & PROT_EXEC)) {
+            if (mapItem->name.find(".hap") != std::string::npos) {
                 mapItem->prevMap = curMaps->GetMaps().back();
                 HLOGD("update hap(%s) symbols", mapItem->name.c_str());
                 UpdateHapSymbols(mapItem);

@@ -50,4 +50,5 @@ message NativeHookConfig {
     bool dump_nmd = 30;
     string target_so_name = 31;
     repeated string restrace_tag = 32;
+    bool async_stack_enable = 33;
 }

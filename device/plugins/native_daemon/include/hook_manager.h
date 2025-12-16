@@ -140,6 +140,8 @@ public:
     std::string simplifiedNmd_;
     volatile bool nmdComplete_ = false;
 
+    std::shared_ptr<ShareMemoryBlock> uniqueTableBlock_;
+
 private:
     int pid_ = -1; // for SA mode
     bool printMallocNmd_ = false;
