@@ -68,10 +68,10 @@ public:
 HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal, TestSize.Level1)
 {
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 0) ==
-                nullptr); // Create a memory block of size 0, return null.
+        nullptr); // Create a memory block of size 0, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 1) ==
-                nullptr); // Create a memory block with a size less than 4096, return null.
+        nullptr); // Create a memory block with a size less than 4096, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) !=
         nullptr); // Successfully created
@@ -109,17 +109,17 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
     EXPECT_GE(check, 0);
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 0, fd) ==
-                nullptr); // Create a memory block of size 0, return null.
+        nullptr); // Create a memory block of size 0, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 1, fd) ==
-                nullptr); // Create a memory block with a size less than 4096, return null.
+        nullptr); // Create a memory block with a size less than 4096, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
 
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 4096, fd) ==
-                nullptr);
+        nullptr);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 4096, fd) ==
-                nullptr); // Duplicate memory blocks with the correct fd.
+        nullptr); // Duplicate memory blocks with the correct fd.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
     // Repeatedly releasing memory blocks returns -1
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
