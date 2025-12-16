@@ -118,7 +118,7 @@ HWTEST_F(HookRecordTest, TestSerializeData, TestSize.Level0)
     baseData.type = MEMORY_USING_MSG;
     rawdata->stackContext = &baseData;
     rawdata->stackContext->addr = reinterpret_cast<void*>(0x20);
-    std::shared_ptr<HookRecord> hookRecord = std::make_shared<FreeRecord>(rawdata);
+    std::shared_ptr<HookRecord> hookRecord = std::make_shared<MemoryUsingRecord>(rawdata);
     EXPECT_EQ(hookRecord->GetType(), MEMORY_USING_MSG);
     std::vector<CallFrame> callFrames = {};
     std::vector<CallFrame>* callFramesptr = &callFrames;
@@ -126,7 +126,7 @@ HWTEST_F(HookRecordTest, TestSerializeData, TestSize.Level0)
     BatchNativeHookData stackData;
     auto hookData = stackData.add_events();
     hookRecord->SerializeData(hookData, hookInfo);
-    EXPECT_EQ(hookData.trace_alloc_event().size(), 1);
+    EXPECT_EQ(hookData->trace_alloc_event().tag_name(), "memory_using");
 }
 
 /*
