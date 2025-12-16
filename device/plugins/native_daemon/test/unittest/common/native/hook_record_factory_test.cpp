@@ -191,4 +191,46 @@ HWTEST_F(HookRecordFactoryTest, ReturnEndRecord, TestSize.Level0)
     }
     delete[] data;
 }
+
+/*
+ * @tc.name: CreateStackRecord
+ * @tc.desc: test HookRecordFactory::CreateStackRecord.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CreateStackRecord001, TestSize.Level0)
+{
+    std::shared_ptr<RawStack> rawdata = std::make_shared<RawStack>();
+    BaseStackRawData baseData;
+    baseData.pid = 12;
+    baseData.tid = 11;
+    baseData.type = MMAP_FILE_PAGE_MSG;
+    rawdata->stackContext = &baseData;
+    rawdata->stackContext->addr = reinterpret_cast<void*>(0x10);
+    auto record = g_factory->CreateStackRecord(MMAP_FILE_PAGE_MSG, rawdata);
+    EXPECT_EQ(record->GetType(), MMAP_FILE_PAGE_MSG);
+    baseData.type = MALLOC_MSG;
+    record = g_factory->CreateStackRecord(MALLOC_MSG, rawdata);
+    EXPECT_EQ(record->GetType(), MALLOC_MSG);
+}
+
+/*
+ * @tc.name: CreateStackRecord
+ * @tc.desc: test HookRecordFactory::CreateStackRecord with memory using message.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordFactoryTest, CreateStackRecord002, TestSize.Level0)
+{
+    std::shared_ptr<RawStack> rawdata = std::make_shared<RawStack>();
+    BaseStackRawData baseData;
+    baseData.pid = 12;
+    baseData.tid = 11;
+    baseData.type = MEMORY_USING_MSG;
+    rawdata->stackContext = &baseData;
+    rawdata->stackContext->addr = reinterpret_cast<void*>(0x10);
+    auto record = g_factory->CreateStackRecord(MEMORY_USING_MSG, rawdata);
+    EXPECT_EQ(record->GetType(), MEMORY_USING_MSG);
+    baseData.type = FREE_MSG;
+    record = g_factory->CreateStackRecord(FREE_MSG, rawdata);
+    EXPECT_EQ(record->GetType(), FREE_MSG);
+}
 }
