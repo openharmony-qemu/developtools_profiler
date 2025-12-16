@@ -73,9 +73,10 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal, TestSize.Level1)
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 1) ==
                 nullptr); // Create a memory block with a size less than 4096, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) != nullptr); // Successfully created
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) !=
+        nullptr); // Successfully created
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) ==
-                nullptr); // Creating a memory block with the same name returns null.
+        nullptr); // Creating a memory block with the same name returns null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
 }
@@ -87,7 +88,8 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, FindMemoryBlockByName, TestSize.Level1)
 {
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("err") == nullptr); // Return null for a memory block that does not exist.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("err") ==
+        nullptr); // Return null for a memory block that does not exist.
 }
 
 /**
@@ -98,7 +100,7 @@ HWTEST_F(SharedMemoryAllocatorTest, FindMemoryBlockByName, TestSize.Level1)
 HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
 {
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("err", 4096, 99) ==
-                nullptr); // Returning null when mapping a memory block with a non-existent file descriptor.
+        nullptr); // Returning null when mapping a memory block with a non-existent file descriptor.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("err"));
 
     int fd = syscall(SYS_memfd_create, "testnameremote", 0);
@@ -119,7 +121,8 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 4096, fd) ==
                 nullptr); // Duplicate memory blocks with the correct fd.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote")); // Repeatedly releasing memory blocks returns -1
+    // Repeatedly releasing memory blocks returns -1
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
 }
 
 /**
@@ -129,7 +132,8 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, GetDataSize, TestSize.Level1)
 {
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) != nullptr); // Successfully created
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) !=
+        nullptr); // Successfully created
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("testname")->GetDataSize() == 0);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
 }
@@ -141,7 +145,8 @@ HWTEST_F(SharedMemoryAllocatorTest, GetDataSize, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockLocal, TestSize.Level1)
 {
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("or")); // Return -1 for releasing a non-existent memory block
+    // Return -1 for releasing a non-existent memory block
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("or"));
 }
 
 /**
@@ -151,6 +156,7 @@ HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockLocal, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockRemote, TestSize.Level1)
 {
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("or")); // Return -1 for releasing a non-existent memory block
+    // Return -1 for releasing a non-existent memory block
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("or"));
 }
 } // namespace
