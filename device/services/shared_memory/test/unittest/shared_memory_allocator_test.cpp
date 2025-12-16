@@ -201,7 +201,7 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote",
         PAGE_SIZE, fd) != nullptr); // 成功创建大小为4k的内存块
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("test", 
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("test",
         PAGE_SIZE, fd) != nullptr); // 成功创建大小为4k，不同名fd相同的内存块
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testname1",
         currentMaxShareMemorySize, fd) != nullptr); // 成功创建最大值的内存块
