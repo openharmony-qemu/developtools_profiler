@@ -13,6 +13,9 @@
  * limitations under the License.
  */
 
+#ifndef HOOK_SOCKET_CLIENT_MOCK_H 
+#define HOOK_SOCKET_CLIENT_MOCK_H
+
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <memory>
@@ -22,18 +25,12 @@
 #include "init_param.h"
 #include <memory_trace.h>
 
-namespace {
-
 class MockHookSocketClient : public HookSocketClient {
 public:
-    MockHookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
-                        std::atomic<Range>* targetedRange = nullptr, 
-                        std::atomic<int>* memCount = nullptr,
-                        void (*disableHookCallback)() = nullptr)
-        : HookSocketClient(pid, config, sampler, targetedRange, memCount, disableHookCallback) {};
-
+    MockHookSocketClient(void (*disableHookCallback)() = nullptr) : HookSocketClient(
+        g_hookPid.load(), &g_clientConfig, &g_sampler, &g_targetedRange, &g_sharedMemCount, disableHookCallback) {};
     MOCK_METHOD5(SendStackWithPayload, bool(const void* data, size_t size, const void* payload,
         size_t payloadSize, int smbIndex));
 };
-}
 
+#endif // HOOK_SOCKET_CLIENT_MOCK_H

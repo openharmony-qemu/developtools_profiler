@@ -26,7 +26,8 @@ class Sampling;
 class HookSocketClient : public ServiceBase {
 public:
     HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
-                     std::atomic<Range>* targetedRange = nullptr, std::atomic<int>* memCount = nullptr,
+                     std::atomic<Range>* targetedRange = nullptr,
+                     std::atomic<int>* memCount = nullptr,
                      void (*disableHookCallback)() = nullptr);
     ~HookSocketClient();
     bool Connect(const std::string addrname);

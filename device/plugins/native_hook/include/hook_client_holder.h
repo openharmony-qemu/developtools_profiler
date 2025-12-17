@@ -30,6 +30,8 @@ public:
     explicit HookClientHolder(std::shared_ptr<HookSocketClient>& sharedClient);
     HookSocketClient* Get();
     bool IsValid() const;
+    bool SendStackWithPayload(const void* data, size_t size, const void* payload,
+            size_t payloadSize, int smbIndex = 0);
     bool UpdateThreadName();
     void SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath, const StackRawData& rawdata);
 

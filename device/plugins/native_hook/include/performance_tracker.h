@@ -40,7 +40,7 @@ private:
 #define PERF_TRACK() PerformanceTracker __perf_tracker__
 #define PERF_RECORD_DATA(bytes) __perf_tracker__.RecordDataSize(bytes)
 #define PERF_REFRESH_START_TIME() __perf_tracker__.RefreshStartTime()
-#define PERF_RESET() PerformanceTracker::ResetPerfInfo();
+#define PERF_RESET() PerformanceTracker::ResetPerfInfo()
 
 #else
 

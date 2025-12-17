@@ -89,6 +89,7 @@ ohos_unittest("nativehook_ut") {
     "hilog:libhilog_base",
     "init:libbegetutil",
     "protobuf:protobuf",
+    "faultloggerd:libasync_stack",
   ]
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

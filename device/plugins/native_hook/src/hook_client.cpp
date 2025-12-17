@@ -66,7 +66,7 @@ std::mutex g_usableSizeMapMutex;
 std::atomic<const MallocDispatchType*> g_dispatch {nullptr};
 std::atomic<pid_t> g_hookPid = 0;
 std::atomic<bool> g_hookReady = false;
-ClientConfig g_ClientConfig = {0};
+ClientConfig g_clientConfig = {0};
 std::atomic<bool> g_isPidChanged = false;
 std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
 std::shared_ptr<AddressHandler> g_addrHandler = nullptr;
@@ -85,6 +85,14 @@ static std::atomic<uint16_t> g_tagId = RESTRACE_TYPE_COUNT + 1;
 
 enum class MISC_TYPE : uint32_t {
     JS_STACK_DATA = 1,
+};
+
+struct StackParam {
+    bool needCollect = true;
+    bool needFpunwind = true;
+    uintptr_t stackPtr = 0;
+    int stackSize = 0;
+    int fpStackDepth = 0;
 };
 
 using OHOS::Developtools::NativeDaemon::buildArchType;
@@ -166,8 +174,7 @@ pid_t GetCurThreadId()
     return reinterpret_cast<long>((pthread_getspecific(g_hookTid)));
 }
 
-uint16_t inline __attribute__((always_inline)) GetTagId(const char* tagName,
-                                                        unsigned long long mask = 0)
+uint16_t GetTagId(const char* tagName, unsigned long long mask = 0)
 {
     if (tagName == nullptr || strlen(tagName) > MAX_HOOK_PATH) {
         return 0;
@@ -190,9 +197,7 @@ uint16_t inline __attribute__((always_inline)) GetTagId(const char* tagName,
         return 0;
     }
     HookClientHolder client(g_hookClient);
-    if (client.IsValid()) {
-        client.Get()->SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
-    }
+    client.SendStackWithPayload(&tagData, sizeof(BaseStackRawData) + strlen(tagName) + 1, nullptr, 0);
     return tagData.tagId;
 }
 
@@ -210,9 +215,9 @@ void* MallocHookStart(void* disableHookCallback)
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {
-        g_ClientConfig.Reset();
+        g_clientConfig.Reset();
         g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig, &g_sampler,
                                                           &g_targetedRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
         if (g_hookClient->GetConnectState()) {
@@ -267,10 +272,7 @@ bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
         return false;
     }
     pthread_detach(threadStart);
-    if (!InitTheadKey()) {
-        return false;
-    }
-    return true;
+    return InitTheadKey();
 }
 
 void* ohos_release_on_end(void*)
@@ -289,7 +291,7 @@ void* ohos_release_on_end(void*)
     }
     g_addrHandler = nullptr;
     g_hookClient = nullptr;
-    g_ClientConfig.Reset();
+    g_clientConfig.Reset();
     g_sharedMemCount = 1;
     std::unique_lock<std::mutex> lock(g_tagMapMutex);
     g_memTagMap.clear();
@@ -349,7 +351,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
             break;
         }
         ip = *reinterpret_cast<uintptr_t*>(fp + sizeof(uintptr_t));
-        if (g_ClientConfig.responseLibraryMode) {
+        if (g_clientConfig.responseLibraryMode) {
             if (++count >= RESPONSE_LIBRARY_MODE_DEPTH || !FilterStandardSoIp(ip)) {
                 break;
             }
@@ -357,7 +359,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
             ips[depth++] = ip > 0x4 ? ip - 0x4 : ip; // adjust pc in Arm64 architecture
         }
 
-        if ((!g_ClientConfig.targetSoName.empty()) && CheckTargetLibIp(ip)) {
+        if ((!g_clientConfig.targetSoName.empty()) && CheckTargetLibIp(ip)) {
             filterTarget = false;
         }
         nextFp = *reinterpret_cast<uintptr_t*>(fp);
@@ -371,11 +373,11 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
         }
         fp = nextFp;
     }
-    if (g_ClientConfig.responseLibraryMode) {
+    if (g_clientConfig.responseLibraryMode) {
         ips[0] = ip > 0x4 ? ip - 0x4 : ip;
         depth = 1;
     }
-    if ((!g_ClientConfig.targetSoName.empty()) && filterTarget) {
+    if ((!g_clientConfig.targetSoName.empty()) && filterTarget) {
         depth = 0;
     }
     return depth;
@@ -383,7 +385,7 @@ static int inline __attribute__((always_inline)) FpUnwind(int maxDepth, uint64_t
 
 uint64_t getJsChainId()
 {
-    if (g_ClientConfig.arktsConfig.jsStackReport > 0) {
+    if (g_clientConfig.arktsConfig.jsStackReport > 0) {
             OHOS::HiviewDFX::HiTraceId hitraceId = OHOS::HiviewDFX::HiTraceChain::GetId();
             if (hitraceId.IsValid()) {
                 return hitraceId.GetChainId();
@@ -408,43 +410,71 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     return stackSize;
 }
 
-static inline __attribute__((always_inline))
-void CollectStackInfo(StackRawData& rawdata, uintptr_t& stackPtr, int& stackSize, int& fpStackDepth)
+static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData& rawdata, StackParam &param)
 {
-    if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        if (fpStackDepth > 0) {
-            rawdata.jsChainId = getJsChainId();
-        }
-#endif
-    } else {
-        stackSize = GetStackSize(stackPtr, rawdata);
+    if (!param.needCollect) {
+        return true;
     }
+    if (g_clientConfig.fpunwind && param.needFpunwind) {
+        #ifdef __aarch64__
+            param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+            if (param.fpStackDepth == 0) {
+                return false;
+            }
+            rawdata.jsChainId = getJsChainId();
+        #endif
+    } else {
+        param.stackSize = GetStackSize(param.stackPtr, rawdata);
+    }
+    return true;
 }
 
-static inline __attribute__((always_inline))
-int CalculateRealSize(int fpStackDepth)
+static bool inline __attribute__((always_inline)) CollectAsyncStackInfo(AsyncStackData& asyncData, StackParam &param)
 {
-    if (g_ClientConfig.fpunwind) {
-        return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-    } else {
-        return sizeof(BaseStackRawData) + sizeof(StackRawData::regs);
+    if (!param.needCollect || !param.needFpunwind) {
+        return true;
+    }
+    if (g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable) {
+        if (g_clientConfig.maxStackDepth == 0) {
+            return false;
+        }
+#ifdef HAVE_HILOG
+        asyncData.asyncStackId = DfxGetSubmitterStackId();
+        asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_clientConfig.maxStackDepth);
+#endif
+    }
+    return true;
+}
+
+static void inline __attribute__((always_inline)) SetStackRawData(BaseStackRawData& baseData, uint16_t type, void* addr, size_t mallocSize)
+{
+    baseData.type = type;
+    baseData.addr = addr;
+    baseData.mallocSize = mallocSize;
+    baseData.pid = static_cast<uint32_t>(g_hookPid.load());
+    baseData.tid = static_cast<uint32_t>(GetCurThreadId());
+    clock_gettime(g_clientConfig.clockId, &baseData.ts);
+}
+
+static void inline __attribute__((always_inline)) AddAllocAddr(void* pRet)
+{
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_clientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
     }
 }
 
 void* hook_malloc(void* (*fn)(size_t), size_t size)
 {
     void* ret = fn ? fn(size) : nullptr;
-
+    PERF_TRACK();
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return ret;
     }
     if (!ohos_set_filter_size(size, ret)) {
         return ret;
     }
-
-    PERF_TRACK();
 
     if (HookGuard::ShouldFilterBySize(ret, size) || HookGuard::ShouldSample(size)) {
         return ret;
@@ -455,66 +485,27 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         return ret;
     }
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MALLOC_MSG)
-        .SetAddr(ret)
-        .SetSize(size)
-        .SetProcessInfo()
-        .SetTimestamp()
-        .Build();
-
+    StackParam param;
     AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    CollectStackInfo(rawdata, stackPtr, stackSize, fpStackDepth);
-
-    if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-        if (g_ClientConfig.asyncStackEnable) {
-            if (g_ClientConfig.maxStackDepth == 0) {
-                return ret;
-            }
-            asyncData.asyncStackId = DfxGetSubmitterStackId();
-            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-        } else {
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return ret;
-            }
-            rawdata.jsChainId = getJsChainId();
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
+            return ret;
         }
-#endif
-
-    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
-    auto addrHandler = weakHandler.lock();
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
-        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
-    }
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        baseData = &asyncData;
+    } else {
+        if (!CollectStackInfo(rawdata, param)) {
+            return ret;
         }
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        baseData = &rawdata;
     }
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    }
-
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    client.Get()->SendStackWithPayload(&rawdata, realSize,
-                                       reinterpret_cast<void*>(stackPtr),
-                                       stackSize,
-                                       reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    SetStackRawData(*baseData, MALLOC_MSG, ret, size);
+    AddAllocAddr(ret);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     PERF_RECORD_DATA(stackSize);
     return ret;
 }
@@ -522,6 +513,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
 {
     void* ret = fn ? fn(align, len) : nullptr;
+    PERF_TRACK();
 
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return ret;
@@ -529,8 +521,6 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     if (!ohos_set_filter_size(len, ret)) {
         return ret;
     }
-
-    PERF_TRACK();
 
     if (HookGuard::ShouldFilterBySize(ret, len) || HookGuard::ShouldSample(len)) {
         return ret;
@@ -541,68 +531,27 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         return ret;
     }
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MALLOC_MSG)
-           .SetAddr(ret)
-           .SetSize(len)
-           .SetProcessInfo()
-           .SetTimestamp()
-           .Build();
-
+    StackParam param;
     AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    CollectStackInfo(rawdata, stackPtr, stackSize, fpStackDepth);
-
-    if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-        if (g_ClientConfig.asyncStackEnable) {
-            if (g_ClientConfig.maxStackDepth == 0) {
-                return ret;
-            }
-            asyncData.asyncStackId = DfxGetSubmitterStackId();
-            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-        } else {
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return ret;
-            }
-            rawdata.jsChainId = getJsChainId();
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
+            return ret;
         }
-#endif
+        baseData = &asyncData;
     } else {
-        stackSize = GetStackSize(stackPtr, rawdata);
-    }
-
-    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
-    auto addrHandler = weakHandler.lock();
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
-        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(ret));
-    }
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (!CollectStackInfo(rawdata, param)) {
+            return ret;
         }
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        baseData = &rawdata;
     }
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    }
-    client.Get()->SendStackWithPayload(&rawdata, realSize,
-                                       reinterpret_cast<void*>(stackPtr),
-                                       stackSize,
-                                       reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-
+    SetStackRawData(*baseData, MALLOC_MSG, ret, len);
+    AddAllocAddr(ret);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     PERF_RECORD_DATA(stackSize);
     return ret;
 }
@@ -619,16 +568,15 @@ void* hook_valloc(void* (*fn)(size_t), size_t size)
 void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 {
     void* pRet = fn ? fn(number, size) : nullptr;
-    size_t totalSize = number * size;
+    PERF_TRACK();
 
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return pRet;
     }
+    size_t totalSize = number * size;
     if (!ohos_set_filter_size(totalSize, pRet)) {
         return pRet;
     }
-
-    PERF_TRACK();
 
     if (HookGuard::ShouldFilterBySize(pRet, totalSize) || HookGuard::ShouldSample(totalSize)) {
         return pRet;
@@ -639,68 +587,27 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         return pRet;
     }
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MALLOC_MSG)
-        .SetAddr(pRet)
-        .SetSize(totalSize)
-        .SetProcessInfo()
-        .SetTimestamp()
-        .Build();
-
+    StackParam param;
     AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    CollectStackInfo(rawdata, stackPtr, stackSize, fpStackDepth);
-
-    if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-        if (g_ClientConfig.asyncStackEnable) {
-            if (g_ClientConfig.maxStackDepth == 0) {
-                return pRet;
-            }
-            asyncData.asyncStackId = DfxGetSubmitterStackId();
-            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-        } else {
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return pRet;
-            }
-            rawdata.jsChainId = getJsChainId();
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
+            return pRet;
         }
-#endif
+        baseData = &asyncData;
     } else {
-        stackSize = GetStackSize(stackPtr, rawdata);
-    }
-
-    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
-    auto addrHandler = weakHandler.lock();
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
-        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
-    }
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (!CollectStackInfo(rawdata, param)) {
+            return pRet;
         }
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        baseData = &rawdata;
     }
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    }
-    client.Get()->SendStackWithPayload(&rawdata, realSize,
-                                       reinterpret_cast<void*>(stackPtr),
-                                       stackSize,
-                                       reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-
+    SetStackRawData(*baseData, MALLOC_MSG, pRet, totalSize);
+    AddAllocAddr(pRet);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     PERF_RECORD_DATA(stackSize);
     return pRet;
 }
@@ -717,6 +624,7 @@ void* hook_memalign(void* (*fn)(size_t, size_t), size_t align, size_t bytes)
 void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 {
     void* pRet = fn ? fn(ptr, size) : nullptr;
+    PERF_TRACK();
 
     if (!HookGuard::IsReady()) {
         return pRet;
@@ -728,8 +636,6 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         return pRet;
     }
 
-    PERF_TRACK();
-
     if (HookGuard::ShouldFilterBySize(pRet, size) || HookGuard::ShouldSample(size)) {
         return pRet;
     }
@@ -739,51 +645,27 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         return pRet;
     }
 
-    RawDataBuilder builder;
-    builder.SetType(MALLOC_MSG)
-           .SetAddr(pRet)
-           .SetSize(size)
-           .SetProcessInfo()
-           .SetTimestamp();
+    StackRawData rawdata = {{{{0}}}};
+    SetStackRawData(rawdata, MALLOC_MSG, pRet, size);
 
-    StackRawData rawdata = builder.Build();
-
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    CollectStackInfo(rawdata, stackPtr, stackSize, fpStackDepth);
-
-#ifdef __aarch64__
-    if (g_ClientConfig.fpunwind && fpStackDepth == 0) {
+    StackParam param;
+    if (!CollectStackInfo(rawdata, param)) {
         return pRet;
     }
-#endif
 
-    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
-    auto addrHandler = weakHandler.lock();
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
-        addrHandler->AddAllocAddr(reinterpret_cast<uint64_t>(pRet));
-    }
-
-    RawDataBuilder freeBuilder;
-    freeBuilder.SetType(FREE_MSG)
-               .SetAddr(ptr)
-               .SetSize(0)
-               .SetProcessInfo()
-               .SetTimestamp();
-    StackRawData freeData = freeBuilder.Build();
+    StackRawData freeData = {{{{0}}}};
+    SetStackRawData(freeData, FREE_MSG, ptr, 0);
     freeData.ts = rawdata.ts;
 
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    int freeRealSize = g_ClientConfig.fpunwind ? sizeof(BaseStackRawData) : realSize;
+    AddAllocAddr(pRet);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth);
+    int freeRealSize = g_clientConfig.fpunwind ? sizeof(BaseStackRawData) : realSize;
 
-    client.Get()->SendStackWithPayload(&freeData, freeRealSize, nullptr, 0,
-                                       reinterpret_cast<uint64_t>(freeData.addr) % g_sharedMemCount);
-    client.Get()->SendStackWithPayload(&rawdata, realSize,
-                                       reinterpret_cast<void*>(stackPtr),
-                                       stackSize,
-                                       reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-
+    client.SendStackWithPayload(&freeData, freeRealSize, nullptr, 0,
+                                reinterpret_cast<uint64_t>(freeData.addr) % g_sharedMemCount);
+    client.SendStackWithPayload(&rawdata, realSize,
+                                reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     PERF_RECORD_DATA(stackSize);
     return pRet;
 }
@@ -798,257 +680,171 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
     return ret;
 }
 
-void hook_free(void (*free_func)(void*), void* p)
+void hook_free_statistics_interval(void (*free_func)(void*), void* p)
 {
-    if (g_ClientConfig.statisticsInterval > 0) {
-        if (!free_func) {
-            return;
-        }
-        if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
-            free_func(p);
-            return;
-        }
-        PERF_TRACK();
-        std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
-        auto addrHandler = weakHandler.lock();
-        if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
-            if (!addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
-                free_func(p);
-                return;
-            }
-        }
-
-        HookClientHolder client(g_hookClient);
-        if (client.IsValid() && p) {
-            client.Get()->SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
-                                         reinterpret_cast<uint64_t>(p) % g_sharedMemCount);
-        }
+    if (!free_func) {
+        return;
+    }
+    PERF_TRACK();
+    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         free_func(p);
         return;
     }
+    std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
+    auto addrHandler = weakHandler.lock();
+    if ((g_clientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+        if (!addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
+            free_func(p);
+            return;
+        }
+    }
+
+    HookClientHolder client(g_hookClient);
+    if (client.IsValid() && p) {
+        client.SendStackWithPayload(&p, sizeof(void*), nullptr, 0,
+                                    reinterpret_cast<uint64_t>(p) % g_sharedMemCount);
+    }
+    free_func(p);
+    return;
+}
+
+void hook_free(void (*free_func)(void*), void* p)
+{
+    if (g_clientConfig.statisticsInterval > 0) {
+        return hook_free_statistics_interval(free_func, p);
+    }
+    struct timespec freeTs = {};
+    clock_gettime(g_clientConfig.clockId, &freeTs);
     if (free_func) {
         free_func(p);
     }
+    PERF_TRACK();
+
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return;
     }
 
     std::weak_ptr<AddressHandler> weakHandler = g_addrHandler;
     auto addrHandler = weakHandler.lock();
-    if ((g_ClientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
+    if ((g_clientConfig.sampleInterval >= THRESHOLD) && (addrHandler != nullptr)) {
         if (!addrHandler->CheckAddr(reinterpret_cast<uint64_t>(p))) {
             return;
         }
     }
-    PERF_TRACK();
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(FREE_MSG)
-           .SetAddr(p)
-           .SetSize(0)
-           .SetProcessInfo()
-           .SetTimestamp()
-           .Build();
-
+    StackParam param;
     AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    if (g_ClientConfig.freeStackData) {
-        if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-            if (g_ClientConfig.asyncStackEnable) {
-                if (g_ClientConfig.maxStackDepth == 0) {
-                    return;
-                }
-                asyncData.asyncStackId = DfxGetSubmitterStackId();
-                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-            } else {
-                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-                if (fpStackDepth == 0) {
-                    return;
-                }
-                rawdata.jsChainId = getJsChainId();
-            }
-#endif
-        } else {
-            stackSize = GetStackSize(stackPtr, rawdata);
-        }
-    }
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        }
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
-    }
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    }
-    client.Get()->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-}
-
-inline void SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath,
-                                const StackRawData& rawdata, std::shared_ptr<HookSocketClient>& holder)
-{
-    NameData curRawdata = {{{{0}}}};
-    curRawdata.addr = rawdata.addr;
-    curRawdata.pid = static_cast<uint32_t>(g_hookPid.load());
-    curRawdata.mallocSize = rawdata.mallocSize;
-    curRawdata.mmapArgs.offset = offset;
-    curRawdata.type = MMAP_FILE_TYPE;
-    if (static_cast<uint32_t>(prot) & PROT_EXEC) {
-        curRawdata.mmapArgs.flags |= PROT_EXEC;
-    }
-    size_t len = strlen(filePath) + 1;
-    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) &&
-        (IsLegalSoName(filePath)) && (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
-        std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
-        ParseEvent(filePath, g_filterStaLibRange, curRawdata);
-    }
-    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (IsLegalSoName(filePath)) &&
-        (!g_ClientConfig.targetSoName.empty()) && strstr(filePath, g_ClientConfig.targetSoName.c_str()) != NULL) {
-        uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
-        uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
-        auto range = targetedRange.load();
-        if (range.start == 0 && range.end == 0) {
-            range.start = soStart;
-            range.end = soEnd;
-        }
-        if (range.start > soStart) {
-            range.start = soStart;
-        } else if (range.end < soEnd) {
-            range.end = soEnd;
-        }
-        targetedRange.store(range);
-    }
-    if (strncpy_s(curRawdata.name, MAX_HOOK_PATH + 1, filePath, len) != EOK) {
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
         return;
+        }
+        baseData = &asyncData;
+    } else {
+        if (!CollectStackInfo(rawdata, param)) {
+        return;
+        }
+        baseData = &rawdata;
     }
-    curRawdata.name[len - 1] = '\0';
-    if (flags & MAP_FIXED) {
-        curRawdata.mmapArgs.flags |= MAP_FIXED;
-    }
-    holder->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
+    SetStackRawData(*baseData, FREE_MSG, p, 0);
+    baseData->ts = freeTs;
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    HookClientHolder client(g_hookClient);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 }
 
 void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     void* ret = fn ? fn(addr, length, prot, flags, fd, offset) :  nullptr;
+    PERF_TRACK();
+
     if (!HookGuard::IsReady() || HookGuard::IsPidChanged()) {
         return ret;
-    } else if (g_ClientConfig.largestSize > 0 && fd <= 0) {
+    } else if (g_clientConfig.largestSize > 0 && fd <= 0) {
         return ret;
-    } else if ((g_ClientConfig.mmapDisable) && ((g_ClientConfig.memtraceEnable ||
-               (!g_ClientConfig.mallocDisable)) && fd <= 0)) {
+    } else if ((g_clientConfig.mmapDisable) && ((g_clientConfig.memtraceEnable ||
+               (!g_clientConfig.mallocDisable)) && fd <= 0)) {
         return ret;
     }
     if ((fd < 0 && offset == 0) && HookGuard::ShouldSample(length)) {
         return ret;
     }
-
-    PERF_TRACK();
-
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MMAP_MSG)
-           .SetAddr(ret)
-           .SetSize(length)
-           .SetProcessInfo()
-           .SetTimestamp()
-           .Build();
-
-    AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
-
-    if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-        if (g_ClientConfig.asyncStackEnable) {
-            if (g_ClientConfig.maxStackDepth == 0) {
-                return ret;
-            }
-            asyncData.asyncStackId = DfxGetSubmitterStackId();
-            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-        } else {
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            rawdata.jsChainId = getJsChainId();
-        }
-#endif
-    } else {
-        stackSize = GetStackSize(stackPtr, rawdata);
-    }
-    if (fd >= 0) {
-        rawdata.type = MMAP_FILE_PAGE_MSG;
-        char path[FD_PATH_LENGTH] = {0};
-        char fileName[MAX_HOOK_PATH + 1] = {0};
-        if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
-            return nullptr;
-        }
-        ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-        if (len != -1) {
-            fileName[len] = '\0';
-            if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
-                rawdata.type = MEMORY_USING_MSG;
-            }
-            HookClientHolder client(g_hookClient);
-            client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
-            char* p = strrchr(fileName, '/');
-            if (p != nullptr) {
-                rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
-            } else {
-                rawdata.tagId = GetTagId(fileName);
-            }
-        }
-    }
     HookClientHolder client(g_hookClient);
-    if (!client.IsValid() || !client.UpdateThreadName()) {
+    if (!client.IsValid()) {
         return ret;
     }
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (!g_ClientConfig.asyncStackEnable && fpStackDepth == 0) {
+
+    StackParam param;
+    AsyncStackData asyncData {{{{0}}}};
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
             return ret;
         }
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-        }
+        baseData = &asyncData;
     } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        if (!CollectStackInfo(rawdata, param)) {
+            return ret;
+        }
+        if (fd >= 0) {
+            rawdata.type = MMAP_FILE_PAGE_MSG;
+            char path[FD_PATH_LENGTH] = {0};
+            char fileName[MAX_HOOK_PATH + 1] = {0};
+            if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
+                return nullptr;
+            }
+            ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
+            if (len != -1) {
+                fileName[len] = '\0';
+                if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
+                    rawdata.type = MEMORY_USING_MSG;
+                }
+                client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
+                char* p = strrchr(fileName, '/');
+                if (p != nullptr) {
+                    rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
+                } else {
+                    rawdata.tagId = GetTagId(fileName);
+                }
+            }
+        }
+        baseData = &rawdata;
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
-    client.Get()->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    if (!client.UpdateThreadName()) {
+        return ret;
+    }
+    SetStackRawData(*baseData, MMAP_MSG, ret, length);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
     return ret;
 }
 
 int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
+    struct timespec unmapTime = {};
+    clock_gettime(g_clientConfig.clockId, &unmapTime);
     int ret = fn ? fn(addr, length) : -1;
+    PERF_TRACK();
+
     if (!HookGuard::IsReady()) {
         return ret;
     }
     if (HookGuard::ShouldSkipMmap()) {
         return ret;
     }
-    PERF_TRACK();
+    HookClientHolder client(g_hookClient);
+    if (!client.IsValid()) {
+        return ret;
+    }
 
-    if (!g_ClientConfig.targetSoName.empty()) {
+    if (!g_clientConfig.targetSoName.empty()) {
         uint64_t addrval = reinterpret_cast<uint64_t>(addr);
         auto range = g_targetedRange.load();
         if (addrval < range.end && addrval >= range.start) {
@@ -1058,61 +854,28 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
     }
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MUNMAP_MSG)
-           .SetAddr(addr)
-           .SetSize(length)
-           .SetProcessInfo()
-           .SetTimestamp()
-           .Build();
-
+    StackParam param;
     AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int stackSize = 0;
-    int fpStackDepth = 0;
-    if (g_ClientConfig.munmapStackData) {
-        if (g_ClientConfig.fpunwind && g_ClientConfig.statisticsInterval == 0) {
-#ifdef __aarch64__
-            if (g_ClientConfig.asyncStackEnable) {
-                if (g_ClientConfig.maxStackDepth == 0) {
-                    return ret;
-                }
-                asyncData.asyncStackId = DfxGetSubmitterStackId();
-                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-            } else {
-                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-                if (fpStackDepth == 0) {
-                    return ret;
-                }
-                rawdata.jsChainId = getJsChainId();
-            }
-#endif
-        } else {
-            stackSize = GetStackSize(stackPtr, rawdata);
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    param.needFpunwind = g_clientConfig.statisticsInterval == 0;
+    param.needCollect = g_clientConfig.munmapStackData;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
+            return ret;
         }
-    }
-
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            realSize = sizeof(AsyncStackData);
-        } else {
-            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        baseData = &asyncData;
+    } else {
+        if (!CollectStackInfo(rawdata, param)) {
+            return ret;
         }
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+        baseData = &rawdata;
     }
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
-    } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
-    }
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    HookClientHolder client(g_hookClient);
-    if (client.IsValid()) {
-        client.Get()->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
-    }
+    SetStackRawData(*baseData, MUNMAP_MSG, addr, length);
+    baseData->ts = unmapTime;
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
     return ret;
 }
 
@@ -1120,13 +883,14 @@ int hook_prctl(int(*fn)(int, ...),
     int option, unsigned long arg2, unsigned long arg3, unsigned long arg4, unsigned long arg5)
 {
     int ret = fn ? fn(option, arg2, arg3, arg4, arg5) : -1;
+    PERF_TRACK();
+
     if ((!HookGuard::IsReady()) || reinterpret_cast<char*>(arg5) == nullptr || HookGuard::ShouldSkipMmap()) {
         return ret;
     }
     if (option == PR_SET_VMA && arg2 == PR_SET_VMA_ANON_NAME) {
-        PERF_TRACK();
         NameData rawdata = {{{{0}}}};
-        clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
+        clock_gettime(g_clientConfig.clockId, &rawdata.ts);
         rawdata.type = PR_SET_VMA_MSG;
         rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
         rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
@@ -1138,118 +902,49 @@ int hook_prctl(int(*fn)(int, ...),
         }
         rawdata.name[sizeof(rawdata.name) - 1] = '\0';
         HookClientHolder client(g_hookClient);
-        if (client.IsValid()) {
-            client.Get()->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-        }
+        client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData) + tagLen, nullptr, 0,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     }
     return ret;
 }
 
 void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
 {
-    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace() || g_ClientConfig.isSaMode) {
-        return;
-    }
-    if (g_ClientConfig.traceMask > 0) {
-        return;
-    }
     PERF_TRACK();
 
-    RawDataBuilder builder;
-    uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    StackRawData rawdata = builder.SetType(type)
-        .SetAddr(addr)
-        .SetSize(size)
-        .SetTagId(GetTagId(tag))
-        .SetProcessInfo()
-        .SetTimestamp()
-        .Build();
-
-    AsyncStackData asyncData {{{{0}}}};
-    uintptr_t stackPtr = 0;
-    int fpStackDepth = 0;
-    int stackSize = 0;
-
-    if (isUsing) {
-        if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-            if (g_ClientConfig.asyncStackEnable) {
-                if (g_ClientConfig.maxStackDepth == 0) {
-                    return;
-                }
-                asyncData.asyncStackId = DfxGetSubmitterStackId();
-                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-            } else {
-                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-                if (fpStackDepth == 0) {
-                    return;
-                }
-                rawdata.jsChainId = getJsChainId();
-            }
-#endif
-        } else {
-            stackSize = GetStackSize(stackPtr, rawdata);
-        }
+    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace() || g_clientConfig.isSaMode) {
+        return;
     }
-    rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
-    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
-    rawdata.mallocSize = size;
-    rawdata.addr = addr;
-    rawdata.tagId = GetTagId(holder, tag);
-    int realSize = 0;
-    if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-    } else {
-        realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    if (g_clientConfig.traceMask > 0) {
+        return;
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
     HookClientHolder client(g_hookClient);
-    if (client.IsValid()) {
-        client.Get()->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    if (!client.IsValid()) {
+        return;
     }
-}
 
-int CollectStackInfo(bool isUsing, StackRawData& rawdata, AsyncStackData& asyncData, uintptr_t& stackPtr,
-    int& fpStackDepth)
-{
-    int stackSize = 0;
-
-    if (isUsing) {
-        if (g_ClientConfig.fpunwind) {
-#ifdef __aarch64__
-            if (g_ClientConfig.asyncStackEnable) {
-                if (g_ClientConfig.maxStackDepth == 0) {
-                    return -1;
-                }
-                asyncData.asyncStackId = DfxGetSubmitterStackId();
-                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
-            } else {
-                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-                if (fpStackDepth == 0) {
-                    return -1;
-                }
-                rawdata.jsChainId = getJsChainId();
-            }
-#endif
-        } else {
-            stackSize = GetStackSize(stackPtr, rawdata);
+    StackParam param;
+    AsyncStackData asyncData {{{{0}}}};
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    param.needCollect = isUsing;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
+            return;
         }
-    }
-    return stackSize;
-}
-
-int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
-{
-    if (g_ClientConfig.fpunwind) {
-        if (g_ClientConfig.asyncStackEnable) {
-            return sizeof(AsyncStackData);
+        baseData = &asyncData;
+    } else {
+        if (!CollectStackInfo(rawdata, param)) {
+            return;
         }
-        return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        baseData = &rawdata;
     }
-    return sizeof(BaseStackRawData) + sizeof(rawdata.regs);
+    uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
+    SetStackRawData(*baseData, type, addr, size);
+    baseData->tagId = GetTagId(tag);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
 }
 
 size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targetFd)
@@ -1314,123 +1009,108 @@ size_t GetDmaSize(void* addr, bool isUsing)
 
 void hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
 {
+    PERF_TRACK();
+
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
-    PERF_TRACK();
     HookClientHolder client(g_hookClient);
     if (!client.IsValid()) {
         return;
     }
 
-    RawDataBuilder builder;
-    uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    StackRawData rawdata = builder.SetType(type)
-        .SetAddr(addr)
-        .SetSize(size)
-        .SetTagId(GetTagId(tag, mask))
-        .SetProcessInfo()
-        .SetTimestamp()
-        .Build();
-    AsyncStackData asyncData {{{{0}}}};
-
-    unsigned long long combineVal = mask & g_ClientConfig.traceMask;
+    unsigned long long combineVal = mask & g_clientConfig.traceMask;
     if (combineVal == 0) {
         return;
     }
-    if ((g_ClientConfig.isSaMode && isUsing) && (!HookGuard::CheckRestraceConditions(combineVal, size))) {
+    if ((g_clientConfig.isSaMode && isUsing) && (!HookGuard::CheckRestraceConditions(combineVal, size))) {
         return;
     }
-    if (mask == RES_DMABUF_MASK) {
-        size = GetDmaSize(addr, isUsing);
-        if (size == 0) {
+    if (mask == RES_DMABUF_MASK && GetDmaSize(addr, isUsing) == 0) {
+        return;
+    }
+
+    StackParam param;
+    AsyncStackData asyncData {{{{0}}}};
+    StackRawData rawdata = {{{{0}}}};
+    BaseStackRawData* baseData = nullptr;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    param.needCollect = isUsing;
+    if (isAsyncStack) {
+        if (!CollectAsyncStackInfo(asyncData, param)) {
             return;
         }
-    }
-    int fpStackDepth = 0;
-    uintptr_t stackPtr = 0;
-    int stackSize = CollectStackInfo(isUsing, rawdata, asyncData, stackPtr, fpStackDepth);
-    if (stackSize == -1) {
-        return;
-    }
-    rawdata.type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    rawdata.pid = static_cast<uint32_t>(g_hookPid.load());
-    rawdata.tid = static_cast<uint32_t>(GetCurThreadId());
-    rawdata.mallocSize = size;
-    rawdata.addr = addr;
-    rawdata.tagId = GetTagId(holder, tag, mask);
-    int realSize = CalculateRealSize(fpStackDepth, rawdata);
-    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
-        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
-        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+        baseData = &asyncData;
     } else {
-        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+        if (!CollectStackInfo(rawdata, param)) {
+            return;
+        }
+        baseData = &rawdata;
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    int realSize = HookGuard::CalculateRealSize(fpStackDepth);
-    client.Get()->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
+    SetStackRawData(*baseData, type, addr, size);
+    baseData->tagId = GetTagId(tag, mask);
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 }
 
 
 void hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, size_t newSize)
 {
+    PERF_TRACK();
+
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
-    PERF_TRACK();
     HookClientHolder client(g_hookClient);
     if (!client.IsValid()) {
         return;
     }
-    if ((mask & g_ClientConfig.traceMask) == 0) {
+    if ((mask & g_clientConfig.traceMask) == 0) {
         return;
     }
 
     RawDataBuilder builder;
-    builder.SetType(MALLOC_ARKTS)
-           .SetAddr(oldAddr)
-           .SetNewAddr(newAddr)
-           .SetSize(newSize)
-           .SetProcessInfo()
-           .SetTagId(HookGuard::GetPredefinedTagId(mask))
-           .SetTimestamp();
-    StackRawData rawdata = builder.Build();
+    StackRawData rawdata = builder.SetType(MALLOC_ARKTS)
+        .SetAddr(oldAddr)
+        .SetNewAddr(newAddr)
+        .SetSize(newSize)
+        .SetProcessInfo()
+        .SetTagId(HookGuard::GetPredefinedTagId(mask))
+        .SetTimestamp()
+        .Build();
     
     uintptr_t stackPtr = 0;
-    client.Get()->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 }
 
 void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
 {
+    PERF_TRACK();
+
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
-    PERF_TRACK();
 
-    if ((mask & g_ClientConfig.traceMask) == 0) {
+    if ((mask & g_clientConfig.traceMask) == 0) {
         return;
     }
     
     RawDataBuilder builder;
-    builder.SetType(FREE_ARKTS)
-           .SetAddr(addr)
-           .SetSize(size)
-           .SetProcessInfo()
-           .SetTagId(HookGuard::GetPredefinedTagId(mask))
-           .SetTimestamp();
-    StackRawData rawdata = builder.Build();
+    StackRawData rawdata = builder.SetType(FREE_ARKTS)
+        .SetAddr(addr)
+        .SetSize(size)
+        .SetProcessInfo()
+        .SetTagId(HookGuard::GetPredefinedTagId(mask))
+        .SetTimestamp()
+        .Build();
 
     uintptr_t stackPtr = 0;
     HookClientHolder client(g_hookClient);
-    if (client.IsValid()) {
-        client.Get()->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    }
+    client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
+                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 }
 
 
@@ -1571,12 +1251,13 @@ int  ohos_malloc_hook_prctl(int option, unsigned long arg2, unsigned long arg3,
 
 bool ohos_set_filter_size(size_t size, void* ret)
 {
-    return g_ClientConfig.filterSize >= 0 && size >= static_cast<size_t>(g_ClientConfig.filterSize) && size <= g_maxSize;
+    return g_clientConfig.filterSize >= 0 && size >= static_cast<size_t>(g_clientConfig.filterSize)
+        && size <= g_maxSize;
 }
 
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
-    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA) && !g_ClientConfig.asyncStackEnable) {
+    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA) && !g_clientConfig.asyncStackEnable) {
         BaseStackRawData rawdata = {};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;
@@ -1586,7 +1267,7 @@ bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, siz
             return false;
         }
         for (int i = 0; i < g_sharedMemCount; ++i) {
-            result &= (client.Get()->SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize, i));
+            result &= (client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), stackPtr, stackSize, i));
         }
         return result;
     }
@@ -1595,5 +1276,5 @@ bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, siz
 
 void* ohos_malloc_hook_get_hook_config()
 {
-    return &g_ClientConfig.arktsConfig;
+    return &g_clientConfig.arktsConfig;
 }

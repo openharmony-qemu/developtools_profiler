@@ -17,10 +17,9 @@
 #include <unistd.h>
 #include "rawdata_builder.h"
 #include "hook_common.h"
+#include "hook_client.h"
 
 using namespace testing::ext;
-
-extern struct ClientConfig g_ClientConfig;
 
 namespace {
 class RawDataBuilderTest : public ::testing::Test {
@@ -30,7 +29,7 @@ public:
 
     void SetUp() override
     {
-        g_ClientConfig.clockId = CLOCK_REALTIME;
+        g_clientConfig.clockId = CLOCK_REALTIME;
     }
 
     void TearDown() override {}

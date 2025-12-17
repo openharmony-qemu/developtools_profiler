@@ -68,7 +68,7 @@ RawDataBuilder& RawDataBuilder::SetProcessInfo()
 
 RawDataBuilder& RawDataBuilder::SetTimestamp()
 {
-    clock_gettime(g_ClientConfig.clockId, &data_.ts);
+    clock_gettime(g_clientConfig.clockId, &data_.ts);
     return *this;
 }
 

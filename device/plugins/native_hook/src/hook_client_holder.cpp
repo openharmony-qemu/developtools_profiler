@@ -40,6 +40,15 @@ bool HookClientHolder::IsValid() const
     return holder_ != nullptr;
 }
 
+bool HookClientHolder::SendStackWithPayload(const void* data, size_t size, const void* payload,
+    size_t payloadSize, int smbIndex)
+{
+    if (!holder_) {
+        return false;
+    }
+    return holder_->SendStackWithPayload(data, size, payload, payloadSize, smbIndex);
+}
+
 bool HookClientHolder::UpdateThreadName()
 {
     if (!holder_) {
@@ -67,7 +76,7 @@ bool HookClientHolder::UpdateThreadName()
 }
 
 void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath,
-                                const StackRawData& rawdata)
+                                           const StackRawData& rawdata)
 {
     if (!holder_) {
         return;
@@ -82,13 +91,13 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
         curRawdata.mmapArgs.flags |= PROT_EXEC;
     }
     size_t len = strlen(filePath) + 1;
-    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (g_ClientConfig.responseLibraryMode) &&
+    if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (g_clientConfig.responseLibraryMode) &&
         (IsLegalSoName(filePath)) && (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }
     if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (IsLegalSoName(filePath)) &&
-        (!g_ClientConfig.targetSoName.empty()) && strstr(filePath, g_ClientConfig.targetSoName.c_str()) != NULL) {
+        (!g_clientConfig.targetSoName.empty()) && strstr(filePath, g_clientConfig.targetSoName.c_str()) != NULL) {
         uint64_t soStart = reinterpret_cast<uint64_t>(curRawdata.addr);
         uint64_t soEnd = soStart + static_cast<uint64_t>(curRawdata.mallocSize);
         auto range = g_targetedRange.load();

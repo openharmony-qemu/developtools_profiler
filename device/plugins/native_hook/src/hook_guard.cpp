@@ -52,25 +52,25 @@ bool IsPidChanged()
 
 bool ShouldSkipMalloc()
 {
-    return g_ClientConfig.mallocDisable || IsPidChanged();
+    return g_clientConfig.mallocDisable || IsPidChanged();
 }
 
 bool ShouldSkipMemtrace()
 {
-    return !g_ClientConfig.memtraceEnable || IsPidChanged();
+    return !g_clientConfig.memtraceEnable || IsPidChanged();
 }
 
 bool ShouldSkipMmap()
 {
-    return g_ClientConfig.mmapDisable || IsPidChanged();
+    return g_clientConfig.mmapDisable || IsPidChanged();
 }
 
 bool ShouldFilterBySize(void* ptr, size_t mallocSize)
 {
-    if (g_ClientConfig.largestSize == 0 || g_ClientConfig.secondLargestSize == 0) {
+    if (g_clientConfig.largestSize == 0 || g_clientConfig.secondLargestSize == 0) {
         return false;
     }
-    if (mallocSize >= g_ClientConfig.sampleInterval) {
+    if (mallocSize >= g_clientConfig.sampleInterval) {
         return false;
     }
 
@@ -88,13 +88,13 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
         }
     }
 
-    if (usableSize >= g_ClientConfig.sampleInterval) {
+    if (usableSize >= g_clientConfig.sampleInterval) {
         return false;
     }
 
-    if ((usableSize == g_ClientConfig.largestSize) ||
-        (usableSize == g_ClientConfig.secondLargestSize) ||
-        (usableSize == g_ClientConfig.maxGrowthSize)) {
+    if ((usableSize == g_clientConfig.largestSize) ||
+        (usableSize == g_clientConfig.secondLargestSize) ||
+        (usableSize == g_clientConfig.maxGrowthSize)) {
         return false;
     }
 
@@ -103,18 +103,21 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
 
 bool ShouldSample(size_t size)
 {
-    if (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL) {
+    if (g_clientConfig.sampleInterval > MIN_SAMPLER_INTERVAL) {
         return g_sampler.StartSampling(size) == 0;
     }
     return false;
 }
 
-int CalculateRealSize(int fpStackDepth)
+int CalculateRealSize(int fpStackDepth, bool isAsyncStack)
 {
-    if (g_ClientConfig.fpunwind) {
-        return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+    if (!g_clientConfig.fpunwind) {
+        return sizeof(BaseStackRawData) + sizeof(StackRawData::regs);
     }
-    return sizeof(BaseStackRawData) + sizeof(StackRawData::regs);
+    if (isAsyncStack) {
+        return sizeof(AsyncStackData);
+    }
+    return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
 }
 
 uint16_t GetPredefinedTagId(unsigned long long mask)
@@ -148,38 +151,38 @@ bool CheckSizeRange(size_t size, unsigned long long type)
 {
     switch (type) {
         case RES_GPU_VK:
-            if (((size >= g_ClientConfig.gpuRange.gpuVk[0]) && (size <= g_ClientConfig.gpuRange.gpuVk[1]))
-                || ((size >= g_ClientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT])
-                && (size <= g_ClientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT + 1]))) {
+            if (((size >= g_clientConfig.gpuRange.gpuVk[0]) && (size <= g_clientConfig.gpuRange.gpuVk[1]))
+                || ((size >= g_clientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT])
+                && (size <= g_clientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT + 1]))) {
                 return true;
             }
             break;
         case RES_GPU_GLES_IMAGE:
-            if (((size >= g_ClientConfig.gpuRange.gpuGlesImage[0]) && (size <= g_ClientConfig.gpuRange.gpuGlesImage[1]))
-                || ((size >= g_ClientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT])
-                && (size <= g_ClientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT + 1]))) {
+            if (((size >= g_clientConfig.gpuRange.gpuGlesImage[0]) && (size <= g_clientConfig.gpuRange.gpuGlesImage[1]))
+                || ((size >= g_clientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT])
+                && (size <= g_clientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT + 1]))) {
                 return true;
             }
             break;
         case RES_GPU_GLES_BUFFER:
-            if (((size >= g_ClientConfig.gpuRange.gpuGlesBuffer[0])
-                && (size <= g_ClientConfig.gpuRange.gpuGlesBuffer[1]))
-                || ((size >= g_ClientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT])
-                && (size <= g_ClientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT + 1]))) {
+            if (((size >= g_clientConfig.gpuRange.gpuGlesBuffer[0])
+                && (size <= g_clientConfig.gpuRange.gpuGlesBuffer[1]))
+                || ((size >= g_clientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT])
+                && (size <= g_clientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT + 1]))) {
                 return true;
             }
             break;
         case RES_GPU_CL_IMAGE:
-            if (((size >= g_ClientConfig.gpuRange.gpuClImage[0]) && (size <= g_ClientConfig.gpuRange.gpuClImage[1]))
-                || ((size >= g_ClientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT])
-                && (size <= g_ClientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT + 1]))) {
+            if (((size >= g_clientConfig.gpuRange.gpuClImage[0]) && (size <= g_clientConfig.gpuRange.gpuClImage[1]))
+                || ((size >= g_clientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT])
+                && (size <= g_clientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT + 1]))) {
                 return true;
             }
             break;
         case RES_GPU_CL_BUFFER:
-            if (((size >= g_ClientConfig.gpuRange.gpuClBuffer[0]) && (size <= g_ClientConfig.gpuRange.gpuClBuffer[1]))
-                || ((size >= g_ClientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT])
-                && (size <= g_ClientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT + 1]))) {
+            if (((size >= g_clientConfig.gpuRange.gpuClBuffer[0]) && (size <= g_clientConfig.gpuRange.gpuClBuffer[1]))
+                || ((size >= g_clientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT])
+                && (size <= g_clientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT + 1]))) {
                 return true;
             }
             break;

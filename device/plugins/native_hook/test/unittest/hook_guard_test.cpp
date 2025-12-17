@@ -17,14 +17,10 @@
 #include <atomic>
 #include <unistd.h>
 #include "hook_guard.h"
+#include "hook_client.h"
 #include "hook_common.h"
 
 using namespace testing::ext;
-
-extern std::atomic<bool> g_hookReady;
-extern std::atomic<pid_t> g_hookPid;
-extern std::atomic<bool> g_isPidChanged;
-extern struct ClientConfig g_ClientConfig;
 
 namespace {
 class HookGuardTest : public ::testing::Test {
@@ -37,11 +33,11 @@ public:
         g_hookReady = false;
         g_hookPid = getpid();
         g_isPidChanged = false;
-        g_ClientConfig.mallocDisable = false;
-        g_ClientConfig.mmapDisable = false;
-        g_ClientConfig.largestSize = 0;
-        g_ClientConfig.secondLargestSize = 0;
-        g_ClientConfig.sampleInterval = 0;
+        g_clientConfig.mallocDisable = false;
+        g_clientConfig.mmapDisable = false;
+        g_clientConfig.largestSize = 0;
+        g_clientConfig.secondLargestSize = 0;
+        g_clientConfig.sampleInterval = 0;
     }
 
     void TearDown() override {}
@@ -88,15 +84,15 @@ HWTEST_F(HookGuardTest, IsPidChangedTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldSkipMallocTest, TestSize.Level0)
 {
-    g_ClientConfig.mallocDisable = false;
+    g_clientConfig.mallocDisable = false;
     g_isPidChanged = false;
     g_hookPid = getpid();
     EXPECT_FALSE(HookGuard::ShouldSkipMalloc());
 
-    g_ClientConfig.mallocDisable = true;
+    g_clientConfig.mallocDisable = true;
     EXPECT_TRUE(HookGuard::ShouldSkipMalloc());
 
-    g_ClientConfig.mallocDisable = false;
+    g_clientConfig.mallocDisable = false;
     g_isPidChanged = true;
     EXPECT_TRUE(HookGuard::ShouldSkipMalloc());
 }
@@ -108,15 +104,15 @@ HWTEST_F(HookGuardTest, ShouldSkipMallocTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldSkipMmapTest, TestSize.Level0)
 {
-    g_ClientConfig.mmapDisable = false;
+    g_clientConfig.mmapDisable = false;
     g_isPidChanged = false;
     g_hookPid = getpid();
     EXPECT_FALSE(HookGuard::ShouldSkipMmap());
 
-    g_ClientConfig.mmapDisable = true;
+    g_clientConfig.mmapDisable = true;
     EXPECT_TRUE(HookGuard::ShouldSkipMmap());
 
-    g_ClientConfig.mmapDisable = false;
+    g_clientConfig.mmapDisable = false;
     g_isPidChanged = true;
     EXPECT_TRUE(HookGuard::ShouldSkipMmap());
 }
@@ -128,15 +124,15 @@ HWTEST_F(HookGuardTest, ShouldSkipMmapTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldSkipMemtraceTest, TestSize.Level0)
 {
-    g_ClientConfig.memtraceEnable = true;
+    g_clientConfig.memtraceEnable = true;
     g_isPidChanged = false;
     g_hookPid = getpid();
     EXPECT_FALSE(HookGuard::ShouldSkipMemtrace());
 
-    g_ClientConfig.memtraceEnable = false;
+    g_clientConfig.memtraceEnable = false;
     EXPECT_TRUE(HookGuard::ShouldSkipMemtrace());
 
-    g_ClientConfig.memtraceEnable = true;
+    g_clientConfig.memtraceEnable = true;
     g_isPidChanged = true;
     EXPECT_TRUE(HookGuard::ShouldSkipMemtrace());
 }
@@ -148,8 +144,8 @@ HWTEST_F(HookGuardTest, ShouldSkipMemtraceTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldFilterBySizeBasicTest, TestSize.Level0)
 {
-    g_ClientConfig.largestSize = 0;
-    g_ClientConfig.secondLargestSize = 0;
+    g_clientConfig.largestSize = 0;
+    g_clientConfig.secondLargestSize = 0;
 
     void* testPtr = malloc(256);
     ASSERT_NE(testPtr, nullptr);
@@ -164,9 +160,9 @@ HWTEST_F(HookGuardTest, ShouldFilterBySizeBasicTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldFilterBySizeWithConfigTest, TestSize.Level0)
 {
-    g_ClientConfig.largestSize = 1024;
-    g_ClientConfig.secondLargestSize = 512;
-    g_ClientConfig.sampleInterval = 2048;
+    g_clientConfig.largestSize = 1024;
+    g_clientConfig.secondLargestSize = 512;
+    g_clientConfig.sampleInterval = 2048;
 
     void* testPtr1 = malloc(256);
     ASSERT_NE(testPtr1, nullptr);
@@ -186,10 +182,10 @@ HWTEST_F(HookGuardTest, ShouldFilterBySizeWithConfigTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, ShouldSampleBasicTest, TestSize.Level0)
 {
-    g_ClientConfig.sampleInterval = 0;
+    g_clientConfig.sampleInterval = 0;
     EXPECT_FALSE(HookGuard::ShouldSample(1024));
 
-    g_ClientConfig.sampleInterval = 1;
+    g_clientConfig.sampleInterval = 1;
     EXPECT_FALSE(HookGuard::ShouldSample(1024));
 }
 
@@ -200,11 +196,11 @@ HWTEST_F(HookGuardTest, ShouldSampleBasicTest, TestSize.Level0)
  */
 HWTEST_F(HookGuardTest, CalculateRealSizeBasicTest, TestSize.Level0)
 {
-    g_ClientConfig.fpunwind = true;
+    g_clientConfig.fpunwind = true;
     int fpStackDepth = 5;
     EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), 96);
 
-    g_ClientConfig.fpunwind = false;
+    g_clientConfig.fpunwind = false;
     EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), 320);
 }
 }
