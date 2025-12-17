@@ -37,7 +37,6 @@ ohos_source_set("cpudataplugin_source") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "hisysevent:libhisysevent",
       "protobuf:protobuf_lite",
     ]
@@ -56,7 +55,6 @@ ohos_shared_library("cpudataplugin") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
     ]
   }
   install_enable = true
@@ -78,7 +76,6 @@ ohos_executable("cpudataplugintest") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }

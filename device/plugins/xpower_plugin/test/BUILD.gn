@@ -57,7 +57,6 @@ ohos_unittest("xpowerplugin_ut") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "hisysevent:libhisysevent",
     "protobuf:protobuf_lite",
   ]

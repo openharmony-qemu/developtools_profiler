@@ -41,7 +41,6 @@ ohos_source_set("networkplugin_source") {
       "bundle_framework:appexecfwk_base",
       "bundle_framework:appexecfwk_core",
       "c_utils:utils",
-      "hilog:libhilog_base",
       "hisysevent:libhisysevent",
       "init:libbegetutil",
       "ipc:ipc_core",
@@ -62,7 +61,6 @@ ohos_shared_library("networkplugin") {
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

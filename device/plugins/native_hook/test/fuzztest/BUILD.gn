@@ -38,7 +38,6 @@ hook_fuzz_external_deps = [
   "cJSON:cjson",
   "c_utils:utils",
   "googletest:gtest",
-  "hilog:libhilog_base",
   "init:libbegetutil",
   "protobuf:protobuf",
 ]

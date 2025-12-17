@@ -16,7 +16,7 @@
 #define HIPERF_FILE_FORMAT_TEST_H
 
 #include <gtest/gtest.h>
-#include <hilog_base/log_base.h>
+#include <log_base.h>
 
 #include "perf_file_format.h"
 #include "perf_event_record.h"

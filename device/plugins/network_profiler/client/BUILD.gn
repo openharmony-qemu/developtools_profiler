@@ -64,9 +64,6 @@ ohos_shared_library("libnetwork_profiler") {
   ]
 
   defines = []
-  if (current_toolchain != host_toolchain) {
-    external_deps += [ "hilog:libhilog_base" ]
-  }
 
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

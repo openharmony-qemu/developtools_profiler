@@ -45,7 +45,6 @@ ohos_unittest("networkprofiler_ut") {
     "grpc:gpr",
     "grpc:grpc",
     "grpc:grpcxx",
-    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
 
@@ -56,9 +55,6 @@ ohos_unittest("networkprofiler_ut") {
   ]
 
   defines = []
-  if (current_toolchain != host_toolchain) {
-    external_deps += [ "hilog:libhilog_base" ]
-  }
 
   include_dirs = [
     "${network_profiler_path}/client/include",

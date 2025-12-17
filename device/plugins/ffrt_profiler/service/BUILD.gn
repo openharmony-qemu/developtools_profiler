@@ -57,7 +57,6 @@ ohos_source_set("ffrt_profiler_service") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
   }
 
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
