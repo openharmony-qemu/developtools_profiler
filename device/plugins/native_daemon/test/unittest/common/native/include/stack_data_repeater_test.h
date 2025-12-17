@@ -17,7 +17,7 @@
 #define STACK_DATA_REPEATER_TEST
 
 #include <gtest/gtest.h>
-#include <hilog_base/log_base.h>
+#include <log_base.h>
 
 #include "hook_record_factory.h"
 #include "hook_record_factory.h"

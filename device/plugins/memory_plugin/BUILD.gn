@@ -42,7 +42,6 @@ ohos_source_set("memdataplugin_source") {
       "c_utils:utils",
       "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
       "hidumper:lib_dump_usage",
-      "hilog:libhilog_base",
       "hisysevent:libhisysevent",
       "hiview:libucollection_utility",
       "protobuf:protobuf_lite",
@@ -60,7 +59,6 @@ ohos_shared_library("memdataplugin") {
     external_deps = [
       "c_utils:utils",
       "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
-      "hilog:libhilog_base",
     ]
   }
   install_enable = true
@@ -78,7 +76,6 @@ ohos_executable("memorytest") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
     ]
   }
   install_enable = false

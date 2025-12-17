@@ -37,7 +37,6 @@ ohos_source_set("shared_memory_source") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "c_utils:utils",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }
@@ -51,7 +50,6 @@ ohos_shared_library("shared_memory") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "c_utils:utils",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }
@@ -77,7 +75,6 @@ ohos_static_library("shared_memory_lite") {
     external_deps = [
       "bounds_checking_function:libsec_shared",
       "c_utils:utils",
-      "hilog:libhilog_base",
     ]
   }
 

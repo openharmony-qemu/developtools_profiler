@@ -48,7 +48,6 @@ ohos_fuzztest("HiperfStartPluginFuzzTest") {
   defines = [ "LITE_PROTO" ]
   external_deps = [
     "c_utils:utils",
-    "hilog:libhilog_base",
     "hisysevent:libhisysevent",
     "openssl:libcrypto_shared",
     "protobuf:protobuf_lite",

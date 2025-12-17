@@ -36,7 +36,6 @@ ohos_source_set("processplugin_source") {
     defines = [ "HAVE_HILOG" ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "hisysevent:libhisysevent",
       "protobuf:protobuf_lite",
     ]
@@ -55,7 +54,6 @@ ohos_shared_library("processplugin") {
   ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

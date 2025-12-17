@@ -59,7 +59,6 @@ ohos_unittest("ftrace_plugin_ut") {
     "bounds_checking_function:libsec_shared",
     "c_utils:utils",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "hiview:libucollection_client",
     "protobuf:protobuf_lite",
   ]

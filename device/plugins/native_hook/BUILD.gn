@@ -79,8 +79,9 @@ ohos_source_set("native_hook_source") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
+
     external_deps += [ "faultloggerd:libasync_stack" ]
+
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -134,10 +135,9 @@ ohos_shared_library("native_hook") {
   deps = [ ":native_hook_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [
-      "hilog:libhilog_base",
-    ]
-    external_deps += [ "faultloggerd:libasync_stack" ]
+
+    external_deps = [ "faultloggerd:libasync_stack" ]
+
   }
   version_script = "libnative_hook.map"
   install_enable = true
@@ -154,13 +154,12 @@ ohos_executable("nativetest_c") {
     if (use_musl && !is_asan) {
       defines += [ "HOOK_ENABLE" ]
     }
-    external_deps = [ "hilog:libhilog_base" ]
   }
   cflags = [
     "-Wno-error=inline-asm",
     "-O3",
   ]
-  external_deps += [ "bounds_checking_function:libsec_shared" ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
   ldflags = [ "-rdynamic" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -173,7 +172,6 @@ ohos_executable("nativetest_cpp") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
 
   cflags = [
@@ -193,7 +191,6 @@ ohos_shared_library("nativetest_so") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
 
   cflags = [
@@ -212,14 +209,13 @@ ohos_executable("malloctest_cpp") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
 
   cflags = [
     "-Wno-error=inline-asm",
     "-O3",
   ]
-  external_deps += [
+  external_deps = [
     "bounds_checking_function:libsec_shared",
     "hisysevent:libhisysevent",
   ]
@@ -235,7 +231,6 @@ ohos_executable("perf_test_data") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
 
   cflags = [ "-Wno-error=inline-asm" ]
@@ -251,7 +246,6 @@ ohos_executable("statisticstest_cpp") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps = [ "hilog:libhilog_base" ]
   }
 
   cflags = [
@@ -259,7 +253,7 @@ ohos_executable("statisticstest_cpp") {
     "-O3",
   ]
   ldflags = [ "-rdynamic" ]
-  external_deps += [ "bounds_checking_function:libsec_shared" ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -280,7 +274,6 @@ ohos_executable("hook_restrace_test") {
     ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }

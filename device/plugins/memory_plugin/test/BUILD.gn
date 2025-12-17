@@ -49,7 +49,6 @@ ohos_unittest("memdataplugin_ut") {
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "hiview:libucollection_utility",
     "protobuf:protobuf_lite",
   ]
@@ -81,7 +80,6 @@ ohos_unittest("smaps_stats_ut") {
     "c_utils:utils",
     "drivers_interface_memorytracker:libmemorytracker_proxy_1.0",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "hiview:libucollection_utility",
     "protobuf:protobuf_lite",
   ]

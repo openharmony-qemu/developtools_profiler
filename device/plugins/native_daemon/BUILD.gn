@@ -191,7 +191,6 @@ ohos_executable("native_daemon_client") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
   }
   install_enable = false
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
@@ -229,7 +228,6 @@ ohos_shared_library("libnative_daemon_client") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-    external_deps += [ "hilog:libhilog_base" ]
   }
 
   innerapi_tags = [ "platformsdk" ]

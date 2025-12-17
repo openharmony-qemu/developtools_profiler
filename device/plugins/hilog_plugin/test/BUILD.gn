@@ -43,7 +43,6 @@ ohos_unittest("hilogplugin_ut") {
   external_deps = [
     "bounds_checking_function:libsec_shared",
     "googletest:gtest",
-    "hilog:libhilog_base",
     "protobuf:protobuf_lite",
   ]
   configs = [ ":module_private_config" ]
