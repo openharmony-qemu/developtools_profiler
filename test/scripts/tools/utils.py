@@ -19,6 +19,7 @@ import subprocess
 import re
 import time
 import json
+import stat
 
 OUTPUT_PATH = "testModule/output"
 PID_INDEX = 7
@@ -32,6 +33,41 @@ def run_and_get_output(input, text=True, encoding="utf-8", shell = False):
     print(f"input cmd: {input}")
     print(f"output: {output}")
     return output
+
+def task_template(extend=False):
+    if extend:
+        subprocess.check_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k",
+            text=True, encoding="utf-8")
+    else:
+        subprocess.check_output(
+            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k",
+            text=True, encoding="utf-8")
+
+def write_config_file(content):
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    mode = stat.S_IWUSR | stat.S_IRUSR
+    with os.fdopen(os.open(r".\..\inputfiles\nativehook\config.txt", flags, mode), 'w') as file:
+        file.write(content)
+    subprocess.check_output(r"hdc file send .\..\inputfiles\nativehook\config.txt /data/local/tmp/",
+                            text=True, encoding="utf-8")
+
+def write_str_file(file_path, large_string):
+    lines = large_string.split('\n')
+    with open(file_path, 'w') as file:
+        for line in lines:
+            file.write(line + '\n')
+
+def delete_old_files():
+    try:
+        subprocess.check_output(r"del .\..\inputfiles\nativehook\config.txt", text=True, encoding="utf-8")
+        subprocess.check_output(r"del .\..\outputfiles\test.htrace", text=True, encoding="utf-8")
+        subprocess.check_output(r"del .\..\inputfiles\layout.json", text=True, encoding="utf-8")
+        subprocess.check_output(r"del .\..\outputfiles\nativehook.db", text=True, encoding="utf-8")
+        subprocess.check_output("hdc shell rm /data/local/tmp/test.htrace", text=True, encoding="utf-8")
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        pass
 
 
 def get_path_by_attribute(tree, key, value):

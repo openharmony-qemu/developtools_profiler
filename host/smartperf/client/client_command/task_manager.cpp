@@ -50,6 +50,7 @@ namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
 thread_local OHOS::SmartPerf::ThreadLocal g_datas;
 constexpr int32_t SAVE_DATA_INTERVAL_MINUTE = 5;
+constexpr int32_t THE_MINUTE = 60;
 }
 
 namespace OHOS::SmartPerf {
@@ -257,13 +258,13 @@ void TaskManager::StartSaveFileThread()
     });
 }
 
-void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
+void TaskManager::SaveRegularly(int32_t dataIndex)
 {
     if (!recordData_) {
         return;
     }
 
-    if ((loopEnd - currentTimePoint_) >= std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE) &&
+    if (dataIndex > 0 && (dataIndex % (SAVE_DATA_INTERVAL_MINUTE * THE_MINUTE) == 0) &&
         !(SpProfilerFactory::editorFlag)) {
         std::unique_lock<std::mutex> lock(mtx_);
         if (savingFile_) {
@@ -279,7 +280,6 @@ void TaskManager::SaveRegularly(std::chrono::steady_clock::time_point& loopEnd)
         }
         LOGD("Start saving data automatically");
         scheduleSaveDataCond_.notify_all();
-        currentTimePoint_ = loopEnd;
     }
 }
 
@@ -299,10 +299,47 @@ void TaskManager::Start(bool record)
     });
 }
 
+void TaskManager::Pause()
+{
+    std::unique_lock<std::mutex> lock(pauseMutex_);
+    paused_ = true;
+    LOGD("TaskManager Pause");
+}
+
+void TaskManager::Resume()
+{
+    {
+        std::unique_lock<std::mutex> lock(pauseMutex_);
+        paused_ = false;
+        collectTimes_ = 0;
+    }
+    pauseCond_.notify_all();
+    LOGD("TaskManager Resume");
+}
+
+bool TaskManager::ThreadLock()
+{
+    std::unique_lock<std::mutex> lock(pauseMutex_);
+    pauseCond_.wait(lock, [this] {
+        return !paused_ || !running_;
+    });
+    if (!running_) {
+        return false;
+    }
+    return true;
+}
+
 void TaskManager::MainLoop()
 {
     while (running_) {
-        auto loopStart = std::chrono::steady_clock::now();
+        if (!ThreadLock()) {
+            break;
+        }
+        long long loopStart = SPUtils::GetCurTime();
+        if (dataIndex_ == 0 || collectTimes_ == 0) {
+            baseTime_ = loopStart;
+        }
+        collectTimes_++;
         bool recordData = recordData_.load();
         if (dataIndex_++ == collectCount_) {
             break;
@@ -331,14 +368,13 @@ void TaskManager::MainLoop()
             *nextTime_ = SPUtils::GetCurTime();
         }
         ProcessCurrentBatch(currDatas);
-        auto loopEnd = std::chrono::steady_clock::now();
-        SaveRegularly(loopEnd);
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(loopEnd - loopStart);
-        if (elapsed < std::chrono::seconds(1)) {
-            std::this_thread::sleep_for(std::chrono::seconds(1) - elapsed);
+        SaveRegularly(dataIndex_);
+        long long loopEnd = SPUtils::GetCurTime();
+        long long sleepTime = collectTimes_ * 1000 + baseTime_ - loopEnd;
+        if (sleepTime > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime));
         }
     }
-    LOGD("main loop exit");
     ProcessOnceTask(false);
     running_ = false;
     finishCond_.notify_all();
@@ -406,6 +442,7 @@ void TaskManager::Stop(bool pause)
 {
     isPause_ = pause;
     running_ = false;
+    Resume();
     if (mainLoop_.joinable()) {
         {
             std::lock_guard<std::mutex> lock(mtx_);
@@ -587,7 +624,7 @@ void TaskManager::SetRecordState(bool record)
         StartSaveFileThread();
     } else {
         LOGD("Turn off timing to save data");
-        auto time = currentTimePoint_ + std::chrono::minutes(SAVE_DATA_INTERVAL_MINUTE + 1);
+        auto time = SAVE_DATA_INTERVAL_MINUTE * THE_MINUTE;
         SaveRegularly(time);
         recordData_ = false;
 

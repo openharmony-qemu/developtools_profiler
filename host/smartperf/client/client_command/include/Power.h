@@ -34,6 +34,7 @@ private:
     Power &operator = (const Power &);
     const std::string currentNowPath = "/sys/class/power_supply/Battery/current_now";
     const std::string voltageNowPath = "/sys/class/power_supply/Battery/voltage_now";
+    const std::string batteryNumPath = "sys/class/power_supply/Battery/serial_count";
     bool rkFlag = false;
 };
 }

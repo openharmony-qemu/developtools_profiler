@@ -143,6 +143,7 @@ ohos_unittest("native_memory_profiler_sa_ut") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:libz",
+    "faultloggerd:libasync_stack",
   ]
 
   if (hiprofiler_use_libunwinder) {

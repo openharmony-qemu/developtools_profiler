@@ -19,6 +19,8 @@
 #include <iostream>
 #include <sstream>
 #include <regex>
+#include <fstream>
+#include <algorithm>
 #include <sys/wait.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -31,6 +33,7 @@
 
 namespace OHOS {
 namespace SmartPerf {
+const int MAX_CHAR_SIZE = 1024;
 std::vector<std::string> g_pidParams;
 StartUpDelay::StartUpDelay() {}
 StartUpDelay::~StartUpDelay() {}
@@ -122,9 +125,8 @@ bool StartUpDelay::KillSpProcess() const
 
 bool StartUpDelay::GetSpClear(bool isKillTestServer) const
 {
-    std::string cmd = "ps -ef | grep -v grep | grep SP_daemon";
     std::string curPid = std::to_string(getpid());
-    FILE *fd = popen(cmd.c_str(), "r");
+    FILE *fd = popen("ps -ef | grep -v grep | grep SP_daemon", "r");
     if (fd == nullptr) {
         return false;
     }
@@ -176,77 +178,106 @@ void StartUpDelay::ClearOldServer() const
         }
     }
 }
-std::string StartUpDelay::ExecuteCommand(const std::vector<const char*> &args) const
+
+bool StartUpDelay::ExecuteCommand(const std::string& pkgName, std::string& output) const
 {
-    std::string output = "";
+    std::string command = "ps -ef | grep -v grep | grep " + pkgName;
+    const std::vector<const char*> args = { "/bin/sh", "-c", command.c_str(), nullptr };
     int pipefd[2];
+    pid_t pid;
     if (pipe(pipefd) == -1) {
-        LOGE("startup_delay::Failed to create pipe: %s", strerror(errno));
-        return output;
+        LOGE("StartUpDelay::Failed to create pipe");
+        return false;
     }
-    pid_t pid = fork();
+    pid = fork();
     if (pid == -1) {
-        LOGE("startup_delay::Failed to fork: %s", strerror(errno));
-        close(pipefd[0]);
-        close(pipefd[1]);
-        return output;
+        LOGE("StartUpDelay::Failed to fork");
+        return false;
     }
     if (pid == 0) {
         close(pipefd[0]);
         dup2(pipefd[1], STDOUT_FILENO);
         close(pipefd[1]);
-        if (args.empty() || args[0] == nullptr) {
-            LOGE("startup_delay::Invalid commd");
-            return output;
+        execvp(args[0], const_cast<char *const*>(args.data()));
+        LOGE("StartUpDelay::Failed to execute ps ef");
+        _exit(1);
+    } else {
+        close(pipefd[1]);
+        char buffer[MAX_CHAR_SIZE];
+        ssize_t bytesRead;
+        while ((bytesRead = read(pipefd[0], buffer, sizeof(buffer))) > 0) {
+            output.append(buffer, bytesRead);
         }
-        execvp(args[0], const_cast<char* const*>(args.data()));
-        LOGE("startup_delay::Failed to execute pid: %s", strerror(errno));
-        _exit(EXIT_FAILURE);
+        close(pipefd[0]);
+        waitpid(pid, nullptr, 0);
     }
-    close(pipefd[1]);
-    char buf[1024];
-    ssize_t nread;
-    while ((nread = read(pipefd[0], buf, sizeof(buf) - 1)) > 0) {
-        if (nread == sizeof(buf) - 1) {
-            LOGE("startup_delay::Buffer overflow: %s", strerror(errno));
-            break;
-        }
-        buf[nread] = '\0';
-        output.append(buf);
-    }
-    if (nread == -1) {
-        LOGE("startup_delay::Failed to read from pipe: %s", strerror(errno));
-    }
-    close(pipefd[0]);
-    int status;
-    if (waitpid(pid, &status, 0) == -1) {
-        LOGE("startup_delay::Failed to wait for child process: %s", strerror(errno));
-        return output;
-    }
-    return output;
+    return true;
 }
 
-std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string* pids) const
+std::string StartUpDelay::GetAppInforByPs(const std::string& curPkgName) const
 {
-    std::vector<const char*> args = {"pidof", curPkgName.c_str()};
-    args.push_back(nullptr);
-    std::string resultProcId = ExecuteCommand(args);
-    LOGD("StartUpDelay::resultProcId(%s)", resultProcId.c_str());
-    if (!resultProcId.empty()) {
-        if (resultProcId.back() == '\n') {
-            resultProcId.pop_back();
-        }
-        g_pidParams.clear();
-        SPUtils::StrSplit(resultProcId, " ", g_pidParams);
-        pids == nullptr ? "" : *pids = resultProcId;
-        size_t endpos = resultProcId.find(" ");
-        if (endpos != std::string::npos) {
-            resultProcId = resultProcId.substr(0, endpos);
-        }
-        LOGD("startup_delay::output: (%s) (%s)", resultProcId.c_str(),
-            pids == nullptr ? resultProcId.c_str() : pids->c_str());
+    const std::string pkgName = SPUtils::EscapeShellArgs(curPkgName);
+    bool isInvalidPkgName = SPUtils::IsInvalidPkgName(pkgName);
+    if (!isInvalidPkgName) {
+        return std::to_string(ErrorSpCode::INVALID_PKG_NAME);
     }
-    return resultProcId;
+    std::string appProcessInfor;
+    if (!ExecuteCommand(pkgName, appProcessInfor)) {
+        return std::to_string(ErrorSpCode::FILE_OPEN_IS_NULL);
+    }
+    return appProcessInfor;
+}
+
+std::vector<std::vector<std::string>> StartUpDelay::GetAppProcInfor(const std::string& curPkgName)
+{
+    std::vector<std::vector<std::string>> resultAppProcInfor;
+    const size_t mainProcessPose = 1;
+    const std::string eachRowOfData = GetAppInforByPs(curPkgName);
+    if (eachRowOfData.empty()) {
+        return {{std::to_string(ErrorSpCode::DATA_IS_EMPTY), "Not data found for package"}};
+    }
+    std::istringstream iss(eachRowOfData);
+    std::string line;
+    while (std::getline(iss, line)) {
+        if (line.find("root") != std::string::npos && line.find("SP_daemon") != std::string::npos) {
+            std::istringstream issLine(line);
+            std::string word;
+            issLine >> word;
+            issLine >> word;
+            mainProcessId_ = word;
+            continue;
+        }
+        std::vector<std::string> eachRowOfProceInfor;
+        SPUtils::StrSplit(line, " ", eachRowOfProceInfor);
+        for (const auto& procName : eachRowOfProceInfor) {
+            if (procName == curPkgName) {
+                mainProcessId_ = eachRowOfProceInfor[mainProcessPose];
+                break;
+            }
+        }
+        resultAppProcInfor.push_back(eachRowOfProceInfor);
+    }
+    return resultAppProcInfor;
+}
+
+std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string* pids)
+{
+    std::vector<std::vector<std::string>> resultProceInfor = GetAppProcInfor(curPkgName);
+    std::string resultChildProcId;
+    g_pidParams.clear();
+    const size_t indexOne = 1;
+    for (size_t i = 0; i < resultProceInfor.size(); ++i) {
+        g_pidParams.push_back(resultProceInfor[i][indexOne]);
+        resultChildProcId += (" " + resultProceInfor[i][indexOne]);
+    }
+    if (!resultChildProcId.empty()) {
+        const size_t firstNonSpace = resultChildProcId.find_first_not_of(" ");
+        resultChildProcId = resultChildProcId.substr(firstNonSpace);
+    }
+    pids == nullptr ? "" : *pids = resultChildProcId;
+    LOGD("GetPidByPkg: mainProcessId_ = (%s), pids = (%s)", mainProcessId_.c_str(),
+        pids == nullptr ? resultChildProcId.c_str() : pids->c_str());
+    return mainProcessId_;
 }
 
 std::vector<std::string> StartUpDelay::GetPidParams() const

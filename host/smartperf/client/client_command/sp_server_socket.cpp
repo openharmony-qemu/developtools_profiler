@@ -21,7 +21,9 @@
 #include "include/sp_log.h"
 namespace OHOS {
 namespace SmartPerf {
-SpServerSocket::SpServerSocket() : sockPort(0) {}
+SpServerSocket::SpServerSocket() : local{0}, client{}, sockPort(0)
+{
+}
 
 SpServerSocket::~SpServerSocket()
 {

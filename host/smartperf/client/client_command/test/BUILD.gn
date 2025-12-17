@@ -46,6 +46,7 @@ ohos_unittest("sp_daemon_ut") {
     "../effective.cpp",
     "../heartbeat.cpp",
     "../hiperf.cpp",
+    "../jitters.cpp",
     "../lock_frequency.cpp",
     "../navigation.cpp",
     "../parse_click_complete_trace.cpp",

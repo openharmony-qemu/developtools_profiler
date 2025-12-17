@@ -141,6 +141,17 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         context.SendFileDescriptor(smbFd);
         context.SendFileDescriptor(eventFd);
     }
+
+    if (clientConfig_.asyncStackEnable) {
+        if (hookMgr_->uniqueTableBlock_ != nullptr) {
+            int fd = hookMgr_->uniqueTableBlock_->GetfileDescriptor();
+            context.SendFileDescriptor(fd);
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc uniqueTableBlock_ nullptr");
+            return false;
+        }
+    }
+
     hookMgr_->ResetStartupParam();
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
     pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();

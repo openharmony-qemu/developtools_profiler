@@ -57,6 +57,21 @@ void FpStackBuilder::FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr h
     }
 }
 
+void FpStackBuilder::FillIps(std::vector<CallFrame>& callFrames,
+    const std::vector<uintptr_t>& syncPcs, const std::vector<uintptr_t>& asyncPcs)
+{
+    auto fillIpsFromPcVector = [&](const std::vector<uintptr_t>& pcs) {
+        for (auto pc : pcs) {
+            if (pc == 0) {
+                break;
+            }
+            callFrames.emplace_back(StripPac(pc, 0));
+        }
+    };
+    fillIpsFromPcVector(syncPcs);
+    fillIpsFromPcVector(asyncPcs);
+}
+
 void FpStackBuilder::FillJsFrame(CallFrame& jsCallFrame)
 {
     DfxSymbol symbol;
@@ -111,6 +126,44 @@ void FpStackBuilder::FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecor
         } else {
             runtimeInstance_->GetSymbolName(rawData->stackContext->pid, rawData->stackContext->tid,
                                             callFrames, 0, true, SymbolType::JS_SYMBOL);
+        }
+    }
+}
+
+void FpStackBuilder::FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord)
+{
+    if (callFrames.size() <= FILTER_STACK_DEPTH) {
+        return;
+    }
+
+    if (hookConfig_->statistics_interval() > 0) {
+        uint16_t type = hookRecord->GetType();
+        if (type == FREE_MSG || type == MUNMAP_MSG || type == MEMORY_UNUSING_MSG) {
+            return;
+        }
+    }
+    auto rawData = hookRecord->GetRawStack();
+    std::lock_guard<std::mutex> guard(mtx_);
+    pid_t pid = rawData->stackContext->pid;
+    pid_t tid = rawData->stackContext->tid;
+
+    size_t startIdx = FILTER_STACK_DEPTH;
+    if (hookConfig_->fp_unwind()) {
+        startIdx = 0;
+    }
+    for (size_t i = startIdx; i < callFrames.size(); ++i) {
+        CallFrame &cf = callFrames[i];
+        if (cf.callFrameId_ != 0 || (!cf.symbolName_.empty() && !cf.filePath_.empty())) {
+            continue;
+        }
+
+        bool res = runtimeInstance_->SymbolizeFrame(cf, pid, tid);
+        if (!res) {
+            continue;
+        }
+
+        if (cf.isJsFrame_) {
+            FillJsFrame(cf);
         }
     }
 }
@@ -216,7 +269,10 @@ BuildStackDirector::BuildStackDirector(NativeHookConfig* config, std::shared_ptr
     }
 }
 
-std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(HookRecordPtr hookRecord)
+std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
+    HookRecordPtr hookRecord,
+    const std::vector<uintptr_t>& syncPcs,
+    const std::vector<uintptr_t>& asyncPcs)
 {
     callFrames_.clear();
     if (builder_ == nullptr || hookConfig_ == nullptr) {
@@ -228,15 +284,26 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(HookRecordPtr ho
     if (!IsRecordUnwindable(hookRecord)) {
         return callFrames_;
     }
-    if (!builder_->IsRecordInfoValid(hookRecord)) {
-        builder_->ReplaceErrStack(callFrames_);
-        return callFrames_;
-    }
     builder_->PrepareUnwind(hookRecord);
-    builder_->FillIps(callFrames_, hookRecord);
-    if (hookConfig_->js_stack_report()) {
-        builder_->FillJsSymbols(callFrames_, hookRecord);
+    if (!syncPcs.empty() || !asyncPcs.empty()) {
+        builder_->FillIps(callFrames_, syncPcs, asyncPcs);
+
+        if (hookConfig_->js_stack_report()) {
+            builder_->FillAsyncJsSymbols(callFrames_, hookRecord);
+        }
+    } else {
+        if (!builder_->IsRecordInfoValid(hookRecord)) {
+            builder_->ReplaceErrStack(callFrames_);
+            return callFrames_;
+        }
+
+        builder_->FillIps(callFrames_, hookRecord);
+
+        if (hookConfig_->js_stack_report()) {
+            builder_->FillJsSymbols(callFrames_, hookRecord);
+        }
     }
+
     if (!hookConfig_->offline_symbolization()) {
         builder_->FillNativeSymbols(callFrames_, hookRecord);
     }

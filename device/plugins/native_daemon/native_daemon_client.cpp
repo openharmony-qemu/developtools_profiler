@@ -86,6 +86,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("default: recordAccurately\n");
             printf("    --startupMode                       -sm : startupMode, default: false\n");
             printf("    --memtraceEnable                    -me : memtraceEnable, default: false\n");
+            printf("    --asyncStackEnable                  -ae : asyncStackEnable, default: false\n");
             printf("    --offlineSymbolization              -os : offlineSymbolization, default: false\n");
             printf("    --callframeCompress                 -cc : callframeCompress, default: false\n");
             printf("    --statisticsInterval                -si : statisticsInterval\n");
@@ -148,6 +149,8 @@ int32_t main(int32_t argc, char* argv[])
             config->startupMode_ = true;
         } else if ((arg == "--memtraceEnable") || (arg == "-me")) {
             config->memtraceEnable_ = true;
+        } else if ((arg == "--asyncStackEnable") || (arg == "-ae")) {
+            config->asyncStackEnable_ = true;
         } else if ((arg == "--onlineSymbolization") || (arg == "-os")) {
             config->offlineSymbolization_ = false;
         } else if ((arg == "--callframeCompress") || (arg == "-cc")) {

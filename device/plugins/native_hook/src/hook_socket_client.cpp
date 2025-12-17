@@ -144,6 +144,12 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
             smbfd, eventfd, config_->isBlocked, config_->isSaMode);
         stackWriterList_.push_back(stackWriter);
     }
+    if (config_->asyncStackEnable) {
+        int tableFd = context.ReceiveFileDiscriptor();
+        std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>("unique_stack_table",
+            UNIQUE_STACK_TABLE_SIZE, tableFd, -1, false, false);
+        stackWriterList_.push_back(stackWriter);
+    }
     nmdType_ = config_->nmdType;
     g_disableHook = false;
     if (sharedMemCount_ != nullptr) {

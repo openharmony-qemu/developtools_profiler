@@ -69,15 +69,6 @@ STATISTICS_INTERVAL = 10
 MATCH_INTERVAL = 10
 
 
-def task_template(extend=False):
-    if extend:
-        run_and_get_output(
-            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 50 -s -k")
-    else:
-        run_and_get_output(
-            r"hdc shell hiprofiler_cmd -c /data/local/tmp/config.txt -o /data/local/tmp/test.htrace -t 30 -s -k")
-
-
 def task_multiple_template(extend=False):
     if extend:
         run_and_get_output(
@@ -350,12 +341,9 @@ def check_nativehook_result(statistics, startup, offline, sample_interval, dwarf
     if target_so_name != "":
         modified_content = modified_content.replace('target_so_name: ""', 'target_so_name: "' + target_so_name + '"')
 
-    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
-    mode = stat.S_IWUSR | stat.S_IRUSR
-    with os.fdopen(os.open(r".\..\inputfiles\nativehook\config.txt", flags, mode), 'w') as file:
-        file.write(modified_content)
+    write_config_file(modified_content)
 
-    run_and_get_output(r"hdc file send .\..\inputfiles\nativehook\config.txt /data/local/tmp/", text=True, encoding="utf-8")
+(r"hdc file send .\..\inputfiles\nativehook\config.txt /data/local/tmp/", text=True, encoding="utf-8")    run_and_get_output
 
     task_thread = None
     if (dwarf or startup):

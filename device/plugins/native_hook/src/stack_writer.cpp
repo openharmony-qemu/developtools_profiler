@@ -15,12 +15,15 @@
 
 #include <cinttypes>
 #include <unistd.h>
+#include "async_stack.h"
 #include "logging.h"
 #include "share_memory_allocator.h"
 #include "stack_writer.h"
+#include "unique_stack_table.h"
 namespace {
     const int WAIT_TIMEOUT_SA = 3000000;
     const int FLUSH_FLAG = 20;
+    const uint32_t UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
 }
 StackWriter::StackWriter(std::string name,
                          uint32_t size,
@@ -30,7 +33,19 @@ StackWriter::StackWriter(std::string name,
                          bool isSaMode)
     : pluginName_(name), blocked_(blocked)
 {
-    shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
+    if (name.find("unique_stack_table") != std::string::npos) {
+        shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name,
+            UNIQUE_STACK_TABLE_SIZE, smbFd);
+        void* memoryPoint = shareMemoryBlock_->GetMMapBase();
+        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        DfxInitProfilerAsyncStack(memoryPoint, UNIQUE_STACK_TABLE_SIZE);
+        eventNotifier_ = nullptr;
+        lastFlushTime_ = std::chrono::steady_clock::now();
+        return;
+    } else {
+        shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
+    }
+
     if (isSaMode && shareMemoryBlock_ != nullptr) {
         shareMemoryBlock_->SetWaitTime(WAIT_TIMEOUT_SA);
     }
@@ -40,9 +55,16 @@ StackWriter::StackWriter(std::string name,
 
 StackWriter::~StackWriter()
 {
-    eventNotifier_ = nullptr;
-    ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
-    shareMemoryBlock_ = nullptr;
+    if (pluginName_ == "unique_stack_table") {
+        ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
+        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        table->SwitchExternalBuffer(nullptr, 0);
+        shareMemoryBlock_ = nullptr;
+    } else {
+        eventNotifier_ = nullptr;
+        ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
+        shareMemoryBlock_ = nullptr;
+    }
 }
 
 void StackWriter::Report() const
@@ -99,6 +121,9 @@ bool StackWriter::PrepareFlush()
 
 bool StackWriter::Flush()
 {
+    if (eventNotifier_ == nullptr) {
+        return false;
+    }
     ++flushCount_;
     eventNotifier_->Post(flushCount_.load());
     lastFlushTime_ = std::chrono::steady_clock::now();

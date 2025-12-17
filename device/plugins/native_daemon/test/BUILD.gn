@@ -144,6 +144,7 @@ ohos_unittest("native_daemon_ut") {
     "safwk:system_ability_fwk",
     "samgr:samgr_proxy",
     "zlib:libz",
+    "faultloggerd:libasync_stack",
   ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
   if (current_toolchain != host_toolchain) {

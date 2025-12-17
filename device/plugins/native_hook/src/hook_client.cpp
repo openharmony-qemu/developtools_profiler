@@ -43,6 +43,9 @@
 #include "sampling.h"
 #include "hitrace/trace.h"
 #include "address_handler.h"
+#ifdef HAVE_HILOG
+#include "async_stack.h"
+#endif
 
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::NativeDaemon;
@@ -101,6 +104,7 @@ static bool g_isPidChanged = false;
 std::vector<std::pair<uint64_t, uint64_t>> g_filterStaLibRange;
 std::atomic<Range> targetedRange;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
+constexpr uint64_t PROFILER_TYPE = 1ULL << 1;
 
 const MallocDispatchType* GetDispatch()
 {
@@ -574,6 +578,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
@@ -581,11 +586,19 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        if (fpStackDepth == 0) {
-            return ret;
+        if (g_ClientConfig.asyncStackEnable) {
+            if (g_ClientConfig.maxStackDepth == 0) {
+                return ret;
+            }
+            asyncData.asyncStackId = DfxGetSubmitterStackId();
+            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+        } else {
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+                return ret;
+            }
+            rawdata.jsChainId = getJsChainId();
         }
-        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);
@@ -602,12 +615,22 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -670,6 +693,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
@@ -677,11 +701,19 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        if (fpStackDepth == 0) {
-            return ret;
+        if (g_ClientConfig.asyncStackEnable) {
+            if (g_ClientConfig.maxStackDepth == 0) {
+                return ret;
+            }
+            asyncData.asyncStackId = DfxGetSubmitterStackId();
+            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+        } else {
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+                return ret;
+            }
+            rawdata.jsChainId = getJsChainId();
         }
-        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);
@@ -699,12 +731,22 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -772,6 +814,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         return pRet;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
@@ -779,11 +822,19 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        if (fpStackDepth == 0) {
-            return pRet;
+        if (g_ClientConfig.asyncStackEnable) {
+            if (g_ClientConfig.maxStackDepth == 0) {
+                return pRet;
+            }
+            asyncData.asyncStackId = DfxGetSubmitterStackId();
+            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+        } else {
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            if (fpStackDepth == 0) {
+                return pRet;
+            }
+            rawdata.jsChainId = getJsChainId();
         }
-        rawdata.jsChainId = getJsChainId();
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);
@@ -801,12 +852,22 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
     g_mallocTimes++;
 #ifdef PERFORMANCE_DEBUG
     struct timespec end = {};
@@ -1026,6 +1087,7 @@ void hook_free(void (*free_func)(void*), void* p)
         return;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
@@ -1033,11 +1095,19 @@ void hook_free(void (*free_func)(void*), void* p)
     if (g_ClientConfig.freeStackData) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return;
+            if (g_ClientConfig.asyncStackEnable) {
+                if (g_ClientConfig.maxStackDepth == 0) {
+                    return;
+                }
+                asyncData.asyncStackId = DfxGetSubmitterStackId();
+                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+            } else {
+                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+                if (fpStackDepth == 0) {
+                    return;
+                }
+                rawdata.jsChainId = getJsChainId();
             }
-            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             stackSize = GetStackSize(stackPtr, rawdata);
@@ -1050,12 +1120,22 @@ void hook_free(void (*free_func)(void*), void* p)
     rawdata.addr = p;
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1159,6 +1239,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
         return ret;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
@@ -1166,8 +1247,16 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
 
     if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-        fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-        rawdata.jsChainId = getJsChainId();
+        if (g_ClientConfig.asyncStackEnable) {
+            if (g_ClientConfig.maxStackDepth == 0) {
+                return ret;
+            }
+            asyncData.asyncStackId = DfxGetSubmitterStackId();
+            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+        } else {
+            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+            rawdata.jsChainId = getJsChainId();
+        }
 #endif
     } else {
         stackSize = GetStackSize(stackPtr, rawdata);
@@ -1206,14 +1295,23 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     }
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        if (fpStackDepth == 0) {
+        if (!g_ClientConfig.asyncStackEnable && fpStackDepth == 0) {
             return ret;
         }
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1264,17 +1362,26 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
         }
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int fpStackDepth = 0;
     rawdata.ts = unmapTime;
     if (g_ClientConfig.munmapStackData) {
         if (g_ClientConfig.fpunwind && g_ClientConfig.statisticsInterval == 0) {
 #ifdef __aarch64__
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return ret;
+            if (g_ClientConfig.asyncStackEnable) {
+                if (g_ClientConfig.maxStackDepth == 0) {
+                    return ret;
+                }
+                asyncData.asyncStackId = DfxGetSubmitterStackId();
+                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+            } else {
+                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+                if (fpStackDepth == 0) {
+                    return ret;
+                }
+                rawdata.jsChainId = getJsChainId();
             }
-            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             stackSize = GetStackSize(stackPtr, rawdata);
@@ -1288,11 +1395,20 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     rawdata.addr = addr;
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1375,6 +1491,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     }
     int stackSize = 0;
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     int fpStackDepth = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
@@ -1382,11 +1499,19 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (isUsing) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return;
+            if (g_ClientConfig.asyncStackEnable) {
+                if (g_ClientConfig.maxStackDepth == 0) {
+                    return;
+                }
+                asyncData.asyncStackId = DfxGetSubmitterStackId();
+                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+            } else {
+                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+                if (fpStackDepth == 0) {
+                    return;
+                }
+                rawdata.jsChainId = getJsChainId();
             }
-            rawdata.jsChainId = getJsChainId();
 #endif
         } else {
             stackSize = GetStackSize(stackPtr, rawdata);
@@ -1400,11 +1525,20 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     rawdata.tagId = GetTagId(holder, tag);
     int realSize = 0;
     if (g_ClientConfig.fpunwind) {
-        realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        if (g_ClientConfig.asyncStackEnable) {
+            realSize = sizeof(AsyncStackData);
+        } else {
+            realSize = sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
+        }
     } else {
         realSize = sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize);
+    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1473,16 +1607,26 @@ bool CheckRestraceConditions(uint32_t combineVal, size_t size)
            (combineVal & RES_FD_MASK) || (combineVal & RES_THREAD_MASK);
 }
 
-int CollectStackInfo(bool isUsing, StackRawData& rawdata, uintptr_t& stackPtr, int& fpStackDepth)
+int CollectStackInfo(bool isUsing, StackRawData& rawdata, AsyncStackData& asyncData, uintptr_t& stackPtr,
+    int& fpStackDepth)
 {
     int stackSize = 0;
 
     if (isUsing) {
         if (g_ClientConfig.fpunwind) {
 #ifdef __aarch64__
-            fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
-            if (fpStackDepth == 0) {
-                return -1;
+            if (g_ClientConfig.asyncStackEnable) {
+                if (g_ClientConfig.maxStackDepth == 0) {
+                    return -1;
+                }
+                asyncData.asyncStackId = DfxGetSubmitterStackId();
+                asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+            } else {
+                fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
+                if (fpStackDepth == 0) {
+                    return -1;
+                }
+                rawdata.jsChainId = getJsChainId();
             }
 #endif
         } else {
@@ -1495,10 +1639,12 @@ int CollectStackInfo(bool isUsing, StackRawData& rawdata, uintptr_t& stackPtr, i
 int CalculateRealSize(int fpStackDepth, const StackRawData& rawdata)
 {
     if (g_ClientConfig.fpunwind) {
+        if (g_ClientConfig.asyncStackEnable) {
+            return sizeof(AsyncStackData);
+        }
         return sizeof(BaseStackRawData) + (fpStackDepth * sizeof(uint64_t));
-    } else {
-        return sizeof(BaseStackRawData) + sizeof(rawdata.regs);
     }
+    return sizeof(BaseStackRawData) + sizeof(rawdata.regs);
 }
 
 size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targetFd)
@@ -1576,6 +1722,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
         return;
     }
     StackRawData rawdata = {{{{0}}}};
+    AsyncStackData asyncData {{{{0}}}};
     uintptr_t stackPtr = 0;
     clock_gettime(g_ClientConfig.clockId, &rawdata.ts);
     unsigned long long combineVal = mask & g_ClientConfig.traceMask;
@@ -1592,7 +1739,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
         }
     }
     int fpStackDepth = 0;
-    int stackSize = CollectStackInfo(isUsing, rawdata, stackPtr, fpStackDepth);
+    int stackSize = CollectStackInfo(isUsing, rawdata, asyncData, stackPtr, fpStackDepth);
     if (stackSize == -1) {
         return;
     }
@@ -1603,8 +1750,14 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     rawdata.addr = addr;
     rawdata.tagId = GetTagId(holder, tag, mask);
     int realSize = CalculateRealSize(fpStackDepth, rawdata);
-    holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
-                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (g_ClientConfig.fpunwind && g_ClientConfig.asyncStackEnable) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        holder->SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        holder->SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void *>(stackPtr), stackSize,
+                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
 #ifdef PERFORMANCE_DEBUG
     g_mallocTimes++;
     struct timespec end = {};
@@ -1870,7 +2023,7 @@ static bool IsPidChanged(void)
 
 bool ohos_malloc_hook_send_hook_misc_data(uint64_t id, const char* stackPtr, size_t stackSize, uint32_t type)
 {
-    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA)) {
+    if (type == static_cast<uint32_t>(MISC_TYPE::JS_STACK_DATA) && !g_ClientConfig.asyncStackEnable) {
         BaseStackRawData rawdata = {};
         rawdata.jsChainId = id;
         rawdata.type = JS_STACK_MSG;

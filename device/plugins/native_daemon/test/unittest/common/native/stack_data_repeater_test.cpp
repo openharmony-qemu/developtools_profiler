@@ -35,6 +35,19 @@ protected:
         stackDataRepeater->Close();
     }
 
+    std::shared_ptr<HookRecord> CreateHookRecord(uint32_t stackSize)
+    {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MALLOC_MSG;
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0xED);
+        rawStack->stackSize = stackSize;
+        rawStack->fpDepth = 10; // 10 : fp depth
+        rawStack->reportFlag = true;
+        rawStack->reduceStackFlag = true;
+        return std::make_shared<HookRecord>(rawStack);
+    }
+
     size_t maxSize;
     StackDataRepeaterPtr stackDataRepeater;
 };
@@ -260,4 +273,118 @@ HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest016, TestSize.Level1)
     HookRecordPtr batchRawStack[CACHE_ARRAY_SIZE];
     ASSERT_NE(stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, 1, batchRawStack, 1, isTimeOut), nullptr);
     ASSERT_FALSE(isTimeOut);
+}
+
+/*
+@tc.name: StackDataRepeaterTest017
+@tc.desc: check the correctness of the TakeRawData method.
+@tc.type: FUNC
+*/
+HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest017, TestSize.Level1)
+{
+    auto rawStack = std::make_shared<RawStack>();
+    auto baseStack = std::make_shared<BaseStackRawData>();
+    rawStack->stackContext = baseStack.get();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0xED);
+    rawStack->stackSize = 1024; // 1024 : stack size
+    rawStack->fpDepth = 10; // 10 : fp depth
+    rawStack->reportFlag = true;
+    rawStack->reduceStackFlag = true;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    stackDataRepeater->PutRawStack(hookRecord, true);
+
+    bool isTimeOut = false;
+    HookRecordPtr batchRawStack[CACHE_ARRAY_SIZE];
+    ASSERT_NE(stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, 1, batchRawStack, 1, isTimeOut), nullptr);
+    ASSERT_NE(batchRawStack[0], nullptr);
+    EXPECT_EQ(batchRawStack[0]->GetRawStack()->stackContext->type, MALLOC_MSG);
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(batchRawStack[0]->GetRawStack()->stackContext->addr), 0xED);
+    EXPECT_EQ(batchRawStack[0]->GetRawStack()->stackSize, 1024);
+    EXPECT_EQ(batchRawStack[0]->GetRawStack()->fpDepth, 10);
+    EXPECT_EQ(batchRawStack[0]->GetRawStack()->reportFlag, true);
+    EXPECT_EQ(batchRawStack[0]->GetRawStack()->reduceStackFlag, true);
+}
+
+/*
+@tc.name: StackDataRepeaterTest018
+@tc.desc: check the correctness int one thread.
+@tc.type: FUNC
+*/
+HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest018, TestSize.Level1)
+{
+    std::thread putThread([this]() {
+        std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> rawDataArray;
+        for (uint32_t i = 0; i < CACHE_ARRAY_SIZE; i++) {
+            rawDataArray[i] = CreateHookRecord(1024 + i);
+        }
+        ASSERT_TRUE(stackDataRepeater->PutRawStackArray(rawDataArray, CACHE_ARRAY_SIZE));
+    });
+
+    std::thread takeThread([this]() {
+        bool isTimeOut = false;
+        HookRecordPtr batchRawStack[CACHE_ARRAY_SIZE] = {nullptr};
+        ASSERT_NE(stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, CACHE_ARRAY_SIZE, batchRawStack, 1, isTimeOut),
+                  nullptr);
+        ASSERT_FALSE(isTimeOut);
+        for (size_t i = 0; i < CACHE_ARRAY_SIZE; i++) {
+            EXPECT_TRUE(batchRawStack[i]->IsValid());
+            EXPECT_EQ(batchRawStack[i]->GetRawStack()->stackContext->type, MALLOC_MSG);
+            EXPECT_EQ(reinterpret_cast<uintptr_t>(batchRawStack[i]->GetRawStack()->stackContext->addr), 0xED);
+            EXPECT_EQ(batchRawStack[i]->GetRawStack()->stackSize, 1024 + i);
+            EXPECT_EQ(batchRawStack[i]->GetRawStack()->fpDepth, 10);
+            EXPECT_EQ(batchRawStack[i]->GetRawStack()->reportFlag, true);
+            EXPECT_EQ(batchRawStack[i]->GetRawStack()->reduceStackFlag, true);
+            delete batchRawStack[i]->GetRawStack()->stackContext;
+        }
+    });
+    takeThread.join();
+    putThread.join();
+}
+
+/*
+@tc.name: StackDataRepeaterTest019
+@tc.desc: test put and take stack data int three threads
+@tc.type: FUNC
+*/
+
+HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest019, TestSize.Level1)
+{
+    std::vector<std::thread> putThreads;
+    for (size_t i = 0; i < 3; i++) { // 3: thread number
+        putThreads.emplace_back([this]() {
+            std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> rawDataArray;
+            for (uint32_t i = 0; i < CACHE_ARRAY_SIZE; i++) {
+                rawDataArray[i] = CreateHookRecord(1024 + i);
+            }
+            ASSERT_TRUE(stackDataRepeater->PutRawStackArray(rawDataArray, CACHE_ARRAY_SIZE));
+        });
+    }
+    std::vector<std::thread> takeThreads;
+    for (size_t i = 0; i < 3; i++) { // 3: thread number
+        takeThreads.emplace_back([this]() {
+            bool isTimeOut = false;
+            HookRecordPtr batchRawStack[CACHE_ARRAY_SIZE] = {nullptr};
+            ASSERT_NE(
+                stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, CACHE_ARRAY_SIZE, batchRawStack, 1, isTimeOut),
+                nullptr);
+            ASSERT_FALSE(isTimeOut);
+            for (size_t i = 0; i < CACHE_ARRAY_SIZE; i++) {
+                EXPECT_TRUE(batchRawStack[i]->IsValid());
+                EXPECT_EQ(batchRawStack[i]->GetRawStack()->stackContext->type, MALLOC_MSG);
+                EXPECT_EQ(reinterpret_cast<uintptr_t>(batchRawStack[i]->GetRawStack()->stackContext->addr), 0xED);
+                EXPECT_EQ(batchRawStack[i]->GetRawStack()->stackSize, 1024 + i);
+                EXPECT_EQ(batchRawStack[i]->GetRawStack()->fpDepth, 10);
+                EXPECT_EQ(batchRawStack[i]->GetRawStack()->reportFlag, true);
+                EXPECT_EQ(batchRawStack[i]->GetRawStack()->reduceStackFlag, true);
+                delete batchRawStack[i]->GetRawStack()->stackContext;
+            }
+        });
+    }
+    for (auto& thread : putThreads) {
+        thread.join();
+    }
+    for (auto& thread : takeThreads) {
+        thread.join();
+    }
 }

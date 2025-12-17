@@ -264,7 +264,11 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     }
 
     if (hookConfig_.fp_unwind()) {
-        rawStack->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
+        if (hookConfig_.async_stack_enable()) {
+            rawStack->fpDepth = 0;
+        } else {
+            rawStack->fpDepth = (size - sizeof(BaseStackRawData)) / sizeof(uint64_t);
+        }
     } else {
         size_t rawRealSize = sizeof(BaseStackRawData) + MAX_REG_SIZE * sizeof(char);
         rawStack->stackSize = size - rawRealSize;

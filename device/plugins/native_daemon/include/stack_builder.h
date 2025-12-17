@@ -29,7 +29,10 @@ public:
     virtual ~StackBuilder() = default;
     virtual void PrepareUnwind(HookRecordPtr hookRecord) {};
     virtual void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
+    virtual void FillIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+        const std::vector<uintptr_t>& asyncPcs) = 0;
     virtual void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
+    virtual void FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
     virtual void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) = 0;
     void FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
     virtual bool IsRecordInfoValid(HookRecordPtr hookRecord) = 0;
@@ -47,7 +50,10 @@ public:
     FpStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
     void PrepareUnwind(HookRecordPtr hookRecord) override;
     void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+        const std::vector<uintptr_t>& asyncPcs) override;
     void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void FillJsFrame(CallFrame& jsCallFrame);
@@ -58,7 +64,16 @@ public:
     DwarfStackBuilder() = delete;
     DwarfStackBuilder(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
     void FillIps(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+        const std::vector<uintptr_t>& asyncPcs) override
+    {
+        return;
+    }
     void FillJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
+    void FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override
+    {
+        return;
+    }
     void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void ReplaceErrStack(std::vector<CallFrame>& callFrames) override;
@@ -72,7 +87,8 @@ class BuildStackDirector {
 public:
     BuildStackDirector() = delete;
     BuildStackDirector(NativeHookConfig* config, std::shared_ptr<VirtualRuntime> runtime, std::mutex& mtx);
-    std::vector<CallFrame>& ConstructCallFrames(HookRecordPtr hookRecord);
+    std::vector<CallFrame>& ConstructCallFrames(HookRecordPtr hookRecord,
+        const std::vector<uintptr_t>& syncPcs = {}, const std::vector<uintptr_t>& asyncPcs = {});
     void SetBuilder(std::shared_ptr<StackBuilder> builder)
     {
         builder_ = builder;

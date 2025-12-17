@@ -1009,5 +1009,31 @@ std::string SPUtils::GetProductName()
 {
     return PRODUCT_NAME;
 }
+
+std::string SPUtils::EscapeShellArgs(const std::string& args)
+{
+    std::string escaped;
+    const size_t expansion = 2;
+    escaped.reserve(args.size() * expansion);
+    const char* specicalChars = R"(\\"$`;&|><(){}[]^~*?#!%@)";
+    for (char c : args) {
+        if (std::strchr(specicalChars, c)) {
+            escaped += '\\';
+        }
+        escaped += c;
+    }
+    LOGD("SPUtils::EscapeShellArgs escaped = (%s)", escaped.c_str());
+    return escaped;
+}
+
+bool SPUtils::IsInvalidPkgName(const std::string& pkgName)
+{
+    if (pkgName.empty() || !isalpha(pkgName[0])) {
+        return false;
+    }
+    return std::all_of(pkgName.begin(), pkgName.end(), [](char c) {
+        return isalnum(c) || c == '.' || c == '_';
+    });
+}
 }
 }

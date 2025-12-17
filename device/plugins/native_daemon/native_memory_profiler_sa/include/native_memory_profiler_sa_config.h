@@ -51,6 +51,7 @@ public:
     bool recordAccurately_{true};
     bool startupMode_{false};
     bool memtraceEnable_{false};
+    bool asyncStackEnable_{false};
     uint64_t traceMask_{0};
     std::vector<std::vector<uint64_t>> gpuRange_ {GPU_TYPE_SIZE, std::vector<uint64_t>(GPU_RANGE_SIZE * 2, 0)};
     //2: double

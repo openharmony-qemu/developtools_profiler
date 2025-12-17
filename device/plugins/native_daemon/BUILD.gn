@@ -142,7 +142,7 @@ ohos_executable("native_daemon") {
     "samgr:samgr_proxy",
     "zlib:libz",
   ]
-
+  external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
 
   if (hiprofiler_use_libunwinder) {

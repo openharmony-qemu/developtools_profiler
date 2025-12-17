@@ -21,6 +21,8 @@
 #include "sp_profiler_factory.h"
 #include "common.h"
 #include <fstream>
+#include <atomic>
+#include <condition_variable>
 
 namespace OHOS::SmartPerf {
 class TaskManager;
@@ -44,6 +46,8 @@ public:
     void SetFilePath(const std::string& fileName, bool removeCurrentFile = true);
     void Start(bool record = true);
     void Stop(bool pause = false);
+    void Pause();
+    void Resume();
     void CollectData(std::map<uint32_t, std::map<std::string, std::string>>& datas);
     void WriteToCSV();
     void Wait();
@@ -59,6 +63,7 @@ public:
     void InitDataCsv();
     ArgumentParser& GetArgumentParser();
     void SetFileTitleFlag();
+    bool ThreadLock();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
@@ -66,7 +71,7 @@ private:
     std::string MapToString(std::map<std::string, std::string>& myMap);
     void StartSaveFileThread();
     void CollectThreadsData();
-    void SaveRegularly(std::chrono::steady_clock::time_point& loopEnd);
+    void SaveRegularly(int32_t dataIndex);
     void ProcessCurrentBatch(std::map<std::string, std::string>& data);
     void ProcessOnceTask(bool start);
     void MainLoop();
@@ -107,6 +112,11 @@ private:
     std::atomic_bool isPause_ {false};
     bool firstSetTitle_ {true};
     ArgumentParser parameter_;
+    std::atomic<bool> paused_{false};
+    std::mutex pauseMutex_;
+    std::condition_variable pauseCond_;
+    long long baseTime_ = 0;
+    int32_t collectTimes_ = 0;
 };
 }
 #endif // TASK_MANAGER_H
