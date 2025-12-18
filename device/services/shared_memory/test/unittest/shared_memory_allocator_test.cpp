@@ -94,15 +94,15 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
     auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
-        nullptr); // 创建大小为1k的内存块，返回空
+        nullptr); // Create a memory block of size 1k, return null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 8 * MIN_SHARE_MEMORY_SIZE) !=
-        nullptr); // 成功创建大小为8k的内存块
+        nullptr); // Successfully created a memory block of size 8k.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("testname") != nullptr);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname",
-        PAGE_SIZE + MIN_SHARE_MEMORY_SIZE) == nullptr); // 创建大小为10k的内存块，返回空
+        PAGE_SIZE + MIN_SHARE_MEMORY_SIZE) == nullptr); // Create a memory block of size 10k, return null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", currentMaxShareMemorySize) !=
-        nullptr); // 成功创建最大值的内存块
+        nullptr); // Successfully created the largest memory block.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
 }
 
@@ -116,12 +116,12 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal003, TestSize.Level1)
     std::string name(256, 's');
     std::string maxLengthName(255, 's');
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(name,
-        PAGE_SIZE) == nullptr); // 创建大小为4k，名称长为256的内存块，返回空
+        PAGE_SIZE) == nullptr); // Create a memory block with a size of 4k and a name length of 256, returning null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(maxLengthName,
-        PAGE_SIZE) != nullptr); // 成功创建大小为4k，名称长为255的内存块
+        PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 255.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(maxLengthName));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("",
-        PAGE_SIZE) != nullptr); // 成功创建大小为4k，名称长为0的内存块
+        PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 0.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(""));
 }
 
@@ -133,9 +133,9 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal003, TestSize.Level1)
 HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal004, TestSize.Level1)
 {
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("\0",
-        PAGE_SIZE) != nullptr); // 成功创建大小为4k的内存块
+        PAGE_SIZE) != nullptr); // Successfully created a memory block of size 4k.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("",
-        PAGE_SIZE) == nullptr); // 创建大小为4k的内存块，返回空
+        PAGE_SIZE) == nullptr); // Create a memory block of size 4k, return null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("\0"));
 }
 
