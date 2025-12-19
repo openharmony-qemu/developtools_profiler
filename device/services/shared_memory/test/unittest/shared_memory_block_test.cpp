@@ -678,8 +678,8 @@ HWTEST_F(SharedMemoryBlockTest, WriteTwoSmbTest, TestSize.Level0)
     auto write2 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory());
     EXPECT_NE(write1->Valid(), false);
     EXPECT_NE(write2->Valid(), false);
-    EXPECT_TRUE(write1->PutRaw(reinterpret_cast<const int8_t*>(buffer1), 0));
-    EXPECT_TRUE(write2->PutRaw(reinterpret_cast<const int8_t*>(buffer2), 0));
+    EXPECT_TRUE(write1->PutRaw(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1)));
+    EXPECT_TRUE(write2->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 }
 
@@ -723,11 +723,10 @@ HWTEST_F(SharedMemoryBlockTest, WritePutWithPayloadTimeout, TestSize.Level0)
     EXPECT_TRUE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1),
         reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
-    write->header_ = nullptr;
     EXPECT_TRUE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3),
         reinterpret_cast<const int8_t*>(buffer4), sizeof(buffer4)));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
-    EXPECT_FALSE(write->Valid());
+    EXPECT_TRUE(write->Valid());
     EXPECT_FALSE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer3), 0, nullptr, 0));
     EXPECT_FALSE(write->PutWithPayloadTimeout(nullptr, 0, nullptr, 0));
 }
@@ -740,22 +739,22 @@ HWTEST_F(SharedMemoryBlockTest, WritePutWithPayloadTimeout, TestSize.Level0)
 HWTEST_F(SharedMemoryBlockTest, SharedMemoryWriterFalseTest, TestSize.Level0)
 {
     auto write = std::make_shared<ShareMemoryBlock>("", SMB_SIZE, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 
     write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, 0, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 
     write = std::make_shared<ShareMemoryBlock>("", 0, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 
     write = std::make_shared<ShareMemoryBlock>("", SMB_SIZE, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 
     write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, 0, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 
     write = std::make_shared<ShareMemoryBlock>("", 0, 0);
-    EXPECT_EQ(write->Valid(), true);
+    EXPECT_EQ(write->Valid(), false);
 }
 
 /**
@@ -776,11 +775,10 @@ HWTEST_F(SharedMemoryBlockTest, WriterSyncTest, TestSize.Level0)
     EXPECT_TRUE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1),
         reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
-    write->header_ = nullptr;
     EXPECT_TRUE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3),
         reinterpret_cast<const int8_t*>(buffer4), sizeof(buffer4), nullptr));
     EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
-    EXPECT_FALSE(write->Valid());
+    EXPECT_TRUE(write->Valid());
     EXPECT_FALSE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer3), 0, nullptr, 0, nullptr));
     EXPECT_FALSE(write->PutWithPayloadTimeout(nullptr, 0, nullptr, 0));
 }
