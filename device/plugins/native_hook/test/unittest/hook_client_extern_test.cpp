@@ -295,9 +295,9 @@ HWTEST_F(HookClientExternTest, HookRestraceTest, TestSize.Level0)
     mask = 1;
     ohos_malloc_hook_restrace(mask, reinterpret_cast<void*>(0x1000), size, tag, isUsing);
 
-    std::vector<int> expectedTypeVec = {MEMORY_TAG, MEMORY_UNUSING_MSG};
+    std::vector<int> expectedTypeVec = {MEMORY_UNUSING_MSG};
     EXPECT_EQ(typeVec, expectedTypeVec);
-    std::vector<int> expectedsizeVec = {0, size};
+    std::vector<int> expectedsizeVec = {size};
     EXPECT_EQ(sizeVec, expectedsizeVec);
 }
 

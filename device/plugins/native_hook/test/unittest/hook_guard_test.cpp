@@ -198,9 +198,12 @@ HWTEST_F(HookGuardTest, CalculateRealSizeBasicTest, TestSize.Level0)
 {
     g_clientConfig.fpunwind = true;
     int fpStackDepth = 5;
-    EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), 96);
+    int baseSize = sizeof(BaseStackRawData);
+    int fpStackSize = fpStackDepth * sizeof(uint64_t);
+    int rawDataSize = sizeof(StackRawData::regs);
+    EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), baseSize + fpStackSize);
 
     g_clientConfig.fpunwind = false;
-    EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), 320);
+    EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), baseSize + rawDataSize);
 }
 }

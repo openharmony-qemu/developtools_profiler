@@ -147,49 +147,39 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
     return it != g_maskTagMap.end() ? it->second : 0;
 }
 
-bool CheckSizeRange(size_t size, unsigned long long type)
+bool IsInDualRange(size_t size, const uint64_t* range)
 {
+    if (!range || GPU_RANGE_COUNT + 2 > sizeof(*range)/sizeof(uint64_t)) {
+        return false;
+    }
+    const uint64_t u64Size = static_cast<uint64_t>(size);
+    return (u64Size >= range[0] && u64Size <= range[1]) ||
+           (u64Size >= range[GPU_RANGE_COUNT] && u64Size <= range[GPU_RANGE_COUNT + 1]);
+}
+
+bool CheckSizeRange(size_t size, uint64_t type)
+{
+    uint64_t* targetRange = nullptr;
     switch (type) {
         case RES_GPU_VK:
-            if (((size >= g_clientConfig.gpuRange.gpuVk[0]) && (size <= g_clientConfig.gpuRange.gpuVk[1]))
-                || ((size >= g_clientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT])
-                && (size <= g_clientConfig.gpuRange.gpuVk[GPU_RANGE_COUNT + 1]))) {
-                return true;
-            }
+            targetRange = g_clientConfig.gpuRange.gpuVk;
             break;
         case RES_GPU_GLES_IMAGE:
-            if (((size >= g_clientConfig.gpuRange.gpuGlesImage[0]) && (size <= g_clientConfig.gpuRange.gpuGlesImage[1]))
-                || ((size >= g_clientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT])
-                && (size <= g_clientConfig.gpuRange.gpuGlesImage[GPU_RANGE_COUNT + 1]))) {
-                return true;
-            }
+            targetRange = g_clientConfig.gpuRange.gpuGlesImage;
             break;
         case RES_GPU_GLES_BUFFER:
-            if (((size >= g_clientConfig.gpuRange.gpuGlesBuffer[0])
-                && (size <= g_clientConfig.gpuRange.gpuGlesBuffer[1]))
-                || ((size >= g_clientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT])
-                && (size <= g_clientConfig.gpuRange.gpuGlesBuffer[GPU_RANGE_COUNT + 1]))) {
-                return true;
-            }
+            targetRange = g_clientConfig.gpuRange.gpuGlesBuffer;
             break;
         case RES_GPU_CL_IMAGE:
-            if (((size >= g_clientConfig.gpuRange.gpuClImage[0]) && (size <= g_clientConfig.gpuRange.gpuClImage[1]))
-                || ((size >= g_clientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT])
-                && (size <= g_clientConfig.gpuRange.gpuClImage[GPU_RANGE_COUNT + 1]))) {
-                return true;
-            }
+            targetRange = g_clientConfig.gpuRange.gpuClImage;
             break;
         case RES_GPU_CL_BUFFER:
-            if (((size >= g_clientConfig.gpuRange.gpuClBuffer[0]) && (size <= g_clientConfig.gpuRange.gpuClBuffer[1]))
-                || ((size >= g_clientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT])
-                && (size <= g_clientConfig.gpuRange.gpuClBuffer[GPU_RANGE_COUNT + 1]))) {
-                return true;
-            }
+            targetRange = g_clientConfig.gpuRange.gpuClBuffer;
             break;
         default:
             break;
     }
-    return false;
+    return IsInDualRange(size, targetRange);
 }
 
 bool CheckRestraceConditions(uint32_t combineVal, size_t size)

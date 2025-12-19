@@ -96,7 +96,6 @@ struct StackParam {
 };
 
 using OHOS::Developtools::NativeDaemon::buildArchType;
-constexpr int UPDATE_THEARD_NAME = 1000;
 static uint32_t g_maxSize = INT_MAX;
 static std::unordered_map<std::string, uint32_t> g_memTagMap;
 constexpr int PID_STR_SIZE = 4;
@@ -410,43 +409,55 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     return stackSize;
 }
 
-static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData& rawdata, StackParam &param)
+static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
+    StackRawData& rawdata, AsyncStackData& asyncData, StackParam &param)
 {
     if (!param.needCollect) {
         return true;
     }
     if (g_clientConfig.fpunwind && param.needFpunwind) {
-        #ifdef __aarch64__
-            param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+#ifdef __aarch64__
+        if (g_ClientConfig.asyncStackEnable) {
+            if (g_ClientConfig.maxStackDepth == 0) {
+                return false;
+            }
+            asyncData.asyncStackId = DfxGetSubmitterStackId();
+            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_ClientConfig.maxStackDepth);
+        } else {
+            param.fpStackDepth = FpUnwind(g_ClientConfig.maxStackDepth, rawdata.ip);
             if (param.fpStackDepth == 0) {
                 return false;
             }
             rawdata.jsChainId = getJsChainId();
-        #endif
+        }
+#endif
     } else {
         param.stackSize = GetStackSize(param.stackPtr, rawdata);
     }
     return true;
 }
 
-static bool inline __attribute__((always_inline)) CollectAsyncStackInfo(AsyncStackData& asyncData, StackParam &param)
+static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData& rawdata, StackParam &param)
 {
-    if (!param.needCollect || !param.needFpunwind) {
+    if (!param.needCollect) {
         return true;
     }
-    if (g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable) {
-        if (g_clientConfig.maxStackDepth == 0) {
+    if (g_clientConfig.fpunwind && param.needFpunwind) {
+#ifdef __aarch64__
+        param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+        if (param.fpStackDepth == 0) {
             return false;
         }
-#ifdef HAVE_HILOG
-        asyncData.asyncStackId = DfxGetSubmitterStackId();
-        asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_clientConfig.maxStackDepth);
+        rawdata.jsChainId = getJsChainId();
 #endif
+    } else {
+        param.stackSize = GetStackSize(param.stackPtr, rawdata);
     }
     return true;
 }
 
-static void inline __attribute__((always_inline)) SetStackRawData(BaseStackRawData& baseData, uint16_t type, void* addr, size_t mallocSize)
+static void inline __attribute__((always_inline)) SetStackRawData(BaseStackRawData& baseData, uint16_t type,
+    void* addr, size_t mallocSize)
 {
     baseData.type = type;
     baseData.addr = addr;
@@ -488,25 +499,23 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return ret;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return ret;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return ret;
     }
-    SetStackRawData(*baseData, MALLOC_MSG, ret, size);
+
     AddAllocAddr(ret);
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
-                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    PERF_RECORD_DATA(stackSize);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, MALLOC_MSG, ret, size);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        SetStackRawData(rawdata, MALLOC_MSG, ret, size);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
+    PERF_RECORD_DATA(param.stackSize);
     return ret;
 }
 
@@ -534,25 +543,22 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return ret;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return ret;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return ret;
     }
-    SetStackRawData(*baseData, MALLOC_MSG, ret, len);
     AddAllocAddr(ret);
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
-                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    PERF_RECORD_DATA(stackSize);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, MALLOC_MSG, ret, len);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        SetStackRawData(rawdata, MALLOC_MSG, ret, len);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
+    PERF_RECORD_DATA(param.stackSize);
     return ret;
 }
 
@@ -590,25 +596,22 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return pRet;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return pRet;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return pRet;
     }
-    SetStackRawData(*baseData, MALLOC_MSG, pRet, totalSize);
     AddAllocAddr(pRet);
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
-                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    PERF_RECORD_DATA(stackSize);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, MALLOC_MSG, pRet, totalSize);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        SetStackRawData(rawdata, MALLOC_MSG, pRet, totalSize);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
+    PERF_RECORD_DATA(param.stackSize);
     return pRet;
 }
 
@@ -666,7 +669,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     client.SendStackWithPayload(&rawdata, realSize,
                                 reinterpret_cast<void*>(param.stackPtr), param.stackSize,
                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
-    PERF_RECORD_DATA(stackSize);
+    PERF_RECORD_DATA(param.stackSize);
     return pRet;
 }
 
@@ -680,7 +683,7 @@ size_t hook_malloc_usable_size(size_t (*fn)(void*), void* ptr)
     return ret;
 }
 
-void hook_free_statistics_interval(void (*free_func)(void*), void* p)
+void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
 {
     if (!free_func) {
         return;
@@ -711,7 +714,7 @@ void hook_free_statistics_interval(void (*free_func)(void*), void* p)
 void hook_free(void (*free_func)(void*), void* p)
 {
     if (g_clientConfig.statisticsInterval > 0) {
-        return hook_free_statistics_interval(free_func, p);
+        return HookFreeStatisticsInterval(free_func, p);
     }
     struct timespec freeTs = {};
     clock_gettime(g_clientConfig.clockId, &freeTs);
@@ -735,25 +738,56 @@ void hook_free(void (*free_func)(void*), void* p)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-        return;
-        }
-        baseData = &rawdata;
     }
-    SetStackRawData(*baseData, FREE_MSG, p, 0);
-    baseData->ts = freeTs;
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
     HookClientHolder client(g_hookClient);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
-                                reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, FREE_MSG, p, 0);
+        asyncData.ts = freeTs;
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        SetStackRawData(rawdata, FREE_MSG, p, 0);
+        rawdata.ts = freeTs;
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
+}
+
+bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset)
+{
+    if (fd < 0) {
+        return true;
+    }
+    rawdata.type = MMAP_FILE_PAGE_MSG;
+    char path[FD_PATH_LENGTH] = {0};
+    char fileName[MAX_HOOK_PATH + 1] = {0};
+    if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
+        return false;
+    }
+    ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
+    if (len != -1) {
+        fileName[len] = '\0';
+        if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
+            rawdata.type = MEMORY_USING_MSG;
+        }
+        HookClientHolder client(g_hookClient);
+        if (!client.IsValid()) {
+            return false;
+        }
+        client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
+        char* p = strrchr(fileName, '/');
+        if (p != nullptr) {
+            rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
+        } else {
+            rawdata.tagId = GetTagId(fileName);
+        }
+    }
+    return true;
 }
 
 void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
@@ -781,48 +815,24 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return ret;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return ret;
-        }
-        if (fd >= 0) {
-            rawdata.type = MMAP_FILE_PAGE_MSG;
-            char path[FD_PATH_LENGTH] = {0};
-            char fileName[MAX_HOOK_PATH + 1] = {0};
-            if (snprintf_s(path, FD_PATH_LENGTH, FD_PATH_LENGTH - 1, "/proc/self/fd/%d", fd) < 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "hook_mmap snprintf_s error");
-                return nullptr;
-            }
-            ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-            if (len != -1) {
-                fileName[len] = '\0';
-                if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
-                    rawdata.type = MEMORY_USING_MSG;
-                }
-                client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
-                char* p = strrchr(fileName, '/');
-                if (p != nullptr) {
-                    rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
-                } else {
-                    rawdata.tagId = GetTagId(fileName);
-                }
-            }
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return ret;
+    }
+    SetStackRawData(rawdata, MMAP_MSG, ret, length);
+    if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset)) {
+        return ret;
     }
     if (!client.UpdateThreadName()) {
         return ret;
     }
-    SetStackRawData(*baseData, MMAP_MSG, ret, length);
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    if (isAsyncStack) {
+        *static_cast<BaseStackRawData*>(&asyncData) = *static_cast<BaseStackRawData*>(&rawdata);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    } else {
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    }
     return ret;
 }
 
@@ -857,25 +867,22 @@ int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     param.needFpunwind = g_clientConfig.statisticsInterval == 0;
     param.needCollect = g_clientConfig.munmapStackData;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return ret;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return ret;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return ret;
     }
-    SetStackRawData(*baseData, MUNMAP_MSG, addr, length);
-    baseData->ts = unmapTime;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, MUNMAP_MSG, addr, length);
+        asyncData.ts = unmapTime;
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    } else {
+        SetStackRawData(rawdata, MUNMAP_MSG, addr, length);
+        rawdata.ts = unmapTime;
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    }
     return ret;
 }
 
@@ -926,25 +933,22 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     param.needCollect = isUsing;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return;
     }
     uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    SetStackRawData(*baseData, type, addr, size);
-    baseData->tagId = GetTagId(tag);
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, type, addr, size);
+        asyncData.tagId = GetTagId(tag);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    } else {
+        SetStackRawData(rawdata, type, addr, size);
+        rawdata.tagId = GetTagId(tag);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize);
+    }
 }
 
 size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targetFd)
@@ -1033,26 +1037,24 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
-    BaseStackRawData* baseData = nullptr;
-    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     param.needCollect = isUsing;
-    if (isAsyncStack) {
-        if (!CollectAsyncStackInfo(asyncData, param)) {
-            return;
-        }
-        baseData = &asyncData;
-    } else {
-        if (!CollectStackInfo(rawdata, param)) {
-            return;
-        }
-        baseData = &rawdata;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return;
     }
     uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
-    SetStackRawData(*baseData, type, addr, size);
-    baseData->tagId = GetTagId(tag, mask);
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    client.SendStackWithPayload(baseData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
-                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, type, addr, size);
+        asyncData.tagId = GetTagId(tag, mask);
+        client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    } else {
+        SetStackRawData(rawdata, type, addr, size);
+        rawdata.tagId = GetTagId(tag, mask);
+        client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
+                                    reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+    }
 }
 
 

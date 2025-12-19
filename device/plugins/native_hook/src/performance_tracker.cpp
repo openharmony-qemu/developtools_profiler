@@ -36,7 +36,7 @@ PerformanceTracker::~PerformanceTracker()
     clock_gettime(CLOCK_REALTIME, &end);
 
     uint64_t elapsed = (end.tv_sec - start_.tv_sec) * S_TO_NS + (end.tv_nsec - start_.tv_nsec);
-    timeCost_ += elapsed;
+    timeCost_.fetch_add(elapsed);
     mallocTimes_++;
 
     if (mallocTimes_ % PRINT_INTERVAL == 0) {
@@ -49,7 +49,7 @@ PerformanceTracker::~PerformanceTracker()
 
 void PerformanceTracker::RecordDataSize(size_t bytes)
 {
-    dataCounts_ += bytes;
+    dataCounts_.fetch_add(bytes);
 }
 
 void PerformanceTracker::RefreshStartTime()

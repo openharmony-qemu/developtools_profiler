@@ -86,7 +86,6 @@ ohos_unittest("nativehook_ut") {
     "faultloggerd:libunwinder",
     "googletest:gtest",
     "googletest:gmock",
-    "hilog:libhilog_base",
     "init:libbegetutil",
     "protobuf:protobuf",
     "faultloggerd:libasync_stack",

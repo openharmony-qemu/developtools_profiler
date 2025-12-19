@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#ifndef HOOK_SOCKET_CLIENT_MOCK_H 
+#ifndef HOOK_SOCKET_CLIENT_MOCK_H
 #define HOOK_SOCKET_CLIENT_MOCK_H
 
 #include <gmock/gmock.h>
@@ -27,7 +27,7 @@
 
 class MockHookSocketClient : public HookSocketClient {
 public:
-    MockHookSocketClient(void (*disableHookCallback)() = nullptr) : HookSocketClient(
+    explicit MockHookSocketClient(void (*disableHookCallback)() = nullptr) : HookSocketClient(
         g_hookPid.load(), &g_clientConfig, &g_sampler, &g_targetedRange, &g_sharedMemCount, disableHookCallback) {};
     MOCK_METHOD5(SendStackWithPayload, bool(const void* data, size_t size, const void* payload,
         size_t payloadSize, int smbIndex));

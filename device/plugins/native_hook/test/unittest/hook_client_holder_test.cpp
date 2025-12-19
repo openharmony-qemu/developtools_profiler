@@ -387,7 +387,7 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_LdMusl, TestSize
 }
 
 /**
- * @tc.name: SendMmapFileRawDataTest_MapFixed_LdMusl
+ * @tc.name: SendMmapFileRawDataTest_AddrNull
  * @tc.desc: addr is nullptr
  * @tc.type: FUNC
  */

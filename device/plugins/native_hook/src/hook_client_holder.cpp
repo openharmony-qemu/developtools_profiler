@@ -23,7 +23,7 @@
 #include <pthread.h>
 #include <cstring>
 
-constexpr int UPDATE_THEARD_NAME = 1000;
+constexpr int UPDATE_THREAD_NAME = 1000;
 
 HookClientHolder::HookClientHolder(std::shared_ptr<HookSocketClient>& sharedClient)
     : holder_(sharedClient)
@@ -71,7 +71,7 @@ bool HookClientHolder::UpdateThreadName()
         }
     }
     pthread_setspecific(g_updateThreadNameCount,
-                        reinterpret_cast<void *>(updateCount == UPDATE_THEARD_NAME ? 0 : updateCount + 1));
+                        reinterpret_cast<void *>(updateCount == UPDATE_THREAD_NAME ? 0 : updateCount + 1));
     return ret;
 }
 
