@@ -33,23 +33,27 @@ StackWriter::StackWriter(std::string name,
                          bool isSaMode)
     : pluginName_(name), blocked_(blocked)
 {
-    if (name.find("unique_stack_table") != std::string::npos) {
+    if (name == "unique_stack_table") {
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name,
             UNIQUE_STACK_TABLE_SIZE, smbFd);
-        void* memoryPoint = shareMemoryBlock_->GetMMapBase();
-        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
-        DfxInitProfilerAsyncStack(memoryPoint, UNIQUE_STACK_TABLE_SIZE);
+        if (shareMemoryBlock_ == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StackWriter CreateMemoryBlockRemote failed");
+        } else {
+            void* memoryPoint = shareMemoryBlock_->GetMMapBase();
+            if (memoryPoint == nullptr) {
+                PROFILER_LOG_ERROR(LOG_CORE, "StackWriter GetMMapBase failed");
+            } else {
+                DfxInitProfilerAsyncStack(memoryPoint, UNIQUE_STACK_TABLE_SIZE);
+            }
+        }
         eventNotifier_ = nullptr;
-        lastFlushTime_ = std::chrono::steady_clock::now();
-        return;
     } else {
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
+        if (isSaMode && shareMemoryBlock_ != nullptr) {
+            shareMemoryBlock_->SetWaitTime(WAIT_TIMEOUT_SA);
+        }
+        eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     }
-
-    if (isSaMode && shareMemoryBlock_ != nullptr) {
-        shareMemoryBlock_->SetWaitTime(WAIT_TIMEOUT_SA);
-    }
-    eventNotifier_ = EventNotifier::CreateWithFd(eventFd);
     lastFlushTime_ = std::chrono::steady_clock::now();
 }
 
