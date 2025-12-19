@@ -41,7 +41,7 @@ int InitShareMemory()
 {
     int fd = syscall(SYS_memfd_create, SMB_NAME.c_str(), 0);
     if (fd < 0) {
-        PROFILER_LOG_WARN_BASE(LOG_CORE, "CreateBlock FAIL SYS_memfd_create");
+        PROFILER_LOG_WARN(LOG_CORE, "CreateBlock FAIL SYS_memfd_create");
         return -1;
     }
 
@@ -51,7 +51,7 @@ int InitShareMemory()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR_BASE(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
         return -1;
     }
 
@@ -61,7 +61,7 @@ int InitShareMemory()
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
-        PROFILER_LOG_ERROR_BASE(LOG_CORE, "CreateBlock g_smbAddr mmap ERR : %s", buf);
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateBlock g_smbAddr mmap ERR : %s", buf);
         return -1;
     }
 
