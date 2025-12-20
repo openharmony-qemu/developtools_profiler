@@ -192,7 +192,7 @@ ohos_executable("native_daemon_client") {
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
   }
-  install_enable = false
+  install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
 }

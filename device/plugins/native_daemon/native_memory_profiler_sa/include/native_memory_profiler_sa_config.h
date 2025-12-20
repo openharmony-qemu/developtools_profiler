@@ -65,6 +65,7 @@ public:
     bool printNmdOnly_{false};
     bool hookstandalone_{false};
     bool saveFile_{false};
+    bool extendProcesses_{false};
     std::string fileName_;
     uint32_t nmdPid_{0};
     uint32_t nmdType_{0};
