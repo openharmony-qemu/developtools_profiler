@@ -60,24 +60,70 @@ public:
     void TearDown() {}
 };
 
+const int MIN_SHARE_MEMORY_SIZE = 1024;
+constexpr uint32_t PAGE_SIZE = 4096;
+
 /**
  * @tc.name: Service
  * @tc.desc: Creates a memory block of the specified size.
  * @tc.type: FUNC
  */
-HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal, TestSize.Level1)
+HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal001, TestSize.Level1)
 {
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 0) ==
-                nullptr); // 创建大小为0的内存块，返回空
+        nullptr); // Create a memory block of size 0, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 1) ==
-                nullptr); // 创建内存块大小<4096，返回空
+        nullptr); // Create a memory block with a size less than 4096, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) != nullptr); // 成功创建
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) ==
-                nullptr); // 创建同名内存块返回空
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", PAGE_SIZE) !=
+        nullptr); // Successfully created
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", PAGE_SIZE) ==
+        nullptr); // Creating a memory block with the same name returns null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
+}
+
+/**
+ * @tc.name: Service
+ * @tc.desc: Creates a memory block of the specified size.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
+{
+    auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
+    // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
+        nullptr); // Create a memory block of size 1k, return null.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 8 * MIN_SHARE_MEMORY_SIZE) !=
+        nullptr); // Successfully created a memory block of size 8k.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("testname") != nullptr);
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
+    // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname",
+        PAGE_SIZE + MIN_SHARE_MEMORY_SIZE) == nullptr);
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", currentMaxShareMemorySize) !=
+        nullptr); // Successfully created the largest memory block.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
+}
+
+/**
+ * @tc.name: Service
+ * @tc.desc: Creates a memory block of the specified name size.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal003, TestSize.Level1)
+{
+    std::string name(256, 's');
+    std::string maxLengthName(255, 's');
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(name,
+        PAGE_SIZE) == nullptr); // Create a memory block with a size of 4k and a name length of 256, returning null.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(maxLengthName,
+        PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 255.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(maxLengthName));
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("",
+        PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 0.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(""));
 }
 
 /**
@@ -87,7 +133,8 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, FindMemoryBlockByName, TestSize.Level1)
 {
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("err") == nullptr); // 查找不存在的内存块返回空
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("err") ==
+        nullptr); // Return null for a memory block that does not exist.
 }
 
 /**
@@ -97,29 +144,76 @@ HWTEST_F(SharedMemoryAllocatorTest, FindMemoryBlockByName, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
 {
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("err", 4096, 99) ==
-                nullptr); // 使用不存在的文件描述符映射内存块返回空
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("err", PAGE_SIZE, 99) ==
+        nullptr); // Returning null when mapping a memory block with a non-existent file descriptor.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("err"));
 
     int fd = syscall(SYS_memfd_create, "testnameremote", 0);
     EXPECT_GE(fd, 0);
-    int check = ftruncate(fd, 4096);
+    int check = ftruncate(fd, PAGE_SIZE);
     EXPECT_GE(check, 0);
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 0, fd) ==
-                nullptr); // 创建大小为0的内存块，返回空
+        nullptr); // Create a memory block of size 0, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
 
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 1, fd) ==
-                nullptr); // 创建内存块大小<4096，返回空
+        nullptr); // Create a memory block with a size less than 4096, return null.
     ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
 
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 4096, fd) ==
-                nullptr);
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", 4096, fd) ==
-                nullptr); // 创建正确fd的重复内存块
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", PAGE_SIZE, fd) ==
+        nullptr);
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote", PAGE_SIZE, fd) ==
+        nullptr); // Duplicate memory blocks with the correct fd.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote")); // 重复释放内存块返回-1
+    // Repeatedly releasing memory blocks returns -1
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
+}
+
+/**
+ * @tc.name: Service
+ * @tc.desc: Shared memory MemoryBlockRemote test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
+{
+    auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
+
+    int fd = syscall(SYS_memfd_create, "testnameremote", 0);
+    EXPECT_GE(fd, 0);
+    int check = ftruncate(fd, PAGE_SIZE);
+    EXPECT_GE(check, 0);
+
+    int fd2 = syscall(SYS_memfd_create, "testnameremote", 0);
+    EXPECT_GE(fd2, 0);
+    int check2 = ftruncate(fd2, PAGE_SIZE);
+    EXPECT_GE(check2, 0);
+
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote",
+        PAGE_SIZE, fd) != nullptr); // Successfully created a memory block of size 4k.
+    // Successfully created a memory block with a size of 4k, different names, and the same file descriptor.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("test",
+        PAGE_SIZE, fd) != nullptr);
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testname1",
+        currentMaxShareMemorySize, fd) != nullptr); // Successfully created the largest memory block.
+    // Create a memory block of size 4k with the same name but different file descriptors, and return null.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote",
+        PAGE_SIZE, fd2) == nullptr);
+    
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testnameremote"));
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("test"));
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testname1"));
+
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testname1",
+        PAGE_SIZE, fd) == nullptr); // Create a memory block with a size less than 4096, return null.
+    // Successfully created a memory block of size 4k with the same name but different FDs.
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testname1",
+        PAGE_SIZE, fd2) != nullptr);
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("testname1"));
+
+    int fd3 = -1;
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote("testnameremote",
+        PAGE_SIZE, fd3) == nullptr);
 }
 
 /**
@@ -129,7 +223,8 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, GetDataSize, TestSize.Level1)
 {
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 4096) != nullptr); // 成功创建
+    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", PAGE_SIZE) !=
+        nullptr); // Successfully created
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("testname")->GetDataSize() == 0);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
 }
@@ -141,7 +236,8 @@ HWTEST_F(SharedMemoryAllocatorTest, GetDataSize, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockLocal, TestSize.Level1)
 {
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("or")); // 释放不存在的内存块返回-1
+    // Return -1 for releasing a non-existent memory block
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("or"));
 }
 
 /**
@@ -151,6 +247,7 @@ HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockLocal, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, ReleaseMemoryBlockRemote, TestSize.Level1)
 {
-    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("or")); // 释放不存在的内存块返回-1
+    // Return -1 for releasing a non-existent memory block
+    ASSERT_FALSE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote("or"));
 }
 } // namespace
