@@ -679,8 +679,8 @@ HWTEST_F(SharedMemoryBlockTest, WriteTwoSmbTest, TestSize.Level0)
     EXPECT_NE(write1->Valid(), false);
     EXPECT_NE(write2->Valid(), false);
     EXPECT_TRUE(write1->PutRaw(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1)));
-    EXPECT_TRUE(write2->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
     EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write2->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
     EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
 }
 
