@@ -25,7 +25,7 @@ class Sampling;
 
 class HookSocketClient : public ServiceBase {
 public:
-    HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
+    HookSocketClient(int pid, ClientConfig *config, 
                      std::atomic<Range>* targetedRange = nullptr, std::atomic<int>* memCount = nullptr,
                      void (*disableHookCallback)() = nullptr);
     ~HookSocketClient();

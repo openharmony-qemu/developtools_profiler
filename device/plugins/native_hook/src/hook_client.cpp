@@ -72,7 +72,7 @@ constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 
 using OHOS::Developtools::NativeDaemon::buildArchType;
 static std::shared_ptr<HookSocketClient> g_hookClient {nullptr};
-static Sampling g_sampler;
+static thread_local Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
@@ -335,10 +335,9 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     } else {
         g_ClientConfig.Reset();
-        g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &g_sampler,
-                                                          &targetedRange, &g_sharedMemCount,
-                                                          reinterpret_cast<void (*)()>(disableHookCallback));
+        g_hookClient =
+            std::make_shared<HookSocketClient>(g_hookPid.load(), &g_ClientConfig, &targetedRange,
+                                               &g_sharedMemCount, reinterpret_cast<void (*)()>(disableHookCallback));
         if (g_hookClient->GetConnectState()) {
             g_addrHandler = std::make_shared<LowAddrHandler>();
 #ifdef __aarch64__
@@ -554,7 +553,8 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
 #endif
 
     if (SimplifiedFilter(ret, size) ||
-        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0)) {
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL &&
+         g_sampler.InitSampling(g_ClientConfig.sampleInterval) && g_sampler.StartSampling(size) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -667,8 +667,9 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if (SimplifiedFilter(ret, len) ||
-        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(len) == 0)) { //0 not sampling
+    if (SimplifiedFilter(ret, len) || (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL &&
+                                       g_sampler.InitSampling(g_ClientConfig.sampleInterval) &&
+                                       g_sampler.StartSampling(len) == 0)) {  // 0 not sampling
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -794,7 +795,8 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 #endif
 
     if (SimplifiedFilter(pRet, number * size) ||
-        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size * number) == 0)) {
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL &&
+         g_sampler.InitSampling(g_ClientConfig.sampleInterval) && g_sampler.StartSampling(size * number) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -913,7 +915,8 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 #endif
 
     if (SimplifiedFilter(pRet, size) ||
-        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL && g_sampler.StartSampling(size) == 0)) {
+        (g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL &&
+         g_sampler.InitSampling(g_ClientConfig.sampleInterval) && g_sampler.StartSampling(size) == 0)) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};
@@ -1218,8 +1221,8 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
-    if ((fd < 0 && offset == 0) && g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL
-        && g_sampler.StartSampling(length) == 0) {
+    if ((fd < 0 && offset == 0) && g_ClientConfig.sampleInterval > MIN_SAMPLER_INTERVAL &&
+        g_sampler.InitSampling(g_ClientConfig.sampleInterval) && g_sampler.StartSampling(length) == 0) {
 #ifdef PERFORMANCE_DEBUG
         g_mallocTimes++;
         struct timespec end = {};

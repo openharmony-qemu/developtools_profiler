@@ -23,7 +23,7 @@
 
 class Sampling {
 public:
-    void InitSampling(uint64_t);
+    bool InitSampling(uint64_t);
     void Reset();
     uint64_t GetSampleInterval() const
     {
@@ -33,18 +33,12 @@ public:
     {
         return (allocSize >= sampleInterval_) ? allocSize : (CalcSamplings(allocSize) * sampleInterval_) ;
     }
-    int64_t CalcNextSampleInterval()
+    int64_t CalcNextSampleInterval() 
     {
         return static_cast<int64_t>(exponentialDist_(randomEngine_)) + 1;
     }
-    Sampling()
-    {
-        pthread_spin_init(&spinlock_, PTHREAD_PROCESS_PRIVATE);
-    }
-    ~Sampling()
-    {
-        pthread_spin_destroy(&spinlock_);
-    }
+    Sampling() {}
+    ~Sampling() {}
 
     // for test
     void SetRandomEngineSeed(uint64_t cnt)
@@ -53,26 +47,12 @@ public:
     }
 
 private:
-    class Spinlock {
-    public:
-        Spinlock(const Spinlock&) = delete;
-        Spinlock& operator=(const Spinlock&) = delete;
-        Spinlock()
-        {
-            pthread_spin_lock(&spinlock_);
-        }
-        ~Spinlock()
-        {
-            pthread_spin_unlock(&spinlock_);
-        }
-    };
     size_t CalcSamplings(size_t);
-
     uint64_t sampleInterval_ {0};
     double sampleRate_ {0.0};
     int64_t nextSampleInterval_ {0};
+    bool isInit_{false};
     std::exponential_distribution<double> exponentialDist_;
-    static inline std::default_random_engine randomEngine_;
-    static inline pthread_spinlock_t spinlock_;
+    std::default_random_engine randomEngine_;
 };
 #endif  // __SAMPLING_H__
