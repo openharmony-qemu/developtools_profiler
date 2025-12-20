@@ -92,14 +92,14 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal001, TestSize.Level1)
 HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
 {
     auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
-    // Shared memory can only be allocated in units of 4k; requests for sizes that are not multiples of 4k cannot be fulfilled.
+    // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
         nullptr); // Create a memory block of size 1k, return null.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", 8 * MIN_SHARE_MEMORY_SIZE) !=
         nullptr); // Successfully created a memory block of size 8k.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().FindMemoryBlockByName("testname") != nullptr);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal("testname"));
-    // Shared memory can only be allocated in units of 4k; requests for sizes that are not multiples of 4k cannot be fulfilled.
+    // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname",
         PAGE_SIZE + MIN_SHARE_MEMORY_SIZE) == nullptr);
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", currentMaxShareMemorySize) !=
