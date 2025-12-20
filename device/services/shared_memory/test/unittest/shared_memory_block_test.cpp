@@ -15,26 +15,95 @@
 
 #include <cstring>
 #include <gtest/gtest.h>
+#include <sys/mman.h>
+#include <sys/syscall.h>
 
 #include "plugin_service_types.pb.h"
 #include "share_memory_block.h"
+#include <log_base.h>
 
 using namespace testing::ext;
 
 namespace {
+constexpr uint32_t SMB_SIZE = 10 * 4096;
 constexpr size_t ARRAYSIZE = 1024;
+const std::string SMB_NAME = "shared_memory_block_test";
+const std::string PLUGIN_NAME = "shared_memory_block";
+const std::string PLUGIN_NAME_SECOND = "shared_memory_block_second";
+const std::string PLUGIN_NAME_THIRD = "shared_memory_block_third";
 constexpr int PAGE_SIZE = 4096;
 constexpr int NUM_FOUR = 4;
 constexpr int NUM_FIVE = 5;
+void* g_smbAddr = nullptr;
+int g_smbFd = 0;
+
+int InitShareMemory()
+{
+    int fd = syscall(SYS_memfd_create, SMB_NAME.c_str(), 0);
+    if (fd < 0) {
+        HILOG_BASE_WARN(LOG_CORE, "CreateBlock FAIL SYS_memfd_create");
+        return -1;
+    }
+
+    int check = ftruncate(fd, SMB_SIZE);
+    if (check < 0) {
+        close(fd);
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        strerror_r(errno, buf, bufSize);
+        HILOG_BASE_ERROR(LOG_CORE, "CreateBlock ftruncate ERR : %s", buf);
+        return -1;
+    }
+
+    g_smbAddr = mmap(nullptr, SMB_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+    if (g_smbAddr == (reinterpret_cast<void *>(-1))) {
+        close(fd);
+        const int bufSize = 256;
+        char buf[bufSize] = { 0 };
+        strerror_r(errno, buf, bufSize);
+        HILOG_BASE_ERROR(LOG_CORE, "CreateBlock g_smbAddr mmap ERR : %s", buf);
+        return -1;
+    }
+
+    ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr);
+
+    // initialize header infos
+    header_->info.readOffset_ = 0;
+    header_->info.writeOffset_ = 0;
+    header_->info.memorySize_ = SMB_SIZE - sizeof(ShareMemoryBlock::BlockHeader);
+    header_->info.bytesCount_ = 0;
+    header_->info.chunkCount_ = 0;
+
+    return fd;
+}
 
 class SharedMemoryBlockTest : public testing::Test {
 public:
     static void SetUpTestCase() {}
     static void TearDownTestCase() {}
 
-    void SetUp() {}
-    void TearDown() {}
+    void SetUp()
+    {
+        g_smbFd = InitShareMemory();
+    }
+    void TearDown()
+    {
+        g_smbFd = 0;
+    }
 };
+
+bool CheckBuffer(uint8_t* buffer, size_t size)
+{
+    ShareMemoryBlock::BlockHeader* header_ = reinterpret_cast<ShareMemoryBlock::BlockHeader*>(g_smbAddr);
+    uint8_t* cmpaddr = (uint8_t*)g_smbAddr + sizeof(ShareMemoryBlock::BlockHeader) + header_->info.readOffset_;
+    cmpaddr = cmpaddr + sizeof(uint32_t);
+
+    header_->info.readOffset_ = header_->info.writeOffset_.load();
+    if (memcmp(buffer, cmpaddr, size) == 0) {
+        return true;
+    }
+    return false;
+}
 
 /**
  * @tc.name: share memory
@@ -546,5 +615,174 @@ HWTEST_F(SharedMemoryBlockTest, TakeDataOptimize, TestSize.Level1)
         return true;
     });
     EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: Write data to shared memory through writer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WriteaNormalTest, TestSize.Level0)
+{
+    auto write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, g_smbFd);
+    EXPECT_NE(write->Valid(), false);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_TRUE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1)));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
+    EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3)));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+
+    EXPECT_FALSE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer3), 0));
+    EXPECT_FALSE(write->PutRaw(nullptr, 0));
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: Write failure process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WriteaFalseTest, TestSize.Level0)
+{
+    auto write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, 0);
+    EXPECT_NE(write->Valid(), true);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+
+    EXPECT_FALSE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1)));
+    EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_FALSE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
+    EXPECT_FALSE(CheckBuffer(buffer2, sizeof(buffer2)));
+    EXPECT_FALSE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3)));
+    EXPECT_FALSE(CheckBuffer(buffer3, sizeof(buffer3)));
+
+    EXPECT_FALSE(write->PutRaw(reinterpret_cast<const int8_t*>(buffer3), 0));
+    EXPECT_FALSE(write->PutRaw(nullptr, 0));
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: test Write with two shared memory block.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WriteTwoSmbTest, TestSize.Level0)
+{
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    auto write1 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, g_smbFd);
+    auto write2 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory());
+    EXPECT_NE(write1->Valid(), false);
+    EXPECT_NE(write2->Valid(), false);
+    EXPECT_TRUE(write1->PutRaw(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1)));
+    EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write2->PutRaw(reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
+    EXPECT_TRUE(CheckBuffer(buffer2, sizeof(buffer2)));
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: test WriteTimeout with three shared memory block.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WriteTimeoutMultiSmbTest, TestSize.Level0)
+{
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    auto write1 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, g_smbFd);
+    auto write2 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME_SECOND, SMB_SIZE, InitShareMemory());
+    auto write3 = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME_THIRD, SMB_SIZE, InitShareMemory());
+    EXPECT_NE(write1->Valid(), false);
+    EXPECT_NE(write2->Valid(), false);
+    EXPECT_NE(write3->Valid(), false);
+    EXPECT_FALSE(write1->PutRawTimeout(nullptr, sizeof(buffer1)));
+    EXPECT_FALSE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_FALSE(write2->PutRawTimeout(reinterpret_cast<const int8_t*>(buffer2), 0));
+    EXPECT_FALSE(CheckBuffer(buffer2, sizeof(buffer2)));
+    EXPECT_TRUE(write3->PutRawTimeout(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3)));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: test PutWithPayloadTimeout with three shared memory block.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WritePutWithPayloadTimeout, TestSize.Level0)
+{
+    auto write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, g_smbFd);
+    EXPECT_NE(write->Valid(), false);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
+
+    EXPECT_FALSE(write->PutWithPayloadTimeout(nullptr, 0, nullptr, 0));
+    EXPECT_TRUE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2)));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3),
+        reinterpret_cast<const int8_t*>(buffer4), sizeof(buffer4)));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+    EXPECT_TRUE(write->Valid());
+    EXPECT_FALSE(write->PutWithPayloadTimeout(reinterpret_cast<const int8_t*>(buffer3), 0, nullptr, 0));
+    EXPECT_FALSE(write->PutWithPayloadTimeout(nullptr, 0, nullptr, 0));
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: SharedMemoryBlockTest failure test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, SharedMemoryWriterFalseTest, TestSize.Level0)
+{
+    auto write = std::make_shared<ShareMemoryBlock>("", SMB_SIZE, 0);
+    EXPECT_EQ(write->Valid(), false);
+
+    write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, 0, 0);
+    EXPECT_EQ(write->Valid(), false);
+
+    write = std::make_shared<ShareMemoryBlock>("", 0, 0);
+    EXPECT_EQ(write->Valid(), false);
+
+    write = std::make_shared<ShareMemoryBlock>("", SMB_SIZE, 0);
+    EXPECT_EQ(write->Valid(), false);
+
+    write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, 0, 0);
+    EXPECT_EQ(write->Valid(), false);
+
+    write = std::make_shared<ShareMemoryBlock>("", 0, 0);
+    EXPECT_EQ(write->Valid(), false);
+}
+
+/**
+ * @tc.name: SharedMemoryBlockTest
+ * @tc.desc: Write data to shared memory with blocked mode.
+ * @tc.type: FUNC
+ */
+HWTEST_F(SharedMemoryBlockTest, WriterSyncTest, TestSize.Level0)
+{
+    auto write = std::make_shared<ShareMemoryBlock>(PLUGIN_NAME, SMB_SIZE, g_smbFd);
+    EXPECT_NE(write->Valid(), false);
+    uint8_t buffer1[] = {0x55, 0xAA, 0x55, 0xAA};
+    uint8_t buffer2[] = {0x11, 0x22, 0x33, 0x44};
+    uint8_t buffer3[] = {0xAA, 0xBB, 0xCC, 0xDD};
+    uint8_t buffer4[] = {0xCC, 0xDD, 0xBB, 0xEE};
+
+    EXPECT_FALSE(write->PutWithPayloadSync(nullptr, 0, nullptr, 0, nullptr));
+    EXPECT_TRUE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer1), sizeof(buffer1),
+        reinterpret_cast<const int8_t*>(buffer2), sizeof(buffer2), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer1, sizeof(buffer1)));
+    EXPECT_TRUE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer3), sizeof(buffer3),
+        reinterpret_cast<const int8_t*>(buffer4), sizeof(buffer4), nullptr));
+    EXPECT_TRUE(CheckBuffer(buffer3, sizeof(buffer3)));
+    EXPECT_TRUE(write->Valid());
+    EXPECT_FALSE(write->PutWithPayloadSync(reinterpret_cast<const int8_t*>(buffer3), 0, nullptr, 0, nullptr));
+    EXPECT_FALSE(write->PutWithPayloadTimeout(nullptr, 0, nullptr, 0));
 }
 } // namespace
