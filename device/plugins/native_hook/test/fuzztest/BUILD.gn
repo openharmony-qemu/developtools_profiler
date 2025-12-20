@@ -41,12 +41,18 @@ hook_fuzz_external_deps = [
   "init:libbegetutil",
   "protobuf:protobuf",
 ]
+if (hiprofiler_use_libunwinder) {
+  hook_fuzz_external_deps += [ "faultloggerd:libunwinder" ]
+}
 
 hook_fuzz_include_dirs = [
   "${OHOS_PROFILER_DIR}/device/plugins/native_hook/include",
   "${OHOS_PROFILER_DIR}/device/plugins/api/include",
   "${OHOS_PROFILER_DIR}/interfaces/kits",
   "${OHOS_PROFILER_DIR}/device/base/include",
+  "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/include",
+  "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+  "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
 ]
 
 ###############################fuzztest####################################
