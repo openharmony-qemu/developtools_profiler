@@ -16,7 +16,9 @@
 
 #include <gtest/gtest.h>
 #include <google/protobuf/text_format.h>
+#define private public
 #include "stack_preprocess.h"
+#undef private
 #include "native_hook_config.pb.h"
 #include "plugin_module_api.h"
 #include "native_hook_result_standard.pb.h"
@@ -32,6 +34,40 @@ constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
 constexpr size_t MAX_BUFFER_SIZE = 1024 * 1024;
 constexpr uint32_t MAX_ENUM = 9999;
+
+static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tagId)
+{
+    // RawStack owns a raw pointer stackContext; install a deleter so UTs don't leak.
+    auto raw = RawStackPtr(new RawStack(), [](RawStack* p) {
+        if (p != nullptr) {
+            delete p->stackContext;
+            p->stackContext = nullptr;
+            delete p;
+        }
+    });
+
+    raw->stackContext = new BaseStackRawData();
+    raw->stackContext->nodeType = nodeType;
+    raw->stackContext->nodeId = nodeId;
+    raw->stackContext->tagId = tagId;
+    raw->stackSize = 1;
+    raw->reportFlag = true;
+    return raw;
+}
+
+static std::shared_ptr<HookRecord> MakeHookRecord(uint32_t nodeType, uint64_t nodeId, uint32_t tagId)
+{
+    return std::make_shared<HookRecord>(MakeRawStack(nodeType, nodeId, tagId));
+}
+
+static std::vector<CallFrame> MakeFrames(uint64_t callFrameId)
+{
+    std::vector<CallFrame> frames;
+    CallFrame frame(callFrameId);
+    frame.callFrameId_ = static_cast<uint32_t>(callFrameId);
+    frames.push_back(frame);
+    return frames;
+}
 
 static thread_local std::vector<uint64_t> g_callStack;
 static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
@@ -537,5 +573,189 @@ HWTEST_F(StackPreprocessTest, FlushDataAbnormalProtoTest, TestSize.Level0)
 
     int ret = std::remove(filePath.c_str());
     ASSERT_EQ(ret, 0) << "Failed to delete temporary file";
+}
+
+/*
+@tc.name: CallStackHash01
+@tc.desc: Same call stack + same nodeType/nodeId + same tagName should map to the same stack id.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash01, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    // Use fp_unwind so GetCallStackId starts from idx=0 (won't skip single-frame stacks).
+    // GetCallStackId clears internal g_callStack to avoid cross-test contamination.
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // register tag 0 -> "tagA"
+    preprocess.SaveMemTag(0, "tagA");
+
+    auto hookRecord = MakeHookRecord(1, 100, 0);
+    auto frames = MakeFrames(1111);
+    BatchNativeHookData data;
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    EXPECT_GT(id1, 0u);
+    std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
+    uint32_t id2 = preprocess.FindCallStackId(lookupStack, hookRecord);
+    EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash02
+@tc.desc: Same call stack but different nodeType/nodeId should map to different stack ids.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash02, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SaveMemTag(0, "tagA");
+
+    auto hr1 = MakeHookRecord(1, 100, 0);
+    auto frames = MakeFrames(2222);
+
+    BatchNativeHookData data1;
+    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1);
+    EXPECT_GT(id1, 0u);
+
+    // same frames but different nodeType/nodeId
+    auto hr2 = MakeHookRecord(2, 200, 0);
+    BatchNativeHookData data2;
+    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2);
+    EXPECT_GT(id2, 0u);
+    EXPECT_NE(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash03
+@tc.desc: Same call stack but different tagName should map to different stack ids.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash03, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // register two different tags
+    preprocess.SaveMemTag(0, "tagA");
+    preprocess.SaveMemTag(1, "tagB");
+
+    // first record with tagA
+    auto hr1 = MakeHookRecord(1, 300, 0);
+    auto frames = MakeFrames(3333);
+    BatchNativeHookData data1;
+    uint32_t id1 = preprocess.GetCallStackId(hr1, frames, data1);
+    EXPECT_GT(id1, 0u);
+
+    // same frames but tagB
+    auto hr2 = MakeHookRecord(1, 300, 1);
+    BatchNativeHookData data2;
+    uint32_t id2 = preprocess.GetCallStackId(hr2, frames, data2);
+    EXPECT_GT(id2, 0u);
+    EXPECT_NE(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash04
+@tc.desc: nodeType=0 and nodeId=0 should still work as a valid dimension for stack mapping.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash04, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    // Use fp_unwind so GetCallStackId starts from idx=0 (won't skip single-frame stacks).
+    // Also GetCallStackId clears internal g_callStack to avoid cross-test contamination.
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SaveMemTag(0, "tagA");
+
+    auto hookRecord = MakeHookRecord(0, 0, 0);
+    auto frames = MakeFrames(4444);
+    BatchNativeHookData data;
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    EXPECT_GT(id1, 0u);
+
+    std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
+    uint32_t id2 = preprocess.FindCallStackId(lookupStack, hookRecord);
+    EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash05
+@tc.desc: nodeType=0 and nodeId!=0 should still work as a valid dimension for stack mapping.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash05, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SaveMemTag(0, "tagA");
+
+    auto hookRecord = MakeHookRecord(0, 123, 0);
+    auto frames = MakeFrames(5555);
+    BatchNativeHookData data;
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    EXPECT_GT(id1, 0u);
+
+    std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
+    uint32_t id2 = preprocess.FindCallStackId(lookupStack, hookRecord);
+    EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash06
+@tc.desc: tagName empty string (tagId not registered) should still work for stack mapping.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash06, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_fp_unwind(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Do not SaveMemTag for tagId 999, tagName remains empty.
+    constexpr uint32_t kUnregisteredTagId = 999;
+
+    auto hookRecord = MakeHookRecord(1, 100, kUnregisteredTagId);
+    auto frames = MakeFrames(6666);
+    BatchNativeHookData data;
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, frames, data);
+    EXPECT_GT(id1, 0u);
+
+    std::vector<uint64_t> lookupStack {static_cast<uint64_t>(frames[0].callFrameId_)};
+    uint32_t id2 = preprocess.FindCallStackId(lookupStack, hookRecord);
+    EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: CallStackHash07
+@tc.desc: callStack empty should still be supported and map consistently.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SaveMemTag(0, "tagA");
+    auto hookRecord = MakeHookRecord(1, 100, 0);
+
+    // Make callStack empty by calling GetCallStackId with fewer frames than FILTER_STACK_DEPTH,
+    // so FillCallStack adds nothing after g_callStack.clear().
+    std::vector<CallFrame> emptyFrames;
+    BatchNativeHookData data;
+    uint32_t id1 = preprocess.GetCallStackId(hookRecord, emptyFrames, data);
+    EXPECT_GT(id1, 0u);
+
+    std::vector<uint64_t> emptyCallStack;
+    uint32_t id2 = preprocess.FindCallStackId(emptyCallStack, hookRecord);
+    EXPECT_EQ(id1, id2);
 }
 }
