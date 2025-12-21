@@ -112,6 +112,11 @@ constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
 constexpr uint64_t PROFILER_TYPE = 1ULL << 1;
 
+// Thread-local node info for restrace. Keep storage internal (not exported).
+static thread_local uint32_t g_treadTraceType;
+static thread_local uint64_t g_treadTraceId;
+static thread_local bool g_nodeIdSeted = false;
+
 const MallocDispatchType* GetDispatch()
 {
     return g_dispatch.load(std::memory_order_relaxed);
@@ -164,6 +169,44 @@ pid_t GetRealPid(void)
     return static_cast<pid_t>(ConvertPid(buf, sizeof(buf)));
 }
 }  // namespace
+
+// Exported API for other components (via dlsym).
+extern "C" __attribute__((visibility("default"))) void SetResTraceId(
+    uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTraceType, uint64_t* pOldTraceID)
+{
+    if (!pOldTraceType || !pOldTraceID) {
+        return;
+    }
+    *pOldTraceType = g_treadTraceType;
+    *pOldTraceID = g_treadTraceId;
+
+    g_treadTraceType = newTraceType;
+    g_treadTraceId = newTraceID;
+    g_nodeIdSeted = true;
+}
+
+static inline bool GetResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
+{
+    if (!pTraceType || !pTraceID) {
+        return false;
+    }
+    *pTraceType = g_treadTraceType;
+    *pTraceID = g_treadTraceId;
+    return true;
+}
+
+inline void FillNodeInfo(BaseStackRawData& rawdata)
+{
+    if (!g_nodeIdSeted) {
+        return;
+    }
+    uint32_t nodeType;
+    uint64_t nodeId;
+    if (GetResTraceId(&nodeType, &nodeId)) {
+        rawdata.nodeType = nodeType;
+        rawdata.nodeId = nodeId;
+    }
+}
 
 pid_t GetCurThreadId()
 {
@@ -503,7 +546,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return ret;
     }
-
+    FillNodeInfo(rawdata);
     AddAllocAddr(ret);
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
     if (isAsyncStack) {
@@ -546,6 +589,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return ret;
     }
+    FillNodeInfo(rawdata);
     AddAllocAddr(ret);
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
@@ -599,6 +643,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return pRet;
     }
+    FillNodeInfo(rawdata);
     AddAllocAddr(pRet);
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
@@ -660,6 +705,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     SetStackRawData(freeData, FREE_MSG, ptr, 0);
     freeData.ts = rawdata.ts;
 
+    FillNodeInfo(rawdata);
     AddAllocAddr(pRet);
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth);
     int freeRealSize = g_clientConfig.fpunwind ? sizeof(BaseStackRawData) : realSize;
@@ -774,6 +820,7 @@ bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_
         fileName[len] = '\0';
         if (strstr(fileName, "/dev/ashmem") != NULL || strstr(fileName, ".so") != NULL) {
             rawdata.type = MEMORY_USING_MSG;
+            FillNodeInfo(rawdata);
         }
         HookClientHolder client(g_hookClient);
         if (!client.IsValid()) {
@@ -937,6 +984,7 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return;
     }
+    FillNodeInfo(rawdata);
     uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
@@ -1041,6 +1089,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return;
     }
+    FillNodeInfo(rawdata);
     uint16_t type = isUsing ? MEMORY_USING_MSG : MEMORY_UNUSING_MSG;
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);

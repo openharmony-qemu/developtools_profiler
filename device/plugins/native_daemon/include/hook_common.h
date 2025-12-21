@@ -137,6 +137,8 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
     uint32_t tid;
     uint16_t type;
     uint16_t tagId;
+    uint32_t nodeType;
+    uint64_t nodeId;
 };
 
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
@@ -173,6 +175,8 @@ struct alignas(8) ReportEventBaseData { // 8 is 8 bit
     uint32_t mallocSize;
     uint32_t tid;
     uint32_t stackMapId;
+    uint32_t nodeType = 0;
+    uint64_t nodeId = 0;
 };
 
 struct alignas(8) ArkTsClientConfig { // 8 is 8 bit

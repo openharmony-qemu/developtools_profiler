@@ -52,6 +52,8 @@ struct RecordStatistic {
     uint64_t applySize {0};
     uint64_t releaseSize {0};
     std::string tagName = "";
+    uint32_t nodeType {0};
+    uint64_t nodeId {0};
 };
 
 struct CallStackHash {
@@ -61,6 +63,39 @@ struct CallStackHash {
     }
 };
 
+struct NewCallStack {
+    std::vector<uint64_t> callStack;
+    uint32_t nodeType;
+    uint64_t nodeId;
+    std::string tagName;
+
+    // cached callStack hash to avoid repeated accumulation cost
+    mutable uint64_t cachedCallStackHash {0};
+    mutable bool cachedCallStackHashValid {false};
+    uint64_t GetCallStackHash() const
+    {
+        if (!cachedCallStackHashValid) {
+            cachedCallStackHash = CallStackHash{}(callStack);
+            cachedCallStackHashValid = true;
+        }
+        return cachedCallStackHash;
+    }
+
+    bool operator == (const NewCallStack& other) const
+    {
+        return nodeId == other.nodeId &&
+               nodeType == other.nodeType &&
+               tagName == other.tagName &&
+               callStack == other.callStack;
+    }
+};
+
+struct NewCallStackHash {
+    uint64_t operator()(const NewCallStack& key) const
+    {
+        return key.GetCallStackHash();
+    }
+};
 
 class StackPreprocess : public std::enable_shared_from_this<StackPreprocess> {
 public:
@@ -180,10 +215,10 @@ private:
     template <typename T>
     void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
     template <typename T>
-    uint32_t SetCallStackMap(T& stackData);
+    uint32_t SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord);
     template <typename T>
     uint32_t GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
-    uint32_t FindCallStackId(std::vector<uint64_t>& callStack);
+    uint32_t FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord);
     template <typename T>
     void SetEventFrame(const RawStackPtr& rawStack, std::vector<CallFrame>& callFrames,
         T* event, uint32_t stackId, const std::string& type = "");
@@ -239,7 +274,7 @@ private:
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
     // Key is callStack_, value is call stack id
-    std::unordered_map<std::vector<uint64_t>, uint32_t, CallStackHash> callStackMap_;
+    std::unordered_map<NewCallStack, uint32_t, NewCallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
