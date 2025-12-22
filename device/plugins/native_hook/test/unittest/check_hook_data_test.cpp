@@ -116,8 +116,13 @@ public:
             command_.push_back(const_cast<char*>(outFile_.c_str()));
             command_.push_back(const_cast<char*>("-sms"));
             command_.push_back(const_cast<char*>(std::to_string(SHARE_MEMORY_SIZE).c_str()));
-            command_.push_back(const_cast<char*>("-p"));
-            command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+            if (!extendPid_) {
+                command_.push_back(const_cast<char*>("-p"));
+                command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+            } else {
+                command_.push_back(const_cast<char*>("-pe"));
+                command_.push_back(const_cast<char*>(std::to_string(hookPid_).c_str()));
+            }
             command_.push_back(const_cast<char*>("-d"));
             command_.push_back(const_cast<char*>(std::to_string(HOOK_TIME).c_str()));
             if (modeIndex_ == 0) {
@@ -482,6 +487,7 @@ public:
     bool saveFile_ = false;
     bool isHookStandalone_ = true;
     bool dumpdata_ = false;
+    bool extendPid_ = false;
     bool nmd_ = false;
     std::string outFile_ = "";
     std::string outFileType_ = "";
@@ -1392,6 +1398,68 @@ HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0230, Function | MediumTest | Lev
     }
 }
 #endif
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test dumpdata with -pe command.
+ * @tc.type: FUNC
+ */
+HWTEST_F(CheckHookDataTest, DFX_DFR_Hiprofiler_0240, Function | MediumTest | Level0)
+{
+    for (size_t i = 1; i < 2; ++i) { // 2: 0 is dwarf, 1 is fp mode
+        unwindDepth_ = 10;
+        statisticsInterval_ = 1;
+        modeIndex_ = i;
+        dumpdata_ = true;
+        offlineSymbolization_ = true;
+        extendPid_ = true;
+        outFileType_ = "extend_pid_";
+        StartMallocProcess();
+        sleep(1);
+        StartDaemonProcessArgs();
+        sleep(WAIT_FLUSH);
+        StopProcess(hookPid_);
+        syscall(SYS_tkill, daemonPid_, 2);
+
+        std::ifstream infile;
+        infile.open(outFile_, std::ios::in);
+        ASSERT_TRUE(infile.is_open());
+        std::string buf;
+        std::string expectCallStackId;
+        std::string statisticsCallStackId;
+        while (getline(infile, buf)) {
+            if (buf.find("stack_map") != std::string::npos) {
+                if (!expectCallStackId.empty()) {
+                    continue;
+                }
+                getline(infile, buf); // read stack_map id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                expectCallStackId = resultVec[1];
+                std::cout << "expectCallStackId: " << expectCallStackId << std::endl;
+            } else if (buf.find("statistics_event") != std::string::npos) {
+                getline(infile, buf); // read statistics_event pid
+                getline(infile, buf); // read statistics_event callstack_id
+                std::vector<std::string>& resultVec = StringSplit(buf, ':');
+                statisticsCallStackId = resultVec[1];
+                std::cout << "statisticsCallStackId: " << statisticsCallStackId << std::endl;
+                if (expectCallStackId == statisticsCallStackId) {
+                    break;
+                }
+            }
+        }
+        getline(infile, buf); // read statistics_event apply_count
+        if (buf.find("type") != std::string::npos) {
+            getline(infile, buf);
+        }
+        std::vector<std::string>& resultVec = StringSplit(buf, ':');
+        ASSERT_FALSE(resultVec.empty());
+        ASSERT_TRUE(COMMON::IsNumeric(resultVec[1].c_str()));
+        uint16_t applyCount = std::atoi(resultVec[1].c_str());
+        std::cout << "applyCount: " << applyCount << std::endl;
+        EXPECT_TRUE(applyCount > 0);
+        sleep(SLEEP_TIME);
+    }
+}
 }
 
 #pragma clang optimize on
