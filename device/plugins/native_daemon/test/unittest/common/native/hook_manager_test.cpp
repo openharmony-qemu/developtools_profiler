@@ -260,4 +260,209 @@ HWTEST_F(HookManagerTest, CheckHapEncryped, TestSize.Level0)
     EXPECT_EQ(hookManager->hookConfig_.js_stack_report(), 1);
     EXPECT_EQ(hookManager->hookConfig_.max_js_stack_depth(), TEST_MAX_JS_STACK_DEPTH);
 }
+
+/*
+ * @tc.name: ConvertTagToMaskEmptyTagList
+ * @tc.desc: test ConvertTagToMask with empty tag list.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskEmptyTagList, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    // Empty restrace_tag list
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, 0ULL);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskSingleTagConversion
+ * @tc.desc: test ConvertTagToMask with single tag conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add single tag
+    config.add_restrace_tag("RES_GPU_VK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskMultipleTagConversion
+ * @tc.desc: test ConvertTagToMask with multiple tags conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskMultipleTagConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add multiple tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_THREAD_PTHREAD");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN | RES_THREAD_PTHREAD);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskAllTagsConversion
+
+ * @tc.desc: test ConvertTagToMask with all tags conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskAllTagsConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add all tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_GPU_GLES_IMAGE");
+    config.add_restrace_tag("RES_GPU_GLES_BUFFER");
+    config.add_restrace_tag("RES_GPU_CL_IMAGE");
+    config.add_restrace_tag("RES_GPU_CL_BUFFER");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_FD_EPOLL");
+    config.add_restrace_tag("RES_FD_EVENTFD");
+    config.add_restrace_tag("RES_FD_SOCKET");
+    config.add_restrace_tag("RES_FD_PIPE");
+    config.add_restrace_tag("RES_FD_DUP");
+    config.add_restrace_tag("RES_FD_ALL");
+    config.add_restrace_tag("RES_THREAD_PTHREAD");
+    config.add_restrace_tag("RES_THREAD_ALL");
+    config.add_restrace_tag("RES_ARKTS_HEAP_MASK");
+    config.add_restrace_tag("RES_JS_HEAP_MASK");
+    config.add_restrace_tag("RES_KMP_HEAP_MASK");
+    config.add_restrace_tag("RES_RN_HEAP_MASK");
+    config.add_restrace_tag("RES_DMABUF_MASK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK | RES_GPU_GLES_IMAGE | RES_GPU_GLES_BUFFER | RES_GPU_CL_IMAGE | RES_GPU_CL_BUFFER |
+              RES_FD_OPEN | RES_FD_EPOLL | RES_FD_EVENTFD | RES_FD_SOCKET | RES_FD_PIPE | RES_FD_DUP |
+              RES_FD_MASK | RES_THREAD_PTHREAD | RES_THREAD_MASK | RES_ARKTS_HEAP_MASK | RES_JS_HEAP_MASK |
+              RES_KMP_HEAP_MASK | RES_RN_HEAP_MASK | RES_DMABUF_MASK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskInvalidTagHandling
+ * @tc.desc: test ConvertTagToMask with invalid tag handling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskInvalidTagHandling, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add invalid tag
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("INVALID_TAG");
+    config.add_restrace_tag("RES_FD_OPEN");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // Invalid tags should be ignored, only process valid tags
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskDuplicateTagHandling
+ * @tc.desc: test ConvertTagToMask with duplicate tag handling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskDuplicateTagHandling, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add duplicate tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_FD_OPEN");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // Duplicate tags should be ignored, only process unique tags
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskSpecificTagCombinations
+ * @tc.desc: test ConvertTagToMask with specific tag combinations.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSpecificTagCombinations, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Test FD related tags
+    config.add_restrace_tag("RES_FD_ALL");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_FD_SOCKET");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // RES_FD_ALL should include all FD related flags
+    EXPECT_TRUE(result & RES_FD_MASK);
+    EXPECT_TRUE(result & RES_FD_OPEN);
+    EXPECT_TRUE(result & RES_FD_SOCKET);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskBoundaryConditions
+ * @tc.desc: test ConvertTagToMask with boundary conditions.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskBoundaryConditions, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Test boundary conditions
+    config.add_restrace_tag("RES_DMABUF_MASK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_DMABUF_MASK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskPerformanceTest
+ * @tc.desc: test ConvertTagToMask with performance test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskPerformanceTest, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    const int testCount = 10000;
+    const int timeout = 1000; // 1 millisecond
+    // Add a large number of tags for performance test
+    for (int i = 0; i < testCount; i++) {
+        config.add_restrace_tag("RES_GPU_VK");
+    }
+    
+    hookManager.SetHookConfig(config);
+
+    // Test execution time
+    auto start = std::chrono::high_resolution_clock::now();
+    unsigned long long result = hookManager.ConvertTagToMask();
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    EXPECT_EQ(result, RES_GPU_VK);
+    EXPECT_LT(duration, timeout); // Expect the execution time to be less than 1 millisecond
+}
 } // namespace
