@@ -21,10 +21,15 @@ namespace OHOS {
 namespace SmartPerf {
 struct FpsInfo {
     int fps;
+    double avgDrawCall = 0;
+    double maxDrawCall = 0;
+    double avgScanout = 0;
+    double maxScanout = 0;
     std::vector<long long> jitters;
     std::vector<long long> currTimeStamps;
     std::vector<long long> currDumpTimeStamps;
     std::vector<long long> presentFenceTimeStamps;
+    std::vector<long long> flushTimeStamps;
     int curTime;
     long long currTimeDiff;
     long long currTimeDump;
@@ -69,7 +74,7 @@ public:
     void SetLayerName(const std::string& sName);
     FpsInfo GetFpsInfo();
     FpsInfo GetDiffLayersFpsInfo(const std::string &sName);
-    bool CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRefreshInfoToSP);
+    bool CalcFpsAndJitters(bool isBreak, std::string &curTimestamp, bool isGetRefreshInfoToSP);
     long long CalculateJitter(long long &curTimestamp) const;
     FpsInfo fpsInfo;
     FpsInfo fpsInfoData;
@@ -88,7 +93,11 @@ public:
     void SetRkFlag();
     std::string FindFpsRefreshrate();
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
+    void calcDrawFrame(std::vector<long long> &flushtimeStamps);
+    void colleCurFrame(long long &flushtime);
     void CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curTimestamp);
+    void ColleScanout(std::vector<long long> &flushtimeStamps, std::vector<long long> &currDumpTimeStamps);
+    void calcScanout(long long &curDumpTime, long long &curFlushTime);
     static inline bool isGameApp = false;
     static inline bool isNeedDump = false;
     static inline bool isPreset = false;
@@ -135,6 +144,14 @@ private:
     long long presentFenceCurScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
     long long prevlastScreenTimestamp = 0;
+    long long lastFlushTimeStamp = 0;
+    long long curDrawCal = 0;
+    long long lastDrawCal = 0;
+    long long totalDrawCal = 0;
+    long long curScanout = 0;
+    long long lastScanout = 0;
+    long long totalScanout = 0;
+    bool firstDrawFlag = true;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(const std::string& name);
     int fifty = 50;
@@ -166,6 +183,7 @@ private:
     int isCatchTrace = 0;
     std::string nodeIdStr = "";
     bool isUniRender = false;
+    bool heelChiraityFlag = false;
 };
 }
 }

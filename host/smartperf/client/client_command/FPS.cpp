@@ -44,7 +44,7 @@ std::map<std::string, std::string> FPS::ItemData()
         heelChiraityFlag = false;
         firstDrawFlag = true;
         fpsInfo.currDumpTimeStamps.clear();
-        fpsInfo.flushtimestamps.clear();
+        fpsInfo.flushTimeStamps.clear();
         fpsInfo.presentFenceTimeStamps.clear();
         fpsInfoResult = GetFpsInfo();
     }
@@ -85,7 +85,7 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
     if (!isStartStop) {
         result["fpsJitters"] = jitterStr;
     }
-    LOGI("result.fps: %s, result.curTime: %s, result.jitters: %s",
+    LOGD("result.fps: %s, result.curTime: %s, result.jitters: %s",
         std::to_string(fpsInfoResult.fps).c_str(),
         std::to_string(fpsInfoResult.curTime).c_str(),
         jitterStr.c_str());
@@ -99,6 +99,33 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
         ByTrace::GetInstance().CheckFpsJitters(maxJitters, fpsInfoResult.fps);
     }
     return result;
+}
+
+void FPS::HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std::string> &result)
+{
+    const size_t million = 1000000;
+    if (heelChiraityFlag) {
+        if (fpsInfoResult.avgDrawCall == 0) {
+            result["avgDrawCall"] = "0";
+        } else {
+            result["avgDrawCall"] = std::to_string(fpsInfoResult.avgDrawCall / million);
+        }
+        if (fpsInfoResult.maxDrawCall == 0) {
+            result["maxDrawCall"] = "0";
+        } else {
+            result["maxDrawCall"] = std::to_string(fpsInfoResult.maxDrawCall / million);
+        }
+        if (fpsInfoResult.avgScanout == 0) {
+            result["avgScanout"] = "0";
+        } else {
+            result["avgScanout"] = std::to_string(fpsInfoResult.avgScanout / million);
+        }
+        if (fpsInfoResult.maxScanout == 0) {
+            result["maxScanout"] = "0";
+        } else {
+            result["maxScanout"] = std::to_string(fpsInfoResult.maxScanout / million);
+        }
+    }
 }
 
 void FPS::CalcFatalCaton(std::vector<long long>& jitters)
@@ -310,7 +337,7 @@ void FPS::ReadDataFromPipe(int fd)
         return;
     }
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
-        LOGI("FPS::ReadDataFromPipe::dump time: %s", tmp);
+        LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
         std::string curScreenTimestamp(tmp);
         if (!strcmp(curScreenTimestamp.c_str(), "0")) {
             continue;
@@ -345,41 +372,39 @@ void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence)
 
 FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
 {
-    LOGI("yanzhe GetFpsInfoByRs name = %s", name.c_str());
     if (!name.empty()) {
        // fps
         heelChiraityFlag = true;
         uint64_t nodeId;
         std::istringstream s(name);
         s >> nodeId;
-        LOGI("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
+        LOGD("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
-        LOGI("FPS fpsInfoResult GetRefreshInfoToSP: %s", fpsInfoResult.c_str());
+        LOGD("FPS fpsInfoResult GetRefreshInfoToSP: %s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, true);
-        LOGI("yanzhe currDumpTimeStamps.size = (%u)", fpsInfo.currDumpTimeStamps.size());
         // when GetRefreshInfo data is empty, get GetRefreshInfoToSP to calc jitters.
         if (fpsInfo.currDumpTimeStamps.empty()) {
-            LOGI("FPS::fosInfo.currDumpTimeStamps.empty");
+            LOGD("FPS::fosInfo.currDumpTimeStamps.empty");
             CalcJitters(fpsInfo.presentFenceTimeStamps);
         }
         std::thread calcDrawFrameThread([this]() {
-            this->calcDrawFrame(fpsInfo.flushtimestamps);
+            this->calcDrawFrame(fpsInfo.flushTimeStamps);
         });
         std::thread CalcScanoutThread([this]() {
-            this->ColleScanout(fpsInfo.flushtimestamps, fpsInfo.presentFenceTimeStamps);
+            this->ColleScanout(fpsInfo.flushTimeStamps, fpsInfo.presentFenceTimeStamps);
         });
         calcDrawFrameThread.join();
         CalcScanoutThread.join();
-        fpsInfo.avgDrawCall = totalDrawCal / fpsInfo.flushtimestamps.size();
-        fpsInfo.avgScanout = totalScanout / fpsInfo.flushtimestamps.size();
+        fpsInfo.avgDrawCall = totalDrawCal / fpsInfo.flushTimeStamps.size();
+        fpsInfo.avgScanout = totalScanout / fpsInfo.flushTimeStamps.size();
         totalDrawCal = 0;
         totalScanout = 0;
     } else {
         // jitters
         pid_t pid = std::atoi(processId.c_str());
-        LOGI("FPS::GetFpsInfoByRs pid: (%d)", pid);
+        LOGD("FPS::GetFpsInfoByRs pid: (%d)", pid);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfo(pid);
-        LOGI("FPS fpsInfoResult GetRefreshInfo: %s", fpsInfoResult.c_str());
+        LOGD("FPS fpsInfoResult GetRefreshInfo: %s", fpsInfoResult.c_str());
         GetCurTimeStamps(fpsInfoResult, false);
         CalcJitters(fpsInfo.currDumpTimeStamps);
     }
@@ -397,8 +422,7 @@ bool FPS::CalcFpsAndJitters(bool isBreak, std::string &curTimestamp, bool isGetR
         presenttimestamp = SPUtilesTye::StringToSometype<long long>(curTimestamp.substr(pos + 1));
         findFpsCurTime = ((presenttimestamp / mod) == fpsInfo.curTime);
         if (findFpsCurTime) {
-            LOGI("yanzhe CalcFpsAndJitters flushtimestamp = %lld | presenttimestamp = %lld", flushtimestamp, presenttimestamp);
-            fpsInfo.flushtimestamps.push_back(flushtimestamp);
+            fpsInfo.flushTimeStamps.push_back(flushtimestamp);
         }
     } else {
         presenttimestamp = SPUtilesTye::StringToSometype<long long>(curTimestamp);
@@ -461,7 +485,6 @@ void FPS::colleCurFrame(long long &flushtime)
         fpsInfo.maxDrawCall = (curDrawCal > fpsInfo.maxDrawCall) ? curDrawCal : fpsInfo.maxDrawCall;
     }
     firstDrawFlag = false;
-    LOGI("yanzhe colleCurFrame = %lld maxDrawCall = %lld", curDrawCal, fpsInfo.maxDrawCall);
 }
 
 void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps)
