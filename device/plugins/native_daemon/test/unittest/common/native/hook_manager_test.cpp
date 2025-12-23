@@ -465,4 +465,171 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskPerformanceTest, TestSize.Level0)
     EXPECT_EQ(result, RES_GPU_VK);
     EXPECT_LT(duration, timeout); // Expect the execution time to be less than 1 millisecond
 }
+
+/*
+ * @tc.name: GetCmdArgsEmptyConfig
+ * @tc.desc: test GetCmdArgs with empty config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsEmptyConfig, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    
+    std::string result = hookManager.GetCmdArgs(config);
+
+    EXPECT_NE(result, "");
+    EXPECT_NE(result.find("pid: "), std::string::npos);
+    EXPECT_NE(result.find("save_file: false"), std::string::npos);
+    EXPECT_NE(result.find("filter_size: 0"), std::string::npos);
+    EXPECT_NE(result.find("smb_pages: 0"), std::string::npos);
+    EXPECT_NE(result.find("max_stack_depth: 0"), std::string::npos);
+    EXPECT_NE(result.find("process_name: "), std::string::npos);
+    EXPECT_NE(result.find("malloc_disable: false"), std::string::npos);
+    EXPECT_NE(result.find("mmap_disable: false"), std::string::npos);
+    EXPECT_NE(result.find("free_stack_report: false"), std::string::npos);
+    EXPECT_NE(result.find("munmap_stack_report: false"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_cnt: 0"), std::string::npos);
+    EXPECT_NE(result.find("string_compressed: false"), std::string::npos);
+    EXPECT_NE(result.find("fp_unwind: false"), std::string::npos);
+    EXPECT_NE(result.find("blocked: false"), std::string::npos);
+    EXPECT_NE(result.find("record_accurately: false"), std::string::npos);
+    EXPECT_NE(result.find("startup_mode: false"), std::string::npos);
+    EXPECT_NE(result.find("memtrace_enable: false"), std::string::npos);
+    EXPECT_NE(result.find("offline_symbolization: false"), std::string::npos);
+    EXPECT_NE(result.find("callframe_compress: false"), std::string::npos);
+    EXPECT_NE(result.find("statistics_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("clock: "), std::string::npos);
+    EXPECT_NE(result.find("sample_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("response_library_mode: false"), std::string::npos);
+    EXPECT_NE(result.find("js_stack_report: 0"), std::string::npos);
+    EXPECT_NE(result.find("max_js_stack_depth: 0"), std::string::npos);
+    EXPECT_NE(result.find("filter_napi_name: "), std::string::npos);
+    EXPECT_NE(result.find("target_so_name: "), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsBasicConfig
+ * @tc.desc: test GetCmdArgs with basic config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsBasicConfig, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_pid(1);
+    config.set_save_file(true);
+    config.set_filter_size(1024);
+    config.set_smb_pages(64);
+    config.set_max_stack_depth(32);
+    config.set_process_name("test_process");
+
+    std::string result = hookManager.GetCmdArgs(config);
+
+    EXPECT_NE(result, "");
+    // Notice that "pid: test_process" cannot be found.
+    EXPECT_NE(result.find("save_file: true"), std::string::npos);
+    EXPECT_NE(result.find("filter_size: 1024"), std::string::npos);
+    EXPECT_NE(result.find("smb_pages: 64"), std::string::npos);
+    EXPECT_NE(result.find("max_stack_depth: 32"), std::string::npos);
+    EXPECT_NE(result.find("process_name: test_process"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsBooleanFlags
+ * @tc.desc: test GetCmdArgs with boolean flags.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsBooleanFlags, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_malloc_disable(true);
+    config.set_mmap_disable(true);
+    config.set_free_stack_report(true);
+    config.set_munmap_stack_report(true);
+    config.set_string_compressed(true);
+    config.set_fp_unwind(true);
+    config.set_blocked(true);
+    config.set_record_accurately(true);
+    config.set_startup_mode(true);
+    config.set_memtrace_enable(true);
+    config.set_offline_symbolization(true);
+    config.set_callframe_compress(true);
+    config.set_response_library_mode(true);
+
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("malloc_disable: true"), std::string::npos);
+    EXPECT_NE(result.find("mmap_disable: true"), std::string::npos);
+    EXPECT_NE(result.find("free_stack_report: true"), std::string::npos);
+    EXPECT_NE(result.find("munmap_stack_report: true"), std::string::npos);
+    EXPECT_NE(result.find("string_compressed: true"), std::string::npos);
+    EXPECT_NE(result.find("fp_unwind: true"), std::string::npos);
+    EXPECT_NE(result.find("blocked: true"), std::string::npos);
+    EXPECT_NE(result.find("record_accurately: true"), std::string::npos);
+    EXPECT_NE(result.find("startup_mode: true"), std::string::npos);
+    EXPECT_NE(result.find("memtrace_enable: true"), std::string::npos);
+    EXPECT_NE(result.find("offline_symbolization: true"), std::string::npos);
+    EXPECT_NE(result.find("callframe_compress: true"), std::string::npos);
+    EXPECT_NE(result.find("response_library_mode: true"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsNumericValues
+ * @tc.desc: test GetCmdArgs with numeric values.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsNumericValues, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_malloc_free_matching_interval(1000);
+    config.set_malloc_free_matching_cnt(5);
+    config.set_statistics_interval(30);
+    config.set_sample_interval(100);
+    config.set_js_stack_report(1);
+    config.set_max_js_stack_depth(10);
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("malloc_free_matching_interval: 1000"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_cnt: 5"), std::string::npos);
+    EXPECT_NE(result.find("statistics_interval: 30"), std::string::npos);
+    EXPECT_NE(result.find("sample_interval: 100"), std::string::npos);
+    EXPECT_NE(result.find("js_stack_report: 1"), std::string::npos);
+    EXPECT_NE(result.find("max_js_stack_depth: 10"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsStringValues
+ * @tc.desc: test GetCmdArgs with string values.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsStringValues, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_clock("clock: monotonic");
+    config.set_filter_napi_name("test");
+    config.set_target_so_name("test.so");
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("clock: monotonic"), std::string::npos);
+    EXPECT_NE(result.find("filter_napi_name: test"), std::string::npos);
+    EXPECT_NE(result.find("target_so_name: test.so"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsExpandPids
+ * @tc.desc: test GetCmdArgs with expand_pids.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsExpandPids, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.add_expand_pids(2001);
+    config.add_expand_pids(2002);
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("expand_pids: 2001"), std::string::npos);
+    EXPECT_NE(result.find("expand_pids: 2002"), std::string::npos);
+}
 } // namespace
