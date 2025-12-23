@@ -260,4 +260,376 @@ HWTEST_F(HookManagerTest, CheckHapEncryped, TestSize.Level0)
     EXPECT_EQ(hookManager->hookConfig_.js_stack_report(), 1);
     EXPECT_EQ(hookManager->hookConfig_.max_js_stack_depth(), TEST_MAX_JS_STACK_DEPTH);
 }
+
+/*
+ * @tc.name: ConvertTagToMaskEmptyTagList
+ * @tc.desc: test ConvertTagToMask with empty tag list.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskEmptyTagList, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    // Empty restrace_tag list
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, 0ULL);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskSingleTagConversion
+ * @tc.desc: test ConvertTagToMask with single tag conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add single tag
+    config.add_restrace_tag("RES_GPU_VK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskMultipleTagConversion
+ * @tc.desc: test ConvertTagToMask with multiple tags conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskMultipleTagConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add multiple tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_THREAD_PTHREAD");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN | RES_THREAD_PTHREAD);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskAllTagsConversion
+
+ * @tc.desc: test ConvertTagToMask with all tags conversion.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskAllTagsConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add all tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_GPU_GLES_IMAGE");
+    config.add_restrace_tag("RES_GPU_GLES_BUFFER");
+    config.add_restrace_tag("RES_GPU_CL_IMAGE");
+    config.add_restrace_tag("RES_GPU_CL_BUFFER");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_FD_EPOLL");
+    config.add_restrace_tag("RES_FD_EVENTFD");
+    config.add_restrace_tag("RES_FD_SOCKET");
+    config.add_restrace_tag("RES_FD_PIPE");
+    config.add_restrace_tag("RES_FD_DUP");
+    config.add_restrace_tag("RES_FD_ALL");
+    config.add_restrace_tag("RES_THREAD_PTHREAD");
+    config.add_restrace_tag("RES_THREAD_ALL");
+    config.add_restrace_tag("RES_ARKTS_HEAP_MASK");
+    config.add_restrace_tag("RES_JS_HEAP_MASK");
+    config.add_restrace_tag("RES_KMP_HEAP_MASK");
+    config.add_restrace_tag("RES_RN_HEAP_MASK");
+    config.add_restrace_tag("RES_DMABUF_MASK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_GPU_VK | RES_GPU_GLES_IMAGE | RES_GPU_GLES_BUFFER | RES_GPU_CL_IMAGE | RES_GPU_CL_BUFFER |
+              RES_FD_OPEN | RES_FD_EPOLL | RES_FD_EVENTFD | RES_FD_SOCKET | RES_FD_PIPE | RES_FD_DUP |
+              RES_FD_MASK | RES_THREAD_PTHREAD | RES_THREAD_MASK | RES_ARKTS_HEAP_MASK | RES_JS_HEAP_MASK |
+              RES_KMP_HEAP_MASK | RES_RN_HEAP_MASK | RES_DMABUF_MASK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskInvalidTagHandling
+ * @tc.desc: test ConvertTagToMask with invalid tag handling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskInvalidTagHandling, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add invalid tag
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("INVALID_TAG");
+    config.add_restrace_tag("RES_FD_OPEN");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // Invalid tags should be ignored, only process valid tags
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskDuplicateTagHandling
+ * @tc.desc: test ConvertTagToMask with duplicate tag handling.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskDuplicateTagHandling, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add duplicate tags
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_GPU_VK");
+    config.add_restrace_tag("RES_FD_OPEN");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // Duplicate tags should be ignored, only process unique tags
+    EXPECT_EQ(result, RES_GPU_VK | RES_FD_OPEN);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskSpecificTagCombinations
+ * @tc.desc: test ConvertTagToMask with specific tag combinations.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSpecificTagCombinations, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Test FD related tags
+    config.add_restrace_tag("RES_FD_ALL");
+    config.add_restrace_tag("RES_FD_OPEN");
+    config.add_restrace_tag("RES_FD_SOCKET");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    // RES_FD_ALL should include all FD related flags
+    EXPECT_TRUE(result & RES_FD_MASK);
+    EXPECT_TRUE(result & RES_FD_OPEN);
+    EXPECT_TRUE(result & RES_FD_SOCKET);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskBoundaryConditions
+ * @tc.desc: test ConvertTagToMask with boundary conditions.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskBoundaryConditions, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Test boundary conditions
+    config.add_restrace_tag("RES_DMABUF_MASK");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_DMABUF_MASK);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskPerformanceTest
+ * @tc.desc: test ConvertTagToMask with performance test.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskPerformanceTest, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    const int testCount = 10000;
+    const int timeout = 1000; // 1 millisecond
+    // Add a large number of tags for performance test
+    for (int i = 0; i < testCount; i++) {
+        config.add_restrace_tag("RES_GPU_VK");
+    }
+    
+    hookManager.SetHookConfig(config);
+
+    // Test execution time
+    auto start = std::chrono::high_resolution_clock::now();
+    unsigned long long result = hookManager.ConvertTagToMask();
+    auto end = std::chrono::high_resolution_clock::now();
+
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
+    EXPECT_EQ(result, RES_GPU_VK);
+    EXPECT_LT(duration, timeout); // Expect the execution time to be less than 1 millisecond
+}
+
+/*
+ * @tc.name: GetCmdArgsEmptyConfig
+ * @tc.desc: test GetCmdArgs with empty config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsEmptyConfig, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    
+    std::string result = hookManager.GetCmdArgs(config);
+
+    EXPECT_NE(result, "");
+    EXPECT_NE(result.find("pid: "), std::string::npos);
+    EXPECT_NE(result.find("save_file: false"), std::string::npos);
+    EXPECT_NE(result.find("filter_size: 0"), std::string::npos);
+    EXPECT_NE(result.find("smb_pages: 0"), std::string::npos);
+    EXPECT_NE(result.find("max_stack_depth: 0"), std::string::npos);
+    EXPECT_NE(result.find("process_name: "), std::string::npos);
+    EXPECT_NE(result.find("malloc_disable: false"), std::string::npos);
+    EXPECT_NE(result.find("mmap_disable: false"), std::string::npos);
+    EXPECT_NE(result.find("free_stack_report: false"), std::string::npos);
+    EXPECT_NE(result.find("munmap_stack_report: false"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_cnt: 0"), std::string::npos);
+    EXPECT_NE(result.find("string_compressed: false"), std::string::npos);
+    EXPECT_NE(result.find("fp_unwind: false"), std::string::npos);
+    EXPECT_NE(result.find("blocked: false"), std::string::npos);
+    EXPECT_NE(result.find("record_accurately: false"), std::string::npos);
+    EXPECT_NE(result.find("startup_mode: false"), std::string::npos);
+    EXPECT_NE(result.find("memtrace_enable: false"), std::string::npos);
+    EXPECT_NE(result.find("offline_symbolization: false"), std::string::npos);
+    EXPECT_NE(result.find("callframe_compress: false"), std::string::npos);
+    EXPECT_NE(result.find("statistics_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("clock: "), std::string::npos);
+    EXPECT_NE(result.find("sample_interval: 0"), std::string::npos);
+    EXPECT_NE(result.find("response_library_mode: false"), std::string::npos);
+    EXPECT_NE(result.find("js_stack_report: 0"), std::string::npos);
+    EXPECT_NE(result.find("max_js_stack_depth: 0"), std::string::npos);
+    EXPECT_NE(result.find("filter_napi_name: "), std::string::npos);
+    EXPECT_NE(result.find("target_so_name: "), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsBasicConfig
+ * @tc.desc: test GetCmdArgs with basic config.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsBasicConfig, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_pid(1);
+    config.set_save_file(true);
+    config.set_filter_size(1024);
+    config.set_smb_pages(64);
+    config.set_max_stack_depth(32);
+    config.set_process_name("test_process");
+
+    std::string result = hookManager.GetCmdArgs(config);
+
+    EXPECT_NE(result, "");
+    // Notice that "pid: test_process" cannot be found.
+    EXPECT_NE(result.find("save_file: true"), std::string::npos);
+    EXPECT_NE(result.find("filter_size: 1024"), std::string::npos);
+    EXPECT_NE(result.find("smb_pages: 64"), std::string::npos);
+    EXPECT_NE(result.find("max_stack_depth: 32"), std::string::npos);
+    EXPECT_NE(result.find("process_name: test_process"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsBooleanFlags
+ * @tc.desc: test GetCmdArgs with boolean flags.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsBooleanFlags, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_malloc_disable(true);
+    config.set_mmap_disable(true);
+    config.set_free_stack_report(true);
+    config.set_munmap_stack_report(true);
+    config.set_string_compressed(true);
+    config.set_fp_unwind(true);
+    config.set_blocked(true);
+    config.set_record_accurately(true);
+    config.set_startup_mode(true);
+    config.set_memtrace_enable(true);
+    config.set_offline_symbolization(true);
+    config.set_callframe_compress(true);
+    config.set_response_library_mode(true);
+
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("malloc_disable: true"), std::string::npos);
+    EXPECT_NE(result.find("mmap_disable: true"), std::string::npos);
+    EXPECT_NE(result.find("free_stack_report: true"), std::string::npos);
+    EXPECT_NE(result.find("munmap_stack_report: true"), std::string::npos);
+    EXPECT_NE(result.find("string_compressed: true"), std::string::npos);
+    EXPECT_NE(result.find("fp_unwind: true"), std::string::npos);
+    EXPECT_NE(result.find("blocked: true"), std::string::npos);
+    EXPECT_NE(result.find("record_accurately: true"), std::string::npos);
+    EXPECT_NE(result.find("startup_mode: true"), std::string::npos);
+    EXPECT_NE(result.find("memtrace_enable: true"), std::string::npos);
+    EXPECT_NE(result.find("offline_symbolization: true"), std::string::npos);
+    EXPECT_NE(result.find("callframe_compress: true"), std::string::npos);
+    EXPECT_NE(result.find("response_library_mode: true"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsNumericValues
+ * @tc.desc: test GetCmdArgs with numeric values.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsNumericValues, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_malloc_free_matching_interval(1000);
+    config.set_malloc_free_matching_cnt(5);
+    config.set_statistics_interval(30);
+    config.set_sample_interval(100);
+    config.set_js_stack_report(1);
+    config.set_max_js_stack_depth(10);
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("malloc_free_matching_interval: 1000"), std::string::npos);
+    EXPECT_NE(result.find("malloc_free_matching_cnt: 5"), std::string::npos);
+    EXPECT_NE(result.find("statistics_interval: 30"), std::string::npos);
+    EXPECT_NE(result.find("sample_interval: 100"), std::string::npos);
+    EXPECT_NE(result.find("js_stack_report: 1"), std::string::npos);
+    EXPECT_NE(result.find("max_js_stack_depth: 10"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsStringValues
+ * @tc.desc: test GetCmdArgs with string values.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsStringValues, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.set_clock("clock: monotonic");
+    config.set_filter_napi_name("test");
+    config.set_target_so_name("test.so");
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("clock: monotonic"), std::string::npos);
+    EXPECT_NE(result.find("filter_napi_name: test"), std::string::npos);
+    EXPECT_NE(result.find("target_so_name: test.so"), std::string::npos);
+}
+
+/*
+ * @tc.name: GetCmdArgsExpandPids
+ * @tc.desc: test GetCmdArgs with expand_pids.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, GetCmdArgsExpandPids, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+    config.add_expand_pids(2001);
+    config.add_expand_pids(2002);
+    std::string result = hookManager.GetCmdArgs(config);
+    EXPECT_NE(result.find("expand_pids: 2001"), std::string::npos);
+    EXPECT_NE(result.find("expand_pids: 2002"), std::string::npos);
+}
 } // namespace
