@@ -50,10 +50,10 @@ using namespace OHOS::Developtools::NativeDaemon;
 using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::Profiler;
 
-static thread_local std::vector<uint64_t> g_callStack;
-static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
-static thread_local std::set<uint64_t> g_addrSet;
-static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
+thread_local std::vector<uint64_t> g_callStack;
+thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
+thread_local std::set<uint64_t> g_addrSet;
+thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
@@ -70,9 +70,6 @@ void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
     std::vector<uint64_t> addrs = FindAddrs(addr, size);
     for (auto addr : addrs) {
         SetFreeStatisticsData(addr);
-        spinLock_.Lock();
-        g_addrSet.erase(addr);
-        spinLock_.Unlock();
     }
 }
 
@@ -343,6 +340,14 @@ void StackPreprocess::SetDirectorForTest(std::shared_ptr<BuildStackDirector> dir
 {
     g_director = director;
 }
+
+void StackPreprocess::ClearThreadLocalVariables()
+{
+    g_callStack.clear();
+    g_allocAddrMap.clear();
+    g_addrSet.clear();
+    g_director = nullptr;
+}
 #endif
 
 bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size,
@@ -502,6 +507,8 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
 
     std::vector<CallFrame> callFrames;
     if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProcessRegularStackData: BuildCallFrames failed for type %u",
+                           hookRecord->GetType());
         return false;
     }
 
@@ -559,6 +566,174 @@ void StackPreprocess::LogPerformanceMetrics(const struct timespec& start,
 }
 #endif
 
+bool StackPreprocess::ProcessBatchData()
+{
+    if (dataRepeater_ == nullptr) {
+        return false;
+    }
+    HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+
+    uint32_t waitDuration = 0;
+    if (hookConfig_.statistics_interval() > 0) {
+        auto currentTime = std::chrono::steady_clock::now();
+        auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastStatisticsTime_);
+        int tempDuration = std::chrono::duration_cast<std::chrono::milliseconds>(statisticsInterval_).count() -
+                           timeDiff.count();
+        waitDuration = tempDuration > 0 ? static_cast<uint32_t>(tempDuration) : 0;
+    }
+
+    bool isTimeOut = false;
+    auto result = dataRepeater_->TakeRawData(waitDuration, hookDataClockId_, MAX_BATCH_CNT, batchRawStack,
+                                             hookConfig_.statistics_interval(), isTimeOut);
+
+    if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {
+        IntervalFlushRecordStatistics();
+        return true;
+    }
+
+    if (!result) {
+        return false;
+    }
+
+    for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
+        if (!ProcessSingleRecord(batchRawStack[i])) {
+            break;
+        }
+    }
+
+    CleanupBatchRecords(batchRawStack, MAX_BATCH_CNT);
+
+    if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
+        return true;
+    }
+
+    if ((hookConfig_.statistics_interval() == 0) && (hookConfig_.malloc_free_matching_interval() == 0)) {
+        std::visit([&](auto& stackData) {
+            FlushCheck(stackData);
+        }, stackData_);
+    }
+
+    IntervalFlushRecordStatistics();
+    IntervalFlushApplyAndReleaseMatchData();
+    return true;
+}
+
+bool StackPreprocess::ProcessSingleRecord(HookRecordPtr& hookRecord)
+{
+    if (!hookRecord || isStopTakeData_) {
+        return false;
+    }
+
+    if (HandleSimpleMessages(hookRecord)) {
+        return true;
+    }
+
+    auto rawData = hookRecord->GetRawStack();
+    if (rawData->stackContext == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StackPreprocess take results rawData->stackContext is nullptr");
+        return true;
+    }
+
+    uint16_t type = hookRecord->GetType();
+    if (type == NMD_MSG || type == END_MSG) {
+        if (type == END_MSG) {
+            isStopTakeData_ = true;
+        }
+        return false;
+    }
+
+    if (HandleNoStackEvent(hookRecord)) {
+        return true;
+    }
+
+    if (type == MUNMAP_MSG) {
+        std::lock_guard<std::mutex> guard(mtx_);
+        runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
+    }
+
+    if (!rawData->reportFlag) {
+        ignoreCnts_++;
+        if (ignoreCnts_ % LOG_PRINT_TIMES == 0) {
+            PROFILER_LOG_INFO(LOG_CORE, "ignoreCnts_ = %d quene size = %zu\n", ignoreCnts_, dataRepeater_->Size());
+        }
+        return true;
+    }
+
+    eventCnts_++;
+    if (eventCnts_ % LOG_PRINT_TIMES == 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "eventCnts_ = %d quene size = %zu\n", eventCnts_, dataRepeater_->Size());
+    }
+
+    BuildAndReportStack(hookRecord);
+    return true;
+}
+
+void StackPreprocess::BuildAndReportStack(HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    uint16_t type = hookRecord->GetType();
+
+    std::vector<CallFrame> callFrames;
+    if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "BuildAndReportStack: BuildCallFrames failed for type %u", type);
+        return;
+    }
+
+    if (((hookConfig_.fp_unwind()) || rawData->stackSize > 0) && (type != PR_SET_VMA_MSG)) {
+        ReportOfflineSymbolizationData();
+    }
+
+    std::visit([&](auto& stackData) {
+        if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
+            SetHookData(hookRecord, callFrames, stackData);
+        } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
+            WriteFrames(hookRecord, callFrames);
+        } else if (!hookConfig_.save_file()) {
+            if (hookConfig_.malloc_free_matching_interval() > 0) {
+                SetApplyAndReleaseMatchFrame(hookRecord, callFrames, stackData);
+            } else {
+                SetHookData(hookRecord, callFrames, stackData);
+            }
+        }
+    }, stackData_);
+}
+
+void StackPreprocess::CleanupBatchRecords(HookRecordPtr batchRawStack[], uint32_t maxCount)
+{
+    for (unsigned int i = 0; i < maxCount; i++) {
+        if (!batchRawStack[i]) {
+            break;
+        }
+        factory_->SaveHookRecord(std::move(batchRawStack[i]));
+    }
+}
+
+bool StackPreprocess::HandleSimpleMessages(HookRecordPtr& hookRecord)
+{
+    uint16_t type = hookRecord->GetType();
+
+    if (type == FREE_MSG_SIMP) {
+        SetFreeStatisticsData(hookRecord->GetAddr());
+        return true;
+    }
+
+    if (type == FREE_ARKTS) {
+        size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+        HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
+        return true;
+    }
+
+    if (type == MALLOC_ARKTS) {
+        size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
+        auto addr = hookRecord->GetRawStack()->stackContext->addr;
+        auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
+        HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
+        return true;
+    }
+
+    return false;
+}
+
 void StackPreprocess::TakeResults()
 {
     if (!dataRepeater_) {
@@ -568,144 +743,10 @@ void StackPreprocess::TakeResults()
     if (g_director == nullptr) {
         g_director = std::make_shared<BuildStackDirector>(&hookConfig_, runtime_instance, mtx_);
     }
-    while (1) {
-        HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
-        if (isStopTakeData_) {
+    while (!isStopTakeData_) {
+        if (!ProcessBatchData()) {
             break;
         }
-        uint32_t during = 0;
-        if (hookConfig_.statistics_interval() > 0) {
-            auto currentTime = std::chrono::steady_clock::now();
-            auto timeDiff = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - lastStatisticsTime_);
-            int tempDuring =
-                std::chrono::duration_cast<std::chrono::milliseconds>(statisticsInterval_).count() - timeDiff.count();
-            during = tempDuring > 0 ? static_cast<uint32_t>(tempDuring) : 0;
-        }
-        bool isTimeOut = false;
-        auto result = dataRepeater_->TakeRawData(during, hookDataClockId_, MAX_BATCH_CNT, batchRawStack,
-                                                 hookConfig_.statistics_interval(), isTimeOut);
-        if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {  // statistics mode
-            IntervalFlushRecordStatistics();
-            continue;
-        }
-        if (!result) {
-            break;
-        }
-        for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
-            auto hookRecord = batchRawStack[i];
-            if (!hookRecord || isStopTakeData_) {
-                break;
-            }
-            uint16_t type = hookRecord->GetType();
-            if (type == FREE_MSG_SIMP) {
-                SetFreeStatisticsData(hookRecord->GetAddr());
-                continue;
-            } else if (type == FREE_ARKTS) {
-                size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
-                HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
-                continue;
-            } else if (type == MALLOC_ARKTS) {
-                size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
-                auto addr = hookRecord->GetRawStack()->stackContext->addr;
-                auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
-                HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
-                continue;
-            }
-            auto rawData = hookRecord->GetRawStack();
-            if (rawData->stackContext == nullptr) {
-                PROFILER_LOG_ERROR(LOG_CORE, "StackPreprocess take results rawData->stackContext is nullptr");
-                continue;
-            }
-            if (type == NMD_MSG) {
-                continue;
-            } else if (type == END_MSG) {
-                isStopTakeData_ = true;
-                break;
-            }
-#ifdef PERFORMANCE_DEBUG
-            struct timespec start = {};
-            clock_gettime(CLOCK_REALTIME, &start);
-#endif
-            if (HandleNoStackEvent(hookRecord)) {
-                continue;
-            } else if (type == MUNMAP_MSG) {
-                std::lock_guard<std::mutex> guard(mtx_);
-                runtime_instance->RemoveMaps(reinterpret_cast<uint64_t>(hookRecord->GetAddr()));
-            }
-
-            if (!rawData->reportFlag) {
-                ignoreCnts_++;
-                if (ignoreCnts_ % LOG_PRINT_TIMES == 0) {
-                    PROFILER_LOG_INFO(LOG_CORE, "ignoreCnts_ = %d quene size = %zu\n",
-                                      ignoreCnts_, dataRepeater_->Size());
-                }
-                continue;
-            }
-            eventCnts_++;
-            if (eventCnts_ % LOG_PRINT_TIMES == 0) {
-                PROFILER_LOG_INFO(LOG_CORE, "eventCnts_ = %d quene size = %zu\n", eventCnts_, dataRepeater_->Size());
-            }
-
-            std::vector<CallFrame> callFrames;
-            if (!BuildCallFrames(hookRecord, rawData, callFrames)) {
-                continue;
-            }
-
-#ifdef PERFORMANCE_DEBUG
-            size_t realFrameDepth = callFrames.size();
-#endif
-            if (((hookConfig_.fp_unwind()) || rawData->stackSize > 0) &&
-                (type != PR_SET_VMA_MSG)) {
-                ReportOfflineSymbolizationData();
-            }
-            std::visit([&](auto& stackData) {
-                if (hookConfig_.save_file() && hookConfig_.file_name() != "" && isHookStandaloneSerialize_) {
-                    SetHookData(hookRecord, callFrames, stackData);
-                } else if (hookConfig_.save_file() && hookConfig_.file_name() != "") {
-                    WriteFrames(hookRecord, callFrames);
-                } else if (!hookConfig_.save_file()) {
-                    if (hookConfig_.malloc_free_matching_interval() > 0) {
-                        SetApplyAndReleaseMatchFrame(hookRecord, callFrames, stackData);
-                    } else {
-                        SetHookData(hookRecord, callFrames, stackData);
-                    }
-                }
-                }, stackData_);
-
-#ifdef PERFORMANCE_DEBUG
-            struct timespec end = {};
-            clock_gettime(CLOCK_REALTIME, &end);
-            uint64_t curTimeCost = (end.tv_sec - start.tv_sec) * MAX_MATCH_CNT * MAX_MATCH_CNT * MAX_MATCH_CNT +
-                (end.tv_nsec - start.tv_nsec);
-            if (curTimeCost >= LONG_TIME_THRESHOLD) {
-                PROFILER_LOG_ERROR(LOG_CORE, "bigTimeCost %" PRIu64 " event=%d, realFrameDepth=%zu, "
-                    "callFramesDepth=%zu\n",
-                    curTimeCost, type, realFrameDepth, callFrames.size());
-            }
-            timeCost += curTimeCost;
-            unwindTimes++;
-            if (unwindTimes % LOG_PRINT_TIMES == 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "unwindTimes %" PRIu64" cost time = %" PRIu64" mean cost = %" PRIu64"\n",
-                    unwindTimes.load(), timeCost.load(), timeCost.load() / unwindTimes.load());
-            }
-#endif
-        } // for
-        for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
-            if (!batchRawStack[i]) {
-                break;
-            }
-            factory_->SaveHookRecord(std::move(batchRawStack[i]));
-        }
-        if (hookConfig_.save_file() && hookConfig_.file_name() != "" && !isHookStandaloneSerialize_) {
-            continue;
-        }
-        if ((hookConfig_.statistics_interval() == 0) && (hookConfig_.malloc_free_matching_interval() == 0)) {
-            std::visit([&](auto& stackData) {
-                FlushCheck(stackData);
-                }, stackData_);
-        }
-        IntervalFlushRecordStatistics();
-        IntervalFlushApplyAndReleaseMatchData();
     } // while
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, exit!", gettid());
 }
@@ -1125,7 +1166,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     hookRecord->SerializeData(hookData, hookInfo);
 }
 
-inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
+bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
 {
     // through the addr lookup record
     auto addrIter = g_allocAddrMap.find(addr);
@@ -1136,13 +1177,17 @@ inline bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
         record->releaseSize += addrIter->second.first;
         statisticsPeriodData_[record->callstackId] = record;
         g_allocAddrMap.erase(addr);
+        auto addrSetIter = g_addrSet.find(addr);
+        if (addrSetIter != g_addrSet.end()) {
+            g_addrSet.erase(addrSetIter);
+        }
         spinLock_.Unlock();
         return true;
     }
     return false;
 }
 
-inline void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
+void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
 {
     auto recordIter = recordStatisticsMap_.find(stackId);
     if (recordIter != recordStatisticsMap_.end()) {
@@ -1152,7 +1197,9 @@ inline void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookReco
         record.applySize += rawStack->stackContext->mallocSize;
         g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-        g_addrSet.insert(hookRecord->GetAddr());
+        if (hookRecord->GetType() == MEMORY_USING_MSG) {
+            g_addrSet.insert(hookRecord->GetAddr());
+        }
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
 }
@@ -1240,11 +1287,13 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     auto [recordIter, stat] = recordStatisticsMap_.emplace(stackId, record);
     g_allocAddrMap[hookRecord->GetAddr()] =
         std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
-    g_addrSet.insert(hookRecord->GetAddr());
+    if (hookRecord->GetType() == MEMORY_USING_MSG) {
+        g_addrSet.insert(hookRecord->GetAddr());
+    }
     statisticsPeriodData_[stackId] = &recordIter->second;
 }
 
-inline void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists)
+void StackPreprocess::SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists)
 {
     auto rawStack = hookRecord->GetRawStack();
     // if the record exists, it is updated.Otherwise Add
