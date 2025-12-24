@@ -112,7 +112,7 @@ HWTEST_F(HookClientHolderTest, MultipleHoldersTest, TestSize.Level0)
 HWTEST_F(HookClientHolderTest, UpdateThreadNameTest, TestSize.Level0)
 {
     std::shared_ptr<HookSocketClient> hookClient = std::make_shared<HookSocketClient>(
-        g_hookPid.load(), &g_clientConfig, &g_sampler, &g_targetedRange, &g_sharedMemCount);
+        g_hookPid.load(), &g_clientConfig, &g_targetedRange, &g_sharedMemCount);
     HookClientHolder holder1(hookClient);
     EXPECT_TRUE(holder1.IsValid());
     EXPECT_FALSE(holder1.UpdateThreadName());

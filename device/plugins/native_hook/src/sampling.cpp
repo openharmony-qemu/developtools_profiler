@@ -15,6 +15,7 @@
 
 #include "sampling.h"
 
+std::default_random_engine Sampling::randomEngine_;
 void Sampling::Reset()
 {
     sampleInterval_ = 0;
@@ -38,11 +39,9 @@ bool Sampling::InitSampling(uint64_t sampleInterval)
 size_t Sampling::CalcSamplings(size_t allocSize)
 {
     size_t counts = 0;
-    {
-        for (nextSampleInterval_ -= static_cast<int64_t>(allocSize); nextSampleInterval_ <= 0;
-            nextSampleInterval_ += CalcNextSampleInterval()) {
-            ++counts;
-        }
+    for (nextSampleInterval_ -= static_cast<int64_t>(allocSize); nextSampleInterval_ <= 0;
+         nextSampleInterval_ += CalcNextSampleInterval()) {
+        ++counts;
     }
     return counts;
 }

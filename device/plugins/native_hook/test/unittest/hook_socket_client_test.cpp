@@ -47,8 +47,7 @@ public:
 HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level0)
 {
     ClientConfig config;
-    Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(uint64_t);
@@ -65,8 +64,7 @@ HWTEST_F(HookSocketClientTest, ProtocolProc, TestSize.Level0)
 HWTEST_F(HookSocketClientTest, SendStack, TestSize.Level0)
 {
     ClientConfig config;
-    Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(ClientConfig);
@@ -99,10 +97,9 @@ HWTEST_F(HookSocketClientTest, FdListSize, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(ClientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     ASSERT_EQ(hookClient.GetSmbFds().size(), 1);
     ASSERT_EQ(hookClient.GetEventFds().size(), 1);
@@ -118,10 +115,9 @@ HWTEST_F(HookSocketClientTest, GetSmbFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(ClientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> smbFds = hookClient.GetSmbFds();
     for (size_t i = 0; i < smbFds.size(); ++i) {
@@ -139,10 +135,9 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level0)
 {
     ClientConfig clientConfig;
     SocketContext socketContext;
-    Sampling sampler;
     auto ptr = reinterpret_cast<const int8_t*>(&clientConfig);
     auto size = sizeof(ClientConfig);
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     ASSERT_TRUE(hookClient.ProtocolProc(socketContext, 0, ptr, size));
     std::vector<int> eventFds = hookClient.GetEventFds();
     for (size_t i = 0; i < eventFds.size(); ++i) {
@@ -160,8 +155,7 @@ HWTEST_F(HookSocketClientTest, GetEventFds, TestSize.Level0)
 HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level0)
 {
     ClientConfig config;
-    Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(ClientConfig);
@@ -186,8 +180,7 @@ HWTEST_F(HookSocketClientTest, SendNmdInfo, TestSize.Level0)
 HWTEST_F(HookSocketClientTest, SendSimplifiedNmdInfo, TestSize.Level0)
 {
     ClientConfig config;
-    Sampling sampler;
-    HookSocketClient hookClient(1, &g_ClientConfigTest, &sampler, nullptr);
+    HookSocketClient hookClient(1, &g_ClientConfigTest, nullptr);
     SocketContext socketContext;
     auto ptr = reinterpret_cast<const int8_t*>(&config);
     auto size = sizeof(ClientConfig);

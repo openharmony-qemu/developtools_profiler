@@ -132,7 +132,6 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
                        config_->memtraceEnable, config_->traceMask);
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
-    // sampler_->InitSampling(config_->sampleInterval);
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     for (int i = 0; i < sharedMemCount; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();

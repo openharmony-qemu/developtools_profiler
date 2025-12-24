@@ -33,7 +33,7 @@ public:
     {
         return (allocSize >= sampleInterval_) ? allocSize : (CalcSamplings(allocSize) * sampleInterval_) ;
     }
-    int64_t CalcNextSampleInterval() 
+    int64_t CalcNextSampleInterval()
     {
         return static_cast<int64_t>(exponentialDist_(randomEngine_)) + 1;
     }
@@ -53,6 +53,6 @@ private:
     int64_t nextSampleInterval_ {0};
     bool isInit_{false};
     std::exponential_distribution<double> exponentialDist_;
-    std::default_random_engine randomEngine_;
+    static std::default_random_engine randomEngine_;
 };
 #endif  // __SAMPLING_H__
