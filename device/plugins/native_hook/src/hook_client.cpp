@@ -273,6 +273,11 @@ void* MallocHookStart(void* disableHookCallback)
             g_midPartHandler = nullptr;
 #endif
             g_hookReady = true;
+        } else {
+            void (*callback)() = reinterpret_cast<void (*)()>(disableHookCallback);
+            if (callback != nullptr) {
+                callback();
+            }
         }
     }
     return nullptr;
@@ -309,12 +314,16 @@ static bool InitTheadKey()
 bool ohos_malloc_hook_on_start(void (*disableHookCallback)())
 {
     pthread_t threadStart;
-    if (pthread_create(&threadStart, nullptr, MallocHookStart,
-                       reinterpret_cast<void *>(disableHookCallback))) {
+    if (pthread_create(&threadStart, nullptr, MallocHookStart, reinterpret_cast<void*>(disableHookCallback)) != 0) {
+        disableHookCallback();
         return false;
     }
     pthread_detach(threadStart);
-    return InitTheadKey();
+    if (!InitTheadKey()) {
+        disableHookCallback();
+        return false;
+    }
+    return true;
 }
 
 void* ohos_release_on_end(void*)
