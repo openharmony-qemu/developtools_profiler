@@ -30,7 +30,7 @@
 #include "include/GameEvent.h"
 #include "transaction/rs_interfaces.h"
 #include "include/ByTrace.h"
-#include "include/sp_profiler_factory.h
+#include "include/sp_profiler_factory.h"
 namespace OHOS {
 namespace SmartPerf {
 bool HAVE_CATON = false;
@@ -167,6 +167,15 @@ void FPS::StartExecutionOnce(bool isPause)
     }
     isGameApp = SPUtils::GetIsGameApp(pkgName);
     catonNum = 0;
+}
+
+void FPS::SetFpsCurrentFpsTime(FpsInfo fpsInfoResult)
+{
+    ffTime.fps = fpsInfoResult.fps;
+    if (!fpsInfoResult.jitters.empty()) {
+        auto maxElement = std::max_element(fpsInfoResult.jitters.begin(), fpsInfoResult.jitters.end());
+        ffTime.currentFpsTime = *maxElement;
+    }
 }
 
 FpsCurrentFpsTime FPS::GetFpsCurrentFpsTime()

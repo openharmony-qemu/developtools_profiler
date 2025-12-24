@@ -95,7 +95,7 @@ public:
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
     void calcDrawFrame(std::vector<long long> &flushtimeStamps);
     void colleCurFrame(long long &flushtime);
-    void CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curTimestamp);
+    void CalcJitters(std::vector<long long> &currDumpTimeStamps);
     void ColleScanout(std::vector<long long> &flushtimeStamps, std::vector<long long> &currDumpTimeStamps);
     void calcScanout(long long &curDumpTime, long long &curFlushTime);
     static inline bool isGameApp = false;
@@ -114,13 +114,14 @@ public:
     FpsInfo GetFpsInfoByRs(const std::string& name);
     std::map<std::string, std::string> GetFpsAndJitters(FpsInfo &fpsInfoResult,
         std::map<std::string, std::string> &result);
+    void HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std::string> &result);
     void SetTraceCatch();
     std::string GetGameLayer();
     std::string GetLayerName(std::string &gameLayer, uint64_t &nodeId, const std::string& line, size_t &endPos);
     std::string GetSurfaceId(std::string &gameLayer, uint64_t &nodeId, const std::string &surfaceId,
         const std::string& line, size_t &endPos);
     FpsInfo GetAppFps(std::string &uniteLayer);
-    void GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curTimestamp);
+    void GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence);
     void GetSystemClockGettime();
 
     // sections
@@ -140,8 +141,6 @@ private:
     std::string surfaceViewName;
     bool refresh = false;
     long long mod = 1e9;
-    long long curScreenTimestamp = 0;
-    long long presentFenceCurScreenTimestamp = 0;
     long long prevScreenTimestamp = -1;
     long long prevlastScreenTimestamp = 0;
     long long lastFlushTimeStamp = 0;
