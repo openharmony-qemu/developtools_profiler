@@ -254,6 +254,9 @@ bool IsHexDigits(const std::string &str)
 
 unsigned LgFloor(unsigned long val)
 {
+    if (val == 0) {
+        return 0;
+    }
     val |= (val >> RIGHT_MOVE_1);
     val |= (val >> RIGHT_MOVE_2);
     val |= (val >> RIGHT_MOVE_4);
@@ -272,6 +275,9 @@ unsigned LgFloor(unsigned long val)
 
 uint64_t PowCeil(uint64_t val)
 {
+    if (val == 0) {
+        return 1;
+    }
     size_t msbIndex = LgFloor(val - 1);
     return 1ULL << (msbIndex + 1);
 }

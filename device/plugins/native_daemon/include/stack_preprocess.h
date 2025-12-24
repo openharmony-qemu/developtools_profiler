@@ -136,6 +136,7 @@ public:
 #ifdef NATIVE_DAEMON_UNITTEST
     static std::shared_ptr<BuildStackDirector> GetDirectorForTest();
     static void SetDirectorForTest(std::shared_ptr<BuildStackDirector> director);
+    static void ClearThreadLocalVariables();
 #endif
     bool ProcessSharedMemoryData(const int8_t data[], uint32_t size,
         RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord);
@@ -185,6 +186,11 @@ private:
 
 private:
     void TakeResults();
+    bool ProcessBatchData();
+    bool ProcessSingleRecord(HookRecordPtr& hookRecord);
+    void BuildAndReportStack(HookRecordPtr& hookRecord);
+    void CleanupBatchRecords(HookRecordPtr batchRawStack[], uint32_t maxCount);
+    bool HandleSimpleMessages(HookRecordPtr& hookRecord);
     template <typename T>
     void SetHookData(HookRecordPtr hookRecord, T& stackData);
     template <typename T>
@@ -241,8 +247,6 @@ private:
     void HandleDeleteAddr(uint64_t addr, size_t size);
     std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
     void HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size);
-    unsigned LgFloor(unsigned long x);
-    uint64_t PowCeil(uint64_t x);
     void InitializeGpuData();
     void ReportOfflineSymbolizationData();
 

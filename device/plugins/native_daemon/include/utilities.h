@@ -301,6 +301,8 @@ float Percentage(const T &a, const T &b)
 
 bool PowerOfTwo(int n);
 int GetValueFromJsonFile(const std::string& filePath, const std::string& key);
+unsigned LgFloor(unsigned long x);
+uint64_t PowCeil(uint64_t x);
 
 #define INDENT_ONE_LEVEL (indent + 1)
 #define INDENT_TWO_LEVEL (indent + 2)

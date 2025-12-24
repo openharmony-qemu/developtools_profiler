@@ -34,6 +34,7 @@ constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
 constexpr size_t MAX_BUFFER_SIZE = 1024 * 1024;
 constexpr uint32_t MAX_ENUM = 9999;
+constexpr uint32_t MAX_BATCH_CNT = 40;
 
 static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tagId)
 {
@@ -90,10 +91,12 @@ void StackPreprocessTest::TearDownTestCase(void)
 
 void StackPreprocessTest::SetUp(void)
 {
+    StackPreprocess::ClearThreadLocalVariables();
 }
 
 void StackPreprocessTest::TearDown(void)
 {
+    StackPreprocess::ClearThreadLocalVariables();
 }
 
 void StackPreprocessTest::BuildAbnormalData(BatchNativeHookData& testData)
@@ -757,5 +760,1245 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
     std::vector<uint64_t> emptyCallStack;
     uint32_t id2 = preprocess.FindCallStackId(emptyCallStack, hookRecord);
     EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: HandleSimpleMessagesFreeSimpleTest
+@tc.desc: test HandleSimpleMessages with FREE_MSG_SIMP type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleSimpleMessagesFreeSimpleTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = FREE_MSG_SIMP;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.HandleSimpleMessages(hookRecord);
+
+    EXPECT_TRUE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleSimpleMessagesFreeArktsTest
+@tc.desc: test HandleSimpleMessages with FREE_ARKTS type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleSimpleMessagesFreeArktsTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = FREE_ARKTS;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    rawStack->stackContext->mallocSize = 1024;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.HandleSimpleMessages(hookRecord);
+
+    EXPECT_TRUE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleSimpleMessagesMallocArktsTest
+@tc.desc: test HandleSimpleMessages with MALLOC_ARKTS type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleSimpleMessagesMallocArktsTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_ARKTS;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x3000);
+    rawStack->stackContext->newAddr = reinterpret_cast<void*>(0x4000);
+    rawStack->stackContext->mallocSize = 2048;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.HandleSimpleMessages(hookRecord);
+
+    EXPECT_TRUE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleSimpleMessagesOtherTypeTest
+@tc.desc: test HandleSimpleMessages with other message types.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleSimpleMessagesOtherTypeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.HandleSimpleMessages(hookRecord);
+
+    EXPECT_FALSE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordNullRecordTest
+@tc.desc: test ProcessSingleRecord with null hook record.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordNullRecordTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    HookRecordPtr hookRecord = nullptr;
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_FALSE(result);
+}
+
+/*
+@tc.name: ProcessSingleRecordStopFlagTest
+@tc.desc: test ProcessSingleRecord when stop flag is set.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordStopFlagTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.isStopTakeData_ = true;
+
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_FALSE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordNullStackContextTest
+@tc.desc: test ProcessSingleRecord with null stack context.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordNullStackContextTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = nullptr;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_TRUE(result);
+}
+
+/*
+@tc.name: ProcessSingleRecordNmdMsgTest
+@tc.desc: test ProcessSingleRecord with NMD_MSG type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordNmdMsgTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = NMD_MSG;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_FALSE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordEndMsgTest
+@tc.desc: test ProcessSingleRecord with END_MSG type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordEndMsgTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = END_MSG;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.isStopTakeData_ = false;
+
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_FALSE(result);
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordSimpleMessageTest
+@tc.desc: test ProcessSingleRecord with simple message type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordSimpleMessageTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = FREE_MSG_SIMP;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_TRUE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: CleanupBatchRecordsEmptyArrayTest
+@tc.desc: test CleanupBatchRecords with empty array.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CleanupBatchRecordsEmptyArrayTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    auto factory = std::make_shared<HookRecordFactory>(hookConfig);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(factory);
+
+    HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+    preprocess.CleanupBatchRecords(batchRawStack, MAX_BATCH_CNT);
+
+    for (int i = 0; i < MAX_BATCH_CNT; i++) {
+        EXPECT_EQ(batchRawStack[i], nullptr);
+    }
+}
+
+/*
+@tc.name: CleanupBatchRecordsSingleRecordTest
+@tc.desc: test CleanupBatchRecords with single record.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CleanupBatchRecordsSingleRecordTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    auto factory = std::make_shared<HookRecordFactory>(hookConfig);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(factory);
+
+    HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    batchRawStack[0] = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.CleanupBatchRecords(batchRawStack, MAX_BATCH_CNT);
+
+    EXPECT_EQ(batchRawStack[0], nullptr);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: CleanupBatchRecordsMultipleRecordsTest
+@tc.desc: test CleanupBatchRecords with multiple records.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CleanupBatchRecordsMultipleRecordsTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    auto factory = std::make_shared<HookRecordFactory>(hookConfig);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(factory);
+
+    HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+    BaseStackRawData* stackContexts[5] = {nullptr};
+
+    for (int i = 0; i < 5; i++) {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MALLOC_MSG;
+        stackContexts[i] = rawStack->stackContext;
+        batchRawStack[i] = std::make_shared<HookRecord>(rawStack);
+    }
+
+    preprocess.CleanupBatchRecords(batchRawStack, MAX_BATCH_CNT);
+
+    for (int i = 0; i < 5; i++) {
+        EXPECT_EQ(batchRawStack[i], nullptr);
+        delete stackContexts[i];
+    }
+}
+
+/*
+@tc.name: ProcessBatchDataNoDataRepeaterTest
+@tc.desc: test ProcessBatchData when dataRepeater is null.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessBatchDataNoDataRepeaterTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    bool result = preprocess.ProcessBatchData();
+
+    EXPECT_FALSE(result);
+}
+
+/*
+@tc.name: ProcessBatchDataStatisticsIntervalTest
+@tc.desc: test ProcessBatchData with statistics interval configured.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessBatchDataStatisticsIntervalTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.InitStatisticsTime();
+
+    bool result = preprocess.ProcessBatchData();
+
+    EXPECT_FALSE(result);
+}
+
+/*
+@tc.name: ProcessSingleRecordMunmapMsgTest
+@tc.desc: test ProcessSingleRecord with MUNMAP_MSG type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordMunmapMsgTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MUNMAP_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x5000);
+    rawStack->reportFlag = true;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.InitializeDirector();
+
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_TRUE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordIgnoreReportFlagTest
+@tc.desc: test ProcessSingleRecord with reportFlag set to false.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordIgnoreReportFlagTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->reportFlag = false;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    uint32_t initialIgnoreCnts = preprocess.ignoreCnts_;
+
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(preprocess.ignoreCnts_, initialIgnoreCnts + 1);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: CleanupBatchRecordsPartialArrayTest
+@tc.desc: test CleanupBatchRecords with partially filled array.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, CleanupBatchRecordsPartialArrayTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    auto factory = std::make_shared<HookRecordFactory>(hookConfig);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(factory);
+
+    HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
+    BaseStackRawData* stackContexts[3] = {nullptr};
+
+    for (int i = 0; i < 3; i++) {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MALLOC_MSG;
+        stackContexts[i] = rawStack->stackContext;
+        batchRawStack[i] = std::make_shared<HookRecord>(rawStack);
+    }
+
+    preprocess.CleanupBatchRecords(batchRawStack, MAX_BATCH_CNT);
+
+    for (int i = 0; i < 3; i++) {
+        EXPECT_EQ(batchRawStack[i], nullptr);
+        delete stackContexts[i];
+    }
+    for (int i = 3; i < MAX_BATCH_CNT; i++) {
+        EXPECT_EQ(batchRawStack[i], nullptr);
+    }
+}
+
+/*
+@tc.name: HandleSimpleMessagesNullStackContextTest
+@tc.desc: test HandleSimpleMessages behavior with different message types.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleSimpleMessagesNullStackContextTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MMAP_MSG;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    bool result = preprocess.HandleSimpleMessages(hookRecord);
+
+    EXPECT_FALSE(result);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ProcessSingleRecordWithReportFlagTest
+@tc.desc: test ProcessSingleRecord with reportFlag set to true.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ProcessSingleRecordWithReportFlagTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->reportFlag = true;
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.InitializeDirector();
+
+    uint32_t initialEventCnts = preprocess.eventCnts_;
+    bool result = preprocess.ProcessSingleRecord(hookRecord);
+
+    EXPECT_TRUE(result);
+    EXPECT_EQ(preprocess.eventCnts_, initialEventCnts + 1);
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: FindAddrsEmptySetTest
+@tc.desc: test FindAddrs with empty address set.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FindAddrsEmptySetTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+@tc.name: FindAddrsSingleMatchTest
+@tc.desc: test FindAddrs with single matching address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FindAddrsSingleMatchTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First add an address to allocAddrMap, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Find the range containing this address
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_EQ(result.size(), 1);
+    EXPECT_EQ(result[0], 0x1000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: FindAddrsRangeMatchTest
+@tc.desc: test FindAddrs with multiple addresses in range.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FindAddrsRangeMatchTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Add multiple addresses, using MEMORY_USING_MSG type to support FindAddrs
+    for (uint64_t i = 0; i < 5; i++) {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MEMORY_USING_MSG;
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000 + i * 100);
+        rawStack->stackContext->mallocSize = 64;
+        rawStack->stackContext->tagId = i + 1;
+        auto hookRecord = std::make_shared<HookRecord>(rawStack);
+        preprocess.SetAllocStatisticsData(hookRecord, i + 1);
+        delete rawStack->stackContext;
+    }
+
+    // Find addresses within the range
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 500);
+    EXPECT_EQ(result.size(), 5);
+}
+
+/*
+@tc.name: FindAddrsNoMatchTest
+@tc.desc: test FindAddrs with no matching addresses.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FindAddrsNoMatchTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Add an address, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Find non-existent address range
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x2000, 100);
+    EXPECT_TRUE(result.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleDeleteAddrSingleTest
+@tc.desc: test HandleDeleteAddr with single address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleDeleteAddrSingleTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First add an address, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Delete this address
+    preprocess.HandleDeleteAddr(0x1000, 100);
+
+    // Verify the address has been deleted
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_TRUE(result.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleDeleteAddrRangeTest
+@tc.desc: test HandleDeleteAddr with address range.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleDeleteAddrRangeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Add multiple addresses, using MEMORY_USING_MSG type to support FindAddrs
+    for (uint64_t i = 0; i < 5; i++) {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MEMORY_USING_MSG;
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000 + i * 100);
+        rawStack->stackContext->mallocSize = 64;
+        rawStack->stackContext->tagId = 1;
+        auto hookRecord = std::make_shared<HookRecord>(rawStack);
+        preprocess.SetAllocStatisticsData(hookRecord, i + 1);
+        delete rawStack->stackContext;
+    }
+
+    // Delete addresses within the range
+    preprocess.HandleDeleteAddr(0x1000, 500);
+
+    // Verify addresses within the range have been deleted
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 500);
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+@tc.name: HandleDeleteAddrNotExistTest
+@tc.desc: test HandleDeleteAddr with non-existent address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleDeleteAddrNotExistTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Delete non-existent address, should not crash
+    preprocess.HandleDeleteAddr(0x1000, 100);
+
+    // Verify operation completed normally, no address was deleted
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+@tc.name: HandleMoveAddrExistTest
+@tc.desc: test HandleMoveAddr with existing address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleMoveAddrExistTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First add an address, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Move address
+    preprocess.HandleMoveAddr(0x1000, 0x2000, 64);
+
+    // Verify old address has been deleted
+    std::vector<uint64_t> oldResult = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_TRUE(oldResult.empty());
+
+    // Verify new address has been added
+    std::vector<uint64_t> newResult = preprocess.FindAddrs(0x2000, 100);
+    EXPECT_EQ(newResult.size(), 1);
+    EXPECT_EQ(newResult[0], 0x2000);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleMoveAddrNotExistTest
+@tc.desc: test HandleMoveAddr with non-existent address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleMoveAddrNotExistTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Move non-existent address, should not crash
+    preprocess.HandleMoveAddr(0x1000, 0x2000, 64);
+
+    // Verify operation completed normally, no address was added
+    std::vector<uint64_t> result = preprocess.FindAddrs(0x2000, 100);
+    EXPECT_TRUE(result.empty());
+}
+
+/*
+@tc.name: HandleMoveAddrSizeChangeTest
+@tc.desc: test HandleMoveAddr with size change.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleMoveAddrSizeChangeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First add an address, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Move address and change size
+    preprocess.HandleMoveAddr(0x1000, 0x2000, 128);
+
+    // Verify new address has been added
+    std::vector<uint64_t> newResult = preprocess.FindAddrs(0x2000, 200);
+    EXPECT_EQ(newResult.size(), 1);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: SetPidTest
+@tc.desc: test SetPid method.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetPidTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SetPid(12345);
+    EXPECT_EQ(preprocess.pid_, 12345);
+}
+
+/*
+@tc.name: SetNmdFdTest
+@tc.desc: test SetNmdFd method.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetNmdFdTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SetNmdFd(100);
+    EXPECT_EQ(preprocess.nmdFd_, 100);
+}
+
+/*
+@tc.name: SetFlushSizeTest
+@tc.desc: test SetFlushSize method.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFlushSizeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    preprocess.SetFlushSize(1000);
+    EXPECT_EQ(preprocess.flushSize_, 100);
+    EXPECT_EQ(preprocess.bufferSize_, 200);
+}
+
+/*
+@tc.name: SetFreeStatisticsDataExistTest
+@tc.desc: test SetFreeStatisticsData with existing address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataExistTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First allocate address, using MEMORY_USING_MSG type to support FindAddrs
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->tagId = 1;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Free address
+    bool result = preprocess.SetFreeStatisticsData(0x1000);
+    EXPECT_TRUE(result);
+
+    // Verify address has been removed from map
+    std::vector<uint64_t> addrs = preprocess.FindAddrs(0x1000, 100);
+    EXPECT_TRUE(addrs.empty());
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: SetFreeStatisticsDataNotExistTest
+@tc.desc: test SetFreeStatisticsData with non-existent address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataNotExistTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Free non-existent address
+    bool result = preprocess.SetFreeStatisticsData(0x1000);
+    EXPECT_FALSE(result);
+}
+
+/*
+@tc.name: SetFreeStatisticsDataMultipleTest
+@tc.desc: test SetFreeStatisticsData with multiple addresses.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFreeStatisticsDataMultipleTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Allocate multiple addresses
+    for (uint64_t i = 0; i < 3; i++) {
+        auto rawStack = std::make_shared<RawStack>();
+        rawStack->stackContext = new BaseStackRawData();
+        rawStack->stackContext->type = MALLOC_MSG;
+        rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000 + i * 0x100);
+        rawStack->stackContext->mallocSize = 64;
+        rawStack->stackContext->pid = 12345;
+        auto hookRecord = std::make_shared<HookRecord>(rawStack);
+        preprocess.SetAllocStatisticsData(hookRecord, i + 1);
+        delete rawStack->stackContext;
+    }
+
+    // Free multiple addresses consecutively
+    EXPECT_TRUE(preprocess.SetFreeStatisticsData(0x1000));
+    EXPECT_TRUE(preprocess.SetFreeStatisticsData(0x1100));
+    EXPECT_TRUE(preprocess.SetFreeStatisticsData(0x1200));
+}
+
+/*
+@tc.name: SetAllocStatisticsDataNewTest
+@tc.desc: test SetAllocStatisticsData with new address.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetAllocStatisticsDataNewTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First allocation of address
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    size_t initialSize = preprocess.recordStatisticsMap_.size();
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Verify statistics data has been created
+    EXPECT_EQ(preprocess.recordStatisticsMap_.size(), initialSize + 1);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: UpdateAllocStatisticsSameSizeTest
+@tc.desc: test UpdateAllocStatistics with same size allocation.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsSameSizeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First allocation
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->pid = 12345;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+    preprocess.SetAllocStatisticsData(hookRecord, 1);
+
+    // Get initial statistics data
+    auto& stat = preprocess.recordStatisticsMap_[1];
+    uint64_t initialApplyCount = stat.applyCount;
+    uint64_t initialApplySize = stat.applySize;
+
+    // Update statistics (same size)
+    preprocess.UpdateAllocStatistics(hookRecord, 1);
+
+    // Verify applyCount increases, applySize also increases (accumulating same size)
+    EXPECT_EQ(stat.applyCount, initialApplyCount + 1);
+    EXPECT_EQ(stat.applySize, initialApplySize + 64);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: UpdateAllocStatisticsDifferentSizeTest
+@tc.desc: test UpdateAllocStatistics with different size allocation.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, UpdateAllocStatisticsDifferentSizeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // First allocation
+    auto rawStack1 = std::make_shared<RawStack>();
+    rawStack1->stackContext = new BaseStackRawData();
+    rawStack1->stackContext->type = MALLOC_MSG;
+    rawStack1->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack1->stackContext->mallocSize = 64;
+    auto hookRecord1 = std::make_shared<HookRecord>(rawStack1);
+    preprocess.SetAllocStatisticsData(hookRecord1, 1);
+
+    // Get initial statistics data
+    auto& stat = preprocess.recordStatisticsMap_[1];
+    uint64_t initialApplyCount = stat.applyCount;
+    uint64_t initialApplySize = stat.applySize;
+
+    // Update statistics (different size)
+    auto rawStack2 = std::make_shared<RawStack>();
+    rawStack2->stackContext = new BaseStackRawData();
+    rawStack2->stackContext->type = MALLOC_MSG;
+    rawStack2->stackContext->addr = reinterpret_cast<void*>(0x2000);
+    rawStack2->stackContext->mallocSize = 128;
+    auto hookRecord2 = std::make_shared<HookRecord>(rawStack2);
+    preprocess.UpdateAllocStatistics(hookRecord2, 1);
+
+    // Verify both applyCount and applySize increase
+    EXPECT_EQ(stat.applyCount, initialApplyCount + 1);
+    EXPECT_GT(stat.applySize, initialApplySize);
+
+    delete rawStack1->stackContext;
+    delete rawStack2->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsMallocTest
+@tc.desc: test AddAllocStatistics with MALLOC type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsMallocTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    size_t initialSize = preprocess.recordStatisticsMap_.size();
+    preprocess.AddAllocStatistics(hookRecord, 1);
+
+    // Verify statistics data has been added
+    EXPECT_EQ(preprocess.recordStatisticsMap_.size(), initialSize + 1);
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::MALLOC);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsMmapTest
+@tc.desc: test AddAllocStatistics with MMAP type.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsMmapTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MMAP_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 4096;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+
+    // Verify type field is set correctly
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].type, RecordStatisticsEvent::MMAP);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: AddAllocStatisticsWithTagTest
+@tc.desc: test AddAllocStatistics with tag information.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AddAllocStatisticsWithTagTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Use MEMORY_USING_MSG type to support tagId setting
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MEMORY_USING_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    rawStack->stackContext->pid = 12345;
+    rawStack->stackContext->tagId = 100;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    preprocess.AddAllocStatistics(hookRecord, 1);
+
+    // Verify tagId is set correctly
+    EXPECT_EQ(preprocess.recordStatisticsMap_[1].tagId, 100);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: FlushRecordStatisticsEmptyTest
+@tc.desc: test FlushRecordStatistics with empty statistics data.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, FlushRecordStatisticsEmptyTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Flush when there is no statistics data
+    bool result = preprocess.FlushRecordStatistics();
+    EXPECT_FALSE(result);
+}
+
+/*
+@tc.name: HandleNoStackEventMallocTest
+@tc.desc: test HandleNoStackEvent with MALLOC event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleNoStackEventMallocTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MALLOC_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 64;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    // MALLOC_MSG is not a type handled by HandleNoStackEvent, should return false
+    bool result = preprocess.HandleNoStackEvent(hookRecord);
+    EXPECT_FALSE(result);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleNoStackEventFreeTest
+@tc.desc: test HandleNoStackEvent with FREE event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleNoStackEventFreeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Create hookRecord of FREE_MSG type
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = FREE_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 0;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    // FREE_MSG is not a type handled by HandleNoStackEvent, should return false
+    bool result = preprocess.HandleNoStackEvent(hookRecord);
+    EXPECT_FALSE(result);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleNoStackEventMmapTest
+@tc.desc: test HandleNoStackEvent with MMAP event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleNoStackEventMmapTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MMAP_MSG;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 4096;
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    // MMAP_MSG is not a type handled by HandleNoStackEvent, should return false
+    bool result = preprocess.HandleNoStackEvent(hookRecord);
+    EXPECT_FALSE(result);
+
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleNoStackEventMmapFileTypeTest
+@tc.desc: test HandleNoStackEvent with MMAP_FILE_TYPE event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleNoStackEventMmapFileTypeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = MMAP_FILE_TYPE;
+    rawStack->stackContext->addr = reinterpret_cast<void*>(0x1000);
+    rawStack->stackContext->mallocSize = 4096;
+    rawStack->stackContext->pid = 12345;
+    rawStack->stackContext->tid = 67890;
+    rawStack->stackContext->mmapArgs.flags = 0x01;
+    rawStack->stackContext->mmapArgs.offset = 0;
+
+    // Set file path data
+    const char* filePath = "/system/lib/libc.so";
+    size_t pathLen = strlen(filePath) + 1;
+    rawStack->data = new uint8_t[pathLen];
+    memcpy_s(rawStack->data, pathLen, filePath, pathLen);
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    // MMAP_FILE_TYPE is a type handled by HandleNoStackEvent, should return true
+    bool result = preprocess.HandleNoStackEvent(hookRecord);
+    EXPECT_TRUE(result);
+
+    delete[] rawStack->data;
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: HandleNoStackEventThreadNameTest
+@tc.desc: test HandleNoStackEvent with THREAD_NAME_MSG event.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, HandleNoStackEventThreadNameTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto rawStack = std::make_shared<RawStack>();
+    rawStack->stackContext = new BaseStackRawData();
+    rawStack->stackContext->type = THREAD_NAME_MSG;
+    rawStack->stackContext->tid = 12345;
+
+    // Set thread name data
+    const char* threadName = "TestThread";
+    size_t nameLen = strlen(threadName) + 1;
+    rawStack->data = new uint8_t[nameLen];
+    memcpy_s(rawStack->data, nameLen, threadName, nameLen);
+
+    auto hookRecord = std::make_shared<HookRecord>(rawStack);
+
+    // THREAD_NAME_MSG is a type handled by HandleNoStackEvent, should return true
+    bool result = preprocess.HandleNoStackEvent(hookRecord);
+    EXPECT_TRUE(result);
+
+    delete[] rawStack->data;
+    delete rawStack->stackContext;
+}
+
+/*
+@tc.name: ForceStopTest
+@tc.desc: test ForceStop method.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, ForceStopTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Initial state should be false
+    EXPECT_FALSE(preprocess.isStopTakeData_.load());
+
+    // Call ForceStop
+    preprocess.ForceStop();
+
+    // Verify isStopTakeData_ is set to true
+    EXPECT_TRUE(preprocess.isStopTakeData_.load());
+}
+
+/*
+@tc.name: SetPidAndGetPidTest
+@tc.desc: test SetPid and verify pid is set correctly.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetPidAndGetPidTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    pid_t testPid = 99999;
+    preprocess.SetPid(testPid);
+
+    EXPECT_EQ(preprocess.pid_, testPid);
+}
+
+/*
+@tc.name: SetNmdFdAndGetNmdFdTest
+@tc.desc: test SetNmdFd and verify nmdFd is set correctly.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetNmdFdAndGetNmdFdTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    int testFd = 12345;
+    preprocess.SetNmdFd(testFd);
+
+    EXPECT_EQ(preprocess.nmdFd_, testFd);
+}
+
+/*
+@tc.name: SetFlushSizeAndVerifyTest
+@tc.desc: test SetFlushSize and verify buffer sizes are calculated correctly.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetFlushSizeAndVerifyTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    uint32_t testSize = 2000;
+    preprocess.SetFlushSize(testSize);
+
+    // flushSize_ = testSize / 10
+    EXPECT_EQ(preprocess.flushSize_, testSize / 10);
+    // bufferSize_ = flushSize_ * 2
+    EXPECT_EQ(preprocess.bufferSize_, (testSize / 10) * 2);
 }
 }
