@@ -119,6 +119,9 @@ bool NativeMemoryProfilerSaService::StartServiceAbility()
 
 bool NativeMemoryProfilerSaService::HasProfilingPermission()
 {
+    if (!COMMON::IsUserMode()) {
+        return true;
+    }
     uint32_t callingTokenID = IPCSkeleton::GetCallingTokenID();
     int res = Security::AccessToken::AccessTokenKit::VerifyAccessToken(callingTokenID,
                                                                        "ohos.permission.ENABLE_PROFILER");
@@ -452,7 +455,7 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
 {
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
-    if (g_taskNum + 1 > taskMaxNum_) {
+    if (!config->extendProcesses_ && (g_taskNum + 1 > taskMaxNum_)) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
         return false;
     }

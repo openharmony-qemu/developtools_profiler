@@ -750,9 +750,13 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
     }
 }
 
-inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack)
+inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
 {
-    auto itStack = callStackMap_.find(callStack);
+    auto rawData = hookRecord->GetRawStack();
+    std::string tagName;
+    GetMemTag(rawData->stackContext->tagId, tagName);
+    NewCallStack newCallStack = {callStack, rawData->stackContext->nodeType, rawData->stackContext->nodeId, tagName};
+    auto itStack = callStackMap_.find(newCallStack);
     if (itStack != callStackMap_.end()) {
         return itStack->second;
     }
@@ -763,7 +767,7 @@ inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStac
  * @return '0' is invalid stack id, '> 0' is valid stack id
  */
 template <typename T>
-inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
+inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord)
 {
     std::lock_guard<std::mutex> guard(mtx_);
     uint32_t stackId = 0;
@@ -790,7 +794,11 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData)
         }
     }
     stackmap->set_pid(pid_);
-    callStackMap_[g_callStack] = stackId;
+    auto rawData = hookRecord->GetRawStack();
+    std::string tagName;
+    GetMemTag(rawData->stackContext->tagId, tagName);
+    NewCallStack newCallStack = {g_callStack, rawData->stackContext->nodeType, rawData->stackContext->nodeId, tagName};
+    callStackMap_[newCallStack] = stackId;
     return stackId;
 }
 
@@ -846,11 +854,11 @@ inline uint32_t StackPreprocess::GetCallStackId(const HookRecordPtr& hookRecord,
         ++napiIndex_;
     }
     // return call stack id
-    uint32_t stackId = FindCallStackId(g_callStack);
+    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
         return stackId;
     } else {
-        return SetCallStackMap(stackData);
+        return SetCallStackMap(stackData, hookRecord);
     }
 }
 
@@ -937,11 +945,11 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
     }
     spinLock_.Lock();
     // by call stack id set alloc statistics data.
-    uint32_t stackId = FindCallStackId(g_callStack);
+    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
         SetAllocStatisticsData(hookRecord, stackId, true);
     } else {
-        stackId = SetCallStackMap(stackData);
+        stackId = SetCallStackMap(stackData, hookRecord);
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
@@ -966,11 +974,11 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T
         return;
     }
     // by call stack id set alloc statistics data.
-    uint32_t stackId = FindCallStackId(g_callStack);
+    uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
         SetAllocStatisticsData(hookRecord, stackId, true);
     } else {
-        stackId = SetCallStackMap(stackData);
+        stackId = SetCallStackMap(stackData, hookRecord);
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
@@ -1109,7 +1117,11 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     if (type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG || type == MEMORY_UNUSING_MSG) {
         GetMemTag(rawStack->stackContext->tagId, tagName);
     }
-    SerializeInfo hookInfo = {&callFrames, stackMapId, tagName, &hookConfig_};
+
+    SerializeInfo hookInfo = {&callFrames, stackMapId, tagName,
+                              rawStack->stackContext->nodeType,
+                              rawStack->stackContext->nodeId,
+                              &hookConfig_};
     hookRecord->SerializeData(hookData, hookInfo);
 }
 
@@ -1157,6 +1169,8 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     switch (hookRecord->GetType()) {
         case MALLOC_MSG:
             record.type = RecordStatisticsEvent::MALLOC;
+            record.nodeType = rawStack->stackContext->nodeType;
+            record.nodeId = rawStack->stackContext->nodeId;
             break;
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
@@ -1177,10 +1191,16 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
                        tagName == TAG_RES_FD_ALL;
             if (tagName == TAG_RES_GPU_VK) {
                 record.type = RecordStatisticsEvent::GPU_VK;
+                record.nodeType = rawStack->stackContext->nodeType;
+                record.nodeId = rawStack->stackContext->nodeId;
             } else if ((tagName == TAG_RES_GPU_GLES_IMAGE) || (tagName == TAG_RES_GPU_GLES_BUFFER)) {
                 record.type = RecordStatisticsEvent::GPU_GLES;
+                record.nodeType = rawStack->stackContext->nodeType;
+                record.nodeId = rawStack->stackContext->nodeId;
             } else if ((tagName == TAG_RES_GPU_CL_IMAGE) || (tagName == TAG_RES_GPU_CL_BUFFER)) {
                 record.type = RecordStatisticsEvent::GPU_CL;
+                record.nodeType = rawStack->stackContext->nodeType;
+                record.nodeId = rawStack->stackContext->nodeId;
             } else if (fdLeakTag) {
                 record.type = RecordStatisticsEvent::FD;
             } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
@@ -1189,12 +1209,16 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
                 record.type = RecordStatisticsEvent::ARKTS_HEAP;
             } else if (tagName == "ashmem") {
                 record.type = RecordStatisticsEvent::ASHMEM;
+                record.nodeType = rawStack->stackContext->nodeType;
+                record.nodeId = rawStack->stackContext->nodeId;
             } else if (tagName == TAG_RES_JS_HEAP_MASK) {
                 record.type = RecordStatisticsEvent::JS_HEAP;
             } else if (tagName == TAG_RES_KMP_HEAP_MASK) {
                 record.type = RecordStatisticsEvent::KMP_HEAP;
             } else if (tagName == TAG_RES_DMABUF_MASK) {
                 record.type = RecordStatisticsEvent::DMA;
+                record.nodeType = rawStack->stackContext->nodeType;
+                record.nodeId = rawStack->stackContext->nodeId;
             } else if (tagName == TAG_RES_RN_HEAP_MASK) {
                 record.type = RecordStatisticsEvent::RN_HEAP;
             } else {
@@ -1572,6 +1596,8 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_apply_size(statistics->applySize);
             recordEvent->set_release_size(statistics->releaseSize);
             recordEvent->set_tag_name(statistics->tagName);
+            recordEvent->set_node_type(statistics->nodeType);
+            recordEvent->set_node_id(statistics->nodeId);
         }
         FlushData(stackData);
         }, stackData_);
@@ -1685,6 +1711,8 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
             hookData->set_tv_nsec(rawStack.ts.tv_nsec);
             if (rawStack.type == MALLOC_MSG) {
                 auto allocEvent = hookData->mutable_alloc_event();
+                allocEvent->set_node_type(rawStack.nodeType);
+                allocEvent->set_node_id(rawStack.nodeId);
                 SetEventFrame(rawStack, allocEvent, rawStack.stackMapId);
             } else if (rawStack.type == MMAP_MSG) {
                 auto mmapEvent = hookData->mutable_mmap_event();
@@ -1706,6 +1734,8 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
                 tagEvent->set_pid(pid_);
             } else if (rawStack.type == MEMORY_USING_MSG) {
                 auto traceAllocEvent = hookData->mutable_trace_alloc_event();
+                traceAllocEvent->set_node_type(rawStack.nodeType);
+                traceAllocEvent->set_node_id(rawStack.nodeId);
                 std::string tagName;
                 GetMemTag(rawStack.tagId, tagName);
                 if (tagName != "") {

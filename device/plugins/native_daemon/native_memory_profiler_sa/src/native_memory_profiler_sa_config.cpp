@@ -79,6 +79,7 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEBOOL(parcel, printNmdOnly_);
     WRITEBOOL(parcel, hookstandalone_);
     WRITEBOOL(parcel, saveFile_);
+    WRITEBOOL(parcel, extendProcesses_);
     WRITESTRING(parcel, fileName_);
     WRITEUINT32(parcel, nmdPid_);
     WRITEUINT32(parcel, nmdType_);
@@ -129,6 +130,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->printNmdOnly_);
     READBOOL(parcel, config->hookstandalone_);
     READBOOL(parcel, config->saveFile_);
+    READBOOL(parcel, config->extendProcesses_);
     READSTRING(parcel, config->fileName_);
     READUINT32(parcel, config->nmdPid_);
     READUINT32(parcel, config->nmdType_);

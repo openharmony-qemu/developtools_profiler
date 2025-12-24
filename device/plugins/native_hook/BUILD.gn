@@ -38,7 +38,11 @@ ohos_source_set("native_hook_source") {
     "../native_daemon/src/utilities.cpp",
     "src/address_handler.cpp",
     "src/hook_client.cpp",
+    "src/hook_client_holder.cpp",
+    "src/hook_guard.cpp",
     "src/hook_socket_client.cpp",
+    "src/performance_tracker.cpp",
+    "src/rawdata_builder.cpp",
     "src/runtime_stack_range.cpp",
     "src/sampling.cpp",
     "src/stack_writer.cpp",
@@ -274,6 +278,30 @@ ohos_executable("hook_restrace_test") {
     ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
+      "protobuf:protobuf_lite",
+    ]
+  }
+  install_enable = false
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_executable("arkui_test") {
+  output_name = "arkui_test"
+  sources = [ "test/arkui_test.cpp" ]
+  include_dirs = [
+    "include",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/base/include",
+  ]
+  if (current_toolchain != host_toolchain) {
+    defines = [
+      "HAVE_HILOG",
+      "HOOK_ENABLE",
+    ]
+    external_deps = [
+      "bounds_checking_function:libsec_shared",
+      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }

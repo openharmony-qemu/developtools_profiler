@@ -14,7 +14,7 @@
  */
 
 #include "native_memory_profiler_sa_client_manager.h"
-
+#include "common.h"
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,12 +46,39 @@ bool IsNumeric(const std::string& str)
     }
     return true;
 }
+
+bool IsOption(const std::string& arg)
+{
+    return !arg.empty() && arg[0] == '-';
+}
+
+int32_t HandleExtendPid(int32_t index, int32_t argc, char* argv[], std::vector<int>& pidList)
+{
+    int32_t pidIndex = index + 1;
+    while (pidIndex < argc && !IsOption(std::string(argv[pidIndex]))) {
+        int pidVal = IsNumeric(argv[pidIndex]) ? std::stoi(argv[pidIndex]) : 0;
+        pidList.push_back(pidVal);
+        ++pidIndex;
+    }
+    return pidIndex - 1;
+}
+
+int32_t HandleExtendProcessName(int32_t index, int32_t argc, char* argv[], std::vector<std::string>& nameList)
+{
+    int32_t pidIndex = index + 1;
+    while (pidIndex < argc && !IsOption(std::string(argv[pidIndex]))) {
+        nameList.push_back(argv[pidIndex]);
+        ++pidIndex;
+    }
+    return pidIndex - 1;
+}
+
 }
 
 int32_t main(int32_t argc, char* argv[])
 {
-    if (argc > 50) { // 50: max args size
-        printf("error too many args.\n");
+    if (COMMON::IsUserMode()) {
+        printf("User mode not supported.\n");
         return 0;
     }
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
@@ -59,6 +86,8 @@ int32_t main(int32_t argc, char* argv[])
     bool stop = false;
     bool error = false;
     bool dumpData = false;
+    std::vector<int> pidList;
+    std::vector<std::string> nameList;
     for (int32_t i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
         if (arg == "--help" || arg == "-h") {
@@ -99,6 +128,9 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --hookstandalone                    -hsa : hookstandalone \n");
             printf("    --save_file                         -sf : save_file \n");
             printf("    ----fileName                        -fn : file_name \n");
+            printf("    ----pidExtend                       -pe : pid extend \n");
+            printf("    ----processNameExtend               -pne : process_name extend \n");
+            printf("    ----traceMask                       -tm : trace mask \n");
             return 0;
         }
 
@@ -183,6 +215,15 @@ int32_t main(int32_t argc, char* argv[])
             config->saveFile_ = true;
         } else if ((arg == "--fileName") || (arg == "-fn")) {
             config->fileName_ = i + 1 < argc ? std::string(argv[++i]) : "";
+        } else if ((arg == "--pidExtend") || (arg == "-pe")) {
+            i = HandleExtendPid(i, argc, argv, pidList);
+            config->extendProcesses_ = true;
+        } else if ((arg == "--processNameExtend") || (arg == "-pne")) {
+            i = HandleExtendProcessName(i, argc, argv, nameList);
+            config->extendProcesses_ = true;
+        } else if ((arg == "--traceMask") || (arg == "-tm")) {
+            config->traceMask_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else {
             printf("error arg: %s\n", arg.c_str());
             error = true;
@@ -196,6 +237,20 @@ int32_t main(int32_t argc, char* argv[])
 
     if (start) {
         std::cout << "start....." << std::endl;
+        bool multiprocesses = false;
+        for (auto pidVal : pidList) {
+            config->pid_ = pidVal;
+            NativeMemoryProfilerSaClientManager::Start(config);
+            multiprocesses = true;
+        }
+        for (auto pidName : nameList) {
+            config->processName_ = pidName;
+            NativeMemoryProfilerSaClientManager::Start(config);
+            multiprocesses = true;
+        }
+        if (multiprocesses) {
+            return 0;
+        }
         if (config->printNmd_) {
             uint32_t fdFirst = TestDumpFile(std::to_string(0));
             NativeMemoryProfilerSaClientManager::GetMallocStats(fdFirst, config->pid_, ONLY_NMD, true);
@@ -209,6 +264,18 @@ int32_t main(int32_t argc, char* argv[])
         }
     } else if (stop) {
         std::cout << "stop....." << std::endl;
+        bool multiprocesses = false;
+        for (auto pidVal : pidList) {
+            NativeMemoryProfilerSaClientManager::Stop(pidVal);
+            multiprocesses = true;
+        }
+        for (auto pidName : nameList) {
+            NativeMemoryProfilerSaClientManager::Stop(pidName);
+            multiprocesses = true;
+        }
+        if (multiprocesses) {
+            return 0;
+        }
         if (config->pid_ > 0) {
             NativeMemoryProfilerSaClientManager::Stop(config->pid_);
         } else {

@@ -181,6 +181,10 @@ void MallocRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookI
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto allocEvent = protoData->mutable_alloc_event();
+        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+            allocEvent->set_node_type(hookInfo.nodeType);
+            allocEvent->set_node_id(hookInfo.nodeId);
+        }
         HookRecord::SetSize(allocEvent);
         HookRecord::SetEventFrame(allocEvent, hookInfo);
         }, stackData);
@@ -193,6 +197,10 @@ void MmapRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInf
         if (hookInfo.tagName != "") {
             mmapEvent->set_type(hookInfo.tagName);
         }
+        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+            mmapEvent->set_node_type(hookInfo.nodeType);
+            mmapEvent->set_node_id(hookInfo.nodeId);
+        }
         HookRecord::SetSize(mmapEvent);
         HookRecord::SetEventFrame(mmapEvent, hookInfo);
         }, stackData);
@@ -204,6 +212,10 @@ void MmapFilePageRecord::SerializeData(NativeHookProto stackData, SerializeInfo&
         auto mmapEvent = protoData->mutable_mmap_event();
         if (hookInfo.tagName != "") {
             mmapEvent->set_type(MMAP_FILE_PAGE_PREFIX + hookInfo.tagName);
+        }
+        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+            mmapEvent->set_node_type(hookInfo.nodeType);
+            mmapEvent->set_node_id(hookInfo.nodeId);
         }
         HookRecord::SetSize(mmapEvent);
         HookRecord::SetEventFrame(mmapEvent, hookInfo);
@@ -237,6 +249,10 @@ void MemoryUsingRecord::SerializeData(NativeHookProto stackData, SerializeInfo& 
         auto traceAllocEvent = protoData->mutable_trace_alloc_event();
         if (hookInfo.tagName != "") {
             traceAllocEvent->set_tag_name(hookInfo.tagName);
+        }
+        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+            traceAllocEvent->set_node_type(hookInfo.nodeType);
+            traceAllocEvent->set_node_id(hookInfo.nodeId);
         }
         HookRecord::SetTraceType(traceAllocEvent, hookInfo.tagName);
         HookRecord::SetSize(traceAllocEvent);

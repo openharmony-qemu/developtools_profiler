@@ -1,5 +1,8 @@
 {
   global:
+  extern "C" {
+    "SetResTraceId";
+  };
   extern "C++" {
     "ohos_malloc_hook_initialize";
     "ohos_malloc_hook_get_hook_flag";

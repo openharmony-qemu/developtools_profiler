@@ -60,6 +60,8 @@ struct SerializeInfo {
     std::vector<CallFrame>* callFrames = nullptr;
     uint32_t stackMapId = 0;
     std::string tagName = "";
+    uint32_t nodeType = 0;
+    uint64_t nodeId = 0;
     NativeHookConfig* config = nullptr;
 };
 

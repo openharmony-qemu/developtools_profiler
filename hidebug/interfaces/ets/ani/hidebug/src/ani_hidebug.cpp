@@ -532,7 +532,7 @@ ani_object GetVMRuntimeStats(ani_env *env)
     ani_class cls = nullptr;
     ani_method ctorMethod = nullptr;
     ani_object vmRunTimeStats = nullptr;
-    if (env->FindClass("escompat.Record", &cls) != ANI_OK ||
+    if (env->FindClass("std.core.Record", &cls) != ANI_OK ||
         env->Class_FindMethod(cls, "<ctor>", nullptr, &ctorMethod) != ANI_OK ||
         env->Object_New(cls, ctorMethod, &vmRunTimeStats, nullptr) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "failed to init record.");
@@ -590,7 +590,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(alwaysEnabledRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(alwaysEnabledRef),
-                "unboxed", ":Z", &alwaysEnabledAni) != ANI_OK) {
+                "unboxed", ":z", &alwaysEnabledAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
                 return false;
             }
@@ -604,7 +604,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(sampleRatedRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(sampleRatedRef),
-                "unboxed", ":I", &sampleRateAni) != ANI_OK) {
+                "unboxed", ":i", &sampleRateAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
                 return false;
             }
@@ -618,7 +618,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(slotRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(slotRef),
-                "unboxed", ":I", &slotAni) != ANI_OK) {
+                "unboxed", ":i", &slotAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
                 return false;
             }
@@ -729,20 +729,20 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getAppVMObjectUsedSizeAdapter", ":l", reinterpret_cast<void *>(GetAppVMObjectUsedSize)},
         ani_native_function {"getMemoryLimitImplAdapter", ":C{@ohos.hidebug.hidebug.MemoryLimitImplAdapter}",
             reinterpret_cast<void *>(GetAppMemoryLimit)},
-        ani_native_function {"getVMRuntimeStats", ":C{escompat.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
+        ani_native_function {"getVMRuntimeStats", ":C{std.core.Record}", reinterpret_cast<void *>(GetVMRuntimeStats)},
         ani_native_function {"getVMRuntimeStat", "C{std.core.String}:l", reinterpret_cast<void *>(GetVMRuntimeStat)},
         ani_native_function {"getPssAdapter", ":l", reinterpret_cast<void *>(GetPss)},
         ani_native_function {"getSharedDirtyAdapter", ":l", reinterpret_cast<void *>(GetSharedDirty)},
         ani_native_function {"getPrivateDirtyAdapter", ":l", reinterpret_cast<void *>(GetPrivateDirty)},
         ani_native_function {"getCpuUsage", ":d", reinterpret_cast<void *>(GetCpuUsage)},
-        ani_native_function {"getServiceDump", "iiC{escompat.Array}:", reinterpret_cast<void *>(GetServiceDump)},
+        ani_native_function {"getServiceDump", "iiC{std.core.Array}:", reinterpret_cast<void *>(GetServiceDump)},
         ani_native_function {"getNativeHeapSizeAdapter", ":l", reinterpret_cast<void *>(GetNativeHeapSize)},
         ani_native_function {"getNativeHeapAllocatedSizeAdapter", ":l",
             reinterpret_cast<void *>(GetNativeHeapAllocatedSize)},
         ani_native_function {"getNativeHeapFreeSizeAdapter", ":l",
             reinterpret_cast<void *>(GetNativeHeapFreeSize)},
         ani_native_function {"getVssAdapter", ":l", reinterpret_cast<void *>(GetVss)},
-        ani_native_function {"getAppThreadCpuUsage", ":C{escompat.Array}",
+        ani_native_function {"getAppThreadCpuUsage", ":C{std.core.Array}",
             reinterpret_cast<void *>(GetAppThreadCpuUsage)},
         ani_native_function {"getSystemCpuUsage", ":d", reinterpret_cast<void *>(GetSystemCpuUsage)},
         ani_native_function {"getAppNativeMemInfoAdapter", "z:C{@ohos.hidebug.hidebug.NativeMemInfoAdapter}",
@@ -750,7 +750,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getSystemMemInfoAdapter", ":C{@ohos.hidebug.hidebug.SystemMemInfoAdapter}",
             reinterpret_cast<void *>(GetSystemMemInfo)},
         ani_native_function {"startAppTraceCapture",
-            "C{escompat.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
+            "C{std.core.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
         ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},

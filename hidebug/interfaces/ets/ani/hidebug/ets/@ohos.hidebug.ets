@@ -163,7 +163,7 @@ export namespace hidebug {
   export function getAppNativeMemInfoAsync(): Promise<NativeMemInfo> {
     return new Promise<NativeMemInfo>((resolve: (v: NativeMemInfo) => void,
       reject: (e: BusinessError<void>) => void) => {
-        taskpool.execute(getAppNativeMemInfo).then((ret: NullishType): void => {
+        taskpool.execute(getAppNativeMemInfo).then((ret: Any): void => {
           resolve(ret as NativeMemInfo);
         }).catch((err: Object | null | undefined) => {
           reject(err as BusinessError);
@@ -321,7 +321,7 @@ export namespace hidebug {
           } else {
             return getGraphicsMemoryAdapter(interval as int);
           }
-        }).then((ret: NullishType): void => {
+        }).then((ret: Any): void => {
           resolve(ret as GraphicsMemorySummary);
         }).catch((err: Object | null | undefined) => {
           reject(err as BusinessError);
