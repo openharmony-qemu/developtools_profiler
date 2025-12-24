@@ -209,12 +209,17 @@ bool SocketContext::SendHookConfig(const uint8_t* config, size_t len)
     if (config == nullptr || len == 0) {
         return false;
     }
-
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;
     phead.protoSize = len + sizeof(struct ProtocolHead);
-    send(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead), 0);
-    send(socketHandle_, config, len, 0);
+    if (send(socketHandle_, reinterpret_cast<int8_t*>(&phead), sizeof(struct ProtocolHead), 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "send head information error!");
+        return false;
+    }
+    if (send(socketHandle_, config, len, 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "send config data error!");
+        return false;
+    }
     return true;
 }
 
@@ -231,7 +236,6 @@ bool SocketContext::SendHeartBeat()
     if (send(socketHandle_, &HEARTBEAT_MSG, sizeof(HEARTBEAT_MSG), 0) == -1) {
         return false;
     }
-
     return true;
 }
 

@@ -49,13 +49,10 @@ public:
     bool SendNmdInfo();
     bool SendSimplifiedNmdInfo();
     bool SendEndMsg();
+    bool GetConnectState();
     int GetNmdType()
     {
         return nmdType_;
-    }
-    bool GetConnectState()
-    {
-        return connectState_.load();
     }
 
 private:

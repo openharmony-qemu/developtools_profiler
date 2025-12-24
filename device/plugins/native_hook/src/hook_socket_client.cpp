@@ -93,6 +93,11 @@ HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *samp
     connectState_ = Connect(DEFAULT_UNIX_SOCKET_HOOK_FULL_PATH);
 }
 
+bool HookSocketClient::GetConnectState()
+{
+    return connectState_.load() && (unixSocketClient_->GetClientState() != CLIENT_STAT_THREAD_EXITED);
+}
+
 HookSocketClient::~HookSocketClient()
 {
     for (size_t i = 0; i < stackWriterList_.size(); ++i) {
@@ -118,7 +123,9 @@ bool HookSocketClient::Connect(const std::string addrname)
         return false;
     }
 
-    unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&pid_), sizeof(pid_));
+    if (!unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&pid_), sizeof(pid_))) {
+        return false;
+    }
     return true;
 }
 
@@ -257,11 +264,15 @@ bool HookSocketClient::SendNmdInfo()
     malloc_stats_print(NmdWriteStat, &opt, "a");
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = NMD_MSG;
-    if (stackWriterList_[0]) {
-        stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                                     reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
-                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
-    } else {
+    if (!stackWriterList_[0]) {
+        free(nmdBuf);
+        return false;
+    }
+    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                            reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
+                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret) {
+        DisableHook();
         free(nmdBuf);
         return false;
     }
@@ -283,11 +294,15 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
     malloc_stats_print(NmdWriteStat, &opt, "s");
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = NMD_MSG;
-    if (stackWriterList_[0]) {
-        stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
-                                                     reinterpret_cast<int8_t*>(opt.buf), strlen(opt.buf) + 1,
-                                                     std::bind(&HookSocketClient::PeerIsConnected, this));
-    } else {
+    if (!stackWriterList_[0]) {
+        free(nmdBuf);
+        return false;
+    }
+    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                            reinterpret_cast<int8_t *>(opt.buf), strlen(opt.buf) + 1,
+                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret) {
+        DisableHook();
         free(nmdBuf);
         return false;
     }
