@@ -37,6 +37,10 @@ private:
     static std::atomic<uint64_t> dataCounts_ = 0;
 };
 
+std::atomic<uint64_t> PerformanceTracker::mallocTimes_ = 0;
+std::atomic<uint64_t> PerformanceTracker::timeCost_ = 0;
+std::atomic<uint64_t> PerformanceTracker::dataCounts_ = 0;
+
 #define PERF_TRACK() PerformanceTracker __perf_tracker__
 #define PERF_RECORD_DATA(bytes) __perf_tracker__.RecordDataSize(bytes)
 #define PERF_REFRESH_START_TIME() __perf_tracker__.RefreshStartTime()

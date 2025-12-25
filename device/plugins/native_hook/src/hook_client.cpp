@@ -810,7 +810,7 @@ void hook_free(void (*free_func)(void*), void* p)
     }
 }
 
-bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset)
+static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset)
 {
     if (fd < 0) {
         return true;
@@ -1129,15 +1129,10 @@ void hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, si
         return;
     }
 
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(MALLOC_ARKTS)
-        .SetAddr(oldAddr)
-        .SetNewAddr(newAddr)
-        .SetSize(newSize)
-        .SetProcessInfo()
-        .SetTagId(HookGuard::GetPredefinedTagId(mask))
-        .SetTimestamp()
-        .Build();
+    StackRawData rawdata = {{{{0}}}};
+    SetStackRawData(rawdata, MALLOC_ARKTS, oldAddr, newSize);
+    rawdata.newAddr = newAddr;
+    rawdata.tagId = HookGuard::GetPredefinedTagId(mask);
     
     uintptr_t stackPtr = 0;
     client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
@@ -1156,14 +1151,9 @@ void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
         return;
     }
     
-    RawDataBuilder builder;
-    StackRawData rawdata = builder.SetType(FREE_ARKTS)
-        .SetAddr(addr)
-        .SetSize(size)
-        .SetProcessInfo()
-        .SetTagId(HookGuard::GetPredefinedTagId(mask))
-        .SetTimestamp()
-        .Build();
+    StackRawData rawdata = {{{{0}}}};
+    SetStackRawData(rawdata, FREE_ARKTS, addr, size);
+    rawdata.tagId = HookGuard::GetPredefinedTagId(mask);
 
     uintptr_t stackPtr = 0;
     HookClientHolder client(g_hookClient);

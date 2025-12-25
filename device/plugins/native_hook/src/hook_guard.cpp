@@ -151,6 +151,7 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
 
 bool IsInDualRange(size_t size, const uint64_t* range)
 {
+    // size of range need great than GPU_RANGE_COUNT + 2
     if (!range || GPU_RANGE_COUNT + 2 > sizeof(*range)/sizeof(uint64_t)) {
         return false;
     }
