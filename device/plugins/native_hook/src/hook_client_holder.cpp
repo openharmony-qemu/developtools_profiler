@@ -18,6 +18,7 @@
 #include "hook_common.h"
 #include "hook_client.h"
 #include "get_thread_id.h"
+#include "logging.h"
 #include "runtime_stack_range.h"
 #include <sys/prctl.h>
 #include <pthread.h>
@@ -62,7 +63,10 @@ bool HookClientHolder::UpdateThreadName()
         NameData tnameData = {{{{0}}}};
         tnameData.tid = static_cast<uint32_t>(GetCurThreadId());
         tnameData.type = THREAD_NAME_MSG;
-        prctl(PR_GET_NAME, tnameData.name);
+        if (prctl(PR_GET_NAME, tnameData.name) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "prctl tnameData.name error");
+            return false;
+        }
         ret = holder_->SendStackWithPayload(&tnameData,
                                             sizeof(BaseStackRawData) + strlen(tnameData.name) + 1,
                                             nullptr, 0);
@@ -107,7 +111,8 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
         }
         if (range.start > soStart) {
             range.start = soStart;
-        } else if (range.end < soEnd) {
+        }
+        if (range.end < soEnd) {
             range.end = soEnd;
         }
         g_targetedRange.store(range);

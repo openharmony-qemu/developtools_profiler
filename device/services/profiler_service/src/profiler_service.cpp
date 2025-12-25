@@ -681,6 +681,10 @@ Status ProfilerService::SubscribeProfilerEvt(ServerContext* context,
             }
 
             bool sendSuccess = writer->Write(response);
+            for (auto& state : response.plugin_state()) {
+                PROFILER_LOG_INFO(LOG_CORE, "sendSuccess = %d, event = %d, detail=%s",
+                    sendSuccess, state.event(), state.event_detail().c_str());
+            }
             if (count <= 0 || !sendSuccess) {
                 PROFILER_LOG_INFO(LOG_CORE, "count = %d, sendSuccess = %d", count, sendSuccess);
                 break;
