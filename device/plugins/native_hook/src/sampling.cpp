@@ -15,6 +15,7 @@
 
 #include "sampling.h"
 
+std::default_random_engine Sampling::randomEngine_;
 void Sampling::Reset()
 {
     sampleInterval_ = 0;
@@ -23,23 +24,24 @@ void Sampling::Reset()
     exponentialDist_.reset();
 }
 
-void Sampling::InitSampling(uint64_t sampleInterval)
+bool Sampling::InitSampling(uint64_t sampleInterval)
 {
-    sampleInterval_ = sampleInterval;
-    sampleRate_ = 1.0 / static_cast<double>(sampleInterval_);
-    exponentialDist_ = std::exponential_distribution<double>(sampleRate_);
-    nextSampleInterval_ = CalcNextSampleInterval();
+    if (!isInit_) {
+        sampleInterval_ = sampleInterval;
+        sampleRate_ = 1.0 / static_cast<double>(sampleInterval_);
+        exponentialDist_ = std::exponential_distribution<double>(sampleRate_);
+        nextSampleInterval_ = CalcNextSampleInterval();
+        isInit_ = true;
+    }
+    return isInit_;
 }
 
 size_t Sampling::CalcSamplings(size_t allocSize)
 {
     size_t counts = 0;
-    {
-        Spinlock s;
-        for (nextSampleInterval_ -= static_cast<int64_t>(allocSize); nextSampleInterval_ <= 0;
-            nextSampleInterval_ += CalcNextSampleInterval()) {
-            ++counts;
-        }
+    for (nextSampleInterval_ -= static_cast<int64_t>(allocSize); nextSampleInterval_ <= 0;
+         nextSampleInterval_ += CalcNextSampleInterval()) {
+        ++counts;
     }
     return counts;
 }

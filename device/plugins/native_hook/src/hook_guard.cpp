@@ -24,6 +24,7 @@
 
 constexpr int PID_NAMESPACE_ID = 1;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
+static thread_local Sampling g_sampler;
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -104,6 +105,7 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
 bool ShouldSample(size_t size)
 {
     if (g_clientConfig.sampleInterval > MIN_SAMPLER_INTERVAL) {
+        g_sampler.InitSampling(g_clientConfig.sampleInterval);
         return g_sampler.StartSampling(size) == 0;
     }
     return false;

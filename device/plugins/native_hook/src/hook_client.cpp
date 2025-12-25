@@ -57,7 +57,6 @@ pthread_key_t g_updateThreadNameCount = 10000;
 static pthread_once_t g_onceFlag;
 
 // Global variables that need to be exported
-Sampling g_sampler;
 std::recursive_timed_mutex g_ClientMutex;
 std::recursive_timed_mutex g_FilterMapMutex;
 std::mutex g_tagMapMutex;
@@ -258,8 +257,7 @@ void* MallocHookStart(void* disableHookCallback)
         return nullptr;
     } else {
         g_clientConfig.Reset();
-        g_sampler.Reset();
-        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig, &g_sampler,
+        g_hookClient = std::make_shared<HookSocketClient>(g_hookPid.load(), &g_clientConfig,
                                                           &g_targetedRange, &g_sharedMemCount,
                                                           reinterpret_cast<void (*)()>(disableHookCallback));
         if (g_hookClient->GetConnectState()) {

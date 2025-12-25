@@ -77,10 +77,10 @@ static void NmdWriteStat(void *arg, const char *buf)
     opt->pos += len;
 }
 
-HookSocketClient::HookSocketClient(int pid, ClientConfig *config, Sampling *sampler,
+HookSocketClient::HookSocketClient(int pid, ClientConfig *config,
                                    std::atomic<Range>* targetedRange, std::atomic<int>* memCount,
                                    void (*disableHookCallback)())
-    : pid_(pid), config_(config), sampler_(sampler), targetedRange_(targetedRange),
+    : pid_(pid), config_(config), targetedRange_(targetedRange),
       sharedMemCount_(memCount), disableHookCallback_(disableHookCallback)
 {
     g_disableHook = true;
@@ -139,7 +139,6 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
                        config_->memtraceEnable, config_->traceMask);
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
-    sampler_->InitSampling(config_->sampleInterval);
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
     for (int i = 0; i < sharedMemCount; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();

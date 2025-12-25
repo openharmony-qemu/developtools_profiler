@@ -40,7 +40,6 @@ extern std::atomic<pid_t> g_hookPid;
 extern std::atomic<bool> g_hookReady;
 extern std::atomic<bool> g_isPidChanged;
 extern ClientConfig g_clientConfig;
-extern Sampling g_sampler;
 extern std::mutex g_usableSizeMapMutex;
 extern std::unordered_map<size_t, size_t> g_mallocUsableSizeMap;
 extern std::atomic<Range> g_targetedRange;
