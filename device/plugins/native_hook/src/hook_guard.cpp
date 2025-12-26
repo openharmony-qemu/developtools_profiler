@@ -24,7 +24,7 @@
 
 constexpr int PID_NAMESPACE_ID = 1;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
-static thread_local Sampling g_sampler;
+thread_local Sampling g_sampler;
 
 using namespace OHOS::Developtools::NativeDaemon;
 

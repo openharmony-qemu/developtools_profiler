@@ -332,9 +332,6 @@ void* ohos_release_on_end(void*)
     }
     PROFILER_LOG_INFO(LOG_CORE, "ohos_release_on_end begin!");
     if (g_hookClient != nullptr) {
-        if (g_hookClient->GetNmdType() == 1) {
-            g_hookClient->SendNmdInfo();
-        }
         g_hookClient->SendEndMsg();
         g_hookClient->Flush();
     }

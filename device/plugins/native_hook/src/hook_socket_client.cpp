@@ -317,10 +317,6 @@ bool HookSocketClient::SendEndMsg()
     if (g_disableHook || unixSocketClient_ == nullptr) {
         return false;
     }
-    if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
-        DisableHook();
-        return false;
-    }
     std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
         [&rawdata](std::shared_ptr<StackWriter>& writer) {
         if (writer) {
