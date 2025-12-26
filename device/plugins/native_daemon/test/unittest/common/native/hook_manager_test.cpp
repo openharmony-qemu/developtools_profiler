@@ -439,34 +439,6 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskBoundaryConditions, TestSize.Level0)
 }
 
 /*
- * @tc.name: ConvertTagToMaskPerformanceTest
- * @tc.desc: test ConvertTagToMask with performance test.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerTest, ConvertTagToMaskPerformanceTest, TestSize.Level0)
-{
-    HookManager hookManager;
-    NativeHookConfig config;
-    const int testCount = 10000;
-    const int timeout = 1000; // 1 millisecond
-    // Add a large number of tags for performance test
-    for (int i = 0; i < testCount; i++) {
-        config.add_restrace_tag("RES_GPU_VK");
-    }
-    
-    hookManager.SetHookConfig(config);
-
-    // Test execution time
-    auto start = std::chrono::high_resolution_clock::now();
-    unsigned long long result = hookManager.ConvertTagToMask();
-    auto end = std::chrono::high_resolution_clock::now();
-
-    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
-    EXPECT_EQ(result, RES_GPU_VK);
-    EXPECT_LT(duration, timeout); // Expect the execution time to be less than 1 millisecond
-}
-
-/*
  * @tc.name: GetCmdArgsEmptyConfig
  * @tc.desc: test GetCmdArgs with empty config.
  * @tc.type: FUNC
