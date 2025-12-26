@@ -553,7 +553,6 @@ void FPS::CalcScanout(long long &curDumpTime, long long &curFlushTime)
     curScanout = curDumpTime - curFlushTime;
     fpsInfo.maxScanout = (curScanout > fpsInfo.maxScanout) ? curScanout : fpsInfo.maxScanout;
     totalScanout += curScanout;
-    LOGI("yanzhe curScanout = %d maxScanout = %d", curScanout, fpsInfo.maxScanout);
 }
 
 long long FPS::CalculateJitter(long long &curTimestamp) const
