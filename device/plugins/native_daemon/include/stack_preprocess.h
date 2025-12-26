@@ -261,6 +261,7 @@ private:
     bool ProcessEndMsg();
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
+    void SetIsStartTakeData(bool isStartTakeData);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::shared_ptr<Writer> writer_ = nullptr;
@@ -268,6 +269,7 @@ private:
     std::thread thread_ {};
     std::unique_ptr<uint8_t[]> buffer_;
     std::atomic_bool isStopTakeData_ = false;
+    std::atomic_bool isStartTakeData_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);
     OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};

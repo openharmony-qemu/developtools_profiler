@@ -203,6 +203,13 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
     }
 }
 
+inline void StackPreprocess::SetIsStartTakeData(bool isStartTakeData)
+{
+    if (isStartTakeData_ != isStartTakeData) {
+        isStartTakeData_ = isStartTakeData;
+    }
+}
+
 bool StackPreprocess::StartTakeResults()
 {
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
@@ -217,18 +224,24 @@ bool StackPreprocess::StartTakeResults()
 
     thread_ = std::move(demuxer);
     isStopTakeData_ = false;
+    SetIsStartTakeData(false);
     return true;
 }
 
 bool StackPreprocess::StopTakeResults()
 {
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
-    int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-        std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
-    if (timerFd == -1) {
-        PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
-        return false;
+    if (isStartTakeData_) {
+        int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+            std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
+        if (timerFd == -1) {
+            PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
+            return false;
+        }
+    } else {
+        ForceStop();
     }
+    
     if (!dataRepeater_) {
         while (!isStopTakeData_) {
             std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_TIME_ONCE));
@@ -367,6 +380,7 @@ bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size
     }
 
     uint16_t type = hookRecord->GetType();
+    SetIsStartTakeData(true);
     if (isStopTakeData_) {
         return false;
     } else if (type == MEMORY_TAG) {
@@ -635,6 +649,7 @@ bool StackPreprocess::ProcessSingleRecord(HookRecordPtr& hookRecord)
     }
 
     uint16_t type = hookRecord->GetType();
+    SetIsStartTakeData(true);
     if (type == NMD_MSG || type == END_MSG) {
         if (type == END_MSG) {
             isStopTakeData_ = true;
