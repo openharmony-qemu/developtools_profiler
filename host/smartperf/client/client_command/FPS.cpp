@@ -290,7 +290,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs("");
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(fpsByRsSleepTime_));
         fpsInfo = GetFpsInfoByRs(name);
     }
     return fpsInfo;
@@ -395,13 +395,13 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
             CalcJitters(fpsInfo.presentFenceTimeStamps);
         }
         std::thread calcDrawFrameThread([this]() {
-            this->calcDrawFrame(fpsInfo.flushTimeStamps);
+            this->CalcDrawFrame(fpsInfo.flushTimeStamps);
         });
-        std::thread CalcScanoutThread([this]() {
+        std::thread calcScanoutThread([this]() {
             this->ColleScanout(fpsInfo.flushTimeStamps, fpsInfo.presentFenceTimeStamps);
         });
         calcDrawFrameThread.join();
-        CalcScanoutThread.join();
+        calcScanoutThread.join();
         fpsInfo.avgDrawCall = totalDrawCal / fpsInfo.flushTimeStamps.size();
         fpsInfo.avgScanout = totalScanout / fpsInfo.flushTimeStamps.size();
         totalDrawCal = 0;
@@ -454,38 +454,38 @@ bool FPS::CalcFpsAndJitters(bool isBreak, std::string &curTimestamp, bool isGetR
     return isBreak && !findFpsCurTime;
 }
 
-void FPS::calcDrawFrame(std::vector<long long> &flushtimeStamps)
+void FPS::CalcDrawFrame(std::vector<long long> &flushTimeStamps)
 {
     bool isOrder = true;
-    if (flushtimeStamps.size() > 1) {
-        isOrder = flushtimeStamps[1] - flushtimeStamps[0] > 0;
+    if (flushTimeStamps.size() > 1) {
+        isOrder = flushTimeStamps[1] - flushTimeStamps[0] > 0;
     } else {
-        LOGE("the flushtimeStamps is empty");
+        LOGE("the flushTimeStamps is empty");
         return;
     }
     if (isOrder) {
-        for (size_t i = 0; i < flushtimeStamps.size(); i++) {
-            long long flushtime = flushtimeStamps[i];
-            colleCurFrame(flushtime);
+        for (size_t i = 0; i < flushTimeStamps.size(); i++) {
+            long long flushtime = flushTimeStamps[i];
+            ColleCurFrame(flushtime);
             lastFlushTimeStamp = flushtime;
             lastDrawCal = curDrawCal;
         }
     } else {
-        for (size_t i = flushtimeStamps.size(); i > 0; i--) {
-            long long flushtime = flushtimeStamps[i - 1];
-            colleCurFrame(flushtime);
+        for (size_t i = flushTimeStamps.size(); i > 0; i--) {
+            long long flushtime = flushTimeStamps[i - 1];
+            ColleCurFrame(flushtime);
             lastFlushTimeStamp = flushtime;
             lastDrawCal = curDrawCal;
         }
     }
 }
         
-void FPS::colleCurFrame(long long &flushtime)
+void FPS::ColleCurFrame(long long &flushTime)
 {
     if (lastFlushTimeStamp == 0) {
-        curDrawCal = flushtime % mod;
+        curDrawCal = flushTime % mod;
     } else {
-        curDrawCal = flushtime - lastFlushTimeStamp;
+        curDrawCal = flushTime - lastFlushTimeStamp;
     }
     if (!firstDrawFlag) {
         totalDrawCal += curDrawCal;
@@ -535,20 +535,20 @@ void FPS::ColleScanout(std::vector<long long> &flushtimeStamps, std::vector<long
         for (size_t i = 0; i < flushtimeStamps.size(); i++) {
             long long curDumpTime = currDumpTimeStamps[i];
             long long curFlushTime = flushtimeStamps[i];
-            calcScanout(curDumpTime, curFlushTime);
+            CalcScanout(curDumpTime, curFlushTime);
             lastScanout = curScanout;
         }
     } else {
         for (size_t i = flushtimeStamps.size(); i > 0; i--) {
             long long curDumpTime = currDumpTimeStamps[i - 1];
             long long curFlushTime = flushtimeStamps[i - 1];
-            calcScanout(curDumpTime, curFlushTime);
+            CalcScanout(curDumpTime, curFlushTime);
             lastScanout = curScanout;
         }
     }
 }
 
-void FPS::calcScanout(long long &curDumpTime, long long &curFlushTime)
+void FPS::CalcScanout(long long &curDumpTime, long long &curFlushTime)
 {
     curScanout = curDumpTime - curFlushTime;
     fpsInfo.maxScanout = (curScanout > fpsInfo.maxScanout) ? curScanout : fpsInfo.maxScanout;

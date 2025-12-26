@@ -93,11 +93,11 @@ public:
     void SetRkFlag();
     std::string FindFpsRefreshrate();
     std::string GetHardenRefreshrate(std::string &screenInfo) const;
-    void calcDrawFrame(std::vector<long long> &flushtimeStamps);
-    void colleCurFrame(long long &flushtime);
+    void CalcDrawFrame(std::vector<long long> &flushTimeStamps);
+    void ColleCurFrame(long long &flushTime);
     void CalcJitters(std::vector<long long> &currDumpTimeStamps);
     void ColleScanout(std::vector<long long> &flushtimeStamps, std::vector<long long> &currDumpTimeStamps);
-    void calcScanout(long long &curDumpTime, long long &curFlushTime);
+    void CalcScanout(long long &curDumpTime, long long &curFlushTime);
     static inline bool isGameApp = false;
     static inline bool isNeedDump = false;
     static inline bool isPreset = false;
@@ -184,6 +184,7 @@ private:
     std::string nodeIdStr = "";
     bool isUniRender = false;
     bool heelChiraityFlag = false;
+    int fpsByRsSleepTime_ = 50;
 };
 }
 }
