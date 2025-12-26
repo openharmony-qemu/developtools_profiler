@@ -274,7 +274,9 @@ std::string StartUpDelay::GetPidByPkg(const std::string &curPkgName, std::string
         const size_t firstNonSpace = resultChildProcId.find_first_not_of(" ");
         resultChildProcId = resultChildProcId.substr(firstNonSpace);
     }
-    pids == nullptr ? "" : *pids = resultChildProcId;
+    if (pids != nullptr) {
+        *pids = resultChildProcId;
+    }
     LOGD("GetPidByPkg: mainProcessId_ = (%s), pids = (%s)", mainProcessId_.c_str(),
         pids == nullptr ? resultChildProcId.c_str() : pids->c_str());
     return mainProcessId_;

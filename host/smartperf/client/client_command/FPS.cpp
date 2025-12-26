@@ -41,7 +41,9 @@ std::map<std::string, std::string> FPS::ItemData()
     if (surfaceViewName.length() > 0) {
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
     } else {
+        firstDrawFlag = true;
         fpsInfo.currDumpTimeStamps.clear();
+        fpsInfo.flushTimeStamps.clear();
         fpsInfo.presentFenceTimeStamps.clear();
         fpsInfoResult = GetFpsInfo();
     }
@@ -66,6 +68,7 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
     if (fpsInfoResult.fps > fullFrame && fpsInfoResult.fps < maxFullFrame) {
         fpsInfoResult.fps = fullFrame;
     }
+    HandleHeelChirality(fpsInfoResult, result);
     result["fps"] = std::to_string(fpsInfoResult.fps);
     std::string jitterStr = "";
     std::string split = "";
@@ -97,6 +100,33 @@ std::map<std::string, std::string> FPS::GetFpsAndJitters(FpsInfo &fpsInfoResult,
     return result;
 }
 
+void FPS::HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std::string> &result)
+{
+    const size_t million = 1000000;
+    if (heelChiraityFlag) {
+        if (fpsInfoResult.avgDrawCall == 0) {
+            result["avgDrawCall"] = "0";
+        } else {
+            result["avgDrawCall"] = std::to_string(fpsInfoResult.avgDrawCall / million);
+        }
+        if (fpsInfoResult.maxDrawCall == 0) {
+            result["maxDrawCall"] = "0";
+        } else {
+            result["maxDrawCall"] = std::to_string(fpsInfoResult.maxDrawCall / million);
+        }
+        if (fpsInfoResult.avgScanout == 0) {
+            result["avgScanout"] = "0";
+        } else {
+            result["avgScanout"] = std::to_string(fpsInfoResult.avgScanout / million);
+        }
+        if (fpsInfoResult.maxScanout == 0) {
+            result["maxScanout"] = "0";
+        } else {
+            result["maxScanout"] = std::to_string(fpsInfoResult.maxScanout / million);
+        }
+    }
+}
+
 void FPS::CalcFatalCaton(std::vector<long long>& jitters)
 {
     if (!HAVE_CATON && catonNum == 0) {
@@ -126,7 +156,7 @@ void FPS::GetGameScenStatus()
             }
         }
     }
-    LOGD("IN GAME SCENE inGameSceneNum (%d)", inGameSceneNum);
+    LOGI("IN GAME SCENE inGameSceneNum (%d)", inGameSceneNum);
 }
 
 void FPS::StartExecutionOnce(bool isPause)
@@ -167,6 +197,7 @@ void FPS::SetLayerName(const std::string& sName)
     surfaceViewName = sName;
     isNeedDump = true;
 }
+
 FpsInfo FPS::GetDiffLayersFpsInfo(const std::string &sName)
 {
     isUniRender = true;
@@ -188,7 +219,7 @@ void FPS::GetSystemClockGettime()
     clock_gettime(CLOCK_MONOTONIC, &time1);
     fpsInfo.curTime = static_cast<int>(time1.tv_sec - 1);
     fpsInfo.currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
-    LOGD("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
+    LOGI("FPS:fpsInfo.curTime: %d, FPS:psInfo.currTimeDump: %lld", fpsInfo.curTime, fpsInfo.currTimeDump);
 }
 
 FpsInfo FPS::GetFpsInfo()
@@ -237,7 +268,7 @@ FpsInfo FPS::GetAppFps(std::string &uniteLayer)
         GetSystemClockGettime();
         fpsInfoData = GetSurfaceFrame(uniteLayer);
     } else {
-        LOGD("FPS::app is in the background");
+        LOGI("FPS::app is in the background");
         if (processId.empty()) {
             processFlag = true;
         }
@@ -259,6 +290,7 @@ FpsInfo FPS::GetSurfaceFrame(const std::string& name)
         fpsInfo = GetFpsInfoByDump(name);
     } else {
         fpsInfo = GetFpsInfoByRs("");
+        std::this_thread::sleep_for(std::chrono::milliseconds(fpsByRsSleepTime_));
         fpsInfo = GetFpsInfoByRs(name);
     }
     return fpsInfo;
@@ -312,15 +344,10 @@ void FPS::ReadDataFromPipe(int fd)
         close(fd);
         return;
     }
-    std::stringstream sstream;
     while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
         LOGD("FPS::ReadDataFromPipe::dump time: %s", tmp);
-        std::string tmpStr(tmp);
-        curScreenTimestamp = 0;
-        sstream.clear();
-        sstream.str(tmpStr);
-        sstream >> curScreenTimestamp;
-        if (curScreenTimestamp == 0) {
+        std::string curScreenTimestamp(tmp);
+        if (!strcmp(curScreenTimestamp.c_str(), "0")) {
             continue;
         }
         if (CalcFpsAndJitters(isBreak, curScreenTimestamp, false)) {
@@ -330,31 +357,22 @@ void FPS::ReadDataFromPipe(int fd)
     (void)fclose(fp);
     if (!hapLowFpsFlag || !isLowCurFps) {
         if (!isStartStop) {
-            CalcJitters(fpsInfo.currDumpTimeStamps, curScreenTimestamp);
+            CalcJitters(fpsInfo.currDumpTimeStamps);
         }
     }
 }
 
-void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence, long long &curTimestamp)
+void FPS::GetCurTimeStamps(std::string &fpsInfoResult, bool presentFence)
 {
     bool isBreak = false;
-    std::stringstream iss;
-    iss << fpsInfoResult;
+    std::stringstream iss(fpsInfoResult);
     std::string timeStampLine;
     while (getline(iss, timeStampLine, '\n')) {
         timeStampLine.erase(0, timeStampLine.find_first_not_of(' '));
-        curTimestamp = 0;
-        if (timeStampLine.empty()) {
+        if (timeStampLine.empty() || !(strcmp(timeStampLine.c_str(), "0"))) {
             continue;
         }
-        std::stringstream ss;
-        ss.clear();
-        ss << timeStampLine;
-        ss >> curTimestamp;
-        if (curTimestamp == 0) {
-            continue;
-        }
-        if (CalcFpsAndJitters(isBreak, curTimestamp, presentFence)) {
+        if (CalcFpsAndJitters(isBreak, timeStampLine, presentFence)) {
             break;
         }
     }
@@ -370,40 +388,65 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         LOGD("FPS::GetFpsInfoByRs nodeId: (%lld)", nodeId);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfoToSP(nodeId);
         LOGD("FPS fpsInfoResult GetRefreshInfoToSP: %s", fpsInfoResult.c_str());
-        GetCurTimeStamps(fpsInfoResult, true, presentFenceCurScreenTimestamp);
+        GetCurTimeStamps(fpsInfoResult, true);
         // when GetRefreshInfo data is empty, get GetRefreshInfoToSP to calc jitters.
         if (fpsInfo.currDumpTimeStamps.empty()) {
             LOGD("FPS::fosInfo.currDumpTimeStamps.empty");
-            CalcJitters(fpsInfo.presentFenceTimeStamps, presentFenceCurScreenTimestamp);
+            CalcJitters(fpsInfo.presentFenceTimeStamps);
         }
+        std::thread calcDrawFrameThread([this]() {
+            this->CalcDrawFrame(fpsInfo.flushTimeStamps);
+        });
+        std::thread calcScanoutThread([this]() {
+            this->ColleScanout(fpsInfo.flushTimeStamps, fpsInfo.presentFenceTimeStamps);
+        });
+        calcDrawFrameThread.join();
+        calcScanoutThread.join();
+        fpsInfo.avgDrawCall = totalDrawCal / fpsInfo.flushTimeStamps.size();
+        fpsInfo.avgScanout = totalScanout / fpsInfo.flushTimeStamps.size();
+        totalDrawCal = 0;
+        totalScanout = 0;
     } else {
         // jitters
         pid_t pid = std::atoi(processId.c_str());
         LOGD("FPS::GetFpsInfoByRs pid: (%d)", pid);
         std::string fpsInfoResult = OHOS::Rosen::RSInterfaces::GetInstance().GetRefreshInfo(pid);
         LOGD("FPS fpsInfoResult GetRefreshInfo: %s", fpsInfoResult.c_str());
-        GetCurTimeStamps(fpsInfoResult, false, curScreenTimestamp);
-        CalcJitters(fpsInfo.currDumpTimeStamps, curScreenTimestamp);
+        GetCurTimeStamps(fpsInfoResult, false);
+        CalcJitters(fpsInfo.currDumpTimeStamps);
     }
     return fpsInfo;
 }
 
-bool FPS::CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRefreshInfoToSP)
+bool FPS::CalcFpsAndJitters(bool isBreak, std::string &curTimestamp, bool isGetRefreshInfoToSP)
 {
-    long long onScreenTime = curTimestamp / mod;
-    bool findFpsCurTime = (onScreenTime == fpsInfo.curTime);
+    long long flushtimestamp = 0;
+    long long presenttimestamp = 0;
+    bool findFpsCurTime = false;
+    size_t pos = curTimestamp.find_last_of(':');
+    if (pos != std::string::npos && pos != curTimestamp.length() - 1) {
+        flushtimestamp = SPUtilesTye::StringToSometype<long long>(curTimestamp.substr(0, pos));
+        presenttimestamp = SPUtilesTye::StringToSometype<long long>(curTimestamp.substr(pos + 1));
+        findFpsCurTime = ((presenttimestamp / mod) == fpsInfo.curTime);
+        if (findFpsCurTime) {
+            fpsInfo.flushTimeStamps.push_back(flushtimestamp);
+        }
+    } else {
+        presenttimestamp = SPUtilesTye::StringToSometype<long long>(curTimestamp);
+        findFpsCurTime = ((presenttimestamp / mod) == fpsInfo.curTime);
+    }
     if (findFpsCurTime) {
         isBreak = true;
         if (isGetRefreshInfoToSP) {
             fpsNum++;
             fpsInfo.fps = fpsNum;
-            fpsInfo.presentFenceTimeStamps.push_back(curTimestamp);
+            fpsInfo.presentFenceTimeStamps.push_back(presenttimestamp);
         } else if (isUniRender || isNeedDump) {
             fpsNum++;
             fpsInfo.fps = fpsNum;
-            fpsInfo.currDumpTimeStamps.push_back(curTimestamp);
+            fpsInfo.currDumpTimeStamps.push_back(presenttimestamp);
         } else {
-            fpsInfo.currDumpTimeStamps.push_back(curTimestamp);
+            fpsInfo.currDumpTimeStamps.push_back(presenttimestamp);
         }
     } else {
         findFpsCurTime = false;
@@ -411,7 +454,47 @@ bool FPS::CalcFpsAndJitters(bool isBreak, long long &curTimestamp, bool isGetRef
     return isBreak && !findFpsCurTime;
 }
 
-void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &curTimestamp)
+void FPS::CalcDrawFrame(std::vector<long long> &flushTimeStamps)
+{
+    bool isOrder = true;
+    if (flushTimeStamps.size() > 1) {
+        isOrder = flushTimeStamps[1] - flushTimeStamps[0] > 0;
+    } else {
+        LOGE("the flushTimeStamps is empty");
+        return;
+    }
+    if (isOrder) {
+        for (size_t i = 0; i < flushTimeStamps.size(); i++) {
+            long long flushtime = flushTimeStamps[i];
+            ColleCurFrame(flushtime);
+            lastFlushTimeStamp = flushtime;
+            lastDrawCal = curDrawCal;
+        }
+    } else {
+        for (size_t i = flushTimeStamps.size(); i > 0; i--) {
+            long long flushtime = flushTimeStamps[i - 1];
+            ColleCurFrame(flushtime);
+            lastFlushTimeStamp = flushtime;
+            lastDrawCal = curDrawCal;
+        }
+    }
+}
+        
+void FPS::ColleCurFrame(long long &flushTime)
+{
+    if (lastFlushTimeStamp == 0) {
+        curDrawCal = flushTime % mod;
+    } else {
+        curDrawCal = flushTime - lastFlushTimeStamp;
+    }
+    if (!firstDrawFlag) {
+        totalDrawCal += curDrawCal;
+        fpsInfo.maxDrawCall = (curDrawCal > fpsInfo.maxDrawCall) ? curDrawCal : fpsInfo.maxDrawCall;
+    }
+    firstDrawFlag = false;
+}
+
+void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps)
 {
     bool isOrder = true;
     if (currDumpTimeStamps.size() > 1) {
@@ -419,7 +502,7 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
     }
     if (isOrder) {
         for (size_t i = 0; i < currDumpTimeStamps.size(); i++) {
-            curTimestamp = currDumpTimeStamps[i];
+            long long curTimestamp = currDumpTimeStamps[i];
             fpsInfo.currTimeStamps.push_back(curTimestamp);
             long long jitter = CalculateJitter(curTimestamp);
             fpsInfo.jitters.push_back(jitter);
@@ -428,7 +511,7 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
         }
     } else {
         for (size_t i = currDumpTimeStamps.size(); i > 0 ; i--) {
-            curTimestamp = currDumpTimeStamps[i - 1];
+            long long curTimestamp = currDumpTimeStamps[i - 1];
             fpsInfo.currTimeStamps.push_back(curTimestamp);
             long long jitter = CalculateJitter(curTimestamp);
             fpsInfo.jitters.push_back(jitter);
@@ -440,7 +523,38 @@ void FPS::CalcJitters(std::vector<long long> &currDumpTimeStamps, long long &cur
         fpsInfo.jitters.erase(fpsInfo.jitters.begin());
     }
 }
-        
+
+void FPS::ColleScanout(std::vector<long long> &flushtimeStamps, std::vector<long long> &currDumpTimeStamps)
+{
+    bool isOrder = true;
+    if (flushtimeStamps.size() > 1 && currDumpTimeStamps.size() > 1) {
+        isOrder = ((flushtimeStamps[1] - flushtimeStamps[0] > 0)
+            && (currDumpTimeStamps[1] - currDumpTimeStamps[0] > 0));
+    }
+    if (isOrder) {
+        for (size_t i = 0; i < flushtimeStamps.size(); i++) {
+            long long curDumpTime = currDumpTimeStamps[i];
+            long long curFlushTime = flushtimeStamps[i];
+            CalcScanout(curDumpTime, curFlushTime);
+            lastScanout = curScanout;
+        }
+    } else {
+        for (size_t i = flushtimeStamps.size(); i > 0; i--) {
+            long long curDumpTime = currDumpTimeStamps[i - 1];
+            long long curFlushTime = flushtimeStamps[i - 1];
+            CalcScanout(curDumpTime, curFlushTime);
+            lastScanout = curScanout;
+        }
+    }
+}
+
+void FPS::CalcScanout(long long &curDumpTime, long long &curFlushTime)
+{
+    curScanout = curDumpTime - curFlushTime;
+    fpsInfo.maxScanout = (curScanout > fpsInfo.maxScanout) ? curScanout : fpsInfo.maxScanout;
+    totalScanout += curScanout;
+}
+
 long long FPS::CalculateJitter(long long &curTimestamp) const
 {
     long long jitter;
@@ -809,6 +923,11 @@ void FPS::GetFPS(std::vector<std::string>& v)
         }
     }
     printf("SP_daemon exec finished!\n");
+}
+
+void FPS::SetHapFlag()
+{
+    heelChiraityFlag = true;
 }
 }
 }

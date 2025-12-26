@@ -395,13 +395,13 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         HeartbeatDetection(recvBuf);
         const SocketErrorType tokenStatus = CheckUdpToken(recvBuf);
         if (tokenStatus == SocketErrorType::TOKEN_CHECK_FAILED) {
-            std::string failStr = std::string("token failed");
-            spSocket.Sendto(failStr);
+            spSocket.Sendto(std::string("token failed"));
             spSocket.Close();
             return;
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init::") != std::string::npos && firstFlag) {
+            FPS::GetInstance().SetHapFlag();
             HandleMsgTrace(recvBuf);
             UdpStartInitFunc(recvBuf, spSocket);
             firstFlag = false;
