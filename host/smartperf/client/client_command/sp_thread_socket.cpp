@@ -402,6 +402,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
         }
         RemoveToken(recvBuf);
         if (recvBuf.find("init::") != std::string::npos && firstFlag) {
+            FPS::GetInstance().SetHapFlag();
             HandleMsgTrace(recvBuf);
             UdpStartInitFunc(recvBuf, spSocket);
             firstFlag = false;

@@ -132,6 +132,7 @@ public:
     void PrintSections(int msCount, long long currTimeLast, long long currTimeStart, long long currLastTime) const;
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetFPS(std::vector<std::string>& v);
+    void SetHapFlag();
 private:
     FPS() {};
     FPS(const FPS &);

@@ -41,7 +41,6 @@ std::map<std::string, std::string> FPS::ItemData()
     if (surfaceViewName.length() > 0) {
         fpsInfoResult = GetDiffLayersFpsInfo(surfaceViewName);
     } else {
-        heelChiraityFlag = false;
         firstDrawFlag = true;
         fpsInfo.currDumpTimeStamps.clear();
         fpsInfo.flushTimeStamps.clear();
@@ -383,7 +382,6 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
 {
     if (!name.empty()) {
        // fps
-        heelChiraityFlag = true;
         uint64_t nodeId;
         std::istringstream s(name);
         s >> nodeId;
@@ -926,6 +924,11 @@ void FPS::GetFPS(std::vector<std::string>& v)
         }
     }
     printf("SP_daemon exec finished!\n");
+}
+
+void FPS::SetHapFlag()
+{
+    heelChiraityFlag = true;
 }
 }
 }
