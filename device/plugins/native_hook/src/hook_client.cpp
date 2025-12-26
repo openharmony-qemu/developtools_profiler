@@ -137,7 +137,7 @@ static void InitResTraceKey()
     }
 }
 
-static inline ResTraceTls* GetOrCreateResTraceTls()
+static ResTraceTls* GetOrCreateResTraceTls()
 {
     pthread_once(&g_resTraceOnce, InitResTraceKey);
     if (!g_resTraceKeyReady.load(std::memory_order_acquire)) {
@@ -227,7 +227,7 @@ extern "C" __attribute__((visibility("default"))) void SetResTraceId(
     tls->traceId = newTraceID;
 }
 
-static inline bool GetResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
+static bool GetResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
 {
     if (!g_resTraceKeyReady.load(std::memory_order_acquire)) {
         return false;
