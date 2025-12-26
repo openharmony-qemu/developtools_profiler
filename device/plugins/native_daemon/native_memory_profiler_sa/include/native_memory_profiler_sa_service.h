@@ -74,7 +74,6 @@ private:
     void SetGpuConfig(ClientConfig& clientConfig);
 
 private:
-    std::mutex nmdMtx_;
     std::mutex gpuMtx_;
     std::string startupModeProcessName_;
     int32_t taskMaxNum_ = 4;
