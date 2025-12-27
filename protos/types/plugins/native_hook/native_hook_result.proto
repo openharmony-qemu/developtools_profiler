@@ -143,6 +143,7 @@ enum TraceType {
     ASHMEM = 10;
     DMA = 11;
     SO = 12;
+    ARK_GLOBAL_HANDLE = 13;
 };
 
 message TraceAllocEvent {
@@ -191,6 +192,7 @@ message RecordStatisticsEvent {
         ASHMEM = 14;
         DMA = 15;
         OTHER = 16;
+        ARK_GLOBAL_HANDLE = 17;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

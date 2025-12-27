@@ -62,6 +62,7 @@ const size_t JS_HEAP_MASK_INDEX = 16;
 const size_t KMP_HEAP_MASK_INDEX = 17;
 const size_t RN_HEAP_MASK_INDEX = 18;
 const size_t DMABUF_MASK_INDEX = 19;
+const size_t ARK_GLOBAL_HANDLE_INDEX = 20;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
