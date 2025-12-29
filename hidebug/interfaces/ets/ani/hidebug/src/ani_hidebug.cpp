@@ -590,7 +590,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(alwaysEnabledRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(alwaysEnabledRef),
-                "unboxed", ":z", &alwaysEnabledAni) != ANI_OK) {
+                "toBoolean", ":z", &alwaysEnabledAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
                 return false;
             }
@@ -604,7 +604,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(sampleRatedRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(sampleRatedRef),
-                "unboxed", ":i", &sampleRateAni) != ANI_OK) {
+                "toInt", ":i", &sampleRateAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
                 return false;
             }
@@ -618,7 +618,7 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
         env->Reference_IsUndefined(slotRef, &isUndefined);
         if (!isUndefined) {
             if (env->Object_CallMethodByName_Int(static_cast<ani_object>(slotRef),
-                "unboxed", ":i", &slotAni) != ANI_OK) {
+                "toInt", ":i", &slotAni) != ANI_OK) {
                 HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
                 return false;
             }
@@ -644,7 +644,7 @@ bool UpdateGwpAsanParams(ani_env *env, ani_object optionsObj, ani_object duratio
     env->Reference_IsUndefined(durationObj, &isUndefined);
     if (isUndefined == ANI_FALSE) {
         ani_int durationAni;
-        env->Object_CallMethodByName_Int(durationObj, "unboxed", ":i", &durationAni);
+        env->Object_CallMethodByName_Int(durationObj, "toInt", ":i", &durationAni);
         if (durationAni <= 0) {
             paramErrorMessage = "Invalid parameter, duration must be greater than 0.";
             return false;
