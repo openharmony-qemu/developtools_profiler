@@ -265,6 +265,8 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_RN_HEAP_MASK;
             } else if (resTag == TAG_RES_DMABUF_MASK) {
                 resMask |= RES_DMABUF_MASK;
+            } else if (resTag == TAG_RES_ARK_GLOBAL_HANDLE) {
+                resMask |= RES_ARK_GLOBAL_HANDLE;
             }
         }
     }
