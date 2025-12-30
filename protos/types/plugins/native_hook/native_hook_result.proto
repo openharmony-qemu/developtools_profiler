@@ -97,12 +97,30 @@ message FilePathMap {
     uint32 id = 1;
     string name = 2;
     int32 pid = 3;
+    uint64 adlt_base = 4;
 }
 
 message SymbolMap {
     uint32 id = 1;
     string name = 2;
     int32 pid = 3;
+}
+
+message SMOMapEntry {
+    uint64 start_addr = 1;
+    uint64 end_addr   = 2;
+    uint32 so_index   = 3;
+}
+ 
+message SMOIdTlbEntry{
+    uint32 so_index = 1;
+    string name = 2;
+}
+ 
+message SMOMapsInfo {
+    repeated SMOMapEntry map_entries = 1;
+    repeated SMOIdTlbEntry id_tlb_entries = 2;
+    string file_path = 3;
 }
 
 message ThreadNameMap {
@@ -221,6 +239,7 @@ message NativeHookData {
         RecordStatisticsEvent statistics_event = 15;
         TraceAllocEvent trace_alloc_event = 16;
         TraceFreeEvent trace_free_event = 17;
+        SMOMapsInfo smo_map = 18;
     }
 }
 

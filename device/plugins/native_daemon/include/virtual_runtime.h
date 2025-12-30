@@ -27,6 +27,7 @@
 #include "symbols_file.h"
 #include "virtual_thread.h"
 #include "native_hook_config.pb.h"
+#include "smo_map_global.h"
 
 namespace OHOS {
 namespace Developtools {
@@ -134,9 +135,64 @@ public:
     bool IsSymbolExist(const std::string& fileName);
     void DelSymbolFile(const std::string& fileName);
     void UpdateMaps(pid_t pid, pid_t tid);
+    std::string ResolveMergedSoIp(uint64_t ip, const std::string& filePath);
+    void UpdateAdltBase();
     std::vector<std::shared_ptr<DfxMap>>& GetProcessMaps()
     {
         return processMaps_;
+    }
+    bool EnsureSmoInfoForFile(const std::string& path);
+    std::shared_ptr<DfxMap> FindMapByPath(const std::string& path);
+    uint64_t GetAdltBase(const std::string& path) const;
+    template <typename T>
+    void TryEmitSmoMapsInfo(T& stackData)
+    {
+        std::vector<std::pair<std::string, SMOMapsInfo>> pending;
+        {
+            std::unique_lock<std::shared_mutex> lk(g_smoMapsLock);
+ 
+            for (auto& [path, entry] : g_smoMaps) {
+                if (!entry.initialized || entry.sent) continue;
+                pending.emplace_back(path, entry.info);
+            }
+        }
+        for (auto& p : pending) {
+            const auto& info = p.second;
+ 
+            auto event = stackData.add_events();
+            auto* smo = event->mutable_smo_map();
+ 
+            smo->set_file_path(info.file_path());
+ 
+            for (int i = 0; i < info.map_entries_size(); i++) {
+                const auto& src = info.map_entries(i);
+                auto* dst = smo->add_map_entries();
+ 
+                dst->set_start_addr(src.start_addr());
+                dst->set_end_addr(src.end_addr());
+                dst->set_so_index(src.so_index());
+            }
+ 
+            for (int i = 0; i < info.id_tlb_entries_size(); i++) {
+                const auto& src = info.id_tlb_entries(i);
+                auto* dst = smo->add_id_tlb_entries();
+ 
+                dst->set_so_index(src.so_index());
+                dst->set_name(src.name());
+            }
+        }
+ 
+        {
+            std::unique_lock<std::shared_mutex> lk(g_smoMapsLock);
+ 
+            for (auto& p : pending) {
+                const std::string& path = p.first;
+                auto it = g_smoMaps.find(path);
+                if (it != g_smoMaps.end()) {
+                    it->second.sent = true;
+                }
+            }
+        }
     }
 
 public:
@@ -214,6 +270,8 @@ private:
     std::map<uint64_t, std::shared_ptr<DfxMap>> arktsMapTree_;
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
     std::unordered_map<std::string_view, uint32_t> jsUrlMap_; // Key is js url , value is filePathId
+    std::unordered_map<std::string, bool> adltFound_;
+    std::unordered_map<std::string, uint64_t> adltBaseMap_;
 };
 } // namespace NativeDaemon
 } // namespace Developtools
