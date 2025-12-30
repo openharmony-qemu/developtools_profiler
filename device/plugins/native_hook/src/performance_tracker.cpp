@@ -25,9 +25,19 @@
 constexpr int PRINT_INTERVAL = 5000;
 constexpr uint64_t S_TO_NS = 1000 * 1000 * 1000;
 
-PerformanceTracker::PerformanceTracker()
+std::atomic<uint64_t> PerformanceTracker::mallocTimes_ = 0;
+std::atomic<uint64_t> PerformanceTracker::mallocRecordTimes_ = 0;
+std::atomic<uint64_t> PerformanceTracker::timeCost_ = 0;
+std::atomic<uint64_t> PerformanceTracker::dataCounts_ = 0;
+std::atomic<uint64_t> PerformanceTracker::mallocSize_ = 0;
+std::map<OperatType, uint64_t> PerformanceTracker::mallocCountMap_;
+std::mutex g_mutex;
+
+PerformanceTracker::PerformanceTracker(OperatType type)
 {
     RefreshStartTime();
+    std::unique_lock<std::mutex> lock(g_mutex);
+    mallocCountMap_[type]++;
 }
 
 PerformanceTracker::~PerformanceTracker()
@@ -38,18 +48,13 @@ PerformanceTracker::~PerformanceTracker()
     uint64_t elapsed = (end.tv_sec - start_.tv_sec) * S_TO_NS + (end.tv_nsec - start_.tv_nsec);
     timeCost_.fetch_add(elapsed);
     mallocTimes_++;
-
-    if (mallocTimes_ % PRINT_INTERVAL == 0) {
-        PROFILER_LOG_ERROR(LOG_CORE,
-            "mallocTimes %" PRIu64" cost time = %" PRIu64" copy data bytes = %" PRIu64" mean cost = %" PRIu64"\n",
-            mallocTimes_.load(), timeCost_.load(), dataCounts_.load(),
-            timeCost_.load() / mallocTimes_.load());
-    }
 }
 
-void PerformanceTracker::RecordDataSize(size_t bytes)
+void PerformanceTracker::RecordDataSize(size_t stackSize, size_t mallocSize)
 {
-    dataCounts_.fetch_add(bytes);
+    dataCounts_.fetch_add(stackSize);
+    mallocSize_.fetch_add(mallocSize);
+    mallocRecordTimes_++;
 }
 
 void PerformanceTracker::RefreshStartTime()
@@ -60,8 +65,28 @@ void PerformanceTracker::RefreshStartTime()
 void PerformanceTracker::ResetPerfInfo()
 {
     mallocTimes_ = 0;
+    mallocRecordTimes_ = 0;
+    mallocSize_ = 0;
     timeCost_ = 0;
     dataCounts_ = 0;
+    std::unique_lock<std::mutex> lock(g_mutex);
+    mallocCountMap_.clear();
+}
+
+void PerformanceTracker::PrintResult()
+{
+    if (mallocTimes_.load() == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "no malloc operation!");
+    }
+    PROFILER_LOG_ERROR(LOG_CORE,
+        "mallocTimes: %" PRIu64" mallocRecordTimes: %" PRIu64" mallocSize: %" PRIu64""
+        " cost time: %" PRIu64" copy data bytes: %" PRIu64" mean cost: %" PRIu64"\n",
+        mallocTimes_.load(), mallocRecordTimes_.load(), mallocSize_.load(),
+        timeCost_.load(), dataCounts_.load(), timeCost_.load() / mallocTimes_.load());
+    std::unique_lock<std::mutex> lock(g_mutex);
+    for (const auto& [key, value] : PerformanceTracker::mallocCountMap_) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%hhu: %" PRIu64 "\n", key, value);
+    }
 }
 
 #endif  // PERFORMANCE_DEBUG

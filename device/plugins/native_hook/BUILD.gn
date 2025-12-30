@@ -22,6 +22,7 @@ config("hook_config") {
     "CONFIG_NO_HILOG",
   ]
   defines += [ "target_cpu_${target_cpu}" ]
+  defines += [ "PERFORMANCE_DEBUG" ]
   if (!is_asan) {
     defines += [ "HOOK_ENABLE" ]
   }
