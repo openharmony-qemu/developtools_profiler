@@ -368,7 +368,6 @@ void FlowController::HmCaptureWorkOnNomalModeInner()
     pthread_setname_np(pthread_self(), "HmTraceReader");
     PROFILER_LOG_INFO(LOG_CORE, "FlowController::HmCaptureWorkOnNomalMode start!");
     auto tracePeriod = std::chrono::milliseconds(tracePeriodMs_);
-    ftraceParser_->ParseTidGid();
     while (keepRunning_) {
         auto start = std::chrono::steady_clock::now();
         if (flushCacheData_ && !keepRunning_) {
@@ -536,6 +535,7 @@ bool FlowController::HmParseEventDataOnNomalMode(long dataSize)
     // update tgidDict_
     if (!eventPidList.empty()) {
         ftraceParser_->ParseTargetedSavedTgid(FtraceFsOps::GetInstance().GetSavedTgids(), eventPidList);
+        ftraceParser_->ParseTargetedSaveCmdline(FtraceFsOps::GetInstance().GetSavedCmdLines(), eventPidList);
     }
 
     for (auto data = buffer; data < endPtr;) {
@@ -720,6 +720,7 @@ bool FlowController::ParseCommDictInfo()
 template <typename T> bool FlowController::ParseCommDict(T& tracePluginResult)
 {
     CHECK_NOTNULL(tracePluginResult, false, "create TracePluginResult FAILED!");
+    ftraceParser_->ParseSavedCmdlines(FtraceFsOps::GetInstance().GetSavedCmdLines());
     for (auto& [tid, comm] : ftraceParser_->GetCommDict()) {
         auto commDictMsg = tracePluginResult->add_comm_dict();
         commDictMsg->set_tid(tid);

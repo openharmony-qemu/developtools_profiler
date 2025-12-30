@@ -24,7 +24,7 @@
 #include <regex>
 #include <sstream>
 #include <unistd.h>
-
+#include <charconv>
 #include "common.h"
 #include "file_utils.h"
 #include "securec.h"
@@ -49,7 +49,6 @@ constexpr unsigned COL_IDX_NAME = 0;
 constexpr unsigned COL_IDX_VALUE = 1;
 
 constexpr unsigned TS_EXT_SHIFT = 27;
-constexpr uint32_t INT_MAX_LEN = 10;
 
 inline uint64_t GetTimestampIncrements(uint64_t ext)
 {
@@ -496,9 +495,8 @@ bool FtraceParser::ParseSavedTgid(const std::string& savedTgid)
             tgidDict_[pid] = tgid;
         }
     }
-
     if (tgidDict_.size() == 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
+        return false;
     }
     return true;
 }
@@ -507,27 +505,17 @@ bool FtraceParser::ParseSavedTgid(const std::string& savedTgid)
 // refers kernel function saved_cmdlines_show
 bool FtraceParser::ParseSavedCmdlines(const std::string& savedCmdlines)
 {
-    bool retval = false;
     int32_t pid;
     std::string comm;
-    std::string line;
     std::stringstream sin(savedCmdlines);
-    while (std::getline(sin, line)) {
+    while (sin >> pid >> comm) {
         // kernel format with: "%d %s\n"
-        auto pos = line.find(' ');
-        if (pos != std::string::npos && pos < INT_MAX_LEN) {
-            auto pidStr = line.substr(0, pos);
-            pid = COMMON::IsNumeric(pidStr) ? std::stoi(pidStr) : 0;
-            comm = line.substr(pos + 1);
-            commDict_[pid] = comm;
-            retval = true;
-        }
+        commDict_[pid] = comm;
     }
-
     if (commDict_.size() == 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedCmdlines: parsed cmdlines: %zu", commDict_.size());
+        return false;
     }
-    return retval;
+    return true;
 }
 
 // parse /sys/kernel/debug/tracing/saved_tgids
@@ -544,8 +532,19 @@ void FtraceParser::ParseTargetedSavedTgid(const std::string& savedTgidsPath, std
             tgidDict_[pid] = tgid;
         }
     }
-    if (tgidDict_.size() == 0) {
-        PROFILER_LOG_WARN(LOG_CORE, "ParseSavedTgid: parsed tigds: %zu", tgidDict_.size());
+}
+
+void FtraceParser::ParseTargetedSaveCmdline(const std::string& savedCmdlines, std::unordered_set<int>& targetPidVect)
+{
+    int32_t pid;
+    std::string comm;
+    std::stringstream sin(savedCmdlines);
+    // kernel format code with: "%d %s\n"
+    while (sin >> pid >> comm) {
+        auto it = std::find(targetPidVect.begin(), targetPidVect.end(), pid);
+        if (it != targetPidVect.end()) {
+            commDict_[pid] = comm;
+        }
     }
 }
 
