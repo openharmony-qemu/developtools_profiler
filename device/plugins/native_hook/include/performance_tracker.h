@@ -17,41 +17,63 @@
 #define PERFORMANCE_TRACKER_H
 
 #include <sys/time.h>
+#include <cstdint>
+#include <atomic>
+#include <mutex>
+#include <map>
+
+enum class OperatType : uint8_t {
+    malloc = 0,
+    aligned_alloc,
+    calloc,
+    realloc,
+    free,
+    mmap,
+    munmap,
+    prctl,
+    memtrace,
+    resTraceMove,
+    resTraceFreeRegion,
+    restrace,
+    other,
+};
 
 #ifdef PERFORMANCE_DEBUG
 
 class PerformanceTracker {
 public:
-    PerformanceTracker();
+    PerformanceTracker(OperatType type);
     ~PerformanceTracker();
-    void RecordDataSize(size_t bytes);
+    void RecordDataSize(size_t stackSize, size_t mallocSize);
     void RefreshStartTime();
     
     static void ResetPerfInfo();
+    static void PrintResult();
 
 private:
     struct timespec start_;
 
-    static std::atomic<uint64_t> mallocTimes_ = 0;
-    static std::atomic<uint64_t> timeCost_ = 0;
-    static std::atomic<uint64_t> dataCounts_ = 0;
+    static std::atomic<uint64_t> mallocTimes_;
+    static std::atomic<uint64_t> mallocRecordTimes_;
+    static std::atomic<uint64_t> timeCost_;
+    static std::atomic<uint64_t> dataCounts_;
+    static std::atomic<uint64_t> mallocSize_;
+    static std::map<OperatType, uint64_t> mallocCountMap_;
 };
 
-std::atomic<uint64_t> PerformanceTracker::mallocTimes_ = 0;
-std::atomic<uint64_t> PerformanceTracker::timeCost_ = 0;
-std::atomic<uint64_t> PerformanceTracker::dataCounts_ = 0;
-
-#define PERF_TRACK() PerformanceTracker __perf_tracker__
-#define PERF_RECORD_DATA(bytes) __perf_tracker__.RecordDataSize(bytes)
+#define PERF_TRACK(type) PerformanceTracker __perf_tracker__(type)
+#define PERF_RECORD_DATA(stackSize, mallocSize) __perf_tracker__.RecordDataSize(stackSize, mallocSize)
 #define PERF_REFRESH_START_TIME() __perf_tracker__.RefreshStartTime()
 #define PERF_RESET() PerformanceTracker::ResetPerfInfo()
+#define PERF_PRINT_RESULTS() PerformanceTracker::PrintResult()
 
 #else
 
-#define PERF_TRACK() do {} while (0)
-#define PERF_RECORD_DATA(bytes) do {} while (0)
+#define PERF_TRACK(type) do {} while (0)
+#define PERF_RECORD_DATA(stackSize, mallocSize) do {} while (0)
 #define PERF_REFRESH_START_TIME()  do {} while (0)
 #define PERF_RESET() do {} while (0)
+#define PERF_PRINT_RESULTS() do {} while (0)
 
 #endif  // PERFORMANCE_DEBUG
 
