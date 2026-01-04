@@ -117,10 +117,11 @@ HWTEST_F(SPdaemonTest, FpsTestCase, TestSize.Level1)
     struct timespec time1 = { 0 };
     clock_gettime(CLOCK_MONOTONIC, &time1);
     long long currTimeDump = (time1.tv_sec - 1) * mod + time1.tv_nsec;
+    std::string currTimeDumpStr = std::to_string(currTimeDump);
     fps.SetFpsCurrentFpsTime(fpsInfoResult);
     fps.SetPackageName(packName);
     fps.SetLayerName(surfaceViewName);
-    fps.CalcFpsAndJitters(true, currTimeDump, true);
+    fps.CalcFpsAndJitters(true, currTimeDumpStr, true);
 
     std::string cmd = "SP_daemon -N 1 -PKG ohos.samples.ecg -f";
     std::string result = "";
