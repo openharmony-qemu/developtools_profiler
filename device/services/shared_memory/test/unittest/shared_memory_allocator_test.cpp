@@ -91,7 +91,8 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal001, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
 {
-    auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
+    // round down to the nearest integer(UINT32_MAX / PAGE_SIZE) * PAGE_SIZE
+    uint32_t currentMaxShareMemorySize = 4294963200;
     // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
         nullptr); // Create a memory block of size 1k, return null.
@@ -177,7 +178,8 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
 {
-    auto currentMaxShareMemorySize = UINT32_MAX / PAGE_SIZE * PAGE_SIZE;
+    // round down to the nearest integer(UINT32_MAX / PAGE_SIZE) * PAGE_SIZE
+    uint32_t currentMaxShareMemorySize = 4294963200;
 
     int fd = syscall(SYS_memfd_create, "testnameremote", 0);
     EXPECT_GE(fd, 0);
