@@ -111,7 +111,6 @@ constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 #endif
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
 constexpr uint64_t PROFILER_TYPE = 1ULL << 1;
-
 static pthread_key_t g_sampleKey = 10000;
 
 static void DestroySampleKey(void* value)
