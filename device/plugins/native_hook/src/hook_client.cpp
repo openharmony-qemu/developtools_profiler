@@ -118,40 +118,9 @@ struct ResTraceTls {
     uint64_t traceId = 0;
 };
 
-static pthread_key_t g_resTraceKey;
-static pthread_once_t g_resTraceOnce = PTHREAD_ONCE_INIT;
-static std::atomic<bool> g_resTraceKeyReady {false};
-
 static void DestroyResTraceTls(void* value)
 {
     delete static_cast<ResTraceTls*>(value);
-}
-
-static void InitResTraceKey()
-{
-    if (pthread_key_create(&g_resTraceKey, DestroyResTraceTls) == 0) {
-        g_resTraceKeyReady.store(true, std::memory_order_release);
-        (void)pthread_setspecific(g_resTraceKey, nullptr);
-    } else {
-        g_resTraceKeyReady.store(false, std::memory_order_release);
-    }
-}
-
-static ResTraceTls* GetOrCreateResTraceTls()
-{
-    pthread_once(&g_resTraceOnce, InitResTraceKey);
-    if (!g_resTraceKeyReady.load(std::memory_order_acquire)) {
-        return nullptr;
-    }
-    auto* tls = static_cast<ResTraceTls*>(pthread_getspecific(g_resTraceKey));
-    if (tls == nullptr) {
-        tls = new (std::nothrow) ResTraceTls();
-        if (tls == nullptr) {
-            return nullptr;
-        }
-        (void)pthread_setspecific(g_resTraceKey, tls);
-    }
-    return tls;
 }
 
 const MallocDispatchType* GetDispatch()
@@ -207,49 +176,11 @@ pid_t GetRealPid(void)
 }
 }  // namespace
 
-// Exported API for other components (via dlsym).
-extern "C" __attribute__((visibility("default"))) void SetResTraceId(
-    uint32_t newTraceType, uint64_t newTraceID, uint32_t* pOldTraceType, uint64_t* pOldTraceID)
-{
-    if (!pOldTraceType || !pOldTraceID) {
-        return;
-    }
-    auto* tls = GetOrCreateResTraceTls();
-    if (tls == nullptr) {
-        *pOldTraceType = 0;
-        *pOldTraceID = 0;
-        return;
-    }
-    *pOldTraceType = tls->traceType;
-    *pOldTraceID = tls->traceId;
-
-    tls->traceType = newTraceType;
-    tls->traceId = newTraceID;
-}
-
-static bool GetResTraceId(uint32_t* pTraceType, uint64_t* pTraceID)
-{
-    if (!g_resTraceKeyReady.load(std::memory_order_acquire)) {
-        return false;
-    }
-    if (!pTraceType || !pTraceID) {
-        return false;
-    }
-    // Don't create key/tls on Get.
-    auto* tls = static_cast<ResTraceTls*>(pthread_getspecific(g_resTraceKey));
-    if (tls == nullptr) {
-        return false;
-    }
-    *pTraceType = tls->traceType;
-    *pTraceID = tls->traceId;
-    return true;
-}
-
 inline void FillNodeInfo(BaseStackRawData& rawdata)
 {
     uint32_t nodeType;
     uint64_t nodeId;
-    if (GetResTraceId(&nodeType, &nodeId)) {
+    if (getResTraceId(&nodeType, &nodeId)) {
         rawdata.nodeType = nodeType;
         rawdata.nodeId = nodeId;
     }

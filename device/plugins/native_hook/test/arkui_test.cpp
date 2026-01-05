@@ -56,33 +56,9 @@ static void DepthArkUiMalloc(int depth, size_t size, uint32_t nodeType, uint64_t
         printf("DMA allocateAndFreeRegion: allocation failed, size=%zu", size);
         return;
     }
-    using SetResTraceIdFn = void (*)(uint32_t, uint64_t, uint32_t*, uint64_t*);
-    static SetResTraceIdFn setResTraceIdFn = nullptr;
-    static void* nativeHookHandle = nullptr;
-    if (setResTraceIdFn == nullptr) {
-        if (nativeHookHandle == nullptr) {
-            nativeHookHandle = dlopen("libnative_hook.z.so", RTLD_NOW);
-            if (nativeHookHandle == nullptr) {
-                nativeHookHandle = dlopen("libnative_hook.so", RTLD_NOW);
-            }
-            if (nativeHookHandle == nullptr) {
-                printf("dlopen native_hook failed: %s\n", dlerror());
-                delete[] buffer;
-                return;
-            }
-        }
-        (void)dlerror();
-        setResTraceIdFn = reinterpret_cast<SetResTraceIdFn>(dlsym(nativeHookHandle, "SetResTraceId"));
-        const char* err = dlerror();
-        if (err != nullptr || setResTraceIdFn == nullptr) {
-            printf("dlsym(setResTraceId) failed: %s\n", err ? err : "null");
-            delete[] buffer;
-            return;
-        }
-    }
     uint32_t oldNodeType = 0;
     uint64_t oldNodeId = 0;
-    setResTraceIdFn(nodeType, nodeId, &oldNodeType, &oldNodeId);
+    setResTraceId(nodeType, nodeId, &oldNodeType, &oldNodeId);
     printf("setResTraceId: newNodeType=%u newNodeId=%lu oldNodeType=%u oldNodeId=%lu\n",
         nodeType, nodeId, oldNodeType, oldNodeId);
     restrace(RES_GPU_GLES_IMAGE, buffer, static_cast<int>(size), TAG_RES_GPU_GLES_IMAGE, true);
@@ -123,7 +99,7 @@ int main()
 
     printf("arkui_test finished.\n");
     sleep(SLEEP_TIME_SEC);
-    return 0;
+    _exit(0);
 }
 
 #pragma clang optimize on
