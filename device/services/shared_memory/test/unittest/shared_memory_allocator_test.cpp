@@ -68,19 +68,20 @@ size_t GetMemAvailable()
 {
     std::ifstream meminfo("/proc/meminfo");
     std::string line;
-    size_t CurrentMemAvailable = 0;
+    size_t currentMemAvailable = 0;
     while (std::getline(meminfo, line)) {
         if (line.find("MemAvailable:") != std::string::npos) {
             // Extract memory value
+            size_t offset = 2;
             size_t pos = line.find(":");
-            size_t mem_pos = line.find(" ");
-            CurrentMemAvailable = std::stoul(line.substr(pos + 2, mem_pos - pos - 2));
+            size_t memPos = line.find(" ");
+            currentMemAvailable = std::stoul(line.substr(pos + offset, memPos - pos - offset));
             break;
         }
     }
 
     meminfo.close();
-    return CurrentMemAvailable;
+    return currentMemAvailable;
 }
 
 /**
