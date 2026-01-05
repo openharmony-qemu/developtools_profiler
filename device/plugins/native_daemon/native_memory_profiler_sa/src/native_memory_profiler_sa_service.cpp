@@ -56,6 +56,7 @@ static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
 //2: double
+static std::mutex g_nmdMtx;
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -135,7 +136,7 @@ bool NativeMemoryProfilerSaService::HasProfilingPermission()
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(nmdMtx_);
+        std::lock_guard<std::mutex> guard(g_nmdMtx);
         g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
@@ -148,7 +149,7 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
                                              MessageParcel &reply)
 {
     if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(nmdMtx_);
+        std::lock_guard<std::mutex> guard(g_nmdMtx);
         g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
@@ -176,7 +177,7 @@ int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(nmdMtx_);
+        std::lock_guard<std::mutex> guard(g_nmdMtx);
         g_nmdPidType[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
         if (!config->printNmdOnly_) {
             return RET_OK;
@@ -234,8 +235,11 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
     g_nameAndFilePathCtx.erase(config->filePath);
     g_pidCtx.erase(config->pid);
     g_pidInfo.erase(static_cast<pid_t>(pid));
-    if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
-        g_nmdPidType.erase(config->pid);
+    {
+        std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
+        if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
+            g_nmdPidType.erase(config->pid);
+        }
     }
     if (config->isStartupMode) {
         g_hasStartupMode = false;
@@ -335,7 +339,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         hook->SetSaServiceConfig(true, false);
     }
     if (config->pid_ > 0) {
-        std::lock_guard<std::mutex> nmdGuard(nmdMtx_);
+        std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
         if (g_nmdPidType.find(config->pid_) != g_nmdPidType.end()) {
             hook->SetNmdInfo(g_nmdPidType[config->pid_]);
         }
