@@ -18,6 +18,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <pthread.h>
 
 namespace HookGuard {
     bool IsReady();
@@ -26,7 +27,7 @@ namespace HookGuard {
     bool ShouldSkipMmap();
     bool ShouldSkipMemtrace();
     bool ShouldFilterBySize(void* ptr, size_t size);
-    bool ShouldSample(size_t size);
+    bool ShouldSample(size_t size, pthread_key_t& sampleKey);
     int CalculateRealSize(int fpStackDepth, bool isAsyncStack = false);
     uint16_t GetPredefinedTagId(unsigned long long mask);
     bool CheckRestraceConditions(uint32_t combineVal, size_t size);

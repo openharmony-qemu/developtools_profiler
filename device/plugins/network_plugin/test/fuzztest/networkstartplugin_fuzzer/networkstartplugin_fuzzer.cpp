@@ -19,12 +19,31 @@
 #include <cstdint>
 
 #include "network_plugin.h"
+#include "fuzzer/FuzzedDataProvider.h"
 
 namespace OHOS {
+std::string GenerateRandomAlphabetString(const uint8_t* data, size_t size)
+{
+    if (data == nullptr || size == 0) {
+        return "";
+    }
+    FuzzedDataProvider provider(data, size);
+    const std::string alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    const size_t length = provider.ConsumeIntegralInRange<size_t>(1, size);
+    std::string result;
+
+    for (size_t i = 0; i < length; i++) {
+        char c = alphabet[provider.ConsumeIntegralInRange<size_t>(0, alphabet.size() - 1)];
+        result.push_back(c);
+    }
+    return result;
+}
+
 bool FuzzNetworkStartPlugin(const uint8_t* data, size_t size)
 {
     std::unique_ptr<NetworkPlugin> plugin = std::make_unique<NetworkPlugin>();
-    plugin->Start(data, size);
+    std::string str = GenerateRandomAlphabetString(data, size);
+    plugin->Start((const uint8_t*)str.c_str(), str.size());
     plugin->Stop();
     return true;
 }

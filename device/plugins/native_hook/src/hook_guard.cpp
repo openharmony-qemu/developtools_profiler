@@ -24,7 +24,6 @@
 
 constexpr int PID_NAMESPACE_ID = 1;
 constexpr int MIN_SAMPLER_INTERVAL = 1;
-thread_local Sampling g_sampler;
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -102,11 +101,22 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
     return true;
 }
 
-bool ShouldSample(size_t size)
+bool ShouldSample(size_t size, pthread_key_t& sampleKey)
 {
+    if (sampleKey == 10000) { // 10000 : invalid key value
+        return false;
+    }
+    auto* tlsSample = static_cast<Sampling*>(pthread_getspecific(sampleKey));
+    if (tlsSample == nullptr) {
+        tlsSample = new (std::nothrow) Sampling();
+        if (tlsSample == nullptr) {
+            return false;
+        }
+        (void)pthread_setspecific(sampleKey, tlsSample);
+    }
     if (g_clientConfig.sampleInterval > MIN_SAMPLER_INTERVAL) {
-        g_sampler.InitSampling(g_clientConfig.sampleInterval);
-        return g_sampler.StartSampling(size) == 0;
+        tlsSample->InitSampling(g_clientConfig.sampleInterval);
+        return tlsSample->StartSampling(size) == 0;
     }
     return false;
 }
