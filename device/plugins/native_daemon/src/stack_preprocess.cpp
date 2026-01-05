@@ -17,7 +17,7 @@
 
 #include <elf.h>
 #include <unistd.h>
-
+#include <sstream>
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
@@ -1389,6 +1389,7 @@ inline void StackPreprocess::SetFrameInfo(T& frame, CallFrame& callFrame)
     }
     frame.set_offset(callFrame.offset_);
     frame.set_symbol_offset(callFrame.symbolOffset_);
+    frame.set_file_path(runtime_instance->ResolveMergedSoIp(callFrame.ip_, std::string(callFrame.filePath_)));
     if (callFrame.symbolNameId_ != 0 && callFrame.filePathId_ != 0) {
         frame.set_symbol_name_id(callFrame.symbolNameId_);
         frame.set_file_path_id(callFrame.filePathId_);
@@ -1457,11 +1458,21 @@ void StackPreprocess::SetMapsInfo()
             continue;
         }
         std::visit([&](auto& stackData) {
+            runtime_instance->TryEmitSmoMapsInfo(stackData);
             auto hookData = stackData.add_events();
             auto filepathMap = hookData->mutable_file_path();
             filepathMap->set_id(curMemMaps->filePathId_);
             filepathMap->set_name(curMemMaps->name_);
             filepathMap->set_pid(pid_);
+            auto& runtime = runtime_instance;
+            bool isAdlt = StartsWith(std::string(curMemMaps->name_), "/system/lib/libadlt") &&
+                    EndsWith(std::string(curMemMaps->name_), ".so");
+            if (isAdlt) {
+                uint64_t base = runtime->GetAdltBase(std::string(curMemMaps->name_));
+                filepathMap->set_adlt_base(base);
+            } else {
+                filepathMap->set_adlt_base(std::numeric_limits<uint64_t>::max());
+            }
             SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
 
             for (auto& map : curMemMaps->GetMaps()) {

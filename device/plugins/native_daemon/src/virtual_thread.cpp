@@ -228,6 +228,7 @@ bool VirtualThread::ParseMap(std::vector<std::shared_ptr<DfxMap>>& memMaps, bool
         return false;
     }
     memMaps = dfxMaps->GetMaps();
+    virtualruntime_->UpdateAdltBase();
     bool mapsAdded = !update;
     std::vector<std::shared_ptr<DfxMap>> tempMap;
     std::string tempMapName;

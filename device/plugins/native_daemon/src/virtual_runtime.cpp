@@ -46,6 +46,8 @@ void VirtualRuntime::ClearMaps()
 {
     processMaps_.clear();
     arktsMapTree_.clear();
+    adltFound_.clear();
+    adltBaseMap_.clear();
 }
 
 VirtualRuntime::VirtualRuntime(const NativeHookConfig& hookConfig): hookConfig_(hookConfig)
@@ -253,6 +255,74 @@ void VirtualRuntime::UpdateMaps(pid_t pid, pid_t tid)
     }
 }
 
+std::string VirtualRuntime::ResolveMergedSoIp(uint64_t ip, const std::string& filePath)
+{
+    auto it = adltBaseMap_.find(filePath);
+    if (it == adltBaseMap_.end()) {
+        return filePath;
+    }
+    uint64_t base = it->second;
+ 
+    if (base == std::numeric_limits<uint64_t>::max()) {
+        return filePath;
+    }
+ 
+    uint64_t relPc = ip - base;
+ 
+    std::shared_lock<std::shared_mutex> lk(g_smoMapsLock);
+ 
+    auto gIt = g_smoMaps.find(filePath);
+    if (gIt == g_smoMaps.end()) {
+        return filePath;
+    }
+    const auto& info = gIt->second.info;
+ 
+    int foundSoIndex = -1;
+    for (const auto& e : info.map_entries()) {
+        if (relPc >= e.start_addr() && relPc < e.end_addr()) {
+            foundSoIndex = e.so_index();
+            break;
+        }
+    }
+ 
+    if (foundSoIndex < 0) {
+        return filePath;
+    }
+ 
+    std::string soName;
+    for (const auto& idEntry : info.id_tlb_entries()) {
+        if (idEntry.so_index() == (uint32_t)foundSoIndex) {
+            soName = idEntry.name();
+            break;
+        }
+    }
+ 
+    if (soName.empty()) {
+        return filePath;
+    }
+ 
+    std::string result = filePath + ":" + soName;
+    return result;
+}
+ 
+void VirtualRuntime::UpdateAdltBase()
+{
+    for (auto& map : processMaps_) {
+        if (StartsWith(map->name, "/system/lib/libadlt") &&
+            EndsWith(map->name, ".so")) {
+            if (adltFound_[map->name]) {
+                continue;
+            }
+ 
+            if (map->offset == 0 && !map->IsMapExec()) {
+                adltBaseMap_[map->name] = map->begin;
+                adltFound_[map->name] = true;
+            }
+            EnsureSmoInfoForFile(map->name);
+        }
+    }
+}
+ 
 bool VirtualRuntime::UnwindStack(std::vector<u64>& regs,
                                  const u8* stack_addr,
                                  int stack_size,
@@ -603,6 +673,99 @@ std::shared_ptr<DfxMap> VirtualRuntime::FindArktsMapByAddr(uint64_t ip) const
     return nullptr;
 }
 
+uint64_t VirtualRuntime::GetAdltBase(const std::string& path) const
+{
+    auto it = adltBaseMap_.find(path);
+    if (it != adltBaseMap_.end()) {
+        return it->second;
+    }
+    return std::numeric_limits<uint64_t>::max();
+}
+
+std::shared_ptr<DfxMap> VirtualRuntime::FindMapByPath(const std::string& path)
+{
+    if (processMaps_.empty()) {
+        PROFILER_LOG_INFO(LOG_CORE, "[FindMapByPath] processMaps_ empty -> return nullptr");
+        return nullptr;
+    }
+ 
+    for (size_t i = 0; i < processMaps_.size(); ++i) {
+        auto& m = processMaps_[i];
+        if (!m) {
+            continue;
+        }
+        if (m->name == path) {
+            return m;
+        }
+    }
+ 
+    return nullptr;
+}
+
+bool VirtualRuntime::EnsureSmoInfoForFile(const std::string& path)
+{
+    auto map = FindMapByPath(path);
+    if (!map) {
+        PROFILER_LOG_INFO(LOG_CORE, "[EnsureSmoInfo] map NOT FOUND for %s", path.c_str());
+        return false;
+    }
+ 
+    auto elf = map->GetElf(pid_);
+    if (!elf) {
+        return false;
+    }
+ 
+    const auto& adltMaps = elf->GetAdltMap();
+    const auto& adltStrtab = elf->GetAdltStrtab();
+ 
+    {
+        std::unique_lock<std::shared_mutex> lk(g_smoMapsLock);
+ 
+        auto& entry = g_smoMaps[path];
+        if (entry.initialized) {
+            PROFILER_LOG_INFO(LOG_CORE, "[EnsureSmoInfo] already initialized for %s", path.c_str());
+            return true;
+        }
+ 
+        SMOMapsInfo& smo = entry.info;
+        smo.clear_map_entries();
+        smo.clear_id_tlb_entries();
+        smo.set_file_path(path);
+ 
+        for (size_t i = 0; i < adltMaps.size(); ++i) {
+            const auto& mi = adltMaps[i];
+ 
+            auto* e = smo.add_map_entries();
+            e->set_start_addr(mi.pcBegin);
+            e->set_end_addr(mi.pcEnd);
+            e->set_so_index(mi.psodIndex);
+        }
+ 
+        std::unordered_set<uint32_t> seen;
+        for (const auto& mi : adltMaps) {
+            if (seen.count(mi.psodIndex)) continue;
+            seen.insert(mi.psodIndex);
+ 
+            std::string nm;
+            if (mi.nameOffset < adltStrtab.length()) {
+                size_t endPos = adltStrtab.find('\0', mi.nameOffset);
+                if (endPos != std::string::npos) {
+                    nm = adltStrtab.substr(mi.nameOffset, endPos - mi.nameOffset);
+                }
+            }
+ 
+            auto* idEntry = smo.add_id_tlb_entries();
+            idEntry->set_so_index(mi.psodIndex);
+            idEntry->set_name(nm);
+        }
+ 
+        entry.initialized = true;
+        entry.sent = false;
+    }
+ 
+    return true;
+}
+
 void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string& filePath, pid_t pid, pid_t tid)
 {
     if (info.size() != INFO_SIZE) {
@@ -687,6 +850,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
     if (flags & PROT_EXEC) {
         offlineMapAddr_.push_back(soBegin_);
     }
+    UpdateAdltBase();
 }
 
 void VirtualRuntime::RemoveMaps(uint64_t addr)
