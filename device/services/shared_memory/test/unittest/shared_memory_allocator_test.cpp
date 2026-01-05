@@ -14,6 +14,7 @@
  */
 
 #include <fcntl.h>
+#include <fstream>
 #include <gtest/gtest.h>
 #include <semaphore.h>
 #include <sys/wait.h>
@@ -63,6 +64,25 @@ public:
 const int MIN_SHARE_MEMORY_SIZE = 1024;
 constexpr uint32_t PAGE_SIZE = 4096;
 
+size_t GetMemAvailable()
+{
+    std::ifstream meminfo("/proc/meminfo");
+    std::string line;
+    size_t CurrentMemAvailable = 0;
+    while (std::getline(meminfo, line)) {
+        if (line.find("MemAvailable:") != std::string::npos) {
+            // Extract memory value
+            size_t pos = line.find(":");
+            size_t mem_pos = line.find(" ");
+            CurrentMemAvailable = std::stoul(line.substr(pos + 2, mem_pos - pos - 2));
+            break;
+        }
+    }
+
+    meminfo.close();
+    return CurrentMemAvailable;
+}
+
 /**
  * @tc.name: Service
  * @tc.desc: Creates a memory block of the specified size.
@@ -91,8 +111,9 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal001, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
 {
-    // round down to the nearest integer(UINT32_MAX / PAGE_SIZE) * PAGE_SIZE
-    uint32_t currentMaxShareMemorySize = 4294963200;
+    // round down to the nearest integer, Get the maximum allocatable space of the current shared memory block
+    auto currentMaxShareMemorySize = static_cast<uint32_t>(GetMemAvailable());
+    currentMaxShareMemorySize = currentMaxShareMemorySize * MIN_SHARE_MEMORY_SIZE / PAGE_SIZE * PAGE_SIZE;
     // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
         nullptr); // Create a memory block of size 1k, return null.
@@ -178,8 +199,9 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote, TestSize.Level1)
  */
 HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
 {
-    // round down to the nearest integer(UINT32_MAX / PAGE_SIZE) * PAGE_SIZE
-    uint32_t currentMaxShareMemorySize = 4294963200;
+    // round down to the nearest integer, Get the maximum allocatable space of the current shared memory block
+    auto currentMaxShareMemorySize = static_cast<uint32_t>(GetMemAvailable());
+    currentMaxShareMemorySize = currentMaxShareMemorySize * MIN_SHARE_MEMORY_SIZE / PAGE_SIZE * PAGE_SIZE;
 
     int fd = syscall(SYS_memfd_create, "testnameremote", 0);
     EXPECT_GE(fd, 0);
