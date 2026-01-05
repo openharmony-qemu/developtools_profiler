@@ -183,10 +183,11 @@ HWTEST_F(HookGuardTest, ShouldFilterBySizeWithConfigTest, TestSize.Level0)
 HWTEST_F(HookGuardTest, ShouldSampleBasicTest, TestSize.Level0)
 {
     g_clientConfig.sampleInterval = 0;
-    EXPECT_FALSE(HookGuard::ShouldSample(1024));
+    pthread_key_t key = 10000;
+    EXPECT_FALSE(HookGuard::ShouldSample(1024, key));
 
     g_clientConfig.sampleInterval = 1;
-    EXPECT_FALSE(HookGuard::ShouldSample(1024));
+    EXPECT_FALSE(HookGuard::ShouldSample(1024, key));
 }
 
 /**

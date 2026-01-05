@@ -121,10 +121,16 @@ struct ResTraceTls {
 static pthread_key_t g_resTraceKey;
 static pthread_once_t g_resTraceOnce = PTHREAD_ONCE_INIT;
 static std::atomic<bool> g_resTraceKeyReady {false};
+static pthread_key_t g_sampleKey = 10000;
 
 static void DestroyResTraceTls(void* value)
 {
     delete static_cast<ResTraceTls*>(value);
+}
+
+static void DestroySampleKey(void* value)
+{
+    delete static_cast<Sampling*>(value);
 }
 
 static void InitResTraceKey()
@@ -334,6 +340,13 @@ static void InitHookTidKey()
         return;
     }
     pthread_setspecific(g_hookTid, nullptr);
+    if (g_sampleKey != 10000) { // 10000: initial value
+        pthread_key_delete(g_sampleKey);
+    }
+    if (pthread_key_create(&g_sampleKey, DestroySampleKey) != 0) {
+        return;
+    }
+    pthread_setspecific(g_sampleKey, nullptr);
 }
 
 static bool InitTheadKey()
@@ -581,7 +594,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
         return ret;
     }
 
-    if (HookGuard::ShouldFilterBySize(ret, size) || HookGuard::ShouldSample(size)) {
+    if (HookGuard::ShouldFilterBySize(ret, size) || HookGuard::ShouldSample(size, g_sampleKey)) {
         return ret;
     }
 
@@ -628,7 +641,7 @@ void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
         return ret;
     }
 
-    if (HookGuard::ShouldFilterBySize(ret, len) || HookGuard::ShouldSample(len)) {
+    if (HookGuard::ShouldFilterBySize(ret, len) || HookGuard::ShouldSample(len, g_sampleKey)) {
         return ret;
     }
 
@@ -685,7 +698,7 @@ void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
         return pRet;
     }
 
-    if (HookGuard::ShouldFilterBySize(pRet, totalSize) || HookGuard::ShouldSample(totalSize)) {
+    if (HookGuard::ShouldFilterBySize(pRet, totalSize) || HookGuard::ShouldSample(totalSize, g_sampleKey)) {
         return pRet;
     }
 
@@ -744,7 +757,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
         return pRet;
     }
 
-    if (HookGuard::ShouldFilterBySize(pRet, size) || HookGuard::ShouldSample(size)) {
+    if (HookGuard::ShouldFilterBySize(pRet, size) || HookGuard::ShouldSample(size, g_sampleKey)) {
         return pRet;
     }
 
@@ -915,7 +928,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
                (!g_clientConfig.mallocDisable)) && fd <= 0)) {
         return ret;
     }
-    if ((fd < 0 && offset == 0) && HookGuard::ShouldSample(length)) {
+    if ((fd < 0 && offset == 0) && HookGuard::ShouldSample(length, g_sampleKey)) {
         return ret;
     }
     HookClientHolder client(g_hookClient);
