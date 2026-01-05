@@ -112,16 +112,6 @@ constexpr int RESPONSE_LIBRARY_MODE_DEPTH = 5;
 constexpr int MAX_BITPOOL_SIZE = 1000 * 1024;
 constexpr uint64_t PROFILER_TYPE = 1ULL << 1;
 
-// Thread-local node info for restrace. Keep storage internal (not exported).
-struct ResTraceTls {
-    uint32_t traceType = 0;
-    uint64_t traceId = 0;
-};
-
-static void DestroyResTraceTls(void* value)
-{
-    delete static_cast<ResTraceTls*>(value);
-}
 
 const MallocDispatchType* GetDispatch()
 {
