@@ -81,11 +81,11 @@ public:
     std::string GetCmdArgs(const NetworkProfilerConfig& traceConfig);
 
 private:
-    bool CheckConfig();
+    virtual bool CheckConfig();
     bool CheckConfigPid(std::set<int32_t>& pidCache);
     bool CheckStartupProcessName();
     bool CheckRestartProcessName(std::set<int32_t>& pidCache);
-    bool HandleNetworkProfilerContext(const std::shared_ptr<NetworkProfilerCtx>& ctx);
+    virtual bool HandleNetworkProfilerContext(const std::shared_ptr<NetworkProfilerCtx>& ctx);
     clockid_t GetClockId(NetworkProfilerConfig::ClockId clockType);
 
 private:

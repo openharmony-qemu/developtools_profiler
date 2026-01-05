@@ -29,7 +29,7 @@ class StopSessionCmd;
 
 using ManagerInterfacePtr = STD_PTR(shared, ManagerInterface);
 
-class CommandPoller final : public IPluginServiceClient {
+class CommandPoller : public IPluginServiceClient {
 public:
     explicit CommandPoller(const ManagerInterfacePtr& p);
     ~CommandPoller();
@@ -39,7 +39,7 @@ public:
     bool OnStartSessionCmd(const StartSessionCmd& cmd, PluginResult& result) const;
     bool OnStopSessionCmd(const StopSessionCmd& cmd) const;
     bool OnReportBasicDataCmd(const RefreshSessionCmd& cmd) const;
-    void PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId);
+    virtual void PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId);
 
     uint32_t GetRequestId();
     bool OnConnect();

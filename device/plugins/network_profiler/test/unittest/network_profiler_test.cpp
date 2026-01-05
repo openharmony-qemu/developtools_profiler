@@ -25,7 +25,8 @@
 #include "init_param.h"
 #include "network_profiler_socker_client.h"
 #include "network_profiler.h"
-#include "network_profiler_manager.h"
+#include "network_profiler_manager_mock.h"
+#include "common.h"
 #include "grpc/impl/codegen/log.h"
 #include "plugin_service.h"
 #include "plugin_service.ipc.h"
@@ -654,6 +655,128 @@ HWTEST_F(NetworkProfilerTest, NetworkProfilerSocketServiceTest006, TestSize.Leve
     const int8_t* ptr = reinterpret_cast<const int8_t*>(&pid);
     socketService->SetConfig(sizeof(uint64_t), sizeof(uint64_t), true, 0);
     ASSERT_FALSE(socketService->ProtocolProc(socketContext, 0, ptr, sizeof(pid)));
+}
+
+/**
+ * @tc.name: StartNetworkProfilerTest
+ * @tc.desc: test NetworkProfilerManager::StartNetworkProfilerTest with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, StartNetworkProfilerTest, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManagerMock>();
+    testing::Mock::AllowLeak(networkProfilerMgr.get());
+    EXPECT_CALL(*networkProfilerMgr, CheckConfig()).WillRepeatedly(::testing::Return(true));
+    EXPECT_CALL(*networkProfilerMgr, HandleNetworkProfilerContext(::testing::_))
+        .WillRepeatedly(::testing::Return(true));
+    ASSERT_TRUE(networkProfilerMgr != nullptr);
+    networkProfilerMgr->Init();
+
+    std::vector<uint32_t> pluginIds(1);
+    ProfilerPluginConfig config;
+    config.set_name("network");
+    config.set_plugin_sha256("");
+    config.set_sample_interval(20);
+
+    PluginResult result;
+    std::vector<ProfilerPluginConfig> configVec;
+    configVec.push_back(config);
+
+    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
+    networkProfilerMgr->paramValue_ = "test";
+    EXPECT_FALSE(networkProfilerMgr->StartNetworkProfiler());
+
+    int32_t pid = 1;
+    networkProfilerMgr->networkCtx_.clear();
+    networkProfilerMgr->networkCtx_.emplace_back(std::make_shared<NetworkProfilerManager::NetworkProfilerCtx>(pid));
+    networkProfilerMgr->config_.add_pid(pid);
+    networkProfilerMgr->config_.add_startup_process_name("test_name_startup");
+    networkProfilerMgr->config_.add_restart_process_name("test_name_restart");
+    EXPECT_TRUE(networkProfilerMgr->StartNetworkProfiler());
+    auto commandPollerMock = std::make_shared<CommandPollerMock>(networkProfilerMgr);
+    EXPECT_CALL(*commandPollerMock, PushResult(::testing::_, ::testing::_)).WillRepeatedly(::testing::DoDefault());
+    testing::Mock::AllowLeak(commandPollerMock.get());
+    ASSERT_TRUE(commandPollerMock != nullptr);
+    networkProfilerMgr->SetCommandPoller(commandPollerMock);
+    EXPECT_TRUE(networkProfilerMgr->StartPluginSession(pluginIds, configVec, result));
+}
+
+/**
+ * @tc.name: HandleNetworkProfilerContextTest
+ * @tc.desc: test NetworkProfilerManager::HandleNetworkProfilerContextTest with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, HandleNetworkProfilerContextTest, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    EXPECT_FALSE(networkProfilerMgr->HandleNetworkProfilerContext(nullptr));
+
+    int32_t pid = -1;
+    auto ctx1 = std::make_shared<NetworkProfilerManager::NetworkProfilerCtx>(pid);
+    EXPECT_FALSE(networkProfilerMgr->HandleNetworkProfilerContext(ctx1));
+
+    pid = 1;
+    auto ctx2 = std::make_shared<NetworkProfilerManager::NetworkProfilerCtx>(pid);
+    uint32_t smbPages = 100;
+    networkProfilerMgr->config_.set_smb_pages(smbPages);
+    EXPECT_TRUE(networkProfilerMgr->HandleNetworkProfilerContext(ctx2));
+    EXPECT_EQ(ctx2->smbName, "network_profiler_smb_1");
+
+    string processName = "test";
+    EXPECT_TRUE(networkProfilerMgr->CreateWriter("name", 0, 0, 0, false));
+    auto ctx3 = std::make_shared<NetworkProfilerManager::NetworkProfilerCtx>(processName);
+    EXPECT_TRUE(networkProfilerMgr->HandleNetworkProfilerContext(ctx3));
+    EXPECT_EQ(ctx3->smbName, "network_profiler_smb_test");
+    ctx3->eventNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK);
+    networkProfilerMgr->ReadShareMemory(ctx3);
+}
+
+/**
+ * @tc.name: GetClockIdTest
+ * @tc.desc: test NetworkProfilerManager::GetClockIdTest with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, GetClockIdTest, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::BOOTTIME), CLOCK_BOOTTIME);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::REALTIME), CLOCK_REALTIME);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::REALTIME_COARSE), CLOCK_REALTIME_COARSE);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::MONOTONIC), CLOCK_MONOTONIC);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::MONOTONIC_COARSE), CLOCK_MONOTONIC_COARSE);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::MONOTONIC_RAW), CLOCK_MONOTONIC_RAW);
+    EXPECT_EQ(networkProfilerMgr->GetClockId(NetworkProfilerConfig::UNKNOW), CLOCK_BOOTTIME);
+}
+
+/**
+ * @tc.name: CheckRestartProcessNameTestNotStart
+ * @tc.desc: test NetworkProfilerManager::CheckRestartProcessNameTestNotStart with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, CheckRestartProcessNameTestNotStart, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    networkProfilerMgr->config_.add_restart_process_name("test_name_restart");
+    std::set<int32_t> pidCache;
+    EXPECT_FALSE(networkProfilerMgr->CheckRestartProcessName(pidCache));
+}
+
+/**
+ * @tc.name: CheckRestartProcessNameTestStarted
+ * @tc.desc: test NetworkProfilerManager::CheckRestartProcessNameTestStarted with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NetworkProfilerTest, CheckRestartProcessNameTestStarted, TestSize.Level1)
+{
+    auto networkProfilerMgr = std::make_shared<NetworkProfilerManager>();
+    const std::string processName = "foundation";
+    networkProfilerMgr->config_.add_restart_process_name(processName);
+    std::set<int32_t> pidCache;
+    EXPECT_TRUE(networkProfilerMgr->CheckRestartProcessName(pidCache));
+    int32_t pidValue = -1;
+    COMMON::IsProcessExist(processName, pidValue);
+    EXPECT_EQ(networkProfilerMgr->networkCtx_.size(), static_cast<size_t>(1));
+    EXPECT_EQ(networkProfilerMgr->GetNetworkProfilerCtx(pidValue, processName), std::make_pair(0, 0));
 }
 
 } // namespace
