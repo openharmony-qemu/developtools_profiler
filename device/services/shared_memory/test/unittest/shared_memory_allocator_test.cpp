@@ -113,7 +113,12 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal002, TestSize.Level1)
 {
     // round down to the nearest integer, Get the maximum allocatable space of the current shared memory block
     auto currentMaxShareMemorySize = static_cast<uint32_t>(GetMemAvailable());
-    currentMaxShareMemorySize = currentMaxShareMemorySize * MIN_SHARE_MEMORY_SIZE / PAGE_SIZE * PAGE_SIZE;
+    auto uint32MaxKb = UINT32_MAX / static_cast<uint32_t>(MIN_SHARE_MEMORY_SIZE);
+    if (currentMaxShareMemorySize > uint32MaxKb) {
+        currentMaxShareMemorySize = uint32MaxKb;
+    }
+    currentMaxShareMemorySize = currentMaxShareMemorySize * static_cast<uint32_t>(MIN_SHARE_MEMORY_SIZE) /
+        PAGE_SIZE * PAGE_SIZE;
     // Only 4 KB can be allocated. If the number is not a multiple of 4 KB, you cannot apply for the number.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("testname", MIN_SHARE_MEMORY_SIZE) ==
         nullptr); // Create a memory block of size 1k, return null.
@@ -201,7 +206,12 @@ HWTEST_F(SharedMemoryAllocatorTest, MemoryBlockRemote002, TestSize.Level1)
 {
     // round down to the nearest integer, Get the maximum allocatable space of the current shared memory block
     auto currentMaxShareMemorySize = static_cast<uint32_t>(GetMemAvailable());
-    currentMaxShareMemorySize = currentMaxShareMemorySize * MIN_SHARE_MEMORY_SIZE / PAGE_SIZE * PAGE_SIZE;
+    auto uint32MaxKb = UINT32_MAX / static_cast<uint32_t>(MIN_SHARE_MEMORY_SIZE);
+    if (currentMaxShareMemorySize > uint32MaxKb) {
+        currentMaxShareMemorySize = uint32MaxKb;
+    }
+    currentMaxShareMemorySize = currentMaxShareMemorySize * static_cast<uint32_t>(MIN_SHARE_MEMORY_SIZE) /
+        PAGE_SIZE * PAGE_SIZE;
 
     int fd = syscall(SYS_memfd_create, "testnameremote", 0);
     EXPECT_GE(fd, 0);
