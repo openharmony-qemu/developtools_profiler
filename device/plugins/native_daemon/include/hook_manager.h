@@ -151,6 +151,8 @@ private:
     unsigned long long ConvertTagToMask();
     bool CheckProcessName();
     void CheckHapEncryped();
+    void UpdateAsyncFlagConfig();
+    uint64_t MergeAsyncFlagMaskFromEnum(uint64_t baseMask);
     void SetHookData(HookContext& hookContext, struct timespec ts,
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
@@ -172,6 +174,7 @@ private:
     std::shared_ptr<Writer> writer_{nullptr};
     constexpr static uint32_t MAX_BUFFER_SIZE = 100 * 1024 * 1024;
     uint64_t shareMemorySize_{MAX_BUFFER_SIZE};
+    uint64_t asyncFlagMask_{0};
     NmdParam nmdParamInfo_;
     uint32_t largestSize_ = 0;
     uint32_t secondLargestSize_ = 0;

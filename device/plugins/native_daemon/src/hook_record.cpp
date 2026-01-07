@@ -273,4 +273,29 @@ void MemoryUnusingRecord::SerializeData(NativeHookProto stackData, SerializeInfo
         HookRecord::SetEventFrame(traceFreeEvent, hookInfo);
         }, stackData);
 }
+
+void ArktsFreeRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo)
+{
+    std::visit([this, &hookInfo](auto protoData) {
+        auto traceFreeRegionEvent = protoData->mutable_trace_free_region_event();
+        HookRecord::SetSize(traceFreeRegionEvent);
+        HookRecord::SetTraceType(traceFreeRegionEvent, hookInfo.tagName);
+        traceFreeRegionEvent->set_pid(rawStack_->stackContext->pid);
+        traceFreeRegionEvent->set_tid(rawStack_->stackContext->tid);
+        traceFreeRegionEvent->set_addr(GetAddr());
+        }, stackData);
+}
+
+void ArktsMallocRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo)
+{
+    std::visit([this, &hookInfo](auto protoData) {
+        auto traceMoveEvent = protoData->mutable_trace_move_event();
+        traceMoveEvent->set_new_addr(reinterpret_cast<uint64_t>(rawStack_->stackContext->newAddr));
+        HookRecord::SetTraceType(traceMoveEvent, hookInfo.tagName);
+        HookRecord::SetSize(traceMoveEvent);
+        traceMoveEvent->set_pid(rawStack_->stackContext->pid);
+        traceMoveEvent->set_tid(rawStack_->stackContext->tid);
+        traceMoveEvent->set_addr(GetAddr());
+        }, stackData);
+}
 }

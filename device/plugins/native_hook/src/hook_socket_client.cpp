@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 #include "hook_socket_client.h"
+#include "async_stack.h"
 #include "runtime_stack_range.h"
 #include "common.h"
 #include "hook_common.h"
@@ -100,6 +101,7 @@ bool HookSocketClient::GetConnectState()
 
 HookSocketClient::~HookSocketClient()
 {
+    RestoreAsyncStackType();
     for (size_t i = 0; i < stackWriterList_.size(); ++i) {
         if (stackWriterList_[i]) {
             stackWriterList_[i]->Flush();
@@ -137,6 +139,12 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %llu",
                        config_->memtraceEnable, config_->traceMask);
+#ifdef __aarch64__
+    if (config_->asyncStackEnable && config_->asyncFlag != 0) {
+        asyncFlagBackup_ = DfxSetAsyncStackType(config_->asyncFlag);
+        asyncFlagConfigured_ = true;
+    }
+#endif
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
@@ -238,11 +246,22 @@ void HookSocketClient::DisableHook()
 {
     bool expected = false;
     if (g_disableHook.compare_exchange_strong(expected, true, std::memory_order_release, std::memory_order_relaxed)) {
+        RestoreAsyncStackType();
         HILOG_BASE_INFO(LOG_CORE, "%s", __func__);
         if (disableHookCallback_) {
             disableHookCallback_();
         }
     }
+}
+
+void HookSocketClient::RestoreAsyncStackType()
+{
+#ifdef __aarch64__
+    if (asyncFlagConfigured_) {
+        DfxSetAsyncStackType(asyncFlagBackup_);
+        asyncFlagConfigured_ = false;
+    }
+#endif
 }
 
 bool HookSocketClient::PeerIsConnected()

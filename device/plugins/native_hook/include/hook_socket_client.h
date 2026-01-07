@@ -70,6 +70,10 @@ private:
     uint32_t maxGrowthSize_ = 0;
     uint32_t sampleInterval_ = 0;
     std::atomic<bool> connectState_ = false;
+    uint64_t asyncFlagBackup_ = 0;
+    bool asyncFlagConfigured_ = false;
+
+    void RestoreAsyncStackType();
 };
 
 #endif // HOOK_SOCKET_CLIENT

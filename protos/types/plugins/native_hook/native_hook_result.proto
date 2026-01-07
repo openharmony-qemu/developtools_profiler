@@ -189,6 +189,23 @@ message TraceFreeEvent {
     uint32 stack_id = 8;
 }
 
+message TraceMoveEvent {
+    int32 pid = 1;
+    int32 tid = 2; 
+    uint64 addr = 3;
+    uint64 new_addr = 4;
+    TraceType trace_type = 5;
+    uint64 size = 6;
+}
+
+message TraceFreeRegionEvent {
+    int32 pid = 1;
+    int32 tid = 2; 
+    uint64 addr = 3;
+    TraceType trace_type = 4;
+    uint64 size = 5;
+}
+
 message RecordStatisticsEvent {
     uint32 pid = 1;
     uint32 callstack_id = 2;
@@ -242,6 +259,8 @@ message NativeHookData {
         TraceAllocEvent trace_alloc_event = 16;
         TraceFreeEvent trace_free_event = 17;
         SMOMapsInfo smo_map = 18;
+        TraceMoveEvent trace_move_event = 19;
+        TraceFreeRegionEvent trace_free_region_event = 20;
     }
 }
 

@@ -16,6 +16,18 @@ syntax = "proto3";
 option java_package = "ohos.devtools.datasources.transport.grpc.service";
 option optimize_for = LITE_RUNTIME;
 
+enum AsyncFlagType {
+    LIBUV_SEND = 0;
+    FFRT_POOL = 1;
+    FFRT_QUEUE = 2;
+    EVENTHANDLER = 3;
+    PROMISE = 4;
+    CUSTOMIZE = 5;
+    ARKTS_WORKER = 6;
+    ARKTS_TASKPOOL = 7;
+    ALL_ASYNC_TYPE = 8;
+}
+
 
 message NativeHookConfig {
     int32 pid = 1;
@@ -51,4 +63,5 @@ message NativeHookConfig {
     string target_so_name = 31;
     repeated string restrace_tag = 32;
     bool async_stack_enable = 33;
+    repeated AsyncFlagType async_type = 34;
 }

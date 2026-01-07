@@ -389,13 +389,11 @@ bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size
     } else if (type == FREE_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
-        return true;
     } else if (type == MALLOC_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         auto addr = hookRecord->GetRawStack()->stackContext->addr;
         auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
         HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
-        return true;
     } else if (HandleNoStackEvent(hookRecord)) {
         return true;
     } else if (type == MUNMAP_MSG) {
@@ -1171,7 +1169,8 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     hookData->set_tv_sec(rawStack->stackContext->ts.tv_sec);
     hookData->set_tv_nsec(rawStack->stackContext->ts.tv_nsec);
     std::string tagName = "";
-    if (type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG || type == MEMORY_UNUSING_MSG) {
+    if (type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG || type == MEMORY_UNUSING_MSG ||
+        type == FREE_ARKTS || type == MALLOC_ARKTS) {
         GetMemTag(rawStack->stackContext->tagId, tagName);
     }
 
