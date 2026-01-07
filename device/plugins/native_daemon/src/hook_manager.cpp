@@ -273,6 +273,66 @@ unsigned long long HookManager::ConvertTagToMask()
     return resMask;
 }
 
+uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
+{
+    constexpr uint64_t ALL_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
+        ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+    uint64_t mask = baseMask;
+    for (const auto value : hookConfig_.async_type()) {
+        switch (value) {
+            case AsyncFlagType::LIBUV_SEND:
+                mask |= ASYNC_TYPE_LIBUV_SEND;
+                break;
+            case AsyncFlagType::FFRT_POOL:
+                mask |= ASYNC_TYPE_FFRT_POOL;
+                break;
+            case AsyncFlagType::FFRT_QUEUE:
+                mask |= ASYNC_TYPE_FFRT_QUEUE;
+                break;
+            case AsyncFlagType::EVENTHANDLER:
+                mask |= ASYNC_TYPE_EVENTHANDLER;
+                break;
+            case AsyncFlagType::PROMISE:
+                mask |= ASYNC_TYPE_PROMISE;
+                break;
+            case AsyncFlagType::CUSTOMIZE:
+                mask |= ASYNC_TYPE_CUSTOMIZE;
+                break;
+            case AsyncFlagType::ARKTS_WORKER:
+                mask |= ASYNC_TYPE_ARKTS_WORKER;
+                break;
+            case AsyncFlagType::ARKTS_TASKPOOL:
+                mask |= ASYNC_TYPE_ARKTS_TASKPOOL;
+                break;
+            case AsyncFlagType::ALL_ASYNC_TYPE:
+                mask |= ALL_TYPE;
+                break;
+            default:
+                PROFILER_LOG_WARN(LOG_CORE, "invalid async_type: %d", value);
+                break;
+        }
+    }
+    return mask;
+}
+
+void HookManager::UpdateAsyncFlagConfig()
+{
+    asyncFlagMask_ = 0;
+    if (!hookConfig_.async_stack_enable()) {
+        return;
+    }
+    if (hookConfig_.async_type_size() > 0) {
+        asyncFlagMask_ = MergeAsyncFlagMaskFromEnum(DEFAULT_ASYNC_TYPE);
+    }
+    if (asyncFlagMask_ == DEFAULT_ASYNC_TYPE) {
+        PROFILER_LOG_WARN(LOG_CORE, "async_stack_enable set but async_type is erro");
+        return;
+    }
+    PROFILER_LOG_WARN(LOG_CORE, "async_flag final mask: 0x%llx",
+        static_cast<unsigned long long>(asyncFlagMask_));
+}
+
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
@@ -290,6 +350,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.isBlocked = hookConfig_.blocked();
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
+    clientConfig.asyncFlag = asyncFlagMask_;
     if (saMode_) {
         clientConfig.traceMask = traceMask_;
     } else {
@@ -502,6 +563,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
 
+    UpdateAsyncFlagConfig();
+    
     if (hookCtx_.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
         return false;

@@ -212,6 +212,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         isBlocked = false;
         memtraceEnable = false;
         asyncStackEnable = false;
+        asyncFlag = 0;
         responseLibraryMode = false;
         freeEventOnlyAddrEnable = false;
         printNmd = false;
@@ -238,7 +239,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", mallocDisable:" << mallocDisable << ", mmapDisable:" << mmapDisable
             << ", freeStackData:" << freeStackData << ", munmapStackData:" << munmapStackData
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
-            << ", asyncStackEnable:" << asyncStackEnable
+            << ", asyncStackEnable:" << asyncStackEnable << ", asyncFlag:" << asyncFlag
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
@@ -274,6 +275,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool isBlocked = false;
     bool memtraceEnable = false;
     bool asyncStackEnable = false;
+    uint64_t asyncFlag = 0;
     bool responseLibraryMode = false;
     bool freeEventOnlyAddrEnable = false;
     bool printNmd = false;

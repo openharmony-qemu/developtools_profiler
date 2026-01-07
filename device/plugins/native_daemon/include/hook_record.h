@@ -201,12 +201,14 @@ class ArktsFreeRecord : public HookRecord {
 public:
     ArktsFreeRecord() = default;
     ArktsFreeRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class ArktsMallocRecord : public HookRecord {
 public:
     ArktsMallocRecord() = default;
     ArktsMallocRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+    void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 }
 #endif //HOOK_RECORD_H
