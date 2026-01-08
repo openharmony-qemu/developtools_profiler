@@ -402,8 +402,8 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
         });
         calcDrawFrameThread.join();
         calcScanoutThread.join();
-        fpsInfo.avgDrawCall = totalDrawCal / fpsInfo.flushTimeStamps.size();
-        fpsInfo.avgScanout = totalScanout / fpsInfo.flushTimeStamps.size();
+        fpsInfo.avgDrawCall = static_cast<double>(totalDrawCal) / fpsInfo.flushTimeStamps.size();
+        fpsInfo.avgScanout = static_cast<double>(totalScanout) / fpsInfo.flushTimeStamps.size();
         totalDrawCal = 0;
         totalScanout = 0;
     } else {
