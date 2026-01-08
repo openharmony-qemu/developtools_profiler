@@ -105,6 +105,7 @@ public:
     ~StackPreprocess();
     void SetWriter(const std::shared_ptr<Writer>& writer);
     void SetWriter(const WriterStructPtr& writer);
+    void SetWriterForFdSa(uint32_t fd);
     void SetFactory(std::shared_ptr<HookRecordFactory> factory)
     {
         factory_ = factory;

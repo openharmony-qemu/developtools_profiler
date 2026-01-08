@@ -65,9 +65,6 @@ HookManager::~HookManager()
         for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
             item->eventPollerList[i] = nullptr;
         }
-        if (item->stackPreprocess != nullptr) {
-            item->stackPreprocess = nullptr;
-        }
         if (item->stackData != nullptr) {
             item->stackData = nullptr;
         }
@@ -468,8 +465,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
                 [this, &ctx, i] { this->ReadShareMemory(ctx, i); });
         }
     }
-    if (isProtobufSerialize_ || isSaService_) {
+    if (isProtobufSerialize_) {
         ctx->stackPreprocess->SetWriter(g_buffWriter);
+    } else if (isSaService_) {
+        ctx->stackPreprocess->SetWriterForFdSa(saFd_);
     } else {
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
@@ -867,6 +866,11 @@ void HookManager::RegisterWriter(const std::shared_ptr<Writer> writer)
 {
     g_buffWriter = writer;
     return;
+}
+
+void HookManager::RegisterFdForSa(uint32_t saFd)
+{
+    saFd_ = saFd;
 }
 
 void HookManager::SetHookConfig(const NativeHookConfig& hookConfig)

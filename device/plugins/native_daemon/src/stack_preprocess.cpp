@@ -186,6 +186,16 @@ void StackPreprocess::SetWriter(const std::shared_ptr<Writer>& writer)
     }
 }
 
+void StackPreprocess::SetWriterForFdSa(uint32_t fd)
+{
+    writer_ = std::make_shared<TraceFileWriter>(fd);
+    std::shared_ptr<TraceFileWriter> tfPtr = std::static_pointer_cast<TraceFileWriter>(writer_);
+    tfPtr->SetTimeSource();
+    if ((!isSaService_) || (isHookStandaloneSerialize_)) {
+        stackData_ = BatchNativeHookData();
+    }
+}
+
 void StackPreprocess::SetWriter(const WriterStructPtr& writer)
 {
     if (writer == nullptr) {

@@ -102,6 +102,7 @@ public:
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
+    void RegisterFdForSa(uint32_t saFd);
     void WriteHookConfig();
     void DumpNmdInfo(const char* nmdResult);
     std::string GetCmdArgs(const NativeHookConfig& traceConfig);
@@ -180,6 +181,7 @@ private:
     uint32_t secondLargestSize_ = 0;
     uint32_t maxGrowthSize_ = 0;
     int32_t maxProcessCount_ = 10000;
+    uint32_t saFd_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
 };
 }
