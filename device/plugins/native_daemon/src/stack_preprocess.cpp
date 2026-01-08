@@ -734,7 +734,7 @@ bool StackPreprocess::HandleSimpleMessages(HookRecordPtr& hookRecord)
     if (type == FREE_ARKTS) {
         size_t size = hookRecord->GetRawStack()->stackContext->mallocSize;
         HandleDeleteAddr(reinterpret_cast<uint64_t>(hookRecord->GetAddr()), size);
-        return true;
+        return false;
     }
 
     if (type == MALLOC_ARKTS) {
@@ -742,7 +742,7 @@ bool StackPreprocess::HandleSimpleMessages(HookRecordPtr& hookRecord)
         auto addr = hookRecord->GetRawStack()->stackContext->addr;
         auto newAddr = hookRecord->GetRawStack()->stackContext->newAddr;
         HandleMoveAddr(reinterpret_cast<uint64_t>(addr), reinterpret_cast<uint64_t>(newAddr), size);
-        return true;
+        return false;
     }
 
     return false;
