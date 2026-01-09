@@ -831,7 +831,7 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
     ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
     if (len != -1) {
         fileName[len] = '\0';
-        if (g_clientConfig.memtraceEnable) 
+        if (g_clientConfig.memtraceEnable) {
             const bool isSoFile = strstr(fileName, ".so") != nullptr;
             const bool isAshmem = strstr(fileName, "/dev/ashmem") != nullptr;
             if ((isSoFile && (g_clientConfig.traceMask & RES_SO_MASK)) ||
