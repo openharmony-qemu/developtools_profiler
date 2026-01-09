@@ -831,13 +831,14 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
     ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
     if (len != -1) {
         fileName[len] = '\0';
-        const bool isSoFile = strstr(fileName, ".so") != nullptr;
-        const bool isAshmem = strstr(fileName, "/dev/ashmem") != nullptr;
-        if (g_clientConfig.memtraceEnable &&
-            ((isSoFile && (g_clientConfig.traceMask & RES_SO_MASK)) ||
-            (isAshmem && (g_clientConfig.traceMask & RES_ASHMEM_MASK)))) {
-            rawdata.type = MEMORY_USING_MSG;
-            FillNodeInfo(rawdata);
+        if (g_clientConfig.memtraceEnable) 
+            const bool isSoFile = strstr(fileName, ".so") != nullptr;
+            const bool isAshmem = strstr(fileName, "/dev/ashmem") != nullptr;
+            if ((isSoFile && (g_clientConfig.traceMask & RES_SO_MASK)) ||
+                (isAshmem && (g_clientConfig.traceMask & RES_ASHMEM_MASK))) {
+                rawdata.type = MEMORY_USING_MSG;
+                FillNodeInfo(rawdata);
+            }
         }
         HookClientHolder client(g_hookClient);
         if (!client.IsValid()) {
