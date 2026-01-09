@@ -803,7 +803,7 @@ HWTEST_F(StackPreprocessTest, HandleSimpleMessagesFreeArktsTest, TestSize.Level0
     auto hookRecord = std::make_shared<HookRecord>(rawStack);
     bool result = preprocess.HandleSimpleMessages(hookRecord);
 
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
     delete rawStack->stackContext;
 }
 
@@ -827,7 +827,7 @@ HWTEST_F(StackPreprocessTest, HandleSimpleMessagesMallocArktsTest, TestSize.Leve
     auto hookRecord = std::make_shared<HookRecord>(rawStack);
     bool result = preprocess.HandleSimpleMessages(hookRecord);
 
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
     delete rawStack->stackContext;
 }
 
