@@ -66,7 +66,11 @@ public:
 private:
     CommandLine();
     ~CommandLine();
-
+    void Reset()
+    {
+        paramIdx_ = 0;
+        commandParams_.clear();
+    }
     int paramIdx_;
     std::map<uint32_t, std::shared_ptr<CommandParam>> commandParams_;
 

@@ -134,6 +134,14 @@ private:
     void MergeStandaloneFile(const std::string& resultFile, const std::string& pluginName,
         const std::string& outputFile, const std::string& pluginVersion);
 
+    ::grpc::Status StopSessionImpl(::grpc::ServerContext* context,
+                               const ::StopSessionRequest* request,
+                               ::StopSessionResponse* response, uint32_t sessionId);
+
+    ::grpc::Status DestroySessionImpl(::grpc::ServerContext* context,
+                                  const ::DestroySessionRequest* request,
+                                  ::DestroySessionResponse* response, uint32_t sessionId);
+
 private:
     mutable std::mutex sessionContextMutex_ = {};
     PluginServicePtr pluginService_ = nullptr;
