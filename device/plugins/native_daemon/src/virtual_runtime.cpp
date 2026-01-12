@@ -775,34 +775,34 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info, const std::string
     uint64_t length = info[1];
     uint64_t flags = info[SECOND_INDEX];
     uint64_t offset = info[THIRD_INDEX];
+    if (hookConfig_.async_stack_enable()) {
+        bool isArkTS = (filePath.find(".hap") != std::string::npos) ||
+            (filePath.find("[anon:ArkTS") != std::string::npos) ||
+            (filePath.find("stub.an") != std::string::npos) ||
+            (filePath.find(".hsp") != std::string::npos) ||
+            (filePath.find(".abc") != std::string::npos) ||
+            (filePath.find(".hqf") != std::string::npos);
+        if (isArkTS) {
+            if (mapsCache_.find(begin) == mapsCache_.end()) {
+                soBegin_ = begin;
+                auto mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
+                auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+                memMaps->AddMap(mapItem, true);
+                mapsCache_[begin] = memMaps;
 
-    bool isArkTS = (filePath.find(".hap") != std::string::npos) ||
-        (filePath.find("[anon:ArkTS") != std::string::npos) ||
-        (filePath.find("stub.an") != std::string::npos) ||
-        (filePath.find(".hsp") != std::string::npos) ||
-        (filePath.find(".abc") != std::string::npos) ||
-        (filePath.find(".hqf") != std::string::npos);
-    if (isArkTS) {
-        if (mapsCache_.find(begin) == mapsCache_.end()) {
-            soBegin_ = begin;
-            auto mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
-            auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
-            memMaps->AddMap(mapItem, true);
-            mapsCache_[begin] = memMaps;
+                UpdateHapSymbols(mapItem);
+                UpdateSymbols(filePath, mapItem);
 
-            UpdateHapSymbols(mapItem);
-            UpdateSymbols(filePath, mapItem);
+                auto &thread = UpdateThread(pid, tid);
+                processMaps_.emplace_back(mapItem);
+                thread.SortMaps();
+                offlineMapAddr_.push_back(soBegin_);
+                arktsMapTree_[begin] = mapItem;
 
-            auto &thread = UpdateThread(pid, tid);
-            processMaps_.emplace_back(mapItem);
-            thread.SortMaps();
-            offlineMapAddr_.push_back(soBegin_);
-            arktsMapTree_[begin] = mapItem;
-
-            return;
+                return;
+            }
         }
     }
-
     if (!(flags & MAP_FIXED)) {
         return;
     }
