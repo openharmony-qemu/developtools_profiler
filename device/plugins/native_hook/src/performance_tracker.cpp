@@ -77,6 +77,7 @@ void PerformanceTracker::PrintResult()
 {
     if (mallocTimes_.load() == 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "no malloc operation!");
+        return;
     }
     PROFILER_LOG_ERROR(LOG_CORE,
         "mallocTimes: %" PRIu64" mallocRecordTimes: %" PRIu64" mallocSize: %" PRIu64""

@@ -162,8 +162,7 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
 
 bool IsInDualRange(size_t size, const uint64_t* range)
 {
-    // size of range need great than GPU_RANGE_COUNT + 2
-    if (!range || GPU_RANGE_COUNT + 2 > sizeof(*range)/sizeof(uint64_t)) {
+    if (range == nullptr) {
         return false;
     }
     const uint64_t u64Size = static_cast<uint64_t>(size);
@@ -196,14 +195,11 @@ bool CheckSizeRange(size_t size, uint64_t type)
     return IsInDualRange(size, targetRange);
 }
 
-bool CheckRestraceConditions(uint32_t combineVal, size_t size)
+bool CheckRestraceConditions(unsigned long long combineVal, size_t size)
 {
-    return ((combineVal & RES_GPU_VK) && CheckSizeRange(size, RES_GPU_VK)) ||
-           ((combineVal & RES_GPU_GLES_IMAGE) && CheckSizeRange(size, RES_GPU_GLES_IMAGE)) ||
-           ((combineVal & RES_GPU_GLES_BUFFER) && CheckSizeRange(size, RES_GPU_GLES_BUFFER)) ||
-           ((combineVal & RES_GPU_CL_IMAGE) && CheckSizeRange(size, RES_GPU_CL_IMAGE)) ||
-           ((combineVal & RES_GPU_CL_BUFFER) && CheckSizeRange(size, RES_GPU_CL_BUFFER)) ||
-           (combineVal & RES_FD_MASK) || (combineVal & RES_THREAD_MASK);
+    static unsigned long long checkRangeType =
+        RES_GPU_VK | RES_GPU_GLES_IMAGE | RES_GPU_GLES_BUFFER | RES_GPU_CL_IMAGE | RES_GPU_CL_BUFFER;
+    return ((checkRangeType & combineVal) == 0) ? true : CheckSizeRange(size, combineVal);
 }
 
 }  // namespace HookGuard

@@ -207,4 +207,26 @@ HWTEST_F(HookGuardTest, CalculateRealSizeBasicTest, TestSize.Level0)
     g_clientConfig.fpunwind = false;
     EXPECT_EQ(HookGuard::CalculateRealSize(fpStackDepth), baseSize + rawDataSize);
 }
+
+/**
+ * @tc.name: CheckRestraceConditionsBasicTest
+ * @tc.desc: Test HookGuard::CheckRestraceConditionsBasicTest basic functionality
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookGuardTest, CheckRestraceConditionsBasicTest, TestSize.Level0)
+{
+    for (size_t i = 0; i < OHOS::Developtools::NativeDaemon::GPU_RANGE_COUNT * 2; i++) { //2: double
+        g_clientConfig.gpuRange.gpuVk[i] = i;
+        g_clientConfig.gpuRange.gpuGlesImage[i] = i;
+        g_clientConfig.gpuRange.gpuGlesBuffer[i] = i;
+        g_clientConfig.gpuRange.gpuClImage[i] = i;
+        g_clientConfig.gpuRange.gpuClBuffer[i] = i;
+    }
+    EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_ARKTS_HEAP_MASK, 4));
+    EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_GPU_VK, 0));
+    EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_GPU_GLES_IMAGE, 1));
+    EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_GPU_GLES_BUFFER, 2));
+    EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_GPU_CL_IMAGE, 3));
+    EXPECT_FALSE(HookGuard::CheckRestraceConditions(RES_GPU_CL_BUFFER, 4));
+}
 }
