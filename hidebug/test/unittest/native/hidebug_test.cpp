@@ -23,6 +23,7 @@
 
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
+#include "hidebug_util.h"
 #include "securec.h"
 #include <sys/mman.h>
 
@@ -410,7 +411,7 @@ HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest, TestSize.Level0)
  */
 HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest2, TestSize.Level1)
 {
-    if (IsHm()) {
+    if (OHOS::HiviewDFX::IsHm()) {
         auto callback = [] (const char* stacks) {
             ASSERT_NE(stacks, nullptr);
             ASSERT_GT(std::strlen(stacks), 0);

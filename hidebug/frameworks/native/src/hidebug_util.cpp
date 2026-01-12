@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <sys/xattr.h>
 #include <unistd.h>
 
