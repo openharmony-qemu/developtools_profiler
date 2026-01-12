@@ -30,7 +30,7 @@ namespace HookGuard {
     bool ShouldSample(size_t size, pthread_key_t& sampleKey);
     int CalculateRealSize(int fpStackDepth, bool isAsyncStack = false);
     uint16_t GetPredefinedTagId(unsigned long long mask);
-    bool CheckRestraceConditions(uint32_t combineVal, size_t size);
+    bool CheckRestraceConditions(unsigned long long combineVal, size_t size);
 }
 
 #endif  // HOOK_GUARD_H
