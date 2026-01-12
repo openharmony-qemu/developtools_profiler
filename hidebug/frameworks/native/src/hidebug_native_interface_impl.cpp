@@ -28,8 +28,8 @@
 #include "hilog/log.h"
 #include "client/cpu_collector_client.h"
 #include "client/memory_collector_client.h"
-#include "utility/memory_collector.h"
 #include "utility/graphic_memory_collector.h"
+#include "utility/memory_collector.h"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -89,7 +89,7 @@ int GetGraphicMemoryInfo(GraphicsMemorySummary& graphicMemoryInfo)
     auto collectorGraph = collector->GetGraphicUsage(pid, GraphicType::GRAPH, true);
     if (collectorGraph.retCode != UCollect::UcError::SUCCESS || collectorGraph.data < 0) {
         HILOG_ERROR(LOG_CORE, "collectorGraph Failed,retCode = %{public}d",
-                    static_cast<int>(collectorGl.retCode));
+                    static_cast<int>(collectorGraph.retCode));
         return NATIVE_FAIL;
     }
 
