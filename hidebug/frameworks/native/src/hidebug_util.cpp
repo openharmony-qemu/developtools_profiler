@@ -236,5 +236,16 @@ bool CreateResourceLimitDir()
     }
     return true;
 }
+
+bool IsHm()
+{
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("HongMeng") != std::string::npos;
+    }
+    return isHM;
+}
 }
 }
