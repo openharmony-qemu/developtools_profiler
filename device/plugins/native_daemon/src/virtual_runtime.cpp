@@ -803,7 +803,6 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
             }
         }
     }
-
     if (!(flags & MAP_FIXED)) {
         return;
     }
