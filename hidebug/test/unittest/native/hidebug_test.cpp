@@ -23,6 +23,7 @@
 
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
+#include "hidebug_util.h"
 #include "securec.h"
 #include <sys/mman.h>
 
@@ -410,26 +411,28 @@ HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest, TestSize.Level0)
  */
 HWTEST_F(HidebugTest, OH_HiDebug_RequestThreadLiteSamplingTest2, TestSize.Level1)
 {
-    auto callback = [] (const char* stacks) {
-        ASSERT_NE(stacks, nullptr);
-        ASSERT_GT(std::strlen(stacks), 0);
-    };
-    uint32_t tid = static_cast<uint32_t>(gettid());
-    HiDebug_ProcessSamplerConfig config{
-        .tids = &tid,
-        .size = 1,
-        .duration = 1500,
-        .frequency = 0,
-        .reserved = 0
-    };
-    std::thread([&] {
-        ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_SUCCESS);
-    }).detach();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
-    std::thread([&] {
-        ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_UNDER_SAMPLING);
-    }).detach();
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    if (OHOS::HiviewDFX::IsHm()) {
+        auto callback = [] (const char* stacks) {
+            ASSERT_NE(stacks, nullptr);
+            ASSERT_GT(std::strlen(stacks), 0);
+        };
+        uint32_t tid = static_cast<uint32_t>(gettid());
+        HiDebug_ProcessSamplerConfig config{
+            .tids = &tid,
+            .size = 1,
+            .duration = 1500,
+            .frequency = 0,
+            .reserved = 0
+        };
+        std::thread([&] {
+            ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_SUCCESS);
+        }).detach();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::thread([&] {
+            ASSERT_EQ(OH_HiDebug_RequestThreadLiteSampling(&config, callback), HIDEBUG_UNDER_SAMPLING);
+        }).detach();
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+    }
 }
 
 /**

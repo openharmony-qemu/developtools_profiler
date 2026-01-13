@@ -112,6 +112,8 @@ bool IsDeveloperOptionsEnabled();
 bool CheckVersionType(const std::string& type, const std::string& key);
 
 bool CreateResourceLimitDir();
+
+bool IsHm();
 }
 }
 #endif // HIDEBUG_UTIL_H_

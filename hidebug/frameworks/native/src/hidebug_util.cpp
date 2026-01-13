@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <sys/xattr.h>
 #include <unistd.h>
 
@@ -235,6 +236,17 @@ bool CreateResourceLimitDir()
         return false;
     }
     return true;
+}
+
+bool IsHm()
+{
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("HongMeng") != std::string::npos;
+    }
+    return isHM;
 }
 }
 }
