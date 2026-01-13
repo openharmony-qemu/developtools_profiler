@@ -22,6 +22,7 @@
 #include <iostream>
 #include <unistd.h>
 #include <sstream>
+#include <charconv>
 
 using namespace OHOS::Developtools::NativeDaemon;
 const int ONLY_NMD = 2;
@@ -56,7 +57,16 @@ int32_t HandleExtendPid(int32_t index, int32_t argc, char* argv[], std::vector<i
 {
     int32_t pidIndex = index + 1;
     while (pidIndex < argc && !IsOption(std::string(argv[pidIndex]))) {
-        int pidVal = IsNumeric(argv[pidIndex]) ? std::stoi(argv[pidIndex]) : 0;
+        int pidVal = -1;
+        if (!IsNumeric(argv[pidIndex])) {
+            pidVal = 0;
+        } else {
+            std::string pidStr(argv[pidIndex]);
+            auto result = std::from_chars(pidStr.data(), pidStr.data() + pidStr.size(), pidVal);
+            if (result.ec != std::errc()) {
+                pidVal = 0;
+            }
+        }
         pidList.push_back(pidVal);
         ++pidIndex;
     }

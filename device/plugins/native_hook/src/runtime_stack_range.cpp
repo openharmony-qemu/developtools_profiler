@@ -234,13 +234,17 @@ void ParseEvent(const std::string& filePath, std::vector<std::pair<uint64_t, uin
             iter->second.soEnd_ = soEnd;
         }
         auto it = filterStaLibRange.rbegin();
+        bool found = false;
         for (; it != filterStaLibRange.rend(); ++it) {
             if (it->first == iter->second.soBegin_) {
-                break;
+                    found = true;
+                    break;
             }
         }
-        it->first = iter->second.soBegin_;
-        it->second = iter->second.soEnd_;
+        if (found) {
+            it->first = iter->second.soBegin_;
+            it->second = iter->second.soEnd_;
+        }
     } else {
         filterStaLibRange.emplace_back(iter->second.soBegin_, iter->second.soEnd_);
     }

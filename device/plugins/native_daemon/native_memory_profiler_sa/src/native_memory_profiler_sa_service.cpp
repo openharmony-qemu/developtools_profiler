@@ -42,8 +42,6 @@ constexpr int VEC_SHIFT = 2;
 
 static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
 static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
-static std::unordered_map<std::string, std::shared_ptr<TraceFileWriter>> g_nameAndFilePathWriterMap;
-static std::unordered_map<int32_t, std::shared_ptr<TraceFileWriter>> g_pidWriterMap;
 static std::mutex g_mtx;
 static ScheduleTaskManager g_scheduleTaskManager;
 static bool g_hasStartupMode{false};
@@ -252,9 +250,6 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         StringViewMemoryHold::GetInstance().Clear();
         DelayedShutdown(false);
     }
-    g_nameAndFilePathWriterMap.erase(config->processName);
-    g_nameAndFilePathWriterMap.erase(config->filePath);
-    g_pidWriterMap.erase(config->pid);
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -322,22 +317,14 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
         fd = static_cast<uint32_t>(fdTemp);
     }
-    std::shared_ptr<TraceFileWriter> writeFile = nullptr;
-    if (config->printNmdOnly_) {
-        writeFile = std::make_shared<TraceFileWriter>(0);
-    } else {
-        writeFile = std::make_shared<TraceFileWriter>(fd);
+    uint32_t saFd = 0;
+    if (!config->printNmdOnly_) {
+        saFd = fd;
     }
-    CHECK_NOTNULL(writeFile, RET_ERR, "Failed to create TraceFileWriter");
-    writeFile->SetTimeSource();
-    hook->RegisterWriter(writeFile);
+    hook->RegisterFdForSa(saFd);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
-    if (config->hookstandalone_) {
-        hook->SetSaServiceConfig(true, true);
-    } else {
-        hook->SetSaServiceConfig(true, false);
-    }
+    hook->SetSaServiceConfig(true, config->hookstandalone_);
     if (config->pid_ > 0) {
         std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
         if (g_nmdPidType.find(config->pid_) != g_nmdPidType.end()) {
@@ -376,15 +363,12 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
 
     if (configCtx->pid > 0) {
         g_pidCtx[configCtx->pid] = configCtx;
-        g_pidWriterMap[configCtx->pid] = writeFile;
     } else if (!configCtx->processName.empty()) {
         g_nameAndFilePathCtx[configCtx->processName] = configCtx;
-        g_nameAndFilePathWriterMap[configCtx->processName] = writeFile;
     }
 
     if (fd == 0) {
         g_nameAndFilePathCtx[configCtx->filePath] = configCtx;
-        g_nameAndFilePathWriterMap[configCtx->filePath] = writeFile;
     }
     ++g_taskNum;
     DelayedShutdown(true);
