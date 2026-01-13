@@ -28,7 +28,6 @@
 #include "hilog/log.h"
 #include "client/cpu_collector_client.h"
 #include "client/memory_collector_client.h"
-#include "utility/graphic_memory_collector.h"
 #include "utility/memory_collector.h"
 
 namespace OHOS {
@@ -74,27 +73,20 @@ int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 
 int GetGraphicMemoryInfo(GraphicsMemorySummary& graphicMemoryInfo)
 {
-    auto collector = UCollectUtil::GraphicMemoryCollector::Create();
+    auto collector = UCollectClient::MemoryCollector::Create();
     if (!collector) {
         HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed");
         return NATIVE_FAIL;
     }
-    pid_t pid = getpid();
-    auto collectorGl = collector->GetGraphicUsage(pid, GraphicType::GL, true);
-    if (collectorGl.retCode != UCollect::UcError::SUCCESS || collectorGl.data < 0) {
-        HILOG_ERROR(LOG_CORE, "collectorGl Failed,retCode = %{public}d",
-                    static_cast<int>(collectorGl.retCode));
+    auto collectResult = collector->GetGraphicUsage();
+    if (collectResult.retCode != UCollect::UcError::SUCCESS ||
+        collectResult.data.gl < 0 || collectResult.data.graph < 0) {
+        HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
+                    static_cast<int>(collectResult.retCode));
         return NATIVE_FAIL;
     }
-    auto collectorGraph = collector->GetGraphicUsage(pid, GraphicType::GRAPH, true);
-    if (collectorGraph.retCode != UCollect::UcError::SUCCESS || collectorGraph.data < 0) {
-        HILOG_ERROR(LOG_CORE, "collectorGraph Failed,retCode = %{public}d",
-                    static_cast<int>(collectorGraph.retCode));
-        return NATIVE_FAIL;
-    }
-
-    graphicMemoryInfo.gl = static_cast<uint32_t>(collectorGl.data);
-    graphicMemoryInfo.graph = static_cast<uint32_t>(collectorGraph.data);
+    graphicMemoryInfo.gl = static_cast<uint32_t>(collectResult.data.gl);
+    graphicMemoryInfo.graph = static_cast<uint32_t>(collectResult.data.graph);
     return NATIVE_SUCCESS;
 }
 
