@@ -359,11 +359,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
     clientConfig.asyncFlag = asyncFlagMask_;
-    if (saMode_) {
-        clientConfig.traceMask = traceMask_;
-    } else {
-        clientConfig.traceMask = ConvertTagToMask();
-    }
+    clientConfig.traceMask = saMode_ ? traceMask_ : ConvertTagToMask();
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
