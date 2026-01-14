@@ -263,12 +263,12 @@ bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo)
         file >> std::ws;
         if (key == "dmaheapPageNum") {
             file >> graph;
-        } else if (key == "gpuPagenum") {
+        } else if (key == "gpuPageNum") {
             file >> gl;
         }
         file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
-    uint32_t kbPerPage = 4;
+    constexpr uint32_t kbPerPage = 4;
     graphicMemoryInfo.gl = gl * kbPerPage;
     graphicMemoryInfo.graph = graph * kbPerPage;
     file.close();
