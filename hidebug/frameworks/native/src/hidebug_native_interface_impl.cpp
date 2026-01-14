@@ -74,7 +74,7 @@ int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 int GetGraphicMemoryInfo(GraphicsMemorySummary& graphicMemoryInfo)
 {
     if (IsHm()) {
-        if (!GetGlAndGraph(graphicMemoryInfo)){
+        if (!GetGlAndGraph(graphicMemoryInfo)) {
             HILOG_ERROR(LOG_CORE, "GetGlAndGraph Failed");
             return NATIVE_FAIL;
         }
