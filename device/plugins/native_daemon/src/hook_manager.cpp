@@ -51,6 +51,7 @@ constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
+constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
@@ -341,8 +342,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
 #ifndef __aarch64__
     if (static_cast<int>(clientConfig.shareMemorySize) < 0) {
         PROFILER_LOG_WARN(LOG_CORE, "GetClientConfig shareMemorySize is too large.");
-        const uint32_t adjustScale = 4;
-        clientConfig.shareMemorySize /= adjustScale;
+        clientConfig.shareMemorySize = MAX_MAP_BUFFER_SIZE;
     }
 #endif
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
@@ -395,8 +395,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 #ifndef __aarch64__
     if (static_cast<int>(bufferSize) < 0) {
         PROFILER_LOG_WARN(LOG_CORE, "HandleHookContext bufferSize is too large.");
-        const uint32_t adjustScale = 4;
-        bufferSize = bufferSize / adjustScale;
+        bufferSize = MAX_MAP_BUFFER_SIZE;
     }
 #endif
     for (int i = 0; i < sharedMemCount; ++i) {
