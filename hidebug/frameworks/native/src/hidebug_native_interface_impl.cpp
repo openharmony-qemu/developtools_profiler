@@ -73,20 +73,27 @@ int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 
 int GetGraphicMemoryInfo(GraphicsMemorySummary& graphicMemoryInfo)
 {
-    auto collector = UCollectClient::MemoryCollector::Create();
-    if (!collector) {
-        HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed");
-        return NATIVE_FAIL;
+    if (IsHm()) {
+        if (!GetGlAndGraph(graphicMemoryInfo)) {
+            HILOG_ERROR(LOG_CORE, "GetGlAndGraph Failed");
+            return NATIVE_FAIL;
+        }
+    } else {
+        auto collector = UCollectClient::MemoryCollector::Create();
+        if (!collector) {
+            HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed");
+            return NATIVE_FAIL;
+        }
+        auto collectResult = collector->GetGraphicUsage();
+        if (collectResult.retCode != UCollect::UcError::SUCCESS ||
+            collectResult.data.gl < 0 || collectResult.data.graph < 0) {
+            HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
+                        static_cast<int>(collectResult.retCode));
+            return NATIVE_FAIL;
+        }
+        graphicMemoryInfo.gl = static_cast<uint32_t>(collectResult.data.gl);
+        graphicMemoryInfo.graph = static_cast<uint32_t>(collectResult.data.graph);
     }
-    auto collectResult = collector->GetGraphicUsage();
-    if (collectResult.retCode != UCollect::UcError::SUCCESS ||
-        collectResult.data.gl < 0 || collectResult.data.graph < 0) {
-        HILOG_ERROR(LOG_CORE, "GetGraphicUsage Failed,retCode = %{public}d",
-                    static_cast<int>(collectResult.retCode));
-        return NATIVE_FAIL;
-    }
-    graphicMemoryInfo.gl = static_cast<uint32_t>(collectResult.data.gl);
-    graphicMemoryInfo.graph = static_cast<uint32_t>(collectResult.data.graph);
     return NATIVE_SUCCESS;
 }
 

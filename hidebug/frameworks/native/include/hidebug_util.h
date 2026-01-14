@@ -114,6 +114,8 @@ bool CheckVersionType(const std::string& type, const std::string& key);
 bool CreateResourceLimitDir();
 
 bool IsHm();
+
+bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo);
 }
 }
 #endif // HIDEBUG_UTIL_H_

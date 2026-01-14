@@ -18,6 +18,7 @@
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
+#include <fstream>
 #include <thread>
 #include <vector>
 
@@ -247,6 +248,31 @@ bool IsHm()
         isHM = osRelease.find("HongMeng") != std::string::npos;
     }
     return isHM;
+}
+
+bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo)
+{
+    std::ifstream file("/proc/self/mm_decision_info");
+    if (!file.is_open()) {
+        return false;
+    }
+    uint32_t graph = 0;
+    uint32_t gl = 0;
+    std::string key;
+    while (getline(file, key, ':')) {
+        file >> std::ws;
+        if (key == "dmaheapPageNum") {
+            file >> graph;
+        } else if (key == "gpuPageNum") {
+            file >> gl;
+        }
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    constexpr uint32_t kbPerPage = 4;
+    graphicMemoryInfo.gl = gl * kbPerPage;
+    graphicMemoryInfo.graph = graph * kbPerPage;
+    file.close();
+    return true;
 }
 }
 }
