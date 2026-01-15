@@ -39,7 +39,7 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
         jsRecordCache_.emplace_back(std::make_shared<JsRecord>());
         arkTsMallocRecordCache_.emplace_back(std::make_shared<ArktsMallocRecord>());
         arkTsFreeRecordCache_.emplace_back(std::make_shared<ArktsFreeRecord>());
-        memoryUnUsingMsgRecordCache_..emplace_back(std::make_shared<MemoryUnusingRecord>());
+        memoryUnUsingMsgRecordCache_.emplace_back(std::make_shared<MemoryUnusingRecord>());
         memoryUsingMsgRecordCache_.emplace_back(std::make_shared<MemoryUsingRecord>());
         if (hookConfig_.statistics_interval() > 0) {
             freeRecordSimpCache_.emplace_back(std::make_shared<FreeRecordSimp>());
