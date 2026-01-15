@@ -150,7 +150,7 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
 {
     char fileName[PATH_MAX + 1] = {0};
     char realPath[PATH_MAX + 1] = {0};
-    FILE * fp = nullptr;
+    FILE *fp = nullptr;
     ssize_t bytesRead = 0;
 
     if (snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s%d/%s", path_.c_str(), pid, pFileName) < 0) {
@@ -180,7 +180,12 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         return RET_FAIL;
     }
     buffer_.get()[bytesRead] = '\0';
-    fclose(fp);
+    if(fclose(fp) < 0) {
+       PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
+       err_ = errno;
+       return RET_FAIL; 
+    }
+    fp = nullptr;
 
     return bytesRead;
 }
