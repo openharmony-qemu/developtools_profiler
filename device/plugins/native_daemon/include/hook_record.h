@@ -171,12 +171,14 @@ public:
 
 class MemoryUsingRecord : public HookRecord {
 public:
+    MemoryUsingRecord() = default;
     MemoryUsingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
     void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MemoryUnusingRecord : public HookRecord {
 public:
+    MemoryUnusingRecord() = default;
     MemoryUnusingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
     void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
