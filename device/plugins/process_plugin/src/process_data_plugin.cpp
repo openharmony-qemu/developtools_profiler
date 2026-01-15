@@ -180,10 +180,10 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         return RET_FAIL;
     }
     buffer_.get()[bytesRead] = '\0';
-    if(fclose(fp) < 0) {
-       PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
-       err_ = errno;
-       return RET_FAIL; 
+    if (fclose(fp) < 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
+        err_ = errno;
+        return RET_FAIL; 
     }
     fp = nullptr;
 
