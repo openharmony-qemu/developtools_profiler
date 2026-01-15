@@ -183,7 +183,7 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     if (fclose(fp) < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
         err_ = errno;
-        return RET_FAIL; 
+        return RET_FAIL;
     }
     fp = nullptr;
 
