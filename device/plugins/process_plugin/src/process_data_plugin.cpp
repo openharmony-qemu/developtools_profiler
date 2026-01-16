@@ -172,7 +172,7 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         fclose(fp);
         return RET_FAIL;
     }
-    bytesRead = fread(buffer_.get(), READ_BUFFER_SIZE - 1, 1, fp);
+    bytesRead = fread(buffer_.get(), 1, READ_BUFFER_SIZE - 1, fp);
     if (bytesRead < 0) {
         fclose(fp);
         PROFILER_LOG_INFO(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName, errno);
