@@ -37,6 +37,7 @@ constexpr uint32_t WAIT_TIME_ONCE = 10;
 constexpr uint32_t MAX_BATCH_CNT = 40;
 constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
+constexpr uint64_t STATISTICS_PERIOD_DATA_FLUSH_BATCH = 10000;
 constexpr int NAPI_CALL_STACK = 2; // just for napi call stack
 constexpr uint32_t FRAME_DEPTH = 2; // add two frames
 constexpr uint32_t FLUSH_BASELINE_SA = (1U << 20);
@@ -1018,6 +1019,11 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, s
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
+    if constexpr (std::is_same<T, ::BatchNativeHookData>::value) {
+        if (stackData.events().size() > STATISTICS_PERIOD_DATA_FLUSH_BATCH) {
+            FlushData(stackData);
+        }
+    }
     spinLock_.Unlock();
 }
 
@@ -1547,8 +1553,8 @@ void StackPreprocess::FlushData(BatchNativeHookData& stackData)
     }
     if (stackData.events().size() > 0) {
         size_t length = stackData.ByteSizeLong();
-        stackData.SerializeToArray(buffer_.get(), length);
         if (length < bufferSize_) {
+            stackData.SerializeToArray(buffer_.get(), length);
             if (isHookStandaloneSerialize_) {
                 std::string str;
                 ForStandard::BatchNativeHookData StandardStackData;
@@ -1563,6 +1569,7 @@ void StackPreprocess::FlushData(BatchNativeHookData& stackData)
             }
         } else {
             PROFILER_LOG_ERROR(LOG_CORE, "the data is larger than MAX_BUFFER_SIZE, flush failed");
+            std::get<::BatchNativeHookData>(stackData_).clear_events();
         }
     }
 }
@@ -1670,6 +1677,7 @@ bool StackPreprocess::FlushRecordStatistics()
     std::visit([&](auto& stackData) {
         struct timespec ts;
         clock_gettime(hookDataClockId_, &ts);
+        uint32_t count = 0;
         for (auto [addr, statistics] : statisticsPeriodData_) {
             auto hookData = stackData.add_events();
             hookData->set_tv_sec(ts.tv_sec);
@@ -1685,6 +1693,10 @@ bool StackPreprocess::FlushRecordStatistics()
             recordEvent->set_tag_name(statistics->tagName);
             recordEvent->set_node_type(statistics->nodeType);
             recordEvent->set_node_id(statistics->nodeId);
+            if (++count % STATISTICS_PERIOD_DATA_FLUSH_BATCH == 0) {
+                FlushData(stackData);
+                count = 0;
+            }
         }
         FlushData(stackData);
         }, stackData_);
