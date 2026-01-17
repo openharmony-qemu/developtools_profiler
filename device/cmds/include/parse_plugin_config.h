@@ -21,6 +21,7 @@
 
 #include "google/protobuf/text_format.h"
 #include "profiler_service.grpc.pb.h"
+#include "native_hook_config_standard.pb.h"
 
 class ParsePluginConfig {
 public:
@@ -47,6 +48,7 @@ public:
     bool SetSerializeGpuConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeFfrtProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
     bool SetSerializeNetworkProfilerConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig);
+    bool CheckRestraceTag(std::unique_ptr<ForStandard::NativeHookConfig>& hookConfig);
     uint32_t GetHiperfPluginDuration();
     google::protobuf::TextFormat::Parser& GetParser()
     {

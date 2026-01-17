@@ -566,6 +566,9 @@ void TraceFileWriter::FinishReport(int32_t size)
     if (fileMapAddr_ == MAP_FAILED) {
         return;
     }
+    if (size <= 0) {
+        return;
+    }
     auto realSize = PIECE_HEAD_LEN + size;
     CHECK_TRUE(helper_.AddSegment(nullptr, realSize), NO_RETVAL, "AddSegment(%d) failed, error: %s",
         realSize, strerror(errno));
