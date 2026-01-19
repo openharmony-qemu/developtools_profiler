@@ -191,14 +191,16 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
             munmapRecord->rawStack_ = rawStack;
             return munmapRecord;
         }
-        case MEMORY_UNUSING_MSG:
+        case MEMORY_UNUSING_MSG: {
             auto memoryUnUsingMsgRecord = GetRecordFromCache(memoryUnUsingMsgRecordCache_, MEMORY_UNUSING_MSG);
             memoryUnUsingMsgRecord->rawStack_ = rawStack;
             return memoryUnUsingMsgRecord;
-        case MEMORY_USING_MSG:
+        }
+        case MEMORY_USING_MSG: {
             auto memoryUsingMsgRecord = GetRecordFromCache(memoryUsingMsgRecordCache_, MEMORY_USING_MSG);
             memoryUsingMsgRecord->rawStack_ = rawStack;
             return memoryUsingMsgRecord;
+        }
         case MMAP_FILE_TYPE:
             return std::make_shared<TagRecord>(rawStack);
         case MALLOC_MSG: {
