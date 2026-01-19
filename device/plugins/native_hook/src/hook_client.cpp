@@ -93,6 +93,7 @@ struct StackParam {
     uintptr_t stackPtr = 0;
     int stackSize = 0;
     int fpStackDepth = 0;
+    bool needJsStack = true;
 };
 
 using OHOS::Developtools::NativeDaemon::buildArchType;
@@ -456,7 +457,9 @@ static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
             if (param.fpStackDepth == 0) {
                 return false;
             }
-            rawdata.jsChainId = getJsChainId();
+            if (param.needJsStack) {
+                rawdata.jsChainId = getJsChainId();
+            }
         }
 #endif
     } else {
@@ -692,6 +695,7 @@ void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
     PERF_TRACK(OperatType::realloc);
 
     StackParam param;
+    param.needJsStack = false;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
     StackRawData freedata = {{{{0}}}};
