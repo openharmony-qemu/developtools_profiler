@@ -192,7 +192,7 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
             return munmapRecord;
         }
         case MEMORY_UNUSING_MSG:
-            auto memoryUnUsingMsgRecord = GetRecordFromCache(memoryUnUsingMsgRecordCache_, MEMORY_USING_MSG);
+            auto memoryUnUsingMsgRecord = GetRecordFromCache(memoryUnUsingMsgRecordCache_, MEMORY_UNUSING_MSG);
             memoryUnUsingMsgRecord->rawStack_ = rawStack;
             return memoryUnUsingMsgRecord;
         case MEMORY_USING_MSG:
