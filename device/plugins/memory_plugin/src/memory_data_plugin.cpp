@@ -619,11 +619,11 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     }
     buffer_.get()[bytesRead] = '\0';
     if (fclose(fp) < 0) {
- 	    PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
- 	    err_ = errno;
- 	    return RET_FAIL;
- 	}
- 	fp = nullptr;
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
+        err_ = errno;
+        return RET_FAIL;
+    }
+    fp = nullptr;
 
     return bytesRead;
 }
