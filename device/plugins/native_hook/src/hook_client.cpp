@@ -993,6 +993,11 @@ void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
     if (g_clientConfig.traceMask > 0) {
         return;
     }
+
+    if (!ohos_set_filter_size(size, nullptr)) {
+        return;
+    }
+
     HookClientHolder client(g_hookClient);
     if (!client.IsValid()) {
         return;
@@ -1086,6 +1091,11 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
+
+    if (!ohos_set_filter_size(size, nullptr)) {
+        return;
+    }
+
     HookClientHolder client(g_hookClient);
     if (!client.IsValid()) {
         return;
