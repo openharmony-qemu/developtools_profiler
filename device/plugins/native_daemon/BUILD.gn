@@ -154,6 +154,11 @@ ohos_executable("native_daemon") {
     defines += [ "HAVE_HILOG" ]
     external_deps += [ "hilog:libhilog" ]
   }
+  if (hiprofiler_feature_support_usr_symlink) {
+    symlink_target_name = [
+      "../usr/bin/native_daemon",
+    ]
+  }
   use_exceptions = true
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
