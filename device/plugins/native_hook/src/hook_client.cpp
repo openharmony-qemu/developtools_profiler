@@ -507,7 +507,7 @@ static void inline __attribute__((always_inline)) AddAllocAddr(void* pRet)
     }
 }
 
-void* hook_malloc(void* (*fn)(size_t), size_t size)
+void* __attribute__((noinline)) hook_malloc(void* (*fn)(size_t), size_t size)
 {
     void* ret = fn ? fn(size) : nullptr;
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
@@ -553,7 +553,7 @@ void* hook_malloc(void* (*fn)(size_t), size_t size)
     return ret;
 }
 
-void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
+void* __attribute__((noinline)) hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
 {
     void* ret = fn ? fn(align, len) : nullptr;
 
@@ -609,7 +609,7 @@ void* hook_valloc(void* (*fn)(size_t), size_t size)
     return pRet;
 }
 
-void* hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
+void* __attribute__((noinline)) hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 {
     void* pRet = fn ? fn(number, size) : nullptr;
 
@@ -666,7 +666,7 @@ void* hook_memalign(void* (*fn)(size_t, size_t), size_t align, size_t bytes)
     return pRet;
 }
 
-void* hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
+void* __attribute__((noinline)) hook_realloc(void* (*fn)(void*, size_t), void* ptr, size_t size)
 {
     void* pRet = fn ? fn(ptr, size) : nullptr;
 
@@ -774,7 +774,7 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
     return;
 }
 
-void hook_free(void (*free_func)(void*), void* p)
+void __attribute__((noinline)) hook_free(void (*free_func)(void*), void* p)
 {
     if (g_clientConfig.statisticsInterval > 0) {
         return HookFreeStatisticsInterval(free_func, p);
@@ -801,6 +801,7 @@ void hook_free(void (*free_func)(void*), void* p)
     StackParam param;
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
+    param.needCollect = g_clientConfig.freeStackData;
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return;
     }
@@ -859,7 +860,7 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
     return true;
 }
 
-void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
+void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     void* ret = fn ? fn(addr, length, prot, flags, fd, offset) :  nullptr;
@@ -905,7 +906,7 @@ void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
     return ret;
 }
 
-int hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
+int __attribute__((noinline)) hook_munmap(int(*fn)(void*, size_t), void* addr, size_t length)
 {
     struct timespec unmapTime = {};
     clock_gettime(g_clientConfig.clockId, &unmapTime);
@@ -985,7 +986,7 @@ int hook_prctl(int(*fn)(int, ...),
     return ret;
 }
 
-void hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
+void __attribute__((noinline)) hook_memtrace(void* addr, size_t size, const char* tag, bool isUsing)
 {
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace() || g_clientConfig.isSaMode) {
         return;
@@ -1086,7 +1087,8 @@ size_t GetDmaSize(void* addr, bool isUsing)
     return 0;
 }
 
-void hook_restrace(unsigned long long mask, void* addr, size_t size, const char* tag, bool isUsing)
+void __attribute__((noinline)) hook_restrace(unsigned long long mask,
+    void* addr, size_t size, const char* tag, bool isUsing)
 {
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
