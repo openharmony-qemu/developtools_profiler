@@ -51,6 +51,9 @@ constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
+#ifndef __aarch64__
+constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
+#endif
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
@@ -338,6 +341,12 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
+#ifndef __aarch64__
+    if (static_cast<int>(clientConfig.shareMemorySize) < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "GetClientConfig shareMemorySize is too large.");
+        clientConfig.shareMemorySize = MAX_MAP_BUFFER_SIZE / sharedMemCount / PAGE_BYTES * PAGE_BYTES;
+    }
+#endif
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -352,11 +361,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
     clientConfig.asyncFlag = asyncFlagMask_;
-    if (saMode_) {
-        clientConfig.traceMask = traceMask_;
-    } else {
-        clientConfig.traceMask = ConvertTagToMask();
-    }
+    clientConfig.traceMask = saMode_ ? traceMask_ : ConvertTagToMask();
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
@@ -389,7 +394,12 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
-
+#ifndef __aarch64__
+    if (static_cast<int>(bufferSize) < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "HandleHookContext bufferSize is too large.");
+        bufferSize = MAX_MAP_BUFFER_SIZE / sharedMemCount / PAGE_BYTES * PAGE_BYTES;
+    }
+#endif
     for (int i = 0; i < sharedMemCount; ++i) {
         std::string smbName = "";
         if (ctx->pid > 0) {
