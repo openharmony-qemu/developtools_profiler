@@ -45,7 +45,8 @@ PerformanceTracker::~PerformanceTracker()
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
 
-    uint64_t elapsed = (end.tv_sec - start_.tv_sec) * S_TO_NS + (end.tv_nsec - start_.tv_nsec);
+    uint64_t elapsed = static_cast<uint64_t>(end.tv_sec - start_.tv_sec) * S_TO_NS +
+        static_cast<uint64_t>(end.tv_nsec - start_.tv_nsec);
     timeCost_.fetch_add(elapsed);
     mallocTimes_++;
 }

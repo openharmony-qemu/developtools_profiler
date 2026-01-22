@@ -121,7 +121,7 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
         return;
     }
     curRawdata.name[len - 1] = '\0';
-    if (flags & MAP_FIXED) {
+    if (static_cast<uint32_t>(flags) & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
     holder_->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
