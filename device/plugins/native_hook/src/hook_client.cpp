@@ -1115,7 +1115,7 @@ void hook_restrace(unsigned long long mask, void* addr, size_t size, const char*
         }
     }
 
-    if (!ohos_set_filter_size(size, nullptr)) {
+    if (((mask & (RES_FD_MASK | RES_THREAD_MASK)) == 0) && !ohos_set_filter_size(size, nullptr)) {
         return;
     }
 
