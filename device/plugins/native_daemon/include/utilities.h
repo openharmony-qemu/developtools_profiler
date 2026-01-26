@@ -225,7 +225,6 @@ const char PATH_SEPARATOR = '\\';
 #else
 const char PATH_SEPARATOR = '/';
 #endif
-const std::string PATH_SEPARATOR_STR = std::string(1, PATH_SEPARATOR);
 
 std::string PlatformPathConvert(const std::string &path);
 
