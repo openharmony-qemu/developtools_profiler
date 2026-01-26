@@ -486,8 +486,8 @@ std::string MemoryDataPlugin::ReadFile(const std::string& path)
     char realPath[PATH_MAX] = {0};
     CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), "",
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
-    int fd = open(realPath, O_RDONLY);
-    if (fd == -1) {
+    FILE* fp = fopen(realPath, "r");
+    if (fp == nullptr) {
         const int maxSize = 256;
         char buf[maxSize] = { 0 };
         strerror_r(errno, buf, maxSize);
@@ -501,14 +501,14 @@ std::string MemoryDataPlugin::ReadFile(const std::string& path)
         if (content.size() - count < DEFAULT_READ_SIZE) {
             content.resize(content.size() + DEFAULT_READ_SIZE);
         }
-        ssize_t nBytes = read(fd, &content[count], content.size() - count);
+        ssize_t nBytes = fread(&content[count], 1, content.size() - count, fp);
         if (nBytes <= 0) {
             break;
         }
         count += static_cast<size_t>(nBytes);
     }
     content.resize(count);
-    CHECK_TRUE(close(fd) != -1, content, "close %s failed, %d", path.c_str(), errno);
+    CHECK_TRUE(fclose(fp) != -1, content, "close %s failed, %d", path.c_str(), errno);
     return content;
 }
 
@@ -581,7 +581,7 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
 {
     char fileName[PATH_MAX + 1] = {0};
     char realPath[PATH_MAX + 1] = {0};
-    int fd = -1;
+    FILE* fp = nullptr;
     ssize_t bytesRead = 0;
     CHECK_TRUE(snprintf_s(fileName, sizeof(fileName), sizeof(fileName) - 1, "%s/%d/%s", testpath_, pid, pFileName) >= 0,
                RET_FAIL, "%s:snprintf_s error", __func__);
@@ -592,8 +592,8 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         PROFILER_LOG_ERROR(LOG_CORE, "%s:realpath failed, errno(%d:%s)", __func__, errno, buf);
         return RET_FAIL;
     }
-    fd = open(realPath, O_RDONLY | O_CLOEXEC);
-    if (fd == -1) {
+    fp = fopen(realPath, "r");
+    if (fp == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
@@ -604,12 +604,12 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
     if (buffer_.get() == nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
-        close(fd);
+        fclose(fp);
         return RET_FAIL;
     }
-    bytesRead = read(fd, buffer_.get(), READ_BUFFER_SIZE - 1);
+    bytesRead = fread(buffer_.get(), 1, READ_BUFFER_SIZE - 1, fp);
     if (bytesRead < 0) {
-        close(fd);
+        fclose(fp);
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
@@ -618,7 +618,12 @@ int32_t MemoryDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         return RET_FAIL;
     }
     buffer_.get()[bytesRead] = '\0';
-    close(fd);
+    if (fclose(fp) < 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName, errno);
+        err_ = errno;
+        return RET_FAIL;
+    }
+    fp = nullptr;
 
     return bytesRead;
 }
