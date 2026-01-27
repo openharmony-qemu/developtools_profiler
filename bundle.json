@@ -14,7 +14,8 @@
     "subsystem": "developtools",
     "features": [
       "hiprofiler_SmartPerf",
-      "hiprofiler_sandbox_log_path_mapping"
+      "hiprofiler_sandbox_log_path_mapping",
+      "hiprofiler_feature_support_usr_symlink"
     ],
     "syscap": [
       "SystemCapability.HiviewDFX.HiProfiler.HiDebug"

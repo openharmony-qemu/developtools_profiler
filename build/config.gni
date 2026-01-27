@@ -30,6 +30,7 @@ if (getenv("BUILD_L2") == "true") {
 declare_args() {
   hiprofiler_SmartPerf = true
   hiprofiler_sandbox_log_path_mapping = false
+  hiprofiler_feature_support_usr_symlink = false
 }
 
 declare_args() {

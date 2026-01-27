@@ -72,6 +72,11 @@ ohos_executable("hiprofiler_cmd") {
       defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
     }
   }
+  if (hiprofiler_feature_support_usr_symlink) {
+    symlink_target_name = [
+      "../usr/bin/hiprofiler_cmd",
+    ]
+  }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
