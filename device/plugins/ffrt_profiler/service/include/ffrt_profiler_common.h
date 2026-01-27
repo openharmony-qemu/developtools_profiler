@@ -20,7 +20,7 @@
 #include <fstream>
 
 namespace OHOS::Developtools::Profiler {
-const std::string PARAM_KAY = "hiviewdfx.hiprofiler.ffrtprofiler.target";
+inline const std::string PARAM_KAY = "hiviewdfx.hiprofiler.ffrtprofiler.target";
 static constexpr uint8_t MAX_COMM_LEN = 16;
 static constexpr int32_t TRACE_DATA = -1;
 static constexpr int32_t ALIGNAS_NUM = 8;
