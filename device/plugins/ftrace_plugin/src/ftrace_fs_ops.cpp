@@ -303,9 +303,6 @@ static void AddPlatformEvents(std::set<std::pair<std::string, std::string>> &eve
 std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents()
 {
     std::set<std::pair<std::string, std::string>> eventSet;
-    if (IsHmKernel()) {
-        AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
-    }
     AddPlatformEvents(eventSet, ftraceRoot_ + "/events");
     PROFILER_LOG_INFO(LOG_CORE, "get platform event formats done, types: %zu!", eventSet.size());
     return {eventSet.begin(), eventSet.end()};
