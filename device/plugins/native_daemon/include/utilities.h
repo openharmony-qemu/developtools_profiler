@@ -89,7 +89,7 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 namespace {
-const std::string EMPTY_STRING = "";
+inline const std::string EMPTY_STRING = "";
 constexpr int32_t STRING_POOL_SIZE = 4000;
 }
 
