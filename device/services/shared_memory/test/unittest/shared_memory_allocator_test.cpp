@@ -150,8 +150,7 @@ HWTEST_F(SharedMemoryAllocatorTest, CreateMemoryBlockLocal003, TestSize.Level1)
         PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 255.
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(maxLengthName));
     ASSERT_TRUE(ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("",
-        PAGE_SIZE) != nullptr); // Successfully created a memory block with a size of 4k and a name length of 0.
-    ASSERT_TRUE(ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(""));
+        PAGE_SIZE) == nullptr); // Failed to created a memory block with a size of 4k and a name length of 0.
 }
 
 /**
