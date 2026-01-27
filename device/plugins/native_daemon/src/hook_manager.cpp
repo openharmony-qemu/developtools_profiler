@@ -164,6 +164,10 @@ void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
 
 bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 {
+    if (pluginPath.empty()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin Path is empty");
+        return false;
+    }
     RegisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_path(pluginPath);
@@ -191,6 +195,10 @@ bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 
 bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
 {
+    if (pluginPath.empty()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin Path is empty");
+        return false;
+    }
     UnregisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_plugin_id(agentIndex_);
