@@ -65,7 +65,7 @@ std::string GetProcessNameByPid(int32_t pid);
 bool StoiCheck(const std::string& str);
 std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr);
 bool CheckPopenParams(const std::vector<std::string>& command, const char* type);
-static const std::string STATE_VERSION = "1.0";
+inline static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
     RET_NO_PERMISSION,
     RET_NOT_SUPPORT,
