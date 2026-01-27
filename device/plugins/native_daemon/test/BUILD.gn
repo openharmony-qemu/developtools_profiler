@@ -21,6 +21,7 @@ sources_base = [
   "unittest/common/native/callstack_test.cpp",
   "unittest/common/native/debug_logger_test.cpp",
   "unittest/common/native/hashlist_test.cpp",
+  "unittest/common/native/hook_boundary_test.cpp",
   "unittest/common/native/hook_manager_test.cpp",
   "unittest/common/native/hook_manager_exception_test.cpp",
   "unittest/common/native/hook_record_factory_test.cpp",
