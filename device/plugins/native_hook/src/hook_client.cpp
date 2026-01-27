@@ -821,7 +821,7 @@ void __attribute__((noinline)) hook_free(void (*free_func)(void*), void* p)
     }
 }
 
-static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset)
+static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int fd, off_t offset, size_t length)
 {
     if (fd < 0) {
         return true;
@@ -834,28 +834,32 @@ static bool RefreshMmapRawData(StackRawData &rawdata, int prot, int flags, int f
         return false;
     }
     ssize_t len = readlink(path, fileName, sizeof(fileName) - 1);
-    if (len != -1) {
-        fileName[len] = '\0';
-        if (g_clientConfig.memtraceEnable) {
-            const bool isSoFile = strstr(fileName, ".so") != nullptr;
-            const bool isAshmem = strstr(fileName, "/dev/ashmem") != nullptr;
-            if ((isSoFile && (g_clientConfig.traceMask & RES_SO_MASK)) ||
-                (isAshmem && (g_clientConfig.traceMask & RES_ASHMEM_MASK))) {
-                rawdata.type = MEMORY_USING_MSG;
-                FillNodeInfo(rawdata);
+    if (len == -1) {
+        return true;
+    }
+    fileName[len] = '\0';
+    if (g_clientConfig.memtraceEnable) {
+        const bool isSoFile = strstr(fileName, ".so") != nullptr;
+        const bool isAshmem = strstr(fileName, "/dev/ashmem") != nullptr;
+        if ((isSoFile && (g_clientConfig.traceMask & RES_SO_MASK)) ||
+            (isAshmem && (g_clientConfig.traceMask & RES_ASHMEM_MASK))) {
+            if (!ohos_set_filter_size(length, nullptr)) {
+                return false;
             }
+            rawdata.type = MEMORY_USING_MSG;
+            FillNodeInfo(rawdata);
         }
-        HookClientHolder client(g_hookClient);
-        if (!client.IsValid()) {
-            return false;
-        }
-        client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
-        char* p = strrchr(fileName, '/');
-        if (p != nullptr) {
-            rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
-        } else {
-            rawdata.tagId = GetTagId(fileName);
-        }
+    }
+    HookClientHolder client(g_hookClient);
+    if (!client.IsValid()) {
+        return false;
+    }
+    client.SendMmapFileRawData(prot, flags, offset, fileName, rawdata);
+    char* p = strrchr(fileName, '/');
+    if (p != nullptr) {
+        rawdata.tagId = GetTagId(&fileName[p - fileName + 1]);
+    } else {
+        rawdata.tagId = GetTagId(fileName);
     }
     return true;
 }
@@ -889,7 +893,7 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
         return ret;
     }
     SetStackRawData(rawdata, MMAP_MSG, ret, length);
-    if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset)) {
+    if (!RefreshMmapRawData(rawdata, prot, flags, fd, offset, length)) {
         return ret;
     }
     if (!client.UpdateThreadName()) {
@@ -1094,10 +1098,6 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
         return;
     }
 
-    if (!ohos_set_filter_size(size, nullptr)) {
-        return;
-    }
-
     HookClientHolder client(g_hookClient);
     if (!client.IsValid()) {
         return;
@@ -1116,6 +1116,11 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
             return;
         }
     }
+
+    if (((mask & (RES_FD_MASK | RES_THREAD_MASK)) == 0) && !ohos_set_filter_size(size, nullptr)) {
+        return;
+    }
+
     PERF_TRACK(OperatType::restrace);
 
     StackParam param;
