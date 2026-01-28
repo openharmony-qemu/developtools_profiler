@@ -133,6 +133,10 @@ public:
     void GetSectionsPrint(int printCount, long long msStartTime, int numb, long long harTime) const;
     void GetFPS(std::vector<std::string>& v);
     void SetHapFlag();
+    void GetTouchEventNum();
+    void GetDistr();
+    void GetDistrTimes(std::string &line);
+    void SetWinId(std::string &winId);
 private:
     FPS() {};
     FPS(const FPS &);
@@ -151,6 +155,11 @@ private:
     long long curScanout = 0;
     long long lastScanout = 0;
     long long totalScanout = 0;
+    long long touchEvent = 0;
+    long long Distr = 0;
+    long long totalDistr = 0;
+    long long distrNum = 0;
+    long long avgDistr = 0;
     bool firstDrawFlag = true;
     int fpsNum = 0;
     FpsInfo GetSurfaceFrame(const std::string& name);
@@ -185,6 +194,9 @@ private:
     bool isUniRender = false;
     bool heelChiraityFlag = false;
     int fpsByRsSleepTime_ = 50;
+    std::string winId_ = "";
+    std::mutex touchEventLock_;
+    std::mutex distrLock_;
 };
 }
 }

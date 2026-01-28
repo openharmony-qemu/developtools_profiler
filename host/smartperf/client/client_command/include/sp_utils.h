@@ -175,6 +175,9 @@ std::string GetSurface();
 std::string GetProductName();
 std::string EscapeShellArgs(const std::string& args);
 bool IsInvalidPkgName(const std::string& pkgName);
+std::string GetWinId();
+void GetWinIdNum(std::string &hidumperStr);
+void EnDumpFun(const std::string &winId);
 };
 }
 }
