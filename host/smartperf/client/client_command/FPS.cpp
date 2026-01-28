@@ -125,7 +125,7 @@ void FPS::HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std:
             result["maxScanout"] = std::to_string(fpsInfoResult.maxScanout / million);
         }
         result["avgDistr"] = std::to_string(static_cast<double>(avgDistr) / million);
-        result["Distr"] = std::to_string(static_cast<double>(Distr) / million);
+        result["maxDistr"] = std::to_string(static_cast<double>(Distr) / million);
         result["touchEvent"] = std::to_string(touchEvent);
         touchEvent = 0;
         Distr = 0;
@@ -390,8 +390,8 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
 {
     if (!name.empty()) {
        // fps
-        std::thread([this] () { this->GetTouchEventNum(); }).detach();
-        std::thread([this] () { this->GetDistr(); }).detach();
+        std::thread([this]() { this->GetTouchEventNum(); }).detach();
+        std::thread([this]() { this->GetDistr(); }).detach();
         uint64_t nodeId;
         std::istringstream s(name);
         s >> nodeId;
@@ -942,7 +942,7 @@ void FPS::GetTouchEventNum()
     const std::string hidumperCmd = "hidumper -s WindowManagerService -a '-w " + winId_ + " -touchmonitor -c'";
     std::string cmdResult = "";
     SPUtils::LoadCmd(hidumperCmd, cmdResult);
-    size_t pos = cmdResult.find("UINoderCount:");
+    size_t pos = cmdResult.find("UINodeCount:");
     if (pos != std::string::npos) {
         std::string substring = cmdResult.substr(pos + 12);
         touchEvent = SPUtilesTye::StringToSometype<int>(substring)%oneHunder;
@@ -967,12 +967,13 @@ void FPS::GetDistr()
             std::string numberStr = line.substr(pos + 1);
             tamps = SPUtilesTye::StringToSometype<long long>(numberStr) / mod;
         }
-        GetDistrTimes(line);
+        GetDistrTimes(line, tamps);
     }
     avgDistr = totalDistr / distrNum;
+    pclose(fp);
 }
 
-void FPS::GetDistrTimes(std::string &line)
+void FPS::GetDistrTimes(std::string &line, long long &tamps)
 {
     if (line.find(" ns") != std::string::npos) {
         int inDex = 5;
@@ -987,11 +988,11 @@ void FPS::GetDistrTimes(std::string &line)
         if (SPUtilesTye::StringToSometype<long long>(tokensOne) / mod == tamps) {
             distrNum++;
             std::string tokensFive = tokens[inDex];
-            distr = SPUtilesTye::StringToSometype<long long>(tokensFive) -
+            diStr = SPUtilesTye::StringToSometype<long long>(tokensFive) -
                 SPUtilesTye::StringToSometype<long long>(tokensOne);
-            totalDistr += distr;
-            if (distr > Distr) {
-                Distr = distr;
+            totalDistr += diStr;
+            if (diStr > Distr) {
+                Distr = diStr;
             }
         }
     }

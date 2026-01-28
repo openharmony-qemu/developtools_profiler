@@ -135,7 +135,7 @@ public:
     void SetHapFlag();
     void GetTouchEventNum();
     void GetDistr();
-    void GetDistrTimes(std::string &line);
+    void GetDistrTimes(std::string &line, long long &tamps);
     void SetWinId(std::string &winId);
 private:
     FPS() {};
@@ -155,10 +155,10 @@ private:
     long long curScanout = 0;
     long long lastScanout = 0;
     long long totalScanout = 0;
-    long long touchEvent = 0;
+    int touchEvent = 0;
     long long Distr = 0;
     long long totalDistr = 0;
-    long long distrNum = 0;
+    int distrNum = 0;
     long long avgDistr = 0;
     bool firstDrawFlag = true;
     int fpsNum = 0;

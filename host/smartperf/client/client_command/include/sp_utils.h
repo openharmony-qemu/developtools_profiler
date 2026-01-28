@@ -176,8 +176,9 @@ std::string GetProductName();
 std::string EscapeShellArgs(const std::string& args);
 bool IsInvalidPkgName(const std::string& pkgName);
 std::string GetWinId();
-void GetWinIdNum(std::string &hidumperStr);
+void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);
+void OverDumpFun();
 };
 }
 }
