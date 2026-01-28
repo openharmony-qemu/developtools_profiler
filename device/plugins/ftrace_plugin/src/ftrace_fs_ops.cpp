@@ -89,15 +89,14 @@ int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& cont
     return (int)ret;
 }
 
-int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content, int flags)
+int FtraceFsOps::WriteTraceFile(const std::string& path, const std::string& content, const std::string mode)
 {
     bool ret = false;
     if (access((ftraceRoot_ + path).c_str(), W_OK) == 0) {
-        if (FileUtils::WriteFile(ftraceRoot_ + path, content, flags) > 0) {
+        if (FileUtils::WriteFile(ftraceRoot_ + path, content, mode) > 0) {
             ret = true;
         }
     }
-
     return (int)ret;
 }
 
@@ -232,14 +231,12 @@ std::string FtraceFsOps::GetEventDataFormat(const std::string& type, const std::
 bool FtraceFsOps::ClearTraceBuffer()
 {
     char realPath[PATH_MAX + 1] = {0};
-
     std::string path = ftraceRoot_ + "/trace";
-
     CHECK_TRUE((path.length() < PATH_MAX) && (realpath(path.c_str(), realPath) != nullptr), false,
                "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
-    int fd = open(realPath, O_TRUNC | O_RDWR);
-    CHECK_TRUE(fd >= 0, false, "open %s failed!", realPath);
-    return close(fd) == 0;
+    FILE *fp = fopen(realPath, "w+");
+    CHECK_TRUE(fp != nullptr, false, "open %s failed!", realPath);
+    return fclose(fp) == 0;
 }
 
 bool FtraceFsOps::SetRecordCmdOption(bool enable)
@@ -311,12 +308,12 @@ std::vector<std::pair<std::string, std::string>> FtraceFsOps::GetPlatformEvents(
 bool FtraceFsOps::AppendSetEvent(const std::string& type, const std::string& name)
 {
     std::string path = "/set_event";
-    return WriteTraceFile(path, type + ":" + name + "\n", O_WRONLY | O_APPEND) > 0;
+    return WriteTraceFile(path, type + ":" + name + "\n", "a") > 0;
 }
 
 bool FtraceFsOps::ClearSetEvent()
 {
-    return WriteTraceFile("/set_event", "\n", O_WRONLY | O_TRUNC) > 0;
+    return WriteTraceFile("/set_event", "\n", "w") > 0;
 }
 
 bool FtraceFsOps::EnableEvent(const std::string& type, const std::string& name)

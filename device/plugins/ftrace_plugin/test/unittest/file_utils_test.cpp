@@ -24,7 +24,6 @@
 using namespace testing::ext;
 
 namespace {
-constexpr int FILE_MODE = 0644;
 
 class FileUtilsTest : public ::testing::Test {
 protected:
@@ -105,7 +104,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithPath, TestSize.Level0)
     std::string path = "temp.txt";
 
     int nbytes = data_.size();
-    int retval = FileUtils::WriteFile(path, data_, O_CREAT | O_RDWR, FILE_MODE);
+    int retval = FileUtils::WriteFile(path, data_, "w+");
     EXPECT_EQ(retval, nbytes); // expect write success!
 
     std::string text = FileUtils::ReadFile(path);
@@ -137,7 +136,7 @@ HWTEST_F(FileUtilsTest, WriteFileWithPathOptions, TestSize.Level0)
     std::string path = "temp.txt";
 
     int nbytes = data_.size();
-    int retval = FileUtils::WriteFile(path, data_, O_CREAT | O_RDWR, FILE_MODE);
+    int retval = FileUtils::WriteFile(path, data_, "w+");
     EXPECT_EQ(retval, nbytes);
 
     std::string text = FileUtils::ReadFile(path);
