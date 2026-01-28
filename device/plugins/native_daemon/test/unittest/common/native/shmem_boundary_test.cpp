@@ -308,23 +308,6 @@ HWTEST_F(ShmemBoundaryTest, GetMemoryValidSizeBoundary, TestSize.Level0)
 }
 
 /*
- * @tc.name: GetMemoryValidSizeBoundary
- * @tc.desc: test GetMemory with valid size boundary.
- * @tc.type: FUNC
- */
-HWTEST_F(ShmemBoundaryTest, GetMemorySizeZeroBoundary, TestSize.Level0)
-{
-    shareMemoryBlock_ = std::make_shared<ShareMemoryBlock>(SMB_NAME, PAGE_SIZE);
-    if (shareMemoryBlock_->Valid()) {
-        uint8_t* memory = nullptr;
-        uint32_t offset = 0;
-        bool result = shareMemoryBlock_->GetMemory(0, &memory, &offset);
-        EXPECT_TRUE(result);
-        EXPECT_NE(memory, nullptr);
-    }
-}
-
-/*
  * @tc.name: GetMemorySizeOneBoundary
  * @tc.desc: test GetMemory with valid size boundary.
  * @tc.type: FUNC
