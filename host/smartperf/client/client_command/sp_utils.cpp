@@ -1073,7 +1073,7 @@ void SPUtils::GetWinIdNum(std::string &hidumperStr, std::string &winId)
 
 void SPUtils::EnDumpFun(const std::string &winId)
 {
-    const std::string dumpCmd = "hidumper is WindowManagerService -a '-w " + winId + " -touchmonitor -b'";
+    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -b'";
     std::string cmdResult = "";
     LoadCmd(dumpCmd, cmdResult);
 }
@@ -1082,7 +1082,7 @@ void SPUtils::OverDumpFun()
 {
     std::string winId = GetWinId();
     std::string cmdResult = "";
-    const std::string dumpCmd = "hidumper is WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
+    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
     LoadCmd(dumpCmd, cmdResult);
 }
 }
