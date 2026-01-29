@@ -46,6 +46,7 @@ using namespace std::chrono;
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+const std::string PATH_SEPARATOR_STR = std::string(1, PATH_SEPARATOR);
 bool SymbolsFile::onRecording_ = true;
 const std::string SymbolsFile::GetBuildId() const
 {

@@ -27,6 +27,10 @@ using namespace std::chrono;
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+const std::map<DebugLevel, const std::string> DebugLevelMap = {
+    {LEVEL_MUCH, "M"},    {LEVEL_VERBOSE, "V"}, {LEVEL_DEBUG, "D"}, {LEVEL_INFO, "I"},
+    {LEVEL_WARNING, "W"}, {LEVEL_ERROR, "E"},   {LEVEL_FATAL, "F"},
+};
 DebugLogger::DebugLogger() : timeStamp_(steady_clock::now()), logPath_(DEFAULT_LOG_PATH)
 {
     logFileBuffer_.resize(LOG_BUFFER_SIZE);
