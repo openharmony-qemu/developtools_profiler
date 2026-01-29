@@ -156,7 +156,7 @@ private:
     long long lastScanout = 0;
     long long totalScanout = 0;
     int touchEvent = 0;
-    long long Distr = 0;
+    long long diStr_ = 0;
     long long totalDistr = 0;
     int distrNum = 0;
     long long avgDistr = 0;

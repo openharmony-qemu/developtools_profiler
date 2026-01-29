@@ -125,10 +125,10 @@ void FPS::HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std:
             result["maxScanout"] = std::to_string(fpsInfoResult.maxScanout / million);
         }
         result["avgDistr"] = std::to_string(static_cast<double>(avgDistr) / million);
-        result["maxDistr"] = std::to_string(static_cast<double>(Distr) / million);
+        result["maxDistr"] = std::to_string(static_cast<double>(diStr_) / million);
         result["touchEvent"] = std::to_string(touchEvent);
         touchEvent = 0;
-        Distr = 0;
+        diStr_ = 0;
         totalDistr = 0;
         distrNum = 0;
         avgDistr = 0;
@@ -945,7 +945,7 @@ void FPS::GetTouchEventNum()
     size_t pos = cmdResult.find("UINodeCount:");
     if (pos != std::string::npos) {
         std::string substring = cmdResult.substr(pos + 12);
-        touchEvent = SPUtilesTye::StringToSometype<int>(substring)%oneHunder;
+        touchEvent = SPUtilesTye::StringToSometype<int>(substring) % oneHunder;
     }
 }
 
@@ -991,8 +991,8 @@ void FPS::GetDistrTimes(std::string &line, long long &tamps)
             diStr = SPUtilesTye::StringToSometype<long long>(tokensFive) -
                 SPUtilesTye::StringToSometype<long long>(tokensOne);
             totalDistr += diStr;
-            if (diStr > Distr) {
-                Distr = diStr;
+            if (diStr > diStr_) {
+                diStr_ = diStr;
             }
         }
     }
