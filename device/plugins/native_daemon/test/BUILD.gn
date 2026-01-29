@@ -34,6 +34,7 @@ sources_base = [
   "unittest/common/native/share_memory_exception_test.cpp",
   "unittest/common/native/shmem_boundary_test.cpp",
   "unittest/common/native/stack_data_repeater_test.cpp",
+  "unittest/common/native/stack_preprocess_exception_test.cpp",
   "unittest/common/native/stack_preprocess_test.cpp",
   "unittest/common/native/stack_builder_test.cpp",
   "unittest/common/native/stack_boundary_test.cpp",
