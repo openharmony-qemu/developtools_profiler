@@ -74,7 +74,8 @@ std::string FileUtils::ReadFile(const std::string& path)
         return "";
     }
     if (fclose(fp) != 0) {
-        return "";
+        PROFILER_LOG_ERROR(LOG_CORE, "fclose file error");
+        return content;
     }
     return content;
 }
