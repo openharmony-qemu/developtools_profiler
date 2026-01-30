@@ -56,13 +56,12 @@ thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
-    spinLock_.Lock();
     std::vector<uint64_t> addrs = {};
+    std::shared_lock<std::shared_mutex> lock(addrSetMtx_);
     auto it = addrSet_.lower_bound(addr);
     for (; it != addrSet_.end() && *it < addr + size; ++it) {
         addrs.push_back(*it);
     }
-    spinLock_.Unlock();
     return addrs;
 }
 
@@ -82,10 +81,11 @@ void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t siz
         auto& record = addrIter->second.second;
         record->applySize += (size - g_allocAddrMap[addr].first);
         g_allocAddrMap[newAddr] = std::pair(size, record);
-        addrSet_.insert(newAddr);
         g_allocAddrMap.erase(addr);
-        addrSet_.erase(addr);
         spinLock_.Unlock();
+        std::unique_lock<std::shared_mutex> lock(addrSetMtx_);
+        addrSet_.insert(newAddr);
+        addrSet_.erase(addr);
     }
 }
 
@@ -1202,11 +1202,12 @@ bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
         record->releaseSize += addrIter->second.first;
         statisticsPeriodData_[record->callstackId] = record;
         g_allocAddrMap.erase(addr);
+        spinLock_.Unlock();
+        std::unique_lock<std::shared_mutex> lock(addrSetMtx_);
         auto addrSetIter = addrSet_.find(addr);
         if (addrSetIter != addrSet_.end()) {
             addrSet_.erase(addrSetIter);
         }
-        spinLock_.Unlock();
         return true;
     }
     return false;
@@ -1223,9 +1224,8 @@ void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, siz
         g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
-            spinLock_.Lock();
+            std::unique_lock<std::shared_mutex> lock(addrSetMtx_);
             addrSet_.insert(hookRecord->GetAddr());
-            spinLock_.Unlock();
         }
         statisticsPeriodData_[stackId] = &recordIter->second;
     }
@@ -1317,9 +1317,8 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     g_allocAddrMap[hookRecord->GetAddr()] =
         std::pair(rawStack->stackContext->mallocSize, &recordIter->second);
     if (hookRecord->GetType() == MEMORY_USING_MSG) {
-        spinLock_.Lock();
+        std::unique_lock<std::shared_mutex> lock(addrSetMtx_);
         addrSet_.insert(hookRecord->GetAddr());
-        spinLock_.Unlock();
     }
     statisticsPeriodData_[stackId] = &recordIter->second;
 }
