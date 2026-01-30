@@ -150,8 +150,6 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
 
     if (fclose(fp) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName.c_str(), errno);
-        err_ = errno;
-        return RET_FAIL;
     }
     return bytesRead;
 }
