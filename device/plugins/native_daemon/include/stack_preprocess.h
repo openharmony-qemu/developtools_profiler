@@ -323,6 +323,7 @@ private:
     uint32_t dataFlushSize_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
     std::set<uint64_t> addrSet_;
+    std::shared_mutex addrSetMtx_;
 };
 }
 
