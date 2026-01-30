@@ -1076,6 +1076,12 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, T& stackData)
             case JS_STACK_MSG: {
                 break;
             }
+            case MALLOC_ARKTS: {
+                break;
+            }
+            case FREE_ARKTS: {
+                break;
+            }
             default: {
                 PROFILER_LOG_ERROR(LOG_CORE, "statistics event type: error");
                 break;
@@ -1151,6 +1157,12 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
                 break;
             }
             case PR_SET_VMA_MSG: {
+                break;
+            }
+            case MALLOC_ARKTS: {
+                break;
+            }
+            case FREE_ARKTS: {
                 break;
             }
             default: {
