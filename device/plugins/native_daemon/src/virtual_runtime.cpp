@@ -266,7 +266,6 @@ std::string VirtualRuntime::ResolveMergedSoIp(uint64_t ip, const std::string& fi
         return filePath;
     }
     std::shared_lock<std::shared_mutex> lk(g_smoMapsLock);
-    
     auto gIt = g_smoMaps.find(filePath);
     if (gIt == g_smoMaps.end()) {
         return filePath;
