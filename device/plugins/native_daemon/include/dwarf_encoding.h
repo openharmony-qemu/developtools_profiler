@@ -64,26 +64,6 @@ enum DW_EH_PE_A {
     DW_EH_PE_omit = 0xff,    // indicate that no value ispresent.
 };
 
-const std::map<dw_encode_t, size_t> DWFormatSizeMap = {
-#ifdef ARM
-    {DW_EH_PE_absptr, 4},
-#else
-    {DW_EH_PE_absptr, 8},
-#endif
-#ifdef NOT_USE
-    {DW_EH_PE_uleb128, sizeof(char) * 128},
-#endif
-    {DW_EH_PE_udata2, sizeof(char) * 2},
-    {DW_EH_PE_udata4, sizeof(char) * 4},
-    {DW_EH_PE_udata8, sizeof(char) * 8},
-#ifdef NOT_USE
-    {DW_EH_PE_sleb128, sizeof(char) * 128},
-#endif
-    {DW_EH_PE_sdata2, sizeof(char) * 2},
-    {DW_EH_PE_sdata4, sizeof(char) * 4},
-    {DW_EH_PE_sdata8, sizeof(char) * 8},
-};
-
 template<class T>
 uint64_t dwReadAnyTypeData(const unsigned char *&buffer, T)
 {

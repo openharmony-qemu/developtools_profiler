@@ -36,7 +36,7 @@ public:
     void SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath, const StackRawData& rawdata);
 
 private:
-    std::shared_ptr<HookSocketClient> holder_;
+    std::weak_ptr<HookSocketClient> holder_;
 };
 
 #endif  // HOOK_CLIENT_HOLDER_H

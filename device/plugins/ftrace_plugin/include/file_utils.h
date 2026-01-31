@@ -23,8 +23,7 @@ public:
     static std::string ReadFile(int fd);
     static std::string ReadFile(const std::string& path);
     static int WriteFile(const std::string& path, const std::string& content);
-    static int WriteFile(const std::string& path, const std::string& content, int flags);
-    static int WriteFile(const std::string& path, const std::string& content, int flags, int mode);
+    static int WriteFile(const std::string& path, const std::string& content, const std::string mode);
     static std::vector<std::string> ListDir(const std::string& dirPath);
 };
 

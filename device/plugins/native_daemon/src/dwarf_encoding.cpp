@@ -20,6 +20,26 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+const std::map<dw_encode_t, size_t> DWFormatSizeMap = {
+#ifdef ARM
+    {DW_EH_PE_absptr, 4},
+#else
+    {DW_EH_PE_absptr, 8},
+#endif
+#ifdef NOT_USE
+    {DW_EH_PE_uleb128, sizeof(char) * 128},
+#endif
+    {DW_EH_PE_udata2, sizeof(char) * 2},
+    {DW_EH_PE_udata4, sizeof(char) * 4},
+    {DW_EH_PE_udata8, sizeof(char) * 8},
+#ifdef NOT_USE
+    {DW_EH_PE_sleb128, sizeof(char) * 128},
+#endif
+    {DW_EH_PE_sdata2, sizeof(char) * 2},
+    {DW_EH_PE_sdata4, sizeof(char) * 4},
+    {DW_EH_PE_sdata8, sizeof(char) * 8},
+};
+
 DwarfEncoding::DwarfEncoding(dw_encode_t dw, const unsigned char *&data, uint64_t vaddrBase,
                              uint64_t vaddrPC, uint64_t vaddrText)
     : dw_(dw), data_(data), vaddrBase_(vaddrBase), vaddrPC_(vaddrPC), vaddrText_(vaddrText)

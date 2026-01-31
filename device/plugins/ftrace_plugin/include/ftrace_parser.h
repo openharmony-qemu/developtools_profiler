@@ -122,6 +122,7 @@ public:
     {
         return commDict_;
     }
+    void ParseTargetedSaveCmdline(const std::string& savedCmdlines, std::unordered_set<int>& targetPidVect);
 
 private:
     int GetHeaderPageCommitSize(void);
@@ -191,20 +192,8 @@ private:
             std::string comm;
             if (auto it = commDict_.find(pid); it != commDict_.end()) {
                 comm = it->second;
-            } else {
-                if (tgid != 0) {
-                    comm = FtraceFsOps::GetInstance().GetThreadComm(tgid, pid);
-                } else {
-                    comm = FtraceFsOps::GetInstance().GetProcessComm(pid);
-                }
-                if (comm.size() > 0) {
-                    comm.pop_back(); // /proc/xxx/comm end with `\n`
-                    commDict_.insert(std::pair<int32_t, std::string>(pid, comm));
-                }
             }
-            if (comm.size() > 0) {
-                ftraceEvent.set_comm(comm);
-            }
+            ftraceEvent.set_comm(comm);
             auto it = commDict_.find(tgid);
             if (it == commDict_.end()) {
                 std::string processComm = FtraceFsOps::GetInstance().GetProcessComm(tgid);

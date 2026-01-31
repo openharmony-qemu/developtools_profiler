@@ -186,7 +186,6 @@ int CpuDataPlugin::Stop()
 
 int32_t CpuDataPlugin::ReadFile(std::string& fileName)
 {
-    int fd = -1;
     ssize_t bytesRead = 0;
     char filePath[PATH_MAX + 1] = {0};
     char realPath[PATH_MAX + 1] = {0};
@@ -206,8 +205,8 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
         return RET_FAIL;
     }
 
-    fd = open(realPath, O_RDONLY | O_CLOEXEC);
-    if (fd == -1) {
+    FILE *fp = fopen(realPath, "rb");
+    if (fp == nullptr) {
         const int bufSize = 256;
         char buf[bufSize] = { 0 };
         strerror_r(errno, buf, bufSize);
@@ -218,21 +217,22 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
     if (buffer_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
-        close(fd);
+        fclose(fp);
         return RET_FAIL;
     }
     if (memset_s(buffer_, READ_BUFFER_SIZE, 0, READ_BUFFER_SIZE) != EOK) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:memset_s error!", __func__);
     }
-    bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
+    bytesRead = fread(buffer_, sizeof(char), READ_BUFFER_SIZE - 1, fp);
     if (bytesRead <= 0) {
-        close(fd);
+        fclose(fp);
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, realPath, errno);
         err_ = errno;
         return RET_FAIL;
     }
-    close(fd);
-
+    if (fclose(fp) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to close(%s)", __func__, realPath);
+    }
     return bytesRead;
 }
 

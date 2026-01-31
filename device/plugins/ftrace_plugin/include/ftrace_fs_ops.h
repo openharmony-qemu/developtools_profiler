@@ -33,7 +33,7 @@ public:
     static std::string GetFtraceRoot();
     bool IsHmKernel();
     int WriteTraceFile(const std::string& path, const std::string& content);
-    int WriteTraceFile(const std::string& path, const std::string& content, int flags);
+    int WriteTraceFile(const std::string& path, const std::string& content, const std::string mode);
     std::string ReadTraceFile(const std::string& path) const;
     std::string GetKernelVersion() const;
 

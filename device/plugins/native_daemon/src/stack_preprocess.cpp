@@ -1717,6 +1717,9 @@ bool StackPreprocess::GetMemTag(uint32_t tagId, std::string& tagName)
 
 void StackPreprocess::SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack)
 {
+    if (jsRawStack == nullptr) {
+        return;
+    }
     std::lock_guard<std::mutex> guard(jsMapMtx_);
     auto iterChainId = jsStackMap_.find(jsChainId);
     if (iterChainId == jsStackMap_.end()) {

@@ -33,26 +33,29 @@ HookClientHolder::HookClientHolder(std::shared_ptr<HookSocketClient>& sharedClie
 
 HookSocketClient* HookClientHolder::Get()
 {
-    return holder_.get();
+    std::shared_ptr<HookSocketClient> client = holder_.lock();
+    return client ? client.get() : nullptr;
 }
 
 bool HookClientHolder::IsValid() const
 {
-    return holder_ != nullptr;
+    return holder_.lock() != nullptr;
 }
 
 bool HookClientHolder::SendStackWithPayload(const void* data, size_t size, const void* payload,
     size_t payloadSize, int smbIndex)
 {
-    if (!holder_) {
+    std::shared_ptr<HookSocketClient> client = holder_.lock();
+    if (client == nullptr) {
         return false;
     }
-    return holder_->SendStackWithPayload(data, size, payload, payloadSize, smbIndex);
+    return client->SendStackWithPayload(data, size, payload, payloadSize, smbIndex);
 }
 
 bool HookClientHolder::UpdateThreadName()
 {
-    if (!holder_) {
+    std::shared_ptr<HookSocketClient> client = holder_.lock();
+    if (client == nullptr) {
         return false;
     }
 
@@ -67,9 +70,9 @@ bool HookClientHolder::UpdateThreadName()
             PROFILER_LOG_ERROR(LOG_CORE, "prctl tnameData.name error");
             return false;
         }
-        ret = holder_->SendStackWithPayload(&tnameData,
-                                            sizeof(BaseStackRawData) + strlen(tnameData.name) + 1,
-                                            nullptr, 0);
+        ret = client->SendStackWithPayload(&tnameData,
+                                           sizeof(BaseStackRawData) + strlen(tnameData.name) + 1,
+                                           nullptr, 0);
         if (!ret) {
             return ret;
         }
@@ -82,7 +85,8 @@ bool HookClientHolder::UpdateThreadName()
 void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, const char* filePath,
                                            const StackRawData& rawdata)
 {
-    if (!holder_) {
+    std::shared_ptr<HookSocketClient> client = holder_.lock();
+    if (client == nullptr) {
         return;
     }
     NameData curRawdata = {{{{0}}}};
@@ -121,8 +125,8 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
         return;
     }
     curRawdata.name[len - 1] = '\0';
-    if (flags & MAP_FIXED) {
+    if (static_cast<uint32_t>(flags) & MAP_FIXED) {
         curRawdata.mmapArgs.flags |= MAP_FIXED;
     }
-    holder_->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
+    client->SendStackWithPayload(&curRawdata, sizeof(BaseStackRawData) + len, nullptr, 0);
 }

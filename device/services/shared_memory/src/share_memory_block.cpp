@@ -98,6 +98,7 @@ bool ShareMemoryBlock::CreateBlockWithFd(std::string name, uint32_t size, int fd
 bool ShareMemoryBlock::CreateBlock(std::string name, uint32_t size)
 {
     PROFILER_LOG_INFO(LOG_CORE, "CreateBlock %s %d", name.c_str(), size);
+    CHECK_TRUE(name.size() > 0, false, "CreateBlock failed: name is empty!");
     CHECK_TRUE(size > sizeof(BlockHeader), false, "size %u too less!", size);
     CHECK_TRUE(size % PAGE_SIZE == 0, false, "size %u not times of %d!", size, PAGE_SIZE);
 
@@ -225,9 +226,12 @@ int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
 
 bool ShareMemoryBlock::UseFreeMemory(int8_t* pmem, uint32_t size)
 {
-    uint32_t wp = pmem - PIECE_HEAD_LEN - header_->data;
+    int wpIndex = pmem - PIECE_HEAD_LEN - header_->data;
+    if (wpIndex < 0 || wpIndex >= header_->info.memorySize_)  {
+        return false;
+    }
+    uint32_t wp = static_cast<uint32_t>(wpIndex);
     *((int*)(&header_->data[wp])) = size;
-
     header_->info.writeOffset_ = wp + PIECE_HEAD_LEN + size;
     return true;
 }
@@ -472,6 +476,7 @@ void ShareMemoryBlock::UseMemory(int32_t size)
 bool ShareMemoryBlock::GetMemory(uint32_t size, uint8_t** memory, uint32_t* offset)
 {
     CHECK_NOTNULL(header_, false, "header not ready!");
+    CHECK_TRUE(size > 0, false, "GetMemory failed: size equals 0");
 
     // The actual size is to store data with a size of offset and a size of data and a four byte tail tag.
     uint32_t realSize = messageWriteOffset_ + size + PIECE_HEAD_LEN;
@@ -549,6 +554,7 @@ bool ShareMemoryBlock::TakeDataOptimize(const DataHandler& func)
 
 bool ShareMemoryBlock::Seek(uint32_t pos)
 {
+    CHECK_TRUE(pos < memorySize_, false, "Seek failed: pos is out of range [0, %d]", memorySize_);
     messageWriteOffset_ = pos;
     return true;
 }
