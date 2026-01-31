@@ -1481,7 +1481,7 @@ void StackPreprocess::SetMapsInfo()
             filepathMap->set_pid(pid_);
             auto& runtime = runtime_instance;
             bool isAdlt = StartsWith(std::string(curMemMaps->name_), "/system/lib/libadlt") &&
-                    EndsWith(std::string(curMemMaps->name_), ".so");
+                EndsWith(std::string(curMemMaps->name_), ".so");
             if (isAdlt) {
                 uint64_t base = runtime->GetAdltBase(std::string(curMemMaps->name_));
                 filepathMap->set_adlt_base(base);

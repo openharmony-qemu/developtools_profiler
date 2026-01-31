@@ -262,21 +262,16 @@ std::string VirtualRuntime::ResolveMergedSoIp(uint64_t ip, const std::string& fi
         return filePath;
     }
     uint64_t base = it->second;
- 
     if (base == std::numeric_limits<uint64_t>::max()) {
         return filePath;
     }
- 
-    uint64_t relPc = ip - base;
- 
     std::shared_lock<std::shared_mutex> lk(g_smoMapsLock);
- 
     auto gIt = g_smoMaps.find(filePath);
     if (gIt == g_smoMaps.end()) {
         return filePath;
     }
     const auto& info = gIt->second.info;
- 
+    uint64_t relPc = ip - base;
     int foundSoIndex = -1;
     for (const auto& e : info.map_entries()) {
         if (relPc >= e.start_addr() && relPc < e.end_addr()) {
