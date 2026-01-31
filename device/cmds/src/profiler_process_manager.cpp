@@ -14,13 +14,9 @@
  */
 
 #include "profiler_process_manager.h"
-#include <chrono>
 #include <thread>
+#include <chrono>
 #include "parameters.h"
-
-namespace {
-constexpr int WAIT_PROC_MILLIS = 300;
-}
 
 ProfilerProcessManager& ProfilerProcessManager::GetInstance()
 {
@@ -30,31 +26,28 @@ ProfilerProcessManager& ProfilerProcessManager::GetInstance()
 
 bool ProfilerProcessManager::StartDependentProcess()
 {
+    constexpr int waitProcMills = 300;
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
-    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_PROC_MILLIS));
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
 
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
-    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_PROC_MILLIS));
-    
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "1");
-    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_PROC_MILLIS));
-    
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "1");
-    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_PROC_MILLIS));
-    
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     return true;
 }
 
 void ProfilerProcessManager::KillDependentProcess()
 {
+    constexpr int waitProcMills = 300;
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
-    std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_PROC_MILLIS));
-    
+    std::this_thread::sleep_for(std::chrono::milliseconds(waitProcMills));
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.plugins.start", "0");
     OHOS::system::SetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
 }
-

@@ -14,39 +14,60 @@
  */
 
 #include "profiler_command_parser.h"
-#include <cstdio>
-#include <cstring>
+#include "command_line.h"
 #include <getopt.h>
+#include <cstring>
 #include <iostream>
-#include <istream>
-#include <iterator>
-#include "parse_plugin_config.h"
+#include "logging.h"
+#include <unistd.h>  // for optind
+#include "profiler_config_manager.h"
 
+namespace {
+    constexpr int DOUBLE = 2;
+}
 ProfilerCommandParser& ProfilerCommandParser::GetInstance()
 {
     static ProfilerCommandParser instance;
     return instance;
 }
 
-bool ProfilerCommandParser::HandleSpecialArgument(char option, const char* optarg, ProfilerCommandArgs& args)
-{
-    if (option == 'c' && optarg != nullptr && strcmp(optarg, "-") == 0) {
-        std::string content;
-        std::istreambuf_iterator<char> begin(std::cin);
-        std::istreambuf_iterator<char> end = {};
-        content.assign(begin, end);
-        
-        args.stdinConfig = ParsePluginConfig::GetInstance().GetPluginsConfig(content);
-        if (args.stdinConfig.empty()) {
-            printf("Please check the configuration!\n");
-            return false;
-        }
-    }
-    return true;
-}
-
 bool ProfilerCommandParser::ParseArguments(int argc, char* argv[], ProfilerCommandArgs& args)
 {
+    // Check for subcommands (start/stop)
+    if (argc >= DOUBLE) {
+        std::string firstArg = argv[1];
+        if (firstArg == "start") {
+            args.commandType = CommandType::START;
+            // Parse remaining arguments as if they were normal command arguments
+            // Shift argv to skip "start"
+            int newArgc = argc - 1;
+            char** newArgv = new char*[newArgc + 1];
+            newArgv[0] = argv[0];  // program name
+            for (int i = 1; i < newArgc; i++) {
+                newArgv[i] = argv[i + 1];  // Skip "start"
+            }
+            newArgv[newArgc] = nullptr;
+            
+            bool result = ParseNormalArguments(newArgc, newArgv, args, true);
+            delete[] newArgv;
+            return result;
+        } else if (firstArg == "stop") {
+            args.commandType = CommandType::STOP;
+            return true;  // stop command doesn't need additional arguments
+        }
+    }
+    
+    // Normal command parsing
+    args.commandType = CommandType::NORMAL;
+    return ParseNormalArguments(argc, argv, args);
+}
+
+bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], ProfilerCommandArgs& args,
+                                                 bool isStart)
+{
+    // Handle stdin config case and nonblock flag
+    int optionIndex = 0;
+    optind = 1;  // Reset getopt
     while (true) {
         struct option long_options[] = {
             {"getport", no_argument, nullptr, 'q'},
@@ -54,73 +75,86 @@ bool ProfilerCommandParser::ParseArguments(int argc, char* argv[], ProfilerComma
             {"out", required_argument, nullptr, 'o'},
             {"help", no_argument, nullptr, 'h'},
             {"list", no_argument, nullptr, 'l'},
-            {"start", no_argument,  nullptr, 's'},
-            {"kill", no_argument,  nullptr, 'k'},
+            {"start", no_argument, nullptr, 's'},
+            {"kill", no_argument, nullptr, 'k'},
+            {"nonblock", no_argument, nullptr, 0},
             {"config", required_argument, nullptr, 'c'},
             {nullptr, 0, nullptr, 0}
         };
-        int option = getopt_long(argc, argv, "c:t:o:qhlsk", long_options, nullptr);
+        
+        int option = getopt_long(argc, argv, "c:t:o:qhlsk", long_options, &optionIndex);
         if (option == -1) {
             break;
         }
         
-        switch (option) {
-            case 'q':
-                args.isGetGrpcAddr = true;
-                break;
-            case 't':
-                args.traceKeepSecond = optarg ? optarg : "";
-                break;
-            case 'o':
-                args.outputFile = optarg ? optarg : "";
-                break;
-            case 'h':
-                args.isHelp = true;
-                break;
-            case 'l':
-                args.isShowPluginList = true;
-                break;
-            case 's':
-                args.isStartProcess = true;
-                break;
-            case 'k':
-                args.isKillProcess = true;
-                break;
-            case 'c':
-                if (optarg != nullptr) {
-                    if (strcmp(optarg, "-") == 0) {
-                        if (!HandleSpecialArgument(option, optarg, args)) {
-                            return false;
-                        }
-                    } else {
-                        args.configFile = optarg;
-                    }
-                }
-                break;
-            default:
-                printf("invalid param: %c\n", option);
-                return false;
+        if (option == 0) {
+            // Handle long option without short equivalent (nonblock)
+            if (long_options[optionIndex].name && strcmp(long_options[optionIndex].name, "nonblock") == 0) {
+                args.isNonBlock = true;
+            }
+            continue;
         }
+        
+        std::string optionStr("qtohlskc");
+        if (optionIndex == 0 && optionStr.find(option) == std::string::npos) {
+            printf("invalid param\n");
+            return false;
+        }
+        
+        if (option == 'c' && optarg && strcmp(optarg, "-") == 0) {
+            if (!HandleSpecialArgument(option, optarg, args)) {
+                return false;
+            }
+        }
+    }
+    
+    // Build argv vector excluding stdin config case
+    std::vector<std::string> argvVector;
+    bool startCommandExit = false;
+    for (int i = 0; i < argc; i++) {
+        if (isStart && ((strcmp(argv[i], "-t") == 0) || strcmp(argv[i], "--time") == 0)) {
+            printf("hiprofiler_cmd start command shouldn't use time parameter\n");
+            startCommandExit = true;
+        }
+        if (((i + 1) < argc) && (strcmp(argv[i], "-c") == 0 || strcmp(argv[i], "--config") == 0) &&
+            (strcmp(argv[i + 1], "-") == 0)) {
+            i++;
+        } else {
+            argvVector.push_back(argv[i]);
+        }
+    }
+
+    // Use CommandLine to parse arguments
+    CommandLine& cmdLine = CommandLine::GetInstance();
+    
+    // Register all parameters with CommandLine
+    cmdLine.AddParamSwitch("--getport", "-q", args.isGetGrpcAddr, "get grpc address");
+    cmdLine.AddParamText("--time", "-t", args.traceKeepSecond, "trace time");
+    cmdLine.AddParamText("--out", "-o", args.outputFile, "output file name");
+    cmdLine.AddParamSwitch("--help", "-h", args.isHelp, "make some help");
+    cmdLine.AddParamSwitch("--list", "-l", args.isShowPluginList, "plugin list");
+    cmdLine.AddParamSwitch("--start", "-s", args.isStartProcess, "start dependent process");
+    cmdLine.AddParamSwitch("--kill", "-k", args.isKillProcess, "kill dependent process");
+    cmdLine.AddParamText("--config", "-c", args.configFile, "start trace by config file");
+    cmdLine.AddParamSwitch("--nonblock", "", args.isNonBlock, "start capture without block");
+    
+    if (argc < 1 || cmdLine.AnalyzeParam(argvVector) < 0 || startCommandExit) {
+        return false;
     }
     
     return true;
 }
 
-void ProfilerCommandParser::RegisterAllArguments()
+bool ProfilerCommandParser::HandleSpecialArgument(char option, const char* optarg, ProfilerCommandArgs& args)
 {
+    if (option == 'c' && strcmp(optarg, "-") == 0) {
+        ProfilerConfigManager::GetInstance().ReadConfigFromStdin(args.stdinConfig);
+        return true;
+    }
+    return false;
 }
 
 void ProfilerCommandParser::PrintHelp() const
 {
-    printf("Usage: hiprofiler [OPTIONS]\n");
-    printf("\n");
-    printf("Options:\n");
-    printf("  --getport, -q      Get gRPC address and port\n");
-    printf("  --time, -t N       Trace time in seconds\n");
-    printf("  --out, -o FILE     Output file name\n");
-    printf("  --help, -h         Show this help message\n");
-    printf("  --list, -l         Show plugin list\n");
-    printf("  --start, -s        Start dependent processes\n");
-    printf("  --kill, -k         Kill dependent processes\n");
-    printf("  --config, -c FILE  Start trace by config file (use '-' for stdin)\n");
+    CommandLine::GetInstance().PrintHelp();
 }

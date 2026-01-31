@@ -18,7 +18,14 @@
 
 #include <string>
 
+enum class CommandType {
+    NORMAL,      // Normal command execution
+    START,       // hiprofiler_cmd start <params>
+    STOP         // hiprofiler_cmd stop
+};
+
 struct ProfilerCommandArgs {
+    CommandType commandType = CommandType::NORMAL;
     bool isGetGrpcAddr = false;
     std::string traceKeepSecond;
     std::string configFile;
@@ -27,16 +34,15 @@ struct ProfilerCommandArgs {
     bool isShowPluginList = false;
     bool isStartProcess = false;
     bool isKillProcess = false;
+    bool isNonBlock = false;
     std::string stdinConfig;
 };
 
 class ProfilerCommandParser {
 public:
     static ProfilerCommandParser& GetInstance();
-
     ProfilerCommandParser(const ProfilerCommandParser&) = delete;
     ProfilerCommandParser& operator=(const ProfilerCommandParser&) = delete;
-
     bool ParseArguments(int argc, char* argv[], ProfilerCommandArgs& args);
     void PrintHelp() const;
 
@@ -44,7 +50,7 @@ private:
     ProfilerCommandParser() = default;
     ~ProfilerCommandParser() = default;
 
-    void RegisterAllArguments();
+    bool ParseNormalArguments(int argc, char* argv[], ProfilerCommandArgs& args, bool isStart = false);
     bool HandleSpecialArgument(char option, const char* optarg, ProfilerCommandArgs& args);
 };
 

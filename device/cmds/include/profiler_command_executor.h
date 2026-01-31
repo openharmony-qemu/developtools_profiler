@@ -31,11 +31,13 @@ public:
 
 private:
     bool LoadConfigFromArgs(const ProfilerCommandArgs& args, std::string& config);
-    int HandleStartProcessCommand(const ProfilerCommandArgs& args);
-    int HandleGetGrpcAddrCommand(const ProfilerCommandArgs& args);
+    bool HandleStartProcessCommand(const ProfilerCommandArgs& args);
+    bool HandleGetGrpcAddrCommand(const ProfilerCommandArgs& args);
     int HandleShowPluginListCommand(const ProfilerCommandArgs& args);
     int HandleEmptyConfig(const ProfilerCommandArgs& args, const std::string& config);
     void ExecuteProfilerCapture(const ProfilerCommandArgs& args, const std::string& config);
+    int HandleStartCommand(const ProfilerCommandArgs& args, const std::string& config);
+    void HandleStopCommand();
 };
 
 #endif // PROFILER_COMMAND_EXECUTOR_H

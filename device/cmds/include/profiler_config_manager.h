@@ -21,7 +21,6 @@
 class ProfilerConfigManager {
 public:
     static ProfilerConfigManager& GetInstance();
-
     ProfilerConfigManager(const ProfilerConfigManager&) = delete;
     ProfilerConfigManager& operator=(const ProfilerConfigManager&) = delete;
     bool ParseConfig(const std::string& configFile, std::string& config);
