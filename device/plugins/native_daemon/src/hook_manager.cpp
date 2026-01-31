@@ -450,6 +450,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             return false;
         }
         auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        if (table == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext new UniqueStackTable failed.");
+            return false;
+        }
         // Use faultloggerd to record sync/async stack info.
         table->SwitchExternalBuffer(memoryBase, UNIQUE_STACK_TABLE_SIZE);
     }
