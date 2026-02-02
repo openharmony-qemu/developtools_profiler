@@ -25,7 +25,9 @@ enum AsyncFlagType {
     CUSTOMIZE = 5;
     ARKTS_WORKER = 6;
     ARKTS_TASKPOOL = 7;
-    ALL_ASYNC_TYPE = 8;
+    ARKWEB_ENGINE = 8;
+    JSVM_ASYNC = 9;
+    ALL_ASYNC_TYPE = 10;
 }
 
 
