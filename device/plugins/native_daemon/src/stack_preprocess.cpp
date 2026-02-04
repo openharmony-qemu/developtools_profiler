@@ -1093,7 +1093,7 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, T& stackData)
 
 void StackPreprocess::ReportOfflineSymbolizationData()
 {
-    if (hookConfig_.offline_symbolization() && flushBasicData_) {
+    if (hookConfig_.offline_symbolization() && (flushBasicData_ || hookConfig_.async_stack_enable())) {
         SetMapsInfo();
         flushBasicData_ = false;
     }

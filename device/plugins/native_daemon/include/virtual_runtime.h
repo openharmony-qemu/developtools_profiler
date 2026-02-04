@@ -109,7 +109,9 @@ public:
 
     void ClearOfflineMaps()
     {
-        offlineMapAddr_.clear();
+        if (offlineMapAddr_.size() != 0) {
+            offlineMapAddr_.clear();
+        }
     }
 
     std::map<uint64_t, std::shared_ptr<MemMaps>>& GetMapsCache()
