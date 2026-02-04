@@ -31,6 +31,7 @@
 #include "directory_ex.h"
 #include "file_ex.h"
 #include "parameters.h"
+#include "securec.h"
 #include "storage_acl.h"
 
 #include "hilog/log.h"
@@ -275,14 +276,18 @@ bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo)
     return true;
 }
 
-bool GetVssInfo(NativeMemInfo& nativeMemInfo) {
+bool GetVssInfo(NativeMemInfo& nativeMemInfo)
+{
     FILE* fp = fopen("/proc/self/statm", "r");
     if (!fp) {
         return false;
     }
 
     uint64_t pageCount = 0;
-    fscanf(fp, "%llu", &pageCount);
+    if (fscanf_s(fp, "%llu", &pageCount) != 1) {
+        fclose(fp);
+        return false;
+    }
     fclose(fp);
     long pageSize = sysconf(_SC_PAGESIZE);
     if (pageSize <= 0) {
@@ -294,7 +299,8 @@ bool GetVssInfo(NativeMemInfo& nativeMemInfo) {
     return true;
 }
 
-bool GetMemInfo(NativeMemInfo& nativeMemInfo) {
+bool GetMemInfo(NativeMemInfo& nativeMemInfo)
+{
     std::ifstream file("/proc/self/smaps_rollup");
     if (!file.is_open()) {
         return false;
