@@ -288,7 +288,7 @@ bool GetVssInfo(NativeMemInfo& nativeMemInfo)
         fclose(fp);
         return false;
     }
-    if (fclose(fp) !=0 ) {
+    if (fclose(fp) != 0) {
         return false;
     }
     long pageSize = sysconf(_SC_PAGESIZE);
