@@ -107,6 +107,7 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, co
         PROFILER_LOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
         return -1;
     }
+    realPath[PATH_MAX] = '\0';
     FILE* fp = fopen(realPath, mode.c_str());
     CHECK_TRUE(fp != nullptr, -1, "open %s failed, %d", path.c_str(), errno);
     size_t ret = fwrite(content.data(), sizeof(char), content.size(), fp);
