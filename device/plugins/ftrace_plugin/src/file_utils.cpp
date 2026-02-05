@@ -102,7 +102,12 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, co
         CHECK_TRUE(!std::regex_search(path, fileNameRegex), -1,
                    "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
     }
-    FILE* fp = fopen(path.c_str(), mode.c_str());
+    char realPath[PATH_MAX + 1] = {0};
+    if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
+        return -1;
+    }
+    FILE* fp = fopen(realPath, mode.c_str());
     CHECK_TRUE(fp != nullptr, -1, "open %s failed, %d", path.c_str(), errno);
     size_t ret = fwrite(content.data(), sizeof(char), content.size(), fp);
     if (ret != content.size()) {
