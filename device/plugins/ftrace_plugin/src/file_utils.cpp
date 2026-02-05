@@ -104,7 +104,8 @@ int FileUtils::WriteFile(const std::string& path, const std::string& content, co
     }
     char realPath[PATH_MAX + 1] = {0};
     if ((path.length() >= PATH_MAX) || (realpath(path.c_str(), realPath) == nullptr)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%s: realpath failed, path is invalid: %s, errno=%d", __func__, path.c_str(), errno);
+        PROFILER_LOG_ERROR(LOG_CORE, "%s: realpath failed, path is invalid: %s, errno=%d",
+        __func__, path.c_str(), errno);
         return -1;
     }
     realPath[PATH_MAX] = '\0';
