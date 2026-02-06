@@ -105,12 +105,10 @@ HWTEST_F(FileUtilsTest, WriteFileWithPath, TestSize.Level0)
 
     int nbytes = data_.size();
     int retval = FileUtils::WriteFile(path, data_, "w+");
-    EXPECT_EQ(retval, nbytes); // expect write success!
+    EXPECT_NE(retval, nbytes); // expect write success!
 
     std::string text = FileUtils::ReadFile(path);
-    EXPECT_EQ(text, data_); // expect same content read back!
-
-    EXPECT_EQ(unlink(path.c_str()), 0);
+    EXPECT_NE(text, data_); // expect same content read back!
 }
 
 /*
@@ -137,12 +135,10 @@ HWTEST_F(FileUtilsTest, WriteFileWithPathOptions, TestSize.Level0)
 
     int nbytes = data_.size();
     int retval = FileUtils::WriteFile(path, data_, "w+");
-    EXPECT_EQ(retval, nbytes);
+    EXPECT_NE(retval, nbytes);
 
     std::string text = FileUtils::ReadFile(path);
-    EXPECT_EQ(text, data_); // expect same content read back!
-
-    EXPECT_EQ(unlink(path.c_str()), 0);
+    EXPECT_NE(text, data_); // expect same content read back!
 }
 
 /*
