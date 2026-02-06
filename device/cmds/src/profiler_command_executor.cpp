@@ -162,7 +162,7 @@ void ProfilerCommandExecutor::ChildProcessCapture(const ProfilerCommandArgs& arg
     if (ProfilerSessionManager::GetInstance().Capture(config, args.traceKeepSecond, args.outputFile)) {
         printf("DONE\n");
     }
-    if (args.isKillProcess && (!args.isNonBlock)) {
+    if (args.isKillProcess) {
         ProfilerProcessManager::GetInstance().KillDependentProcess();
     }
 }
