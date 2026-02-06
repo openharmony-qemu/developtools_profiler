@@ -861,6 +861,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     }
     stackmap->set_pid(pid_);
     auto rawData = hookRecord->GetRawStack();
+    CHECK_NOTNULL(rawData, 0, "StackPreprocess rawData is nullptr");
     std::string tagName;
     GetMemTag(rawData->stackContext->tagId, tagName);
     NewCallStack newCallStack = {g_callStack, rawData->stackContext->nodeType, rawData->stackContext->nodeId, tagName};
