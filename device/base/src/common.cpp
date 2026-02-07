@@ -369,6 +369,23 @@ bool CheckPopenParams(const std::vector<std::string>& command, const char* type)
     return true;
 }
 
+bool IsProcessExistByPid(int& pidval)
+{
+    char filePath[FILE_PATH_SIZE] = {0};
+    int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%d/cmdline", pidval);
+    if (len < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+        return false;
+    }
+    FILE* fp = fopen(filePath, "r");
+    if (fp == nullptr) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
+        return false;
+    }
+    fclose(fp);
+    return true;
+}
+
 FILE* CustomPopen(const std::vector<std::string>& command, const char* type, int fds[],
                   volatile pid_t& childPid, bool needUnblock)
 {
