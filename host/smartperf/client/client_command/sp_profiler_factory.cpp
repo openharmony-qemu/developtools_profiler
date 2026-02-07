@@ -197,7 +197,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             profiler = &Jitters::GetInstance();
             break;
         case CommandType::CT_SH:
-            profiler = &shader::GetInstance();
+            profiler = &Shader::GetInstance();
             break;
         default:
             break;
