@@ -133,6 +133,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
+    std::string winId = "";
     switch (commandType) {
         case CommandType::CT_C:
             if (cmdFlag) {
@@ -143,6 +144,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &GPU::GetInstance();
             break;
         case CommandType::CT_F:
+            winId = SPUtils::GetWinId();
+            SPUtils::EnDumpFun(winId);
+            FPS::GetInstance().SetWinId(winId);
             if (cmdFlag) {
                 profiler = &FPS::GetInstance();
             }

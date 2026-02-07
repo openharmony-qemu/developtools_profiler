@@ -764,6 +764,7 @@ void SpThreadSocket::HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *prof
             GpuCounter::GetInstance().SetSavePathDirectory(gpuCounterfilePath);
             taskMgr_->SetHapFlag(false);
             taskMgr_->Stop();
+            SPUtils::OverDumpFun();
             retCode = Hiperf::GetInstance().ReturnHiperfData();
             spSocket.Sendto(retCode);
             taskMgr_->WriteToCSV();

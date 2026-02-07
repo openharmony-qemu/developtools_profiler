@@ -98,7 +98,6 @@ private:
     bool ipcDataRecv_ {false};
     std::vector<ThreadLocal*> threadLocals_ {4};
     std::ofstream dataFile_;
-    std::chrono::steady_clock::time_point currentTimePoint_;
     std::set<std::string> titles_;
 
     std::thread scheduleSaveDataTh_;
