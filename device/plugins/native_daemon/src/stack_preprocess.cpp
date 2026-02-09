@@ -490,7 +490,6 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
     }
     CHECK_NOTNULL(rawData, false, "rawData is null");
     auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
-    
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
 
     std::vector<uintptr_t> syncStackPcs;
