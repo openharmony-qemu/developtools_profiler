@@ -44,7 +44,10 @@ public:
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
         // 清理测试生成的文件
-        remove(TEST_NMD_FILE_PATH.c_str());
+        int result = remove(TEST_NMD_FILE_PATH.c_str());
+        if (result != 0) {
+            std::cerr "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
+        }
     }
     
     void SetUp() override
