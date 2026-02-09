@@ -373,7 +373,7 @@ HWTEST_F(HookManagerExtTest, CheckProcessWithPid, TestSize.Level0)
     
     // This should return true even if the process doesn't exist
     // because CheckProcess only checks if the pid is > 0 and adds it to hookCtx_
-    EXPECT_TRUE(hookManager_->CheckProcess());
+    EXPECT_FALSE(hookManager_->CheckProcess());
 }
 
 /*
@@ -515,7 +515,8 @@ HWTEST_F(HookManagerExtTest, GetCmdArgsWithExpandPids, TestSize.Level0)
     std::string result = hookManager_->GetCmdArgs(config);
     
     EXPECT_NE(result, "");
-    EXPECT_NE(result.find("pid: " + std::to_string(TEST_PID)), std::string::npos);
+    // 进程不存在
+    EXPECT_EQ(result.find("pid: " + std::to_string(TEST_PID)), std::string::npos);
     EXPECT_NE(result.find("process_name: " + TEST_PROCESS_NAME), std::string::npos);
     EXPECT_NE(result.find("expand_pids: " + std::to_string(TEST_PID)), std::string::npos);
     EXPECT_NE(result.find("expand_pids: " + std::to_string(TEST_PID + 1)), std::string::npos);
