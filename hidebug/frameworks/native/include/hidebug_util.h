@@ -116,6 +116,10 @@ bool CreateResourceLimitDir();
 bool IsHm();
 
 bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo);
+
+bool GetVssInfo(NativeMemInfo& nativeMemInfo);
+
+bool GetMemInfo(NativeMemInfo& nativeMemInfo);
 }
 }
 #endif // HIDEBUG_UTIL_H_
