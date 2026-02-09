@@ -37,13 +37,12 @@ public:
     static void SetUpTestCase()
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
-        sleep(1); // 睡眠1s确保hiprofilerd进程启动
+        sleep(1); 
     }
     
     static void TearDownTestCase()
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
-        // 清理测试生成的文件
         int result = remove(TEST_NMD_FILE_PATH.c_str());
         if (result != 0) {
             std::cerr "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
@@ -515,7 +514,7 @@ HWTEST_F(HookManagerExtTest, GetCmdArgsWithExpandPids, TestSize.Level0)
     std::string result = hookManager_->GetCmdArgs(config);
     
     EXPECT_NE(result, "");
-    // 进程不存在
+    // process does not exist.
     EXPECT_EQ(result.find("pid: " + std::to_string(TEST_PID)), std::string::npos);
     EXPECT_NE(result.find("process_name: " + TEST_PROCESS_NAME), std::string::npos);
     EXPECT_NE(result.find("expand_pids: " + std::to_string(TEST_PID)), std::string::npos);
