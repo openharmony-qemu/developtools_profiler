@@ -619,7 +619,6 @@ void TaskManager::SetRecordState(bool record)
 {
     if (record) {
         LOGD("Start saving data regularly");
-        currentTimePoint_ = std::chrono::steady_clock::now();
         recordData_ = true;
         StartSaveFileThread();
     } else {
