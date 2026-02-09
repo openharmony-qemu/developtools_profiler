@@ -19,8 +19,6 @@
 #include <sys/time.h>
 #include <cstdint>
 #include <atomic>
-#include <mutex>
-#include <map>
 
 enum class OperatType : uint8_t {
     malloc = 0,
@@ -58,7 +56,6 @@ private:
     static std::atomic<uint64_t> timeCost_;
     static std::atomic<uint64_t> dataCounts_;
     static std::atomic<uint64_t> mallocSize_;
-    static std::map<OperatType, uint64_t> mallocCountMap_;
 };
 
 #define PERF_TRACK(type) PerformanceTracker __perf_tracker__(type)
