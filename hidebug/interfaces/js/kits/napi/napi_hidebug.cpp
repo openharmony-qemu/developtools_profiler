@@ -1029,53 +1029,9 @@ napi_value SetJsRawHeapTrimLevel(napi_env env, napi_callback_info info)
     }
 
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    if (engine != nullptr) {
+    if (engine) {
         engine->SetRawHeapTrimLevel(level);
         HILOG_DEBUG(LOG_CORE, "SetRawHeapTrimLevel to level: %{public}d success", level);
-    }
-    return CreateUndefined(env);
-}
-
-static std::string GetProcDumpInSharedOOMParam(napi_env env, napi_callback_info info, bool &enable)
-{
-    size_t argc = ENABLE_ARGS_ONE_PARAMS;
-    napi_value argv = nullptr;
-    napi_get_cb_info(env, info, &argc, &argv, nullptr, nullptr);
-    std::string paramErrorMessage;
-    if (argc != ENABLE_ARGS_ONE_PARAMS) {
-        paramErrorMessage = "Param type error, wrong num of parammeters.";
-        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
-        return paramErrorMessage;
-    }
-    if (!MatchValueType(env, argv, napi_boolean)) {
-        paramErrorMessage = "Param type error, invalid boolean.";
-        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
-        return paramErrorMessage;
-    }
-    if (napi_get_value_bool(env, argv, &enable) != napi_ok) {
-        paramErrorMessage = "Param value error.";
-        HILOG_ERROR(LOG_CORE, "%{public}s", paramErrorMessage.c_str());
-        return paramErrorMessage;
-    }
-    return paramErrorMessage;
-}
-
-napi_value SetProcDumpInSharedOOM(napi_env env, napi_callback_info info)
-{
-    ApiInvokeRecorder apiInvokeRecorder("SetProcDumpInSharedOOM");
-    bool enable = false;
-    std::string paramErrorMessage = GetProcDumpInSharedOOMParam(env, info, enable);
-    if (!paramErrorMessage.empty()) {
-        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(),
-            paramErrorMessage.c_str());
-        return CreateUndefined(env);
-    }
-
-    NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    if (engine != nullptr) {
-        engine->SetProcDumpInSharedOOM(enable);
-        HILOG_DEBUG(LOG_CORE, "SetProcDumpInSharedOOM to enable: %{public}d success", enable);
     }
     return CreateUndefined(env);
 }
@@ -1123,7 +1079,6 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("disableGwpAsanGrayscale", DisableGwpAsanGrayscale),
         DECLARE_NAPI_FUNCTION("getGwpAsanGrayscaleState", GetGwpAsanGrayscaleState),
         DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
-        DECLARE_NAPI_FUNCTION("setProcDumpInSharedOOM", SetProcDumpInSharedOOM),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
