@@ -20,7 +20,6 @@
 #include <log_base.h>
 
 #include "hook_record_factory.h"
-#include "hook_record_factory.h"
 #include "utilities.h"
 #include "hook_record.h"
 #include "hook_common.h"
