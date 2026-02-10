@@ -100,8 +100,8 @@ ShaderMetrics Shader::ParseShaderMetrics(const std::string& content) const
         LOGE("not find Separator");
         return metrics;
     }
-    std::string CompileNum = content.substr(posCompileNum, comPos - posCompileNum);
-    metrics.compileNum = SPUtilesTye::StringToSometype<int>(CompileNum);
+    std::string compileNum = content.substr(posCompileNum, comPos - posCompileNum);
+    metrics.compileNum = SPUtilesTye::StringToSometype<int>(compileNum);
 
     size_t posCompileDuration = content.find(keyCompileDuration, comPos);
     if (posCompileDuration == std::string::npos) {
@@ -111,8 +111,8 @@ ShaderMetrics Shader::ParseShaderMetrics(const std::string& content) const
 
     posCompileDuration += keyCompileDuration.length();
     size_t endPos = content.length();
-    std::string CompileDuration = content.substr(posCompileDuration, endPos - posCompileDuration);
-    metrics.compileDuration = SPUtilesTye::StringToSometype<int>(CompileDuration);
+    std::string compileDuration = content.substr(posCompileDuration, endPos - posCompileDuration);
+    metrics.compileDuration = SPUtilesTye::StringToSometype<int>(compileDuration);
     return metrics;
 }
 

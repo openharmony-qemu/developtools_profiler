@@ -35,10 +35,9 @@ public:
     void SetPkgName(const std::string& pkgName);
 
 private:
-    Shader() = default;
-    ~Shader() = default;
-    Shader(const Shader&) = delete;
-    Shader& operator=(const Shader&) = delete;
+    Shader() {};
+    Shader(const Shader &) = delete;
+    Shader &operator=(const Shader &) = delete;
 
     // Helper functions following Method Decomposition Rule
     std::string GetShaderReportPath() const;
