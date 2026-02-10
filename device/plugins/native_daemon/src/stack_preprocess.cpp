@@ -476,6 +476,7 @@ bool StackPreprocess::ProcessEndMsg()
     if (endMsgCount_ == sharedMemCount) {
         PROFILER_LOG_INFO(LOG_CORE, "Received all END_MSG, stopping data collection");
         isStopTakeData_ = true;
+        return false;
     }
     return true;
 }
@@ -662,7 +663,7 @@ bool StackPreprocess::ProcessSingleRecord(HookRecordPtr& hookRecord)
     SetIsStartTakeData(true);
     if (type == NMD_MSG || type == END_MSG) {
         if (type == END_MSG) {
-            isStopTakeData_ = true;
+            return ProcessEndMsg();
         }
         return false;
     }
