@@ -62,7 +62,7 @@ std::string Shader::ReadFileContent(const std::string& path) const
     }
     std::string shaderFile = path + "/shader_report_info.txt";
     if (!SPUtils::FileAccess(shaderFile)) {
-        std::string shaderFileCmd = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + shaderFile;
+        std::string shaderFileCmd = "touch " + shaderFile;
         if (!SPUtils::LoadCmd(shaderFileCmd, cmdResult)) {
             LOGE("%s not be created!", shaderFile.c_str());
             return "";

@@ -688,4 +688,11 @@ void TaskManager::SetFileTitleFlag()
 {
     firstSetTitle_ = true;
 }
+
+void TaskManager::ClearShaderFile()
+{
+    const std::string cmdRmShaderFile = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + "/data/local/tmp/" + processName_;
+    std::string cmdResult = "";
+    SPUtils::LoadCmd(cmdRmShaderFile, cmdResult);
+}
 }
