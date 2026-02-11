@@ -504,7 +504,7 @@ HWTEST_F(StackPreprocessTest, FlushDataNormalProtoTest, TestSize.Level0)
     preprocess.isHookStandaloneSerialize_ = true;
 
     BatchNativeHookData testData;
-    NativeHookData* event = testData.add_events();
+    NativeHookData *event = testData.add_events();
     event->set_tv_sec(1234567890);
     event->set_tv_nsec(987654321);
 
@@ -517,8 +517,8 @@ HWTEST_F(StackPreprocessTest, FlushDataNormalProtoTest, TestSize.Level0)
     std::string fileContent = buffer.str();
 
     ForStandard::BatchNativeHookData parseData;
-    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent,
-        &parseData)) << "Failed to parse protobuf text format from file";
+    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent, &parseData))
+        << "Failed to parse protobuf text format from file";
     ASSERT_EQ(parseData.events_size(), 1);
     EXPECT_TRUE(parseData.events(0).tv_sec() == 1234567890);
     EXPECT_TRUE(parseData.events(0).tv_nsec() == 987654321);
@@ -558,18 +558,18 @@ HWTEST_F(StackPreprocessTest, FlushDataAbnormalProtoTest, TestSize.Level0)
     std::string fileContent = buffer.str();
 
     ForStandard::BatchNativeHookData parseData;
-    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent,
-        &parseData)) << "Failed to parse protobuf text format from file";
+    ASSERT_TRUE(google::protobuf::TextFormat::ParseFromString(fileContent, &parseData))
+        << "Failed to parse protobuf text format from file";
 
     ASSERT_EQ(parseData.events_size(), 2);
 
-    const auto& firstEvent = parseData.events(0);
+    const auto &firstEvent = parseData.events(0);
     EXPECT_EQ(firstEvent.alloc_event().pid(), -1);
     EXPECT_EQ(firstEvent.alloc_event().addr(), 0);
     EXPECT_EQ(firstEvent.alloc_event().frame_info_size(), 0);
     EXPECT_EQ(firstEvent.tv_nsec(), 18446744073709551615ULL);
 
-    const auto& secondEvent = parseData.events(1);
+    const auto &secondEvent = parseData.events(1);
     EXPECT_EQ(secondEvent.trace_alloc_event().trace_type(), MAX_ENUM);
     EXPECT_EQ(secondEvent.trace_alloc_event().tag_name(), "");
     EXPECT_EQ(secondEvent.trace_alloc_event().size(), 0);

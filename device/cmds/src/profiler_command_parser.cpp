@@ -19,7 +19,7 @@
 #include <cstring>
 #include <iostream>
 #include "logging.h"
-#include <unistd.h>  // for optind
+#include <unistd.h>
 #include "profiler_config_manager.h"
 
 namespace {
@@ -38,16 +38,13 @@ bool ProfilerCommandParser::ParseArguments(int argc, char* argv[], ProfilerComma
         std::string firstArg = argv[1];
         if (firstArg == "start") {
             args.commandType = CommandType::START;
-            // Parse remaining arguments as if they were normal command arguments
-            // Shift argv to skip "start"
             int newArgc = argc - 1;
             char** newArgv = new char*[newArgc + 1];
-            newArgv[0] = argv[0];  // program name
+            newArgv[0] = argv[0];
             for (int i = 1; i < newArgc; i++) {
                 newArgv[i] = argv[i + 1];  // Skip "start"
             }
             newArgv[newArgc] = nullptr;
-            
             bool result = ParseNormalArguments(newArgc, newArgv, args, true);
             delete[] newArgv;
             return result;
@@ -56,8 +53,6 @@ bool ProfilerCommandParser::ParseArguments(int argc, char* argv[], ProfilerComma
             return true;  // stop command doesn't need additional arguments
         }
     }
-    
-    // Normal command parsing
     args.commandType = CommandType::NORMAL;
     return ParseNormalArguments(argc, argv, args);
 }
@@ -65,7 +60,6 @@ bool ProfilerCommandParser::ParseArguments(int argc, char* argv[], ProfilerComma
 bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], ProfilerCommandArgs& args,
                                                  bool isStart)
 {
-    // Handle stdin config case and nonblock flag
     int optionIndex = 0;
     optind = 1;  // Reset getopt
     while (true) {
@@ -81,12 +75,10 @@ bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], Profile
             {"config", required_argument, nullptr, 'c'},
             {nullptr, 0, nullptr, 0}
         };
-        
         int option = getopt_long(argc, argv, "c:t:o:qhlsk", long_options, &optionIndex);
         if (option == -1) {
             break;
         }
-        
         if (option == 0) {
             // Handle long option without short equivalent (nonblock)
             if (long_options[optionIndex].name && strcmp(long_options[optionIndex].name, "nonblock") == 0) {
@@ -107,8 +99,6 @@ bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], Profile
             }
         }
     }
-    
-    // Build argv vector excluding stdin config case
     std::vector<std::string> argvVector;
     bool startCommandExit = false;
     for (int i = 0; i < argc; i++) {
@@ -123,10 +113,7 @@ bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], Profile
             argvVector.push_back(argv[i]);
         }
     }
-
-    // Use CommandLine to parse arguments
     CommandLine& cmdLine = CommandLine::GetInstance();
-    
     // Register all parameters with CommandLine
     cmdLine.AddParamSwitch("--getport", "-q", args.isGetGrpcAddr, "get grpc address");
     cmdLine.AddParamText("--time", "-t", args.traceKeepSecond, "trace time");
@@ -137,11 +124,9 @@ bool ProfilerCommandParser::ParseNormalArguments(int argc, char* argv[], Profile
     cmdLine.AddParamSwitch("--kill", "-k", args.isKillProcess, "kill dependent process");
     cmdLine.AddParamText("--config", "-c", args.configFile, "start trace by config file");
     cmdLine.AddParamSwitch("--nonblock", "", args.isNonBlock, "start capture without block");
-    
     if (argc < 1 || cmdLine.AnalyzeParam(argvVector) < 0 || startCommandExit) {
         return false;
     }
-    
     return true;
 }
 

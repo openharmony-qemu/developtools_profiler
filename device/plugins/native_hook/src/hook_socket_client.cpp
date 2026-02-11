@@ -145,6 +145,13 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         asyncFlagConfigured_ = true;
     }
 #endif
+    for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: vk and gles image
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get gpu range: %llu, %llu, %llu, %llu, %llu,",
+                           config_->gpuRange.gpuVk[i], config_->gpuRange.gpuGlesImage[i],
+                           config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
+                           config_->gpuRange.gpuClBuffer[i]);
+    }
+
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;

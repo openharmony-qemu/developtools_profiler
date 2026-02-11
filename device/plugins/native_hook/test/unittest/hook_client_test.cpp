@@ -326,7 +326,7 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest008, TestSize.Level0)
 
 /**
  * @tc.name: native hook
- * @tc.desc: Test hook restrace normal process.
+ * @tc.desc: Test hook restrace with ark global handle.
  * @tc.type: FUNC
  */
 HWTEST_F(NativeHookTest, NormalHookRestraceTest009, TestSize.Level0)
@@ -341,6 +341,7 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest009, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }
+
 /**
  * @tc.name: ResTraceMoveTest
  * @tc.desc: Test memory move.
@@ -395,7 +396,6 @@ HWTEST_F(NativeHookTest, NormalHookAlignedAllocTest, TestSize.Level0)
     EXPECT_NE(alignedAllocBlack, nullptr);
 
     ohos_malloc_hook_free(alignedAllocBlack);
-
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }
