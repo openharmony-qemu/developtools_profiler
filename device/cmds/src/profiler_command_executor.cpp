@@ -37,37 +37,27 @@ int ProfilerCommandExecutor::Run(int argc, char* argv[])
     if (!COMMON::GetDeveloperMode()) {
         return -1;
     }
-
     ProfilerCommandArgs args;
     ProfilerCommandParser& parser = ProfilerCommandParser::GetInstance();
-    
     if (!parser.ParseArguments(argc, argv, args) || args.isHelp) {
         parser.PrintHelp();
         return 0;
     }
-
-    // Handle stop command
     if (args.commandType == CommandType::STOP) {
         HandleStopCommand();
         ProfilerProcessManager::GetInstance().KillDependentProcess();
         return 0;
     }
-
-    // Normal command execution
     std::string config = "";
     if (!LoadConfigFromArgs(args, config)) {
         return -1;
     }
-
-    // Handle start process command
     if (args.isStartProcess && !HandleStartProcessCommand(args)) {
         if (args.isKillProcess) {
             ProfilerProcessManager::GetInstance().KillDependentProcess();
         }
         return 0;
     }
-
-    // Handle get grpc address command
     if (args.isGetGrpcAddr) {
         int ret = HandleGetGrpcAddrCommand(args);
         if (args.isKillProcess) {
@@ -75,8 +65,6 @@ int ProfilerCommandExecutor::Run(int argc, char* argv[])
         }
         return ret;
     }
-
-    // Handle show plugin list command
     if (args.isShowPluginList) {
         int ret = HandleShowPluginListCommand(args);
         if (args.isKillProcess) {
@@ -84,16 +72,11 @@ int ProfilerCommandExecutor::Run(int argc, char* argv[])
         }
         return ret;
     }
-
-    // Handle empty config case
     if (config.empty()) {
         return HandleEmptyConfig(args, config);
     }
-
     // Delete old output file
     remove(args.outputFile.c_str());
-
-    // Handle start command
     if (args.commandType == CommandType::START) {
         std::string config = "";
         if (!LoadConfigFromArgs(args, config)) {
@@ -101,13 +84,10 @@ int ProfilerCommandExecutor::Run(int argc, char* argv[])
         }
         return HandleStartCommand(args, config);
     }
-    // Execute profiler capture
     ExecuteProfilerCapture(args, config);
-    
     if (args.isKillProcess && (!args.isNonBlock)) {
         ProfilerProcessManager::GetInstance().KillDependentProcess();
     }
-    
     return 0;
 }
 
@@ -157,6 +137,36 @@ int ProfilerCommandExecutor::HandleEmptyConfig(const ProfilerCommandArgs& args, 
     return 1;
 }
 
+void ProfilerCommandExecutor::ChildProcessCapture(const ProfilerCommandArgs& args, const std::string& config)
+{
+    close(STDIN_FILENO);
+    close(STDOUT_FILENO);
+    close(STDERR_FILENO);
+    if (setsid() < 0) {
+        close(g_pipefd[PIPE_READ_END]);
+        close(g_pipefd[PIPE_WRITE_END]);
+        PROFILER_LOG_ERROR(LOG_CORE, "setsid error");
+        return;
+    }
+    
+    close(g_pipefd[PIPE_READ_END]);
+    uint32_t sigFlag = 1;
+    int retVal = TEMP_FAILURE_RETRY(write(g_pipefd[PIPE_WRITE_END], &sigFlag, sizeof(sigFlag)));
+    if (retVal <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "write signal flag failed");
+        close(g_pipefd[PIPE_WRITE_END]);
+        return;
+    }
+    close(g_pipefd[PIPE_WRITE_END]);
+    
+    if (ProfilerSessionManager::GetInstance().Capture(config, args.traceKeepSecond, args.outputFile)) {
+        printf("DONE\n");
+    }
+    if (args.isKillProcess) {
+        ProfilerProcessManager::GetInstance().KillDependentProcess();
+    }
+}
+
 void ProfilerCommandExecutor::ExecuteProfilerCapture(const ProfilerCommandArgs& args, const std::string& config)
 {
     if (args.isNonBlock) {
@@ -164,38 +174,10 @@ void ProfilerCommandExecutor::ExecuteProfilerCapture(const ProfilerCommandArgs& 
             printf("pipe error\n");
             return;
         }
-        
         pid_t childPid = fork();
         if (childPid == 0) {
-            // Child process
-            close(STDIN_FILENO);
-            close(STDOUT_FILENO);
-            close(STDERR_FILENO);
-            if (setsid() < 0) {
-                close(g_pipefd[PIPE_READ_END]);
-                close(g_pipefd[PIPE_WRITE_END]);
-                PROFILER_LOG_ERROR(LOG_CORE, "setsid error");
-                return;
-            }
-            
-            close(g_pipefd[PIPE_READ_END]);
-            uint32_t sigFlag = 1;
-            int retVal = TEMP_FAILURE_RETRY(write(g_pipefd[PIPE_WRITE_END], &sigFlag, sizeof(sigFlag)));
-            if (retVal <= 0) {
-                PROFILER_LOG_ERROR(LOG_CORE, "write signal flag failed");
-                close(g_pipefd[PIPE_WRITE_END]);
-                return;
-            }
-            close(g_pipefd[PIPE_WRITE_END]);
-            
-            if (ProfilerSessionManager::GetInstance().Capture(config, args.traceKeepSecond, args.outputFile)) {
-                printf("DONE\n");
-            }
-            if (args.isKillProcess && (!args.isNonBlock)) {
-                ProfilerProcessManager::GetInstance().KillDependentProcess();
-            }
+            ChildProcessCapture(args, config);
         } else if (childPid > 0) {
-            // Parent process
             close(g_pipefd[PIPE_WRITE_END]);
             uint32_t exitFlag = 0;
             ssize_t retVal = TEMP_FAILURE_RETRY(read(g_pipefd[PIPE_READ_END], &exitFlag, sizeof(exitFlag)));
@@ -236,13 +218,12 @@ int ProfilerCommandExecutor::HandleStartCommand(const ProfilerCommandArgs& args,
         remove(args.outputFile.c_str());
     }
 
-    // Start profiling in background (non-blocking)
     ProfilerSessionManager& sessionMgr = ProfilerSessionManager::GetInstance();
-    
-    // Use CaptureLongRunning for start command
     uint32_t sessionId = sessionMgr.CaptureLongRunning(config, duration, args.outputFile);
     if (sessionId == 0) {
         printf("Failed to start profiling session\n");
+        return -1;
+    } else if (sessionId == UINT32_MAX) {
         return -1;
     }
 

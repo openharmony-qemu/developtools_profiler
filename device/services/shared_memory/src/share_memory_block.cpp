@@ -227,7 +227,7 @@ int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
 bool ShareMemoryBlock::UseFreeMemory(int8_t* pmem, uint32_t size)
 {
     int wpIndex = pmem - PIECE_HEAD_LEN - header_->data;
-    if (wpIndex < 0 || wpIndex >= header_->info.memorySize_)  {
+    if (wpIndex < 0 || static_cast<uint32_t>(wpIndex) >= header_->info.memorySize_)  {
         return false;
     }
     uint32_t wp = static_cast<uint32_t>(wpIndex);
