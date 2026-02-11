@@ -185,7 +185,6 @@ int32_t ProcessDataPlugin::ReadProcPidFile(int32_t pid, const char* pFileName)
         err_ = errno;
     }
     fp = nullptr;
-
     return bytesRead;
 }
 
