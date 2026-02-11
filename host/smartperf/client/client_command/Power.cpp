@@ -36,8 +36,12 @@ std::map<std::string, std::string> Power::ItemData()
         }
 
         result["currentNow"] = currentNow;
-        result["voltageNow"] = std::to_string(SPUtilesTye::StringToSometype<int>(voltageNow) *
-            SPUtilesTye::StringToSometype<int>(battryString));
+        if (battryString.empty() || battryString.find("/bin/sh") != std::string::npos) {
+            result["voltageNow"] = voltageNow;
+        } else {
+            result["voltageNow"] = std::to_string(SPUtilesTye::StringToSometype<int>(voltageNow) *
+                SPUtilesTye::StringToSometype<int>(battryString));
+        }
     } else {
         result["failed"] = "RK does not support power acquisition";
         LOGE("failed:RK does not support power acquisition");

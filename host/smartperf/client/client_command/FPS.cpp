@@ -737,7 +737,7 @@ void FPS::SetTraceCatch()
 
 void FPS::GetOhFps(std::vector<std::string>& v)
 {
-    if (v[number] == "") {
+    if (v[number] == "" || v.size() <= number) {
         printf("the args of num must be not-null!\n");
     } else {
         this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
@@ -914,7 +914,7 @@ void FPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long
 
 void FPS::GetFPS(std::vector<std::string>& v)
 {
-    if (v[number] == "") {
+    if (v[number] == "" || v.size() <= number) {
         printf("the args of num must be not-null!\n");
     } else {
         this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());

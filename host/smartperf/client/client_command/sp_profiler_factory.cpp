@@ -39,6 +39,7 @@
 #include "include/hiperf.h"
 #include "include/sdk_data_recv.h"
 #include "include/jitters.h"
+#include "include/shader.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -194,6 +195,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             break;
         case CommandType::CT_JITTERS:
             profiler = &Jitters::GetInstance();
+            break;
+        case CommandType::CT_SH:
+            profiler = &Shader::GetInstance();
             break;
         default:
             break;
