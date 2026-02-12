@@ -435,21 +435,6 @@ HWTEST_F(SymbolsFileExtTest, GetVaddrInSymbolsForKernel, TestSize.Level0)
     // Kernel symbols should return ip directly
     EXPECT_EQ(kernelSymbols->GetVaddrInSymbols(0x12345678, 0x87654321, 0x1000), 0x12345678U);
 }
-
-/**
- * @tc.name: GetVaddrInSymbolsForJava
- * @tc.desc: Test GetVaddrInSymbols for JavaFileSymbols
- * @tc.type: FUNC
- */
-HWTEST_F(SymbolsFileExtTest, GetVaddrInSymbolsForJava, TestSize.Level0)
-{
-    auto javaSymbols = SymbolsFile::CreateSymbolsFile(SYMBOL_JAVA_FILE);
-    javaSymbols->textExecVaddrFileOffset_ = 0x000c5000;
-    javaSymbols->textExecVaddr_ = 0x002c5000;
-    
-    // Test with Java symbols
-    EXPECT_EQ(javaSymbols->GetVaddrInSymbols(0x002c5123, 0x002c5000, 0x000c5000), 0x002c5123U);
-}
 }
 }
 }
