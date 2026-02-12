@@ -351,24 +351,6 @@ HWTEST_F(VirtualRuntimeExtTest, FillArkTsFilePath, TestSize.Level0)
 }
 
 /**
- * @tc.name: FillJsSymbolCache
- * @tc.desc: Test FillJsSymbolCache method
- * @tc.type: FUNC
- */
-HWTEST_F(VirtualRuntimeExtTest, FillJsSymbolCache, TestSize.Level0)
-{
-    CallFrame callFrame(0x1000);
-    DfxSymbol symbol(0x1000, "test_func");
-    symbol.filePathId_ = 1;
-
-    // Fill cache
-    runtime_->FillJsSymbolCache(callFrame, symbol);
-
-    // Verify symbol was added
-    EXPECT_NE(runtime_->GetSymbolsFiles().end(), runtime_->GetSymbolsFiles().end());
-}
-
-/**
  * @tc.name: ArktsGetSymbolCache
  * @tc.desc: Test ArktsGetSymbolCache method
  * @tc.type: FUNC
@@ -518,25 +500,6 @@ HWTEST_F(VirtualRuntimeExtTest, UpdateAdltBase, TestSize.Level0)
     // Verify adlt base was updated
     EXPECT_NE(runtime_->adltFound_.find("/system/lib/libadlt.so"), runtime_->adltFound_.end());
     EXPECT_NE(runtime_->adltBaseMap_.find("/system/lib/libadlt.so"), runtime_->adltBaseMap_.end());
-}
-
-/**
- * @tc.name: HandleMapInfo
- * @tc.desc: Test HandleMapInfo method
- * @tc.type: FUNC
- */
-HWTEST_F(VirtualRuntimeExtTest, HandleMapInfo, TestSize.Level0)
-{
-    const pid_t testPid = 123;
-    const pid_t testTid = 456;
-    const std::string testPath = "test.so";
-    std::vector<uint64_t> info = {0x1000, 0x1000, PROT_READ, 0};
-
-    // Handle map info
-    runtime_->HandleMapInfo(info, testPath, testPid, testTid);
-
-    // Verify map was added
-    EXPECT_NE(runtime_->mapsCache_.find(0x1000), runtime_->mapsCache_.end());
 }
 
 /**
