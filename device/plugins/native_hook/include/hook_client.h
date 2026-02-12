@@ -73,7 +73,9 @@ EXPORT_API int ohos_malloc_hook_prctl(int option, unsigned long, unsigned long, 
 EXPORT_API bool ohos_set_filter_size(size_t size, void* ret);
 EXPORT_API bool ohos_malloc_hook_send_hook_misc_data(uint64_t, const char*, size_t, uint32_t);
 EXPORT_API void* ohos_malloc_hook_get_hook_config();
-
+EXPORT_API void hook_free(void (*free_func)(void*), void* p);
+EXPORT_API void* hook_malloc(void* (*fn)(size_t), size_t size);
+EXPORT_API void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len);
 #ifdef __cplusplus
 }
 #endif
