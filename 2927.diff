@@ -1,0 +1,42 @@
+diff --git a/device/plugins/native_daemon/include/smo_map_global.h b/device/plugins/native_daemon/include/smo_map_global.h
+index 6f3498b74ea97d99116346ed6d0d7f36c75bc37b..3840a3f3e5da67dfe3901650474b46a437d1beb2 100644
+--- a/device/plugins/native_daemon/include/smo_map_global.h
++++ b/device/plugins/native_daemon/include/smo_map_global.h
+@@ -14,18 +14,18 @@
+  */
+ #ifndef HIPERF_SMO_MAP_GLOBAL_H
+ #define HIPERF_SMO_MAP_GLOBAL_H
+- 
++
+ #include <unordered_map>
+ #include <shared_mutex>
+ #include "native_hook_result.pb.h"   // only this is needed
+- 
++
+ struct GlobalSmoEntry {
+-    SMOMapsInfo info;      // 最终要发送的 event
++    SMOMapsInfo info;      // last send event
+     bool initialized = false;
+     bool sent = false;
+ };
+- 
++
+ extern std::unordered_map<std::string, GlobalSmoEntry> g_smoMaps;
+- 
++
+ extern std::shared_mutex g_smoMapsLock;
+ #endif
+\ No newline at end of file
+diff --git a/device/plugins/native_daemon/src/virtual_runtime.cpp b/device/plugins/native_daemon/src/virtual_runtime.cpp
+index 5a0d9699ca6d80ac476d5af26c511296c6eadc6c..33ae2ffc000a758b19652a7d9d692e7ff194c9e6 100644
+--- a/device/plugins/native_daemon/src/virtual_runtime.cpp
++++ b/device/plugins/native_daemon/src/virtual_runtime.cpp
+@@ -291,7 +291,7 @@ std::string VirtualRuntime::ResolveMergedSoIp(uint64_t ip, const std::string& fi
+  
+     std::string soName;
+     for (const auto& idEntry : info.id_tlb_entries()) {
+-        if (idEntry.so_index() == (uint32_t)foundSoIndex) {
++        if (idEntry.so_index() == static_cast<uint32_t>(foundSoIndex)) {
+             soName = idEntry.name();
+             break;
+         }
