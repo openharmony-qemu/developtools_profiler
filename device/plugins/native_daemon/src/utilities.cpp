@@ -627,6 +627,12 @@ bool IsArkJsFile(const std::string& filepath)
             || StringEndsWith(filepath, ".hqf"));
 }
 
+bool IsArkwebV8File(const std::string& filepath)
+{
+    return (StringStartsWith(filepath, "[anon:v8") ||
+            StringStartsWith(filepath, "[anon:JS_V8"));
+}
+
 uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask)
 {
     uintptr_t outAddr = inAddr;

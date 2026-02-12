@@ -1043,6 +1043,75 @@ HWTEST_F(SymbolsFileTest, UpdateBuildIdIfMatch, TestSize.Level0)
     EXPECT_STREQ(file->buildId_.c_str(), "123");
     EXPECT_STRNE(file->buildId_.c_str(), "456");
 }
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::IsArkwebV8
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest001, TestSize.Level0)
+{
+    std::string filepath = "[anon:v8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    file->filePath_ = "test";
+    EXPECT_FALSE(file->IsArkwebV8());
+
+    file->SetBoolValue(false);
+    file->filePath_ = "[anon:v8";
+    EXPECT_FALSE(file->IsArkwebV8());
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::LoadDebugInfo
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest002, TestSize.Level0)
+{
+    std::string filepath = "[anon:JS_V8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    std::string symbolFilePath = "test.so";
+    EXPECT_FALSE(file->LoadDebugInfo(map, symbolFilePath));
+    map = std::make_shared<DfxMap>();
+    EXPECT_TRUE(file->LoadDebugInfo(map, symbolFilePath));
+    EXPECT_TRUE(file->LoadDebugInfo(map, symbolFilePath));
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::LoadSymbols
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest003, TestSize.Level0)
+{
+    std::string filepath = "[anon:JS_V8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    std::string symbolFilePath = "test.so";
+    EXPECT_FALSE(file->LoadSymbols(map, symbolFilePath));
+    map = std::make_shared<DfxMap>();
+    EXPECT_TRUE(file->LoadSymbols(map, symbolFilePath));
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::GetSymbolWithPcAndMap
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest004, TestSize.Level0)
+{
+    std::string filepath = "[anon:v8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    uint64_t ip = 0;
+    auto dfxSymbol = file->GetSymbolWithPcAndMap(ip, map);
+    EXPECT_EQ(dfxSymbol.taskVaddr_, ip);
+    map = std::make_shared<DfxMap>();
+    ip = 1;
+    dfxSymbol = file->GetSymbolWithPcAndMap(ip, map);
+    EXPECT_EQ(dfxSymbol.taskVaddr_, ip);
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

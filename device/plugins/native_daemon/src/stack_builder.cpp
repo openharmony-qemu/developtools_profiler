@@ -289,6 +289,7 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
         builder_->FillIps(callFrames_, syncPcs, asyncPcs);
 
         if (hookConfig_->js_stack_report()) {
+            // can get arkweb symbols in async fp mode
             builder_->FillAsyncJsSymbols(callFrames_, hookRecord);
         }
     } else {
@@ -300,7 +301,10 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
         builder_->FillIps(callFrames_, hookRecord);
 
         if (hookConfig_->js_stack_report()) {
+            // can get arkweb symbols in sync dwarf mode
             builder_->FillJsSymbols(callFrames_, hookRecord);
+            // only use for getting arkweb symbols in sync fp mode
+            builder_->FillAsyncJsSymbols(callFrames_, hookRecord);
         }
     }
 
