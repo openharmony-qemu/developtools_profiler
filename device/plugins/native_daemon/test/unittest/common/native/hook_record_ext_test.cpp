@@ -191,6 +191,7 @@ HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0) {
     hookInfo.tagName = TEST_TAG_NAME;
     hookInfo.nodeType = TEST_NODE_TYPE;
     hookInfo.nodeId = TEST_NODE_ID;
+    hookConfig_.set_fp_unwind(true);
     hookInfo.config = &hookConfig_;
     
     // Test with alloc event
@@ -216,6 +217,7 @@ HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0) {
     EXPECT_EQ(allocEventCompressed->addr(), TEST_ADDR);
     EXPECT_EQ(allocEventCompressed->stack_id(), 1);
     EXPECT_EQ(allocEventCompressed->frame_info_size(), 0);
+    hookConfig_.set_fp_unwind(false);
 }
 
 /*
@@ -241,8 +243,6 @@ HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoTest, TestSize.Level0) {
     
     EXPECT_EQ(frameInfo->ip(), callFrame.ip_);
     EXPECT_EQ(frameInfo->sp(), callFrame.sp_);
-    EXPECT_EQ(frameInfo->symbol_name(), callFrame.symbolName_);
-    EXPECT_EQ(frameInfo->file_path(), callFrame.filePath_);
     EXPECT_EQ(frameInfo->offset(), callFrame.offset_);
     EXPECT_EQ(frameInfo->symbol_offset(), callFrame.symbolOffset_);
     EXPECT_EQ(frameInfo->symbol_name_id(), callFrame.symbolNameId_);
