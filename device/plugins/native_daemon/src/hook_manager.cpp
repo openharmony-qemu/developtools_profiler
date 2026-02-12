@@ -287,6 +287,9 @@ unsigned long long HookManager::ConvertTagToMask()
 
 uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
 {
+    constexpr uint64_t ALL_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+                                  ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
+                                  ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
     uint64_t mask = baseMask;
     for (const auto value : hookConfig_.async_type()) {
         switch (value) {
@@ -313,6 +316,9 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
                 break;
             case AsyncFlagType::ARKTS_TASKPOOL:
                 mask |= ASYNC_TYPE_ARKTS_TASKPOOL;
+                break;
+            case AsyncFlagType::ALL_ASYNC_TYPE:
+                mask |= ALL_TYPE;
                 break;
             default:
                 PROFILER_LOG_WARN(LOG_CORE, "invalid async_type: %d", value);
