@@ -16,6 +16,10 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #include <sstream>
+#include "hook_socket_client.h"
+#include "parameters.h"
+#include "socket_context.h"
+#include "async_stack.h"
 #include "command_poller.h"
 #include "hook_manager.h"
 #include "hook_service.h"
@@ -37,7 +41,7 @@ public:
     static void SetUpTestCase()
     {
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "1");
-        sleep(1); 
+        sleep(1);
     }
     
     static void TearDownTestCase()
@@ -45,7 +49,7 @@ public:
         OHOS::system::SetParameter("hiviewdfx.hiprofiler.profilerd.start", "0");
         int result = remove(TEST_NMD_FILE_PATH.c_str());
         if (result != 0) {
-            std::cerr "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
+            std::cout << "Failed to remove file: " << TEST_NMD_FILE_PATH << std::endl;
         }
     }
     
@@ -512,9 +516,9 @@ HWTEST_F(HookManagerExtTest, GetCmdArgsWithExpandPids, TestSize.Level0)
     config.add_expand_pids(TEST_PID + 2);
     
     std::string result = hookManager_->GetCmdArgs(config);
-    
+    std::cout << result << std::endl;
     EXPECT_NE(result, "");
-    // process does not exist.
+    // 进程不存在
     EXPECT_EQ(result.find("pid: " + std::to_string(TEST_PID)), std::string::npos);
     EXPECT_NE(result.find("process_name: " + TEST_PROCESS_NAME), std::string::npos);
     EXPECT_NE(result.find("expand_pids: " + std::to_string(TEST_PID)), std::string::npos);
