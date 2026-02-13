@@ -25,6 +25,7 @@
 #include "logging.h"
 #include "openssl/sha.h"
 #include "parameters.h"
+#include "common.h"
 
 using namespace testing::ext;
 
@@ -40,6 +41,7 @@ const std::string DEFAULT_SO_PATH("/system/lib/");
 const std::string DEFAULT_HIPROFILERD_PATH("/system/bin/hiprofilerd");
 const std::string DEFAULT_HIPROFILER_PLUGINS_PATH("/system/bin/hiprofiler_plugins");
 const std::string DEFAULT_HIPROFILERD_NAME("hiprofilerd");
+const std::string DEFAULT_HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 
 const std::string DEFAULT_HIPROFILER_CMD_PATH("/system/bin/hiprofiler_cmd");
 const std::string FTRACE_PLUGIN_PATH("/data/local/tmp/libftrace_plugin.z.so");
@@ -920,9 +922,9 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0260, Function | MediumTest | Lev
     cmd = "rm " + outFile;
     system(cmd.c_str());
     StopProcessStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
-    sleep(1);
+    sleep(2);
     StopProcessStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1);
+    sleep(2);
 }
 
 /**
@@ -932,9 +934,16 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0260, Function | MediumTest | Lev
  */
 HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0270, Function | MediumTest | Level0)
 {
+    int pidValue = 0;
+    if (COMMON::IsProcessExist(DEFAULT_HIPROFILERD_NAME, pidValue)) {
+        kill(pidValue, SIGKILL);
+    }
+    if (COMMON::IsProcessExist(DEFAULT_HIPROFILER_PLUGINS_NAME, pidValue)) {
+        kill(pidValue, SIGKILL);
+    }
     std::string content = "";
     StartServerStub(DEFAULT_HIPROFILERD_PATH);
-    sleep(1);
+    sleep(2);
     StartServerStub(DEFAULT_HIPROFILER_PLUGINS_PATH);
     sleep(1);
     std::string outFile = DEFAULT_PATH + "trace.htrace";
