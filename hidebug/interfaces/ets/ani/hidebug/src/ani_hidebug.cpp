@@ -781,7 +781,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"getGraphicsMemoryAdapter", "i:C{@ohos.hidebug.hidebug.GraphicsMemorySummary}",
             reinterpret_cast<void *>(GetGraphicsMemoryAdapter)},
         ani_native_function {"getRssInfoAdapter", ":C{@ohos.hidebug.hidebug.RssInfoAdapter}",
-        reinterpret_cast<void *>(GetRssInfoAdapter)},
+            reinterpret_cast<void *>(GetRssInfoAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {
