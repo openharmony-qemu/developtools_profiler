@@ -345,4 +345,28 @@ export namespace hidebug {
   export native function disableGwpAsanGrayscale(): void;
 
   export native function getGwpAsanGrayscaleState(): int;
+
+  export interface RssInfo {
+    rss: bigint;
+    swapRss: bigint;
+  }
+
+  class RssInfoImpl implements RssInfo {
+    rss: bigint;
+    swapRss: bigint;
+  }
+
+  class RssInfoAdapter {
+    rss: long;
+    swapRss: long;
+  }
+  native function getRssInfoAdapter(): RssInfoAdapter;
+
+  export function getRssInfo(): RssInfo {
+    let rssInfo = getRssInfoAdapter();
+    let ret = new RssInfoImpl();
+    ret.rss = new bigint(rssInfo.rss);
+    ret.swapRss = new bigint(rssInfo.swapRss);
+    return ret;
+  }
 }

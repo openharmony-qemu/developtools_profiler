@@ -106,6 +106,17 @@ typedef struct GraphicsMemorySummary {
      */
     uint32_t graph = 0;
 } GraphicsMemorySummary;
+
+struct RssInfo {
+    /**
+    * Process resident set size, in kibibytes
+    */
+    uint32_t rss = 0;
+    /**
+    * Swap usage size, in kibibytes
+    */
+    uint32_t swapRss = 0;
+};
 }
 }
 

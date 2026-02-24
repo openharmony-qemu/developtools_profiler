@@ -713,6 +713,27 @@ static ani_status BindGwpMethods(ani_env *env, ani_namespace nameSpace)
     return env->Namespace_BindNativeFunctions(nameSpace, gwpMethods.data(), gwpMethods.size());
 }
 
+ani_object GetRssInfoAdapter(ani_env *env)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getRssInfoAdapter");
+    auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
+    if (!rssInfoOption) {
+        rssInfoOption.emplace();
+    }
+
+    ani_class cls = nullptr;
+    ani_method ctorMethod = nullptr;
+    ani_object rssInfo = nullptr;
+    if (env->FindClass("@ohos.hidebug.hidebug.RssInfoAdapter", &cls) != ANI_OK ||
+        env->Class_FindMethod(cls, "<ctor>", ":", &ctorMethod) != ANI_OK ||
+        env->Object_New(cls, ctorMethod, &rssInfo) != ANI_OK) {
+        return AniUtil::CreateUndefined(env);
+    }
+    env->Object_SetPropertyByName_Long(rssInfo, "rss", static_cast<ani_long>(rssInfoOption->rss));
+    env->Object_SetPropertyByName_Long(rssInfo, "swapRss", static_cast<ani_long>(rssInfoOption->swapRss));
+    return rssInfo;
+}
+
 ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
 {
     ani_env *env = nullptr;
@@ -759,6 +780,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"stopJsCpuProfiling", ":", reinterpret_cast<void *>(StopJsCpuProfiling)},
         ani_native_function {"getGraphicsMemoryAdapter", "i:C{@ohos.hidebug.hidebug.GraphicsMemorySummary}",
             reinterpret_cast<void *>(GetGraphicsMemoryAdapter)},
+        ani_native_function {"getRssInfoAdapter", ":C{@ohos.hidebug.hidebug.RssInfoAdapter}",
+        reinterpret_cast<void *>(GetRssInfoAdapter)},
     };
     auto retCode = env->Namespace_BindNativeFunctions(nameSpace, methods.data(), methods.size());
     if (ANI_OK != retCode) {

@@ -1080,6 +1080,26 @@ napi_value SetProcDumpInSharedOOM(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+napi_value GetRssInfo(napi_env env, napi_callback_info info)
+{
+    ApiInvokeRecorder apiInvokeRecorder("getRssInfo");
+    auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
+    if (!rssInfoOption) {
+        rssInfoOption.emplace();
+    }
+    napi_value rssInfo = nullptr;
+    napi_create_object(env, &rssInfo);
+
+    napi_value rss = nullptr;
+    napi_create_bigint_uint64(env, static_cast<uint64_t>(rssInfoOption->rss), &rss);
+    napi_set_named_property(env, rssInfo, "rss", rss);
+
+    napi_value swapRss = nullptr;
+    napi_create_bigint_uint64(env, static_cast<uint64_t>(rssInfoOption->swapRss), &swapRss);
+    napi_set_named_property(env, rssInfo, "swapRss", swapRss);
+    return rssInfo;
+}
+
 napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
 {
     ApiRecordReporter::InitProcessor();
@@ -1124,6 +1144,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("getGwpAsanGrayscaleState", GetGwpAsanGrayscaleState),
         DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
         DECLARE_NAPI_FUNCTION("setProcDumpInSharedOOM", SetProcDumpInSharedOOM),
+        DECLARE_NAPI_FUNCTION("getRssInfo", GetRssInfo),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);
