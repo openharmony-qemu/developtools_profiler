@@ -1102,15 +1102,15 @@ describe("HidebugJsTest", function () {
          * @tc.type: FUNC
          */
     it('HidebugJsTest_049', 0, function () {
-    console.info("---------------------------HidebugJsTest_049----------------------------------");
-    try {
-        let rssInfo = hidebug.getRssInfo();
-        expect(rssInfo.rss >= 0).assertTrue();
-        expect(rssInfo.swapRss >= 0).assertTrue();
-    } catch (error) {
-        console.info(error.code);
-        console.info(error.message);
-        expect(false).assertTrue();
-    }
+        console.info("---------------------------HidebugJsTest_049----------------------------------");
+        try {
+            let rssInfo = hidebug.getRssInfo();
+            expect(rssInfo.rss >= 0).assertTrue();
+            expect(rssInfo.swapRss >= 0).assertTrue();
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
     })
 })
