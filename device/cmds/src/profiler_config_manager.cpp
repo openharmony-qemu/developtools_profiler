@@ -14,25 +14,11 @@
  */
 
 #include "profiler_config_manager.h"
-#include <cstdio>
+#include "file_path_handler.h"
+#include "parse_plugin_config.h"
+#include "common.h"
 #include <iostream>
 #include <istream>
-#include <iterator>
-#include <sys/stat.h>
-#include <sys/types.h>
-#include <vector>
-#include <cstring>
-#include "ipc_skeleton.h"
-#include "common.h"
-#include "parse_plugin_config.h"
-
-namespace {
-constexpr int USER_ID_MOD = 200000;
-constexpr int APP_ID_THRESH = 20000000;
-const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
-const std::string DEFAULT_OUTPUT_ROOT = "/data/local/tmp/";
-const std::string SANDBOX_PATH_ROOT("/storage/Users/currentUser/");
-}
 
 ProfilerConfigManager& ProfilerConfigManager::GetInstance()
 {
@@ -42,31 +28,11 @@ ProfilerConfigManager& ProfilerConfigManager::GetInstance()
 
 bool ProfilerConfigManager::ParseConfig(const std::string& configFile, std::string& config)
 {
-    std::string configFileWithPath = configFile;
-    bool adaptSandbox = false;
-#if defined(is_sandbox) && is_sandbox
-    int32_t callingUid = OHOS::IPCSkeleton::GetCallingUid();
-    if (callingUid > APP_ID_THRESH) {
-        adaptSandbox = true;
-    }
-#endif
+    auto handler = FilePathHandlerFactory::CreateHandler();
+    std::string configFileWithPath = handler->GetConfigFilePath(configFile);
     
-    if (configFile.find('/') == std::string::npos) {
-        if (adaptSandbox) {
-            configFileWithPath = SANDBOX_PATH_ROOT + configFile;
-        } else {
-            std::string defaultPath("/data/local/tmp/");
-            configFileWithPath = defaultPath + configFile;
-        }
-    }
-
     printf("Read config from %s\n", configFileWithPath.c_str());
-    std::vector<std::string> validPaths {};
-    if (adaptSandbox) {
-        validPaths.push_back(SANDBOX_PATH_ROOT);
-    } else {
-        validPaths.push_back("/data/local/tmp/");
-    }
+    std::vector<std::string> validPaths = handler->GetValidPaths();
     
     if (!COMMON::ReadFile(configFileWithPath, validPaths, config)) {
         printf("Read %s fail, please place it under %s.\n", configFile.c_str(), validPaths[0].c_str());
@@ -95,4 +61,3 @@ bool ProfilerConfigManager::ReadConfigFromStdin(std::string& config)
     }
     return true;
 }
-

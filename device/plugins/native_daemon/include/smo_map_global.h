@@ -20,7 +20,7 @@
 #include "native_hook_result.pb.h"   // only this is needed
  
 struct GlobalSmoEntry {
-    SMOMapsInfo info;      // 最终要发送的 event
+    SMOMapsInfo info;      // last send event
     bool initialized = false;
     bool sent = false;
 };

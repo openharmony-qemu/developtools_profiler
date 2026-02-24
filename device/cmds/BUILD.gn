@@ -30,6 +30,12 @@ ohos_executable("hiprofiler_cmd") {
   sources = [
     "src/main.cpp",
     "src/parse_plugin_config.cpp",
+    "src/profiler_command_parser.cpp",
+    "src/profiler_command_executor.cpp",
+    "src/profiler_session_manager.cpp",
+    "src/profiler_config_manager.cpp",
+    "src/profiler_process_manager.cpp",
+    "src/file_path_handler.cpp",
   ]
   include_dirs = [ "include" ]
   deps = [
@@ -71,6 +77,11 @@ ohos_executable("hiprofiler_cmd") {
     if (hiprofiler_sandbox_log_path_mapping) {
       defines += [ "is_sandbox=${hiprofiler_sandbox_log_path_mapping}" ]
     }
+  }
+  if (hiprofiler_feature_support_usr_symlink) {
+    symlink_target_name = [
+      "../usr/bin/hiprofiler_cmd",
+    ]
   }
   install_enable = true
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"

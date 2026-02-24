@@ -39,6 +39,7 @@
 #include "include/hiperf.h"
 #include "include/sdk_data_recv.h"
 #include "include/jitters.h"
+#include "include/shader.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -133,6 +134,7 @@ void SpProfilerFactory::SetProfilerPidByPkg(std::string &pid, std::string pids)
 SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool cmdFlag)
 {
     SpProfiler *profiler = nullptr;
+    std::string winId = "";
     switch (commandType) {
         case CommandType::CT_C:
             if (cmdFlag) {
@@ -143,6 +145,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItem(CommandType commandType, bool 
             profiler = &GPU::GetInstance();
             break;
         case CommandType::CT_F:
+            winId = SPUtils::GetWinId();
+            SPUtils::EnDumpFun(winId);
+            FPS::GetInstance().SetWinId(winId);
             if (cmdFlag) {
                 profiler = &FPS::GetInstance();
             }
@@ -190,6 +195,9 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             break;
         case CommandType::CT_JITTERS:
             profiler = &Jitters::GetInstance();
+            break;
+        case CommandType::CT_SH:
+            profiler = &Shader::GetInstance();
             break;
         default:
             break;

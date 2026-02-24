@@ -696,16 +696,15 @@ Status ProfilerService::SubscribeProfilerEvt(ServerContext* context,
     return Status::OK;
 }
 
-Status ProfilerService::StopSession(ServerContext* context,
-                                    const ::StopSessionRequest* request,
-                                    ::StopSessionResponse* response)
+Status ProfilerService::StopSessionImpl(ServerContext* context,
+                                        const ::StopSessionRequest* request,
+                                        ::StopSessionResponse* response, uint32_t sessionId)
 {
 #ifdef PERFORMANCE_DEBUG
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
     CHECK_REQUEST_RESPONSE(context, request, response);
-    uint32_t sessionId = request->session_id();
     PROFILER_LOG_INFO(LOG_CORE, "StopSession %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
@@ -725,13 +724,36 @@ Status ProfilerService::StopSession(ServerContext* context,
     return Status::OK;
 }
 
-Status ProfilerService::DestroySession(ServerContext* context,
-                                       const ::DestroySessionRequest* request,
-                                       ::DestroySessionResponse* response)
+Status ProfilerService::StopSession(ServerContext* context,
+                                    const ::StopSessionRequest* request,
+                                    ::StopSessionResponse* response)
+{
+    if (request == nullptr) {
+        return {StatusCode::INTERNAL, "request is null"};
+    }
+    if (request->stop_all()) {
+        std::vector<uint32_t> sessionList;
+        {
+            std::unique_lock<std::mutex> lock(sessionContextMutex_);
+            for (const auto& info : sessionContext_) {
+                sessionList.push_back(info.first);
+            }
+        }
+        for (auto sessionId : sessionList) {
+            StopSessionImpl(context, request, response, sessionId);
+        }
+        return Status::OK;
+    } else {
+        uint32_t sessionId = request->session_id();
+        return StopSessionImpl(context, request, response, sessionId);
+    }
+}
+
+Status ProfilerService::DestroySessionImpl(ServerContext* context,
+                                           const ::DestroySessionRequest* request,
+                                           ::DestroySessionResponse* response, uint32_t sessionId)
 {
     CHECK_REQUEST_RESPONSE(context, request, response);
-
-    uint32_t sessionId = request->session_id();
     PROFILER_LOG_INFO(LOG_CORE, "DestroySession %d %u start", request->request_id(), sessionId);
 
     auto ctx = GetSessionContext(sessionId);
@@ -764,6 +786,36 @@ Status ProfilerService::DestroySession(ServerContext* context,
     }
 
     return Status::OK;
+}
+
+Status ProfilerService::DestroySession(ServerContext* context,
+                                       const ::DestroySessionRequest* request,
+                                       ::DestroySessionResponse* response)
+{
+    if (request == nullptr) {
+        return {StatusCode::INTERNAL, "request is null"};
+    }
+    if (request->destroy_all()) {
+        std::vector<uint32_t> sessionIds;
+        for (const auto& session : sessionContext_) {
+            sessionIds.push_back(session.first);
+        }
+        bool success = true;
+        for (const auto& sessionId : sessionIds) {
+            grpc::Status status = DestroySessionImpl(context, request, response, sessionId);
+            if (!status.ok()) {
+                success = false;
+            }
+        }
+        if (success) {
+            return Status::OK;
+        } else {
+            return {StatusCode::INTERNAL, "ProfilerService::DestroySession failed to destroy all sessions"};
+        }
+    } else {
+        uint32_t sessionId = request->session_id();
+        return DestroySessionImpl(context, request, response, sessionId);
+    }
 }
 
 ::grpc::Status ProfilerService::KeepSession(::grpc::ServerContext* context,

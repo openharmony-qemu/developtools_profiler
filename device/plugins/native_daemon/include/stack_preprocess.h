@@ -43,23 +43,58 @@ namespace OHOS::Developtools::NativeDaemon {
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
 
 struct RecordStatistic {
-    uint32_t pid {0};
-    uint32_t callstackId {0};
-    uint32_t tagId {0};
-    RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
     uint64_t applyCount {0};
     uint64_t releaseCount {0};
     uint64_t applySize {0};
     uint64_t releaseSize {0};
-    std::string tagName = "";
-    uint32_t nodeType {0};
     uint64_t nodeId {0};
+    uint32_t tagId {0};
+    RecordStatisticsEvent::MemoryType type {RecordStatisticsEvent::MALLOC};
+    uint32_t nodeType {0};
+    uint32_t callstackId {0};
+    uint32_t stackSize {0};
+};
+
+struct CallStackKey {
+    uint64_t stackHash;
+    uint64_t nodeId;
+    uint32_t stackSize;
+    uint32_t nodeType;
+    uint32_t tagId;
+
+    bool operator == (const CallStackKey& other) const
+    {
+        return stackHash == other.stackHash &&
+               nodeId == other.nodeId &&
+               nodeType == other.nodeType &&
+               tagId == other.tagId &&
+               stackSize == other.stackSize;
+    }
+};
+
+struct CallStackKeyHash {
+    uint64_t operator()(const CallStackKey& key) const
+    {
+        return key.stackHash;
+    }
 };
 
 struct CallStackHash {
     uint64_t operator()(const std::vector<uint64_t>& stack) const
     {
-        return std::accumulate(stack.begin(), stack.end(), 0);
+        constexpr uint64_t seed = 0xc70f6907ULL;
+        uint64_t hash = seed;
+        for (uint64_t val : stack) {
+            val ^= val >> 33; // 33 : hash bit
+            val *= 0xff51afd7ed558ccdULL;
+            val ^= val >> 33; // 33 : hash bit
+            val *= 0xc4ceb9fe1a85ec53ULL;
+            val ^= val >> 33; // 33 : hash bit
+            hash ^= val;
+            hash = (hash << 27) | (hash >> 37); // 27: rotate left by 27 bits; 37: rotate right by 37 bits
+            hash = hash * 5 + 0x52dce729; // add a constant
+        }
+        return hash;
     }
 };
 
@@ -262,7 +297,9 @@ private:
     bool ProcessEndMsg();
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
+    void LogPerformanceMetrics(const struct timespec& start, const std::string& operation);
     void SetIsStartTakeData(bool isStartTakeData);
+    void CleanupFullyReleasedStack(uint32_t stackId);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
     std::shared_ptr<Writer> writer_ = nullptr;
@@ -280,13 +317,14 @@ private:
     uint32_t eventCnts_ = 0;
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
+    std::unordered_map<CallStackKey, uint32_t, CallStackKeyHash> callStackIndex_;
     // Key is callStack_, value is call stack id
     std::unordered_map<NewCallStack, uint32_t, NewCallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};
     // Key is call stack id, value is recordstatistic data
     std::unordered_map<uint32_t, RecordStatistic> recordStatisticsMap_;
     // Key is call stack id, value is recordstatistic data pointer
-    std::unordered_map<uint32_t, RecordStatistic*> statisticsPeriodData_;
+    std::unordered_set<uint32_t> statisticsPeriodSet_;
     // Key is alloc or mmap address, value is ReportEventBaseData list iterator
     std::unordered_map<uint64_t, std::list<ReportEventBaseData>::iterator> applyAndReleaseMatchIntervallMap_;
     std::list<ReportEventBaseData> applyAndReleaseMatchPeriodListData_;

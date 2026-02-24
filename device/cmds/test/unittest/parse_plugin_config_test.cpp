@@ -220,4 +220,31 @@ HWTEST_F(ParsePluginConfigTest, TestNativeHookConfig, TestSize.Level0)
     parseConfig.pluginConfigMap["nativehook"] = hookConfig;
     EXPECT_FALSE(parseConfig.SetSerializeHookConfig("nativehook", pluginConfig));
 }
+
+/**
+ * @tc.name: ParsePluginConfig
+ * @tc.desc: check restrace tag
+ * @tc.type: FUNC
+ */
+HWTEST_F(ParsePluginConfigTest, TestNativeHookRestraceTag, TestSize.Level0)
+{
+    std::ostringstream oss{};
+    oss << "pid : 123"
+        << "\n"
+        << "malloc_disable:true"
+        << "\n"
+        << "memtrace_enable:true"
+        << "\n"
+        << "restrace_tag: \"RES_DMABUF_MASK_XX\""
+        << "\n";
+    auto hookConfigNolite = std::make_unique<ForStandard::NativeHookConfig>();
+    google::protobuf::TextFormat::Parser hookParser;
+    hookParser.AllowUnknownField(true);
+    ASSERT_TRUE(hookParser.ParseFromString(oss.str(), hookConfigNolite.get()));
+    EXPECT_EQ(hookConfigNolite->restrace_tag(0), "RES_DMABUF_MASK_XX");
+    ParsePluginConfig parseConfig;
+    ProfilerPluginConfig pluginConfig;
+    parseConfig.pluginConfigMap["nativehook"] = oss.str();
+    EXPECT_FALSE(parseConfig.SetSerializeHookConfig("nativehook", pluginConfig));
+}
 }

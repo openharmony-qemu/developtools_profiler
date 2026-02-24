@@ -124,6 +124,14 @@ void FPS::HandleHeelChirality(FpsInfo &fpsInfoResult, std::map<std::string, std:
         } else {
             result["maxScanout"] = std::to_string(fpsInfoResult.maxScanout / million);
         }
+        result["avgDistr"] = std::to_string(static_cast<double>(avgDistr) / million);
+        result["maxDistr"] = std::to_string(static_cast<double>(diStr_) / million);
+        result["touchEvent"] = std::to_string(touchEvent);
+        touchEvent = 0;
+        diStr_ = 0;
+        totalDistr = 0;
+        distrNum = 0;
+        avgDistr = 0;
     }
 }
 
@@ -382,6 +390,8 @@ FpsInfo FPS::GetFpsInfoByRs(const std::string& name)
 {
     if (!name.empty()) {
        // fps
+        std::thread([this]() { this->GetTouchEventNum(); }).detach();
+        std::thread([this]() { this->GetDistr(); }).detach();
         uint64_t nodeId;
         std::istringstream s(name);
         s >> nodeId;
@@ -727,7 +737,7 @@ void FPS::SetTraceCatch()
 
 void FPS::GetOhFps(std::vector<std::string>& v)
 {
-    if (v[number] == "") {
+    if (v[number] == "" || v.size() <= number) {
         printf("the args of num must be not-null!\n");
     } else {
         this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
@@ -904,7 +914,7 @@ void FPS::GetSectionsPrint(int printCount, long long msStartTime, int numb, long
 
 void FPS::GetFPS(std::vector<std::string>& v)
 {
-    if (v[number] == "") {
+    if (v[number] == "" || v.size() <= number) {
         printf("the args of num must be not-null!\n");
     } else {
         this->num = SPUtilesTye::StringToSometype<int>(v[number].c_str());
@@ -923,6 +933,74 @@ void FPS::GetFPS(std::vector<std::string>& v)
         }
     }
     printf("SP_daemon exec finished!\n");
+}
+
+void FPS::GetTouchEventNum()
+{
+    std::unique_lock<std::mutex> lock(touchEventLock_);
+    int oneHunder = 100;
+    const std::string hidumperCmd = "hidumper -s WindowManagerService -a '-w " + winId_ + " -touchmonitor -c'";
+    std::string cmdResult = "";
+    SPUtils::LoadCmd(hidumperCmd, cmdResult);
+    size_t pos = cmdResult.find("UINodeCount:");
+    if (pos != std::string::npos) {
+        std::string substring = cmdResult.substr(pos + 12);
+        touchEvent = SPUtilesTye::StringToSometype<int>(substring) % oneHunder;
+    }
+}
+
+void FPS::GetDistr()
+{
+    std::unique_lock<std::mutex> lock(distrLock_);
+    char tmp[4096];
+    long long tamps = 0;
+    const std::string hidumperCmd = "hidumper -s WindowManagerService -a '-w " + winId_ + " -touchmonitor -d'";
+    FILE *fp = popen(hidumperCmd.c_str(), "r");
+    if (!fp) {
+        LOGE("hidumperf is failed");
+        return;
+    }
+    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
+        std::string line(tmp);
+        if (line.find("LastRequestVsyncTime:") != std::string::npos) {
+            size_t pos = line.find(":");
+            std::string numberStr = line.substr(pos + 1);
+            tamps = SPUtilesTye::StringToSometype<long long>(numberStr) / mod;
+        }
+        GetDistrTimes(line, tamps);
+    }
+    avgDistr = totalDistr / distrNum;
+    pclose(fp);
+}
+
+void FPS::GetDistrTimes(std::string &line, long long &tamps)
+{
+    if (line.find(" ns") != std::string::npos) {
+        int inDex = 5;
+        std::istringstream iss(line);
+        std::vector<std::string> tokens;
+        std::string token;
+        long long diStr = 0;
+        while (iss >> token) {
+            tokens.push_back(token);
+        }
+        std::string tokensOne = tokens[1];
+        if (SPUtilesTye::StringToSometype<long long>(tokensOne) / mod == tamps) {
+            distrNum++;
+            std::string tokensFive = tokens[inDex];
+            diStr = SPUtilesTye::StringToSometype<long long>(tokensFive) -
+                SPUtilesTye::StringToSometype<long long>(tokensOne);
+            totalDistr += diStr;
+            if (diStr > diStr_) {
+                diStr_ = diStr;
+            }
+        }
+    }
+}
+
+void FPS::SetWinId(std::string &winId)
+{
+    winId_ = winId;
 }
 
 void FPS::SetHapFlag()

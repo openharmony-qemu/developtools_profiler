@@ -112,6 +112,14 @@ bool IsDeveloperOptionsEnabled();
 bool CheckVersionType(const std::string& type, const std::string& key);
 
 bool CreateResourceLimitDir();
+
+bool IsHm();
+
+bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo);
+
+bool GetVssInfo(NativeMemInfo& nativeMemInfo);
+
+bool GetMemInfo(NativeMemInfo& nativeMemInfo);
 }
 }
 #endif // HIDEBUG_UTIL_H_

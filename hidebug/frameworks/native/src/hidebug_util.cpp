@@ -18,10 +18,12 @@
 #include <cstring>
 #include <ctime>
 #include <fcntl.h>
+#include <fstream>
 #include <thread>
 #include <vector>
 
 #include <sys/stat.h>
+#include <sys/utsname.h>
 #include <sys/xattr.h>
 #include <unistd.h>
 
@@ -29,6 +31,7 @@
 #include "directory_ex.h"
 #include "file_ex.h"
 #include "parameters.h"
+#include "securec.h"
 #include "storage_acl.h"
 
 #include "hilog/log.h"
@@ -234,6 +237,102 @@ bool CreateResourceLimitDir()
         HILOG_ERROR(LOG_CORE, "CreateSanBoxDir Failed to AclSetAccess");
         return false;
     }
+    return true;
+}
+
+bool IsHm()
+{
+    bool isHM = false;
+    utsname unameBuf;
+    if ((uname(&unameBuf)) == 0) {
+        std::string osRelease = unameBuf.release;
+        isHM = osRelease.find("HongMeng") != std::string::npos;
+    }
+    return isHM;
+}
+
+bool GetGlAndGraph(GraphicsMemorySummary& graphicMemoryInfo)
+{
+    std::ifstream file("/proc/self/mm_decision_info");
+    if (!file.is_open()) {
+        return false;
+    }
+    uint32_t graph = 0;
+    uint32_t gl = 0;
+    std::string key;
+    while (getline(file, key, ':')) {
+        file >> std::ws;
+        if (key == "dmaheapPageNum") {
+            file >> graph;
+        } else if (key == "gpuPageNum") {
+            file >> gl;
+        }
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+    constexpr uint32_t kbPerPage = 4;
+    graphicMemoryInfo.gl = gl * kbPerPage;
+    graphicMemoryInfo.graph = graph * kbPerPage;
+    file.close();
+    return true;
+}
+
+bool GetVssInfo(NativeMemInfo& nativeMemInfo)
+{
+    FILE* fp = fopen("/proc/self/statm", "r");
+    if (!fp) {
+        return false;
+    }
+
+    uint64_t pageCount = 0;
+    if (fscanf_s(fp, "%llu", &pageCount) != 1) {
+        fclose(fp);
+        return false;
+    }
+    if (fclose(fp) != 0) {
+        return false;
+    }
+    long pageSize = sysconf(_SC_PAGESIZE);
+    if (pageSize <= 0) {
+        return false;
+    }
+    uint32_t bytePerKb = 1024;
+    uint32_t kbPerPage = static_cast<uint32_t>(pageSize) / bytePerKb;
+    nativeMemInfo.vss = static_cast<uint32_t>(pageCount * kbPerPage);
+    return true;
+}
+
+bool GetMemInfo(NativeMemInfo& nativeMemInfo)
+{
+    std::ifstream file("/proc/self/smaps_rollup");
+    if (!file.is_open()) {
+        return false;
+    }
+    file.tie(nullptr);
+    std::string key;
+    constexpr uint32_t defaultLen = 128;
+    key.reserve(defaultLen);
+    uint32_t tmpSwapPss = 0;
+    while (getline(file, key, ':')) {
+        file >> std::ws;
+        if (key == "Rss") {
+            file >> nativeMemInfo.rss;
+        } else if (key == "Pss") {
+            file >> nativeMemInfo.pss;
+        } else if (key == "Shared_Clean") {
+            file >> nativeMemInfo.sharedClean;
+        } else if (key == "Shared_Dirty") {
+            file >> nativeMemInfo.sharedDirty;
+        } else if (key == "Private_Clean") {
+            file >> nativeMemInfo.privateClean;
+        } else if (key == "Private_Dirty") {
+            file >> nativeMemInfo.privateDirty;
+        } else if (key == "SwapPss") {
+            file >> tmpSwapPss;
+        }
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+        key.clear();
+    }
+    nativeMemInfo.pss += tmpSwapPss;
     return true;
 }
 }

@@ -27,10 +27,20 @@ ohos_unittest("hiprofiler_cmd_ut") {
   module_out_path = module_output_path
   sources = [
     "../src/parse_plugin_config.cpp",
+    "../src/profiler_command_parser.cpp",
+    "../src/profiler_command_executor.cpp",
+    "../src/profiler_session_manager.cpp",
+    "../src/profiler_config_manager.cpp",
+    "../src/profiler_process_manager.cpp",
+    "../src/file_path_handler.cpp",
     "unittest/hiprofiler_cmd_test.cpp",
     "unittest/parse_plugin_config_test.cpp",
+    "unittest/profiler_command_test.cpp",
+    "unittest/profiler_session_manager_test.cpp",
+    "unittest/file_path_handler_test.cpp",
   ]
   deps = [
+    "../:command_line",
     "${OHOS_PROFILER_DIR}/device/base:hiprofiler_base",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_proto",
     "${OHOS_PROFILER_DIR}/protos/services:profiler_service_type_source",
@@ -70,13 +80,18 @@ ohos_unittest("hiprofiler_cmd_ut") {
     "grpc:grpcxx",
 
     "init:libbegetutil",
+    "ipc:ipc_core",
     "openssl:libcrypto_shared",
     "protobuf:protobuf",
   ]
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog_base" ]
+  }
   configs = [ ":module_private_config" ]
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
-  defines = [ "OPENSSL_SUPPRESS_DEPRECATED" ]
+  defines += [ "OPENSSL_SUPPRESS_DEPRECATED" ]
 }
 
 group("unittest") {

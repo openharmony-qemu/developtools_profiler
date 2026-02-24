@@ -89,7 +89,7 @@ namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
 namespace {
-const std::string EMPTY_STRING = "";
+inline const std::string EMPTY_STRING = "";
 constexpr int32_t STRING_POOL_SIZE = 4000;
 }
 
@@ -225,7 +225,6 @@ const char PATH_SEPARATOR = '\\';
 #else
 const char PATH_SEPARATOR = '/';
 #endif
-const std::string PATH_SEPARATOR_STR = std::string(1, PATH_SEPARATOR);
 
 std::string PlatformPathConvert(const std::string &path);
 

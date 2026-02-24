@@ -131,6 +131,7 @@ enum class CommandType {
     CT_FC,
     CT_HCI,
     CT_JITTERS,
+    CT_SH,
 };
 enum class CommandHelp {
     HELP,
@@ -169,6 +170,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-fc"), CommandType::CT_FC },
     { std::string("-HCI"), CommandType::CT_HCI },
     { std::string("-j"), CommandType::CT_JITTERS },
+    { std::string("-sh"), CommandType::CT_SH },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -203,6 +205,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_FC, std::string("-fc") },
     { CommandType::CT_HCI, std::string("-HCI") },
     { CommandType::CT_JITTERS, std::string("-j") },
+    { CommandType::CT_SH, std::string("-sh") },
 };
 
 const std::unordered_map<std::string, CommandType> COMMAND_SHELL_MAP = {
@@ -227,6 +230,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_SHELL_MAP = {
     { std::string("-fl"), CommandType::CT_FL },
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-nav"), CommandType::CT_NAV },
+    { std::string("-sh"), CommandType::CT_SH },
 };
 
 const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {

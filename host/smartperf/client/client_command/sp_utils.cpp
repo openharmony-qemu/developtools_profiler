@@ -1035,5 +1035,55 @@ bool SPUtils::IsInvalidPkgName(const std::string& pkgName)
         return isalnum(c) || c == '.' || c == '_';
     });
 }
+
+std::string SPUtils::GetWinId()
+{
+    char tmp[4096];
+    std::string winId = "";
+    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-a'";
+    FILE *fp = popen(dumpCmd.c_str(), "r");
+    if (!fp) {
+        LOGE("hidumper is failed");
+        return "";
+    }
+    while (fgets(tmp, sizeof(tmp), fp) != nullptr) {
+        std::string hidumperStr(tmp);
+        GetWinIdNum(hidumperStr, winId);
+    }
+    pclose(fp);
+    return winId;
+}
+
+void SPUtils::GetWinIdNum(std::string &hidumperStr, std::string &winId)
+{
+    if (hidumperStr.find("hw0") != std::string::npos) {
+        int inDex = 3;
+        std::istringstream iss(hidumperStr);
+        std::string token;
+        int count = 0;
+        while (iss >> token) {
+            if (count == inDex) {
+                winId = token;
+                break;
+            }
+            count++;
+        }
+    }
+}
+
+void SPUtils::EnDumpFun(const std::string &winId)
+{
+    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -b'";
+    std::string cmdResult = "";
+    LoadCmd(dumpCmd, cmdResult);
+}
+
+void SPUtils::OverDumpFun()
+{
+    std::string winId = GetWinId();
+    std::string cmdResult = "";
+    const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
+    LoadCmd(dumpCmd, cmdResult);
+}
 }
 }

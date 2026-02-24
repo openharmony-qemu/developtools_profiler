@@ -124,13 +124,12 @@ int DiskioDataPlugin::Stop()
 
 int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
 {
-    int fd = -1;
     ssize_t bytesRead = 0;
     char realPath[PATH_MAX + 1] = {0};
     CHECK_TRUE((fileName.length() < PATH_MAX) && (realpath(fileName.c_str(), realPath) != nullptr), RET_FAIL,
                "%s:path is invalid: %s, errno=%d", __func__, fileName.c_str(), errno);
-    fd = open(realPath, O_RDONLY | O_CLOEXEC);
-    if (fd == -1) {
+    FILE *fp = fopen(realPath, "rb");
+    if (fp == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to open(%s), errno=%d", __func__, fileName.c_str(), errno);
         err_ = errno;
         return RET_FAIL;
@@ -138,18 +137,20 @@ int32_t DiskioDataPlugin::ReadFile(std::string& fileName)
     if (buffer_ == nullptr) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:empty address, buffer_ is NULL", __func__);
         err_ = RET_NULL_ADDR;
-        close(fd);
+        fclose(fp);
         return RET_FAIL;
     }
-    bytesRead = read(fd, buffer_, READ_BUFFER_SIZE - 1);
+    bytesRead = fread(buffer_, sizeof(char), READ_BUFFER_SIZE - 1, fp);
     if (bytesRead <= 0) {
-        close(fd);
+        fclose(fp);
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to read(%s), errno=%d", __func__, fileName.c_str(), errno);
         err_ = errno;
         return RET_FAIL;
     }
-    close(fd);
 
+    if (fclose(fp) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to close(%s), errno=%d", __func__, fileName.c_str(), errno);
+    }
     return bytesRead;
 }
 

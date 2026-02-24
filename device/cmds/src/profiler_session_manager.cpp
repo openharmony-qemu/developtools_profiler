@@ -14,26 +14,34 @@
  */
 
 #include "profiler_session_manager.h"
-#include <arpa/inet.h>
-#include <ifaddrs.h>
-#include <cstring>
-#include <iostream>
-#include <thread>
-#include <chrono>
+#include "profiler_process_manager.h"
+#include "file_path_handler.h"
+#include "parse_plugin_config.h"
 #include <grpcpp/grpcpp.h>
 #include "common.h"
-#include "parse_plugin_config.h"
-#include "parameters.h"
+#include "logging.h"
+#include "google/protobuf/text_format.h"
+#include <arpa/inet.h>
+#include <ifaddrs.h>
+#include <netinet/in.h>
+#include <cstring>
+#include <future>
+
+using google::protobuf::TextFormat;
 
 namespace {
 constexpr int MS_PER_S = 1000;
-constexpr int DEFAULT_SESSION_TIME_S = 10;
 constexpr int KEEP_SESSION_TIMEOUT_MS = 5 * 1000;
+constexpr int KEEP_SESSION_TIMEOUT_LONG_MS = 3600 * 1000;
 constexpr int KEEP_SESSION_SLEEP_SECOND = 3;
-constexpr int ADDR_BUFFER_SIZE = 128;
+constexpr int DEFAULT_SESSION_TIME_S = 10;
+constexpr int MAX_LONG_RUNNING_DURATION_S = 3600;  // Maximum 1 hour
 constexpr uint32_t INT_MAX_LEN = 10;
-const std::string DEFAULT_OUTPUT_FILE = "/data/local/tmp/hiprofiler_data.htrace";
-const std::string DEFAULT_OUTPUT_ROOT = "/data/local/tmp/";
+constexpr int ADDR_BUFFER_SIZE = 128;
+constexpr int DOUBLE = 2;
+static uint32_t g_sampleDuration = 0;
+const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
+}
 
 std::string GetLoopbackAddress()
 {
@@ -45,7 +53,6 @@ std::string GetLoopbackAddress()
         printf("error: %s\n", COMMON::GetErrorMsg().c_str());
         return "";
     }
-    
     while (ifAddrStruct != nullptr) {
         if (ifAddrStruct->ifa_addr == nullptr) {
             ifAddrStruct = ifAddrStruct->ifa_next;
@@ -57,6 +64,9 @@ std::string GetLoopbackAddress()
             if (strcmp(addressBuffer, "127.0.0.1") == 0) {
                 break;
             }
+        } else if (ifAddrStruct->ifa_addr->sa_family == AF_INET6) {
+            tmpAddrPtr = &((reinterpret_cast<struct sockaddr_in*>(ifAddrStruct->ifa_addr))->sin_addr);
+            inet_ntop(AF_INET6, tmpAddrPtr, addressBuffer, INET6_ADDRSTRLEN);
         }
         ifAddrStruct = ifAddrStruct->ifa_next;
     }
@@ -64,8 +74,6 @@ std::string GetLoopbackAddress()
     freeifaddrs(ifAddrStruct);
     return addressBuffer;
 }
-
-}  // namespace
 
 ProfilerSessionManager& ProfilerSessionManager::GetInstance()
 {
@@ -80,17 +88,11 @@ ProfilerSessionManager::ProfilerSessionManager()
 
 ProfilerSessionManager::~ProfilerSessionManager()
 {
-    RequestExit();
     if (keepSessionThread_ && keepSessionThread_->joinable()) {
+        keepSessionRunning_ = false;
         keepSessionCv_.notify_one();
         keepSessionThread_->join();
     }
-}
-
-void ProfilerSessionManager::RequestExit()
-{
-    exitRequested_ = true;
-    sessionCv_.notify_one();
 }
 
 std::unique_ptr<IProfilerService::Stub> ProfilerSessionManager::GetProfilerServiceStub()
@@ -105,13 +107,10 @@ std::unique_ptr<IProfilerService::Stub> ProfilerSessionManager::GetProfilerServi
 }
 
 std::unique_ptr<CreateSessionRequest> ProfilerSessionManager::MakeCreateRequest(
-    const std::string& config,
-    const std::string& keepSecond,
-    const std::string& outputFile)
+    const std::string& config, const std::string& keepSecond, const std::string& outputFile)
 {
     auto request = std::make_unique<CreateSessionRequest>();
     std::string content = config;
-    
     if (content.empty()) {
         printf("config file empty!");
         return nullptr;
@@ -128,7 +127,6 @@ std::unique_ptr<CreateSessionRequest> ProfilerSessionManager::MakeCreateRequest(
     }
 
     request->set_request_id(1);
-    
     if (!keepSecond.empty() && keepSecond.size() < INT_MAX_LEN) {
         int ks = COMMON::IsNumeric(keepSecond) ? std::stoi(keepSecond) : 0;
         if (ks > 0) {
@@ -138,35 +136,39 @@ std::unique_ptr<CreateSessionRequest> ProfilerSessionManager::MakeCreateRequest(
         sessionConfig->set_sample_duration(DEFAULT_SESSION_TIME_S * MS_PER_S);
     }
 
-    if (!outputFile.empty()) {
-        sessionConfig->set_result_file(outputFile);
-    } else if (sessionConfig->result_file() == "") {
-        sessionConfig->set_result_file(DEFAULT_OUTPUT_FILE);
-    }
-
-    if (sessionConfig->result_file().substr(0, DEFAULT_OUTPUT_ROOT.size()) != DEFAULT_OUTPUT_ROOT) {
-        printf("Filepath unable to write! Please use /data/local/tmp/ at the beginning.\n");
+    // Use FilePathHandler to handle output file path
+    auto handler = FilePathHandlerFactory::CreateHandler();
+    if (!handler->HandleOutputFilePath(outputFile, sessionConfig)) {
         return nullptr;
     }
 
     printf("keepSecond: %us\n", sessionConfig->sample_duration() / MS_PER_S);
-
+    g_sampleDuration = sessionConfig->sample_duration();
     for (int i = 0; i < request->plugin_configs().size(); i++) {
         auto pluginConfig = request->mutable_plugin_configs(i);
         if (!ParsePluginConfig::GetInstance().SetSerializePluginsConfig(pluginConfig->name(), *pluginConfig)) {
             printf("set %s plugin config failed\n", pluginConfig->name().c_str());
             return nullptr;
         }
+        if (pluginConfig->name() == "hiperf-plugin") {
+            uint32_t perfTime = ParsePluginConfig::GetInstance().GetHiperfPluginDuration();
+            if (perfTime > 0 && perfTime * MS_PER_S > sessionConfig->sample_duration()) {
+                printf("hiperf-plugin duration must be less than sample duration\n");
+                return nullptr;
+            }
+        }
     }
-
+    content.clear();
+    if (!TextFormat::PrintToString(*request.get(), &content)) {
+        printf("config message format FAILED!\n");
+        return nullptr;
+    }
     return request;
 }
 
-uint32_t ProfilerSessionManager::CreateSession(
-    std::unique_ptr<IProfilerService::Stub>& profilerStub,
-    const std::string& config,
-    const std::string& keepSecond,
-    const std::string& outputFile)
+uint32_t ProfilerSessionManager::CreateSession(std::unique_ptr<IProfilerService::Stub>& profilerStub,
+                                               const std::string& config, const std::string& keepSecond,
+                                               const std::string& outputFile)
 {
     auto request = MakeCreateRequest(config, keepSecond, outputFile);
     if (!request) {
@@ -181,7 +183,6 @@ uint32_t ProfilerSessionManager::CreateSession(
         printf("CreateSession FAIL\n");
         return 0;
     }
-
     return createResponse.session_id();
 }
 
@@ -191,71 +192,67 @@ bool ProfilerSessionManager::StartSession(std::unique_ptr<IProfilerService::Stub
     StartSessionResponse startResponse;
     startRequest.set_request_id(0);
     startRequest.set_session_id(sessionId);
-    
     grpc::ClientContext startContext;
     grpc::Status status = profilerStub->StartSession(&startContext, startRequest, &startResponse);
-    
     if (!status.ok()) {
         printf("StartSession FAIL\n");
         return false;
     }
-
     return true;
 }
 
-bool ProfilerSessionManager::StopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId)
+bool ProfilerSessionManager::StopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub,
+                                         uint32_t sessionId, bool stopAll)
 {
     StopSessionRequest stopRequest;
     StopSessionResponse stopResponse;
     grpc::ClientContext stopContext;
-    
     stopRequest.set_session_id(sessionId);
+    if (stopAll) {
+        stopRequest.set_stop_all(true);
+    }
     grpc::Status status = profilerStub->StopSession(&stopContext, stopRequest, &stopResponse);
-    
     if (!status.ok()) {
         return false;
     }
-
     printf("StopSession done!\n");
     return true;
 }
 
-bool ProfilerSessionManager::DestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId)
+bool ProfilerSessionManager::DestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub,
+                                            uint32_t sessionId, bool destroyAll)
 {
     DestroySessionRequest destroyRequest;
     DestroySessionResponse destroyResponse;
     grpc::ClientContext destroyContext;
-    
+    if (destroyAll) {
+        destroyRequest.set_destroy_all(true);
+    }
     destroyRequest.set_session_id(sessionId);
     grpc::Status status = profilerStub->DestroySession(&destroyContext, destroyRequest, &destroyResponse);
-    
     if (!status.ok()) {
         return false;
     }
-
     printf("DestroySession done!\n");
     return true;
 }
 
 void ProfilerSessionManager::KeepSessionAlive(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId)
 {
-    while (keepSessionRunning_ && !exitRequested_) {
+    while (keepSessionRunning_.load()) {
         KeepSessionRequest keepRequest;
         keepRequest.set_request_id(0);
         keepRequest.set_session_id(sessionId);
         keepRequest.set_keep_alive_time(KEEP_SESSION_TIMEOUT_MS);
-        
         grpc::ClientContext keepContext;
         KeepSessionResponse keepResponse;
         profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
-
         std::unique_lock<std::mutex> lck(keepSessionMutex_);
         keepSessionCv_.wait_for(lck, std::chrono::seconds(KEEP_SESSION_SLEEP_SECOND));
     }
 }
 
-bool ProfilerSessionManager::Capture(const std::string& config, 
-                                     const std::string& durationSeconds,
+bool ProfilerSessionManager::Capture(const std::string& config, const std::string& durationSeconds,
                                      const std::string& outputFile)
 {
     auto profilerStub = GetProfilerServiceStub();
@@ -264,10 +261,10 @@ bool ProfilerSessionManager::Capture(const std::string& config,
         return false;
     }
 
-    if (exitRequested_) {
+    if (exitRequested_.load()) {
         return false;
     }
-    
+
     if (!COMMON::IsNumeric(durationSeconds)) {
         printf("please input a valid time value");
         return false;
@@ -279,45 +276,46 @@ bool ProfilerSessionManager::Capture(const std::string& config,
         return false;
     }
 
-    if (exitRequested_) {
-        DestroySession(profilerStub, sessionId);
-        return false;
+    if (exitRequested_.load()) {
+        return DestroySession(profilerStub, sessionId);
     }
 
+    // Start keep session thread
     keepSessionRunning_ = true;
     keepSessionThread_ = std::make_unique<std::thread>(
         &ProfilerSessionManager::KeepSessionAlive, this, std::ref(profilerStub), sessionId);
 
-    if (exitRequested_) {
+    if (exitRequested_.load()) {
         keepSessionRunning_ = false;
         keepSessionCv_.notify_one();
-        keepSessionThread_->join();
+        if (keepSessionThread_->joinable()) {
+            keepSessionThread_->join();
+        }
         return DestroySession(profilerStub, sessionId);
     }
 
     if (!StartSession(profilerStub, sessionId)) {
         keepSessionRunning_ = false;
         keepSessionCv_.notify_one();
-        keepSessionThread_->join();
+        if (keepSessionThread_->joinable()) {
+            keepSessionThread_->join();
+        }
         return false;
     }
+    printf("tracing %u ms....\n", g_sampleDuration);
+    std::cout.flush();
 
-    if (!exitRequested_) {
-        printf("tracing %s ms....\n", durationSeconds.c_str());
-        std::cout.flush();
-        
-        auto request = MakeCreateRequest(config, durationSeconds, outputFile);
-        uint32_t duration = request ? request->session_config().sample_duration() : DEFAULT_SESSION_TIME_S * MS_PER_S;
-        
-        std::unique_lock<std::mutex> lck(sessionMutex_);
-        sessionCv_.wait_for(lck, std::chrono::milliseconds(duration));
+    std::unique_lock<std::mutex> lck(sessionMutex_);
+    sessionCv_.wait_for(lck, std::chrono::milliseconds(g_sampleDuration));
+
+    bool ret = false;
+    if (StopSession(profilerStub, sessionId) && DestroySession(profilerStub, sessionId)) {
+        ret = true;
     }
-
-    bool ret = StopSession(profilerStub, sessionId) && DestroySession(profilerStub, sessionId);
 
     keepSessionRunning_ = false;
     keepSessionCv_.notify_one();
-    if (keepSessionThread_ && keepSessionThread_->joinable()) {
+    if (keepSessionThread_->joinable()) {
         keepSessionThread_->join();
     }
 
@@ -335,33 +333,30 @@ bool ProfilerSessionManager::GetCapabilities(std::string& capabilities, bool pri
     GetCapabilitiesRequest capRequest;
     GetCapabilitiesResponse capResponse;
     capRequest.set_request_id(0);
-    
     grpc::ClientContext capContext;
     grpc::Status status = profilerStub->GetCapabilities(&capContext, capRequest, &capResponse);
-    
     if (!status.ok()) {
         printf("Service not started\n");
         return false;
     }
 
-    if (!google::protobuf::TextFormat::PrintToString(capResponse, &capabilities)) {
+    if (!TextFormat::PrintToString(capResponse, &capabilities)) {
         printf("capabilities message format FAILED!\n");
         return false;
     }
 
-    if (!printResult) {
+    if (printResult) {
         printf("support plugin list:\n%s\n", capabilities.c_str());
     }
-    
     return true;
 }
 
-int ProfilerSessionManager::CheckServiceConnection()
+bool ProfilerSessionManager::CheckServiceConnection()
 {
     auto profilerStub = GetProfilerServiceStub();
     if (profilerStub == nullptr) {
         printf("Get profiler service stub failed!\n");
-        return -1;
+        return false;
     }
 
     GetCapabilitiesRequest request;
@@ -372,12 +367,143 @@ int ProfilerSessionManager::CheckServiceConnection()
     grpc::Status status = profilerStub->GetCapabilities(&context, request, &response);
     if (!status.ok()) {
         printf("Service not started\n");
-        return -1;
+        return false;
     }
 
     printf("OK\n");
     printf("ip:%s\n", GetLoopbackAddress().c_str());
     printf("port:%u\n", COMMON::GetServicePort());
-    return 0;
+    return true;
 }
 
+void ProfilerSessionManager::RequestExit()
+{
+    exitRequested_ = true;
+    std::async(&std::condition_variable::notify_one, &sessionCv_);
+}
+
+void CaptureChildProcessImpl()
+{
+    int profilerPid = 0;
+    bool profilerExit = false;
+    for (int i = 0; i < 720; ++i) { //720: loop times
+        if (profilerPid == 0 && (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, profilerPid))) {
+            profilerExit = true;
+            break;
+        } else if (profilerPid != 0 && (!COMMON::IsProcessExistByPid(profilerPid))) {
+            profilerExit = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); //5000: 5s
+    }
+    if (!profilerExit) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_MS * DOUBLE));
+        ProfilerProcessManager::GetInstance().KillDependentProcess();
+    }
+}
+
+uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
+                                                    const std::string& durationSeconds,
+                                                    const std::string& outputFile)
+{
+    auto profilerStub = GetProfilerServiceStub();
+    if (profilerStub == nullptr) {
+        printf("Get profiler service stub failed!\n");
+        return 0;
+    }
+    std::string cappedDuration = durationSeconds;
+    if (!durationSeconds.empty() && COMMON::IsNumeric(durationSeconds)) {
+        int duration = std::stoi(durationSeconds);
+        if (duration > MAX_LONG_RUNNING_DURATION_S) {
+            cappedDuration = std::to_string(MAX_LONG_RUNNING_DURATION_S);
+            printf("Duration capped at %d seconds\n", MAX_LONG_RUNNING_DURATION_S);
+        }
+    } else {
+        cappedDuration = std::to_string(MAX_LONG_RUNNING_DURATION_S);
+    }
+    uint32_t sessionId = CreateSession(profilerStub, config, cappedDuration, outputFile);
+    if (sessionId == 0) {
+        printf("Create session returns Id 0\n");
+        return 0;
+    }
+
+    KeepSessionRequest keepRequest;
+    keepRequest.set_request_id(0);
+    keepRequest.set_session_id(sessionId);
+    keepRequest.set_keep_alive_time(KEEP_SESSION_TIMEOUT_LONG_MS);
+    grpc::ClientContext keepContext;
+    KeepSessionResponse keepResponse;
+    profilerStub->KeepSession(&keepContext, keepRequest, &keepResponse);
+
+    if (!StartSession(profilerStub, sessionId)) {
+        keepSessionRunning_ = false;
+        keepSessionCv_.notify_one();
+        if (keepSessionThread_->joinable()) {
+            keepSessionThread_->join();
+        }
+        DestroySession(profilerStub, sessionId);
+        return 0;
+    }
+    pid_t pidval = fork();
+    if (pidval == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ProfilerSessionManager::CaptureLongRunning fork process failed");
+    } else if (pidval == 0) {
+        CaptureChildProcessImpl();
+        return UINT32_MAX;
+    }
+    return sessionId;
+}
+
+bool ProfilerSessionManager::StopSessionById(uint32_t sessionId)
+{
+    auto profilerStub = GetProfilerServiceStub();
+    if (profilerStub == nullptr) {
+        printf("Get profiler service stub failed!\n");
+        return false;
+    }
+
+    // Stop keep session thread
+    keepSessionRunning_ = false;
+    keepSessionCv_.notify_one();
+    if (keepSessionThread_ && keepSessionThread_->joinable()) {
+        keepSessionThread_->join();
+    }
+
+    // Notify waiting threads
+    sessionCv_.notify_all();
+
+    // Stop and destroy session
+    bool success = StopSession(profilerStub, sessionId) && DestroySession(profilerStub, sessionId);
+    if (success) {
+        printf("Session %u stopped successfully\n", sessionId);
+    } else {
+        printf("Failed to stop session %u\n", sessionId);
+    }
+    
+    return success;
+}
+
+bool ProfilerSessionManager::StopAllSessions()
+{
+    auto profilerStub = GetProfilerServiceStub();
+    if (profilerStub == nullptr) {
+        printf("Get profiler service stub failed!\n");
+        return false;
+    }
+    // Stop keep session thread
+    keepSessionRunning_ = false;
+    keepSessionCv_.notify_one();
+    if (keepSessionThread_ && keepSessionThread_->joinable()) {
+        keepSessionThread_->join();
+    }
+    // Notify waiting threads
+    sessionCv_.notify_all();
+    // Stop and destroy session
+    bool success = StopSession(profilerStub, 1, true) && DestroySession(profilerStub, 1, true);
+    if (success) {
+        printf("All sessions stopped successfully\n");
+    } else {
+        printf("Failed to stop all session\n");
+    }
+    return success;
+}

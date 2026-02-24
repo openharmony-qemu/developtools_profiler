@@ -25,13 +25,13 @@
 #include "hisysevent_plugin_config_standard.pb.h"
 #include "memory_plugin_common_standard.pb.h"
 #include "memory_plugin_config_standard.pb.h"
-#include "native_hook_config_standard.pb.h"
 #include "network_plugin_config_standard.pb.h"
 #include "process_plugin_config_standard.pb.h"
 #include "trace_plugin_config_standard.pb.h"
 #include "xpower_plugin_config_standard.pb.h"
 #include "ffrt_profiler_config_standard.pb.h"
 #include "network_profiler_config_standard.pb.h"
+#include "memory_trace.h"
 
 namespace {
 constexpr int REMAINDER = 2;
@@ -279,6 +279,24 @@ bool ParsePluginConfig::SetSerializeMemoryConfig(const std::string& pluginName, 
     return true;
 }
 
+bool ParsePluginConfig::CheckRestraceTag(std::unique_ptr<ForStandard::NativeHookConfig>& hookConfig)
+{
+    static std::vector<std::string> resTagVect = {
+        TAG_RES_FD_OPEN,         TAG_RES_FD_EPOLL,      TAG_RES_FD_EVENTFD,     TAG_RES_FD_SOCKET,
+        TAG_RES_FD_PIPE,         TAG_RES_FD_DUP,        TAG_RES_FD_ALL,         TAG_RES_THREAD_PTHREAD,
+        TAG_RES_THREAD_ALL,      TAG_RES_GPU_VK,        TAG_RES_GPU_GLES_IMAGE, TAG_RES_GPU_GLES_BUFFER,
+        TAG_RES_GPU_CL_IMAGE,    TAG_RES_GPU_CL_BUFFER, TAG_RES_GPU_ALL,        TAG_RES_DMABUF,
+        TAG_RES_ARKTS_HEAP_MASK, TAG_RES_JS_HEAP_MASK,  TAG_RES_KMP_HEAP_MASK,  TAG_RES_SO_MASK,
+        TAG_RES_ASHMEM_MASK,     TAG_RES_RN_HEAP_MASK,  TAG_RES_DMABUF_MASK,    TAG_RES_ARK_GLOBAL_HANDLE};
+    for (int i = 0; i < hookConfig->restrace_tag_size(); ++i) {
+        if (std::find(resTagVect.begin(), resTagVect.end(), hookConfig->restrace_tag(i)) == resTagVect.end()) {
+            printf("invalid restrace tag: %s\n", hookConfig->restrace_tag(i).c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
 bool ParsePluginConfig::SetSerializeHookConfig(const std::string& pluginName, ProfilerPluginConfig& pluginConfig)
 {
     std::string configData = pluginConfigMap[pluginName];
@@ -287,7 +305,9 @@ bool ParsePluginConfig::SetSerializeHookConfig(const std::string& pluginName, Pr
         printf("nativedaemon parse failed!\n");
         return false;
     }
-
+    if (!CheckRestraceTag(hookConfigNolite)) {
+        return false;
+    }
     std::vector<uint8_t> configDataVec(hookConfigNolite->ByteSizeLong());
     if (hookConfigNolite->SerializeToArray(configDataVec.data(), configDataVec.size()) <= 0) {
         printf("nativedaemon serialize failed!\n");

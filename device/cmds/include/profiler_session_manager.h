@@ -32,10 +32,14 @@ public:
     ProfilerSessionManager& operator=(const ProfilerSessionManager&) = delete;
 
     bool Capture(const std::string& config, const std::string& durationSeconds, const std::string& outputFile);
+    uint32_t CaptureLongRunning(const std::string& config, const std::string& durationSeconds,
+                                const std::string& outputFile);
+    bool StopSessionById(uint32_t sessionId);
+    bool StopAllSessions();
 
     bool GetCapabilities(std::string& capabilities, bool printResult = false);
 
-    int CheckServiceConnection();
+    bool CheckServiceConnection();
 
     void RequestExit();
 
@@ -56,8 +60,10 @@ private:
                            const std::string& config, const std::string& keepSecond,
                            const std::string& outputFile);
     bool StartSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId);
-    bool StopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId);
-    bool DestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId);
+    bool StopSession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId,
+                     bool stopAll = false);
+    bool DestroySession(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId,
+                        bool destroyAll = false);
     std::unique_ptr<IProfilerService::Stub> GetProfilerServiceStub();
 
     void KeepSessionAlive(std::unique_ptr<IProfilerService::Stub>& profilerStub, uint32_t sessionId);

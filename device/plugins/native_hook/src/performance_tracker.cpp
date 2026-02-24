@@ -30,14 +30,10 @@ std::atomic<uint64_t> PerformanceTracker::mallocRecordTimes_ = 0;
 std::atomic<uint64_t> PerformanceTracker::timeCost_ = 0;
 std::atomic<uint64_t> PerformanceTracker::dataCounts_ = 0;
 std::atomic<uint64_t> PerformanceTracker::mallocSize_ = 0;
-std::map<OperatType, uint64_t> PerformanceTracker::mallocCountMap_;
-std::mutex g_mutex;
 
 PerformanceTracker::PerformanceTracker(OperatType type)
 {
     RefreshStartTime();
-    std::unique_lock<std::mutex> lock(g_mutex);
-    mallocCountMap_[type]++;
 }
 
 PerformanceTracker::~PerformanceTracker()
@@ -45,7 +41,8 @@ PerformanceTracker::~PerformanceTracker()
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
 
-    uint64_t elapsed = (end.tv_sec - start_.tv_sec) * S_TO_NS + (end.tv_nsec - start_.tv_nsec);
+    uint64_t elapsed = static_cast<uint64_t>(end.tv_sec - start_.tv_sec) * S_TO_NS +
+        static_cast<uint64_t>(end.tv_nsec - start_.tv_nsec);
     timeCost_.fetch_add(elapsed);
     mallocTimes_++;
 }
@@ -69,8 +66,6 @@ void PerformanceTracker::ResetPerfInfo()
     mallocSize_ = 0;
     timeCost_ = 0;
     dataCounts_ = 0;
-    std::unique_lock<std::mutex> lock(g_mutex);
-    mallocCountMap_.clear();
 }
 
 void PerformanceTracker::PrintResult()
@@ -84,10 +79,6 @@ void PerformanceTracker::PrintResult()
         " cost time: %" PRIu64" copy data bytes: %" PRIu64" mean cost: %" PRIu64"\n",
         mallocTimes_.load(), mallocRecordTimes_.load(), mallocSize_.load(),
         timeCost_.load(), dataCounts_.load(), timeCost_.load() / mallocTimes_.load());
-    std::unique_lock<std::mutex> lock(g_mutex);
-    for (const auto& [key, value] : PerformanceTracker::mallocCountMap_) {
-        PROFILER_LOG_ERROR(LOG_CORE, "%hhu: %" PRIu64 "\n", key, value);
-    }
 }
 
 #endif  // PERFORMANCE_DEBUG

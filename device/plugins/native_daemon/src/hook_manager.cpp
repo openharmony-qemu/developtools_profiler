@@ -46,11 +46,15 @@ const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
+constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
+#ifndef __aarch64__
+constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
+#endif
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
@@ -161,6 +165,10 @@ void HookManager::SetCommandPoller(const std::shared_ptr<CommandPoller>& p)
 
 bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 {
+    if (pluginPath.empty()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "RegisterPlugin Path is empty");
+        return false;
+    }
     RegisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_path(pluginPath);
@@ -188,6 +196,10 @@ bool HookManager::RegisterAgentPlugin(const std::string& pluginPath)
 
 bool HookManager::UnregisterAgentPlugin(const std::string& pluginPath)
 {
+    if (pluginPath.empty()) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "UnregisterPlugin Path is empty");
+        return false;
+    }
     UnregisterPluginRequest request;
     request.set_request_id(commandPoller_->GetRequestId());
     request.set_plugin_id(agentIndex_);
@@ -222,7 +234,7 @@ unsigned long long HookManager::ConvertTagToMask()
 {
     unsigned long long resMask = 0;
     if (hookConfig_.restrace_tag().size() > 0) {
-        for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
+        for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
             std::string resTag = hookConfig_.restrace_tag(i);
             if (resTag == TAG_RES_GPU_VK) {
                 resMask |= RES_GPU_VK;
@@ -277,8 +289,8 @@ unsigned long long HookManager::ConvertTagToMask()
 uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
 {
     constexpr uint64_t ALL_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
-        ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+        ASYNC_TYPE_ARKTS_TASKPOOL | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
     uint64_t mask = baseMask;
     for (const auto value : hookConfig_.async_type()) {
         switch (value) {
@@ -305,6 +317,12 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
                 break;
             case AsyncFlagType::ARKTS_TASKPOOL:
                 mask |= ASYNC_TYPE_ARKTS_TASKPOOL;
+                break;
+            case AsyncFlagType::ARKWEB_ENGINE:
+                mask |= ASYNC_TYPE_ARKWEB;
+                break;
+            case AsyncFlagType::JSVM_ASYNC:
+                mask |= ASYNC_TYPE_JSVM;
                 break;
             case AsyncFlagType::ALL_ASYNC_TYPE:
                 mask |= ALL_TYPE;
@@ -338,6 +356,12 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
+#ifndef __aarch64__
+    if (static_cast<int>(clientConfig.shareMemorySize) < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "GetClientConfig shareMemorySize is too large.");
+        clientConfig.shareMemorySize = MAX_MAP_BUFFER_SIZE / sharedMemCount / PAGE_BYTES * PAGE_BYTES;
+    }
+#endif
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -352,11 +376,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
     clientConfig.asyncFlag = asyncFlagMask_;
-    if (saMode_) {
-        clientConfig.traceMask = traceMask_;
-    } else {
-        clientConfig.traceMask = ConvertTagToMask();
-    }
+    clientConfig.traceMask = saMode_ ? traceMask_ : ConvertTagToMask();
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();
     clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
@@ -389,7 +409,12 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
-
+#ifndef __aarch64__
+    if (static_cast<int>(bufferSize) < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "HandleHookContext bufferSize is too large.");
+        bufferSize = MAX_MAP_BUFFER_SIZE / sharedMemCount / PAGE_BYTES * PAGE_BYTES;
+    }
+#endif
     for (int i = 0; i < sharedMemCount; ++i) {
         std::string smbName = "";
         if (ctx->pid > 0) {
@@ -432,6 +457,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             return false;
         }
         auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        if (table == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext new UniqueStackTable failed.");
+            return false;
+        }
         // Use faultloggerd to record sync/async stack info.
         table->SwitchExternalBuffer(memoryBase, UNIQUE_STACK_TABLE_SIZE);
     }
@@ -798,9 +827,16 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if ((item->pid > 0) && hookService_) {
-            hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
-            hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
+        if (item->pid > 0) {
+            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
+                const int bufSize = 256;
+                char buf[bufSize] = {0};
+                strerror_r(errno, buf, bufSize);
+            }
+            if (hookService_) {
+                hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
+                hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
+            }
         } else if (item->pid <= 0) {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }

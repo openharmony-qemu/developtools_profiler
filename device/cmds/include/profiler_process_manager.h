@@ -22,7 +22,6 @@ public:
 
     ProfilerProcessManager(const ProfilerProcessManager&) = delete;
     ProfilerProcessManager& operator=(const ProfilerProcessManager&) = delete;
-
     bool StartDependentProcess();
     void KillDependentProcess();
 
