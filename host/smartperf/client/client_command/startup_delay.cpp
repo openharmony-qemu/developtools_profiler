@@ -160,7 +160,6 @@ void StartUpDelay::ClearOldServer() const
         if (resultLine.empty() || resultLine.find("sh -c") != std::string::npos) {
             continue;
         }
-
         std::istringstream lineStream(resultLine);
         std::string token;
 
@@ -171,7 +170,6 @@ void StartUpDelay::ClearOldServer() const
             }
             count++;
         }
-
         if (token != curPid) {
             SPUtils::LoadCmd(killCmd + token, killResult);
             LOGD("Find old server: %s, killed.", token.c_str());

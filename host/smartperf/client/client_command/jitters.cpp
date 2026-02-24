@@ -96,7 +96,7 @@ JittersInfo Jitters::GetJittersByDump(const std::string& name)
     jittersInfo = tmpFps;
     bool isBreak = false;
     std::string commond = "fps " + name;
-    std::string cmd = "hidumper -s 10 -a \"" + commond + "\"";
+    const std::string cmd = "hidumper -s 10 -a \"" + commond + "\"";
     FILE *fp = popen(cmd.c_str(), "r");
     if (fp == nullptr) {
         LOGE("Failed to open hidumper file");

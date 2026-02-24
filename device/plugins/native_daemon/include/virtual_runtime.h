@@ -152,7 +152,7 @@ public:
         std::vector<std::pair<std::string, SMOMapsInfo>> pending;
         {
             std::unique_lock<std::shared_mutex> lk(g_smoMapsLock);
- 
+
             for (auto& [path, entry] : g_smoMaps) {
                 if (!entry.initialized || entry.sent) continue;
                 pending.emplace_back(path, entry.info);
@@ -160,33 +160,33 @@ public:
         }
         for (auto& p : pending) {
             const auto& info = p.second;
- 
+
             auto event = stackData.add_events();
             auto* smo = event->mutable_smo_map();
- 
+
             smo->set_file_path(info.file_path());
- 
+
             for (int i = 0; i < info.map_entries_size(); i++) {
                 const auto& src = info.map_entries(i);
                 auto* dst = smo->add_map_entries();
- 
+
                 dst->set_start_addr(src.start_addr());
                 dst->set_end_addr(src.end_addr());
                 dst->set_so_index(src.so_index());
             }
- 
+
             for (int i = 0; i < info.id_tlb_entries_size(); i++) {
                 const auto& src = info.id_tlb_entries(i);
                 auto* dst = smo->add_id_tlb_entries();
- 
+
                 dst->set_so_index(src.so_index());
                 dst->set_name(src.name());
             }
         }
- 
+
         {
             std::unique_lock<std::shared_mutex> lk(g_smoMapsLock);
- 
+
             for (auto& p : pending) {
                 const std::string& path = p.first;
                 auto it = g_smoMaps.find(path);
@@ -254,6 +254,7 @@ private:
     void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
 
     std::string ReadThreadName(pid_t tid);
+
     VirtualThread &CreateThread(pid_t pid, pid_t tid);
 
     const DfxSymbol GetKernelSymbol(uint64_t ip, const std::vector<std::shared_ptr<DfxMap>> &maps,

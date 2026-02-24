@@ -84,9 +84,7 @@ ohos_source_set("native_hook_source") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-
     external_deps += [ "faultloggerd:libasync_stack" ]
-
   }
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
   part_name = "${OHOS_PROFILER_PART_NAME}"
@@ -140,9 +138,7 @@ ohos_shared_library("native_hook") {
   deps = [ ":native_hook_source" ]
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
-
     external_deps = [ "faultloggerd:libasync_stack" ]
-
   }
   version_script = "libnative_hook.map"
   install_enable = true
@@ -269,6 +265,7 @@ ohos_executable("hook_restrace_test") {
   sources = [ "test/hook_restrace_test.cpp" ]
   include_dirs = [
     "include",
+    "../api/include",
     "${OHOS_PROFILER_DIR}/interfaces/kits",
     "${OHOS_PROFILER_DIR}/device/base/include",
   ]
@@ -302,7 +299,6 @@ ohos_executable("arkui_test") {
     ]
     external_deps = [
       "bounds_checking_function:libsec_shared",
-      "hilog:libhilog_base",
       "protobuf:protobuf_lite",
     ]
   }

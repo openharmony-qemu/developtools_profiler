@@ -223,6 +223,8 @@ int ProfilerCommandExecutor::HandleStartCommand(const ProfilerCommandArgs& args,
     if (sessionId == 0) {
         printf("Failed to start profiling session\n");
         return -1;
+    } else if (sessionId == UINT32_MAX) {
+        return -1;
     }
 
     printf("Profiling started with session ID: %u\n", sessionId);

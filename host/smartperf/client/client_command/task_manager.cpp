@@ -45,6 +45,7 @@
 #include <filesystem>
 #include "include/sdk_data_recv.h"
 #include "include/jitters.h"
+#include "include/shader.h"
 
 namespace {
 OHOS::SmartPerf::TaskManager* g_mgr = nullptr;
@@ -521,6 +522,7 @@ void TaskManager::GetProcessInfo(CommandType type, const ArgumentParser::ArgValu
     FileDescriptor::GetInstance().SetProcessId(processIds_);
     FileDescriptor::GetInstance().SetPackageName(processName_);
     Hiperf::GetInstance().SetProcessId(processIds_);
+    Shader::GetInstance().SetPkgName(processName_);
 }
 
 void TaskManager::RegisterThreadLocal(ThreadLocal* local)
@@ -619,7 +621,6 @@ void TaskManager::SetRecordState(bool record)
 {
     if (record) {
         LOGD("Start saving data regularly");
-        currentTimePoint_ = std::chrono::steady_clock::now();
         recordData_ = true;
         StartSaveFileThread();
     } else {
@@ -686,5 +687,12 @@ ArgumentParser& TaskManager::GetArgumentParser()
 void TaskManager::SetFileTitleFlag()
 {
     firstSetTitle_ = true;
+}
+
+void TaskManager::ClearShaderFile()
+{
+    const std::string cmdRmShaderFile = CMD_COMMAND_MAP.at(CmdCommand::REMOVE) + "/data/local/tmp/" + processName_;
+    std::string cmdResult = "";
+    SPUtils::LoadCmd(cmdRmShaderFile, cmdResult);
 }
 }

@@ -245,9 +245,10 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
 int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig)
 {
     CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
-    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start invalid pid with MemSaConfig");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
+ 
     config->pid_ = static_cast<int32_t>(pid);
     config->duration_ = duration;
     config->statisticsInterval_ = FIVE_MINUTES;
