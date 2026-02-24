@@ -71,8 +71,8 @@ HWTEST_F(HidebugNativeInterfaceTest, GetRssInfoTest, TestSize.Level0)
     auto& interface = HidebugNativeInterface::GetInstance();
     auto rssInfo = interface.GetRssInfo();
     ASSERT_TRUE(rssInfo.has_value());
-    ASSERT_GE(rssInfo.rss, 0);
-    ASSERT_GE(rssInfo.swapRss, 0);
+    ASSERT_GE(rssInfo->rss, 0);
+    ASSERT_GE(rssInfo->swapRss, 0);
 }
 
 #ifdef __aarch64__
