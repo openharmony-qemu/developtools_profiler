@@ -349,17 +349,9 @@ bool GetRssInfo(RssInfo& rssInfo)
     while (getline(file, key, ':')) {
         file >> std::ws;
         if (key == "VmRSS") {
-            if (!(file >> rss)) {
-                HILOG_ERROR(LOG_CORE, "Failed to parse VmRSS value");
-                file.close();
-                return false;
-            }
+            file >> rss;
         } else if (key == "VmSwap") {
-            if (!(file >> swapRss)) {
-                HILOG_ERROR(LOG_CORE, "Failed to parse VmSwap value");
-                file.close();
-                return false;
-            }
+            file >> swapRss;
         }
         file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
