@@ -1097,10 +1097,10 @@ describe("HidebugJsTest", function () {
         }
     })
     /**
-         * @tc.name: HidebugJsTest_049
-         * @tc.desc: getRssInfo()的正常测试
-         * @tc.type: FUNC
-         */
+     * @tc.name: HidebugJsTest_049
+     * @tc.desc: getRssInfo()的正常测试
+     * @tc.type: FUNC
+     */
     it('HidebugJsTest_049', 0, function () {
         console.info("---------------------------HidebugJsTest_049----------------------------------");
         try {
