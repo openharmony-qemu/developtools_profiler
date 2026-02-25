@@ -183,7 +183,7 @@ void MallocRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookI
 {
     std::visit([this, &hookInfo](auto protoData) {
         auto allocEvent = protoData->mutable_alloc_event();
-        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+        if (hookInfo.nodeType != 0 || hookInfo.nodeId != 0) {
             allocEvent->set_node_type(hookInfo.nodeType);
             allocEvent->set_node_id(hookInfo.nodeId);
         }
@@ -199,7 +199,7 @@ void MmapRecord::SerializeData(NativeHookProto stackData, SerializeInfo& hookInf
         if (hookInfo.tagName != "") {
             mmapEvent->set_type(hookInfo.tagName);
         }
-        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+        if (hookInfo.nodeType != 0 || hookInfo.nodeId != 0) {
             mmapEvent->set_node_type(hookInfo.nodeType);
             mmapEvent->set_node_id(hookInfo.nodeId);
         }
@@ -215,7 +215,7 @@ void MmapFilePageRecord::SerializeData(NativeHookProto stackData, SerializeInfo&
         if (hookInfo.tagName != "") {
             mmapEvent->set_type(MMAP_FILE_PAGE_PREFIX + hookInfo.tagName);
         }
-        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+        if (hookInfo.nodeType != 0 || hookInfo.nodeId != 0) {
             mmapEvent->set_node_type(hookInfo.nodeType);
             mmapEvent->set_node_id(hookInfo.nodeId);
         }
@@ -252,7 +252,7 @@ void MemoryUsingRecord::SerializeData(NativeHookProto stackData, SerializeInfo& 
         if (hookInfo.tagName != "") {
             traceAllocEvent->set_tag_name(hookInfo.tagName);
         }
-        if (hookInfo.nodeType != 0 && hookInfo.nodeId != 0) {
+        if (hookInfo.nodeType != 0 || hookInfo.nodeId != 0) {
             traceAllocEvent->set_node_type(hookInfo.nodeType);
             traceAllocEvent->set_node_id(hookInfo.nodeId);
         }
