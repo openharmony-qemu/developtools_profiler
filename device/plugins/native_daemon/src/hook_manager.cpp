@@ -46,7 +46,6 @@ const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
-constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
@@ -827,16 +826,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if (item->pid > 0) {
-            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
-                const int bufSize = 256;
-                char buf[bufSize] = {0};
-                strerror_r(errno, buf, bufSize);
-            }
-            if (hookService_) {
-                hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
-                hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
-            }
+        if ((item->pid > 0) && hookService_) {
+            hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
+            hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
         } else if (item->pid <= 0) {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
