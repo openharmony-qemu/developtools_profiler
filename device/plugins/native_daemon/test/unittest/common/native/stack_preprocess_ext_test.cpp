@@ -95,7 +95,7 @@ void StackPreprocessExtTest::TearDown(void)
 HWTEST_F(StackPreprocessExtTest, StartTakeResultsTest, TestSize.Level0)
 {
     NativeHookConfig hookConfig; 
-    constexpr int TEST_MAX_SIZE = 1024; 
+    constexpr int TEST_MAX_SIZE = 1024;
     StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE); 
     
     auto preprocess = std::make_shared<StackPreprocess>(stackDataRepeater, hookConfig, 0); 
@@ -132,12 +132,12 @@ HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0)
 */
 HWTEST_F(StackPreprocessExtTest, ForceStopTest, TestSize.Level0)
 {
-    NativeHookConfig hookConfig; 
+    NativeHookConfig hookConfig;
     constexpr int TEST_MAX_SIZE = 1024;
-    StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE); 
+    StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE);
     
-    auto preprocess = std::make_shared<StackPreprocess>(stackDataRepeater, hookConfig, 0); 
-    preprocess->StartTakeResults(); 
+    auto preprocess = std::make_shared<StackPreprocess>(stackDataRepeater, hookConfig, 0);
+    preprocess->StartTakeResults();
     EXPECT_FALSE(preprocess->isStartTakeData_.load());
     
     preprocess->ForceStop();
