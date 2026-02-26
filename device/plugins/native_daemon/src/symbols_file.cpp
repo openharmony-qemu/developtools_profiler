@@ -755,21 +755,22 @@ public:
         }
         if (StringEndsWith(filePath_, ".hap") || StringEndsWith(filePath_, ".hsp")
             || StringEndsWith(filePath_, ".hqf") || StringEndsWith(filePath_, ".abc")) {
-            dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
-            if (dfxExtractor_ == nullptr) {
-                HLOGD("DfxExtractor create failed.");
-                return false;
-            }
-            // extract the bytecode information of the ark in the hap package
-            if (!dfxExtractor_->GetHapAbcInfo(loadOffSet_, abcDataPtr_, abcDataSize_)) {
-                HLOGD("failed to call GetHapAbcInfo, the symbol file is:%s", filePath_.c_str());
-                return false;
-            }
-            HLOGD("loadOffSet %u", (uint32_t)loadOffSet_);
-            if (abcDataPtr_ != nullptr) {
-                isHapAbc_ = true;
-                HLOGD("input abcDataPtr : %s, isAbc: %d", abcDataPtr_.get(), isHapAbc_);
-            }
+            // dfxExtractor_ = std::make_unique<DfxExtractor>(filePath_);
+            // if (dfxExtractor_ == nullptr) {
+            //     HLOGD("DfxExtractor create failed.");
+            //     return false;
+            // }
+            // // extract the bytecode information of the ark in the hap package
+            // if (!dfxExtractor_->GetHapAbcInfo(loadOffSet_, abcDataPtr_, abcDataSize_)) {
+            //     HLOGD("failed to call GetHapAbcInfo, the symbol file is:%s", filePath_.c_str());
+            //     return false;
+            // }
+            // HLOGD("loadOffSet %u", (uint32_t)loadOffSet_);
+            // if (abcDataPtr_ != nullptr) {
+            //     isHapAbc_ = true;
+            //     HLOGD("input abcDataPtr : %s, isAbc: %d", abcDataPtr_.get(), isHapAbc_);
+            // }
+            isHapAbc_ = true;
         } else {
             if (map_ == nullptr) {
                 return false;
