@@ -36,7 +36,8 @@ constexpr uint32_t TEST_NODE_TYPE = 1;
 constexpr uint64_t TEST_NODE_ID = 100;
 const std::string TEST_TAG_NAME = "test_tag";
 
-static RawStackPtr MakeRawStack(uint16_t type, uint64_t addr, uint32_t size) {
+static RawStackPtr MakeRawStack(uint16_t type, uint64_t addr, uint32_t size)
+{
     auto raw = RawStackPtr(new RawStack(), [](RawStack* p) {
         if (p != nullptr) {
             delete p->stackContext;
@@ -56,7 +57,8 @@ static RawStackPtr MakeRawStack(uint16_t type, uint64_t addr, uint32_t size) {
     return raw;
 }
 
-static std::vector<CallFrame> MakeCallFrames() {
+static std::vector<CallFrame> MakeCallFrames()
+{
     std::vector<CallFrame> frames;
     CallFrame frame(1);
     frame.ip_ = 0x1000;
@@ -82,19 +84,23 @@ protected:
     NativeHookConfig hookConfig_;
 };
 
-void HookRecordExtTest::SetUpTestCase(void) {
+void HookRecordExtTest::SetUpTestCase(void)
+{
 }
 
-void HookRecordExtTest::TearDownTestCase(void) {
+void HookRecordExtTest::TearDownTestCase(void)
+{
 }
 
-void HookRecordExtTest::SetUp() {
+void HookRecordExtTest::SetUp()
+{
     hookConfig_.set_fp_unwind(false);
     hookConfig_.set_callframe_compress(false);
     hookConfig_.set_offline_symbolization(false);
 }
 
-void HookRecordExtTest::TearDown() {
+void HookRecordExtTest::TearDown()
+{
 }
 
 /*
@@ -102,7 +108,8 @@ void HookRecordExtTest::TearDown() {
 @tc.desc: test basic methods of HookRecord class.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, HookRecordBasicTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, HookRecordBasicTest, TestSize.Level0)
+{
     // Test with valid raw stack
     RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
     HookRecord hookRecord(rawStack);
@@ -128,7 +135,8 @@ HWTEST_F(HookRecordExtTest, HookRecordBasicTest, TestSize.Level0) {
 @tc.desc: test HookRecord class with invalid raw stack.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, HookRecordInvalidTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, HookRecordInvalidTest, TestSize.Level0)
+{
     // Test with null raw stack
     HookRecord hookRecord;
     
@@ -150,7 +158,8 @@ HWTEST_F(HookRecordExtTest, HookRecordInvalidTest, TestSize.Level0) {
 @tc.desc: test FreeRecordSimp class.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, FreeRecordSimpTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, FreeRecordSimpTest, TestSize.Level0)
+{
     // Test with valid address
     FreeRecordSimp freeRecord(TEST_ADDR);
     
@@ -178,7 +187,8 @@ HWTEST_F(HookRecordExtTest, FreeRecordSimpTest, TestSize.Level0) {
 @tc.desc: test HookRecord::SetEventFrame method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
     HookRecord hookRecord(rawStack);
@@ -225,7 +235,8 @@ HWTEST_F(HookRecordExtTest, HookRecordSetEventFrameTest, TestSize.Level0) {
 @tc.desc: test HookRecord::SetFrameInfo method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(TEST_TYPE, TEST_ADDR, TEST_SIZE);
     HookRecord hookRecord(rawStack);
@@ -266,7 +277,8 @@ HWTEST_F(HookRecordExtTest, HookRecordSetFrameInfoTest, TestSize.Level0) {
 @tc.desc: test HookRecord::SetTraceType method with different tag names.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, HookRecordSetTraceTypeTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, HookRecordSetTraceTypeTest, TestSize.Level0)
+{
     // Test with GPU VK tag
     NativeHookData event1;
     auto traceEvent1 = event1.mutable_trace_alloc_event();
@@ -309,7 +321,8 @@ HWTEST_F(HookRecordExtTest, HookRecordSetTraceTypeTest, TestSize.Level0) {
 @tc.desc: test FreeRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, FreeRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, FreeRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(FREE_MSG, TEST_ADDR, TEST_SIZE);
     FreeRecord freeRecord(rawStack);
@@ -340,7 +353,8 @@ HWTEST_F(HookRecordExtTest, FreeRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test MallocRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MallocRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MallocRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MALLOC_MSG, TEST_ADDR, TEST_SIZE);
     MallocRecord mallocRecord(rawStack);
@@ -374,7 +388,8 @@ HWTEST_F(HookRecordExtTest, MallocRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test MmapRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MmapRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MmapRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MMAP_MSG, TEST_ADDR, TEST_SIZE);
     MmapRecord mmapRecord(rawStack);
@@ -409,7 +424,8 @@ HWTEST_F(HookRecordExtTest, MmapRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test MmapFilePageRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MmapFilePageRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MmapFilePageRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MMAP_FILE_PAGE_MSG, TEST_ADDR, TEST_SIZE);
     MmapFilePageRecord mmapFilePageRecord(rawStack);
@@ -444,7 +460,8 @@ HWTEST_F(HookRecordExtTest, MmapFilePageRecordSerializeDataTest, TestSize.Level0
 @tc.desc: test MunmapRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MunmapRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MunmapRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MUNMAP_MSG, TEST_ADDR, TEST_SIZE);
     MunmapRecord munmapRecord(rawStack);
@@ -476,7 +493,8 @@ HWTEST_F(HookRecordExtTest, MunmapRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test PrSetVmaRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, PrSetVmaRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, PrSetVmaRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(PR_SET_VMA_MSG, TEST_ADDR, TEST_SIZE);
     const char* vmaTag = "test_vma_tag";
@@ -511,7 +529,8 @@ HWTEST_F(HookRecordExtTest, PrSetVmaRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test MemoryUsingRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MemoryUsingRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MemoryUsingRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MEMORY_USING_MSG, TEST_ADDR, TEST_SIZE);
     MemoryUsingRecord memoryUsingRecord(rawStack);
@@ -546,7 +565,8 @@ HWTEST_F(HookRecordExtTest, MemoryUsingRecordSerializeDataTest, TestSize.Level0)
 @tc.desc: test MemoryUnusingRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, MemoryUnusingRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, MemoryUnusingRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MEMORY_UNUSING_MSG, TEST_ADDR, TEST_SIZE);
     MemoryUnusingRecord memoryUnusingRecord(rawStack);
@@ -578,7 +598,8 @@ HWTEST_F(HookRecordExtTest, MemoryUnusingRecordSerializeDataTest, TestSize.Level
 @tc.desc: test ArktsFreeRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, ArktsFreeRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, ArktsFreeRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(FREE_ARKTS, TEST_ADDR, TEST_SIZE);
     ArktsFreeRecord arktsFreeRecord(rawStack);
@@ -610,7 +631,8 @@ HWTEST_F(HookRecordExtTest, ArktsFreeRecordSerializeDataTest, TestSize.Level0) {
 @tc.desc: test ArktsMallocRecord::SerializeData method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, ArktsMallocRecordSerializeDataTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, ArktsMallocRecordSerializeDataTest, TestSize.Level0)
+{
     // Create test data
     RawStackPtr rawStack = MakeRawStack(MALLOC_ARKTS, TEST_ADDR, TEST_SIZE);
     rawStack->stackContext->newAddr = reinterpret_cast<void*>(TEST_ADDR + TEST_SIZE);
@@ -644,7 +666,8 @@ HWTEST_F(HookRecordExtTest, ArktsMallocRecordSerializeDataTest, TestSize.Level0)
 @tc.desc: test RawStack::Reset method.
 @tc.type: FUNC
 */
-HWTEST_F(HookRecordExtTest, RawStackResetTest, TestSize.Level0) {
+HWTEST_F(HookRecordExtTest, RawStackResetTest, TestSize.Level0)
+{
     // Create and initialize raw stack
     RawStack rawStack;
     rawStack.stackContext = new BaseStackRawData();
