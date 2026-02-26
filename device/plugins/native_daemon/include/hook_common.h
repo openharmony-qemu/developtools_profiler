@@ -35,7 +35,9 @@ constexpr int STACK_DATA_SIZE = 400000;
 constexpr int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
 constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
-constexpr static uint32_t UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
+constexpr static uint32_t DEFAULT_UNIQUE_STACK_TABLE_SIZE = 64 * 1024 * 1024;
+constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
+constexpr static uint32_t UNIQUE_STACK_TABLE_SIZE = DEFAULT_UNIQUE_STACK_TABLE_SIZE;
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
@@ -202,6 +204,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         shareMemorySize = 0;
         clockId = CLOCK_REALTIME;
         maxStackDepth = 0;
+        uniqueStackTableSize = DEFAULT_UNIQUE_STACK_TABLE_SIZE;
         statisticsInterval = 0;
         sampleInterval = 0;
         mallocDisable = false;
@@ -241,6 +244,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", asyncStackEnable:" << asyncStackEnable << ", asyncFlag:" << asyncFlag
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
+            << ", uniqueStackTableSize: " << uniqueStackTableSize
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
@@ -263,6 +267,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
 
     int32_t filterSize = -1;
     uint32_t shareMemorySize = 0;
+    uint32_t uniqueStackTableSize = DEFAULT_UNIQUE_STACK_TABLE_SIZE;
     uint32_t sampleInterval = 0;
     uint32_t statisticsInterval = 0;
     clockid_t clockId = CLOCK_REALTIME;

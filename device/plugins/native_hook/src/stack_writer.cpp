@@ -16,6 +16,7 @@
 #include <cinttypes>
 #include <unistd.h>
 #include "async_stack.h"
+#include "hook_common.h"
 #include "logging.h"
 #include "share_memory_allocator.h"
 #include "stack_writer.h"
@@ -23,7 +24,6 @@
 namespace {
     const int WAIT_TIMEOUT_SA = 3000000;
     const int FLUSH_FLAG = 20;
-    const uint32_t UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
 }
 StackWriter::StackWriter(std::string name,
                          uint32_t size,
@@ -34,8 +34,13 @@ StackWriter::StackWriter(std::string name,
     : pluginName_(name), blocked_(blocked)
 {
     if (name == "unique_stack_table") {
+        uint32_t tableSize = size == 0 ?
+            OHOS::Developtools::NativeDaemon::DEFAULT_UNIQUE_STACK_TABLE_SIZE : size;
+        if (tableSize > OHOS::Developtools::NativeDaemon::MAX_UNIQUE_STACK_TABLE_SIZE) {
+            tableSize = OHOS::Developtools::NativeDaemon::MAX_UNIQUE_STACK_TABLE_SIZE;
+        }
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name,
-            UNIQUE_STACK_TABLE_SIZE, smbFd);
+            tableSize, smbFd);
         if (shareMemoryBlock_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "StackWriter CreateMemoryBlockRemote failed");
         } else {
@@ -43,7 +48,7 @@ StackWriter::StackWriter(std::string name,
             if (memoryPoint == nullptr) {
                 PROFILER_LOG_ERROR(LOG_CORE, "StackWriter GetMMapBase failed");
             } else {
-                DfxInitProfilerAsyncStack(memoryPoint, UNIQUE_STACK_TABLE_SIZE);
+                DfxInitProfilerAsyncStack(memoryPoint, tableSize);
             }
         }
         eventNotifier_ = nullptr;

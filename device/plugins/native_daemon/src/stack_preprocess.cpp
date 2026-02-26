@@ -1140,6 +1140,8 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     // statistical reporting must is compressed and accurate.
     auto rawStack = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
+    const bool isMmap = (type == MMAP_MSG || type == MMAP_FILE_PAGE_MSG || type == MUNMAP_MSG ||
+        type == PR_SET_VMA_MSG);
     if (hookConfig_.statistics_interval() > 0) {
         switch (type) {
             case FREE_MSG:
@@ -1164,7 +1166,10 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
                 break;
             }
         }
-        return;
+        // return;
+        if (!isMmap) {
+            return;
+        }
     }
 
     uint32_t stackMapId = 0;

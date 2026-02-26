@@ -17,6 +17,7 @@
 #define NATIVE_MEMORY_PROFILER_SA_CONFIG_H
 
 #include "parcel.h"
+#include "hook_common.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -76,6 +77,7 @@ public:
     uint32_t largestSize_{0};
     uint32_t secondLargestSize_{0};
     uint32_t maxGrowthSize_{0};
+    uint32_t uniqueStackTableSize_{DEFAULT_UNIQUE_STACK_TABLE_SIZE};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H
