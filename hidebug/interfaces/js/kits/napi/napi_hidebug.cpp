@@ -1085,7 +1085,7 @@ napi_value GetRssInfo(napi_env env, napi_callback_info info)
     ApiInvokeRecorder apiInvokeRecorder("getRssInfo");
     auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
     if (!rssInfoOption) {
-        rssInfoOption.emplace(0, 0);
+        rssInfoOption.emplace();
     }
     napi_value rssInfo = nullptr;
     napi_create_object(env, &rssInfo);
