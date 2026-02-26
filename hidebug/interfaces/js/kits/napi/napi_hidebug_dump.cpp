@@ -55,6 +55,9 @@ constexpr auto DUMP_MAX_COUNT = "persist.hiview.hidebugdump.maxcount";
 constexpr auto PROCESS_DUMP_MAX_COUNT = "persist.hiview.hidebugdump.process.maxcount";
 constexpr auto QUOTA_VALUE_LENGTH = 256;
 constexpr int ONE_VALUE_LIMIT = 1;
+constexpr int TWO_VALUE_LIMIT = 2;
+constexpr int FIRST_PARAM_POS = 0;
+constexpr int SECOND_PARAM_POS = 1;
 constexpr int64_t MS_TO_NS = 1000 * 1000;
 constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
 std::atomic<int> g_dumpingCount{0};
@@ -220,7 +223,7 @@ std::string GenerateDumpFile(int64_t currentTime)
 }
 }
 
-napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env)
+napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env, bool needClean)
 {
     std::string filesDir = GetProcessDir(DirectoryType::FILE);
     if (filesDir.empty()) {
@@ -234,38 +237,78 @@ napi_value DumpHeapSnapshot(const std::string& fileName, napi_env env)
         return CreateErrorMessage(env, "file created failed.");
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
-    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true);
+    engine->DumpHeapSnapshot(filePath, true, DumpFormat::JSON, false, true, false, needClean);
     return CreateUndefined(env);
+}
+
+bool GetDumpHeapParams(napi_env env, napi_callback_info info, std::string& fileName, bool& needClean, std::string msg)
+{
+    size_t argc = TWO_VALUE_LIMIT;
+    napi_value argv[TWO_VALUE_LIMIT] = {nullptr};
+    napi_value thisVar = nullptr;
+    void *data = nullptr;
+    napi_get_cb_info(env, info, &argc, argv, &thisVar, &data);
+    if (argc < ONE_VALUE_LIMIT || argc > TWO_VALUE_LIMIT) {
+        msg = "Invalid parameter(s), please provide one parameter of type string.";
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+        return false;
+    }
+    constexpr int paramLen = 128;
+    if (argc == ONE_VALUE_LIMIT && !GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen)) {
+        msg = "Invalid parameter(s), the first parameter must be of type string.";
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+        return false;
+    }
+    if (argc == TWO_VALUE_LIMIT && !GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen)
+        && !GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean)) {
+        msg = "Invalid parameter(s), the second parameter must be of type bool.";
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+        return false;
+    }
+    return true;
 }
 
 napi_value DumpHeapData(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpHeapData");
     std::string fileName = GetFileNameParam(env, info);
-    return DumpHeapSnapshot(fileName, env);
+    return DumpHeapSnapshot(fileName, env, false);
 }
 
 napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
 {
     ApiInvokeRecorder apiInvokeRecorder("dumpJsHeapData");
     std::string fileName;
-    if (!GetTheOnlyStringParam(env, info, fileName)) {
-        std::string paramErrorMessage = "Invalid parameter, require a string parameter.";
-        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), paramErrorMessage.c_str());
+    bool needClean = false;
+    std::string msg;
+    if (!GetDumpHeapParams(env, info, fileName, needClean, msg)) {
+        napi_throw_error(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(), msg.c_str());
         return CreateUndefined(env);
     }
-    return DumpHeapSnapshot(fileName, env);
+    return DumpHeapSnapshot(fileName, env, needClean);
 }
 
-int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc)
+int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc,
+                               bool& needClean)
 {
-    size_t argc = ONE_VALUE_LIMIT;  // expected param length.
-    napi_value argv = nullptr;
-    napi_get_cb_info(env, info, &argc, &argv, nullptr, nullptr);
+    size_t argc = TWO_VALUE_LIMIT;  // expected param length.
+    napi_value argv[TWO_VALUE_LIMIT] = {nullptr};
+
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
     if (g_dumpingCount.fetch_add(1) != 0) {
         return DumpRawHeapErrors::REPEAT_DUMPING;
     }
-    if (argc > ONE_VALUE_LIMIT  || (argc > 0 && !GetNapiBoolValue(env, argv, isGc))) {
+    if (argc > TWO_VALUE_LIMIT) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+        return ErrorCode::PARAMETER_ERROR;
+    }
+    if (argc == ONE_VALUE_LIMIT && !GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require first param of type bool!", __func__, argc);
+        return ErrorCode::PARAMETER_ERROR;
+    }
+    if (argc == TWO_VALUE_LIMIT && !GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc) &&
+        !GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require second param of type bool!", __func__, argc);
         return ErrorCode::PARAMETER_ERROR;
     }
     if (!CheckDumpDiskSpace()) {
@@ -343,7 +386,8 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     napi_create_promise(env, &deferred, &promise);
     bool isGc = true;
     std::string fileName;
-    int32_t errCode = GetDumpJsRawHeapParams(env, info, fileName, isGc);
+    bool needClean = false;
+    int32_t errCode = GetDumpJsRawHeapParams(env, info, fileName, isGc, needClean);
     napi_value err = ResolveErrorCode(env, errCode);
     if (err != nullptr) {
         g_dumpingCount.fetch_sub(1);
@@ -365,7 +409,7 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
                 ResolveDumpJsRawHeapData(env, deferred, fileName);
             }
         }, napi_eprio_high);
-    });
+    }, needClean);
     return promise;
 }
 }
