@@ -718,7 +718,7 @@ ani_object GetRssInfoAdapter(ani_env *env)
     ApiInvokeRecorder apiInvokeRecorder("getRssInfoAdapter");
     auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
     if (!rssInfoOption) {
-        rssInfoOption.emplace();
+        rssInfoOption.emplace(0, 0);
     }
 
     ani_class cls = nullptr;
