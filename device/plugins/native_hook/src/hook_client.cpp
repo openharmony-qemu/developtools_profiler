@@ -506,7 +506,7 @@ static void inline __attribute__((always_inline)) AddAllocAddr(void* pRet)
     }
 }
 
-void* __attribute__((noinline)) hook_malloc(void* (*fn)(size_t), size_t size)
+extern "C" __attribute__((visibility("default"), used)) void* hook_malloc(void* (*fn)(size_t), size_t size)
 {
     void* ret = fn ? fn(size) : nullptr;
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
@@ -554,7 +554,8 @@ void* __attribute__((noinline)) hook_malloc(void* (*fn)(size_t), size_t size)
     return ret;
 }
 
-void* __attribute__((noinline)) hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len)
+extern "C" __attribute__((visibility("default"), used)) void* hook_aligned_alloc(
+    void* (*fn)(size_t, size_t), size_t align, size_t len)
 {
     void* ret = fn ? fn(align, len) : nullptr;
 
@@ -777,7 +778,7 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
     return;
 }
 
-void __attribute__((noinline)) hook_free(void (*free_func)(void*), void* p)
+extern "C" __attribute__((visibility("default"), used)) void hook_free(void (*free_func)(void*), void* p)
 {
     if (g_clientConfig.statisticsInterval > 0) {
         return HookFreeStatisticsInterval(free_func, p);
