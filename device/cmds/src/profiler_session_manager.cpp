@@ -449,6 +449,7 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
         PROFILER_LOG_ERROR(LOG_CORE, "ProfilerSessionManager::CaptureLongRunning fork process failed");
     } else if (pidval == 0) {
         CaptureChildProcessImpl();
+        return UINT32_MAX;
     }
     return sessionId;
 }

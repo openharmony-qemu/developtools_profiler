@@ -38,6 +38,7 @@ private:
     void ExecuteProfilerCapture(const ProfilerCommandArgs& args, const std::string& config);
     int HandleStartCommand(const ProfilerCommandArgs& args, const std::string& config);
     void HandleStopCommand();
+    void ChildProcessCapture(const ProfilerCommandArgs& args, const std::string& config);
 };
 
 #endif // PROFILER_COMMAND_EXECUTOR_H

@@ -21,12 +21,10 @@
 #include <cstring>
 #include <memory>
 
-// Constants
 const std::string SandboxFilePathHandler::SANDBOX_PATH_ROOT("/storage/Users/currentUser/");
 const std::string NormalFilePathHandler::DEFAULT_OUTPUT_FILE("/data/local/tmp/hiprofiler_data.htrace");
 const std::string NormalFilePathHandler::DEFAULT_OUTPUT_ROOT("/data/local/tmp/");
 
-// SandboxFilePathHandler implementation
 SandboxFilePathHandler::SandboxFilePathHandler()
 {
 }

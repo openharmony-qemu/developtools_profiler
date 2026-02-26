@@ -21,8 +21,8 @@ namespace OHOS::Developtools::NativeDaemon {
 
 static bool WriteGpuRange(Parcel& parcel, const std::vector<std::vector<uint64_t>>& gpuRange)
 {
-    for (size_t i = 0; i < gpuRange.size(); ++i) {
-        for (size_t j = 0; j < gpuRange[i].size(); ++j) {
+    for (size_t i = 0; i < gpuRange.size(); i++) {
+        for (size_t j = 0; j < gpuRange[i].size(); j++) {
             WRITEUINT64(parcel, gpuRange[i][j]);
         }
     }
@@ -32,14 +32,14 @@ static bool WriteGpuRange(Parcel& parcel, const std::vector<std::vector<uint64_t
 static bool ReadGpuRange(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config)
 {
     std::vector<std::vector<uint64_t>> gpuRange;
-    for (size_t i = 0; i < GPU_TYPE_SIZE; ++i) {
-        std::vector<uint64_t> rangeVec;
-        for (size_t j = 0; j < GPU_RANGE_SIZE * 2; ++j) { //2: double
-            uint64_t readVal = 0;
-            READUINT64(parcel, readVal);
-            rangeVec.push_back(readVal);
+    for (size_t i = 0; i < GPU_TYPE_SIZE; i++) {
+        std::vector<uint64_t> vec;
+        for (size_t j = 0; j < GPU_RANGE_SIZE * 2; j++) { // 2: the count of array
+            uint64_t val = 0;
+            READUINT64(parcel, val);
+            vec.push_back(val);
         }
-        gpuRange.push_back(rangeVec);
+        gpuRange.push_back(vec);
     }
     std::swap(config->gpuRange_, gpuRange);
     return true;
@@ -159,8 +159,9 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         "fpUnwind: %d, blocked: %d, recordAccurately: %d",
         config->mallocFreeMatchingInterval_, config->mallocFreeMatchingCnt_, config->stringCompressed_,
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
-    PROFILER_LOG_DEBUG(LOG_CORE,
-        "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, offlineSymbolization: %d, callframeCompress: %d," \
+    PROFILER_LOG_DEBUG(
+        LOG_CORE,
+        "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, offlineSymbolization: %d, callframeCompress: %d,"
         "statisticsInterval: %d, clockId: %d, targetSoName: %s",
         config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_, config->offlineSymbolization_,
         config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());

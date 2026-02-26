@@ -233,7 +233,7 @@ unsigned long long HookManager::ConvertTagToMask()
 {
     unsigned long long resMask = 0;
     if (hookConfig_.restrace_tag().size() > 0) {
-        for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
+        for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
             std::string resTag = hookConfig_.restrace_tag(i);
             if (resTag == TAG_RES_GPU_VK) {
                 resMask |= RES_GPU_VK;

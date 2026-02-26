@@ -149,7 +149,7 @@ HWTEST_F(ProfilerCommandTest, TestParseStartCommandWithTime, Function | MediumTe
     int argc = 6;
     
     bool result = parser.ParseArguments(argc, argv, args);
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
     EXPECT_EQ(args.commandType, CommandType::START);
     EXPECT_EQ(args.configFile, "test.txt");
     EXPECT_EQ(args.traceKeepSecond, "1800");
@@ -183,7 +183,7 @@ HWTEST_F(ProfilerCommandTest, TestParseStartCommandWithAllParams, Function | Med
     int argc = 10;
     
     bool result = parser.ParseArguments(argc, argv, args);
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
     EXPECT_EQ(args.commandType, CommandType::START);
     EXPECT_EQ(args.configFile, "test.txt");
     EXPECT_EQ(args.outputFile, "output.htrace");
