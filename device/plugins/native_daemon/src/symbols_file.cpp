@@ -856,28 +856,28 @@ public:
             // symbolization based on ark bytecode
             if (StringEndsWith(map->name, ".hap") || StringEndsWith(map->name, ".hsp")
                 || StringEndsWith(map->name, ".hqf") || StringEndsWith(map->name, ".abc")) {
-                auto ret = DfxArk::Instance().ParseArkFileInfo(static_cast<uintptr_t>(ip), static_cast<uintptr_t>(map->begin),
-                                                               static_cast<uintptr_t>(map->offset), filePath_.c_str(), arkExtractorptr_,
-                                                               &jsFunc);
+                auto ret = DfxArk::Instance().ParseArkFileInfo(static_cast<uintptr_t>(ip),
+                                                               static_cast<uintptr_t>(map->begin),
+                                                               static_cast<uintptr_t>(map->offset), filePath_.c_str(),
+                                                               arkExtractorptr_, &jsFunc);
                 if (ret == -1) {
                     HLOGD("failed to call ParseArkFileInfo, the symbol file is : %s", map->name.c_str());
                     return DfxSymbol(ip, "");
                 }
             } else {
-                auto ret = DfxArk::Instance().ParseArkFrameInfo(static_cast<uintptr_t>(ip), static_cast<uintptr_t>(map->begin),
-                                                                loadOffSet_, abcDataPtr_.get(), abcDataSize_, arkExtractorptr_,
-                                                                &jsFunc);
+                auto ret = DfxArk::Instance().ParseArkFrameInfo(static_cast<uintptr_t>(ip),
+                                                                static_cast<uintptr_t>(map->begin),
+                                                                loadOffSet_, abcDataPtr_.get(), abcDataSize_,
+                                                                arkExtractorptr_, &jsFunc);
                 if (ret == -1) {
                     HLOGD("failed to call ParseArkFrameInfo, the symbol file is : %s", map->name.c_str());
                     return DfxSymbol(ip, "");
                 }
             }
+
             this->symbolsMap_.insert(std::make_pair(ip,
-                                                    DfxSymbol(ip,
-                                                    jsFunc.codeBegin,
-                                                    jsFunc.functionName,
-                                                    jsFunc.ToString(),
-                                                    map->name)));
+                                                    DfxSymbol(ip, jsFunc.codeBegin, jsFunc.functionName,
+                                                    jsFunc.ToString(), map->name)));
 
             DfxSymbol &foundSymbol = symbolsMap_[ip];
             if (!foundSymbol.matched_) {
