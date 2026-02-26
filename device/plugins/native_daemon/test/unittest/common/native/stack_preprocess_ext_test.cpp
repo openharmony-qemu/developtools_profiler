@@ -28,7 +28,8 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 
 namespace {
-static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tagId) {
+static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tagId)
+{
     // RawStack owns a raw pointer stackContext; install a deleter so UTs don't leak.
     auto raw = RawStackPtr(new RawStack(), [](RawStack* p) {
         if (p != nullptr) {
@@ -47,7 +48,8 @@ static RawStackPtr MakeRawStack(uint32_t nodeType, uint64_t nodeId, uint32_t tag
     return raw;
 }
 
-static std::vector<CallFrame> MakeFrames(uint64_t callFrameId) {
+static std::vector<CallFrame> MakeFrames(uint64_t callFrameId) 
+{
     std::vector<CallFrame> frames;
     CallFrame frame(callFrameId);
     frame.callFrameId_ = static_cast<uint32_t>(callFrameId);
@@ -67,17 +69,21 @@ public:
     void TearDown();
 };
 
-void StackPreprocessExtTest::SetUpTestCase(void) {
+void StackPreprocessExtTest::SetUpTestCase(void) 
+{
 }
 
-void StackPreprocessExtTest::TearDownTestCase(void) {
+void StackPreprocessExtTest::TearDownTestCase(void) 
+{
 }
 
-void StackPreprocessExtTest::SetUp(void) {
+void StackPreprocessExtTest::SetUp(void)
+{
     StackPreprocess::ClearThreadLocalVariables();
 }
 
-void StackPreprocessExtTest::TearDown(void) {
+void StackPreprocessExtTest::TearDown(void)
+{
     StackPreprocess::ClearThreadLocalVariables();
 }
 
@@ -86,7 +92,8 @@ void StackPreprocessExtTest::TearDown(void) {
 @tc.desc: test StartTakeResults method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, StartTakeResultsTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, StartTakeResultsTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig; 
     constexpr int TEST_MAX_SIZE = 1024; 
     StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE); 
@@ -103,7 +110,8 @@ HWTEST_F(StackPreprocessExtTest, StartTakeResultsTest, TestSize.Level0) {
 @tc.desc: test StopTakeResults method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig; 
     constexpr int TEST_MAX_SIZE = 1024; 
     StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE); 
@@ -122,7 +130,8 @@ HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0) {
 @tc.desc: test ForceStop method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ForceStopTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ForceStopTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig; 
     constexpr int TEST_MAX_SIZE = 1024; 
     StackDataRepeaterPtr stackDataRepeater = std::make_shared<StackDataRepeater>(TEST_MAX_SIZE); 
@@ -140,7 +149,8 @@ HWTEST_F(StackPreprocessExtTest, ForceStopTest, TestSize.Level0) {
 @tc.desc: test SetFlushSize method with different sizes.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, SetFlushSizeTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, SetFlushSizeTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -162,7 +172,8 @@ HWTEST_F(StackPreprocessExtTest, SetFlushSizeTest, TestSize.Level0) {
 @tc.desc: test SetNmdFd method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, SetNmdFdTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, SetNmdFdTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -176,7 +187,8 @@ HWTEST_F(StackPreprocessExtTest, SetNmdFdTest, TestSize.Level0) {
 @tc.desc: test SaveMemTag and GetMemTag methods with different tag IDs.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, SaveMemTagAndGetMemTagTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, SaveMemTagAndGetMemTagTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -203,7 +215,8 @@ HWTEST_F(StackPreprocessExtTest, SaveMemTagAndGetMemTagTest, TestSize.Level0) {
 @tc.desc: test SaveJsRawStack and GetJsRawStack methods.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, SaveJsRawStackAndGetJsRawStackTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, SaveJsRawStackAndGetJsRawStackTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -227,7 +240,8 @@ HWTEST_F(StackPreprocessExtTest, SaveJsRawStackAndGetJsRawStackTest, TestSize.Le
 @tc.desc: test InitStatisticsTime method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, InitStatisticsTimeTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, InitStatisticsTimeTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -242,7 +256,8 @@ HWTEST_F(StackPreprocessExtTest, InitStatisticsTimeTest, TestSize.Level0) {
 @tc.desc: test WriteHookConfig method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, WriteHookConfigTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, WriteHookConfigTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     hookConfig.set_fp_unwind(true);
     hookConfig.set_statistics_interval(10);
@@ -260,7 +275,8 @@ HWTEST_F(StackPreprocessExtTest, WriteHookConfigTest, TestSize.Level0) {
 @tc.desc: test FinishTraceFile method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, FinishTraceFileTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, FinishTraceFileTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -275,7 +291,8 @@ HWTEST_F(StackPreprocessExtTest, FinishTraceFileTest, TestSize.Level0) {
 @tc.desc: test FlushRecordStatistics method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -290,7 +307,8 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordStatisticsTest, TestSize.Level0) {
 @tc.desc: test FlushRecordApplyAndReleaseMatchData method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -305,7 +323,8 @@ HWTEST_F(StackPreprocessExtTest, FlushRecordApplyAndReleaseMatchDataTest, TestSi
 @tc.desc: test InitializeGpuData method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, InitializeGpuDataTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, InitializeGpuDataTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -320,7 +339,8 @@ HWTEST_F(StackPreprocessExtTest, InitializeGpuDataTest, TestSize.Level0) {
 @tc.desc: test ReportOfflineSymbolizationData method with different configurations.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ReportOfflineSymbolizationDataTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ReportOfflineSymbolizationDataTest, TestSize.Level0)
+{
     // Test with offline symbolization enabled
     NativeHookConfig hookConfig1;
     hookConfig1.set_offline_symbolization(true);
@@ -345,7 +365,8 @@ HWTEST_F(StackPreprocessExtTest, ReportOfflineSymbolizationDataTest, TestSize.Le
 @tc.desc: test ProcessMemoryTag method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ProcessMemoryTagTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ProcessMemoryTagTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -366,7 +387,8 @@ HWTEST_F(StackPreprocessExtTest, ProcessMemoryTagTest, TestSize.Level0) {
 @tc.desc: test ProcessNmdMsg method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ProcessNmdMsgTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ProcessNmdMsgTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -386,7 +408,8 @@ HWTEST_F(StackPreprocessExtTest, ProcessNmdMsgTest, TestSize.Level0) {
 @tc.desc: test ProcessEndMsg method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ProcessEndMsgTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ProcessEndMsgTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -401,7 +424,8 @@ HWTEST_F(StackPreprocessExtTest, ProcessEndMsgTest, TestSize.Level0) {
 @tc.desc: test ProcessAddressData method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, ProcessAddressDataTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, ProcessAddressDataTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -419,7 +443,8 @@ HWTEST_F(StackPreprocessExtTest, ProcessAddressDataTest, TestSize.Level0) {
 @tc.desc: test SetMapsInfo method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, SetMapsInfoTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, SetMapsInfoTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -434,7 +459,8 @@ HWTEST_F(StackPreprocessExtTest, SetMapsInfoTest, TestSize.Level0) {
 @tc.desc: test BuildCallFrames method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
@@ -457,7 +483,8 @@ HWTEST_F(StackPreprocessExtTest, BuildCallFramesTest, TestSize.Level0) {
 @tc.desc: test InitializeDirector method.
 @tc.type: FUNC
 */
-HWTEST_F(StackPreprocessExtTest, InitializeDirectorTest, TestSize.Level0) {
+HWTEST_F(StackPreprocessExtTest, InitializeDirectorTest, TestSize.Level0)
+{
     NativeHookConfig hookConfig;
     StackPreprocess preprocess(nullptr, hookConfig, 0);
     
