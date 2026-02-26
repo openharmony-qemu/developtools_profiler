@@ -333,13 +333,13 @@ std::optional<GraphicsMemorySummary> HidebugNativeInterfaceImpl::GetGraphicsMemo
 
 std::optional<RssInfo> HidebugNativeInterfaceImpl::GetRssInfo()
 {
-    RssInfo RssInfo{};
-    bool ret = OHOS::HiviewDFX::GetRssInfo(RssInfo);
+    RssInfo rssInfo{};
+    bool ret = OHOS::HiviewDFX::GetRssInfo(rssInfo);
     if (!ret) {
         HILOG_ERROR(LOG_CORE, "GetRssInfo failed");
         return {};
     }
-    return RssInfo;
+    return rssInfo;
 }
 }
 }
