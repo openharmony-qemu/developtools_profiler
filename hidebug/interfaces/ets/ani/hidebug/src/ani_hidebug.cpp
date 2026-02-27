@@ -718,7 +718,10 @@ ani_object GetRssInfoAdapter(ani_env *env)
     ApiInvokeRecorder apiInvokeRecorder("getRssInfoAdapter");
     auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
     if (!rssInfoOption) {
-        rssInfoOption.emplace();
+        constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+        AniUtil::ThrowErrorMessage(env, errMsg, ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return AniUtil::CreateUndefined(env);
     }
 
     ani_class cls = nullptr;
