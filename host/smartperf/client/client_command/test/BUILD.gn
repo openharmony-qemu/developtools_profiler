@@ -54,7 +54,7 @@ ohos_unittest("sp_daemon_ut") {
     "../parse_radar.cpp",
     "../parse_slide_fps_trace.cpp",
     "../sdk_data_recv.cpp",
-    "../service_plugin.cpp",	 
+    "../service_plugin.cpp",
     "../shader.cpp",
     "../sp_log.cpp",
     "../sp_profiler_factory.cpp",

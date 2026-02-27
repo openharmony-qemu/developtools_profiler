@@ -371,4 +371,3 @@ HWTEST_F(SPdaemonHeartbeatTest, GetInstanceTest003, TestSize.Level1)
 }
 }
 }
-}

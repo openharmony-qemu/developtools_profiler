@@ -71,7 +71,7 @@ HWTEST_F(SPdaemonGpuTest, SetRkFlagTest001, TestSize.Level1)
  */
 HWTEST_F(SPdaemonGpuTest, ItemDataTest001, TestSize.Level1)
 {
-    GPU &gpu = = GPU::GetInstance();
+    GPU &gpu = GPU::GetInstance();
     
     auto result = gpu.ItemData();
     
@@ -335,8 +335,6 @@ HWTEST_F(SPdaemonGpuTest, ItemDataTest009, TestSize.Level1)
 {
     GPU &gpu = GPU::GetInstance();
     
-    int freq = gpu.GetGpuFreq();
-    float load = gpu.GetGpuLoad();
     auto result = gpu.ItemData();
     
     EXPECT_FALSE(result.empty());
@@ -353,8 +351,6 @@ HWTEST_F(SPdaemonGpuTest, ItemDataTest010, TestSize.Level1)
     GPU &gpu = GPU::GetInstance();
     gpu.SetRkFlag();
     
-    int32_t freq = gpu.GetRkGpuFreq();
-    float load = gpu.GetRkGpuLoad();
     auto result = gpu.ItemData();
     
     EXPECT_FALSE(result.empty());
@@ -431,7 +427,6 @@ HWTEST_F(SPdaemonGpuTest, ItemDataTest011, TestSize.Level1)
     auto result2 = gpu.ItemData();
     
     EXPECT_EQ(result1.size(), result2.size());
-}
 }
 }
 }
