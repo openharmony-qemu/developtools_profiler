@@ -222,8 +222,6 @@ private:
     template <typename T>
     void FillCallStack(std::vector<CallFrame>& callFrames, size_t idx, T& stackData);
     template <typename T>
-    bool EnsureStackDataWritable(T& stackData);
-    template <typename T>
     uint32_t SetCallStackMap(T& stackData, const HookRecordPtr& hookRecord);
     template <typename T>
     uint32_t GetCallStackId(const HookRecordPtr& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
