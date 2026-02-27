@@ -1085,7 +1085,10 @@ napi_value GetRssInfo(napi_env env, napi_callback_info info)
     ApiInvokeRecorder apiInvokeRecorder("getRssInfo");
     auto rssInfoOption = HidebugNativeInterface::GetInstance().GetRssInfo();
     if (!rssInfoOption) {
-        rssInfoOption.emplace();
+        constexpr const char* errMsg = "Failed to get the application memory due to a remote exception";
+        napi_throw_error(env, std::to_string(ErrorCode::SYSTEM_STATUS_ABNORMAL).c_str(), errMsg);
+        apiInvokeRecorder.SetErrorCode(ErrorCode::SYSTEM_STATUS_ABNORMAL);
+        return CreateUndefined(env);
     }
     napi_value rssInfo = nullptr;
     napi_create_object(env, &rssInfo);
