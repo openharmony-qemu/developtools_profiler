@@ -51,6 +51,7 @@ public:
     virtual bool IsDebuggerConnected() = 0;
     virtual std::optional<int32_t> GetGraphicsMemory() = 0;
     virtual std::optional<GraphicsMemorySummary> GetGraphicsMemorySummary(uint32_t interval) = 0;
+    virtual std::optional<RssInfo> GetRssInfo() = 0;
 };
 }
 }

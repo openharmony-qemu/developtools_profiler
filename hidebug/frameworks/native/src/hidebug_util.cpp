@@ -335,5 +335,31 @@ bool GetMemInfo(NativeMemInfo& nativeMemInfo)
     nativeMemInfo.pss += tmpSwapPss;
     return true;
 }
+
+bool GetRssInfo(RssInfo& rssInfo)
+{
+    std::ifstream file("/proc/self/status");
+    if (!file.is_open()) {
+        HILOG_ERROR(LOG_CORE, ":: open status file failed!");
+        return false;
+    }
+    uint32_t rss = 0;
+    uint32_t swapRss = 0;
+    std::string key;
+    while (getline(file, key, ':')) {
+        file >> std::ws;
+        if (key == "VmRSS") {
+            file >> rss;
+        } else if (key == "VmSwap") {
+            file >> swapRss;
+        }
+        file.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    }
+
+    rssInfo.rss = rss;
+    rssInfo.swapRss = swapRss;
+    file.close();
+    return true;
+}
 }
 }

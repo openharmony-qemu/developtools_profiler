@@ -117,6 +117,7 @@ public:
     bool IsDebuggerConnected() override;
     std::optional<int32_t> GetGraphicsMemory() override;
     std::optional<GraphicsMemorySummary> GetGraphicsMemorySummary(uint32_t interval) override;
+    std::optional<RssInfo> GetRssInfo() override;
 private:
     static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
 };
@@ -328,6 +329,17 @@ std::optional<GraphicsMemorySummary> HidebugNativeInterfaceImpl::GetGraphicsMemo
         return ret.second;
     }
     return {};
+}
+
+std::optional<RssInfo> HidebugNativeInterfaceImpl::GetRssInfo()
+{
+    RssInfo rssInfo{};
+    bool ret = OHOS::HiviewDFX::GetRssInfo(rssInfo);
+    if (!ret) {
+        HILOG_ERROR(LOG_CORE, "GetRssInfo failed");
+        return {};
+    }
+    return rssInfo;
 }
 }
 }
