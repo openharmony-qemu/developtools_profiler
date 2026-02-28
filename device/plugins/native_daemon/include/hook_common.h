@@ -37,7 +37,6 @@ constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
 constexpr static uint32_t DEFAULT_UNIQUE_STACK_TABLE_SIZE = 64 * 1024 * 1024;
 constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
-constexpr static uint32_t UNIQUE_STACK_TABLE_SIZE = DEFAULT_UNIQUE_STACK_TABLE_SIZE;
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
