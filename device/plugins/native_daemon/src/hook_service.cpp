@@ -78,7 +78,16 @@ void HookService::CloseSocketFd(pid_t pid)
 
 bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
-    if (size != sizeof(int) || hookMgr_ == nullptr) {
+    if (hookMgr_ == nullptr) {
+        return false;
+    }
+    if (size != sizeof(int)) {
+        std::string path = hookMgr_->GetArktsDiagPath(buf, size);
+        if (path.size() > 0) {
+            context.SendHookConfig(reinterpret_cast<const uint8_t *>(path.c_str()), path.size());
+            PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc, receive message does not from hook client, just return");
+        }
+
         return false;
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));

@@ -44,6 +44,8 @@ constexpr uint32_t PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
+const std::string PRELOAD_NAME = "hiviewdfx.hiprofiler.preload";
+const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.diag.path";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
 constexpr int SIGNAL_STOP_HOOK = 37;
@@ -280,6 +282,8 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_SO_MASK;
             } else if (resTag == TAG_RES_ASHMEM_MASK) {
                 resMask |= RES_ASHMEM_MASK;
+            } else if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
+                resMask |= RES_ARK_LOCAL_HANDLE;
             }
         }
     }
@@ -350,6 +354,71 @@ void HookManager::UpdateAsyncFlagConfig()
     }
     PROFILER_LOG_WARN(LOG_CORE, "async_flag final mask: 0x%llx",
         static_cast<unsigned long long>(asyncFlagMask_));
+}
+
+static std::string GetArktsDiagPathFromParam()
+{
+    uint32_t len = 0;
+    int ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), nullptr, &len);
+    if (ret == 0) {
+        std::vector<char> value(len + 1);
+        ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), value.data(), &len);
+        if (ret == 0) {
+            return std::string(value.data());
+        }
+    }
+
+    return "";
+}
+
+bool HookManager::SetLocalHandle(const char *value)
+{
+    if (hookConfig_.restrace_tag().size() == 0) {
+        return true;
+    }
+
+    for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
+        std::string resTag = hookConfig_.restrace_tag(i);
+        if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
+            std::string path = GetArktsDiagPathFromParam();
+            if (access(path.c_str(), F_OK) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "arkts diag lib(%s) does not exist", path.c_str());
+                return false;
+            }
+
+            int ret = SystemSetParameter(PRELOAD_NAME.c_str(), value);
+            if (ret < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "set preload param(%s) failed for process(%s)",
+                                   value, hookConfig_.process_name().c_str());
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+std::string HookManager::GetArktsDiagPath(const int8_t *buf, const uint32_t size)
+{
+    std::string data(reinterpret_cast<const char *>(buf), size);
+    PROFILER_LOG_DEBUG(LOG_CORE, "GetArktsDiagPath, received data:%s", data.c_str());
+    size_t pos = data.find(PRELOAD_APP_IDENTIFY);
+    if (pos == std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "received preload msg is invalid:%s", data.c_str());
+        return "";
+    }
+
+    size_t start = pos + PRELOAD_APP_IDENTIFY.length();
+    std::string appName = data.substr(start);
+    PROFILER_LOG_INFO(LOG_CORE, "preload appName:%s", appName.c_str());
+
+    if (appName != hookConfig_.process_name()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "received appName not equal, appName:%s, process_name:%s",
+                           appName.c_str(), hookConfig_.process_name().c_str());
+        return "";
+    }
+
+    return GetArktsDiagPathFromParam();
 }
 
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
@@ -596,6 +665,9 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 
     UpdateAsyncFlagConfig();
+    if (!SetLocalHandle("1")) {
+        return false;
+    }
     
     if (hookCtx_.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
@@ -852,6 +924,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->Close();
         }
+    }
+    if (!SetLocalHandle("0")) {
+        PROFILER_LOG_WARN(LOG_CORE, "reset preload param failed");
     }
     return true;
 }

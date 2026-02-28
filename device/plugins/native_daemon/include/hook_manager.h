@@ -95,6 +95,8 @@ public:
     void SetCommandPoller(const std::shared_ptr<CommandPoller>& p) override;
     void ResetStartupParam();
     void SethookStandalone(bool);
+    bool SetLocalHandle(const char *value);
+    std::string GetArktsDiagPath(const int8_t *buf, const uint32_t size);
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
