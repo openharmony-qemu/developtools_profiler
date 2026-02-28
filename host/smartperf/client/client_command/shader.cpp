@@ -74,7 +74,7 @@ std::string Shader::ReadFileContent(const std::string& path) const
         return "";
     }
 
-    LOGI("Shader: Successfully read file: %s", path.c_str());
+    LOGD("Shader: Successfully read file: %s", path.c_str());
     return content;
 }
 
@@ -85,7 +85,7 @@ ShaderMetrics Shader::ParseShaderMetrics(const std::string& content) const
     std::string keyCompileDuration = "CompileDuration: ";
 
     if (content.empty()) {
-        LOGI("Shader: Empty content, returning default metrics");
+        LOGD("Shader: Empty content, returning default metrics");
         return metrics;
     }
 
@@ -126,7 +126,7 @@ void Shader::ClearReportFile(const std::string& path) const
     std::ofstream ofs(path, std::ios::out | std::ios::trunc);
     if (ofs.is_open()) {
         ofs.close();
-        LOGI("Shader: Cleared report file: %s", path.c_str());
+        LOGD("Shader: Cleared report file: %s", path.c_str());
     } else {
         LOGE("Shader: Failed to clear file: %s", path.c_str());
     }
@@ -139,7 +139,7 @@ std::map<std::string, std::string> Shader::FormatMetricsAsMap(const ShaderMetric
     result["compileNum"] = std::to_string(metrics.compileNum);
     result["compileDuration"] = std::to_string(metrics.compileDuration);
 
-    LOGI("Shader: Formatted metrics - compileNum=%s, compileDuration=%s",
+    LOGD("Shader: Formatted metrics - compileNum=%s, compileDuration=%s",
          result["compileNum"].c_str(), result["compileDuration"].c_str());
 
     return result;
