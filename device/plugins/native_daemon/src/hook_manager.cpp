@@ -56,7 +56,8 @@ constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
 uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
 {
-    return NormalizeUniqueStackTableSize(static_cast<uint32_t>(config.unique_stack_table_size()));
+    uint32_t currSize = config.unique_stack_table_size() * ONE_MEGABYTE;
+    return NormalizeUniqueStackTableSize(currSize);
 }
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
@@ -536,13 +537,6 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
             return false;
         }
     }
-    uint32_t normalizedUniqueSize = NormalizeUniqueStackTableSize(
-        static_cast<uint32_t>(hookConfig_.unique_stack_table_size()));
-    if (normalizedUniqueSize != hookConfig_.unique_stack_table_size()) {
-        PROFILER_LOG_WARN(LOG_CORE, "unique_stack_table_size adjusted from %u to %u",
-            static_cast<uint32_t>(hookConfig_.unique_stack_table_size()), normalizedUniqueSize);
-        hookConfig_.set_unique_stack_table_size(normalizedUniqueSize);
-    }
     if ((!saMode_) && (COMMON::IsUserMode())) {
         if (!COMMON::CheckApplicationPermission(hookConfig_.pid(), hookConfig_.process_name())) {
             return false;
@@ -951,8 +945,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
-    uint32_t normalizedUniqueSize = NormalizeUniqueStackTableSize(config->uniqueStackTableSize_);
-    hookConfig_.set_unique_stack_table_size(normalizedUniqueSize);
+    hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
