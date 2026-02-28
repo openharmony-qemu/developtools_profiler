@@ -321,6 +321,7 @@ uint64_t PowCeil(uint64_t x);
 #endif
 int32_t GetProcessPid(const std::string& processName);
 bool IsArkJsFile(const std::string& filepath);
+bool IsArkwebV8File(const std::string& filepath);
 uintptr_t StripPac(uintptr_t inAddr, uintptr_t pacMask);
 } // namespace NativeDaemon
 } // namespace Developtools

@@ -248,6 +248,27 @@ HWTEST_F(VirtualRuntimeTest, SymbolizeFrame, TestSize.Level0)
     EXPECT_TRUE(callFrame2.isJsFrame_);
     EXPECT_EQ(callFrame2.symbolName_, "first_user_func");
 }
+
+/**
+ * @tc.name: IsArktsMap
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeTest, IsArktsMap, TestSize.Level0)
+{
+    EXPECT_FALSE(runtime_->IsArktsMap(nullptr));
+    auto map = std::make_shared<DfxMap>();
+    map->name = "test.hap";
+    EXPECT_TRUE(runtime_->IsArktsMap(map));
+    map->name = "[anon:v8]";
+    EXPECT_TRUE(runtime_->IsArktsMap(map));
+    map->name = "[anon:JS_V8";
+    EXPECT_TRUE(runtime_->IsArktsMap(map));
+    map->name = "stub.an";
+    EXPECT_TRUE(runtime_->IsArktsMap(map));
+    map->name = "test.so";
+    EXPECT_FALSE(runtime_->IsArktsMap(map));
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

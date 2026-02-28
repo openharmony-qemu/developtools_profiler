@@ -479,12 +479,12 @@ const DfxSymbol VirtualRuntime::GetUserSymbol(uint64_t ip, const VirtualThread &
             }
 
             DfxSymbol foundSymbols;
-
-            if (!symbolsFile->IsAbc()) {
-                foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
-            } else {
-                HLOGD("symbolsFile:%s is ABC :%d", symbolsFile->filePath_.c_str(), symbolsFile->IsAbc());
+            if (symbolsFile->IsAbc() || symbolsFile->IsArkwebV8()) {
+                HLOGD("ABC or V8 file, symbolsFile: %s", symbolsFile->filePath_.c_str());
                 foundSymbols = symbolsFile->GetSymbolWithPcAndMap(ip, curMaps->GetMaps()[itemIndex]);
+            } else {
+                HLOGD("symbolsFile: %s", symbolsFile->filePath_.c_str());
+                foundSymbols = symbolsFile->GetSymbolWithVaddr(vaddrSymbol.fileVaddr_);
             }
             foundSymbols.taskVaddr_ = ip;
             foundSymbols.symbolName_ = foundSymbols.GetName();
@@ -638,7 +638,7 @@ bool VirtualRuntime::IsArktsMap(const std::shared_ptr<DfxMap>& map) const
     }
     const std::string& name = map->name;
 
-    if (IsArkJsFile(name) || (name.find("stub.an") != std::string::npos)) {
+    if (IsArkJsFile(name) || IsArkwebV8File(name) || (name.find("stub.an") != std::string::npos)) {
         return true;
     }
 

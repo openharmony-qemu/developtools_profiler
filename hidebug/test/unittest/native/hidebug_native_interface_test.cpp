@@ -61,6 +61,20 @@ HWTEST_F(HidebugNativeInterfaceTest, GetVssTest, TestSize.Level0)
     ASSERT_GE(vssInfo.value(), 0);
 }
 
+/**
+ * @tc.name: GetRssInfoTest
+ * @tc.desc: test GetRssInfoTest. get rss information.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetRssInfoTest, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    auto rssInfo = interface.GetRssInfo();
+    ASSERT_TRUE(rssInfo.has_value());
+    ASSERT_GT(rssInfo->rss, 0u);
+    ASSERT_GE(rssInfo->swapRss, 0);
+}
+
 #ifdef __aarch64__
 /**
  * @tc.name: OH_HiDebug_GetGraphicsMemory

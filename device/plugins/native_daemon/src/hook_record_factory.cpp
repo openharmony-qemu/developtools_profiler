@@ -39,6 +39,8 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
         jsRecordCache_.emplace_back(std::make_shared<JsRecord>());
         arkTsMallocRecordCache_.emplace_back(std::make_shared<ArktsMallocRecord>());
         arkTsFreeRecordCache_.emplace_back(std::make_shared<ArktsFreeRecord>());
+        memoryUnUsingMsgRecordCache_.emplace_back(std::make_shared<MemoryUnusingRecord>());
+        memoryUsingMsgRecordCache_.emplace_back(std::make_shared<MemoryUsingRecord>());
         if (hookConfig_.statistics_interval() > 0) {
             freeRecordSimpCache_.emplace_back(std::make_shared<FreeRecordSimp>());
         } else {
@@ -66,6 +68,10 @@ HookRecordPtr CreateCacheItem(int16_t type)
             return std::make_shared<ArktsMallocRecord>();
         case FREE_ARKTS:
             return std::make_shared<ArktsFreeRecord>();
+        case MEMORY_USING_MSG:
+            return std::make_shared<MemoryUsingRecord>();
+        case MEMORY_UNUSING_MSG:
+            return std::make_shared<MemoryUnusingRecord>();
         default:
             PROFILER_LOG_ERROR(LOG_CORE, "CreateItem get unexpected type");
             return nullptr;
@@ -147,6 +153,16 @@ void HookRecordFactory::SaveRecordToCache(uint16_t type, HookRecordPtr hookRecor
                 arkTsFreeRecordCache_.push_back(hookRecord);
             }
             break;
+        case MEMORY_UNUSING_MSG:
+            if (memoryUnUsingMsgRecordCache_.size() < HOOK_RECORD_CACHE_MAX_SIZE) {
+                memoryUnUsingMsgRecordCache_.push_back(hookRecord);
+            }
+            break;
+        case MEMORY_USING_MSG:
+            if (memoryUsingMsgRecordCache_.size() < HOOK_RECORD_CACHE_MAX_SIZE) {
+                memoryUsingMsgRecordCache_.push_back(hookRecord);
+            }
+            break;
         default:
             break;
     }
@@ -175,10 +191,16 @@ std::shared_ptr<HookRecord> HookRecordFactory::CreateStackRecord(uint16_t type, 
             munmapRecord->rawStack_ = rawStack;
             return munmapRecord;
         }
-        case MEMORY_UNUSING_MSG:
-            return std::make_shared<MemoryUnusingRecord>(rawStack);
-        case MEMORY_USING_MSG:
-            return std::make_shared<MemoryUsingRecord>(rawStack);
+        case MEMORY_UNUSING_MSG: {
+            auto memoryUnUsingMsgRecord = GetRecordFromCache(memoryUnUsingMsgRecordCache_, MEMORY_UNUSING_MSG);
+            memoryUnUsingMsgRecord->rawStack_ = rawStack;
+            return memoryUnUsingMsgRecord;
+        }
+        case MEMORY_USING_MSG: {
+            auto memoryUsingMsgRecord = GetRecordFromCache(memoryUsingMsgRecordCache_, MEMORY_USING_MSG);
+            memoryUsingMsgRecord->rawStack_ = rawStack;
+            return memoryUsingMsgRecord;
+        }
         case MMAP_FILE_TYPE:
             return std::make_shared<TagRecord>(rawStack);
         case MALLOC_MSG: {

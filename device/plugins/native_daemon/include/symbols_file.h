@@ -59,6 +59,7 @@ enum SymbolsFileType {
     SYMBOL_JAVA_FILE,
     SYMBOL_JS_FILE,
     SYMBOL_HAP_FILE,
+    SYMBOL_ARKWEB_V8_FILE,
     SYMBOL_UNKNOW_FILE,
 };
 
@@ -99,6 +100,10 @@ public:
     };
     bool setSymbolsFilePath(const std::vector<std::string> &);
     virtual bool IsAbc()
+    {
+        return false;
+    }
+    virtual bool IsArkwebV8()
     {
         return false;
     }
