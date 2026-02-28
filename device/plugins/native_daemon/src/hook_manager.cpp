@@ -963,10 +963,6 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
     uint32_t normalizedUniqueSize = NormalizeUniqueStackTableSize(config->uniqueStackTableSize_);
-    if (normalizedUniqueSize != config->uniqueStackTableSize_) {
-        PROFILER_LOG_WARN(LOG_CORE, "unique_stack_table_size adjusted from %u to %u",
-            config->uniqueStackTableSize_, normalizedUniqueSize);
-    }
     hookConfig_.set_unique_stack_table_size(normalizedUniqueSize);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
