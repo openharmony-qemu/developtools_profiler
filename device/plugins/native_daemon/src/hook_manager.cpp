@@ -54,7 +54,8 @@ constexpr int DOUBLE = 2;
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
-auto NormalizeUniqueStackTableSize = [](uint32_t size) {
+uint32_t NormalizeUniqueStackTableSize(uint32_t size)
+{
     if (size == 0) {
         return DEFAULT_UNIQUE_STACK_TABLE_SIZE;
     }
@@ -62,10 +63,12 @@ auto NormalizeUniqueStackTableSize = [](uint32_t size) {
         return MAX_UNIQUE_STACK_TABLE_SIZE;
     }
     return size;
-};
-auto GetUniqueStackTableSizeWithDefault = [](const NativeHookConfig& config) {
+}
+
+uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
+{
     return NormalizeUniqueStackTableSize(static_cast<uint32_t>(config.unique_stack_table_size()));
-};
+}
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
