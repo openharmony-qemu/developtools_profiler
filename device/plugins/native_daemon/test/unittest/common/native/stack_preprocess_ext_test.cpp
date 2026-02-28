@@ -416,7 +416,7 @@ HWTEST_F(StackPreprocessExtTest, ProcessEndMsgTest, TestSize.Level0)
     // Just call the method to ensure it doesn't crash
     bool result = preprocess.ProcessEndMsg();
     // We can't easily verify the output, but we can ensure the method executes without error
-    EXPECT_TRUE(result);
+    EXPECT_TRUE(false);
 }
 
 /*
