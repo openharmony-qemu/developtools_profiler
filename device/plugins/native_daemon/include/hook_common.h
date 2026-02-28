@@ -37,12 +37,14 @@ constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
 constexpr static uint32_t DEFAULT_UNIQUE_STACK_TABLE_SIZE = 64 * 1024 * 1024;
 constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
+constexpr static uint32_t ONE_MEGABYTE = 1024 * 1024;
 inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 {
-    if (size == 0) {
+    uint32_t currSize = size * ONE_MEGABYTE;
+    if (currSize == 0 || currSize <= DEFAULT_UNIQUE_STACK_TABLE_SIZE) {
         return DEFAULT_UNIQUE_STACK_TABLE_SIZE;
     }
-    return std::min(size, MAX_UNIQUE_STACK_TABLE_SIZE);
+    return std::min(currSize, MAX_UNIQUE_STACK_TABLE_SIZE);
 }
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
