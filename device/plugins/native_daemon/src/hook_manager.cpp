@@ -54,17 +54,6 @@ constexpr int DOUBLE = 2;
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
-uint32_t NormalizeUniqueStackTableSize(uint32_t size)
-{
-    if (size == 0) {
-        return DEFAULT_UNIQUE_STACK_TABLE_SIZE;
-    }
-    if (size > MAX_UNIQUE_STACK_TABLE_SIZE) {
-        return MAX_UNIQUE_STACK_TABLE_SIZE;
-    }
-    return size;
-}
-
 uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
 {
     return NormalizeUniqueStackTableSize(static_cast<uint32_t>(config.unique_stack_table_size()));
