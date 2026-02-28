@@ -35,7 +35,7 @@ constexpr int STACK_DATA_SIZE = 400000;
 constexpr int SPEED_UP_THRESHOLD = STACK_DATA_SIZE / 2;
 constexpr int SLOW_DOWN_THRESHOLD = STACK_DATA_SIZE / 4;
 constexpr int32_t MIN_STACK_DEPTH = 6;
-constexpr static uint32_t DEFAULT_UNIQUE_STACK_TABLE_SIZE = 64 * 1024 * 1024;
+constexpr static uint32_t DEFAULT_UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
 constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
 constexpr static uint32_t ONE_MEGABYTE = 1024 * 1024;
 inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
