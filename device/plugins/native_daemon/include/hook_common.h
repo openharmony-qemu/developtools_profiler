@@ -40,7 +40,6 @@ constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
 constexpr static uint32_t ONE_MEGABYTE = 1024 * 1024;
 inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 {
-    uint32_t currSize = size * ONE_MEGABYTE;
     if (currSize == 0 || currSize <= DEFAULT_UNIQUE_STACK_TABLE_SIZE) {
         return DEFAULT_UNIQUE_STACK_TABLE_SIZE;
     }
