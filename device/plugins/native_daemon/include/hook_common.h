@@ -40,10 +40,10 @@ constexpr static uint32_t MAX_UNIQUE_STACK_TABLE_SIZE = 256 * 1024 * 1024;
 constexpr static uint32_t ONE_MEGABYTE = 1024 * 1024;
 inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 {
-    if (currSize == 0 || currSize <= DEFAULT_UNIQUE_STACK_TABLE_SIZE) {
+    if (size == 0 || size <= DEFAULT_UNIQUE_STACK_TABLE_SIZE) {
         return DEFAULT_UNIQUE_STACK_TABLE_SIZE;
     }
-    return std::min(currSize, MAX_UNIQUE_STACK_TABLE_SIZE);
+    return std::min(size, MAX_UNIQUE_STACK_TABLE_SIZE);
 }
 // filter two layers of dwarf stack in libnative_hook.z.so
 const size_t FILTER_STACK_DEPTH = 2;
