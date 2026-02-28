@@ -139,6 +139,13 @@
             "header_files": []
           },
           "name": "//developtools/profiler/hidebug/interfaces/cj:cj_hidebug_ffi"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device/plugins/preload_client",
+            "header_files": []
+          },
+          "name": "//developtools/profiler/device/plugins/preload_client:hiprofiler_preload_client"
         }
       ],
       "test": [

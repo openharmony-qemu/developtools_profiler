@@ -176,6 +176,7 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(RN_HEAP_MASK_INDEX + 1, TAG_RES_RN_HEAP_MASK);
     SaveMemTag(DMABUF_MASK_INDEX + 1, TAG_RES_DMABUF_MASK);
     SaveMemTag(ARK_GLOBAL_HANDLE_INDEX + 1, TAG_RES_ARK_GLOBAL_HANDLE);
+    SaveMemTag(ARK_LOCAL_HANDLE_INDEX + 1, TAG_RES_ARK_LOCAL_HANDLE);
 }
 
 void StackPreprocess::FinishTraceFile()
@@ -1345,6 +1346,8 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
                 record.type = RecordStatisticsEvent::RN_HEAP;
             } else if (tagName == TAG_RES_ARK_GLOBAL_HANDLE) {
                 record.type = RecordStatisticsEvent::ARK_GLOBAL_HANDLE;
+            } else if (tagName == TAG_RES_ARK_LOCAL_HANDLE) {
+                record.type = RecordStatisticsEvent::ARK_LOCAL_HANDLE;
             } else {
                 if (tagName.find(".so") != std::string::npos) {
                     record.type = RecordStatisticsEvent::SO;
