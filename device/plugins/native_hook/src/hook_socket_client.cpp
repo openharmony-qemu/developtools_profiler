@@ -148,11 +148,11 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
 #endif
     for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: vk and gles image
         PROFILER_LOG_ERROR(LOG_CORE,
-                           "HookSocketClient::ProtocolProc get gpu range: %" PRIu64 ", %" PRIu64 ", %" PRIu64
-                           ", %" PRIu64 ", %" PRIu64 ",",
-                           config_->gpuRange.gpuVk[i], config_->gpuRange.gpuGlesImage[i],
-                           config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
-                           config_->gpuRange.gpuClBuffer[i]);
+            "HookSocketClient::ProtocolProc get gpu range: %" PRIu64 ", %" PRIu64 ", %" PRIu64
+            ", %" PRIu64 ", %" PRIu64 ",",
+            config_->gpuRange.gpuVk[i], config_->gpuRange.gpuGlesImage[i],
+            config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
+            config_->gpuRange.gpuClBuffer[i]);
     }
 
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
