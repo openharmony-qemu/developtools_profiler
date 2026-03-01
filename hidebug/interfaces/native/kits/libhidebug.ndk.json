@@ -54,5 +54,13 @@
     {
         "first_introduced": "23",
         "name": "OH_HiDebug_ResetCrashObj"
+    },
+    {
+        "first_introduced": "24",
+        "name": "OH_HiDebug_StartProfiler"
+    },
+    {
+        "first_introduced": "24",
+        "name": "OH_HiDebug_StopProfiler"
     }
 ]
