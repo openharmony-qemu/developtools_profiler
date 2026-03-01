@@ -496,7 +496,7 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
     std::vector<uintptr_t> syncStackPcs;
     if (asyncData->syncStackId > 0) {
         StackId id { asyncData->syncStackId };
-        if (!table->GetPcsByStackId(id, syncStackPcs)) {
+        if (!table->GetPcsByStackId(id, syncStackPcs, true)) {
             PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get syncStackPcs Faild");
         }
     }
@@ -504,7 +504,7 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
     std::vector<uintptr_t> asyncStackPcs;
     if (asyncData->asyncStackId > 0) {
         StackId id { asyncData->asyncStackId };
-        if (!table->GetPcsByStackId(id, asyncStackPcs)) {
+        if (!table->GetPcsByStackId(id, asyncStackPcs, true)) {
             PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get asyncStackPcs Faild");
         }
     }
