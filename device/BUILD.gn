@@ -48,9 +48,11 @@ group("hiprofiler_targets") {
     }
     if (is_ohos && use_musl && !is_asan) {
       deps += [
+        "sa_profile:native_daemon_sa_profile",
         "plugins/preload_client:hiprofiler_preload_client",
         "plugins/native_daemon:native_daemon",
         "plugins/native_daemon:native_daemon_client",
+        "plugins/native_daemon:libmemory_profiler",
         "plugins/native_hook:native_hook",
         "plugins/native_hook:perf_test_data",
       ]

@@ -54,3 +54,15 @@ ohos_executable("malloc_dispatch_exe") {
   part_name = "hiprofiler"
   subsystem_name = "developtools"
 }
+
+ohos_executable("profiler_native_exe") {
+  sources = [ "hidebug_profiler_native.cpp" ]
+  include_dirs = [ "$hidebug_path/interfaces/native/kits/include" ]
+  defines = [ "HOOK_ENABLE" ]
+  deps = [ "$hidebug_path/frameworks/hidebug_ndk:ohhidebug" ]
+  external_deps = [ "bounds_checking_function:libsec_shared" ]
+  install_enable = false
+  install_images = [ "system" ]
+  part_name = "hiprofiler"
+  subsystem_name = "developtools"
+}

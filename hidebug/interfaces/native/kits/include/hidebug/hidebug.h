@@ -304,6 +304,45 @@ uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr);
  * @since 23
  */
 void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
+
+/**
+ * @brief Starts Resource Profiler for the current process.
+ *
+ * @param type Type of resource to be profiled.
+ * @param config Configuration parameters for the profiler.
+ * @return Result code.
+ *         {@link HIDEBUG_SUCCESS} Profiler started successfully.
+ *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid argument.
+ *         {@link HIDEBUG_RES_PROF_MAX_DURATION_INVALID_ARG} Maximum duration is invalid.
+ *         {@link HIDEBUG_RES_PROF_FILTER_SIZE_INVALID_ARG} FilterSize is invalid.
+ *         {@link HIDEBUG_RES_PROF_MAX_STACK_DEPTH_INVALID_ARG} Maximum stack depth is invalid.
+ *         {@link HIDEBUG_RES_PROF_STATISTICS_INTERVAL_INVALID_ARG} StatisticsInterval is invalid.
+ *         {@link HIDEBUG_RES_PROF_SAMPLE_INTERVAL_INVALID_ARG} Sample interval is invalid.
+ *         {@link HIDEBUG_RES_PROF_RESOURCE_TYPE_INVALID_ARG} ResourceType is invalid.
+ *         {@link HIDEBUG_RES_PROF_PERMISSION_DENIED} Permission denied.
+ *         {@link HIDEBUG_RES_PROF_ALREADY_STARTED} Profiler has already been started.
+ *         {@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Process exceeds the limit.
+ *         {@link HIDEBUG_RES_PROF_CONFLICT} Conflict with command line performance analysis tool.
+ *         {@link HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION} Automatically stopped
+ *         because the duration limit was reached.
+ *         {@link HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED} Daily quota exceeded.
+ *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} CPU overloaded.
+ *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Memory pressure is critical.
+ *         {@link HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL} Storage pressure is critical.
+ * @since 24
+ */
+HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config);
+
+/**
+ * @brief Stops Resource Profiler for the current process.
+ *
+ * @return Result code
+ *         {@link HIDEBUG_SUCCESS} Stop profiler successfully.
+ *         {@link HIDEBUG_RES_PROF_NOT_STARTED} The task does not started.
+ * @since 24
+ */
+HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -24,6 +24,7 @@
 #include "utilities.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
+#include "singleton.h"
 using namespace OHOS::Security::AccessToken;
 using namespace testing::ext;
 
@@ -79,17 +80,17 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest001
     config->offlineSymbolization_ = true;
     config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
 
-    NativeMemoryProfilerSaService service;
-    EXPECT_EQ(service.Start(config), RET_OK);
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    EXPECT_EQ(service->Start(config), RET_OK);
     sleep(3);
-    EXPECT_EQ(service.Stop(config->pid_), RET_OK);
+    EXPECT_EQ(service->Stop(config->pid_), RET_OK);
 
     uint32_t fd = open("/data/local/tmp/test_dump_data.htrace",
         O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
     EXPECT_GT(fd, 0);
-    EXPECT_EQ(service.DumpData(fd, config), RET_OK);
+    EXPECT_EQ(service->DumpData(fd, config), RET_OK);
     sleep(2);
-    EXPECT_EQ(service.Stop(config->pid_), RET_OK);
+    EXPECT_EQ(service->Stop(config->pid_), RET_OK);
 }
 
 /**
@@ -111,17 +112,17 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest002
     config->offlineSymbolization_ = true;
     config->shareMemorySize_ = 0;
 
-    NativeMemoryProfilerSaService service;
-    EXPECT_EQ(service.Start(config), RET_ERR);
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    EXPECT_EQ(service->Start(config), RET_ERR);
 
     config->pid_ = 0;
     config->processName_ = "";
     config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
-    EXPECT_EQ(service.Start(config), RET_ERR);
+    EXPECT_EQ(service->Start(config), RET_ERR);
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaServiceTest
+ * @tc.name: NativeMemoryProfilerSaServiceTest003
  * @tc.desc: Test the service interface with false case.
  * @tc.type: FUNC
  */
@@ -139,8 +140,29 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest003
     config->offlineSymbolization_ = true;
     config->shareMemorySize_ = 0;
 
-    NativeMemoryProfilerSaService service;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     OHOS::MessageParcel reply;
-    EXPECT_EQ(service.Start(config, reply), RET_ERR);
+    EXPECT_EQ(service->Start(config, reply), RET_ERR);
+}
+
+/**
+ * @tc.name: NativeMemoryProfilerSaServiceTest004
+ * @tc.desc: ApplyNmdConfig short-circuit - Start with printNmd_/printNmdOnly_ returns RET_OK without hook
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest004, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdPid_ = 1;
+    config->nmdType_ = 0;
+    config->duration_ = 10;
+    config->filePath_ = "/data/local/tmp/nmd_only.htrace";
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    EXPECT_EQ(service->Start(config), RET_OK);
 }
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

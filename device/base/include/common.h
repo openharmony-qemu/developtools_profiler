@@ -24,6 +24,7 @@
 
 
 namespace COMMON {
+const std::string DEFAULT_RW_DIR = "/data";
 bool IsProcessRunning(int& lockFileFd); // add file lock, only one process can run
 std::string CanonicalizeSpecPath(const char* src);
 bool IsProcessExist(const std::string& processName, int& pid); // Check if the process exists and get PID
@@ -45,7 +46,7 @@ bool CheckApplicationEncryped(int pid, const std::string& processName);
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
 bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
 std::string GetErrorMsg();
-std::string GetTimeStr();
+std::string GetTimeStr(std::time_t gap = 0);
 clockid_t GetClockId(const std::string& clockIdStr);
 std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
@@ -76,6 +77,13 @@ enum ErrorType {
     RET_FAIL = -1,
     RET_SUCC = 0,
 };
+std::string GetBundleNameByPid(int32_t pid);
+std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& filename);
+double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
+bool CopyFileFast(const std::string& srcPath, const std::string& destPath, bool isRemoveSrc = true);
+bool CleanOldenFiles(const std::string& path);
+bool CleanCmdOldenTraceFiles(const std::string& path);
+bool CreateFile(const std::string& filePath);
 
 class SpinLock {
 public:

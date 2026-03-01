@@ -54,6 +54,28 @@ int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerS
     return RET_OK;
 }
 
+int32_t NativeMemoryProfilerSaProxy::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    MessageParcel data;
+    if (!data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed to write descriptor");
+        return RET_ERR;
+    }
+    CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
+
+    MessageParcel reply;
+    MessageOption option;
+    sptr<IRemoteObject> remote = Remote();
+    CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
+    int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::START_HOOK_PID_VOID),
+                                      data, reply, option);
+    if (ret != RET_OK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed");
+        return ret;
+    }
+    return RET_OK;
+}
+
 int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     MessageParcel data;
@@ -81,31 +103,39 @@ int32_t NativeMemoryProfilerSaProxy::DumpData(uint32_t fd, std::shared_ptr<Nativ
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
+void NativeMemoryProfilerSaProxy::HandleTimeout()
+{
+    int pidVal = 0;
+    if (!COMMON::IsProcessExist("memory_collector", pidVal)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop memory_collector doesn't exist!");
+    } else {
+        HiviewDFX::DfxDumpCatcher dumplog;
+        std::string msg = "";
+        if (!dumplog.DumpCatch(pidVal, 0, msg, MAX_FRAME_NUM)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop DumpCatch failed!");
+        } else {
+            std::istringstream iss(msg);
+            std::string line;
+            while (std::getline(iss, line, '\n')) {
+                PROFILER_LOG_ERROR(LOG_CORE, "%s", line.c_str());
+            }
+        }
+    }
+    OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+}
+
+int32_t NativeMemoryProfilerSaProxy::ExecuteWithTimeout(
+    const std::function<int32_t(MessageParcel&)>& writeDataFunc,
+    NativeMemoryProfilerSaInterfaceCode interfaceCode)
 {
     struct timespec start = {};
     clock_gettime(CLOCK_REALTIME, &start);
     XCollieCallback callbackFunc = [](void *) {
-        int pidVal = 0;
-        if (!COMMON::IsProcessExist("native_daemon", pidVal)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop native_daemon doesn't exist!");
-        } else {
-            HiviewDFX::DfxDumpCatcher dumplog;
-            std::string msg = "";
-            if (!dumplog.DumpCatch(pidVal, 0, msg, MAX_FRAME_NUM)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop DumpCatch failed!");
-            } else {
-                std::istringstream iss(msg);
-                std::string line;
-                while (std::getline(iss, line, '\n')) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "%s", line.c_str());
-                }
-            }
-        }
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
+        NativeMemoryProfilerSaProxy::HandleTimeout();
     };
-    int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer("Hiprofiler_Timeout", TIME_OUT, callbackFunc, nullptr,
-                                                                 HiviewDFX::XCOLLIE_FLAG_LOG);
+
+    int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer(
+        "Hiprofiler_Timeout", TIME_OUT, callbackFunc, nullptr, HiviewDFX::XCOLLIE_FLAG_LOG);
     if (setTimerRet == HiviewDFX::INVALID_ID) {
         PROFILER_LOG_ERROR(LOG_CORE, "add hicollie failed for native daemon sa Stop");
         return RET_ERR;
@@ -116,17 +146,22 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
         HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
         return RET_ERR;
     }
-    WRITEUINT32(data, pid, RET_ERR);
+
+    int32_t writeRet = writeDataFunc(data);
+    if (writeRet != RET_OK) {
+        HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
+        return writeRet;
+    }
     MessageParcel reply;
     MessageOption option;
     sptr<IRemoteObject> remote = Remote();
     CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
-    int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID),
-                                      data, reply, option);
+    int32_t ret = remote->SendRequest(static_cast<uint32_t>(interfaceCode), data, reply, option);
     HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
     struct timespec end = {};
     clock_gettime(CLOCK_REALTIME, &end);
-    uint64_t timeCost = static_cast<uint64_t>((end.tv_sec - start.tv_sec) * S_TO_NS + (end.tv_nsec - start.tv_nsec));
+    uint64_t timeCost = static_cast<uint64_t>((end.tv_sec - start.tv_sec) * S_TO_NS +
+        (end.tv_nsec - start.tv_nsec));
     PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu",
                       static_cast<unsigned long long>(timeCost));
     if (ret != RET_OK) {
@@ -136,59 +171,33 @@ int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
     return RET_OK;
 }
 
+int32_t NativeMemoryProfilerSaProxy::Stop(uint32_t pid)
+{
+    return ExecuteWithTimeout(
+        [pid](MessageParcel& data) -> int32_t {
+            WRITEUINT32(data, pid, RET_ERR);
+            return RET_OK;
+        },
+        NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID);
+}
+
 int32_t NativeMemoryProfilerSaProxy::Stop(const std::string& name)
 {
-    struct timespec start = {};
-    clock_gettime(CLOCK_REALTIME, &start);
-    XCollieCallback callbackFunc = [](void *) {
-        int pidVal = 0;
-        if (!COMMON::IsProcessExist("native_daemon", pidVal)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy native_daemon doesn't exist!");
-        } else {
-            HiviewDFX::DfxDumpCatcher dumplog;
-            std::string msg = "";
-            if (!dumplog.DumpCatch(pidVal, 0, msg, MAX_FRAME_NUM)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop DumpCatch failed!");
-            } else {
-                std::istringstream iss(msg);
-                std::string line;
-                while (std::getline(iss, line, '\n')) {
-                    PROFILER_LOG_DEBUG(LOG_CORE, "%s", line.c_str());
-                }
-            }
-        }
-        OHOS::system::SetParameter("hiviewdfx.hiprofiler.memprofiler.start", "0");
-    };
-    int setTimerRet = HiviewDFX::XCollie::GetInstance().SetTimer("Hiprofiler_Timeout", TIME_OUT, callbackFunc, nullptr,
-                                                                 HiviewDFX::XCOLLIE_FLAG_LOG);
-    if (setTimerRet == HiviewDFX::INVALID_ID) {
-        PROFILER_LOG_ERROR(LOG_CORE, "add hicollie failed for native daemon sa Stop");
-        return RET_ERR;
-    }
-    MessageParcel data;
-    if (!data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor())) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Stop failed to write descriptor");
-        HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
-        return RET_ERR;
-    }
-    WRITESTRING(data, name, RET_ERR);
-    MessageParcel reply;
-    MessageOption option;
-    sptr<IRemoteObject> remote = Remote();
-    CHECK_NOTNULL(remote, RET_ERR, "remote is nullptr");
-    int32_t ret = remote->SendRequest(static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_NAME),
-                                      data, reply, option);
-    HiviewDFX::XCollie::GetInstance().CancelTimer(setTimerRet);
-    struct timespec end = {};
-    clock_gettime(CLOCK_REALTIME, &end);
-    unsigned long long timeCost = static_cast<unsigned long long>((end.tv_sec - start.tv_sec) * S_TO_NS +
-                                                                  (end.tv_nsec - start.tv_nsec));
-    PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaProxy::Stop cost time: %llu", timeCost);
-    if (ret != RET_OK) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Stop failed");
-        return ret;
-    }
-    return RET_OK;
+    return ExecuteWithTimeout(
+        [&name](MessageParcel& data) -> int32_t {
+            WRITESTRING(data, name, RET_ERR);
+            return RET_OK;
+        },
+        NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_NAME);
+}
+
+int32_t NativeMemoryProfilerSaProxy::Stop()
+{
+    return ExecuteWithTimeout(
+        [](MessageParcel& data) -> int32_t {
+            return RET_OK;
+        },
+        NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID_VOID);
 }
 
 int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
