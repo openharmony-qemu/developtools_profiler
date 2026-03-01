@@ -83,6 +83,96 @@ typedef enum HiDebug_ErrorCode {
      * @since 22
      */
     HIDEBUG_RESOURCE_UNAVAILABLE = 11400302,
+    /**
+     * Resource profiler succeeded
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_SUCCESS = 11400400,
+    /**
+     * Resource profiler invalid argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_INVALID_ARG = 11400410,
+    /**
+     * Resource profiler invalid max duration argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_MAX_DURATION_INVALID_ARG = 11400411,
+    /**
+     * Resource profiler invalid filter size argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_FILTER_SIZE_INVALID_ARG = 11400412,
+    /**
+     * Resource profiler invalid max stack depth argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_MAX_STACK_DEPTH_INVALID_ARG = 11400413,
+    /**
+     * Resource profiler invalid statistics interval argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_STATISTICS_INTERVAL_INVALID_ARG = 11400414,
+    /**
+     * Resource profiler invalid sample interval argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_SAMPLE_INTERVAL_INVALID_ARG = 11400415,
+    /**
+     * Resource profiler invalid resource type argument
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_RESOURCE_TYPE_INVALID_ARG = 11400416,
+    /**
+     * Resource profiler permission denied
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_PERMISSION_DENIED = 11400420,
+    /**
+     * Resource profiler already started
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_ALREADY_STARTED = 11400421,
+    /**
+     * Resource profiler not started
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_NOT_STARTED = 11400422,
+    /**
+     * Resource profiler process exceeds limit
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_PROCESS_OVERLIMIT = 11400423,
+    /**
+     * Resource profiler conflict
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_CONFLICT = 11400424,
+    /**
+     * Resource profiler auto stopped by duration
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION = 11400425,
+    /**
+     * Resource profiler daily quota exceeded
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED = 11400426,
+    /**
+     * Resource profiler CPU overload
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_CPU_OVERLOADED = 11400427,
+    /**
+     * Resource profiler memory pressure is critical
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL = 11400428,
+    /**
+     * Resource profiler storage pressure is critical
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL = 11400429,
 } HiDebug_ErrorCode;
 
 /**
@@ -401,6 +491,74 @@ typedef enum HiDebug_CrashObjType {
     /** 4KB memory block */
     HIDEBUG_CRASHOBJ_MEMORY_4096B = 5
 } HiDebug_CrashObjType;
+
+/**
+ * @brief Resource profiler type.
+ *
+ * @since 24
+ */
+typedef enum OH_HiDebug_ResourceType {
+    /**
+     * File descriptor
+     * @since 24
+     */
+    OH_RES_TYPE_FD,
+    /**
+     * Thread
+     * @since 24
+    */
+    OH_RES_TYPE_THREAD,
+    /**
+     * Native memory
+     * @since 24
+    */
+    OH_RES_TYPE_NATIVE,
+    /**
+     * GPU
+     * @since 24
+    */
+    OH_RES_TYPE_GPU,
+    /**
+     * Global handle
+     * @since 24
+    */
+    OH_RES_TYPE_GLOBAL_HANDLE,
+} OH_HiDebug_ResourceType;
+
+/**
+ * @brief Resource profiler configuration.
+ *
+ * @since 24
+ */
+typedef struct OH_HiDebug_ResProfilerConfig {
+    /**
+     * Set the maximum collection duration, in seconds.
+     * @since 24
+     */
+    uint32_t maxDuration;
+    /**
+     * Filter by resource allocation size, in bytes.
+     * @since 24
+     */
+    uint32_t filterSize;
+    /**
+     * Set the stack trace depth, in frames.
+     * @since 24
+     */
+    uint32_t maxStackDepth;
+    /**
+     * Statistics interval, in seconds.
+     * @since 24
+     */
+    uint32_t statisticsInterval;
+    /**
+     * Sample interval, in bytes.
+     * In sampling mode, memory allocations less than or equal to this parameter will be sampled probabilistically,
+     * while those greater than this parameter will be sampled fully.
+     * @since 24
+     */
+    uint32_t sampleInterval;
+} OH_HiDebug_ResProfilerConfig;
 
 #ifdef __cplusplus
 }

@@ -19,6 +19,8 @@
 #include "iremote_object.h"
 #include "iremote_proxy.h"
 #include "system_ability.h"
+#include "message_parcel.h"
+#include <functional>
 
 #include "i_native_memory_profiler_sa.h"
 #include "native_memory_profiler_sa_interface_code.h"
@@ -30,11 +32,19 @@ public:
     virtual ~NativeMemoryProfilerSaProxy() = default;
 
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
+    int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     int32_t Stop(uint32_t pid) override;
+    int32_t Stop() override;
     int32_t Stop(const std::string& name) override;
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, std::string& replyStats) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override { return 0; }
+
+private:
+    static void HandleTimeout();
+    int32_t ExecuteWithTimeout(
+        const std::function<int32_t(MessageParcel&)>& writeDataFunc,
+        NativeMemoryProfilerSaInterfaceCode interfaceCode);
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

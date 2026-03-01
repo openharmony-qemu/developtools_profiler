@@ -24,11 +24,15 @@ ohos_shared_library("ohhidebug") {
     "hidebug_crash_obj.cpp",
     "hidebug_ndk.cpp",
     "hidebug_perf.cpp",
+    "hidebug_profiler.cpp",
   ]
   if (!is_asan) {
     defines = [ "HOOK_ENABLE" ]
   }
-  deps = [ "../native:hidebug_native" ]
+  deps = [
+    "../native:hidebug_native",
+    "../../../device/plugins/native_daemon:libnative_daemon_client",
+  ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
@@ -36,6 +40,9 @@ ohos_shared_library("ohhidebug") {
     "faultloggerd:libbacktrace_local",
     "faultloggerd:libdfx_dumpcatcher",
     "hilog:libhilog",
+    "os_account:os_account_innerkits",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
   ]
 
   innerapi_tags = [ "ndk" ]

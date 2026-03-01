@@ -25,6 +25,7 @@
 #include "native_memory_profiler_sa_stub.h"
 #include "schedule_task_manager.h"
 #include "service_entry.h"
+#include "singleton.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 
@@ -43,15 +44,23 @@ struct TaskConfig {
     uint32_t fd{0};
 };
 
+struct MemoryInfo {
+    uint64_t totalMem;
+    uint64_t usedMem;
+    uint64_t freeMem;
+    double freePercent;
+};
+
 class NativeMemoryProfilerSaService : public SystemAbility, public NativeMemoryProfilerSaStub, public ServiceBase {
     DECLARE_SYSTEM_ABILITY(NativeMemoryProfilerSaService);
+    DECLARE_DELAYED_SINGLETON(NativeMemoryProfilerSaService);
 public:
-    NativeMemoryProfilerSaService();
-    ~NativeMemoryProfilerSaService();
     static bool StartServiceAbility();
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
+    int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     int32_t Stop(uint32_t pid) override;
     int32_t Stop(const std::string& name) override;
+    int32_t Stop() override;
     int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
@@ -61,6 +70,8 @@ public:
     static bool HasProfilingPermission();
     static void CloseSocketFd(int pid);
     static void DelayedShutdown(bool cancel);
+    virtual void OnStart() override;
+    virtual void OnStop() override;
 
 private:
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
@@ -72,11 +83,19 @@ private:
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetGpuConfig(ClientConfig& clientConfig);
+    // 统一应用 config 中的 NMD/memtrace 侧效应，减少 Start/DumpData 重复分支
+    bool ApplyNmdConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fdForNmd = 0);
+    void ApplyMemtraceConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    static bool GetSystemMemoryInfo(MemoryInfo* memInfo);
+    static bool GetSystemCpuUsageInfo(double* cpuUsage);
+    static bool ParseCpuStats(const std::string& content, unsigned long& total, unsigned long& idle);
+    static int32_t CheckSystemResource();
 
 private:
     std::mutex gpuMtx_;
     std::string startupModeProcessName_;
     int32_t taskMaxNum_ = 4;
+    std::atomic<bool> started_ = false;
 };
 } // namespace OHOS::Developtools::NativeDaemon
 

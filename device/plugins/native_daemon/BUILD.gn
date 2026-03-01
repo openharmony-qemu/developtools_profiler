@@ -48,6 +48,117 @@ ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
   subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
 }
 
+ohos_shared_library("libmemory_profiler") {
+  public_configs = [
+    ":hook_config",
+  ]
+
+  include_dirs = [
+    "./include",
+    "./src",
+    "../../base/include",
+    "../api/include",
+    "../api/src",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+  ]
+
+  include_dirs += [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/include",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/util/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src",
+  ]
+
+  sources = [
+    "../api/src/buffer_writer.cpp",
+    "../api/src/command_poller.cpp",
+    "../api/src/writer_adapter.cpp",
+    "src/debug_logger.cpp",
+    "src/dwarf_encoding.cpp",
+    "src/get_thread_id.cpp",
+    "src/hook_manager.cpp",
+    "src/hook_record.cpp",
+    "src/hook_record_factory.cpp",
+    "src/hook_service.cpp",
+    "src/hook_standalone.cpp",
+    "src/register.cpp",
+    "src/smo_map_global.cpp",
+    "src/stack_builder.cpp",
+    "src/stack_data_repeater.cpp",
+    "src/stack_preprocess.cpp",
+    "src/symbols_file.cpp",
+    "src/utilities.cpp",
+    "src/virtual_runtime.cpp",
+    "src/virtual_thread.cpp",
+  ]
+  if (is_ohos) {
+    sources += [ "./src/call_stack.cpp" ]
+  }
+
+  sources += [
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_death_recipient.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_service.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_stub.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_helper.cpp",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/src/trace_file_writer.cpp",
+  ]
+
+  deps = [
+    ":hiprofiler_daemon.cfg",
+    "${OHOS_PROFILER_DIR}/device/plugins/network_profiler/service:network_profiler_service",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/proto_encoder:proto_encoder_source",
+    "${OHOS_PROFILER_DIR}/protos/services:plugin_service_proto",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_encoder",
+    "../../base:hiprofiler_base",
+  ]
+
+  if (hiprofiler_use_libunwind) {
+    deps += [ "//third_party/libunwind:unwind_source_${target_cpu}" ]
+  }
+
+  external_deps = [
+    "ability_base:extractortool",
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
+    "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
+    "c_utils:utils",
+    "hicollie:libhicollie",
+    "hisysevent:libhisysevent",
+    "init:libbegetutil",
+    "ipc:ipc_core",
+    "openssl:libcrypto_shared",
+    "protobuf:protobuf_lite",
+    "safwk:system_ability_fwk",
+    "samgr:samgr_proxy",
+    "zlib:libz",
+  ]
+  external_deps += [ "faultloggerd:libasync_stack" ]
+  defines = [ "ENABLE_HAP_EXTRACTOR" ]
+
+  if (hiprofiler_use_libunwinder) {
+    external_deps += [ "faultloggerd:libunwinder" ]
+  }
+
+  if (current_toolchain != host_toolchain) {
+    defines += [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
+  }
+  shlib_type = "sa"
+  use_exceptions = true
+  install_enable = true
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
 ohos_executable("native_daemon") {
   output_name = "native_daemon"
   configs = [ ":cflags_config" ]
@@ -172,6 +283,7 @@ ohos_executable("native_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
     "../../base/src/common.cpp",
     "native_daemon_client.cpp",
   ]
@@ -210,6 +322,7 @@ ohos_shared_library("libnative_daemon_client") {
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_client_manager.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_config.cpp",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_proxy.cpp",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon/native_memory_profiler_sa/src/native_memory_profiler_sa_lazyload_callback.cpp",
     "../../base/src/common.cpp",
   ]
 

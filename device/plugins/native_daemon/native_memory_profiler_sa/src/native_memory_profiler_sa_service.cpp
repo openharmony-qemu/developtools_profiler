@@ -39,6 +39,9 @@ constexpr int32_t SIMP_NMD = 3;
 constexpr int32_t NMD_WAIT_MS = 100;
 constexpr int32_t NMD_WAIT_TIMES = 50;
 constexpr int VEC_SHIFT = 2;
+constexpr double MIN_MEM_ROM_PERCENT = 0.15;
+constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.15;
+constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
 
 static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
 static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
@@ -53,8 +56,14 @@ static std::unordered_map<pid_t, int> g_pidFds;
 static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
+static std::unordered_map<pid_t, std::string> g_fileNameInfo;
+static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
+const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
+    DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
+static std::atomic<uint32_t> g_checkConfErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
+static std::atomic<uint32_t> g_stopHookErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -131,14 +140,30 @@ bool NativeMemoryProfilerSaService::HasProfilingPermission()
     return true;
 }
 
+bool NativeMemoryProfilerSaService::ApplyNmdConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    uint32_t fdForNmd)
+{
+    if (!config->printNmd_) {
+        return false;
+    }
+    std::lock_guard<std::mutex> guard(g_nmdMtx);
+    g_nmdPidType[config->nmdPid_] = std::make_pair(fdForNmd, config->nmdType_);
+    return !config->printNmdOnly_;
+}
+
+void NativeMemoryProfilerSaService::ApplyMemtraceConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    if (!config->memtraceEnable_) {
+        return;
+    }
+    std::lock_guard<std::mutex> guard(gpuMtx_);
+    g_gpuRange = config->gpuRange_;
+}
+
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
-    if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(g_nmdMtx);
-        g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
-        if (!config->printNmdOnly_) {
-            return RET_OK;
-        }
+    if (ApplyNmdConfig(config, 0)) {
+        return RET_OK;
     }
     return StartHook(config);
 }
@@ -146,45 +171,113 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                              MessageParcel &reply)
 {
-    if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(g_nmdMtx);
-        g_nmdPidType[config->nmdPid_] = std::make_pair(0, config->nmdType_);
-        if (!config->printNmdOnly_) {
-            return RET_OK;
-        }
+    if (ApplyNmdConfig(config, 0)) {
+        return RET_OK;
     }
-    if (config->memtraceEnable_) {
-        std::lock_guard<std::mutex> guard(gpuMtx_);
-        g_gpuRange = config->gpuRange_;
-    }
+    ApplyMemtraceConfig(config);
     return StartHook(config, 0, reply);
+}
+
+int32_t NativeMemoryProfilerSaService::CheckSystemResource()
+{
+    const int oneHundred = 100;
+    MemoryInfo memInfo;
+    if (!GetSystemMemoryInfo(&memInfo)) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
+    }
+
+    if (memInfo.freePercent < MIN_MEM_PROFILER_MEM_PERCENT) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %.2f%%", memInfo.freePercent * oneHundred);
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
+    }
+    
+    double cpuUsage = 0.0;
+    if (!GetSystemCpuUsageInfo(&cpuUsage)) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
+    }
+    if (cpuUsage > MAX_MEM_PROFILER_CPU_PERCENT) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System CPU usage is too high: %.2f%%", cpuUsage * oneHundred);
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CPU_OVERLOADED);
+    }
+    
+    double freeRom = 0.0;
+    freeRom = COMMON::GetFreeRomPercent(COMMON::DEFAULT_RW_DIR);
+    if (freeRom < MIN_MEM_ROM_PERCENT) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System ROM is too low: %.2f%%", freeRom * oneHundred);
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_STORAGE_PRESSURE_CRITICAL);
+    }
+
+    return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
+}
+
+int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    int32_t pid = static_cast<int32_t>(IPCSkeleton::GetCallingPid());
+    if (config->pid_ != pid) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
+    std::lock_guard<std::mutex> guard(g_fileNameMtx);
+    g_fileNameInfo[pid] = config->typeFileName_;
+    if (ApplyNmdConfig(config, 0)) {
+        return RET_OK;
+    }
+    ApplyMemtraceConfig(config);
+
+    int32_t retResource = CheckSystemResource();
+    if (retResource != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System resource is not enough,errorcode is:%d.", retResource);
+        return retResource;
+    }
+    return StartHook(config);
+}
+
+int32_t NativeMemoryProfilerSaService::Stop()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    StopHook(static_cast<uint32_t>(pid));
+    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        return g_stopHookErrorCode;
+    }
+    pid_t uid = IPCSkeleton::GetCallingUid();
+    std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
+    std::lock_guard<std::mutex> guard(g_fileNameMtx);
+    std::string destPath = COMMON::GetFullTracePath(uid, pid, g_fileNameInfo[pid]);
+    if (!COMMON::CopyFileFast(srcPath, destPath)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Copy file into boundle failed");
+        return RET_ERR;
+    }
+    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        return g_stopHookErrorCode;
+    }
+    return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
 {
     StopHook(pid);
+    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        return g_stopHookErrorCode;
+    }
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 {
     StopHook(0, name);
+    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        return g_stopHookErrorCode;
+    }
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
-    if (config->printNmd_) {
-        std::lock_guard<std::mutex> guard(g_nmdMtx);
-        g_nmdPidType[config->nmdPid_] = std::make_pair(fd, config->nmdType_);
-        if (!config->printNmdOnly_) {
-            return RET_OK;
-        }
+    if (ApplyNmdConfig(config, fd)) {
+        return RET_OK;
     }
-    if (config->memtraceEnable_) {
-        std::lock_guard<std::mutex> guard(gpuMtx_);
-        g_gpuRange = config->gpuRange_;
-    }
+    ApplyMemtraceConfig(config);
     if (StartHook(config, fd) == RET_ERR) {
         close(fd);
         return RET_ERR;
@@ -224,6 +317,9 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
     if (config == nullptr) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
             pid, name.c_str());
+        g_stopHookErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::The task has been stooped, errorcode is:%d.",
+            static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
         return;
     }
     CloseSocketFd(static_cast<pid_t>(pid));
@@ -299,6 +395,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     if (!CheckConfig(config, fd)) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_MSG_EMPTY,
             "check config failed");
+        if (g_checkConfErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+            return g_checkConfErrorCode;
+        }
         return RET_ERR;
     }
     if (fd == 0) {
@@ -338,7 +437,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     hook->StartPluginSession(&g_pidInfo);
 
     int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
-        [this, config] { this->StopHook(config->pid_, config->processName_); },
+        [this, config] {
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
+            this->StopHook(config->pid_, config->processName_);
+        },
         config->duration_ * TIME_BASE,
         true);
     if (timerFd == -1) {
@@ -440,7 +543,10 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
     if (!config->extendProcesses_ && (g_taskNum + 1 > taskMaxNum_)) {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: Support up to 4 tasks at the same time");
+        g_checkConfErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
+        PROFILER_LOG_INFO(LOG_CORE,
+            "NativeMemoryProfilerSaService: Support up to %d tasks at the same time, error code: %d",
+            taskMaxNum_, static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT));
         return false;
     }
 
@@ -453,7 +559,9 @@ bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProf
     if (config->pid_ > 0) {
         config->processName_.clear();
         if (g_pidCtx.find(config->pid_) != g_pidCtx.end()) {
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
+            g_checkConfErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED);
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d, error code: %d",
+                config->pid_, static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED));
             return false;
         }
     } else if (!config->processName_.empty()) {
@@ -605,11 +713,16 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
     } else {
         int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
             []() {
-                int ret = SystemSetParameter("hiviewdfx.hiprofiler.native_memoryd.start", "0");
-                if (ret < 0) {
-                    PROFILER_LOG_ERROR(LOG_CORE, "DelayedShutdown close sa failed");
-                } else {
-                    PROFILER_LOG_INFO(LOG_CORE, "DelayedShutdown close sa success");
+                auto samgrProxy = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+                if (samgrProxy == nullptr) {
+                    PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: get samgr failed");
+                    return;
+                }
+                int32_t ret =
+                    samgrProxy->UnloadSystemAbility(INativeMemoryProfilerSa::NATIVE_DAEMON_SYSTEM_ABILITY_ID);
+                if (ret != ERR_OK) {
+                    PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: remove system ability failed");
+                    return;
                 }
             },
             DELAYED_SHUTDOWN_TIME * TIME_BASE, true);
@@ -620,4 +733,149 @@ void NativeMemoryProfilerSaService::DelayedShutdown(bool cancel)
         g_delayedShutdownTimerFd = timerFd;
     }
 }
+
+void NativeMemoryProfilerSaService::OnStart()
+{
+    if (started_) {
+        PROFILER_LOG_INFO(LOG_CORE, "memory collector has already started");
+        return;
+    }
+    if (!Publish(DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get())) {
+        PROFILER_LOG_ERROR(LOG_CORE, "memory collector publish failed");
+        return;
+    }
+    started_ = true;
+}
+
+void NativeMemoryProfilerSaService::OnStop()
+{
+    if (!started_) {
+        PROFILER_LOG_INFO(LOG_CORE, "memory collector has already stopped or not started");
+    }
+    started_ = false;
+    PROFILER_LOG_DEBUG(LOG_CORE, "NativeMemoryProfilerSaService::OnStop leave");
+}
+
+bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
+{
+    if (!memInfo) {
+        return false;
+    }
+    
+    std::ifstream memInfoFile("/proc/meminfo");
+    if (!memInfoFile.is_open()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: open meminfo file failed");
+        return false;
+    }
+
+    std::string line;
+    uint64_t totalMem = 0;
+    uint64_t freeMem = 0;
+    uint64_t availableMem = 0;
+    const int kbToBytes = 1024;
+    while (std::getline(memInfoFile, line)) {
+        std::istringstream iss(line);
+        std::string key;
+        uint64_t value;
+        if (iss >> key >> value) {
+            if (key == "MemTotal:") {
+                totalMem = value * kbToBytes; // Convert from kB to bytes
+            } else if (key == "MemFree:") {
+                freeMem = value * kbToBytes;
+            } else if (key == "MemAvailable:") {
+                availableMem = value * kbToBytes;
+            }
+        }
+    }
+    memInfoFile.close();
+
+    if (totalMem == 0 || freeMem == 0 || availableMem == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: invalid memory info");
+        return false;
+    }
+
+    memInfo->totalMem = totalMem;
+    memInfo->freeMem = freeMem;
+    memInfo->usedMem = totalMem - availableMem;
+    memInfo->freePercent = static_cast<double>(memInfo->freeMem) / static_cast<double>(totalMem);
+
+    return true;
+}
+
+bool NativeMemoryProfilerSaService::ParseCpuStats(const std::string& content, unsigned long& total, unsigned long& idle)
+{
+    std::istringstream iss(content);
+    std::string line;
+    if (std::getline(iss, line)) {
+        if (line.find("cpu ") == 0) { // The line starts with "cpu "
+            std::istringstream lineStream(line);
+            std::string cpuLabel;
+            unsigned long user;
+            unsigned long nice;
+            unsigned long system;
+            unsigned long idleVal;
+            unsigned long iowait;
+            unsigned long irq;
+            unsigned long softirq;
+            unsigned long steal;
+            unsigned long guest;
+            unsigned long guest_nice;
+
+            lineStream >> cpuLabel >> user >> nice >> system >> idleVal >> iowait >> irq >> softirq >> steal
+                >> guest >> guest_nice;
+            total = user + nice + system + idleVal + iowait + irq + softirq + steal;
+            idle = idleVal + iowait;
+
+            return true;
+        }
+    }
+    return false;
+}
+
+bool NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(double* cpuUsage)
+{
+    if (cpuUsage == nullptr) {
+        return false;
+    }
+
+    std::vector<std::string> validPaths = {"/proc"};
+    std::string content1;
+    if (!COMMON::ReadFile("/proc/stat", validPaths, content1)) {
+        return false;
+    }
+
+    unsigned long total1 = 0;
+    unsigned long idle1 = 0;
+    if (!ParseCpuStats(content1, total1, idle1)) {
+        return false;
+    }
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50)); // 50ms 间隔
+
+    std::string content2;
+    if (!COMMON::ReadFile("/proc/stat", validPaths, content2)) {
+        return false;
+    }
+
+    unsigned long total2 = 0;
+    unsigned long idle2 = 0;
+    if (!ParseCpuStats(content2, total2, idle2)) {
+        return false;
+    }
+
+    if ((total2 <= total1) || (total2 - total1 == 0)) {
+        return false;
+    }
+
+    unsigned long totalDiff = total2 - total1;
+    unsigned long idleDiff = idle2 - idle1;
+
+    double usage = 1.0 - (static_cast<double>(idleDiff) / static_cast<double>(totalDiff));
+
+    usage = std::clamp(usage, 0.0, 1.0);
+
+    *cpuUsage = usage;
+    return true;
+}
+
 } // namespace OHOS::Developtools::NativeDaemon

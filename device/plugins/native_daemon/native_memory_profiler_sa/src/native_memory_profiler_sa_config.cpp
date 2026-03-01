@@ -90,6 +90,7 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, largestSize_);
     WRITEUINT32(parcel, secondLargestSize_);
     WRITEUINT32(parcel, maxGrowthSize_);
+    WRITESTRING(parcel, typeFileName_);
     return true;
 }
 
@@ -141,6 +142,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->largestSize_);
     READUINT32(parcel, config->secondLargestSize_);
     READUINT32(parcel, config->maxGrowthSize_);
+    READSTRING(parcel, config->typeFileName_);
     PrintConfig(config);
     return true;
 }

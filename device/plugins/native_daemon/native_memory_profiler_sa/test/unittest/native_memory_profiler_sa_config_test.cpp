@@ -84,4 +84,38 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest002, 
     EXPECT_EQ(result->maxGrowthSize_, 300);
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest003
+ * @tc.desc: NMD and memtrace fields serialization (printNmd_, memtraceEnable_, nmdPid_, nmdType_, gpuRange_)
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest003, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+
+    config->printNmd_ = true;
+    config->printNmdOnly_ = true;
+    config->nmdPid_ = 100;
+    config->nmdType_ = 2;
+    config->memtraceEnable_ = true;
+    config->gpuRange_[0][0] = 1;
+    config->gpuRange_[0][1] = 2;
+
+    OHOS::Parcel parcel;
+    EXPECT_EQ(config->Marshalling(parcel), true);
+
+    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
+    EXPECT_EQ(result->printNmd_, true);
+    EXPECT_EQ(result->printNmdOnly_, true);
+    EXPECT_EQ(result->nmdPid_, 100u);
+    EXPECT_EQ(result->nmdType_, 2u);
+    EXPECT_EQ(result->memtraceEnable_, true);
+    EXPECT_EQ(result->gpuRange_[0][0], 1u);
+    EXPECT_EQ(result->gpuRange_[0][1], 2u);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
