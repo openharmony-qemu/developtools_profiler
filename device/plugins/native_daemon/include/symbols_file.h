@@ -38,16 +38,6 @@ constexpr const char KERNEL_ELF_NAME[] = "vmlinux";
 constexpr const char MMAP_VDSO_NAME[] = "[vdso]";
 constexpr const char MMAP_ANONYMOUS_NAME[] = "[anon]";
 constexpr const char MMAP_ANONYMOUS_OHOS_NAME[] = "//anon";
-const std::string NOTE_GNU_BUILD_ID = ".note.gnu.build-id";
-const std::string EH_FRAME_HR = ".eh_frame_hdr";
-const std::string EH_FRAME = ".eh_frame";
-const std::string ARM_EXIDX = ".ARM.exidx";
-const std::string SYMTAB = ".symtab";
-const std::string DYNSYM = ".dynsym";
-const std::string GNU_DEBUGDATA = ".gnu_debugdata";
-const std::string PLT = ".plt";
-const std::string LINKER_PREFIX = "__dl_";
-const std::string LINKER_PREFIX_NAME = "[linker]";
 
 const int MAX_SYMBOLS_TYPE_NAME_LEN = 10;
 
@@ -69,6 +59,7 @@ enum SymbolsFileType {
     SYMBOL_JAVA_FILE,
     SYMBOL_JS_FILE,
     SYMBOL_HAP_FILE,
+    SYMBOL_ARKWEB_V8_FILE,
     SYMBOL_UNKNOW_FILE,
 };
 
@@ -109,6 +100,10 @@ public:
     };
     bool setSymbolsFilePath(const std::vector<std::string> &);
     virtual bool IsAbc()
+    {
+        return false;
+    }
+    virtual bool IsArkwebV8()
     {
         return false;
     }

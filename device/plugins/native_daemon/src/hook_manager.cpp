@@ -44,8 +44,11 @@ constexpr uint32_t PAGE_BYTES = 4096;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
+const std::string PRELOAD_NAME = "hiviewdfx.hiprofiler.preload";
+const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.diag.path";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
+constexpr int SIGNAL_STOP_HOOK = 37;
 const std::string VERSION = "1.02";
 constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
@@ -238,7 +241,7 @@ unsigned long long HookManager::ConvertTagToMask()
 {
     unsigned long long resMask = 0;
     if (hookConfig_.restrace_tag().size() > 0) {
-        for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
+        for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
             std::string resTag = hookConfig_.restrace_tag(i);
             if (resTag == TAG_RES_GPU_VK) {
                 resMask |= RES_GPU_VK;
@@ -284,6 +287,8 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_SO_MASK;
             } else if (resTag == TAG_RES_ASHMEM_MASK) {
                 resMask |= RES_ASHMEM_MASK;
+            } else if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
+                resMask |= RES_ARK_LOCAL_HANDLE;
             }
         }
     }
@@ -293,8 +298,8 @@ unsigned long long HookManager::ConvertTagToMask()
 uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
 {
     constexpr uint64_t ALL_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
-        ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+        ASYNC_TYPE_ARKTS_TASKPOOL | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
     uint64_t mask = baseMask;
     for (const auto value : hookConfig_.async_type()) {
         switch (value) {
@@ -322,6 +327,12 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
             case AsyncFlagType::ARKTS_TASKPOOL:
                 mask |= ASYNC_TYPE_ARKTS_TASKPOOL;
                 break;
+            case AsyncFlagType::ARKWEB_ENGINE:
+                mask |= ASYNC_TYPE_ARKWEB;
+                break;
+            case AsyncFlagType::JSVM_ASYNC:
+                mask |= ASYNC_TYPE_JSVM;
+                break;
             case AsyncFlagType::ALL_ASYNC_TYPE:
                 mask |= ALL_TYPE;
                 break;
@@ -348,6 +359,71 @@ void HookManager::UpdateAsyncFlagConfig()
     }
     PROFILER_LOG_WARN(LOG_CORE, "async_flag final mask: 0x%llx",
         static_cast<unsigned long long>(asyncFlagMask_));
+}
+
+static std::string GetArktsDiagPathFromParam()
+{
+    uint32_t len = 0;
+    int ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), nullptr, &len);
+    if (ret == 0) {
+        std::vector<char> value(len + 1);
+        ret = SystemGetParameter(ARKTS_DIAG_PATH.c_str(), value.data(), &len);
+        if (ret == 0) {
+            return std::string(value.data());
+        }
+    }
+
+    return "";
+}
+
+bool HookManager::SetLocalHandle(const char *value)
+{
+    if (hookConfig_.restrace_tag().size() == 0) {
+        return true;
+    }
+
+    for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
+        std::string resTag = hookConfig_.restrace_tag(i);
+        if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
+            std::string path = GetArktsDiagPathFromParam();
+            if (access(path.c_str(), F_OK) != 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "arkts diag lib(%s) does not exist", path.c_str());
+                return false;
+            }
+
+            int ret = SystemSetParameter(PRELOAD_NAME.c_str(), value);
+            if (ret < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "set preload param(%s) failed for process(%s)",
+                                   value, hookConfig_.process_name().c_str());
+                return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+std::string HookManager::GetArktsDiagPath(const int8_t *buf, const uint32_t size)
+{
+    std::string data(reinterpret_cast<const char *>(buf), size);
+    PROFILER_LOG_DEBUG(LOG_CORE, "GetArktsDiagPath, received data:%s", data.c_str());
+    size_t pos = data.find(PRELOAD_APP_IDENTIFY);
+    if (pos == std::string::npos) {
+        PROFILER_LOG_ERROR(LOG_CORE, "received preload msg is invalid:%s", data.c_str());
+        return "";
+    }
+
+    size_t start = pos + PRELOAD_APP_IDENTIFY.length();
+    std::string appName = data.substr(start);
+    PROFILER_LOG_INFO(LOG_CORE, "preload appName:%s", appName.c_str());
+
+    if (appName != hookConfig_.process_name()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "received appName not equal, appName:%s, process_name:%s",
+                           appName.c_str(), hookConfig_.process_name().c_str());
+        return "";
+    }
+
+    return GetArktsDiagPathFromParam();
 }
 
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
@@ -457,6 +533,10 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             return false;
         }
         auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        if (table == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext new UniqueStackTable failed.");
+            return false;
+        }
         // Use faultloggerd to record sync/async stack info.
         table->SwitchExternalBuffer(memoryBase, uniqueStackTableSize);
     }
@@ -592,6 +672,9 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 
     UpdateAsyncFlagConfig();
+    if (!SetLocalHandle("1")) {
+        return false;
+    }
     
     if (hookCtx_.empty()) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookManager no task");
@@ -823,9 +906,16 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if ((item->pid > 0) && hookService_) {
-            hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
-            hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
+        if (item->pid > 0) {
+            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
+                const int bufSize = 256;
+                char buf[bufSize] = {0};
+                strerror_r(errno, buf, bufSize);
+            }
+            if (hookService_) {
+                hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
+                hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
+            }
         } else if (item->pid <= 0) {
             PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
         }
@@ -841,6 +931,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         if (item->stackData != nullptr) {
             item->stackData->Close();
         }
+    }
+    if (!SetLocalHandle("0")) {
+        PROFILER_LOG_WARN(LOG_CORE, "reset preload param failed");
     }
     return true;
 }

@@ -64,7 +64,7 @@ HWTEST_F(HookRecordTest, TestSetEventFrame001, TestSize.Level0)
     EXPECT_EQ(hookRecord->GetType(), MALLOC_MSG);
     std::vector<CallFrame> callFrames = {};
     std::vector<CallFrame>* callFramesptr = &callFrames;
-    SerializeInfo hookInfo = {callFramesptr, 2, "malloc", &g_hookConfig};
+    SerializeInfo hookInfo = {callFramesptr, 2, "malloc", 0, 0, &g_hookConfig};
     BatchNativeHookData stackData;
     auto hookData = stackData.add_events();
     auto allocEvent = hookData->mutable_alloc_event();
@@ -93,7 +93,7 @@ HWTEST_F(HookRecordTest, TestSetEventFrame002, TestSize.Level0)
     EXPECT_EQ(hookRecord->GetType(), FREE_MSG);
     std::vector<CallFrame> callFrames = {};
     std::vector<CallFrame>* callFramesptr = &callFrames;
-    SerializeInfo hookInfo = {callFramesptr, 2, "free", &g_hookConfig};
+    SerializeInfo hookInfo = {callFramesptr, 2, "free", 0, 0, &g_hookConfig};
     BatchNativeHookData stackData;
     auto hookData = stackData.add_events();
     auto freeEvent = hookData->mutable_free_event();
@@ -122,7 +122,7 @@ HWTEST_F(HookRecordTest, TestSerializeData, TestSize.Level0)
     EXPECT_EQ(hookRecord->GetType(), MEMORY_USING_MSG);
     std::vector<CallFrame> callFrames = {};
     std::vector<CallFrame>* callFramesptr = &callFrames;
-    SerializeInfo hookInfo = {callFramesptr, 3, "memory_using", &g_hookConfig};
+    SerializeInfo hookInfo = {callFramesptr, 3, "memory_using", 0, 0, &g_hookConfig};
     BatchNativeHookData stackData;
     auto hookData = stackData.add_events();
     hookRecord->SerializeData(hookData, hookInfo);

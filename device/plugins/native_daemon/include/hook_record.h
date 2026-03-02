@@ -35,7 +35,7 @@ struct RawStack {
     std::unique_ptr<uint8_t[]> baseStackData = nullptr; // save the shared memory data
     BaseStackRawData* stackContext = nullptr; // points to the foundation type data
     union {
-        uint8_t* stackData; //cannot initialize mutiple members of union
+        uint8_t* stackData; //cannot initialize multiple members of union
         const char* jsStackData = nullptr;
     };
     uint8_t* data = nullptr; // fp mode data is ip, dwarf mode data is regs
@@ -72,7 +72,7 @@ public:
     HookRecord() = default;
     HookRecord(RawStackPtr rawStack) : rawStack_(rawStack){};
     virtual uint16_t GetType();
-    virtual void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo){};
+    virtual void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) {};
     virtual void Reset();
     virtual bool IsValid();
     virtual uint64_t GetAddr();
@@ -171,12 +171,14 @@ public:
 
 class MemoryUsingRecord : public HookRecord {
 public:
+    MemoryUsingRecord() = default;
     MemoryUsingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
     void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };
 
 class MemoryUnusingRecord : public HookRecord {
 public:
+    MemoryUnusingRecord() = default;
     MemoryUnusingRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
     void SerializeData(NativeHookProto stackData, SerializeInfo& hookInfo) override;
 };

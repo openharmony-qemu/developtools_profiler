@@ -30,6 +30,8 @@
 #include <sys/stat.h>
 #include <atomic>
 #include <regex>
+#include <sys/statvfs.h>
+#include <sys/sendfile.h>
 #include "application_info.h"
 #include "bundle_mgr_proxy.h"
 #include "file_ex.h"
@@ -39,6 +41,8 @@
 #include "system_ability_definition.h"
 #include "os_account_info.h"
 #include "os_account_manager.h"
+
+namespace fs = std::filesystem;
 
 using namespace OHOS;
 using namespace OHOS::AppExecFwk;
@@ -77,6 +81,12 @@ const std::set<std::string> CMD_WHITE_LIST = {
     "/system/bin/hiperf",    "/system/bin/hitrace",     "/system/bin/hisysevent",         "/system/bin/hidumper",
     "/system/bin/SP_daemon", "/system/bin/hiprofilerd", "/system/bin/hiprofiler_plugins", "/system/bin/native_daemon",
     "/system/bin/hilog"};
+const uintmax_t ROM_LIMIT = static_cast<uintmax_t>(4) * 1024 * 1024 * 1024;  // 4G
+const time_t DAY_TO_SECONDS = 24 * 60 * 60;
+const mode_t DEFAULT_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;  // -rw-rw----
+const std::string HTRACE_PATH_PREFIX = "/data/app/el2/";
+const std::string HTRACE_PATH_SUFFIX = "/haps/entry/files/";
+const size_t HTRACE_FILES_NUM = 5;
 }  // namespace
 
 bool IsProcessRunning(int& lockFileFd)
@@ -366,6 +376,23 @@ bool CheckPopenParams(const std::vector<std::string>& command, const char* type)
             return false;
         }
     }
+    return true;
+}
+
+bool IsProcessExistByPid(int& pidval)
+{
+    char filePath[FILE_PATH_SIZE] = {0};
+    int len = snprintf_s(filePath, FILE_PATH_SIZE, FILE_PATH_SIZE - 1, "/proc/%d/cmdline", pidval);
+    if (len < 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "maybe, the contents of cmdline had be cut off");
+        return false;
+    }
+    FILE* fp = fopen(filePath, "r");
+    if (fp == nullptr) {
+        PROFILER_LOG_DEBUG(LOG_CORE, "open file failed! %s", filePath);
+        return false;
+    }
+    fclose(fp);
     return true;
 }
 
@@ -762,9 +789,15 @@ std::string GetErrorMsg()
     return errorMsg;
 }
 
-std::string GetTimeStr()
+std::string GetTimeStr(std::time_t gap)
 {
     time_t now = time(nullptr);
+    if (now == 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetTimeStr: time failed.");
+        return "";
+    }
+
+    now -= gap;
     struct tm tmTime;
     localtime_r(&now, &tmTime);
 
@@ -957,5 +990,293 @@ std::string GetProcessNameByPid(int32_t pid)
         procName = processName;
     }
     return procName;
+}
+
+std::string GetBundleNameByPid(int32_t pid)
+{
+    std::string bundleName;
+    std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
+    LoadStringFromFile(filePath, bundleName);
+    bundleName.resize(strlen(bundleName.c_str()));
+    return bundleName;
+}
+
+std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& filename)
+{
+    const pid_t uidBase = 200000;
+    return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + GetBundleNameByPid(pid) +
+        HTRACE_PATH_SUFFIX + filename;
+}
+
+double GetFreeRomPercent(const std::string path)
+{
+    struct statvfs stat;
+    double ret = 0.0;
+    if (statvfs(path.c_str(), &stat) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "GetFreeRomPercent::Failed to get free rom percent,error:%s", strerror(errno));
+        return ret;
+    }
+
+    ret = static_cast<double>(stat.f_bfree) / static_cast<double>(stat.f_blocks);
+    return ret;
+}
+
+static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)
+{
+    struct stat statBuf;
+    if (fstat(srcFd, &statBuf) != 0) {
+        outTotal = 0;
+        return false;
+    }
+
+    off_t offset = 0;
+    outTotal = 0;
+    while (offset < static_cast<off_t>(statBuf.st_size)) {
+        ssize_t copied = sendfile(destFd, srcFd, &offset, static_cast<size_t>(statBuf.st_size - offset));
+        if (copied < 0) {
+            if (errno == EINTR) {
+                continue;
+            }
+            return false;
+        }
+        if (copied == 0) {
+            break;
+        }
+        outTotal += copied;
+    }
+
+    if (fsync(destFd) != 0) {
+        return false;
+    }
+
+    return static_cast<ssize_t>(statBuf.st_size) == outTotal;
+}
+
+static bool CopyFileWithRetry(const std::string& srcPath, const std::string& destPath, int maxRetries)
+{
+    int src = open(srcPath.c_str(), O_RDONLY);
+    if (src < 0) {
+        return false;
+    }
+
+    int dest = open(destPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, DEFAULT_MODE);
+    if (dest < 0) {
+        close(src);
+        return false;
+    }
+
+    bool ret = false;
+    do {
+        ssize_t total = 0;
+        if (DoSendfileCopyOnce(src, dest, total)) {
+            ret = true;
+            break;
+        }
+
+        std::ofstream ofs(destPath, std::ios::trunc);
+        if (!ofs.is_open()) {
+            break;
+        }
+        ofs.close();
+    } while (maxRetries-- > 0);
+
+    close(src);
+    close(dest);
+
+    return ret;
+}
+
+bool CopyFileFast(const std::string& srcPath, const std::string& destPath, bool isRemoveSrc)
+{
+    int maxRetries = 3;
+    bool ret = true;
+    if (!CopyFileWithRetry(srcPath, destPath, maxRetries)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "copy file into bundle failed, err: %s", strerror(errno));
+        ret = false;
+    }
+
+    if (isRemoveSrc) {
+        if (remove(srcPath.c_str()) != 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "remove source file failed, err: %s", strerror(errno));
+            ret = false;
+        }
+    }
+
+    return ret;
+}
+
+static bool IsHtraceFileName(const std::string& filename)
+{
+    const std::string fileSuffix = ".htrace";
+    return filename.size() > fileSuffix.size() &&
+        filename.substr(filename.size() - fileSuffix.size()) == fileSuffix;
+}
+
+static std::pair<std::string, std::string> ParseHtraceFileName(const std::string& filename)
+{
+    const std::string fileSuffix = ".htrace";
+    const size_t fileNamePartsNum = 3;
+    const char delim = '-';
+
+    if (filename.size() <= fileSuffix.size()) {
+        return { "", "" };
+    }
+
+    std::string fileWithNoSuffix = filename.substr(0, filename.size() - fileSuffix.size());
+    std::vector<size_t> indexes;
+
+    for (size_t i = 0; i < fileWithNoSuffix.size(); ++i) {
+        if (fileWithNoSuffix[i] == delim) {
+            indexes.push_back(i);
+        }
+    }
+    if (indexes.size() != fileNamePartsNum) {
+        return { "", "" };
+    }
+    std::string srcType = fileWithNoSuffix.substr(0, indexes[0]);
+    std::string timestamp = fileWithNoSuffix.substr(indexes[2] + 1);
+
+    return { srcType, timestamp };
+}
+
+static void CollectHtraceFiles(const std::string& dirPath, uintmax_t &romTotal,
+    std::multimap<std::string, std::pair<std::string, uintmax_t>> &fileInfos,
+    std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &typeInfos)
+{
+    std::error_code ec;
+    for (const auto& entry : fs::directory_iterator(dirPath, ec)) {
+        if (ec) {
+            break;
+        }
+        std::string filename = entry.path().filename().string();
+        if (!IsHtraceFileName(filename)) {
+            continue;
+        }
+        uintmax_t rom = fs::file_size(entry.path(), ec);
+        if (ec) {
+            ec.clear();
+            continue;
+        }
+        romTotal += rom;
+        auto fileInfo = ParseHtraceFileName(filename);
+        if (fileInfo.first.empty() && fileInfo.second.empty()) {
+            continue;
+        }
+        fileInfos.insert({fileInfo.second, {filename, rom}});
+        typeInfos[fileInfo.first].insert({fileInfo.second, filename});
+    }
+}
+
+static std::unordered_set<std::string> SelectFilesToRemove(uintmax_t romTotal,
+    const std::multimap<std::string, std::pair<std::string, uintmax_t>> &fileInfos,
+    const std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> &typeInfos)
+{
+    std::unordered_set<std::string> needRemove;
+    std::string lastDay = COMMON::GetTimeStr(DAY_TO_SECONDS);
+
+    // rule1 & rule2
+    for (const auto& entry : fileInfos) {
+        if (entry.first < lastDay || romTotal > ROM_LIMIT) {
+            needRemove.insert(entry.second.first);
+            if (romTotal >= entry.second.second) {
+                romTotal -= entry.second.second;
+            } else {
+                romTotal = 0;
+            }
+        }
+    }
+
+    // rule3
+    for (const auto& entry : typeInfos) {
+        size_t sz = entry.second.size();
+        if (sz > HTRACE_FILES_NUM) {
+            size_t delCount = sz - HTRACE_FILES_NUM;
+            for (auto it = entry.second.begin(); it != entry.second.end() && delCount > 0; ++it, --delCount) {
+                needRemove.insert(it->second);
+            }
+        }
+    }
+
+    return needRemove;
+}
+
+static bool RemoveFilesInSet(const std::string& dirPath, const std::unordered_set<std::string>& needRemove)
+{
+    bool allOk = true;
+    std::error_code ec;
+    for (const auto& filename : needRemove) {
+        fs::path fullPath = fs::path(dirPath) / filename;
+        ec.clear();
+        bool removed = fs::remove(fullPath, ec);
+        if (ec || !removed) {
+            PROFILER_LOG_ERROR(LOG_CORE, "CleanOldenFiles: remove failed %s, err: %s",
+                fullPath.string().c_str(), ec.message().c_str());
+            allOk = false;
+            continue;
+        }
+    }
+    return allOk;
+}
+
+/**
+ * [NAPI] file olden: <resource_type>-<process_name>-<pid>-<timestamp>.htrace
+ * 1.clean file saved over 24 hours
+ * 2.clean oldest files if total rom size of '/data' > 4G
+ * 3.clean oldest files if any resource type's count > 5
+ */
+bool CleanOldenFiles(const std::string& path)
+{
+    uintmax_t romTotal = 0;
+    std::multimap<std::string, std::pair<std::string, uintmax_t>> fileInfos;
+    std::unordered_map<std::string, std::set<std::pair<std::string, std::string>>> typeInfos;
+
+    CollectHtraceFiles(path, romTotal, fileInfos, typeInfos);
+
+    auto needRemove = SelectFilesToRemove(romTotal, fileInfos, typeInfos);
+
+    bool ret = RemoveFilesInSet(path, needRemove);
+    return ret;
+}
+
+bool CreateFile(const std::string& filePath)
+{
+    if (access(filePath.c_str(), F_OK) == 0) {
+        return access(filePath.c_str(), W_OK) == 0;
+    }
+    int fd = creat(filePath.c_str(), DEFAULT_MODE);
+    if (fd == -1) {
+        return false;
+    }
+    close(fd);
+    return true;
+}
+
+bool CleanCmdOldenTraceFiles(const std::string& path)
+{
+    std::error_code ec;
+    std::map<fs::file_time_type, std::string> fileInfos;
+    for (const auto& entry : fs::directory_iterator(path, ec)) {
+        if (ec) {
+            break;
+        }
+        std::string filename = entry.path().filename().string();
+        if (!IsHtraceFileName(filename)) {
+            continue;
+        }
+        auto lastWriteTime = fs::last_write_time(entry.path());
+        fileInfos[lastWriteTime] = filename;
+    }
+
+    bool allOk = true;
+    if (fileInfos.size() >= HTRACE_FILES_NUM) {
+        size_t delCount = fileInfos.size() - HTRACE_FILES_NUM;
+        for (auto it = fileInfos.begin(); it != fileInfos.end() && delCount > 0; ++it, --delCount) {
+            std::string fullPath = path + it->second;
+            if (remove(fullPath.c_str()) != 0) {
+                allOk = false;
+            }
+        }
+    }
+    return allOk;
 }
 } // namespace COMMON

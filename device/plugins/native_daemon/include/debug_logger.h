@@ -45,11 +45,11 @@ enum DebugLevel {
 
 #ifdef HIPERF_DEBUG
 #if is_ohos
-const std::string DEFAULT_LOG_PATH = "/data/local/tmp/hiperf_log.txt";
+inline const std::string DEFAULT_LOG_PATH = "/data/local/tmp/hiperf_log.txt";
 #elif is_mingw
-const std::string DEFAULT_LOG_PATH = ".\\hiperf_log.txt";
+inline const std::string DEFAULT_LOG_PATH = ".\\hiperf_log.txt";
 #elif is_linux
-const std::string DEFAULT_LOG_PATH = "hiperf_log.txt";
+inline const std::string DEFAULT_LOG_PATH = "hiperf_log.txt";
 #else
 #error unkow os
 #endif
@@ -65,10 +65,6 @@ const std::string DEFAULT_LOG_PATH = "hiperf_log.txt";
 #define SHORT_FILENAME                                                                             \
     (__builtin_strrchr(__FILE__, '/') ? __builtin_strrchr(__FILE__, '/') + 1 : __FILE__)
 
-const std::map<DebugLevel, const std::string> DebugLevelMap = {
-    {LEVEL_MUCH, "M"},    {LEVEL_VERBOSE, "V"}, {LEVEL_DEBUG, "D"}, {LEVEL_INFO, "I"},
-    {LEVEL_WARNING, "W"}, {LEVEL_ERROR, "E"},   {LEVEL_FATAL, "F"},
-};
 constexpr const int LOG_BUFFER_SIZE = 4 * 1024 * 1024;
 
 class DebugLogger {

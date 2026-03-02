@@ -24,12 +24,14 @@
 
 
 namespace COMMON {
+const std::string DEFAULT_RW_DIR = "/data";
 bool IsProcessRunning(int& lockFileFd); // add file lock, only one process can run
 std::string CanonicalizeSpecPath(const char* src);
 bool IsProcessExist(const std::string& processName, int& pid); // Check if the process exists and get PID
 int StartProcess(const std::string& processBin, std::vector<char*>& argv);
 int KillProcess(int pid);
 bool CheckSubscribeVersion(const std::string& version);
+bool IsProcessExistByPid(int& pidval);
 void PrintMallinfoLog(const std::string& mallInfoPrefix, const struct mallinfo2& mi);
 inline int CustomFdClose(int& fd);
 inline int CustomFdFclose(FILE** fp);
@@ -44,7 +46,7 @@ bool CheckApplicationEncryped(int pid, const std::string& processName);
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
 bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
 std::string GetErrorMsg();
-std::string GetTimeStr();
+std::string GetTimeStr(std::time_t gap = 0);
 clockid_t GetClockId(const std::string& clockIdStr);
 std::string GetClockStr(const int32_t clockId);
 void AdaptSandboxPath(std::string& filePath, int pid);
@@ -65,7 +67,7 @@ std::string GetProcessNameByPid(int32_t pid);
 bool StoiCheck(const std::string& str);
 std::pair<bool, std::string> ReadProcessNameFromDir(struct dirent* ptr);
 bool CheckPopenParams(const std::vector<std::string>& command, const char* type);
-static const std::string STATE_VERSION = "1.0";
+inline static const std::string STATE_VERSION = "1.0";
 enum ErrorType {
     RET_NO_PERMISSION,
     RET_NOT_SUPPORT,
@@ -75,6 +77,13 @@ enum ErrorType {
     RET_FAIL = -1,
     RET_SUCC = 0,
 };
+std::string GetBundleNameByPid(int32_t pid);
+std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& filename);
+double GetFreeRomPercent(const std::string path = DEFAULT_RW_DIR);
+bool CopyFileFast(const std::string& srcPath, const std::string& destPath, bool isRemoveSrc = true);
+bool CleanOldenFiles(const std::string& path);
+bool CleanCmdOldenTraceFiles(const std::string& path);
+bool CreateFile(const std::string& filePath);
 
 class SpinLock {
 public:

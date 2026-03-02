@@ -226,9 +226,12 @@ int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
 
 bool ShareMemoryBlock::UseFreeMemory(int8_t* pmem, uint32_t size)
 {
-    uint32_t wp = pmem - PIECE_HEAD_LEN - header_->data;
+    int wpIndex = pmem - PIECE_HEAD_LEN - header_->data;
+    if (wpIndex < 0 || static_cast<uint32_t>(wpIndex) >= header_->info.memorySize_)  {
+        return false;
+    }
+    uint32_t wp = static_cast<uint32_t>(wpIndex);
     *((int*)(&header_->data[wp])) = size;
-
     header_->info.writeOffset_ = wp + PIECE_HEAD_LEN + size;
     return true;
 }

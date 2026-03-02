@@ -115,31 +115,6 @@ enum perf_event_arm_regs {
     PERF_REG_ARM_MAX,
 };
 
-// order is IP , SP for ut
-static const std::map<size_t, const std::string> PERF_REG_NAME_MAP = {
-#if defined(target_cpu_x86_64)
-    {PERF_REG_X86_IP, "PERF_REG_X86_IP"},
-    {PERF_REG_X86_SP, "PERF_REG_X86_SP"},
-#elif defined(target_cpu_arm)
-    {PERF_REG_ARM_PC, "PERF_REG_ARM_PC"},
-    {PERF_REG_ARM_SP, "PERF_REG_ARM_SP"},
-#elif defined(target_cpu_arm64)
-    {PERF_REG_ARM64_PC, "PERF_REG_ARM64_PC"},
-    {PERF_REG_ARM64_SP, "PERF_REG_ARM64_SP"},
-#endif
-};
-
-// context name
-static const std::map<uint64_t, const std::string> PERF_CONTEXT_NAME = {
-    {PERF_CONTEXT_HV, "PERF_CONTEXT_HV"},
-    {PERF_CONTEXT_KERNEL, "PERF_CONTEXT_KERNEL"},
-    {PERF_CONTEXT_USER, "PERF_CONTEXT_USER"},
-    {PERF_CONTEXT_GUEST, "PERF_CONTEXT_GUEST"},
-    {PERF_CONTEXT_GUEST_KERNEL, "PERF_CONTEXT_GUEST_KERNEL"},
-    {PERF_CONTEXT_GUEST_USER, "PERF_CONTEXT_GUEST_USER"},
-    {PERF_CONTEXT_MAX, "PERF_CONTEXT_MAX"},
-};
-
 #if defined(target_cpu_x86_64)
 constexpr ArchType buildArchType = ArchType::ARCH_X86_64;
 #elif defined(target_cpu_arm64)

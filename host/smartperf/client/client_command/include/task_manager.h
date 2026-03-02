@@ -64,6 +64,7 @@ public:
     ArgumentParser& GetArgumentParser();
     void SetFileTitleFlag();
     bool ThreadLock();
+    void ClearShaderFile();
 
 private:
     std::map<std::string, std::string> TaskFun(SpProfiler* pro, uint32_t batch, bool record);
@@ -98,7 +99,6 @@ private:
     bool ipcDataRecv_ {false};
     std::vector<ThreadLocal*> threadLocals_ {4};
     std::ofstream dataFile_;
-    std::chrono::steady_clock::time_point currentTimePoint_;
     std::set<std::string> titles_;
 
     std::thread scheduleSaveDataTh_;

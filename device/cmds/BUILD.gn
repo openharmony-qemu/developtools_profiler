@@ -30,6 +30,12 @@ ohos_executable("hiprofiler_cmd") {
   sources = [
     "src/main.cpp",
     "src/parse_plugin_config.cpp",
+    "src/profiler_command_parser.cpp",
+    "src/profiler_command_executor.cpp",
+    "src/profiler_session_manager.cpp",
+    "src/profiler_config_manager.cpp",
+    "src/profiler_process_manager.cpp",
+    "src/file_path_handler.cpp",
   ]
   include_dirs = [ "include" ]
   deps = [

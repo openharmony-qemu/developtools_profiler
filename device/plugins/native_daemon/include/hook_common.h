@@ -49,7 +49,7 @@ inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
-const size_t RESTRACE_TYPE_COUNT = 20;
+const size_t RESTRACE_TYPE_COUNT = 22;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
@@ -72,6 +72,7 @@ const size_t KMP_HEAP_MASK_INDEX = 17;
 const size_t RN_HEAP_MASK_INDEX = 18;
 const size_t DMABUF_MASK_INDEX = 19;
 const size_t ARK_GLOBAL_HANDLE_INDEX = 20;
+const size_t ARK_LOCAL_HANDLE_INDEX = 21;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth
@@ -79,6 +80,7 @@ const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
 constexpr int SHARED_MEMORY_NUM = 3;
 constexpr uint64_t DWARF_ERROR_ID = 999999;
 constexpr uint64_t SIZE_MASK = 0xFFFFFF0000000000;
+const std::string PRELOAD_APP_IDENTIFY = "appname:";
 }
 }
 }

@@ -997,12 +997,11 @@ HWTEST_F(MemoryDataPluginTest, TestPid, TestSize.Level1)
     // check result
     EXPECT_TRUE(PluginStub(plugin, config, memoryData));
     EXPECT_GT(memoryData.processesinfo(0).vm_size_kb(), memoryData.processesinfo(1).vm_size_kb());
-
+    plugin.Stop();
     while (waitpid(-1, nullptr, WNOHANG) == 0) {
         kill(pid1, SIGKILL);
         kill(pid2, SIGKILL);
     }
-    plugin.Stop();
 }
 
 /**

@@ -63,6 +63,7 @@ public:
     void TearDown() {}
 };
 
+#ifndef ENABLE_SA_AUTO_START
 /**
  * @tc.name: NativeMemoryProfilerSaClientManagerTest001
  * @tc.desc: The test service is not started
@@ -133,6 +134,7 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     EXPECT_GE(SystemSetParameter(NATIVE_PARAM.c_str(), "0"), 0);
     sleep(1);
 }
+#endif
 
 /**
  * @tc.name: NativeMemoryProfilerSaClientManagerTest003
@@ -171,8 +173,8 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaClientManagerTest006
- * @tc.desc: Test get stack info with MemSaConfig
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest004
+ * @tc.desc: Test simplified nmd mode
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest006, TestSize.Level3)
@@ -181,4 +183,21 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     MemSaConfig config;
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::Start(0, 0, 100, config), RET_ERR);
 }
+
+/**
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest007
+ * @tc.desc: GetMallocStats invalid param - fd=0, pid<=0, invalid type (feature 0212: NMD GetMallocStats)
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest007, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    int validFd = 1;
+    int validPid = 1234;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(0, validPid, 0), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, 0, 0), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, validPid, -1), RET_ERR);
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, validPid, 3), RET_ERR);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

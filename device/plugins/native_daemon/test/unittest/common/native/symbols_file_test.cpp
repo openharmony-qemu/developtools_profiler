@@ -23,6 +23,17 @@ using namespace testing::ext;
 using namespace std;
 using namespace OHOS::HiviewDFX;
 
+const std::string NOTE_GNU_BUILD_ID = ".note.gnu.build-id";
+const std::string EH_FRAME_HR = ".eh_frame_hdr";
+const std::string EH_FRAME = ".eh_frame";
+const std::string ARM_EXIDX = ".ARM.exidx";
+const std::string SYMTAB = ".symtab";
+const std::string DYNSYM = ".dynsym";
+const std::string GNU_DEBUGDATA = ".gnu_debugdata";
+const std::string PLT = ".plt";
+const std::string LINKER_PREFIX = "__dl_";
+const std::string LINKER_PREFIX_NAME = "[linker]";
+
 #ifdef __arm__
     enum SymbolAddr : uint64_t {
         INIT = 0X1000U,
@@ -1031,6 +1042,75 @@ HWTEST_F(SymbolsFileTest, UpdateBuildIdIfMatch, TestSize.Level0)
     file->UpdateBuildIdIfMatch("456");
     EXPECT_STREQ(file->buildId_.c_str(), "123");
     EXPECT_STRNE(file->buildId_.c_str(), "456");
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::IsArkwebV8
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest001, TestSize.Level0)
+{
+    std::string filepath = "[anon:v8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    file->filePath_ = "test";
+    EXPECT_FALSE(file->IsArkwebV8());
+
+    file->SetBoolValue(false);
+    file->filePath_ = "[anon:v8";
+    EXPECT_FALSE(file->IsArkwebV8());
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::LoadDebugInfo
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest002, TestSize.Level0)
+{
+    std::string filepath = "[anon:JS_V8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    std::string symbolFilePath = "test.so";
+    EXPECT_FALSE(file->LoadDebugInfo(map, symbolFilePath));
+    map = std::make_shared<DfxMap>();
+    EXPECT_TRUE(file->LoadDebugInfo(map, symbolFilePath));
+    EXPECT_TRUE(file->LoadDebugInfo(map, symbolFilePath));
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::LoadSymbols
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest003, TestSize.Level0)
+{
+    std::string filepath = "[anon:JS_V8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    std::string symbolFilePath = "test.so";
+    EXPECT_FALSE(file->LoadSymbols(map, symbolFilePath));
+    map = std::make_shared<DfxMap>();
+    EXPECT_TRUE(file->LoadSymbols(map, symbolFilePath));
+}
+
+/**
+ * @tc.name: test func ArkwebV8FileSymbols::GetSymbolWithPcAndMap
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(SymbolsFileTest, ArkwebV8FileSymbolsTest004, TestSize.Level0)
+{
+    std::string filepath = "[anon:v8";
+    auto file = SymbolsFile::CreateSymbolsFile(filepath);
+    std::shared_ptr<DfxMap> map = nullptr;
+    uint64_t ip = 0;
+    auto dfxSymbol = file->GetSymbolWithPcAndMap(ip, map);
+    EXPECT_EQ(dfxSymbol.taskVaddr_, ip);
+    map = std::make_shared<DfxMap>();
+    ip = 1;
+    dfxSymbol = file->GetSymbolWithPcAndMap(ip, map);
+    EXPECT_EQ(dfxSymbol.taskVaddr_, ip);
 }
 } // namespace NativeDaemon
 } // namespace Developtools

@@ -678,6 +678,23 @@ HWTEST_F(UtilitiesTest, GetValueFromJsonFile_InvalidFormat, TestSize.Level0)
     auto res = GetValueFromJsonFile(filePath, "hiprofiler_hook_process_count");
     EXPECT_EQ(res, -1);
 }
+
+/**
+ * @tc.name: test funtion IsArkwebV8File
+ * @tc.desc:
+ * @tc.type: FUNC
+ */
+HWTEST_F(UtilitiesTest, IsArkwebV8File, TestSize.Level0)
+{
+    std::string filepath = "[anon:v8";
+    EXPECT_TRUE(IsArkwebV8File(filepath));
+    filepath = "[anon:JS_V8";
+    EXPECT_TRUE(IsArkwebV8File(filepath));
+    filepath = "[anon]";
+    EXPECT_FALSE(IsArkwebV8File(filepath));
+    filepath = "[anon:JS]";
+    EXPECT_FALSE(IsArkwebV8File(filepath));
+}
 } // namespace NativeDaemon
 } // namespace Developtools
 } // namespace OHOS

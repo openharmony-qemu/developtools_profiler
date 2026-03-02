@@ -13,6 +13,7 @@
  * limitations under the License.
  */
 
+#include "common.h"
 #include "plugin_session_manager.h"
 
 namespace {
@@ -156,6 +157,12 @@ bool PluginSessionManager::InvalidatePluginSessions(const std::vector<std::strin
 
 bool PluginSessionManager::StartPluginSessions(const std::vector<std::string>& nameList)
 {
+    if (COMMON::IsUserMode()) {
+        const std::string tracePathPrefix = "/data/local/tmp/";
+        if (!COMMON::CleanCmdOldenTraceFiles(tracePathPrefix)) {
+            PROFILER_LOG_WARN(LOG_CORE, "PluginSessionManager::StartPluginSessions failed");
+        }
+    }
     CHECK_TRUE(nameList.size() > 0, false, "nameList empty!");
     pluginNameList_ = std::move(nameList);
     // start each plugin sessions

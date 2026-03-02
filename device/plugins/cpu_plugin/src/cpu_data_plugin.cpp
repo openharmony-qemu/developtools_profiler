@@ -232,8 +232,6 @@ int32_t CpuDataPlugin::ReadFile(std::string& fileName)
     }
     if (fclose(fp) != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "%s:failed to close(%s)", __func__, realPath);
-        err_ = errno;
-        return RET_FAIL;
     }
     return bytesRead;
 }

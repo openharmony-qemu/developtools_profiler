@@ -34,6 +34,9 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::START) : {
             return StubStart(data, reply);
         }
+        case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::START_HOOK_PID_VOID) : {
+            return StubStartPidVoid(data, reply);
+        }
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID) : {
             return StubStopPid(data, reply);
         }
@@ -45,6 +48,9 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
         }
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::DUMP_SIMP_DATA) : {
             return StubDumpSimpFile(data, reply);
+        }
+        case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID_VOID) : {
+            return StubStopPidVoid(data, reply);
         }
         default : {
             PROFILER_LOG_ERROR(LOG_CORE, "Unknown code:%u", code);
@@ -62,6 +68,15 @@ int32_t NativeMemoryProfilerSaStub::StubStart(MessageParcel &data, MessageParcel
     return Start(config);
 }
 
+int32_t NativeMemoryProfilerSaStub::StubStartPidVoid(MessageParcel &data, MessageParcel &reply)
+{
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config)) {
+        return RET_ERR;
+    }
+    return StartPidVoid(config);
+}
+
 int32_t NativeMemoryProfilerSaStub::StubStopPid(MessageParcel &data, MessageParcel &reply)
 {
     uint32_t pid = 0;
@@ -74,6 +89,11 @@ int32_t NativeMemoryProfilerSaStub::StubStopName(MessageParcel &data, MessagePar
     std::string processName;
     READSTRING(data, processName, RET_ERR);
     return Stop(processName);
+}
+
+int32_t NativeMemoryProfilerSaStub::StubStopPidVoid(MessageParcel &data, MessageParcel &reply)
+{
+    return Stop();
 }
 
 int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessageParcel &reply)
