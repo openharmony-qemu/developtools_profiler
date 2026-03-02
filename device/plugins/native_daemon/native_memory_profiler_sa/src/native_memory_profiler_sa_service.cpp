@@ -60,8 +60,10 @@ static std::unordered_map<pid_t, std::string> g_fileNameInfo;
 static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
+#ifdef ENABLE_SA_AUTO_START
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
+#endif
 static std::atomic<uint32_t> g_checkConfErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
 static std::atomic<uint32_t> g_stopHookErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
 }
