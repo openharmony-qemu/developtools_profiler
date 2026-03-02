@@ -90,7 +90,6 @@ private:
     static int32_t ParseNormalConfig(std::shared_ptr<NativeMemoryProfilerSaConfig> config, MemAPIConfig* inputConfig);
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
     static int32_t GetMemProfilerUseCountToday();
-    static bool IsNativeDeamonRunning();
     static bool UpdateMemProfilerUserCount();
     static bool ReadCountFile(const std::string &filepath, long long &timestamp, int32_t &count);
     static bool WriteCountFileAtomic(const std::string &filepath, long long timestamp, int32_t count);

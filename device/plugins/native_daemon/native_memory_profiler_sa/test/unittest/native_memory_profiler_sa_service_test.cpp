@@ -155,12 +155,17 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest004
     using namespace OHOS::Developtools::NativeDaemon;
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     EXPECT_NE(config, nullptr);
+    int32_t pid = GetProcessPid(TEST_NATIVE_NAME);
+    EXPECT_NE(pid, 0);
+    config->pid_ = pid;
     config->printNmd_ = true;
     config->printNmdOnly_ = true;
-    config->nmdPid_ = 1;
+    config->nmdPid_ = pid;
     config->nmdType_ = 0;
-    config->duration_ = 10;
+    config->duration_ = TEST_DURATION;
+    config->offlineSymbolization_ = true;
     config->filePath_ = "/data/local/tmp/nmd_only.htrace";
+    config->shareMemorySize_ = TEST_SHARE_MEMORY_SIZE;
 
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     EXPECT_EQ(service->Start(config), RET_OK);

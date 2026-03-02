@@ -309,53 +309,50 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(int32_t type, M
 
     ResProfilerErrorCode inputConfRet = CheckInputConfig(type, inputConfig);
     if (inputConfRet != ResProfilerErrorCode::RES_PROF_SUCCESS) {
-        PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: Args invalid.error code: %d.",
+        PROFILER_LOG_ERROR(LOG_CORE, "CheckInputConfig: Args invalid.errorcode is:%d.",
             static_cast<int32_t>(inputConfRet));
         return static_cast<int32_t>(inputConfRet);
     }
 
     if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: daily use count exceeded");
+        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
-    }
-
-    if (IsNativeDeamonRunning()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: Native Daemon is already running");
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT);
     }
 
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     int32_t retParse = ParseResType(type, config);
     if (retParse != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartProfilerByType failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: ParseResType failed");
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
     int32_t retNormalConfig = ParseNormalConfig(config, inputConfig);
     if (retNormalConfig != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartProfilerByType failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: ParseNormalConfig failed");
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
     config->pid_ = getpid();
     std::string filename = GenerateFileName(type, config->pid_);
     std::string fullPath = NAPI_FILE_PATH_PREFIX + filename;
     if (!COMMON::CreateFile(fullPath)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartProfilerByType failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: CreateFile failed");
         return RET_ERR;
     }
     config->typeFileName_ = filename;
 
     if (!COMMON::CleanOldenFiles(NAPI_FILE_PATH_PREFIX)) {
-        PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartProfilerByType failed");
+        PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: CleanOldenFiles failed");
     }
-    if (!UpdateMemProfilerUserCount()) {
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
-    }
+
     int32_t retStart = StartPidVoid(config);
     if (retStart != 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartProfilerByType failed");
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
 
+    if (!UpdateMemProfilerUserCount()) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
+    }
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
 
@@ -584,12 +581,6 @@ int32_t NativeMemoryProfilerSaClientManager::GetMemProfilerUseCountToday()
         }
     }
     return count;
-}
-
-bool NativeMemoryProfilerSaClientManager::IsNativeDeamonRunning()
-{
-    int nativeDaemonPid = 0;
-    return COMMON::IsProcessExist("native_daemon", nativeDaemonPid);
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Prepare()
