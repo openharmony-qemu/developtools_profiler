@@ -167,8 +167,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     }
     if (config_->asyncStackEnable) {
         int tableFd = context.ReceiveFileDiscriptor();
+        uint32_t uniqueStackSize = NormalizeUniqueStackTableSize(config_->uniqueStackTableSize);
         std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>("unique_stack_table",
-            UNIQUE_STACK_TABLE_SIZE, tableFd, -1, false, false);
+            uniqueStackSize, tableFd, -1, false, false);
         stackWriterList_.push_back(stackWriter);
     }
     nmdType_ = config_->nmdType;

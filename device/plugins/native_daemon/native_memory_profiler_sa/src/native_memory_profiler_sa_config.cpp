@@ -90,6 +90,7 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, largestSize_);
     WRITEUINT32(parcel, secondLargestSize_);
     WRITEUINT32(parcel, maxGrowthSize_);
+    WRITEUINT32(parcel, uniqueStackTableSize_);
     WRITESTRING(parcel, typeFileName_);
     return true;
 }
@@ -142,6 +143,7 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->largestSize_);
     READUINT32(parcel, config->secondLargestSize_);
     READUINT32(parcel, config->maxGrowthSize_);
+    READUINT32(parcel, config->uniqueStackTableSize_);
     READSTRING(parcel, config->typeFileName_);
     PrintConfig(config);
     return true;
@@ -170,5 +172,6 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
     PROFILER_LOG_DEBUG(LOG_CORE,
         "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());
+    PROFILER_LOG_DEBUG(LOG_CORE, "uniqueStackTableSize: %u", config->uniqueStackTableSize_);
 }
 } // namespace OHOS::Developtools::NativeDaemon

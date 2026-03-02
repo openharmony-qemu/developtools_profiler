@@ -23,7 +23,6 @@
 namespace {
     const int WAIT_TIMEOUT_SA = 3000000;
     const int FLUSH_FLAG = 20;
-    const uint32_t UNIQUE_STACK_TABLE_SIZE = 8 * 1024 * 1024;
 }
 StackWriter::StackWriter(std::string name,
                          uint32_t size,
@@ -35,7 +34,7 @@ StackWriter::StackWriter(std::string name,
 {
     if (name == "unique_stack_table") {
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name,
-            UNIQUE_STACK_TABLE_SIZE, smbFd);
+            size, smbFd);
         if (shareMemoryBlock_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "StackWriter CreateMemoryBlockRemote failed");
         } else {
@@ -43,7 +42,7 @@ StackWriter::StackWriter(std::string name,
             if (memoryPoint == nullptr) {
                 PROFILER_LOG_ERROR(LOG_CORE, "StackWriter GetMMapBase failed");
             } else {
-                DfxInitProfilerAsyncStack(memoryPoint, UNIQUE_STACK_TABLE_SIZE);
+                DfxInitProfilerAsyncStack(memoryPoint, size);
             }
         }
         eventNotifier_ = nullptr;

@@ -66,4 +66,5 @@ message NativeHookConfig {
     repeated string restrace_tag = 32;
     bool async_stack_enable = 33;
     repeated AsyncFlagType async_type = 34;
+    uint32 unique_stack_table_size = 35;
 }

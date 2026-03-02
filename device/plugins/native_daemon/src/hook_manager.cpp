@@ -57,6 +57,11 @@ constexpr int DOUBLE = 2;
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
+uint32_t GetUniqueStackTableSizeWithDefault(const NativeHookConfig& config)
+{
+    uint32_t currSize = config.unique_stack_table_size() * ONE_MEGABYTE;
+    return NormalizeUniqueStackTableSize(currSize);
+}
 static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_rawDataArray = {};
 static thread_local uint32_t g_rawStackCount = 0;
 }
@@ -431,6 +436,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
         clientConfig.shareMemorySize = MAX_MAP_BUFFER_SIZE / sharedMemCount / PAGE_BYTES * PAGE_BYTES;
     }
 #endif
+    clientConfig.uniqueStackTableSize = GetUniqueStackTableSizeWithDefault(hookConfig_);
     clientConfig.filterSize = static_cast<int32_t>(hookConfig_.filter_size());
     clientConfig.clockId = COMMON::GetClockId(hookConfig_.clock());
     clientConfig.maxStackDepth = hookConfig_.max_stack_depth();
@@ -514,8 +520,9 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     }
 
     if (hookConfig_.async_stack_enable()) {
+        const uint32_t uniqueStackTableSize = GetUniqueStackTableSizeWithDefault(hookConfig_);
         uniqueTableBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal("unique_stack_table",
-            UNIQUE_STACK_TABLE_SIZE);
+            uniqueStackTableSize);
         if (uniqueTableBlock_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "HandleHookContext uniqueTableBlock_ nullptr");
             return false;
@@ -531,7 +538,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
             return false;
         }
         // Use faultloggerd to record sync/async stack info.
-        table->SwitchExternalBuffer(memoryBase, UNIQUE_STACK_TABLE_SIZE);
+        table->SwitchExternalBuffer(memoryBase, uniqueStackTableSize);
     }
 
     ctx->isRecordAccurately = hookConfig_.record_accurately();
@@ -1031,6 +1038,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
+    hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -1112,6 +1120,7 @@ std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
     args << "string_compressed: " << (traceConfig.string_compressed() ? "true" : "false") << ", ";
     args << "fp_unwind: " << (traceConfig.fp_unwind() ? "true" : "false") << ", ";
     args << "blocked: " << (traceConfig.blocked() ? "true" : "false") << ", ";
+    args << "unique_stack_table_size: " << std::to_string(traceConfig.unique_stack_table_size()) << ", ";
     args << "record_accurately: " << (traceConfig.record_accurately() ? "true" : "false") << ", ";
     args << "startup_mode: " << (traceConfig.startup_mode() ? "true" : "false") << ", ";
     args << "memtrace_enable: " << (traceConfig.memtrace_enable() ? "true" : "false") << ", ";

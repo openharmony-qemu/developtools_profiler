@@ -75,6 +75,7 @@ public:
     uint32_t largestSize_{0};
     uint32_t secondLargestSize_{0};
     uint32_t maxGrowthSize_{0};
+    uint32_t uniqueStackTableSize_{0};
     std::string typeFileName_;
 };
 } // namespace OHOS::Developtools::NativeDaemon
