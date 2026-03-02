@@ -143,6 +143,7 @@ ohos_shared_library("libmemory_profiler") {
   ]
   external_deps += [ "faultloggerd:libasync_stack" ]
   defines = [ "ENABLE_HAP_EXTRACTOR" ]
+  defines += [ "ENABLE_SA_AUTO_START" ]
 
   if (hiprofiler_use_libunwinder) {
     external_deps += [ "faultloggerd:libunwinder" ]
