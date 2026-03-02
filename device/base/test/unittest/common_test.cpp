@@ -19,6 +19,7 @@
 #include "common.h"
 #include "logging.h"
 #include <malloc.h>
+#include <sys/stat.h>
 
 namespace {
 using namespace testing::ext;
@@ -59,7 +60,15 @@ protected:
             PROFILER_LOG_ERROR(LOG_CORE, "CreateConfigFile: fclose() error = %s", errorMsg.c_str());
             return false;
         }
+        // delay, avoid generating same update time.
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         return true;
+    }
+
+    bool IsFileExists(const char* filePath)
+    {
+        struct stat buffer;
+        return stat(filePath, &buffer) == 0;
     }
 };
 
@@ -372,5 +381,133 @@ HWTEST_F(CommonTest, AdaptSandboxPath, TestSize.Level1)
     std::string path = "/data/storage/test";
     COMMON::AdaptSandboxPath(path, 1);
     EXPECT_EQ(path, "/proc/1/root/data/storage/test");
+}
+
+/**
+ * @tc.name: GetBundleNameByPid
+ * @tc.desc: GetBundleNameByPid
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetBundleNameByPid, TestSize.Level1)
+{
+    const std::string procName = "hiprofiler_base_ut";
+    int pid = 0;
+    EXPECT_TRUE(COMMON::IsProcessExist(procName, pid));
+    
+    std::string bundleName = COMMON::GetBundleNameByPid(pid);
+    EXPECT_NE(bundleName, "");
+}
+
+/**
+ * @tc.name: GetFullTracePath
+ * @tc.desc: GetFullTracePath
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetFullTracePath, TestSize.Level1)
+{
+    pid_t demoUid = 100;
+    pid_t demoPid = 1;
+    std::string demoFileName = "demo.htrace";
+    std::string fullPath = COMMON::GetFullTracePath(demoUid, demoPid, demoFileName);
+    // avoid outputing absolute path
+    EXPECT_NE(fullPath, "");
+}
+
+/**
+ * @tc.name: GetFreeRomPercent
+ * @tc.desc: GetFreeRomPercent
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, GetFreeRomPercent, TestSize.Level1)
+{
+    double freePercent = COMMON::GetFreeRomPercent();
+    // default /data/
+    EXPECT_GT(freePercent, 0.0);
+}
+
+/**
+ * @tc.name: CopyFileFast
+ * @tc.desc: CopyFileFast
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CopyFileFast, TestSize.Level1)
+{
+    std::string fileName = "/data/local/tmp/config.txt";
+    std::string fileContent = "Hello world";
+    EXPECT_TRUE(WriteFile(fileName, fileContent));
+
+    std::string destName = "/data/local/tmp/config_cp.txt";
+    bool ret = COMMON::CopyFileFast(fileName, destName);
+    EXPECT_TRUE(ret);
+}
+
+/**
+ * @tc.name: GetBundleNameByPid
+ * @tc.desc: GetBundleNameByPid
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CleanOldenFiles, TestSize.Level1)
+{
+    std::string dir = "/data/local/tmp/";
+    std::vector<std::string> traceFileArray = {
+        "fd-com.xxx.xxx-1000-20060101_000000.htrace",
+        "fd-com.xxx.xxx-1000-20060101_000001.htrace",
+        "fd-com.xxx.xxx-1000-20060101_000002.htrace",
+        "fd-com.xxx.xxx-1000-20060101_000003.htrace",
+        "fd-com.xxx.xxx-1000-20060101_000004.htrace",
+        "fd-com.xxx.xxx-1000-20060101_000005.htrace"
+    };
+    std::string content = "hello world";
+    for (int i = 0; i < traceFileArray.size(); i++) {
+        std::string fullPath = dir + traceFileArray[i];
+        WriteFile(fullPath, content);
+    }
+    bool ret = COMMON::CleanOldenFiles(dir);
+    EXPECT_TRUE(ret);
+
+    std::string deletedFile = dir + traceFileArray[0];
+    ret = IsFileExists(deletedFile.c_str());
+    EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: CleanCmdOldenTraceFiles
+ * @tc.desc: CleanCmdOldenTraceFiles
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CleanCmdOldenTraceFiles, TestSize.Level1)
+{
+    std::string dir = "/data/local/tmp/";
+    std::vector<std::string> traceFileArray = {
+        "1.htrace",
+        "2.htrace",
+        "3.htrace",
+        "4.htrace",
+        "5.htrace",
+        "6.htrace"
+    };
+    std::string content = "hello world";
+    for (int i = 0; i < traceFileArray.size(); i++) {
+        std::string fullPath = dir + traceFileArray[i];
+        WriteFile(fullPath, content);
+    }
+    bool ret = COMMON::CleanCmdOldenTraceFiles(dir);
+    EXPECT_TRUE(ret);
+
+    std::string deletedFile = dir + traceFileArray[0];
+    ret = IsFileExists(deletedFile.c_str());
+    EXPECT_FALSE(ret);
+}
+
+/**
+ * @tc.name: CreateFile
+ * @tc.desc: CreateFile
+ * @tc.type: FUNC
+ */
+HWTEST_F(CommonTest, CreateFile, TestSize.Level1)
+{
+    std::string filePath = "/data/local/tmp/demo.htrace";
+    bool ret = COMMON::CreateFile(filePath);
+    EXPECT_TRUE(ret);
 }
 } // namespace
