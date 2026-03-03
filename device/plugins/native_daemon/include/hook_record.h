@@ -188,6 +188,11 @@ public:
     NmdRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
 };
 
+class GwpAsanRecord : public HookRecord {
+public:
+    GwpAsanRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+};
+
 class JsRecord : public HookRecord {
 public:
     JsRecord() = default;

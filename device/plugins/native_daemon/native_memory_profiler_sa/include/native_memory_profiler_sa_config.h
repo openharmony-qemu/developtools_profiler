@@ -78,6 +78,10 @@ public:
     uint32_t uniqueStackTableSize_{0};
     std::string typeFileName_;
     uint32_t startType_{0};
+    uint32_t gwpAsanHoldTime_{0};
+    uint32_t gwpAsanMaxEntries_{0};
+    uint32_t gwpAsanMaxStackDepth_{0};
+
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

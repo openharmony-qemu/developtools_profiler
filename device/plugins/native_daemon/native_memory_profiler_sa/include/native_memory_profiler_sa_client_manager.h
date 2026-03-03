@@ -60,6 +60,12 @@ enum class InternalResourceType : int32_t {
     OH_RES_TYPE_GLOBAL_HANDLE = 4,
 };
 
+struct GwpAsanConfig {
+    uint32_t holdTime = 0;
+    uint32_t maxEntries = 0;
+    uint32_t maxStackDepth = 0;
+};
+
 class NativeMemoryProfilerSaClientManager {
 public:
     enum class NativeMemProfilerType : int32_t {
@@ -78,6 +84,7 @@ public:
     static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig);
+    static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
     

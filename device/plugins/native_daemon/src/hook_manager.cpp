@@ -19,6 +19,8 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>
+#include <unordered_set>
+#include <unordered_map>
 #include "async_stack.h"
 #include "command_poller.h"
 #include "common.h"
@@ -495,6 +497,9 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.largestSize = largestSize_;
     clientConfig.secondLargestSize = secondLargestSize_;
     clientConfig.maxGrowthSize = maxGrowthSize_;
+    clientConfig.gwpAsanHoldTime = gwpAsanHoldTime_;
+    clientConfig.gwpAsanMaxEntries = gwpAsanMaxEntries_;
+    clientConfig.gwpAsanMaxStackDepth = gwpAsanMaxStackDepth_;
     // File cache mode configuration
     clientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
     clientConfig.fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
@@ -903,6 +908,99 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
     PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
 }
 
+void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
+                                       size_t size, size_t allocDataSize)
+{
+    std::vector<uintptr_t> pcs;
+    for (size_t i = 0; i < size; ++i) {
+        struct GwpAllocationData* allocData =
+            reinterpret_cast<struct GwpAllocationData*>(allocDataPtr + i * allocDataSize);
+        for (size_t j = 0; j < gwpAsanMaxStackDepth_ && allocData->stack[j] != 0; ++j) {
+            pcs.push_back(allocData->stack[j]);
+        }
+    }
+    
+    std::unordered_set<uintptr_t> uniquePcs(pcs.begin(), pcs.end());
+    pcs.assign(uniquePcs.begin(), uniquePcs.end());
+    
+    auto unwinder = std::make_shared<Unwinder>(hookConfig_.pid(), false);
+    std::vector<DfxFrame> frames;
+    unwinder->GetFramesByPcs(frames, pcs);
+    for (size_t i = 0; i < frames.size() && i < pcs.size(); ++i) {
+        frameMap[pcs[i]] = frames[i];
+    }
+}
+
+void HookManager::FormatGwpAsanCallstack(std::stringstream& ss, const struct GwpAllocationData* allocData,
+                                         const std::unordered_map<uintptr_t, DfxFrame>& frameMap)
+{
+    for (size_t j = 0; j < gwpAsanMaxStackDepth_ && allocData->stack[j] != 0; ++j) {
+        auto it = frameMap.find(allocData->stack[j]);
+        if (it != frameMap.end()) {
+            const DfxFrame& frame = it->second;
+            ss << "#" << j << " 0x" << std::hex << allocData->stack[j] << std::dec << " ";
+            if (!frame.mapName.empty()) {
+                ss << frame.mapName << "+" << frame.mapOffset << "(";
+            }
+            if (!frame.funcName.empty()) {
+                ss << frame.funcName << "+" << frame.funcOffset << ")(";
+            }
+            ss << frame.buildId << ")\n";
+        }
+    }
+}
+
+void HookManager::FormatGwpAsanOutput(std::stringstream& ss, const struct GwpHeader* header, uint8_t* allocDataPtr,
+                                      size_t size, size_t allocDataSize,
+                                      const std::unordered_map<uintptr_t, DfxFrame>& frameMap)
+{
+    ss << "-----------GWP_ASAN_CONFIG Start-----------\n";
+    ss << "SLOT:" << header->max_slots << ",\n";
+    ss << "SAMPLE:" << header->sampled_rate << "\n";
+    ss << "-----------GWP_ASAN_CONFIG End-----------\n";
+    
+    for (size_t i = 0; i < size; ++i) {
+        struct GwpAllocationData* allocData =
+            reinterpret_cast<struct GwpAllocationData*>(allocDataPtr + i * allocDataSize);
+        ss << "-----------GWP_ASAN_MEMORY_SAMPLE Start-----------\n";
+        ss << "========================================================\n";
+        ss << "address:0x" << std::hex << allocData->addr << std::dec << "\n";
+        ss << "size:" << allocData->size << " bytes\n";
+        ss << "alloc_time:" << allocData->alive_time << " ms\n";
+        ss << "callstack:\n";
+        FormatGwpAsanCallstack(ss, allocData, frameMap);
+        ss << "-----------endGWP_ASAN_MEMORY_SAMPLE End-----------\n";
+    }
+}
+
+void HookManager::DumpGwpAsanInfo(uint8_t* data)
+{
+    if (data == nullptr) {
+        return;
+    }
+    size_t *sizePtr = reinterpret_cast<size_t*>(data);
+    struct GwpHeader *header = reinterpret_cast<struct GwpHeader*>(data + sizeof(size_t));
+    if (header->sampled_rate == 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "Invalid GWP-ASAN info: sampled_rate is 0");
+        return;
+    }
+
+    size_t allocDataSize = sizeof(GwpAllocationData) + (gwpAsanMaxStackDepth_ - 1) * sizeof(uintptr_t);
+    uint8_t* allocDataPtr = data + sizeof(size_t) + sizeof(struct GwpHeader);
+
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    CollectGwpAsanFrames(frameMap, allocDataPtr, *sizePtr, allocDataSize);
+
+    std::stringstream ss;
+    FormatGwpAsanOutput(ss, header, allocDataPtr, *sizePtr, allocDataSize, frameMap);
+
+    std::string result = ss.str();
+    if (gwpFd_ > 0) {
+        lseek(gwpFd_, 0, SEEK_END);
+        write(gwpFd_, result.c_str(), result.size());
+    }
+}
+
 bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx,
     std::shared_ptr<HookRecord>& hookRecord, std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size)
 {
@@ -911,6 +1009,11 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
     rawStack = hookRecord->GetRawStack();
     uint16_t type = hookRecord->GetType();
     if (type == FREE_MSG_SIMP) {
+        return true;
+    }
+
+    if (type == GWP_ASAN_MSG) {
+        DumpGwpAsanInfo(rawStack->data);
         return true;
     }
 
@@ -1092,6 +1195,10 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         fclose(fpHookData_);
         fpHookData_ = nullptr;
     }
+    if (gwpFd_ > 0) {
+        close(gwpFd_);
+        gwpFd_ = 0;
+    }
     return true;
 }
 
@@ -1268,6 +1375,9 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     largestSize_ = config->largestSize_;
     secondLargestSize_ = config->secondLargestSize_;
     maxGrowthSize_ = config->maxGrowthSize_;
+    gwpAsanHoldTime_ = config->gwpAsanHoldTime_;
+    gwpAsanMaxEntries_ = config->gwpAsanMaxEntries_;
+    gwpAsanMaxStackDepth_ = config->gwpAsanMaxStackDepth_;
 }
 
 int32_t HookManager::CreatePluginSession()
@@ -1392,6 +1502,11 @@ void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
     printMallocNmd_ = true;
     nmdParamInfo_.fd = info.first;
     nmdParamInfo_.type = info.second;
+}
+
+void HookManager::SetGwpFd(uint32_t fd)
+{
+    gwpFd_ = fd;
 }
 
 bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
