@@ -1,0 +1,96 @@
+# Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+import("//build/test.gni")
+import("../../../base/config.gni")
+
+module_output_path = "${OHOS_PROFILER_TEST_MODULE_OUTPUT_PATH}/device"
+
+config("module_private_config") {
+  visibility = [ ":*" ]
+  defines = [
+    "HIPERF_DEBUG",
+    "CONFIG_NO_HILOG",
+    "target_cpu_${target_cpu}",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines += [ "HAVE_HILOG" ]
+  }
+  if (use_clang_coverage) {
+    defines += [ "COVERAGE_TEST" ]
+  }
+}
+
+ohos_unittest("preload_ut") {
+  module_out_path = module_output_path
+  sources = [
+    "unittest/preload_client_test.cpp",
+    "unittest/preload_socket_client_test.cpp",
+  ]
+
+  public_deps = [
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
+    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
+  ]
+  deps = [
+    "${OHOS_PROFILER_DIR}/device/base:mock_test_source",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
+    "${OHOS_PROFILER_DIR}/device/plugins/preload_client:preload_client_source",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp",
+    "${OHOS_PROFILER_DIR}/protos/types/plugins/native_hook:native_hook_cpp_standard",
+  ]
+
+  include_dirs = [
+    "../include",
+    "../../native_daemon/include",
+    "../../api/include",
+    "../../api/src",
+    "../../memory_plugin/include",
+    "../../../base/include/",
+    "${OHOS_PROFILER_DIR}/interfaces/kits",
+    "${OHOS_PROFILER_DIR}/device/services/ipc/include",
+    "${OHOS_PROFILER_DIR}/device/services/shared_memory/include",
+    "${OHOS_PROFILER_DIR}/device/services/profiler_service/include",
+  ]
+
+  cflags = [
+    "-Wno-inconsistent-missing-override",
+    "-Dprivate=public",  #allow test code access private members
+    "-Dprotected=public",  #allow test code access private members
+  ]
+  external_deps = [
+    "access_token:libaccesstoken_sdk",
+    "access_token:libtokensetproc_shared",
+    "bounds_checking_function:libsec_shared",
+    "cJSON:cjson",
+    "c_utils:utils",
+    "faultloggerd:libunwinder",
+    "googletest:gtest",
+    "googletest:gmock",
+    "init:libbegetutil",
+    "protobuf:protobuf",
+    "faultloggerd:libasync_stack",
+  ]
+  configs = [ ":module_private_config" ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+  resource_config_file = "${OHOS_PROFILER_DIR}/device/ohos_test.xml"
+}
+group("unittest") {
+  testonly = true
+  deps = [
+    ":preload_ut",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon_client",
+    "${OHOS_PROFILER_DIR}/device/plugins/native_hook:nativetest_so",
+  ]
+}
