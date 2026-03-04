@@ -31,6 +31,7 @@ namespace HiviewDFX {
 int64_t GetElapsedNanoSecondsSinceBoot();
 
 int64_t GetRealNanoSecondsTimestamp();
+std::string GetDate();
 
 template<typename T>
 class CachedValue {
@@ -87,6 +88,7 @@ bool CreateDirectory(const std::string &path, unsigned mode);
 bool IsLegalPath(const std::string& path);
 
 uint64_t GetFileSize(const std::string& path);
+void GetDirFiles(const std::string& dir, std::vector<std::string>& files);
 
 class SmartFile {
 public:

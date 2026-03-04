@@ -62,6 +62,7 @@ constexpr int DEFAULT_DURATION = 7;
 constexpr auto SLASH_STR = "/";
 constexpr auto JSON_FILE = ".json";
 constexpr auto KEY_HIVIEW_DEVELOP_TYPE = "persist.hiview.leak_detector";
+constexpr int MAX_WAIT_TIME_SECOND = 30; // 30s
 
 struct GwpAsanParams {
     bool alwaysEnabled = false;
@@ -69,6 +70,27 @@ struct GwpAsanParams {
     double maxSimutaneousAllocations = DEFAULT_MAX_SIMUTANEOUS_ALLOCATIONS;
     int32_t duration = DEFAULT_DURATION;
 };
+
+constexpr std::pair<TraceErrorCode, const char*> TraceErrorCodeMap[]  = {
+    {TraceErrorCode::TRACE_INVALID_ARGUMENT, "Invalid parameter."},
+    {TraceErrorCode::TRACE_ABNORMAL, "Remote service exception."},
+    {TraceErrorCode::TRACE_STORAGE_LIMIT, "Trace storage limit reached."},
+    {TraceErrorCode::RESOURCE_UNAVAILABLE, "Resource unavailable."},
+};
+
+napi_value ResolveTraceErrorCode(napi_env env, const TraceErrorCode errCode)
+{
+    if (errCode == TraceErrorCode::TRACE_SUCCESS) {
+        return nullptr;
+    }
+    HILOG_ERROR(LOG_CORE, "%{public}s for %{public}d.", __func__, errCode);
+    for (const auto&[code, msg] : TraceErrorCodeMap) {
+        if (code == errCode) {
+            return CreateErrorMessage(env, std::to_string(errCode), msg);
+        }
+    }
+    return nullptr;
+}
 }
 
 static bool GetDumpParam(napi_env env, napi_callback_info info,
@@ -152,6 +174,50 @@ static bool GetTraceParam(napi_env env, napi_callback_info info,
     }
     if (!GetNapiUint32Value(env, argv[THIRD_POS], limitSize)) {
         HILOG_ERROR(LOG_CORE, "Get input limitSize failed.");
+        return false;
+    }
+    return true;
+}
+
+static bool GetTraceParam(napi_env env, napi_callback_info info,
+    std::string& identifier, uint32_t& bufferSize, uint32_t& duration)
+{
+    constexpr int valueNum = 1;
+    size_t argc = valueNum;
+    napi_value argv[valueNum] = {nullptr};
+    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    if (argc != valueNum) {
+        HILOG_ERROR(LOG_CORE, "invalid numbers of params.");
+        return false;
+    }
+    auto config = argv[FIRST_POS];
+    if (!MatchValueType(env, config, napi_object)) {
+        HILOG_ERROR(LOG_CORE, "The type of options must be RequestTraceConfig.");
+        return false;
+    }
+    napi_value nIdentifier = nullptr;
+    if (!GetNapiObjectProperty(env, config, "identifier", nIdentifier) ||
+        !GetNapiStringValue(env, nIdentifier, identifier)) {
+        HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
+        return false;
+    }
+    napi_value nBufferSize = nullptr;
+    if (!GetNapiObjectProperty(env, config, "bufferSizeKb", nBufferSize) ||
+        !GetNapiUint32Value(env, nBufferSize, bufferSize)) {
+        HILOG_ERROR(LOG_CORE, "Get input bufferSize failed.");
+        return false;
+    }
+    napi_value nDuration = nullptr;
+    if (!GetNapiObjectProperty(env, config, "durationMs", nDuration) ||
+        !GetNapiUint32Value(env, nDuration, duration)) {
+        HILOG_ERROR(LOG_CORE, "Get input duration failed.");
+        return false;
+    }
+    // Reserved field for future use, check value type
+    napi_value nReserved = nullptr;
+    if (!GetNapiObjectProperty(env, config, "reserved", nReserved) ||
+        !MatchValueType(env, nReserved, napi_number)) {
+        HILOG_ERROR(LOG_CORE, "Check reserved type failed.");
         return false;
     }
     return true;
@@ -669,6 +735,69 @@ napi_value StopAppTraceCapture(napi_env env, napi_callback_info info)
     return CreateUndefined(env);
 }
 
+class RequestTraceTask : public AsyncTask {
+public:
+    RequestTraceTask() : AsyncTask("requestTraceTask"), apiInvokeRecorder_("requestTrace") {}
+protected:
+    napi_value InitAsyncTask(napi_env env, napi_callback_info info) override
+    {
+        if (!GetTraceParam(env, info, identifier_, bufferSize_, duration_)) {
+            apiInvokeRecorder_.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+            return CreateErrorMessage(env, std::to_string(ErrorCode::PARAMETER_ERROR), "Invalid parameter.");
+        }
+        return nullptr;
+    }
+
+    void Work(napi_env env) override
+    {
+        auto task = [this](TraceErrorCode retCode, const std::string& tracePath) {
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                result_ = retCode;
+                tracePath_ = tracePath;
+                hasFinished_ = true;
+            }
+            cond_.notify_all();
+        };
+        result_ = HidebugNativeInterface::GetInstance().RequestTrace(identifier_, bufferSize_, duration_, task);
+        if (result_ == TRACE_SUCCESS) {
+            std::unique_lock<std::mutex> lock(mutex_);
+            bool waitRet = cond_.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND),
+                [this] { return hasFinished_; });
+            if (!waitRet) {
+                result_ = TRACE_ABNORMAL;
+                HILOG_ERROR(LOG_CORE, "wait callback timeout");
+            }
+        }
+    }
+
+    bool Done(napi_env env, napi_status status, napi_value& ret) override
+    {
+        if (napi_value err = ResolveTraceErrorCode(env, result_); err != nullptr) {
+            apiInvokeRecorder_.SetErrorCode(result_);
+            ret = err;
+            return false;
+        }
+        napi_create_string_utf8(env, tracePath_.c_str(), tracePath_.size(), &ret);
+        return true;
+    }
+private:
+    ApiInvokeRecorder apiInvokeRecorder_;
+    std::string identifier_;
+    uint32_t bufferSize_ = 0;
+    uint32_t duration_ = 0;
+    std::mutex mutex_;
+    std::condition_variable cond_;
+    bool hasFinished_ = false;
+    TraceErrorCode result_ = TRACE_SUCCESS;
+    std::string tracePath_;
+};
+
+napi_value RequestTrace(napi_env env, napi_callback_info info)
+{
+    return AsyncTask::GetPromise<RequestTraceTask>(env, info);
+}
+
 static bool JudgeValueRange(const std::string &type, int32_t value)
 {
     if (type == "pss_memory") {
@@ -1148,6 +1277,7 @@ napi_value DeclareHiDebugInterface(napi_env env, napi_value exports)
         DECLARE_NAPI_FUNCTION("setJsRawHeapTrimLevel", SetJsRawHeapTrimLevel),
         DECLARE_NAPI_FUNCTION("setProcDumpInSharedOOM", SetProcDumpInSharedOOM),
         DECLARE_NAPI_FUNCTION("getRssInfo", GetRssInfo),
+        DECLARE_NAPI_FUNCTION("requestTrace", RequestTrace),
     };
     NAPI_CALL(env, napi_define_properties(env, exports, sizeof(desc) / sizeof(desc[0]), desc));
     InitNapiClass(env, exports);

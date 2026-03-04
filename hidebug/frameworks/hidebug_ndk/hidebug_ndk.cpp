@@ -145,6 +145,10 @@ HiDebug_ErrorCode ConvertTraceErrorCode(OHOS::HiviewDFX::TraceErrorCode traceErr
             return HIDEBUG_NO_PERMISSION;
         case OHOS::HiviewDFX::NO_TRACE_RUNNING:
             return HIDEBUG_NO_TRACE_RUNNING;
+        case OHOS::HiviewDFX::TRACE_STORAGE_LIMIT:
+            return OH_HIDEBUG_TRACE_STORAGE_LIMIT;
+        case OHOS::HiviewDFX::RESOURCE_UNAVAILABLE:
+            return HIDEBUG_RESOURCE_UNAVAILABLE;
         default:
             return HIDEBUG_TRACE_ABNORMAL;
     }
@@ -172,6 +176,21 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
 HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture()
 {
     return ConvertTraceErrorCode(OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().StopAppTraceCapture());
+}
+
+HiDebug_ErrorCode OH_HiDebug_RequestTrace(OH_HiDebug_RequestTraceConfig *config,
+    OH_HiDebug_RequestTraceCallback callback)
+{
+    if (config == nullptr || callback == nullptr) {
+        return HIDEBUG_INVALID_ARGUMENT;
+    }
+    auto task = [callback](OHOS::HiviewDFX::TraceErrorCode retCode, const std::string& tracePath) {
+        callback(ConvertTraceErrorCode(retCode), tracePath.c_str());
+    };
+    std::string identifier = config->identifier == nullptr ? "" : config->identifier;
+    auto ret = OHOS::HiviewDFX::HidebugNativeInterface::GetInstance().RequestTrace(
+        identifier, config->bufferSizeKb, config->durationMs, task);
+    return ConvertTraceErrorCode(ret);
 }
 
 HiDebug_ErrorCode OH_HiDebug_GetGraphicsMemory(uint32_t *value)

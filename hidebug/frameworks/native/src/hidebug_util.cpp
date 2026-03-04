@@ -17,6 +17,7 @@
 
 #include <cstring>
 #include <ctime>
+#include <dirent.h>
 #include <fcntl.h>
 #include <fstream>
 #include <thread>
@@ -64,6 +65,23 @@ int64_t GetElapsedNanoSecondsSinceBoot()
 int64_t GetRealNanoSecondsTimestamp()
 {
     return GetNanoSecondsTimestamp(CLOCK_REALTIME);
+}
+
+std::string GetDate()
+{
+    time_t nowTime = time(nullptr);
+    if (nowTime < 0) {
+        return "";
+    }
+    char dateChs[9] = { 0 }; // 9 means 8(19700101) + 1('\0')
+    struct tm localTm;
+    if (localtime_noenv_r(&nowTime, &localTm) == nullptr) {
+        return "";
+    }
+    if (strftime(dateChs, sizeof(dateChs), "%Y%m%d", &localTm) == 0) {
+        return "";
+    }
+    return dateChs;
 }
 
 std::string GetProcessDir(DirectoryType type)
@@ -164,6 +182,24 @@ bool CreateDirectory(const std::string &path, unsigned mode)
         }
     }
     return true;
+}
+
+void GetDirFiles(const std::string& dir, std::vector<std::string>& files)
+{
+    DIR* dirPtr = opendir(dir.c_str());
+    if (dirPtr == nullptr) {
+        return;
+    }
+    struct dirent* ent = nullptr;
+    while ((ent = readdir(dirPtr)) != nullptr) {
+        if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) {
+            continue;
+        }
+        if (ent->d_type == DT_REG) { // do not process subdirectory
+            files.push_back(OHOS::IncludeTrailingPathDelimiter(dir) + std::string(ent->d_name));
+        }
+    }
+    closedir(dirPtr);
 }
 
 std::unique_ptr<SmartFile> SmartFile::OpenFile(const std::string& path, const std::string& mode)
