@@ -372,7 +372,6 @@ void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params
     if (params.size() > RAM_THIRD && params[0].find("FilePage") != std::string::npos) {
         pss.filePagePssValue = params[RAM_SECOND];
     }
-
 }
 
 void RAM::FillPssRamInfo(size_t index, std::string pid,
