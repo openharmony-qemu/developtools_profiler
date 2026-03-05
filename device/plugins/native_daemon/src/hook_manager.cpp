@@ -45,7 +45,7 @@ std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
 const std::string PRELOAD_NAME = "hiviewdfx.hiprofiler.preload";
-const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.diag.path";
+const std::string ARKTS_DIAG_PATH = "const.ark.jsruntime.dfx_library";
 const std::string PRODUCT_CONFIG_PATH = "/sys_prod/etc/hiview/hiprofiler/hiprofiler_cfg.json";
 constexpr int SIGNAL_START_HOOK = 36;
 constexpr int SIGNAL_STOP_HOOK = 37;
