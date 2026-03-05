@@ -188,8 +188,8 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
 
-    if (memInfo.freePercent < MIN_MEM_PROFILER_MEM_PERCENT) {
-        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %.2f%%", memInfo.freePercent * oneHundred);
+    if (memInfo.availablePercent < MIN_MEM_PROFILER_MEM_PERCENT) {
+        PROFILER_LOG_ERROR(LOG_CORE, "System memory is too low: %.2f%%", memInfo.availablePercent * oneHundred);
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_MEM_PRESSURE_CRITICAL);
     }
     
@@ -219,6 +219,12 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
         PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
+
+    if (IsNativeDeamonRunning()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT);
     }
     std::lock_guard<std::mutex> guard(g_fileNameMtx);
     g_fileNameInfo[pid] = config->typeFileName_;
@@ -774,18 +780,18 @@ bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
     uint64_t totalMem = 0;
     uint64_t freeMem = 0;
     uint64_t availableMem = 0;
-    const int kbToBytes = 1024;
+
     while (std::getline(memInfoFile, line)) {
         std::istringstream iss(line);
         std::string key;
         uint64_t value;
         if (iss >> key >> value) {
             if (key == "MemTotal:") {
-                totalMem = value * kbToBytes; // Convert from kB to bytes
+                totalMem = value;
             } else if (key == "MemFree:") {
-                freeMem = value * kbToBytes;
+                freeMem = value;
             } else if (key == "MemAvailable:") {
-                availableMem = value * kbToBytes;
+                availableMem = value;
             }
         }
     }
@@ -799,7 +805,7 @@ bool NativeMemoryProfilerSaService::GetSystemMemoryInfo(MemoryInfo *memInfo)
     memInfo->totalMem = totalMem;
     memInfo->freeMem = freeMem;
     memInfo->usedMem = totalMem - availableMem;
-    memInfo->freePercent = static_cast<double>(memInfo->freeMem) / static_cast<double>(totalMem);
+    memInfo->availablePercent = static_cast<double>(availableMem) / static_cast<double>(totalMem);
 
     return true;
 }
@@ -878,6 +884,12 @@ bool NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(double* cpuUsage)
 
     *cpuUsage = usage;
     return true;
+}
+
+bool NativeMemoryProfilerSaService::IsNativeDeamonRunning()
+{
+    int nativeDaemonPid = 0;
+    return COMMON::IsProcessExist("native_daemon", nativeDaemonPid);
 }
 
 } // namespace OHOS::Developtools::NativeDaemon

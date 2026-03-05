@@ -48,7 +48,7 @@ struct MemoryInfo {
     uint64_t totalMem;
     uint64_t usedMem;
     uint64_t freeMem;
-    double freePercent;
+    double availablePercent;
 };
 
 class NativeMemoryProfilerSaService : public SystemAbility, public NativeMemoryProfilerSaStub, public ServiceBase {
@@ -90,6 +90,7 @@ private:
     static bool GetSystemCpuUsageInfo(double* cpuUsage);
     static bool ParseCpuStats(const std::string& content, unsigned long& total, unsigned long& idle);
     static int32_t CheckSystemResource();
+    static bool IsNativeDeamonRunning();
 
 private:
     std::mutex gpuMtx_;
