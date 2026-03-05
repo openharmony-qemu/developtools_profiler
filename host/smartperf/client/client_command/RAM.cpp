@@ -327,7 +327,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        GetPssAboutPid(params);
+        GetPssAboutPid(pss, params);
         if (params[1].find("Ashmem") != std::string::npos) {
             std::string ashmemValue = params[1];
             size_t pos = ashmemValue.find(":");
@@ -348,7 +348,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     return pssRamInfo;
 }
 
-void RAM::GetPssAboutPid(std::vector<std::string> &params)
+void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params)
 {
     if (params.size() > RAM_SECOND && params[0].find("GL") != std::string::npos) {
         pss.gpuPssValue = params[1];
