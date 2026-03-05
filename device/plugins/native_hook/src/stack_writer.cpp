@@ -118,6 +118,20 @@ bool StackWriter::WriteTimeout(const void* data, size_t size)
     return shareMemoryBlock_->PutRawTimeout(reinterpret_cast<const int8_t*>(data), size);
 }
 
+bool StackWriter::WriteSync(const void* data, size_t size, const std::function<bool()>& callback)
+{
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr || data == nullptr || size == 0) {
+            return false;
+        }
+        return cacheFileWriter_->Write(data, size);
+    }
+    if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
+        return false;
+    }
+    return shareMemoryBlock_->PutRawSync(reinterpret_cast<const int8_t*>(data), size, callback);
+}
+
 bool StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
                                           const std::function<bool()>& callback)
 {

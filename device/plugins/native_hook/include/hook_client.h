@@ -76,6 +76,9 @@ EXPORT_API void* ohos_malloc_hook_get_hook_config();
 EXPORT_API void hook_free(void (*free_func)(void*), void* p);
 EXPORT_API void* hook_malloc(void* (*fn)(size_t), size_t size);
 EXPORT_API void* hook_aligned_alloc(void* (*fn)(size_t, size_t), size_t align, size_t len);
+EXPORT_API int32_t hook_fill_data(int sample_type, void *sample_addr, size_t size, size_t act_size, void *buff, size_t buff_len);
+EXPORT_API void hook_data_dump(void *buff, size_t buff_size);
+EXPORT_API void hook_alive_addr_dump(void* buff, size_t buffLen);
 #ifdef __cplusplus
 }
 #endif

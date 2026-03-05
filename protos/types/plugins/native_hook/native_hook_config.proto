@@ -69,4 +69,5 @@ message NativeHookConfig {
     uint32 unique_stack_table_size = 35;
     bool use_file_cache_mode = 36;
     uint32 file_cache_buffer_size = 37;
+    bool allocator_sampling_enable = 38;
 }

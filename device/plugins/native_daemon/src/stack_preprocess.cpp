@@ -18,6 +18,7 @@
 #include <elf.h>
 #include <unistd.h>
 #include <sstream>
+#include <unordered_set>
 #include "common.h"
 #include "logging.h"
 #include "plugin_service_types.pb.h"
@@ -33,6 +34,7 @@ constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
+constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
 constexpr uint32_t WAIT_STOP_ONCE = 1000;
 constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 300;
@@ -53,7 +55,6 @@ using namespace OHOS::HiviewDFX;
 using namespace OHOS::Developtools::Profiler;
 
 thread_local std::vector<uint64_t> g_callStack;
-thread_local std::unordered_map<uint64_t, std::pair<uint64_t, size_t>> g_allocAddrMap;
 
 thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
@@ -77,22 +78,37 @@ void StackPreprocess::HandleDeleteAddr(uint64_t addr, size_t size)
     }
 }
 
+void StackPreprocess::ReconcileWithSnapshot(const std::unordered_set<uint64_t>& aliveAddrs)
+{
+    std::vector<uint64_t> staleAddrs;
+    spinLock_.Lock();
+    for (const auto& [addr, info] : allocAddrMap_) {
+        if (aliveAddrs.find(addr) == aliveAddrs.end()) {
+            staleAddrs.push_back(addr);
+        }
+    }
+    for (uint64_t addr : staleAddrs) {
+        SetFreeStatisticsDataLocked(addr);
+    }
+    spinLock_.Unlock();
+}
+
 void StackPreprocess::HandleMoveAddr(uint64_t addr, uint64_t newAddr, size_t size)
 {
-    auto addrIter = g_allocAddrMap.find(addr);
-    if (addrIter != g_allocAddrMap.end()) {
-        spinLock_.Lock();
-        auto recordIter = recordStatisticsMap_.find(addrIter->second.second);
+    spinLock_.Lock();
+    auto addrIter = allocAddrMap_.find(addr);
+    if (addrIter != allocAddrMap_.end()) {
+        auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
         if (recordIter != recordStatisticsMap_.end()) {
             auto& record = recordIter->second;
-            record.applySize += (size - g_allocAddrMap[addr].first);
-            g_allocAddrMap[newAddr] = std::pair(size, record.callstackId);
-            g_allocAddrMap.erase(addr);
+            record.applySize += (size - allocAddrMap_[addr].mallocSize);
+            allocAddrMap_[newAddr] = AllocAddrInfo{size, record.callstackId, addrIter->second.ts};
+            allocAddrMap_.erase(addr);
             addrSet_.insert(newAddr);
             addrSet_.erase(addr);
         }
-        spinLock_.Unlock();
     }
+    spinLock_.Unlock();
 }
 
 StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const NativeHookConfig& hookConfig,
@@ -118,7 +134,7 @@ StackPreprocess::StackPreprocess(const StackDataRepeaterPtr& dataRepeater, const
         statisticsInterval_ = std::chrono::seconds(hookConfig_.statistics_interval());
         recordStatisticsMap_.reserve(STATISTICS_MAP_SZIE);
         statisticsPeriodSet_.reserve(STATISTICS_PERIOD_DATA_SIZE);
-        g_allocAddrMap.reserve(ALLOC_ADDRMAMP_SIZE);
+        allocAddrMap_.reserve(ALLOC_ADDRMAMP_SIZE);
     }
     if (hookConfig_.malloc_free_matching_interval() > 0) {
         applyAndReleaseMatchInterval_ = std::chrono::seconds(hookConfig_.malloc_free_matching_interval());
@@ -293,16 +309,41 @@ bool StackPreprocess::StopTakeResults()
     return true;
 }
 
+void StackPreprocess::WaitForFinalSnapshot()
+{
+    if (!serverCommandCallback_) {
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "WaitForFinalSnapshot: sending final snapshot request");
+    waitingFinalSnapshot_ = true;
+    finalSnapshotDone_ = false;
+    serverCommandCallback_(FINAL_SNAPSHOT_REQUEST_CMD);
+    std::unique_lock<std::mutex> lock(snapshotMtx_);
+    bool completed = snapshotCv_.wait_for(lock,
+        std::chrono::milliseconds(FINAL_SNAPSHOT_TIMEOUT_MS),
+        [this]() { return finalSnapshotDone_.load(); });
+    waitingFinalSnapshot_ = false;
+    if (!completed) {
+        PROFILER_LOG_WARN(LOG_CORE, "WaitForFinalSnapshot: timed out");
+    }
+}
+
 inline void StackPreprocess::IntervalFlushRecordStatistics()
 {
-    // interval reporting statistics
-    if (hookConfig_.statistics_interval() > 0) {
-        auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastStatisticsTime_);
-        if (elapsedTime >= statisticsInterval_) {
-            lastStatisticsTime_ = currentTime;
-            FlushRecordStatistics();
-        }
+    if (hookConfig_.statistics_interval() <= 0) {
+        return;
+    }
+    auto currentTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(
+        currentTime - lastStatisticsTime_);
+    if (elapsedTime < statisticsInterval_) {
+        return;
+    }
+    lastStatisticsTime_ = currentTime;
+    if (hookConfig_.allocator_sampling_enable() && serverCommandCallback_) {
+        serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
+    } else {
+        FlushRecordStatistics();
     }
 }
 
@@ -440,7 +481,6 @@ void StackPreprocess::SetDirectorForTest(std::shared_ptr<BuildStackDirector> dir
 void StackPreprocess::ClearThreadLocalVariables()
 {
     g_callStack.clear();
-    g_allocAddrMap.clear();
     g_director = nullptr;
 }
 #endif
@@ -453,6 +493,27 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
+    if (size >= sizeof(uint32_t)) {
+        uint32_t marker = *reinterpret_cast<const uint32_t*>(data);
+        if (marker == ALIVE_ADDR_SNAPSHOT_MARKER) {
+            const uint64_t* addrs = reinterpret_cast<const uint64_t*>(
+                data + sizeof(uint32_t));
+            size_t addrCount = (size - sizeof(uint32_t)) / sizeof(uint64_t);
+            snapshotAddrs_.insert(addrs, addrs + addrCount);
+            return true;
+        }
+        if (marker == ALIVE_ADDR_SNAPSHOT_END_MARKER) {
+            ReconcileWithSnapshot(snapshotAddrs_);
+            snapshotAddrs_.clear();
+            FlushRecordStatistics();
+            if (waitingFinalSnapshot_) {
+                finalSnapshotDone_ = true;
+                snapshotCv_.notify_one();
+            }
+            return true;
+        }
+    }
+
     if (size == sizeof(uint64_t)) {
         return ProcessAddressData(data);
     }
@@ -462,6 +523,15 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     }
 
     uint16_t type = hookRecord->GetType();
+
+    // jemalloc may report duplicate malloc addresses; reconcile before expensive unwinding
+    if (type == MALLOC_MSG && hookConfig_.statistics_interval() > 0) {
+        uint64_t addr = reinterpret_cast<uint64_t>(rawData->stackContext->addr);
+        if (!ReconcileDuplicateMalloc(addr, rawData->stackContext->ts)) {
+            return true;
+        }
+    }
+
     SetIsStartTakeData(true);
     if (isStopTakeData_) {
         return false;
@@ -546,7 +616,7 @@ bool StackPreprocess::ProcessEndMsg()
         return false;
     }
     endMsgCount_++;
-    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = hookConfig_.offline_symbolization() ? SHARED_MEMORY_NUM : 1;
     if (endMsgCount_ == sharedMemCount) {
         PROFILER_LOG_INFO(LOG_CORE, "Received all END_MSG, stopping data collection");
         isStopTakeData_ = true;
@@ -1139,6 +1209,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T
         return;
     }
     // by call stack id set alloc statistics data.
+    spinLock_.Lock();
     uint32_t stackId = FindCallStackId(g_callStack, hookRecord);
     if (stackId > 0) {
         SetAllocStatisticsData(hookRecord, stackId, true);
@@ -1147,6 +1218,7 @@ void StackPreprocess::SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T
         statisticsModelFlushCallstack_ = true;
         SetAllocStatisticsData(hookRecord, stackId);
     }
+    spinLock_.Unlock();
 }
 
 template <typename T>
@@ -1303,29 +1375,53 @@ void StackPreprocess::SetHookData(HookRecordPtr hookRecord, std::vector<CallFram
     hookRecord->SerializeData(hookData, hookInfo);
 }
 
+bool StackPreprocess::SetFreeStatisticsDataLocked(uint64_t addr)
+{
+    auto addrIter = allocAddrMap_.find(addr);
+    if (addrIter == allocAddrMap_.end()) {
+        return false;
+    }
+    auto recordIter = recordStatisticsMap_.find(addrIter->second.stackId);
+    if (recordIter != recordStatisticsMap_.end()) {
+        auto& record = recordIter->second;
+        ++record.releaseCount;
+        record.releaseSize += addrIter->second.mallocSize;
+        statisticsPeriodSet_.insert(record.callstackId);
+    }
+    allocAddrMap_.erase(addr);
+    auto addrSetIter = addrSet_.find(addr);
+    if (addrSetIter != addrSet_.end()) {
+        addrSet_.erase(addrSetIter);
+    }
+    return true;
+}
+
 bool StackPreprocess::SetFreeStatisticsData(uint64_t addr)
 {
     spinLock_.Lock();
-    // through the addr lookup record
-    auto addrIter = g_allocAddrMap.find(addr);
-    if (addrIter != g_allocAddrMap.end()) {
-        auto recordIter = recordStatisticsMap_.find(addrIter->second.second);
-        if (recordIter != recordStatisticsMap_.end()) {
-            auto& record = recordIter->second;
-            ++record.releaseCount;
-            record.releaseSize += addrIter->second.first;
-            statisticsPeriodSet_.insert(record.callstackId);
-        }
-        g_allocAddrMap.erase(addr);
-        auto addrSetIter = addrSet_.find(addr);
-        if (addrSetIter != addrSet_.end()) {
-            addrSet_.erase(addrSetIter);
-        }
+    bool result = SetFreeStatisticsDataLocked(addr);
+    spinLock_.Unlock();
+    return result;
+}
+
+bool StackPreprocess::ReconcileDuplicateMalloc(uint64_t addr, const struct timespec& newTs)
+{
+    spinLock_.Lock();
+    auto it = allocAddrMap_.find(addr);
+    if (it == allocAddrMap_.end()) {
         spinLock_.Unlock();
         return true;
     }
+    const auto& oldTs = it->second.ts;
+    bool isNewer = (newTs.tv_sec > oldTs.tv_sec) ||
+        (newTs.tv_sec == oldTs.tv_sec && newTs.tv_nsec > oldTs.tv_nsec);
+    if (!isNewer) {
+        spinLock_.Unlock();
+        return false;
+    }
+    SetFreeStatisticsDataLocked(addr);
     spinLock_.Unlock();
-    return false;
+    return true;
 }
 
 void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
@@ -1336,8 +1432,8 @@ void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, siz
         auto rawStack = hookRecord->GetRawStack();
         ++record.applyCount;
         record.applySize += rawStack->stackContext->mallocSize;
-        g_allocAddrMap[hookRecord->GetAddr()] =
-            std::pair(rawStack->stackContext->mallocSize, stackId);
+        allocAddrMap_[hookRecord->GetAddr()] =
+            AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
             addrSet_.insert(hookRecord->GetAddr());
         }
@@ -1428,8 +1524,8 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     }
 
     recordStatisticsMap_.emplace(stackId, record);
-    g_allocAddrMap[hookRecord->GetAddr()] =
-        std::pair(rawStack->stackContext->mallocSize, stackId);
+    allocAddrMap_[hookRecord->GetAddr()] =
+        AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};
     if (hookRecord->GetType() == MEMORY_USING_MSG) {
         addrSet_.insert(hookRecord->GetAddr());
     }

@@ -206,6 +206,27 @@ int8_t* ShareMemoryBlock::GetCurrentFreeMemory(uint32_t size)
     return &header_->data[wp + PIECE_HEAD_LEN];
 }
 
+int8_t* ShareMemoryBlock::GetRawMemory(uint32_t size)
+{
+    CHECK_NOTNULL(header_, nullptr, "header not ready!");
+    uint32_t wp = header_->info.writeOffset_.load();
+    uint32_t rp = header_->info.readOffset_.load();
+    if (wp < rp && rp <= wp + size) {
+        return nullptr;
+    }
+    if (wp + size > header_->info.memorySize_) {
+        if (rp == 0) {
+            return nullptr;
+        }
+        *((uint32_t*)(&header_->data[wp])) = INVALID_LENGTH;
+        wp = 0;
+        if (wp + size >= rp) {
+            return nullptr;
+        }
+    }
+    return &header_->data[wp];
+}
+
 int8_t* ShareMemoryBlock::GetFreeMemory(uint32_t size)
 {
     if (reusePloicy_ == ReusePolicy::DROP_NONE) {
@@ -284,6 +305,43 @@ bool ShareMemoryBlock::PutRawTimeout(const int8_t* data, uint32_t size)
     ++header_->info.bytesCount_;
     ++header_->info.chunkCount_;
 
+    pthread_mutex_unlock(&header_->info.mutex_);
+    return true;
+}
+
+bool ShareMemoryBlock::PutRawSync(const int8_t* data, uint32_t size, const std::function<bool()>& callback)
+{
+    if (header_ == nullptr) {
+        return false;
+    }
+    pthread_mutex_lock(&header_->info.mutex_);
+    int8_t* rawMemory = GetRawMemory(size);
+    if (rawMemory == nullptr) {
+        while (true) {
+            if (rawMemory == nullptr) {
+                if ((callback && callback()) || (g_timeCount > waitTime_)) {
+                    HILOG_BASE_ERROR(LOG_CORE, "PutRawSync exit with g_timeCount %{public}d", g_timeCount.load());
+                    pthread_mutex_unlock(&header_->info.mutex_);
+                    return false;
+                }
+                pthread_mutex_unlock(&header_->info.mutex_);
+                usleep(WAIT_RELEASE_TIMEOUT_US);
+                g_timeCount += WAIT_RELEASE_TIMEOUT_US;
+                pthread_mutex_lock(&header_->info.mutex_);
+                rawMemory = GetRawMemory(size);
+                continue;
+            }
+            g_timeCount = 0;
+            break;
+        }
+    }
+    if (memcpy_s(rawMemory, size, data, size) != EOK) {
+        pthread_mutex_unlock(&header_->info.mutex_);
+        return false;
+    }
+    header_->info.writeOffset_ = (rawMemory - header_->data) + size;
+    ++header_->info.bytesCount_;
+    ++header_->info.chunkCount_;
     pthread_mutex_unlock(&header_->info.mutex_);
     return true;
 }
