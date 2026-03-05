@@ -296,6 +296,24 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagConversion, TestSize.Level0)
 }
 
 /*
+ * @tc.name: ConvertTagToMaskSingleTagLocalHandle
+ * @tc.desc: test ConvertTagToMask with single tag local handle.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagLocalHandle, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add single tag
+    config.add_restrace_tag("RES_ARK_LOCAL_HANDLE");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_ARK_LOCAL_HANDLE);
+}
+
+/*
  * @tc.name: ConvertTagToMaskMultipleTagConversion
  * @tc.desc: test ConvertTagToMask with multiple tags conversion.
  * @tc.type: FUNC

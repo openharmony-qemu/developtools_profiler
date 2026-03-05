@@ -90,6 +90,7 @@ group("unittest") {
       "plugins/native_daemon/native_memory_profiler_sa/test:unittest",
       "plugins/native_daemon/test:unittest",
       "plugins/native_hook/test:unittest",
+      "plugins/preload_client/test:unittest",
     ]
   }
 }
