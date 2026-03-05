@@ -504,9 +504,8 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
         callFrames = g_director->ConstructCallFrames(hookRecord);
         return true;
     }
-
+    CHECK_NOTNULL(rawData, false, "rawData is null");
     auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
-
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
 
     std::vector<uintptr_t> syncStackPcs;
@@ -889,6 +888,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     }
     stackmap->set_pid(pid_);
     auto rawData = hookRecord->GetRawStack();
+    CHECK_NOTNULL(rawData, 0, "StackPreprocess rawData is nullptr");
     uint64_t stackHash = CallStackHash{}(g_callStack);
     CallStackKey key = {stackHash, g_callStack.size(), rawData->stackContext->nodeId,
                         rawData->stackContext->nodeType, rawData->stackContext->tagId};
