@@ -52,6 +52,9 @@ std::map<std::string, std::string> procRamInfoLast {
         {"heapSize", "NA"},
         {"heapAlloc", "NA"},
         {"heapFree", "NA"},
+        {"anonPage", "NA"},
+        {"filePage", "NA"},
+        {"ashmem", "NA"},
         {"childCarktsHeapPss", "NA"},
         {"childGpuPss", "NA"},
         {"childGraphicPss", "NA"},
@@ -66,7 +69,10 @@ std::map<std::string, std::string> procRamInfoLast {
         {"childSharedDirty", "NA"},
         {"childStackPss", "NA"},
         {"childSwap", "NA"},
-        {"childSwapPss", "NA"}
+        {"childSwapPss", "NA"},
+        {"childAnonPage", "NA"},
+        {"childFilePage", "NA"},
+        {"childAshmem", "NA"},
 };
 std::map<std::string, std::string> RAM::ItemData()
 {
@@ -141,6 +147,9 @@ std::map<std::string, std::string> RAM::ProcMemNaInfo() const
     procMemInfo["stackPss"] = "NA";
     procMemInfo["swap"] = "NA";
     procMemInfo["swapPss"] = "NA";
+    procMemInfo["anonPage"] = "NA";
+    procMemInfo["filePage"] = "NA";
+    procMemInfo["ashmem"] = "NA";
     return procMemInfo;
 }
 
@@ -162,6 +171,9 @@ std::map<std::string, std::string> RAM::ChildProcMemNaInfo() const
     procMemInfo["childStackPss"] = "NA";
     procMemInfo["childSwap"] = "NA";
     procMemInfo["childSwapPss"] = "NA";
+    procMemInfo["childAnonPage"] = "NA";
+    procMemInfo["childFilePage"] = "NA";
+    procMemInfo["childAshmem"] = "NA";
     return procMemInfo;
 }
 
@@ -315,27 +327,18 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         }
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
-        if (params.size() > RAM_SECOND && params[0].find("GL") != std::string::npos) {
-            pss.gpuPssValue = params[1];
-        }
-        if (params.size() > RAM_SECOND && params[0].find("Graph") != std::string::npos) {
-            pss.graphicPssValue = params[1];
-        }
-        if (params.size() > RAM_FOURTH && params[0].find("ark") != std::string::npos) {
-            pss.arktsHeapPssValue = params[RAM_THIRD];
-        }
-        if (params.size() > RAM_THIRD && params[0].find("native") != std::string::npos &&
-            params[1].find("heap") != std::string::npos) {
-            pss.nativeHeapPssValue = params[RAM_SECOND];
-        }
-        if (params.size() > RAM_SECOND && params[0].find("stack") != std::string::npos) {
-            pss.stackPssValue = params[1];
+        GetPssAboutPid(params);
+        if (params[1].find("Ashmem") != std::string::npos) {
+            std::string ashmemValue = params[1];
+            size_t pos = ashmemValue.find(":");
+            if (pos != std::string::npos) {
+                std::string numberStr = ashmemValue.substr(pos + 1);
+                pss.ashmemPssValue = numberStr;
+                break;
+            }
         }
         if (!pss.gpuPssValue.empty() && params.size() > 0 && params[0].find("Total") != std::string::npos) {
             paramsInfo = params;
-        }
-        if (paramsInfo.size() > 0) {
-            break;
         }
     }
 
@@ -343,6 +346,33 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
     // 应用程序的内存占用信息
     LOGD("pssRamInfo map size(%u)", pssRamInfo.size());
     return pssRamInfo;
+}
+
+void RAM::GetPssAboutPid(std::vector<std::string> &params)
+{
+    if (params.size() > RAM_SECOND && params[0].find("GL") != std::string::npos) {
+        pss.gpuPssValue = params[1];
+    }
+    if (params.size() > RAM_SECOND && params[0].find("Graph") != std::string::npos) {
+        pss.graphicPssValue = params[1];
+    }
+    if (params.size() > RAM_FOURTH && params[0].find("ark") != std::string::npos) {
+        pss.arktsHeapPssValue = params[RAM_THIRD];
+    }
+    if (params.size() > RAM_THIRD && params[0].find("native") != std::string::npos &&
+        params[1].find("heap") != std::string::npos) {
+        pss.nativeHeapPssValue = params[RAM_SECOND];
+    }
+    if (params.size() > RAM_SECOND && params[0].find("stack") != std::string::npos) {
+        pss.stackPssValue = params[1];
+    }
+    if (params.size() > RAM_THIRD && params[0].find("AnonPage") != std::string::npos) {
+        pss.anonPagePssValue = params[RAM_SECOND];
+    }
+    if (params.size() > RAM_THIRD && params[0].find("FilePage") != std::string::npos) {
+        pss.filePagePssValue = params[RAM_SECOND];
+    }
+
 }
 
 void RAM::FillPssRamInfo(size_t index, std::string pid,
@@ -354,6 +384,9 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["arktsHeapPss"] = pss.arktsHeapPssValue;
         pssRamInfo["nativeHeapPss"] = pss.nativeHeapPssValue;
         pssRamInfo["stackPss"] = pss.stackPssValue;
+        pssRamInfo["anonPage"] = pss.anonPagePssValue;
+        pssRamInfo["filePage"] = pss.filePagePssValue;
+        pssRamInfo["ashmem"] = pss.ashmemPssValue;
     } else {
         pid.append(":");
         pssRamInfo["childGpuPss"].append(pid).append(pss.gpuPssValue).append("|");
@@ -361,6 +394,9 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["childArktsHeapPss"].append(pid).append(pss.arktsHeapPssValue).append("|");
         pssRamInfo["childNativeHeapPss"].append(pid).append(pss.nativeHeapPssValue).append("|");
         pssRamInfo["childStackPss"].append(pid).append(pss.stackPssValue).append("|");
+        pssRamInfo["childAnonPage"].append(pid).append(pss.anonPagePssValue).append("|");
+        pssRamInfo["childFilePage"].append(pid).append(pss.filePagePssValue).append("|");
+        pssRamInfo["childAshmem"].append(pid).append(pss.ashmemPssValue).append("|");
     }
 }
 

@@ -37,6 +37,9 @@ struct PssValues {
     std::string arktsHeapPssValue = "";
     std::string nativeHeapPssValue = "";
     std::string stackPssValue = "";
+    std::string anonPagePssValue = "";
+    std::string filePagePssValue = "";
+    std::string ashmemPssValue = "";
 };
 namespace OHOS {
 namespace SmartPerf {
@@ -47,6 +50,7 @@ public:
     std::map<std::string, std::string> GetPssRamInfo(FILE *fd, const std::string& pid, size_t index);
     std::map<std::string, std::string> ParsePssValues(FILE *fd, std::vector<std::string> &paramsInfo,
         const std::string pid, size_t index);
+    void GetPssAboutPid(std::vector<std::string> &params);
     void FillPssRamInfo(size_t index, std::string pid, const PssValues &pssValues,
         std::map<std::string, std::string> &pssRamInfo) const;
     std::map<std::string, std::string> SaveSumRamInfo(std::vector<std::string>& paramsInfo,
