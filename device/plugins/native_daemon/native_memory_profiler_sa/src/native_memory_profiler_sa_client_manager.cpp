@@ -121,6 +121,7 @@ int32_t NativeMemoryProfilerSaClientManager::Stop(const std::string& name)
     return proxy.Stop(name);
 }
 
+// only for API
 int32_t NativeMemoryProfilerSaClientManager::Stop()
 {
     auto service = GetRemoteService();
@@ -339,6 +340,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(int32_t type, M
         return RET_ERR;
     }
     config->typeFileName_ = filename;
+    config->startType_ = 1; // 1:API
 
     if (!COMMON::CleanOldenFiles(NAPI_FILE_PATH_PREFIX)) {
         PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: CleanOldenFiles failed");
