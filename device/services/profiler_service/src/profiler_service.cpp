@@ -728,6 +728,9 @@ Status ProfilerService::StopSession(ServerContext* context,
                                     const ::StopSessionRequest* request,
                                     ::StopSessionResponse* response)
 {
+    if (request == nullptr) {
+        return {StatusCode::INTERNAL, "request is null"};
+    }
     if (request->stop_all()) {
         std::vector<uint32_t> sessionList;
         {
@@ -789,6 +792,9 @@ Status ProfilerService::DestroySession(ServerContext* context,
                                        const ::DestroySessionRequest* request,
                                        ::DestroySessionResponse* response)
 {
+    if (request == nullptr) {
+        return {StatusCode::INTERNAL, "request is null"};
+    }
     if (request->destroy_all()) {
         std::vector<uint32_t> sessionIds;
         for (const auto& session : sessionContext_) {

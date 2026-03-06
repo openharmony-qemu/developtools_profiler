@@ -25,6 +25,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <fcntl.h>
+#include <cinttypes>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
@@ -137,14 +138,23 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         return true;
     }
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
-    PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %llu",
-                       config_->memtraceEnable, config_->traceMask);
+    PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %" PRIu64,
+                       config_->memtraceEnable, static_cast<uint64_t>(config_->traceMask));
 #ifdef __aarch64__
     if (config_->asyncStackEnable && config_->asyncFlag != 0) {
         asyncFlagBackup_ = DfxSetAsyncStackType(config_->asyncFlag);
         asyncFlagConfigured_ = true;
     }
 #endif
+    for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: vk and gles image
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "HookSocketClient::ProtocolProc get gpu range: %" PRIu64 ", %" PRIu64 ", %" PRIu64
+            ", %" PRIu64 ", %" PRIu64 ",",
+            config_->gpuRange.gpuVk[i], config_->gpuRange.gpuGlesImage[i],
+            config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
+            config_->gpuRange.gpuClBuffer[i]);
+    }
+
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
     int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;

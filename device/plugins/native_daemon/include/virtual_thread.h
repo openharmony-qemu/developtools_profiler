@@ -73,9 +73,6 @@ public:
     bool isReported_ {false}; // indicates whether information about item has been reported
 };
 
-const std::string MMAP_NAME_HEAP = "[heap]";
-const std::string MMAP_NAME_ANON = "[anon]";
-
 class VirtualRuntime;
 
 class VirtualThread {

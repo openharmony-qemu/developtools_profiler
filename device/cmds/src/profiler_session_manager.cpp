@@ -40,6 +40,7 @@ constexpr uint32_t INT_MAX_LEN = 10;
 constexpr int ADDR_BUFFER_SIZE = 128;
 constexpr int DOUBLE = 2;
 static uint32_t g_sampleDuration = 0;
+const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 }
 
 std::string GetLoopbackAddress()
@@ -381,6 +382,26 @@ void ProfilerSessionManager::RequestExit()
     std::async(&std::condition_variable::notify_one, &sessionCv_);
 }
 
+void CaptureChildProcessImpl()
+{
+    int profilerPid = 0;
+    bool profilerExit = false;
+    for (int i = 0; i < 720; ++i) { //720: loop times
+        if (profilerPid == 0 && (!COMMON::IsProcessExist(HIPROFILER_PLUGINS_NAME, profilerPid))) {
+            profilerExit = true;
+            break;
+        } else if (profilerPid != 0 && (!COMMON::IsProcessExistByPid(profilerPid))) {
+            profilerExit = true;
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(5000)); //5000: 5s
+    }
+    if (!profilerExit) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_MS * DOUBLE));
+        ProfilerProcessManager::GetInstance().KillDependentProcess();
+    }
+}
+
 uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
                                                     const std::string& durationSeconds,
                                                     const std::string& outputFile)
@@ -390,8 +411,6 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
         printf("Get profiler service stub failed!\n");
         return 0;
     }
-
-    // Cap duration at MAX_LONG_RUNNING_DURATION_S
     std::string cappedDuration = durationSeconds;
     if (!durationSeconds.empty() && COMMON::IsNumeric(durationSeconds)) {
         int duration = std::stoi(durationSeconds);
@@ -402,7 +421,6 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
     } else {
         cappedDuration = std::to_string(MAX_LONG_RUNNING_DURATION_S);
     }
-
     uint32_t sessionId = CreateSession(profilerStub, config, cappedDuration, outputFile);
     if (sessionId == 0) {
         printf("Create session returns Id 0\n");
@@ -430,11 +448,9 @@ uint32_t ProfilerSessionManager::CaptureLongRunning(const std::string& config,
     if (pidval == -1) {
         PROFILER_LOG_ERROR(LOG_CORE, "ProfilerSessionManager::CaptureLongRunning fork process failed");
     } else if (pidval == 0) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(KEEP_SESSION_TIMEOUT_LONG_MS
-                                                              + KEEP_SESSION_TIMEOUT_MS * DOUBLE));
-        ProfilerProcessManager::GetInstance().KillDependentProcess();
+        CaptureChildProcessImpl();
+        return UINT32_MAX;
     }
-
     return sessionId;
 }
 

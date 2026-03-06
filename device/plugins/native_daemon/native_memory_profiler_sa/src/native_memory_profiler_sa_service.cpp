@@ -291,10 +291,6 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      std::string& args)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
-    if (COMMON::GetProcessNameByPid(config->pid_) == "hiview") {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: process name is hiview, return false");
-        return RET_ERR;
-    }
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;

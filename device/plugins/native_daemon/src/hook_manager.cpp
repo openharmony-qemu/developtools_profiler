@@ -233,7 +233,7 @@ unsigned long long HookManager::ConvertTagToMask()
 {
     unsigned long long resMask = 0;
     if (hookConfig_.restrace_tag().size() > 0) {
-        for (size_t i = 0; i < hookConfig_.restrace_tag().size(); ++i) {
+        for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
             std::string resTag = hookConfig_.restrace_tag(i);
             if (resTag == TAG_RES_GPU_VK) {
                 resMask |= RES_GPU_VK;
@@ -288,8 +288,8 @@ unsigned long long HookManager::ConvertTagToMask()
 uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
 {
     constexpr uint64_t ALL_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
-        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE |
-        ASYNC_TYPE_ARKTS_WORKER | ASYNC_TYPE_ARKTS_TASKPOOL;
+        ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROMISE | ASYNC_TYPE_CUSTOMIZE | ASYNC_TYPE_ARKTS_WORKER |
+        ASYNC_TYPE_ARKTS_TASKPOOL | ASYNC_TYPE_ARKWEB | ASYNC_TYPE_JSVM;
     uint64_t mask = baseMask;
     for (const auto value : hookConfig_.async_type()) {
         switch (value) {
@@ -316,6 +316,12 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
                 break;
             case AsyncFlagType::ARKTS_TASKPOOL:
                 mask |= ASYNC_TYPE_ARKTS_TASKPOOL;
+                break;
+            case AsyncFlagType::ARKWEB_ENGINE:
+                mask |= ASYNC_TYPE_ARKWEB;
+                break;
+            case AsyncFlagType::JSVM_ASYNC:
+                mask |= ASYNC_TYPE_JSVM;
                 break;
             case AsyncFlagType::ALL_ASYNC_TYPE:
                 mask |= ALL_TYPE;

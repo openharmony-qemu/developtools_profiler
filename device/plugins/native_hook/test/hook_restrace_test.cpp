@@ -32,6 +32,7 @@ constexpr uint64_t COUNT_INDEX = 3;
 constexpr uint64_t SIZE_INDEX = 2;
 constexpr int MAX_SIZE = 1024 * 1024 * 1024;
 constexpr int DEFAULT_VAL = 10;
+constexpr int MAX_DEPTH = 1000000;
 
 void AllocateMemoryFreeRegion(int depth, int size)
 {
@@ -105,7 +106,7 @@ void AllocateMemory(int depth, int size)
             return;
         }
         mem[0] = 'a';
-        restrace(RES_GPU_VK, mem, DEFAULT_VAL, TAG_RES_GPU_VK, false);
+        restrace(RES_GPU_VK, mem, 0, TAG_RES_GPU_VK, false);
         delete[] mem;
         return;
     }
@@ -127,15 +128,15 @@ int main(int argc, char* argv[])
     int depth = DEFAULT_VAL;
     int count = DEFAULT_VAL;
     int mallocSize = 1;
-    if (argc < 4) { //4: number of expected args
+    if (argc < 4) { // 4: means the number of argument
         std::cout << "args are not enough!" << std::endl;
         return 0;
     }
     depth = atoi(argv[1]);
     mallocSize = atoi(argv[SIZE_INDEX]);
     count = atoi(argv[COUNT_INDEX]);
-    if (depth <= 0) {
-        std::cout << "invalid depth" << std::endl;
+    if (depth <= 0 || depth > MAX_DEPTH) {
+        std::cout << "invalid depths" << std::endl;
         return 0;
     }
     if (count <= 0) {

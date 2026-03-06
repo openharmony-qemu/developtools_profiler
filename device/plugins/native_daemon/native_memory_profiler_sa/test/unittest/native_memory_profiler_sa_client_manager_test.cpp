@@ -171,8 +171,8 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaClientManagerTest006
- * @tc.desc: Test get stack info with MemSaConfig
+ * @tc.name: NativeMemoryProfilerSaClientManagerTest004
+ * @tc.desc: Test simplified nmd mode
  * @tc.type: FUNC
  */
 HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientManagerTest006, TestSize.Level3)
