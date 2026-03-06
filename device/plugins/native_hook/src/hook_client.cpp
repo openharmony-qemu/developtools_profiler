@@ -703,37 +703,37 @@ void* __attribute__((noinline)) hook_realloc(void* (*fn)(void*, size_t), void* p
     AsyncStackData asyncData {{{{0}}}};
     StackRawData rawdata = {{{{0}}}};
     StackRawData freedata = {{{{0}}}};
+    AsyncStackData freeAsyncData {{{{0}}}};
     if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
         return pRet;
     }
-
     AddAllocAddr(pRet);
-
     const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
     int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
-    int rawSize = HookGuard::CalculateRealSize(param.fpStackDepth, false);
-    int freeRealSize = g_clientConfig.fpunwind ? sizeof(BaseStackRawData) : rawSize;
     bool sendResult = false;
-    
-    SetStackRawData(freedata, FREE_MSG, ptr, 0);
-    freedata.ts = ts;
-    client.SendStackWithPayload(&freedata, freeRealSize, nullptr, 0,
-                                reinterpret_cast<uint64_t>(freedata.addr) % g_sharedMemCount);
-
     if (isAsyncStack) {
+        SetStackRawData(freeAsyncData, FREE_MSG, ptr, 0);
+        freeAsyncData.ts = ts;
+        client.SendStackWithPayload(&freeAsyncData, sizeof(freeAsyncData), nullptr, 0,
+                                    reinterpret_cast<uint64_t>(freeAsyncData.addr) % g_sharedMemCount);
         SetStackRawData(asyncData, MALLOC_MSG, pRet, size);
         FillNodeInfo(asyncData);
         asyncData.ts = ts;
         sendResult = client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr),
             param.stackSize, reinterpret_cast<uint64_t>(asyncData.addr) % g_sharedMemCount);
     } else {
+        int rawSize = HookGuard::CalculateRealSize(param.fpStackDepth, false);
+        int freeRealSize = g_clientConfig.fpunwind ? sizeof(BaseStackRawData) : rawSize;
+        SetStackRawData(freedata, FREE_MSG, ptr, 0);
+        freedata.ts = ts;
+        client.SendStackWithPayload(&freedata, freeRealSize, nullptr, 0,
+                                    reinterpret_cast<uint64_t>(freedata.addr) % g_sharedMemCount);
         SetStackRawData(rawdata, MALLOC_MSG, pRet, size);
         FillNodeInfo(rawdata);
         rawdata.ts = ts;
         sendResult = client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr),
             param.stackSize, reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
     }
-
     if (sendResult) {
         PERF_RECORD_DATA(param.stackSize, size);
     }
