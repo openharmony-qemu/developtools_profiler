@@ -259,11 +259,19 @@ bool GetDumpHeapParams(napi_env env, napi_callback_info info, std::string& fileN
         HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
         return false;
     }
-    if (argc == TWO_VALUE_LIMIT && !GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen)
-        && !GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean)) {
-        msg = "Invalid parameter(s), the second parameter must be of type bool.";
-        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
-        return false;
+    if (argc == TWO_VALUE_LIMIT) {
+        bool getFirstParamSuccess = GetNapiStringValue(env, argv[FIRST_PARAM_POS], fileName, paramLen);
+        if (!getFirstParamSuccess) {
+            msg = "Invalid parameter(s), the first parameter must be of type string.";
+            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+            return false;
+        }
+        bool needCleanResult = GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean);
+        if (!needCleanResult) {
+            msg = "Invalid parameter(s), the second parameter must be of type bool.";
+            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+            return false;
+        }
     }
     return true;
 }
@@ -306,10 +314,17 @@ int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::strin
         HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require first param of type bool!", __func__, argc);
         return ErrorCode::PARAMETER_ERROR;
     }
-    if (argc == TWO_VALUE_LIMIT && !GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc) &&
-        !GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean)) {
-        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require second param of type bool!", __func__, argc);
-        return ErrorCode::PARAMETER_ERROR;
+    if (argc == TWO_VALUE_LIMIT) {
+        bool isGcResult = GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc);
+        if (!isGcResult) {
+            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require param of type bool!", __func__, argc);
+            return ErrorCode::PARAMETER_ERROR;
+        }
+        bool needCleanResult = GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean);
+        if (!needCleanResult) {
+            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require param of type bool!", __func__, argc);
+            return ErrorCode::PARAMETER_ERROR;
+        }
     }
     if (!CheckDumpDiskSpace()) {
         return DumpRawHeapErrors::LOW_DISK_SPACE;
