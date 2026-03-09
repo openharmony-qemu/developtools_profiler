@@ -38,10 +38,6 @@ ohos_unittest("preload_ut") {
     "unittest/preload_socket_client_test.cpp",
   ]
 
-  public_deps = [
-    "${OHOS_PROFILER_DIR}/device/services/shared_memory:shared_memory_source",
-    "${OHOS_PROFILER_DIR}/protos/services:profiler_service_all_type_source",
-  ]
   deps = [
     "${OHOS_PROFILER_DIR}/device/base:mock_test_source",
     "${OHOS_PROFILER_DIR}/device/plugins/native_daemon:native_daemon",
