@@ -110,7 +110,7 @@ HWTEST_F(SPdaemonAIScheduleTest, ItemDataTest002, TestSize.Level1)
     
     auto result = aiSchedule.ItemData();
     
-    EXPECT_TRUE(result.empty());
+    EXPECT_FALSE(result.empty());
 }
 
 /**

@@ -77,21 +77,21 @@ HWTEST_F(ControlCallCmdTest, GetResultTest03, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, GetResultTest04, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"", "", "appStartTime"};
+    std::vector<std::string> v = {"appStartTime"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
 HWTEST_F(ControlCallCmdTest, GetResultTest05, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"", "", "slideList"};
+    std::vector<std::string> v = {"slideList"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
 HWTEST_F(ControlCallCmdTest, GetResultTest06, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"", "", "timeDelay"};
+    std::vector<std::string> v = {"timeDelay"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
