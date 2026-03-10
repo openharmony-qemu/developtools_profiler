@@ -306,39 +306,42 @@ uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr);
 void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
 
 /**
- * @brief Starts Resource Profiler for the current process.
+ * @brief Starts Resource Profiler for the current process. When {@link HIDEBUG_RES_PROF_SUCCESS} is returned, you
+ * can call {@link OH_HiDebug_StopProfiler} to stop the resource collection. If {@link OH_HiDebug_StopProfiler} is
+ * not called, the resource collection will continue until the maximum duration is reached.
  *
  * @param type Type of resource to be profiled.
  * @param config Configuration parameters for the profiler.
- * @return Result code.
- *         {@link HIDEBUG_SUCCESS} Profiler started successfully.
- *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid argument.
- *         {@link HIDEBUG_RES_PROF_MAX_DURATION_INVALID_ARG} Maximum duration is invalid.
- *         {@link HIDEBUG_RES_PROF_FILTER_SIZE_INVALID_ARG} FilterSize is invalid.
- *         {@link HIDEBUG_RES_PROF_MAX_STACK_DEPTH_INVALID_ARG} Maximum stack depth is invalid.
- *         {@link HIDEBUG_RES_PROF_STATISTICS_INTERVAL_INVALID_ARG} StatisticsInterval is invalid.
- *         {@link HIDEBUG_RES_PROF_SAMPLE_INTERVAL_INVALID_ARG} Sample interval is invalid.
- *         {@link HIDEBUG_RES_PROF_RESOURCE_TYPE_INVALID_ARG} ResourceType is invalid.
- *         {@link HIDEBUG_RES_PROF_PERMISSION_DENIED} Permission denied.
- *         {@link HIDEBUG_RES_PROF_ALREADY_STARTED} Profiler has already been started.
- *         {@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Process exceeds the limit.
- *         {@link HIDEBUG_RES_PROF_CONFLICT} Conflict with command line performance analysis tool.
- *         {@link HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION} Automatically stopped
- *         because the duration limit was reached.
- *         {@link HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED} Daily quota exceeded.
- *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} CPU overloaded.
- *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Memory pressure is critical.
- *         {@link HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL} Storage pressure is critical.
+ * @return Result code
+ *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler started successfully.
+ *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid resource profiler argument.
+ *         {@link HIDEBUG_RES_PROF_INVALID_MAX_DURATION} Invalid maximum duration.
+ *         {@link HIDEBUG_RES_PROF_INVALID_FILTER_SIZE} Invalid filter size.
+ *         {@link HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH} Invalid maximum stack depth.
+ *         {@link HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL} Invalid statistics interval.
+ *         {@link HIDEBUG_RES_PROF_INVALID_SAMPLE_INTERVAL} Invalid sample interval.
+ *         {@link HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE} Invalid resource type.
+ *         {@link HIDEBUG_RES_PROF_PERMISSION_DENIED} Resource profiler permission denied.
+ *         {@link HIDEBUG_RES_PROF_ALREADY_STARTED} Resource profiler already started.
+ *         {@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Resource profiler process count exceeds the limit.
+ *         {@link HIDEBUG_RES_PROF_CONFLICT} Resource profiler conflicts with CLI tools or system profiling tasks.
+ *         {@link HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION} Resource profiler automatically stopped due to the
+ *         duration limit.
+ *         {@link HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED} Daily quota exceeded during resource profiling.
+ *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} System is experiencing high CPU utilization.
+ *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Insufficient available memory.
+ *         {@link HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL} Insufficient available storage space.
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config);
 
 /**
- * @brief Stops Resource Profiler for the current process.
+ * @brief Stops resource profiler for the current process. This API can be called after the OH_HiDebug_StartProfiler
+ * API and the call duration must be within the maximum duration
  *
  * @return Result code
- *         {@link HIDEBUG_SUCCESS} Stop profiler successfully.
- *         {@link HIDEBUG_RES_PROF_NOT_STARTED} The task does not started.
+ *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler stopped successfully.
+ *         {@link HIDEBUG_RES_PROF_NOT_STARTED} Resource profiler not started.
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);

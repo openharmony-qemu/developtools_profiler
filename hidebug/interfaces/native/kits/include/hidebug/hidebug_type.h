@@ -84,92 +84,92 @@ typedef enum HiDebug_ErrorCode {
      */
     HIDEBUG_RESOURCE_UNAVAILABLE = 11400302,
     /**
-     * Resource profiler succeeded
+     * Resource profiler started/stopped successfully.
      * @since 24
      */
     HIDEBUG_RES_PROF_SUCCESS = 11400400,
     /**
-     * Resource profiler invalid argument
+     * Invalid resource profiler argument.
      * @since 24
      */
     HIDEBUG_RES_PROF_INVALID_ARG = 11400410,
     /**
-     * Resource profiler invalid max duration argument
+     * Invalid maximum duration.
      * @since 24
      */
-    HIDEBUG_RES_PROF_MAX_DURATION_INVALID_ARG = 11400411,
+    HIDEBUG_RES_PROF_INVALID_MAX_DURATION = 11400411,
     /**
-     * Resource profiler invalid filter size argument
+     * Invalid filter size.
      * @since 24
      */
-    HIDEBUG_RES_PROF_FILTER_SIZE_INVALID_ARG = 11400412,
+    HIDEBUG_RES_PROF_INVALID_FILTER_SIZE = 11400412,
     /**
-     * Resource profiler invalid max stack depth argument
+     * Invalid maximum stack depth.
      * @since 24
      */
-    HIDEBUG_RES_PROF_MAX_STACK_DEPTH_INVALID_ARG = 11400413,
+    HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH = 11400413,
     /**
-     * Resource profiler invalid statistics interval argument
+     * Invalid statistics interval.
      * @since 24
      */
-    HIDEBUG_RES_PROF_STATISTICS_INTERVAL_INVALID_ARG = 11400414,
+    HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL = 11400414,
     /**
-     * Resource profiler invalid sample interval argument
+     * Invalid sample interval.
      * @since 24
      */
-    HIDEBUG_RES_PROF_SAMPLE_INTERVAL_INVALID_ARG = 11400415,
+    HIDEBUG_RES_PROF_INVALID_SAMPLE_INTERVAL = 11400415,
     /**
-     * Resource profiler invalid resource type argument
+     * Invalid resource type.
      * @since 24
      */
-    HIDEBUG_RES_PROF_RESOURCE_TYPE_INVALID_ARG = 11400416,
+    HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE = 11400416,
     /**
-     * Resource profiler permission denied
+     * Resource profiler permission denied.
      * @since 24
      */
     HIDEBUG_RES_PROF_PERMISSION_DENIED = 11400420,
     /**
-     * Resource profiler already started
+     * Resource profiler already started.
      * @since 24
      */
     HIDEBUG_RES_PROF_ALREADY_STARTED = 11400421,
     /**
-     * Resource profiler not started
+     * Resource profiler not started.
      * @since 24
      */
     HIDEBUG_RES_PROF_NOT_STARTED = 11400422,
     /**
-     * Resource profiler process exceeds limit
+     * Resource profiler process count exceeds the limit.
      * @since 24
      */
     HIDEBUG_RES_PROF_PROCESS_OVERLIMIT = 11400423,
     /**
-     * Resource profiler conflict
+     * Resource profiler conflicts with CLI tools or system profiling tasks.
      * @since 24
      */
     HIDEBUG_RES_PROF_CONFLICT = 11400424,
     /**
-     * Resource profiler auto stopped by duration
+     * Resource profiler automatically stopped due to the duration limit.
      * @since 24
      */
     HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION = 11400425,
     /**
-     * Resource profiler daily quota exceeded
+     * Daily quota exceeded during resource profiling.
      * @since 24
      */
     HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED = 11400426,
     /**
-     * Resource profiler CPU overload
+     * System is experiencing high CPU utilization.
      * @since 24
      */
     HIDEBUG_RES_PROF_CPU_OVERLOADED = 11400427,
     /**
-     * Resource profiler memory pressure is critical
+     * Insufficient available memory.
      * @since 24
      */
     HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL = 11400428,
     /**
-     * Resource profiler storage pressure is critical
+     * Insufficient available storage space.
      * @since 24
      */
     HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL = 11400429,
@@ -493,7 +493,7 @@ typedef enum HiDebug_CrashObjType {
 } HiDebug_CrashObjType;
 
 /**
- * @brief Resource profiler type.
+ * @brief Defines an enum for the resource profiler types.
  *
  * @since 24
  */
@@ -506,43 +506,43 @@ typedef enum OH_HiDebug_ResourceType {
     /**
      * Thread
      * @since 24
-    */
+     */
     OH_RES_TYPE_THREAD,
     /**
      * Native memory
      * @since 24
-    */
+     */
     OH_RES_TYPE_NATIVE,
     /**
-     * GPU
+     * GPU memory
      * @since 24
-    */
+     */
     OH_RES_TYPE_GPU,
     /**
      * Global handle
      * @since 24
-    */
+     */
     OH_RES_TYPE_GLOBAL_HANDLE,
 } OH_HiDebug_ResourceType;
 
 /**
- * @brief Resource profiler configuration.
+ * @brief Defines a struct for the resource profiler configuration.
  *
  * @since 24
  */
 typedef struct OH_HiDebug_ResProfilerConfig {
     /**
-     * Set the maximum collection duration, in seconds.
+     * Maximum collection duration, in seconds.
      * @since 24
      */
     uint32_t maxDuration;
     /**
-     * Filter by resource allocation size, in bytes.
+     * Filter size, in bytes.
      * @since 24
      */
     uint32_t filterSize;
     /**
-     * Set the stack trace depth, in frames.
+     * Maximum stack trace depth, in frames.
      * @since 24
      */
     uint32_t maxStackDepth;
@@ -553,8 +553,8 @@ typedef struct OH_HiDebug_ResProfilerConfig {
     uint32_t statisticsInterval;
     /**
      * Sample interval, in bytes.
-     * In sampling mode, memory allocations less than or equal to this parameter will be sampled probabilistically,
-     * while those greater than this parameter will be sampled fully.
+     * In sampling mode, if the memory allocation size is less than or equal to the sample interval,
+     * it will be sampled probabilistically, otherwise, it will be sampled fully.
      * @since 24
      */
     uint32_t sampleInterval;
