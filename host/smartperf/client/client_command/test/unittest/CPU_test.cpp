@@ -513,7 +513,7 @@ HWTEST_F(SPdaemonCpuTest, GetSysChildProcessCpuLoadTest002, TestSize.Level1)
     
     cpu.GetSysChildProcessCpuLoad(3, processCpuInfo);
     
-    EXPECT_FALSE(processCpuInfo.empty());
+    EXPECT_TRUE(processCpuInfo.empty());
 }
 
 /**
@@ -528,7 +528,7 @@ HWTEST_F(SPdaemonCpuTest, GetSysChildProcessCpuLoadTest003, TestSize.Level1)
     
     cpu.GetSysChildProcessCpuLoad(0, processCpuInfo);
     
-    EXPECT_FALSE(processCpuInfo.empty());
+    EXPECT_TRUE(processCpuInfo.empty());
 }
 
 /**

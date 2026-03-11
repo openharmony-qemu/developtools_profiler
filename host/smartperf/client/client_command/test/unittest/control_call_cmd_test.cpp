@@ -55,14 +55,14 @@ HWTEST_F(ControlCallCmdTest, GetResultTest01, TestSize.Level1)
 {
     ControlCallCmd cmd;
     time = cmd.ResponseTime();
-    std::vector<std::string> v = {"responseTime"};
+    std::vector<std::string> v = {"", "", "responseTime"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 
 HWTEST_F(ControlCallCmdTest, GetResultTest02, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"completeTime"};
+    std::vector<std::string> v = {"", "", "completeTime"};
     time = cmd.CompleteTime();
     EXPECT_EQ("", cmd.GetResult(v));
 }
@@ -70,7 +70,7 @@ HWTEST_F(ControlCallCmdTest, GetResultTest02, TestSize.Level1)
 HWTEST_F(ControlCallCmdTest, GetResultTest03, TestSize.Level1)
 {
     ControlCallCmd cmd;
-    std::vector<std::string> v = {"frameLoss"};
+    std::vector<std::string> v = {"", "", "frameLoss"};
     EXPECT_EQ("", cmd.GetResult(v));
 }
 

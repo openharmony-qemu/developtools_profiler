@@ -72,9 +72,11 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
     EnableWriteLogAndDeleteOldLogFiles();
     OHOS::SmartPerf::StartUpDelay sd;
     sd.KillSpProcess();
-    std::string pidStr = sd.GetPidByPkg("SP_daemon");
-    std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
+    std::string pidStr = "";
     std::string result = "";
+    std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
+    SPUtils::LoadCmd(cmdStr, pidStr);
+    cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
     SPUtils::LoadCmd(cmdStr + pidStr, result);
     if (isNeedDaemon) {
         daemon(0, 0);
@@ -83,7 +85,6 @@ void SmartPerfCommand::DeviceServer(int isNeedDaemon) const
 }
 void SmartPerfCommand::HelpCommand(CommandHelp type, const std::string& token) const
 {
-    LOGD("SmartPerfCommand::HelpCommand  type(%d)", type);
     if (type == CommandHelp::HELP) {
         std::cout << smartPerfMsg << std::endl;
     }
@@ -102,9 +103,11 @@ void SmartPerfCommand::HelpCommand(CommandHelp type, const std::string& token) c
     if (type == CommandHelp::SERVER || type == CommandHelp::EDITORSERVER) {
         sd.ClearOldServer();
         SPUtils::GetTtyDeviceFd();
-        std::string pidStr = sd.GetPidByPkg("SP_daemon");
-        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
+        std::string pidStr = "";
         std::string result = "";
+        std::string cmdStr = CMD_COMMAND_MAP.at(CmdCommand::PIDOF_SP);
+        SPUtils::LoadCmd(cmdStr, pidStr);
+        cmdStr = CMD_COMMAND_MAP.at(CmdCommand::TASKSET);
         SPUtils::LoadCmd(cmdStr + pidStr, result);
         if (type == CommandHelp::SERVER) {
             daemon(0, 0);

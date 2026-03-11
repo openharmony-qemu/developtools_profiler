@@ -328,7 +328,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
         GetPssAboutPid(pss, params);
-        if (params[1].find("Ashmem") != std::string::npos) {
+        if (params.size() > RAM_SECOND && params[1].find("Ashmem") != std::string::npos) {
             std::string ashmemValue = params[1];
             size_t pos = ashmemValue.find(":");
             if (pos != std::string::npos) {
