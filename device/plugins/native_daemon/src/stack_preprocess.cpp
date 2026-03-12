@@ -505,9 +505,14 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
         return true;
     }
     CHECK_NOTNULL(rawData, false, "rawData is null");
+    CHECK_NOTNULL(rawData->stackContext, false, "rawData stackContext is null");
+    uint16_t msgType = rawData->stackContext->type;
+    if (msgType == FREE_ARKTS || msgType == MALLOC_ARKTS || msgType == PR_SET_VMA_MSG ||
+        msgType == MMAP_FILE_PAGE_MSG) {
+        return true;
+    }
     auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
-
     std::vector<uintptr_t> syncStackPcs;
     if (asyncData->syncStackId > 0) {
         StackId id { asyncData->syncStackId };
@@ -528,7 +533,6 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
         callFrames = g_director->ConstructCallFrames(
             hookRecord, syncStackPcs, asyncStackPcs);
     }
-
     return true;
 }
 
