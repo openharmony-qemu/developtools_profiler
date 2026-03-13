@@ -31,9 +31,9 @@ namespace OHOS::Developtools::NativeDaemon {
 
 struct TaskConfig {
     TaskConfig(std::shared_ptr<HookManager> manager, int32_t pid, const std::string& processName,
-        const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0)
+        const std::string& filePath, int32_t timerFd, bool startupMode, uint32_t fd = 0, uint32_t startType = 0)
         : hookMgr(manager), pid(pid), processName(processName), filePath(filePath), timerFd(timerFd),
-          isStartupMode(startupMode), fd(fd) {}
+          isStartupMode(startupMode), fd(fd), startType(startType) {}
     ~TaskConfig() {};
     std::shared_ptr<HookManager> hookMgr = nullptr;
     int32_t pid{0};
@@ -42,6 +42,7 @@ struct TaskConfig {
     int32_t timerFd{-1};
     bool isStartupMode{false};
     uint32_t fd{0};
+    uint32_t startType{0}; // 0:Hiveiew 1:API
 };
 
 struct MemoryInfo {
@@ -65,7 +66,7 @@ public:
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, MessageParcel &reply) override;
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                   std::string& replyStats) override { return 0; }
-    static void StopHook(uint32_t pid, std::string name = "");
+    static int32_t StopHook(uint32_t pid, std::string name = "");
     static void ClientDisconnectCallback(int socketFd);
     static bool HasProfilingPermission();
     static void CloseSocketFd(int pid);
@@ -78,7 +79,7 @@ private:
     int32_t StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                           uint32_t& fd, std::shared_ptr<HookManager>& hook, std::string& args);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
-    bool CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
+    int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -91,6 +92,8 @@ private:
     static bool ParseCpuStats(const std::string& content, unsigned long& total, unsigned long& idle);
     static int32_t CheckSystemResource();
     static bool IsNativeDeamonRunning();
+    static int32_t GetTaskNum(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
 
 private:
     std::mutex gpuMtx_;
