@@ -163,6 +163,7 @@ enum TraceType {
     SO = 12;
     ARK_GLOBAL_HANDLE = 13;
     ARK_LOCAL_HANDLE = 14;
+    VMA_ARKWEB = 15;
 };
 
 message TraceAllocEvent {
@@ -230,6 +231,7 @@ message RecordStatisticsEvent {
         OTHER = 16;
         ARK_GLOBAL_HANDLE = 17;
         ARK_LOCAL_HANDLE = 18;
+        VMA_ARKWEB = 19;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;
