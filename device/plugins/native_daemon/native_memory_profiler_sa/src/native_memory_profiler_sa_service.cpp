@@ -59,6 +59,8 @@ static std::mutex g_pidFdMtx;
 static std::unordered_map<pid_t, std::pair<uid_t, gid_t>> g_pidInfo;
 static std::vector<std::vector<uint64_t>> g_gpuRange {GPU_TYPE_COUNT, std::vector<uint64_t>(GPU_RANGE_COUNT * 2, 0)};
 static std::unordered_map<pid_t, std::string> g_fileNameInfo;
+static std::unordered_map<int32_t, int32_t> g_timerFdInfo;
+static std::mutex g_timerFdMtx;
 static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
@@ -242,8 +244,10 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT);
     }
-    std::lock_guard<std::mutex> guard(g_fileNameMtx);
-    g_fileNameInfo[pid] = config->typeFileName_;
+    {
+        std::lock_guard<std::mutex> guard(g_fileNameMtx);
+        g_fileNameInfo[pid] = config->typeFileName_;
+    }
     if (ApplyNmdConfig(config, 0)) {
         return RET_OK;
     }
@@ -261,17 +265,18 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
 int32_t NativeMemoryProfilerSaService::Stop()
 {
     pid_t pid = IPCSkeleton::GetCallingPid();
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        auto fdTimerIter = g_timerFdInfo.find(pid);
+        if (fdTimerIter != g_timerFdInfo.end()) {
+            // delete schedule task.
+            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
+            g_timerFdInfo.erase(fdTimerIter);
+        }
+    }
     int32_t retStopHook = StopHook(static_cast<uint32_t>(pid));
     if (retStopHook != RET_OK) {
         return retStopHook;
-    }
-    pid_t uid = IPCSkeleton::GetCallingUid();
-    std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
-    std::lock_guard<std::mutex> guard(g_fileNameMtx);
-    std::string destPath = COMMON::GetFullTracePath(uid, pid, g_fileNameInfo[pid]);
-    if (!COMMON::CopyFileFast(srcPath, destPath)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Copy file into boundle failed");
-        return RET_ERR;
     }
     return RET_OK;
 }
@@ -346,25 +351,7 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
             pid, name.c_str(), ret);
         return ret;
     }
-    CloseSocketFd(static_cast<pid_t>(pid));
-    config->hookMgr->StopPluginSession({});
-    config->hookMgr->DestroyPluginSession({});
-    g_nameAndFilePathCtx.erase(config->processName);
-    g_nameAndFilePathCtx.erase(config->filePath);
-    g_pidCtx.erase(config->pid);
-    g_pidInfo.erase(static_cast<pid_t>(pid));
-    {
-        std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
-        if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
-            g_nmdPidType.erase(config->pid);
-        }
-    }
-    if (config->isStartupMode) {
-        g_hasStartupMode = false;
-    }
-    if (config->fd > 0) {
-        close(config->fd);
-    }
+    ReleaseForStopHook(pid, config);
     if (--g_taskNum == 0) {
         PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
         StringViewMemoryHold::GetInstance().Clear();
@@ -474,6 +461,10 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_FAIL,
             "start schedule task failed");
         return RET_ERR;
+    }
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        g_timerFdInfo[config->pid_] = timerFd;
     }
 
     std::shared_ptr<TaskConfig> configCtx =
@@ -969,6 +960,42 @@ bool NativeMemoryProfilerSaService::IsNativeDeamonRunning()
 {
     int nativeDaemonPid = 0;
     return COMMON::IsProcessExist("native_daemon", nativeDaemonPid);
+}
+
+void NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config)
+{
+    CloseSocketFd(static_cast<pid_t>(pid));
+    config->hookMgr->StopPluginSession({});
+    config->hookMgr->DestroyPluginSession({});
+    g_nameAndFilePathCtx.erase(config->processName);
+    g_nameAndFilePathCtx.erase(config->filePath);
+    g_pidCtx.erase(config->pid);
+    auto pidInfoIter = g_pidInfo.find(pid);
+    {
+        std::lock_guard<std::mutex> guard(g_fileNameMtx);
+        auto fileNameInfoIter = g_fileNameInfo.find(pid);
+        if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
+            return;
+        }
+        std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
+        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
+        if (!COMMON::CopyFileFast(srcPath, destPath)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
+        }
+    }
+    g_pidInfo.erase(static_cast<pid_t>(pid));
+    {
+        std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
+        if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
+            g_nmdPidType.erase(config->pid);
+        }
+    }
+    if (config->isStartupMode) {
+        g_hasStartupMode = false;
+    }
+    if (config->fd > 0) {
+        close(config->fd);
+    }
 }
 
 } // namespace OHOS::Developtools::NativeDaemon

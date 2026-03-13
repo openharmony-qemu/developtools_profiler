@@ -85,7 +85,7 @@ const uintmax_t ROM_LIMIT = static_cast<uintmax_t>(4) * 1024 * 1024 * 1024;  // 
 const time_t DAY_TO_SECONDS = 24 * 60 * 60;
 const mode_t DEFAULT_MODE = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP;  // -rw-rw----
 const std::string HTRACE_PATH_PREFIX = "/data/app/el2/";
-const std::string HTRACE_PATH_SUFFIX = "/haps/entry/files/";
+const std::string HTRACE_PATH_SUFFIX = "/files/";
 const size_t HTRACE_FILES_NUM = 5;
 }  // namespace
 
@@ -1091,7 +1091,7 @@ bool CopyFileFast(const std::string& srcPath, const std::string& destPath, bool 
     int maxRetries = 3;
     bool ret = true;
     if (!CopyFileWithRetry(srcPath, destPath, maxRetries)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "copy file into bundle failed, err: %s", strerror(errno));
+        PROFILER_LOG_ERROR(LOG_CORE, "copy file failed, err: %s", strerror(errno));
         ret = false;
     }
 
