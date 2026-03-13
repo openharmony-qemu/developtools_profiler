@@ -890,12 +890,12 @@ private:
 
     pid_t pid_ = 0;
 
-    std::string GetDemangle(const WebJsFunction& webjsFunction)
+    std::string GetDemangle(const JsvmFunction& jsvmFunction)
     {
-        std::string result(webjsFunction.functionName);
-        if (strlen(webjsFunction.url) > 0) {
-            result += ":[" + std::string(webjsFunction.url) + ":" + std::to_string(webjsFunction.line) +
-                ":" + std::to_string(webjsFunction.column) + "]";
+        std::string result(jsvmFunction.functionName);
+        if (strlen(jsvmFunction.url) > 0) {
+            result += ":[" + std::string(jsvmFunction.url) + ":" + std::to_string(jsvmFunction.line) +
+                ":" + std::to_string(jsvmFunction.column) + "]";
         }
         return result;
     }
@@ -910,7 +910,7 @@ public:
     {
 #if defined(is_ohos) && is_ohos
         if (arkwebV8ExtractorPtr_ != 0) {
-            DfxJsvm::Instance().ArkwebDestroyJsSymbolExtractor(arkwebV8ExtractorPtr_);
+            DfxJsvm::Instance().JsvmDestroyJsSymbolExtractor(arkwebV8ExtractorPtr_);
             arkwebV8ExtractorPtr_ = 0;
         }
 #endif
@@ -924,11 +924,11 @@ public:
         }
         arkwebV8Extracted_ = true;
         if (arkwebV8ExtractorPtr_ == 0 && IsArkwebV8File(filePath_)) {
-            auto ret = DfxJsvm::Instance().ArkwebCreateJsSymbolExtractor(&arkwebV8ExtractorPtr_, pid_);
+            auto ret = DfxJsvm::Instance().JsvmCreateJsSymbolExtractor(&arkwebV8ExtractorPtr_, pid_);
             if (ret < 0) {
                 arkwebV8ExtractorPtr_ = 0;
                 isArkwebV8_ = false;
-                HLOGE("failed to call ArkwebCreateJsSymbolExtractor, the symbol file is: %s", filePath_.c_str());
+                HLOGE("failed to call JsvmCreateJsSymbolExtractor, the symbol file is: %s", filePath_.c_str());
             } else {
                 isArkwebV8_ = true;
             }
@@ -984,16 +984,16 @@ public:
 
 #if defined(is_ohos) && is_ohos
         if (IsArkwebV8()) {
-            WebJsFunction webjsFunction;
+            JsvmFunction jsvmFunction;
             HLOGD("map->name module: %s", map->name.c_str());
-            auto ret = DfxJsvm::Instance().ParseArkwebJsFrameInfo(static_cast<uintptr_t>(ip),
-                arkwebV8ExtractorPtr_, &webjsFunction);
+            auto ret = DfxJsvm::Instance().ParseJsvmFrameInfo(static_cast<uintptr_t>(ip),
+                arkwebV8ExtractorPtr_, &jsvmFunction);
             if (ret == -1) {
-                HLOGD("failed to call ParseArkwebJsFrameInfo, the symbol file is: %s", map->name.c_str());
+                HLOGD("failed to call ParseJsvmFrameInfo, the symbol file is: %s", map->name.c_str());
                 return DfxSymbol(ip, "");
             }
-            std::string demangle = GetDemangle(webjsFunction);
-            DfxSymbol symbol = DfxSymbol(ip, 0, webjsFunction.functionName, demangle, map->name);
+            std::string demangle = GetDemangle(jsvmFunction);
+            DfxSymbol symbol = DfxSymbol(ip, 0, jsvmFunction.functionName, demangle, map->name);
             this->symbolsMap_.insert(std::make_pair(ip, symbol));
 
             DfxSymbol &foundSymbol = symbolsMap_[ip];
@@ -1003,7 +1003,7 @@ public:
             }
 
             HLOGD("ip: 0x%" PRIx64 " the symbol file is: %s, function is %s demangle_: %s", ip,
-                  symbolsMap_[ip].module_.data(), webjsFunction.functionName, matchedSymbols_.back()->demangle_.data());
+                  symbolsMap_[ip].module_.data(), jsvmFunction.functionName, matchedSymbols_.back()->demangle_.data());
             return symbolsMap_[ip];
         }
 #endif
