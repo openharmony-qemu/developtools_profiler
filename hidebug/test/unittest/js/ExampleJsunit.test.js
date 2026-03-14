@@ -1113,4 +1113,76 @@ describe("HidebugJsTest", function () {
             expect(false).assertTrue();
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_050
+     * @tc.desc: test requestTrace invalid parameter
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_050', 0, async function () {
+        console.info("---------------------------HidebugJsTest_050----------------------------------");
+        try {
+            hidebug.requestTrace({
+                identifier: "trace_name",
+            }).then((filePath) => {
+                expect(filePath).assertEqual("");
+            }).catch((err) => {
+                expect(err.code).assertEqual("401");
+            })
+
+            hidebug.requestTrace({
+                identifier: null,
+                bufferSizeKb: 1024,
+                durationMs: 2000,
+                reserved: 0,
+            }).then((filePath) => {
+                expect(filePath).assertEqual("");
+            }).catch((err) => {
+                expect(err.code).assertEqual("401");
+            })
+
+            hidebug.requestTrace({
+                identifier: undefined,
+                bufferSizeKb: 1024,
+                durationMs: 2000,
+                reserved: 0,
+            }).then((filePath) => {
+                expect(filePath).assertEqual("");
+            }).catch((err) => {
+                expect(err.code).assertEqual("401");
+            })
+            await msleep(1000);
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(error.code).assertEqual("401");
+        }
+    })
+
+    /**
+     * @tc.name: HidebugJsTest_051
+     * @tc.desc: test requestTrace
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_051', 0, async function () {
+        console.info("---------------------------HidebugJsTest_051----------------------------------");
+        try {
+            hidebug.requestTrace({
+                identifier: "trace1",
+                bufferSizeKb: 1024,
+                durationMs: 2000,
+                reserved: 0,
+            }).then((filePath) => {
+                console.info("output path: " + filePath);
+                expect(fs.accessSync(filePath)).assertTrue();
+            }).catch((err) => {
+                expect(err.code).assertEqual("11400104");
+            })
+            await msleep(5000);
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(error.code).assertEqual("401");
+        }
+    })
 })

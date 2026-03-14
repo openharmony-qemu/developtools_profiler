@@ -19,6 +19,8 @@
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
 
+#include "collect_result.h"
+#include "hidebug_util.h"
 #include "hidebug/hidebug.h"
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
@@ -87,5 +89,36 @@ HWTEST_F(HidebugNativeInterfaceTest, GetMemoryLeakResourceTest, TestSize.Level1)
     ASSERT_EQ(interface.GetMemoryLeakResource("test", 10, false), NATIVE_SUCCESS);
 }
 #endif
+
+/**
+ * @tc.name: RequestTraceTest
+ * @tc.desc: test RequestTrace.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, RequestTraceTest, TestSize.Level1)
+{
+    auto task = [](TraceErrorCode retCode, const std::string& tracePath) {
+        EXPECT_EQ(retCode, TRACE_ABNORMAL);
+        EXPECT_TRUE(tracePath.empty());
+    };
+    auto& interface = HidebugNativeInterface::GetInstance();
+    std::string targetPath = "/data/storage/el2/log/";
+    if (access(targetPath.c_str(), F_OK) == 0) {
+        ASSERT_EQ(interface.RequestTrace("", 0, 0, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("", 1024, 1000, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("", 15 * 1024, 15 * 1000, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("", 15 * 1024 + 1, 15 * 1000 + 1, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("tracetest", 1024, 1000, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("trace12345_TRACE1234/trace", 1024, 1000, task), TRACE_SUCCESS);
+        ASSERT_EQ(interface.RequestTrace("trace12345/TRACE1234trace", 1024, 1000, task), TRACE_SUCCESS);
+
+        sleep(1);
+        interface.SetTraceErrorCode(UCollect::UcError::TRACE_OVER_FLOW);
+        ASSERT_EQ(interface.RequestTrace("tracetest", 1024, 1000, task), RESOURCE_UNAVAILABLE);
+        interface.SetTraceErrorCode(0);
+    } else {
+        ASSERT_EQ(interface.RequestTrace("", 0, 0, task), TRACE_ABNORMAL);
+    }
+}
 }
 }

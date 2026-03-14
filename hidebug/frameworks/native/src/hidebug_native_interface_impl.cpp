@@ -18,6 +18,8 @@
 #include <chrono>
 #include <fstream>
 #include <memory>
+#include <mutex>
+#include <sys/stat.h>
 #include <vector>
 #include <unistd.h>
 
@@ -28,6 +30,8 @@
 #include "hilog/log.h"
 #include "client/cpu_collector_client.h"
 #include "client/memory_collector_client.h"
+#include "client/trace_collector_client.h"
+#include "storage_acl.h"
 #include "utility/memory_collector.h"
 
 namespace OHOS {
@@ -40,6 +44,14 @@ namespace HiviewDFX {
 
 namespace {
 constexpr int64_t SECOND_TO_NANOSECOND = 1000 * 1000 * 1000;
+constexpr size_t MAX_LEN_OF_TRACE_PREFIX = 20;
+constexpr uint32_t MIN_TRACE_BUFFER_SIZE = 1024; // 1M
+constexpr uint32_t MAX_TRACE_BUFFER_SIZE = 15 * 1024; // 15M
+constexpr uint32_t MIN_TRACE_DURATION = 1000; // 1s
+constexpr uint32_t MAX_TRACE_DURATION = 15 * 1000; // 15s
+constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
+constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
+constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
@@ -96,6 +108,73 @@ int GetSystemCpuUsageInfo(double& cpuUsage)
     cpuUsage = collectResult.data;
     return NATIVE_SUCCESS;
 }
+
+void CheckAndReplaceTraceParam(std::string& prefix, uint32_t& bufferSize, uint32_t& duration)
+{
+    if (bufferSize < MIN_TRACE_BUFFER_SIZE) {
+        bufferSize = MIN_TRACE_BUFFER_SIZE;
+    } else if (bufferSize > MAX_TRACE_BUFFER_SIZE) {
+        bufferSize = MAX_TRACE_BUFFER_SIZE;
+    }
+    if (duration < MIN_TRACE_DURATION) {
+        duration = MIN_TRACE_DURATION;
+    } else if (duration > MAX_TRACE_DURATION) {
+        duration = MAX_TRACE_DURATION;
+    }
+    if (prefix.length() > MAX_LEN_OF_TRACE_PREFIX) {
+        prefix = prefix.substr(0, MAX_LEN_OF_TRACE_PREFIX);
+    }
+    // char is [a-zA-Z0-9_]
+    bool isValid = std::all_of(prefix.begin(), prefix.end(), [](char c) {
+        return isalnum(static_cast<unsigned char>(c)) || c == '_';
+    });
+    if (!isValid) {
+        prefix = "";
+    }
+}
+
+bool CreateTracePathAndSetAccess()
+{
+    mode_t permissions = S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH; // 0755
+    if (access(TRACE_PATH, F_OK) != 0) {
+        if (mkdir(TRACE_PATH, permissions) == -1 && errno != EEXIST) {
+            HILOG_ERROR(LOG_CORE, "failed to create dir trace:%{public}d, %{public}s", errno, strerror(errno));
+            return false;
+        }
+    }
+    if (OHOS::StorageDaemon::AclSetAccess(TRACE_PATH, "g:1201:rwx") != 0) {
+        HILOG_ERROR(LOG_CORE, "failed to set access");
+        return false;
+    }
+    return true;
+}
+
+bool CheckTraceFileNum()
+{
+    std::vector<std::string> files;
+    GetDirFiles(TRACE_PATH, files);
+    uint32_t count = 0;
+    constexpr size_t suffixLen = sizeof(TRACE_FILE_SUFFIX) - 1;
+    for (const auto& file : files) {
+        if (file.length() >= suffixLen && file.rfind(TRACE_FILE_SUFFIX) == file.length() - suffixLen &&
+            (++count) >= MAX_TRACE_FILE_NUM) {
+            return false;
+        }
+    }
+    return true;
+}
+
+TraceErrorCode ConvertTraceErrorCode(uint32_t traceErrorCode)
+{
+    switch (traceErrorCode) {
+        case UCollect::UcError::SUCCESS:
+            return TRACE_SUCCESS;
+        case UCollect::UcError::TRACE_OVER_FLOW:
+            return RESOURCE_UNAVAILABLE;
+        default:
+            return TRACE_ABNORMAL;
+    }
+}
 }
 
 class HidebugNativeInterfaceImpl : public HidebugNativeInterface {
@@ -108,6 +187,9 @@ public:
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
     TraceErrorCode StopAppTraceCapture() override;
+    TraceErrorCode RequestTrace(const std::string& identifier, uint32_t bufferSize, uint32_t duration,
+        std::function<void(TraceErrorCode, const std::string&)> task) override;
+    void SetTraceErrorCode(uint32_t code) override;
     int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) override;
     std::optional<double> GetSystemCpuUsage() override;
     std::optional<MemoryLimitInfo> GetAppMemoryLimit() override;
@@ -119,7 +201,20 @@ public:
     std::optional<GraphicsMemorySummary> GetGraphicsMemorySummary(uint32_t interval) override;
     std::optional<RssInfo> GetRssInfo() override;
 private:
+    bool CheckTraceErrorCode();
+private:
     static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
+    std::mutex traceMutex_;
+    uint32_t traceErrorCode_ = 0;
+    std::string date_;
+};
+
+class RequestTraceCallBackImpl : public UCollectClient::RequestTraceCallBack {
+public:
+    explicit RequestTraceCallBackImpl(std::function<void(TraceErrorCode, const std::string&)> task) : task_(task) {}
+    void OnTraceResponse(uint32_t retCode, const std::string& traceName) override;
+private:
+    std::function<void(TraceErrorCode, const std::string&)> task_;
 };
 
 HidebugNativeInterface& HidebugNativeInterface::GetInstance()
@@ -181,6 +276,52 @@ TraceErrorCode HidebugNativeInterfaceImpl::StopAppTraceCapture()
         return NO_TRACE_RUNNING;
     }
     return TRACE_ABNORMAL;
+}
+
+TraceErrorCode HidebugNativeInterfaceImpl::RequestTrace(const std::string& identifier, uint32_t bufferSize,
+    uint32_t duration, std::function<void(TraceErrorCode, const std::string&)> task)
+{
+    std::string prefix = identifier;
+    CheckAndReplaceTraceParam(prefix, bufferSize, duration);
+    if (!CreateTracePathAndSetAccess()) {
+        return TRACE_ABNORMAL;
+    }
+    if (!CheckTraceFileNum()) {
+        HILOG_ERROR(LOG_CORE, "trace file num over %{public}d", MAX_TRACE_FILE_NUM);
+        return TRACE_STORAGE_LIMIT;
+    }
+    if (!CheckTraceErrorCode()) {
+        HILOG_ERROR(LOG_CORE, "trace dump over flow today");
+        return RESOURCE_UNAVAILABLE;
+    }
+    auto traceCollector = UCollectClient::TraceCollector::Create();
+    if (!traceCollector) {
+        HILOG_ERROR(LOG_CORE, "create trace collector failed");
+        return TRACE_ABNORMAL;
+    }
+    auto callback = std::make_shared<RequestTraceCallBackImpl>(std::move(task));
+    UCollectClient::TraceConfig traceConfig;
+    traceConfig.prefix = prefix;
+    traceConfig.bufferSize = bufferSize;
+    traceConfig.duration = duration;
+    traceCollector->RequestAppTrace(traceConfig, callback);
+    return TRACE_SUCCESS;
+}
+
+void HidebugNativeInterfaceImpl::SetTraceErrorCode(uint32_t code)
+{
+    std::lock_guard<std::mutex> guard(traceMutex_);
+    date_ = GetDate();
+    traceErrorCode_ = code;
+}
+
+bool HidebugNativeInterfaceImpl::CheckTraceErrorCode()
+{
+    std::lock_guard<std::mutex> guard(traceMutex_);
+    if (GetDate() == date_) {
+        return traceErrorCode_ != UCollect::UcError::TRACE_OVER_FLOW;
+    }
+    return true;
 }
 
 std::optional<double> HidebugNativeInterfaceImpl::GetSystemCpuUsage()
@@ -340,6 +481,20 @@ std::optional<RssInfo> HidebugNativeInterfaceImpl::GetRssInfo()
         return {};
     }
     return rssInfo;
+}
+
+void RequestTraceCallBackImpl::OnTraceResponse(uint32_t retCode, const std::string& traceName)
+{
+    if (task_ == nullptr) {
+        HILOG_ERROR(LOG_CORE, "callback task is null");
+        return;
+    }
+    if (retCode != 0) {
+        HILOG_ERROR(LOG_CORE, "callback retCode: %{public}d, traceName: %{public}s", retCode, traceName.c_str());
+    }
+    HidebugNativeInterface::GetInstance().SetTraceErrorCode(retCode);
+    std::string tracePath = traceName.empty() ? "" : TRACE_PATH + traceName;
+    task_(ConvertTraceErrorCode(retCode), tracePath);
 }
 }
 }

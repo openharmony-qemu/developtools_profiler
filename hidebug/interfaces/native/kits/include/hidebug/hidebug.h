@@ -154,6 +154,21 @@ HiDebug_ErrorCode OH_HiDebug_StartAppTraceCapture(HiDebug_TraceFlag flag,
 HiDebug_ErrorCode OH_HiDebug_StopAppTraceCapture();
 
 /**
+ * @brief Requests application trace capture with specified configuration.
+ *
+ * @param config Indicates the trace request configuration. See {@link OH_HiDebug_RequestTraceConfig}.
+ * @param callback Indicates the callback for the trace request. See {@link OH_HiDebug_RequestTraceCallback}.
+ * @return Result code.
+ *         {@link HIDEBUG_SUCCESS} The operation is successful.
+ *         {@link HIDEBUG_TRACE_ABNORMAL} Remote service exception.
+ *         {@link OH_HIDEBUG_TRACE_STORAGE_LIMIT} Trace storage limit reached.
+ *         {@link HIDEBUG_RESOURCE_UNAVAILABLE} Resource unavailable.
+ * @since 24
+ */
+HiDebug_ErrorCode OH_HiDebug_RequestTrace(OH_HiDebug_RequestTraceConfig *config,
+    OH_HiDebug_RequestTraceCallback callback);
+
+/**
  * @brief Get the graphics memory of application.
  *
  * @param value Indicates value of graphics memory, in kibibytes.
