@@ -131,6 +131,60 @@ bool HookSocketClient::Connect(const std::string addrname)
     return true;
 }
 
+void HookSocketClient::HandleFileCacheMode(SocketContext &context)
+{
+    // file cache mode enabled
+    int eventfd = context.ReceiveFileDiscriptor();
+    std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>(
+        "hook_file_cache", config_->shareMemorySize, config_->fileCacheBufferSize, eventfd,
+        config_->isBlocked, config_->isSaMode, config_->enableFileCacheMode);
+    stackWriter->PrepareCacheFileWriter([this](uint16_t fileIndex, uint16_t eventType, int fd) {
+        if (unixSocketClient_ != nullptr && eventType == CACHE_FILE_CREATED) {
+            // when a new cache file is craeted, send fd to native_daemon
+            HookCacheFileMsg cacheFileMsg(pid_, fileIndex, CACHE_FILE_CREATED);
+            unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&cacheFileMsg), sizeof(cacheFileMsg));
+            unixSocketClient_->SendFileDescriptor(fd);
+            PROFILER_LOG_INFO(LOG_CORE, "[%d] send cache file fd to native_daemon", pid_);
+        }
+    });
+    stackWriterList_.push_back(stackWriter);
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc use file cache mode");
+    if (sharedMemCount_ != nullptr) {
+        *sharedMemCount_ = 1;
+    }
+}
+
+void HookSocketClient::HandleSharedMemoryMode(SocketContext &context)
+{
+    // shared memory mode
+    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    for (int i = 0; i < sharedMemCount; ++i) {
+        int smbfd = context.ReceiveFileDiscriptor();
+        int eventfd = context.ReceiveFileDiscriptor();
+        smbFds_.push_back(smbfd);
+        eventFds_.push_back(eventfd);
+        std::string smbName = "hooknativesmb_" + std::to_string(pid_) + ":" + std::to_string(i);
+        std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
+            smbfd, eventfd, config_->isBlocked, config_->isSaMode, false);
+        stackWriterList_.push_back(stackWriter);
+    }
+    if (sharedMemCount_ != nullptr) {
+        *sharedMemCount_ = sharedMemCount;
+    }
+}
+
+void HookSocketClient::HandleCommonConfig()
+{
+    nmdType_ = config_->nmdType;
+    g_disableHook = false;
+    largestSize_ = config_->largestSize;
+    secondLargestSize_ = config_->secondLargestSize;
+    maxGrowthSize_ = config_->maxGrowthSize;
+    sampleInterval_ = config_->sampleInterval;
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
+        largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
+}
+
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
     if (size != sizeof(ClientConfig)) {
@@ -151,20 +205,17 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
                            config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
                            config_->gpuRange.gpuClBuffer[i]);
     }
-
     config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
-    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
-    for (int i = 0; i < sharedMemCount; ++i) {
-        int smbfd = context.ReceiveFileDiscriptor();
-        int eventfd = context.ReceiveFileDiscriptor();
-        smbFds_.push_back(smbfd);
-        eventFds_.push_back(eventfd);
-        std::string smbName = "hooknativesmb_" + std::to_string(pid_) + ":" + std::to_string(i);
-        std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>(smbName, config_->shareMemorySize,
-            smbfd, eventfd, config_->isBlocked, config_->isSaMode);
-        stackWriterList_.push_back(stackWriter);
+
+    if (config_->enableFileCacheMode) {
+        // file cache mode enabled
+        HandleFileCacheMode(context);
+    } else {
+        // shared memory mode
+        HandleSharedMemoryMode(context);
     }
+
     if (config_->asyncStackEnable) {
         int tableFd = context.ReceiveFileDiscriptor();
         uint32_t uniqueStackSize = NormalizeUniqueStackTableSize(config_->uniqueStackTableSize);
@@ -172,17 +223,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
             uniqueStackSize, tableFd, -1, false, false);
         stackWriterList_.push_back(stackWriter);
     }
-    nmdType_ = config_->nmdType;
-    g_disableHook = false;
-    if (sharedMemCount_ != nullptr) {
-        *sharedMemCount_ = sharedMemCount;
-    }
-    largestSize_ = config_->largestSize;
-    secondLargestSize_ = config_->secondLargestSize;
-    maxGrowthSize_ = config_->maxGrowthSize;
-    sampleInterval_ = config_->sampleInterval;
-    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc, ts1.1 = %d, ts1.2 = %d, ts2 = %d, ts3 = %d",
-        largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
+    HandleCommonConfig();
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();
     } else if (nmdType_ == SIMP_NMD) {
@@ -234,7 +275,7 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         DisableHook();
         return false;
     }
-    if (stackWriter->PrepareFlush()) {
+    if (!stackWriter->IsFileCacheMode() && stackWriter->PrepareFlush()) {
         stackWriter->Flush();
     }
     return true;
@@ -348,6 +389,7 @@ bool HookSocketClient::SendEndMsg()
         [&rawdata](std::shared_ptr<StackWriter>& writer) {
         if (writer) {
             writer->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
+            writer->StopFileCache();
         }
     });
     return true;

@@ -80,7 +80,11 @@ const int32_t DEFAULT_MAX_JS_STACK_DEPTH = 10;
 constexpr int SHARED_MEMORY_NUM = 3;
 constexpr uint64_t DWARF_ERROR_ID = 999999;
 constexpr uint64_t SIZE_MASK = 0xFFFFFF0000000000;
-const std::string PRELOAD_APP_IDENTIFY = "appname:";
+const std::string PRELOAD_APP_IDENTIFY = "preload_appname:";
+constexpr uint32_t MIN_FILE_CACHE_MEMORY_SIZE = 16;
+constexpr uint32_t MAX_FILE_CACHE_MEMORY_SIZE = 32;
+constexpr uint32_t DEFAULT_FILE_CACHE_MEMORY_SIZE = 32;
+constexpr uint32_t MB_TO_BYTES = 1024 * 1024;
 }
 }
 }
@@ -124,6 +128,12 @@ enum {
 enum SymbolType {
     NATIVE_SYMBOL,
     JS_SYMBOL,
+};
+
+enum CacheFileMsgType {
+    CACHE_FILE_CREATED,
+    CACHE_FILE_READY,
+    CACHE_FILE_STOP,
 };
 
 struct Range {
@@ -241,6 +251,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         secondLargestSize = 0;
         maxGrowthSize = 0;
         targetSoName = "";
+        enableFileCacheMode = false;
+        fileCacheBufferSize = 0;
     }
 
     std::string ToString()
@@ -259,7 +271,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << std::to_string(arktsConfig.maxJsStackDepth) << ", filterNapiName: "
             << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind
             << ", largestSize: " << largestSize  << ", secondLargestSize: " << secondLargestSize
-            << ", maxGrowthSize: " << maxGrowthSize << ", offline:" << offlineSymbolization;
+            << ", maxGrowthSize: " << maxGrowthSize << ", offline:" << offlineSymbolization
+            << ", enableFileCacheMode: " << enableFileCacheMode << ", fileCacheBufferSize:" << fileCacheBufferSize;
         return ss.str();
     }
 
@@ -303,5 +316,15 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t secondLargestSize = 0;
     uint32_t maxGrowthSize = 0;
     std::string targetSoName;
+    bool enableFileCacheMode = false;
+    uint32_t fileCacheBufferSize = 0;
+};
+
+struct alignas(8) HookCacheFileMsg {
+    HookCacheFileMsg() : hookPid(-1), fileIndex(0), msgType(CACHE_FILE_CREATED) {}
+    HookCacheFileMsg(int32_t pid, uint16_t index, uint16_t type) : hookPid(pid), fileIndex(index), msgType(type) {}
+    int32_t hookPid = -1;
+    uint16_t fileIndex = 0;
+    uint16_t msgType = CACHE_FILE_CREATED;
 };
 #endif // HOOK_COMMON_H

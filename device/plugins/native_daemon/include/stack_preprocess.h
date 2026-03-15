@@ -168,13 +168,14 @@ public:
     bool BuildCallFrames(const std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData,
         std::vector<CallFrame>& callFrames);
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
+    void TakeResultsFromCacheFile(int fd);
     void InitializeDirector();
 #ifdef NATIVE_DAEMON_UNITTEST
     static std::shared_ptr<BuildStackDirector> GetDirectorForTest();
     static void SetDirectorForTest(std::shared_ptr<BuildStackDirector> director);
     static void ClearThreadLocalVariables();
 #endif
-    bool ProcessSharedMemoryData(const int8_t data[], uint32_t size,
+    bool ProcessRawData(const int8_t data[], uint32_t size,
         RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord);
     void SetNmdFd(uint32_t fd)
     {
@@ -191,6 +192,19 @@ public:
         }
     }
 
+    inline void SetIsStartTakeData(bool isStartTakeData)
+    {
+        if (isStartTakeData_ != isStartTakeData) {
+            isStartTakeData_ = isStartTakeData;
+        }
+    }
+
+    inline void SetIsStopTakeData(bool isStopTakeData)
+    {
+        if (isStopTakeData_ != isStopTakeData) {
+            isStopTakeData_ = isStopTakeData;
+        }
+    }
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
     struct ElfSymbolTable {
@@ -298,7 +312,6 @@ private:
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
     void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
     void LogPerformanceMetrics(const struct timespec& start, const std::string& operation);
-    void SetIsStartTakeData(bool isStartTakeData);
     void CleanupFullyReleasedStack(uint32_t stackId);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();

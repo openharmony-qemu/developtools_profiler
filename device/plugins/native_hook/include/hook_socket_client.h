@@ -54,6 +54,11 @@ public:
     }
 
 private:
+    void HandleFileCacheMode(SocketContext &context);
+    void HandleSharedMemoryMode(SocketContext &context);
+    void HandleCommonConfig();
+
+private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
     std::vector<int> smbFds_;
     std::vector<int> eventFds_;

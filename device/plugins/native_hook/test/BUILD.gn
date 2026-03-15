@@ -45,6 +45,7 @@ ohos_unittest("nativehook_ut") {
     "unittest/rawdata_builder_test.cpp",
     "unittest/sampling_test.cpp",
     "unittest/stack_writer_test.cpp",
+    "unittest/cache_file_writer_test.cpp",
   ]
 
   public_deps = [

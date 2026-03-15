@@ -29,8 +29,9 @@ StackWriter::StackWriter(std::string name,
                          int smbFd,
                          int eventFd,
                          bool blocked,
-                         bool isSaMode)
-    : pluginName_(name), blocked_(blocked)
+                         bool isSaMode,
+                         bool useFileCacheMode)
+    : pluginName_(name), blocked_(blocked), useFileCache_(useFileCacheMode)
 {
     if (name == "unique_stack_table") {
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name,
@@ -46,6 +47,10 @@ StackWriter::StackWriter(std::string name,
             }
         }
         eventNotifier_ = nullptr;
+    } else if (useFileCache_) {
+        cacheFileWriter_ = std::make_shared<CacheFileWriter>(eventFd, size);
+        eventNotifier_ = nullptr;
+        shareMemoryBlock_ = nullptr;
     } else {
         shareMemoryBlock_ = ShareMemoryAllocator::GetInstance().CreateMemoryBlockRemote(name, size, smbFd);
         if (isSaMode && shareMemoryBlock_ != nullptr) {
@@ -63,6 +68,8 @@ StackWriter::~StackWriter()
         auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
         table->SwitchExternalBuffer(nullptr, 0);
         shareMemoryBlock_ = nullptr;
+    } else if (useFileCache_) {
+        cacheFileWriter_ = nullptr;
     } else {
         eventNotifier_ = nullptr;
         ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockRemote(pluginName_);
@@ -83,23 +90,44 @@ void StackWriter::DoStats(long bytes)
 
 long StackWriter::Write(const void* data, size_t size)
 {
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr) {
+            return false;
+        }
+        return cacheFileWriter_->Write(data, size);
+    }
+
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
     return shareMemoryBlock_->PutRaw(reinterpret_cast<const int8_t*>(data), size);
 }
 
-long StackWriter::WriteTimeout(const void* data, size_t size)
+bool StackWriter::WriteTimeout(const void* data, size_t size)
 {
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr) {
+            return false;
+        }
+        return cacheFileWriter_->Write(data, size);
+    }
+
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
     return shareMemoryBlock_->PutRawTimeout(reinterpret_cast<const int8_t*>(data), size);
 }
 
-long StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+bool StackWriter::WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
                                           const std::function<bool()>& callback)
 {
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr) {
+            return false;
+        }
+        return cacheFileWriter_->WriteWithPayload(data, size, payload, payloadSize);
+    }
+
     if (shareMemoryBlock_ == nullptr || data == nullptr || size == 0) {
         return false;
     }
@@ -122,8 +150,28 @@ bool StackWriter::PrepareFlush()
     return (dataCount_ % FLUSH_FLAG == 0);
 }
 
+bool StackWriter::IsFileCacheMode()
+{
+    return useFileCache_;
+}
+
+void StackWriter::PrepareCacheFileWriter(FileEventCallback callback)
+{
+    if (!useFileCache_ || cacheFileWriter_ == nullptr) {
+        return;
+    }
+    cacheFileWriter_->Prepare(callback);
+}
+
 bool StackWriter::Flush()
 {
+    if (useFileCache_) {
+        if (cacheFileWriter_ == nullptr) {
+            return false;
+        }
+        return cacheFileWriter_->Flush();
+    }
+
     if (eventNotifier_ == nullptr) {
         return false;
     }
@@ -132,4 +180,12 @@ bool StackWriter::Flush()
     lastFlushTime_ = std::chrono::steady_clock::now();
     bytesPending_ = 0;
     return true;
+}
+
+void StackWriter::StopFileCache()
+{
+    if (!useFileCache_ || cacheFileWriter_ == nullptr) {
+        return;
+    }
+    cacheFileWriter_->SetCacheFileWriterEnd();
 }

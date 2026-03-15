@@ -70,7 +70,15 @@ public:
         std::shared_ptr<StackDataRepeater> stackData = nullptr;
         std::shared_ptr<StackPreprocess> stackPreprocess = nullptr;
         bool isRecordAccurately = false;
+        std::mutex fdQueueMtx;
+        std::deque<int> cachedFileFdQueue;
+        std::shared_ptr<EventNotifier> readyFileNotifier;
+        std::shared_ptr<EpollEventPoller> readyFilePoller;
         void FlushStackArray();
+        int GetFdQueueFront();
+        size_t GetFdQueueSize();
+        void PushBackFdQueue(int fd);
+        void PopFrontFdQueue();
     };
     HookManager() = default;
     ~HookManager();
@@ -100,6 +108,9 @@ public:
     bool HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
+    void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
+    bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
+    int GetFileNotifierFd(int32_t pid, const std::string& name);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CreatePluginSession();
@@ -160,6 +171,15 @@ private:
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
     void CreateWriter();
+    void UpdateFileCacheModeConfig();
+    bool HandleFileCacheHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
+    bool HandleSharedMemoryHookContext(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
+    void CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
+    bool CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
+    bool TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
+        std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
+    bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
+        std::shared_ptr<RawStack>& rawStack);
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;

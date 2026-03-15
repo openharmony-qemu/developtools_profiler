@@ -34,6 +34,7 @@ public:
     void RemovePidInfo(pid_t pid);
 private:
     bool StartService(const std::string& unixSocketName);
+    void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
 
 private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};

@@ -43,6 +43,8 @@ int GetServicePort();
 void SplitString(const std::string& str, const std::string &sep, std::vector<std::string>& ret);
 bool CheckApplicationPermission(int pid, const std::string& processName);
 bool CheckApplicationEncryped(int pid, const std::string& processName);
+bool CheckIsApplication(int pid, const std::string& processName);
+bool GetBundleNameByProcessInfo(int pid, const std::string& processName, std::string& bundleName);
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths);
 bool ReadFile(const std::string& filePath, const std::vector<std::string>& validPaths, std::string& fileContent);
 std::string GetErrorMsg();

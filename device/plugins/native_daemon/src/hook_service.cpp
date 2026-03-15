@@ -81,13 +81,18 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     if (hookMgr_ == nullptr) {
         return false;
     }
+    PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc recv size[%u]", size);
     if (size != sizeof(int)) {
+        if (clientConfig_.enableFileCacheMode && size == sizeof(HookCacheFileMsg)) {
+            ReceiveCacheFileMsg(context, buf);
+            return true;
+        }
+
         std::string path = hookMgr_->GetArktsDiagPath(buf, size);
         if (path.size() > 0) {
             context.SendHookConfig(reinterpret_cast<const uint8_t *>(path.c_str()), path.size());
             PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc, receive message does not from hook client, just return");
         }
-
         return false;
     }
     int peerConfig = *const_cast<int *>(reinterpret_cast<const int *>(buf));
@@ -138,17 +143,22 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     PROFILER_LOG_DEBUG(LOG_CORE, "ProtocolProc, receive message from hook client, and send hook config to process %d",
                        peerConfig);
     context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig_), sizeof(clientConfig_));
-    int sharedMemCount = (clientConfig_.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
-    std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName, sharedMemCount);
-    for (int i = 0; i < sharedMemCount; ++i) {
-        int eventFd = fdVec[i * VEC_SHIFT];
-        int smbFd = fdVec[i * VEC_SHIFT + 1];
-        if (eventFd == smbFd) {
-            PROFILER_LOG_ERROR(LOG_CORE, "Get fd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
-            return false;
-        }
-        context.SendFileDescriptor(smbFd);
+    if (clientConfig_.enableFileCacheMode) {
+        int eventFd = hookMgr_->GetFileNotifierFd(peerConfig, procName);
         context.SendFileDescriptor(eventFd);
+    } else {
+        int sharedMemCount = (clientConfig_.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+        std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName, sharedMemCount);
+        for (int i = 0; i < sharedMemCount; ++i) {
+            int eventFd = fdVec[i * VEC_SHIFT];
+            int smbFd = fdVec[i * VEC_SHIFT + 1];
+            if (eventFd == smbFd) {
+                PROFILER_LOG_ERROR(LOG_CORE, "Get fd failed!, name: %s, pid: %d", procName.c_str(), peerConfig);
+                return false;
+            }
+            context.SendFileDescriptor(smbFd);
+            context.SendFileDescriptor(eventFd);
+        }
     }
 
     if (clientConfig_.asyncStackEnable) {
@@ -166,5 +176,21 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
     pidFds_[static_cast<pid_t>(peerConfig)] = context.GetSocketHandle();
     socketLock.unlock();
     return true;
+}
+
+void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
+{
+    if (buf == nullptr) {
+        return;
+    }
+
+    HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    // in file cache mode, receive cached file fd from native_hook
+    if (cacheFileMsg.msgType == CACHE_FILE_CREATED) {
+        int cacheFd = context.ReceiveFileDiscriptor();
+        hookMgr_->HandleCachedFileFdByPid(cacheFileMsg.hookPid, cacheFd, cacheFileMsg.fileIndex);
+        PROFILER_LOG_INFO(LOG_CORE, "ReceiveCacheFileMsg pid:%d fd index %u",
+            cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
+    }
 }
 }

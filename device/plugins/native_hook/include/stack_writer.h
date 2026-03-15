@@ -21,10 +21,11 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <mutex>
 #include "event_notifier.h"
 #include "share_memory_block.h"
 #include "writer.h"
-#include <mutex>
+#include "cache_file_writer.h"
 
 class StackWriter : public Writer {
 public:
@@ -33,14 +34,18 @@ public:
                  int smbFd,
                  int eventFd,
                  bool blocked = false,
-                 bool isSaMode = false);
+                 bool isSaMode = false,
+                 bool useFileCacheMode = false);
     ~StackWriter();
     long Write(const void* data, size_t size) override;
-    long WriteTimeout(const void* data, size_t size);
-    long WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
+    bool WriteTimeout(const void* data, size_t size);
+    bool WriteWithPayloadTimeout(const void* data, size_t size, const void* payload, size_t payloadSize,
                                  const std::function<bool()>& callback);
     bool Flush() override;
     bool PrepareFlush();
+    bool IsFileCacheMode();
+    void PrepareCacheFileWriter(FileEventCallback callback);
+    void StopFileCache();
 
 private:
     void DoStats(long bytes);
@@ -49,7 +54,9 @@ private:
 private:
     std::string pluginName_;
     bool blocked_ = false;
-    std::shared_ptr<ShareMemoryBlock> shareMemoryBlock_;
+    bool useFileCache_ = false;
+    std::shared_ptr<ShareMemoryBlock> shareMemoryBlock_ = nullptr;
+    std::shared_ptr<CacheFileWriter> cacheFileWriter_ = nullptr;
     EventNotifierPtr eventNotifier_ = nullptr;
     std::chrono::steady_clock::time_point lastFlushTime_;
     std::atomic<uint64_t> bytesCount_ = 0;

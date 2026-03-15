@@ -34,6 +34,8 @@ constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
+constexpr uint32_t WAIT_STOP_ONCE = 1000;
+constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 300;
 constexpr uint32_t MAX_BATCH_CNT = 40;
 constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
@@ -224,13 +226,6 @@ void StackPreprocess::SetWriter(const WriterStructPtr& writer)
     }
 }
 
-inline void StackPreprocess::SetIsStartTakeData(bool isStartTakeData)
-{
-    if (isStartTakeData_ != isStartTakeData) {
-        isStartTakeData_ = isStartTakeData;
-    }
-}
-
 bool StackPreprocess::StartTakeResults()
 {
     CHECK_NOTNULL(dataRepeater_, false, "data repeater null");
@@ -259,14 +254,23 @@ bool StackPreprocess::StopTakeResults()
     }
 #endif
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
-    if (isStartTakeData_) {
-        int32_t timerFd = scheduleTaskManager_.ScheduleTask(
-            std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
-        if (timerFd == -1) {
-            PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
-            return false;
+    if (!hookConfig_.use_file_cache_mode()) {
+        if (isStartTakeData_) {
+            int32_t timerFd = scheduleTaskManager_.ScheduleTask(
+                std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
+            if (timerFd == -1) {
+                PROFILER_LOG_ERROR(LOG_CORE, "StopTakeResults ScheduleTask failed!");
+                return false;
+            }
+        } else {
+            ForceStop();
         }
     } else {
+        uint32_t waitCnt = 0;
+        while (!isStopTakeData_ && waitCnt < WAIT_FILE_CACHE_STOP_CNT) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_STOP_ONCE));
+            waitCnt++;
+        }
         ForceStop();
     }
 
@@ -356,12 +360,62 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
     while (!isStopTakeData_) {
         bool ret = shareMemoryBlock->TakeData(
             [&](const int8_t data[], uint32_t size) -> bool {
-                return ProcessSharedMemoryData(data, size, rawData, hookRecord);
+                return ProcessRawData(data, size, rawData, hookRecord);
             });
         if (!ret) {
             break;
         }
     }
+}
+
+void StackPreprocess::TakeResultsFromCacheFile(int fd)
+{
+    if (fd < 0) {
+        SetIsStopTakeData(true);
+        return;
+    }
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+    uint64_t readfileSize = 0;
+    bool ret = false;
+    InitializeDirector();
+    lseek(fd, 0, SEEK_SET);
+    while (!isStopTakeData_) {
+        uint32_t totalSize = 0;
+        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
+        if (readBytes < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+            break;
+        }
+        if (readBytes == 0) {
+            PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile read end of file.");
+            ret = true;
+            break;
+        }
+        if (readBytes != sizeof(totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read invalid totalSize=%zd.", readBytes);
+            break;
+        }
+        readfileSize += sizeof(totalSize);
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile invalid totalSize=%u.", totalSize);
+            break;
+        }
+        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
+        readBytes = read(fd, buffer.get(), totalSize);
+        if (readBytes != static_cast<ssize_t>(totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read data failed.");
+            break;
+        }
+        readfileSize += totalSize;
+        ret = ProcessRawData(reinterpret_cast<const int8_t*>(buffer.get()), totalSize, rawData, hookRecord);
+        if (!ret) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile process data failed.");
+            break;
+        }
+    }
+    close(fd);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%lu]completed, ret %d.", readfileSize, ret);
 }
 
 void StackPreprocess::InitializeDirector()
@@ -390,7 +444,7 @@ void StackPreprocess::ClearThreadLocalVariables()
 }
 #endif
 
-bool StackPreprocess::ProcessSharedMemoryData(const int8_t data[], uint32_t size,
+bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
                                               RawStackPtr rawData, std::shared_ptr<HookRecord> hookRecord)
 {
 #ifdef PERFORMANCE_DEBUG
