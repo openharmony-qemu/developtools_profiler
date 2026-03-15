@@ -26,7 +26,7 @@
 namespace {
     constexpr size_t WRITE_CHUNK_SIZE = 4 * 1024 * 1024; // 4MB
     constexpr uint64_t MAX_CACHE_FILE_SIZE = 96 * 1024 * 1024; // 96MB
-    constexpr uint64_t ALL_CACHE_FILE_SIZE_LIMIT = 2 * 1024 * 1024 * 1024; // 2GB
+    constexpr uint64_t ALL_CACHE_FILE_SIZE_LIMIT = 2ULL * 1024 * 1024 * 1024; // 2GB
     const std::string CACHE_FILE_PATH = "/data/storage/el2/base/cache/";
     const std::string CACHE_FILE_PREFIX = "native_hook_cache_";
 }
