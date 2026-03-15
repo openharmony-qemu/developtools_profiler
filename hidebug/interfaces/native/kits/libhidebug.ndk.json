@@ -62,5 +62,9 @@
     {
         "first_introduced": "24",
         "name": "OH_HiDebug_StopProfiler"
+    },
+    {
+        "first_introduced": "24",
+        "name": "OH_HiDebug_RequestTrace"
     }
 ]

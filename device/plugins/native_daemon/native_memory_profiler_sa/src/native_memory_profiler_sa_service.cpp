@@ -42,6 +42,8 @@ constexpr int VEC_SHIFT = 2;
 constexpr double MIN_MEM_ROM_PERCENT = 0.15;
 constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.15;
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
+constexpr uint32_t START_TYPE_HIVIEW = 0;
+constexpr uint32_t START_TYPE_API = 1;
 
 static std::unordered_map<std::string, std::shared_ptr<TaskConfig>> g_nameAndFilePathCtx;
 static std::unordered_map<int32_t, std::shared_ptr<TaskConfig>> g_pidCtx;
@@ -64,8 +66,6 @@ static std::mutex g_nmdMtx;
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
 #endif
-static std::atomic<uint32_t> g_checkConfErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
-static std::atomic<uint32_t> g_stopHookErrorCode {static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)};
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -164,20 +164,36 @@ void NativeMemoryProfilerSaService::ApplyMemtraceConfig(std::shared_ptr<NativeMe
 
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (IsNativeDeamonRunning()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+        return RET_ERR; // inner interface error
+    }
     if (ApplyNmdConfig(config, 0)) {
         return RET_OK;
     }
-    return StartHook(config);
+    if (StartHook(config) != RET_OK) { // inner interface error
+        return RET_ERR;
+    }
+    return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                              MessageParcel &reply)
 {
+    if (IsNativeDeamonRunning()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+        return RET_ERR; // inner interface error
+    }
     if (ApplyNmdConfig(config, 0)) {
         return RET_OK;
     }
     ApplyMemtraceConfig(config);
-    return StartHook(config, 0, reply);
+    if (StartHook(config, 0, reply) != RET_OK) { // inner interface error
+        return RET_ERR;
+    }
+    return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::CheckSystemResource()
@@ -241,12 +257,13 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
     return StartHook(config);
 }
 
+// only for API
 int32_t NativeMemoryProfilerSaService::Stop()
 {
     pid_t pid = IPCSkeleton::GetCallingPid();
-    StopHook(static_cast<uint32_t>(pid));
-    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
-        return g_stopHookErrorCode;
+    int32_t retStopHook = StopHook(static_cast<uint32_t>(pid));
+    if (retStopHook != RET_OK) {
+        return retStopHook;
     }
     pid_t uid = IPCSkeleton::GetCallingUid();
     std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
@@ -256,37 +273,37 @@ int32_t NativeMemoryProfilerSaService::Stop()
         PROFILER_LOG_ERROR(LOG_CORE, "Copy file into boundle failed");
         return RET_ERR;
     }
-    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
-        return g_stopHookErrorCode;
-    }
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
 {
-    StopHook(pid);
-    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
-        return g_stopHookErrorCode;
+    if (StopHook(pid) != RET_OK) {
+        return RET_ERR;
     }
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 {
-    StopHook(0, name);
-    if (g_stopHookErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
-        return g_stopHookErrorCode;
+    if (StopHook(0, name) != RET_OK) {
+        return RET_ERR;
     }
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (IsNativeDeamonRunning()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
+        return RET_ERR; // inner interface error
+    }
     if (ApplyNmdConfig(config, fd)) {
         return RET_OK;
     }
     ApplyMemtraceConfig(config);
-    if (StartHook(config, fd) == RET_ERR) {
+    if (StartHook(config, fd) != RET_OK) {
         close(fd);
         return RET_ERR;
     }
@@ -306,11 +323,11 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
     }
 }
 
-void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
+int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
 {
     if (!HasProfilingPermission()) {
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
-        return;
+        return RET_ERR;
     }
     std::lock_guard<std::mutex> guard(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -323,12 +340,11 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         pid = static_cast<pid_t>(config->hookMgr->GetPid());
     }
     if (config == nullptr) {
-        PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has stop, pid: %d, process name: %s",
-            pid, name.c_str());
-        g_stopHookErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
-        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService::The task has been stooped, errorcode is:%d.",
-            static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED));
-        return;
+        int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "NativeMemoryProfilerSaService::hook has stop, pid: %d, process name: %s, errorcode is:%d.",
+            pid, name.c_str(), ret);
+        return ret;
     }
     CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->StopPluginSession({});
@@ -354,6 +370,7 @@ void NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
         StringViewMemoryHold::GetInstance().Clear();
         DelayedShutdown(false);
     }
+    return RET_OK;
 }
 
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
@@ -400,13 +417,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
     }
     PROFILER_LOG_INFO(LOG_CORE, "file path: %s", config->filePath_.c_str());
-    if (!CheckConfig(config, fd)) {
+    int32_t checkRet = CheckConfig(config, fd);
+    if (checkRet != RET_OK) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_MSG_EMPTY,
             "check config failed");
-        if (g_checkConfErrorCode != static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
-            return g_checkConfErrorCode;
-        }
-        return RET_ERR;
+        return checkRet;
     }
     if (fd == 0) {
         auto retFile = COMMON::CheckNotExistsFilePath(config->filePath_);
@@ -448,7 +463,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         [this, config] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
-            this->StopHook(config->pid_, config->processName_);
+            if (this->StopHook(config->pid_, config->processName_) != RET_OK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
+            }
         },
         config->duration_ * TIME_BASE,
         true);
@@ -461,7 +478,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
 
     std::shared_ptr<TaskConfig> configCtx =
         std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
-                                     config->startupMode_, fd);
+                                     config->startupMode_, fd, config->startType_);
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create TaskConfig");
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
@@ -546,58 +563,120 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
     return RET_OK;
 }
 
-bool NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
+int32_t NativeMemoryProfilerSaService::GetTaskNum(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    if (config == nullptr) {
+        return 0;
+    }
+    if (config->startType_ == START_TYPE_API) {
+        auto it = g_pidInfo.find(config->pid_);
+        if (it == g_pidInfo.end()) {
+            return 0;
+        }
+        int32_t uidTaskModeCount = 0;
+        auto targetUid = it->second.first;
+        for (auto& item : g_pidInfo) {
+            if (item.second.first == targetUid) {
+                uidTaskModeCount++;
+            }
+        }
+        return uidTaskModeCount;
+    }
+    if (config->startType_ == START_TYPE_HIVIEW) {
+        int32_t hiviewTaskModeCount = 0;
+        for (const auto& item : g_pidCtx) {
+            if ((item.second != nullptr) && (item.second->startType == START_TYPE_HIVIEW)) {
+                hiviewTaskModeCount++;
+            }
+        }
+        return hiviewTaskModeCount;
+    }
+
+    return 0;
+}
+
+int32_t NativeMemoryProfilerSaService::PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    if (config->pid_ > 0) {
+        config->processName_.clear();
+        auto ctx = g_pidCtx[config->pid_];
+        if (ctx != nullptr) {
+            // Determine whether the existing task's startType matches the requested startType.
+            // If they match, set RES_PROF_ALREADY_STARTED; otherwise set RES_PROF_CONFLICT.
+            int32_t retErrorCode = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT);
+            if (ctx->startType == config->startType_) {
+                retErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED);
+            }
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d, errorcode: %d.",
+                config->pid_, retErrorCode);
+            return retErrorCode;
+        }
+    } else if (!config->processName_.empty()) {
+        if (g_nameAndFilePathCtx.find(config->processName_) != g_nameAndFilePathCtx.end()) {
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, process name: %s",
+                config->processName_.c_str());
+            return RET_ERR;
+        }
+    } else {
+        PROFILER_LOG_ERROR(LOG_CORE, "The PID and process name are not configured");
+        return RET_ERR;
+    }
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
     auto maxTaskCount = GetValueFromJsonFile(PRODUCT_CONFIG_PATH, "hiprofiler_hook_process_count");
     taskMaxNum_ = maxTaskCount > 0 ? maxTaskCount : taskMaxNum_;
-    if (!config->extendProcesses_ && (g_taskNum + 1 > taskMaxNum_)) {
-        g_checkConfErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
-        PROFILER_LOG_INFO(LOG_CORE,
-            "NativeMemoryProfilerSaService: Support up to %d tasks at the same time, error code: %d",
-            taskMaxNum_, static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT));
-        return false;
+    if (!config->extendProcesses_) {
+        // Check whether API tasks exceed the maximum allowed task count.
+        // If exceeded, return RES_PROF_PROCESS_OVERLIMIT.
+        // For API mode: count tasks that belong to the same UID.
+        // For HIVIEW mode: count tasks with startType == START_TYPE_HIVIEW.
+        int taskCount = GetTaskNum(config);
+        PROFILER_LOG_INFO(LOG_CORE, "GetTaskNum: taskCount:%d", taskCount);
+        if ((taskCount + 1) > taskMaxNum_) {
+            if (config->startType_ == START_TYPE_HIVIEW) {
+                PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d", config->pid_);
+                return RET_ERR;
+            }
+            int checkRet = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PROCESS_OVERLIMIT);
+            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: too many tasks, errorcode: %d.", checkRet);
+            return checkRet;
+        }
     }
 
     if (g_hasStartupMode && config->startupMode_) {
         PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: tasks with an existing startup mode, name: %s",
             startupModeProcessName_.c_str());
-        return false;
+        return RET_ERR;
     }
 
-    if (config->pid_ > 0) {
-        config->processName_.clear();
-        if (g_pidCtx.find(config->pid_) != g_pidCtx.end()) {
-            g_checkConfErrorCode = static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED);
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, pid: %d, error code: %d",
-                config->pid_, static_cast<uint32_t>(ResProfilerErrorCode::RES_PROF_ALREADY_STARTED));
-            return false;
-        }
-    } else if (!config->processName_.empty()) {
-        if (g_nameAndFilePathCtx.find(config->processName_) != g_nameAndFilePathCtx.end()) {
-            PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService: hook has started, process name: %s",
-                              config->processName_.c_str());
-            return false;
-        }
-    } else {
-        PROFILER_LOG_ERROR(LOG_CORE, "The PID and process name are not configured");
-        return false;
+    int32_t conflictRet = PidAndNameConflict(config);
+    if ((conflictRet != RET_OK) && (config->startType_ == START_TYPE_HIVIEW)) {
+        return RET_ERR;
+    } else if (conflictRet != RET_OK) {
+        return conflictRet;
     }
 
     if (fd > 0) {
-        return true;
+        return RET_OK;
     }
 
     if (!config->filePath_.empty()) {
         if (g_nameAndFilePathCtx.find(config->filePath_) != g_nameAndFilePathCtx.end()) {
-            PROFILER_LOG_ERROR(LOG_CORE,
-                               "NativeMemoryProfilerSaService: File %s is being used.", config->filePath_.c_str());
-            return false;
+            PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService: File %s is being used.",
+                config->filePath_.c_str());
+            return RET_ERR;
         }
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "The file path are not configured");
-        return false;
+        return RET_ERR;
     }
-    return true;
+    return RET_OK;
 }
 
 void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std::string& name)

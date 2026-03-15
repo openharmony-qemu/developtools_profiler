@@ -48,6 +48,7 @@ enum class ResProfilerErrorCode : uint32_t {
     RES_PROF_CPU_OVERLOADED = 11400427,
     RES_PROF_MEM_PRESSURE_CRITICAL = 11400428,
     RES_PROF_STORAGE_PRESSURE_CRITICAL = 11400429,
+    RES_PROF_ERROR = 11400430,
 };
 
 } // namespace OHOS::Developtools::NativeDaemon

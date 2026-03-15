@@ -237,7 +237,7 @@ std::vector<std::vector<std::string>> StartUpDelay::GetAppProcInfor(const std::s
     std::istringstream iss(eachRowOfData);
     std::string line;
     while (std::getline(iss, line)) {
-        if (line.find("root") != std::string::npos && line.find("SP_daemon") != std::string::npos) {
+        if (line.find("SP_daemon") != std::string::npos) {
             continue;
         }
         std::vector<std::string> eachRowOfProceInfor;

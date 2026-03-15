@@ -43,6 +43,9 @@ public:
     virtual TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) = 0;
     virtual TraceErrorCode StopAppTraceCapture() = 0;
+    virtual TraceErrorCode RequestTrace(const std::string& identifier, uint32_t bufferSize, uint32_t duration,
+        std::function<void(TraceErrorCode, const std::string&)> task) = 0;
+    virtual void SetTraceErrorCode(uint32_t code) = 0;
     virtual int GetMemoryLeakResource(const std::string& type, int32_t value, bool enabledDebugLog) = 0;
     virtual std::optional<MemoryLimitInfo> GetAppMemoryLimit() = 0;
     virtual std::optional<NativeMemInfo> GetAppNativeMemInfo(bool withCache = false) = 0;

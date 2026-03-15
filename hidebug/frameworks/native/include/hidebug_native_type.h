@@ -36,6 +36,10 @@ enum TraceErrorCode {
     TRACE_ABNORMAL = 11400104,
     /** No trace running */
     NO_TRACE_RUNNING = 11400105,
+    /** Trace storage limit reached */
+    TRACE_STORAGE_LIMIT = 11400120,
+    /** Resource unavailable */
+    RESOURCE_UNAVAILABLE = 11400302,
 };
 
 struct NativeMemInfo {

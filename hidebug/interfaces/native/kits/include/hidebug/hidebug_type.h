@@ -64,6 +64,11 @@ typedef enum HiDebug_ErrorCode {
     /** No trace running */
     HIDEBUG_NO_TRACE_RUNNING = 11400105,
     /**
+     * Trace storage limit reached
+     * @since 24
+     */
+    OH_HIDEBUG_TRACE_STORAGE_LIMIT = 11400120,
+    /**
      * The pc passed to the symbolic function is invalid
      * @since 20
      */
@@ -285,6 +290,43 @@ typedef enum HiDebug_TraceFlag {
     /** Capture all thread trace */
     HIDEBUG_TRACE_FLAG_ALL_THREADS = 2
 } HiDebug_TraceFlag;
+
+/**
+ * @brief Defines trace request configuration.
+ *
+ * @since 24
+ */
+typedef struct OH_HiDebug_RequestTraceConfig {
+    /**
+     * Identifier used as the prefix of the output trace file name.
+     * @since 24
+     */
+    const char* identifier;
+    /**
+     * The buffer size of the trace file, in kb.
+     * @since 24
+     */
+    uint32_t bufferSizeKb;
+    /**
+     * The duration of the trace, in ms.
+     * @since 24
+     */
+    uint32_t durationMs;
+    /**
+     * Reserved field for future use. Set to 0.
+     * @since 24
+     */
+    uint32_t reserved;
+} OH_HiDebug_RequestTraceConfig;
+
+/**
+ * @brief Defines callback type for trace request.
+ *
+ * @param errorCode Result code, see {@link HiDebug_ErrorCode}.
+ * @param filePath Path of the generated trace file, may be NULL on failure.
+ * @since 24
+ */
+typedef void (*OH_HiDebug_RequestTraceCallback)(HiDebug_ErrorCode errorCode, const char* filePath);
 
 /**
  * @brief Defines structure type for MallocDispatch table.

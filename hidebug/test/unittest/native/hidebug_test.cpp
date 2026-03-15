@@ -466,4 +466,32 @@ HWTEST_F(HidebugTest, OH_HiDebug_SetCrashObjFailTest, TestSize.Level2)
     char data[] = "test crash obj";
     EXPECT_EQ(OH_HiDebug_SetCrashObj(static_cast<HiDebug_CrashObjType>(-1), data), 0);
 }
+
+/**
+ * @tc.name: OH_HiDebug_RequestTraceTest.
+ * @tc.desc: test OH_HiDebug_RequestTrace.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugTest, OH_HiDebug_RequestTraceTest, TestSize.Level1)
+{
+    auto callback = [](HiDebug_ErrorCode errorCode, const char* filePath) {
+        EXPECT_EQ(errorCode, HIDEBUG_TRACE_ABNORMAL);
+    };
+    OH_HiDebug_RequestTraceConfig config = {nullptr, 0, 0, 0};
+    ASSERT_EQ(OH_HiDebug_RequestTrace(nullptr, nullptr), HIDEBUG_INVALID_ARGUMENT);
+    ASSERT_EQ(OH_HiDebug_RequestTrace(&config, nullptr), HIDEBUG_INVALID_ARGUMENT);
+
+    std::string targetPath = "/data/storage/el2/log/";
+    if (access(targetPath.c_str(), F_OK) == 0) {
+        ASSERT_EQ(OH_HiDebug_RequestTrace(&config, callback), HIDEBUG_SUCCESS);
+        config.identifier = nullptr;
+        ASSERT_EQ(OH_HiDebug_RequestTrace(&config, callback), HIDEBUG_SUCCESS);
+        config.identifier = "trace_test";
+        config.bufferSizeKb = 1024;
+        config.durationMs = 1000;
+        ASSERT_EQ(OH_HiDebug_RequestTrace(&config, callback), HIDEBUG_SUCCESS);
+    } else {
+        ASSERT_EQ(OH_HiDebug_RequestTrace(&config, callback), HIDEBUG_TRACE_ABNORMAL);
+    }
+}
 } // namespace

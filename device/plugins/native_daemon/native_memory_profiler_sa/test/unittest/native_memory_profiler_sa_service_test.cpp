@@ -20,7 +20,9 @@
 #include <memory>
 #include "test_common.h"
 #include "init_param.h"
+#define private public
 #include "native_memory_profiler_sa_service.h"
+#undef private
 #include "utilities.h"
 #include "token_setproc.h"
 #include "accesstoken_kit.h"
@@ -169,5 +171,60 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, NativeMemoryProfilerSaServiceTest004
 
     auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
     EXPECT_EQ(service->Start(config), RET_OK);
+    sleep(2);
+    EXPECT_EQ(service->Stop(config->pid_), RET_OK);
 }
+
+/**
+ * @tc.name: GetTaskNumConfigNull
+ * @tc.desc: GetTaskNum config is nullptr
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumConfigNull, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = nullptr;
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    int32_t result = service->GetTaskNum(config);
+    EXPECT_EQ(result, 0);
+}
+
+/**
+ * @tc.name: GetTaskNumConfigNull
+ * @tc.desc: GetTaskNum startType is API,pid_ not found in g_pidCtx
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumApiTypePidNotFound, TestSize.Level3)
+{
+    int32_t startTypeApi = 1;
+    int32_t notFoundPid = 999;
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->startType_ = startTypeApi;
+    config->pid_ = notFoundPid;
+
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+    int32_t result = service->GetTaskNum(config);
+
+    EXPECT_EQ(result, 0);
+}
+
+/**
+ * @tc.name: GetTaskNumConfigNull
+ * @tc.desc: GetTaskNum startType is HIVIEW Type, g_pidCtx is empty
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumHiviewTypeEmpty, TestSize.Level3)
+{
+    uint32_t startTypeHiview = 0;
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->startType_ = startTypeHiview;
+    
+    auto service = OHOS::DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance();
+
+    int32_t result = service->GetTaskNum(config);
+    EXPECT_EQ(result, 0);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

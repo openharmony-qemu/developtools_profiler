@@ -119,7 +119,7 @@ bool GetNapiStringValue(napi_env env, napi_value value, std::string& ret, size_t
         HILOG_ERROR(LOG_CORE, "Get input filename param length failed.");
         return false;
     }
-    if (bufLen > maxSize || bufLen == 0) {
+    if (maxSize > 0 && (bufLen > maxSize || bufLen == 0)) {
         HILOG_ERROR(LOG_CORE, "input filename param length is illegal.");
         return false;
     }
