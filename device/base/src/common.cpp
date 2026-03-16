@@ -745,6 +745,7 @@ bool CheckIsApplication(int pid, const std::string& processName)
     sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
     CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
     sptr<AppExecFwk::IBundleMgr> proxy = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_NOTNULL(proxy, false, "Get proxy failed!");
     AppExecFwk::ApplicationInfo appInfo;
     ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO,
         AppExecFwk::Constants::ANY_USERID, appInfo);
