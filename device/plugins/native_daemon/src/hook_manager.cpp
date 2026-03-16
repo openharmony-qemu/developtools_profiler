@@ -1255,6 +1255,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
+    hookConfig_.set_use_file_cache_mode(false);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
