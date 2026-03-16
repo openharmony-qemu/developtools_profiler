@@ -16,6 +16,8 @@
 #ifndef NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
 #define NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H
 
+#define private public
+
 #include <gtest/gtest.h>
 #include <memory>
 #include "test_common.h"
@@ -227,4 +229,86 @@ HWTEST_F(NativeMemoryProfilerSaServiceTest, GetTaskNumHiviewTypeEmpty, TestSize.
     EXPECT_EQ(result, 0);
 }
 
+/**
+ * @tc.name: IsNativeDeamonRunningTest
+ * @tc.desc: have not process
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, IsNativeDeamonRunningTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_FALSE(NativeMemoryProfilerSaService::IsNativeDeamonRunning());
+}
+
+/**
+ * @tc.name: CheckSystemResourceTest
+ * @tc.desc: CheckSystemResourceTest
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, CheckSystemResourceTest, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    int32_t result = NativeMemoryProfilerSaService::CheckSystemResource();
+    EXPECT_EQ(result, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+}
+
+/**
+ * @tc.name: GetSystemMemoryInfoTest001
+ * @tc.desc: invalid params
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest001, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemoryInfo* memInfo = nullptr;
+    bool result = NativeMemoryProfilerSaService::GetSystemMemoryInfo(memInfo);
+    EXPECT_FALSE(result);
+}
+
+/**
+ * @tc.name: GetSystemMemoryInfoTest002
+ * @tc.desc: normal case
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemMemoryInfoTest002, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    MemoryInfo memInfo;
+    bool result = NativeMemoryProfilerSaService::GetSystemMemoryInfo(&memInfo);
+    if (result) {
+        EXPECT_GT(memInfo.totalMem, 0);
+        EXPECT_GT(memInfo.usedMem, 0);
+        EXPECT_GT(memInfo.freeMem, 0);
+        EXPECT_GT(memInfo.availablePercent, 0.0);
+    }
+}
+
+/**
+ * @tc.name: GetSystemCpuUsageInfoTest001
+ * @tc.desc: invalid params
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemCpuUsageInfoTest001, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    double* cpuUsage = nullptr;
+    bool result = NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(cpuUsage);
+    EXPECT_FALSE(result);
+}
+
+/**
+ * @tc.name: GetSystemCpuUsageInfoTest002
+ * @tc.desc: normal case
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaServiceTest, GetSystemCpuUsageInfoTest002, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    double cpuUsage = 0.0;
+    bool result = NativeMemoryProfilerSaService::GetSystemCpuUsageInfo(&cpuUsage);
+    if (result) {
+        EXPECT_GE(cpuUsage, 0.0);
+        EXPECT_LE(cpuUsage, 100.0);
+    }
+}
 #endif // NATIVE_MEMORY_PROFILER_SA_SERVICE_TEST_H

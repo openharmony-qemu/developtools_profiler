@@ -16,12 +16,16 @@
 #ifndef NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
 #define NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
 
+#define private public
+
 #include <gtest/gtest.h>
 #include <unistd.h>
 #include <cstdio>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <chrono>
+#include <thread>
 #include "test_common.h"
 #include "init_param.h"
 #include "native_memory_profiler_sa_client_manager.h"
@@ -38,6 +42,7 @@ const std::string TEST_NATIVE_NAME = "foundation";
 const int NMD_ONLY_TYPE = 2;
 static AccessTokenID g_selfTokenId;
 static TEST_COMMON::MockNativeToken* g_mock = nullptr;
+const std::string TEST_INVALID_FILE_PATH = "/invalid/path/test_count_file";
 }
 
 class NativeMemoryProfilerSaClientManagerTest : public testing::Test {
@@ -61,6 +66,32 @@ public:
     }
     void SetUp() {}
     void TearDown() {}
+
+    bool WriteFile(const std::string& filePath, const std::string& fileContent)
+    {
+        FILE* file = fopen(filePath.c_str(), "w");
+        if (file == nullptr) {
+            return false;
+        }
+
+        size_t len = fwrite(const_cast<char*>(fileContent.c_str()), 1, fileContent.length(), file);
+        if (len != fileContent.length()) {
+            (void)fclose(file);
+            return false;
+        }
+
+        if (fflush(file) == EOF) {
+            return false;
+        }
+
+        fsync(fileno(file));
+        if (fclose(file) != 0) {
+            return false;
+        }
+        // delay, avoid generating same update time.
+        std::this_thread::sleep_for(std::chrono::seconds(1));
+        return true;
+    }
 };
 
 #ifndef ENABLE_SA_AUTO_START
@@ -198,6 +229,164 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, NativeMemoryProfilerSaClientMa
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, 0, 0), RET_ERR);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, validPid, -1), RET_ERR);
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMallocStats(validFd, validPid, 3), RET_ERR);
+}
+
+/**
+ * @tc.name: CheckInputConfigTest001
+ * @tc.desc: type = 0 and config = nullptr;
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest001, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    int type = 0;
+    MemAPIConfig* config = nullptr;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, config),
+              ResProfilerErrorCode::RES_PROF_INVALID_ARG);
+}
+
+/**
+ * @tc.name: CheckInputConfigTest002
+ * @tc.desc: type = 0 and config is valid;
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest002, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    int type = 0;
+    MemAPIConfig normalConfig;
+    normalConfig.maxDuration = 30;
+    normalConfig.filterSize = 100;
+    normalConfig.maxStackDepth = 30;
+    normalConfig.statisticsInterval = 100;
+    normalConfig.sampleInterval = 400;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &normalConfig),
+              ResProfilerErrorCode::RES_PROF_SUCCESS);
+}
+
+/**
+ * @tc.name: CheckInputConfigTest003
+ * @tc.desc: corner cases: invalid type or invalid config
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, CheckInputConfigTest003, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    int type = 0;
+    MemAPIConfig invalidConfig;
+    invalidConfig.maxDuration = 0;
+    invalidConfig.filterSize = 100;
+    invalidConfig.maxStackDepth = 30;
+    invalidConfig.statisticsInterval = 100;
+    invalidConfig.sampleInterval = 400;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_MAX_DURATION_INVALID_ARG);
+
+    invalidConfig.maxDuration = 30;
+    invalidConfig.filterSize = 0;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_FILTER_SIZE_INVALID_ARG);
+
+    invalidConfig.filterSize = 100;
+    invalidConfig.maxStackDepth = 32;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_MAX_STACK_DEPTH_INVALID_ARG);
+
+    invalidConfig.maxStackDepth = 30;
+    invalidConfig.statisticsInterval = 3601;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_STATISTICS_INTERVAL_INVALID_ARG);
+
+    invalidConfig.statisticsInterval = 100;
+    invalidConfig.sampleInterval = 380;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_SAMPLE_INTERVAL_INVALID_ARG);
+
+    invalidConfig.sampleInterval = 400;
+    type = 5;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::CheckInputConfig(type, &invalidConfig),
+              ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG);
+}
+
+/**
+ * @tc.name: ReadCountFileTest001
+ * @tc.desc: file path is invalid
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ReadCountFileTest001, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    long long timestamp = 0;
+    int32_t count = 0;
+    bool result = NativeMemoryProfilerSaClientManager::ReadCountFile(TEST_INVALID_FILE_PATH, timestamp, count);
+    EXPECT_FALSE(result);
+}
+
+/**
+ * @tc.name: ReadCountFileTest002
+ * @tc.desc: normal case
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ReadCountFileTest002, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::string testFilePath = "/data/local/tmp/test_count_file";
+    std::string testTimeStamp = "1234567890";
+    std::string testCount = "1";
+    std::string testContent = testTimeStamp + " " + testCount + '\n';
+    EXPECT_TRUE(WriteFile(testFilePath, testContent));
+
+    long long timestamp = 0;
+    int32_t count = 0;
+    bool result = NativeMemoryProfilerSaClientManager::ReadCountFile(testFilePath, timestamp, count);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(timestamp, 1234567890);
+    EXPECT_EQ(count, 1);
+}
+
+/**
+ * @tc.name: ReadCountFileTest003
+ * @tc.desc: empty file
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, ReadCountFileTest003, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    std::string testFilePath = "/data/local/tmp/test_count_file";
+    std::string testContent = "";
+    EXPECT_TRUE(WriteFile(testFilePath, testContent));
+
+    long long timestamp = 0;
+    int32_t count = 0;
+    bool result = NativeMemoryProfilerSaClientManager::ReadCountFile(testFilePath, timestamp, count);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(timestamp, 0);
+    EXPECT_EQ(count, 0);
+}
+
+/**
+ * @tc.name: WriteCountFileAtomicTest
+ * @tc.desc: normal case
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, WriteCountFileAtomicTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    long long timestamp = 1234567890;
+    int32_t count = 5;
+    bool result = NativeMemoryProfilerSaClientManager::WriteCountFileAtomic(TEST_INVALID_FILE_PATH, timestamp, count);
+    EXPECT_FALSE(result);
+}
+
+/**
+ * @tc.name: GetMemProfilerUseCountTodayTest
+ * @tc.desc: bundle path not exists
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GetMemProfilerUseCountTodayTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMemProfilerUseCountToday(), 0);
 }
 
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H
