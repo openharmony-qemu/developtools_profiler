@@ -1044,7 +1044,7 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
         }
     }
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%lu]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
 }
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
