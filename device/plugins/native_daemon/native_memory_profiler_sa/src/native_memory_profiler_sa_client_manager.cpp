@@ -32,6 +32,8 @@ constexpr uint32_t LIB_SMS = 4096;
 constexpr uint32_t CALL_STACK_SMS = 16384;
 constexpr uint32_t NMD_DURATION = 5;
 constexpr uint32_t NMD_SHMEM = 300;
+constexpr uint32_t GWP_DURATION = 10;
+constexpr uint32_t GWP_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
 constexpr int SIMP_NMD = 3;
 constexpr int FIVE_MINUTES = 300;
@@ -660,5 +662,24 @@ std::string NativeMemoryProfilerSaClientManager::GenerateFileName(int type, int3
     std::string procName = COMMON::GetProcessNameByPid(pid);
     std::string timeStr = COMMON::GetTimeStr();
     return typeVal + "-" + procName + "-" + std::to_string(pid) + "-" + timeStr + FILE_SUFFIX;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& gwpConfig)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid > 0, RET_ERR, "NativeMemoryProfilerSaClientManager: Start, invalid pid with MemSaConfig");
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: saConfig is nullptr");
+    config->pid_ = static_cast<int32_t>(pid);
+    config->duration_ = GWP_DURATION;
+    config->mallocDisable_ = true;
+    config->mmapDisable_ = true;
+    config->shareMemorySize_ = GWP_SHMEM;
+    config->gwpAsanHoldTime_ = gwpConfig.holdTime;
+    config->gwpAsanMaxEntries_ = gwpConfig.maxEntries;
+    config->gwpAsanMaxStackDepth_ = gwpConfig.maxStackDepth;
+    return InvokeWithProxy([fd, &config](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.DumpData(fd, config);
+    });
 }
 } // namespace OHOS::Developtools::NativeDaemon

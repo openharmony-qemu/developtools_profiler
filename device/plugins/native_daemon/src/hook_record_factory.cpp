@@ -258,6 +258,8 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     InitRawStack(rawStack, sharedMemData, size, storeData);
     uint16_t type = rawStack->stackContext->type;
     switch (type) {
+        case GWP_ASAN_MSG:
+            return std::make_shared<GwpAsanRecord>(rawStack);
         case NMD_MSG:
             return std::make_shared<NmdRecord>(rawStack);
         case MALLOC_ARKTS: {

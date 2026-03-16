@@ -41,6 +41,11 @@ struct OptArg {
     char *buf;
 };
 
+#if defined(target_cpu_arm64)
+extern "C" size_t libc_gwp_asan_collect_allocations_by_time_range(uint64_t end_time,
+    uintptr_t *buffer, size_t max_count, size_t deep);
+#endif
+
 } // namespace
 
 using namespace OHOS::Developtools::NativeDaemon;
@@ -229,6 +234,11 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     } else if (nmdType_ == SIMP_NMD) {
         SendSimplifiedNmdInfo();
     }
+    #if defined(target_cpu_arm64)
+    if (config_->gwpAsanHoldTime > 0) {
+        SendGwpAsanInfo();
+    }
+    #endif
     if (!config_->targetSoName.empty() && !ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
         return false;
@@ -377,6 +387,58 @@ bool HookSocketClient::SendSimplifiedNmdInfo()
     free(nmdBuf);
     return true;
 }
+
+#if defined(target_cpu_arm64)
+bool HookSocketClient::SendGwpAsanInfo()
+{
+    if (stackWriterList_.empty() || !stackWriterList_[0]) {
+        return false;
+    }
+    size_t maxAllocations = config_->gwpAsanMaxEntries;
+    uint64_t timespan = config_->gwpAsanHoldTime;
+    size_t deep = config_->gwpAsanMaxStackDepth;
+    uintptr_t *buffer = reinterpret_cast<uintptr_t *>(malloc(MEMCHECK_DETAILINFO_MAXSIZE - sizeof(size_t)));
+    if (!buffer) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::SendGwpAsanInfo malloc failed!");
+        return false;
+    }
+    size_t collected_count = libc_gwp_asan_collect_allocations_by_time_range(timespan, buffer,
+        maxAllocations, deep);
+    int8_t *payload = reinterpret_cast<int8_t *>(malloc(MEMCHECK_DETAILINFO_MAXSIZE));
+    if (!payload) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::SendGwpAsanInfo malloc payload failed!");
+        free(buffer);
+        return false;
+    }
+    if (memcpy_s(payload, sizeof(size_t), &collected_count, sizeof(size_t)) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::SendGwpAsanInfo memcpy_s collected_count failed!");
+        free(buffer);
+        free(payload);
+        return false;
+    }
+    if (memcpy_s(payload + sizeof(size_t), MEMCHECK_DETAILINFO_MAXSIZE - sizeof(size_t), buffer,
+                 MEMCHECK_DETAILINFO_MAXSIZE - sizeof(size_t)) != EOK) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::SendGwpAsanInfo memcpy_s buffer failed!");
+        free(buffer);
+        free(payload);
+        return false;
+    }
+    free(buffer);
+    StackRawData rawdata = {{{{0}}}};
+    rawdata.type = GWP_ASAN_MSG;
+    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                            payload, MEMCHECK_DETAILINFO_MAXSIZE,
+                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret) {
+        DisableHook();
+        free(payload);
+        return false;
+    }
+    stackWriterList_[0]->Flush();
+    free(payload);
+    return true;
+}
+#endif
 
 bool HookSocketClient::SendEndMsg()
 {

@@ -53,6 +53,18 @@ struct NmdParam {
     uint32_t type = -1;
 };
 
+struct GwpHeader {
+    size_t max_slots;
+    size_t sampled_rate;
+};
+
+struct GwpAllocationData {
+    uintptr_t addr;
+    size_t size;
+    uint64_t alive_time;
+    uintptr_t stack[1];
+};
+
 namespace OHOS::Developtools::NativeDaemon {
 class HookService;
 class HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
@@ -118,6 +130,7 @@ public:
     void RegisterFdForSa(uint32_t saFd);
     void WriteHookConfig();
     void DumpNmdInfo(const char* nmdResult);
+    void DumpGwpAsanInfo(uint8_t* data);
     std::string GetCmdArgs(const NativeHookConfig& traceConfig);
     std::vector<int> GetFds(int32_t pid, const std::string& name, int sharedMemCount);
     inline void SetSaServiceConfig(bool saFlag, bool isProtobufSerialize)
@@ -149,6 +162,7 @@ public:
         saMode_ = saMode;
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
+    void SetGwpFd(uint32_t fd);
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
     std::string simplifiedNmd_;
@@ -171,6 +185,13 @@ private:
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);
     void CreateWriter();
+    void CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
+                              size_t size, size_t allocDataSize);
+    void FormatGwpAsanOutput(std::stringstream& ss, const struct GwpHeader* header, uint8_t* allocDataPtr,
+                             size_t size, size_t allocDataSize,
+                             const std::unordered_map<uintptr_t, DfxFrame>& frameMap);
+    void FormatGwpAsanCallstack(std::stringstream& ss, const struct GwpAllocationData* allocData,
+                                const std::unordered_map<uintptr_t, DfxFrame>& frameMap);
     void UpdateFileCacheModeConfig();
     bool HandleFileCacheHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     bool HandleSharedMemoryHookContext(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
@@ -205,6 +226,10 @@ private:
     int32_t maxProcessCount_ = 10000;
     uint32_t saFd_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
+    uint32_t gwpAsanHoldTime_ = 0;
+    uint32_t gwpAsanMaxEntries_ = 0;
+    uint32_t gwpAsanMaxStackDepth_ = 0;
+    uint32_t gwpFd_ = 0;
 };
 }
 #endif // AGENT_MANAGER_H

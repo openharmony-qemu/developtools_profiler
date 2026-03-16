@@ -46,6 +46,7 @@ public:
     bool PeerIsConnected();
     bool SendNmdInfo();
     bool SendSimplifiedNmdInfo();
+    bool SendGwpAsanInfo();
     bool SendEndMsg();
     bool GetConnectState();
     int GetNmdType()

@@ -14,6 +14,9 @@
  */
 
 #include <gtest/gtest.h>
+#include <fcntl.h>
+#include <fstream>
+#include <unistd.h>
 #include "command_poller.h"
 #include "hook_manager.h"
 #include "hook_service.h"
@@ -621,5 +624,332 @@ HWTEST_F(HookManagerTest, GetCmdArgsExpandPids, TestSize.Level0)
     std::string result = hookManager.GetCmdArgs(config);
     EXPECT_NE(result.find("expand_pids: 2001"), std::string::npos);
     EXPECT_NE(result.find("expand_pids: 2002"), std::string::npos);
+}
+
+namespace {
+constexpr size_t STACK_DEPTH = 4;
+constexpr size_t ALLOC_DATA_SIZE = sizeof(GwpAllocationData) + (STACK_DEPTH - 1) * sizeof(uintptr_t);
+constexpr size_t DEFAULT_ALLOC_SIZE = 256;
+constexpr uint64_t DEFAULT_ALIVE_TIME = 1000;
+
+void BuildGwpAsanTestData(std::vector<uint8_t>& data, size_t count, size_t sampledRate)
+{
+    data.resize(sizeof(size_t) + sizeof(GwpHeader) + ALLOC_DATA_SIZE * count, 0);
+    
+    size_t* sizePtr = reinterpret_cast<size_t*>(data.data());
+    *sizePtr = count;
+    
+    GwpHeader* header = reinterpret_cast<GwpHeader*>(data.data() + sizeof(size_t));
+    header->max_slots = 10;
+    header->sampled_rate = sampledRate;
+    
+    for (size_t i = 0; i < count; ++i) {
+        GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(
+            data.data() + sizeof(size_t) + sizeof(GwpHeader) + i * ALLOC_DATA_SIZE);
+        alloc->addr = 0x1000 + i * 0x1000;
+        alloc->size = DEFAULT_ALLOC_SIZE * (i + 1);
+        alloc->alive_time = DEFAULT_ALIVE_TIME * (i + 1);
+        alloc->stack[0] = 0x100 + i * 0x100;
+        alloc->stack[1] = 0x200 + i * 0x100;
+        alloc->stack[2] = 0;
+    }
+}
+
+void BuildFrameMap(std::unordered_map<uintptr_t, DfxFrame>& frameMap, size_t count)
+{
+    for (size_t i = 0; i < count; ++i) {
+        DfxFrame frame;
+        frame.mapName = "test" + std::to_string(i) + ".so";
+        frame.mapOffset = 0x100 + i * 0x100;
+        frame.funcName = "test_func" + std::to_string(i);
+        frame.funcOffset = 0x10 + i * 0x10;
+        frame.buildId = "build" + std::to_string(i);
+        frameMap[0x100 + i * 0x100] = frame;
+    }
+}
+
+bool VerifyOutputContains(const std::string& output, const std::vector<std::string>& keywords)
+{
+    for (const auto& keyword : keywords) {
+        if (output.find(keyword) == std::string::npos) {
+            return false;
+        }
+    }
+    return true;
+}
+}
+
+/*
+ * @tc.name: DumpGwpAsanInfoNullPointer
+ * @tc.desc: test DumpGwpAsanInfo with null pointer.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, DumpGwpAsanInfoNullPointer, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.DumpGwpAsanInfo(nullptr);
+    EXPECT_EQ(hookManager.gwpAsanMaxStackDepth_, STACK_DEPTH);
+}
+
+/*
+ * @tc.name: DumpGwpAsanInfoInvalidSampledRate
+ * @tc.desc: test DumpGwpAsanInfo with invalid sampled_rate.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, DumpGwpAsanInfoInvalidSampledRate, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    
+    std::vector<uint8_t> data;
+    BuildGwpAsanTestData(data, 1, 0);
+    
+    hookManager.DumpGwpAsanInfo(data.data());
+    EXPECT_EQ(hookManager.gwpAsanMaxStackDepth_, STACK_DEPTH);
+}
+
+/*
+ * @tc.name: DumpGwpAsanInfoNormalCase
+ * @tc.desc: test DumpGwpAsanInfo with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, DumpGwpAsanInfoNormalCase, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.hookConfig_.set_pid(getpid());
+    
+    std::vector<uint8_t> data;
+    BuildGwpAsanTestData(data, 1, 100);
+    
+    std::string testFile = "/data/local/tmp/test_gwp_asan.txt";
+    int fd = open(testFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd > 0) {
+        hookManager.SetGwpFd(fd);
+        hookManager.DumpGwpAsanInfo(data.data());
+        close(fd);
+        
+        std::ifstream infile(testFile);
+        std::string content((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+        infile.close();
+        
+        EXPECT_TRUE(VerifyOutputContains(content, {
+            "GWP_ASAN_CONFIG", "SLOT:10", "SAMPLE:100",
+            "GWP_ASAN_MEMORY_SAMPLE", "address:0x1000",
+            "size:256 bytes", "alloc_time:1000 ms"
+        }));
+        
+        unlink(testFile.c_str());
+    }
+}
+
+/*
+ * @tc.name: DumpGwpAsanInfoMultipleSamples
+ * @tc.desc: test DumpGwpAsanInfo with multiple samples.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, DumpGwpAsanInfoMultipleSamples, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.hookConfig_.set_pid(getpid());
+    
+    std::vector<uint8_t> data;
+    BuildGwpAsanTestData(data, 3, 100);
+    
+    std::string testFile = "/data/local/tmp/test_gwp_asan_multi.txt";
+    int fd = open(testFile.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if (fd > 0) {
+        hookManager.SetGwpFd(fd);
+        hookManager.DumpGwpAsanInfo(data.data());
+        close(fd);
+        
+        std::ifstream infile(testFile);
+        std::string content((std::istreambuf_iterator<char>(infile)), std::istreambuf_iterator<char>());
+        infile.close();
+        
+        EXPECT_TRUE(VerifyOutputContains(content, {
+            "GWP_ASAN_CONFIG", "SLOT:10", "SAMPLE:100",
+            "address:0x1000", "address:0x2000", "address:0x3000",
+            "size:256 bytes", "size:512 bytes", "size:768 bytes"
+        }));
+        
+        unlink(testFile.c_str());
+    }
+}
+
+/*
+ * @tc.name: CollectGwpAsanFramesEmptyData
+ * @tc.desc: test CollectGwpAsanFrames with empty data.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, CollectGwpAsanFramesEmptyData, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.hookConfig_.set_pid(getpid());
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    hookManager.CollectGwpAsanFrames(frameMap, nullptr, 0, 0);
+    EXPECT_EQ(frameMap.size(), 0);
+}
+
+/*
+ * @tc.name: CollectGwpAsanFramesNormalCase
+ * @tc.desc: test CollectGwpAsanFrames with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, CollectGwpAsanFramesNormalCase, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.hookConfig_.set_pid(getpid());
+    
+    std::vector<uint8_t> allocData(ALLOC_DATA_SIZE, 0);
+    GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(allocData.data());
+    alloc->stack[0] = 0x100;
+    alloc->stack[1] = 0x200;
+    alloc->stack[2] = 0x300;
+    alloc->stack[3] = 0;
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    hookManager.CollectGwpAsanFrames(frameMap, allocData.data(), 1, ALLOC_DATA_SIZE);
+    EXPECT_EQ(hookManager.gwpAsanMaxStackDepth_, STACK_DEPTH);
+}
+
+/*
+ * @tc.name: CollectGwpAsanFramesDuplicatePcs
+ * @tc.desc: test CollectGwpAsanFrames with duplicate PCs.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, CollectGwpAsanFramesDuplicatePcs, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    hookManager.hookConfig_.set_pid(getpid());
+    
+    std::vector<uint8_t> allocData(ALLOC_DATA_SIZE * 2, 0);
+    for (size_t i = 0; i < 2; ++i) {
+        GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(allocData.data() + i * ALLOC_DATA_SIZE);
+        alloc->stack[0] = 0x100;
+        alloc->stack[1] = 0x200;
+        alloc->stack[2] = 0;
+    }
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    hookManager.CollectGwpAsanFrames(frameMap, allocData.data(), 2, ALLOC_DATA_SIZE);
+    EXPECT_EQ(hookManager.gwpAsanMaxStackDepth_, STACK_DEPTH);
+}
+
+/*
+ * @tc.name: FormatGwpAsanOutputNormalCase
+ * @tc.desc: test FormatGwpAsanOutput with normal case.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, FormatGwpAsanOutputNormalCase, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    
+    GwpHeader header;
+    header.max_slots = 10;
+    header.sampled_rate = 100;
+    
+    std::vector<uint8_t> allocData(ALLOC_DATA_SIZE, 0);
+    GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(allocData.data());
+    alloc->addr = 0x1000;
+    alloc->size = DEFAULT_ALLOC_SIZE;
+    alloc->alive_time = DEFAULT_ALIVE_TIME;
+    alloc->stack[0] = 0x100;
+    alloc->stack[1] = 0;
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    BuildFrameMap(frameMap, 1);
+    
+    std::stringstream ss;
+    hookManager.FormatGwpAsanOutput(ss, &header, allocData.data(), 1, ALLOC_DATA_SIZE, frameMap);
+    
+    std::string result = ss.str();
+    EXPECT_TRUE(VerifyOutputContains(result, {
+        "GWP_ASAN_CONFIG", "SLOT:10", "SAMPLE:100",
+        "GWP_ASAN_MEMORY_SAMPLE", "address:0x1000",
+        "size:256 bytes", "alloc_time:1000 ms",
+        "test0.so", "test_func0"
+    }));
+}
+
+/*
+ * @tc.name: FormatGwpAsanOutputMultipleSamples
+ * @tc.desc: test FormatGwpAsanOutput with multiple samples.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, FormatGwpAsanOutputMultipleSamples, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    
+    GwpHeader header;
+    header.max_slots = 10;
+    header.sampled_rate = 100;
+    
+    std::vector<uint8_t> allocData(ALLOC_DATA_SIZE * 3, 0);
+    for (size_t i = 0; i < 3; ++i) {
+        GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(allocData.data() + i * ALLOC_DATA_SIZE);
+        alloc->addr = 0x1000 + i * 0x1000;
+        alloc->size = DEFAULT_ALLOC_SIZE * (i + 1);
+        alloc->alive_time = DEFAULT_ALIVE_TIME * (i + 1);
+        alloc->stack[0] = 0x100 + i * 0x100;
+        alloc->stack[1] = 0;
+    }
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    BuildFrameMap(frameMap, 3);
+    
+    std::stringstream ss;
+    hookManager.FormatGwpAsanOutput(ss, &header, allocData.data(), 3, ALLOC_DATA_SIZE, frameMap);
+    
+    std::string result = ss.str();
+    EXPECT_TRUE(VerifyOutputContains(result, {
+        "GWP_ASAN_CONFIG", "SLOT:10", "SAMPLE:100",
+        "address:0x1000", "address:0x2000", "address:0x3000",
+        "size:256 bytes", "size:512 bytes", "size:768 bytes",
+        "test0.so", "test1.so", "test2.so"
+    }));
+}
+
+/*
+ * @tc.name: FormatGwpAsanOutputEmptyFrameMap
+ * @tc.desc: test FormatGwpAsanOutput with empty frame map.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, FormatGwpAsanOutputEmptyFrameMap, TestSize.Level0)
+{
+    HookManager hookManager;
+    hookManager.gwpAsanMaxStackDepth_ = STACK_DEPTH;
+    
+    GwpHeader header;
+    header.max_slots = 10;
+    header.sampled_rate = 100;
+    
+    std::vector<uint8_t> allocData(ALLOC_DATA_SIZE, 0);
+    GwpAllocationData* alloc = reinterpret_cast<GwpAllocationData*>(allocData.data());
+    alloc->addr = 0x1000;
+    alloc->size = DEFAULT_ALLOC_SIZE;
+    alloc->alive_time = DEFAULT_ALIVE_TIME;
+    alloc->stack[0] = 0x100;
+    alloc->stack[1] = 0;
+    
+    std::unordered_map<uintptr_t, DfxFrame> frameMap;
+    
+    std::stringstream ss;
+    hookManager.FormatGwpAsanOutput(ss, &header, allocData.data(), 1, ALLOC_DATA_SIZE, frameMap);
+    
+    std::string result = ss.str();
+    EXPECT_TRUE(VerifyOutputContains(result, {
+        "GWP_ASAN_CONFIG", "SLOT:10", "SAMPLE:100",
+        "GWP_ASAN_MEMORY_SAMPLE", "address:0x1000",
+        "size:256 bytes", "alloc_time:1000 ms"
+    }));
 }
 } // namespace

@@ -118,6 +118,7 @@ enum {
     JS_STACK_MSG,
     MMAP_FILE_TYPE,
     NMD_MSG,
+    GWP_ASAN_MSG,
     END_MSG,
     FREE_MSG_SIMP,
     MALLOC_ARKTS,
@@ -316,6 +317,9 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t secondLargestSize = 0;
     uint32_t maxGrowthSize = 0;
     std::string targetSoName;
+    uint32_t gwpAsanHoldTime = 0;
+    uint32_t gwpAsanMaxEntries = 0;
+    uint32_t gwpAsanMaxStackDepth = 0;
     bool enableFileCacheMode = false;
     uint32_t fileCacheBufferSize = 0;
 };

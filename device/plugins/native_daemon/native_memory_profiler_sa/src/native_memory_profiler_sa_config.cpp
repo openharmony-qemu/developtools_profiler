@@ -93,6 +93,9 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, uniqueStackTableSize_);
     WRITESTRING(parcel, typeFileName_);
     WRITEUINT32(parcel, startType_);
+    WRITEUINT32(parcel, gwpAsanHoldTime_);
+    WRITEUINT32(parcel, gwpAsanMaxEntries_);
+    WRITEUINT32(parcel, gwpAsanMaxStackDepth_);
     return true;
 }
 
@@ -147,6 +150,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->uniqueStackTableSize_);
     READSTRING(parcel, config->typeFileName_);
     READUINT32(parcel, config->startType_);
+    READUINT32(parcel, config->gwpAsanHoldTime_);
+    READUINT32(parcel, config->gwpAsanMaxEntries_);
+    READUINT32(parcel, config->gwpAsanMaxStackDepth_);
     PrintConfig(config);
     return true;
 }
