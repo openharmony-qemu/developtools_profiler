@@ -186,6 +186,7 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
 
     HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
     // in file cache mode, receive cached file fd from native_hook
+    std::lock_guard<std::mutex> lock(mtx_);
     if (cacheFileMsg.msgType == CACHE_FILE_CREATED) {
         int cacheFd = context.ReceiveFileDiscriptor();
         hookMgr_->HandleCachedFileFdByPid(cacheFileMsg.hookPid, cacheFd, cacheFileMsg.fileIndex);
