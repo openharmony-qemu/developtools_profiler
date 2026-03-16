@@ -92,6 +92,7 @@ private:
     static bool ParseCpuStats(const std::string& content, unsigned long& total, unsigned long& idle);
     static int32_t CheckSystemResource();
     static bool IsNativeDeamonRunning();
+    bool ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
     static int32_t GetTaskNum(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
 

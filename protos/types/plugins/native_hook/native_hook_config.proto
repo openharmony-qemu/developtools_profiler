@@ -67,4 +67,6 @@ message NativeHookConfig {
     bool async_stack_enable = 33;
     repeated AsyncFlagType async_type = 34;
     uint32 unique_stack_table_size = 35;
+    bool use_file_cache_mode = 36;
+    uint32 file_cache_buffer_size = 37;
 }

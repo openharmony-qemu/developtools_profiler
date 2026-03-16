@@ -34,6 +34,8 @@ const int PAGE_BYTES = 4096;
 const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t FLUSH_BASELINE = (1U << 21); // need to flush data size with offline mode
 constexpr uint32_t STOP_BASELINE = (1U << 22); // need to stop take data size with offline mode
+constexpr int SEM_WAIT_TIME = 30; // default wait on semaphore at most 30 seconds.
+constexpr int NATIVEHOOK_SEM_WAIT_TIME = 300; // wait more time for nativehook file cache mode.
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 } // namespace
 
@@ -253,8 +255,11 @@ bool PluginService::StopPluginSession(const std::string& pluginName)
 
     waitSemphores_[cmd->command_id()] = sem;
     PROFILER_LOG_DEBUG(LOG_CORE, "=== StopPluginSession %s Waiting ... ===", pluginName.c_str());
-    // wait on semaphore at most 30 seconds.
-    if (!sem->TimedWait(30)) {
+    int semWaitTime = SEM_WAIT_TIME;
+    if (pluginName == "nativehook") {
+        semWaitTime = NATIVEHOOK_SEM_WAIT_TIME;
+    }
+    if (!sem->TimedWait(semWaitTime)) {
         // semaphore timeout
         PROFILER_LOG_DEBUG(LOG_CORE, "=== StopPluginSession Waiting FAIL ===");
         return false;

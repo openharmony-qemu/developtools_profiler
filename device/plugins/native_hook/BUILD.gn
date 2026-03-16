@@ -47,6 +47,7 @@ ohos_source_set("native_hook_source") {
     "src/runtime_stack_range.cpp",
     "src/sampling.cpp",
     "src/stack_writer.cpp",
+    "src/cache_file_writer.cpp",
   ]
   include_dirs = [
     "./include",

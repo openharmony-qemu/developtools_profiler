@@ -159,7 +159,7 @@ HWTEST_F(StackPreprocessTest, StackPreprocessTest003, TestSize.Level0)
 
 /*
 @tc.name: ProcessSharedMemoryDataAddressSizeTest
-@tc.desc: test ProcessSharedMemoryData with size equal to sizeof(uint64_t).
+@tc.desc: test ProcessRawData with size equal to sizeof(uint64_t).
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataAddressSizeTest, TestSize.Level0)
@@ -172,13 +172,13 @@ HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataAddressSizeTest, TestSize.L
     ASSERT_EQ(ret, 0);
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-    bool result = preprocess.ProcessSharedMemoryData(addrData, sizeof(addrData), rawData, hookRecord);
+    bool result = preprocess.ProcessRawData(addrData, sizeof(addrData), rawData, hookRecord);
     ASSERT_TRUE(result);
 }
 
 /*
 @tc.name: ProcessSharedMemoryDataInvalidSizeTest
-@tc.desc: test ProcessSharedMemoryData with invalid data size.
+@tc.desc: test ProcessRawData with invalid data size.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataInvalidSizeTest, TestSize.Level0)
@@ -188,13 +188,13 @@ HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataInvalidSizeTest, TestSize.L
     int8_t invalidData[4] = {0}; // Smaller than any valid data structure
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-    bool result = preprocess.ProcessSharedMemoryData(invalidData, sizeof(invalidData), rawData, hookRecord);
+    bool result = preprocess.ProcessRawData(invalidData, sizeof(invalidData), rawData, hookRecord);
     ASSERT_FALSE(result);
 }
 
 /*
 @tc.name: ProcessSharedMemoryDataStopFlagTest
-@tc.desc: test ProcessSharedMemoryData with isStopTakeData_ set to true.
+@tc.desc: test ProcessRawData with isStopTakeData_ set to true.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataStopFlagTest, TestSize.Level0)
@@ -205,7 +205,7 @@ HWTEST_F(StackPreprocessTest, ProcessSharedMemoryDataStopFlagTest, TestSize.Leve
     preprocess.isStopTakeData_ = true;
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-    bool result = preprocess.ProcessSharedMemoryData(validData, sizeof(validData), rawData, hookRecord);
+    bool result = preprocess.ProcessRawData(validData, sizeof(validData), rawData, hookRecord);
     ASSERT_FALSE(result);
 }
 

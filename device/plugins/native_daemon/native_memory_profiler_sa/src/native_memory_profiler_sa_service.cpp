@@ -711,9 +711,42 @@ void NativeMemoryProfilerSaService::SetGpuConfig(ClientConfig& clientConfig)
     }
 }
 
+bool NativeMemoryProfilerSaService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
+{
+    if (buf == nullptr) {
+        return false;
+    }
+    HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+    std::lock_guard<std::mutex> guard(g_mtx);
+    if (auto iter = g_pidCtx.find(cacheFileMsg.hookPid); iter != g_pidCtx.end()) {
+        if (iter->second->hookMgr == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "hook manager is null");
+            return false;
+        }
+        ClientConfig clientConfig;
+        iter->second->hookMgr->GetClientConfig(clientConfig);
+        if (clientConfig.enableFileCacheMode) {
+            // in file cache mode, receive cached file fd from native_hook
+            if (cacheFileMsg.msgType == CACHE_FILE_CREATED) {
+                int cacheFd = context.ReceiveFileDiscriptor();
+                PROFILER_LOG_INFO(LOG_CORE, "ReceiveCacheFileMsg pid:%d index %u",
+                    cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
+                iter->second->hookMgr->HandleCachedFileFdByPid(cacheFileMsg.hookPid, cacheFd, cacheFileMsg.fileIndex);
+            }
+            return true;
+        }
+    }
+    PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: receive invalid config");
+    return false;
+}
+
 bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf,
     const uint32_t size)
 {
+    if (size == sizeof(HookCacheFileMsg)) {
+        return ReceiveCacheFileMsg(context, buf);
+    }
+
     if (size != sizeof(int)) {
         return false;
     }

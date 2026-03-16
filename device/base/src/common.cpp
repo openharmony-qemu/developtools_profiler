@@ -677,6 +677,7 @@ bool CheckApplicationPermission(int pid, const std::string& processName)
     }
     return appInfo.appProvisionType == Constants::APP_PROVISION_TYPE_DEBUG;
 }
+
 bool CheckApplicationEncryped(int pid, const std::string& processName)
 {
     std::string bundleName;
@@ -708,6 +709,51 @@ bool CheckApplicationEncryped(int pid, const std::string& processName)
                         static_cast<uint32_t>(AppExecFwk::ApplicationReservedFlag::ENCRYPTED_APPLICATION)) != 0;
     PROFILER_LOG_INFO(LOG_CORE, "%s: check application encryped.%d : %s", __func__, isEncrypted, bundleName.c_str());
     return isEncrypted;
+}
+
+bool GetBundleNameByProcessInfo(int pid, const std::string& processName, std::string& bundleName)
+{
+    if (pid > 0) {
+        std::string filePath = "/proc/" + std::to_string(pid) + "/cmdline";
+        if (!LoadStringFromFile(filePath, bundleName)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get process name by pid failed!");
+            return false;
+        }
+        bundleName.resize(strlen(bundleName.c_str()));
+    } else {
+        bundleName = processName;
+    }
+    auto pos = bundleName.find(":");
+    if (pos != std::string::npos) {
+        bundleName = bundleName.substr(0, pos);
+    }
+
+    return true;
+}
+
+bool CheckIsApplication(int pid, const std::string& processName)
+{
+    std::string bundleName;
+    bool ret = GetBundleNameByProcessInfo(pid, processName, bundleName);
+    if (!ret) {
+        return false;
+    }
+
+    CHECK_TRUE(!bundleName.empty(), false, "Pid or process name is illegal!");
+    sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+    CHECK_NOTNULL(sam, false, "GetSystemAbilityManager failed!");
+    sptr<IRemoteObject> remoteObject = sam->GetSystemAbility(BUNDLE_MGR_SERVICE_SYS_ABILITY_ID);
+    CHECK_NOTNULL(remoteObject, false, "Get BundleMgr SA failed!");
+    sptr<AppExecFwk::IBundleMgr> proxy = iface_cast<AppExecFwk::IBundleMgr>(remoteObject);
+    CHECK_NOTNULL(proxy, false, "Get proxy failed!");
+    AppExecFwk::ApplicationInfo appInfo;
+    ret = proxy->GetApplicationInfo(bundleName, AppExecFwk::ApplicationFlag::GET_BASIC_APPLICATION_INFO,
+        AppExecFwk::Constants::ANY_USERID, appInfo);
+    if (!ret) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Check target process is not Application!");
+        return false;
+    }
+    return true;
 }
 
 bool VerifyPath(const std::string& filePath, const std::vector<std::string>& validPaths)

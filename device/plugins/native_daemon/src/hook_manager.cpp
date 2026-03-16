@@ -76,6 +76,12 @@ HookManager::~HookManager()
         for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
             item->eventPollerList[i] = nullptr;
         }
+        if (item->readyFileNotifier != nullptr) {
+            item->readyFileNotifier = nullptr;
+        }
+        if (item->readyFilePoller != nullptr) {
+            item->readyFilePoller = nullptr;
+        }
         if (item->stackData != nullptr) {
             item->stackData = nullptr;
         }
@@ -361,6 +367,27 @@ void HookManager::UpdateAsyncFlagConfig()
         static_cast<unsigned long long>(asyncFlagMask_));
 }
 
+void HookManager::UpdateFileCacheModeConfig()
+{
+    // enableFileCacheMode is enabled only when the target process is an application.
+    for (const auto& pid : hookConfig_.expand_pids()) {
+        if (pid <= 0 || !COMMON::CheckIsApplication(pid, "")) {
+            hookConfig_.set_use_file_cache_mode(false);
+            return;
+        }
+    }
+    const std::string processName = hookConfig_.process_name();
+    if (!processName.empty() && !COMMON::CheckIsApplication(0, processName)) {
+        hookConfig_.set_use_file_cache_mode(false);
+        return;
+    }
+
+    uint32_t fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
+    if (fileCacheBufferSize < MIN_FILE_CACHE_MEMORY_SIZE || fileCacheBufferSize > MAX_FILE_CACHE_MEMORY_SIZE) {
+        hookConfig_.set_file_cache_buffer_size(MAX_FILE_CACHE_MEMORY_SIZE);
+    }
+}
+
 static std::string GetArktsDiagPathFromParam()
 {
     uint32_t len = 0;
@@ -468,6 +495,9 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.largestSize = largestSize_;
     clientConfig.secondLargestSize = secondLargestSize_;
     clientConfig.maxGrowthSize = maxGrowthSize_;
+    // File cache mode configuration
+    clientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
+    clientConfig.fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
     // -1 is save '\0'
     int ret = memcpy_s(clientConfig.arktsConfig.filterNapiName, sizeof(clientConfig.arktsConfig.filterNapiName) - 1,
                        hookConfig_.filter_napi_name().c_str(), hookConfig_.filter_napi_name().size());
@@ -476,13 +506,22 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     }
 }
 
-bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
+bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
 {
-    if (ctx == nullptr) {
-        return false;
-    }
+    // Initialize file cache mode
+    ctx->readyFileNotifier = EventNotifier::Create(0, EventNotifier::NONBLOCK | EventNotifier::SEMAPHORE);
+    CHECK_NOTNULL(ctx->readyFileNotifier, false, "create readyFileNotifier failed!");
+    ctx->readyFilePoller = std::make_shared<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
+    CHECK_NOTNULL(ctx->readyFilePoller, false, "create readyFilePoller FAILED!");
 
-    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    ctx->readyFilePoller->Init();
+    ctx->readyFilePoller->Start();
+    return true;
+}
+
+bool HookManager::HandleSharedMemoryHookContext(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
+{
+    // shared memory mode
     uint32_t bufferSize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
 #ifndef __aarch64__
     if (static_cast<int>(bufferSize) < 0) {
@@ -509,7 +548,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         CHECK_NOTNULL(eventNotifier, false, "create EventNotifier for %s failed!", smbName.c_str());
         ctx->eventNotifierList.push_back(eventNotifier);
         PROFILER_LOG_INFO(LOG_CORE, "hookservice smbFd = %d, eventFd = %d\n", shareMemoryBlock->GetfileDescriptor(),
-                          eventNotifier->GetFd());
+            eventNotifier->GetFd());
         // start event poller task
         auto eventPoller = std::make_shared<EpollEventPoller>(DEFAULT_EVENT_POLLING_INTERVAL);
         CHECK_NOTNULL(eventPoller, false, "create event poller FAILED!");
@@ -517,6 +556,92 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         eventPoller->Init();
         eventPoller->Start();
         ctx->eventPollerList.push_back(eventPoller);
+    }
+    return true;
+}
+
+void HookManager::CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
+{
+    clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
+        fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+    ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
+    ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
+
+    ClientConfig clientConfig;
+    GetClientConfig(clientConfig);
+    if (!clientConfig.enableFileCacheMode) {
+        for (int i = 0; i < sharedMemCount; ++i) {
+            ctx->eventPollerList[i]->AddFileDescriptor(
+                ctx->eventNotifierList[i]->GetFd(),
+                std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
+                ctx->eventNotifierList[i], ctx->shareMemoryBlockList[i]));
+        }
+    } else {
+        ctx->readyFilePoller->AddFileDescriptor(
+            ctx->readyFileNotifier->GetFd(),
+            [&ctx] {
+                int frontFd = ctx->GetFdQueueFront();
+                ctx->PopFrontFdQueue();
+                PROFILER_LOG_INFO(LOG_CORE, "NoQueueDataHandler pop fd, queue size%zu",
+                    ctx->GetFdQueueSize());
+                ctx->readyFileNotifier->Take();
+                ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
+            });
+        PROFILER_LOG_INFO(LOG_CORE, "NoQueueDataHandler add readyFilePoller");
+    }
+}
+
+bool HookManager::CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
+{
+    clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
+    ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
+    CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
+        fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
+    ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
+
+    ClientConfig clientConfig;
+    GetClientConfig(clientConfig);
+    if (!clientConfig.enableFileCacheMode) {
+        for (int i = 0; i < sharedMemCount; ++i) {
+            ctx->eventPollerList[i]->AddFileDescriptor(
+                ctx->eventNotifierList[i]->GetFd(),
+                [this, &ctx, i] { this->ReadShareMemory(ctx, i); });
+        }
+    } else {
+        ctx->readyFilePoller->AddFileDescriptor(
+            ctx->readyFileNotifier->GetFd(),
+            [this, &ctx] {
+                int frontFd = ctx->GetFdQueueFront();
+                ctx->PopFrontFdQueue();
+                PROFILER_LOG_INFO(LOG_CORE, "QueueDataHandler pop fd, queue size%zu",
+                    ctx->GetFdQueueSize());
+                ctx->readyFileNotifier->Take();
+                this->ReadFromCacheFile(ctx, frontFd);
+            });
+        PROFILER_LOG_INFO(LOG_CORE, "QueueDataHandler add readyFilePoller");
+    }
+    return true;
+}
+
+bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
+{
+    if (ctx == nullptr) {
+        return false;
+    }
+    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    ClientConfig clientConfig;
+    GetClientConfig(clientConfig);
+    if (clientConfig.enableFileCacheMode) {
+        if (!HandleFileCacheHookContext(ctx)) {
+            return false;
+        }
+        sharedMemCount = 0;
+    } else {
+        if (!HandleSharedMemoryHookContext(ctx, sharedMemCount)) {
+            return false;
+        }
     }
 
     if (hookConfig_.async_stack_enable()) {
@@ -550,28 +675,11 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  js_stack_report = %d max_js_stack_depth = %u",
         hookConfig_.js_stack_report(), hookConfig_.max_js_stack_depth());
 
-    clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
     if (noDataQueue_) {
-        ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookConfig_, pluginDataClockId,
-            fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
-        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
-        ctx->stackPreprocess->SetNmdFd(nmdParamInfo_.fd);
-        for (int i = 0; i < sharedMemCount; ++i) {
-            ctx->eventPollerList[i]->AddFileDescriptor(
-                ctx->eventNotifierList[i]->GetFd(),
-                std::bind(&StackPreprocess::TakeResultsFromShmem, ctx->stackPreprocess,
-                ctx->eventNotifierList[i], ctx->shareMemoryBlockList[i]));
-        }
+        CreateNoQueueDataHandler(ctx, sharedMemCount);
     } else {
-        ctx->stackData = std::make_shared<StackDataRepeater>(STACK_DATA_SIZE);
-        CHECK_TRUE(ctx->stackData != nullptr, false, "Create StackDataRepeater FAIL");
-        ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookConfig_, pluginDataClockId,
-            fpHookData_, isHookStandalone_, isSaService_, isProtobufSerialize_);
-        ctx->stackPreprocess->SetFlushSize(shareMemorySize_);
-        for (int i = 0; i < sharedMemCount; ++i) {
-            ctx->eventPollerList[i]->AddFileDescriptor(
-                ctx->eventNotifierList[i]->GetFd(),
-                [this, &ctx, i] { this->ReadShareMemory(ctx, i); });
+        if (!CreateQueueDataHandler(ctx, sharedMemCount)) {
+            return false;
         }
     }
     if (isProtobufSerialize_) {
@@ -672,6 +780,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     }
 
     UpdateAsyncFlagConfig();
+    UpdateFileCacheModeConfig();
+
     if (!SetLocalHandle("1")) {
         return false;
     }
@@ -731,6 +841,35 @@ void HookManager::HookManagerCtx::FlushStackArray()
     }
 }
 
+int HookManager::HookManagerCtx::GetFdQueueFront()
+{
+    std::lock_guard<std::mutex> guard(fdQueueMtx);
+    if (cachedFileFdQueue.empty()) {
+        return -1;
+    }
+    return cachedFileFdQueue.front();
+}
+
+size_t HookManager::HookManagerCtx::GetFdQueueSize()
+{
+    std::lock_guard<std::mutex> guard(fdQueueMtx);
+    return cachedFileFdQueue.size();
+}
+
+void HookManager::HookManagerCtx::PushBackFdQueue(int fd)
+{
+    std::lock_guard<std::mutex> guard(fdQueueMtx);
+    cachedFileFdQueue.push_back(fd);
+}
+
+void HookManager::HookManagerCtx::PopFrontFdQueue()
+{
+    std::lock_guard<std::mutex> guard(fdQueueMtx);
+    if (!cachedFileFdQueue.empty()) {
+        cachedFileFdQueue.pop_front();
+    }
+}
+
 void HookManager::FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                                      std::shared_ptr<HookRecord>& hookRecord)
 {
@@ -764,6 +903,79 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
     PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
 }
 
+bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx,
+    std::shared_ptr<HookRecord>& hookRecord, std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size)
+{
+    hookRecord = factory_->GetHookRecord(data, size);
+    CHECK_NOTNULL(hookRecord, false, "TakeDataHandler hookRecord invalid!");
+    rawStack = hookRecord->GetRawStack();
+    uint16_t type = hookRecord->GetType();
+    if (type == FREE_MSG_SIMP) {
+        return true;
+    }
+
+    if (type == NMD_MSG && printMallocNmd_) {
+        const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
+        if (!saMode_) {
+            DumpNmdInfo(nmdResult);
+        }
+        if (nmdParamInfo_.type == SIMP_NMD) {
+            simplifiedNmd_ = std::string(nmdResult);
+            nmdComplete_ = true;
+            PROFILER_LOG_INFO(LOG_CORE, "receive simplified nmd info, target pid :%d, processName:%s.\n",
+                hookCtx->pid, hookCtx->processName.c_str());
+        } else {
+            lseek(nmdParamInfo_.fd, 0, SEEK_END);
+            (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
+        }
+        return true;
+    } else if (type == END_MSG) {
+        return true;
+    }
+    rawStack->reportFlag = true;
+    if (type == MEMORY_TAG || type == THREAD_NAME_MSG ||
+        type == MMAP_FILE_TYPE || type == PR_SET_VMA_MSG ||
+        type == JS_STACK_MSG) {
+        return true;
+    }
+    rawStack->reduceStackFlag = false;
+    if (hookConfig_.fp_unwind()) {
+        if (rawStack->stackContext->jsChainId > 0) {
+            rawStack->jsStackData = hookCtx->stackPreprocess->GetJsRawStack(rawStack->stackContext->jsChainId);
+        }
+        return true;
+    }
+    return true;
+}
+
+bool HookManager::ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx,
+    std::shared_ptr<HookRecord>& hookRecord, std::shared_ptr<RawStack>& rawStack)
+{
+    uint16_t type = hookRecord->GetType();
+    if (type == MEMORY_TAG) {
+        std::string tagName = reinterpret_cast<char*>(rawStack->data);
+        hookCtx->stackPreprocess->SaveMemTag(rawStack->stackContext->tagId, tagName);
+        return true;
+    } else if (type == JS_STACK_MSG) {
+        hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackContext->jsChainId,
+            reinterpret_cast<char*>(rawStack->data));
+        return true;
+    } else if (type == END_MSG) {
+        hookCtx->FlushStackArray();
+        if (!hookCtx->stackData->PutRawStack(hookRecord, hookCtx->isRecordAccurately)) {
+            return false;
+        }
+        if (!hookCtx->stackData->PutRawStack(nullptr, false)) {
+            return false;
+        }
+        return true;
+    } else if (type == NMD_MSG) {
+        return true;
+    }
+    FlushRawStackArray(hookCtx, hookRecord);
+    return true;
+}
+
 void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex)
 {
     std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = hookCtx->shareMemoryBlockList[sharedMemoryIndex];
@@ -772,74 +984,67 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     while (true) {
         std::shared_ptr<HookRecord> hookRecord = nullptr;
         std::shared_ptr<RawStack> rawStack = nullptr;
-        bool ret = shareMemoryBlock->TakeData([&](const int8_t data[], uint32_t size) -> bool {
-            hookRecord = factory_->GetHookRecord(data, size);
-            CHECK_NOTNULL(hookRecord, false, "ReadShareMemory hookRecord invalid!");
-            rawStack = hookRecord->GetRawStack();
-            uint16_t type = hookRecord->GetType();
-            if (type == FREE_MSG_SIMP) {
-                return true;
-            }
-
-            if (type == NMD_MSG && printMallocNmd_) {
-                const char* nmdResult = reinterpret_cast<const char*>(rawStack->data);
-                if (!saMode_) {
-                    DumpNmdInfo(nmdResult);
-                }
-                if (nmdParamInfo_.type == SIMP_NMD) {
-                    simplifiedNmd_ = std::string(nmdResult);
-                    nmdComplete_ = true;
-                    PROFILER_LOG_INFO(LOG_CORE, "receive simplified nmd info, target pid :%d, processName:%s.\n",
-                                      hookCtx->pid, hookCtx->processName.c_str());
-                } else {
-                    lseek(nmdParamInfo_.fd, 0, SEEK_END);
-                    (void)write(nmdParamInfo_.fd, nmdResult, strlen(nmdResult));
-                }
-                return true;
-            } else if (type == END_MSG) {
-                return true;
-            }
-            rawStack->reportFlag = true;
-            if (type == MEMORY_TAG || type == THREAD_NAME_MSG ||
-                type == MMAP_FILE_TYPE || type == PR_SET_VMA_MSG ||
-                type == JS_STACK_MSG) {
-                return true;
-            }
-            rawStack->reduceStackFlag = false;
-            if (hookConfig_.fp_unwind()) {
-                if (rawStack->stackContext->jsChainId > 0) {
-                    rawStack->jsStackData = hookCtx->stackPreprocess->GetJsRawStack(rawStack->stackContext->jsChainId);
-                }
-                return true;
-            }
-            return true;
-        });
+        ShareMemoryBlock::DataHandler dataHandler = std::bind(&HookManager::TakeDataHandler, this,
+            std::cref(hookCtx), std::ref(hookRecord), std::ref(rawStack), std::placeholders::_1, std::placeholders::_2);
+        bool ret = shareMemoryBlock->TakeData(dataHandler);
         if (!ret) {
             break;
         }
-        uint16_t type = hookRecord->GetType();
-        if (type == MEMORY_TAG) {
-            std::string tagName = reinterpret_cast<char*>(rawStack->data);
-            hookCtx->stackPreprocess->SaveMemTag(rawStack->stackContext->tagId, tagName);
-            continue;
-        } else if (type == JS_STACK_MSG) {
-            hookCtx->stackPreprocess->SaveJsRawStack(rawStack->stackContext->jsChainId,
-                                                     reinterpret_cast<char*>(rawStack->data));
-            continue;
-        } else if (type == END_MSG) {
-            hookCtx->FlushStackArray();
-            if (!hookCtx->stackData->PutRawStack(hookRecord, hookCtx->isRecordAccurately)) {
-                break;
-            }
-            if (!hookCtx->stackData->PutRawStack(nullptr, false)) {
-                break;
-            }
-            continue;
-        } else if (type == NMD_MSG) {
-            continue;
+        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
+            break;
         }
-        FlushRawStackArray(hookCtx, hookRecord);
     }
+}
+
+void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
+{
+    if (fd < 0) {
+        hookCtx->stackPreprocess->SetIsStopTakeData(true);
+        return;
+    }
+    uint64_t readfileSize = 0;
+    bool ret = false;
+    lseek(fd, 0, SEEK_SET);
+    while (true) {
+        uint32_t totalSize = 0;
+        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
+        if (readBytes < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+            break;
+        }
+        if (readBytes == 0) {
+            PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile read end of file.");
+            ret = true;
+            break;
+        }
+        if (readBytes != sizeof(totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read invalid totalSize=%zd.", readBytes);
+            break;
+        }
+        readfileSize += sizeof(totalSize);
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile invalid totalSize=%u.", totalSize);
+            break;
+        }
+        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
+        readBytes = read(fd, buffer.get(), totalSize);
+        if (readBytes != static_cast<ssize_t>(totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read data failed.");
+            break;
+        }
+        readfileSize += totalSize;
+        std::shared_ptr<HookRecord> hookRecord = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        ret = TakeDataHandler(hookCtx, hookRecord, rawStack, reinterpret_cast<const int8_t*>(buffer.get()), totalSize);
+        if (!ret) {
+            break;
+        }
+        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
+            break;
+        }
+    }
+    close(fd);
+    PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
 }
 
 bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
@@ -849,16 +1054,27 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             return false;
         }
     }
+    ClientConfig clientConfig;
+    GetClientConfig(clientConfig);
     for (const auto& item : hookCtx_) {
-        for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
-            if (item->eventPollerList[i] && item->eventNotifierList[i]) {
-                PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %zu", i);
-                item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
-                item->eventPollerList[i]->Stop();
-                item->eventPollerList[i]->Finalize();
+        if (clientConfig.enableFileCacheMode) {
+            if (item->readyFilePoller && item->readyFileNotifier) {
+                PROFILER_LOG_INFO(LOG_CORE, "FileCache mode eventPoller unset");
+                item->readyFilePoller->RemoveFileDescriptor(item->readyFileNotifier->GetFd());
+                item->readyFilePoller->Stop();
+                item->readyFilePoller->Finalize();
             }
-            if (item->shareMemoryBlockList[i]) {
-                ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbNames[i]);
+        } else {
+            for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
+                if (item->eventPollerList[i] && item->eventNotifierList[i]) {
+                    PROFILER_LOG_ERROR(LOG_CORE, "eventPoller unset! num: %zu", i);
+                    item->eventPollerList[i]->RemoveFileDescriptor(item->eventNotifierList[i]->GetFd());
+                    item->eventPollerList[i]->Stop();
+                    item->eventPollerList[i]->Finalize();
+                }
+                if (item->shareMemoryBlockList[i]) {
+                    ShareMemoryAllocator::GetInstance().ReleaseMemoryBlockLocal(item->smbNames[i]);
+                }
             }
         }
         if (item->stackPreprocess != nullptr) {
@@ -1039,6 +1255,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
+    hookConfig_.set_use_file_cache_mode(false);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -1175,5 +1392,39 @@ void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
     printMallocNmd_ = true;
     nmdParamInfo_.fd = info.first;
     nmdParamInfo_.type = info.second;
+}
+
+bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
+{
+    for (const auto& item : hookCtx_) {
+        if (item != nullptr && item->pid == pid) {
+            if (item->stackPreprocess != nullptr) {
+                item->stackPreprocess->SetIsStartTakeData(true);
+            }
+            item->PushBackFdQueue(fd);
+            PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid push fd, queue size %zu",
+                item->GetFdQueueSize());
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int HookManager::GetFileNotifierFd(int32_t pid, const std::string& name)
+{
+    for (const auto& item : hookCtx_) {
+        if (item->pid == pid || item->processName == name) {
+            if (item->pid == -1) {
+                item->pid = pid;
+            }
+            item->stackPreprocess->SetPid(pid);
+            if (!item->readyFileNotifier) {
+                return -1;
+            }
+            return item->readyFileNotifier->GetFd();
+        }
+    }
+    return -1;
 }
 }
