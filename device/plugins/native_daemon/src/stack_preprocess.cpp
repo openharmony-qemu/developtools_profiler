@@ -540,6 +540,10 @@ bool StackPreprocess::ProcessNmdMsg(RawStackPtr& rawData)
 
 bool StackPreprocess::ProcessEndMsg()
 {
+    if (hookConfig_.use_file_cache_mode()) {
+        isStopTakeData_ = true;
+        return false;
+    }
     endMsgCount_++;
     int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
     if (endMsgCount_ == sharedMemCount) {
