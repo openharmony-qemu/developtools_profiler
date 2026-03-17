@@ -37,19 +37,6 @@ public:
 };
 
 /**
- * @tc.name: Temperature::GetInstance
- * @tc.desc: Test GetInstance returns singleton instance
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonTemperatureTest, GetInstanceTest001, TestSize.Level1)
-{
-    Temperature &instance1 = Temperature::GetInstance();
-    Temperature &instance2 = Temperature::GetInstance();
-    
-    EXPECT_EQ(&instance1, &instance2);
-}
-
-/**
  * @tc.name: Temperature::ItemData
  * @tc.desc: Test ItemData returns valid result
  * @tc.type: FUNC

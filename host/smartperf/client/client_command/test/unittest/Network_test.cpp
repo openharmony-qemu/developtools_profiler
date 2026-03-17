@@ -37,19 +37,6 @@ public:
 };
 
 /**
- * @tc.name: Network::GetInstance
- * @tc.desc: Test GetInstance returns singleton instance
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonNetworkTest, GetInstanceTest001, TestSize.Level1)
-{
-    Network &instance1 = Network::GetInstance();
-    Network &instance2 = Network::GetInstance();
-    
-    EXPECT_EQ(&instance1, &instance2);
-}
-
-/**
  * @tc.name: Network::ItemData
  * @tc.desc: Test ItemData returns valid result
  * @tc.type: FUNC

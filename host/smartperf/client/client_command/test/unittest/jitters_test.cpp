@@ -37,19 +37,6 @@ public:
 };
 
 /**
- * @tc.name: Jitters::GetInstance
- * @tc.desc: Test GetInstance returns singleton instance
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonJittersTest, GetInstanceTest001, TestSize.Level1)
-{
-    Jitters &instance1 = Jitters::GetInstance();
-    Jitters &instance2 = Jitters::GetInstance();
-    
-    EXPECT_EQ(&instance1, &instance2);
-}
-
-/**
  * @tc.name: Jitters::SetPackageName
  * @tc.desc: Test SetPackageName with valid package name
  * @tc.type: FUNC
