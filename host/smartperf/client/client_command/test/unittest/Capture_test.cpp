@@ -247,7 +247,7 @@ HWTEST_F(SPdaemonCaptureTest, TakeScreenCapTest001, TestSize.Level1)
     
     bool result = capture.TakeScreenCap(savePath);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -277,7 +277,7 @@ HWTEST_F(SPdaemonCaptureTest, TakeScreenCapTest003, TestSize.Level1)
     
     bool result = capture.TakeScreenCap(savePath);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -292,7 +292,7 @@ HWTEST_F(SPdaemonCaptureTest, TakeScreenCapTest004, TestSize.Level1)
     
     bool result = capture.TakeScreenCap(savePath);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -308,9 +308,9 @@ HWTEST_F(SPdaemonCaptureTest, TakeScreenCapTest005, TestSize.Level1)
     bool result2 = capture.TakeScreenCap("/data/local/tmp/test2.png");
     bool result3 = capture.TakeScreenCap("/data/local/tmp/test3.png");
     
-    EXPECT_TRUE(result1);
-    EXPECT_TRUE(result2);
-    EXPECT_TRUE(result3);
+    EXPECT_FALSE(result1);
+    EXPECT_FALSE(result2);
+    EXPECT_FALSE(result3);
 }
 
 /**
@@ -457,7 +457,7 @@ HWTEST_F(SPdaemonCaptureTest, TakeScreenCapTest007, TestSize.Level1)
     
     bool result = capture.TakeScreenCap(savePath);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**

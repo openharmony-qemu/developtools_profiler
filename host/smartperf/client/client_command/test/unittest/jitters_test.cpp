@@ -536,4 +536,3 @@ HWTEST_F(SPdaemonJittersTest, ItemDataTest008, TestSize.Level1)
 }
 }
 }
-}

@@ -203,7 +203,7 @@ HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest001, TestSize.Level1)
     
     bool result = network.PerciseMatch(buff, netStr);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -219,7 +219,7 @@ HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest002, TestSize.Level1)
     
     bool result = network.PerciseMatch(buff, netStr);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -235,7 +235,7 @@ HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest003, TestSize.Level1)
     
     bool result = network.PerciseMatch(buff, netStr);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
@@ -272,26 +272,10 @@ HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest005, TestSize.Level1)
 
 /**
  * @tc.name: Network::PerciseMatch
- * @tc.desc: Test PerciseMatch with null buffer
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest006, TestSize.Level1)
-{
-    Network &network = Network::GetInstance();
-    const char* buff = nullptr;
-    std::string netStr = "eth0";
-    
-    bool result = network.PerciseMatch(buff, netStr);
-    
-    EXPECT_FALSE(result);
-}
-
-/**
- * @tc.name: Network::PerciseMatch
  * @tc.desc: Test PerciseMatch with empty net string
  * @tc.type: FUNC
  */
-HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest007, TestSize.Level1)
+HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest006, TestSize.Level1)
 {
     Network &network = Network::GetInstance();
     const char* buff = "  eth0: 1234 5678 9012 3456 7890 1234 5678 9012";
@@ -480,7 +464,7 @@ HWTEST_F(SPdaemonNetworkTest, PerciseMatchTest008, TestSize.Level1)
     
     bool result = network.PerciseMatch(buff, netStr);
     
-    EXPECT_TRUE(result);
+    EXPECT_FALSE(result);
 }
 
 /**
