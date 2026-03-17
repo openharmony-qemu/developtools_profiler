@@ -297,6 +297,8 @@ unsigned long long HookManager::ConvertTagToMask()
                 resMask |= RES_ASHMEM_MASK;
             } else if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
                 resMask |= RES_ARK_LOCAL_HANDLE;
+            } else if (resTag == TAG_RES_VMA_ARKWEB) {
+                resMask |= RES_VMA_ARKWEB;
             }
         }
     }

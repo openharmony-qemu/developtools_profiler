@@ -317,6 +317,24 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagLocalHandle, TestSize.Level0)
 }
 
 /*
+ * @tc.name: ConvertTagToMaskSingleTagVMA
+ * @tc.desc: test ConvertTagToMask with single tag local handle.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskSingleTagVMA, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    // Add single tag
+    config.add_restrace_tag("RES_VMA_ARKWEB");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_VMA_ARKWEB);
+}
+
+/*
  * @tc.name: ConvertTagToMaskMultipleTagConversion
  * @tc.desc: test ConvertTagToMask with multiple tags conversion.
  * @tc.type: FUNC

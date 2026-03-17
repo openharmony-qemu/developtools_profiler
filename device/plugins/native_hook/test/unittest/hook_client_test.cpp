@@ -343,6 +343,24 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest009, TestSize.Level0)
 }
 
 /**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace normal process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest010, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_VMA_ARKWEB, mem, 1, TAG_RES_VMA_ARKWEB, true);
+    ohos_malloc_hook_restrace(RES_VMA_ARKWEB, mem, 1, TAG_RES_VMA_ARKWEB, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
  * @tc.name: ResTraceMoveTest
  * @tc.desc: Test memory move.
  * @tc.type: FUNC
