@@ -391,6 +391,7 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
     args << "filter_napi_name: " << config->filterNapiName_ << ", ";
     args << "nmd_pid: " << std::to_string(config->nmdPid_) << ", ";
     args << "nmd_type: " << std::to_string(config->nmdType_) << ", ";
+    args << "mem_leak_format: " << std::to_string(config->memLeakFormat_) << ", ";
     return args.str();
 }
 
@@ -423,11 +424,12 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         fd = static_cast<uint32_t>(fdTemp);
     }
     uint32_t saFd = 0;
-    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0) {
+    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && config->memLeakFormat_ == 0) {
         saFd = fd;
     }
     hook->RegisterFdForSa(saFd);
     hook->SetGwpFd(config->gwpAsanHoldTime_ > 0 ? fd : 0);
+    hook->SetMemLeakFd(config->memLeakFormat_ > 0 ? fd : 0);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, config->hookstandalone_);
@@ -442,7 +444,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             "create pluginsession failed");
         return RET_ERR;
     }
-    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0) {
+    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && config->memLeakFormat_ == 0) {
         hook->WriteHookConfig();
     }
     hook->StartPluginSession(&g_pidInfo);
