@@ -229,4 +229,37 @@ HWTEST_F(HookGuardTest, CheckRestraceConditionsBasicTest, TestSize.Level0)
     EXPECT_TRUE(HookGuard::CheckRestraceConditions(RES_GPU_CL_IMAGE, 3));
     EXPECT_FALSE(HookGuard::CheckRestraceConditions(RES_GPU_CL_BUFFER, 4));
 }
+
+/**
+ * @tc.name: GetPredefinedTagIdVmaArkwebTest
+ * @tc.desc: Test GetPredefinedTagId with RES_VMA_ARKWEB mask
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookGuardTest, GetPredefinedTagIdVmaArkwebTest, TestSize.Level0)
+{
+    uint16_t tagId = GetPredefinedTagId(RES_VMA_ARKWEB);
+    EXPECT_EQ(tagId, static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1));
+}
+
+/**
+ * @tc.name: GetPredefinedTagIdArkLocalHandleTest
+ * @tc.desc: Test GetPredefinedTagId with RES_ARK_LOCAL_HANDLE mask
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookGuardTest, GetPredefinedTagIdArkLocalHandleTest, TestSize.Level0)
+{
+    uint16_t tagId = GetPredefinedTagId(RES_ARK_LOCAL_HANDLE);
+    EXPECT_EQ(tagId, static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1));
+}
+
+/**
+ * @tc.name: GetPredefinedTagIdUnknownMaskTest
+ * @tc.desc: Test GetPredefinedTagId with unknown mask returns 0
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookGuardTest, GetPredefinedTagIdUnknownMaskTest, TestSize.Level0)
+{
+    uint16_t tagId = GetPredefinedTagId(0xFFFFFFFF);
+    EXPECT_EQ(tagId, 0);
+}
 }

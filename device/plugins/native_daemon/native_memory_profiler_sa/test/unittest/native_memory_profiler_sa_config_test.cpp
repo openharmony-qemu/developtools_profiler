@@ -118,4 +118,30 @@ HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest003, 
     EXPECT_EQ(result->gpuRange_[0][1], 2u);
 }
 
+/**
+ * @tc.name: NativeMemoryProfilerSaConfigTest004
+ * @tc.desc: GWP-ASan fields serialization and deserialization
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest004, TestSize.Level3)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(config, nullptr);
+
+    config->gwpAsanHoldTime_ = 30;
+    config->gwpAsanMaxEntries_ = 64;
+    config->gwpAsanMaxStackDepth_ = 16;
+
+    OHOS::Parcel parcel;
+    EXPECT_EQ(config->Marshalling(parcel), true);
+
+    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_NE(result, nullptr);
+    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
+    EXPECT_EQ(result->gwpAsanHoldTime_, 30u);
+    EXPECT_EQ(result->gwpAsanMaxEntries_, 64u);
+    EXPECT_EQ(result->gwpAsanMaxStackDepth_, 16u);
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H

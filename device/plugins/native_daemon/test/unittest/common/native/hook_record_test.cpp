@@ -251,4 +251,24 @@ HWTEST_F(HookRecordTest, TestSetTraceType001, TestSize.Level0)
     EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::JS_HEAP);
 }
 
+/*
+ * @tc.name: test SetTraceType VMA_ARKWEB
+ * @tc.desc: test HookRecord::SetTraceType with VMA_ARKWEB tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookRecordTest, TestSetTraceTypeVmaArkweb, TestSize.Level0)
+{
+    std::shared_ptr<RawStack> rawdata = std::make_shared<RawStack>();
+    g_hookConfig.set_offline_symbolization(false);
+    baseData.type = MMAP_MSG;
+    rawdata->stackContext = &baseData;
+    std::shared_ptr<HookRecord> hookRecord = std::make_shared<MmapRecord>(rawdata);
+    EXPECT_EQ(hookRecord->GetType(), MMAP_MSG);
+    BatchNativeHookData stackData;
+    auto hookData = stackData.add_events();
+    auto traceAllocEvent = hookData->mutable_trace_alloc_event();
+    hookRecord->SetTraceType(traceAllocEvent, TAG_RES_VMA_ARKWEB);
+    EXPECT_EQ(traceAllocEvent->trace_type(), TraceType::VMA_ARKWEB);
+}
+
 }
