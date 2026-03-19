@@ -346,6 +346,7 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} System is experiencing high CPU utilization.
  *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Insufficient available memory.
  *         {@link HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL} Insufficient available storage space.
+ *         {@link HIDEBUG_RES_PROF_FAILURE} Failed to start the resource profiler.
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config);
@@ -357,6 +358,7 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDe
  * @return Result code
  *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler stopped successfully.
  *         {@link HIDEBUG_RES_PROF_NOT_STARTED} Resource profiler not started.
+ *         {@link HIDEBUG_RES_PROF_FAILURE} Failed to stop the resource profiler.
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);

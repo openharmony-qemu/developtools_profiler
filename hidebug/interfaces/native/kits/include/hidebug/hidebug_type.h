@@ -178,6 +178,11 @@ typedef enum HiDebug_ErrorCode {
      * @since 24
      */
     HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL = 11400429,
+    /**
+     * Failed to start/stop the resource profiler.
+     * @since 24
+     */
+    HIDEBUG_RES_PROF_FAILURE = 11400430,
 } HiDebug_ErrorCode;
 
 /**
