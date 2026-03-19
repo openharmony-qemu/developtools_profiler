@@ -121,6 +121,8 @@ public:
     void StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, gid_t>>* pidInfo = nullptr);
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
+    bool ParseCacheRecords(const std::shared_ptr<HookManagerCtx>& hookCtx,
+        uint8_t* buf, size_t totalAvail, size_t& offset, uint64_t& readfileSize, size_t maxRecordSize);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
     int GetFileNotifierFd(int32_t pid, const std::string& name);
     void SetHookConfig(const NativeHookConfig& hookConfig);

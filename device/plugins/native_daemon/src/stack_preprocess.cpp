@@ -375,48 +375,70 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
         SetIsStopTakeData(true);
         return;
     }
-    RawStackPtr rawData = nullptr;
-    std::shared_ptr<HookRecord> hookRecord = nullptr;
+    constexpr size_t BUF_SIZE = 4 * 1024 * 1024;
+    auto buf = std::make_unique<uint8_t[]>(BUF_SIZE);
     uint64_t readfileSize = 0;
     bool ret = false;
+    size_t remainSize = 0;
     InitializeDirector();
     lseek(fd, 0, SEEK_SET);
     while (!isStopTakeData_) {
-        uint32_t totalSize = 0;
-        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
-        if (readBytes < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+        ssize_t bytesRead = read(fd, buf.get() + remainSize, BUF_SIZE - remainSize);
+        if (bytesRead < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed errno=%d.", errno);
             break;
         }
-        if (readBytes == 0) {
+        if (bytesRead == 0 && remainSize == 0) {
             PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile read end of file.");
             ret = true;
             break;
         }
-        if (readBytes != sizeof(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read invalid totalSize=%zd.", readBytes);
+        if (bytesRead == 0 && remainSize > 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile truncated data, remain=%zu.", remainSize);
             break;
         }
-        readfileSize += sizeof(totalSize);
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile invalid totalSize=%u.", totalSize);
-            break;
-        }
-        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
-        readBytes = read(fd, buffer.get(), totalSize);
-        if (readBytes != static_cast<ssize_t>(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read data failed.");
-            break;
-        }
-        readfileSize += totalSize;
-        ret = ProcessRawData(reinterpret_cast<const int8_t*>(buffer.get()), totalSize, rawData, hookRecord);
+        size_t totalAvail = remainSize + static_cast<size_t>(bytesRead);
+        size_t offset = 0;
+        ret = ParseRecordsFromBuffer(buf.get(), totalAvail, offset, readfileSize);
         if (!ret) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile process data failed.");
             break;
+        }
+        remainSize = totalAvail - offset;
+        if (remainSize > 0) {
+            memmove(buf.get(), buf.get() + offset, remainSize);
         }
     }
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
+}
+
+bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buf, size_t totalAvail,
+    size_t& offset, uint64_t& readfileSize)
+{
+    constexpr size_t READ_BUF_SIZE = 4 * 1024 * 1024;
+    constexpr size_t maxRecordSize = READ_BUF_SIZE - sizeof(uint32_t);
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    while (offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        memcpy(&totalSize, buf + offset, sizeof(uint32_t));
+        if (totalSize == 0 || totalSize > maxRecordSize) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile invalid totalSize=%u.", totalSize);
+            return false;
+        }
+        if (offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buf + offset + sizeof(uint32_t));
+        readfileSize += sizeof(uint32_t) + totalSize;
+        offset += sizeof(uint32_t) + totalSize;
+        if (!ProcessRawData(dataPtr, totalSize, rawData, hookRecord)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile process data failed.");
+            return false;
+        }
+    }
+    return true;
 }
 
 void StackPreprocess::InitializeDirector()
@@ -518,7 +540,7 @@ bool StackPreprocess::ValidateAndPrepareData(const int8_t data[], uint32_t size,
                                              RawStackPtr& rawData)
 {
     CHECK_TRUE(size >= sizeof(BaseStackRawData), false, "stack data invalid!");
-    hookRecord = factory_->GetHookRecord(data, size, false);
+    hookRecord = factory_->GetHookRecord(data, size);
     CHECK_NOTNULL(hookRecord, false, "hookRecord invalid!");
     rawData = hookRecord->GetRawStack();
     return true;

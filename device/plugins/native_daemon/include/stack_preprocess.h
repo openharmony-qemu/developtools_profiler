@@ -169,6 +169,8 @@ public:
         std::vector<CallFrame>& callFrames);
     void TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&, const std::shared_ptr<ShareMemoryBlock>&);
     void TakeResultsFromCacheFile(int fd);
+    bool ParseRecordsFromBuffer(uint8_t* buf, size_t totalAvail,
+        size_t& offset, uint64_t& readfileSize);
     void InitializeDirector();
 #ifdef NATIVE_DAEMON_UNITTEST
     static std::shared_ptr<BuildStackDirector> GetDirectorForTest();

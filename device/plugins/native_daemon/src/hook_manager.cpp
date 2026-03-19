@@ -1101,51 +1101,71 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     }
 }
 
+bool HookManager::ParseCacheRecords(const std::shared_ptr<HookManagerCtx>& hookCtx,
+    uint8_t* buf, size_t totalAvail, size_t& offset, uint64_t& readfileSize, size_t maxRecordSize)
+{
+    while (offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        memcpy(&totalSize, buf + offset, sizeof(uint32_t));
+        if (totalSize == 0 || totalSize > static_cast<uint32_t>(maxRecordSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile invalid totalSize=%u.", totalSize);
+            return false;
+        }
+        if (offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buf + offset + sizeof(uint32_t));
+        readfileSize += sizeof(uint32_t) + totalSize;
+        offset += sizeof(uint32_t) + totalSize;
+        std::shared_ptr<HookRecord> hookRecord = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
+            return false;
+        }
+        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
         hookCtx->stackPreprocess->SetIsStopTakeData(true);
         return;
     }
+    constexpr size_t BUF_SIZE = 4 * 1024 * 1024;
+    constexpr size_t MAX_RECORD_SIZE = BUF_SIZE - sizeof(uint32_t);
+    auto buf = std::make_unique<uint8_t[]>(BUF_SIZE);
     uint64_t readfileSize = 0;
     bool ret = false;
+    size_t remainSize = 0;
     lseek(fd, 0, SEEK_SET);
     while (true) {
-        uint32_t totalSize = 0;
-        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
-        if (readBytes < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+        ssize_t bytesRead = read(fd, buf.get() + remainSize, BUF_SIZE - remainSize);
+        if (bytesRead < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed errno=%d.", errno);
             break;
         }
-        if (readBytes == 0) {
+        if (bytesRead == 0 && remainSize == 0) {
             PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile read end of file.");
             ret = true;
             break;
         }
-        if (readBytes != sizeof(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read invalid totalSize=%zd.", readBytes);
+        if (bytesRead == 0 && remainSize > 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile truncated data, remain=%zu.", remainSize);
             break;
         }
-        readfileSize += sizeof(totalSize);
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile invalid totalSize=%u.", totalSize);
-            break;
-        }
-        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
-        readBytes = read(fd, buffer.get(), totalSize);
-        if (readBytes != static_cast<ssize_t>(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read data failed.");
-            break;
-        }
-        readfileSize += totalSize;
-        std::shared_ptr<HookRecord> hookRecord = nullptr;
-        std::shared_ptr<RawStack> rawStack = nullptr;
-        ret = TakeDataHandler(hookCtx, hookRecord, rawStack, reinterpret_cast<const int8_t*>(buffer.get()), totalSize);
+        size_t totalAvail = remainSize + static_cast<size_t>(bytesRead);
+        size_t offset = 0;
+        ret = ParseCacheRecords(hookCtx, buf.get(), totalAvail, offset, readfileSize, MAX_RECORD_SIZE);
         if (!ret) {
             break;
         }
-        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
-            break;
+        remainSize = totalAvail - offset;
+        if (remainSize > 0) {
+            memmove(buf.get(), buf.get() + offset, remainSize);
         }
     }
     close(fd);
