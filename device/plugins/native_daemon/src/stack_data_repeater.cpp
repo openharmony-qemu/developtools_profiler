@@ -149,10 +149,10 @@ HookRecordPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId,
         hookData = rawDataQueue_.front();
         rawDataQueue_.pop_front();
         batchRawStack[i] = hookData;
-        rawStack = hookData->GetRawStack();
         if ((hookData != nullptr) && (hookData->GetType() == MALLOC_MSG)) {
             mallocMap_.erase(hookData->GetAddr());
-            if (needReduceStack) {
+            rawStack = hookData->GetRawStack();
+            if (needReduceStack && rawStack != nullptr) {
                 rawStack->reduceStackFlag = true;
                 reducedStackCount_++;
             }
