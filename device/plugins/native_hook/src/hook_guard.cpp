@@ -135,29 +135,28 @@ int CalculateRealSize(int fpStackDepth, bool isAsyncStack)
 uint16_t GetPredefinedTagId(unsigned long long mask)
 {
     static std::unordered_map<unsigned long long, uint16_t> g_maskTagMap = {
-        {RES_GPU_VK,            static_cast<uint16_t>(GPU_VK_INDEX + 1)},
-        {RES_GPU_GLES_IMAGE,    static_cast<uint16_t>(GPU_GLES_IMAGE_INDEX + 1)},
-        {RES_GPU_GLES_BUFFER,   static_cast<uint16_t>(GPU_GLES_BUFFER_INDEX + 1)},
-        {RES_GPU_CL_IMAGE,      static_cast<uint16_t>(GPU_CL_IMAGE_INDEX + 1)},
-        {RES_GPU_CL_BUFFER,     static_cast<uint16_t>(GPU_CL_BUFFER_INDEX + 1)},
-        {RES_FD_OPEN,           static_cast<uint16_t>(FD_OPEN_INDEX + 1)},
-        {RES_FD_EPOLL,          static_cast<uint16_t>(FD_EPOLL_INDEX + 1)},
-        {RES_FD_EVENTFD,        static_cast<uint16_t>(FD_EVENTFD_INDEX + 1)},
-        {RES_FD_SOCKET,         static_cast<uint16_t>(FD_SOCKET_INDEX + 1)},
-        {RES_FD_PIPE,           static_cast<uint16_t>(FD_PIPE_INDEX + 1)},
-        {RES_FD_DUP,            static_cast<uint16_t>(FD_DUP_INDEX + 1)},
-        {RES_FD_MASK,           static_cast<uint16_t>(FD_MASK_INDEX + 1)},
-        {RES_THREAD_PTHREAD,    static_cast<uint16_t>(THREAD_PTHREAD_INDEX + 1)},
-        {RES_THREAD_MASK,       static_cast<uint16_t>(THREAD_MASK_INDEX + 1)},
-        {RES_JS_HEAP_MASK,      static_cast<uint16_t>(JS_HEAP_MASK_INDEX + 1)},
-        {RES_ARKTS_HEAP_MASK,   static_cast<uint16_t>(ARKTS_HEAP_MASK_INDEX + 1)},
-        {RES_KMP_HEAP_MASK,     static_cast<uint16_t>(KMP_HEAP_MASK_INDEX + 1)},
-        {RES_RN_HEAP_MASK,      static_cast<uint16_t>(RN_HEAP_MASK_INDEX + 1)},
-        {RES_DMABUF_MASK,       static_cast<uint16_t>(DMABUF_MASK_INDEX + 1)},
+        {RES_GPU_VK, static_cast<uint16_t>(GPU_VK_INDEX + 1)},
+        {RES_GPU_GLES_IMAGE, static_cast<uint16_t>(GPU_GLES_IMAGE_INDEX + 1)},
+        {RES_GPU_GLES_BUFFER, static_cast<uint16_t>(GPU_GLES_BUFFER_INDEX + 1)},
+        {RES_GPU_CL_IMAGE, static_cast<uint16_t>(GPU_CL_IMAGE_INDEX + 1)},
+        {RES_GPU_CL_BUFFER, static_cast<uint16_t>(GPU_CL_BUFFER_INDEX + 1)},
+        {RES_FD_OPEN, static_cast<uint16_t>(FD_OPEN_INDEX + 1)},
+        {RES_FD_EPOLL, static_cast<uint16_t>(FD_EPOLL_INDEX + 1)},
+        {RES_FD_EVENTFD, static_cast<uint16_t>(FD_EVENTFD_INDEX + 1)},
+        {RES_FD_SOCKET, static_cast<uint16_t>(FD_SOCKET_INDEX + 1)},
+        {RES_FD_PIPE, static_cast<uint16_t>(FD_PIPE_INDEX + 1)},
+        {RES_FD_DUP, static_cast<uint16_t>(FD_DUP_INDEX + 1)},
+        {RES_FD_MASK, static_cast<uint16_t>(FD_MASK_INDEX + 1)},
+        {RES_THREAD_PTHREAD, static_cast<uint16_t>(THREAD_PTHREAD_INDEX + 1)},
+        {RES_THREAD_MASK, static_cast<uint16_t>(THREAD_MASK_INDEX + 1)},
+        {RES_JS_HEAP_MASK, static_cast<uint16_t>(JS_HEAP_MASK_INDEX + 1)},
+        {RES_ARKTS_HEAP_MASK, static_cast<uint16_t>(ARKTS_HEAP_MASK_INDEX + 1)},
+        {RES_KOTLIN_HEAP_MASK, static_cast<uint16_t>(KOTLIN_HEAP_MASK_INDEX + 1)},
+        {RES_RN_HEAP_MASK, static_cast<uint16_t>(RN_HEAP_MASK_INDEX + 1)},
+        {RES_DMABUF_MASK, static_cast<uint16_t>(DMABUF_MASK_INDEX + 1)},
         {RES_ARK_GLOBAL_HANDLE, static_cast<uint16_t>(ARK_GLOBAL_HANDLE_INDEX + 1)},
-        {RES_ARK_LOCAL_HANDLE,  static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)},
-        {RES_VMA_ARKWEB,        static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)}
-    };
+        {RES_ARK_LOCAL_HANDLE, static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)},
+        {RES_VMA_ARKWEB, static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)}};
     auto it = g_maskTagMap.find(mask);
     return it != g_maskTagMap.end() ? it->second : 0;
 }

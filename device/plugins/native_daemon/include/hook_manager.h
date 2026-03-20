@@ -176,7 +176,7 @@ private:
     unsigned long long traceMask_ = 0;
     bool saMode_ = false;
     bool CheckProcess();
-    unsigned long long ConvertTagToMask();
+    unsigned long long ConvertTagToMask() const;
     bool CheckProcessName();
     void CheckHapEncryped();
     void UpdateAsyncFlagConfig();

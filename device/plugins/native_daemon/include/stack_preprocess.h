@@ -293,6 +293,7 @@ private:
     bool SetFreeStatisticsData(uint64_t addr);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    bool ResolveTagType(const std::string& tagName, RecordStatistic& record);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     void HandleDeleteAddr(uint64_t addr, size_t size);
     std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
