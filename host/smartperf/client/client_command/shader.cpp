@@ -69,7 +69,7 @@ std::string Shader::ReadFileContent(const std::string& path)
         return "";
     }
     file.seekg(lastSize_);
-    while(std::getline(file, line)) {
+    while (std::getline(file, line)) {
         content = line;
     }
     lastSize_ = curSize;
