@@ -27,6 +27,7 @@ auto_generated_cpp_sources = [
   "ftrace_ftrace_event_parser.cpp",
   "ftrace_gpio_event_parser.cpp",
   "ftrace_gpu_mem_event_parser.cpp",
+  "ftrace_hmfs_event_parser.cpp",
   "ftrace_i2c_event_parser.cpp",
   "ftrace_ipi_event_parser.cpp",
   "ftrace_irq_event_parser.cpp",

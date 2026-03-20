@@ -27,6 +27,7 @@ auto_generated_cpp_sources = [
   "ftrace_ftrace_event_formatter.cpp",
   "ftrace_gpio_event_formatter.cpp",
   "ftrace_gpu_mem_event_formatter.cpp",
+  "ftrace_hmfs_event_formatter.cpp",
   "ftrace_i2c_event_formatter.cpp",
   "ftrace_ipi_event_formatter.cpp",
   "ftrace_irq_event_formatter.cpp",

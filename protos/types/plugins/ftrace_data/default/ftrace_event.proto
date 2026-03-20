@@ -31,6 +31,7 @@ import "filemap.proto";
 import "ftrace.proto";
 import "gpio.proto";
 import "gpu_mem.proto";
+import "hmfs.proto";
 import "i2c.proto";
 import "ipi.proto";
 import "irq.proto";
@@ -478,5 +479,9 @@ message FtraceEvent {
         RegulatorEnableFormat regulator_enable_format = 4023;
         RegulatorEnableCompleteFormat regulator_enable_complete_format = 4024;
         RegulatorEnableDelayFormat regulator_enable_delay_format = 4025;
+        HmfsReadEnterFormat hmfs_read_enter_format = 4026;
+        HmfsReadExitFormat hmfs_read_exit_format = 4027;
+        HmfsWriteEnterFormat hmfs_write_enter_format = 4028;
+        HmfsWriteExitFormat hmfs_write_exit_format = 4029;
     }
 }
