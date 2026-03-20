@@ -41,7 +41,7 @@ std::string Shader::GetShaderReportPath() const
     if (pkgName_.empty()) {
         return "";
     }
-    return "/data/el1/100/system_optimize/" + pkgName_ + "/shader_cache/shader_dfx";
+    return "/data/app/el1/100/system_optimize/" + pkgName_ + "/shader_cache/shader_dfx";
 }
 
 std::string Shader::ReadFileContent(const std::string& path)
