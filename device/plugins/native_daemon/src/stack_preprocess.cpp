@@ -372,7 +372,7 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
 void StackPreprocess::TakeResultsFromCacheFile(int fd)
 {
     if (fd < 0) {
-        SetIsStopTakeData(true);
+        PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile parse all cache file done.");
         return;
     }
     RawStackPtr rawData = nullptr;
@@ -542,7 +542,8 @@ bool StackPreprocess::ProcessNmdMsg(RawStackPtr& rawData)
 bool StackPreprocess::ProcessEndMsg()
 {
     if (hookConfig_.use_file_cache_mode()) {
-        isStopTakeData_ = true;
+        PROFILER_LOG_INFO(LOG_CORE, "Received END_MSG, stopping cache file data collection");
+        SetIsStopTakeData(true);
         return false;
     }
     endMsgCount_++;

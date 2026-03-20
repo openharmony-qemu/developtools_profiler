@@ -1104,7 +1104,7 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
-        hookCtx->stackPreprocess->SetIsStopTakeData(true);
+        PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile parse all cache file done.");
         return;
     }
     uint64_t readfileSize = 0;

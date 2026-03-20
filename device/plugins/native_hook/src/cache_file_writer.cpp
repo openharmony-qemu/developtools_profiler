@@ -109,7 +109,6 @@ void CacheFileWriter::SetCacheFileWriterEnd()
 {
     std::lock_guard<std::mutex> lock(writeMutex_);
     isCacheFileEnded_ = true;
-    NotifyFileEvent(currentFileIndex_, CACHE_FILE_STOP);
 }
 
 void CacheFileWriter::WriteToMemoryCache(const void* data, size_t size)
@@ -202,6 +201,7 @@ bool CacheFileWriter::FlushMemoryCacheToFile()
         fsync(currentFileFd_);
         // Notify native_daemon that file is ready to read
         NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY);
+        NotifyFileEvent(currentFileIndex_, CACHE_FILE_STOP);
         memoryCache_.clear();
         return true;
     }
