@@ -288,6 +288,27 @@ export namespace hidebug {
 
   export native function stopAppTraceCapture(): void;
 
+  export interface RequestTraceConfig {
+    identifier: string;
+    bufferSizeKb: int;
+    durationMs: int;
+    reserved: int;
+  }
+
+  native function requestTraceAdapter(config: RequestTraceConfig): string;
+
+  export function requestTrace(config: RequestTraceConfig): Promise<string> {
+    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
+      taskpool.execute(() => {
+        return requestTraceAdapter(config);
+      }).then((ret: Any): void => {
+        resolve(ret as string);
+      }).catch((err: Object | null | undefined) => {
+        reject(err as BusinessError);
+      });
+    });
+  }
+
   export native function isDebugState(): boolean;
 
   export function getGraphicsMemory(): Promise<int> {

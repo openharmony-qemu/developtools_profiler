@@ -14,9 +14,12 @@
  */
 
 #include <algorithm>
+#include <chrono>
 #include <codecvt>
+#include <condition_variable>
 #include <string>
 #include <malloc.h>
+#include <mutex>
 #include <parameters.h>
 #include "ani_util.h"
 #include "application_context.h"
@@ -45,8 +48,30 @@ namespace {
 #define LOG_TAG "HiDebug_ANI"
 constexpr int BYTE_2_KB_SHIFT_BITS = 10;
 constexpr int MAX_TAGS_ARRAY_LENGTH = 40;
+constexpr int MAX_WAIT_TIME_SECOND = 30; // 30s
 constexpr auto SLASH_STR = "/";
 constexpr auto JSON_FILE = ".json";
+
+constexpr std::pair<TraceErrorCode, const char*> TraceErrorCodeMap[] = {
+    {TraceErrorCode::TRACE_INVALID_ARGUMENT, "Invalid parameter."},
+    {TraceErrorCode::TRACE_ABNORMAL, "Remote service exception."},
+    {TraceErrorCode::TRACE_STORAGE_LIMIT, "Trace storage limit reached."},
+    {TraceErrorCode::RESOURCE_UNAVAILABLE, "Resource unavailable."},
+};
+
+bool ResolveTraceErrorCode(ani_env *env, const TraceErrorCode errCode)
+{
+    if (errCode == TraceErrorCode::TRACE_SUCCESS) {
+        return true;
+    }
+    for (const auto &[code, msg] : TraceErrorCodeMap) {
+        if (code == errCode) {
+            AniUtil::ThrowErrorMessage(env, msg, errCode);
+            return false;
+        }
+    }
+    return false;
+}
 
 std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
 {
@@ -124,6 +149,54 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
         }
         tags.push_back(static_cast<uint64_t>(longValue));
     }
+    return true;
+}
+
+bool GetTraceParam(ani_env *env, ani_object configAni, std::string &identifier, uint32_t &bufferSize, uint32_t &duration)
+{
+    ani_ref identifierRef = nullptr;
+    if (env->Object_GetPropertyByName_Ref(configAni, "identifier", &identifierRef) != ANI_OK ||
+        AniUtil::ParseAniString(env, static_cast<ani_string>(identifierRef), identifier) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
+        return false;
+    }
+
+    ani_ref bufferSizeRef = nullptr;
+    ani_int bufferSizeAni = 0;
+    if (env->Object_GetPropertyByName_Ref(configAni, "bufferSizeKb", &bufferSizeRef) != ANI_OK ||
+        env->Object_CallMethodByName_Int(static_cast<ani_object>(bufferSizeRef),
+            "toInt", ":i", &bufferSizeAni) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Get input bufferSize failed.");
+        return false;
+    }
+    if (bufferSizeAni < 0) {
+        HILOG_ERROR(LOG_CORE, "bufferSize should not be negative.");
+        return false;
+    }
+
+    ani_ref durationRef = nullptr;
+    ani_int durationAni = 0;
+    if (env->Object_GetPropertyByName_Ref(configAni, "durationMs", &durationRef) != ANI_OK ||
+        env->Object_CallMethodByName_Int(static_cast<ani_object>(durationRef),
+            "toInt", ":i", &durationAni) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Get input duration failed.");
+        return false;
+    }
+    if (durationAni < 0) {
+        HILOG_ERROR(LOG_CORE, "duration should not be negative.");
+        return false;
+    }
+
+    ani_ref reservedRef = nullptr;
+    ani_int reservedAni = 0;
+    if (env->Object_GetPropertyByName_Ref(configAni, "reserved", &reservedRef) != ANI_OK ||
+        env->Object_CallMethodByName_Int(static_cast<ani_object>(reservedRef),
+            "toInt", ":i", &reservedAni) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Check reserved type failed.");
+        return false;
+    }
+    bufferSize = static_cast<uint32_t>(bufferSizeAni);
+    duration = static_cast<uint32_t>(durationAni);
     return true;
 }
 
@@ -381,6 +454,50 @@ void StopAppTraceCapture(ani_env *env)
         AniUtil::ThrowErrorMessage(env, errorMessage, ErrorCode::NO_CAPTURE_TRACE_RUNNING);
         return;
     }
+}
+
+ani_string RequestTraceAdapter(ani_env *env, ani_object configAni)
+{
+    ApiInvokeRecorder apiInvokeRecorder("requestTrace");
+    std::string identifier;
+    uint32_t bufferSize = 0;
+    uint32_t duration = 0;
+    if (!GetTraceParam(env, configAni, identifier, bufferSize, duration)) {
+        apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
+        AniUtil::ThrowErrorMessage(env, "Invalid parameter.", ErrorCode::PARAMETER_ERROR);
+        return nullptr;
+    }
+    std::mutex mutex;
+    std::condition_variable cond;
+    bool hasFinished = false;
+    std::string tracePath;
+    auto task = [&mutex, &cond, &hasFinished, &tracePath](TraceErrorCode, const std::string& path) {
+        {
+            std::lock_guard<std::mutex> lock(mutex);
+            tracePath = path;
+            hasFinished = true;
+        }
+        cond.notify_all();
+    };
+    TraceErrorCode retCode = HidebugNativeInterface::GetInstance().RequestTrace(identifier, bufferSize, duration, task);
+    if (retCode == TraceErrorCode::TRACE_SUCCESS) {
+        std::unique_lock<std::mutex> lock(mutex);
+        bool waitRet = cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] { return hasFinished; });
+        if (!waitRet) {
+            retCode = TraceErrorCode::TRACE_ABNORMAL;
+            HILOG_ERROR(LOG_CORE, "wait callback timeout");
+        }
+    }
+    if (!ResolveTraceErrorCode(env, retCode)) {
+        apiInvokeRecorder.SetErrorCode(retCode);
+        return nullptr;
+    }
+    ani_string retValue = nullptr;
+    if (env->String_NewUTF8(tracePath.c_str(), tracePath.size(), &retValue) != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Create requestTrace return string failed.");
+        return nullptr;
+    }
+    return retValue;
 }
 
 ani_object GetGraphicsMemoryAdapter(ani_env *env, ani_int interval)
@@ -776,6 +893,8 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"startAppTraceCapture",
             "C{std.core.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
+        ani_native_function {"requestTraceAdapter", "C{@ohos.hidebug.hidebug.RequestTraceConfig}:C{std.core.String}",
+            reinterpret_cast<void *>(RequestTraceAdapter)},
         ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
         ani_native_function {"startJsCpuProfiling", "C{std.core.String}:",
