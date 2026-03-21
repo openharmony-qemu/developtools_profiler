@@ -17,6 +17,7 @@
 #define NATIVE_MEMORY_PROFILER_SA_CONFIG_H
 
 #include "parcel.h"
+#include <vector>
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -52,6 +53,8 @@ public:
     bool startupMode_{false};
     bool memtraceEnable_{false};
     bool asyncStackEnable_{false};
+    std::vector<int32_t> asyncType_;
+
     uint64_t traceMask_{0};
     std::vector<std::vector<uint64_t>> gpuRange_ {GPU_TYPE_SIZE, std::vector<uint64_t>(GPU_RANGE_SIZE * 2, 0)};
     bool offlineSymbolization_{true};

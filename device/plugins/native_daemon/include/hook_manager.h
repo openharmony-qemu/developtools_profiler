@@ -181,6 +181,7 @@ private:
     void CheckHapEncryped();
     void UpdateAsyncFlagConfig();
     uint64_t MergeAsyncFlagMaskFromEnum(uint64_t baseMask);
+    void SetAsyncTypeFromConfig(const std::vector<int32_t>& asyncType);
     void SetHookData(HookContext& hookContext, struct timespec ts,
         std::vector<OHOS::Developtools::NativeDaemon::CallFrame>& callFrames,
         BatchNativeHookDataPtr& batchNativeHookData);

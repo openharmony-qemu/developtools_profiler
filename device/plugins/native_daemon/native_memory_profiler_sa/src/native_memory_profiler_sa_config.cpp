@@ -19,6 +19,35 @@
 #include <vector>
 namespace OHOS::Developtools::NativeDaemon {
 
+static bool WriteAsyncType(Parcel& parcel, const std::vector<int32_t>& asyncType)
+{
+    uint32_t size = static_cast<uint32_t>(asyncType.size());
+    WRITEUINT32(parcel, size);
+    for (const auto& val : asyncType) {
+        WRITEINT32(parcel, val);
+    }
+    return true;
+}
+
+static bool ReadAsyncType(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config)
+{
+    uint32_t size = 0;
+    READUINT32(parcel, size);
+    const uint32_t MAX_ASYNC_TYPE_SIZE = 16;
+    if (size > MAX_ASYNC_TYPE_SIZE) {
+        PROFILER_LOG_ERROR(LOG_CORE, "ReadAsyncType size too large: %u", size);
+        return false;
+    }
+    std::vector<int32_t> asyncType;
+    for (uint32_t i = 0; i < size; i++) {
+        int32_t val = 0;
+        READINT32(parcel, val);
+        asyncType.push_back(val);
+    }
+    config->asyncType_ = std::move(asyncType);
+    return true;
+}
+
 static bool WriteGpuRange(Parcel& parcel, const std::vector<std::vector<uint64_t>>& gpuRange)
 {
     for (size_t i = 0; i < gpuRange.size(); i++) {
@@ -67,6 +96,9 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEBOOL(parcel, startupMode_);
     WRITEBOOL(parcel, memtraceEnable_);
     WRITEBOOL(parcel, asyncStackEnable_);
+    if (!WriteAsyncType(parcel, asyncType_)) {
+        return false;
+    }
     WRITEUINT64(parcel, traceMask_);
     WriteGpuRange(parcel, gpuRange_);
     WRITEBOOL(parcel, offlineSymbolization_);
@@ -124,6 +156,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->startupMode_);
     READBOOL(parcel, config->memtraceEnable_);
     READBOOL(parcel, config->asyncStackEnable_);
+    if (!ReadAsyncType(parcel, config)) {
+        return false;
+    }
     READUINT64(parcel, config->traceMask_);
     ReadGpuRange(parcel, config);
     READBOOL(parcel, config->offlineSymbolization_);
@@ -177,6 +212,14 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         "statisticsInterval: %d, clockId: %d, targetSoName: %s",
         config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_, config->offlineSymbolization_,
         config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());
+    std::string asyncTypeStr;
+    for (size_t i = 0; i < config->asyncType_.size(); i++) {
+        if (i > 0) {
+            asyncTypeStr += ",";
+        }
+        asyncTypeStr += std::to_string(config->asyncType_[i]);
+    }
+    PROFILER_LOG_DEBUG(LOG_CORE, "asyncType: [%s]", asyncTypeStr.c_str());
     PROFILER_LOG_DEBUG(LOG_CORE,
         "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());

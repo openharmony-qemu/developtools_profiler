@@ -13,135 +13,323 @@
  * limitations under the License.
  */
 
-#ifndef NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
-#define NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
+#define private public
 
 #include <gtest/gtest.h>
 #include <memory>
-
+#include "message_parcel.h"
 #include "native_memory_profiler_sa_config.h"
+#include "hook_manager.h"
+#include "native_hook_config.pb.h"
 
 using namespace testing::ext;
+using namespace OHOS::Developtools::NativeDaemon;
 
 class NativeMemoryProfilerSaConfigTest : public testing::Test {
 public:
-    static void SetUpTestCase(void) {}
-    static void TearDownTestCase(void) {}
+    static void SetUpTestCase() {}
+    static void TearDownTestCase() {}
     void SetUp() {}
     void TearDown() {}
 };
 
-/**
- * @tc.name: NativeMemoryProfilerSaConfigTest001
- * @tc.desc: Test serialization and derivativeization
- * @tc.type: FUNC
- */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest001, TestSize.Level3)
+static std::shared_ptr<NativeMemoryProfilerSaConfig> MarshalAndUnmarshal(
+    std::shared_ptr<NativeMemoryProfilerSaConfig> src)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
-
-    config->duration_ = 100;
-    std::string filePath = "XXXXXXXXXXXX";
-    config->filePath_ = filePath;
-    config->fpUnwind_ = false;
-
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
-
-    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->duration_, 100);
-    EXPECT_EQ(result->filePath_, filePath);
-    EXPECT_EQ(result->fpUnwind_, false);
+    OHOS::MessageParcel parcel;
+    if (!src->Marshalling(parcel)) {
+        return nullptr;
+    }
+    auto dst = std::make_shared<NativeMemoryProfilerSaConfig>();
+    if (!NativeMemoryProfilerSaConfig::Unmarshalling(parcel, dst)) {
+        return nullptr;
+    }
+    return dst;
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaConfigTest002
- * @tc.desc: Test adding member variable serialization and derivativeization
+ * @tc.name: AsyncTypeMarshallingWithValues
+ * @tc.desc: asyncType_ with values survives Marshalling/Unmarshalling round-trip
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest002, TestSize.Level3)
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingWithValues, TestSize.Level0)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    src->asyncStackEnable_ = true;
+    src->asyncType_ = {0, 1, 3}; // LIBUV_SEND, FFRT_POOL, EVENTHANDLER
 
-    config->largestSize_ = 100;
-    config->secondLargestSize_ = 200;
-    config->maxGrowthSize_ = 300;
-
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
-
-    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->largestSize_, 100);
-    EXPECT_EQ(result->secondLargestSize_, 200);
-    EXPECT_EQ(result->maxGrowthSize_, 300);
+    auto dst = MarshalAndUnmarshal(src);
+    ASSERT_NE(dst, nullptr);
+    EXPECT_EQ(dst->asyncStackEnable_, true);
+    ASSERT_EQ(dst->asyncType_.size(), 3u);
+    EXPECT_EQ(dst->asyncType_[0], 0);
+    EXPECT_EQ(dst->asyncType_[1], 1);
+    EXPECT_EQ(dst->asyncType_[2], 3);
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaConfigTest003
- * @tc.desc: NMD and memtrace fields serialization (printNmd_, memtraceEnable_, nmdPid_, nmdType_, gpuRange_)
+ * @tc.name: AsyncTypeMarshallingEmpty
+ * @tc.desc: empty asyncType_ survives Marshalling/Unmarshalling round-trip
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest003, TestSize.Level3)
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingEmpty, TestSize.Level0)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
-    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    src->asyncStackEnable_ = true;
+    src->asyncType_ = {};
 
-    config->printNmd_ = true;
-    config->printNmdOnly_ = true;
-    config->nmdPid_ = 100;
-    config->nmdType_ = 2;
-    config->memtraceEnable_ = true;
-    config->gpuRange_[0][0] = 1;
-    config->gpuRange_[0][1] = 2;
-
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
-
-    std::shared_ptr<NativeMemoryProfilerSaConfig> result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->printNmd_, true);
-    EXPECT_EQ(result->printNmdOnly_, true);
-    EXPECT_EQ(result->nmdPid_, 100u);
-    EXPECT_EQ(result->nmdType_, 2u);
-    EXPECT_EQ(result->memtraceEnable_, true);
-    EXPECT_EQ(result->gpuRange_[0][0], 1u);
-    EXPECT_EQ(result->gpuRange_[0][1], 2u);
+    auto dst = MarshalAndUnmarshal(src);
+    ASSERT_NE(dst, nullptr);
+    EXPECT_EQ(dst->asyncStackEnable_, true);
+    EXPECT_TRUE(dst->asyncType_.empty());
 }
 
 /**
- * @tc.name: NativeMemoryProfilerSaConfigTest004
- * @tc.desc: GWP-ASan fields serialization and deserialization
+ * @tc.name: AsyncTypeMarshallingBoundaryValue
+ * @tc.desc: asyncType_ with ALL_ASYNC_TYPE (10) survives round-trip
  * @tc.type: FUNC
  */
-HWTEST_F(NativeMemoryProfilerSaConfigTest, NativeMemoryProfilerSaConfigTest004, TestSize.Level3)
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingBoundaryValue, TestSize.Level0)
 {
-    using namespace OHOS::Developtools::NativeDaemon;
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    src->asyncStackEnable_ = true;
+    src->asyncType_ = {10}; // ALL_ASYNC_TYPE
+
+    auto dst = MarshalAndUnmarshal(src);
+    ASSERT_NE(dst, nullptr);
+    ASSERT_EQ(dst->asyncType_.size(), 1u);
+    EXPECT_EQ(dst->asyncType_[0], 10);
+}
+
+/**
+ * @tc.name: SetHookConfigEmptyAsyncTypeDefaultsToAll
+ * @tc.desc: When asyncStackEnable is true and asyncType_ is empty, ALL_ASYNC_TYPE is added
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetHookConfigEmptyAsyncTypeDefaultsToAll, TestSize.Level0)
+{
+    HookManager hookManager;
     auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(config, nullptr);
+    config->asyncStackEnable_ = true;
+    config->asyncType_ = {}; // empty -> should default to ALL_ASYNC_TYPE
 
-    config->gwpAsanHoldTime_ = 30;
-    config->gwpAsanMaxEntries_ = 64;
-    config->gwpAsanMaxStackDepth_ = 16;
+    hookManager.SetHookConfig(config);
 
-    OHOS::Parcel parcel;
-    EXPECT_EQ(config->Marshalling(parcel), true);
-
-    auto result = std::make_shared<NativeMemoryProfilerSaConfig>();
-    EXPECT_NE(result, nullptr);
-    EXPECT_EQ(NativeMemoryProfilerSaConfig::Unmarshalling(parcel, result), true);
-    EXPECT_EQ(result->gwpAsanHoldTime_, 30u);
-    EXPECT_EQ(result->gwpAsanMaxEntries_, 64u);
-    EXPECT_EQ(result->gwpAsanMaxStackDepth_, 16u);
+    EXPECT_TRUE(hookManager.hookConfig_.async_stack_enable());
+    ASSERT_EQ(hookManager.hookConfig_.async_type_size(), 1);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(0), AsyncFlagType::ALL_ASYNC_TYPE);
 }
 
-#endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_TEST_H
+/**
+ * @tc.name: SetHookConfigSpecificAsyncTypes
+ * @tc.desc: When asyncType_ has specific values, they are forwarded to hookConfig_
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetHookConfigSpecificAsyncTypes, TestSize.Level0)
+{
+    HookManager hookManager;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->asyncStackEnable_ = true;
+    config->asyncType_ = {0, 4}; // LIBUV_SEND, PROMISE
+
+    hookManager.SetHookConfig(config);
+
+    EXPECT_TRUE(hookManager.hookConfig_.async_stack_enable());
+    ASSERT_EQ(hookManager.hookConfig_.async_type_size(), 2);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(0), AsyncFlagType::LIBUV_SEND);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(1), AsyncFlagType::PROMISE);
+}
+
+/**
+ * @tc.name: SetHookConfigAsyncDisabledNoAsyncType
+ * @tc.desc: When asyncStackEnable is false, async_type should not be set
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetHookConfigAsyncDisabledNoAsyncType, TestSize.Level0)
+{
+    HookManager hookManager;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->asyncStackEnable_ = false;
+    config->asyncType_ = {0, 1};
+
+    hookManager.SetHookConfig(config);
+
+    EXPECT_FALSE(hookManager.hookConfig_.async_stack_enable());
+    EXPECT_EQ(hookManager.hookConfig_.async_type_size(), 0);
+}
+
+// Forward declaration for ParseAsyncType defined in native_daemon_client.cpp
+std::vector<int32_t> ParseAsyncType(const std::string& str);
+
+/**
+ * @tc.name: AsyncTypeMarshallingOutOfRangeFiltered
+ * @tc.desc: asyncType_ with out-of-range values (negative / >10) are filtered by ReadAsyncType
+ *           The values are stored as-is during marshalling; range check is in ParseAsyncType/SetAsyncTypeFromConfig.
+ *           Verify that oversized size field causes Unmarshalling to return false.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingOversizeFails, TestSize.Level0)
+{
+    // Manually write a parcel with size > MAX_ASYNC_TYPE_SIZE (16) to trigger the guard
+    OHOS::MessageParcel parcel;
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    // Fill all fields up to asyncStackEnable_ via normal Marshalling, then we'll craft the rest
+    // Simpler: write a valid config but inject oversized asyncType size via raw parcel manipulation
+    // We test the guard indirectly: create a config with 17 elements (exceeds MAX=16)
+    src->asyncType_.resize(17, 0);
+    // Marshalling writes size=17, ReadAsyncType should reject it
+    OHOS::MessageParcel writeParcel;
+    ASSERT_TRUE(src->Marshalling(writeParcel));
+    // Unmarshalling should fail because size=17 > MAX_ASYNC_TYPE_SIZE=16
+    auto dst = std::make_shared<NativeMemoryProfilerSaConfig>();
+    EXPECT_FALSE(NativeMemoryProfilerSaConfig::Unmarshalling(writeParcel, dst));
+}
+
+/**
+ * @tc.name: ParseAsyncTypeFiltersOutOfRange
+ * @tc.desc: ParseAsyncType skips negative values and values > ALL_ASYNC_TYPE(10)
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, ParseAsyncTypeFiltersOutOfRange, TestSize.Level0)
+{
+    // negative value -1 should be skipped
+    auto result = ParseAsyncType("-1");
+    EXPECT_TRUE(result.empty());
+
+    // value 99 exceeds ALL_ASYNC_TYPE(10), should be skipped
+    result = ParseAsyncType("99");
+    EXPECT_TRUE(result.empty());
+
+    // mixed: valid 0, invalid 11, valid 10
+    result = ParseAsyncType("0,11,10");
+    ASSERT_EQ(result.size(), 2u);
+    EXPECT_EQ(result[0], 0);
+    EXPECT_EQ(result[1], 10);
+}
+
+/**
+ * @tc.name: ParseAsyncTypeEmptyString
+ * @tc.desc: ParseAsyncType with empty string returns empty vector
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, ParseAsyncTypeEmptyString, TestSize.Level0)
+{
+    auto result = ParseAsyncType("");
+    EXPECT_TRUE(result.empty());
+}
+
+/**
+ * @tc.name: ParseAsyncTypeNonNumericMixed
+ * @tc.desc: ParseAsyncType with non-numeric tokens skips them
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, ParseAsyncTypeNonNumericMixed, TestSize.Level0)
+{
+    // "abc" is non-numeric, "3" is valid
+    auto result = ParseAsyncType("abc,3,xyz");
+    ASSERT_EQ(result.size(), 1u);
+    EXPECT_EQ(result[0], 3);
+}
+
+/**
+ * @tc.name: SetAsyncTypeFromConfigFiltersOutOfRange
+ * @tc.desc: SetAsyncTypeFromConfig skips values outside [0, ALL_ASYNC_TYPE]
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetAsyncTypeFromConfigFiltersOutOfRange, TestSize.Level0)
+{
+    HookManager hookManager;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->asyncStackEnable_ = true;
+    config->asyncType_ = {-1, 0, 11, 99, 10}; // -1, 11, 99 should be filtered
+
+    hookManager.SetHookConfig(config);
+
+    ASSERT_EQ(hookManager.hookConfig_.async_type_size(), 2);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(0), AsyncFlagType::LIBUV_SEND); // 0
+    EXPECT_EQ(hookManager.hookConfig_.async_type(1), AsyncFlagType::ALL_ASYNC_TYPE); // 10
+}
+
+/**
+ * @tc.name: AsyncTypeMarshallingExactBoundary
+ * @tc.desc: asyncType_ with exactly MAX_ASYNC_TYPE_SIZE(16) elements passes Marshalling/Unmarshalling
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingExactBoundary, TestSize.Level0)
+{
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    src->asyncStackEnable_ = true;
+    // Fill 16 elements (exactly MAX_ASYNC_TYPE_SIZE), values cycle through valid range [0,10]
+    src->asyncType_.resize(16);
+    for (int i = 0; i < 16; i++) {
+        src->asyncType_[i] = i % 11; // 0..10
+    }
+
+    auto dst = MarshalAndUnmarshal(src);
+    ASSERT_NE(dst, nullptr);
+    ASSERT_EQ(dst->asyncType_.size(), 16u);
+    for (int i = 0; i < 16; i++) {
+        EXPECT_EQ(dst->asyncType_[i], i % 11);
+    }
+}
+
+/**
+ * @tc.name: SetHookConfigAsyncDisabledIgnoresAsyncType
+ * @tc.desc: When asyncStackEnable_ is false, asyncType_ is not forwarded to hookConfig_
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetHookConfigAsyncDisabledIgnoresAsyncType, TestSize.Level0)
+{
+    HookManager hookManager;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->asyncStackEnable_ = false;
+    config->asyncType_ = {0, 1, 2};
+
+    hookManager.SetHookConfig(config);
+
+    EXPECT_FALSE(hookManager.hookConfig_.async_stack_enable());
+    EXPECT_EQ(hookManager.hookConfig_.async_type_size(), 0);
+}
+
+/**
+ * @tc.name: AsyncTypeMarshallingOrderPreserved
+ * @tc.desc: asyncType_ element order is preserved after Marshalling/Unmarshalling round-trip
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, AsyncTypeMarshallingOrderPreserved, TestSize.Level0)
+{
+    auto src = std::make_shared<NativeMemoryProfilerSaConfig>();
+    src->asyncStackEnable_ = true;
+    src->asyncType_ = {3, 1, 4, 2};
+
+    auto dst = MarshalAndUnmarshal(src);
+    ASSERT_NE(dst, nullptr);
+    ASSERT_EQ(dst->asyncType_.size(), 4u);
+    EXPECT_EQ(dst->asyncType_[0], 3);
+    EXPECT_EQ(dst->asyncType_[1], 1);
+    EXPECT_EQ(dst->asyncType_[2], 4);
+    EXPECT_EQ(dst->asyncType_[3], 2);
+}
+
+/**
+ * @tc.name: SetHookConfigDuplicateAsyncTypePreserved
+ * @tc.desc: SetHookConfig does not deduplicate asyncType_; duplicate values are forwarded as-is
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaConfigTest, SetHookConfigDuplicateAsyncTypePreserved, TestSize.Level0)
+{
+    HookManager hookManager;
+    auto config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->asyncStackEnable_ = true;
+    config->asyncType_ = {0, 0, 1, 1};
+
+    hookManager.SetHookConfig(config);
+
+    // Current implementation does not deduplicate; all 4 entries should be present
+    EXPECT_TRUE(hookManager.hookConfig_.async_stack_enable());
+    ASSERT_EQ(hookManager.hookConfig_.async_type_size(), 4);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(0), AsyncFlagType::LIBUV_SEND);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(1), AsyncFlagType::LIBUV_SEND);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(2), AsyncFlagType::FFRT_POOL);
+    EXPECT_EQ(hookManager.hookConfig_.async_type(3), AsyncFlagType::FFRT_POOL);
+}

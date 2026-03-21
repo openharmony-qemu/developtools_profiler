@@ -1320,6 +1320,21 @@ void HookManager::RegisterFdForSa(uint32_t saFd)
     saFd_ = saFd;
 }
 
+void HookManager::SetAsyncTypeFromConfig(const std::vector<int32_t>& asyncType)
+{
+    if (asyncType.empty()) {
+        // Default: enable all async types
+        hookConfig_.add_async_type(AsyncFlagType::ALL_ASYNC_TYPE);
+        return;
+    }
+    for (const auto& val : asyncType) {
+        if (val < AsyncFlagType::LIBUV_SEND || val > AsyncFlagType::ALL_ASYNC_TYPE) {
+            continue;
+        }
+        hookConfig_.add_async_type(static_cast<AsyncFlagType>(val));
+    }
+}
+
 void HookManager::SetHookConfig(const NativeHookConfig& hookConfig)
 {
     hookConfig_ = hookConfig;
@@ -1352,6 +1367,9 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_startup_mode(config->startupMode_);
     hookConfig_.set_memtrace_enable(config->memtraceEnable_);
     hookConfig_.set_async_stack_enable(config->asyncStackEnable_);
+    if (config->asyncStackEnable_) {
+        SetAsyncTypeFromConfig(config->asyncType_);
+    }
     traceMask_ = config->traceMask_;
     hookConfig_.set_offline_symbolization(config->offlineSymbolization_);
     hookConfig_.set_callframe_compress(config->callframeCompress_);
