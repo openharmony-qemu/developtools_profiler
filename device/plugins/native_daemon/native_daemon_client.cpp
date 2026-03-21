@@ -53,6 +53,25 @@ bool IsOption(const std::string& arg)
     return !arg.empty() && arg[0] == '-';
 }
 
+std::vector<int32_t> ParseAsyncType(const std::string& str)
+{
+    std::vector<int32_t> result;
+    std::istringstream ss(str);
+    std::string token;
+    // AsyncFlagType range: 0 (LIBUV_SEND) to 10 (ALL_ASYNC_TYPE)
+    constexpr int32_t ASYNC_TYPE_MIN = 0;
+    constexpr int32_t ASYNC_TYPE_MAX = 10; // ALL_ASYNC_TYPE
+    while (std::getline(ss, token, ',')) {
+        if (IsNumeric(token)) {
+            int32_t val = static_cast<int32_t>(std::stoi(token));
+            if (val >= ASYNC_TYPE_MIN && val <= ASYNC_TYPE_MAX) {
+                result.push_back(val);
+            }
+        }
+    }
+    return result;
+}
+
 int32_t HandleExtendPid(int32_t index, int32_t argc, char* argv[], std::vector<int>& pidList)
 {
     int32_t pidIndex = index + 1;
@@ -126,6 +145,7 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --startupMode                       -sm : startupMode, default: false\n");
             printf("    --memtraceEnable                    -me : memtraceEnable, default: false\n");
             printf("    --asyncStackEnable                  -ae : asyncStackEnable, default: false\n");
+            printf("    --asyncType                         -at : asyncType, comma-separated AsyncFlagType values\n");
             printf("    --offlineSymbolization              -os : offlineSymbolization, default: false\n");
             printf("    --callframeCompress                 -cc : callframeCompress, default: false\n");
             printf("    --statisticsInterval                -si : statisticsInterval\n");
@@ -193,6 +213,10 @@ int32_t main(int32_t argc, char* argv[])
             config->memtraceEnable_ = true;
         } else if ((arg == "--asyncStackEnable") || (arg == "-ae")) {
             config->asyncStackEnable_ = true;
+        } else if ((arg == "--asyncType") || (arg == "-at")) {
+            if (i + 1 < argc) {
+                config->asyncType_ = ParseAsyncType(std::string(argv[++i]));
+            }
         } else if ((arg == "--onlineSymbolization") || (arg == "-os")) {
             config->offlineSymbolization_ = false;
         } else if ((arg == "--callframeCompress") || (arg == "-cc")) {
