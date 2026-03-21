@@ -234,11 +234,11 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     } else if (nmdType_ == SIMP_NMD) {
         SendSimplifiedNmdInfo();
     }
-    #if defined(target_cpu_arm64)
+#if defined(target_cpu_arm64)
     if (config_->gwpAsanHoldTime > 0) {
         SendGwpAsanInfo();
     }
-    #endif
+#endif
     if (!config_->targetSoName.empty() && !ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
         return false;
