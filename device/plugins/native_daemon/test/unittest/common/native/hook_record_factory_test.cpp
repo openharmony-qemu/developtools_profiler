@@ -233,4 +233,22 @@ HWTEST_F(HookRecordFactoryTest, CreateStackRecord002, TestSize.Level0)
     record = g_factory->CreateStackRecord(FREE_MSG, rawdata);
     EXPECT_EQ(record->GetType(), FREE_MSG);
 }
+ 
+/*
+* @tc.name: GetGwpAsanRecord
+* @tc.desc: test HookRecordFactory::GetHookRecord with GWP_ASAN message.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookRecordFactoryTest, GetGwpAsanRecord, TestSize.Level0)
+{
+    StackRawData rawdata;
+    rawdata.type = GWP_ASAN_MSG;
+    uint32_t dataSize = sizeof(StackRawData);
+    int8_t* data = new int8_t[sizeof(StackRawData)];
+    if (memcpy_s(data, sizeof(StackRawData), &rawdata, sizeof(StackRawData)) == EOK) {
+        std::shared_ptr<HookRecord> hookRecord = g_factory->GetHookRecord(data, dataSize);
+        EXPECT_EQ(hookRecord->GetType(), GWP_ASAN_MSG);
+    }
+    delete[] data;
+}
 }
