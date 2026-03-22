@@ -91,6 +91,12 @@ struct GwpAsanParams {
     int32_t duration = 7;
 };
 
+struct RequestTraceParam {
+    std::string identifier;
+    uint32_t bufferSize = 0;
+    uint32_t duration = 0;
+};
+
 bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &args)
 {
     ani_size arraySize = 0;
@@ -152,51 +158,23 @@ bool GetTraceParam(ani_env *env, ani_array tagsAni, std::vector<uint64_t> &tags)
     return true;
 }
 
-bool GetTraceParam(ani_env *env, ani_object configAni, std::string &identifier, uint32_t &bufferSize, uint32_t &duration)
+bool GetRequestTraceParam(ani_env *env, ani_string identifierAni, ani_int bufferSizeAni, ani_int durationAni,
+    RequestTraceParam &param)
 {
-    ani_ref identifierRef = nullptr;
-    if (env->Object_GetPropertyByName_Ref(configAni, "identifier", &identifierRef) != ANI_OK ||
-        AniUtil::ParseAniString(env, static_cast<ani_string>(identifierRef), identifier) != ANI_OK) {
+    if (AniUtil::ParseAniString(env, identifierAni, param.identifier) != ANI_OK) {
         HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
-        return false;
-    }
-
-    ani_ref bufferSizeRef = nullptr;
-    ani_int bufferSizeAni = 0;
-    if (env->Object_GetPropertyByName_Ref(configAni, "bufferSizeKb", &bufferSizeRef) != ANI_OK ||
-        env->Object_CallMethodByName_Int(static_cast<ani_object>(bufferSizeRef),
-            "toInt", ":i", &bufferSizeAni) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "Get input bufferSize failed.");
         return false;
     }
     if (bufferSizeAni < 0) {
         HILOG_ERROR(LOG_CORE, "bufferSize should not be negative.");
         return false;
     }
-
-    ani_ref durationRef = nullptr;
-    ani_int durationAni = 0;
-    if (env->Object_GetPropertyByName_Ref(configAni, "durationMs", &durationRef) != ANI_OK ||
-        env->Object_CallMethodByName_Int(static_cast<ani_object>(durationRef),
-            "toInt", ":i", &durationAni) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "Get input duration failed.");
-        return false;
-    }
     if (durationAni < 0) {
         HILOG_ERROR(LOG_CORE, "duration should not be negative.");
         return false;
     }
-
-    ani_ref reservedRef = nullptr;
-    ani_int reservedAni = 0;
-    if (env->Object_GetPropertyByName_Ref(configAni, "reserved", &reservedRef) != ANI_OK ||
-        env->Object_CallMethodByName_Int(static_cast<ani_object>(reservedRef),
-            "toInt", ":i", &reservedAni) != ANI_OK) {
-        HILOG_ERROR(LOG_CORE, "Check reserved type failed.");
-        return false;
-    }
-    bufferSize = static_cast<uint32_t>(bufferSizeAni);
-    duration = static_cast<uint32_t>(durationAni);
+    param.bufferSize = static_cast<uint32_t>(bufferSizeAni);
+    param.duration = static_cast<uint32_t>(durationAni);
     return true;
 }
 
@@ -456,13 +434,13 @@ void StopAppTraceCapture(ani_env *env)
     }
 }
 
-ani_string RequestTraceAdapter(ani_env *env, ani_object configAni)
+ani_string RequestTraceAdapter(ani_env *env, ani_string identifierAni, ani_int bufferSizeAni,
+    ani_int durationAni, ani_int reservedAni)
 {
     ApiInvokeRecorder apiInvokeRecorder("requestTrace");
-    std::string identifier;
-    uint32_t bufferSize = 0;
-    uint32_t duration = 0;
-    if (!GetTraceParam(env, configAni, identifier, bufferSize, duration)) {
+    (void)reservedAni;
+    RequestTraceParam param;
+    if (!GetRequestTraceParam(env, identifierAni, bufferSizeAni, durationAni, param)) {
         apiInvokeRecorder.SetErrorCode(ErrorCode::PARAMETER_ERROR);
         AniUtil::ThrowErrorMessage(env, "Invalid parameter.", ErrorCode::PARAMETER_ERROR);
         return nullptr;
@@ -470,22 +448,30 @@ ani_string RequestTraceAdapter(ani_env *env, ani_object configAni)
     std::mutex mutex;
     std::condition_variable cond;
     bool hasFinished = false;
+    TraceErrorCode callbackRetCode = TraceErrorCode::TRACE_ABNORMAL;
     std::string tracePath;
-    auto task = [&mutex, &cond, &hasFinished, &tracePath](TraceErrorCode, const std::string& path) {
+    auto task = [&mutex, &cond, &hasFinished, &callbackRetCode, &tracePath](
+        TraceErrorCode callbackRet, const std::string& path) {
         {
             std::lock_guard<std::mutex> lock(mutex);
+            callbackRetCode = callbackRet;
             tracePath = path;
             hasFinished = true;
         }
         cond.notify_all();
     };
-    TraceErrorCode retCode = HidebugNativeInterface::GetInstance().RequestTrace(identifier, bufferSize, duration, task);
+    TraceErrorCode retCode = HidebugNativeInterface::GetInstance().RequestTrace(
+        param.identifier, param.bufferSize, param.duration, task);
     if (retCode == TraceErrorCode::TRACE_SUCCESS) {
         std::unique_lock<std::mutex> lock(mutex);
-        bool waitRet = cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] { return hasFinished; });
+        bool waitRet = cond.wait_for(lock, std::chrono::seconds(MAX_WAIT_TIME_SECOND), [&hasFinished] {
+            return hasFinished;
+        });
         if (!waitRet) {
             retCode = TraceErrorCode::TRACE_ABNORMAL;
             HILOG_ERROR(LOG_CORE, "wait callback timeout");
+        } else {
+            retCode = callbackRetCode;
         }
     }
     if (!ResolveTraceErrorCode(env, retCode)) {
@@ -893,7 +879,7 @@ ANI_EXPORT ani_status ANI_Constructor(ani_vm *vm, uint32_t *result)
         ani_native_function {"startAppTraceCapture",
             "C{std.core.Array}C{@ohos.hidebug.hidebug.TraceFlag}i:C{std.core.String}",
             reinterpret_cast<void *>(StartAppTraceCapture)},
-        ani_native_function {"requestTraceAdapter", "C{@ohos.hidebug.hidebug.RequestTraceConfig}:C{std.core.String}",
+        ani_native_function {"requestTraceAdapter", "C{std.core.String}iii:C{std.core.String}",
             reinterpret_cast<void *>(RequestTraceAdapter)},
         ani_native_function {"isDebugState", ":z", reinterpret_cast<void *>(IsDebugState)},
         ani_native_function {"stopAppTraceCapture", ":", reinterpret_cast<void *>(StopAppTraceCapture)},
