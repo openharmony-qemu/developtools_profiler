@@ -716,7 +716,7 @@ bool StackPreprocess::ProcessBatchData()
 
     if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {
         if (!hookConfig_.use_file_cache_mode()) {
-            IntervalFlushRecordStatistics();
+            IntervalFlushRecordStatistics(latestEventTime);
         }
         return true;
     }
