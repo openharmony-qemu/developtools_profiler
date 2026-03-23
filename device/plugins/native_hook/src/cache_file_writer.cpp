@@ -140,7 +140,7 @@ std::string CacheFileWriter::GetCacheFilePath(uint16_t index) const
     return filePath;
 }
 
-void CacheFileWriter::CheckIsDiskUsageExceedLimit()
+bool CacheFileWriter::CheckIsDiskUsageExceedLimit()
 {
     struct statvfs diskInfo;
     if (statvfs(cacheFileDir_.c_str(), &diskInfo) != 0) {
@@ -156,7 +156,7 @@ void CacheFileWriter::CheckIsDiskUsageExceedLimit()
     return true;
 }
 
-bool CacheFileWriter::HandleFileCacheEnd()
+void CacheFileWriter::HandleFileCacheEnd()
 {
     (void)WriteToFile(memoryCache_.data(), memoryCache_.size());
     fsync(currentFileFd_);
