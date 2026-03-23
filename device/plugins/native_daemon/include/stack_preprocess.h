@@ -159,7 +159,7 @@ public:
     inline void InitStatisticsTime()
     {
         if (hookConfig_.use_file_cache_mode()) {
-            clock_gettime(CLOCK_REALTIME, &lastCacheStatisticsTime_)
+            clock_gettime(CLOCK_REALTIME, &lastCacheStatisticsTime_);
         } else {
             lastStatisticsTime_ = std::chrono::steady_clock::now();
         }
@@ -320,7 +320,7 @@ private:
     void CleanupFullyReleasedStack(uint32_t stackId);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
-    struct timespec lastCacheStatisticsTime_ = {0, 0}
+    struct timespec lastCacheStatisticsTime_ = {0, 0};
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};
