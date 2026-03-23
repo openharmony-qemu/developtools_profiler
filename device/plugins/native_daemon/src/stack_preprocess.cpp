@@ -34,8 +34,9 @@ constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
 constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
-constexpr uint32_t WAIT_STOP_ONCE = 1000;
 constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 300;
+constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
+constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
 constexpr uint32_t MAX_BATCH_CNT = 40;
 constexpr uint64_t JS_OFFLINE_IP_MASK = 0xFFFFFE0000000000;
 constexpr uint64_t DWARF_NAPI_CALLBACK = 999999;
@@ -269,7 +270,7 @@ bool StackPreprocess::StopTakeResults()
     } else {
         uint32_t waitCnt = 0;
         while (!isStopTakeData_ && waitCnt < WAIT_FILE_CACHE_STOP_CNT) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(WAIT_STOP_ONCE));
+            std::this_thread::sleep_for(std::chrono::milliseconds(SECOND_TO_MILLISECOND));
             waitCnt++;
         }
         ForceStop();
@@ -293,15 +294,27 @@ bool StackPreprocess::StopTakeResults()
     return true;
 }
 
-inline void StackPreprocess::IntervalFlushRecordStatistics()
+inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec& eventTime)
 {
     // interval reporting statistics
     if (hookConfig_.statistics_interval() > 0) {
-        auto currentTime = std::chrono::steady_clock::now();
-        auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastStatisticsTime_);
-        if (elapsedTime >= statisticsInterval_) {
-            lastStatisticsTime_ = currentTime;
-            FlushRecordStatistics();
+        if (hookConfig_.use_file_cache_mode()) {
+            uint64_t eventTimeMs = eventTime.tv_sec * SECOND_TO_MILLISECOND +
+                eventTime.tv_nsec / MILLISECOND_TO_NANOSECOND;
+            uint64_t lastTimeMs = lastCacheStatisticsTime_.tv_sec * SECOND_TO_MILLISECOND +
+                lastCacheStatisticsTime_.tv_nsec / MILLISECOND_TO_NANOSECOND;
+            uint64_t elapsedTimeMs = eventTimeMs > lastTimeMs ? (eventTimeMs - lastTimeMs) : 0;
+            if (elapsedTimeMs >= hookConfig_.statistics_interval() * SECOND_TO_MILLISECOND) {
+                lastCacheStatisticsTime_ = eventTime;
+                FlushRecordStatistics();
+            }
+        } else {
+            auto currentTime = std::chrono::steady_clock::now();
+            auto elapsedTime = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastStatisticsTime_);
+            if (elapsedTime >= statisticsInterval_) {
+                lastStatisticsTime_ = currentTime;
+                FlushRecordStatistics();
+            }
         }
     }
 }
@@ -382,6 +395,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
     InitializeDirector();
     lseek(fd, 0, SEEK_SET);
     while (!isStopTakeData_) {
+        ret = false;
         uint32_t totalSize = 0;
         ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
         if (readBytes < 0) {
@@ -412,7 +426,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
         ret = ProcessRawData(reinterpret_cast<const int8_t*>(buffer.get()), totalSize, rawData, hookRecord);
         if (!ret) {
             PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile process data failed.");
-            break;
+            continue;
         }
     }
     close(fd);
@@ -621,7 +635,7 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
             ProcessStackData(hookRecord, callFrames, stackData);
         }, stackData_);
 
-    IntervalFlushRecordStatistics();
+    IntervalFlushRecordStatistics(rawData->stackContext->ts);
 
 #ifdef PERFORMANCE_DEBUG
     LogPerformanceMetrics(start, "stack processing", hookRecord->GetType(), rawData->fpDepth);
@@ -686,7 +700,7 @@ bool StackPreprocess::ProcessBatchData()
         return false;
     }
     HookRecordPtr batchRawStack[MAX_BATCH_CNT] = {nullptr};
-
+    struct timespec latestEventTime = {0, 0};
     uint32_t waitDuration = 0;
     if (hookConfig_.statistics_interval() > 0) {
         auto currentTime = std::chrono::steady_clock::now();
@@ -701,7 +715,9 @@ bool StackPreprocess::ProcessBatchData()
                                              hookConfig_.statistics_interval(), isTimeOut);
 
     if (hookConfig_.statistics_interval() > 0 && isTimeOut && result == nullptr) {
-        IntervalFlushRecordStatistics();
+        if (!hookConfig_.use_file_cache_mode()) {
+            IntervalFlushRecordStatistics();
+        }
         return true;
     }
 
@@ -712,6 +728,9 @@ bool StackPreprocess::ProcessBatchData()
     for (unsigned int i = 0; i < MAX_BATCH_CNT; i++) {
         if (!ProcessSingleRecord(batchRawStack[i])) {
             break;
+        }
+        if (batchRawStack[i] && batchRawStack[i]->GetRawStack() && batchRawStack[i]->GetRawStack()->stackContext) {
+            latestEventTime = batchRawStack[i]->GetRawStack()->stackContext->ts;
         }
     }
 
@@ -727,7 +746,7 @@ bool StackPreprocess::ProcessBatchData()
         }, stackData_);
     }
 
-    IntervalFlushRecordStatistics();
+    IntervalFlushRecordStatistics(latestEventTime);
     IntervalFlushApplyAndReleaseMatchData();
     return true;
 }
@@ -1337,6 +1356,7 @@ void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, siz
         auto rawStack = hookRecord->GetRawStack();
         ++record.applyCount;
         record.applySize += rawStack->stackContext->mallocSize;
+        record.ts = rawStack->stackContext->ts;
         g_allocAddrMap[hookRecord->GetAddr()] =
             std::pair(rawStack->stackContext->mallocSize, stackId);
         if (hookRecord->GetType() == MEMORY_USING_MSG) {
@@ -1353,6 +1373,7 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
     record.callstackId = stackId;
     record.applyCount = 1;
     record.applySize = rawStack->stackContext->mallocSize;
+    record.ts = rawStack->stackContext->ts;
 
     switch (hookRecord->GetType()) {
         case MALLOC_MSG:
@@ -1803,8 +1824,13 @@ bool StackPreprocess::FlushRecordStatistics()
                 if (iter != recordStatisticsMap_.end()) {
                     auto statistics = &iter->second;
                     auto hookData = stackData.add_events();
-                    hookData->set_tv_sec(ts.tv_sec);
-                    hookData->set_tv_nsec(ts.tv_nsec);
+                    if (hookConfig_.use_file_cache_mode()) {
+                        hookData->set_tv_sec(statistics->ts.tv_sec);
+                        hookData->set_tv_nsec(statistics->ts.tv_nsec);
+                    } else {
+                        hookData->set_tv_sec(ts.tv_sec);
+                        hookData->set_tv_nsec(ts.tv_nsec);
+                    }
                     auto recordEvent = hookData->mutable_statistics_event();
                     recordEvent->set_pid(pid_);
                     recordEvent->set_callstack_id(stackId);
