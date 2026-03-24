@@ -53,6 +53,7 @@ struct RecordStatistic {
     uint32_t nodeType {0};
     uint32_t callstackId {0};
     uint32_t stackSize {0};
+    struct timespec ts {0, 0};
 };
 
 struct CallStackKey {
@@ -157,7 +158,11 @@ public:
     }
     inline void InitStatisticsTime()
     {
-        lastStatisticsTime_ = std::chrono::steady_clock::now();
+        if (hookConfig_.use_file_cache_mode()) {
+            clock_gettime(CLOCK_REALTIME, &lastCacheStatisticsTime_);
+        } else {
+            lastStatisticsTime_ = std::chrono::steady_clock::now();
+        }
     }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
@@ -287,7 +292,7 @@ private:
     void SetAllocStatisticsFrame(const HookRecordPtr& hookRecord, T& stackData);
     template <typename T>
     void SetApplyAndReleaseMatchFrame(HookRecordPtr hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
-    void IntervalFlushRecordStatistics();
+    void IntervalFlushRecordStatistics(const struct timespec& eventTime);
     void IntervalFlushApplyAndReleaseMatchData();
     bool HandleNoStackEvent(HookRecordPtr& hookRecord);
     bool SetFreeStatisticsData(uint64_t addr);
@@ -315,6 +320,7 @@ private:
     void CleanupFullyReleasedStack(uint32_t stackId);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
+    struct timespec lastCacheStatisticsTime_ = {0, 0};
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
     std::thread thread_ {};

@@ -19,6 +19,7 @@
 #include <cstring>
 #include <fcntl.h>
 #include <sys/stat.h>
+#include <sys/statvfs.h>
 #include <unistd.h>
 #include "hook_common.h"
 #include "logging.h"
@@ -26,7 +27,7 @@
 namespace {
     constexpr size_t WRITE_CHUNK_SIZE = 4 * 1024 * 1024; // 4MB
     constexpr uint64_t MAX_CACHE_FILE_SIZE = 96 * 1024 * 1024; // 96MB
-    constexpr uint64_t ALL_CACHE_FILE_SIZE_LIMIT = 2ULL * 1024 * 1024 * 1024; // 2GB
+    constexpr double MIN_DISK_USAGE_LIMIT_PERCENT = 0.15; // 15%
     const std::string CACHE_FILE_PATH = "/data/storage/el2/base/cache/";
     const std::string CACHE_FILE_PREFIX = "native_hook_cache_";
 }
@@ -43,7 +44,8 @@ CacheFileWriter::CacheFileWriter(int eventFd, uint32_t cacheMemorySize)
     } else {
         cacheMemorySize_ = cacheMemorySize * MB_TO_BYTES;
     }
-    memoryCache_.reserve(cacheMemorySize_);
+    uint32_t extraSize = sizeof(StackRawData) + sizeof(uint32_t);
+    memoryCache_.reserve(cacheMemorySize_ + extraSize);
 }
 
 CacheFileWriter::~CacheFileWriter()
@@ -65,7 +67,7 @@ void CacheFileWriter::Prepare(FileEventCallback callback)
 
 bool CacheFileWriter::Write(const void* data, size_t size)
 {
-    if (data == nullptr || size == 0 || size > cacheMemorySize_ || !initialized_) {
+    if (data == nullptr || size == 0 || size > cacheMemorySize_ || !initialized_ || isTotalFileSizeLimit_) {
         return false;
     }
     uint32_t totalSize = size;
@@ -85,7 +87,7 @@ bool CacheFileWriter::Write(const void* data, size_t size)
 bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void* payload, size_t payloadSize)
 {
     if (data == nullptr || size == 0 || size > cacheMemorySize_ ||
-        payloadSize > cacheMemorySize_ || !initialized_) {
+        payloadSize > cacheMemorySize_ || !initialized_ || isTotalFileSizeLimit_) {
         return false;
     }
     uint32_t totalSize = size + payloadSize;
@@ -108,7 +110,11 @@ bool CacheFileWriter::WriteWithPayload(const void* data, size_t size, const void
 void CacheFileWriter::SetCacheFileWriterEnd()
 {
     std::lock_guard<std::mutex> lock(writeMutex_);
+    if (isCacheFileEnded_) {
+        return;
+    }
     isCacheFileEnded_ = true;
+    FlushMemoryCacheToFile();
 }
 
 void CacheFileWriter::WriteToMemoryCache(const void* data, size_t size)
@@ -134,15 +140,63 @@ std::string CacheFileWriter::GetCacheFilePath(uint16_t index) const
     return filePath;
 }
 
-bool CacheFileWriter::CreateNewCacheFile()
+bool CacheFileWriter::CheckIsDiskUsageExceedLimit()
 {
+    struct statvfs diskInfo;
+    if (statvfs(cacheFileDir_.c_str(), &diskInfo) != 0) {
+        return true;
+    }
+
+    if (diskInfo.f_blocks > 0) {
+        double freePercent = static_cast<double>(diskInfo.f_bfree) / static_cast<double>(diskInfo.f_blocks);
+        if (freePercent > MIN_DISK_USAGE_LIMIT_PERCENT) {
+            return false;
+        }
+    }
+    return true;
+}
+
+void CacheFileWriter::HandleFileCacheEnd()
+{
+    (void)WriteToFile(memoryCache_.data(), memoryCache_.size());
+    fsync(currentFileFd_);
+    // Notify native_daemon that file is ready to read
+    NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY);
+    NotifyFileEvent(currentFileIndex_, CACHE_FILE_STOP);
+    memoryCache_.clear();
     if (currentFileFd_ != -1) {
         close(currentFileFd_);
         currentFileFd_ = -1;
     }
-    if (totalBytesWritten_ >= ALL_CACHE_FILE_SIZE_LIMIT) {
-        NotifyFileEvent(currentFileIndex_, CACHE_FILE_STOP);
+}
+
+void CacheFileWriter::HandleFileSizeExceedLimit()
+{
+    isTotalFileSizeLimit_ = true;
+    StackRawData appendEndData = {{{{0}}}};
+    appendEndData.type = END_MSG;
+    uint32_t totalSize = sizeof(appendEndData);
+    WriteToMemoryCache(&totalSize, sizeof(totalSize));
+    WriteToMemoryCache(&appendEndData, sizeof(appendEndData));
+    isCacheFileEnded_ = true;
+    HandleFileCacheEnd();
+}
+
+bool CacheFileWriter::CreateNewCacheFile()
+{
+    if (CheckIsDiskUsageExceedLimit()) {
+        HandleFileSizeExceedLimit();
         return false;
+    }
+    if (initialized_) {
+        fsync(currentFileFd_);
+        // Notify native_daemon that file is ready to read
+        NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY);
+    }
+
+    if (currentFileFd_ != -1) {
+        close(currentFileFd_);
+        currentFileFd_ = -1;
     }
 
     currentFileIndex_++;
@@ -197,19 +251,11 @@ bool CacheFileWriter::FlushMemoryCacheToFile()
     }
 
     if (isCacheFileEnded_) {
-        (void)WriteToFile(memoryCache_.data(), memoryCache_.size());
-        fsync(currentFileFd_);
-        // Notify native_daemon that file is ready to read
-        NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY);
-        NotifyFileEvent(currentFileIndex_, CACHE_FILE_STOP);
-        memoryCache_.clear();
+        HandleFileCacheEnd();
         return true;
     }
 
     if (currentFileSize_ + memoryCache_.size() >= MAX_CACHE_FILE_SIZE) {
-        fsync(currentFileFd_);
-        // Notify native_daemon that file is ready to read
-        NotifyFileEvent(currentFileIndex_, CACHE_FILE_READY);
         if (!CreateNewCacheFile()) {
             return false;
         }
