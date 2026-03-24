@@ -561,4 +561,63 @@ HWTEST_F(HookManagerExtTest, GetCmdArgsWithClockAndSample, TestSize.Level0)
     EXPECT_NE(result.find("clock: realtime"), std::string::npos);
     EXPECT_NE(result.find("sample_interval: 50"), std::string::npos);
 }
+
+
+/*
+* @tc.name: SetGwpFd
+* @tc.desc: test SetGwpFd method.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookManagerExtTest, SetGwpFd, TestSize.Level0)
+{
+    const uint32_t fd = 8;
+    hookManager_->SetGwpFd(fd);
+    EXPECT_EQ(hookManager_->gwpFd_, fd);
+
+    hookManager_->SetGwpFd(0);
+    EXPECT_EQ(hookManager_->gwpFd_, 0);
+}
+
+/*
+* @tc.name: SetHookConfigFromSaConfigGwpAsan
+* @tc.desc: test SetHookConfig with GWP-ASan fields from SaConfig.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookManagerExtTest, SetHookConfigFromSaConfigGwpAsan, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->gwpAsanHoldTime_ = 30;
+    saConfig->gwpAsanMaxEntries_ = 64;
+    saConfig->gwpAsanMaxStackDepth_ = 16;
+
+    hookManager_->SetHookConfig(saConfig);
+
+    EXPECT_EQ(hookManager_->gwpAsanHoldTime_, 30);
+    EXPECT_EQ(hookManager_->gwpAsanMaxEntries_, 64);
+    EXPECT_EQ(hookManager_->gwpAsanMaxStackDepth_, 16);
+}
+
+/*
+* @tc.name: GetClientConfigGwpAsan
+* @tc.desc: test GetClientConfig includes GWP-ASan fields.
+* @tc.type: FUNC
+*/
+HWTEST_F(HookManagerExtTest, GetClientConfigGwpAsan, TestSize.Level0)
+{
+    auto saConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    saConfig->pid_ = TEST_PID;
+    saConfig->gwpAsanHoldTime_ = 20;
+    saConfig->gwpAsanMaxEntries_ = 128;
+    saConfig->gwpAsanMaxStackDepth_ = 32;
+
+    hookManager_->SetHookConfig(saConfig);
+
+    ClientConfig clientConfig;
+    hookManager_->GetClientConfig(clientConfig);
+
+    EXPECT_EQ(clientConfig.gwpAsanHoldTime, 20);
+    EXPECT_EQ(clientConfig.gwpAsanMaxEntries, 128);
+    EXPECT_EQ(clientConfig.gwpAsanMaxStackDepth, 32);
+}
 } // namespace

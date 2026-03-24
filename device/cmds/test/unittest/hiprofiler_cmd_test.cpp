@@ -51,6 +51,8 @@ constexpr uint32_t READ_BUFFER_SIZE = 1024;
 constexpr int SLEEP_TIME = 3;
 constexpr int FILE_READ_CHUNK_SIZE = 4096;
 constexpr char HEX_CHARS[] = "0123456789abcdef";
+constexpr int SMB_PAGES = 16384;
+const std::string OUTPUT_PATH = "/data/local/tmp/hiprofiler_data.htrace";
 
 
 class HiprofilerCmdTest : public ::testing::Test {
@@ -508,6 +510,34 @@ public:
         }
         return static_cast<unsigned long>(buf.st_size);
     }
+
+    std::string CreateNmdCommand(const std::string& outputFile, const int32_t time, const std::string& processName)
+{
+    std::ostringstream cmdStream;
+    cmdStream << "hiprofiler_cmd \\\n"
+              << "-c - \\\n"
+              << "-o " << outputFile << " \\\n"
+              << "-t " << time << " \\\n"
+              << "-s \\\n"
+              << "-k \\\n"
+              << "<<CONFIG\n"
+              << "request_id: 1\n"
+              << "session_config {\n"
+              << "  buffers {\n"
+              << "    pages: 14848" << "\n"
+              << "  }\n"
+              << "}\n"
+              << "plugin_configs {\n"
+              << "  plugin_name: \"nativehook\"\n"
+              << "  config_data {\n"
+              << "process_name: \"" << processName << "\"\n"
+              << "smb_pages: " << SMB_PAGES << "\n"
+              << "dump_nmd: true\n"
+              << "  }\n"
+              << "}\n"
+              << "CONFIG\n";
+    return cmdStream.str();
+}
 };
 
 /**
@@ -1026,4 +1056,49 @@ HWTEST_F(HiprofilerCmdTest, DFX_DFR_Hiprofiler_0290, Function | MediumTest | Lev
     content = "";
     EXPECT_TRUE(RunCommand(cmd, content));
     EXPECT_FALSE(content.find(destStr) != std::string::npos);
+}
+
+/*
+ * @tc.name: CheckNmdInfo
+ * @tc.desc: test CheckNmdInfo when process is exit.
+ * @tc.type: FUNC
+ */
+#ifdef __aarch64__
+HWTEST_F(HiprofilerCmdTest, CheckNmdInfo, TestSize.Level0)
+{
+    std::string cmd = CreateNmdCommand(OUTPUT_PATH, 1, "hiview");
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    EXPECT_TRUE(ret.find("FAIL") == std::string::npos);
+    std::string filePath = "/data/local/tmp/nmd_hiview.txt";
+    EXPECT_EQ(access(filePath.c_str(), F_OK), 0);
+
+    std::ifstream infile;
+    infile.open(filePath, std::ios::in);
+    EXPECT_TRUE(infile.is_open());
+    std::string buf;
+    bool nmdResult = false;
+    while (getline(infile, buf)) {
+        if (buf.find("jemalloc statistics") != std::string::npos) {
+            nmdResult = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(nmdResult);
+}
+#endif
+
+/*
+ * @tc.name: CheckNmdInfo002
+ * @tc.desc: test CheckNmdInfo002 when process is not exit.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HiprofilerCmdTest, CheckNmdInfo002, TestSize.Level0)
+{
+    std::string cmd = CreateNmdCommand(OUTPUT_PATH, 1, "test_profiler");
+    std::string ret;
+    EXPECT_TRUE(RunCommand(cmd, ret));
+    EXPECT_TRUE(ret.find("FAIL") == std::string::npos);
+    std::string filePath = "/data/local/tmp/test_profiler.txt";
+    EXPECT_EQ(access(filePath.c_str(), F_OK), -1);
 }

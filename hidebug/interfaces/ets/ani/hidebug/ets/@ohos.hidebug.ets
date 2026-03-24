@@ -15,7 +15,7 @@
 
 import { BusinessError } from '@ohos.base';
 
-export namespace hidebug {
+export default namespace hidebug {
   loadLibraryWithPermissionCheck("hidebug_ani", "@ohos.hidebug");
 
   export native function startJsCpuProfiling(filename: string): void;
@@ -287,6 +287,32 @@ export namespace hidebug {
   export native function startAppTraceCapture(tags: long[], flag: TraceFlag, limitSize: int): string;
 
   export native function stopAppTraceCapture(): void;
+
+  export interface RequestTraceConfig {
+    identifier: string;
+    bufferSizeKb: int;
+    durationMs: int;
+    reserved: int;
+  }
+
+  native function requestTraceAdapter(
+    identifier: string, bufferSizeKb: int, durationMs: int, reserved: int): string;
+
+  export function requestTrace(config: RequestTraceConfig): Promise<string> {
+    let identifier = config.identifier;
+    let bufferSizeKb = config.bufferSizeKb;
+    let durationMs = config.durationMs;
+    let reserved = config.reserved;
+    return new Promise<string>((resolve: (v: string) => void, reject: (e: BusinessError<void>) => void) => {
+      taskpool.execute(() => {
+        return requestTraceAdapter(identifier, bufferSizeKb, durationMs, reserved);
+      }).then((ret: Any): void => {
+        resolve(ret as string);
+      }).catch((err: Object | null | undefined) => {
+        reject(err as BusinessError);
+      });
+    });
+  }
 
   export native function isDebugState(): boolean;
 

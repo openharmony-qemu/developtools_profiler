@@ -47,7 +47,9 @@ public:
     bool PeerIsConnected();
     bool SendNmdInfo();
     bool SendSimplifiedNmdInfo();
+#if defined(target_cpu_arm64)
     bool SendGwpAsanInfo();
+#endif
     bool SendEndMsg();
     bool GetConnectState();
     int GetNmdType()
