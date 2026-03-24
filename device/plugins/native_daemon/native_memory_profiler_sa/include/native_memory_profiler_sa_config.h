@@ -81,7 +81,7 @@ public:
     uint32_t gwpAsanHoldTime_{0};
     uint32_t gwpAsanMaxEntries_{0};
     uint32_t gwpAsanMaxStackDepth_{0};
-
+    bool allocatorSamplingEnable_{false};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

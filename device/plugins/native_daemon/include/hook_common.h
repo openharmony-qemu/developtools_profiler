@@ -127,6 +127,11 @@ enum {
     UNKNOWN,
 };
 
+constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
+constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;
+constexpr uint32_t ALIVE_ADDR_SNAPSHOT_END_MARKER = 0xADD50003;
+constexpr uint32_t FINAL_SNAPSHOT_REQUEST_CMD = 0xADD50004;
+
 enum SymbolType {
     NATIVE_SYMBOL,
     JS_SYMBOL,
@@ -238,6 +243,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         asyncStackEnable = false;
         asyncFlag = 0;
         responseLibraryMode = false;
+        allocatorSamplingEnable = false;
         freeEventOnlyAddrEnable = false;
         printNmd = false;
         nmdType = -1;
@@ -267,6 +273,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", asyncStackEnable:" << asyncStackEnable << ", asyncFlag:" << asyncFlag
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
+            << ", allocatorSamplingEnable: " << allocatorSamplingEnable
             << ", uniqueStackTableSize: " << uniqueStackTableSize
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
@@ -306,6 +313,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
     bool responseLibraryMode = false;
+    bool allocatorSamplingEnable = false;
     bool freeEventOnlyAddrEnable = false;
     bool printNmd = false;
     int nmdType = -1;

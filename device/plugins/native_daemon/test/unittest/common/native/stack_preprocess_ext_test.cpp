@@ -58,7 +58,6 @@ static std::vector<CallFrame> MakeFrames(uint64_t callFrameId)
 }
 
 static thread_local std::vector<uint64_t> g_callStack;
-static thread_local std::unordered_map<uint64_t, std::pair<uint64_t, RecordStatistic*>> g_allocAddrMap;
 static thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
 class StackPreprocessExtTest : public testing::Test {

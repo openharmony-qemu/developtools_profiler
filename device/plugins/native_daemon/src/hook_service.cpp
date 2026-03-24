@@ -147,7 +147,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         int eventFd = hookMgr_->GetFileNotifierFd(peerConfig, procName);
         context.SendFileDescriptor(eventFd);
     } else {
-        int sharedMemCount = (clientConfig_.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+        int sharedMemCount = clientConfig_.offlineSymbolization ? SHARED_MEMORY_NUM : 1;
         std::vector<int> fdVec = hookMgr_->GetFds(peerConfig, procName, sharedMemCount);
         for (int i = 0; i < sharedMemCount; ++i) {
             int eventFd = fdVec[i * VEC_SHIFT];
@@ -192,6 +192,30 @@ void HookService::ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf)
         hookMgr_->HandleCachedFileFdByPid(cacheFileMsg.hookPid, cacheFd, cacheFileMsg.fileIndex);
         PROFILER_LOG_INFO(LOG_CORE, "ReceiveCacheFileMsg pid:%d fd index %u",
             cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
+    }
+}
+
+void HookService::SendCommand(pid_t pid, uint32_t cmd)
+{
+    std::unique_lock<std::mutex> lock(pidFdMtx_);
+    auto it = pidFds_.find(pid);
+    if (it == pidFds_.end() || it->second <= 0) {
+        return;
+    }
+    int sockFd = it->second;
+    lock.unlock();
+
+    struct ProtocolHead phead;
+    phead.protoType = PROTOCOL_TYPE_PROTOBUF;
+    phead.protoSize = sizeof(cmd) + sizeof(struct ProtocolHead);
+    if (send(sockFd, reinterpret_cast<int8_t*>(&phead),
+             sizeof(phead), 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendCommand send head failed, cmd: %u", cmd);
+        return;
+    }
+    if (send(sockFd, reinterpret_cast<int8_t*>(&cmd),
+             sizeof(cmd), 0) == -1) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendCommand send cmd failed, cmd: %u", cmd);
     }
 }
 }
