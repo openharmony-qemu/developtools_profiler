@@ -27,6 +27,7 @@ namespace HookGuard {
     bool ShouldSkipMmap();
     bool ShouldSkipMemtrace();
     bool ShouldFilterBySize(void* ptr, size_t size);
+    bool ShouldFilterBySize(size_t usableSize);
     bool ShouldSample(size_t size, pthread_key_t& sampleKey);
     int CalculateRealSize(int fpStackDepth, bool isAsyncStack = false);
     uint16_t GetPredefinedTagId(unsigned long long mask);

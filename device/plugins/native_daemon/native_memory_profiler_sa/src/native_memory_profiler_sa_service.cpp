@@ -101,6 +101,10 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
     }
     PROFILER_LOG_ERROR(LOG_CORE, "ClientDisconnectCallback get pid: %d", static_cast<int>(pidval));
     lock.unlock();
+    if (!HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
+        return;
+    }
     StopHook(static_cast<uint32_t>(pidval));
 }
 
@@ -283,17 +287,21 @@ int32_t NativeMemoryProfilerSaService::Stop()
 
 int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
 {
-    if (StopHook(pid) != RET_OK) {
+    if (!HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return RET_ERR;
     }
+    (void)StopHook(pid);
     return RET_OK;
 }
 
 int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 {
-    if (StopHook(0, name) != RET_OK) {
+    if (!HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return RET_ERR;
     }
+    (void)StopHook(0, name);
     return RET_OK;
 }
 
@@ -330,10 +338,6 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
 
 int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
 {
-    if (!HasProfilingPermission()) {
-        PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
-        return RET_ERR;
-    }
     std::lock_guard<std::mutex> guard(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
     if (pid > 0) {
@@ -497,15 +501,16 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
     auto args = GetCmdArgs(config);
-    if (!HasProfilingPermission()) {
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
             "no profiling permission");
         PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
         return RET_ERR;
     }
-    if (config == nullptr) {
-        return RET_ERR;
-    }
+
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
 

@@ -101,6 +101,7 @@ bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
     WRITEUINT32(parcel, gwpAsanHoldTime_);
     WRITEUINT32(parcel, gwpAsanMaxEntries_);
     WRITEUINT32(parcel, gwpAsanMaxStackDepth_);
+    WRITEBOOL(parcel, allocatorSamplingEnable_);
     WRITEUINT32(parcel, memLeakFormat_);
     return true;
 }
@@ -165,6 +166,7 @@ bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
     READUINT32(parcel, config->gwpAsanHoldTime_);
     READUINT32(parcel, config->gwpAsanMaxEntries_);
     READUINT32(parcel, config->gwpAsanMaxStackDepth_);
+    READBOOL(parcel, config->allocatorSamplingEnable_);
     READUINT32(parcel, config->memLeakFormat_);
     PrintConfig(config);
     return true;

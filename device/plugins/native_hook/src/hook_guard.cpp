@@ -18,6 +18,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <malloc.h>
+#include <sys/mman.h>
 #include "hook_common.h"
 #include "hook_client.h"
 #include "sampling.h"
@@ -101,6 +102,22 @@ bool ShouldFilterBySize(void* ptr, size_t mallocSize)
     return true;
 }
 
+bool ShouldFilterBySize(size_t usableSize)
+{
+    if (g_clientConfig.largestSize == 0 || g_clientConfig.secondLargestSize == 0) {
+        return false;
+    }
+    if (usableSize >= g_clientConfig.sampleInterval) {
+        return false;
+    }
+    if ((usableSize == g_clientConfig.largestSize) ||
+        (usableSize == g_clientConfig.secondLargestSize) ||
+        (usableSize == g_clientConfig.maxGrowthSize)) {
+        return false;
+    }
+    return true;
+}
+
 bool ShouldSample(size_t size, pthread_key_t& sampleKey)
 {
     if (sampleKey == 10000) { // 10000 : invalid key value
@@ -108,10 +125,12 @@ bool ShouldSample(size_t size, pthread_key_t& sampleKey)
     }
     auto* tlsSample = static_cast<Sampling*>(pthread_getspecific(sampleKey));
     if (tlsSample == nullptr) {
-        tlsSample = new (std::nothrow) Sampling();
-        if (tlsSample == nullptr) {
+        void* mem = mmap(nullptr, sizeof(Sampling), PROT_READ | PROT_WRITE,
+                         MAP_PRIVATE | MAP_ANONYMOUS, -1, 0);
+        if (mem == MAP_FAILED) {
             return false;
         }
+        tlsSample = new (mem) Sampling();
         (void)pthread_setspecific(sampleKey, tlsSample);
     }
     if (g_clientConfig.sampleInterval > MIN_SAMPLER_INTERVAL) {
@@ -155,7 +174,8 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         {RES_RN_HEAP_MASK,      static_cast<uint16_t>(RN_HEAP_MASK_INDEX + 1)},
         {RES_DMABUF_MASK,       static_cast<uint16_t>(DMABUF_MASK_INDEX + 1)},
         {RES_ARK_GLOBAL_HANDLE, static_cast<uint16_t>(ARK_GLOBAL_HANDLE_INDEX + 1)},
-        {RES_ARK_LOCAL_HANDLE,  static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)}
+        {RES_ARK_LOCAL_HANDLE,  static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)},
+        {RES_VMA_ARKWEB,        static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)}
     };
     auto it = g_maskTagMap.find(mask);
     return it != g_maskTagMap.end() ? it->second : 0;

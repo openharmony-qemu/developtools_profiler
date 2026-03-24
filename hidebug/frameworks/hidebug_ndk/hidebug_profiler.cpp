@@ -80,7 +80,7 @@ std::map<int32_t, HiDebug_ErrorCode> resProfErrorCodeMap = {
 HiDebug_ErrorCode ConvertProfilerErrorCode(int32_t errCode)
 {
     auto it = resProfErrorCodeMap.find(errCode);
-    return (it != resProfErrorCodeMap.end()) ? it->second : HiDebug_ErrorCode::HIDEBUG_RES_PROF_INVALID_ARG;
+    return (it != resProfErrorCodeMap.end()) ? it->second : HiDebug_ErrorCode::HIDEBUG_RES_PROF_FAILURE;
 }
 
 HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config)

@@ -26,6 +26,7 @@
 #include <string>
 #include <sys/time.h>
 #include <sys/prctl.h>
+#include <sys/mman.h>
 #include <unordered_map>
 #include <unordered_set>
 #include "dfx_regs_get.h"
@@ -116,7 +117,10 @@ static pthread_key_t g_sampleKey = 10000;
 
 static void DestroySampleKey(void* value)
 {
-    delete static_cast<Sampling*>(value);
+    if (value != nullptr) {
+        static_cast<Sampling*>(value)->~Sampling();
+        munmap(value, sizeof(Sampling));
+    }
 }
 
 const MallocDispatchType* GetDispatch()
@@ -333,6 +337,11 @@ bool ohos_malloc_hook_on_end(void)
         return false;
     }
     pthread_detach(threadEnd);
+#ifdef OHOS_ENABLE_SAMPLER
+    malloc_sampler_data_fill_hook_reg(nullptr);
+    malloc_sampler_data_dump_hook_reg(nullptr);
+    malloc_sampler_alloc_report_hook_reg(nullptr);
+#endif
     return true;
 }
 
@@ -506,9 +515,88 @@ static void inline __attribute__((always_inline)) AddAllocAddr(void* pRet)
     }
 }
 
+int32_t hook_fill_data(int sample_type, void *sample_addr, size_t size, size_t act_size, void *buff, size_t buff_len)
+{
+    if (buff == nullptr || buff_len == 0) {
+        return 0;
+    }
+    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
+        return -1;
+    }
+    if (HookGuard::ShouldFilterBySize(act_size) || HookGuard::ShouldSample(act_size, g_sampleKey)) {
+        return -1;
+    }
+    StackParam param;
+    AsyncStackData asyncData {{{{0}}}};
+    StackRawData rawdata = {{{{0}}}};
+    const bool isAsyncStack = g_clientConfig.fpunwind && g_clientConfig.asyncStackEnable;
+    if (!CollectStackInfoWithAsyncData(rawdata, asyncData, param)) {
+        return 0;
+    }
+
+    int realSize = HookGuard::CalculateRealSize(param.fpStackDepth, isAsyncStack);
+    if (static_cast<size_t>(realSize + 4) > buff_len) {
+        return 0;
+    }
+    *((uint32_t*)buff) = realSize;
+    if (isAsyncStack) {
+        SetStackRawData(asyncData, MALLOC_MSG, sample_addr, act_size);
+        FillNodeInfo(asyncData);
+        if (memcpy_s((char*)buff + 4, buff_len - 4, &asyncData, realSize) != EOK) {
+            return 0;
+        }
+    } else {
+        SetStackRawData(rawdata, MALLOC_MSG, sample_addr, act_size);
+        FillNodeInfo(rawdata);
+        if (memcpy_s((char*)buff + 4, buff_len - 4, &rawdata, realSize) != EOK) {
+            return 0;
+        }
+    }
+    return realSize + 4;
+}
+
+void hook_data_dump(void *buff, size_t buffLen)
+{
+    if (buff == nullptr || buffLen == 0) {
+        return;
+    }
+
+    HookClientHolder client(g_hookClient);
+    if (!client.IsValid() || !client.UpdateThreadName()) {
+        return;
+    }
+    constexpr size_t headSize = sizeof(uint32_t);
+    if (buffLen <= headSize) {
+        return;
+    }
+    const auto* base = reinterpret_cast<const BaseStackRawData*>(
+        static_cast<const char*>(buff) + headSize);
+    int smbIndex = static_cast<int>(
+        reinterpret_cast<uint64_t>(base->addr) % static_cast<uint64_t>(g_sharedMemCount.load()));
+    client.SendRawData(buff, buffLen, smbIndex);
+    return;
+}
+
+void hook_alive_addr_dump(void* buff, size_t buffLen)
+{
+    if(buff == nullptr || buffLen == 0) {
+ 	    return;
+    }
+    HookClientHolder client(g_hookClient);
+ 	if (client.IsValid()) {
+ 	    client.SendStackWithPayload(buff, buffLen, nullptr, 0);
+ 	}
+ 	return;
+}
+
 extern "C" __attribute__((visibility("default"), used)) void* hook_malloc(void* (*fn)(size_t), size_t size)
 {
     void* ret = fn ? fn(size) : nullptr;
+
+    if (g_clientConfig.allocatorSamplingEnable) {
+        return ret;
+    }
+
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return ret;
     }
@@ -558,6 +646,10 @@ extern "C" __attribute__((visibility("default"), used)) void* hook_aligned_alloc
     void* (*fn)(size_t, size_t), size_t align, size_t len)
 {
     void* ret = fn ? fn(align, len) : nullptr;
+
+    if (g_clientConfig.allocatorSamplingEnable) {
+        return ret;
+    }
 
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return ret;
@@ -615,6 +707,10 @@ void* hook_valloc(void* (*fn)(size_t), size_t size)
 void* __attribute__((noinline)) hook_calloc(void* (*fn)(size_t, size_t), size_t number, size_t size)
 {
     void* pRet = fn ? fn(number, size) : nullptr;
+
+    if (g_clientConfig.allocatorSamplingEnable) {
+        return pRet;
+    }
 
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
         return pRet;
@@ -674,6 +770,9 @@ void* __attribute__((noinline)) hook_realloc(void* (*fn)(void*, size_t), void* p
 {
     void* pRet = fn ? fn(ptr, size) : nullptr;
 
+    if (g_clientConfig.allocatorSamplingEnable) {
+        return pRet;
+    }
     if (!HookGuard::IsReady()) {
         return pRet;
     }
@@ -755,7 +854,7 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
     if (!free_func) {
         return;
     }
-    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc()) {
+    if (!HookGuard::IsReady() || HookGuard::ShouldSkipMalloc() || g_clientConfig.allocatorSamplingEnable) {
         free_func(p);
         return;
     }
@@ -780,6 +879,12 @@ void HookFreeStatisticsInterval(void (*free_func)(void*), void* p)
 
 extern "C" __attribute__((visibility("default"), used)) void hook_free(void (*free_func)(void*), void* p)
 {
+    if (g_clientConfig.allocatorSamplingEnable) {
+        if (free_func) {
+            free_func(p);
+        }
+        return;
+    }
     if (g_clientConfig.statisticsInterval > 0) {
         return HookFreeStatisticsInterval(free_func, p);
     }

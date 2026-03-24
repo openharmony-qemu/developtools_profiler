@@ -43,6 +43,9 @@ private:
     bool CreateNewCacheFile();
     std::string GetCacheFilePath(uint16_t index) const;
     bool WriteToFile(const uint8_t* data, size_t size);
+    void HandleFileCacheEnd();
+    bool CheckIsDiskUsageExceedLimit();
+    void HandleFileSizeExceedLimit();
     void NotifyFileEvent(uint16_t fileIndex, uint16_t eventType);
     bool CleanOldCacheFiles();
 
@@ -57,6 +60,7 @@ private:
     uint64_t currentFileSize_ = 0;
     uint64_t totalBytesWritten_ = 0;
     std::atomic<bool> initialized_ = false;
+    std::atomic<bool> isTotalFileSizeLimit_ = false;
     bool isCacheFileEnded_ = false;
     std::string cacheFileDir_;
     uint32_t cacheMemorySize_;

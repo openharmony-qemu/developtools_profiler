@@ -33,7 +33,6 @@ std::map<std::string, std::string> Shader::ItemData()
     std::string filePath = GetShaderReportPath();
     std::string content = ReadFileContent(filePath);
     ShaderMetrics metrics = ParseShaderMetrics(content);
-    ClearReportFile(filePath);
     return FormatMetricsAsMap(metrics);
 }
 
@@ -42,38 +41,38 @@ std::string Shader::GetShaderReportPath() const
     if (pkgName_.empty()) {
         return "";
     }
-    return "/data/local/tmp/" + pkgName_;
+    return "/data/app/el1/100/system_optimize/" + pkgName_ + "/shader_cache/shader_dfx";
 }
 
-std::string Shader::ReadFileContent(const std::string& path) const
+std::string Shader::ReadFileContent(const std::string& path)
 {
     std::string cmdResult;
     if (path.empty()) {
         LOGE("Shader: Empty file path");
         return "";
     }
-
-    if (!SPUtils::FileAccess(path)) {
-        std::string shaderPath = CMD_COMMAND_MAP.at(CmdCommand::CREAT_DIR) + path;
-        if (!SPUtils::LoadCmd(shaderPath, cmdResult)) {
-            LOGE("%s not be created!", shaderPath.c_str());
-            return "";
-        }
-    }
     std::string shaderFile = path + "/shader_report_info.txt";
     if (!SPUtils::FileAccess(shaderFile)) {
-        std::string shaderFileCmd = "touch " + shaderFile;
-        if (!SPUtils::LoadCmd(shaderFileCmd, cmdResult)) {
-            LOGE("%s not be created!", shaderFile.c_str());
-            return "";
-        }
-    }
-    std::string content;
-    if (!SPUtils::LoadFile(path, content)) {
-        LOGE("Shader: Failed to read file: %s", path.c_str());
+        LOGE("%s not be created!", shaderFile.c_str());
         return "";
     }
-
+    std::string content;
+    std::string line;
+    size_t curSize = SPUtils::GetFileSize(shaderFile);
+    if (curSize == lastSize_) {
+        LOGD("The cur file do not change");
+        return "";
+    }
+    std::ifstream file(shaderFile, std::ios::in | std::ios::binary);
+    if (!file) {
+        LOGE("the file not exeit");
+        return "";
+    }
+    file.seekg(lastSize_);
+    while (std::getline(file, line)) {
+        content = line;
+    }
+    lastSize_ = curSize;
     LOGD("Shader: Successfully read file: %s", path.c_str());
     return content;
 }
@@ -116,31 +115,15 @@ ShaderMetrics Shader::ParseShaderMetrics(const std::string& content) const
     return metrics;
 }
 
-void Shader::ClearReportFile(const std::string& path) const
-{
-    if (path.empty()) {
-        return;
-    }
-
-    // Clear the file content by opening in truncate mode
-    std::ofstream ofs(path, std::ios::out | std::ios::trunc);
-    if (ofs.is_open()) {
-        ofs.close();
-        LOGD("Shader: Cleared report file: %s", path.c_str());
-    } else {
-        LOGE("Shader: Failed to clear file: %s", path.c_str());
-    }
-}
-
 std::map<std::string, std::string> Shader::FormatMetricsAsMap(const ShaderMetrics& metrics) const
 {
     std::map<std::string, std::string> result;
 
-    result["compileNum"] = std::to_string(metrics.compileNum);
-    result["compileDuration"] = std::to_string(metrics.compileDuration);
+    result["times"] = std::to_string(metrics.compileNum);
+    result["duration"] = std::to_string(metrics.compileDuration);
 
     LOGD("Shader: Formatted metrics - compileNum=%s, compileDuration=%s",
-         result["compileNum"].c_str(), result["compileDuration"].c_str());
+         result["times"].c_str(), result["duration"].c_str());
 
     return result;
 }

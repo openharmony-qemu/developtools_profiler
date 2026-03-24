@@ -41,12 +41,12 @@ private:
 
     // Helper functions following Method Decomposition Rule
     std::string GetShaderReportPath() const;
-    std::string ReadFileContent(const std::string& path) const;
+    std::string ReadFileContent(const std::string& path);
     ShaderMetrics ParseShaderMetrics(const std::string& content) const;
-    void ClearReportFile(const std::string& path) const;
     std::map<std::string, std::string> FormatMetricsAsMap(const ShaderMetrics& metrics) const;
 
     std::string pkgName_;
+    size_t lastSize_ = 0;
 };
 }
 }

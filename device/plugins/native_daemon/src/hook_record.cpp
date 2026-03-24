@@ -164,6 +164,8 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         event->set_trace_type(TraceType::ARK_GLOBAL_HANDLE);
     } else if (tagName == TAG_RES_ARK_LOCAL_HANDLE) {
         event->set_trace_type(TraceType::ARK_LOCAL_HANDLE);
+    } else if (tagName == TAG_RES_VMA_ARKWEB) {
+        event->set_trace_type(TraceType::VMA_ARKWEB);
     } else {
         if (tagName.find(".so") != std::string::npos) {
             event->set_trace_type(TraceType::SO);

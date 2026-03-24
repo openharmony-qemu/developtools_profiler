@@ -35,6 +35,7 @@ public:
 
     bool PutRaw(const int8_t* data, uint32_t size);
     bool PutRawTimeout(const int8_t* data, uint32_t size);
+    bool PutRawSync(const int8_t* data, uint32_t size, const std::function<bool()>& callback);
     bool PutWithPayloadTimeout(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize);
     bool PutWithPayloadSync(const int8_t* header, uint32_t headerSize, const int8_t* payload, uint32_t payloadSize,
                             const std::function<bool()>& callback);
@@ -106,6 +107,7 @@ private:
 
     ShareMemoryBlock();
     int8_t* GetCurrentFreeMemory(uint32_t size);
+    int8_t* GetRawMemory(uint32_t size);
 
     bool CreateBlock(std::string name, uint32_t size);
     bool CreateBlockWithFd(std::string name, uint32_t size, int fd);
