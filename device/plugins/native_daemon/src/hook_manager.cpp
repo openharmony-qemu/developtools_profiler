@@ -1083,13 +1083,14 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
-        hookCtx->stackPreprocess->SetIsStopTakeData(true);
+        PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile parse all cache file done.");
         return;
     }
     uint64_t readfileSize = 0;
     bool ret = false;
     lseek(fd, 0, SEEK_SET);
     while (true) {
+        ret = false;
         uint32_t totalSize = 0;
         ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
         if (readBytes < 0) {
@@ -1121,11 +1122,9 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
         std::shared_ptr<RawStack> rawStack = nullptr;
         ret = TakeDataHandler(hookCtx, hookRecord, rawStack, reinterpret_cast<const int8_t*>(buffer.get()), totalSize);
         if (!ret) {
-            break;
+            continue;
         }
-        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
-            break;
-        }
+        ProcessRawStackByType(hookCtx, hookRecord, rawStack);
     }
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
