@@ -86,6 +86,7 @@ constexpr uint32_t MIN_FILE_CACHE_MEMORY_SIZE = 16;
 constexpr uint32_t MAX_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t DEFAULT_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t MB_TO_BYTES = 1024 * 1024;
+constexpr uint64_t FD_TAG = 0xD002D0C;
 }
 }
 }
@@ -124,7 +125,15 @@ enum {
     FREE_MSG_SIMP,
     MALLOC_ARKTS,
     FREE_ARKTS,
+    MEM_LEAK_MSG,
     UNKNOWN,
+};
+
+enum MemLeakFormat {
+    TYPE_DISABLE = 0,
+    TYPE_TXT = 1,
+    TYPE_VECTOR = 2,
+    TYPE_SNAPSHOT = 3,
 };
 
 constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
@@ -261,6 +270,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         targetSoName = "";
         enableFileCacheMode = false;
         fileCacheBufferSize = 0;
+        memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+        onlyMemLeak = false;
     }
 
     std::string ToString()
@@ -331,6 +342,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t gwpAsanMaxStackDepth = 0;
     bool enableFileCacheMode = false;
     uint32_t fileCacheBufferSize = 0;
+    MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+    bool onlyMemLeak = false;
 };
 
 struct alignas(8) HookCacheFileMsg {

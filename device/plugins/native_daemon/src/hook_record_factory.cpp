@@ -260,6 +260,8 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     switch (type) {
         case GWP_ASAN_MSG:
             return std::make_shared<GwpAsanRecord>(rawStack);
+        case MEM_LEAK_MSG:
+            return std::make_shared<MemLeakRecord>(rawStack);
         case NMD_MSG:
             return std::make_shared<NmdRecord>(rawStack);
         case MALLOC_ARKTS: {

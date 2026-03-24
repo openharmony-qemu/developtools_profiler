@@ -61,6 +61,7 @@ private:
     void HandleFileCacheMode(SocketContext &context);
     void HandleSharedMemoryMode(SocketContext &context);
     void HandleCommonConfig();
+    bool GetAndSendMemLeakInfo();
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;

@@ -104,6 +104,7 @@ public:
     // CommandPoller will call the following four interfaces after receiving the command
     bool CreatePluginSession(const std::vector<ProfilerPluginConfig>& config) override;
     bool DestroyPluginSession(const std::vector<uint32_t>& pluginIds) override;
+    void CloseResource();
     bool StartPluginSession(const std::vector<uint32_t>& pluginIds,
                             const std::vector<ProfilerPluginConfig>& config, PluginResult& result) override;
     bool StopPluginSession(const std::vector<uint32_t>& pluginIds) override;
@@ -125,6 +126,7 @@ public:
     int GetFileNotifierFd(int32_t pid, const std::string& name);
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     int32_t CreatePluginSession();
     void RegisterWriter(const std::shared_ptr<Writer> writer);
     void RegisterFdForSa(uint32_t saFd);
@@ -139,6 +141,7 @@ public:
         isProtobufSerialize_ = isProtobufSerialize;
     }
     void GetClientConfig(ClientConfig& clientConfig);
+    void GetClientConfigExt(ClientConfig& clientConfig);
     bool GetNoDataQueueFlag()
     {
         return noDataQueue_;
@@ -163,6 +166,7 @@ public:
     }
     void SetNmdInfo(std::pair<uint32_t, uint32_t>);
     void SetGwpFd(uint32_t fd);
+    void SetMemLeakFd(uint32_t fd);
     void FlushRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx,
                             std::shared_ptr<HookRecord>& hookRecord);
     std::string simplifiedNmd_;
@@ -175,6 +179,7 @@ private:
     bool printMallocNmd_ = false;
     unsigned long long traceMask_ = 0;
     bool saMode_ = false;
+    void DumpMemLeakInfo(uint8_t* data);
     bool CheckProcess();
     unsigned long long ConvertTagToMask();
     bool CheckProcessName();
@@ -201,6 +206,8 @@ private:
         std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
     bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
         std::shared_ptr<RawStack>& rawStack);
+    void CreateMemLeakFile();
+    std::string GetMemLeakFileName(MemLeakFormat format);
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
@@ -230,6 +237,8 @@ private:
     uint32_t gwpAsanMaxEntries_ = 0;
     uint32_t gwpAsanMaxStackDepth_ = 0;
     uint32_t gwpFd_ = 0;
+    uint32_t memLeakFd_ = 0;
+    std::string memLeakFileName_;
 };
 }
 #endif // AGENT_MANAGER_H

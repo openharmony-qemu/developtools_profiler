@@ -19,6 +19,7 @@
 #include "hook_common.h"
 #include "unix_socket_client.h"
 #include "share_memory_allocator.h"
+#include "mem_leak_detector.h"
 #include "logging.h"
 #include "sampling.h"
 #include <unistd.h>
@@ -253,6 +254,9 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         stackWriterList_.push_back(stackWriter);
     }
     HandleCommonConfig();
+    if (config_->onlyMemLeak) {
+        GetAndSendMemLeakInfo();
+    }
     if (config_->allocatorSamplingEnable) {
 #ifdef OHOS_ENABLE_SAMPLER
         malloc_sampler_data_fill_hook_reg(hook_fill_data);
@@ -274,6 +278,35 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
         return false;
     }
+    return true;
+}
+
+bool HookSocketClient::GetAndSendMemLeakInfo()
+{
+    if ((config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) || (stackWriterList_.size() == 0)) {
+        return false;
+    }
+
+    MemoryLeakDetector memLeakDetector;
+    std::string data;
+    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat) - 1, data)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::GetMemLeakInfo failed!");
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::GetMemLeakInfo success!");
+    StackRawData rawdata = {{{{0}}}};
+    rawdata.type = MEM_LEAK_MSG;
+    if (!stackWriterList_[0]) {
+        return false;
+    }
+    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                            reinterpret_cast<int8_t *>(data.data()), data.size() + 1,
+                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret) {
+        DisableHook();
+        return false;
+    }
+    stackWriterList_[0]->Flush();
     return true;
 }
 
@@ -505,6 +538,9 @@ bool HookSocketClient::SendEndMsg()
     rawdata.type = END_MSG;
     if (g_disableHook || unixSocketClient_ == nullptr) {
         return false;
+    }
+    if (!config_->onlyMemLeak) {
+        GetAndSendMemLeakInfo();
     }
     std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
         [&rawdata](std::shared_ptr<StackWriter>& writer) {

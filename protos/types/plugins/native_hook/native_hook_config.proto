@@ -70,4 +70,5 @@ message NativeHookConfig {
     bool use_file_cache_mode = 36;
     uint32 file_cache_buffer_size = 37;
     bool allocator_sampling_enable = 38;
+    uint32 mem_leak_format = 39;
 }

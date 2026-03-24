@@ -93,10 +93,16 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, uniqueStackTableSize_);
     WRITESTRING(parcel, typeFileName_);
     WRITEUINT32(parcel, startType_);
+    return MarshallingExt(parcel);
+}
+
+bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
+{
     WRITEUINT32(parcel, gwpAsanHoldTime_);
     WRITEUINT32(parcel, gwpAsanMaxEntries_);
     WRITEUINT32(parcel, gwpAsanMaxStackDepth_);
     WRITEBOOL(parcel, allocatorSamplingEnable_);
+    WRITEUINT32(parcel, memLeakFormat_);
     return true;
 }
 
@@ -151,10 +157,17 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->uniqueStackTableSize_);
     READSTRING(parcel, config->typeFileName_);
     READUINT32(parcel, config->startType_);
+    return UnmarshallingExt(parcel, config);
+}
+
+bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
+                                                    std::shared_ptr<NativeMemoryProfilerSaConfig> config)
+{
     READUINT32(parcel, config->gwpAsanHoldTime_);
     READUINT32(parcel, config->gwpAsanMaxEntries_);
     READUINT32(parcel, config->gwpAsanMaxStackDepth_);
     READBOOL(parcel, config->allocatorSamplingEnable_);
+    READUINT32(parcel, config->memLeakFormat_);
     PrintConfig(config);
     return true;
 }
@@ -184,5 +197,6 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());
     PROFILER_LOG_DEBUG(LOG_CORE, "uniqueStackTableSize: %u", config->uniqueStackTableSize_);
     PROFILER_LOG_DEBUG(LOG_CORE, "startType: %d", config->startType_);
+    PROFILER_LOG_DEBUG(LOG_CORE, "memLeakFormat_: %u", config->memLeakFormat_);
 }
 } // namespace OHOS::Developtools::NativeDaemon
