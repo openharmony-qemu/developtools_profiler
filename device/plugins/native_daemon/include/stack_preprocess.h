@@ -68,6 +68,8 @@ struct AllocAddrInfo {
 struct CallStackKey {
     uint64_t stackHash;
     uint64_t nodeId;
+    uint64_t syncStackId;
+    uint64_t asyncStackId;
     uint32_t stackSize;
     uint32_t nodeType;
     uint32_t tagId;
@@ -76,9 +78,11 @@ struct CallStackKey {
     {
         return stackHash == other.stackHash &&
                nodeId == other.nodeId &&
+               syncStackId == other.syncStackId &&
+               asyncStackId == other.asyncStackId &&
+               stackSize == other.stackSize &&
                nodeType == other.nodeType &&
-               tagId == other.tagId &&
-               stackSize == other.stackSize;
+               tagId == other.tagId;
     }
 };
 
@@ -254,6 +258,11 @@ private:
         MATCH_ADDRMAMP_SIZE = 100000,
     };
 
+    struct ParseContext {
+        uint32_t offset;
+        uint64_t readfileSize;
+    };
+
     struct ScopedLockFile {
         ScopedLockFile(FILE* fpHook): fpHookData(fpHook)
         {
@@ -288,6 +297,8 @@ private:
     template <typename T>
     void ReportFrameMap(CallFrame& callFrame, T& stackData);
     void ReportThreadNameMap(uint32_t tid, const std::string& tname);
+    bool ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,
+        RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord);
     void SetMapsInfo();
     template <typename T>
     void SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo, T& batchNativeHookData);
@@ -330,6 +341,8 @@ private:
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    bool TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord);
+    uint32_t FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord);
     void HandleDeleteAddr(uint64_t addr, size_t size);
     std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
     void HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size);

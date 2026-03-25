@@ -1189,6 +1189,47 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     }
 }
 
+bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
+    uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize)
+{
+    while (offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + offset, sizeof(uint32_t));
+        if (ret != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer memcpy_s failed, ret=%d", ret);
+            return false;
+        }
+
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer invalid totalSize=%u", totalSize);
+            return false;
+        }
+
+        if (offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+
+        offset += sizeof(uint32_t);
+        readfileSize += sizeof(uint32_t) + totalSize;
+
+        std::shared_ptr<HookRecord> hookRecord = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+        if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer TakeDataHandler failed, skip current record");
+            offset += totalSize;
+            continue;
+        }
+        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer ProcessRawStackByType failed, skip current record");
+            offset += totalSize;
+            continue;
+        }
+        offset += totalSize;
+    }
+    return true;
+}
+
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
@@ -1196,46 +1237,68 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
         hookCtx->stackPreprocess->SetIsCacheFileParseDone(true);
         return;
     }
+    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
+    auto readBuffer = std::make_unique<uint8_t[]>(readBufSize);
+    uint32_t remainSize = 0;
     uint64_t readfileSize = 0;
     bool ret = false;
+    bool hasError = false;
     lseek(fd, 0, SEEK_SET);
-    while (true) {
-        ret = false;
-        uint32_t totalSize = 0;
-        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
-        if (readBytes < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+
+    while (!hasError) {
+        ssize_t bytesRead = read(fd, readBuffer.get() + remainSize, readBufSize - remainSize);
+        if (bytesRead < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed errno=%d", errno);
+            hasError = true;
             break;
         }
-        if (readBytes == 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile read end of file.");
-            ret = true;
+        if (bytesRead == 0) {
+            if (remainSize == 0) {
+                ret = true;
+            } else {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile incomplete record at EOF, remainSize=%u",
+                    remainSize);
+                hasError = true;
+            }
             break;
         }
-        if (readBytes != sizeof(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read invalid totalSize=%zd.", readBytes);
+
+        uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
+        uint32_t offset = 0;
+
+        if (!ParseRecordsFromBuffer(hookCtx, readBuffer.get(), totalAvail, offset, readfileSize)) {
+            hasError = true;
             break;
         }
-        readfileSize += sizeof(totalSize);
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile invalid totalSize=%u.", totalSize);
-            break;
-        }
-        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
-        readBytes = read(fd, buffer.get(), totalSize);
-        if (readBytes != static_cast<ssize_t>(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read data failed.");
-            break;
-        }
-        readfileSize += totalSize;
-        std::shared_ptr<HookRecord> hookRecord = nullptr;
-        std::shared_ptr<RawStack> rawStack = nullptr;
-        ret = TakeDataHandler(hookCtx, hookRecord, rawStack, reinterpret_cast<const int8_t*>(buffer.get()), totalSize);
-        if (!ret) {
+
+        remainSize = totalAvail - offset;
+        if (remainSize > 0 && offset == 0) {
+            uint32_t oversizeRecord = 0;
+            if (memcpy_s(&oversizeRecord, sizeof(uint32_t), readBuffer.get(), sizeof(uint32_t)) != EOK) {
+                hasError = true;
+                break;
+            }
+            PROFILER_LOG_WARN(LOG_CORE, "ReadFromCacheFile record too large for buffer, "
+                "totalSize=%u, bufSize=%u, skipping", oversizeRecord, readBufSize);
+            off_t skipBytes = static_cast<off_t>(oversizeRecord) + sizeof(uint32_t) - remainSize;
+            if (lseek(fd, skipBytes, SEEK_CUR) < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile lseek skip failed errno=%d", errno);
+                hasError = true;
+                break;
+            }
+            readfileSize += sizeof(uint32_t) + oversizeRecord;
+            remainSize = 0;
             continue;
         }
-        ProcessRawStackByType(hookCtx, hookRecord, rawStack);
+        if (remainSize > 0) {
+            if (memmove_s(readBuffer.get(), readBufSize, readBuffer.get() + offset, remainSize) != EOK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile memmove_s failed");
+                hasError = true;
+                break;
+            }
+        }
     }
+
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
 }

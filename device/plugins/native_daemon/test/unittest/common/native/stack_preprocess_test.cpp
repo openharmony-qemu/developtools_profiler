@@ -61,6 +61,28 @@ static std::shared_ptr<HookRecord> MakeHookRecord(uint32_t nodeType, uint64_t no
     return std::make_shared<HookRecord>(MakeRawStack(nodeType, nodeId, tagId));
 }
 
+static std::shared_ptr<HookRecord> MakeAsyncHookRecord(uint16_t type, uint64_t syncStackId,
+    uint64_t asyncStackId, size_t mallocSize = 0)
+{
+    auto raw = RawStackPtr(new RawStack(), [](RawStack* p) {
+        if (p != nullptr) {
+            delete reinterpret_cast<AsyncStackData*>(p->stackContext);
+            p->stackContext = nullptr;
+            delete p;
+        }
+    });
+
+    auto* asyncData = new AsyncStackData();
+    asyncData->type = type;
+    asyncData->syncStackId = syncStackId;
+    asyncData->asyncStackId = asyncStackId;
+    asyncData->mallocSize = mallocSize;
+    raw->stackContext = asyncData;
+    raw->stackSize = 1;
+    raw->reportFlag = true;
+    return std::make_shared<HookRecord>(raw);
+}
+
 static std::vector<CallFrame> MakeFrames(uint64_t callFrameId)
 {
     std::vector<CallFrame> frames;
@@ -759,6 +781,103 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
     std::vector<uint64_t> emptyCallStack;
     uint32_t id2 = preprocess.FindCallStackId(emptyCallStack, hookRecord);
     EXPECT_EQ(id1, id2);
+}
+
+/*
+@tc.name: AsyncCallStackKeyTest
+@tc.desc: async stack should write CallStackKey with stackSize fixed to zero.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_offline_symbolization(true);
+    hookConfig.set_js_stack_report(1);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto hookRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    std::vector<CallFrame> frames;
+    frames.emplace_back(0x1000, 0, true);
+    frames.back().callFrameId_ = 0x2345;
+    BatchNativeHookData data;
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+
+    ASSERT_EQ(preprocess.callStackIndex_.size(), 1u);
+    ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+    uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
+    const auto& key = preprocess.callStackIndex_.begin()->first;
+    EXPECT_EQ(preprocess.callStackIndex_.begin()->second, stackId);
+    EXPECT_EQ(key.syncStackId, 11u);
+    EXPECT_EQ(key.asyncStackId, 22u);
+    EXPECT_EQ(key.stackSize, 0u);
+    EXPECT_EQ(key.stackHash, (11ULL ^ (22ULL << 32)) ^ (64ULL | SIZE_MASK));
+}
+
+/*
+@tc.name: AsyncStatisticsLookupTest
+@tc.desc: FindAsyncStatisticsStackIdLocked should directly hit callStackIndex_ in async scene.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, AsyncStatisticsLookupTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_offline_symbolization(true);
+    hookConfig.set_js_stack_report(1);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    auto hookRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    std::vector<CallFrame> frames;
+    frames.emplace_back(0x1000, 0, true);
+    frames.back().callFrameId_ = 0x2345;
+    BatchNativeHookData data;
+    preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
+
+    ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+    uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
+    uint32_t lookupId = preprocess.FindAsyncStatisticsStackIdLocked(hookRecord);
+    EXPECT_EQ(lookupId, stackId);
+}
+
+/*
+@tc.name: TryProcessCachedAsyncStatisticsWithoutFileModeTest
+@tc.desc: cached async statistics should still work when statistics mode is enabled without file cache mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, TryProcessCachedAsyncStatisticsWithoutFileModeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_statistics_interval(10);
+    hookConfig.set_async_stack_enable(true);
+    hookConfig.set_fp_unwind(true);
+    hookConfig.set_offline_symbolization(true);
+    hookConfig.set_js_stack_report(1);
+    auto factory = std::make_shared<HookRecordFactory>(hookConfig);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(factory);
+
+    auto firstRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    std::vector<CallFrame> frames;
+    frames.emplace_back(0x1000, 0, true);
+    frames.back().callFrameId_ = 0x2345;
+    BatchNativeHookData data;
+    preprocess.SetAllocStatisticsFrame(firstRecord, frames, data);
+
+    ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
+    uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
+    auto secondRecord = MakeAsyncHookRecord(MALLOC_MSG, 11, 22, 64);
+    bool ret = preprocess.TryProcessCachedAsyncStatistics(secondRecord);
+
+    ASSERT_TRUE(ret);
+    ASSERT_EQ(secondRecord, nullptr);
+    auto iter = preprocess.recordStatisticsMap_.find(stackId);
+    ASSERT_NE(iter, preprocess.recordStatisticsMap_.end());
+    EXPECT_EQ(iter->second.applyCount, 2u);
 }
 
 /*
