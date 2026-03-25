@@ -173,7 +173,7 @@ public:
     inline void InitStatisticsTime()
     {
         if (hookConfig_.use_file_cache_mode()) {
-            clock_gettime(CLOCK_REALTIME, &lastCacheStatisticsTime_);
+            lastCacheStatisticsTime_ = {0, 0};
         } else {
             lastStatisticsTime_ = std::chrono::steady_clock::now();
         }
