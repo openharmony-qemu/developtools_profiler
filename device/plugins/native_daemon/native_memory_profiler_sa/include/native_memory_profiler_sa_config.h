@@ -28,7 +28,9 @@ constexpr size_t GPU_RANGE_SIZE = 2;
 class NativeMemoryProfilerSaConfig : public Parcelable {
 public:
     bool Marshalling(Parcel& parcel) const override;
+    bool MarshallingExt(Parcel& parcel) const;
     static bool Unmarshalling(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config);
+    static bool UnmarshallingExt(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config);
     static void PrintConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
 
 public:
@@ -81,7 +83,8 @@ public:
     uint32_t gwpAsanHoldTime_{0};
     uint32_t gwpAsanMaxEntries_{0};
     uint32_t gwpAsanMaxStackDepth_{0};
-
+    bool allocatorSamplingEnable_{false};
+    uint32_t memLeakFormat_{0};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

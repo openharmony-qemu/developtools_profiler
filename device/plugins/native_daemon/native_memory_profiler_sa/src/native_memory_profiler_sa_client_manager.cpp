@@ -34,6 +34,8 @@ constexpr uint32_t NMD_DURATION = 5;
 constexpr uint32_t NMD_SHMEM = 300;
 constexpr uint32_t GWP_DURATION = 10;
 constexpr uint32_t GWP_SHMEM = 300;
+constexpr uint32_t MEM_LEAK_DURATION = 10;
+constexpr uint32_t MEM_LEAK_SHMEM = 300;
 constexpr int ONLY_NMD = 2;
 constexpr int SIMP_NMD = 3;
 constexpr int FIVE_MINUTES = 300;
@@ -63,6 +65,23 @@ static int32_t InvokeWithProxy(std::function<int32_t(NativeMemoryProfilerSaProxy
     }
     NativeMemoryProfilerSaProxy proxy(service);
     return invoker(proxy);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::StartLeakDetect(int fd, pid_t pid, uint32_t format)
+{
+    CHECK_TRUE(fd != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: fd is 0");
+    CHECK_TRUE(pid != 0, RET_ERR, "NativeMemoryProfilerSaClientManager: pid is 0");
+
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
+    config->pid_ = static_cast<int32_t>(pid);
+    config->duration_ = MEM_LEAK_DURATION;
+    config->mallocDisable_ = true;
+    config->mmapDisable_ = true;
+    config->shareMemorySize_ = MEM_LEAK_SHMEM;
+    config->memLeakFormat_ = format;
+    return InvokeWithProxy([fd, &config](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.DumpData(fd, config);
+    });
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)

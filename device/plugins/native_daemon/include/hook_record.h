@@ -193,6 +193,11 @@ public:
     GwpAsanRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
 };
 
+class MemLeakRecord : public HookRecord {
+public:
+    MemLeakRecord(RawStackPtr rawStack) : HookRecord(rawStack) {};
+};
+
 class JsRecord : public HookRecord {
 public:
     JsRecord() = default;

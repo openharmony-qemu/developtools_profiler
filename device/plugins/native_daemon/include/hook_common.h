@@ -86,6 +86,7 @@ constexpr uint32_t MIN_FILE_CACHE_MEMORY_SIZE = 16;
 constexpr uint32_t MAX_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t DEFAULT_FILE_CACHE_MEMORY_SIZE = 32;
 constexpr uint32_t MB_TO_BYTES = 1024 * 1024;
+constexpr uint64_t FD_TAG = 0xD002D0C;
 }
 }
 }
@@ -124,8 +125,21 @@ enum {
     FREE_MSG_SIMP,
     MALLOC_ARKTS,
     FREE_ARKTS,
+    MEM_LEAK_MSG,
     UNKNOWN,
 };
+
+enum MemLeakFormat {
+    TYPE_DISABLE = 0,
+    TYPE_TXT = 1,
+    TYPE_VECTOR = 2,
+    TYPE_SNAPSHOT = 3,
+};
+
+constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
+constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;
+constexpr uint32_t ALIVE_ADDR_SNAPSHOT_END_MARKER = 0xADD50003;
+constexpr uint32_t FINAL_SNAPSHOT_REQUEST_CMD = 0xADD50004;
 
 enum SymbolType {
     NATIVE_SYMBOL,
@@ -238,6 +252,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         asyncStackEnable = false;
         asyncFlag = 0;
         responseLibraryMode = false;
+        allocatorSamplingEnable = false;
         freeEventOnlyAddrEnable = false;
         printNmd = false;
         nmdType = -1;
@@ -255,6 +270,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         targetSoName = "";
         enableFileCacheMode = false;
         fileCacheBufferSize = 0;
+        memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+        onlyMemLeak = false;
     }
 
     std::string ToString()
@@ -267,6 +284,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << ", fpunwind:" << fpunwind << ", isBlocked:" << isBlocked << ", memtraceEnable:" << memtraceEnable
             << ", asyncStackEnable:" << asyncStackEnable << ", asyncFlag:" << asyncFlag
             << ", sampleInterval: " << sampleInterval << ", responseLibraryMode: " << responseLibraryMode
+            << ", allocatorSamplingEnable: " << allocatorSamplingEnable
             << ", uniqueStackTableSize: " << uniqueStackTableSize
             << ", freeEventOnlyAddrEnable: " << freeEventOnlyAddrEnable << ", jsStackReport: "
             << arktsConfig.jsStackReport << ", maxJsStackDepth: "
@@ -306,6 +324,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
     bool responseLibraryMode = false;
+    bool allocatorSamplingEnable = false;
     bool freeEventOnlyAddrEnable = false;
     bool printNmd = false;
     int nmdType = -1;
@@ -323,6 +342,8 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t gwpAsanMaxStackDepth = 0;
     bool enableFileCacheMode = false;
     uint32_t fileCacheBufferSize = 0;
+    MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+    bool onlyMemLeak = false;
 };
 
 struct alignas(8) HookCacheFileMsg {

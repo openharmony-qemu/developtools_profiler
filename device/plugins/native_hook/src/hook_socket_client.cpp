@@ -19,6 +19,7 @@
 #include "hook_common.h"
 #include "unix_socket_client.h"
 #include "share_memory_allocator.h"
+#include "mem_leak_detector.h"
 #include "logging.h"
 #include "sampling.h"
 #include <unistd.h>
@@ -30,6 +31,12 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+
+extern "C" {
+int32_t hook_fill_data(int, void*, size_t, size_t, void*, size_t);
+void hook_data_dump(void*, size_t);
+void hook_alive_addr_dump(void*, size_t);
+}
 
 namespace {
 constexpr int ONLY_NMD_TYPE = 2;
@@ -163,7 +170,7 @@ void HookSocketClient::HandleFileCacheMode(SocketContext &context)
 void HookSocketClient::HandleSharedMemoryMode(SocketContext &context)
 {
     // shared memory mode
-    int sharedMemCount = (config_->offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = config_->offlineSymbolization ? SHARED_MEMORY_NUM : 1;
     for (int i = 0; i < sharedMemCount; ++i) {
         int smbfd = context.ReceiveFileDiscriptor();
         int eventfd = context.ReceiveFileDiscriptor();
@@ -193,6 +200,21 @@ void HookSocketClient::HandleCommonConfig()
 
 bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
 {
+    if (size == sizeof(uint32_t)) {
+        uint32_t cmd = *reinterpret_cast<const uint32_t*>(buf);
+        if (cmd == SNAPSHOT_REQUEST_CMD) {
+#ifdef OHOS_ENABLE_SAMPLER
+            malloc_sampler_alloc_report_all();
+#endif
+            return true;
+        } else if (cmd == FINAL_SNAPSHOT_REQUEST_CMD) {
+#ifdef OHOS_ENABLE_SAMPLER
+            malloc_sampler_data_fill_hook_reg(nullptr);
+            malloc_sampler_alloc_report_all();
+#endif
+            return true;
+        }
+    }
     if (size != sizeof(ClientConfig)) {
         return true;
     }
@@ -232,6 +254,16 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         stackWriterList_.push_back(stackWriter);
     }
     HandleCommonConfig();
+    if (config_->onlyMemLeak) {
+        GetAndSendMemLeakInfo();
+    }
+    if (config_->allocatorSamplingEnable) {
+#ifdef OHOS_ENABLE_SAMPLER
+        malloc_sampler_data_fill_hook_reg(hook_fill_data);
+        malloc_sampler_data_dump_hook_reg(hook_data_dump);
+        malloc_sampler_alloc_report_hook_reg(hook_alive_addr_dump);
+#endif
+    }
     if (nmdType_ == 0 || nmdType_ == ONLY_NMD_TYPE) {
         SendNmdInfo();
     } else if (nmdType_ == SIMP_NMD) {
@@ -246,6 +278,35 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
         return false;
     }
+    return true;
+}
+
+bool HookSocketClient::GetAndSendMemLeakInfo()
+{
+    if ((config_->memLeakFormat == MemLeakFormat::TYPE_DISABLE) || (stackWriterList_.size() == 0)) {
+        return false;
+    }
+
+    MemoryLeakDetector memLeakDetector;
+    std::string data;
+    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat) - 1, data)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::GetMemLeakInfo failed!");
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::GetMemLeakInfo success!");
+    StackRawData rawdata = {{{{0}}}};
+    rawdata.type = MEM_LEAK_MSG;
+    if (!stackWriterList_[0]) {
+        return false;
+    }
+    bool ret = stackWriterList_[0]->WriteWithPayloadTimeout(&rawdata, sizeof(BaseStackRawData),
+                                                            reinterpret_cast<int8_t *>(data.data()), data.size() + 1,
+                                                            std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (!ret) {
+        DisableHook();
+        return false;
+    }
+    stackWriterList_[0]->Flush();
     return true;
 }
 
@@ -292,6 +353,34 @@ bool HookSocketClient::SendStackWithPayload(const void* data, size_t size, const
         stackWriter->Flush();
     }
     return true;
+}
+
+bool HookSocketClient::SendRawData(const void* data, size_t size, int smbIndex)
+{
+    if (smbIndex + 1 > static_cast<int>(stackWriterList_.size())) {
+        return false;
+    }
+    if (g_disableHook || unixSocketClient_ == nullptr) {
+        return false;
+    }
+    if (unixSocketClient_->GetClientState() == CLIENT_STAT_THREAD_EXITED) {
+        DisableHook();
+        return false;
+    }
+    std::shared_ptr<StackWriter> stackWriter = stackWriterList_[smbIndex];
+    if (!stackWriter) {
+        return false;
+    }
+    long ret = stackWriter->WriteSync(data, size,
+                                       std::bind(&HookSocketClient::PeerIsConnected, this));
+    if (ret <= 0 && config_->isBlocked) {
+        DisableHook();
+        return false;
+    }
+    if (stackWriter->PrepareFlush()) {
+        stackWriter->Flush();
+    }
+    return ret > 0;
 }
 
 void HookSocketClient::Flush()
@@ -449,6 +538,9 @@ bool HookSocketClient::SendEndMsg()
     rawdata.type = END_MSG;
     if (g_disableHook || unixSocketClient_ == nullptr) {
         return false;
+    }
+    if (!config_->onlyMemLeak) {
+        GetAndSendMemLeakInfo();
     }
     std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
         [&rawdata](std::shared_ptr<StackWriter>& writer) {

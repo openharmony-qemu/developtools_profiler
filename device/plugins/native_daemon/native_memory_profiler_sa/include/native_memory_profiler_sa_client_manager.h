@@ -87,6 +87,7 @@ public:
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
+    static int32_t StartLeakDetect(int fd, pid_t pid, uint32_t format);
     
 private:
     static int32_t OnDemandStart(OHOS::sptr<OHOS::ISystemAbilityManager> sam,

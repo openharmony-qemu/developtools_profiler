@@ -32,6 +32,7 @@ public:
     void CloseSocketFd(pid_t pid);
     void AddPidInfo(pid_t pid, uid_t uid, gid_t gid);
     void RemovePidInfo(pid_t pid);
+    void SendCommand(pid_t pid, uint32_t cmd);
 private:
     bool StartService(const std::string& unixSocketName);
     void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);

@@ -25,7 +25,7 @@ HookRecordFactory::HookRecordFactory(NativeHookConfig hookConfig) : hookConfig_(
 {
     const bool isNoDataQueueMode = (hookConfig_.statistics_interval() > 0 && hookConfig_.fp_unwind() &&
                                     hookConfig_.offline_symbolization());
-    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = hookConfig_.offline_symbolization() ? SHARED_MEMORY_NUM : 1;
     int rawDataCacheSize = isNoDataQueueMode ? sharedMemCount : RAW_DATA_CACHE_INIT_SIZE;
     int hookRecordCacheSize = isNoDataQueueMode ? sharedMemCount : HOOK_RECORD_CACHE_INIT_SIZE;
 
@@ -260,6 +260,8 @@ std::shared_ptr<HookRecord> HookRecordFactory::GetHookRecord(const int8_t shared
     switch (type) {
         case GWP_ASAN_MSG:
             return std::make_shared<GwpAsanRecord>(rawStack);
+        case MEM_LEAK_MSG:
+            return std::make_shared<MemLeakRecord>(rawStack);
         case NMD_MSG:
             return std::make_shared<NmdRecord>(rawStack);
         case MALLOC_ARKTS: {

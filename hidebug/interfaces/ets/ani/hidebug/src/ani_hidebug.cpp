@@ -106,7 +106,7 @@ bool GetDumpParam(ani_env *env, ani_array argsAni, std::vector<std::u16string> &
     }
     for (ani_size i = 0; i < arraySize; i++) {
         ani_ref aniValue = nullptr;
-        if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "i:C{std.core.Object}", &aniValue, i) != ANI_OK) {
+        if (env->Object_CallMethodByName_Ref(argsAni, "$_get", "i:Y", &aniValue, i) != ANI_OK) {
             HILOG_ERROR(LOG_CORE, "get_element -> Get input args failed.");
             return false;
         }

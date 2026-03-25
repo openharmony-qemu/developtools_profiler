@@ -438,7 +438,7 @@ std::string HookManager::GetArktsDiagPath(const int8_t *buf, const uint32_t size
 
 void HookManager::GetClientConfig(ClientConfig& clientConfig)
 {
-    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = hookConfig_.offline_symbolization() ? SHARED_MEMORY_NUM : 1;
     clientConfig.shareMemorySize = (static_cast<uint32_t>(hookConfig_.smb_pages()) / sharedMemCount) * PAGE_BYTES;
 #ifndef __aarch64__
     if (static_cast<int>(clientConfig.shareMemorySize) < 0) {
@@ -467,6 +467,11 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.offlineSymbolization = hookConfig_.offline_symbolization();
     clientConfig.responseLibraryMode = hookConfig_.response_library_mode();
     clientConfig.arktsConfig.jsStackReport = hookConfig_.js_stack_report();
+#ifdef OHOS_ENABLE_SAMPLER
+    clientConfig.allocatorSamplingEnable = hookConfig_.allocator_sampling_enable();
+#else
+    clientConfig.allocatorSamplingEnable = false;
+#endif
     printMallocNmd_ = hookConfig_.dump_nmd() ? hookConfig_.dump_nmd() : printMallocNmd_;
     clientConfig.nmdType = (printMallocNmd_ && hookConfig_.dump_nmd()) ? ONLY_NMD_TYPE :
         static_cast<int>(nmdParamInfo_.type);
@@ -481,6 +486,13 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.gwpAsanHoldTime = gwpAsanHoldTime_;
     clientConfig.gwpAsanMaxEntries = gwpAsanMaxEntries_;
     clientConfig.gwpAsanMaxStackDepth = gwpAsanMaxStackDepth_;
+    GetClientConfigExt(clientConfig);
+}
+
+void HookManager::GetClientConfigExt(ClientConfig& clientConfig)
+{
+    clientConfig.memLeakFormat = static_cast<MemLeakFormat>(hookConfig_.mem_leak_format());
+    clientConfig.onlyMemLeak = saMode_;
     // File cache mode configuration
     clientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
     clientConfig.fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
@@ -616,7 +628,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     if (ctx == nullptr) {
         return false;
     }
-    int sharedMemCount = (hookConfig_.offline_symbolization()) ? SHARED_MEMORY_NUM : 1;
+    int sharedMemCount = hookConfig_.offline_symbolization() ? SHARED_MEMORY_NUM : 1;
     ClientConfig clientConfig;
     GetClientConfig(clientConfig);
     if (clientConfig.enableFileCacheMode) {
@@ -660,6 +672,7 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  js_stack_report = %d max_js_stack_depth = %u",
         hookConfig_.js_stack_report(), hookConfig_.max_js_stack_depth());
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig  memLeakFormat = %d", hookConfig_.mem_leak_format());
 
     if (noDataQueue_) {
         CreateNoQueueDataHandler(ctx, sharedMemCount);
@@ -676,6 +689,17 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
         ctx->stackPreprocess->SetWriter(const_cast<WriterStructPtr>(writerAdapter_->GetStruct()));
     }
     ctx->stackPreprocess->SetFactory(factory_);
+    if (hookConfig_.allocator_sampling_enable() && hookConfig_.statistics_interval() > 0) {
+        std::weak_ptr<HookManager> weakSelf = shared_from_this();
+        std::weak_ptr<HookManagerCtx> weakCtx = ctx;
+        ctx->stackPreprocess->SetServerCommandCallback([weakSelf, weakCtx](uint32_t cmd) {
+            auto self = weakSelf.lock();
+            auto hookCtx = weakCtx.lock();
+            if (self && self->hookService_ && hookCtx && hookCtx->pid > 0) {
+                self->hookService_->SendCommand(hookCtx->pid, cmd);
+            }
+        });
+    }
     return true;
 }
 
@@ -698,6 +722,41 @@ void HookManager::CheckHapEncryped()
         hookConfig_.set_js_stack_report(0);
         hookConfig_.set_max_js_stack_depth(0);
     }
+}
+
+void HookManager::CreateMemLeakFile()
+{
+    // sa mode has send fd
+    if (memLeakFd_ > 0) {
+        return;
+    }
+    if (static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()) == MemLeakFormat::TYPE_DISABLE) {
+        return;
+    }
+    constexpr int FILE_MODE = 0644;
+    int fileFd = open(memLeakFileName_.c_str(), O_CREAT | O_RDWR, FILE_MODE);
+    if (fileFd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
+        return;
+    }
+    fdsan_exchange_owner_tag(fileFd, 0, FD_TAG);
+    memLeakFd_ = fileFd;
+    PROFILER_LOG_INFO(LOG_CORE, "Create memLeak file success. fd: %d, type: %d, filename: %s",
+        memLeakFd_, hookConfig_.mem_leak_format(), memLeakFileName_.c_str());
+}
+
+std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
+{
+    std::string DEFAULT_PATH = "/data/local/tmp/";
+    std::map<MemLeakFormat, std::string> formatSuffixMap = {
+        {MemLeakFormat::TYPE_SNAPSHOT, ".heapsnapshot"},
+    };
+    auto iter = formatSuffixMap.find(format);
+    std::string suffix = (iter != formatSuffixMap.end()) ? iter->second : ".txt";
+    int pidValue = hookConfig_.pid();
+    std::string processName = hookConfig_.process_name();
+    COMMON::IsProcessExist(processName, pidValue);
+    return DEFAULT_PATH + "mem_leak_" + std::to_string(pidValue) + suffix;
 }
 
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
@@ -764,6 +823,10 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.js_stack_report() > 0 && hookConfig_.max_js_stack_depth() == 0 && hookConfig_.fp_unwind()) {
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
+    if (static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()) != MemLeakFormat::TYPE_DISABLE) {
+        memLeakFileName_ = GetMemLeakFileName(static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()));
+        std::remove(memLeakFileName_.c_str());
+    }
 
     UpdateAsyncFlagConfig();
     UpdateFileCacheModeConfig();
@@ -791,6 +854,12 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.fp_unwind() && hookConfig_.offline_symbolization()
         && hookConfig_.statistics_interval() > 0) {
         noDataQueue_ = true;
+    }
+    if (hookConfig_.allocator_sampling_enable()) {
+        if (hookConfig_.statistics_interval() == 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "allocator_sampling_enable requires statistics_interval > 0");
+            return false;
+        }
     }
 
     if (!isSaService_) {
@@ -887,6 +956,20 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
     }
     outFile.close();
     PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
+}
+
+void HookManager::DumpMemLeakInfo(uint8_t* data)
+{
+    if (data == nullptr) {
+        return;
+    }
+    CreateMemLeakFile();
+    std::string result = reinterpret_cast<char*>(data);
+    if (memLeakFd_ > 0) {
+        lseek(memLeakFd_, 0, SEEK_END);
+        write(memLeakFd_, result.c_str(), result.size());
+    }
+    fdsan_close_with_tag(memLeakFd_, FD_TAG);
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -995,6 +1078,11 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
 
     if (type == GWP_ASAN_MSG) {
         DumpGwpAsanInfo(rawStack->data);
+        return true;
+    }
+
+    if (type == MEM_LEAK_MSG) {
+        DumpMemLeakInfo(rawStack->data);
         return true;
     }
 
@@ -1171,6 +1259,12 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
             uniqueTableBlock_ = nullptr;
         }
     }
+    CloseResource();
+    return true;
+}
+
+void HookManager::CloseResource()
+{
     if (fpHookData_) {
         fclose(fpHookData_);
         fpHookData_ = nullptr;
@@ -1179,7 +1273,10 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
         close(gwpFd_);
         gwpFd_ = 0;
     }
-    return true;
+    if (memLeakFd_ > 0) {
+        fdsan_close_with_tag(memLeakFd_, FD_TAG);
+        memLeakFd_ = 0;
+    }
 }
 
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
@@ -1209,6 +1306,9 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
+        if (hookConfig_.allocator_sampling_enable() && item->stackPreprocess != nullptr) {
+            item->stackPreprocess->WaitForFinalSnapshot();
+        }
         if (item->pid > 0) {
             if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
                 const int bufSize = 256;
@@ -1225,7 +1325,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
-        if (hookConfig_.statistics_interval() > 0) {
+        if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
             item->stackPreprocess->FlushRecordStatistics();
         }
         if (hookConfig_.malloc_free_matching_interval() > 0) {
@@ -1341,8 +1441,10 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
+    hookConfig_.set_allocator_sampling_enable(config->allocatorSamplingEnable_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
     hookConfig_.set_use_file_cache_mode(false);
+    hookConfig_.set_mem_leak_format(config->memLeakFormat_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -1352,6 +1454,11 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
         hookConfig_.set_file_name(config->fileName_);
         isProtobufSerialize_ = true;
     }
+    SetHookConfigExt(config);
+}
+
+void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
     largestSize_ = config->largestSize_;
     secondLargestSize_ = config->secondLargestSize_;
     maxGrowthSize_ = config->maxGrowthSize_;
@@ -1441,6 +1548,7 @@ std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
     args << "max_js_stack_depth: " << std::to_string(traceConfig.max_js_stack_depth()) << ", ";
     args << "filter_napi_name: " << traceConfig.filter_napi_name() << ", ";
     args << "target_so_name: " << traceConfig.target_so_name() << ", ";
+    args << "mem_leak_format: " << std::to_string(traceConfig.mem_leak_format()) << ", ";
     for (const auto& pid : traceConfig.expand_pids()) {
         args << "expand_pids: " << std::to_string(pid) << ", ";
     }
@@ -1487,6 +1595,11 @@ void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
 void HookManager::SetGwpFd(uint32_t fd)
 {
     gwpFd_ = fd;
+}
+
+void HookManager::SetMemLeakFd(uint32_t fd)
+{
+    memLeakFd_ = fd;
 }
 
 bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)

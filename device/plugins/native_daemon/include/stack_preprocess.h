@@ -16,11 +16,14 @@
 #define STACK_PREPROCESS_H
 
 #include <chrono>
+#include <functional>
 #include <thread>
 #include <unordered_map>
+#include <unordered_set>
 #include <list>
 #include <algorithm>
 #include <mutex>
+#include <condition_variable>
 #include <variant>
 #include <numeric>
 #include "hook_record_factory.h"
@@ -54,6 +57,12 @@ struct RecordStatistic {
     uint32_t callstackId {0};
     uint32_t stackSize {0};
     struct timespec ts {0, 0};
+};
+
+struct AllocAddrInfo {
+    uint64_t mallocSize;
+    size_t stackId;
+    struct timespec ts;
 };
 
 struct CallStackKey {
@@ -146,11 +155,16 @@ public:
     {
         factory_ = factory;
     }
+    void SetServerCommandCallback(std::function<void(uint32_t)> callback)
+    {
+        serverCommandCallback_ = std::move(callback);
+    }
     bool StartTakeResults();
     bool StopTakeResults();
     void FinishTraceFile();
     bool FlushRecordStatistics();
     void FlushRecordApplyAndReleaseMatchData();
+    void WaitForFinalSnapshot();
     void ForceStop();
     inline void SetPid(int32_t pid)
     {
@@ -296,6 +310,9 @@ private:
     void IntervalFlushApplyAndReleaseMatchData();
     bool HandleNoStackEvent(HookRecordPtr& hookRecord);
     bool SetFreeStatisticsData(uint64_t addr);
+    bool SetFreeStatisticsDataLocked(uint64_t addr);
+    void ReconcileWithSnapshot(const std::unordered_set<uint64_t>& aliveAddrs);
+    bool ReconcileDuplicateMalloc(uint64_t addr, const struct timespec& newTs);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     bool ResolveTagType(const std::string& tagName, RecordStatistic& record);
@@ -381,6 +398,13 @@ private:
     uint32_t dataFlushSize_ = 0;
     std::shared_ptr<HookRecordFactory> factory_{nullptr};
     std::set<uint64_t> addrSet_;
+    std::unordered_map<uint64_t, AllocAddrInfo> allocAddrMap_;
+    std::function<void(uint32_t)> serverCommandCallback_;
+    std::unordered_set<uint64_t> snapshotAddrs_;
+    std::atomic_bool waitingFinalSnapshot_{false};
+    std::atomic_bool finalSnapshotDone_{false};
+    std::mutex snapshotMtx_;
+    std::condition_variable snapshotCv_;
 };
 }
 
