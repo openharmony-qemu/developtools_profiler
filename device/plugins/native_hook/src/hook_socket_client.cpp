@@ -542,12 +542,13 @@ bool HookSocketClient::SendEndMsg()
     if (!config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
     }
-    std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
-        [&rawdata](std::shared_ptr<StackWriter>& writer) {
+    int sharedMemCount = *sharedMemCount_;
+    for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
+        auto& writer = stackWriterList_[smbIndex];
         if (writer) {
             writer->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
             writer->StopFileCache();
         }
-    });
+    }
     return true;
 }
