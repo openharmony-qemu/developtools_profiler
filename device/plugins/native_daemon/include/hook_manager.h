@@ -160,6 +160,11 @@ public:
         return hookConfig_;
     }
 
+    void SetMemLeakFormat(uint32_t memLeakFormat)
+    {
+        memLeakFormat_ = static_cast<MemLeakFormat>(memLeakFormat);
+    }
+
     void SetSaMode(bool saMode)
     {
         saMode_ = saMode;
@@ -237,6 +242,7 @@ private:
     uint32_t gwpAsanMaxEntries_ = 0;
     uint32_t gwpAsanMaxStackDepth_ = 0;
     uint32_t gwpFd_ = 0;
+    MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
     uint32_t memLeakFd_ = 0;
     std::string memLeakFileName_;
 };

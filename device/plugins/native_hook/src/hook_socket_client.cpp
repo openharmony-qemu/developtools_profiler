@@ -289,7 +289,7 @@ bool HookSocketClient::GetAndSendMemLeakInfo()
 
     MemoryLeakDetector memLeakDetector;
     std::string data;
-    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat) - 1, data)) {
+    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat), data)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::GetMemLeakInfo failed!");
         return false;
     }
