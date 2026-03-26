@@ -41,7 +41,8 @@ void VisualEffectAnalysis::GetDeviceCpuNum()
     std::string value = "";
     size_t pos = cpuNum.rfind("||");
     if (pos != std::string::npos) {
-        value = cpuNum.substr(pos + 2);
+        int cpuNumMark = 2;
+        value = cpuNum.substr(pos + cpuNumMark);
     }
     for (int i = 0; i < SPUtilesTye::StringToSometype<int>(value); i++) {
         cpuData_.push_back("cpu" + std::to_string(i) + "Frequency");
@@ -107,7 +108,7 @@ void VisualEffectAnalysis::CapturingTraces()
     std::thread([this]() {
         this->GetCyclePower();
     }).detach();
-    sleep(ftraceTime_ / 1000);
+    sleep(ftraceTime_ / oneMin_);
     SPUtils::LoadCmd(overtrace_, cmdresult);
     std::string permissCmd = "chmod 755 " + tracePase_;
     SPUtils::LoadCmd(permissCmd, cmdresult);
@@ -117,7 +118,7 @@ void VisualEffectAnalysis::CapturingTraces()
 
 void VisualEffectAnalysis::GetCyclePower()
 {
-    std::unique_lock<std::mutex> lock(v_mtx);
+    std::unique_lock<std::mutex> lock(mtx_);
     long long powerBeginTime = SPUtils::GetCurTime();
     long long powerOvetTime = 0;
     while (powerOvetTime - powerBeginTime < ftraceTime_) {
@@ -185,7 +186,7 @@ void VisualEffectAnalysis::GetBeginTraceTime(const std::string &line)
             }
         }
         double numResult = SPUtilesTye::StringToSometype<double>(timestamp);
-        firstTraceTime_ = static_cast<long long>(std::round(numResult * 1000));
+        firstTraceTime_ = static_cast<long long>(std::round(numResult * oneMin_));
         fristLine_ = false;
     }
 }
@@ -411,9 +412,10 @@ std::string VisualEffectAnalysis::GetCutTime(const std::string &line)
 
 std::string VisualEffectAnalysis::GetCpuCycle(const std::string &line)
 {
+    int cycleMark = 3;
     std::istringstream iss(line);
     std::string cpuCycle = "";
-    for (int i = 0; i < 3; i++) {
+    for (int i = 0; i < cycleMark; i++) {
         std::getline(iss, cpuCycle, '|');
     }
     std::getline(iss, cpuCycle, '|');

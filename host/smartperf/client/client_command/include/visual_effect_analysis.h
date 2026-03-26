@@ -83,8 +83,10 @@ private:
     const std::string ddrClusterPath_ = "/sys/devices/system/cpu/cpufreq/";
     const std::string countersGather_ = "./mnt/lower/vendor/bin/counters_gather -s 10";
     const std::string endFtrace_ = "hitrace --trace_finish_nodump";
-    const std::string geginFtrace_ = "hitrace --trace_begin -b 512000 graphic ohos ace sched window freq multimodalinput zimage zmedia zcamera zaudio nweb app ark";
+    const std::string geginFtrace_ = "hitrace --trace_begin -b 512000 graphic ohos ace sched "
+        "window freq multimodalinput zimage zmedia zcamera zaudio nweb app ark";
     int ftraceTime_ = 5000;
+    int oneMin_ = 1000;
       // const std::string overtrace_ = "hitrace --trace_finish -o /data/local/tmp/smartperf/1/tmp.ftrace";
     const std::string overtrace_ = "hitrace --trace_finish -o /data/local/tmp/tmp.ftrace";
     const long long oneHundred_ = 100;
@@ -103,7 +105,7 @@ private:
     long long externalMemoryReadRate_ = 0;
     long long externalMemoryWriteRate_ = 0;
     long long externalMemoryTrafficRate_ = 0;
-    std::mutex v_mtx;
+    std::mutex mtx_;
     std::string traceStartPoint_ = "";
     std::string traceEndPoint_ = "";
     long long beginCollTraceTime_ = 0;
