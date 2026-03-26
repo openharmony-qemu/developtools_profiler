@@ -815,6 +815,9 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, indexFilePath);
+    } else if (iterator->first == MessageType::GET_GPU_INFO) {
+        GetSocketPort(recvBuf);
+        ConnectAndSendFile(spSocket, indexFileFePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
@@ -973,7 +976,7 @@ std::string SpThreadSocket::GetTime(std::string &recvBuf)
         if (lastStarPos != std::string::npos) {
             std::string result = recvBuf.substr(lastStarPos + 1);
             int time = SPUtilesTye::StringToSometype<int>(result);
-            VisualEffectAnalysis::GetInstance().SetBeginTraceFlag(time);
+            VisualEffectAnalysis::GetInstance().SetTraceTime(time);
         }
         size_t pos = recvBuf.find('*');
         if (pos != std::string::npos) {
