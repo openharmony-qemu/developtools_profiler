@@ -165,14 +165,6 @@ bool GetRequestTraceParam(ani_env *env, ani_string identifierAni, ani_int buffer
         HILOG_ERROR(LOG_CORE, "Get input identifier failed.");
         return false;
     }
-    if (bufferSizeAni < 0) {
-        HILOG_ERROR(LOG_CORE, "bufferSize should not be negative.");
-        return false;
-    }
-    if (durationAni < 0) {
-        HILOG_ERROR(LOG_CORE, "duration should not be negative.");
-        return false;
-    }
     param.bufferSize = static_cast<uint32_t>(bufferSizeAni);
     param.duration = static_cast<uint32_t>(durationAni);
     return true;
