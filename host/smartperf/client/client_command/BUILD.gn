@@ -84,6 +84,7 @@ ohos_executable("SP_daemon") {
     "sp_utils.cpp",
     "stalling_rate_trace.cpp",
     "startup_delay.cpp",
+    "visual_effect_analysis.cpp",
   ]
 
   sources += [
