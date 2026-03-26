@@ -990,29 +990,34 @@ std::string SpThreadSocket::GetTime(std::string &recvBuf)
 
 void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
 {
-    if (recvBuf.find("&&&") != std::string::npos) {
-        std::vector<std::string> parts = split(recvBuf, "&&&");
-        for (size_t i = 0; i< parts.size(); ++i) {
-            if (parts[i].find("***") != std::string::npos) {
-                size_t lastStarPos = parts[i].rfind('*');
-                if (lastStarPos != std::string::npos) {
-                    std::string result = parts[i].substr(lastStarPos + 1);
-                    int time = SPUtilesTye::StringToSometype<int>(result);
-                    VisualEffectAnalysis::GetInstance().SetTraceTime(time);
-                }
-                size_t pos = parts[i].find('*');
-                if (pos != std::string::npos) {
-                    recvBuf = parts[i].substr(0, pos);
-                }
+    if (recvBuf.find("&&&") == std::string::npos) {
+        return;
+    }
+
+    std::vector<std::string> parts = split(recvBuf, "&&&");
+    for (size_t i = 0; i < parts.size(); ++i) {
+        if (parts[i].find("***") != std::string::npos) {
+            size_t lastStarPos = parts[i].rfind('*');
+            if (lastStarPos != std::string::npos) {
+                std::string result = parts[i].substr(lastStarPos + 1);
+                int time = SPUtilesTye::StringToSometype<int>(result);
+                VisualEffectAnalysis::GetInstance().SetTraceTime(time);
             }
-            if (parts[i].find("begin$$$$$$") != std::string::npos) {
-                std::string result = parts[i].substr(11);
-                VisualEffectAnalysis::GetInstance().SetTraceBegin(result);
+
+            size_t pos = parts[i].find('*');
+            if (pos != std::string::npos) {
+                recvBuf = parts[i].substr(0, pos);
             }
-            if (parts[i].find("over$$$$$$") != std::string::npos) {
-                std::string result = parts[i].substr(10);
-                VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
-            }
+        }
+
+        if (parts[i].find("begin$$$$$$") != std::string::npos) {
+            std::string result = parts[i].substr(11);
+            VisualEffectAnalysis::GetInstance().SetTraceBegin(result);
+        }
+
+        if (parts[i].find("over$$$$$$") != std::string::npos) {
+            std::string result = parts[i].substr(10);
+            VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
         }
     }
 }
