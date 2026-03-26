@@ -36,7 +36,7 @@ constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
-constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 300;
+constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 3600;
 constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
 constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
 constexpr uint32_t MAX_BATCH_CNT = 40;
@@ -339,6 +339,10 @@ inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec
                 eventTime.tv_nsec / MILLISECOND_TO_NANOSECOND;
             uint64_t lastTimeMs = lastCacheStatisticsTime_.tv_sec * SECOND_TO_MILLISECOND +
                 lastCacheStatisticsTime_.tv_nsec / MILLISECOND_TO_NANOSECOND;
+            if (lastTimeMs == 0 && eventTimeMs != 0) {
+                lastCacheStatisticsTime_ = eventTime;
+                return;
+            }
             uint64_t elapsedTimeMs = eventTimeMs > lastTimeMs ? (eventTimeMs - lastTimeMs) : 0;
             if (elapsedTimeMs >= hookConfig_.statistics_interval() * SECOND_TO_MILLISECOND) {
                 lastCacheStatisticsTime_ = eventTime;
@@ -430,6 +434,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
 {
     if (fd < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile parse all cache file done.");
+        SetIsStopTakeData(true);
         return;
     }
     RawStackPtr rawData = nullptr;
@@ -941,6 +946,15 @@ bool StackPreprocess::HandleSimpleMessages(HookRecordPtr& hookRecord)
     return false;
 }
 
+bool StackPreprocess::CheckIsFileCacheFinsh()
+{
+    if (hookConfig_.use_file_cache_mode() && dataRepeater_ != nullptr &&
+        dataRepeater_->Size() == 0 && isCacheFileParseDone_) {
+        return true;
+    }
+    return false;
+}
+
 void StackPreprocess::TakeResults()
 {
     if (!dataRepeater_) {
@@ -953,6 +967,9 @@ void StackPreprocess::TakeResults()
     while (!isStopTakeData_) {
         if (!ProcessBatchData()) {
             break;
+        }
+        if (CheckIsFileCacheFinsh()) {
+            SetIsStopTakeData(true);
         }
     } // while
     PROFILER_LOG_INFO(LOG_CORE, "TakeResults thread %d, exit!", gettid());
@@ -1924,8 +1941,8 @@ bool StackPreprocess::FlushRecordStatistics()
                     auto statistics = &iter->second;
                     auto hookData = stackData.add_events();
                     if (hookConfig_.use_file_cache_mode()) {
-                        hookData->set_tv_sec(statistics->ts.tv_sec);
-                        hookData->set_tv_nsec(statistics->ts.tv_nsec);
+                        hookData->set_tv_sec(lastCacheStatisticsTime_.tv_sec);
+                        hookData->set_tv_nsec(lastCacheStatisticsTime_.tv_nsec);
                     } else {
                         hookData->set_tv_sec(ts.tv_sec);
                         hookData->set_tv_nsec(ts.tv_nsec);

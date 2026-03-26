@@ -1193,6 +1193,7 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
 {
     if (fd < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile parse all cache file done.");
+        hookCtx->stackPreprocess->SetIsCacheFileParseDone(true);
         return;
     }
     uint64_t readfileSize = 0;
@@ -1347,6 +1348,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
         if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
+            item->stackPreprocess->UpdateStatisticsTime();
             item->stackPreprocess->FlushRecordStatistics();
         }
         if (hookConfig_.malloc_free_matching_interval() > 0) {
