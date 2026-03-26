@@ -35,7 +35,7 @@ const int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t FLUSH_BASELINE = (1U << 21); // need to flush data size with offline mode
 constexpr uint32_t STOP_BASELINE = (1U << 22); // need to stop take data size with offline mode
 constexpr int SEM_WAIT_TIME = 30; // default wait on semaphore at most 30 seconds.
-constexpr int NATIVEHOOK_SEM_WAIT_TIME = 305; // wait more time for nativehook file cache mode.
+constexpr int NATIVEHOOK_SEM_WAIT_TIME = 1805; // wait more time for nativehook file cache mode.
 const std::string HIPROFILER_PLUGINS_NAME("hiprofiler_plugins");
 } // namespace
 

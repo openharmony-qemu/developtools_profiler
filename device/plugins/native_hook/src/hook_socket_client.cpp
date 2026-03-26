@@ -157,7 +157,6 @@ void HookSocketClient::HandleFileCacheMode(SocketContext &context)
             HookCacheFileMsg cacheFileMsg(pid_, fileIndex, CACHE_FILE_CREATED);
             unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&cacheFileMsg), sizeof(cacheFileMsg));
             unixSocketClient_->SendFileDescriptor(fd);
-            PROFILER_LOG_INFO(LOG_CORE, "[%d] send cache file fd to native_daemon", pid_);
         }
     });
     stackWriterList_.push_back(stackWriter);

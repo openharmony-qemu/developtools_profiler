@@ -178,6 +178,12 @@ public:
             lastStatisticsTime_ = std::chrono::steady_clock::now();
         }
     }
+    inline void UpdateStatisticsTime()
+    {
+        if (hookConfig_.use_file_cache_mode()) {
+            lastCacheStatisticsTime_.tv_sec += hookConfig_.statistics_interval();
+        }
+    }
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack);
@@ -224,6 +230,13 @@ public:
             isStopTakeData_ = isStopTakeData;
         }
     }
+
+    inline void SetIsCacheFileParseDone(bool isCacheFileParseDone)
+    {
+        if (isCacheFileParseDone_ != isCacheFileParseDone) {
+            isCacheFileParseDone_ = isCacheFileParseDone;
+        }
+    }
 private:
     using CallFrame = OHOS::Developtools::NativeDaemon::CallFrame;
     struct ElfSymbolTable {
@@ -255,6 +268,7 @@ private:
 
 private:
     void TakeResults();
+    bool CheckIsFileCacheFinsh();
     bool ProcessBatchData();
     bool ProcessSingleRecord(HookRecordPtr& hookRecord);
     void BuildAndReportStack(HookRecordPtr& hookRecord);
@@ -344,6 +358,7 @@ private:
     std::unique_ptr<uint8_t[]> buffer_;
     std::atomic_bool isStopTakeData_ = false;
     std::atomic_bool isStartTakeData_ = false;
+    std::atomic_bool isCacheFileParseDone_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);
     OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};
