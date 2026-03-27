@@ -232,6 +232,9 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
     config->shareMemorySize_ = NMD_SHMEM;
     config->nmdPid_ = static_cast<uint32_t>(pid);
     config->nmdType_ = static_cast<uint32_t>(SIMP_NMD);
+    if (pid == getpid()) {
+        config->startType_ = 1; // 1:API
+    }
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
     int32_t ret = InvokeWithProxy([&config, &memStats](NativeMemoryProfilerSaProxy& proxy) {
         std::string replyStats;

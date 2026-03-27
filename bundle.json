@@ -112,10 +112,22 @@
             "header_files": [
               "plugins/native_daemon/native_memory_profiler_sa/include/native_memory_profiler_sa_client_manager.h",
               "plugins/native_daemon/native_memory_profiler_sa/include/native_memory_profiler_sa_config.h",
+              "plugins/native_daemon/native_memory_profiler_sa/util/include/mem_config.h",
               "base/include/common.h"
             ]
           },
           "name": "//developtools/profiler/device/plugins/native_daemon:libnative_daemon_client"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/device",
+            "header_files": [
+              "plugins/native_daemon/memory_profiler_client/include/memory_profiler_client.h",
+              "plugins/native_daemon/memory_profiler_client/memory_profiler_client_impl.h",
+              "plugins/native_daemon/native_memory_profiler_sa/util/include/mem_config.h"
+            ]
+          },
+          "name": "//developtools/profiler/device/plugins/native_daemon:memory_profiler_client"
         },
         {
           "header": {

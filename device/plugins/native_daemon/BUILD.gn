@@ -44,6 +44,15 @@ config("profiler_sa_config") {
   ]
 }
 
+config("memory_profiler_client_config") {
+  visibility = [ ":*" ]
+  include_dirs = [
+    "memory_profiler_client/",
+    "memory_profiler_client/include",
+    "native_memory_profiler_sa/util/include",
+  ]
+}
+
 ohos_prebuilt_etc("hiprofiler_daemon.cfg") {
   source = "../../etc/hiprofiler_daemon.cfg"
   relative_install_dir = "init"
@@ -346,6 +355,27 @@ ohos_shared_library("libnative_daemon_client") {
 
   if (current_toolchain != host_toolchain) {
     defines = [ "HAVE_HILOG" ]
+  }
+
+  innerapi_tags = [ "platformsdk" ]
+  subsystem_name = "${OHOS_PROFILER_SUBSYS_NAME}"
+  part_name = "${OHOS_PROFILER_PART_NAME}"
+}
+
+ohos_shared_library("memory_profiler_client") {
+  public_configs = [ ":memory_profiler_client_config" ]
+  sources = [ "memory_profiler_client/memory_profiler_client_impl.cpp" ]
+  deps = [ ":libnative_daemon_client" ]
+
+  external_deps = [
+    "c_utils:utils",
+    "ipc:ipc_core",
+    "samgr:samgr_proxy",
+  ]
+
+  if (current_toolchain != host_toolchain) {
+    defines = [ "HAVE_HILOG" ]
+    external_deps += [ "hilog:libhilog" ]
   }
 
   innerapi_tags = [ "platformsdk" ]
