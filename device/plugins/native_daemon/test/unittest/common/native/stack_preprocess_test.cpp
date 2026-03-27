@@ -785,7 +785,7 @@ HWTEST_F(StackPreprocessTest, CallStackHash07, TestSize.Level0)
 
 /*
 @tc.name: AsyncCallStackKeyTest
-@tc.desc: async stack should write CallStackKey with stackSize fixed to zero.
+@tc.desc: async stack should only write AsyncCallStackKey and keep CallStackKey empty.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
@@ -805,20 +805,20 @@ HWTEST_F(StackPreprocessTest, AsyncCallStackKeyTest, TestSize.Level0)
     BatchNativeHookData data;
     preprocess.SetAllocStatisticsFrame(hookRecord, frames, data);
 
-    ASSERT_EQ(preprocess.callStackIndex_.size(), 1u);
+    ASSERT_TRUE(preprocess.callStackIndex_.empty());
+    ASSERT_EQ(preprocess.asyncCallStackIndex_.size(), 1u);
     ASSERT_EQ(preprocess.recordStatisticsMap_.size(), 1u);
     uint32_t stackId = preprocess.recordStatisticsMap_.begin()->first;
-    const auto& key = preprocess.callStackIndex_.begin()->first;
-    EXPECT_EQ(preprocess.callStackIndex_.begin()->second, stackId);
-    EXPECT_EQ(key.syncStackId, 11u);
-    EXPECT_EQ(key.asyncStackId, 22u);
-    EXPECT_EQ(key.stackSize, 0u);
-    EXPECT_EQ(key.stackHash, (11ULL ^ (22ULL << 32)) ^ (64ULL | SIZE_MASK));
+
+    const auto& asyncKey = preprocess.asyncCallStackIndex_.begin()->first;
+    EXPECT_EQ(preprocess.asyncCallStackIndex_.begin()->second, stackId);
+    EXPECT_EQ(asyncKey.stackHash, 11ULL ^ (22ULL << 32));
+    EXPECT_EQ(asyncKey.mallocSize, 64u);
 }
 
 /*
 @tc.name: AsyncStatisticsLookupTest
-@tc.desc: FindAsyncStatisticsStackIdLocked should directly hit callStackIndex_ in async scene.
+@tc.desc: FindAsyncStatisticsStackIdLocked should hit asyncCallStackIndex_ in async scene.
 @tc.type: FUNC
 */
 HWTEST_F(StackPreprocessTest, AsyncStatisticsLookupTest, TestSize.Level0)

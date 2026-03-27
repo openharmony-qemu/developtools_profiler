@@ -68,8 +68,6 @@ struct AllocAddrInfo {
 struct CallStackKey {
     uint64_t stackHash;
     uint64_t nodeId;
-    uint64_t syncStackId;
-    uint64_t asyncStackId;
     uint32_t stackSize;
     uint32_t nodeType;
     uint32_t tagId;
@@ -78,8 +76,6 @@ struct CallStackKey {
     {
         return stackHash == other.stackHash &&
                nodeId == other.nodeId &&
-               syncStackId == other.syncStackId &&
-               asyncStackId == other.asyncStackId &&
                stackSize == other.stackSize &&
                nodeType == other.nodeType &&
                tagId == other.tagId;
@@ -90,6 +86,30 @@ struct CallStackKeyHash {
     uint64_t operator()(const CallStackKey& key) const
     {
         return key.stackHash;
+    }
+};
+
+struct AsyncCallStackKey {
+    uint64_t stackHash;      // syncStackId ^ (asyncStackId << 32)
+    uint64_t mallocSize;
+    uint64_t nodeId;
+    uint64_t nodeTag;        // (static_cast<uint64_t>(nodeType) << 32) | tagId
+
+    bool operator==(const AsyncCallStackKey& other) const
+    {
+        return memcmp(this, &other, sizeof(AsyncCallStackKey)) == 0;
+    }
+};
+
+struct AsyncCallStackKeyHash {
+    uint64_t operator()(const AsyncCallStackKey& key) const
+    {
+        constexpr uint64_t kMul = 0x9e3779b97f4a7c15ULL;
+        uint64_t h = key.stackHash;
+        h ^= key.mallocSize * kMul;
+        h ^= key.nodeId * (kMul >> 16);
+        h ^= key.nodeTag * (kMul >> 32);
+        return h;
     }
 };
 
@@ -382,6 +402,7 @@ private:
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
     std::unordered_map<CallStackKey, uint32_t, CallStackKeyHash> callStackIndex_;
+    std::unordered_map<AsyncCallStackKey, uint32_t, AsyncCallStackKeyHash> asyncCallStackIndex_;
     // Key is callStack_, value is call stack id
     std::unordered_map<NewCallStack, uint32_t, NewCallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};
