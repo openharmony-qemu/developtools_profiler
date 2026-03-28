@@ -1012,18 +1012,19 @@ void NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared
     g_nameAndFilePathCtx.erase(config->filePath);
     g_pidCtx.erase(config->pid);
     auto pidInfoIter = g_pidInfo.find(pid);
-    {
+    do {
         std::lock_guard<std::mutex> guard(g_fileNameMtx);
         auto fileNameInfoIter = g_fileNameInfo.find(pid);
         if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
-            return;
+            break;
         }
         std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
         std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
         if (!COMMON::CopyFileFast(srcPath, destPath)) {
             PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
         }
-    }
+    } while (false);
+    
     g_pidInfo.erase(static_cast<pid_t>(pid));
     {
         std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
