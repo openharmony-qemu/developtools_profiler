@@ -1214,13 +1214,13 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
     }
 
     if (mask == RES_DMABUF_MASK) {
-        if (size == FD_SIZE && isUsing){
+        if (size == FD_SIZE && isUsing) {
             size = GetDmaSize(addr);
             if (size == 0) {
                 return;
             }
         }
-        addr = addr | RES_DMABUF_MASK;
+        addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr) | RES_DMABUF_MASK);
     }
 
     if (((mask & (RES_FD_MASK | RES_THREAD_MASK | RES_ARK_LOCAL_HANDLE | RES_ARK_GLOBAL_HANDLE)) == 0) && !ohos_set_filter_size(size, nullptr)) {
