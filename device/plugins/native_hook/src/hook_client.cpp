@@ -1165,11 +1165,8 @@ size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targ
     return 0;
 }
 
-size_t GetDmaSize(void* addr, bool isUsing)
+size_t GetDmaSize(void* addr)
 {
-    if (!isUsing) {
-        return 0;
-    }
     char path[FD_PATH_LENGTH] = {0};
     char fileName[MAX_HOOK_PATH + 1] = {0};
     int fd = static_cast<int>(reinterpret_cast<intptr_t>(addr));
@@ -1217,10 +1214,13 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
     }
 
     if (mask == RES_DMABUF_MASK) {
-        size = GetDmaSize(addr, isUsing);
-        if (size == 0) {
-            return;
+        if (size == FD_SIZE && isUsing){
+            size = GetDmaSize(addr);
+            if (size == 0) {
+                return;
+            }
         }
+        addr = addr | RES_DMABUF_MASK;
     }
 
     if (((mask & (RES_FD_MASK | RES_THREAD_MASK | RES_ARK_LOCAL_HANDLE | RES_ARK_GLOBAL_HANDLE)) == 0) && !ohos_set_filter_size(size, nullptr)) {

@@ -20,6 +20,9 @@ static thread_local std::vector<std::string> g_fpJsCallStacks;
 static thread_local std::vector<u64> g_u64regs;
 const std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
 const std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
+constexpr size_t SKIP_STACK_FRAME_COUNT = 3;
+constexpr size_t SKIP_FROM_END_THIRD = 3;
+constexpr size_t SKIP_FROM_END_SECOND = 2; 
 
 void StackBuilder::FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord)
 {
@@ -70,6 +73,10 @@ void FpStackBuilder::FillIps(std::vector<CallFrame>& callFrames,
     };
     fillIpsFromPcVector(syncPcs);
     fillIpsFromPcVector(asyncPcs);
+    if (syncPcs.size() >= SKIP_STACK_FRAME_COUNT) {
+        callFrames.erase(callFrames.end() - static_cast<std::vector<uintptr_t>::difference_type>(SKIP_FROM_END_THIRD));
+        callFrames.erase(callFrames.end() - static_cast<std::vector<uintptr_t>::difference_type>(SKIP_FROM_END_SECOND));
+    }
 }
 
 void FpStackBuilder::FillJsFrame(CallFrame& jsCallFrame)
@@ -160,10 +167,6 @@ void FpStackBuilder::FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, Hook
         bool res = runtimeInstance_->SymbolizeFrame(cf, pid, tid);
         if (!res) {
             continue;
-        }
-
-        if (cf.isJsFrame_) {
-            FillJsFrame(cf);
         }
     }
 }
