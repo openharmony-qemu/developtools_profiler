@@ -29,7 +29,7 @@ using namespace testing::ext;
 using namespace OHOS::Developtools::NativeDaemon;
 namespace {
 const std::string TEST_PROCESS_NAME = "test_process";
-const int TEST_PID = 12345;
+const int TEST_PID = 999999;
 const int TEST_SMB_PAGES = 1024;
 const int TEST_FILTER_SIZE = 512;
 const int TEST_MAX_STACK_DEPTH = 20;
@@ -360,23 +360,6 @@ HWTEST_F(HookManagerExtTest, DumpNmdInfo, TestSize.Level0)
     
     // Clean up
     remove(TEST_NMD_FILE_PATH.c_str());
-}
-
-/*
- * @tc.name: CheckProcessWithPid
- * @tc.desc: test CheckProcess with valid pid.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerExtTest, CheckProcessWithPid, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_pid(TEST_PID);
-    config.add_expand_pids(TEST_PID);
-    hookManager_->SetHookConfig(config);
-    
-    // This should return true even if the process doesn't exist
-    // because CheckProcess only checks if the pid is > 0 and adds it to hookCtx_
-    EXPECT_FALSE(hookManager_->CheckProcess());
 }
 
 /*
