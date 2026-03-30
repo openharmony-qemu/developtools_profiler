@@ -424,6 +424,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             return RET_ERR;
         }
         int fdTemp = open(retFile.second.c_str(), O_RDWR | O_CREAT, FILE_MODE);
+        if (config->startType_ == START_TYPE_API) {
+            unlink(retFile.second.c_str());
+        }
         CHECK_TRUE(fdTemp >= 0, RET_ERR, "Failed to open file(%s)", config->filePath_.c_str());
         fd = static_cast<uint32_t>(fdTemp);
     }
@@ -1010,7 +1013,6 @@ void NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared
     config->hookMgr->DestroyPluginSession({});
     g_nameAndFilePathCtx.erase(config->processName);
     g_nameAndFilePathCtx.erase(config->filePath);
-    g_pidCtx.erase(config->pid);
     auto pidInfoIter = g_pidInfo.find(pid);
     do {
         std::lock_guard<std::mutex> guard(g_fileNameMtx);
@@ -1018,13 +1020,12 @@ void NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared
         if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
             break;
         }
-        std::string srcPath = FILE_PATH_HEAD + std::to_string(pid) + FILE_PATH_TAIL;
         std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
-        if (!COMMON::CopyFileFast(srcPath, destPath)) {
+        if (!COMMON::CopyFileFast(g_pidCtx[pid]->fd, destPath)) {
             PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
         }
     } while (false);
-    
+    g_pidCtx.erase(config->pid);
     g_pidInfo.erase(static_cast<pid_t>(pid));
     {
         std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
