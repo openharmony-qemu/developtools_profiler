@@ -59,6 +59,18 @@ thread_local std::vector<uint64_t> g_callStack;
 
 thread_local std::shared_ptr<BuildStackDirector> g_director{nullptr};
 
+static uint64_t TimespecToMilliseconds(const struct timespec& time)
+{
+    return static_cast<uint64_t>(time.tv_sec) * SECOND_TO_MILLISECOND +
+        static_cast<uint64_t>(time.tv_nsec) / MILLISECOND_TO_NANOSECOND;
+}
+
+static struct timespec MillisecondsToTimespec(uint64_t timeMs)
+{
+    return {static_cast<time_t>(timeMs / SECOND_TO_MILLISECOND),
+        static_cast<long>((timeMs % SECOND_TO_MILLISECOND) * MILLISECOND_TO_NANOSECOND)};
+}
+
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = {};
@@ -335,22 +347,22 @@ inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec
     // interval reporting statistics
     if (hookConfig_.statistics_interval() > 0) {
         if (hookConfig_.use_file_cache_mode()) {
-            uint64_t eventTimeMs = eventTime.tv_sec * SECOND_TO_MILLISECOND +
-                eventTime.tv_nsec / MILLISECOND_TO_NANOSECOND;
-            uint64_t lastTimeMs = lastCacheStatisticsTime_.tv_sec * SECOND_TO_MILLISECOND +
-                lastCacheStatisticsTime_.tv_nsec / MILLISECOND_TO_NANOSECOND;
+            uint64_t lastTimeMs = TimespecToMilliseconds(lastCacheStatisticsTime_);
+            uint64_t eventTimeMs = TimespecToMilliseconds(eventTime);
             if (lastTimeMs == 0 && eventTimeMs != 0) {
                 lastCacheStatisticsTime_ = eventTime;
                 return;
             }
+            uint64_t intervalMs = static_cast<uint64_t>(hookConfig_.statistics_interval()) * SECOND_TO_MILLISECOND;
             uint64_t elapsedTimeMs = eventTimeMs > lastTimeMs ? (eventTimeMs - lastTimeMs) : 0;
-            if (elapsedTimeMs >= hookConfig_.statistics_interval() * SECOND_TO_MILLISECOND) {
-                lastCacheStatisticsTime_ = eventTime;
+            if (elapsedTimeMs >= intervalMs) {
+                uint64_t intervalCount = elapsedTimeMs / intervalMs;
+                lastCacheStatisticsTime_ = MillisecondsToTimespec(lastTimeMs + intervalCount * intervalMs);
                 if (hookConfig_.allocator_sampling_enable() && serverCommandCallback_) {
- 	                serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
- 	            } else {
- 	                FlushRecordStatistics();
- 	            }
+                    serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
+                } else {
+                    FlushRecordStatistics();
+                }
             }
         } else {
             auto currentTime = std::chrono::steady_clock::now();
@@ -358,10 +370,10 @@ inline void StackPreprocess::IntervalFlushRecordStatistics(const struct timespec
             if (elapsedTime >= statisticsInterval_) {
                 lastStatisticsTime_ = currentTime;
                 if (hookConfig_.allocator_sampling_enable() && serverCommandCallback_) {
- 	                serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
- 	            } else {
- 	                FlushRecordStatistics();
- 	            }
+                    serverCommandCallback_(SNAPSHOT_REQUEST_CMD);
+                } else {
+                    FlushRecordStatistics();
+                }
             }
         }
     }
@@ -430,6 +442,41 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
     }
 }
 
+bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,
+    RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord)
+{
+    while (ctx.offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + ctx.offset, sizeof(uint32_t));
+        if (ret != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer memcpy_s failed, ret=%d", ret);
+            return false;
+        }
+
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer invalid totalSize=%u", totalSize);
+            return false;
+        }
+
+        if (ctx.offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+
+        ctx.offset += sizeof(uint32_t);
+        ctx.readfileSize += sizeof(uint32_t) + totalSize;
+
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
+        if (!ProcessRawData(dataPtr, totalSize, rawData, hookRecord)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer ProcessRawData failed, skip current record");
+            ctx.offset += totalSize;
+            continue;
+        }
+
+        ctx.offset += totalSize;
+    }
+    return true;
+}
+
 void StackPreprocess::TakeResultsFromCacheFile(int fd)
 {
     if (fd < 0) {
@@ -437,49 +484,74 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
         SetIsStopTakeData(true);
         return;
     }
-    RawStackPtr rawData = nullptr;
-    std::shared_ptr<HookRecord> hookRecord = nullptr;
+    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
+    auto readBuffer = std::make_unique<uint8_t[]>(readBufSize);
+    uint32_t remainSize = 0;
     uint64_t readfileSize = 0;
     bool ret = false;
+    bool hasError = false;
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
     InitializeDirector();
     lseek(fd, 0, SEEK_SET);
-    while (!isStopTakeData_) {
-        ret = false;
-        uint32_t totalSize = 0;
-        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
-        if (readBytes < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+
+    while (!isStopTakeData_ && !hasError) {
+        ssize_t bytesRead = read(fd, readBuffer.get() + remainSize, readBufSize - remainSize);
+        if (bytesRead < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read failed errno=%d", errno);
+            hasError = true;
             break;
         }
-        if (readBytes == 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile read end of file.");
-            ret = true;
+        if (bytesRead == 0) {
+            if (remainSize == 0) {
+                ret = true;
+            } else {
+                PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile incomplete record at EOF, remainSize=%u",
+                    remainSize);
+                hasError = true;
+            }
             break;
         }
-        if (readBytes != sizeof(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read invalid totalSize=%zd.", readBytes);
+
+        uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
+        ParseContext ctx = {0, readfileSize};
+
+        if (!ParseRecordsFromBuffer(readBuffer.get(), totalAvail, ctx, rawData, hookRecord)) {
+            hasError = true;
             break;
         }
-        readfileSize += sizeof(totalSize);
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile invalid totalSize=%u.", totalSize);
-            break;
-        }
-        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
-        readBytes = read(fd, buffer.get(), totalSize);
-        if (readBytes != static_cast<ssize_t>(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile read data failed.");
-            break;
-        }
-        readfileSize += totalSize;
-        ret = ProcessRawData(reinterpret_cast<const int8_t*>(buffer.get()), totalSize, rawData, hookRecord);
-        if (!ret) {
-            PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile process data failed.");
+
+        readfileSize = ctx.readfileSize;
+        remainSize = totalAvail - ctx.offset;
+        if (remainSize > 0 && ctx.offset == 0) {
+            uint32_t oversizeRecord = 0;
+            if (memcpy_s(&oversizeRecord, sizeof(uint32_t), readBuffer.get(), sizeof(uint32_t)) != EOK) {
+                hasError = true;
+                break;
+            }
+            PROFILER_LOG_WARN(LOG_CORE, "TakeResultsFromCacheFile record too large for buffer, "
+                "totalSize=%u, bufSize=%u, skipping", oversizeRecord, readBufSize);
+            off_t skipBytes = static_cast<off_t>(oversizeRecord) + sizeof(uint32_t) - remainSize;
+            if (lseek(fd, skipBytes, SEEK_CUR) < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile lseek skip failed errno=%d", errno);
+                hasError = true;
+                break;
+            }
+            readfileSize += sizeof(uint32_t) + oversizeRecord;
+            remainSize = 0;
             continue;
         }
+        if (remainSize > 0) {
+            if (memmove_s(readBuffer.get(), readBufSize, readBuffer.get() + ctx.offset, remainSize) != EOK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "TakeResultsFromCacheFile memmove_s failed");
+                hasError = true;
+                break;
+            }
+        }
     }
+
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%llu] completed, ret %d", readfileSize, ret);
 }
 
 void StackPreprocess::InitializeDirector()
@@ -543,7 +615,6 @@ bool StackPreprocess::ProcessRawData(const int8_t data[], uint32_t size,
     if (!ValidateAndPrepareData(data, size, hookRecord, rawData)) {
         return false;
     }
-
     uint16_t type = hookRecord->GetType();
 
     // jemalloc may report duplicate malloc addresses; reconcile before expensive unwinding
@@ -695,6 +766,10 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
     clock_gettime(CLOCK_REALTIME, &start);
 #endif
 
+    if (TryProcessCachedAsyncStatistics(hookRecord)) {
+        return true;
+    }
+
     if (rawData->stackContext->jsChainId > 0) {
         rawData->jsStackData = GetJsRawStack(rawData->stackContext->jsChainId);
     }
@@ -719,6 +794,40 @@ bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookR
     LogPerformanceMetrics(start, "stack processing", hookRecord->GetType(), rawData->fpDepth);
 #endif
 
+    if (hookRecord != nullptr) {
+        factory_->SaveHookRecord(std::move(hookRecord));
+        hookRecord = nullptr;
+    }
+    return true;
+}
+
+bool StackPreprocess::TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord)
+{
+    uint16_t type = hookRecord->GetType();
+    bool isStatisticsType = (type == MALLOC_MSG || type == MMAP_MSG ||
+        type == MMAP_FILE_PAGE_MSG || type == MEMORY_USING_MSG);
+    if (hookConfig_.statistics_interval() == 0 ||
+        !hookConfig_.async_stack_enable() || !isStatisticsType) {
+        return false;
+    }
+    if (hookConfig_.save_file() && !hookConfig_.file_name().empty() && !isHookStandaloneSerialize_) {
+        return false;
+    }
+    auto rawData = hookRecord->GetRawStack();
+    if (type == MALLOC_MSG) {
+        rawData->stackContext->mallocSize = ComputeAlign(rawData->stackContext->mallocSize);
+    }
+    spinLock_.Lock();
+    uint32_t stackId = FindAsyncStatisticsStackIdLocked(hookRecord);
+    if (stackId == 0) {
+        spinLock_.Unlock();
+        return false;
+    }
+    bool isExists = (recordStatisticsMap_.find(stackId) != recordStatisticsMap_.end());
+    SetAllocStatisticsData(hookRecord, stackId, isExists);
+    spinLock_.Unlock();
+    ReportOfflineSymbolizationData();
+    IntervalFlushRecordStatistics(rawData->stackContext->ts);
     if (hookRecord != nullptr) {
         factory_->SaveHookRecord(std::move(hookRecord));
         hookRecord = nullptr;
@@ -844,7 +953,6 @@ bool StackPreprocess::ProcessSingleRecord(HookRecordPtr& hookRecord)
         PROFILER_LOG_ERROR(LOG_CORE, "StackPreprocess take results rawData->stackContext is nullptr");
         return true;
     }
-
     uint16_t type = hookRecord->GetType();
     SetIsStartTakeData(true);
     if (type == NMD_MSG || type == END_MSG) {
@@ -1018,14 +1126,40 @@ inline void StackPreprocess::FillCallStack(std::vector<CallFrame>& callFrames, s
 inline uint32_t StackPreprocess::FindCallStackId(std::vector<uint64_t>& callStack, const HookRecordPtr& hookRecord)
 {
     auto rawData = hookRecord->GetRawStack();
-    uint64_t stackHash = CallStackHash{}(callStack);
-    CallStackKey key = {stackHash, callStack.size(), rawData->stackContext->nodeId,
-                        rawData->stackContext->nodeType, rawData->stackContext->tagId};
-    auto itStack = callStackIndex_.find(key);
-    if (itStack != callStackIndex_.end()) {
-        return itStack->second;
+
+    if (hookConfig_.async_stack_enable() && rawData->stackContext->type != FREE_ARKTS &&
+        rawData->stackContext->type != MALLOC_ARKTS && rawData->stackContext->type != PR_SET_VMA_MSG) {
+        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+        uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+        uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
+            rawData->stackContext->tagId;
+        AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
+            rawData->stackContext->nodeId, nodeTag};
+        auto it = asyncCallStackIndex_.find(asyncKey);
+        return it != asyncCallStackIndex_.end() ? it->second : 0;
     }
-    return 0;
+
+    uint64_t stackHash = CallStackHash{}(callStack);
+    uint32_t stackSize = static_cast<uint32_t>(callStack.size());
+    CallStackKey key = {stackHash, rawData->stackContext->nodeId, stackSize,
+        rawData->stackContext->nodeType, rawData->stackContext->tagId};
+    auto itStack = callStackIndex_.find(key);
+    return itStack != callStackIndex_.end() ? itStack->second : 0;
+}
+
+uint32_t StackPreprocess::FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord)
+{
+    auto rawData = hookRecord->GetRawStack();
+    CHECK_NOTNULL(rawData, 0, "rawData is nullptr");
+    CHECK_NOTNULL(rawData->stackContext, 0, "stackContext is nullptr");
+    const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+    uint64_t stackHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+    uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
+        rawData->stackContext->tagId;
+    AsyncCallStackKey key = {stackHash, rawData->stackContext->mallocSize,
+        rawData->stackContext->nodeId, nodeTag};
+    auto it = asyncCallStackIndex_.find(key);
+    return it != asyncCallStackIndex_.end() ? it->second : 0;
 }
 
 /**
@@ -1038,7 +1172,7 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     uint32_t stackId = 0;
     auto hookData = stackData.add_events();
     auto stackmap = hookData->mutable_stack_map();
-    stackId = callStackIndex_.size() + 1;
+    stackId = hookConfig_.async_stack_enable() ? asyncCallStackIndex_ .size() + 1 : callStackIndex_.size() + 1;
     stackmap->set_id(stackId);
     // offline symbolization use ip, other use frame_map_id
     if (hookConfig_.offline_symbolization()) {
@@ -1061,10 +1195,23 @@ inline uint32_t StackPreprocess::SetCallStackMap(T& stackData, const HookRecordP
     stackmap->set_pid(pid_);
     auto rawData = hookRecord->GetRawStack();
     CHECK_NOTNULL(rawData, 0, "StackPreprocess rawData is nullptr");
-    uint64_t stackHash = CallStackHash{}(g_callStack);
-    CallStackKey key = {stackHash, g_callStack.size(), rawData->stackContext->nodeId,
-                        rawData->stackContext->nodeType, rawData->stackContext->tagId};
+
+    if (hookConfig_.async_stack_enable()) {
+        const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
+        uint64_t asyncHash = asyncData->syncStackId ^ (asyncData->asyncStackId << 32);
+        uint64_t nodeTag = (static_cast<uint64_t>(rawData->stackContext->nodeType) << 32) |
+            rawData->stackContext->tagId;
+        AsyncCallStackKey asyncKey = {asyncHash, rawData->stackContext->mallocSize,
+            rawData->stackContext->nodeId, nodeTag};
+        asyncCallStackIndex_[asyncKey] = stackId;
+    } else {
+        uint64_t stackHash = CallStackHash{}(g_callStack);
+        uint32_t stackSize = static_cast<uint32_t>(g_callStack.size());
+        CallStackKey key = {stackHash, rawData->stackContext->nodeId, stackSize,
+        rawData->stackContext->nodeType, rawData->stackContext->tagId};
     callStackIndex_[key] = stackId;
+    }
+
     return stackId;
 }
 

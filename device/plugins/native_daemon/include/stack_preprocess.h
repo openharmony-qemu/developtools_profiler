@@ -76,9 +76,9 @@ struct CallStackKey {
     {
         return stackHash == other.stackHash &&
                nodeId == other.nodeId &&
+               stackSize == other.stackSize &&
                nodeType == other.nodeType &&
-               tagId == other.tagId &&
-               stackSize == other.stackSize;
+               tagId == other.tagId;
     }
 };
 
@@ -86,6 +86,30 @@ struct CallStackKeyHash {
     uint64_t operator()(const CallStackKey& key) const
     {
         return key.stackHash;
+    }
+};
+
+struct AsyncCallStackKey {
+    uint64_t stackHash;      // syncStackId ^ (asyncStackId << 32)
+    uint64_t mallocSize;
+    uint64_t nodeId;
+    uint64_t nodeTag;        // (static_cast<uint64_t>(nodeType) << 32) | tagId
+
+    bool operator==(const AsyncCallStackKey& other) const
+    {
+        return memcmp(this, &other, sizeof(AsyncCallStackKey)) == 0;
+    }
+};
+
+struct AsyncCallStackKeyHash {
+    uint64_t operator()(const AsyncCallStackKey& key) const
+    {
+        constexpr uint64_t kMul = 0x9e3779b97f4a7c15ULL;
+        uint64_t h = key.stackHash;
+        h ^= key.mallocSize * kMul;
+        h ^= key.nodeId * (kMul >> 16);
+        h ^= key.nodeTag * (kMul >> 32);
+        return h;
     }
 };
 
@@ -254,6 +278,11 @@ private:
         MATCH_ADDRMAMP_SIZE = 100000,
     };
 
+    struct ParseContext {
+        uint32_t offset;
+        uint64_t readfileSize;
+    };
+
     struct ScopedLockFile {
         ScopedLockFile(FILE* fpHook): fpHookData(fpHook)
         {
@@ -288,6 +317,8 @@ private:
     template <typename T>
     void ReportFrameMap(CallFrame& callFrame, T& stackData);
     void ReportThreadNameMap(uint32_t tid, const std::string& tname);
+    bool ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,
+        RawStackPtr& rawData, std::shared_ptr<HookRecord>& hookRecord);
     void SetMapsInfo();
     template <typename T>
     void SetSymbolInfo(uint32_t filePathId, ElfSymbolTable& symbolInfo, T& batchNativeHookData);
@@ -330,6 +361,8 @@ private:
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    bool TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord);
+    uint32_t FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord);
     void HandleDeleteAddr(uint64_t addr, size_t size);
     std::vector<uint64_t> FindAddrs(uint64_t addr, size_t size);
     void HandleMoveAddr(uint64_t addr, uint64_t new_addr, size_t size);
@@ -369,6 +402,7 @@ private:
     bool flushBasicData_ {true};
     std::vector<u64> u64regs_;
     std::unordered_map<CallStackKey, uint32_t, CallStackKeyHash> callStackIndex_;
+    std::unordered_map<AsyncCallStackKey, uint32_t, AsyncCallStackKeyHash> asyncCallStackIndex_;
     // Key is callStack_, value is call stack id
     std::unordered_map<NewCallStack, uint32_t, NewCallStackHash> callStackMap_;
     std::chrono::seconds statisticsInterval_ {0};

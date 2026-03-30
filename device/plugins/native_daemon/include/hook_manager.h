@@ -211,6 +211,8 @@ private:
         std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
     bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
         std::shared_ptr<RawStack>& rawStack);
+    bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
+        uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
     void CreateMemLeakFile();
     std::string GetMemLeakFileName(MemLeakFormat format);
 
