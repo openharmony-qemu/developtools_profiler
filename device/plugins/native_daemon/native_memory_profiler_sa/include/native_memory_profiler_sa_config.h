@@ -21,6 +21,7 @@
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr uint32_t DEFAULT_DURATION = 20;
+constexpr uint32_t INVALID_FORMAT = 0xFFFFFFFF;
 constexpr uint8_t  DEFAULT_STACK_DAPTH = 30;
 constexpr size_t GPU_TYPE_SIZE = 5;
 constexpr size_t GPU_RANGE_SIZE = 2;
@@ -84,7 +85,9 @@ public:
     uint32_t gwpAsanMaxEntries_{0};
     uint32_t gwpAsanMaxStackDepth_{0};
     bool allocatorSamplingEnable_{false};
-    uint32_t memLeakFormat_{0};
+    bool nativeOrphanSnapshotsEnable_{false};
+    uint32_t memLeakFormat_{INVALID_FORMAT};
+    uint32_t memLeakLimit_{0};
 };
 } // namespace OHOS::Developtools::NativeDaemon
 #endif // NATIVE_MEMORY_PROFILER_SA_CONFIG_H

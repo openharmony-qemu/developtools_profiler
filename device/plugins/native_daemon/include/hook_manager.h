@@ -244,6 +244,7 @@ private:
     uint32_t gwpFd_ = 0;
     MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
     uint32_t memLeakFd_ = 0;
+    uint32_t memLeakLimit_ = 0;
     std::string memLeakFileName_;
 };
 }

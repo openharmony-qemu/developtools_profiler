@@ -428,12 +428,12 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         fd = static_cast<uint32_t>(fdTemp);
     }
     uint32_t saFd = 0;
-    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && config->memLeakFormat_ == 0) {
+    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && !config->nativeOrphanSnapshotsEnable_) {
         saFd = fd;
     }
     hook->RegisterFdForSa(saFd);
     hook->SetGwpFd(config->gwpAsanHoldTime_ > 0 ? fd : 0);
-    hook->SetMemLeakFd(config->memLeakFormat_ > 0 ? fd : 0);
+    hook->SetMemLeakFd(config->nativeOrphanSnapshotsEnable_ ? fd : 0);
     hook->SetSaMode(true);
     hook->SetHookConfig(config);
     hook->SetSaServiceConfig(true, config->hookstandalone_);
@@ -448,7 +448,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
             "create pluginsession failed");
         return RET_ERR;
     }
-    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && config->memLeakFormat_ == 0) {
+    if (!config->printNmdOnly_ && config->gwpAsanHoldTime_ == 0 && !config->nativeOrphanSnapshotsEnable_) {
         hook->WriteHookConfig();
     }
     hook->StartPluginSession(&g_pidInfo);
