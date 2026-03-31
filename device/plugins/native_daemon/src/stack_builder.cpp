@@ -21,6 +21,7 @@ static thread_local std::vector<u64> g_u64regs;
 const std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
 const std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
 
+
 void StackBuilder::FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord)
 {
     auto rawStack = hookRecord->GetRawStack();
