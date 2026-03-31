@@ -20,8 +20,6 @@ static thread_local std::vector<std::string> g_fpJsCallStacks;
 static thread_local std::vector<u64> g_u64regs;
 const std::string JS_CALL_STACK_DEPTH_SEP = ",";   // ',' is js call stack depth separator
 const std::string JS_SYMBOL_FILEPATH_SEP = "|";    // '|' is js symbol and filepath separator
-constexpr size_t kStartIndex = 0;
-constexpr size_t kRemoveCount = 2;
 
 void StackBuilder::FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord)
 {
@@ -72,10 +70,6 @@ void FpStackBuilder::FillIps(std::vector<CallFrame>& callFrames,
     };
     fillIpsFromPcVector(syncPcs);
     fillIpsFromPcVector(asyncPcs);
-    if (syncPcs.size() >= kStartIndex + kRemoveCount) {
-        auto first = callFrames.begin() + kStartIndex;
-        callFrames.erase(first, first + kRemoveCount);
-    }
 }
 
 void FpStackBuilder::FillJsFrame(CallFrame& jsCallFrame)
