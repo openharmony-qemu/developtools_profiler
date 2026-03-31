@@ -102,18 +102,29 @@ HWTEST_F(HookManagerExceptionTest, CheckProcessWithNonExistProcessName, TestSize
 }
 
 /*
- * @tc.name: CheckProcessExceedMaxPidCount
- * @tc.desc: test CheckProcess when PID count exceeds maximum in response mode.
+ * @tc.name: CheckProcessWithExistingPid
+ * @tc.desc: test CheckProcess with existing PID.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerExceptionTest, CheckProcessExceedMaxPidCount, TestSize.Level0)
+HWTEST_F(HookManagerExceptionTest, CheckProcessWithExistingPid, TestSize.Level0)
 {
-    hookConfig_.set_response_library_mode(true);
-    for (int i = 0; i < 10; ++i) {
-        hookConfig_.add_expand_pids(getpid());
-    }
+    hookConfig_.set_pid(getpid());
     hookManager_->SetHookConfig(hookConfig_);
     EXPECT_TRUE(hookManager_->CheckProcess());
+}
+
+/*
+ * @tc.name: CheckProcessWithMultiplePids
+ * @tc.desc: test CheckProcess with multiple PIDs to trigger protobuf serialization.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExceptionTest, CheckProcessWithMultiplePids, TestSize.Level0)
+{
+    hookConfig_.add_expand_pids(getpid());
+    hookConfig_.add_expand_pids(getppid());
+    hookManager_->SetHookConfig(hookConfig_);
+    EXPECT_TRUE(hookManager_->CheckProcess());
+    EXPECT_TRUE(hookManager_->isProtobufSerialize_);
 }
 
 /*
