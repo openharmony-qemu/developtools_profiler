@@ -301,15 +301,50 @@ HWTEST_F(HookManagerTest, ConvertTagToMaskAllTagsConversion, TestSize.Level0)
     config.add_restrace_tag("RES_ARKTS_HEAP_MASK");
     config.add_restrace_tag("RES_JS_HEAP_MASK");
     config.add_restrace_tag("RES_KOTLIN_HEAP_MASK");
-    config.add_restrace_tag("RES_RN_HEAP_MASK");
     config.add_restrace_tag("RES_DMABUF_MASK");
+    config.add_restrace_tag("RES_DART_HEAP");
+    config.add_restrace_tag("RES_RN_HERMES_HEAP");
     hookManager.SetHookConfig(config);
 
     unsigned long long result = hookManager.ConvertTagToMask();
     EXPECT_EQ(result, RES_GPU_VK | RES_GPU_GLES_IMAGE | RES_GPU_GLES_BUFFER | RES_GPU_CL_IMAGE | RES_GPU_CL_BUFFER |
               RES_FD_OPEN | RES_FD_EPOLL | RES_FD_EVENTFD | RES_FD_SOCKET | RES_FD_PIPE | RES_FD_DUP |
               RES_FD_MASK | RES_THREAD_PTHREAD | RES_THREAD_MASK | RES_ARKTS_HEAP_MASK | RES_JS_HEAP_MASK |
-              RES_KOTLIN_HEAP_MASK | RES_RN_HEAP_MASK | RES_DMABUF_MASK);
+              RES_KOTLIN_HEAP_MASK | RES_DMABUF_MASK | RES_DART_HEAP | RES_RN_HERMES_HEAP);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskDartHeapConversion
+ * @tc.desc: test ConvertTagToMask with DART_HEAP tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskDartHeapConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    config.add_restrace_tag("RES_DART_HEAP");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_DART_HEAP);
+}
+
+/*
+ * @tc.name: ConvertTagToMaskRnHermesHeapConversion
+ * @tc.desc: test ConvertTagToMask with RN_HERMES_HEAP tag.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerTest, ConvertTagToMaskRnHermesHeapConversion, TestSize.Level0)
+{
+    HookManager hookManager;
+    NativeHookConfig config;
+
+    config.add_restrace_tag("RES_RN_HERMES_HEAP");
+    hookManager.SetHookConfig(config);
+
+    unsigned long long result = hookManager.ConvertTagToMask();
+    EXPECT_EQ(result, RES_RN_HERMES_HEAP);
 }
 
 /*

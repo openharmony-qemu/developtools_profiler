@@ -150,11 +150,12 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         {"ashmem", TraceType::ASHMEM},
         {TAG_RES_ARKTS_HEAP_MASK, TraceType::ARKTS_HEAP},
         {TAG_RES_JS_HEAP_MASK, TraceType::JS_HEAP},
-        {TAG_RES_RN_HEAP_MASK, TraceType::RN_HEAP},
         {TAG_RES_DMABUF_MASK, TraceType::DMA},
         {TAG_RES_ARK_GLOBAL_HANDLE, TraceType::ARK_GLOBAL_HANDLE},
         {TAG_RES_ARK_LOCAL_HANDLE, TraceType::ARK_LOCAL_HANDLE},
         {TAG_RES_VMA_ARKWEB, TraceType::VMA_ARKWEB},
+        {TAG_RES_DART_HEAP, TraceType::DART_HEAP},
+        {TAG_RES_RN_HERMES_HEAP, TraceType::RN_HERMES_HEAP},
     };
 
     auto it = tagToType.find(tagName);

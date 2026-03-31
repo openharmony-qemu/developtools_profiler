@@ -157,13 +157,14 @@ enum TraceType {
     ARKTS_HEAP = 6;
     JS_HEAP = 7;
     KMP_HEAP = 8;
-    RN_HEAP = 9;
+    RN_HERMES_HEAP = 9;
     ASHMEM = 10;
     DMA = 11;
     SO = 12;
     ARK_GLOBAL_HANDLE = 13;
     ARK_LOCAL_HANDLE = 14;
     VMA_ARKWEB = 15;
+    DART_HEAP = 16;
 };
 
 message TraceAllocEvent {
@@ -225,13 +226,14 @@ message RecordStatisticsEvent {
         ARKTS_HEAP = 10;
         JS_HEAP = 11;
         KMP_HEAP = 12;
-        RN_HEAP = 13;
+        RN_HERMES_HEAP = 13;
         ASHMEM = 14;
         DMA = 15;
         OTHER = 16;
         ARK_GLOBAL_HANDLE = 17;
         ARK_LOCAL_HANDLE = 18;
         VMA_ARKWEB = 19;
+        DART_HEAP = 20;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

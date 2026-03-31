@@ -265,13 +265,14 @@ unsigned long long HookManager::ConvertTagToMask() const
         {TAG_RES_ARKTS_HEAP_MASK, RES_ARKTS_HEAP_MASK},
         {TAG_RES_JS_HEAP_MASK, RES_JS_HEAP_MASK},
         {TAG_RES_KOTLIN_HEAP_MASK, RES_KOTLIN_HEAP_MASK},
-        {TAG_RES_RN_HEAP_MASK, RES_RN_HEAP_MASK},
         {TAG_RES_DMABUF_MASK, RES_DMABUF_MASK},
         {TAG_RES_ARK_GLOBAL_HANDLE, RES_ARK_GLOBAL_HANDLE},
         {TAG_RES_SO_MASK, RES_SO_MASK},
         {TAG_RES_ASHMEM_MASK, RES_ASHMEM_MASK},
         {TAG_RES_ARK_LOCAL_HANDLE, RES_ARK_LOCAL_HANDLE},
-        {TAG_RES_VMA_ARKWEB, RES_VMA_ARKWEB}};
+        {TAG_RES_VMA_ARKWEB, RES_VMA_ARKWEB},
+        {TAG_RES_DART_HEAP, RES_DART_HEAP},
+        {TAG_RES_RN_HERMES_HEAP, RES_RN_HERMES_HEAP}};
     unsigned long long resMask = 0;
     for (const auto& tag : hookConfig_.restrace_tag()) {
         auto it = tagToMask.find(tag);

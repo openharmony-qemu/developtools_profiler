@@ -171,11 +171,12 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         {RES_JS_HEAP_MASK, static_cast<uint16_t>(JS_HEAP_MASK_INDEX + 1)},
         {RES_ARKTS_HEAP_MASK, static_cast<uint16_t>(ARKTS_HEAP_MASK_INDEX + 1)},
         {RES_KOTLIN_HEAP_MASK, static_cast<uint16_t>(KOTLIN_HEAP_MASK_INDEX + 1)},
-        {RES_RN_HEAP_MASK, static_cast<uint16_t>(RN_HEAP_MASK_INDEX + 1)},
         {RES_DMABUF_MASK, static_cast<uint16_t>(DMABUF_MASK_INDEX + 1)},
         {RES_ARK_GLOBAL_HANDLE, static_cast<uint16_t>(ARK_GLOBAL_HANDLE_INDEX + 1)},
         {RES_ARK_LOCAL_HANDLE, static_cast<uint16_t>(ARK_LOCAL_HANDLE_INDEX + 1)},
-        {RES_VMA_ARKWEB, static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)}};
+        {RES_VMA_ARKWEB, static_cast<uint16_t>(VMA_ARKWEB_INDEX + 1)},
+        {RES_DART_HEAP, static_cast<uint16_t>(DART_HEAP_INDEX + 1)},
+        {RES_RN_HERMES_HEAP, static_cast<uint16_t>(RN_HERMES_HEAP_INDEX + 1)}};
     auto it = g_maskTagMap.find(mask);
     return it != g_maskTagMap.end() ? it->second : 0;
 }
