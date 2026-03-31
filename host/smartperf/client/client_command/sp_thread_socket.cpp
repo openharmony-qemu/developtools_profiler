@@ -972,7 +972,7 @@ std::vector<std::string> SpThreadSocket::split(const std::string &str, const std
 std::string SpThreadSocket::GetTime(std::string &recvBuf)
 {
     if (recvBuf.find("***") != std::string::npos && recvBuf.find("&&&") == std::string::npos) {
-        size_t lastStarPos = recvBuf.find('*');
+        size_t lastStarPos = recvBuf.rfind('*');
         if (lastStarPos != std::string::npos) {
             std::string result = recvBuf.substr(lastStarPos + 1);
             int time = SPUtilesTye::StringToSometype<int>(result);
