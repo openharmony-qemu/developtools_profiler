@@ -370,7 +370,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(int32_t type, M
     int32_t retStart = StartPidVoid(config);
     if (retStart != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
+        return retStart;
     }
 
     if (!UpdateMemProfilerUserCount()) {
