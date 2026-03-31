@@ -113,12 +113,32 @@ void AllocateMemory(int depth, int size)
     AllocateMemory(depth - 1, size);
 }
 
+void AllocateKmpMemory(int depth, int size)
+{
+    if (size > MAX_SIZE || (size == 0)) {
+        return;
+    }
+    if (depth == 0) {
+        char* mem = new char[size];
+        restrace(RES_KOTLIN_HEAP_MASK, mem, size, TAG_RES_KOTLIN_HEAP_MASK, true);
+        if (mem == nullptr) {
+            return;
+        }
+        mem[0] = 'a';
+        restrace(RES_KOTLIN_HEAP_MASK, mem, size, TAG_RES_KOTLIN_HEAP_MASK, false);
+        delete[] mem;
+        return;
+    }
+    AllocateKmpMemory(depth - 1, size);
+}
+
 void ThreadFunc(int depth, int count, int size)
 {
     for (int i = 0; i < count; ++i) {
         AllocateMemory(depth, size);
         AllocateMemoryFreeRegion(depth, size);
         AllocateMemoryMove(depth, size);
+        AllocateKmpMemory(depth, size);
     }
 }
 

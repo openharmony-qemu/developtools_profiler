@@ -299,8 +299,8 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest007, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     char* mem = new char[1];
-    ohos_malloc_hook_restrace(RES_KMP_HEAP_MASK, mem, 1, TAG_RES_KMP_HEAP_MASK, true);
-    ohos_malloc_hook_restrace(RES_KMP_HEAP_MASK, mem, 1, TAG_RES_KMP_HEAP_MASK, false);
+    ohos_malloc_hook_restrace(RES_KOTLIN_HEAP_MASK, mem, 1, TAG_RES_KOTLIN_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_KOTLIN_HEAP_MASK, mem, 1, TAG_RES_KOTLIN_HEAP_MASK, false);
     delete[] mem;
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
@@ -396,6 +396,23 @@ HWTEST_F(NativeHookTest, ResTraceFreeRegionTest, TestSize.Level0)
 
     delete[] mem;
 
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+* @tc.name: native hook
+* @tc.desc: Test hook restrace normal process by kmp.
+* @tc.type: FUNC
+*/
+HWTEST_F(NativeHookTest, NormalHookRestraceTestKmp, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_KOTLIN_HEAP_MASK, mem, 1, TAG_RES_KOTLIN_HEAP_MASK, true);
+    ohos_malloc_hook_restrace(RES_KOTLIN_HEAP_MASK, mem, 1, TAG_RES_KOTLIN_HEAP_MASK, false);
+    delete[] mem;
     EXPECT_TRUE(ohos_malloc_hook_on_end());
     sleep(WAIT_THREAD_TIME);
 }

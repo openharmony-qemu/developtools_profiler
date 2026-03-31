@@ -186,7 +186,7 @@ private:
     bool saMode_ = false;
     void DumpMemLeakInfo(uint8_t* data);
     bool CheckProcess();
-    unsigned long long ConvertTagToMask();
+    unsigned long long ConvertTagToMask() const;
     bool CheckProcessName();
     void CheckHapEncryped();
     void UpdateAsyncFlagConfig();

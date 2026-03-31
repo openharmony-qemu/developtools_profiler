@@ -71,6 +71,39 @@ static struct timespec MillisecondsToTimespec(uint64_t timeMs)
         static_cast<long>((timeMs % SECOND_TO_MILLISECOND) * MILLISECOND_TO_NANOSECOND)};
 }
 
+namespace {
+struct TagMapping {
+    const char* tagName;
+    RecordStatisticsEvent::MemoryType type;
+    bool needNodeInfo;
+};
+
+static TagMapping g_tagMappings[] = {
+    {TAG_RES_GPU_VK, RecordStatisticsEvent::GPU_VK, true},
+    {TAG_RES_GPU_GLES_IMAGE, RecordStatisticsEvent::GPU_GLES, true},
+    {TAG_RES_GPU_GLES_BUFFER, RecordStatisticsEvent::GPU_GLES, true},
+    {TAG_RES_GPU_CL_IMAGE, RecordStatisticsEvent::GPU_CL, true},
+    {TAG_RES_GPU_CL_BUFFER, RecordStatisticsEvent::GPU_CL, true},
+    {TAG_RES_FD_OPEN, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_EPOLL, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_EVENTFD, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_SOCKET, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_PIPE, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_DUP, RecordStatisticsEvent::FD, false},
+    {TAG_RES_FD_ALL, RecordStatisticsEvent::FD, false},
+    {TAG_RES_THREAD_PTHREAD, RecordStatisticsEvent::THREAD, false},
+    {TAG_RES_THREAD_ALL, RecordStatisticsEvent::THREAD, false},
+    {TAG_RES_ARKTS_HEAP_MASK, RecordStatisticsEvent::ARKTS_HEAP, false},
+    {TAG_RES_JS_HEAP_MASK, RecordStatisticsEvent::JS_HEAP, false},
+    {TAG_RES_KOTLIN_HEAP_MASK, RecordStatisticsEvent::KMP_HEAP, false},
+    {TAG_RES_RN_HEAP_MASK, RecordStatisticsEvent::RN_HEAP, false},
+    {TAG_RES_DMABUF_MASK, RecordStatisticsEvent::DMA, true},
+    {TAG_RES_ARK_GLOBAL_HANDLE, RecordStatisticsEvent::ARK_GLOBAL_HANDLE, false},
+    {TAG_RES_ARK_LOCAL_HANDLE, RecordStatisticsEvent::ARK_LOCAL_HANDLE, false},
+    {TAG_RES_VMA_ARKWEB, RecordStatisticsEvent::VMA_ARKWEB, false},
+};
+}
+
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
 {
     std::vector<uint64_t> addrs = {};
@@ -203,7 +236,7 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(THREAD_MASK_INDEX + 1, TAG_RES_THREAD_ALL);
     SaveMemTag(ARKTS_HEAP_MASK_INDEX + 1, TAG_RES_ARKTS_HEAP_MASK);
     SaveMemTag(JS_HEAP_MASK_INDEX + 1, TAG_RES_JS_HEAP_MASK);
-    SaveMemTag(KMP_HEAP_MASK_INDEX + 1, TAG_RES_KMP_HEAP_MASK);
+    SaveMemTag(KOTLIN_HEAP_MASK_INDEX + 1, TAG_RES_KOTLIN_HEAP_MASK);
     SaveMemTag(RN_HEAP_MASK_INDEX + 1, TAG_RES_RN_HEAP_MASK);
     SaveMemTag(DMABUF_MASK_INDEX + 1, TAG_RES_DMABUF_MASK);
     SaveMemTag(ARK_GLOBAL_HANDLE_INDEX + 1, TAG_RES_ARK_GLOBAL_HANDLE);
@@ -1629,6 +1662,26 @@ void StackPreprocess::UpdateAllocStatistics(const HookRecordPtr& hookRecord, siz
     }
 }
 
+bool StackPreprocess::ResolveTagType(const std::string& tagName, RecordStatistic& record)
+{
+    for (const auto& item : g_tagMappings) {
+        if (tagName == item.tagName) {
+            record.type = item.type;
+            return item.needNodeInfo;
+        }
+    }
+    if (tagName == "ashmem") {
+        record.type = RecordStatisticsEvent::ASHMEM;
+        return true;
+    }
+    if (tagName.find(".so") != std::string::npos) {
+        record.type = RecordStatisticsEvent::SO;
+    } else {
+        record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
+    }
+    return false;
+}
+
 void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId)
 {
     auto rawStack = hookRecord->GetRawStack();
@@ -1647,62 +1700,17 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
         case MMAP_MSG:
             record.type = RecordStatisticsEvent::MMAP;
             break;
-        case MMAP_FILE_PAGE_MSG: {
+        case MMAP_FILE_PAGE_MSG:
             record.type = RecordStatisticsEvent::FILE_PAGE_MSG;
             record.tagId = rawStack->stackContext->tagId;
             break;
-        }
         case MEMORY_USING_MSG: {
             std::string tagName;
             GetMemTag(rawStack->stackContext->tagId, tagName);
-            bool fdLeakTag = tagName == TAG_RES_FD_OPEN || tagName == TAG_RES_FD_EPOLL ||
-                       tagName == TAG_RES_FD_EVENTFD || tagName == TAG_RES_FD_SOCKET ||
-                       tagName == TAG_RES_FD_PIPE || tagName == TAG_RES_FD_DUP ||
-                       tagName == TAG_RES_FD_ALL;
-            if (tagName == TAG_RES_GPU_VK) {
-                record.type = RecordStatisticsEvent::GPU_VK;
+            bool needNodeInfo = ResolveTagType(tagName, record);
+            if (needNodeInfo) {
                 record.nodeType = rawStack->stackContext->nodeType;
                 record.nodeId = rawStack->stackContext->nodeId;
-            } else if ((tagName == TAG_RES_GPU_GLES_IMAGE) || (tagName == TAG_RES_GPU_GLES_BUFFER)) {
-                record.type = RecordStatisticsEvent::GPU_GLES;
-                record.nodeType = rawStack->stackContext->nodeType;
-                record.nodeId = rawStack->stackContext->nodeId;
-            } else if ((tagName == TAG_RES_GPU_CL_IMAGE) || (tagName == TAG_RES_GPU_CL_BUFFER)) {
-                record.type = RecordStatisticsEvent::GPU_CL;
-                record.nodeType = rawStack->stackContext->nodeType;
-                record.nodeId = rawStack->stackContext->nodeId;
-            } else if (fdLeakTag) {
-                record.type = RecordStatisticsEvent::FD;
-            } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
-                record.type = RecordStatisticsEvent::THREAD;
-            } else if (tagName == TAG_RES_ARKTS_HEAP_MASK) {
-                record.type = RecordStatisticsEvent::ARKTS_HEAP;
-            } else if (tagName == "ashmem") {
-                record.type = RecordStatisticsEvent::ASHMEM;
-                record.nodeType = rawStack->stackContext->nodeType;
-                record.nodeId = rawStack->stackContext->nodeId;
-            } else if (tagName == TAG_RES_JS_HEAP_MASK) {
-                record.type = RecordStatisticsEvent::JS_HEAP;
-            } else if (tagName == TAG_RES_KMP_HEAP_MASK) {
-                record.type = RecordStatisticsEvent::KMP_HEAP;
-            } else if (tagName == TAG_RES_DMABUF_MASK) {
-                record.type = RecordStatisticsEvent::DMA;
-                record.nodeType = rawStack->stackContext->nodeType;
-                record.nodeId = rawStack->stackContext->nodeId;
-            } else if (tagName == TAG_RES_RN_HEAP_MASK) {
-                record.type = RecordStatisticsEvent::RN_HEAP;
-            } else if (tagName == TAG_RES_ARK_GLOBAL_HANDLE) {
-                record.type = RecordStatisticsEvent::ARK_GLOBAL_HANDLE;
-            } else if (tagName == TAG_RES_ARK_LOCAL_HANDLE) {
-                record.type = RecordStatisticsEvent::ARK_LOCAL_HANDLE;
-            } else if (tagName == TAG_RES_VMA_ARKWEB) {
-                record.type = RecordStatisticsEvent::VMA_ARKWEB;
-            } else {
-                if (tagName.find(".so") != std::string::npos) {
-                    record.type = RecordStatisticsEvent::SO;
-                } else {
-                    record.type = RecordStatisticsEvent::MEMORY_USING_MSG;
-                }
             }
             record.tagId = rawStack->stackContext->tagId;
             break;
@@ -1711,7 +1719,6 @@ void StackPreprocess::AddAllocStatistics(const HookRecordPtr& hookRecord, size_t
             PROFILER_LOG_ERROR(LOG_CORE, "SetAllocStatisticsData event type error");
             break;
     }
-
     recordStatisticsMap_.emplace(stackId, record);
     allocAddrMap_[hookRecord->GetAddr()] =
         AllocAddrInfo{rawStack->stackContext->mallocSize, stackId, rawStack->stackContext->ts};

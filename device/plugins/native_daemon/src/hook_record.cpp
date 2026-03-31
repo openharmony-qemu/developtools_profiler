@@ -17,8 +17,8 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <unordered_map>
 #include "hook_record.h"
-
 namespace OHOS::Developtools::NativeDaemon {
 
 uint16_t HookRecord::GetType()
@@ -131,41 +131,35 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         PROFILER_LOG_ERROR(LOG_CORE, "hookRecord SetTraceType invalid event");
         return;
     }
-    if (tagName == TAG_RES_GPU_VK) {
-        event->set_trace_type(TraceType::GPU_VK);
-    } else if (tagName == TAG_RES_GPU_GLES_IMAGE) {
-        event->set_trace_type(TraceType::GPU_GLES);
-    } else if (tagName == TAG_RES_GPU_GLES_BUFFER) {
-        event->set_trace_type(TraceType::GPU_GLES);
-    } else if (tagName == TAG_RES_GPU_CL_IMAGE) {
-        event->set_trace_type(TraceType::GPU_CL);
-    } else if (tagName == TAG_RES_GPU_CL_BUFFER) {
-        event->set_trace_type(TraceType::GPU_CL);
-    } else if (tagName == TAG_RES_FD_OPEN || tagName == TAG_RES_FD_EPOLL ||
-               tagName == TAG_RES_FD_EVENTFD || tagName == TAG_RES_FD_SOCKET ||
-               tagName == TAG_RES_FD_PIPE || tagName == TAG_RES_FD_DUP ||
-               tagName == TAG_RES_FD_ALL) {
-        event->set_trace_type(TraceType::FD);
-    } else if (tagName == TAG_RES_THREAD_PTHREAD || tagName == TAG_RES_THREAD_ALL) {
-        event->set_trace_type(TraceType::THREAD);
-    } else if (tagName == TAG_RES_KMP_HEAP_MASK) {
-        event->set_trace_type(TraceType::KMP_HEAP);
-    } else if (tagName == "ashmem") {
-        event->set_trace_type(TraceType::ASHMEM);
-    } else if (tagName == TAG_RES_ARKTS_HEAP_MASK) {
-        event->set_trace_type(TraceType::ARKTS_HEAP);
-    } else if (tagName == TAG_RES_JS_HEAP_MASK) {
-        event->set_trace_type(TraceType::JS_HEAP);
-    } else if (tagName == TAG_RES_RN_HEAP_MASK) {
-        event->set_trace_type(TraceType::RN_HEAP);
-    } else if (tagName == TAG_RES_DMABUF_MASK) {
-        event->set_trace_type(TraceType::DMA);
-    } else if (tagName == TAG_RES_ARK_GLOBAL_HANDLE) {
-        event->set_trace_type(TraceType::ARK_GLOBAL_HANDLE);
-    } else if (tagName == TAG_RES_ARK_LOCAL_HANDLE) {
-        event->set_trace_type(TraceType::ARK_LOCAL_HANDLE);
-    } else if (tagName == TAG_RES_VMA_ARKWEB) {
-        event->set_trace_type(TraceType::VMA_ARKWEB);
+    static const std::unordered_map<std::string, TraceType> tagToType = {
+        {TAG_RES_GPU_VK, TraceType::GPU_VK},
+        {TAG_RES_GPU_GLES_IMAGE, TraceType::GPU_GLES},
+        {TAG_RES_GPU_GLES_BUFFER, TraceType::GPU_GLES},
+        {TAG_RES_GPU_CL_IMAGE, TraceType::GPU_CL},
+        {TAG_RES_GPU_CL_BUFFER, TraceType::GPU_CL},
+        {TAG_RES_FD_OPEN, TraceType::FD},
+        {TAG_RES_FD_EPOLL, TraceType::FD},
+        {TAG_RES_FD_EVENTFD, TraceType::FD},
+        {TAG_RES_FD_SOCKET, TraceType::FD},
+        {TAG_RES_FD_PIPE, TraceType::FD},
+        {TAG_RES_FD_DUP, TraceType::FD},
+        {TAG_RES_FD_ALL, TraceType::FD},
+        {TAG_RES_THREAD_PTHREAD, TraceType::THREAD},
+        {TAG_RES_THREAD_ALL, TraceType::THREAD},
+        {TAG_RES_KOTLIN_HEAP_MASK, TraceType::KMP_HEAP},
+        {"ashmem", TraceType::ASHMEM},
+        {TAG_RES_ARKTS_HEAP_MASK, TraceType::ARKTS_HEAP},
+        {TAG_RES_JS_HEAP_MASK, TraceType::JS_HEAP},
+        {TAG_RES_RN_HEAP_MASK, TraceType::RN_HEAP},
+        {TAG_RES_DMABUF_MASK, TraceType::DMA},
+        {TAG_RES_ARK_GLOBAL_HANDLE, TraceType::ARK_GLOBAL_HANDLE},
+        {TAG_RES_ARK_LOCAL_HANDLE, TraceType::ARK_LOCAL_HANDLE},
+        {TAG_RES_VMA_ARKWEB, TraceType::VMA_ARKWEB},
+    };
+
+    auto it = tagToType.find(tagName);
+    if (it != tagToType.end()) {
+        event->set_trace_type(it->second);
     } else {
         if (tagName.find(".so") != std::string::npos) {
             event->set_trace_type(TraceType::SO);

@@ -245,61 +245,40 @@ bool HookManager::UnloadPlugin(const uint32_t pluginId)
     return true;
 }
 
-unsigned long long HookManager::ConvertTagToMask()
+unsigned long long HookManager::ConvertTagToMask() const
 {
+    static const std::unordered_map<std::string_view, unsigned long long> tagToMask = {
+        {TAG_RES_GPU_VK, RES_GPU_VK},
+        {TAG_RES_GPU_GLES_IMAGE, RES_GPU_GLES_IMAGE},
+        {TAG_RES_GPU_GLES_BUFFER, RES_GPU_GLES_BUFFER},
+        {TAG_RES_GPU_CL_IMAGE, RES_GPU_CL_IMAGE},
+        {TAG_RES_GPU_CL_BUFFER, RES_GPU_CL_BUFFER},
+        {TAG_RES_FD_OPEN, RES_FD_OPEN},
+        {TAG_RES_FD_EPOLL, RES_FD_EPOLL},
+        {TAG_RES_FD_EVENTFD, RES_FD_EVENTFD},
+        {TAG_RES_FD_SOCKET, RES_FD_SOCKET},
+        {TAG_RES_FD_PIPE, RES_FD_PIPE},
+        {TAG_RES_FD_DUP, RES_FD_DUP},
+        {TAG_RES_FD_ALL, RES_FD_MASK},
+        {TAG_RES_THREAD_PTHREAD, RES_THREAD_PTHREAD},
+        {TAG_RES_THREAD_ALL, RES_THREAD_MASK},
+        {TAG_RES_ARKTS_HEAP_MASK, RES_ARKTS_HEAP_MASK},
+        {TAG_RES_JS_HEAP_MASK, RES_JS_HEAP_MASK},
+        {TAG_RES_KOTLIN_HEAP_MASK, RES_KOTLIN_HEAP_MASK},
+        {TAG_RES_RN_HEAP_MASK, RES_RN_HEAP_MASK},
+        {TAG_RES_DMABUF_MASK, RES_DMABUF_MASK},
+        {TAG_RES_ARK_GLOBAL_HANDLE, RES_ARK_GLOBAL_HANDLE},
+        {TAG_RES_SO_MASK, RES_SO_MASK},
+        {TAG_RES_ASHMEM_MASK, RES_ASHMEM_MASK},
+        {TAG_RES_ARK_LOCAL_HANDLE, RES_ARK_LOCAL_HANDLE},
+        {TAG_RES_VMA_ARKWEB, RES_VMA_ARKWEB}};
     unsigned long long resMask = 0;
-    if (hookConfig_.restrace_tag().size() > 0) {
-        for (int i = 0; i < hookConfig_.restrace_tag().size(); i++) {
-            std::string resTag = hookConfig_.restrace_tag(i);
-            if (resTag == TAG_RES_GPU_VK) {
-                resMask |= RES_GPU_VK;
-            } else if (resTag == TAG_RES_GPU_GLES_IMAGE) {
-                resMask |= RES_GPU_GLES_IMAGE;
-            } else if (resTag == TAG_RES_GPU_GLES_BUFFER) {
-                resMask |= RES_GPU_GLES_BUFFER;
-            } else if (resTag == TAG_RES_GPU_CL_IMAGE) {
-                resMask |= RES_GPU_CL_IMAGE;
-            } else if (resTag == TAG_RES_GPU_CL_BUFFER) {
-                resMask |= RES_GPU_CL_BUFFER;
-            } else if (resTag == TAG_RES_FD_OPEN) {
-                resMask |= RES_FD_OPEN;
-            } else if (resTag == TAG_RES_FD_EPOLL) {
-                resMask |= RES_FD_EPOLL;
-            } else if (resTag == TAG_RES_FD_EVENTFD) {
-                resMask |= RES_FD_EVENTFD;
-            } else if (resTag == TAG_RES_FD_SOCKET) {
-                resMask |= RES_FD_SOCKET;
-            } else if (resTag == TAG_RES_FD_PIPE) {
-                resMask |= RES_FD_PIPE;
-            } else if (resTag == TAG_RES_FD_DUP) {
-                resMask |= RES_FD_DUP;
-            } else if (resTag == TAG_RES_FD_ALL) {
-                resMask |= RES_FD_MASK;
-            } else if (resTag == TAG_RES_THREAD_PTHREAD) {
-                resMask |= RES_THREAD_PTHREAD;
-            } else if (resTag == TAG_RES_THREAD_ALL) {
-                resMask |= RES_THREAD_MASK;
-            } else if (resTag == TAG_RES_ARKTS_HEAP_MASK) {
-                resMask |= RES_ARKTS_HEAP_MASK;
-            } else if (resTag == TAG_RES_JS_HEAP_MASK) {
-                resMask |= RES_JS_HEAP_MASK;
-            } else if (resTag == TAG_RES_KMP_HEAP_MASK) {
-                resMask |= RES_KMP_HEAP_MASK;
-            } else if (resTag == TAG_RES_RN_HEAP_MASK) {
-                resMask |= RES_RN_HEAP_MASK;
-            } else if (resTag == TAG_RES_DMABUF_MASK) {
-                resMask |= RES_DMABUF_MASK;
-            } else if (resTag == TAG_RES_ARK_GLOBAL_HANDLE) {
-                resMask |= RES_ARK_GLOBAL_HANDLE;
-            } else if (resTag == TAG_RES_SO_MASK) {
-                resMask |= RES_SO_MASK;
-            } else if (resTag == TAG_RES_ASHMEM_MASK) {
-                resMask |= RES_ASHMEM_MASK;
-            } else if (resTag == TAG_RES_ARK_LOCAL_HANDLE) {
-                resMask |= RES_ARK_LOCAL_HANDLE;
-            } else if (resTag == TAG_RES_VMA_ARKWEB) {
-                resMask |= RES_VMA_ARKWEB;
-            }
+    for (const auto& tag : hookConfig_.restrace_tag()) {
+        auto it = tagToMask.find(tag);
+        if (it != tagToMask.end()) {
+            resMask |= it->second;
+        } else {
+            PROFILER_LOG_ERROR(LOG_CORE, "invalid tag name : %s", tag.c_str());
         }
     }
     return resMask;

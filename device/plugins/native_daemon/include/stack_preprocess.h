@@ -360,6 +360,7 @@ private:
     bool ReconcileDuplicateMalloc(uint64_t addr, const struct timespec& newTs);
     void SetAllocStatisticsData(const HookRecordPtr& hookRecord, size_t stackId, bool isExists = false);
     void UpdateAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
+    bool ResolveTagType(const std::string& tagName, RecordStatistic& record);
     void AddAllocStatistics(const HookRecordPtr& hookRecord, size_t stackId);
     bool TryProcessCachedAsyncStatistics(std::shared_ptr<HookRecord>& hookRecord);
     uint32_t FindAsyncStatisticsStackIdLocked(const HookRecordPtr& hookRecord);
