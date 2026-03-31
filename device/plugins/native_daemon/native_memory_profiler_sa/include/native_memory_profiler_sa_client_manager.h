@@ -44,6 +44,12 @@ struct MemSaConfig {
     std::map<std::string, std::pair<Range, Range>> hookSizes;
 };
 
+struct MemLeakConfig {
+    uint32_t duration = 0;
+    uint32_t limit = 0;
+    uint32_t format = 0;
+};
+
 struct MemAPIConfig {
     uint32_t maxDuration;
     uint32_t filterSize;
@@ -83,11 +89,11 @@ public:
     static int32_t StartPrintSimplifiedNmd(pid_t pid, std::vector<SimplifiedMemStats>& memStats);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
+    static int32_t Start(int fd, pid_t pid, MemLeakConfig& memLeakConfig);
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
-    static int32_t StartLeakDetect(int fd, pid_t pid, uint32_t format);
     
 private:
     static int32_t OnDemandStart(OHOS::sptr<OHOS::ISystemAbilityManager> sam,

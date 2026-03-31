@@ -491,15 +491,17 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
 
 void HookManager::GetClientConfigExt(ClientConfig& clientConfig)
 {
-    if (saMode_) {
-        clientConfig.memLeakFormat = memLeakFormat_;
-        clientConfig.onlyMemLeak = true;
-    } else {
-        clientConfig.memLeakFormat = hookConfig_.native_orphansnapshots_enable() ?
-            MemLeakFormat::TYPE_SNAPSHOT : MemLeakFormat::TYPE_DISABLE;
-        clientConfig.onlyMemLeak = false;
+    if (hookConfig_.native_orphansnapshots_enable()) {
+        if (saMode_) {
+            clientConfig.memLeakFormat = memLeakFormat_;
+            clientConfig.onlyMemLeak = true;
+            clientConfig.memLeakLimit = memLeakLimit_;
+        } else {
+            clientConfig.memLeakFormat = MemLeakFormat::TYPE_SNAPSHOT;
+            clientConfig.onlyMemLeak = false;
+            clientConfig.memLeakLimit = MEM_LEAK_LIMIT_DEFAULT;
+        }
     }
-    clientConfig.onlyMemLeak = saMode_;
     // File cache mode configuration
     clientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
     clientConfig.fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
@@ -734,13 +736,6 @@ void HookManager::CheckHapEncryped()
 
 void HookManager::CreateMemLeakFile()
 {
-    // sa mode has send fd
-    if (memLeakFd_ > 0) {
-        return;
-    }
-    if (!hookConfig_.native_orphansnapshots_enable()) {
-        return;
-    }
     constexpr int FILE_MODE = 0644;
     int fileFd = open(memLeakFileName_.c_str(), O_CREAT | O_RDWR, FILE_MODE);
     if (fileFd < 0) {
@@ -964,16 +959,23 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
 
 void HookManager::DumpMemLeakInfo(uint8_t* data)
 {
-    if (data == nullptr) {
+    if (data == nullptr || !hookConfig_.native_orphansnapshots_enable()) {
         return;
     }
-    CreateMemLeakFile();
-    std::string result = reinterpret_cast<char*>(data);
-    if (memLeakFd_ > 0) {
-        lseek(memLeakFd_, 0, SEEK_END);
-        write(memLeakFd_, result.c_str(), result.size());
+    // sa mode has send fd
+    if (!saMode_) {
+        CreateMemLeakFile();
     }
-    fdsan_close_with_tag(memLeakFd_, FD_TAG);
+    std::string result = reinterpret_cast<char*>(data);
+    if (memLeakFd_ <= 0) {
+        return;
+    }
+    lseek(memLeakFd_, 0, SEEK_END);
+    write(memLeakFd_, result.c_str(), result.size());
+    if (!saMode_) {
+        fdsan_close_with_tag(memLeakFd_, FD_TAG);
+        memLeakFd_ = 0;
+    }
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -1341,10 +1343,6 @@ void HookManager::CloseResource()
         close(gwpFd_);
         gwpFd_ = 0;
     }
-    if (memLeakFd_ > 0) {
-        fdsan_close_with_tag(memLeakFd_, FD_TAG);
-        memLeakFd_ = 0;
-    }
 }
 
 bool HookManager::StartPluginSession(const std::vector<uint32_t>& pluginIds,
@@ -1527,8 +1525,9 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
 
 void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
-    hookConfig_.set_native_orphansnapshots_enable(config->memLeakFormat_ != MemLeakFormat::TYPE_DISABLE);
+    hookConfig_.set_native_orphansnapshots_enable(config->nativeOrphanSnapshotsEnable_);
     SetMemLeakFormat(config->memLeakFormat_);
+    memLeakLimit_ = config->memLeakLimit_;
     largestSize_ = config->largestSize_;
     secondLargestSize_ = config->secondLargestSize_;
     maxGrowthSize_ = config->maxGrowthSize_;

@@ -129,12 +129,13 @@ enum {
     UNKNOWN,
 };
 
-enum MemLeakFormat {
-    TYPE_TXT = 0,
-    TYPE_VECTOR = 1,
-    TYPE_SNAPSHOT = 2,
-    TYPE_DISABLE = 0xff,
+enum MemLeakFormat : uint32_t {
+    TYPE_TXT = 0,       // A normal text format(default)
+    TYPE_VECTOR = 1,    // A vector-type text
+    TYPE_SNAPSHOT = 2,  // A JSON-based format
+    TYPE_DISABLE = 0xFFFFFFFF,
 };
+constexpr uint32_t MEM_LEAK_LIMIT_DEFAULT = 100;
 
 constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
 constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;
@@ -271,6 +272,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         enableFileCacheMode = false;
         fileCacheBufferSize = 0;
         memLeakFormat = MemLeakFormat::TYPE_DISABLE;
+        memLeakLimit = MEM_LEAK_LIMIT_DEFAULT;
         onlyMemLeak = false;
     }
 
@@ -342,6 +344,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t gwpAsanMaxStackDepth = 0;
     bool enableFileCacheMode = false;
     uint32_t fileCacheBufferSize = 0;
+    uint32_t memLeakLimit = 0;
     MemLeakFormat memLeakFormat = MemLeakFormat::TYPE_DISABLE;
     bool onlyMemLeak = false;
 };

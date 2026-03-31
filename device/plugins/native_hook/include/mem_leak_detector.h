@@ -54,14 +54,14 @@ public:
         }
     }
 
-    bool GetMemLeakInfo(int format, std::string &result)
+    bool GetMemLeakInfo(int format, size_t limit, std::string &result)
     {
-        PROFILER_LOG_INFO(LOG_CORE, "MemoryLeakDetector::GetMemLeakInfo start, type: %d", format);
+        PROFILER_LOG_INFO(LOG_CORE, "MemoryLeakDetector::GetMemLeakInfo start, type: %d, limit: %zu", format, limit);
         if (func_ == nullptr) {
             PROFILER_LOG_ERROR(LOG_CORE, "MemoryLeakDetector::GetMemLeakInfo func_ is nullptr");
             return false;
         }
-        return func_(format, result, LIMIT_SIZE);
+        return func_(format, result, limit);
     }
 
 private:
