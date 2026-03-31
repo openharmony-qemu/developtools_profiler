@@ -491,7 +491,14 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
 
 void HookManager::GetClientConfigExt(ClientConfig& clientConfig)
 {
-    clientConfig.memLeakFormat = static_cast<MemLeakFormat>(hookConfig_.mem_leak_format());
+    if (saMode_) {
+        clientConfig.memLeakFormat = memLeakFormat_;
+        clientConfig.onlyMemLeak = true;
+    } else {
+        clientConfig.memLeakFormat = hookConfig_.native_orphansnapshots_enable() ?
+            MemLeakFormat::TYPE_SNAPSHOT : MemLeakFormat::TYPE_DISABLE;
+        clientConfig.onlyMemLeak = false;
+    }
     clientConfig.onlyMemLeak = saMode_;
     // File cache mode configuration
     clientConfig.enableFileCacheMode = hookConfig_.use_file_cache_mode();
@@ -672,7 +679,8 @@ bool HookManager::HandleHookContext(const std::shared_ptr<HookManagerCtx>& ctx)
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  offline_symbolization = %d", hookConfig_.offline_symbolization());
     PROFILER_LOG_INFO(LOG_CORE, "hookConfig  js_stack_report = %d max_js_stack_depth = %u",
         hookConfig_.js_stack_report(), hookConfig_.max_js_stack_depth());
-    PROFILER_LOG_INFO(LOG_CORE, "hookConfig  memLeakFormat = %d", hookConfig_.mem_leak_format());
+    PROFILER_LOG_INFO(LOG_CORE, "hookConfig  native_orphansnapshots_enable = %d",
+        hookConfig_.native_orphansnapshots_enable());
 
     if (noDataQueue_) {
         CreateNoQueueDataHandler(ctx, sharedMemCount);
@@ -730,7 +738,7 @@ void HookManager::CreateMemLeakFile()
     if (memLeakFd_ > 0) {
         return;
     }
-    if (static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()) == MemLeakFormat::TYPE_DISABLE) {
+    if (!hookConfig_.native_orphansnapshots_enable()) {
         return;
     }
     constexpr int FILE_MODE = 0644;
@@ -742,21 +750,17 @@ void HookManager::CreateMemLeakFile()
     fdsan_exchange_owner_tag(fileFd, 0, FD_TAG);
     memLeakFd_ = fileFd;
     PROFILER_LOG_INFO(LOG_CORE, "Create memLeak file success. fd: %d, type: %d, filename: %s",
-        memLeakFd_, hookConfig_.mem_leak_format(), memLeakFileName_.c_str());
+        memLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
 }
 
 std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
 {
-    std::string DEFAULT_PATH = "/data/local/tmp/";
-    std::map<MemLeakFormat, std::string> formatSuffixMap = {
-        {MemLeakFormat::TYPE_SNAPSHOT, ".heapsnapshot"},
-    };
-    auto iter = formatSuffixMap.find(format);
-    std::string suffix = (iter != formatSuffixMap.end()) ? iter->second : ".txt";
+    const std::string DEFAULT_PATH = "/data/local/tmp/";
+    const std::string suffix = ".txt";
     int pidValue = hookConfig_.pid();
     std::string processName = hookConfig_.process_name();
     COMMON::IsProcessExist(processName, pidValue);
-    return DEFAULT_PATH + "mem_leak_" + std::to_string(pidValue) + suffix;
+    return DEFAULT_PATH + "memleak-native-orphansnapshot-" + std::to_string(pidValue) + suffix;
 }
 
 bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& config)
@@ -823,8 +827,8 @@ bool HookManager::CreatePluginSession(const std::vector<ProfilerPluginConfig>& c
     if (hookConfig_.js_stack_report() > 0 && hookConfig_.max_js_stack_depth() == 0 && hookConfig_.fp_unwind()) {
         hookConfig_.set_max_js_stack_depth(DEFAULT_MAX_JS_STACK_DEPTH);
     }
-    if (static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()) != MemLeakFormat::TYPE_DISABLE) {
-        memLeakFileName_ = GetMemLeakFileName(static_cast<MemLeakFormat>(hookConfig_.mem_leak_format()));
+    if (hookConfig_.native_orphansnapshots_enable()) {
+        memLeakFileName_ = GetMemLeakFileName(memLeakFormat_);
         std::remove(memLeakFileName_.c_str());
     }
 
@@ -1168,52 +1172,116 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
     }
 }
 
+bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
+    uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize)
+{
+    while (offset + sizeof(uint32_t) <= totalAvail) {
+        uint32_t totalSize = 0;
+        errno_t ret = memcpy_s(&totalSize, sizeof(uint32_t), buffer + offset, sizeof(uint32_t));
+        if (ret != EOK) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer memcpy_s failed, ret=%d", ret);
+            return false;
+        }
+
+        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer invalid totalSize=%u", totalSize);
+            return false;
+        }
+
+        if (offset + sizeof(uint32_t) + totalSize > totalAvail) {
+            break;
+        }
+
+        offset += sizeof(uint32_t);
+        readfileSize += sizeof(uint32_t) + totalSize;
+
+        std::shared_ptr<HookRecord> hookRecord = nullptr;
+        std::shared_ptr<RawStack> rawStack = nullptr;
+        const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + offset);
+        if (!TakeDataHandler(hookCtx, hookRecord, rawStack, dataPtr, totalSize)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer TakeDataHandler failed, skip current record");
+            offset += totalSize;
+            continue;
+        }
+        if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer ProcessRawStackByType failed, skip current record");
+            offset += totalSize;
+            continue;
+        }
+        offset += totalSize;
+    }
+    return true;
+}
+
 void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd)
 {
     if (fd < 0) {
         PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile parse all cache file done.");
+        hookCtx->stackPreprocess->SetIsCacheFileParseDone(true);
         return;
     }
+    constexpr uint32_t readBufSize = 4 * 1024 * 1024;
+    auto readBuffer = std::make_unique<uint8_t[]>(readBufSize);
+    uint32_t remainSize = 0;
     uint64_t readfileSize = 0;
     bool ret = false;
+    bool hasError = false;
     lseek(fd, 0, SEEK_SET);
-    while (true) {
-        ret = false;
-        uint32_t totalSize = 0;
-        ssize_t readBytes = read(fd, &totalSize, sizeof(totalSize));
-        if (readBytes < 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed ret=%zd errno=%d.", readBytes, errno);
+
+    while (!hasError) {
+        ssize_t bytesRead = read(fd, readBuffer.get() + remainSize, readBufSize - remainSize);
+        if (bytesRead < 0) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read failed errno=%d", errno);
+            hasError = true;
             break;
         }
-        if (readBytes == 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile read end of file.");
-            ret = true;
+        if (bytesRead == 0) {
+            if (remainSize == 0) {
+                ret = true;
+            } else {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile incomplete record at EOF, remainSize=%u",
+                    remainSize);
+                hasError = true;
+            }
             break;
         }
-        if (readBytes != sizeof(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read invalid totalSize=%zd.", readBytes);
+
+        uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
+        uint32_t offset = 0;
+
+        if (!ParseRecordsFromBuffer(hookCtx, readBuffer.get(), totalAvail, offset, readfileSize)) {
+            hasError = true;
             break;
         }
-        readfileSize += sizeof(totalSize);
-        if (totalSize == 0 || totalSize > DEFAULT_FILE_CACHE_MEMORY_SIZE * MB_TO_BYTES) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile invalid totalSize=%u.", totalSize);
-            break;
-        }
-        std::unique_ptr<uint8_t[]> buffer = std::make_unique<uint8_t[]>(totalSize);
-        readBytes = read(fd, buffer.get(), totalSize);
-        if (readBytes != static_cast<ssize_t>(totalSize)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile read data failed.");
-            break;
-        }
-        readfileSize += totalSize;
-        std::shared_ptr<HookRecord> hookRecord = nullptr;
-        std::shared_ptr<RawStack> rawStack = nullptr;
-        ret = TakeDataHandler(hookCtx, hookRecord, rawStack, reinterpret_cast<const int8_t*>(buffer.get()), totalSize);
-        if (!ret) {
+
+        remainSize = totalAvail - offset;
+        if (remainSize > 0 && offset == 0) {
+            uint32_t oversizeRecord = 0;
+            if (memcpy_s(&oversizeRecord, sizeof(uint32_t), readBuffer.get(), sizeof(uint32_t)) != EOK) {
+                hasError = true;
+                break;
+            }
+            PROFILER_LOG_WARN(LOG_CORE, "ReadFromCacheFile record too large for buffer, "
+                "totalSize=%u, bufSize=%u, skipping", oversizeRecord, readBufSize);
+            off_t skipBytes = static_cast<off_t>(oversizeRecord) + sizeof(uint32_t) - remainSize;
+            if (lseek(fd, skipBytes, SEEK_CUR) < 0) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile lseek skip failed errno=%d", errno);
+                hasError = true;
+                break;
+            }
+            readfileSize += sizeof(uint32_t) + oversizeRecord;
+            remainSize = 0;
             continue;
         }
-        ProcessRawStackByType(hookCtx, hookRecord, rawStack);
+        if (remainSize > 0) {
+            if (memmove_s(readBuffer.get(), readBufSize, readBuffer.get() + offset, remainSize) != EOK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ReadFromCacheFile memmove_s failed");
+                hasError = true;
+                break;
+            }
+        }
     }
+
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
 }
@@ -1326,6 +1394,7 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         item->stackPreprocess->StopTakeResults();
         PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
         if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
+            item->stackPreprocess->UpdateStatisticsTime();
             item->stackPreprocess->FlushRecordStatistics();
         }
         if (hookConfig_.malloc_free_matching_interval() > 0) {
@@ -1444,7 +1513,6 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_allocator_sampling_enable(config->allocatorSamplingEnable_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
     hookConfig_.set_use_file_cache_mode(false);
-    hookConfig_.set_mem_leak_format(config->memLeakFormat_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -1459,6 +1527,8 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
 
 void HookManager::SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    hookConfig_.set_native_orphansnapshots_enable(config->memLeakFormat_ != MemLeakFormat::TYPE_DISABLE);
+    SetMemLeakFormat(config->memLeakFormat_);
     largestSize_ = config->largestSize_;
     secondLargestSize_ = config->secondLargestSize_;
     maxGrowthSize_ = config->maxGrowthSize_;
@@ -1548,7 +1618,8 @@ std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
     args << "max_js_stack_depth: " << std::to_string(traceConfig.max_js_stack_depth()) << ", ";
     args << "filter_napi_name: " << traceConfig.filter_napi_name() << ", ";
     args << "target_so_name: " << traceConfig.target_so_name() << ", ";
-    args << "mem_leak_format: " << std::to_string(traceConfig.mem_leak_format()) << ", ";
+    args << "native_orphansnapshots_enable: " << (traceConfig.native_orphansnapshots_enable() ? "true" : "false")
+         << ", ";
     for (const auto& pid : traceConfig.expand_pids()) {
         args << "expand_pids: " << std::to_string(pid) << ", ";
     }

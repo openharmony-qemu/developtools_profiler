@@ -1313,6 +1313,29 @@ bool CleanCmdOldenTraceFiles(const std::string& path)
         fileInfos[lastWriteTime] = filename;
     }
 
+    std::vector<fs::file_time_type> delNativeMemoryFiles;
+    const std::string targetPath = "/data/local/tmp/";
+    const std::string pattern = "native_memory_";
+    const std::string suffix = ".htrace";
+    const std::size_t patternSize = pattern.size();
+    const std::size_t suffixSize = suffix.size();
+    for (auto it = fileInfos.begin(); it != fileInfos.end(); ++it) {
+        const std::string& fileName = it->second;
+        if (fileName.size() > suffixSize &&
+            fileName.size() >= patternSize &&
+            fileName.compare(0, patternSize, pattern) == 0 &&
+            fileName.compare(fileName.size() - suffixSize, suffixSize, suffix) == 0) {
+            std::string fullPath = targetPath + fileName;
+            if (unlink(fullPath.c_str()) == 0) {
+                delNativeMemoryFiles.push_back(it->first);
+            }
+        }
+    }
+
+    for (const auto& key : delNativeMemoryFiles) {
+        fileInfos.erase(key);
+    }
+
     bool allOk = true;
     if (fileInfos.size() >= HTRACE_FILES_NUM) {
         size_t delCount = fileInfos.size() - HTRACE_FILES_NUM;

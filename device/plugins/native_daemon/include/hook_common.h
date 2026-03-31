@@ -130,10 +130,10 @@ enum {
 };
 
 enum MemLeakFormat {
-    TYPE_DISABLE = 0,
-    TYPE_TXT = 1,
-    TYPE_VECTOR = 2,
-    TYPE_SNAPSHOT = 3,
+    TYPE_TXT = 0,
+    TYPE_VECTOR = 1,
+    TYPE_SNAPSHOT = 2,
+    TYPE_DISABLE = 0xff,
 };
 
 constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;

@@ -160,6 +160,11 @@ public:
         return hookConfig_;
     }
 
+    void SetMemLeakFormat(uint32_t memLeakFormat)
+    {
+        memLeakFormat_ = static_cast<MemLeakFormat>(memLeakFormat);
+    }
+
     void SetSaMode(bool saMode)
     {
         saMode_ = saMode;
@@ -206,6 +211,8 @@ private:
         std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
     bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
         std::shared_ptr<RawStack>& rawStack);
+    bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
+        uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
     void CreateMemLeakFile();
     std::string GetMemLeakFileName(MemLeakFormat format);
 
@@ -237,6 +244,7 @@ private:
     uint32_t gwpAsanMaxEntries_ = 0;
     uint32_t gwpAsanMaxStackDepth_ = 0;
     uint32_t gwpFd_ = 0;
+    MemLeakFormat memLeakFormat_ = MemLeakFormat::TYPE_DISABLE;
     uint32_t memLeakFd_ = 0;
     std::string memLeakFileName_;
 };

@@ -157,7 +157,6 @@ void HookSocketClient::HandleFileCacheMode(SocketContext &context)
             HookCacheFileMsg cacheFileMsg(pid_, fileIndex, CACHE_FILE_CREATED);
             unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&cacheFileMsg), sizeof(cacheFileMsg));
             unixSocketClient_->SendFileDescriptor(fd);
-            PROFILER_LOG_INFO(LOG_CORE, "[%d] send cache file fd to native_daemon", pid_);
         }
     });
     stackWriterList_.push_back(stackWriter);
@@ -289,7 +288,7 @@ bool HookSocketClient::GetAndSendMemLeakInfo()
 
     MemoryLeakDetector memLeakDetector;
     std::string data;
-    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat) - 1, data)) {
+    if (!memLeakDetector.GetMemLeakInfo(static_cast<int>(config_->memLeakFormat), data)) {
         PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::GetMemLeakInfo failed!");
         return false;
     }
@@ -542,12 +541,13 @@ bool HookSocketClient::SendEndMsg()
     if (!config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
     }
-    std::for_each(stackWriterList_.begin(), stackWriterList_.end(),
-        [&rawdata](std::shared_ptr<StackWriter>& writer) {
+    int sharedMemCount = *sharedMemCount_;
+    for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
+        auto& writer = stackWriterList_[smbIndex];
         if (writer) {
             writer->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
             writer->StopFileCache();
         }
-    });
+    }
     return true;
 }

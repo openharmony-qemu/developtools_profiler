@@ -462,9 +462,6 @@ static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
             asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_clientConfig.maxStackDepth);
         } else {
             param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
-            if (param.fpStackDepth == 0) {
-                return false;
-            }
             if (param.needJsStack) {
                 rawdata.jsChainId = getJsChainId();
             }
@@ -484,9 +481,6 @@ static bool inline __attribute__((always_inline)) CollectStackInfo(StackRawData&
     if (g_clientConfig.fpunwind && param.needFpunwind) {
 #ifdef __aarch64__
         param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
-        if (param.fpStackDepth == 0) {
-            return false;
-        }
         rawdata.jsChainId = getJsChainId();
 #endif
     } else {
