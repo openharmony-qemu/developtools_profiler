@@ -83,7 +83,9 @@
         "//developtools/profiler/hidebug/frameworks/native:hidebug_native",
         "//developtools/profiler/hiebpf:hiebpf_tool",
         "//developtools/profiler/timestamps:timestamps_tool",
-        "//developtools/profiler/tools/pagemap_parse:pagemap_tool"
+        "//developtools/profiler/tools/pagemap_parse:pagemap_tool",
+        "//developtools/profiler/etc:spdaemon.para",
+        "//developtools/profiler/etc:spdaemon.para.dac"
       ],
       "inner_kits": [
         {

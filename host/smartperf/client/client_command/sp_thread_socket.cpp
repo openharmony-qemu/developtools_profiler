@@ -45,6 +45,7 @@
 #include "include/RAM.h"
 #include "include/FPS.h"
 #include "include/hiperf.h"
+#include "include/visual_effect_analysis.h"
 
 #define SMARTPERF "smartperf"
 namespace OHOS {
@@ -400,6 +401,7 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             return;
         }
         RemoveToken(recvBuf);
+        recvBuf = GetTime(recvBuf);
         if (recvBuf.find("init::") != std::string::npos && firstFlag) {
             FPS::GetInstance().SetHapFlag();
             HandleMsgTrace(recvBuf);
@@ -411,7 +413,6 @@ void SpThreadSocket::HandleMsg(SpServerSocket &spSocket)
             ++iterator;
             continue;
         }
-        LOGD("UDP recv : %s", recvBuf.c_str());
         SpProfiler *profiler = SpProfilerFactory::GetProfilerItem(iterator->first);
         if (profiler == nullptr) {
             HandleNullMsg(spSocket, profiler, retCode, recvBuf, iterator);
@@ -696,6 +697,9 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
         LOGD("UDP send cpuNum = %s", retCode.c_str());
     } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
         BackDesktop();
+    } else if (iterator->first == MessageType::GET_CYCLE) {
+        VisualEffectAnalysis::GetInstance().SetBeginTraceFlag();
+        VisualEffectAnalysis::GetInstance().CapturingTraces();
     } else {
         HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
     }
@@ -811,6 +815,9 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
     } else if (iterator->first == MessageType::GET_INDEX_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, indexFilePath);
+    } else if (iterator->first == MessageType::GET_GPU_INFO) {
+        GetSocketPort(recvBuf);
+        ConnectAndSendFile(spSocket, indexFileFePath);
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
@@ -945,6 +952,74 @@ void SpThreadSocket::StartHapCollecting(SpServerSocket &spSocket)
         LOGD("Data collecting thread exiting.");
     });
     return;
+}
+
+std::vector<std::string> SpThreadSocket::split(const std::string &str, const std::string &delimiter)
+{
+    std::vector<std::string> tokens;
+    size_t start = 0;
+    size_t end = str.find(delimiter);
+    while (end != std::string::npos) {
+        tokens.push_back(str.substr(start, end - start));
+        start = end + delimiter.length();
+        end = str.find(delimiter, start);
+    }
+    //添加最后一个片段
+    tokens.push_back(str.substr(start));
+    return tokens;
+}
+
+std::string SpThreadSocket::GetTime(std::string &recvBuf)
+{
+    if (recvBuf.find("***") != std::string::npos && recvBuf.find("&&&") == std::string::npos) {
+        size_t lastStarPos = recvBuf.rfind('*');
+        if (lastStarPos != std::string::npos) {
+            std::string result = recvBuf.substr(lastStarPos + 1);
+            int time = SPUtilesTye::StringToSometype<int>(result);
+            VisualEffectAnalysis::GetInstance().SetTraceTime(time);
+        }
+        size_t pos = recvBuf.find('*');
+        if (pos != std::string::npos) {
+            recvBuf = recvBuf.substr(0, pos);
+        }
+    } else {
+        GetTraceStartPoint(recvBuf);
+    }
+    return recvBuf;
+}
+
+void SpThreadSocket::GetTraceStartPoint(std::string &recvBuf)
+{
+    if (recvBuf.find("&&&") == std::string::npos) {
+        return;
+    }
+
+    std::vector<std::string> parts = split(recvBuf, "&&&");
+    for (size_t i = 0; i < parts.size(); ++i) {
+        if (parts[i].find("***") != std::string::npos) {
+            size_t lastStarPos = parts[i].rfind('*');
+            if (lastStarPos != std::string::npos) {
+                std::string result = parts[i].substr(lastStarPos + 1);
+                int time = SPUtilesTye::StringToSometype<int>(result);
+                VisualEffectAnalysis::GetInstance().SetTraceTime(time);
+            }
+
+            size_t pos = parts[i].find('*');
+            if (pos != std::string::npos) {
+                recvBuf = parts[i].substr(0, pos);
+            }
+        }
+
+        if (parts[i].find("begin$$$$$$") != std::string::npos) {
+            std::string result = parts[i].substr(11);
+            VisualEffectAnalysis::GetInstance().SetTraceBegin(result);
+        }
+
+        if (parts[i].find("over$$$$$$") != std::string::npos) {
+            std::string result = parts[i].substr(10);
+            VisualEffectAnalysis::GetInstance().SetTraceEnd(result);
+        }
+    }
 }
 }
 }

@@ -55,7 +55,9 @@ enum class MessageType {
     SAVE_GPU_COUNTER,
     APP_RECEIVE_DATA_ON,
     APP_RECEIVE_DATA_OFF,
-    GET_INDEX_INFO
+    GET_INDEX_INFO,
+    GET_GPU_INFO,
+    GET_CYCLE
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -96,6 +98,8 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::APP_PAUSE_COLLECT, std::string("app_pause_collect") },
     { MessageType::APP_RESUME_COLLECT, std::string("app_resume_collect") },
     { MessageType::GET_INDEX_INFO, std::string("get_index_info") },
+    { MessageType::GET_GPU_INFO, std::string("get_gpu_info") },
+    { MessageType::GET_CYCLE, std::string("get_cycle") },
 };
 
 enum class CommandType {

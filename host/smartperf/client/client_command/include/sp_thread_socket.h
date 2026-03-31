@@ -69,6 +69,9 @@ public:
     void FetchCpuStats(SpServerSocket &spSocket, std::map<std::string, std::string>& data) const;
     void HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
         const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
+    std::string GetTime(std::string &recvBuf);
+    void GetTraceStartPoint(std::string &recvBuf);
+    std::vector<std::string> split(const std::string &str, const std::string &delimiter);
     void HandleNullAddMsg(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
         const std::string& recvBuf, std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *profiler, std::string& retCode,
@@ -97,6 +100,7 @@ private:
     GpuCounter &gpuCounter = GpuCounter::GetInstance();
     const std::string traceOriginPath = "/data/log/hiview/unified_collection/trace/special/";
     const std::string indexFilePath = "/data/local/tmp/smartperf/1/t_index_info.csv";
+    const std::string indexFileFePath = "/data/local/tmp/smartperf/1/t_gpu_info.csv";
     const std::string gpuCounterfilePath = "/data/local/tmp/smartperfDevice";
     const std::string dubaiXpower = "/data/service/el2/100/xpower/dubai.db";
     const std::string dubaiFilePath = "/data/local/tmp/dubai/dubai.db";

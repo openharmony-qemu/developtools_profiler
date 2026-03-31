@@ -35,7 +35,7 @@ namespace OHOS {
 namespace SmartPerf {
 class SpCsvUtil {
 public:
-    static void WriteCsv(const std::string &path, std::vector<SPData>& vmap)
+    static void WriteCsv(const std::string &path, std::vector<std::map <std::string, std::string>>& vmap)
     {
         std::ofstream outFile;
         std::string cmdResult;
@@ -47,14 +47,14 @@ public:
             SPUtils::LoadCmd(cmd, cmdResult);
         }
         int i = 0;
-        for (SPData& spdata : vmap) {
+        for (const auto &vectorMap : vmap) {
             std::string lineContent = "";
-            for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
-                lineContent += iter->second + ",";
+            for (const auto &map : vectorMap) {
+                lineContent += map.second + ",";
             }
             if (i == 0) {
                 std::string csvTitle = "";
-                csvTitle = SetDataCsvTitle(spdata);
+                csvTitle = SetDataCsvTitle(vectorMap);
                 csvTitle.pop_back();
                 outFile << csvTitle << std::endl;
             }
@@ -79,12 +79,12 @@ public:
         ReportFileWriteEvent(outGeneralPath);
         outFile.close();
     }
-    static std::string SetDataCsvTitle(SPData& spdata)
+    static std::string SetDataCsvTitle(const std::map <std::string, std::string> &map)
     {
         std::string csvTitle = SPTask::GetInstance().GetCsvTitle();
         if (csvTitle.empty()) {
-            for (auto iter = spdata.values.cbegin(); iter != spdata.values.cend(); ++iter) {
-                csvTitle += iter->first + ",";
+            for (const auto &iter : map) {
+                csvTitle += iter.first + ",";
             }
         }
         return csvTitle;
