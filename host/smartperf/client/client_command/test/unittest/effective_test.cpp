@@ -122,34 +122,6 @@ HWTEST_F(EffectiveTest, EffectiveTest_ItemData_003, TestSize.Level1)
 }
 
 /**
-* @tc.name: EffectiveTest_CheckCounterId_001
-* @tc.desc:：验证 CheckCounterId 检查计数器ID
-* @tc.type: FUNC
-*/
-HWTEST_F(EffectiveTest, EffectiveTest_CheckCounterId_001, TestSize.Level1)
-{
-    GTEST_LOG_(INFO) << "EffectiveTest-begin EffectiveTest_CheckCounterId_001";
-    Effective &effective = Effective::GetInstance();
-    
-    EXPECT_TRUE(true);
-    GTEST_LOG_(INFO) << "EffectiveTest-end EffectiveTest_CheckCounterId_001";
-}
-
-/**
-* @tc.name: EffectiveTest_ThreadGetHiperf_001
-* @tc.desc:：验证 ThreadGetHiperf 创建线程
-* @tc.type: FUNC
-*/
-HWTEST_F(EffectiveTest, EffectiveTest_ThreadGetHiperf_001, TestSize.Level1)
-{
-    GTEST_LOG_(INFO) << "EffectiveTest-begin EffectiveTest_ThreadGetHiperf_001";
-    Effective &effective = Effective::GetInstance();
-    
-    EXPECT_TRUE(true);
-    GTEST_LOG_(INFO) << "EffectiveTest-end EffectiveTest_ThreadGetHiperf_001";
-}
-
-/**
 * @tc.name: EffectiveTest_MultipleInstances_001
 * @tc.desc:：验证多个实例调用的一致性
 * @tc.type: FUNC
