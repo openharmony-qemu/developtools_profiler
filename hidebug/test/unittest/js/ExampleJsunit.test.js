@@ -1185,4 +1185,26 @@ describe("HidebugJsTest", function () {
             expect(error.code).assertEqual("401");
         }
     })
+
+    /**
+     * @tc.name: HidebugJsTest_052
+     * @tc.desc: dumpJsRawHeapData normal test, test with 3 bool parameters
+     * @tc.type: FUNC
+     */
+    it('HidebugJsTest_052', 0, async function () {
+        console.info("---------------------------HidebugJsTest_052----------------------------------");
+        try {
+            await hidebug.dumpJsRawHeapData(true, true, true).then((filePath) => {
+                console.info("dumpJsRawHeapData success, filePath: " + filePath);
+                expect(filePath.length > 0).assertTrue();
+            }).catch((err) => {
+                console.info("dumpJsRawHeapData failed: " + err.code + ", " + err.message);
+                expect(false).assertTrue();
+            })
+        } catch (error) {
+            console.info(error.code);
+            console.info(error.message);
+            expect(false).assertTrue();
+        }
+    })
 })
