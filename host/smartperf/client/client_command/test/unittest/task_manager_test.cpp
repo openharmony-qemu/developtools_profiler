@@ -122,7 +122,7 @@ HWTEST_F(TaskManagerTest, TaskManagerTest_AddTask_003, TestSize.Level1)
     TaskManager taskManager(false);
     
     std::vector<std::string> argv = {"-n", "100"};
-   atskManager.AddTask(argv);
+    atskManager.AddTask(argv);
     
     EXPECT_TRUE(true);
     GTEST_LOG_(INFO) << "TaskManagerTest-end TaskManagerTest_AddTask_003";
