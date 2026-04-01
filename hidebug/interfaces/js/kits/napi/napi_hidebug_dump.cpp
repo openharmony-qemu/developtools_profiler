@@ -72,7 +72,7 @@ struct DumpJsRawHeapOptions {
     bool isProcDump = false;
 };
 
-constexpr std::pair<int, const char*> DumpErrCodeMap[]  = {
+constexpr std::pair<int, const char*> DumpErrCodeMap[] = {
     {ErrorCode::PARAMETER_ERROR, "Invalid parameter."},
     {DumpRawHeapErrors::REPEAT_DUMPING, "It is currently dumping. Please wait until the dumping is completed "
     "before making another call."},
