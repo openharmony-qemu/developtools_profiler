@@ -53,7 +53,6 @@ public:
     void GetDdrIdFre(const std::string &line);
     void GetCpuFre(const std::string &line, const int &cluster);
     void GetDdrFre(const std::string &line, const int &cluster);
-    void SetBeginTraceFlag();
     std::string GetCutTime(const std::string &line);
     std::string GetCpuCycle(const std::string &line);
     void GetExternalMemoryRead(const std::string &line);
