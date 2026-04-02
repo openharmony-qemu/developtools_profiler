@@ -665,6 +665,7 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
         return;
     }
     StopSignalProcess(pid);
+    UpdateFreezeExcludedPid(false, static_cast<int32_t>(item->pid), getpid());
 }
 
 bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item)
@@ -849,6 +850,20 @@ void HookManager::CheckHapEncryped()
         PROFILER_LOG_INFO(LOG_CORE, "Encryped Application don't unwind js stack:%s", processName.c_str());
         hookConfig_.set_js_stack_report(0);
         hookConfig_.set_max_js_stack_depth(0);
+    }
+}
+
+void HookManager::UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid)
+{
+    if (!saMode_) {
+        sptr<ISystemAbilityManager> sam = SystemAbilityManagerClient::GetInstance().GetSystemAbilityManager();
+        sptr<AppExecFwk::IAppMgr> appManager =
+            iface_cast<AppExecFwk::IAppMgr>(sam->GetSystemAbility(APP_MGR_SERVICE_ID));
+        if (appManager == nullptr) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Get APP_MGR_SERVICE failed");
+            return;
+        }
+        appManager->UpdateFreezeExcludedPid(isAdd, targetPid, profilerPid);
     }
 }
 
@@ -1663,6 +1678,7 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
         item->stackPreprocess->InitStatisticsTime();
         if (item->pid > 0) {
             PROFILER_LOG_INFO(LOG_CORE, "start command : send 36 signal to process  %d", item->pid);
+            UpdateFreezeExcludedPid(true, static_cast<int32_t>(item->pid), getpid());
             uid_t uid = 0;
             gid_t gid = 0;
             if (!COMMON::GetUidGidFromPid(static_cast<pid_t>(item->pid), uid, gid)) {
