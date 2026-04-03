@@ -197,6 +197,10 @@ ftrace/wakeup
 gpio/gpio_direction
 gpio/gpio_value
 gpu_mem/gpu_mem_total
+hmfs/hmfs_read_enter
+hmfs/hmfs_read_exit
+hmfs/hmfs_write_enter
+hmfs/hmfs_write_exit
 i2c/i2c_read
 i2c/i2c_reply
 i2c/i2c_result
