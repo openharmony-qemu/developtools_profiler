@@ -88,7 +88,8 @@ protected:
 HWTEST_F(HidebugProfilerCallbackTest, NullCallbackTest, TestSize.Level0)
 {
     auto config = MakeDefaultConfig();
-    OH_HiDebug_StartProfiler(OH_RES_TYPE_NATIVE, &config, nullptr);
+    HiDebug_ErrorCode ret = OH_HiDebug_StartProfiler(OH_RES_TYPE_NATIVE, &config, nullptr);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_ARG);
     EXPECT_FALSE(g_ctx.called.load());
 }
 
@@ -99,7 +100,8 @@ HWTEST_F(HidebugProfilerCallbackTest, NullCallbackTest, TestSize.Level0)
  */
 HWTEST_F(HidebugProfilerCallbackTest, NullConfigTest, TestSize.Level0)
 {
-    OH_HiDebug_StartProfiler(OH_RES_TYPE_NATIVE, nullptr, ProfilingCallback);
+    HiDebug_ErrorCode ret = OH_HiDebug_StartProfiler(OH_RES_TYPE_NATIVE, nullptr, ProfilingCallback);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_ARG);
     EXPECT_FALSE(g_ctx.called.load());
     EXPECT_TRUE(g_ctx.filePath.empty());
 }
@@ -112,7 +114,9 @@ HWTEST_F(HidebugProfilerCallbackTest, NullConfigTest, TestSize.Level0)
 HWTEST_F(HidebugProfilerCallbackTest, InvalidTypeStartTest, TestSize.Level0)
 {
     auto config = MakeDefaultConfig();
-    OH_HiDebug_StartProfiler(static_cast<OH_HiDebug_ResourceType>(-1), &config, ProfilingCallback);
+    HiDebug_ErrorCode ret =
+        OH_HiDebug_StartProfiler(static_cast<OH_HiDebug_ResourceType>(-1), &config, ProfilingCallback);
+    EXPECT_EQ(ret, HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE);
     EXPECT_FALSE(g_ctx.called.load());
     EXPECT_TRUE(g_ctx.filePath.empty());
 }

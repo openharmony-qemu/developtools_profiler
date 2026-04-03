@@ -119,20 +119,20 @@ static void ClearProfilingCallback()
     g_callback = nullptr;
 }
 
-void OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
+HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
     OH_HiDebug_ResProfilerConfig* config,
     HiDebug_ProfilingCallback callback)
 {
     if (callback == nullptr) {
-        return;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     if (config == nullptr) {
-        return;
+        return HIDEBUG_RES_PROF_INVALID_ARG;
     }
     {
         std::lock_guard<std::mutex> lock(g_callbackMutex);
         if (g_callback != nullptr) {
-            return;
+            return HIDEBUG_RES_PROF_ALREADY_STARTED;
         }
         g_callback = callback;
         g_resourceType = type;
@@ -155,7 +155,9 @@ void OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
             static_cast<int32_t>(type), &profilerConfig, profilingCallback);
     if (retStart != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
         ClearProfilingCallback();
+        return ConvertProfilerErrorCode(retStart);
     }
+    return HIDEBUG_RES_PROF_SUCCESS;
 }
 
 HiDebug_ErrorCode OH_HiDebug_StopProfiler()

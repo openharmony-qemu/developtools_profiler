@@ -329,9 +329,27 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  * @param type Type of resource to be profiled.
  * @param config Configuration parameters for the profiler.
  * @param callback Callback to receive the profiling result. See {@link HiDebug_ProfilingCallback}.
+ * @return Result code
+ *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler started successfully.
+ *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid resource profiler argument.
+ *         {@link HIDEBUG_RES_PROF_INVALID_MAX_DURATION} Invalid maximum duration.
+ *         {@link HIDEBUG_RES_PROF_INVALID_FILTER_SIZE} Invalid filter size.
+ *         {@link HIDEBUG_RES_PROF_INVALID_MAX_STACK_DEPTH} Invalid maximum stack depth.
+ *         {@link HIDEBUG_RES_PROF_INVALID_STATISTICS_INTERVAL} Invalid statistics interval.
+ *         {@link HIDEBUG_RES_PROF_INVALID_SAMPLE_INTERVAL} Invalid sample interval.
+ *         {@link HIDEBUG_RES_PROF_INVALID_RESOURCE_TYPE} Invalid resource type.
+ *         {@link HIDEBUG_RES_PROF_PERMISSION_DENIED} Resource profiler permission denied.
+ *         {@link HIDEBUG_RES_PROF_ALREADY_STARTED} Resource profiler already started.
+ *         {@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Resource profiler process count exceeds the limit.
+ *         {@link HIDEBUG_RES_PROF_CONFLICT} Resource profiler conflicts with CLI tools or system profiling tasks.
+ *         {@link HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED} Daily quota exceeded during resource profiling.
+ *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} System is experiencing high CPU utilization.
+ *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Insufficient available memory.
+ *         {@link HIDEBUG_RES_PROF_STORAGE_PRESSURE_CRITICAL} Insufficient available storage space.
+ *         {@link HIDEBUG_RES_PROF_FAILURE} Failed to start the resource profiler.
  * @since 24
  */
-void OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config,
+HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config,
     HiDebug_ProfilingCallback callback);
 
 /**
