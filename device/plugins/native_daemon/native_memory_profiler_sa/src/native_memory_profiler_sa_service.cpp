@@ -25,7 +25,7 @@
 #include "accesstoken_kit.h"
 #include "common.h"
 #include "logging.h"
-#include "native_memory_profiler_sa_client_manager.h"
+#include "native_memory_profiler_sa_callback_proxy.h"
 #include <sys/socket.h>
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -43,6 +43,7 @@ constexpr int VEC_SHIFT = 2;
 constexpr double MIN_MEM_ROM_PERCENT = 0.15;
 constexpr double MIN_MEM_PROFILER_MEM_PERCENT = 0.15;
 constexpr double MAX_MEM_PROFILER_CPU_PERCENT = 0.7;
+const std::string API_SANDBOX_PATH_PREFIX = "/data/storage/el2/base/files/";
 constexpr uint32_t START_TYPE_HIVIEW = 0;
 constexpr uint32_t START_TYPE_API = 1;
 
@@ -235,7 +236,8 @@ int32_t NativeMemoryProfilerSaService::CheckSystemResource()
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
 
-int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
 {
     int32_t pid = static_cast<int32_t>(IPCSkeleton::GetCallingPid());
     if (config->pid_ != pid) {
@@ -263,7 +265,11 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
         PROFILER_LOG_ERROR(LOG_CORE, "System resource is not enough,errorcode is:%d.", retResource);
         return retResource;
     }
-    return StartHook(config);
+    auto args = GetCmdArgs(config);
+    std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
+    CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
+    uint32_t fd = 0;
+    return StartHookLock(config, fd, hook, args, callback);
 }
 
 // only for API
@@ -279,7 +285,8 @@ int32_t NativeMemoryProfilerSaService::Stop()
             g_timerFdInfo.erase(fdTimerIter);
         }
     }
-    int32_t retStopHook = StopHook(static_cast<uint32_t>(pid));
+    int32_t retStopHook = StopHook(static_cast<uint32_t>(pid), "",
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
     if (retStopHook != RET_OK) {
         return retStopHook;
     }
@@ -292,7 +299,7 @@ int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return RET_ERR;
     }
-    (void)StopHook(pid);
+    (void)StopHook(pid, "", static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
     return RET_OK;
 }
 
@@ -302,7 +309,7 @@ int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return RET_ERR;
     }
-    (void)StopHook(0, name);
+    (void)StopHook(0, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
     return RET_OK;
 }
 
@@ -337,7 +344,7 @@ void NativeMemoryProfilerSaService::CloseSocketFd(pid_t pid)
     }
 }
 
-int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
+int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, int32_t finishErrorCode)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
     std::shared_ptr<TaskConfig> config = nullptr;
@@ -356,7 +363,11 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name)
             pid, name.c_str(), ret);
         return ret;
     }
-    int32_t retRelease = ReleaseForStopHook(pid, config);
+    std::string resultPath;
+    int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
+    int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
+    NotifyProfilingResult(config, callbackError, retRelease == RET_OK ? resultPath : "");
     if (--g_taskNum == 0) {
         PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
         StringViewMemoryHold::GetInstance().Clear();
@@ -402,7 +413,7 @@ std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemo
 
 int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                                      uint32_t& fd, std::shared_ptr<HookManager>& hook,
-                                                     std::string& args)
+                                                     std::string& args, const sptr<IRemoteObject>& callback)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
     if (config->filePath_.empty() && fd == 0) {
@@ -461,13 +472,11 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         [this, config, filePath = config->filePath_] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
-            int32_t retStop = this->StopHook(config->pid_, config->processName_);
+            int32_t retStop = this->StopHook(config->pid_, config->processName_,
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
             if (retStop != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
             }
-            int32_t errorCode = retStop == RET_OK ?
-                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION) : RET_ERR;
-            NativeMemoryProfilerSaClientManager::NotifyAutoStop(errorCode);
             PROFILER_LOG_INFO(LOG_CORE, "Auto stop completed, file: %s", filePath.c_str());
         },
         config->duration_ * TIME_BASE,
@@ -487,6 +496,7 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         std::make_shared<TaskConfig>(hook, config->pid_, config->processName_, config->filePath_, timerFd,
                                      config->startupMode_, fd, config->startType_);
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create TaskConfig");
+    configCtx->callback = callback;
     if (!g_hasStartupMode && config->startupMode_) {
         g_hasStartupMode = true;
         startupModeProcessName_ = config->processName_;
@@ -1012,7 +1022,18 @@ bool NativeMemoryProfilerSaService::IsNativeDeamonRunning()
     return COMMON::IsProcessExist("native_daemon", nativeDaemonPid);
 }
 
-int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config)
+void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config,
+    int32_t errorCode, const std::string& filePath)
+{
+    if (config == nullptr || config->callback == nullptr) {
+        return;
+    }
+    NativeMemoryProfilerSaCallbackProxy callback(config->callback);
+    callback.OnProfilingResult(errorCode, filePath);
+}
+
+int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
+    std::string& resultPath)
 {
     int32_t ret = RET_OK;
     CloseSocketFd(static_cast<pid_t>(pid));
@@ -1023,16 +1044,17 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
     g_pidCtx.erase(config->pid);
     if (config->startType == START_TYPE_API) {
         std::lock_guard<std::mutex> guard(g_fileNameMtx);
-        auto pidInfoIter = g_pidInfo.find(pid);
         auto fileNameInfoIter = g_fileNameInfo.find(pid);
-        if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
+        if (fileNameInfoIter == g_fileNameInfo.end()) {
             PROFILER_LOG_ERROR(LOG_CORE, "ReleaseForStopHook: api task file info missing");
             ret = RET_ERR;
         } else {
-            std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
+            std::string destPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
             if (!COMMON::CopyFileFast(config->fd, destPath)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
                 ret = RET_ERR;
+            } else {
+                resultPath = destPath;
             }
         }
         g_fileNameInfo.erase(pid);

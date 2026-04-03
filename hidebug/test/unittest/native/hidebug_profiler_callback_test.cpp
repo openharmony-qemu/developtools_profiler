@@ -43,7 +43,7 @@ static void ResetContext()
     g_ctx.filePath.clear();
 }
 
-static void ProfilingCallback(HiDebug_ProfilingResult* result)
+static void ProfilingCallback(OH_HiDebug_ProfilingResult* result)
 {
     if (result == nullptr) {
         return;

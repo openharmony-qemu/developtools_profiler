@@ -34,13 +34,10 @@
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
-
 #ifndef HIVIEWDFX_HIDEBUG_H
 #define HIVIEWDFX_HIDEBUG_H
-
 #include <stdint.h>
 #include "hidebug_type.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -328,7 +325,7 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  *
  * @param type Type of resource to be profiled.
  * @param config Configuration parameters for the profiler.
- * @param callback Callback to receive the profiling result. See {@link HiDebug_ProfilingCallback}.
+ * @param callback Callback to receive the profiling result. See {@link OH_HiDebug_ProfilingCallback}.
  * @return Result code
  *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler started successfully.
  *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid resource profiler argument.
@@ -350,11 +347,11 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config,
-    HiDebug_ProfilingCallback callback);
+    OH_HiDebug_ProfilingCallback callback);
 
 /**
- * @brief Stops resource profiler for the current process. This API can be called after the OH_HiDebug_StartProfiler
- * API and the call duration must be within the maximum duration
+ * @brief Stops resource profiler for the current process. This API can be called after the
+ * {@link OH_HiDebug_StartProfiler} API and the call duration must be within the maximum duration.
  *
  * @return Result code
  *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler stopped successfully.
@@ -363,7 +360,6 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDe
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -540,59 +540,6 @@ typedef enum HiDebug_CrashObjType {
 } HiDebug_CrashObjType;
 
 /**
- * @brief Defines the result of a profiling operation, delivered via callback.
- *
- * @since 24
- */
-typedef struct HiDebug_ProfilingResult {
-    /** The resource type that was profiled. */
-    OH_HiDebug_ResourceType resourceType;
-    /** Path of the output file. Valid only during callback invocation, caller must copy if needed. May be NULL. */
-    const char* filePath;
-} HiDebug_ProfilingResult;
-
-/**
- * @brief Defines callback type for profiling result notification.
- *
- * @param result Pointer to the profiling result. Valid only during callback invocation.
- * @since 24
- */
-typedef void (*HiDebug_ProfilingCallback)(HiDebug_ProfilingResult* result);
-
-/**
- * @brief Defines an enum for the resource profiler types.
- *
- * @since 24
- */
-typedef enum OH_HiDebug_ResourceType {
-    /**
-     * File descriptor
-     * @since 24
-     */
-    OH_RES_TYPE_FD,
-    /**
-     * Thread
-     * @since 24
-     */
-    OH_RES_TYPE_THREAD,
-    /**
-     * Native memory
-     * @since 24
-     */
-    OH_RES_TYPE_NATIVE,
-    /**
-     * GPU memory
-     * @since 24
-     */
-    OH_RES_TYPE_GPU,
-    /**
-     * Global handle
-     * @since 24
-     */
-    OH_RES_TYPE_GLOBAL_HANDLE,
-} OH_HiDebug_ResourceType;
-
-/**
  * @brief Defines a struct for the resource profiler configuration.
  *
  * @since 24
@@ -626,6 +573,66 @@ typedef struct OH_HiDebug_ResProfilerConfig {
      */
     uint32_t sampleInterval;
 } OH_HiDebug_ResProfilerConfig;
+
+/**
+ * @brief Defines an enum for the resource profiler types.
+ *
+ * @since 24
+ */
+typedef enum OH_HiDebug_ResourceType {
+    /**
+     * File descriptor
+     * @since 24
+     */
+    OH_RES_TYPE_FD,
+    /**
+     * Thread
+     * @since 24
+     */
+    OH_RES_TYPE_THREAD,
+    /**
+     * Native memory
+     * @since 24
+     */
+    OH_RES_TYPE_NATIVE,
+    /**
+     * GPU memory
+     * @since 24
+     */
+    OH_RES_TYPE_GPU,
+    /**
+     * Global handle
+     * @since 24
+     */
+    OH_RES_TYPE_GLOBAL_HANDLE
+} OH_HiDebug_ResourceType;
+
+/**
+ * @brief Encapsulates result of a single profiling request operation.
+ *        It represents data delivered via OH_HiDebug_ProfilingCallback.
+ *
+ * @since 24
+ */
+typedef struct OH_HiDebug_ProfilingResult {
+    /**
+     * Profiled resource type.
+     * @since 24
+    */
+    OH_HiDebug_ResourceType resourceType;
+    /**
+     * File path of the profiling result data. Null if the profiling fails.
+     * @since 24
+    */
+    const char* filePath;
+} OH_HiDebug_ProfilingResult;
+
+/**
+ * @brief Callback signature for the resource profiling result.
+ *
+ * @param result Pointer to the OH_HiDebug_ProfilingResult structure.
+ * @since 24
+ */
+typedef void (*OH_HiDebug_ProfilingCallback)(OH_HiDebug_ProfilingResult* result);
 
 #ifdef __cplusplus
 }

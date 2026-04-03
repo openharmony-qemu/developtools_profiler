@@ -54,7 +54,8 @@ int32_t NativeMemoryProfilerSaProxy::Start(std::shared_ptr<NativeMemoryProfilerS
     return RET_OK;
 }
 
-int32_t NativeMemoryProfilerSaProxy::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+int32_t NativeMemoryProfilerSaProxy::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
 {
     MessageParcel data;
     if (!data.WriteInterfaceToken(NativeMemoryProfilerSaProxy::GetDescriptor())) {
@@ -62,6 +63,10 @@ int32_t NativeMemoryProfilerSaProxy::StartPidVoid(std::shared_ptr<NativeMemoryPr
         return RET_ERR;
     }
     CHECK_TRUE(config->Marshalling(data), RET_ERR, "NativeMemoryProfilerSaConfig marshalling failed");
+    if (!data.WriteRemoteObject(callback)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed to write callback object");
+        return RET_ERR;
+    }
 
     MessageParcel reply;
     MessageOption option;

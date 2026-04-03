@@ -30,14 +30,14 @@
 using ResProfilerErrorCode = OHOS::Developtools::NativeDaemon::ResProfilerErrorCode;
 
 static std::mutex g_callbackMutex;
-static HiDebug_ProfilingCallback g_callback = nullptr;
+static OH_HiDebug_ProfilingCallback g_callback = nullptr;
 static OH_HiDebug_ResourceType g_resourceType = OH_RES_TYPE_FD;
 
-static HiDebug_ProfilingCallback TakeProfilingCallback(OH_HiDebug_ResourceType& resourceType)
+static OH_HiDebug_ProfilingCallback TakeProfilingCallback(OH_HiDebug_ResourceType& resourceType)
 {
     std::lock_guard<std::mutex> lock(g_callbackMutex);
     resourceType = g_resourceType;
-    HiDebug_ProfilingCallback callback = g_callback;
+    OH_HiDebug_ProfilingCallback callback = g_callback;
     g_callback = nullptr;
     return callback;
 }
@@ -103,11 +103,11 @@ HiDebug_ErrorCode ConvertProfilerErrorCode(int32_t errCode)
 static void NotifyProfilingResult(const std::string& filePath)
 {
     OH_HiDebug_ResourceType resourceType = OH_RES_TYPE_FD;
-    HiDebug_ProfilingCallback callback = TakeProfilingCallback(resourceType);
+    OH_HiDebug_ProfilingCallback callback = TakeProfilingCallback(resourceType);
     if (callback == nullptr) {
         return;
     }
-    HiDebug_ProfilingResult result;
+    OH_HiDebug_ProfilingResult result;
     result.resourceType = resourceType;
     result.filePath = filePath.empty() ? nullptr : filePath.c_str();
     callback(&result);
@@ -121,7 +121,7 @@ static void ClearProfilingCallback()
 
 HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
     OH_HiDebug_ResProfilerConfig* config,
-    HiDebug_ProfilingCallback callback)
+    OH_HiDebug_ProfilingCallback callback)
 {
     if (callback == nullptr) {
         return HIDEBUG_RES_PROF_INVALID_ARG;
@@ -162,12 +162,6 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
 
 HiDebug_ErrorCode OH_HiDebug_StopProfiler()
 {
-    std::string filePath;
-    int32_t retStop = OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::Stop(filePath);
-    if (retStop != 0) {
-        NotifyProfilingResult("");
-        return ConvertProfilerErrorCode(retStop);
-    }
-    NotifyProfilingResult(filePath);
-    return HIDEBUG_RES_PROF_SUCCESS;
+    int32_t retStop = OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::Stop();
+    return ConvertProfilerErrorCode(retStop);
 }

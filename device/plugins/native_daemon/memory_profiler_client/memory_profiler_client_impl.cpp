@@ -71,7 +71,8 @@ int32_t MemoryProfilerClientImpl::Start(MemAPIConfig& config)
     // OH_RES_TYPE_GPU = 3
     // OH_RES_TYPE_GLOBAL_HANDLE = 4
     int32_t type = 2; // native memory
-    int ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(type, &config);
+    auto callback = [](int32_t, const std::string&) {};
+    int ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(type, &config, callback);
     // ResProfilerErrorCode::RES_PROF_SUCCESS = 11400400
     int successCode = 11400400;
     if (ret != successCode) {

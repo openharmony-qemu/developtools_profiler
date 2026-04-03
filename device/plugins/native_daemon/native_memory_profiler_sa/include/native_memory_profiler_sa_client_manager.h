@@ -60,7 +60,8 @@ public:
         MEM_PROFILER_CALL_STACK,
     };
     static int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
-    static int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    static int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+        const sptr<IRemoteObject>& callback = nullptr);
     static int32_t Start(NativeMemProfilerType type, uint32_t pid, uint32_t duration, uint32_t sampleIntervel);
     static int32_t Stop(uint32_t pid);
     static int32_t Stop(const std::string& name);
@@ -75,7 +76,6 @@ public:
     using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
     static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig, ProfilingCallback callback);
     static void SetProfilingCallback(ProfilingCallback callback);
-    static void NotifyAutoStop(int32_t errorCode);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
