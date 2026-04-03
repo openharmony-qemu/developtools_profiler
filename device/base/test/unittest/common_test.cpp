@@ -20,6 +20,7 @@
 #include "logging.h"
 #include <malloc.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 
 namespace {
 using namespace testing::ext;
@@ -437,7 +438,9 @@ HWTEST_F(CommonTest, CopyFileFast, TestSize.Level1)
     EXPECT_TRUE(WriteFile(fileName, fileContent));
 
     std::string destName = "/data/local/tmp/config_cp.txt";
-    bool ret = COMMON::CopyFileFast(fileName, destName);
+    int srcFd = open(fileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+    bool ret = COMMON::CopyFileFast(srcFd, destName);
+    close(srcFd);
     EXPECT_TRUE(ret);
 }
 

@@ -1098,23 +1098,21 @@ static bool DoSendfileCopyOnce(int srcFd, int destFd, ssize_t &outTotal)
     return static_cast<ssize_t>(statBuf.st_size) == outTotal;
 }
 
-static bool CopyFileWithRetry(const std::string& srcPath, const std::string& destPath, int maxRetries)
+static bool CopyFileWithRetry(uint32_t srcFd, const std::string& destPath, int maxRetries)
 {
-    int src = open(srcPath.c_str(), O_RDONLY);
-    if (src < 0) {
+    if (srcFd < 0) {
         return false;
     }
 
     int dest = open(destPath.c_str(), O_WRONLY | O_CREAT | O_TRUNC, DEFAULT_MODE);
     if (dest < 0) {
-        close(src);
         return false;
     }
 
     bool ret = false;
     do {
         ssize_t total = 0;
-        if (DoSendfileCopyOnce(src, dest, total)) {
+        if (DoSendfileCopyOnce(srcFd, dest, total)) {
             ret = true;
             break;
         }
@@ -1126,29 +1124,20 @@ static bool CopyFileWithRetry(const std::string& srcPath, const std::string& des
         ofs.close();
     } while (maxRetries-- > 0);
 
-    close(src);
     close(dest);
 
     return ret;
 }
 
-bool CopyFileFast(const std::string& srcPath, const std::string& destPath, bool isRemoveSrc)
+bool CopyFileFast(uint32_t srcFd, const std::string& destPath)
 {
     int maxRetries = 3;
-    bool ret = true;
-    if (!CopyFileWithRetry(srcPath, destPath, maxRetries)) {
+    if (!CopyFileWithRetry(srcFd, destPath, maxRetries)) {
         PROFILER_LOG_ERROR(LOG_CORE, "copy file failed, err: %s", strerror(errno));
-        ret = false;
+        return false;
     }
 
-    if (isRemoveSrc) {
-        if (remove(srcPath.c_str()) != 0) {
-            PROFILER_LOG_ERROR(LOG_CORE, "remove source file failed, err: %s", strerror(errno));
-            ret = false;
-        }
-    }
-
-    return ret;
+    return true;
 }
 
 static bool IsHtraceFileName(const std::string& filename)
