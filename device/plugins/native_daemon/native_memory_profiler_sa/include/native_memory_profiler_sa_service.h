@@ -95,7 +95,7 @@ private:
     bool ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
     static int32_t GetTaskNum(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
-    static void ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config);
+    static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config);
 
 private:
     std::mutex gpuMtx_;

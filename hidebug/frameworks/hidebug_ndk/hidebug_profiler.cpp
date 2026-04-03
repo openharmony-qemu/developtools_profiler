@@ -19,12 +19,29 @@
 #include "hilog/log.h"
 
 #include <map>
+#include <mutex>
+#include <securec.h>
+#include <string>
 
 #undef LOG_DOMAIN
 #define LOG_DOMAIN "0xD002D0A"
 #undef LOG_TAG
 #define LOG_TAG "HidebugProfiler"
 using ResProfilerErrorCode = OHOS::Developtools::NativeDaemon::ResProfilerErrorCode;
+
+static std::mutex g_callbackMutex;
+static HiDebug_ProfilingCallback g_callback = nullptr;
+static OH_HiDebug_ResourceType g_resourceType = OH_RES_TYPE_FD;
+
+static HiDebug_ProfilingCallback TakeProfilingCallback(OH_HiDebug_ResourceType& resourceType)
+{
+    std::lock_guard<std::mutex> lock(g_callbackMutex);
+    resourceType = g_resourceType;
+    HiDebug_ProfilingCallback callback = g_callback;
+    g_callback = nullptr;
+    return callback;
+}
+
 void ConvertHidebugToProfilerConfig(
     OH_HiDebug_ResProfilerConfig* src, OHOS::Developtools::NativeDaemon::MemAPIConfig* dst)
 {
@@ -83,29 +100,72 @@ HiDebug_ErrorCode ConvertProfilerErrorCode(int32_t errCode)
     return (it != resProfErrorCodeMap.end()) ? it->second : HiDebug_ErrorCode::HIDEBUG_RES_PROF_FAILURE;
 }
 
-HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config)
+static void NotifyProfilingResult(const std::string& filePath)
 {
-    if (config == nullptr) {
-        return HIDEBUG_RES_PROF_INVALID_ARG;
+    OH_HiDebug_ResourceType resourceType = OH_RES_TYPE_FD;
+    HiDebug_ProfilingCallback callback = TakeProfilingCallback(resourceType);
+    if (callback == nullptr) {
+        return;
     }
+    HiDebug_ProfilingResult result;
+    result.resourceType = resourceType;
+    result.filePath = filePath.empty() ? nullptr : filePath.c_str();
+    callback(&result);
+}
+
+static void ClearProfilingCallback()
+{
+    std::lock_guard<std::mutex> lock(g_callbackMutex);
+    g_callback = nullptr;
+}
+
+void OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type,
+    OH_HiDebug_ResProfilerConfig* config,
+    HiDebug_ProfilingCallback callback)
+{
+    if (callback == nullptr) {
+        return;
+    }
+    if (config == nullptr) {
+        return;
+    }
+    {
+        std::lock_guard<std::mutex> lock(g_callbackMutex);
+        if (g_callback != nullptr) {
+            return;
+        }
+        g_callback = callback;
+        g_resourceType = type;
+    }
+
     OHOS::Developtools::NativeDaemon::MemAPIConfig profilerConfig;
     ConvertHidebugToProfilerConfig(config, &profilerConfig);
+
+    auto profilingCallback = [](int32_t errCode, const std::string& path) {
+        HiDebug_ErrorCode code = ConvertProfilerErrorCode(errCode);
+        if (code == HIDEBUG_RES_PROF_SUCCESS || code == HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION) {
+            NotifyProfilingResult(path);
+            return;
+        }
+        NotifyProfilingResult("");
+    };
+
     int32_t retStart =
         OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::StartProfilerByType(
-            static_cast<int32_t>(type), &profilerConfig);
-    HiDebug_ErrorCode ret = ConvertProfilerErrorCode(retStart);
-    if (ret != HIDEBUG_RES_PROF_SUCCESS) {
-        return ret;
+            static_cast<int32_t>(type), &profilerConfig, profilingCallback);
+    if (retStart != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
+        ClearProfilingCallback();
     }
-    return HIDEBUG_RES_PROF_SUCCESS;
 }
 
 HiDebug_ErrorCode OH_HiDebug_StopProfiler()
 {
-    int32_t retStop = OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::Stop();
+    std::string filePath;
+    int32_t retStop = OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaClientManager::Stop(filePath);
     if (retStop != 0) {
-        HiDebug_ErrorCode ret = ConvertProfilerErrorCode(retStop);
-        return ret;
+        NotifyProfilingResult("");
+        return ConvertProfilerErrorCode(retStop);
     }
+    NotifyProfilingResult(filePath);
     return HIDEBUG_RES_PROF_SUCCESS;
 }
