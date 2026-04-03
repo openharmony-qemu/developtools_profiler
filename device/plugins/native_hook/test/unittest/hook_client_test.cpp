@@ -316,8 +316,8 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest008, TestSize.Level0)
     EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
     EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
     char* mem = new char[1];
-    ohos_malloc_hook_restrace(RES_RN_HEAP_MASK, mem, 1, TAG_RES_RN_HEAP_MASK, true);
-    ohos_malloc_hook_restrace(RES_RN_HEAP_MASK, mem, 1, TAG_RES_RN_HEAP_MASK, false);
+    ohos_malloc_hook_restrace(RES_RN_HERMES_HEAP, mem, 1, TAG_RES_RN_HERMES_HEAP, true);
+    ohos_malloc_hook_restrace(RES_RN_HERMES_HEAP, mem, 1, TAG_RES_RN_HERMES_HEAP, false);
     delete[] mem;
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());
@@ -354,6 +354,24 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest010, TestSize.Level0)
     char* mem = new char[1];
     ohos_malloc_hook_restrace(RES_VMA_ARKWEB, mem, 1, TAG_RES_VMA_ARKWEB, true);
     ohos_malloc_hook_restrace(RES_VMA_ARKWEB, mem, 1, TAG_RES_VMA_ARKWEB, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace with DART heap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest011, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_DART_HEAP, mem, 1, TAG_RES_DART_HEAP, true);
+    ohos_malloc_hook_restrace(RES_DART_HEAP, mem, 1, TAG_RES_DART_HEAP, false);
     delete[] mem;
 
     EXPECT_TRUE(ohos_malloc_hook_on_end());

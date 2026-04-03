@@ -96,11 +96,12 @@ static TagMapping g_tagMappings[] = {
     {TAG_RES_ARKTS_HEAP_MASK, RecordStatisticsEvent::ARKTS_HEAP, false},
     {TAG_RES_JS_HEAP_MASK, RecordStatisticsEvent::JS_HEAP, false},
     {TAG_RES_KOTLIN_HEAP_MASK, RecordStatisticsEvent::KMP_HEAP, false},
-    {TAG_RES_RN_HEAP_MASK, RecordStatisticsEvent::RN_HEAP, false},
     {TAG_RES_DMABUF_MASK, RecordStatisticsEvent::DMA, true},
     {TAG_RES_ARK_GLOBAL_HANDLE, RecordStatisticsEvent::ARK_GLOBAL_HANDLE, false},
     {TAG_RES_ARK_LOCAL_HANDLE, RecordStatisticsEvent::ARK_LOCAL_HANDLE, false},
     {TAG_RES_VMA_ARKWEB, RecordStatisticsEvent::VMA_ARKWEB, false},
+    {TAG_RES_DART_HEAP, RecordStatisticsEvent::DART_HEAP, false},
+    {TAG_RES_RN_HERMES_HEAP, RecordStatisticsEvent::RN_HERMES_HEAP, false},
 };
 }
 
@@ -237,11 +238,12 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(ARKTS_HEAP_MASK_INDEX + 1, TAG_RES_ARKTS_HEAP_MASK);
     SaveMemTag(JS_HEAP_MASK_INDEX + 1, TAG_RES_JS_HEAP_MASK);
     SaveMemTag(KOTLIN_HEAP_MASK_INDEX + 1, TAG_RES_KOTLIN_HEAP_MASK);
-    SaveMemTag(RN_HEAP_MASK_INDEX + 1, TAG_RES_RN_HEAP_MASK);
     SaveMemTag(DMABUF_MASK_INDEX + 1, TAG_RES_DMABUF_MASK);
     SaveMemTag(ARK_GLOBAL_HANDLE_INDEX + 1, TAG_RES_ARK_GLOBAL_HANDLE);
     SaveMemTag(ARK_LOCAL_HANDLE_INDEX + 1, TAG_RES_ARK_LOCAL_HANDLE);
     SaveMemTag(VMA_ARKWEB_INDEX + 1, TAG_RES_VMA_ARKWEB);
+    SaveMemTag(DART_HEAP_INDEX + 1, TAG_RES_DART_HEAP);
+    SaveMemTag(RN_HERMES_HEAP_INDEX + 1, TAG_RES_RN_HERMES_HEAP);
 }
 
 void StackPreprocess::FinishTraceFile()
