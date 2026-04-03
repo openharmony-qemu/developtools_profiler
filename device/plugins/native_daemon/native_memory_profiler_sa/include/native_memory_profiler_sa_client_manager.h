@@ -19,8 +19,10 @@
 #include "i_native_memory_profiler_sa.h"
 #include "native_memory_profiler_sa_lazyload_callback.h"
 #include <iservice_registry.h>
+#include <functional>
 #include <map>
 #include <memory>
+#include <string>
 
 namespace OHOS::Developtools::NativeDaemon {
 struct SimplifiedMemStats {
@@ -84,13 +86,17 @@ public:
     static int32_t Stop(uint32_t pid);
     static int32_t Stop(const std::string& name);
     static int32_t Stop();
+    static int32_t Stop(std::string& filePath);
     static int32_t DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static int32_t GetMallocStats(int fd, int pid, int type, bool printNmdOnly = false);
     static int32_t StartPrintSimplifiedNmd(pid_t pid, std::vector<SimplifiedMemStats>& memStats);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, SimplifiedMemConfig& config);
     static int32_t Start(int fd, pid_t pid, uint32_t duration, MemSaConfig& saConfig);
     static int32_t Start(int fd, pid_t pid, MemLeakConfig& memLeakConfig);
-    static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig);
+    using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
+    static int32_t StartProfilerByType(int32_t type, MemAPIConfig *inputConfig, ProfilingCallback callback);
+    static void SetProfilingCallback(ProfilingCallback callback);
+    static void NotifyAutoStop(int32_t errorCode);
     static int32_t GetGwpAsan(int fd, pid_t pid, GwpAsanConfig& config);
     static sptr<IRemoteObject> GetRemoteService();
     static int32_t Prepare();
@@ -105,6 +111,7 @@ private:
     static ResProfilerErrorCode CheckInputConfig(int type, MemAPIConfig* inputConfig);
     static int32_t GetMemProfilerUseCountToday();
     static bool UpdateMemProfilerUserCount();
+    static bool RollbackMemProfilerUserCount();
     static bool ReadCountFile(const std::string &filepath, long long &timestamp, int32_t &count);
     static bool WriteCountFileAtomic(const std::string &filepath, long long timestamp, int32_t count);
     static bool IsSeparateByMoreThan24Hours(long long t1, long long t2);

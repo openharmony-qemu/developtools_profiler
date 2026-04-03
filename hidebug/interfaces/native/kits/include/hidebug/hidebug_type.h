@@ -540,6 +540,26 @@ typedef enum HiDebug_CrashObjType {
 } HiDebug_CrashObjType;
 
 /**
+ * @brief Defines the result of a profiling operation, delivered via callback.
+ *
+ * @since 24
+ */
+typedef struct HiDebug_ProfilingResult {
+    /** The resource type that was profiled. */
+    OH_HiDebug_ResourceType resourceType;
+    /** Path of the output file. Valid only during callback invocation, caller must copy if needed. May be NULL. */
+    const char* filePath;
+} HiDebug_ProfilingResult;
+
+/**
+ * @brief Defines callback type for profiling result notification.
+ *
+ * @param result Pointer to the profiling result. Valid only during callback invocation.
+ * @since 24
+ */
+typedef void (*HiDebug_ProfilingCallback)(HiDebug_ProfilingResult* result);
+
+/**
  * @brief Defines an enum for the resource profiler types.
  *
  * @since 24
