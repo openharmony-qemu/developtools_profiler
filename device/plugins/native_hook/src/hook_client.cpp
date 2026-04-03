@@ -446,6 +446,64 @@ static int inline __attribute__((always_inline)) GetStackSize(uintptr_t& stackPt
     return stackSize;
 }
 
+static void inline __attribute__((always_inline)) CollectNestedAsyncIds(
+    AsyncStackData& asyncData, DfxAsyncCtx* asyncCtxBuffer, int count)
+{
+    asyncData.nestedAsyncCount = static_cast<uint32_t>(count);
+    for (int i = 0; i < count; i++) {
+        asyncData.nestedAsyncIds[i] = asyncCtxBuffer[i].id;
+        asyncData.nestedAsyncTypes[i] = asyncCtxBuffer[i].type;
+    }
+}
+
+static void inline __attribute__((always_inline)) CollectSyncStack(AsyncStackData& asyncData)
+{
+    asyncData.syncStackId = DfxCollectStackWithDepth(ASYNC_TYPE_PROFILER, g_clientConfig.maxStackDepth);
+}
+
+static void inline __attribute__((always_inline)) CollectNestedAsyncStack(AsyncStackData& asyncData)
+{
+#ifdef __aarch64__
+    DfxAsyncCtx asyncCtxBuffer[MAX_ASYNC_CHAIN_LAYERS];
+    int count = GetCurrentChainedAsyncContext(asyncCtxBuffer, MAX_ASYNC_CHAIN_LAYERS);
+    if (count > 0 && count <= static_cast<int>(MAX_ASYNC_CHAIN_LAYERS)) {
+        CollectNestedAsyncIds(asyncData, asyncCtxBuffer, count);
+    }
+    CollectSyncStack(asyncData);
+    asyncData.asyncStackId = 0;
+#endif
+}
+
+static void inline __attribute__((always_inline)) CollectRegularAsyncStack(AsyncStackData& asyncData)
+{
+    asyncData.asyncStackId = DfxGetSubmitterStackId();
+    asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_clientConfig.maxStackDepth);
+    asyncData.nestedAsyncCount = 0;
+}
+
+static bool inline __attribute__((always_inline)) CollectAsyncStackInfo(AsyncStackData& asyncData)
+{
+    if (g_clientConfig.maxStackDepth == 0) {
+        return false;
+    }
+    if (g_clientConfig.nestedAsyncStackEnable) {
+        CollectNestedAsyncStack(asyncData);
+    } else {
+        CollectRegularAsyncStack(asyncData);
+    }
+    return true;
+}
+
+static void inline __attribute__((always_inline)) CollectFpStackInfo(StackRawData& rawdata, StackParam& param)
+{
+#ifdef __aarch64__
+    param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
+    if (param.needJsStack) {
+        rawdata.jsChainId = getJsChainId();
+    }
+#endif
+}
+
 static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
     StackRawData& rawdata, AsyncStackData& asyncData, StackParam &param)
 {
@@ -455,16 +513,9 @@ static bool inline __attribute__((always_inline)) CollectStackInfoWithAsyncData(
     if (g_clientConfig.fpunwind && param.needFpunwind) {
 #ifdef __aarch64__
         if (g_clientConfig.asyncStackEnable) {
-            if (g_clientConfig.maxStackDepth == 0) {
-                return false;
-            }
-            asyncData.asyncStackId = DfxGetSubmitterStackId();
-            asyncData.syncStackId = DfxCollectStackWithDepth(PROFILER_TYPE, g_clientConfig.maxStackDepth);
+            return CollectAsyncStackInfo(asyncData);
         } else {
-            param.fpStackDepth = FpUnwind(g_clientConfig.maxStackDepth, rawdata.ip);
-            if (param.needJsStack) {
-                rawdata.jsChainId = getJsChainId();
-            }
+            CollectFpStackInfo(rawdata, param);
         }
 #endif
     } else {

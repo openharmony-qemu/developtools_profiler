@@ -24,9 +24,12 @@
 
 #include "register.h"
 #include "utilities.h"
+#include "async_context_manager.h"
 #include <memory_trace.h>
+
 #define MAX_THREAD_NAME (32)
 #define MAX_UNWIND_DEPTH (100)
+#define MAX_ASYNC_CHAIN_LAYERS (10)
 
 namespace OHOS {
 namespace Developtools {
@@ -182,6 +185,9 @@ struct alignas(8) BaseStackRawData { // 8 is 8 bit
 struct alignas(8) AsyncStackData : public BaseStackRawData { // 8 is 8 bit
     uint64_t syncStackId;
     uint64_t asyncStackId;
+    uint32_t nestedAsyncCount;
+    uint64_t nestedAsyncIds[MAX_ASYNC_CHAIN_LAYERS];
+    uint64_t nestedAsyncTypes[MAX_ASYNC_CHAIN_LAYERS];
 };
 
 struct alignas(8) StackRawData: public BaseStackRawData { // 8 is 8 bit
@@ -251,6 +257,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         memtraceEnable = false;
         asyncStackEnable = false;
         asyncFlag = 0;
+        nestedAsyncStackEnable = false;
         responseLibraryMode = false;
         allocatorSamplingEnable = false;
         freeEventOnlyAddrEnable = false;
@@ -323,6 +330,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     bool memtraceEnable = false;
     bool asyncStackEnable = false;
     uint64_t asyncFlag = 0;
+    bool nestedAsyncStackEnable = false;
     bool responseLibraryMode = false;
     bool allocatorSamplingEnable = false;
     bool freeEventOnlyAddrEnable = false;

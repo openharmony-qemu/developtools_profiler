@@ -72,6 +72,25 @@ void FpStackBuilder::FillIps(std::vector<CallFrame>& callFrames,
     fillIpsFromPcVector(asyncPcs);
 }
 
+void FpStackBuilder::FillNestedIps(std::vector<CallFrame>& callFrames,
+    const std::vector<uintptr_t>& syncPcs, const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs)
+{
+    for (auto pc : syncPcs) {
+        if (pc == 0) {
+            break;
+        }
+        callFrames.emplace_back(StripPac(pc, 0));
+    }
+    for (const auto& asyncPcs : nestedAsyncPcs) {
+        for (auto pc : asyncPcs) {
+            if (pc == 0) {
+                break;
+            }
+            callFrames.emplace_back(StripPac(pc, 0));
+        }
+    }
+}
+
 void FpStackBuilder::FillJsFrame(CallFrame& jsCallFrame)
 {
     DfxSymbol symbol;
@@ -269,10 +288,11 @@ BuildStackDirector::BuildStackDirector(NativeHookConfig* config, std::shared_ptr
     }
 }
 
-std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
+template<typename FillFunc>
+std::vector<CallFrame>& BuildStackDirector::ConstructCallFramesImpl(
     HookRecordPtr hookRecord,
-    const std::vector<uintptr_t>& syncPcs,
-    const std::vector<uintptr_t>& asyncPcs)
+    FillFunc&& fillIpsFunc,
+    bool hasPcs)
 {
     callFrames_.clear();
     if (builder_ == nullptr || hookConfig_ == nullptr) {
@@ -285,11 +305,10 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
         return callFrames_;
     }
     builder_->PrepareUnwind(hookRecord);
-    if (!syncPcs.empty() || !asyncPcs.empty()) {
-        builder_->FillIps(callFrames_, syncPcs, asyncPcs);
+    if (hasPcs) {
+        fillIpsFunc();
 
         if (hookConfig_->js_stack_report()) {
-            // can get arkweb symbols in async fp mode
             builder_->FillAsyncJsSymbols(callFrames_, hookRecord);
         }
     } else {
@@ -301,9 +320,7 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
         builder_->FillIps(callFrames_, hookRecord);
 
         if (hookConfig_->js_stack_report()) {
-            // can get arkweb symbols in sync dwarf mode
             builder_->FillJsSymbols(callFrames_, hookRecord);
-            // only use for getting arkweb symbols in sync fp mode
             builder_->FillAsyncJsSymbols(callFrames_, hookRecord);
         }
     }
@@ -312,6 +329,30 @@ std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
         builder_->FillNativeSymbols(callFrames_, hookRecord);
     }
     return callFrames_;
+}
+
+std::vector<CallFrame>& BuildStackDirector::ConstructCallFrames(
+    HookRecordPtr hookRecord,
+    const std::vector<uintptr_t>& syncPcs,
+    const std::vector<uintptr_t>& asyncPcs)
+{
+    bool hasPcs = !syncPcs.empty() || !asyncPcs.empty();
+    auto fillIpsFunc = [this, &syncPcs, &asyncPcs]() {
+        builder_->FillIps(callFrames_, syncPcs, asyncPcs);
+    };
+    return ConstructCallFramesImpl(hookRecord, fillIpsFunc, hasPcs);
+}
+
+std::vector<CallFrame>& BuildStackDirector::ConstructNestedCallFrames(
+    HookRecordPtr hookRecord,
+    const std::vector<uintptr_t>& syncPcs,
+    const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs)
+{
+    bool hasPcs = !syncPcs.empty() || !nestedAsyncPcs.empty();
+    auto fillIpsFunc = [this, &syncPcs, &nestedAsyncPcs]() {
+        builder_->FillNestedIps(callFrames_, syncPcs, nestedAsyncPcs);
+    };
+    return ConstructCallFramesImpl(hookRecord, fillIpsFunc, hasPcs);
 }
 
 bool BuildStackDirector::IsRecordUnwindable(HookRecordPtr hookRecord)

@@ -15,6 +15,7 @@
 #ifndef STACK_BUILDER_H
 #define STACK_BUILDER_H
 
+#include <functional>
 #include "hook_common.h"
 #include "hook_record.h"
 #include "virtual_runtime.h"
@@ -37,6 +38,8 @@ public:
     void FillStatsVirtualFrames(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord);
     virtual bool IsRecordInfoValid(HookRecordPtr hookRecord) = 0;
     virtual void ReplaceErrStack(std::vector<CallFrame>& callFrames) {};
+    virtual void FillNestedIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+                               const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs) = 0;
 
 protected:
     NativeHookConfig* hookConfig_{nullptr};
@@ -57,6 +60,8 @@ public:
     void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void FillJsFrame(CallFrame& jsCallFrame);
+    void FillNestedIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+                       const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs) override;
 };
 
 class DwarfStackBuilder : public StackBuilder {
@@ -77,6 +82,11 @@ public:
     void FillNativeSymbols(std::vector<CallFrame>& callFrames, HookRecordPtr hookRecord) override;
     bool IsRecordInfoValid(HookRecordPtr hookRecord) override;
     void ReplaceErrStack(std::vector<CallFrame>& callFrames) override;
+    void FillNestedIps(std::vector<CallFrame>& callFrames, const std::vector<uintptr_t>& syncPcs,
+                       const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs) override
+    {
+        return;
+    }
 
 private:
     size_t stackDepth_ = 0;
@@ -91,8 +101,13 @@ public:
                                                 const std::vector<uintptr_t>& asyncPcs = {});
     void SetBuilder(std::shared_ptr<StackBuilder> builder) { builder_ = builder; }
     bool IsRecordUnwindable(HookRecordPtr);
+    std::vector<CallFrame>& ConstructNestedCallFrames(HookRecordPtr hookRecord, const std::vector<uintptr_t>& syncPcs,
+                                                      const std::vector<std::vector<uintptr_t>>& nestedAsyncPcs);
 
 private:
+    template<typename FillFunc>
+    std::vector<CallFrame>& ConstructCallFramesImpl(HookRecordPtr hookRecord,
+        FillFunc&& fillIpsFunc, bool hasPcs);
     std::shared_ptr<StackBuilder> builder_{nullptr};
     NativeHookConfig* hookConfig_{nullptr};
     std::vector<CallFrame> callFrames_;

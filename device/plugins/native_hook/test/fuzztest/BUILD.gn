@@ -40,6 +40,7 @@ hook_fuzz_external_deps = [
   "googletest:gtest",
   "init:libbegetutil",
   "protobuf:protobuf",
+  "faultloggerd:libasync_stack",
 ]
 if (hiprofiler_use_libunwinder) {
   hook_fuzz_external_deps += [ "faultloggerd:libunwinder" ]

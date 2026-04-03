@@ -220,12 +220,7 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
     *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %" PRIu64,
                        config_->memtraceEnable, static_cast<uint64_t>(config_->traceMask));
-#ifdef __aarch64__
-    if (config_->asyncStackEnable && config_->asyncFlag != 0) {
-        asyncFlagBackup_ = DfxSetAsyncStackType(config_->asyncFlag);
-        asyncFlagConfigured_ = true;
-    }
-#endif
+    SetAsyncStack();
     for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: vk and gles image
         PROFILER_LOG_ERROR(LOG_CORE,
             "HookSocketClient::ProtocolProc get gpu range: %" PRIu64 ", %" PRIu64 ", %" PRIu64
@@ -550,4 +545,18 @@ bool HookSocketClient::SendEndMsg()
         }
     }
     return true;
+}
+
+void HookSocketClient::SetAsyncStack()
+{
+#ifdef __aarch64__
+    if (config_->asyncStackEnable && config_->asyncFlag != 0) {
+        asyncFlagBackup_ = DfxSetAsyncStackType(config_->asyncFlag);
+        asyncFlagConfigured_ = true;
+        if (config_->nestedAsyncStackEnable) {
+            SetAsyncStackMode(MODE_CHAINED_STACKTRACE);
+        }
+        // the default mode is MODE_LAST_STACKTRACE.
+    }
+#endif
 }
