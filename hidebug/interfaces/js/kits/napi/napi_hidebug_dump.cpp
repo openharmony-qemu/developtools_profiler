@@ -56,13 +56,23 @@ constexpr auto PROCESS_DUMP_MAX_COUNT = "persist.hiview.hidebugdump.process.maxc
 constexpr auto QUOTA_VALUE_LENGTH = 256;
 constexpr int ONE_VALUE_LIMIT = 1;
 constexpr int TWO_VALUE_LIMIT = 2;
+constexpr int THREE_VALUE_LIMIT = 3;
 constexpr int FIRST_PARAM_POS = 0;
 constexpr int SECOND_PARAM_POS = 1;
+constexpr int THIRD_PARAM_POS = 2;
 constexpr int64_t MS_TO_NS = 1000 * 1000;
 constexpr int64_t S_TO_NS = MS_TO_NS * 1000;
 std::atomic<int> g_dumpingCount{0};
 
-constexpr std::pair<int, const char*> DumpErrCodeMap[]  = {
+struct DumpJsRawHeapOptions {
+    size_t argc = 0;
+    std::string filePath;
+    bool isGc = true;
+    bool needClean = false;
+    bool isProcDump = false;
+};
+
+constexpr std::pair<int, const char*> DumpErrCodeMap[] = {
     {ErrorCode::PARAMETER_ERROR, "Invalid parameter."},
     {DumpRawHeapErrors::REPEAT_DUMPING, "It is currently dumping. Please wait until the dumping is completed "
     "before making another call."},
@@ -296,44 +306,44 @@ napi_value DumpJsHeapData(napi_env env, napi_callback_info info)
     return DumpHeapSnapshot(fileName, env, needClean);
 }
 
-int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, std::string& filePath, bool& isGc,
-                               bool& needClean)
+int32_t GetDumpJsRawHeapParams(napi_env env, napi_callback_info info, DumpJsRawHeapOptions& options)
 {
-    size_t argc = TWO_VALUE_LIMIT;  // expected param length.
-    napi_value argv[TWO_VALUE_LIMIT] = {nullptr};
+    options.argc = THREE_VALUE_LIMIT;  // expected param length.
+    napi_value argv[THREE_VALUE_LIMIT] = {nullptr};
 
-    napi_get_cb_info(env, info, &argc, argv, nullptr, nullptr);
+    napi_get_cb_info(env, info, &options.argc, argv, nullptr, nullptr);
     if (g_dumpingCount.fetch_add(1) != 0) {
+        HILOG_ERROR(LOG_CORE, "DumpRawHeap is already running, reject repeated request.");
         return DumpRawHeapErrors::REPEAT_DUMPING;
     }
-    if (argc > TWO_VALUE_LIMIT) {
-        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, argc);
+    if (options.argc > THREE_VALUE_LIMIT) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu!", __func__, options.argc);
         return ErrorCode::PARAMETER_ERROR;
     }
-    if (argc == ONE_VALUE_LIMIT && !GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc)) {
-        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require first param of type bool!", __func__, argc);
+    if (options.argc >= ONE_VALUE_LIMIT && !GetNapiBoolValue(env, argv[FIRST_PARAM_POS], options.isGc)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require first param of type bool!",
+            __func__, options.argc);
         return ErrorCode::PARAMETER_ERROR;
     }
-    if (argc == TWO_VALUE_LIMIT) {
-        bool isGcResult = GetNapiBoolValue(env, argv[FIRST_PARAM_POS], isGc);
-        if (!isGcResult) {
-            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require param of type bool!", __func__, argc);
-            return ErrorCode::PARAMETER_ERROR;
-        }
-        bool needCleanResult = GetNapiBoolValue(env, argv[SECOND_PARAM_POS], needClean);
-        if (!needCleanResult) {
-            HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require param of type bool!", __func__, argc);
-            return ErrorCode::PARAMETER_ERROR;
-        }
+    if (options.argc >= TWO_VALUE_LIMIT && !GetNapiBoolValue(env, argv[SECOND_PARAM_POS], options.needClean)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require second param of type bool!",
+            __func__, options.argc);
+        return ErrorCode::PARAMETER_ERROR;
     }
+    if (options.argc >= THREE_VALUE_LIMIT && !GetNapiBoolValue(env, argv[THIRD_PARAM_POS], options.isProcDump)) {
+        HILOG_ERROR(LOG_CORE, "%{public}s param size %{public}zu, require third param of type bool!",
+            __func__, options.argc);
+        return ErrorCode::PARAMETER_ERROR;
+    }
+
     if (!CheckDumpDiskSpace()) {
         return DumpRawHeapErrors::LOW_DISK_SPACE;
     }
     if (DumpLimitEnable() && (!CheckDeviceQuota() || !CheckProcessQuota())) {
         return DumpRawHeapErrors::QUOTA_EXCEEDED;
     }
-    filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
-    if (!CreateFile(filePath)) {
+    options.filePath = GenerateDumpFile(GetRealNanoSecondsTimestamp());
+    if (!CreateFile(options.filePath)) {
         return DumpRawHeapErrors::FAILED_CREATE_FILE;
     }
     return 0;
@@ -374,7 +384,36 @@ int TransferRetCodeToErrorCode(const int retCode)
     }
 }
 
-void ResolveDumpJsRawHeapData(napi_env env, napi_deferred deferred, const std::string& fileName)
+static napi_value CreateArray(const napi_env env)
+{
+    napi_value arr = nullptr;
+    if (napi_create_array(env, &arr) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "failed to create array");
+        return nullptr;
+    }
+    return arr;
+}
+
+static napi_value CreateString(const napi_env env, const std::string& str, size_t size)
+{
+    napi_value strValue = nullptr;
+    if (napi_create_string_utf8(env, str.c_str(), size, &strValue) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "failed to create string");
+        return nullptr;
+    }
+    return strValue;
+}
+
+static bool SetElement(const napi_env env, const napi_value obj, uint32_t index, const napi_value value)
+{
+    if (napi_set_element(env, obj, index, value) != napi_ok) {
+        HILOG_ERROR(LOG_CORE, "failed to set element");
+        return false;
+    }
+    return true;
+}
+
+void ResolveDumpJsRawHeapData(napi_env env, napi_deferred deferred, const std::string& fileName, size_t argc)
 {
     if (!AppendMetaData(fileName)) {
         HILOG_ERROR(LOG_CORE, "failed to append metadata to dump file.");
@@ -388,9 +427,26 @@ void ResolveDumpJsRawHeapData(napi_env env, napi_deferred deferred, const std::s
         }
     }
     g_dumpingCount.fetch_sub(1);
-    napi_value ret;
-    napi_create_string_utf8(env, fileName.c_str(), fileName.size(), &ret);
-    napi_resolve_deferred(env, deferred, ret);
+
+    napi_value result = nullptr;
+    napi_value filePath = CreateString(env, fileName.c_str(), fileName.size());
+    if (argc == THREE_VALUE_LIMIT) {
+        result = CreateArray(env);
+        if (result != nullptr && filePath != nullptr) {
+            SetElement(env, result, 0, filePath);
+        }
+    } else {
+            result = filePath;
+    }
+
+    if (result == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Failed to create result for JS promise");
+        napi_reject_deferred(env, deferred, CreateErrorMessage(env, std::to_string(ErrorCode::PARAMETER_ERROR).c_str(),
+            "failed to create result for JS promise"));
+        return;
+    }
+
+    napi_resolve_deferred(env, deferred, result);
 }
 
 napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
@@ -399,10 +455,8 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     napi_deferred deferred = nullptr;
     napi_value promise = nullptr;
     napi_create_promise(env, &deferred, &promise);
-    bool isGc = true;
-    std::string fileName;
-    bool needClean = false;
-    int32_t errCode = GetDumpJsRawHeapParams(env, info, fileName, isGc, needClean);
+    DumpJsRawHeapOptions options;
+    int32_t errCode = GetDumpJsRawHeapParams(env, info, options);
     napi_value err = ResolveErrorCode(env, errCode);
     if (err != nullptr) {
         g_dumpingCount.fetch_sub(1);
@@ -412,19 +466,20 @@ napi_value DumpJsRawHeapData(napi_env env, napi_callback_info info)
     }
     NativeEngine *engine = reinterpret_cast<NativeEngine*>(env);
     /* When the interface is available, the fd will be set to -1. */
-    engine->DumpHeapSnapshot(isGc, fileName, [apiInvokeRecorder, env, deferred, fileName] (uint8_t retCode) {
+    engine->DumpHeapSnapshot(options.isGc, options.filePath,
+        [apiInvokeRecorder, env, deferred, options] (uint8_t retCode) {
         apiInvokeRecorder->SetErrorCode(retCode);
-        napi_send_event(env, [env, deferred, fileName, retCode]() {
+        napi_send_event(env, [env, deferred, options, retCode]() {
             napi_value err = ResolveErrorCode(env, TransferRetCodeToErrorCode(retCode));
             if (err != nullptr) {
-                remove(fileName.c_str());
+                remove(options.filePath.c_str());
                 g_dumpingCount.fetch_sub(1);
                 napi_reject_deferred(env, deferred, err);
             } else {
-                ResolveDumpJsRawHeapData(env, deferred, fileName);
+                ResolveDumpJsRawHeapData(env, deferred, options.filePath, options.argc);
             }
         }, napi_eprio_high);
-    }, needClean);
+    }, options.needClean, options.isProcDump);
     return promise;
 }
 }
