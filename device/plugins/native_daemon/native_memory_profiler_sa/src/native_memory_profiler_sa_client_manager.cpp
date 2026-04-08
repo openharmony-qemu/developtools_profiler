@@ -53,6 +53,21 @@ constexpr int HOURS_PER_DAY = 24;
 const std::string MEM_PROFILER_COUNT_FILE_NAME = "/MemProfilerCount";
 const std::string FILE_SUFFIX = ".htrace";
 const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+
+void ParseMemStatsFromString(std::string& stats, std::vector<SimplifiedMemStats>& memStats)
+{
+    SimplifiedMemStats tmp;
+    std::istringstream iss(stats);
+    std::stringstream ss;
+    std::string line;
+    while (std::getline(iss, line, '\n')) {
+        ss.str("");
+        ss.clear();
+        ss.str(line);
+        ss >> tmp.size >> tmp.allocated >> tmp.nmalloc >> tmp.ndalloc;
+        memStats.push_back(tmp);
+    }
+}
 }
 
 static std::mutex g_profilingCallbackMutex;
@@ -296,22 +311,19 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
         std::string replyStats;
         int32_t r = proxy.Start(config, replyStats);
         if (r != RET_OK) {
+            if (config->startType_ == 1 && proxy.Stop() != RET_OK) {
+                PROFILER_LOG_ERROR(LOG_CORE, "StartPrintSimplifiedNmd Stop failed.");
+            }
             return r;
         }
         size_t newlinePos = replyStats.find_first_of('\n');
         if (newlinePos != std::string::npos) {
             replyStats.erase(0, newlinePos + 1);
         }
-        SimplifiedMemStats tmp;
-        std::istringstream iss(replyStats);
-        std::stringstream ss;
-        std::string line;
-        while (std::getline(iss, line, '\n')) {
-            ss.str("");
-            ss.clear();
-            ss.str(line);
-            ss >> tmp.size >> tmp.allocated >> tmp.nmalloc >> tmp.ndalloc;
-            memStats.push_back(tmp);
+        ParseMemStatsFromString(replyStats, memStats);
+        if (config->startType_ == 1) {
+            r = proxy.Stop();
+            CHECK_TRUE(r == RET_OK, r, "StartPrintSimplifiedNmd Stop failed.");
         }
         return RET_OK;
     });

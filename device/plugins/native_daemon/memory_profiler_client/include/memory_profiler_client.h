@@ -41,10 +41,17 @@ public:
 
     /**
      * @desc: Start memory profiler on memory API configuration.
+     * @param resourceType: The resource type of profiler.
+     * value of resourceType : int32_t
+     * OH_RES_TYPE_FD = 0
+     * OH_RES_TYPE_THREAD = 1
+     * OH_RES_TYPE_NATIVE = 2
+     * OH_RES_TYPE_GPU = 3
+     * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * @param config: The memory API profiler configuration.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    virtual int32_t Start(MemAPIConfig& config) = 0;
+    virtual int32_t Start(int32_t resourceType, MemAPIConfig& config) = 0;
 
     /**
      * @desc: Start simplified nmd mode profiler.
