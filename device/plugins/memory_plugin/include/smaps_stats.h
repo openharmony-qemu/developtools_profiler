@@ -288,10 +288,11 @@ public:
                 smapsPath = testpath_ + std::to_string(pid) + std::string("/smaps");
             }
         }
+        bool isDebuggable = COMMON::CheckApplicationPermission(pid, COMMON::GetBundleNameByPid(pid));
         if (isReportSmapsrollup) {
-            ReadVmemFromSmapsrollup(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+            ReadVmemFromSmapsrollup(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps, isDebuggable);
         } else {
-            ReadVmemareasFile(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps);
+            ReadVmemareasFile(smapsPath, processMemoryInfo, smapsInfo, isReportApp, isReportSmaps, isDebuggable);
         }
         if (isReportApp) {
             ReviseStatsData();
@@ -322,7 +323,7 @@ private:
     void SetPssInfoField(MemUsageInfo& memusage, std::string strfield, const char* c);
     void SetSharedAndSwap(MemUsageInfo& memusage, std::string strfield, const char* c);
     template<typename T, typename S>
-    void SetMapHeadInfo(T& processMemoryInfo, S& smapsInfo, SmapsHeadInfo& smapsHeadInfo)
+    void SetMapHeadInfo(T& processMemoryInfo, S& smapsInfo, SmapsHeadInfo& smapsHeadInfo, bool isDebuggable)
     {
         smapsInfo = processMemoryInfo.add_smapinfo();
         if (!COMMON::IsUserMode()) {
@@ -333,7 +334,11 @@ private:
         } else {
             smapsInfo->set_start_addr("");
             smapsInfo->set_end_addr("");
-            smapsInfo->set_path("");
+            if (isDebuggable) {
+                smapsInfo->set_path(smapsHeadInfo.path);
+            } else {
+                smapsInfo->set_path("");
+            }
             smapsInfo->set_permission("");
         }
         smapsInfo->set_category(ParseCategory(smapsHeadInfo));
@@ -381,7 +386,7 @@ private:
 
     template <typename T, typename S>
     bool ReadVmemareasFile(const std::string& path, T& processMemoryInfo, S smapsInfo,
-                           bool isReportApp, bool isReportSmaps)
+                           bool isReportApp, bool isReportSmaps, bool isDebuggable)
     {
         bool findMapHead = false;
         MapPiecesInfo mappic = {0};
@@ -403,7 +408,7 @@ private:
                 ParseMapHead(line, mappic, smapsHeadInfo);
                 findMapHead = true;
                 if (isReportSmaps) {
-                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
+                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo, isDebuggable);
                 }
                 continue;
             }
@@ -427,7 +432,7 @@ private:
 
     template <typename T, typename S>
     bool ReadVmemFromSmapsrollup(const std::string& path, T& processMemoryInfo, S smapsInfo, bool isReportApp,
-                                 bool isReportSmaps)
+                                 bool isReportSmaps,  bool isDebuggable)
     {
         bool findMapHead = false;
         MapPiecesInfo mappic = {0};
@@ -449,7 +454,7 @@ private:
                 ParseMapHead(line, mappic, smapsHeadInfo);
                 findMapHead = true;
                 if (isReportSmaps) {
-                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo);
+                    SetMapHeadInfo<T, S>(processMemoryInfo, smapsInfo, smapsHeadInfo, isDebuggable);
                 }
                 continue;
             }
@@ -494,6 +499,8 @@ private:
         {"[anon:guard", "guard"}, {"/dev", "dev"}, {"[anon:signal_stack", "stack"},
         {"/dmabuf", "dmabuf"}, {"/data/storage", ".hap"}, {"[anon:libc_malloc", "native heap"},
         {"[anon:scudo", "native heap"}, {"[anon:GWP-ASan", "native heap"},
+        {"[anon:JS_V8_HEAP", "ArkWeb v8 heap"}, {"[anon:JSVM_V8_HEAP", "jsvm heap"},
+        {"[anon:partition_alloc", "ArkWeb PA"}, {"[anon:kotlin_heap", "KMP heap"},
     };
     const std::map<std::string, std::string> endMap_ = {
         {".so", ".so"}, {".so.1", ".so"}, {".ttf", ".ttf"},
