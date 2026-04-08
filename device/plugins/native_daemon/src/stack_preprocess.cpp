@@ -754,6 +754,59 @@ bool StackPreprocess::ProcessEndMsg()
     return true;
 }
 
+bool StackPreprocess::GetPcsByStackId(StackId stackIdUnion, std::vector<uintptr_t>& pcs, const std::string& errorMsg)
+{
+    if (stackIdUnion.value > 0) {
+        auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
+        if (!table->GetPcsByStackId(stackIdUnion, pcs, true)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "%s", errorMsg.c_str());
+            return false;
+        }
+    }
+    return true;
+}
+
+bool StackPreprocess::BuildNestedAsyncCallFrames(const AsyncStackData* asyncData,
+    const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames)
+{
+    std::vector<uintptr_t> syncStackPcs;
+    GetPcsByStackId({asyncData->syncStackId}, syncStackPcs,
+        "BuildCallFrames Get syncStackPcs Failed");
+
+    std::vector<std::vector<uintptr_t>> nestedAsyncPcs;
+    nestedAsyncPcs.reserve(asyncData->nestedAsyncCount);
+    for (uint32_t i = 0; i < asyncData->nestedAsyncCount; i++) {
+        std::vector<uintptr_t> asyncPcs;
+        std::string errorMsg = "BuildCallFrames Get nestedAsyncPcs[" + std::to_string(i) + "] Failed";
+        GetPcsByStackId({asyncData->nestedAsyncIds[i]}, asyncPcs, errorMsg);
+        nestedAsyncPcs.push_back(std::move(asyncPcs));
+    }
+
+    if (!syncStackPcs.empty() || !nestedAsyncPcs.empty()) {
+        callFrames = g_director->ConstructNestedCallFrames(
+            hookRecord, syncStackPcs, nestedAsyncPcs);
+    }
+    return true;
+}
+
+bool StackPreprocess::BuildRegularAsyncCallFrames(const AsyncStackData* asyncData,
+    const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames)
+{
+    std::vector<uintptr_t> syncStackPcs;
+    GetPcsByStackId({asyncData->syncStackId}, syncStackPcs,
+        "BuildCallFrames Get syncStackPcs Failed");
+
+    std::vector<uintptr_t> asyncStackPcs;
+    GetPcsByStackId({asyncData->asyncStackId}, asyncStackPcs,
+        "BuildCallFrames Get asyncStackPcs Failed");
+
+    if (!syncStackPcs.empty() || !asyncStackPcs.empty()) {
+        callFrames = g_director->ConstructCallFrames(
+            hookRecord, syncStackPcs, asyncStackPcs);
+    }
+    return true;
+}
+
 bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRecord,
     RawStackPtr& rawData,
     std::vector<CallFrame>& callFrames)
@@ -768,29 +821,13 @@ bool StackPreprocess::BuildCallFrames(const std::shared_ptr<HookRecord>& hookRec
     if (msgType == FREE_ARKTS || msgType == MALLOC_ARKTS || msgType == PR_SET_VMA_MSG) {
         return true;
     }
-    auto table = OHOS::HiviewDFX::UniqueStackTable::Instance();
     const auto* asyncData = reinterpret_cast<const AsyncStackData*>(rawData->stackContext);
-    std::vector<uintptr_t> syncStackPcs;
-    if (asyncData->syncStackId > 0) {
-        StackId id { asyncData->syncStackId };
-        if (!table->GetPcsByStackId(id, syncStackPcs, true)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get syncStackPcs Faild");
-        }
+
+    if (hookConfig_.nested_async_stack_enable() && asyncData->nestedAsyncCount > 0) {
+        return BuildNestedAsyncCallFrames(asyncData, hookRecord, callFrames);
     }
 
-    std::vector<uintptr_t> asyncStackPcs;
-    if (asyncData->asyncStackId > 0) {
-        StackId id { asyncData->asyncStackId };
-        if (!table->GetPcsByStackId(id, asyncStackPcs, true)) {
-            PROFILER_LOG_ERROR(LOG_CORE, "BuildCallFrames Get asyncStackPcs Faild");
-        }
-    }
-
-    if (!syncStackPcs.empty() || !asyncStackPcs.empty()) {
-        callFrames = g_director->ConstructCallFrames(
-            hookRecord, syncStackPcs, asyncStackPcs);
-    }
-    return true;
+    return BuildRegularAsyncCallFrames(asyncData, hookRecord, callFrames);
 }
 
 bool StackPreprocess::ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord,

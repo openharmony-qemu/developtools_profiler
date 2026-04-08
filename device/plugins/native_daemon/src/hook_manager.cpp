@@ -56,6 +56,8 @@ constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
+constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
+    ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER;
 #ifndef __aarch64__
 constexpr uint32_t MAX_MAP_BUFFER_SIZE = 2147479552;
 #endif
@@ -326,6 +328,9 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
             case AsyncFlagType::ALL_ASYNC_TYPE:
                 mask |= ALL_TYPE;
                 break;
+            case AsyncFlagType::ALL_ASYNC_NESTED_TYPE:
+                mask |= ALL_NESTED_MASK_TYPE;
+                break;
             default:
                 PROFILER_LOG_WARN(LOG_CORE, "invalid async_type: %d", value);
                 break;
@@ -462,6 +467,7 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     clientConfig.memtraceEnable = hookConfig_.memtrace_enable();
     clientConfig.asyncStackEnable = hookConfig_.async_stack_enable();
     clientConfig.asyncFlag = asyncFlagMask_;
+    clientConfig.nestedAsyncStackEnable = hookConfig_.nested_async_stack_enable();
     clientConfig.traceMask = saMode_ ? traceMask_ : ConvertTagToMask();
     clientConfig.statisticsInterval = hookConfig_.statistics_interval();
     clientConfig.sampleInterval = hookConfig_.sample_interval();

@@ -41,6 +41,7 @@
 #include "schedule_task_manager.h"
 #include "common.h"
 #include "stack_builder.h"
+#include "unique_stack_table.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 using WriterStructPtr = std::unique_ptr<WriterStruct>::pointer;
@@ -380,6 +381,11 @@ private:
     bool ProcessNmdMsg(RawStackPtr& rawData);
     bool ProcessEndMsg();
     bool ProcessRegularStackData(std::shared_ptr<HookRecord>& hookRecord, RawStackPtr& rawData);
+    bool GetPcsByStackId(StackId stackId, std::vector<uintptr_t>& pcs, const std::string& errorMsg);
+    bool BuildNestedAsyncCallFrames(const AsyncStackData* asyncData,
+        const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames);
+    bool BuildRegularAsyncCallFrames(const AsyncStackData* asyncData,
+        const std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames);
     void LogPerformanceMetrics(const timespec& start, const std::string& operation, uint16_t type, uint32_t fpDepth);
     void LogPerformanceMetrics(const struct timespec& start, const std::string& operation);
     void CleanupFullyReleasedStack(uint32_t stackId);

@@ -28,6 +28,7 @@ enum AsyncFlagType {
     ARKWEB_ENGINE = 8;
     JSVM_ASYNC = 9;
     ALL_ASYNC_TYPE = 10;
+    ALL_ASYNC_NESTED_TYPE = 11;
 }
 
 
@@ -71,4 +72,5 @@ message NativeHookConfig {
     uint32 file_cache_buffer_size = 37;
     bool allocator_sampling_enable = 38;
     bool native_orphansnapshots_enable = 39;
+    bool nested_async_stack_enable = 40;
 }

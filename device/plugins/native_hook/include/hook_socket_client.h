@@ -62,6 +62,7 @@ private:
     void HandleSharedMemoryMode(SocketContext &context);
     void HandleCommonConfig();
     bool GetAndSendMemLeakInfo();
+    void SetAsyncStack();
 
 private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
