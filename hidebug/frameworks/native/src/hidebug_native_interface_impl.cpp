@@ -234,7 +234,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 {
     static double cpuUsage = 0.0;
-    int delayTime = 10000000;// 10s    
+    int delayTime = 10000000;
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
