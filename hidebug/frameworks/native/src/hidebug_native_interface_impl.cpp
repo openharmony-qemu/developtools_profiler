@@ -234,12 +234,13 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 {
     static double cpuUsage = 0.0;
-    if(cpuUsageTaskFlag_) {
+    int delayTime = 10000000; // 10s    
+    if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
-    static std::shared_ptr<OHOS::HiviewDFX::UCollectUtil::CpuCollector> cpuCollector = 
+    static std::shared_ptr<OHOS::HiviewDFX::UCollectUtil::CpuCollector> cpuCollector =
         OHOS::HiviewDFX::UCollectUtil::CpuCollector::Create();
-    if(cpuCollector == nullptr) {
+    if (cpuCollector == nullptr) {
         HILOG_ERROR(LOG_CORE, "Create CpuCollector Failed");
         return cpuUsage;
     }
@@ -249,9 +250,9 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
             HILOG_ERROR(LOG_CORE, "Get cpu usage failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
         }
         cpuUsage = collectResult.data.cpuUsage;
-        ffrt::submit(task,{},{},ffrt::task_attr().delay(10000000));
+        ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     }
-    ffrt::submit(task,{},{},ffrt::task_attr().delay(10000000));
+    ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     cpuUsageTaskFlag_ = true;
     return cpuUsage;
 }
