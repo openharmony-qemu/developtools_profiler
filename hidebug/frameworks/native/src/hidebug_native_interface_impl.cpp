@@ -252,7 +252,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
         }
         cpuUsage = collectResult.data.cpuUsage;
         ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
-    }
+    };
     ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     cpuUsageTaskFlag_ = true;
     return cpuUsage;
