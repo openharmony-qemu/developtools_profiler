@@ -203,7 +203,9 @@ public:
 private:
     bool CheckTraceErrorCode();
 private:
-    static inline HidebugAppThreadCpu threadCpu_; // It should be initialized at startup.
+    double GetCpuUsageBySelf(pid_t pid);
+    bool cpuUsageTaskFlag_ = false;
+    std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
     std::string date_;
@@ -225,14 +227,41 @@ HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
-    std::unique_ptr<DumpUsage> dumpUsage = std::make_unique<DumpUsage>();
-    pid_t pid = getprocpid();
-    return dumpUsage->GetCpuUsage(pid);
+    static pid_t pid = getprocpid();
+    return GetCpuUsageBySelf(pid);
+}
+
+double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
+{
+    static double cpuUsage = 0.0;
+    if(cpuUsageTaskFlag_) {
+        return cpuUsage;
+    }
+    static std::shared_ptr<OHOS::HiviewDFX::UCollectUtil::CpuCollector> cpuCollector = 
+        OHOS::HiviewDFX::UCollectUtil::CpuCollector::Create();
+    if(cpuCollector == nullptr) {
+        HILOG_ERROR(LOG_CORE, "Create CpuCollector Failed");
+        return cpuUsage;
+    }
+    static std::function<void()> task = []() {
+        auto collectResult = cpuCollector->CollectProcessCpuStatInfo(pid);
+        if (collectResult.retCode != UCollect::UcError::SUCCESS) {
+            HILOG_ERROR(LOG_CORE, "Get cpu usage failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
+        }
+        cpuUsage = collectResult.data.cpuUsage;
+        ffrt::submit(task,{},{},ffrt::task_attr().delay(10000000));
+    }
+    ffrt::submit(task,{},{},ffrt::task_attr().delay(10000000));
+    cpuUsageTaskFlag_ = true;
+    return cpuUsage;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
-    auto collectResult = threadCpu_.CollectThreadStatInfos();
+    if (threadCpu_ == nullptr) {
+        threadCpu_ = std::make_unique<HidebugAppThreadCpu>();
+    }
+    auto collectResult = threadCpu_->CollectThreadStatInfos();
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
         HILOG_ERROR(LOG_CORE, "GetAppThreadCpuUsage fail, ret: %{public}d", static_cast<int>(collectResult.retCode));
         return {};
