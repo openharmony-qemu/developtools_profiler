@@ -53,6 +53,7 @@ group("hiprofiler_targets") {
         "plugins/native_daemon:native_daemon",
         "plugins/native_daemon:native_daemon_client",
         "plugins/native_daemon:libmemory_profiler",
+        "plugins/native_daemon:memory_profiler_client",
         "plugins/native_hook:native_hook",
         "plugins/native_hook:perf_test_data",
       ]
@@ -88,6 +89,7 @@ group("unittest") {
   if (is_ohos && use_musl && !is_asan) {
     deps += [
       "plugins/native_daemon/native_memory_profiler_sa/test:unittest",
+      "plugins/native_daemon/memory_profiler_client/test:unittest",
       "plugins/native_daemon/test:unittest",
       "plugins/native_hook/test:unittest",
       "plugins/preload_client/test:unittest",

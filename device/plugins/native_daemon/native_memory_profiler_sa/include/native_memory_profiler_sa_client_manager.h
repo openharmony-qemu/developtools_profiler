@@ -17,26 +17,13 @@
 #define NATIVE_MEMORY_PROFILER_SA_CLIENT_MANAGER_H
 
 #include "i_native_memory_profiler_sa.h"
+#include "mem_config.h"
 #include "native_memory_profiler_sa_lazyload_callback.h"
 #include <iservice_registry.h>
 #include <map>
 #include <memory>
 
 namespace OHOS::Developtools::NativeDaemon {
-struct SimplifiedMemStats {
-    size_t size = 0;
-    size_t allocated = 0;
-    size_t nmalloc = 0;
-    size_t ndalloc = 0;
-};
-
-struct SimplifiedMemConfig {
-    size_t largestSize = 0;
-    size_t secondLargestSize = 0;
-    size_t maxGrowthSize = 0;
-    size_t sampleSize = 0;
-};
-
 using Range = std::pair<uint64_t, uint64_t>;
 
 struct MemSaConfig {
@@ -48,14 +35,6 @@ struct MemLeakConfig {
     uint32_t duration = 0;
     uint32_t limit = 0;
     uint32_t format = 0;
-};
-
-struct MemAPIConfig {
-    uint32_t maxDuration;
-    uint32_t filterSize;
-    uint32_t maxStackDepth;
-    uint32_t statisticsInterval;
-    uint32_t sampleInterval;
 };
 
 enum class InternalResourceType : int32_t {

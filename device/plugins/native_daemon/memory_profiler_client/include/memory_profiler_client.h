@@ -1,0 +1,66 @@
+/*
+ * Copyright (c) Huawei Technologies Co., Ltd. 2026. All rights reserved.
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#ifndef MEMORY_PROFILER_CLIENT_H
+#define MEMORY_PROFILER_CLIENT_H
+
+#include <vector>
+
+#include <sys/types.h>
+
+#include "mem_config.h"
+
+namespace OHOS {
+namespace Developtools {
+namespace NativeDaemon {
+class MemoryProfilerClient {
+public:
+    MemoryProfilerClient() = default;
+    virtual ~MemoryProfilerClient() = default;
+
+    /**
+     * @desc: Start memory profiler on simplified memory configuration.
+     * @param fd: The file descriptor to write the profiling result.
+     * @param duration: The profiling duration in seconds.
+     * @param config: The simplified memory profiler configuration.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    virtual int32_t Start(int fd, uint32_t duration, SimplifiedMemConfig& config) = 0;
+
+    /**
+     * @desc: Start memory profiler on memory API configuration.
+     * @param config: The memory API profiler configuration.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    virtual int32_t Start(MemAPIConfig& config) = 0;
+
+    /**
+     * @desc: Start simplified nmd mode profiler.
+     * @param memStats: The simplified memory stats vector to store the result.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    virtual int32_t StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats) = 0;
+
+    /**
+     * @desc: Stop memory profiler.
+     * @return: RET_OK on success, RET_ERR on failure.
+     */
+    virtual int32_t Stop() = 0;
+};
+}   // namespace NativeDaemon
+}   // namespace Developtools
+}   // namespace OHOS
+
+#endif // MEMORY_PROFILER_CLIENT_H

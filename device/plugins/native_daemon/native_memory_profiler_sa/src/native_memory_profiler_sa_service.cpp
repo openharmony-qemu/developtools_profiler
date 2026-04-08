@@ -539,7 +539,7 @@ int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryPro
                                                  uint32_t fd, MessageParcel &reply)
 {
     auto args = GetCmdArgs(config);
-    if (!HasProfilingPermission()) {
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
         COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
             "no profiling permission");
         PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
