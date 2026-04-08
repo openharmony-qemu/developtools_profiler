@@ -33,7 +33,7 @@
 #include "client/trace_collector_client.h"
 #include "storage_acl.h"
 #include "utility/memory_collector.h"
-#include "ffrt.hs"
+#include "ffrt.h"
 
 namespace OHOS {
 namespace HiviewDFX {
