@@ -33,6 +33,7 @@
 #include "client/trace_collector_client.h"
 #include "storage_acl.h"
 #include "utility/memory_collector.h"
+#include "ffrt.hs"
 
 namespace OHOS {
 namespace HiviewDFX {
@@ -234,7 +235,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 {
     static double cpuUsage = 0.0;
-    int delayTime = 10000000;
+    static int delayTime = 10000000;
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
@@ -244,7 +245,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
         HILOG_ERROR(LOG_CORE, "Create CpuCollector Failed");
         return cpuUsage;
     }
-    static std::function<void()> task = []() {
+    static std::function<void()> task = [&]() {
         auto collectResult = cpuCollector->CollectProcessCpuStatInfo(pid);
         if (collectResult.retCode != UCollect::UcError::SUCCESS) {
             HILOG_ERROR(LOG_CORE, "Get cpu usage failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
