@@ -172,6 +172,16 @@ void NativeMemoryProfilerSaService::ApplyMemtraceConfig(std::shared_ptr<NativeMe
 
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    auto args = GetCmdArgs(config);
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        return RET_ERR;
+    }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
@@ -189,6 +199,16 @@ int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfile
 int32_t NativeMemoryProfilerSaService::Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                              MessageParcel &reply)
 {
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    auto args = GetCmdArgs(config);
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        return RET_ERR;
+    }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
@@ -315,6 +335,16 @@ int32_t NativeMemoryProfilerSaService::Stop(const std::string& name)
 
 int32_t NativeMemoryProfilerSaService::DumpData(uint32_t fd, std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
+    if (config == nullptr) {
+        return RET_ERR;
+    }
+    auto args = GetCmdArgs(config);
+    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Start failed, no profiling permission!");
+        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
+            "no profiling permission");
+        return RET_ERR;
+    }
     if (IsNativeDeamonRunning()) {
         PROFILER_LOG_ERROR(LOG_CORE, "Native Daemon is already running,errorcode is:%d.",
             static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_CONFLICT));
@@ -519,17 +549,10 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
 
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd)
 {
-    auto args = GetCmdArgs(config);
     if (config == nullptr) {
         return RET_ERR;
     }
-    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
-        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
-            "no profiling permission");
-        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
-        return RET_ERR;
-    }
-
+    auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
 
@@ -554,16 +577,10 @@ static int32_t WaitSimplifiedNmdTimeout(uint32_t times, std::shared_ptr<HookMana
 int32_t NativeMemoryProfilerSaService::StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
                                                  uint32_t fd, MessageParcel &reply)
 {
-    auto args = GetCmdArgs(config);
-    if (config->startType_ != START_TYPE_API && !HasProfilingPermission()) {
-        COMMON::PluginWriteToHisysevent("native_hook_plugin", "hiview", args, COMMON::ErrorType::RET_NO_PERMISSION,
-            "no profiling permission");
-        PROFILER_LOG_ERROR(LOG_CORE, "StartHook failed, no profiling permission!");
-        return RET_ERR;
-    }
     if (config == nullptr) {
         return RET_ERR;
     }
+    auto args = GetCmdArgs(config);
     std::shared_ptr<HookManager> hook = std::make_shared<HookManager>();
     CHECK_NOTNULL(hook, RET_ERR, "Failed to create HookManager");
     bool isInputZeroFd = (fd == 0); // when fd is 0, need to bring fd out of function to close.
