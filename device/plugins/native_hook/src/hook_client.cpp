@@ -1310,11 +1310,11 @@ void hook_resTraceMove(unsigned long long mask, void* oldAddr, void* newAddr, si
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
-    HookClientHolder client(g_hookClient);
-    if (!client.IsValid()) {
+    if ((mask & g_clientConfig.traceMask) == 0) {
         return;
     }
-    if ((mask & g_clientConfig.traceMask) == 0) {
+    HookClientHolder client(g_hookClient);
+    if (!client.IsValid()) {
         return;
     }
     PERF_TRACK(OperatType::resTraceMove);
@@ -1334,8 +1334,11 @@ void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
     if (!HookGuard::IsReady() || HookGuard::ShouldSkipMemtrace()) {
         return;
     }
-
     if ((mask & g_clientConfig.traceMask) == 0) {
+        return;
+    }
+    HookClientHolder client(g_hookClient);
+    if (!client.IsValid()) {
         return;
     }
     PERF_TRACK(OperatType::resTraceFreeRegion);
@@ -1345,7 +1348,6 @@ void hook_resTraceFreeRegion(unsigned long long mask, void* addr, size_t size)
     rawdata.tagId = HookGuard::GetPredefinedTagId(mask);
 
     uintptr_t stackPtr = 0;
-    HookClientHolder client(g_hookClient);
     client.SendStackWithPayload(&rawdata, sizeof(BaseStackRawData), reinterpret_cast<void *>(stackPtr), 0,
                                 reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
 }

@@ -327,6 +327,26 @@ HWTEST_F(HookClientExternTest, HookResTraceMoveTest, TestSize.Level0)
 
 /**
  * @tc.name: native hook
+ * @tc.desc: Test HookResTraceMove skips send when trace mask mismatches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookResTraceMoveMaskMismatchTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.memtraceEnable = true;
+    g_clientConfig.traceMask = 0;
+
+    size_t size = 100;
+    ohos_malloc_hook_resTraceMove(1, reinterpret_cast<void*>(0x1000), reinterpret_cast<void*>(0x1000), size);
+
+    EXPECT_TRUE(typeVec.empty());
+    EXPECT_TRUE(sizeVec.empty());
+}
+
+/**
+ * @tc.name: native hook
  * @tc.desc: Test HookResTraceFreeRegionTest process.
  * @tc.type: FUNC
  */
@@ -346,6 +366,26 @@ HWTEST_F(HookClientExternTest, HookResTraceFreeRegionTest, TestSize.Level0)
     EXPECT_EQ(typeVec, expectedTypeVec);
     std::vector<int> expectedsizeVec = {size};
     EXPECT_EQ(sizeVec, expectedsizeVec);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test HookResTraceFreeRegion skips send when trace mask mismatches.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookResTraceFreeRegionMaskMismatchTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+    g_clientConfig.memtraceEnable = true;
+    g_clientConfig.traceMask = 0;
+
+    size_t size = 100;
+    ohos_malloc_hook_resTraceFreeRegion(1, reinterpret_cast<void*>(0x1000), size);
+
+    EXPECT_TRUE(typeVec.empty());
+    EXPECT_TRUE(sizeVec.empty());
 }
 
 /**
