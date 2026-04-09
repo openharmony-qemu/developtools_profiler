@@ -98,6 +98,7 @@ message FilePathMap {
     string name = 2;
     int32 pid = 3;
     uint64 adlt_base = 4;
+    string build_id = 5;
 }
 
 message SymbolMap {

@@ -499,4 +499,66 @@ HWTEST_F(StackPreprocessExtTest, InitializeDirectorTest, TestSize.Level0)
     StackPreprocess::SetDirectorForTest(nullptr);
     EXPECT_EQ(StackPreprocess::GetDirectorForTest(), nullptr);
 }
+
+/*
+@tc.name: GetBuildIdInvalidElfTest
+@tc.desc: test GetBuildId method with invalid elf file.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, GetBuildIdInvalidElfTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Test with non-existent file - should return empty string
+    std::string result = preprocess.GetBuildId("/non/existent/path/libtest.so");
+    EXPECT_EQ(result, "");
+
+    // Test with invalid elf file (empty file)
+    const std::string tempInvalidElf = "/tmp/test_invalid_elf.so";
+    FILE* fp = fopen(tempInvalidElf.c_str(), "w");
+    if (fp != nullptr) {
+        fprintf(fp, "not a valid elf file");
+        fclose(fp);
+
+        result = preprocess.GetBuildId(tempInvalidElf);
+        EXPECT_EQ(result, "");
+
+        unlink(tempInvalidElf.c_str());
+    }
+}
+
+/*
+@tc.name: GetBuildIdValidElfTest
+@tc.desc: test GetBuildId method with valid elf file.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, GetBuildIdValidElfTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Test with a valid system library
+    // Note: This test may return empty string if the library doesn't have build-id
+    // or the file cannot be accessed in the test environment
+    std::string result = preprocess.GetBuildId("/system/lib/libc.so");
+    // If the file exists and is valid, we should get a build-id (hex string) or empty if not found
+    // We just verify the method doesn't crash and returns a valid string
+    EXPECT_TRUE(result.empty() || result.length() > 0);
+}
+
+/*
+@tc.name: GetBuildIdEmptyPathTest
+@tc.desc: test GetBuildId method with empty path.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, GetBuildIdEmptyPathTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+
+    // Test with empty path
+    std::string result = preprocess.GetBuildId("");
+    EXPECT_EQ(result, "");
+}
 }

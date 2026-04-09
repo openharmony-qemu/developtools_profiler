@@ -329,6 +329,7 @@ private:
     void FlushData(OHOS::Developtools::Profiler::ProtoEncoder::BatchNativeHookData& stackData);
     void Flush(const uint8_t* src, size_t size);
     void GetSymbols(const std::string& filePath, ElfSymbolTable& symbols);
+    std::string GetBuildId(const std::string& soName);
     template <typename T>
     void ProcessStackData(std::shared_ptr<HookRecord>& hookRecord, std::vector<CallFrame>& callFrames, T& stackData);
     template <typename T>

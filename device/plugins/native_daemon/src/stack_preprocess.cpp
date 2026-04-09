@@ -29,6 +29,7 @@
 #include "google/protobuf/text_format.h"
 #include "trace_file_writer.h"
 #include "unique_stack_table.h"
+#include "dfx_elf.h"
 
 constexpr uint32_t MAX_MATCH_CNT = 1000;
 constexpr uint32_t MAX_MATCH_INTERVAL = 3600;
@@ -1873,6 +1874,7 @@ inline void StackPreprocess::ReportFilePathMap(CallFrame& callFrame, T& stackDat
         filePathMap->set_id(callFrame.filePathId_);
         filePathMap->set_name(std::string(callFrame.filePath_));
         filePathMap->set_pid(pid_);
+        filePathMap->set_build_id(GetBuildId(std::string(callFrame.filePath_)));
     }
 }
 
@@ -1930,6 +1932,7 @@ void StackPreprocess::SetMapsInfo()
                 } else {
                     filepathMap->set_adlt_base(std::numeric_limits<uint64_t>::max());
                 }
+                filepathMap->set_build_id(GetBuildId(curMemMaps->name_));
                 SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
                 for (auto& map : curMemMaps->GetMaps()) {
                     if (map->prots & PROT_EXEC) {
@@ -2344,4 +2347,16 @@ void StackPreprocess::FlushRecordApplyAndReleaseMatchData()
         FlushData(stackData);
         }, stackData_);
     releasedPeriodListData_.clear();
+}
+
+std::string StackPreprocess::GetBuildId(const std::string& soName)
+{
+    OHOS::HiviewDFX::RegularElfFactory elfFactory(soName);
+    auto elf = elfFactory.Create();
+    if (elf == nullptr || !elf->IsValid()) {
+        PROFILER_LOG_WARN(LOG_CORE, "GetBuildId Failed to create valid DfxElf for: %s", soName.c_str());
+        return "";
+    }
+    std::string buildId = elf->GetBuildId();
+    return buildId;
 }
