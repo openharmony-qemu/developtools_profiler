@@ -15,6 +15,7 @@
 
 #include "native_memory_profiler_sa_client_manager.h"
 #include "memory_trace.h"
+#include "native_memory_profiler_sa_callback_stub.h"
 #include "native_memory_profiler_sa_proxy.h"
 #include "common.h"
 
@@ -23,6 +24,7 @@
 #include <fstream>
 #include <functional>
 #include <iostream>
+#include <mutex>
 #include <sstream>
 #include <sys/stat.h>
 
@@ -51,6 +53,43 @@ constexpr int HOURS_PER_DAY = 24;
 const std::string MEM_PROFILER_COUNT_FILE_NAME = "/MemProfilerCount";
 const std::string FILE_SUFFIX = ".htrace";
 const std::vector<std::string> resourceTypeValues = { "fd", "thread", "native", "gpu", "global_handle" };
+}
+
+static std::mutex g_profilingCallbackMutex;
+static NativeMemoryProfilerSaClientManager::ProfilingCallback g_profilingCallback = nullptr;
+static std::string g_currentFilePath;
+static int32_t g_currentType = 0;
+
+static NativeMemoryProfilerSaClientManager::ProfilingCallback TakeProfilingCallback(std::string& filePath)
+{
+    std::lock_guard<std::mutex> lock(g_profilingCallbackMutex);
+    filePath = g_currentFilePath;
+    NativeMemoryProfilerSaClientManager::ProfilingCallback callback = g_profilingCallback;
+    g_profilingCallback = nullptr;
+    g_currentFilePath.clear();
+    return callback;
+}
+
+class NativeMemoryProfilerSaResultCallback final : public NativeMemoryProfilerSaCallbackStub {
+public:
+    void OnProfilingResult(int32_t errorCode, const std::string& filePath) override
+    {
+        std::string currentPath;
+        NativeMemoryProfilerSaClientManager::ProfilingCallback callback = TakeProfilingCallback(currentPath);
+        if (callback != nullptr) {
+            callback(errorCode, filePath);
+        }
+    }
+};
+
+static sptr<IRemoteObject> GetProfilingResultCallbackObject()
+{
+    static sptr<NativeMemoryProfilerSaResultCallback> callback =
+        new (std::nothrow) NativeMemoryProfilerSaResultCallback();
+    if (callback == nullptr) {
+        return nullptr;
+    }
+    return callback->AsObject();
 }
 
 static int32_t InvokeWithProxy(std::function<int32_t(NativeMemoryProfilerSaProxy&)> invoker)
@@ -92,11 +131,14 @@ int32_t NativeMemoryProfilerSaClientManager::Start(std::shared_ptr<NativeMemoryP
     return InvokeWithProxy([&config](NativeMemoryProfilerSaProxy& proxy) { return proxy.Start(config); });
 }
 
-int32_t NativeMemoryProfilerSaClientManager::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+int32_t NativeMemoryProfilerSaClientManager::StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+    const sptr<IRemoteObject>& callback)
 {
     CHECK_NOTNULL(config, RET_ERR, "NativeMemoryProfilerSaClientManager: config is nullptr");
     CHECK_TRUE(CheckConfig(config), RET_ERR, "CheckConfig failed");
-    return InvokeWithProxy([&config](NativeMemoryProfilerSaProxy& proxy) { return proxy.StartPidVoid(config); });
+    return InvokeWithProxy([&config, &callback](NativeMemoryProfilerSaProxy& proxy) {
+        return proxy.StartPidVoid(config, callback);
+    });
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Start(NativeMemProfilerType type, uint32_t pid, uint32_t duration,
@@ -152,7 +194,21 @@ int32_t NativeMemoryProfilerSaClientManager::Stop()
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
-    return proxy.Stop();
+    int32_t ret = proxy.Stop();
+    if (ret != RET_OK) {
+        std::string filePath;
+        ProfilingCallback callback = TakeProfilingCallback(filePath);
+        if (callback != nullptr) {
+            callback(ret, "");
+        }
+    }
+    return ret;
+}
+
+int32_t NativeMemoryProfilerSaClientManager::Stop(std::string& filePath)
+{
+    filePath = g_currentFilePath;
+    return Stop();
 }
 
 int32_t NativeMemoryProfilerSaClientManager::DumpData(uint32_t fd,
@@ -327,7 +383,8 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     });
 }
 
-int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(int32_t type, MemAPIConfig* inputConfig)
+int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
+    int32_t type, MemAPIConfig* inputConfig, ProfilingCallback callback)
 {
     if (inputConfig == nullptr) {
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
@@ -367,18 +424,34 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(int32_t type, M
     config->typeFileName_ = filename;
     config->startType_ = 1; // 1:API
 
+    if (!UpdateMemProfilerUserCount()) {
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
+    }
+
+    g_currentType = type;
+    g_currentFilePath = fullPath;
+    SetProfilingCallback(callback);
+    sptr<IRemoteObject> callbackObject = GetProfilingResultCallbackObject();
+    if (callbackObject == nullptr) {
+        SetProfilingCallback(nullptr);
+        if (!RollbackMemProfilerUserCount()) {
+            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
+        }
+        return RET_ERR;
+    }
+
     if (!COMMON::CleanOldenFiles(NAPI_FILE_PATH_PREFIX)) {
         PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: CleanOldenFiles failed");
     }
 
-    int32_t retStart = StartPidVoid(config);
+    int32_t retStart = StartPidVoid(config, callbackObject);
     if (retStart != 0) {
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: StartPidVoid failed");
+        SetProfilingCallback(nullptr);
+        if (!RollbackMemProfilerUserCount()) {
+            PROFILER_LOG_WARN(LOG_CORE, "NativeMemoryProfilerSaClientManager: rollback count failed");
+        }
         return retStart;
-    }
-
-    if (!UpdateMemProfilerUserCount()) {
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
     return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS);
 }
@@ -586,6 +659,25 @@ bool NativeMemoryProfilerSaClientManager::UpdateMemProfilerUserCount()
     return true;
 }
 
+bool NativeMemoryProfilerSaClientManager::RollbackMemProfilerUserCount()
+{
+    const std::string filepath = std::string(NAPI_FILE_PATH_PREFIX) + std::string(MEM_PROFILER_COUNT_FILE_NAME);
+    long long timeStamp = 0;
+    int32_t count = 0;
+    if (!ReadCountFile(filepath, timeStamp, count)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to read count file");
+        return false;
+    }
+    if (count <= 0) {
+        return true;
+    }
+    if (!WriteCountFileAtomic(filepath, timeStamp, count - 1)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "RollbackMemProfilerUserCount: failed to write count file");
+        return false;
+    }
+    return true;
+}
+
 int32_t NativeMemoryProfilerSaClientManager::GetMemProfilerUseCountToday()
 {
     const std::string filepath = std::string(NAPI_FILE_PATH_PREFIX) + std::string(MEM_PROFILER_COUNT_FILE_NAME);
@@ -705,4 +797,14 @@ int32_t NativeMemoryProfilerSaClientManager::GetGwpAsan(int fd, pid_t pid, GwpAs
         return proxy.DumpData(fd, config);
     });
 }
+
+void NativeMemoryProfilerSaClientManager::SetProfilingCallback(ProfilingCallback callback)
+{
+    std::lock_guard<std::mutex> lock(g_profilingCallbackMutex);
+    g_profilingCallback = callback;
+    if (callback == nullptr) {
+        g_currentFilePath.clear();
+    }
+}
+
 } // namespace OHOS::Developtools::NativeDaemon

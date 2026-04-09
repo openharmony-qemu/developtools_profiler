@@ -34,13 +34,10 @@
  * @syscap SystemCapability.HiviewDFX.HiProfiler.HiDebug
  * @since 12
  */
-
 #ifndef HIVIEWDFX_HIDEBUG_H
 #define HIVIEWDFX_HIDEBUG_H
-
 #include <stdint.h>
 #include "hidebug_type.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
@@ -321,12 +318,14 @@ uint64_t OH_HiDebug_SetCrashObj(HiDebug_CrashObjType type, void* addr);
 void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
 
 /**
- * @brief Starts Resource Profiler for the current process. When {@link HIDEBUG_RES_PROF_SUCCESS} is returned, you
- * can call {@link OH_HiDebug_StopProfiler} to stop the resource collection. If {@link OH_HiDebug_StopProfiler} is
- * not called, the resource collection will continue until the maximum duration is reached.
+ * @brief Starts Resource Profiler for the current process asynchronously.
+ * The callback is invoked only after profiling stops, including auto-stop caused by the maximum duration.
+ * When profiling output is available, the callback carries the output file path. If profiling stops without
+ * producing output, the callback is invoked with a NULL file path.
  *
  * @param type Type of resource to be profiled.
  * @param config Configuration parameters for the profiler.
+ * @param callback Callback to receive the profiling result. See {@link OH_HiDebug_ProfilingCallback}.
  * @return Result code
  *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler started successfully.
  *         {@link HIDEBUG_RES_PROF_INVALID_ARG} Invalid resource profiler argument.
@@ -340,8 +339,6 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  *         {@link HIDEBUG_RES_PROF_ALREADY_STARTED} Resource profiler already started.
  *         {@link HIDEBUG_RES_PROF_PROCESS_OVERLIMIT} Resource profiler process count exceeds the limit.
  *         {@link HIDEBUG_RES_PROF_CONFLICT} Resource profiler conflicts with CLI tools or system profiling tasks.
- *         {@link HIDEBUG_RES_PROF_AUTO_STOPPED_BY_DURATION} Resource profiler automatically stopped due to the
- *         duration limit.
  *         {@link HIDEBUG_RES_PROF_DAILY_QUOTA_EXCEEDED} Daily quota exceeded during resource profiling.
  *         {@link HIDEBUG_RES_PROF_CPU_OVERLOADED} System is experiencing high CPU utilization.
  *         {@link HIDEBUG_RES_PROF_MEM_PRESSURE_CRITICAL} Insufficient available memory.
@@ -349,11 +346,12 @@ void OH_HiDebug_ResetCrashObj(uint64_t crashObj);
  *         {@link HIDEBUG_RES_PROF_FAILURE} Failed to start the resource profiler.
  * @since 24
  */
-HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config);
+HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDebug_ResProfilerConfig* config,
+    OH_HiDebug_ProfilingCallback callback);
 
 /**
- * @brief Stops resource profiler for the current process. This API can be called after the OH_HiDebug_StartProfiler
- * API and the call duration must be within the maximum duration
+ * @brief Stops resource profiler for the current process. This API can be called after the
+ * {@link OH_HiDebug_StartProfiler} API and the call duration must be within the maximum duration.
  *
  * @return Result code
  *         {@link HIDEBUG_RES_PROF_SUCCESS} Resource profiler stopped successfully.
@@ -362,7 +360,6 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDe
  * @since 24
  */
 HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);
-
 #ifdef __cplusplus
 }
 #endif // __cplusplus

@@ -74,7 +74,8 @@ int32_t NativeMemoryProfilerSaStub::StubStartPidVoid(MessageParcel &data, Messag
     if (!NativeMemoryProfilerSaConfig::Unmarshalling(data, config)) {
         return RET_ERR;
     }
-    return StartPidVoid(config);
+    sptr<IRemoteObject> callback = data.ReadRemoteObject();
+    return StartPidVoid(config, callback);
 }
 
 int32_t NativeMemoryProfilerSaStub::StubStopPid(MessageParcel &data, MessageParcel &reply)

@@ -32,7 +32,8 @@ public:
     virtual ~NativeMemoryProfilerSaProxy() = default;
 
     int32_t Start(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
-    int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config) override;
+    int32_t StartPidVoid(std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
+        const sptr<IRemoteObject>& callback) override;
     int32_t Stop(uint32_t pid) override;
     int32_t Stop() override;
     int32_t Stop(const std::string& name) override;

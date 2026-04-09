@@ -44,7 +44,7 @@ void CollectorThread()
     config.sampleInterval = sampleInterval;
     config.statisticsInterval = statisticsInterval;
 
-    OH_HiDebug_StartProfiler(profilerType, &config);
+    OH_HiDebug_StartProfiler(profilerType, &config, nullptr);
     std::cout << "Collector thread: collecting data..." << std::endl;
         
     std::this_thread::sleep_for(std::chrono::seconds(thirty));
