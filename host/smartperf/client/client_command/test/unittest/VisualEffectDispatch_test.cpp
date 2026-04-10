@@ -695,7 +695,8 @@ HWTEST_F(VisualEffectDispatchTest, VisualEffectDispatch_EdgeCase_005, TestSize.L
 
 HWTEST_F(VisualEffectDispatchTest, VisualEffectDispatch_EdgeCase_006, TestSize.Level1)
 {
-    std::map<std::string, std::string>& itemData = VisualEffectDispatch::GetInstance().GetVisualEffectDispatchItemData();
+    std::map<std::string, std::string>& itemData =
+        VisualEffectDispatch::GetInstance().GetVisualEffectDispatchItemData();
     for (int i = 0; i < 1000; i++) {
         itemData["key" + std::to_string(i)] = "value" + std::to_string(i);
     }
