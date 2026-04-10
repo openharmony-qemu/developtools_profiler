@@ -46,6 +46,7 @@
 #include "include/FPS.h"
 #include "include/hiperf.h"
 #include "include/visual_effect_analysis.h"
+#include "include/VisualEffectDispatch.h"
 
 #define SMARTPERF "smartperf"
 namespace OHOS {
@@ -324,7 +325,11 @@ void SpThreadSocket::DealMsg(const std::string& recvStr, SpServerSocket &spSocke
     }
     if (recvStr.find("init:::") != std::string::npos) {
         WLOGI("Processing 'init:::' command.");
-        InitRecv(recvStr + " -j", spSocket, SocketConnectType::CMD_SOCKET);
+        if (recvStr.find("-f") != std::string::npos) {
+            InitRecv(recvStr + " -j", spSocket, SocketConnectType::CMD_SOCKET);
+        } else {
+            InitRecv(recvStr, spSocket, SocketConnectType::CMD_SOCKET);
+        }
         FPS::GetInstance().isNeedDump = true;
         FPS::GetInstance().isStartStop = true;
     } else if (recvStr.find("start:::") != std::string::npos) {
@@ -817,6 +822,23 @@ void SpThreadSocket::UdpStartMessProcess(SpServerSocket &spSocket, SpProfiler *p
     } else if (iterator->first == MessageType::GET_GPU_INFO) {
         GetSocketPort(recvBuf);
         ConnectAndSendFile(spSocket, indexFileFePath);
+    } else {
+        GetCatchTraceResult(retCode, spSocket,  iterator, recvBuf);
+    }
+}
+
+void SpThreadSocket::GetCatchTraceResult(std::string& retCode, SpServerSocket &spSocket,
+    std::unordered_map<MessageType, std::string>::const_iterator iterator, const std::string& recvBuf)
+{
+    if (iterator->first == MessageType::CATCH_TRACE_SUCCESS) {
+        bytrace.hiviewTrace = SplitMsg(recvBuf);
+        bytrace.CpTraceFile();
+        if (SPUtils::GetDirSize(std::string("/data/local/tmp/hitrace")) > maxTraceSize_) {
+            spSocket.Sendto(std::string("Over_specification"));
+            VisualEffectDispatch::GetInstance().SetSpeciFlag();
+        }
+    } else if (iterator->first == MessageType::CAPTURE_FAILED) {
+        VisualEffectDispatch::GetInstance().SetCatchTraceFlag();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);

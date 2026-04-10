@@ -57,6 +57,7 @@ ohos_executable("SP_daemon") {
     "RAM.cpp",
     "Temperature.cpp",
     "Threads.cpp",
+    "VisualEffectDispatch.cpp",
     "client_control.cpp",
     "control_call_cmd.cpp",
     "cpu_info.cpp",

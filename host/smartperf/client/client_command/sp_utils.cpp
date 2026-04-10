@@ -1085,5 +1085,37 @@ void SPUtils::OverDumpFun()
     const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
     LoadCmd(dumpCmd, cmdResult);
 }
+
+size_t SPUtils::GetDirSize(const std::string &dirPath)
+{
+    if (dirPath.empty()) {
+        LOGE("The dirPath does not exist.");
+        return 0;
+    }
+    size_t traceSize = 0;
+    std::string cmd = "cd " + dirPath + " & ls -al";
+    char buf[1024] = {'\0'};
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        LOGE("open dir failed");
+        return traceSize;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line(buf);
+        if (line.find("Other_trace") != std::string::npos) {
+            int count = 5;
+            std::istringstream iss(line);
+            std::vector<std::string> tokens;
+            std::string token;
+            while (iss >> token) {
+                tokens.push_back(token);
+            }
+            if (tokens.size() >= count) {
+                traceSize += SPUtilesTye::StringToSometype<size_t>(tokens[count - 1]);
+            }
+        }
+    }
+    return traceSize;
+}
 }
 }

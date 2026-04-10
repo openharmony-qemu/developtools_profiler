@@ -117,6 +117,7 @@ private:
         {"-SESSIONID", {ArgumentParser::ArgType::STRING, "session id"}},
         {"-aischedule", {ArgumentParser::ArgType::BOOL, "AI schedule"}},
         {"-sh", {ArgumentParser::ArgType::BOOL, "shader"}},
+        {"-ved", {ArgumentParser::ArgType::BOOL, "VisualEffectDispatch"}},
 
         // UDP
         {"-CPU", {ArgumentParser::ArgType::BOOL}},

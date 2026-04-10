@@ -57,7 +57,9 @@ enum class MessageType {
     APP_RECEIVE_DATA_OFF,
     GET_INDEX_INFO,
     GET_GPU_INFO,
-    GET_CYCLE
+    GET_CYCLE,
+    CATCH_TRACE_SUCCESS,
+    CAPTURE_FAILED
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -100,6 +102,8 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_INDEX_INFO, std::string("get_index_info") },
     { MessageType::GET_GPU_INFO, std::string("get_gpu_info") },
     { MessageType::GET_CYCLE, std::string("get_cycle") },
+    { MessageType::CATCH_TRACE_SUCCESS, std::string("catch_trace_success") },
+    { MessageType::CAPTURE_FAILED, std::string("capture_failed") },
 };
 
 enum class CommandType {
@@ -136,6 +140,7 @@ enum class CommandType {
     CT_HCI,
     CT_JITTERS,
     CT_SH,
+    CT_VED,
 };
 enum class CommandHelp {
     HELP,
@@ -175,6 +180,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_MAP = {
     { std::string("-HCI"), CommandType::CT_HCI },
     { std::string("-j"), CommandType::CT_JITTERS },
     { std::string("-sh"), CommandType::CT_SH },
+    { std::string("-ved"), CommandType::CT_VED },
 };
 
 const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
@@ -210,6 +216,7 @@ const std::unordered_map<CommandType, std::string> COMMAND_MAP_REVERSE = {
     { CommandType::CT_HCI, std::string("-HCI") },
     { CommandType::CT_JITTERS, std::string("-j") },
     { CommandType::CT_SH, std::string("-sh") },
+    { CommandType::CT_VED, std::string("-ved") },
 };
 
 const std::unordered_map<std::string, CommandType> COMMAND_SHELL_MAP = {
@@ -235,6 +242,7 @@ const std::unordered_map<std::string, CommandType> COMMAND_SHELL_MAP = {
     { std::string("-ftl"), CommandType::CT_FTL },
     { std::string("-nav"), CommandType::CT_NAV },
     { std::string("-sh"), CommandType::CT_SH },
+    { std::string("-ved"), CommandType::CT_VED },
 };
 
 const std::unordered_map<CommandHelp, std::string> COMMAND_HELP_MAP = {
