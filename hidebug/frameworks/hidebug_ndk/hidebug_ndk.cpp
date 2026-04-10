@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 
+#include "hidebug_dump.h"
 #include "hidebug/hidebug_type.h"
 #include "hidebug_native_interface.h"
 #include "securec.h"
@@ -276,4 +277,14 @@ void OH_HiDebug_RestoreMallocDispatchTable(void)
     g_currentDispatchDatable = __libc_malloc_default_dispatch;
     g_lastDispatchTable = nullptr;
 #endif
+}
+
+HiDebug_ErrorCode OH_HiDebug_RegisterMemDumpListener(const char* name, OH_HiDebug_MemDumpListener listener)
+{
+    if (name == nullptr || strlen(name) == 0 || listener == nullptr) {
+        return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
+    }
+    std::string nameStr(name);
+    auto& instance = OHOS::DelayedRefSingleton<OHOS::HiviewDFX::HidebugMemDumpListener>::GetInstance();
+    return instance.RegisterMemDumpListener(nameStr, listener);
 }

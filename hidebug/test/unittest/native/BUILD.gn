@@ -21,6 +21,7 @@ ohos_unittest("hidebug_test") {
   sources = [
     "hiappevent_util_test.cpp",
     "hidebug_backtrace_test.cpp",
+    "hidebug_dump_test.cpp",
     "hidebug_native_interface_test.cpp",
     "hidebug_profiler_callback_test.cpp",
     "hidebug_test.cpp",
@@ -30,15 +31,18 @@ ohos_unittest("hidebug_test") {
   deps = [
     "$hidebug_path/frameworks/hidebug_ndk:ohhidebug",
     "$hidebug_path/frameworks/native:hidebug_native",
+    "$hidebug_path/interfaces/innerkits/native/hidebug_dump:hidebug_dump",
   ]
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "hilog:libhilog",
     "hiview:libucollection_client",
   ]
 
   include_dirs = [
     "$hidebug_path/frameworks/native/include",
+    "$hidebug_path/interfaces/innerkits/native/hidebug_dump/include",
     "$hidebug_path/interfaces/native/innerkits/include",
     "$hidebug_path/interfaces/native/kits/include",
   ]

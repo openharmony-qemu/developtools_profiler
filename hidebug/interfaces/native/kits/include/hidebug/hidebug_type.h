@@ -634,6 +634,28 @@ typedef struct OH_HiDebug_ProfilingResult {
  */
 typedef void (*OH_HiDebug_ProfilingCallback)(OH_HiDebug_ProfilingResult* result);
 
+/**
+ * @brief Defines an enumeration for the memory listening callback.
+ * @since 26.0.0
+ */
+typedef enum OH_HiDebug_MemListenerType {
+    /**
+     * Default value. No processing is required.
+     * @since 26.0.0
+     */
+    OH_HiDebug_DO_NOTHING = 0,
+    /**
+     * GC operation.
+     * @since 26.0.0
+     */
+    OH_HiDebug_RUNNING_GC = 1,
+    /**
+     * Dump memory snapshot.
+     * @since 26.0.0
+     */
+    OH_HiDebug_DUMP_SNAPSHOT = 2,
+} OH_HiDebug_MemListenerType;
+
 #ifdef __cplusplus
 }
 #endif // __cplusplus

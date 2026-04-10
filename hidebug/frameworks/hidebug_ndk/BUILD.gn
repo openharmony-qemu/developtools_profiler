@@ -16,6 +16,7 @@ import("//build/ohos.gni")
 ohos_shared_library("ohhidebug") {
   include_dirs = [
     "../../interfaces/native/kits/include",
+    "../../interfaces/innerkits/native/hidebug_dump/include",
     "../native/include",
   ]
 
@@ -30,8 +31,9 @@ ohos_shared_library("ohhidebug") {
     defines = [ "HOOK_ENABLE" ]
   }
   deps = [
-    "../native:hidebug_native",
     "../../../device/plugins/native_daemon:libnative_daemon_client",
+    "../../interfaces/innerkits/native/hidebug_dump:hidebug_dump",
+    "../native:hidebug_native",
   ]
 
   external_deps = [
