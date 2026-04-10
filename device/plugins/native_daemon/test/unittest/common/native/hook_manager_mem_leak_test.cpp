@@ -119,6 +119,9 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_UpdateValue, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_Basic, TestSize.Level0)
 {
+    NativeHookConfig config;
+    config.set_native_orphansnapshots_enable(true);
+    hookManager_->SetHookConfig(config);
     hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT));
     hookManager_->SetSaMode(true);
 
@@ -136,6 +139,9 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_Basic, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_TxtFormat, TestSize.Level0)
 {
+    NativeHookConfig config;
+    config.set_native_orphansnapshots_enable(true);
+    hookManager_->SetHookConfig(config);
     hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_TXT));
     hookManager_->SetSaMode(true);
 
@@ -153,6 +159,9 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_TxtFormat, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_VectorFormat, TestSize.Level0)
 {
+    NativeHookConfig config;
+    config.set_native_orphansnapshots_enable(true);
+    hookManager_->SetHookConfig(config);
     hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_VECTOR));
     hookManager_->SetSaMode(true);
 
@@ -170,6 +179,9 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_VectorFormat, TestSize.Level0)
  */
 HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_DisableFormat, TestSize.Level0)
 {
+    NativeHookConfig config;
+    config.set_native_orphansnapshots_enable(true);
+    hookManager_->SetHookConfig(config);
     hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_DISABLE));
     hookManager_->SetSaMode(true);
 
@@ -487,10 +499,10 @@ HWTEST_F(HookManagerMemLeakTest, DestroyPluginSession_ClosesMemLeakFd, TestSize.
  */
 HWTEST_F(HookManagerMemLeakTest, MemLeakFormat_EnumValues, TestSize.Level0)
 {
-    EXPECT_EQ(static_cast<int>(MemLeakFormat::TYPE_TXT), 0);
-    EXPECT_EQ(static_cast<int>(MemLeakFormat::TYPE_VECTOR), 1);
-    EXPECT_EQ(static_cast<int>(MemLeakFormat::TYPE_SNAPSHOT), 2);
-    EXPECT_EQ(static_cast<int>(MemLeakFormat::TYPE_DISABLE), 0xff);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_TXT), 0);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_VECTOR), 1);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT), 2);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_DISABLE), 0xffffffff);
 }
 
 } // namespace
