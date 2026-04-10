@@ -200,6 +200,10 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
         case CommandType::CT_SH:
             profiler = &Shader::GetInstance();
             break;
+        case CommandType::CT_VED: {
+            profiler = &VisualEffectDispatch::GetInstance();
+            break;
+        }
         default:
             break;
     }
@@ -252,10 +256,6 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemContinue(CommandType commandTyp
         }
         case CommandType::CT_HCI: {
             profiler = &Hiperf::GetInstance();
-            break;
-        }
-        case CommandType::CT_VED: {
-            profiler = &VisualEffectDispatch::GetInstance();
             break;
         }
         default:

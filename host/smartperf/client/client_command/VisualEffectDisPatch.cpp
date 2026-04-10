@@ -36,7 +36,7 @@ int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::ma
     if (VisualEffectDispatch::GetInstance().GetSpeciFlag()) {
         return 1;
     } else if (VisualEffectDispatch::GetInstance().GetCatchTraceFlag()) {
-        return 2;
+        return captureFileFlag_;
     }
     return 0;
 }
@@ -60,10 +60,10 @@ void VisualEffectDispatch::SetVisualEffectDispatchType(int32_t type)
 
 void VisualEffectDispatch::SetCollectNum()
 {
-    if (type_ == 2) {
+    if (type_ == captureFileFlag_) {
         LOGI("yanzhe type = 2");
         int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDispatchItemData["maxCollectNum"]);
-        if (collectNum <= 1 || collectNum >= 5) {
+        if (collectNum <= 1 || collectNum >= static_cast<int>(maxFileFlag_)) {
             collectNum = 1;
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);

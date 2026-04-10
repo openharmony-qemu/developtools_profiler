@@ -60,6 +60,8 @@ class VisualEffectDispatch : public SpProfiler {
     bool isRegister = false;
     bool speciFlag_ = false;
     bool catchTraceFlag_ = false;
+    int32_t maxFileFlag_ = 5;
+    int32_t captureFileFlag_ = 2;
 };
 } // namespace SmartPerf
 } // namespace OHOS
