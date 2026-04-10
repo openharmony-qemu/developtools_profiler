@@ -135,9 +135,7 @@ void VisualEffectAnalysis::GetCyclePower()
 
 void VisualEffectAnalysis::ParsingTrace()
 {
-    if (beginTraceflag_) {
-        VisualEffectRanking(traceStartPoint_, traceEndPoint_);
-    }
+    VisualEffectRanking(traceStartPoint_, traceEndPoint_);
     if (!mapRsContainer_.empty()) {
         mapRsContainer_.erase(mapRsContainer_.begin());
     }
@@ -162,6 +160,9 @@ void VisualEffectAnalysis::VisualEffectRanking(const std::string &beginStr, cons
         if (!overStr.empty() && line.find(overStr) != std::string::npos) {
             beginTraceflag_ = false;
             break;
+        }
+        if (beginStr.empty()) {
+            beginTraceflag_ = true;
         }
         if (beginTraceflag_) {
             GetBeginTraceTime(line);
@@ -384,11 +385,6 @@ void VisualEffectAnalysis::GetDdrFre(const std::string &line, const int &cluster
             }
         }
     }
-}
-
-void VisualEffectAnalysis::SetBeginTraceFlag()
-{
-    beginTraceflag_ = true;
 }
 
 std::string VisualEffectAnalysis::GetCutTime(const std::string &line)

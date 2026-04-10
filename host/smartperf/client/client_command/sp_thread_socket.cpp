@@ -698,7 +698,6 @@ void SpThreadSocket::HandleNullMsg(SpServerSocket &spSocket, SpProfiler *profile
     } else if (iterator->first == MessageType::BACK_TO_DESKTOP) {
         BackDesktop();
     } else if (iterator->first == MessageType::GET_CYCLE) {
-        VisualEffectAnalysis::GetInstance().SetBeginTraceFlag();
         VisualEffectAnalysis::GetInstance().CapturingTraces();
     } else {
         HandleNullAddMsg(spSocket, profiler, retCode, recvBuf, iterator);
