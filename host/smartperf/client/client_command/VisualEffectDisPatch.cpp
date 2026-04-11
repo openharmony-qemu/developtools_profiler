@@ -28,7 +28,7 @@ namespace OHOS {
 namespace SmartPerf {
 int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params)
 {
-    LOGI("yanzhe recv type = %d", type);
+    int32_t captureFileFailed = 2; 
     VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(type);
     for (auto &item : params) {
         VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData()[item.first] = item.second;
@@ -36,15 +36,15 @@ int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::ma
     if (VisualEffectDisPatch::GetInstance().GetSpeciFlag()) {
         return 1;
     } else if (VisualEffectDisPatch::GetInstance().GetCatchTraceFlag()) {
-        return captureFileFlag_;
+        return captureFileFailed;
     }
     return 0;
 }
 
 std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
 {
-    LOGI("VisualEffectDisPatch:ItemData map size(%u)", VisualEffectDisPatchItemData.size());
-    return VisualEffectDisPatchItemData;
+    LOGD("VisualEffectDisPatch:ItemData map size(%u)", visualEffectDisPatchItemData.size());
+    return visualEffectDisPatchItemData;
 }
 
 std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatchItemData()
@@ -54,23 +54,19 @@ std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatc
 
 void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 {
-    LOGI("yanzhe set type = %d", type);
     type_ = type;
 }
 
 void VisualEffectDisPatch::SetCollectNum()
 {
     if (type_ == captureFileFlag_) {
-        LOGI("yanzhe type = 2");
         int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDisPatchItemData["maxCollectNum"]);
         if (collectNum <= 1 || collectNum >= static_cast<int>(maxFileFlag_)) {
             collectNum = 1;
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);
-        LOGI("yanzhe send hap sendMessage = %s", sendMessage.c_str());
         ipcCallback_(sendMessage);
     } else if (type_ == 0) {
-        LOGI("yanzhe type = 0");
         ipcCallback_("haveSchedule");
     }
 }
