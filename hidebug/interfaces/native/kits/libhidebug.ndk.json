@@ -66,5 +66,9 @@
     {
         "first_introduced": "24",
         "name": "OH_HiDebug_RequestTrace"
+    },
+    {
+        "first_introduced": "26",
+        "name": "OH_HiDebug_RegisterMemDumpListener"
     }
 ]

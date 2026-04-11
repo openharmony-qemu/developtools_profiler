@@ -362,28 +362,27 @@ HiDebug_ErrorCode OH_HiDebug_StartProfiler(OH_HiDebug_ResourceType type, OH_HiDe
 HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);
 
 /**
- * @brief Callback function that triggers listening. Developers use FD to write memory data
- * in applications so that the hidumper command can export data.
+ * @brief Callback triggered for listening. You can use FDs to write memory data in your app so that you can export the
+ *     data using the hidumper command.
  *
- * @param fd Developers use FD to write memory data in applications.
- * @param tag Callback type. Developers process related logic based on the callback type.
- * @param arg Callback parameter. Different parameters are transferred based on the value of type.
- * @return Indicates whether the operation is successfully.
+ * @param fd FD used to write memory data in the app.
+ * @param tag Callback type. You can process the related logic based on the callback type.
+ * @param arg Callback argument. You can pass different arguments based on the value of type.
+ * @return Whether the operation is successful.
  * @since 26.0.0
  */
 typedef bool (*OH_HiDebug_MemDumpListener)(int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg);
 
 /**
- * @brief When the memory watermark of an application is high or the momery information is
- * manually exported by the hidumper, the third-party application framework or third-party
- * application developer calls back the registered function to dump the internal memory
- * information of the application to the OME vendor through commercial gray.
- *
- * @param name Identifier of the consumer type.
- * @param listener Callback function for triggering listening.
- * @return Result code
- *         {@link HIDEBUG_SUCCESS} The operation is successfully.
- *         {@link HIDEBUG_INVALID_ARGUMENT} Invalid argument.
+ * @brief Registers a listener triggered when the memory watermark of an app is high or the memory information is
+ *     manually exported by hidumper. The third-party app framework or app developer calls back the registered function
+ *     to dump the app's internal memory information to hidumper or upload the information to the OME vendor through
+ *     commercial gray release.
+ * @param name Consumer type ID.
+ * @param listener Callback triggered for listening.
+ * @return Result code.
+ * {@link HIDEBUG_SUCCESS } Operation succeeded.
+ * {@link HIDEBUG_INVALID_ARGUMENT } Invalid argument.
  * @since 26.0.0
  */
 HiDebug_ErrorCode OH_HiDebug_RegisterMemDumpListener(const char* name, OH_HiDebug_MemDumpListener listener);
