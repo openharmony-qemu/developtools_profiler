@@ -58,11 +58,11 @@ HWTEST_F(HidebugDumpTest, OH_HiDebug_RegisterMemDumpListener_NullListener, TestS
 }
 
 /**
- * @tc.name: OH_HiDebug_RegisterMemDumpListener_UpdateExisting
- * @tc.desc: Re-registering with the same name should update the listener and return HIDEBUG_SUCCESS.
+ * @tc.name: OH_HiDebug_RegisterMemDumpListener_RegisterExisting
+ * @tc.desc: Re-registering with the same name should be rejected and keep the original listener.
  * @tc.type: FUNC
  */
-HWTEST_F(HidebugDumpTest, OH_HiDebug_RegisterMemDumpListener_UpdateExisting, TestSize.Level1)
+HWTEST_F(HidebugDumpTest, OH_HiDebug_RegisterMemDumpListener_RegisterExisting, TestSize.Level1)
 {
     auto listener1 = [](int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg) -> bool {
         return true;
@@ -71,7 +71,10 @@ HWTEST_F(HidebugDumpTest, OH_HiDebug_RegisterMemDumpListener_UpdateExisting, Tes
         return false;
     };
     EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("updateListener", listener1), HIDEBUG_SUCCESS);
-    EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("updateListener", listener2), HIDEBUG_SUCCESS);
+    EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("updateListener", listener2), HIDEBUG_INVALID_ARGUMENT);
+
+    auto found = HidebugMemDumpListener::GetInstance().FindListener("updateListener");
+    EXPECT_EQ(found, listener1);
 }
 
 /**

@@ -16,8 +16,8 @@
 #include "hidebug_dump.h"
 
 #include <cstring>
-#include <unordered_map>
 #include <shared_mutex>
+#include <unordered_map>
 
 #include "hilog/log.h"
 
@@ -55,15 +55,14 @@ HiDebug_ErrorCode HidebugMemDumpListener::RegisterMemDumpListener(
         return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
     }
     std::unique_lock<std::shared_mutex> lock(GetListenerMutex());
-    auto &listenerMap = GetListenerMap();
-    auto it = listenerMap.find(name);
-    bool inserted = (it == listenerMap.end());
-    listenerMap[name] = listener;
-    if (inserted) {
-        HILOG_INFO(LOG_CORE, "MemDumpListener registered, name: %{public}s", name.c_str());
-    } else {
-        HILOG_INFO(LOG_CORE, "MemDumpListener updated, name: %{public}s", name.c_str());
+    auto& listenerMap = GetListenerMap();
+    auto [it, inserted] = listenerMap.emplace(name, listener);
+    if (!inserted) {
+        HILOG_ERROR(LOG_CORE, "MemDumpListener already exists, name: %{public}s", name.c_str());
+        return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
     }
+
+    HILOG_INFO(LOG_CORE, "MemDumpListener registered, name: %{public}s", name.c_str());
     return HiDebug_ErrorCode::HIDEBUG_SUCCESS;
 }
 
