@@ -13,8 +13,8 @@
  * limitations under the License.
  */
 
-#ifndef HIDEBUG_DUMP
-#define HIDEBUG_DUMP
+#ifndef HIDEBUG_DUMP_H
+#define HIDEBUG_DUMP_H
 
 #include <string>
 
@@ -36,4 +36,4 @@ public:
 };
 } // namespace HiviewDFX
 } // namespace OHOS
-#endif // HIDEBUG_DUMP
+#endif // HIDEBUG_DUMP_H

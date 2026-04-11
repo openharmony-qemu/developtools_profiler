@@ -16,9 +16,8 @@
 #include "hidebug_dump.h"
 
 #include <cstring>
-#include <map>
-#include <mutex>
-#include <utility>
+#include <unordered_map>
+#include <shared_mutex>
 
 #include "hilog/log.h"
 
@@ -28,7 +27,7 @@
 #define LOG_TAG "HiDebug_Dump"
 
 namespace {
-using ListenerMap = std::map<std::string, OH_HiDebug_MemDumpListener>;
+using ListenerMap = std::unordered_map<std::string, OH_HiDebug_MemDumpListener>;
 
 ListenerMap& GetListenerMap()
 {
@@ -36,9 +35,9 @@ ListenerMap& GetListenerMap()
     return listenerMap;
 }
 
-std::mutex& GetListenerMutex()
+std::shared_mutex& GetListenerMutex()
 {
-    static std::mutex listenerMutex;
+    static std::shared_mutex listenerMutex;
     return listenerMutex;
 }
 } // namespace
@@ -55,9 +54,12 @@ HiDebug_ErrorCode HidebugMemDumpListener::RegisterMemDumpListener(
     if (name.empty() || listener == nullptr) {
         return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
     }
-    std::lock_guard<std::mutex> lock(GetListenerMutex());
-    auto ret = GetListenerMap().insert_or_assign(name, listener);
-    if (ret.second) {
+    std::unique_lock<std::shared_mutex> lock(GetListenerMutex());
+    auto &listenerMap = GetListenerMap();
+    auto it = listenerMap.find(name);
+    bool inserted = (it == listenerMap.end());
+    listenerMap[name] = listener;
+    if (inserted) {
         HILOG_INFO(LOG_CORE, "MemDumpListener registered, name: %{public}s", name.c_str());
     } else {
         HILOG_INFO(LOG_CORE, "MemDumpListener updated, name: %{public}s", name.c_str());
@@ -67,7 +69,7 @@ HiDebug_ErrorCode HidebugMemDumpListener::RegisterMemDumpListener(
 
 OH_HiDebug_MemDumpListener HidebugMemDumpListener::FindListener(const std::string& name)
 {
-    std::lock_guard<std::mutex> lock(GetListenerMutex());
+    std::shared_lock<std::shared_mutex> lock(GetListenerMutex());
     auto& listenerMap = GetListenerMap();
     auto it = listenerMap.find(name);
     if (it != listenerMap.end()) {

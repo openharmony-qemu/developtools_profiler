@@ -97,7 +97,7 @@ HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_FindListener_Found, TestSize.Le
  */
 HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_EmptyName, TestSize.Level1)
 {
-    bool ret = HidebugMemDumpListener::GetInstance().TriggerListener("", 1, OH_HiDebug_DO_NOTHING, "arg");
+    bool ret = HidebugMemDumpListener::GetInstance().TriggerListener("", 1, OH_HIDEBUG_DO_NOTHING, "arg");
     EXPECT_FALSE(ret);
 }
 
@@ -108,7 +108,7 @@ HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_EmptyName, Test
  */
 HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_NullArg, TestSize.Level1)
 {
-    bool ret = HidebugMemDumpListener::GetInstance().TriggerListener("anyListener", 1, OH_HiDebug_DO_NOTHING, nullptr);
+    bool ret = HidebugMemDumpListener::GetInstance().TriggerListener("anyListener", 1, OH_HIDEBUG_DO_NOTHING, nullptr);
     EXPECT_FALSE(ret);
 }
 
@@ -120,11 +120,11 @@ HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_NullArg, TestSi
 HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_DoNothingTag, TestSize.Level1)
 {
     auto listener = [](int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg) -> bool {
-        return tag == OH_HiDebug_DO_NOTHING;
+        return tag == OH_HIDEBUG_DO_NOTHING;
     };
     EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("doNothingListener", listener), HIDEBUG_SUCCESS);
     bool ret = HidebugMemDumpListener::GetInstance().TriggerListener(
-        "doNothingListener", 1, OH_HiDebug_DO_NOTHING, "testArg");
+        "doNothingListener", 1, OH_HIDEBUG_DO_NOTHING, "testArg");
     EXPECT_TRUE(ret);
 }
 
@@ -136,11 +136,11 @@ HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_DoNothingTag, T
 HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_RunningGCTag, TestSize.Level1)
 {
     auto listener = [](int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg) -> bool {
-        return tag == OH_HiDebug_RUNNING_GC;
+        return tag == OH_HIDEBUG_RUNNING_GC;
     };
     EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("gcListener", listener), HIDEBUG_SUCCESS);
     bool ret = HidebugMemDumpListener::GetInstance().TriggerListener(
-        "gcListener", 1, OH_HiDebug_RUNNING_GC, "gcArg");
+        "gcListener", 1, OH_HIDEBUG_RUNNING_GC, "gcArg");
     EXPECT_TRUE(ret);
 }
 
@@ -152,10 +152,10 @@ HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_RunningGCTag, T
 HWTEST_F(HidebugDumpTest, HidebugMemDumpListener_TriggerListener_DumpSnapshotTag, TestSize.Level1)
 {
     auto listener = [](int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg) -> bool {
-        return tag == OH_HiDebug_DUMP_SNAPSHOT;
+        return tag == OH_HIDEBUG_DUMP_SNAPSHOT;
     };
     EXPECT_EQ(OH_HiDebug_RegisterMemDumpListener("snapshotListener", listener), HIDEBUG_SUCCESS);
     bool ret = HidebugMemDumpListener::GetInstance().TriggerListener(
-        "snapshotListener", 1, OH_HiDebug_DUMP_SNAPSHOT, "snapshotArg");
+        "snapshotListener", 1, OH_HIDEBUG_DUMP_SNAPSHOT, "snapshotArg");
     EXPECT_TRUE(ret);
 }
