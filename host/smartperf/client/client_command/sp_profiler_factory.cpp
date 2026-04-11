@@ -40,7 +40,7 @@
 #include "include/sdk_data_recv.h"
 #include "include/jitters.h"
 #include "include/shader.h"
-#include "include/VisualEffectDispatch.h"
+#include "include/VisualEffectDisPatch.h"
 
 namespace OHOS {
 namespace SmartPerf {
@@ -201,7 +201,7 @@ SpProfiler *SpProfilerFactory::GetCmdProfilerItemOption(CommandType commandType,
             profiler = &Shader::GetInstance();
             break;
         case CommandType::CT_VED: {
-            profiler = &VisualEffectDispatch::GetInstance();
+            profiler = &VisualEffectDisPatch::GetInstance();
             break;
         }
         default:

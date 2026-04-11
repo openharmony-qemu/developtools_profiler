@@ -18,7 +18,7 @@
 #include <memory>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-#include "interface/GameScheduleEventCallback.h"
+#include "interface/GameScheduleEventCallBack.h"
 
 using namespace testing::ext;
 using namespace OHOS::SmartPerf;

@@ -58,7 +58,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
-const std::string SMART_PERF_VERSION = "1.0.9";
+const std::string SMART_PERF_VERSION = "1.1.0";
 const std::string LOWERCASE_H(1, static_cast<char>(104));
 const std::string LOWERCASE_W(1, static_cast<char>(119));
 const std::string PRODUCT_NAME = LOWERCASE_H + LOWERCASE_W;

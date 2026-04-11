@@ -46,7 +46,7 @@
 #include "include/FPS.h"
 #include "include/hiperf.h"
 #include "include/visual_effect_analysis.h"
-#include "include/VisualEffectDispatch.h"
+#include "include/VisualEffectDisPatch.h"
 
 #define SMARTPERF "smartperf"
 namespace OHOS {
@@ -835,10 +835,10 @@ void SpThreadSocket::GetCatchTraceResult(std::string& retCode, SpServerSocket &s
         bytrace.CpTraceFile();
         if (SPUtils::GetDirSize(std::string("/data/local/tmp/hitrace")) > maxTraceSize_) {
             spSocket.Sendto(std::string("Over_specification"));
-            VisualEffectDispatch::GetInstance().SetSpeciFlag();
+            VisualEffectDisPatch::GetInstance().SetSpeciFlag();
         }
     } else if (iterator->first == MessageType::CAPTURE_FAILED) {
-        VisualEffectDispatch::GetInstance().SetCatchTraceFlag();
+        VisualEffectDisPatch::GetInstance().SetCatchTraceFlag();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);

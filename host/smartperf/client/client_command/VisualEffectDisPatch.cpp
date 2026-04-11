@@ -13,7 +13,7 @@
  * limitations under the License.
  */
 
-#include "include/VisualEffectDispatch.h"
+#include "include/VisualEffectDisPatch.h"
 #include "interface/GameSchedulePlugin.h"
 
 #include <string>
@@ -29,40 +29,40 @@ namespace SmartPerf {
 int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params)
 {
     LOGI("yanzhe recv type = %d", type);
-    VisualEffectDispatch::GetInstance().SetVisualEffectDispatchType(type);
+    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(type);
     for (auto &item : params) {
-        VisualEffectDispatch::GetInstance().GetVisualEffectDispatchItemData()[item.first] = item.second;
+        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData()[item.first] = item.second;
     }
-    if (VisualEffectDispatch::GetInstance().GetSpeciFlag()) {
+    if (VisualEffectDisPatch::GetInstance().GetSpeciFlag()) {
         return 1;
-    } else if (VisualEffectDispatch::GetInstance().GetCatchTraceFlag()) {
+    } else if (VisualEffectDisPatch::GetInstance().GetCatchTraceFlag()) {
         return captureFileFlag_;
     }
     return 0;
 }
 
-std::map<std::string, std::string> VisualEffectDispatch::ItemData()
+std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
 {
-    LOGI("VisualEffectDispatch:ItemData map size(%u)", visualEffectDispatchItemData.size());
-    return visualEffectDispatchItemData;
+    LOGI("VisualEffectDisPatch:ItemData map size(%u)", VisualEffectDisPatchItemData.size());
+    return VisualEffectDisPatchItemData;
 }
 
-std::map<std::string, std::string> &VisualEffectDispatch::GetVisualEffectDispatchItemData()
+std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatchItemData()
 {
-    return visualEffectDispatchItemData;
+    return visualEffectDisPatchItemData;
 }
 
-void VisualEffectDispatch::SetVisualEffectDispatchType(int32_t type)
+void VisualEffectDisPatch::SetVisualEffectDisPatchType(int32_t type)
 {
     LOGI("yanzhe set type = %d", type);
     type_ = type;
 }
 
-void VisualEffectDispatch::SetCollectNum()
+void VisualEffectDisPatch::SetCollectNum()
 {
     if (type_ == captureFileFlag_) {
         LOGI("yanzhe type = 2");
-        int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDispatchItemData["maxCollectNum"]);
+        int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDisPatchItemData["maxCollectNum"]);
         if (collectNum <= 1 || collectNum >= static_cast<int>(maxFileFlag_)) {
             collectNum = 1;
         }
@@ -75,7 +75,7 @@ void VisualEffectDispatch::SetCollectNum()
     }
 }
 
-void VisualEffectDispatch::StartExecutionOnce(bool isPause)
+void VisualEffectDisPatch::StartExecutionOnce(bool isPause)
 {
     if (isPause) {
         return;
@@ -83,7 +83,7 @@ void VisualEffectDispatch::StartExecutionOnce(bool isPause)
     RegisterGameScheduleEvent();
 }
 
-void VisualEffectDispatch::FinishtExecutionOnce(bool isPause)
+void VisualEffectDisPatch::FinishtExecutionOnce(bool isPause)
 {
     if (isPause) {
         return;
@@ -91,14 +91,14 @@ void VisualEffectDispatch::FinishtExecutionOnce(bool isPause)
     UnregisterGameEvent();
 }
 
-int VisualEffectDispatch::RegisterGameScheduleEvent()
+int VisualEffectDisPatch::RegisterGameScheduleEvent()
 {
     if (isRegister) {
-        WLOGI("VisualEffectDispatch::RegisterGameScheduleEvent, already register");
+        WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent, already register");
         return 0;
     }
-    WLOGI("VisualEffectDispatch::RegisterGameScheduleEvent");
-    std::unique_ptr<GameScheduleEventCallback> visualEffectDispatchCallback =
+    WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent");
+    std::unique_ptr<GameScheduleEventCallback> visualEffectDisPatchCallback =
         std::make_unique<GameScheduleEventCallbackImpl>();
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::SCHEDULE_PLUGIN);
@@ -113,22 +113,22 @@ int VisualEffectDispatch::RegisterGameScheduleEvent()
         return -1;
     }
 
-    int32_t ret = servicePlugin()->RegisterGameScheduleEvent(std::move(visualEffectDispatchCallback));
+    int32_t ret = servicePlugin()->RegisterGameScheduleEvent(std::move(visualEffectDisPatchCallback));
     if (ret == 0) {
         isRegister = true;
-        WLOGI("VisualEffectDispatch::RegisterGameScheduleEvent success");
+        WLOGI("VisualEffectDisPatch::RegisterGameScheduleEvent success");
     } else {
-        WLOGE("VisualEffectDispatch::RegisterGameScheduleEvent failed");
+        WLOGE("VisualEffectDisPatch::RegisterGameScheduleEvent failed");
     }
     return ret;
 }
 
-int VisualEffectDispatch::UnregisterGameEvent()
+int VisualEffectDisPatch::UnregisterGameEvent()
 {
     if (!isRegister) {
         return 0;
     }
-    WLOGI("VisualEffectDispatch::UnregisterGameEvent");
+    WLOGI("VisualEffectDisPatch::UnregisterGameEvent");
     ServicePluginHandler &servicePluginHandler = ServicePluginHandler::GetInstance();
     void* handle = servicePluginHandler.GetSoHandler(ServicePluginHandler::ServicePluginType::SCHEDULE_PLUGIN);
     if (!handle) {
@@ -145,29 +145,29 @@ int VisualEffectDispatch::UnregisterGameEvent()
     int32_t ret = servicePlugin()->UnregisterGameEvent();
     if (ret == 0) {
         isRegister = false;
-        WLOGI("VisualEffectDispatch::UnregisterGameEvent success");
+        WLOGI("VisualEffectDisPatch::UnregisterGameEvent success");
     } else {
-        WLOGE("VisualEffectDispatch::UnregisterGameEvent failed");
+        WLOGE("VisualEffectDisPatch::UnregisterGameEvent failed");
     }
     return ret;
 }
 
-void VisualEffectDispatch::SetSpeciFlag()
+void VisualEffectDisPatch::SetSpeciFlag()
 {
     speciFlag_ = true;
 }
 
-void VisualEffectDispatch::SetCatchTraceFlag()
+void VisualEffectDisPatch::SetCatchTraceFlag()
 {
     catchTraceFlag_ = true;
 }
 
-bool VisualEffectDispatch::GetSpeciFlag()
+bool VisualEffectDisPatch::GetSpeciFlag()
 {
     return speciFlag_;
 }
 
-bool VisualEffectDispatch::GetCatchTraceFlag()
+bool VisualEffectDisPatch::GetCatchTraceFlag()
 {
     return catchTraceFlag_;
 }

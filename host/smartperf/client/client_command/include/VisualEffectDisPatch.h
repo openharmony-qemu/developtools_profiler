@@ -16,7 +16,7 @@
 #ifndef VISUAL_EFFECT_DISPATCH_H
 #define VISUAL_EFFECT_DISPATCH_H
 
-#include "../interface/GameScheduleEventCallback.h"
+#include "../interface/GameScheduleEventCallBack.h"
 #include "sp_profiler.h"
 #include <string>
 
@@ -28,34 +28,34 @@ class GameScheduleEventCallbackImpl : public GameScheduleEventCallback {
     int32_t OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params) override;
 };
 
-class VisualEffectDispatch : public SpProfiler {
+class VisualEffectDisPatch : public SpProfiler {
     public:
     std::map<std::string, std::string> ItemData() override;
-    static VisualEffectDispatch &GetInstance()
+    static VisualEffectDisPatch &GetInstance()
     {
-        static VisualEffectDispatch instance;
+        static VisualEffectDisPatch instance;
         return instance;
     }
     int RegisterGameScheduleEvent();
     int UnregisterGameEvent();
     void StartExecutionOnce(bool isPause) override;
     void FinishtExecutionOnce(bool isPause) override;
-    std::map<std::string, std::string> &GetVisualEffectDispatchItemData();
-    void SetVisualEffectDispatchType(int32_t type);
+    std::map<std::string, std::string> &GetVisualEffectDisPatchItemData();
+    void SetVisualEffectDisPatchType(int32_t type);
     void SetCollectNum();
     void SetSpeciFlag();
     void SetCatchTraceFlag();
     bool GetSpeciFlag();
     bool GetCatchTraceFlag();
     private:
-    VisualEffectDispatch() {};
-    VisualEffectDispatch(const VisualEffectDispatch &) = delete;
-    VisualEffectDispatch &operator=(const VisualEffectDispatch &) = delete;
-    std::map<std::string, std::string> visualEffectDispatchParams;
-    std::map<std::string, std::string> visualEffectDispatchItemData;
+    VisualEffectDisPatch() {};
+    VisualEffectDisPatch(const VisualEffectDisPatch &) = delete;
+    VisualEffectDisPatch &operator=(const VisualEffectDisPatch &) = delete;
+    std::map<std::string, std::string> visualEffectDisPatchParams;
+    std::map<std::string, std::string> visualEffectDisPatchItemData;
     int32_t type_ = 1;
-    const std::string visualEffectDispatchParamPid = "pid";
-    const std::string visualEffectDispatchParamType = "dispatchType";
+    const std::string visualEffectDisPatchParamPid = "pid";
+    const std::string visualEffectDisPatchParamType = "dispatchType";
     const std::string createPlugin = "onCreatePlugin";
     bool isRegister = false;
     bool speciFlag_ = false;
