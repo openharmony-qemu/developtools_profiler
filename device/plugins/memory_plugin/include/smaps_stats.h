@@ -500,7 +500,7 @@ private:
         {"/dmabuf", "dmabuf"}, {"/data/storage", ".hap"}, {"[anon:libc_malloc", "native heap"},
         {"[anon:scudo", "native heap"}, {"[anon:GWP-ASan", "native heap"},
         {"[anon:JS_V8_HEAP", "ArkWeb v8 heap"}, {"[anon:JSVM_V8_HEAP", "jsvm heap"},
-        {"[anon:partition_alloc", "ArkWeb PA"}, {"[anon:kotlin_heap", "KMP heap"},
+        {"[anon:partition_alloc", "ArkWeb PA"}, {"[anon:Kotlin heap", "KMP heap"},
     };
     const std::map<std::string, std::string> endMap_ = {
         {".so", ".so"}, {".so.1", ".so"}, {".ttf", ".ttf"},
