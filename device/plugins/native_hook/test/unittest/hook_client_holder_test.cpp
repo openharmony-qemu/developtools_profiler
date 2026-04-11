@@ -358,6 +358,8 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_LdMusl, TestSize
 {
     g_hookReady = true;
     g_clientConfig.responseLibraryMode = true;
+    g_clientConfig.filterLibList.clear();
+    g_filterStaLibRange.clear();
     g_hookPid.store(5555);
 
     StackRawData rawdata = RawDataBuilder()
@@ -384,6 +386,45 @@ HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_LdMusl, TestSize
     HookClientHolder holder(g_hookClient);
     EXPECT_TRUE(holder.IsValid());
     holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
+    ASSERT_EQ(g_filterStaLibRange.size(), 1);
+    EXPECT_EQ(g_filterStaLibRange[0].first, 0x5000);
+    EXPECT_EQ(g_filterStaLibRange[0].second, 0x6000);
+}
+
+/**
+ * @tc.name: SendMmapFileRawDataTest_MapFixed_CustomFilterLib
+ * @tc.desc: MAP_FIXED + custom filter lib + responseLibraryMode enabled
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientHolderTest, SendMmapFileRawDataTest_MapFixed_CustomFilterLib, TestSize.Level0)
+{
+    g_hookReady = true;
+    g_clientConfig.responseLibraryMode = true;
+    g_clientConfig.filterLibList = {"libcustom_filter.so"};
+    g_filterStaLibRange.clear();
+    g_hookPid.store(5656);
+
+    StackRawData rawdata = RawDataBuilder()
+           .SetAddr(reinterpret_cast<void*>(0x7000))
+           .SetSize(0x2000)
+           .SetProcessInfo()
+           .SetTimestamp()
+           .Build();
+    const char* filePath = "/system/lib64/libcustom_filter.so";
+
+    std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
+    g_hookClient = mockClient;
+
+    EXPECT_CALL(*mockClient, SendStackWithPayload(::testing::_, ::testing::_, ::testing::_, ::testing::_, ::testing::_))
+        .Times(1);
+
+    HookClientHolder holder(g_hookClient);
+    EXPECT_TRUE(holder.IsValid());
+    holder.SendMmapFileRawData(PROT_READ, MAP_FIXED, 0, filePath, rawdata);
+
+    ASSERT_EQ(g_filterStaLibRange.size(), 1);
+    EXPECT_EQ(g_filterStaLibRange[0].first, 0x7000);
+    EXPECT_EQ(g_filterStaLibRange[0].second, 0x9000);
 }
 
 /**

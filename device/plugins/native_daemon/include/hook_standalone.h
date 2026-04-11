@@ -19,6 +19,7 @@
 #include <string>
 #include <sstream>
 #include <set>
+#include <vector>
 
 struct HookData {
     std::set<std::string> pids = {};
@@ -35,6 +36,7 @@ struct HookData {
     std::string processName;
     std::string performanceFilename {"/data/local/tmp/performance.txt"};
     std::string filterNapiName = {""};
+    std::vector<std::string> filterLibList;
     bool mallocDisable {false};
     bool mmapDisable {false};
     bool freemsgstack {false};
@@ -63,7 +65,8 @@ struct HookData {
         ss << ", processName:" << processName << ' ' <<",startupMode: " << startupMode
            << ", responseLibraryMode: " << responseLibraryMode << ", sampleInterval: " << sampleInterval
            << ", jsStackReport: " << jsStackReport << ", maxJsStackdepth: " << maxJsStackdepth
-           <<", filterNapiName" << filterNapiName << "mallocFreeMatchingInterval: " << mallocFreeMatchingInterval;
+           << ", filterNapiName:" << filterNapiName << ", filterLibListSize: " << filterLibList.size()
+           << ", mallocFreeMatchingInterval: " << mallocFreeMatchingInterval;
         return ss.str();
     }
 };

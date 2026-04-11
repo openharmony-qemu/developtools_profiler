@@ -216,6 +216,7 @@ HWTEST_F(HookManagerExtTest, SetHookConfigFromSaConfig, TestSize.Level0)
     saConfig->maxJsStackDepth_ = TEST_MAX_JS_STACK_DEPTH;
     saConfig->filterNapiName_ = "test_napi";
     saConfig->targetSoName_ = "libtest.so";
+    saConfig->filterLibList_ = {"libcustom_filter.so"};
     saConfig->printNmd_ = true;
     saConfig->hookstandalone_ = false;
     saConfig->saveFile_ = false;
@@ -254,6 +255,8 @@ HWTEST_F(HookManagerExtTest, SetHookConfigFromSaConfig, TestSize.Level0)
     EXPECT_EQ(config.max_js_stack_depth(), TEST_MAX_JS_STACK_DEPTH);
     EXPECT_EQ(config.filter_napi_name(), "test_napi");
     EXPECT_EQ(config.target_so_name(), "libtest.so");
+    ASSERT_EQ(config.filter_lib_list_size(), 1);
+    EXPECT_EQ(config.filter_lib_list(0), "libcustom_filter.so");
 }
 
 /*

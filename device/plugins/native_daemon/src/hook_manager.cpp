@@ -486,6 +486,11 @@ void HookManager::GetClientConfig(ClientConfig& clientConfig)
     if (soName.length() < PATH_MAX && !COMMON::ContainsSpecialChars(soName)) {
         clientConfig.targetSoName = hookConfig_.target_so_name();
     }
+    for (const auto& filterLib : hookConfig_.filter_lib_list()) {
+        if (filterLib.length() < PATH_MAX && !COMMON::ContainsSpecialChars(filterLib)) {
+            clientConfig.filterLibList.emplace_back(filterLib);
+        }
+    }
     clientConfig.printNmd = printMallocNmd_;
     clientConfig.largestSize = largestSize_;
     clientConfig.secondLargestSize = secondLargestSize_;
@@ -1515,6 +1520,10 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_max_js_stack_depth(config->maxJsStackDepth_);
     hookConfig_.set_filter_napi_name(config->filterNapiName_);
     hookConfig_.set_target_so_name(config->targetSoName_);
+    hookConfig_.clear_filter_lib_list();
+    for (const auto& filterLib : config->filterLibList_) {
+        hookConfig_.add_filter_lib_list(filterLib);
+    }
     hookConfig_.set_allocator_sampling_enable(config->allocatorSamplingEnable_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
     hookConfig_.set_use_file_cache_mode(false);
@@ -1624,6 +1633,9 @@ std::string HookManager::GetCmdArgs(const NativeHookConfig& traceConfig)
     args << "max_js_stack_depth: " << std::to_string(traceConfig.max_js_stack_depth()) << ", ";
     args << "filter_napi_name: " << traceConfig.filter_napi_name() << ", ";
     args << "target_so_name: " << traceConfig.target_so_name() << ", ";
+    for (const auto& filterLib : traceConfig.filter_lib_list()) {
+        args << "filter_lib_list: " << filterLib << ", ";
+    }
     args << "native_orphansnapshots_enable: " << (traceConfig.native_orphansnapshots_enable() ? "true" : "false")
          << ", ";
     for (const auto& pid : traceConfig.expand_pids()) {

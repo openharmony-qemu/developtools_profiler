@@ -229,7 +229,7 @@ void* MallocHookStart(void* disableHookCallback)
     PROFILER_LOG_INFO(LOG_CORE, "MallocHookStart begin!");
     g_hookClient.reset();
     g_hookPid = GetRealPid();
-    ParseSelfMaps(g_filterStaLibRange);
+    ParseSelfMaps(g_filterStaLibRange, g_clientConfig.filterLibList);
     if (g_hookClient != nullptr) {
         return nullptr;
     } else {

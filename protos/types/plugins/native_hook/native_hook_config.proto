@@ -73,4 +73,5 @@ message NativeHookConfig {
     bool allocator_sampling_enable = 38;
     bool native_orphansnapshots_enable = 39;
     bool nested_async_stack_enable = 40;
+    repeated string filter_lib_list = 41;
 }

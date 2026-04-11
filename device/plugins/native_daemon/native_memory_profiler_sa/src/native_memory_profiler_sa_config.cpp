@@ -18,6 +18,30 @@
 #include "logging.h"
 #include <vector>
 namespace OHOS::Developtools::NativeDaemon {
+namespace {
+bool WriteStringVector(Parcel& parcel, const std::vector<std::string>& values)
+{
+    WRITEUINT32(parcel, static_cast<uint32_t>(values.size()));
+    for (const auto& value : values) {
+        WRITESTRING(parcel, value);
+    }
+    return true;
+}
+
+bool ReadStringVector(Parcel& parcel, std::vector<std::string>& values)
+{
+    uint32_t size = 0;
+    READUINT32(parcel, size);
+    values.clear();
+    values.reserve(size);
+    for (uint32_t i = 0; i < size; ++i) {
+        std::string value;
+        READSTRING(parcel, value);
+        values.emplace_back(value);
+    }
+    return true;
+}
+}
 
 static bool WriteGpuRange(Parcel& parcel, const std::vector<std::vector<uint64_t>>& gpuRange)
 {
@@ -87,6 +111,9 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT8(parcel, maxJsStackDepth_);
     WRITESTRING(parcel, filterNapiName_);
     WRITESTRING(parcel, targetSoName_);
+    if (!WriteStringVector(parcel, filterLibList_)) {
+        return false;
+    }
     WRITEUINT32(parcel, largestSize_);
     WRITEUINT32(parcel, secondLargestSize_);
     WRITEUINT32(parcel, maxGrowthSize_);
@@ -153,6 +180,9 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT8(parcel, config->maxJsStackDepth_);
     READSTRING(parcel, config->filterNapiName_);
     READSTRING(parcel, config->targetSoName_);
+    if (!ReadStringVector(parcel, config->filterLibList_)) {
+        return false;
+    }
     READUINT32(parcel, config->largestSize_);
     READUINT32(parcel, config->secondLargestSize_);
     READUINT32(parcel, config->maxGrowthSize_);
@@ -193,9 +223,10 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
     PROFILER_LOG_DEBUG(
         LOG_CORE,
         "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, offlineSymbolization: %d, callframeCompress: %d,"
-        "statisticsInterval: %d, clockId: %d, targetSoName: %s",
+        "statisticsInterval: %d, clockId: %d, targetSoName: %s, filterLibListSize: %zu",
         config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_, config->offlineSymbolization_,
-        config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str());
+        config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str(),
+        config->filterLibList_.size());
     PROFILER_LOG_DEBUG(LOG_CORE,
         "jsStackReport: %d, maxJsStackDepth_: %d, filterNapiName_: %s",
         config->jsStackReport_, config->maxJsStackDepth_, config->filterNapiName_.c_str());
