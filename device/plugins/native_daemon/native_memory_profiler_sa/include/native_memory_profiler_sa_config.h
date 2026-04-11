@@ -16,6 +16,7 @@
 #ifndef NATIVE_MEMORY_PROFILER_SA_CONFIG_H
 #define NATIVE_MEMORY_PROFILER_SA_CONFIG_H
 
+#include <vector>
 #include "parcel.h"
 
 namespace OHOS::Developtools::NativeDaemon {
@@ -75,6 +76,7 @@ public:
     uint8_t maxJsStackDepth_{0};
     std::string filterNapiName_;
     std::string targetSoName_;
+    std::vector<std::string> filterLibList_;
     uint32_t largestSize_{0};
     uint32_t secondLargestSize_{0};
     uint32_t maxGrowthSize_{0};

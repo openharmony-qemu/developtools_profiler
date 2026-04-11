@@ -15,6 +15,7 @@
 
 #include "runtime_stack_range.h"
 
+#include <array>
 #include <csignal>
 #include <cstring>
 #include <map>
@@ -25,6 +26,7 @@
 
 namespace {
 constexpr int BASE_MAX = 16;
+constexpr std::array<const char*, 2> DEFAULT_FILTER_LIBS = {"ld-musl", "libc++"};
 
 struct StandardLibrary {
     StandardLibrary(uint64_t begin, uint64_t end, const std::string& name)
@@ -93,6 +95,11 @@ static bool GetCoroutineStackRange(uintptr_t& stackBottom, uintptr_t& stackTop)
     return ret;
 }
 
+static bool MatchFilterLib(const std::string& filePath, const std::string& filterLib)
+{
+    return !filterLib.empty() && filePath.find(filterLib) != std::string::npos;
+}
+
 bool IsLegalSoName(const char *fileName)
 {
     if (fileName == nullptr) {
@@ -109,6 +116,21 @@ bool IsLegalSoName(const char *fileName)
         return false;
     }
     return true;
+}
+
+bool IsFilterLibrary(const std::string& filePath, const std::vector<std::string>& filterLibList)
+{
+    for (const auto* defaultLib : DEFAULT_FILTER_LIBS) {
+        if (MatchFilterLib(filePath, defaultLib)) {
+            return true;
+        }
+    }
+    for (const auto& filterLib : filterLibList) {
+        if (MatchFilterLib(filePath, filterLib)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 static void GetStandardLibraryRange(std::string& line, bool targeted = false)
@@ -182,7 +204,8 @@ bool GetRuntimeStackRange(const uintptr_t stackPtr, uintptr_t& stackBottom, uint
     return ret && (stackPtr >= stackBottom && stackPtr < stackTop);
 }
 
-bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange)
+bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange,
+                   const std::vector<std::string>& filterLibList)
 {
     FILE* fp = fopen("/proc/self/maps", "r");
     bool ret = false;
@@ -204,7 +227,7 @@ bool ParseSelfMaps(std::vector<std::pair<uint64_t, uint64_t>>& filterStaLibRange
             g_stackMainStart = static_cast<uintptr_t>(begin);
             g_stackMainEnd = static_cast<uintptr_t>(end);
             ret = true;
-        } else if (strstr(mapInfo, "ld-musl") != nullptr || strstr(mapInfo, "libc++") != nullptr) {
+        } else if (IsFilterLibrary(mapInfo, filterLibList)) {
             std::string lineStr = mapInfo;
             GetStandardLibraryRange(lineStr);
         }

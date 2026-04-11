@@ -109,7 +109,7 @@ void HookClientHolder::SendMmapFileRawData(int prot, int flags, off_t offset, co
     }
     size_t len = strlen(filePath) + 1;
     if ((static_cast<uint32_t>(flags) & MAP_FIXED) && (g_clientConfig.responseLibraryMode) &&
-        (IsLegalSoName(filePath)) && (strstr(filePath, "ld-musl") != NULL || strstr(filePath, "libc++") != NULL)) {
+        (IsLegalSoName(filePath)) && IsFilterLibrary(filePath, g_clientConfig.filterLibList)) {
         std::lock_guard<std::recursive_timed_mutex> guard(g_FilterMapMutex);
         ParseEvent(filePath, g_filterStaLibRange, curRawdata);
     }

@@ -54,6 +54,10 @@ void SetNativeHookConfig(const HookData& hookData)
     g_nativeConfig.set_js_stack_report(hookData.jsStackReport);
     g_nativeConfig.set_max_js_stack_depth(hookData.maxJsStackdepth);
     g_nativeConfig.set_filter_napi_name(hookData.filterNapiName);
+    g_nativeConfig.clear_filter_lib_list();
+    for (const auto& filterLib : hookData.filterLibList) {
+        g_nativeConfig.add_filter_lib_list(filterLib);
+    }
     g_nativeConfig.set_malloc_free_matching_interval(hookData.mallocFreeMatchingInterval);
     for (const std::string& pid: hookData.pids) {
         if (COMMON::IsNumeric(std::string(pid.data()))) {

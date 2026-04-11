@@ -26,6 +26,7 @@
 #include "utilities.h"
 #include "async_context_manager.h"
 #include <memory_trace.h>
+#include <vector>
 
 #define MAX_THREAD_NAME (32)
 #define MAX_UNWIND_DEPTH (100)
@@ -277,6 +278,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
         secondLargestSize = 0;
         maxGrowthSize = 0;
         targetSoName = "";
+        filterLibList.clear();
         enableFileCacheMode = false;
         fileCacheBufferSize = 0;
         memLeakFormat = MemLeakFormat::TYPE_DISABLE;
@@ -302,6 +304,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
             << arktsConfig.filterNapiName << ", jsFpunwind: " << arktsConfig.jsFpunwind
             << ", largestSize: " << largestSize  << ", secondLargestSize: " << secondLargestSize
             << ", maxGrowthSize: " << maxGrowthSize << ", offline:" << offlineSymbolization
+            << ", filterLibListSize: " << filterLibList.size()
             << ", enableFileCacheMode: " << enableFileCacheMode << ", fileCacheBufferSize:" << fileCacheBufferSize;
         return ss.str();
     }
@@ -348,6 +351,7 @@ struct alignas(8) ClientConfig { // 8 is 8 bit
     uint32_t secondLargestSize = 0;
     uint32_t maxGrowthSize = 0;
     std::string targetSoName;
+    std::vector<std::string> filterLibList;
     uint32_t gwpAsanHoldTime = 0;
     uint32_t gwpAsanMaxEntries = 0;
     uint32_t gwpAsanMaxStackDepth = 0;

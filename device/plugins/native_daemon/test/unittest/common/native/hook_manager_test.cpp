@@ -575,10 +575,12 @@ HWTEST_F(HookManagerTest, GetCmdArgsStringValues, TestSize.Level0)
     config.set_clock("clock: monotonic");
     config.set_filter_napi_name("test");
     config.set_target_so_name("test.so");
+    config.add_filter_lib_list("libcustom_filter.so");
     std::string result = hookManager.GetCmdArgs(config);
     EXPECT_NE(result.find("clock: monotonic"), std::string::npos);
     EXPECT_NE(result.find("filter_napi_name: test"), std::string::npos);
     EXPECT_NE(result.find("target_so_name: test.so"), std::string::npos);
+    EXPECT_NE(result.find("filter_lib_list: libcustom_filter.so"), std::string::npos);
 }
 
 /*
