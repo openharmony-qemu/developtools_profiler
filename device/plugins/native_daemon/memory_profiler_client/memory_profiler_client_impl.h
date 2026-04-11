@@ -37,10 +37,17 @@ public:
 
     /**
      * @desc: Start memory profiler on memory API configuration.
+     * @param resourceType: The resource type of profiler.
+     * value of resourceType : int32_t
+     * OH_RES_TYPE_FD = 0
+     * OH_RES_TYPE_THREAD = 1
+     * OH_RES_TYPE_NATIVE = 2
+     * OH_RES_TYPE_GPU = 3
+     * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * @param config: The memory API profiler configuration.
      * @return: RET_OK on success, RET_ERR on failure.
      */
-    int32_t Start(MemAPIConfig& config);
+    int32_t Start(int32_t resourceType, MemAPIConfig& config);
 
     /**
      * @desc: Start simplified nmd mode profiler.
@@ -56,7 +63,7 @@ public:
     int32_t Stop();
 
 private:
-    bool CheckMemApiConfig(const MemAPIConfig& config);
+    bool CheckInput(int32_t resourceType, const MemAPIConfig& config);
 };
 }   // namespace NativeDaemon
 }   // namespace Developtools

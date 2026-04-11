@@ -68,20 +68,24 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
         .statisticsInterval = 0,
         .sampleInterval = 0
     };
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    int32_t resType = -1;
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    resType = 5;
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    resType = 2;
     apiConfig.maxDuration = 4000;
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
     apiConfig.maxDuration = 10;
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
     apiConfig.filterSize = 8;
     apiConfig.maxStackDepth = 31;
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
     apiConfig.maxStackDepth = 16;
     apiConfig.statisticsInterval = 4000;
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
     apiConfig.statisticsInterval = 1;
     apiConfig.sampleInterval = 100;
-    EXPECT_EQ(client->Start(apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
     delete client;
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest001 end.";
 }
@@ -123,7 +127,7 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest002, TestSize.Level3)
  */
 HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
 {
-    GTEST_LOG_(INFO) << "MemoryProfilerClientTest004 start.";
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 start.";
     using namespace OHOS::Developtools::NativeDaemon;
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
     std::vector<SimplifiedMemStats> memStats;
@@ -139,5 +143,5 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest003, TestSize.Level3)
     if (t.joinable()) {
         t.join();
     }
-    GTEST_LOG_(INFO) << "MemoryProfilerClientTest004 end.";
+    GTEST_LOG_(INFO) << "MemoryProfilerClientTest003 end.";
 }

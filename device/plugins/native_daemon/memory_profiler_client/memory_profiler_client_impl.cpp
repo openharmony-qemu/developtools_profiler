@@ -59,20 +59,15 @@ int32_t MemoryProfilerClientImpl::Start(int fd, uint32_t duration, SimplifiedMem
     return NativeMemoryProfilerSaClientManager::DumpData(fd, nConfig);
 }
 
-int32_t MemoryProfilerClientImpl::Start(MemAPIConfig& config)
+int32_t MemoryProfilerClientImpl::Start(int32_t resourceType, MemAPIConfig& config)
 {
-    if (!CheckMemApiConfig(config)) {
+    if (!CheckInput(resourceType, config)) {
         return RET_ERR;
     }
-    // InternalResourceType : int32_t
-    // OH_RES_TYPE_FD = 0
-    // OH_RES_TYPE_THREAD = 1
-    // OH_RES_TYPE_NATIVE = 2
-    // OH_RES_TYPE_GPU = 3
-    // OH_RES_TYPE_GLOBAL_HANDLE = 4
-    int32_t type = 2; // native memory
-    auto callback = [](int32_t, const std::string&) {};
-    int ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(type, &config, callback);
+    auto profilingCallback = [](int32_t errCode, const std::string& path) {
+        PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
+    };
+    int ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(resourceType, &config, profilingCallback);
     // ResProfilerErrorCode::RES_PROF_SUCCESS = 11400400
     int successCode = 11400400;
     if (ret != successCode) {
@@ -91,8 +86,18 @@ int32_t MemoryProfilerClientImpl::Stop()
     return NativeMemoryProfilerSaClientManager::Stop();
 }
 
-bool MemoryProfilerClientImpl::CheckMemApiConfig(const MemAPIConfig& config)
+bool MemoryProfilerClientImpl::CheckInput(int32_t resourceType, const MemAPIConfig& config)
 {
+    // value of resourceType : int32_t
+    // OH_RES_TYPE_FD = 0
+    // OH_RES_TYPE_THREAD = 1
+    // OH_RES_TYPE_NATIVE = 2
+    // OH_RES_TYPE_GPU = 3
+    // OH_RES_TYPE_GLOBAL_HANDLE = 4
+    if (resourceType < 0 || resourceType > 4) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Invalid resourceType: %d", resourceType);
+        return false;
+    }
     if (config.maxDuration < DEFINE_MIN_MAX_DURATION || config.maxDuration > DEFINE_MAX_MAX_DURATION) {
         PROFILER_LOG_ERROR(LOG_CORE, "Invalid maxDuration: %u", config.maxDuration);
         return false;
