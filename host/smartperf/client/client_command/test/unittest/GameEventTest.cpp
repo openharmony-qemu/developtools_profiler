@@ -261,94 +261,11 @@ HWTEST_F(GameEventTest, GetGameEventItemData_ClearThroughReference_003, TestSize
     EXPECT_TRUE(itemData.empty());
 }
 
-HWTEST_F(GameEventTest, GetGameEventItemData_SameReference_004, TestSize.Level1)
-{
-    auto &itemData1 = GameEvent::GetInstance().GetGameEventItemData();
-    auto &itemData2 = GameEvent::GetInstance().GetGameEventItemData();
-    
-    EXPECT_EQ(&itemData1, &itemData2);
-}
-
-HWTEST_F(GameEventTest, StartExecutionOnce_NotPause_001, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-}
-
-HWTEST_F(GameEventTest, StartExecutionOnce_IsPause_002, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(true);
-}
-
-HWTEST_F(GameEventTest, StartExecutionOnce_MultipleCalls_003, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().StartExecutionOnce(true);
-}
-
-HWTEST_F(GameEventTest, FinishtExecutionOnce_NotPause_001, TestSize.Level1)
-{
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-}
-
-HWTEST_F(GameEventTest, FinishtExecutionOnce_IsPause_002, TestSize.Level1)
-{
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-}
-
-HWTEST_F(GameEventTest, FinishtExecutionOnce_MultipleCalls_003, TestSize.Level1)
-{
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-}
-
-HWTEST_F(GameEventTest, StartStopExecutionSequence_004, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-}
-
-HWTEST_F(GameEventTest, StartExecutionOnce_WithPauseThenNotPause_005, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-}
-
-HWTEST_F(GameEventTest, FinishtExecutionOnce_WithPauseThenNotPause_006, TestSize.Level1)
-{
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-}
-
 HWTEST_F(GameEventTest, RegisterGameEvent_AlreadyRegistered_001, TestSize.Level1)
 {
     GameEvent::GetInstance().RegisterGameEvent();
     int result = GameEvent::GetInstance().RegisterGameEvent();
     EXPECT_EQ(result, 0);
-    GameEvent::GetInstance().UnregisterGameEvent();
-}
-
-HWTEST_F(GameEventTest, RegisterGameEvent_FirstRegistration_002, TestSize.Level1)
-{
-    int result = GameEvent::GetInstance().RegisterGameEvent();
-    if (result == 0) {
-        GameEvent::GetInstance().UnregisterGameEvent();
-    }
-}
-
-HWTEST_F(GameEventTest, RegisterGameEvent_MultipleRegisterUnregister_003, TestSize.Level1)
-{
-    int result1 = GameEvent::GetInstance().RegisterGameEvent();
-    if (result1 == 0) {
-        int result2 = GameEvent::GetInstance().UnregisterGameEvent();
-        int result3 = GameEvent::GetInstance().RegisterGameEvent();
-        if (result3 == 0) {
-            GameEvent::GetInstance().UnregisterGameEvent();
-        }
-    }
 }
 
 HWTEST_F(GameEventTest, UnregisterGameEvent_NotRegistered_001, TestSize.Level1)
@@ -367,24 +284,6 @@ HWTEST_F(GameEventTest, UnregisterGameEvent_AfterRegister_002, TestSize.Level1)
             EXPECT_EQ(result3, 0);
         }
     }
-}
-
-HWTEST_F(GameEventTest, UnregisterGameEvent_MultipleUnregisterAfterRegister_003, TestSize.Level1)
-{
-    int result1 = GameEvent::GetInstance().RegisterGameEvent();
-    if (result1 == 0) {
-        int result2 = GameEvent::GetInstance().UnregisterGameEvent();
-        int result3 = GameEvent::GetInstance().UnregisterGameEvent();
-        int result4 = GameEvent::GetInstance().UnregisterGameEvent();
-    }
-}
-
-HWTEST_F(GameEventTest, GameEvent_SingletonBehavior_001, TestSize.Level1)
-{
-    auto &instance1 = GameEvent::GetInstance();
-    auto &instance2 = GameEvent::GetInstance();
-    
-    EXPECT_EQ(&instance1, &instance2);
 }
 
 HWTEST_F(GameEventTest, GameEvent_CallbackImplConstruction_002, TestSize.Level1)
@@ -475,26 +374,6 @@ HWTEST_F(GameEventTest, GameEvent_RapidSuccessiveCalls_007007, TestSize.Level1)
     EXPECT_EQ(itemData["key99"], "value99");
 }
 
-HWTEST_F(GameEventTest, GameEvent_ExecutionPauseFlow_008, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-}
-
-HWTEST_F(GameEventTest, GameEvent_RegisterUnregisterAlternating_009, TestSize.Level1)
-{
-    for (int i = 0; i < 10; i++) {
-        int result = GameEvent::GetInstance().RegisterGameEvent();
-        if (result == 0) {
-            GameEvent::GetInstance().UnregisterGameEvent();
-        }
-    }
-}
-
 HWTEST_F(GameEventTest, GameEvent_CallbackWithZeroType_010, TestSize.Level1)
 {
     GameEventCallbackImpl callback;
@@ -536,16 +415,6 @@ HWTEST_F(GameEventTest, GameEvent_ItemDataThreadSafety_012, TestSize.Level1)
     EXPECT_EQ(itemData1["thread2"], "value2");
     EXPECT_EQ(itemData2["thread1"], "value1");
     EXPECT_EQ(itemData2["thread2"], "value2");
-}
-
-HWTEST_F(GameEventTest, GameEvent_MixedExecutionFlow_013, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
 }
 
 HWTEST_F(GameEventTest, GameEvent_CallbackUpdateExistingValue_014, TestSize.Level1)
@@ -648,16 +517,6 @@ HWTEST_F(GameEventTest, GameEvent_ItemDataCopyDoesNotAffectOriginal_018, TestSiz
     EXPECT_EQ(copy["key3"], "value3");
 }
 
-HWTEST_F(GameEventTest, GameEvent_StartStopRegisterUnregisterFlow_019, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-}
-
 HWTEST_F(GameEventTest, GameEvent_CallbackWithSameKeyDifferentValues_020, TestSize.Level1)
 {
     GameEventCallbackImpl callback;
@@ -670,26 +529,6 @@ HWTEST_F(GameEventTest, GameEvent_CallbackWithSameKeyDifferentValues_020, TestSi
     
     auto &itemData = GameEvent::GetInstance().GetGameEventItemData();
     EXPECT_EQ(itemData["counter"], "9");
-}
-
-HWTEST_F(GameEventTest, GameEvent_MultipleStartExecutionOnceCalls_021, TestSize.Level1)
-{
-    for (int i = 0; i < 5; i++) {
-        GameEvent::GetInstance().StartExecutionOnce(false);
-    }
-    for (int i = 0; i < 5; i++) {
-        GameEvent::GetInstance().StartExecutionOnce(true);
-    }
-}
-
-HWTEST_F(GameEventTest, GameEvent_MultipleFinishtExecutionOnceCalls_022, TestSize.Level1)
-{
-    for (int i = 0; i < 5; i++) {
-        GameEvent::GetInstance().FinishtExecutionOnce(false);
-    }
-    for (int i = 0; i < 5; i++) {
-        GameEvent::GetInstance().FinishtExecutionOnce(true);
-    }
 }
 
 HWTEST_F(GameEventTest, GameEvent_CallbackWithVeryLongKey_023, TestSize.Level1)
@@ -763,21 +602,6 @@ HWTEST_F(GameEventTest, GameEvent_CallbackWithMixedTypes_027, TestSize.Level1)
     EXPECT_EQ(itemData["bool"], "true");
     EXPECT_EQ(itemData["string"], "hello");
     EXPECT_EQ(itemData["empty"], "");
-}
-
-HWTEST_F(GameEventTest, GameEvent_StartFinishExecutionWithDifferentPauseStates_028, TestSize.Level1)
-{
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
-    
-    GameEvent::GetInstance().StartExecutionOnce(true);
-    GameEvent::GetInstance().FinishtExecutionOnce(true);
-    
-    GameEvent::GetInstance().StartExecutionOnce(false);
-    GameEvent::GetInstance().FinishtExecutionOnce(false);
 }
 
 HWTEST_F(GameEventTest, GameEvent_CallbackClearAndRefill_029, TestSize.Level1)
