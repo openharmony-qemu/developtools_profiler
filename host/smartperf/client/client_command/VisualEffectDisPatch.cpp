@@ -28,7 +28,7 @@ namespace OHOS {
 namespace SmartPerf {
 int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::map<std::string, std::string> &params)
 {
-    int32_t captureFileFailed = 2; 
+    int32_t captureFileFailed = 2;
     VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(type);
     for (auto &item : params) {
         VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData()[item.first] = item.second;
@@ -44,7 +44,9 @@ int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::ma
 std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
 {
     LOGD("VisualEffectDisPatch:ItemData map size(%u)", visualEffectDisPatchItemData.size());
-    return visualEffectDisPatchItemData;
+    std::map<std::string, std::string> dataMap = visualEffectDisPatchItemData;
+    visualEffectDisPatchItemData = {};
+    return dataMap;
 }
 
 std::map<std::string, std::string> &VisualEffectDisPatch::GetVisualEffectDisPatchItemData()
