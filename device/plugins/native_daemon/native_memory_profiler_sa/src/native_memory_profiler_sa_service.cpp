@@ -1044,17 +1044,17 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
     g_pidCtx.erase(config->pid);
     if (config->startType == START_TYPE_API) {
         std::lock_guard<std::mutex> guard(g_fileNameMtx);
+        auto pidInfoIter = g_pidInfo.find(pid);
         auto fileNameInfoIter = g_fileNameInfo.find(pid);
-        if (fileNameInfoIter == g_fileNameInfo.end()) {
-            PROFILER_LOG_ERROR(LOG_CORE, "ReleaseForStopHook: api task file info missing");
-            ret = RET_ERR;
+        if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
+            PROFILER_LOG_WARN(LOG_CORE, "ReleaseForStopHook: api task file info missing");
         } else {
-            std::string destPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
+            std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
             if (!COMMON::CopyFileFast(config->fd, destPath)) {
                 PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
                 ret = RET_ERR;
             } else {
-                resultPath = destPath;
+                resultPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
             }
         }
         g_fileNameInfo.erase(pid);
