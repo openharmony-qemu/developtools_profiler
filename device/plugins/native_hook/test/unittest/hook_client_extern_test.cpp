@@ -15,6 +15,7 @@
 
 #include <dlfcn.h>
 #include <gtest/gtest.h>
+#include <sys/mman.h>
 #include <sys/prctl.h>
 #include "hook_client.h"
 #include "hook_socket_client_mock.h"
@@ -24,10 +25,18 @@
 
 using namespace testing::ext;
 
+void* hook_mmap(void*(*fn)(void*, size_t, int, int, int, off_t),
+    void* addr, size_t length, int prot, int flags, int fd, off_t offset);
+
 namespace {
 constexpr uint32_t SIZE = 1024;
 constexpr uint32_t RESIZE = 2048;
 constexpr unsigned int WAIT_THREAD_TIME = 3;
+
+void* FakeMmapFailed(void*, size_t, int, int, int, off_t)
+{
+    return MAP_FAILED;
+}
 
 class HookClientExternTest : public ::testing::Test {
 public:
@@ -201,6 +210,23 @@ HWTEST_F(HookClientExternTest, HookMmapTest, TestSize.Level0)
     EXPECT_EQ(typeVec, expectedTypeVec);
     std::vector<int> expectedsizeVec = {length, 0, length};
     EXPECT_EQ(sizeVec, expectedsizeVec);
+}
+
+/**
+ * @tc.name: native hook
+ * @tc.desc: Test HookMmapFailedTest process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookClientExternTest, HookMmapFailedTest, TestSize.Level0)
+{
+    std::vector<int> typeVec;
+    std::vector<int> sizeVec;
+    StartMock(typeVec, sizeVec);
+
+    void* result = hook_mmap(FakeMmapFailed, nullptr, SIZE, 0, 0, 1, 0);
+    EXPECT_EQ(result, MAP_FAILED);
+    EXPECT_TRUE(typeVec.empty());
+    EXPECT_TRUE(sizeVec.empty());
 }
 
 /**

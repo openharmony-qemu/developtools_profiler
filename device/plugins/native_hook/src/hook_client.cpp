@@ -1022,6 +1022,9 @@ void* __attribute__((noinline)) hook_mmap(void*(*fn)(void*, size_t, int, int, in
     void* addr, size_t length, int prot, int flags, int fd, off_t offset)
 {
     void* ret = fn ? fn(addr, length, prot, flags, fd, offset) :  nullptr;
+    if (ret == MAP_FAILED) {
+        return ret;
+    }
 
     if (!HookGuard::IsReady() || HookGuard::IsPidChanged()) {
         return ret;
