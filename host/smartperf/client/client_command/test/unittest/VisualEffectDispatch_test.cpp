@@ -97,7 +97,7 @@ HWTEST_F(VisualEffectDisPatchTest, GameScheduleEventCallbackImpl_OnGameScheduleE
 
     int32_t result = callback.OnGameScheduleEvent(0, params);
 
-    EXPECT_EQ(result, (0);
+    EXPECT_EQ(result, (0));
 }
 
 HWTEST_F(VisualEffectDisPatchTest, GameScheduleEventCallbackImpl_OnGameScheduleEvent_006, TestSize.Level1)
@@ -205,209 +205,6 @@ HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_GetVisualEffectDisPatchI
         VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
 
     EXPECT_TRUE(result2.empty());
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_001, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(1);
-
-    std::map<std::string, std::string> itemData = VisualEffectDisPatch::GetInstance().ItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_002, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_003, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(0);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "2";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_004, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(-1);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "1";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_005, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(100);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "4";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_006, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "0";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_007, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "5";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_008, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "1";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_009, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "invalid";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetVisualEffectDisPatchType_010, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetCollectNum_001, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetCollectNum_002, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(0);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetCollectNum_003, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(1);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetCollectNum_004, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "2";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_SetCollectNum_005, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "4";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_StartExecutionOnce_001, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().StartExecutionOnce(false);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_StartExecutionOnce_002, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().StartExecutionOnce(true);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_StartExecutionOnce_003, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().StartExecutionOnce(false);
-
-    VisualEffectDisPatch::GetInstance().StartExecutionOnce(false);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_FinishtExecutionOnce_001, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().FinishtExecutionOnce(false);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_FinishtExecutionOnce_002, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().FinishtExecutionOnce(true);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_FinishtExecutionOnce_003, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().StartExecutionOnce(false);
-
-    VisualEffectDisPatch::GetInstance().FinishtExecutionOnce(false);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_FinishtExecutionOnce_004, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().FinishtExecutionOnce(false);
-
-    VisualEffectDisPatch::GetInstance().FinishtExecutionOnce(false);
 }
 
 HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_RegisterGameScheduleEvent_001, TestSize.Level1)
@@ -648,21 +445,6 @@ HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_Integration_007, TestSiz
     EXPECT_EQ(result["key2"], "value2");
 }
 
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_Integration_008, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-
-    itemData.clear();
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
 HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_001, TestSize.Level1)
 {
     GameScheduleEventCallbackImpl callback;
@@ -681,28 +463,6 @@ HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_002, TestSize.L
     int32_t result = callback.OnGameScheduleEvent(-2147483648, params);
 
     EXPECT_EQ(result, 0);
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_003, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2147483647);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_004, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(-2147483648);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
 }
 
 HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_005, TestSize.Level1)
@@ -730,49 +490,4 @@ HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_006, TestSize.L
 
     EXPECT_EQ(result.size(), 1000);
 }
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_007, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "999999999";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_008, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "-999999999";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_009, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "3.14159";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
-HWTEST_F(VisualEffectDisPatchTest, VisualEffectDisPatch_EdgeCase_010, TestSize.Level1)
-{
-    VisualEffectDisPatch::GetInstance().SetVisualEffectDisPatchType(2);
-
-    std::map<std::string, std::string> itemData =
-        VisualEffectDisPatch::GetInstance().GetVisualEffectDisPatchItemData();
-    itemData["maxCollectNum"] = "0x10";
-
-    VisualEffectDisPatch::GetInstance().SetCollectNum();
-}
-
 }

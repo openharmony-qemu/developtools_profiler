@@ -1115,6 +1115,7 @@ size_t SPUtils::GetDirSize(const std::string &dirPath)
             }
         }
     }
+    pclose(fd);
     return traceSize;
 }
 }
