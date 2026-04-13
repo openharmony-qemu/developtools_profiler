@@ -1093,7 +1093,7 @@ size_t SPUtils::GetDirSize(const std::string &dirPath)
         return 0;
     }
     size_t traceSize = 0;
-    std::string cmd = "cd " + dirPath + " & ls -al";
+    const std::string cmd = "cd " + dirPath + " & ls -al";
     char buf[1024] = {'\0'};
     FILE *fd = popen(cmd.c_str(), "r");
     if (fd == nullptr) {
@@ -1111,7 +1111,8 @@ size_t SPUtils::GetDirSize(const std::string &dirPath)
                 tokens.push_back(token);
             }
             if (tokens.size() >= count) {
-                traceSize += SPUtilesTye::StringToSometype<size_t>(tokens[count - 1]);
+                std::string tokenStr = tokens[count - 1];
+                traceSize += SPUtilesTye::StringToSometype<size_t>(tokenStr);
             }
         }
     }
