@@ -1909,31 +1909,37 @@ void StackPreprocess::SetMapsInfo()
             continue;
         }
 
-        ElfSymbolTable symbolInfo;
         auto& curMemMaps = mapsIter->second;
-        GetSymbols(curMemMaps->name_, symbolInfo);
-        if (symbolInfo.symEntSize == 0) {
-            continue;
+        bool needBasicData = runtime_instance->MarkOfflineFileReported(curMemMaps->filePathId_);
+        ElfSymbolTable symbolInfo;
+        if (needBasicData) {
+            GetSymbols(curMemMaps->name_, symbolInfo);
+            if (symbolInfo.symEntSize == 0) {
+                runtime_instance->ResetOfflineFileReported(curMemMaps->filePathId_);
+                continue;
+            }
         }
         std::visit(
             [&](auto& stackData) {
                 runtime_instance->TryEmitSmoMapsInfo(stackData);
-                auto hookData = stackData.add_events();
-                auto filepathMap = hookData->mutable_file_path();
-                filepathMap->set_id(curMemMaps->filePathId_);
-                filepathMap->set_name(curMemMaps->name_);
-                filepathMap->set_pid(pid_);
-                auto& runtime = runtime_instance;
-                bool isAdlt = StartsWith(std::string(curMemMaps->name_), "/system/lib/libadlt") &&
-                              EndsWith(std::string(curMemMaps->name_), ".so");
-                if (isAdlt) {
-                    uint64_t base = runtime->GetAdltBase(std::string(curMemMaps->name_));
-                    filepathMap->set_adlt_base(base);
-                } else {
-                    filepathMap->set_adlt_base(std::numeric_limits<uint64_t>::max());
+                if (needBasicData) {
+                    auto hookData = stackData.add_events();
+                    auto filepathMap = hookData->mutable_file_path();
+                    filepathMap->set_id(curMemMaps->filePathId_);
+                    filepathMap->set_name(curMemMaps->name_);
+                    filepathMap->set_pid(pid_);
+                    auto& runtime = runtime_instance;
+                    bool isAdlt = StartsWith(std::string(curMemMaps->name_), "/system/lib/libadlt") &&
+                                  EndsWith(std::string(curMemMaps->name_), ".so");
+                    if (isAdlt) {
+                        uint64_t base = runtime->GetAdltBase(std::string(curMemMaps->name_));
+                        filepathMap->set_adlt_base(base);
+                    } else {
+                        filepathMap->set_adlt_base(std::numeric_limits<uint64_t>::max());
+                    }
+                    filepathMap->set_build_id(GetBuildId(curMemMaps->name_));
+                    SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
                 }
-                filepathMap->set_build_id(GetBuildId(curMemMaps->name_));
-                SetSymbolInfo(curMemMaps->filePathId_, symbolInfo, stackData);
                 for (auto& map : curMemMaps->GetMaps()) {
                     if (map->prots & PROT_EXEC) {
                         auto nativeHookData = stackData.add_events();

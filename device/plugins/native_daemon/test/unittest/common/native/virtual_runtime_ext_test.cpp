@@ -546,6 +546,43 @@ HWTEST_F(VirtualRuntimeExtTest, FillMapsCache, TestSize.Level0)
 }
 
 /**
+ * @tc.name: HandleMapInfoReuseFilePathId
+ * @tc.desc: Test repeated map of same path reuses filePathId
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoReuseFilePathId, TestSize.Level0)
+{
+    const std::string path = "test.so";
+    auto dummyMap = std::make_shared<DfxMap>(0x10, 0x20, 0, PROT_READ, "dummy.so");
+    runtime_->processMaps_.push_back(dummyMap);
+    runtime_->HandleMapInfo({0x1000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 1);
+    ASSERT_NE(runtime_->mapsCache_.find(0x1000), runtime_->mapsCache_.end());
+    uint32_t firstId = runtime_->mapsCache_[0x1000]->filePathId_;
+    runtime_->ClearOfflineMaps();
+    runtime_->RemoveMaps(0x1000);
+    runtime_->HandleMapInfo({0x3000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 1);
+    ASSERT_NE(runtime_->mapsCache_.find(0x3000), runtime_->mapsCache_.end());
+    EXPECT_EQ(runtime_->mapsCache_[0x3000]->filePathId_, firstId);
+    EXPECT_EQ(runtime_->nativeFilePathIdMap_[path], firstId);
+}
+
+/**
+ * @tc.name: HandleMapInfoDedupOfflineMap
+ * @tc.desc: Test repeated exec maps only queue one offline map
+ * @tc.type: FUNC
+ */
+HWTEST_F(VirtualRuntimeExtTest, HandleMapInfoDedupOfflineMap, TestSize.Level0)
+{
+    const std::string path = "test.so";
+    auto dummyMap = std::make_shared<DfxMap>(0x10, 0x20, 0, PROT_READ, "dummy.so");
+    runtime_->processMaps_.push_back(dummyMap);
+    runtime_->HandleMapInfo({0x1000, 0x1000, MAP_FIXED | PROT_EXEC, 0}, path, 1, 1);
+    runtime_->HandleMapInfo({0x2000, 0x1000, MAP_FIXED | PROT_EXEC, 0x1000}, path, 1, 1);
+    ASSERT_EQ(runtime_->offlineMapAddr_.size(), 1u);
+    EXPECT_EQ(runtime_->offlineMapAddr_[0], 0x1000u);
+}
+
+/**
  * @tc.name: FillSymbolNameId
  * @tc.desc: Test FillSymbolNameId method
  * @tc.type: FUNC
