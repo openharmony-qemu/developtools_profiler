@@ -63,6 +63,8 @@ public:
     void HandleMsg(SpServerSocket &spSocket);
     void HeartbeatDetection(const std::string& recvBuf);
     void UdpStartInitFunc(const std::string& recvBuf, SpServerSocket &spSocket);
+    void GetCatchTraceResult(std::string& retCode, SpServerSocket &spSocket,
+        std::unordered_map<MessageType, std::string>::const_iterator iterator, const std::string& recvBuf);
     void HandleUDPMsg(SpServerSocket &spSocket, std::map<std::string, std::string>& data, std::string& retCode,
         std::unordered_map<MessageType, std::string>::const_iterator iterator);
     void SocketHeartbeat() const;
@@ -123,6 +125,7 @@ private:
     std::shared_ptr<TaskManager> taskMgr_ {nullptr};
     ByTrace &bytrace = ByTrace::GetInstance();
     bool firstFlag = true;
+    size_t maxTraceSize_ = 178257920;
 };
 }
 }

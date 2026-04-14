@@ -58,7 +58,7 @@ const unsigned int CHAR_NUM_DIFF = 48;
 const unsigned int UI_DECIMALISM = 10;
 const unsigned int UI_INDEX_2 = 2;
 const int BUFFER_SIZE = 1024;
-const std::string SMART_PERF_VERSION = "1.0.9";
+const std::string SMART_PERF_VERSION = "1.1.0";
 const std::string LOWERCASE_H(1, static_cast<char>(104));
 const std::string LOWERCASE_W(1, static_cast<char>(119));
 const std::string PRODUCT_NAME = LOWERCASE_H + LOWERCASE_W;
@@ -1084,6 +1084,40 @@ void SPUtils::OverDumpFun()
     std::string cmdResult = "";
     const std::string dumpCmd = "hidumper -s WindowManagerService -a '-w " + winId + " -touchmonitor -e'";
     LoadCmd(dumpCmd, cmdResult);
+}
+
+size_t SPUtils::GetDirSize(const std::string &dirPath)
+{
+    if (dirPath.empty()) {
+        LOGE("The dirPath does not exist.");
+        return 0;
+    }
+    size_t traceSize = 0;
+    const std::string cmd = "cd " + dirPath + " & ls -al";
+    char buf[1024] = {'\0'};
+    FILE *fd = popen(cmd.c_str(), "r");
+    if (fd == nullptr) {
+        LOGE("open dir failed");
+        return traceSize;
+    }
+    while (fgets(buf, sizeof(buf), fd) != nullptr) {
+        std::string line(buf);
+        if (line.find("Other_trace") != std::string::npos) {
+            int count = 5;
+            std::istringstream iss(line);
+            std::vector<std::string> tokens;
+            std::string token;
+            while (iss >> token) {
+                tokens.push_back(token);
+            }
+            if (tokens.size() >= count) {
+                std::string tokenStr = tokens[count - 1];
+                traceSize += SPUtilesTye::StringToSometype<size_t>(tokenStr);
+            }
+        }
+    }
+    pclose(fd);
+    return traceSize;
 }
 }
 }
