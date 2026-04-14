@@ -1093,30 +1093,22 @@ size_t SPUtils::GetDirSize(const std::string &dirPath)
         return 0;
     }
     size_t traceSize = 0;
-    const std::string cmd = "cd " + dirPath + " & ls -al";
-    char buf[1024] = {'\0'};
-    FILE *fd = popen(cmd.c_str(), "r");
-    if (fd == nullptr) {
+    DIR *dir = opendir(dirPath.c_str());
+    if (!dir) {
         LOGE("open dir failed");
         return traceSize;
     }
-    while (fgets(buf, sizeof(buf), fd) != nullptr) {
-        std::string line(buf);
-        if (line.find("Other_trace") != std::string::npos) {
-            int count = 5;
-            std::istringstream iss(line);
-            std::vector<std::string> tokens;
-            std::string token;
-            while (iss >> token) {
-                tokens.push_back(token);
-            }
-            if (tokens.size() >= count) {
-                std::string tokenStr = tokens[count - 1];
-                traceSize += SPUtilesTye::StringToSometype<size_t>(tokenStr);
+    struct dirent *ent = readdir(dir);
+    while (ent != nullptr) {
+        if (std::string(ent->d_name) == "Ohter_trace") {
+            std::string path = dirPath + "/" + ent->d_name;
+            struct stat st;
+            if (stat(path.c_str(), &st) == 0) {
+                traceSize += st.st_size;
             }
         }
     }
-    pclose(fd);
+    closedir(dir);
     return traceSize;
 }
 }
