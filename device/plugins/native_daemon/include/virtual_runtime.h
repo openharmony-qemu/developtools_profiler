@@ -112,6 +112,7 @@ public:
         if (offlineMapAddr_.size() != 0) {
             offlineMapAddr_.clear();
         }
+        offlineMapAddrSet_.clear();
     }
 
     std::map<uint64_t, std::shared_ptr<MemMaps>>& GetMapsCache()
@@ -120,6 +121,8 @@ public:
     }
 
     std::pair<std::shared_ptr<MemMaps>, uint32_t> FindMap(uint64_t addr);
+    bool MarkOfflineFileReported(uint32_t filePathId);
+    void ResetOfflineFileReported(uint32_t filePathId);
     uint64_t soBegin_ {0};
     // debug time
 #ifdef HIPERF_DEBUG_TIME
@@ -249,6 +252,8 @@ private:
 
     bool GetSymbolCache(uint64_t ip, DfxSymbol &symbol, const VirtualThread &thread);
     void UpdateSymbolCache(uint64_t ip, DfxSymbol &symbol, HashList<uint64_t, DfxSymbol> &cache);
+    uint32_t GetOrCreateFilePathId(const std::string& filePath);
+    void QueueOfflineMap(uint64_t soBegin);
 
     // find synbols function name
     void MakeCallFrame(DfxSymbol &symbol, CallFrame &callFrame);
@@ -272,6 +277,9 @@ private:
     std::map<uint64_t, std::shared_ptr<MemMaps>> mapsCache_; // key is memMap soBegin, value is MemMaps
     std::map<uint64_t, std::shared_ptr<DfxMap>> arktsMapTree_;
     std::vector<uint64_t> offlineMapAddr_; // element is memMap soBegin
+    std::unordered_set<uint64_t> offlineMapAddrSet_;
+    std::unordered_map<std::string, uint32_t> nativeFilePathIdMap_;
+    std::unordered_set<uint32_t> reportedOfflineFileIds_;
     std::unordered_map<std::string_view, uint32_t> jsUrlMap_; // Key is js url , value is filePathId
     std::unordered_map<std::string, bool> adltFound_;
     std::unordered_map<std::string, uint64_t> adltBaseMap_;

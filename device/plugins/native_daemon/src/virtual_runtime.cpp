@@ -46,6 +46,10 @@ void VirtualRuntime::ClearMaps()
 {
     processMaps_.clear();
     arktsMapTree_.clear();
+    offlineMapAddr_.clear();
+    offlineMapAddrSet_.clear();
+    nativeFilePathIdMap_.clear();
+    reportedOfflineFileIds_.clear();
     adltFound_.clear();
     adltBaseMap_.clear();
 }
@@ -363,6 +367,34 @@ void VirtualRuntime::DelSymbolFile(const std::string& fileName)
     symbolsFiles_.erase(fileName);
 }
 
+uint32_t VirtualRuntime::GetOrCreateFilePathId(const std::string& filePath)
+{
+    auto iter = nativeFilePathIdMap_.find(filePath);
+    if (iter != nativeFilePathIdMap_.end()) {
+        return iter->second;
+    }
+    uint32_t filePathId = ++memMapFilePathId_;
+    nativeFilePathIdMap_.emplace(filePath, filePathId);
+    return filePathId;
+}
+
+void VirtualRuntime::QueueOfflineMap(uint64_t soBegin)
+{
+    if (offlineMapAddrSet_.insert(soBegin).second) {
+        offlineMapAddr_.push_back(soBegin);
+    }
+}
+
+bool VirtualRuntime::MarkOfflineFileReported(uint32_t filePathId)
+{
+    return reportedOfflineFileIds_.insert(filePathId).second;
+}
+
+void VirtualRuntime::ResetOfflineFileReported(uint32_t filePathId)
+{
+    reportedOfflineFileIds_.erase(filePathId);
+}
+
 void VirtualRuntime::UpdateSymbols(std::string fileName, std::shared_ptr<DfxMap> map)
 {
     HLOGD("try to find symbols for file: %s", fileName.c_str());
@@ -593,7 +625,7 @@ void VirtualRuntime::FillMapsCache(std::string& currentFileName, std::shared_ptr
     if (currentFileName.compare(mapItem->name) != 0) {
         currentFileName = mapItem->name;
         soBegin_ = mapItem->begin;
-        auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+        auto memMaps = std::make_shared<MemMaps>(GetOrCreateFilePathId(mapItem->name));
         memMaps->AddMap(mapItem, true);
         mapsCache_[mapItem->begin] = memMaps;
     } else {
@@ -603,7 +635,7 @@ void VirtualRuntime::FillMapsCache(std::string& currentFileName, std::shared_ptr
             curMaps->soEnd_ = mapItem->end;
             curMaps->AddMap(mapItem, false);
             if (mapItem->prots & PROT_EXEC) {
-                offlineMapAddr_.push_back(soBegin_);
+                QueueOfflineMap(soBegin_);
             }
         }
     }
@@ -786,7 +818,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
             if (mapsCache_.find(begin) == mapsCache_.end()) {
                 soBegin_ = begin;
                 auto mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
-                auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+                auto memMaps = std::make_shared<MemMaps>(GetOrCreateFilePathId(filePath));
                 memMaps->AddMap(mapItem, true);
                 mapsCache_[begin] = memMaps;
 
@@ -796,7 +828,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
                 auto &thread = UpdateThread(pid, tid);
                 processMaps_.emplace_back(mapItem);
                 thread.SortMaps();
-                offlineMapAddr_.push_back(soBegin_);
+                QueueOfflineMap(soBegin_);
                 arktsMapTree_[begin] = mapItem;
 
                 return;
@@ -810,7 +842,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
     if (offset == 0 && mapsCache_.find(begin) == mapsCache_.end()) {
         soBegin_ = begin;
         std::shared_ptr<DfxMap> mapItem = std::make_shared<DfxMap>(begin, begin + length, offset, flags, filePath);
-        auto memMaps = std::make_shared<MemMaps>(++memMapFilePathId_);
+        auto memMaps = std::make_shared<MemMaps>(GetOrCreateFilePathId(filePath));
         memMaps->AddMap(mapItem, true);
         mapsCache_[begin] = memMaps;
         UpdateSymbols(filePath, mapItem);
@@ -848,7 +880,7 @@ void VirtualRuntime::HandleMapInfo(std::vector<uint64_t> info,
         }
     }
     if (flags & PROT_EXEC) {
-        offlineMapAddr_.push_back(soBegin_);
+        QueueOfflineMap(soBegin_);
     }
     UpdateAdltBase();
 }
