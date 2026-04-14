@@ -32,7 +32,7 @@ public:
 
     OH_HiDebug_MemDumpListener FindListener(const std::string& name);
 
-    bool TriggerListener(const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg);
+    bool TriggerListener(const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, bool mayReportToOEM, const char* arg);
 };
 } // namespace HiviewDFX
 } // namespace OHOS

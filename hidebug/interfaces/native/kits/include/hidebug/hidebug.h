@@ -368,10 +368,11 @@ HiDebug_ErrorCode OH_HiDebug_StopProfiler(void);
  * @param fd FD used to write memory data in the app.
  * @param tag Callback type. You can process the related logic based on the callback type.
  * @param arg Callback argument. You can pass different arguments based on the value of type.
+ * @param mayReportToOEM Whether to report to OEM.
  * @return Whether the operation is successful.
  * @since 26.0.0
  */
-typedef bool (*OH_HiDebug_MemDumpListener)(int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg);
+typedef bool (*OH_HiDebug_MemDumpListener)(int32_t fd, OH_HiDebug_MemListenerType tag, bool mayReportToOEM, const char* arg);
 
 /**
  * @brief Registers a listener triggered when the memory watermark of an app is high or the memory information is

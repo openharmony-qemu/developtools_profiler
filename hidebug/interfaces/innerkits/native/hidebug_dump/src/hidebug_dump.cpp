@@ -78,7 +78,7 @@ OH_HiDebug_MemDumpListener HidebugMemDumpListener::FindListener(const std::strin
 }
 
 bool HidebugMemDumpListener::TriggerListener(
-    const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, const char* arg)
+    const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, bool mayReportToOEM, const char* arg)
 {
     if (name.empty()) {
         HILOG_ERROR(LOG_CORE, "TriggerListener failed, Listener name is empty");
@@ -100,7 +100,7 @@ bool HidebugMemDumpListener::TriggerListener(
     }
 
     HILOG_INFO(LOG_CORE, "MemDumpListener triggered, name: %{public}s", name.c_str());
-    return listener(fd, tag, arg);
+    return listener(fd, tag, mayReportToOEM, arg);
 }
 } // namespace HiviewDFX
 } // namespace OHOS
