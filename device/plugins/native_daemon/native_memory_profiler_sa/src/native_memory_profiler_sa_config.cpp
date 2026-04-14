@@ -91,8 +91,15 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEBOOL(parcel, startupMode_);
     WRITEBOOL(parcel, memtraceEnable_);
     WRITEBOOL(parcel, asyncStackEnable_);
+    WRITEUINT64(parcel, asyncFlag_);
+    WRITEBOOL(parcel, nestedAsyncStackEnable_);
     WRITEUINT64(parcel, traceMask_);
     WriteGpuRange(parcel, gpuRange_);
+    return MarshallingExt(parcel);
+}
+
+bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
+{
     WRITEBOOL(parcel, offlineSymbolization_);
     WRITEBOOL(parcel, callframeCompress_);
     WRITEUINT32(parcel, statisticsInterval_);
@@ -120,11 +127,6 @@ bool NativeMemoryProfilerSaConfig::Marshalling(Parcel& parcel) const
     WRITEUINT32(parcel, uniqueStackTableSize_);
     WRITESTRING(parcel, typeFileName_);
     WRITEUINT32(parcel, startType_);
-    return MarshallingExt(parcel);
-}
-
-bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
-{
     WRITEUINT32(parcel, gwpAsanHoldTime_);
     WRITEUINT32(parcel, gwpAsanMaxEntries_);
     WRITEUINT32(parcel, gwpAsanMaxStackDepth_);
@@ -135,7 +137,8 @@ bool NativeMemoryProfilerSaConfig::MarshallingExt(Parcel& parcel) const
     return true;
 }
 
-bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr<NativeMemoryProfilerSaConfig> config)
+bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel,
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config)
 {
     if (config == nullptr) {
         return false;
@@ -160,8 +163,16 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READBOOL(parcel, config->startupMode_);
     READBOOL(parcel, config->memtraceEnable_);
     READBOOL(parcel, config->asyncStackEnable_);
+    READUINT64(parcel, config->asyncFlag_);
+    READBOOL(parcel, config->nestedAsyncStackEnable_);
     READUINT64(parcel, config->traceMask_);
     ReadGpuRange(parcel, config);
+    return UnmarshallingExt(parcel, config);
+}
+
+bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
+    std::shared_ptr<NativeMemoryProfilerSaConfig> config)
+{
     READBOOL(parcel, config->offlineSymbolization_);
     READBOOL(parcel, config->callframeCompress_);
     READUINT32(parcel, config->statisticsInterval_);
@@ -189,12 +200,6 @@ bool NativeMemoryProfilerSaConfig::Unmarshalling(Parcel& parcel, std::shared_ptr
     READUINT32(parcel, config->uniqueStackTableSize_);
     READSTRING(parcel, config->typeFileName_);
     READUINT32(parcel, config->startType_);
-    return UnmarshallingExt(parcel, config);
-}
-
-bool NativeMemoryProfilerSaConfig::UnmarshallingExt(Parcel& parcel,
-                                                    std::shared_ptr<NativeMemoryProfilerSaConfig> config)
-{
     READUINT32(parcel, config->gwpAsanHoldTime_);
     READUINT32(parcel, config->gwpAsanMaxEntries_);
     READUINT32(parcel, config->gwpAsanMaxStackDepth_);
@@ -220,11 +225,13 @@ void NativeMemoryProfilerSaConfig::PrintConfig(std::shared_ptr<NativeMemoryProfi
         "fpUnwind: %d, blocked: %d, recordAccurately: %d",
         config->mallocFreeMatchingInterval_, config->mallocFreeMatchingCnt_, config->stringCompressed_,
         config->fpUnwind_, config->blocked_, config->recordAccurately_);
-    PROFILER_LOG_DEBUG(
-        LOG_CORE,
-        "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, offlineSymbolization: %d, callframeCompress: %d,"
+    PROFILER_LOG_DEBUG(LOG_CORE,
+        "startupMode: %d, memtraceEnable: %d, asyncStackEnable: %d, asyncFlag: %llu,"
+        " nestedAsyncStackEnable: %d, traceMask: %llu, offlineSymbolization: %d, callframeCompress: %d,"
         "statisticsInterval: %d, clockId: %d, targetSoName: %s, filterLibListSize: %zu",
-        config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_, config->offlineSymbolization_,
+        config->startupMode_, config->memtraceEnable_, config->asyncStackEnable_,
+        static_cast<unsigned long long>(config->asyncFlag_), config->nestedAsyncStackEnable_,
+        static_cast<unsigned long long>(config->traceMask_), config->offlineSymbolization_,
         config->callframeCompress_, config->statisticsInterval_, config->clockId_, config->targetSoName_.c_str(),
         config->filterLibList_.size());
     PROFILER_LOG_DEBUG(LOG_CORE,

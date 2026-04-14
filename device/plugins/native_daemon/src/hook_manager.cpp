@@ -341,13 +341,15 @@ uint64_t HookManager::MergeAsyncFlagMaskFromEnum(uint64_t baseMask)
 
 void HookManager::UpdateAsyncFlagConfig()
 {
-    asyncFlagMask_ = 0;
     if (!hookConfig_.async_stack_enable()) {
+        asyncFlagMask_ = 0;
         return;
     }
+    uint64_t configuredMask = asyncFlagMask_;
     if (hookConfig_.async_type_size() > 0) {
-        asyncFlagMask_ = MergeAsyncFlagMaskFromEnum(DEFAULT_ASYNC_TYPE);
+        configuredMask = MergeAsyncFlagMaskFromEnum(DEFAULT_ASYNC_TYPE);
     }
+    asyncFlagMask_ = configuredMask;
     if (asyncFlagMask_ == DEFAULT_ASYNC_TYPE) {
         PROFILER_LOG_WARN(LOG_CORE, "async_stack_enable set but async_type is erro");
         return;
@@ -1509,6 +1511,8 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     hookConfig_.set_startup_mode(config->startupMode_);
     hookConfig_.set_memtrace_enable(config->memtraceEnable_);
     hookConfig_.set_async_stack_enable(config->asyncStackEnable_);
+    asyncFlagMask_ = config->asyncFlag_;
+    hookConfig_.set_nested_async_stack_enable(config->nestedAsyncStackEnable_);
     traceMask_ = config->traceMask_;
     hookConfig_.set_offline_symbolization(config->offlineSymbolization_);
     hookConfig_.set_callframe_compress(config->callframeCompress_);

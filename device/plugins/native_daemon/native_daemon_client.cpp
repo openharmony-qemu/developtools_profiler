@@ -137,10 +137,30 @@ int32_t main(int32_t argc, char* argv[])
             printf("    --filterNapiName                    -fnapi : filterNapiName \n");
             printf("    --hookstandalone                    -hsa : hookstandalone \n");
             printf("    --save_file                         -sf : save_file \n");
-            printf("    ----fileName                        -fn : file_name \n");
-            printf("    ----pidExtend                       -pe : pid extend \n");
-            printf("    ----processNameExtend               -pne : process_name extend \n");
-            printf("    ----traceMask                       -tm : trace mask \n");
+            printf("    --fileName                          -fn : file_name \n");
+            printf("    --pidExtend                         -pe : pid extend \n");
+            printf("    --processNameExtend                 -pne : process_name extend \n");
+            printf("    --traceMask                         -tm : trace mask \n");
+            printf("    --asyncFlag                         -af : async flag, default: 0\n");
+            printf("    --nestedAsyncStackEnable            -nase : nested async stack enable, default: false\n");
+            printf("    --printNmdOnly                      -pno : print nmd only, default: false\n");
+            printf("    --targetSoName                      -tsn : target so name \n");
+            printf("    --filterLibList                     -fll : filter lib list \n");
+            printf("    --largestSize                       -ls : largest size, default: 0\n");
+            printf("    --secondLargestSize                 -sls : second largest size, default: 0\n");
+            printf("    --maxGrowthSize                     -mgs : max growth size, default: 0\n");
+            printf("    --uniqueStackTableSize              -usts : unique stack table size, default: 0\n");
+            printf("    --typeFileName                      -tfn : type file name \n");
+            printf("    --startType                         -st : start type, default: 0\n");
+            printf("    --gwpAsanHoldTime                   -gaht : gwp asan hold time, default: 0\n");
+            printf("    --gwpAsanMaxEntries                 -game : gwp asan max entries, default: 0\n");
+            printf("    --gwpAsanMaxStackDepth              -gamsd : gwp asan max stack depth, default: 0\n");
+            printf("    --allocatorSamplingEnable           -ase : allocator sampling enable, default: false\n");
+            printf("    --nativeOrphanSnapshotsEnable       -nose : native orphan snapshots enable, default: false\n");
+            printf("    --memLeakFormat                     -mlf : mem leak format, default: 0\n");
+            printf("    --memLeakLimit                      -mll : mem leak limit, default: 0\n");
+            printf("    --nmdPid                            -np : nmd pid, default: 0\n");
+            printf("    --nmdType                           -nt : nmd type, default: 0\n");
             return 0;
         }
 
@@ -204,7 +224,7 @@ int32_t main(int32_t argc, char* argv[])
             config->clockId_ = i + 1 < argc && IsNumeric(argv[i + 1]) ? std::stoi(argv[++i]) : 0;
         } else if ((arg == "--dumpData") || (arg == "-dd")) {
             dumpData = true;
-        } else if ((arg == "--sampleInterval ") || (arg == "-spi")) {
+        } else if ((arg == "--sampleInterval") || (arg == "-spi")) {
             config->sampleInterval_ =
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--responseLibraryMode") || (arg == "-r")) {
@@ -218,7 +238,62 @@ int32_t main(int32_t argc, char* argv[])
             config->maxJsStackDepth_ =
                 i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint8_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--filterNapiName") || (arg == "-fnapi")) {
-            config->filterNapiName_ = i + 1 < argc ? std::string(argv[i + 1]) : "";
+            config->filterNapiName_ = i + 1 < argc ? std::string(argv[++i]) : "";
+        } else if ((arg == "--asyncFlag") || (arg == "-af")) {
+            config->asyncFlag_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint64_t>(std::stoull(argv[++i])) : 0;
+        } else if ((arg == "--nestedAsyncStackEnable") || (arg == "-nase")) {
+            config->nestedAsyncStackEnable_ = true;
+        } else if ((arg == "--printNmdOnly") || (arg == "-pno")) {
+            config->printNmdOnly_ = true;
+        } else if ((arg == "--targetSoName") || (arg == "-tsn")) {
+            config->targetSoName_ = i + 1 < argc ? std::string(argv[++i]) : "";
+        } else if ((arg == "--filterLibList") || (arg == "-fll")) {
+            while (i + 1 < argc && !IsOption(std::string(argv[i + 1]))) {
+                config->filterLibList_.push_back(std::string(argv[++i]));
+            }
+        } else if ((arg == "--largestSize") || (arg == "-ls")) {
+            config->largestSize_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--secondLargestSize") || (arg == "-sls")) {
+            config->secondLargestSize_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--maxGrowthSize") || (arg == "-mgs")) {
+            config->maxGrowthSize_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--uniqueStackTableSize") || (arg == "-usts")) {
+            config->uniqueStackTableSize_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--typeFileName") || (arg == "-tfn")) {
+            config->typeFileName_ = i + 1 < argc ? std::string(argv[++i]) : "";
+        } else if ((arg == "--startType") || (arg == "-st")) {
+            config->startType_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--gwpAsanHoldTime") || (arg == "-gaht")) {
+            config->gwpAsanHoldTime_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--gwpAsanMaxEntries") || (arg == "-game")) {
+            config->gwpAsanMaxEntries_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--gwpAsanMaxStackDepth") || (arg == "-gamsd")) {
+            config->gwpAsanMaxStackDepth_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--allocatorSamplingEnable") || (arg == "-ase")) {
+            config->allocatorSamplingEnable_ = true;
+        } else if ((arg == "--nativeOrphanSnapshotsEnable") || (arg == "-nose")) {
+            config->nativeOrphanSnapshotsEnable_ = true;
+        } else if ((arg == "--memLeakFormat") || (arg == "-mlf")) {
+            config->memLeakFormat_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--memLeakLimit") || (arg == "-mll")) {
+            config->memLeakLimit_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--nmdPid") || (arg == "-np")) {
+            config->nmdPid_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
+        } else if ((arg == "--nmdType") || (arg == "-nt")) {
+            config->nmdType_ =
+                i + 1 < argc && IsNumeric(argv[i + 1]) ? static_cast<uint32_t>(std::stoi(argv[++i])) : 0;
         } else if ((arg == "--hookstandalone") || (arg == "-hsa")) {
             config->hookstandalone_ = true;
         } else if ((arg == "--save_file") || (arg == "-sf")) {

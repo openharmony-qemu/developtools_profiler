@@ -41,6 +41,8 @@ struct SimplifiedMemConfig {
     size_t secondLargestSize = 0;
     size_t maxGrowthSize = 0;
     size_t sampleSize = 0;
+    bool asyncStackEnable = false;
+    uint64_t asyncFlag = 0;
 };
 
 struct MemAPIConfig {

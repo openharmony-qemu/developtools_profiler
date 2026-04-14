@@ -31,6 +31,8 @@ using Range = std::pair<uint64_t, uint64_t>;
 struct MemSaConfig {
     uint64_t mask = 0;
     std::map<std::string, std::pair<Range, Range>> hookSizes;
+    bool asyncStackEnable = false;
+    uint64_t asyncFlag = 0;
 };
 
 struct MemLeakConfig {
