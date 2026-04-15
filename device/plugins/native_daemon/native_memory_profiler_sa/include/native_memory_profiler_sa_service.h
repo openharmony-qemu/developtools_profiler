@@ -83,10 +83,14 @@ private:
                           uint32_t& fd, std::shared_ptr<HookManager>& hook, std::string& args,
                           const sptr<IRemoteObject>& callback = nullptr);
     int32_t StartHook(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd, MessageParcel &reply);
+    int32_t StopHookAsync(uint32_t pid, int32_t finishErrorCode);
+    void StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config, int32_t finishErrorCode);
+    int32_t StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode, bool isAsync);
     int32_t CheckConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fd = 0);
     void FillTaskConfigContext(int32_t pid, const std::string& name);
     bool ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size) override;
     std::string GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
+    void RefreshFileCacheModeConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetGpuConfig(ClientConfig& clientConfig);
     // 统一应用 config 中的 NMD/memtrace 侧效应，减少 Start/DumpData 重复分支
     bool ApplyNmdConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config, uint32_t fdForNmd = 0);
@@ -101,7 +105,8 @@ private:
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
-    static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
+    static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath,
+        bool isAsync = false);
 
 private:
     std::mutex gpuMtx_;

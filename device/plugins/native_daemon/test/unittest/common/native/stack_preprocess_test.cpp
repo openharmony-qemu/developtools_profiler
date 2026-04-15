@@ -1205,6 +1205,89 @@ HWTEST_F(StackPreprocessTest, ProcessBatchDataStatisticsIntervalTest, TestSize.L
 }
 
 /*
+@tc.name: SetStopTakeDataTest
+@tc.desc: test SetStopTakeData function with file cache mode.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, SetStopTakeDataTest, TestSize.Level0)
+{
+    // Test with file cache mode enabled
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    
+    preprocess.isStopTakeData_ = false;
+    preprocess.SetStopTakeData();
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    
+    // Test with file cache mode disabled
+    NativeHookConfig hookConfigNoCache;
+    hookConfigNoCache.set_use_file_cache_mode(false);
+    StackPreprocess preprocessNoCache(nullptr, hookConfigNoCache, 0);
+    
+    preprocessNoCache.isStopTakeData_ = false;
+    preprocessNoCache.SetStopTakeData();
+    EXPECT_FALSE(preprocessNoCache.isStopTakeData_);
+}
+
+/*
+@tc.name: UpdateLastCacheFileActivityTimeTest
+@tc.desc: test UpdateLastCacheFileActivityTime function.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, UpdateLastCacheFileActivityTimeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    
+    // Test when waitingCacheFileStop_ is false
+    preprocess.waitingCacheFileStop_ = false;
+    auto initialTime = preprocess.lastCacheFileActivityTime_;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_EQ(preprocess.lastCacheFileActivityTime_, initialTime);
+    
+    // Test when waitingCacheFileStop_ is true
+    preprocess.waitingCacheFileStop_ = true;
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_GT(preprocess.lastCacheFileActivityTime_, initialTime);
+}
+
+/*
+@tc.name: IsCacheFileInactiveWithTimeTest
+@tc.desc: test IsCacheFileInactiveWithTime function.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, IsCacheFileInactiveWithTimeTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    
+    // Test when cache file is active
+    preprocess.waitingCacheFileStop_ = true;
+    preprocess.UpdateLastCacheFileActivityTime();
+    EXPECT_FALSE(preprocess.IsCacheFileInactiveWithTime(1));
+}
+
+/*
+@tc.name: StopCacheFileTaskTest
+@tc.desc: test StopCacheFileTask function.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessTest, StopCacheFileTaskTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    
+    // Test StopCacheFileTask
+    preprocess.isStopTakeData_ = true;
+    preprocess.StopCacheFileTask();
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    EXPECT_FALSE(preprocess.waitingCacheFileStop_);
+}
+
+/*
 @tc.name: ProcessSingleRecordMunmapMsgTest
 @tc.desc: test ProcessSingleRecord with MUNMAP_MSG type.
 @tc.type: FUNC

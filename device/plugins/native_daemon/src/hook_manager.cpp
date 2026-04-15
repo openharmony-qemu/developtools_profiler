@@ -1262,7 +1262,7 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
 
         uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
         uint32_t offset = 0;
-
+        hookCtx->stackPreprocess->UpdateLastCacheFileActivityTime();
         if (!ParseRecordsFromBuffer(hookCtx, readBuffer.get(), totalAvail, offset, readfileSize)) {
             hasError = true;
             break;
@@ -1526,7 +1526,7 @@ void HookManager::SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConf
     }
     hookConfig_.set_allocator_sampling_enable(config->allocatorSamplingEnable_);
     hookConfig_.set_unique_stack_table_size(config->uniqueStackTableSize_);
-    hookConfig_.set_use_file_cache_mode(false);
+    hookConfig_.set_use_file_cache_mode(config->enableFileCacheMode_);
     printMallocNmd_ = config->printNmd_;
     if (config->hookstandalone_) {
         isHookStandalone_ = true;
@@ -1576,10 +1576,12 @@ void HookManager::StartPluginSession(std::unordered_map<pid_t, std::pair<uid_t, 
             uid_t uid = 0;
             gid_t gid = 0;
             if (!COMMON::GetUidGidFromPid(static_cast<pid_t>(item->pid), uid, gid)) {
+                item->stackPreprocess->SetStopTakeData();
                 PROFILER_LOG_INFO(LOG_CORE, "get target process uid gid failed");
                 continue;
             }
             if (kill(item->pid, SIGNAL_START_HOOK) == -1) {
+                item->stackPreprocess->SetStopTakeData();
                 const int bufSize = 256;
                 char buf[bufSize] = {0};
                 strerror_r(errno, buf, bufSize);
