@@ -86,6 +86,7 @@ std::map<std::string, uint64_t (*)(ani_vm*)> GetVmGcMap()
 
 struct GwpAsanParams {
     bool alwaysEnabled = false;
+    bool isRecover = false;
     int32_t sampleRate = 2500;
     int32_t maxSimutaneousAllocations = 1000;
     int32_t duration = 7;
@@ -678,47 +679,21 @@ ani_long GetVMRuntimeStat(ani_env *env, ani_string itemAni)
 
 bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwpAsanParams)
 {
-    ani_boolean isUndefined;
-    ani_ref alwaysEnabledRef = nullptr;
-    if (env->Object_GetPropertyByName_Ref(optionsObj, "alwaysEnabled", &alwaysEnabledRef) == ANI_OK) {
-        ani_boolean alwaysEnabledAni = false;
-        env->Reference_IsUndefined(alwaysEnabledRef, &isUndefined);
-        if (!isUndefined) {
-            if (env->Object_CallMethodByName_Boolean(static_cast<ani_object>(alwaysEnabledRef),
-                "toBoolean", ":z", &alwaysEnabledAni) != ANI_OK) {
-                HILOG_ERROR(LOG_CORE, "AlwaysEnabled type must be boolean");
-                return false;
-            }
-            gwpAsanParams.alwaysEnabled = static_cast<bool>(alwaysEnabledAni);
-        }
+    if (!AniUtil::ParseBoolProperty(env, optionsObj, "alwaysEnabled", gwpAsanParams.alwaysEnabled)) {
+        return false;
     }
 
-    ani_ref sampleRatedRef = nullptr;
-    if (env->Object_GetPropertyByName_Ref(optionsObj, "sampleRate", &sampleRatedRef) == ANI_OK) {
-        ani_int sampleRateAni = 0;
-        env->Reference_IsUndefined(sampleRatedRef, &isUndefined);
-        if (!isUndefined) {
-            if (env->Object_CallMethodByName_Int(static_cast<ani_object>(sampleRatedRef),
-                "toInt", ":i", &sampleRateAni) != ANI_OK) {
-                HILOG_ERROR(LOG_CORE, "SampleRate type must be a num");
-                return false;
-            }
-            gwpAsanParams.sampleRate = static_cast<int32_t>(sampleRateAni);
-        }
+    if (!AniUtil::ParseBoolProperty(env, optionsObj, "isRecover", gwpAsanParams.isRecover)) {
+        return false;
     }
 
-    ani_ref slotRef = nullptr;
-    if (env->Object_GetPropertyByName_Ref(optionsObj, "maxSimutaneousAllocations", &slotRef) == ANI_OK) {
-        ani_int slotAni = 0;
-        env->Reference_IsUndefined(slotRef, &isUndefined);
-        if (!isUndefined) {
-            if (env->Object_CallMethodByName_Int(static_cast<ani_object>(slotRef),
-                "toInt", ":i", &slotAni) != ANI_OK) {
-                HILOG_ERROR(LOG_CORE, "MaxSimutaneousAllocations type must be a num");
-                return false;
-            }
-            gwpAsanParams.maxSimutaneousAllocations = static_cast<int32_t>(slotAni);
-        }
+    if (!AniUtil::ParseIntProperty(env, optionsObj, "sampleRate", gwpAsanParams.sampleRate)) {
+        return false;
+    }
+
+    if (!AniUtil::ParseIntProperty(env, optionsObj, "maxSimutaneousAllocations",
+        gwpAsanParams.maxSimutaneousAllocations)) {
+        return false;
     }
 
     if (gwpAsanParams.sampleRate <= 0 || gwpAsanParams.maxSimutaneousAllocations <= 0) {
@@ -727,8 +702,9 @@ bool ParseGwpAsanOptions(ani_env *env, ani_object optionsObj, GwpAsanParams& gwp
     }
 
     HILOG_DEBUG(LOG_CORE, "Parse GwpAsanOptions success, alwaysEnabled: %{public}d, sampleRate: %{public}d,"
-        " maxSimutaneousAllocations: %{public}d",
-        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate, gwpAsanParams.maxSimutaneousAllocations);
+        " maxSimutaneousAllocations: %{public}d, isRecover: %{public}d",
+        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.isRecover);
     return true;
 }
 
@@ -769,7 +745,7 @@ void EnableGwpAsanGrayscaleAni(ani_env *env, ani_object optionsObj, ani_object d
         return;
     }
     if (!EnableGwpAsanGrayscale(gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
-        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration, gwpAsanParams.isRecover)) {
         HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
         apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMIT);
         paramErrorMessage = "The number of GWP-ASAN applications of this device overflowed after last boot.";
