@@ -416,33 +416,32 @@ void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params
 void RAM::GetDevecoPssAboutPid(struct PssValues &pss, std::vector<std::string> &params)
 {
     if (params.size() > RAM_EIGHTH && params[0].find("guard") != std::string::npos) {
-        pss.gpuPssValue =
+        pss.guardPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
     if (params.size() > RAM_EIGHTH && params[0].find(".hap") != std::string::npos) {
-        pss.graphicPssValue =
+        pss.hapPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
     if (params.size() > RAM_EIGHTH && params[0].find(".db") != std::string::npos) {
-        pss.arktsHeapPssValue =
+        pss.dbPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
-    if (params.size() > RAM_EIGHTH && params[0].find(".so") != std::string::npos &&
-        params[1].find("heap") != std::string::npos) {
-        pss.nativeHeapPssValue =
+    if (params.size() > RAM_EIGHTH && params[0].find(".so") != std::string::npos) {
+        pss.soPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
-    if (params.size() > RAM_EIGHTH && params[0].find(".dev") != std::string::npos) {
-        pss.stackPssValue =
+    if (params.size() > RAM_EIGHTH && params[0].find("dev") != std::string::npos) {
+        pss.devPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
     if (params.size() > RAM_EIGHTH && params[0].find(".ttf") != std::string::npos) {
-        pss.anonPagePssValue =
+        pss.ttfPssValue =
             std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
             SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
