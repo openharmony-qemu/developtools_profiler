@@ -18,9 +18,7 @@
 
 #include <string>
 
-#include "refbase.h"
 #include "singleton.h"
-
 #include "hidebug/hidebug.h"
 
 namespace OHOS {
@@ -32,7 +30,10 @@ public:
 
     OH_HiDebug_MemDumpListener FindListener(const std::string& name);
 
-    bool TriggerListener(const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, bool mayReportToOEM, const char* arg);
+    bool TriggerListener(const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag,
+                         bool mayReportToOEM, const char* arg);
+
+    HiDebug_ErrorCode UnregisterMemDumpListener(const std::string& name);
 };
 } // namespace HiviewDFX
 } // namespace OHOS

@@ -288,3 +288,13 @@ HiDebug_ErrorCode OH_HiDebug_RegisterMemDumpListener(const char* name, OH_HiDebu
     auto& instance = OHOS::DelayedRefSingleton<OHOS::HiviewDFX::HidebugMemDumpListener>::GetInstance();
     return instance.RegisterMemDumpListener(nameStr, listener);
 }
+
+HiDebug_ErrorCode OH_HiDebug_UnregisterMemDumpListener(const char* name)
+{
+    if (name == nullptr || strlen(name) == 0) {
+        return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
+    }
+    std::string nameStr(name);
+    auto& instance = OHOS::DelayedRefSingleton<OHOS::HiviewDFX::HidebugMemDumpListener>::GetInstance();
+    return instance.UnregisterMemDumpListener(nameStr);
+}

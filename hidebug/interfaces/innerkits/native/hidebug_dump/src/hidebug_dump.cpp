@@ -77,6 +77,23 @@ OH_HiDebug_MemDumpListener HidebugMemDumpListener::FindListener(const std::strin
     return nullptr;
 }
 
+HiDebug_ErrorCode HidebugMemDumpListener::UnregisterMemDumpListener(const std::string& name)
+{
+    if (name.empty()) {
+        return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
+    }
+    std::unique_lock<std::shared_mutex> lock(GetListenerMutex());
+    auto& listenerMap = GetListenerMap();
+    auto it = listenerMap.find(name);
+    if (it == listenerMap.end()) {
+        HILOG_ERROR(LOG_CORE, "Unregister failed, MemDumpListener not found, name: %{public}s", name.c_str());
+        return HiDebug_ErrorCode::HIDEBUG_INVALID_ARGUMENT;
+    }
+    listenerMap.erase(it);
+    HILOG_INFO(LOG_CORE, "MemDumpListener unregistered, name: %{public}s", name.c_str());
+    return HiDebug_ErrorCode::HIDEBUG_SUCCESS;
+}
+
 bool HidebugMemDumpListener::TriggerListener(
     const std::string& name, int32_t fd, OH_HiDebug_MemListenerType tag, bool mayReportToOEM, const char* arg)
 {
@@ -88,19 +105,15 @@ bool HidebugMemDumpListener::TriggerListener(
         HILOG_ERROR(LOG_CORE, "TriggerListener failed, Invalid file descriptor");
         return false;
     }
-    if (arg == nullptr || strlen(arg) == 0) {
-        HILOG_ERROR(LOG_CORE, "TriggerListener failed, Argument is null or empty");
-        return false;
-    }
 
     OH_HiDebug_MemDumpListener listener = FindListener(name);
     if (listener == nullptr) {
         HILOG_ERROR(LOG_CORE, "TriggerListener failed, MemDumpListener not found, name: %{public}s", name.c_str());
         return false;
     }
-
+    const char* safeArg = (arg != nullptr ? arg : "");
     HILOG_INFO(LOG_CORE, "MemDumpListener triggered, name: %{public}s", name.c_str());
-    return listener(fd, tag, mayReportToOEM, arg);
+    return listener(fd, tag, mayReportToOEM, safeArg);
 }
 } // namespace HiviewDFX
 } // namespace OHOS
