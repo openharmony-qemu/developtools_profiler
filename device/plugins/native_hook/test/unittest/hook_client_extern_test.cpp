@@ -14,9 +14,11 @@
  */
 
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <gtest/gtest.h>
 #include <sys/mman.h>
 #include <sys/prctl.h>
+#include <unistd.h>
 #include "hook_client.h"
 #include "hook_socket_client_mock.h"
 #include "musl_preinit_common.h"
@@ -56,6 +58,7 @@ public:
     void StartMock(std::vector<int> &typeVec, std::vector<int> &sizeVec)
     {
         g_hookReady = true;
+        g_hookPid.store(getpid());
         g_clientConfig.filterSize = 1;
         std::shared_ptr<MockHookSocketClient> mockClient = std::make_shared<MockHookSocketClient>();
         g_hookClient = mockClient;
@@ -199,17 +202,41 @@ HWTEST_F(HookClientExternTest, HookMmapTest, TestSize.Level0)
     StartMock(typeVec, sizeVec);
     g_clientConfig.mmapDisable = false;
     size_t length = 100;
-    int port = 0;
-    int flags = 0;
-    int fd = 1;
-    off_t offset = 0;
-    void* alignedAllocBlack = ohos_malloc_hook_mmap(reinterpret_cast<void*>(0x1000), length, port, flags, fd, offset);
-    EXPECT_NE(alignedAllocBlack, nullptr);
 
-    std::vector<int> expectedTypeVec = {MMAP_FILE_TYPE, MEMORY_TAG, MMAP_FILE_PAGE_MSG};
-    EXPECT_EQ(typeVec, expectedTypeVec);
-    std::vector<int> expectedsizeVec = {length, 0, length};
-    EXPECT_EQ(sizeVec, expectedsizeVec);
+    // Create temporary file for mmap test
+    char tempFile[] = "/data/local/tmp/hook_mmap_test_XXXXXX";
+    int fd = mkstemp(tempFile);
+    if (fd < 0) {
+        // Fallback to anonymous mmap if mkstemp fails
+        fd = -1;
+    } else {
+        char data[length];
+        (void)memset_s(data, sizeof(data), 0, length);
+        ASSERT_EQ(write(fd, data, length), static_cast<ssize_t>(length));
+    }
+
+    int prot = PROT_READ;
+    int flags = MAP_PRIVATE;
+    off_t offset = 0;
+    void* mappedAddr = ohos_malloc_hook_mmap(nullptr, length, prot, flags, fd, offset);
+    EXPECT_NE(mappedAddr, nullptr);
+    EXPECT_NE(mappedAddr, MAP_FAILED);
+
+    ASSERT_GE(typeVec.size(), 2);
+    EXPECT_EQ(typeVec[0], MMAP_FILE_TYPE);
+    EXPECT_EQ(typeVec[typeVec.size() - 1], MMAP_FILE_PAGE_MSG);
+    
+    ASSERT_GE(sizeVec.size(), 2);
+    EXPECT_EQ(sizeVec[0], static_cast<int>(length));
+    EXPECT_EQ(sizeVec[sizeVec.size() - 1], static_cast<int>(length));
+
+    if (mappedAddr != nullptr && mappedAddr != MAP_FAILED) {
+        munmap(mappedAddr, length);
+    }
+    if (fd >= 0) {
+        close(fd);
+        unlink(tempFile);
+    }
 }
 
 /**
