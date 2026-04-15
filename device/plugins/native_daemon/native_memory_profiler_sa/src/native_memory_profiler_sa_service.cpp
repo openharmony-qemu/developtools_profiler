@@ -435,8 +435,7 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
     }
     if (config == nullptr) {
         int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
-        PROFILER_LOG_ERROR(LOG_CORE,
-            "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
+        PROFILER_LOG_ERROR(LOG_CORE, "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
         return ret;
     }
 
