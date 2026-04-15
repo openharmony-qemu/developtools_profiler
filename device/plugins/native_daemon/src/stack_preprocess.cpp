@@ -37,6 +37,7 @@ constexpr uint32_t LOG_PRINT_TIMES = 10000;
 constexpr uint32_t WAIT_STOP_TIME = 5000;
 constexpr uint32_t FINAL_SNAPSHOT_TIMEOUT_MS = 3000;
 constexpr uint32_t WAIT_TIME_ONCE = 10;
+constexpr uint32_t MAX_FILE_CACHE_INACTIVE_SECONDS = 60;
 constexpr uint32_t WAIT_FILE_CACHE_STOP_CNT = 3600;
 constexpr uint32_t SECOND_TO_MILLISECOND = 1000;
 constexpr uint32_t MILLISECOND_TO_NANOSECOND = 1000 * 1000;
@@ -310,6 +311,49 @@ bool StackPreprocess::StartTakeResults()
     return true;
 }
 
+void StackPreprocess::SetStopTakeData()
+{
+    if (hookConfig_.use_file_cache_mode()) {
+        SetIsStopTakeData(true);
+    }
+}
+
+void StackPreprocess::UpdateLastCacheFileActivityTime()
+{
+    if (!waitingCacheFileStop_) {
+        return;
+    }
+    std::lock_guard<std::mutex> lock(cacheFileActivityTimeMtx_);
+    lastCacheFileActivityTime_ = std::chrono::steady_clock::now();
+}
+
+bool StackPreprocess::IsCacheFileInactiveWithTime(uint32_t seconds)
+{
+    std::lock_guard<std::mutex> lock(cacheFileActivityTimeMtx_);
+    auto now = std::chrono::steady_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::seconds>(now - lastCacheFileActivityTime_);
+    return duration.count() > seconds;
+}
+
+void StackPreprocess::StopCacheFileTask()
+{
+    uint32_t waitCnt = 0;
+    waitingCacheFileStop_ = true;
+    UpdateLastCacheFileActivityTime();
+    while (!isStopTakeData_ && waitCnt < WAIT_FILE_CACHE_STOP_CNT) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(SECOND_TO_MILLISECOND));
+        waitCnt++;
+        // Check if there's no activity for a max time
+        if (IsCacheFileInactiveWithTime(MAX_FILE_CACHE_INACTIVE_SECONDS)) {
+            PROFILER_LOG_INFO(LOG_CORE, "StopCacheFileTask: no activity for %u seconds, stopping",
+                MAX_FILE_CACHE_INACTIVE_SECONDS);
+            break;
+        }
+    }
+    ForceStop();
+    waitingCacheFileStop_ = false;
+}
+
 bool StackPreprocess::StopTakeResults()
 {
 #ifdef PERFORMANCE_DEBUG
@@ -332,12 +376,7 @@ bool StackPreprocess::StopTakeResults()
             ForceStop();
         }
     } else {
-        uint32_t waitCnt = 0;
-        while (!isStopTakeData_ && waitCnt < WAIT_FILE_CACHE_STOP_CNT) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(SECOND_TO_MILLISECOND));
-            waitCnt++;
-        }
-        ForceStop();
+        StopCacheFileTask();
     }
 
     if (!dataRepeater_) {
@@ -551,7 +590,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
 
         uint32_t totalAvail = remainSize + static_cast<uint32_t>(bytesRead);
         ParseContext ctx = {0, readfileSize};
-
+        UpdateLastCacheFileActivityTime();
         if (!ParseRecordsFromBuffer(readBuffer.get(), totalAvail, ctx, rawData, hookRecord)) {
             hasError = true;
             break;

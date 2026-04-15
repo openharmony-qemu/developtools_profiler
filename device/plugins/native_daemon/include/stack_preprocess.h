@@ -209,6 +209,8 @@ public:
             lastCacheStatisticsTime_.tv_sec += hookConfig_.statistics_interval();
         }
     }
+    void SetStopTakeData();
+    void UpdateLastCacheFileActivityTime();
     void SaveMemTag(uint32_t tagId, const std::string& tagName);
     bool GetMemTag(uint32_t tagId, std::string& tagName);
     void SaveJsRawStack(uint64_t jsChainId, const char* jsRawStack);
@@ -299,6 +301,8 @@ private:
 private:
     void TakeResults();
     bool CheckIsFileCacheFinsh();
+    bool IsCacheFileInactiveWithTime(uint32_t seconds);
+    void StopCacheFileTask();
     bool ProcessBatchData();
     bool ProcessSingleRecord(HookRecordPtr& hookRecord);
     void BuildAndReportStack(HookRecordPtr& hookRecord);
@@ -392,6 +396,8 @@ private:
     void CleanupFullyReleasedStack(uint32_t stackId);
 private:
     std::chrono::steady_clock::time_point lastStatisticsTime_ = std::chrono::steady_clock::now();
+    std::chrono::steady_clock::time_point lastCacheFileActivityTime_ = std::chrono::steady_clock::now();
+    std::mutex cacheFileActivityTimeMtx_;
     struct timespec lastCacheStatisticsTime_ = {0, 0};
     std::shared_ptr<Writer> writer_ = nullptr;
     StackDataRepeaterPtr dataRepeater_ = nullptr;
@@ -400,6 +406,7 @@ private:
     std::atomic_bool isStopTakeData_ = false;
     std::atomic_bool isStartTakeData_ = false;
     std::atomic_bool isCacheFileParseDone_ = false;
+    std::atomic_bool waitingCacheFileStop_ = false;
     std::shared_ptr<OHOS::Developtools::NativeDaemon::VirtualRuntime> runtime_instance;
     DISALLOW_COPY_AND_MOVE(StackPreprocess);
     OHOS::SafeMap<uint32_t, std::string> memTagMap_ = {};

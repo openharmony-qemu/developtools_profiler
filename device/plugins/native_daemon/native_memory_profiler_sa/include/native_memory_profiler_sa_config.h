@@ -86,6 +86,7 @@ public:
     uint32_t gwpAsanHoldTime_{0};
     uint32_t gwpAsanMaxEntries_{0};
     uint32_t gwpAsanMaxStackDepth_{0};
+    bool enableFileCacheMode_{false};
     bool allocatorSamplingEnable_{false};
     bool nativeOrphanSnapshotsEnable_{false};
     uint32_t memLeakFormat_{INVALID_FORMAT};

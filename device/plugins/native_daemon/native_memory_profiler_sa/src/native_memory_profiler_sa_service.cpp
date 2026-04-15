@@ -279,7 +279,7 @@ int32_t NativeMemoryProfilerSaService::StartPidVoid(std::shared_ptr<NativeMemory
         return RET_OK;
     }
     ApplyMemtraceConfig(config);
-
+    RefreshFileCacheModeConfig(config);
     int32_t retResource = CheckSystemResource();
     if (retResource != static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS)) {
         PROFILER_LOG_ERROR(LOG_CORE, "System resource is not enough,errorcode is:%d.", retResource);
@@ -305,8 +305,9 @@ int32_t NativeMemoryProfilerSaService::Stop()
             g_timerFdInfo.erase(fdTimerIter);
         }
     }
-    int32_t retStopHook = StopHook(static_cast<uint32_t>(pid), "",
+    int32_t retStopHook = StopHookAsync(static_cast<uint32_t>(pid),
         static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+    PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync ret:%d", retStopHook);
     if (retStopHook != RET_OK) {
         return retStopHook;
     }
@@ -406,6 +407,55 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
     return retRelease;
 }
 
+void NativeMemoryProfilerSaService::StopHookTask(uint32_t pid, std::shared_ptr<TaskConfig> config,
+    int32_t finishErrorCode)
+{
+    std::string resultPath;
+    int32_t retRelease = ReleaseForStopHook(pid, config, resultPath, true);
+    int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR);
+    NotifyProfilingResult(config, callbackError, retRelease == RET_OK ? resultPath : "");
+
+    std::lock_guard<std::mutex> guard(g_mtx);
+    if (--g_taskNum == 0) {
+        PROFILER_LOG_INFO(LOG_CORE, "StringViewMemoryHold clear");
+        StringViewMemoryHold::GetInstance().Clear();
+        DelayedShutdown(false);
+    }
+}
+
+int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finishErrorCode)
+{
+    std::shared_ptr<TaskConfig> config = nullptr;
+    if (pid > 0) {
+        std::lock_guard<std::mutex> guard(g_mtx);
+        if (auto taskIter = g_pidCtx.find(pid); taskIter != g_pidCtx.end()) {
+            config = taskIter->second;
+        }
+    }
+    if (config == nullptr) {
+        int32_t ret = static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_NOT_STARTED);
+        PROFILER_LOG_ERROR(LOG_CORE,
+            "StopHookAsync has stop, pid: %d, errorcode is:%d.", pid, ret);
+        return ret;
+    }
+
+    std::thread([pid, config, finishErrorCode, this]() {
+        this->StopHookTask(pid, config, finishErrorCode);
+    }).detach();
+
+    return RET_OK;
+}
+
+int32_t NativeMemoryProfilerSaService::StopHookByType(uint32_t pid, std::string& name, int32_t finishErrorCode,
+    bool isAsync)
+{
+    if (isAsync) {
+        return StopHookAsync(pid, finishErrorCode);
+    }
+    return StopHook(pid, name, finishErrorCode);
+}
+
 std::string NativeMemoryProfilerSaService::GetCmdArgs(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
     std::stringstream args;
@@ -502,8 +552,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
         [this, config, filePath = config->filePath_] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
-            int32_t retStop = this->StopHook(config->pid_, config->processName_,
-                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
+            int32_t retStop = this->StopHookByType(config->pid_, config->processName_,
+                static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
+                config->startType_ == START_TYPE_API);
             if (retStop != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaService StopHook failed");
             }
@@ -734,6 +785,11 @@ void NativeMemoryProfilerSaService::FillTaskConfigContext(int32_t pid, const std
     }
 }
 
+void NativeMemoryProfilerSaService::RefreshFileCacheModeConfig(std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
+{
+    config->enableFileCacheMode_ = true;
+}
+
 void NativeMemoryProfilerSaService::SetGpuConfig(ClientConfig& clientConfig)
 {
     std::lock_guard<std::mutex> guard(gpuMtx_);
@@ -836,18 +892,23 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
         }
         clientConfig.isSaMode = true;
         context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
-        int sharedMemCount = (clientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
-        std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName, sharedMemCount);
-        for (int i = 0; i < sharedMemCount; ++i) {
-            int eventFd = fdVec[i * VEC_SHIFT];
-            int smbFd = fdVec[i * VEC_SHIFT + 1];
-            if (eventFd == smbFd) {
-                PROFILER_LOG_ERROR(LOG_CORE,
-                    "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
-                return false;
-            }
-            context.SendFileDescriptor(smbFd);
+        if (clientConfig.enableFileCacheMode) {
+            int eventFd = iter->second->hookMgr->GetFileNotifierFd(peerConfig, bundleName);
             context.SendFileDescriptor(eventFd);
+        } else {
+            int sharedMemCount = (clientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
+            std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName, sharedMemCount);
+            for (int i = 0; i < sharedMemCount; ++i) {
+                int eventFd = fdVec[i * VEC_SHIFT];
+                int smbFd = fdVec[i * VEC_SHIFT + 1];
+                if (eventFd == smbFd) {
+                    PROFILER_LOG_ERROR(LOG_CORE,
+                        "Get eventFd and smbFd failed!, name: %s, pid: %d", bundleName.c_str(), peerConfig);
+                    return false;
+                }
+                context.SendFileDescriptor(smbFd);
+                context.SendFileDescriptor(eventFd);
+            }
         }
         iter->second->hookMgr->ResetStartupParam();
     } else {
@@ -1050,15 +1111,20 @@ void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<
 }
 
 int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
-    std::string& resultPath)
+    std::string& resultPath, bool isAsync)
 {
     int32_t ret = RET_OK;
     CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->StopPluginSession({});
     config->hookMgr->DestroyPluginSession({});
-    g_nameAndFilePathCtx.erase(config->processName);
-    g_nameAndFilePathCtx.erase(config->filePath);
-    g_pidCtx.erase(config->pid);
+    if (isAsync) {
+        std::lock_guard<std::mutex> guard(g_mtx);
+        g_nameAndFilePathCtx.erase(config->processName);
+        g_nameAndFilePathCtx.erase(config->filePath);
+    } else {
+        g_nameAndFilePathCtx.erase(config->processName);
+        g_nameAndFilePathCtx.erase(config->filePath);
+    }
     if (config->startType == START_TYPE_API) {
         std::lock_guard<std::mutex> guard(g_fileNameMtx);
         auto pidInfoIter = g_pidInfo.find(pid);
@@ -1076,7 +1142,14 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         }
         g_fileNameInfo.erase(pid);
     }
-    g_pidInfo.erase(static_cast<pid_t>(pid));
+    if (isAsync) {
+        std::lock_guard<std::mutex> guard(g_mtx);
+        g_pidCtx.erase(config->pid);
+        g_pidInfo.erase(static_cast<pid_t>(pid));
+    } else {
+        g_pidCtx.erase(config->pid);
+        g_pidInfo.erase(static_cast<pid_t>(pid));
+    }
     {
         std::lock_guard<std::mutex> nmdGuard(g_nmdMtx);
         if (g_nmdPidType.find(config->pid) != g_nmdPidType.end()) {
