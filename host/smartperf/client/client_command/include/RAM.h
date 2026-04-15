@@ -40,6 +40,12 @@ struct PssValues {
     std::string anonPagePssValue = "";
     std::string filePagePssValue = "";
     std::string ashmemPssValue = "";
+    std::string guardPssValue = "";
+    std::string hapPssValue = "";
+    std::string dbPssValue = "";
+    std::string soPssValue = "";
+    std::string devPssValue = "";
+    std::string ttfPssValue = "";
 };
 namespace OHOS {
 namespace SmartPerf {
