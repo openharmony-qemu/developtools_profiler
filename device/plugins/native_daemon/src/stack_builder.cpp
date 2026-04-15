@@ -180,10 +180,6 @@ void FpStackBuilder::FillAsyncJsSymbols(std::vector<CallFrame>& callFrames, Hook
         if (!res) {
             continue;
         }
-
-        if (cf.isJsFrame_) {
-            FillJsFrame(cf);
-        }
     }
 }
 

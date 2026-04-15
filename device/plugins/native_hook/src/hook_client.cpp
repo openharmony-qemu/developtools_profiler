@@ -1219,11 +1219,8 @@ size_t FindFdSize(const std::string& fileName, uint32_t targetPid, uint32_t targ
     return 0;
 }
 
-size_t GetDmaSize(void* addr, bool isUsing)
+size_t GetDmaSize(void* addr)
 {
-    if (!isUsing) {
-        return 0;
-    }
     char path[FD_PATH_LENGTH] = {0};
     char fileName[MAX_HOOK_PATH + 1] = {0};
     int fd = static_cast<int>(reinterpret_cast<intptr_t>(addr));
@@ -1250,6 +1247,20 @@ size_t GetDmaSize(void* addr, bool isUsing)
     return 0;
 }
 
+template <typename T>
+inline void SendDmaCloseData(T& data, unsigned long long mask, void* addr,
+    size_t size, uint16_t type, HookClientHolder& client, int realSize, StackParam& param)
+{
+    if (!(mask == RES_FD_MASK && (g_clientConfig.traceMask & RES_DMABUF_MASK) &&
+        type == MEMORY_UNUSING_MSG)) {
+        return;
+    }
+    data.addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr) | RES_DMABUF_MASK);
+    data.tagId = GetTagId(TAG_RES_DMABUF_MASK, RES_DMABUF_MASK);
+    client.SendStackWithPayload(&data, realSize, reinterpret_cast<void*>(param.stackPtr),
+        param.stackSize, reinterpret_cast<uint64_t>(data.addr) % g_sharedMemCount);
+}
+
 void __attribute__((noinline)) hook_restrace(unsigned long long mask,
     void* addr, size_t size, const char* tag, bool isUsing)
 {
@@ -1269,14 +1280,15 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
     if ((g_clientConfig.isSaMode && isUsing) && (!HookGuard::CheckRestraceConditions(combineVal, size))) {
         return;
     }
-
     if (mask == RES_DMABUF_MASK) {
-        size = GetDmaSize(addr, isUsing);
-        if (size == 0) {
-            return;
+        if (size == FD_SIZE && isUsing) {
+            size = GetDmaSize(addr);
+            if (size == 0) {
+                return;
+            }
         }
+        addr = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(addr) | RES_DMABUF_MASK);
     }
-
     if (((mask & (RES_FD_MASK | RES_THREAD_MASK | RES_ARK_LOCAL_HANDLE | RES_ARK_GLOBAL_HANDLE)) == 0) && !ohos_set_filter_size(size, nullptr)) {
         return;
     }
@@ -1299,12 +1311,14 @@ void __attribute__((noinline)) hook_restrace(unsigned long long mask,
         asyncData.tagId = GetTagId(tag, mask);
         client.SendStackWithPayload(&asyncData, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
                                     reinterpret_cast<uint64_t>(asyncData.addr) % g_sharedMemCount);
+        SendDmaCloseData(asyncData, mask, addr, size, type, client, realSize, param);
     } else {
         SetStackRawData(rawdata, type, addr, size);
         FillNodeInfo(rawdata);
         rawdata.tagId = GetTagId(tag, mask);
         client.SendStackWithPayload(&rawdata, realSize, reinterpret_cast<void*>(param.stackPtr), param.stackSize,
                                     reinterpret_cast<uint64_t>(rawdata.addr) % g_sharedMemCount);
+        SendDmaCloseData(rawdata, mask, addr, size, type, client, realSize, param);
     }
 }
 
