@@ -343,9 +343,9 @@ void StackPreprocess::StopCacheFileTask()
     while (!isStopTakeData_ && waitCnt < WAIT_FILE_CACHE_STOP_CNT) {
         std::this_thread::sleep_for(std::chrono::milliseconds(SECOND_TO_MILLISECOND));
         waitCnt++;
-        // Check if there's no activity for a max time
+        // Check if there's inactivity for a max time
         if (IsCacheFileInactiveWithTime(MAX_FILE_CACHE_INACTIVE_SECONDS)) {
-            PROFILER_LOG_INFO(LOG_CORE, "StopCacheFileTask: no activity for %u seconds, stopping",
+            PROFILER_LOG_INFO(LOG_CORE, "StopCacheFileTask: inactivity for %u seconds, stopping",
                 MAX_FILE_CACHE_INACTIVE_SECONDS);
             break;
         }
