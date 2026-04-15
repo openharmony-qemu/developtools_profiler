@@ -37,7 +37,7 @@ public:
 
 /*
  * @tc.name: ProtocolProc
- * @tc.desc: test HookService::ProtocolProc with normal case.
+ * @tc.desc: test HookService::ProtocolProc fails when SocketContext is not connected.
  * @tc.type: FUNC
  */
 HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level0)
@@ -69,6 +69,6 @@ HWTEST_F(HookServiceTest, ProtocolProc, TestSize.Level0)
     ClientConfig clientConfig;
     auto hookService = std::make_shared<HookService>(clientConfig, hookManager);
     ASSERT_TRUE(hookService != nullptr);
-    ASSERT_TRUE(hookService->ProtocolProc(socketContext, 0, pidPtr, sizeof(pid)));
+    ASSERT_FALSE(hookService->ProtocolProc(socketContext, 0, pidPtr, sizeof(pid)));
 }
 } // namespace

@@ -17,6 +17,7 @@
 #include "runtime_stack_range.h"
 #include "common.h"
 #include "hook_common.h"
+#include "hook_client.h"
 #include "unix_socket_client.h"
 #include "share_memory_allocator.h"
 #include "mem_leak_detector.h"
@@ -146,24 +147,83 @@ bool HookSocketClient::Connect(const std::string addrname)
 
 void HookSocketClient::HandleFileCacheMode(SocketContext &context)
 {
-    // file cache mode enabled
-    int eventfd = context.ReceiveFileDiscriptor();
     std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>(
-        "hook_file_cache", config_->shareMemorySize, config_->fileCacheBufferSize, eventfd,
+        "hook_file_cache", config_->shareMemorySize, config_->fileCacheBufferSize, -1,
         config_->isBlocked, config_->isSaMode, config_->enableFileCacheMode);
-    stackWriter->PrepareCacheFileWriter([this](uint16_t fileIndex, uint16_t eventType, int fd) {
-        if (unixSocketClient_ != nullptr && eventType == CACHE_FILE_CREATED) {
-            // when a new cache file is craeted, send fd to native_daemon
-            HookCacheFileMsg cacheFileMsg(pid_, fileIndex, CACHE_FILE_CREATED);
-            unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&cacheFileMsg), sizeof(cacheFileMsg));
-            unixSocketClient_->SendFileDescriptor(fd);
+    stackWriter->PrepareCacheFileWriter([this](uint16_t fileIndex, uint16_t eventType, int fd) -> bool {
+        if (unixSocketClient_ == nullptr) {
+            return false;
         }
+        HookCacheFileMsg cacheFileMsg(pid_, fileIndex, eventType);
+        if (!unixSocketClient_->SendHookConfig(reinterpret_cast<uint8_t *>(&cacheFileMsg), sizeof(cacheFileMsg))) {
+            return false;
+        }
+        if (eventType == CACHE_FILE_READY) {
+            return fd >= 0 && unixSocketClient_->SendFileDescriptor(fd);
+        }
+        return true;
     });
+    for (uint16_t fileIndex = 0; fileIndex < FILE_CACHE_FD_COUNT; ++fileIndex) {
+        int cacheFd = context.ReceiveFileDiscriptor();
+        if (!stackWriter->AddFileCacheDescriptor(fileIndex, cacheFd)) {
+            if (cacheFd >= 0) {
+                close(cacheFd);
+            }
+            return;
+        }
+    }
     stackWriterList_.push_back(stackWriter);
     PROFILER_LOG_INFO(LOG_CORE, "HookSocketClient::ProtocolProc use file cache mode");
     if (sharedMemCount_ != nullptr) {
         *sharedMemCount_ = 1;
     }
+}
+
+bool HookSocketClient::HandleFileCacheMsg(SocketContext &context, const HookCacheFileMsg& cacheFileMsg)
+{
+    if (cacheFileMsg.msgType != CACHE_FILE_CREATED || stackWriterList_.empty() || stackWriterList_[0] == nullptr) {
+        return false;
+    }
+    int cacheFd = context.ReceiveFileDiscriptor();
+    if (stopRequested_.load()) {
+        if (cacheFd >= 0) {
+            close(cacheFd);
+        }
+        return true;
+    }
+    if (!stackWriterList_[0]->AddFileCacheDescriptor(cacheFileMsg.fileIndex, cacheFd)) {
+        if (cacheFd >= 0) {
+            close(cacheFd);
+        }
+        return false;
+    }
+    return true;
+}
+
+bool HookSocketClient::HandleControlCommand(uint32_t cmd)
+{
+    if (cmd == SNAPSHOT_REQUEST_CMD) {
+#ifdef OHOS_ENABLE_SAMPLER
+        malloc_sampler_alloc_report_all();
+#endif
+        return true;
+    }
+    if (cmd == FINAL_SNAPSHOT_REQUEST_CMD) {
+#ifdef OHOS_ENABLE_SAMPLER
+        malloc_sampler_data_fill_hook_reg(nullptr);
+        malloc_sampler_alloc_report_all();
+#endif
+        return true;
+    }
+    if (cmd != STOP_HOOK_CMD) {
+        return true;
+    }
+    bool expected = false;
+    if (stopRequested_.compare_exchange_strong(expected, true,
+        std::memory_order_release, std::memory_order_relaxed)) {
+        (void)ohos_malloc_hook_on_end();
+    }
+    return true;
 }
 
 void HookSocketClient::HandleSharedMemoryMode(SocketContext &context)
@@ -197,31 +257,12 @@ void HookSocketClient::HandleCommonConfig()
         largestSize_, secondLargestSize_, maxGrowthSize_, sampleInterval_);
 }
 
-bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
+void HookSocketClient::LogReceivedConfig()
 {
-    if (size == sizeof(uint32_t)) {
-        uint32_t cmd = *reinterpret_cast<const uint32_t*>(buf);
-        if (cmd == SNAPSHOT_REQUEST_CMD) {
-#ifdef OHOS_ENABLE_SAMPLER
-            malloc_sampler_alloc_report_all();
-#endif
-            return true;
-        } else if (cmd == FINAL_SNAPSHOT_REQUEST_CMD) {
-#ifdef OHOS_ENABLE_SAMPLER
-            malloc_sampler_data_fill_hook_reg(nullptr);
-            malloc_sampler_alloc_report_all();
-#endif
-            return true;
-        }
-    }
-    if (size != sizeof(ClientConfig)) {
-        return true;
-    }
-    *config_ = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
     PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc get memtraceEnable: %d and traceMask: %" PRIu64,
                        config_->memtraceEnable, static_cast<uint64_t>(config_->traceMask));
     SetAsyncStack();
-    for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) { // 2: vk and gles image
+    for (size_t i = 0; i < GPU_RANGE_COUNT * 2; ++i) {
         PROFILER_LOG_ERROR(LOG_CORE,
             "HookSocketClient::ProtocolProc get gpu range: %" PRIu64 ", %" PRIu64 ", %" PRIu64
             ", %" PRIu64 ", %" PRIu64 ",",
@@ -229,24 +270,30 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
             config_->gpuRange.gpuGlesBuffer[i], config_->gpuRange.gpuClImage[i],
             config_->gpuRange.gpuClBuffer[i]);
     }
-    config_->maxStackDepth  = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
+    config_->maxStackDepth = config_->maxStackDepth > MAX_UNWIND_DEPTH ? MAX_UNWIND_DEPTH : config_->maxStackDepth;
     std::string configStr = config_->ToString();
+    (void)configStr;
+}
 
+void HookSocketClient::PrepareWriters(SocketContext &context)
+{
     if (config_->enableFileCacheMode) {
-        // file cache mode enabled
         HandleFileCacheMode(context);
     } else {
-        // shared memory mode
         HandleSharedMemoryMode(context);
     }
-
-    if (config_->asyncStackEnable) {
-        int tableFd = context.ReceiveFileDiscriptor();
-        uint32_t uniqueStackSize = NormalizeUniqueStackTableSize(config_->uniqueStackTableSize);
-        std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>("unique_stack_table",
-            uniqueStackSize, tableFd, -1, false, false);
-        stackWriterList_.push_back(stackWriter);
+    if (!config_->asyncStackEnable) {
+        return;
     }
+    int tableFd = context.ReceiveFileDiscriptor();
+    uint32_t uniqueStackSize = NormalizeUniqueStackTableSize(config_->uniqueStackTableSize);
+    std::shared_ptr<StackWriter> stackWriter = std::make_shared<StackWriter>("unique_stack_table",
+        uniqueStackSize, tableFd, -1, false, false);
+    stackWriterList_.push_back(stackWriter);
+}
+
+void HookSocketClient::SendOptionalReports()
+{
     HandleCommonConfig();
     if (config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
@@ -268,11 +315,43 @@ bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const
         SendGwpAsanInfo();
     }
 #endif
-    if (!config_->targetSoName.empty() && !ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
-        return false;
+}
+
+bool HookSocketClient::ParseTargetMapsIfNeeded()
+{
+    if (config_->targetSoName.empty()) {
+        return true;
     }
-    return true;
+    if (ParseTargetedMaps(*targetedRange_, config_->targetSoName)) {
+        return true;
+    }
+    PROFILER_LOG_ERROR(LOG_CORE, "HookSocketClient::ProtocolProc ParseTargetedMaps failed!");
+    return false;
+}
+
+bool HookSocketClient::ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig)
+{
+    *config_ = clientConfig;
+    LogReceivedConfig();
+    PrepareWriters(context);
+    SendOptionalReports();
+    return ParseTargetMapsIfNeeded();
+}
+
+bool HookSocketClient::ProtocolProc(SocketContext &context, uint32_t pnum, const int8_t *buf, const uint32_t size)
+{
+    if (size == sizeof(HookCacheFileMsg) && config_ != nullptr && config_->enableFileCacheMode) {
+        HookCacheFileMsg cacheFileMsg = *reinterpret_cast<HookCacheFileMsg *>(const_cast<int8_t*>(buf));
+        return HandleFileCacheMsg(context, cacheFileMsg);
+    }
+    if (size == sizeof(uint32_t)) {
+        return HandleControlCommand(*reinterpret_cast<const uint32_t*>(buf));
+    }
+    if (size != sizeof(ClientConfig)) {
+        return true;
+    }
+    ClientConfig clientConfig = *reinterpret_cast<ClientConfig *>(const_cast<int8_t*>(buf));
+    return ApplyClientConfig(context, clientConfig);
 }
 
 bool HookSocketClient::GetAndSendMemLeakInfo()
@@ -541,6 +620,7 @@ bool HookSocketClient::SendEndMsg()
     for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
         auto& writer = stackWriterList_[smbIndex];
         if (writer) {
+            writer->EnterStopFileCacheMode();
             writer->WriteTimeout(&rawdata, sizeof(BaseStackRawData));
             writer->StopFileCache();
         }

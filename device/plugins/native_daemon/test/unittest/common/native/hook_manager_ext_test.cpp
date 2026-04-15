@@ -14,8 +14,10 @@
  */
 
 #include <gtest/gtest.h>
+#include <cstring>
 #include <fstream>
 #include <sstream>
+#include <unistd.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
 #include "socket_context.h"
@@ -129,6 +131,45 @@ HWTEST_F(HookManagerExtTest, UpdateAsyncFlagConfigAllTypes, TestSize.Level0)
     
     // asyncFlagMask should include all async types
     EXPECT_TRUE(hookManager_->asyncFlagMask_ != 0ULL);
+}
+
+/*
+ * @tc.name: UpdateFileCacheModeConfigSupportsSystemProcess
+ * @tc.desc: test file cache mode keeps enabled for non-application process.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, UpdateFileCacheModeConfigSupportsSystemProcess, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_process_name("native_daemon");
+    config.set_file_cache_buffer_size(MIN_FILE_CACHE_MEMORY_SIZE);
+    hookManager_->SetHookConfig(config);
+
+    hookManager_->UpdateFileCacheModeConfig();
+
+    EXPECT_TRUE(hookManager_->hookConfig_.use_file_cache_mode());
+    EXPECT_EQ(hookManager_->hookConfig_.file_cache_buffer_size(), MIN_FILE_CACHE_MEMORY_SIZE);
+}
+
+/*
+ * @tc.name: CreateFileCacheFd
+ * @tc.desc: test CreateFileCacheFd creates anonymous writable fd.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, CreateFileCacheFd, TestSize.Level0)
+{
+    hookManager_->fileCacheDir_ = "/data/local/tmp/";
+    int fd = hookManager_->CreateFileCacheFd();
+    ASSERT_GE(fd, 0);
+
+    const char* content = "cache-fd";
+    ASSERT_GT(write(fd, content, strlen(content)), 0);
+    ASSERT_EQ(lseek(fd, 0, SEEK_SET), 0);
+    char buffer[16] = {0};
+    ASSERT_GT(read(fd, buffer, sizeof(buffer)), 0);
+    EXPECT_STREQ(buffer, content);
+    close(fd);
 }
 
 /*

@@ -86,6 +86,8 @@ public:
         std::deque<int> cachedFileFdQueue;
         std::shared_ptr<EventNotifier> readyFileNotifier;
         std::shared_ptr<EpollEventPoller> readyFilePoller;
+        std::atomic_bool cacheFileStopReceived = false;
+        std::atomic_bool cacheFileStopRequested = false;
         void FlushStackArray();
         int GetFdQueueFront();
         size_t GetFdQueueSize();
@@ -123,7 +125,11 @@ public:
     void ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex);
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
-    int GetFileNotifierFd(int32_t pid, const std::string& name);
+    bool HandleCacheFileStopByPid(pid_t pid);
+    void RequestCacheFileStop(pid_t pid);
+    bool IsCacheFileStopRequested(pid_t pid);
+    bool PrepareFileCacheContext(int32_t pid, const std::string& name);
+    int CreateFileCacheFd();
     void SetHookConfig(const NativeHookConfig& hookConfig);
     void SetHookConfig(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     void SetHookConfigExt(const std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
@@ -205,6 +211,16 @@ private:
     void UpdateFileCacheModeConfig();
     bool HandleFileCacheHookContext(const std::shared_ptr<HookManagerCtx>& ctx);
     bool HandleSharedMemoryHookContext(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
+    std::shared_ptr<HookManagerCtx> FindHookContext(int32_t pid, const std::string& name);
+    void HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx);
+    void WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item);
+    void StopSignalProcess(pid_t pid);
+    void StopFileCacheProcess(pid_t pid);
+    void StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item);
+    bool FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item);
+    void HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item);
+    bool FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item);
+    void CleanupHookServiceContext(pid_t pid);
     void CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
     bool CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount);
     bool TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
@@ -248,6 +264,7 @@ private:
     uint32_t memLeakFd_ = 0;
     uint32_t memLeakLimit_ = 0;
     std::string memLeakFileName_;
+    std::string fileCacheDir_ = "/data/log/hiprofiler/";
 };
 }
 #endif // AGENT_MANAGER_H

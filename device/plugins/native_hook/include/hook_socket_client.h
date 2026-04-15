@@ -59,8 +59,15 @@ public:
 
 private:
     void HandleFileCacheMode(SocketContext &context);
+    bool HandleFileCacheMsg(SocketContext &context, const HookCacheFileMsg& cacheFileMsg);
+    bool HandleControlCommand(uint32_t cmd);
+    bool ApplyClientConfig(SocketContext &context, const ClientConfig& clientConfig);
     void HandleSharedMemoryMode(SocketContext &context);
+    void LogReceivedConfig();
+    void PrepareWriters(SocketContext &context);
     void HandleCommonConfig();
+    void SendOptionalReports();
+    bool ParseTargetMapsIfNeeded();
     bool GetAndSendMemLeakInfo();
     void SetAsyncStack();
 
@@ -81,6 +88,7 @@ private:
     uint32_t maxGrowthSize_ = 0;
     uint32_t sampleInterval_ = 0;
     std::atomic<bool> connectState_ = false;
+    std::atomic<bool> stopRequested_ = false;
     uint64_t asyncFlagBackup_ = 0;
     bool asyncFlagConfigured_ = false;
 
