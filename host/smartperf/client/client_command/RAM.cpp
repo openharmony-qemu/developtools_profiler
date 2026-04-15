@@ -55,6 +55,12 @@ std::map<std::string, std::string> procRamInfoLast {
         {"anonPage", "NA"},
         {"filePage", "NA"},
         {"ashmem", "NA"},
+        {"guard", "NA"},
+        {"hap", "NA"},
+        {"db", "NA"},
+        {"so", "NA"},
+        {"dev", "NA"},
+        {"ttf", "NA"},
         {"childCarktsHeapPss", "NA"},
         {"childGpuPss", "NA"},
         {"childGraphicPss", "NA"},
@@ -73,6 +79,12 @@ std::map<std::string, std::string> procRamInfoLast {
         {"childAnonPage", "NA"},
         {"childFilePage", "NA"},
         {"childAshmem", "NA"},
+        {"childGuard", "NA"},
+        {"childHap", "NA"},
+        {"childDb", "NA"},
+        {"childSo", "NA"},
+        {"childDev", "NA"},
+        {"childTtf", "NA"},
 };
 std::map<std::string, std::string> RAM::ItemData()
 {
@@ -150,6 +162,12 @@ std::map<std::string, std::string> RAM::ProcMemNaInfo() const
     procMemInfo["anonPage"] = "NA";
     procMemInfo["filePage"] = "NA";
     procMemInfo["ashmem"] = "NA";
+    procMemInfo["guard"] = "NA";
+    procMemInfo["hap"] = "NA";
+    procMemInfo["db"] = "NA";
+    procMemInfo["so"] = "NA";
+    procMemInfo["dev"] = "NA";
+    procMemInfo["ttf"] = "NA";
     return procMemInfo;
 }
 
@@ -174,6 +192,12 @@ std::map<std::string, std::string> RAM::ChildProcMemNaInfo() const
     procMemInfo["childAnonPage"] = "NA";
     procMemInfo["childFilePage"] = "NA";
     procMemInfo["childAshmem"] = "NA";
+    procMemInfo["childGuard"] = "NA";
+    procMemInfo["childHap"] = "NA";
+    procMemInfo["childDb"] = "NA";
+    procMemInfo["childSo"] = "NA";
+    procMemInfo["childDev"] = "NA";
+    procMemInfo["childTtf"] = "NA";
     return procMemInfo;
 }
 
@@ -328,6 +352,7 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
         std::vector<std::string> params;
         SPUtils::StrSplit(line, " ", params);
         GetPssAboutPid(pss, params);
+        GetDevecoPssAboutPid(pss, params);
         if (params.size() > RAM_SECOND && params[1].find("Ashmem") != std::string::npos) {
             std::string ashmemValue = params[1];
             size_t pos = ashmemValue.find(":");
@@ -350,27 +375,75 @@ std::map<std::string, std::string> RAM::ParsePssValues(FILE *fd, std::vector<std
 
 void RAM::GetPssAboutPid(struct PssValues &pss, std::vector<std::string> &params)
 {
-    if (params.size() > RAM_SECOND && params[0].find("GL") != std::string::npos) {
-        pss.gpuPssValue = params[1];
+    if (params.size() > RAM_EIGHTH && params[0].find("GL") != std::string::npos) {
+        pss.gpuPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
-    if (params.size() > RAM_SECOND && params[0].find("Graph") != std::string::npos) {
-        pss.graphicPssValue = params[1];
+    if (params.size() > RAM_EIGHTH && params[0].find("Graph") != std::string::npos) {
+        pss.graphicPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
-    if (params.size() > RAM_FOURTH && params[0].find("ark") != std::string::npos) {
-        pss.arktsHeapPssValue = params[RAM_THIRD];
+    if (params.size() > RAM_TENTH && params[0].find("ark") != std::string::npos) {
+        pss.arktsHeapPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_THIRD]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_NINTH]));
     }
-    if (params.size() > RAM_THIRD && params[0].find("native") != std::string::npos &&
+    if (params.size() > RAM_NINTH && params[0].find("native") != std::string::npos &&
         params[1].find("heap") != std::string::npos) {
-        pss.nativeHeapPssValue = params[RAM_SECOND];
+        pss.nativeHeapPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_SECOND]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_EIGHTH]));
     }
-    if (params.size() > RAM_SECOND && params[0].find("stack") != std::string::npos) {
-        pss.stackPssValue = params[1];
+    if (params.size() > RAM_EIGHTH && params[0].find("stack") != std::string::npos) {
+        pss.stackPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
-    if (params.size() > RAM_THIRD && params[0].find("AnonPage") != std::string::npos) {
-        pss.anonPagePssValue = params[RAM_SECOND];
+    if (params.size() > RAM_NINTH && params[0].find("AnonPage") != std::string::npos) {
+        pss.anonPagePssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_SECOND]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_EIGHTH]));
     }
-    if (params.size() > RAM_THIRD && params[0].find("FilePage") != std::string::npos) {
-        pss.filePagePssValue = params[RAM_SECOND];
+    if (params.size() > RAM_NINTH && params[0].find("FilePage") != std::string::npos) {
+        pss.filePagePssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_SECOND]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_EIGHTH]));
+    }
+}
+
+void RAM::GetDevecoPssAboutPid(struct PssValues &pss, std::vector<std::string> &params)
+{
+    if (params.size() > RAM_EIGHTH && params[0].find("guard") != std::string::npos) {
+        pss.guardPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
+    }
+    if (params.size() > RAM_EIGHTH && params[0].find(".hap") != std::string::npos) {
+        pss.hapPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
+    }
+    if (params.size() > RAM_EIGHTH && params[0].find(".db") != std::string::npos) {
+        pss.dbPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
+    }
+    if (params.size() > RAM_EIGHTH && params[0].find(".so") != std::string::npos) {
+        pss.soPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
+    }
+    if (params.size() > RAM_EIGHTH && params[0].find("dev") != std::string::npos) {
+        pss.devPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
+    }
+    if (params.size() > RAM_EIGHTH && params[0].find(".ttf") != std::string::npos) {
+        pss.ttfPssValue =
+            std::to_string(SPUtilesTye::StringToSometype<int>(params[RAM_ONE]) +
+            SPUtilesTye::StringToSometype<int>(params[RAM_SEVENTH]));
     }
 }
 
@@ -386,6 +459,12 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["anonPage"] = pss.anonPagePssValue;
         pssRamInfo["filePage"] = pss.filePagePssValue;
         pssRamInfo["ashmem"] = pss.ashmemPssValue;
+        pssRamInfo["guard"] = pss.guardPssValue;
+        pssRamInfo["hap"] = pss.hapPssValue;
+        pssRamInfo["db"] = pss.dbPssValue;
+        pssRamInfo["so"] = pss.soPssValue;
+        pssRamInfo["dev"] = pss.devPssValue;
+        pssRamInfo["ttf"] = pss.ttfPssValue;
     } else {
         pid.append(":");
         pssRamInfo["childGpuPss"].append(pid).append(pss.gpuPssValue).append("|");
@@ -396,6 +475,12 @@ void RAM::FillPssRamInfo(size_t index, std::string pid,
         pssRamInfo["childAnonPage"].append(pid).append(pss.anonPagePssValue).append("|");
         pssRamInfo["childFilePage"].append(pid).append(pss.filePagePssValue).append("|");
         pssRamInfo["childAshmem"].append(pid).append(pss.ashmemPssValue).append("|");
+        pssRamInfo["childGuard"].append(pid).append(pss.guardPssValue).append("|");
+        pssRamInfo["childHap"].append(pid).append(pss.hapPssValue).append("|");
+        pssRamInfo["childDb"].append(pid).append(pss.dbPssValue).append("|");
+        pssRamInfo["childSo"].append(pid).append(pss.soPssValue).append("|");
+        pssRamInfo["childDev"].append(pid).append(pss.devPssValue).append("|");
+        pssRamInfo["childTtf"].append(pid).append(pss.ttfPssValue).append("|");
     }
 }
 

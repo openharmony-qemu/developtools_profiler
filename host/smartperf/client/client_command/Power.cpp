@@ -34,7 +34,6 @@ std::map<std::string, std::string> Power::ItemData()
         if (voltageNow.empty()) {
             voltageNow = "NA";
         }
-
         result["currentNow"] = currentNow;
         if (battryString.empty() || battryString.find("/bin/sh") != std::string::npos) {
             result["voltageNow"] = voltageNow;

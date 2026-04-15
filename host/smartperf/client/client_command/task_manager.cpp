@@ -538,9 +538,9 @@ std::string TaskManager::MapToString(std::map<std::string, std::string>& myMap)
         std::vector<std::string> keysToFind = {"fps", "refreshrate", "currentNow", "ddrFrequency", "cpu0Frequency",
             "cpu1Frequency", "cpu2Frequency", "cpu3Frequency", "cpu4Frequency", "cpu5Frequency", "cpu6Frequency",
             "cpu7Frequency", "cpu8Frequency", "cpu9Frequency", "cpu10Frequency", "cpu11Frequency", "gpuFrequency",
-            "pss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage", "cpu3Usage",
-            "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage", "cpu11Usage",
-            "gpuLoad"};
+            "pss", "swapPss", "shell_frame", "shell_back", "soc_thermal", "cpu0Usage", "cpu1Usage", "cpu2Usage",
+            "cpu3Usage", "cpu4Usage", "cpu5Usage", "cpu6Usage", "cpu7Usage", "cpu8Usage", "cpu9Usage", "cpu10Usage",
+            "cpu11Usage", "gpuLoad"};
         for (const auto& key : keysToFind) {
             if (auto iter = myMap.find(key); iter != myMap.end()) {
                 appCollectMap += iter->first + ":" + iter->second + ",";
