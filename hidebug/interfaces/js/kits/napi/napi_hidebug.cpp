@@ -66,6 +66,7 @@ constexpr int MAX_WAIT_TIME_SECOND = 30; // 30s
 
 struct GwpAsanParams {
     bool alwaysEnabled = false;
+    bool isRecover = false;
     double sampleRate = DEFAULT_SAMPLE_RATE;
     double maxSimutaneousAllocations = DEFAULT_MAX_SIMUTANEOUS_ALLOCATIONS;
     int32_t duration = DEFAULT_DURATION;
@@ -1040,13 +1041,23 @@ bool ParseGwpAsanOptions(napi_env env, napi_value value, GwpAsanParams& gwpAsanP
             return false;
         }
     }
+
+    //isRecover?: bool
+    napi_value nisRecover = nullptr;
+    if (GetNapiObjectProperty(env, value, "isRecover", nisRecover)) {
+        if (!GetNapiBoolValue(env, nisRecover, gwpAsanParams.isRecover)) {
+            HILOG_ERROR(LOG_CORE, "isRecover type must be boolean");
+            return false;
+        }
+    }
     if (gwpAsanParams.sampleRate <= 0 || gwpAsanParams.maxSimutaneousAllocations <= 0) {
         HILOG_ERROR(LOG_CORE, "sampleRate or maxSimutaneousAllocations must be greater than 0");
         return false;
     }
     HILOG_DEBUG(LOG_CORE, "Parse GwpAsanOptions success, alwaysEnabled: %{public}d, sampleRate: %{public}f,"
-        " maxSimutaneousAllocations: %{public}f",
-        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate, gwpAsanParams.maxSimutaneousAllocations);
+        " maxSimutaneousAllocations: %{public}f, isRecover: %{public}d",
+        gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.isRecover);
     return true;
 }
 
@@ -1093,7 +1104,7 @@ napi_value EnableGwpAsanGrayscale(napi_env env, napi_callback_info info)
         return CreateUndefined(env);
     }
     if (!EnableGwpAsanGrayscale(gwpAsanParams.alwaysEnabled, gwpAsanParams.sampleRate,
-        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration)) {
+        gwpAsanParams.maxSimutaneousAllocations, gwpAsanParams.duration, gwpAsanParams.isRecover)) {
         HILOG_ERROR(LOG_CORE, "Failed to enable gwp asan grayscale!");
         apiInvokeRecorder.SetErrorCode(ErrorCode::OVER_ENABLE_LIMIT);
         paramErrorMessage = "The number of GWP-ASAN applications of this device overflowed after last boot.";

@@ -96,6 +96,58 @@ ani_status AniUtil::ParseAniEnum(ani_env *env, ani_enum_item enumItem, uint32_t 
     return ANI_OK;
 }
 
+bool AniUtil::ParseBoolProperty(ani_env *env, ani_object object, const char *name, bool &value)
+{
+    ani_ref ref = nullptr;
+    ani_status status = env->Object_GetPropertyByName_Ref(object, name, &ref);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed to get property %{public}s, status: %{public}u", name, status);
+        return false;
+    }
+
+    ani_boolean isUndefined = ANI_FALSE;
+    env->Reference_IsUndefined(ref, &isUndefined);
+    if (isUndefined == ANI_TRUE) {
+        return true;
+    }
+
+    ani_boolean aniValue = ANI_FALSE;
+    status = env->Object_CallMethodByName_Boolean(static_cast<ani_object>(ref), "toBoolean", ":z", &aniValue);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed to get bool value of property %{public}s, status: %{public}u", name, status);
+        return false;
+    }
+
+    value = static_cast<bool>(aniValue);
+    return true;
+}
+
+bool AniUtil::ParseIntProperty(ani_env *env, ani_object object, const char *name, int32_t &value)
+{
+    ani_ref ref = nullptr;
+    ani_status status = env->Object_GetPropertyByName_Ref(object, name, &ref);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed to get property %{public}s, status: %{public}u", name, status);
+        return false;
+    }
+
+    ani_boolean isUndefined = ANI_FALSE;
+    env->Reference_IsUndefined(ref, &isUndefined);
+    if (isUndefined == ANI_TRUE) {
+        return true;
+    }
+
+    ani_int aniValue = 0;
+    status = env->Object_CallMethodByName_Int(static_cast<ani_object>(ref), "toInt", ":i", &aniValue);
+    if (status != ANI_OK) {
+        HILOG_ERROR(LOG_CORE, "Failed to get int value of property %{public}s, status: %{public}u", name, status);
+        return false;
+    }
+
+    value = static_cast<int32_t>(aniValue);
+    return true;
+}
+
 ani_status AniUtil::SetNamedPropertyNumber(ani_env *env, ani_object object, const std::string& name, double value)
 {
     ani_double aniNumber = static_cast<ani_double>(value);

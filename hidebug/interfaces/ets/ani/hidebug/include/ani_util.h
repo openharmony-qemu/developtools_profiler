@@ -29,6 +29,8 @@ public:
     static ani_object CreateUndefined(ani_env *env);
     static ani_status ParseAniString(ani_env *env, ani_string aniStr, std::string &str);
     static ani_status ParseAniEnum(ani_env *env, ani_enum_item enumItem, uint32_t &value);
+    static bool ParseBoolProperty(ani_env *env, ani_object object, const char *name, bool &value);
+    static bool ParseIntProperty(ani_env *env, ani_object object, const char *name, int32_t &value);
     static ani_status SetNamedPropertyNumber(ani_env *env, ani_object object, const std::string& name, double value);
     static ani_vm* GetAniVm(ani_env *env);
 };

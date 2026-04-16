@@ -364,6 +364,7 @@ export default namespace hidebug {
     alwaysEnabled?: boolean;
     sampleRate?: int;
     maxSimutaneousAllocations?: int;
+    isRecover?: boolean;
   }
 
   export native function enableGwpAsanGrayscale(options?: GwpAsanOptions, duration?: int): void;
