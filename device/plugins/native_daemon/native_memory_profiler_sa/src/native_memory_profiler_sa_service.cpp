@@ -66,6 +66,8 @@ static std::mutex g_timerFdMtx;
 static std::mutex g_fileNameMtx;
 //2: double
 static std::mutex g_nmdMtx;
+static std::unordered_set<uint32_t> g_asyncStoppingPids;
+static std::mutex g_asyncStoppingPidsMtx;
 #ifdef ENABLE_SA_AUTO_START
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
@@ -439,8 +441,19 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         return ret;
     }
 
+    {
+        std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
+        if (g_asyncStoppingPids.find(pid) != g_asyncStoppingPids.end()) {
+            PROFILER_LOG_INFO(LOG_CORE, "StopHookAsync: pid %d is already stopping, skip.", pid);
+            return RET_OK;
+        }
+        g_asyncStoppingPids.insert(pid);
+    }
+
     std::thread([pid, config, finishErrorCode, this]() {
         this->StopHookTask(pid, config, finishErrorCode);
+        std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
+        g_asyncStoppingPids.erase(pid);
     }).detach();
 
     return RET_OK;
@@ -1109,6 +1122,27 @@ void NativeMemoryProfilerSaService::NotifyProfilingResult(const std::shared_ptr<
     callback.OnProfilingResult(errorCode, filePath);
 }
 
+int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config,
+    std::string& resultPath)
+{
+    std::lock_guard<std::mutex> guard(g_fileNameMtx);
+    auto pidInfoIter = g_pidInfo.find(pid);
+    auto fileNameInfoIter = g_fileNameInfo.find(pid);
+    if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
+        PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
+    } else {
+        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
+        if (!COMMON::CopyFileFast(config->fd, destPath)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
+            return RET_ERR;
+        } else {
+            resultPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
+        }
+    }
+    g_fileNameInfo.erase(pid);
+    return RET_OK;
+}
+
 int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config,
     std::string& resultPath, bool isAsync)
 {
@@ -1120,32 +1154,17 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         std::lock_guard<std::mutex> guard(g_mtx);
         g_nameAndFilePathCtx.erase(config->processName);
         g_nameAndFilePathCtx.erase(config->filePath);
-    } else {
-        g_nameAndFilePathCtx.erase(config->processName);
-        g_nameAndFilePathCtx.erase(config->filePath);
-    }
-    if (config->startType == START_TYPE_API) {
-        std::lock_guard<std::mutex> guard(g_fileNameMtx);
-        auto pidInfoIter = g_pidInfo.find(pid);
-        auto fileNameInfoIter = g_fileNameInfo.find(pid);
-        if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
-            PROFILER_LOG_WARN(LOG_CORE, "ReleaseForStopHook: api task file info missing");
-        } else {
-            std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
-            if (!COMMON::CopyFileFast(config->fd, destPath)) {
-                PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
-                ret = RET_ERR;
-            } else {
-                resultPath = API_SANDBOX_PATH_PREFIX + fileNameInfoIter->second;
-            }
+        if (config->startType == START_TYPE_API) {
+            ret = CopyApiCollectorFile(pid, config, resultPath);
         }
-        g_fileNameInfo.erase(pid);
-    }
-    if (isAsync) {
-        std::lock_guard<std::mutex> guard(g_mtx);
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
     } else {
+        g_nameAndFilePathCtx.erase(config->processName);
+        g_nameAndFilePathCtx.erase(config->filePath);
+        if (config->startType == START_TYPE_API) {
+            ret = CopyApiCollectorFile(pid, config, resultPath);
+        }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
     }

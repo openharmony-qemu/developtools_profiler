@@ -209,15 +209,7 @@ int32_t NativeMemoryProfilerSaClientManager::Stop()
         return RET_ERR;
     }
     NativeMemoryProfilerSaProxy proxy(service);
-    int32_t ret = proxy.Stop();
-    if (ret != RET_OK) {
-        std::string filePath;
-        ProfilingCallback callback = TakeProfilingCallback(filePath);
-        if (callback != nullptr) {
-            callback(ret, "");
-        }
-    }
-    return ret;
+    return proxy.Stop();
 }
 
 int32_t NativeMemoryProfilerSaClientManager::Stop(std::string& filePath)
