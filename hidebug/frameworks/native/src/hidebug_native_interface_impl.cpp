@@ -315,10 +315,10 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint6
     unsigned long utimeTmp = 0;
     unsigned long stimeTmp = 0;
     // 按字段逐一读取，跳过不需要的字段
-    statFile >> dummy >> comm >> state
-             >> dummy >> dummy >> dummy >> dummy >> dummy  // ppid pgrp session tty_nr tpgid
-             >> dummy >> dummy >> dummy >> dummy >> dummy  // flags minflt cminflt majflt cmajflt
-             >> utimeTmp >> stimeTmp;
+    statFile >> dummy >> comm >> state >>
+        dummy >> dummy >> dummy >> dummy >> dummy >>  // ppid pgrp session tty_nr tpgid
+        dummy >> dummy >> dummy >> dummy >> dummy >>  // flags minflt cminflt majflt cmajflt
+        utimeTmp >> stimeTmp;
     if (statFile.fail()) {
         HILOG_ERROR(LOG_CORE, "ParseProcStat: parse stat file failed");
         return false;
