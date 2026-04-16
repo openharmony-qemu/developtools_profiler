@@ -300,7 +300,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
     char path[64];
-    if (snprintf(path, sizeof(path), "/proc/%d/stat", static_cast<int>(pid)) < 0) {
+    if (snprintf_s(path, sizeof(path), sizeof(path) - 1, "/proc/%d/stat", static_cast<int>(pid)) < 0) {
         return false;
     }
     FILE* fp = fopen(path, "r");
@@ -312,18 +312,26 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint6
     // 1:pid 2:comm 3:state 4:ppid 5:pgrp 6:session 7:tty_nr 8:tpgid
     // 9:flags 10:minflt 11:cminflt 12:majflt 13:cmajflt
     // 14:utime 15:stime
-    unsigned long utimeTmp = 0;
-    unsigned long stimeTmp = 0;
-    int ret = fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu",
-                     &utimeTmp, &stimeTmp);
-    fclose(fp);
-    if (ret != 2) { // 期望解析出 utime 和 stime 共2个字段
-        HILOG_ERROR(LOG_CORE, "ParseProcStat: fscanf failed, ret=%{public}d", ret);
-        return false;
+    char line[512];
+    bool success = false;
+    if (fgets(line, sizeof(line), fp) != nullptr) {
+        unsigned long utimeTmp = 0;
+        unsigned long stimeTmp = 0;
+        // %*s 跳过字段，不写入缓冲区，sscanf_s 无需额外长度参数
+        int ret = sscanf_s(line, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu",
+                           &utimeTmp, &stimeTmp);
+        if (ret == 2) { // 期望解析出 utime 和 stime 共2个字段
+            utime = static_cast<uint64_t>(utimeTmp);
+            stime = static_cast<uint64_t>(stimeTmp);
+            success = true;
+        } else {
+            HILOG_ERROR(LOG_CORE, "ParseProcStat: sscanf_s failed, ret=%{public}d", ret);
+        }
     }
-    utime = static_cast<uint64_t>(utimeTmp);
-    stime = static_cast<uint64_t>(stimeTmp);
-    return true;
+    if (fclose(fp) != 0) {
+        HILOG_ERROR(LOG_CORE, "ParseProcStat: fclose failed, errno=%{public}d", errno);
+    }
+    return success;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
