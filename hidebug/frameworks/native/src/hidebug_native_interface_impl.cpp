@@ -299,39 +299,33 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
-    char path[64];
-    if (snprintf_s(path, sizeof(path), sizeof(path) - 1, "/proc/%d/stat", static_cast<int>(pid)) < 0) {
-        return false;
-    }
-    FILE* fp = fopen(path, "r");
-    if (fp == nullptr) {
-        HILOG_ERROR(LOG_CORE, "ParseProcStat: open %{public}s failed, errno=%{public}d", path, errno);
+    std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
+    std::ifstream statFile(path);
+    if (!statFile.is_open()) {
+        HILOG_ERROR(LOG_CORE, "ParseProcStat: open stat file failed, errno=%{public}d", errno);
         return false;
     }
     // /proc/[pid]/stat 字段说明（1-based）:
     // 1:pid 2:comm 3:state 4:ppid 5:pgrp 6:session 7:tty_nr 8:tpgid
     // 9:flags 10:minflt 11:cminflt 12:majflt 13:cmajflt
     // 14:utime 15:stime
-    char line[512];
-    bool success = false;
-    if (fgets(line, sizeof(line), fp) != nullptr) {
-        unsigned long utimeTmp = 0;
-        unsigned long stimeTmp = 0;
-        // %*s 跳过字段，不写入缓冲区，sscanf_s 无需额外长度参数
-        int ret = sscanf_s(line, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu",
-                           &utimeTmp, &stimeTmp);
-        if (ret == 2) { // 期望解析出 utime 和 stime 共2个字段
-            utime = static_cast<uint64_t>(utimeTmp);
-            stime = static_cast<uint64_t>(stimeTmp);
-            success = true;
-        } else {
-            HILOG_ERROR(LOG_CORE, "ParseProcStat: sscanf_s failed, ret=%{public}d", ret);
-        }
+    std::string comm;
+    char state = 0;
+    int dummy = 0;
+    unsigned long utimeTmp = 0;
+    unsigned long stimeTmp = 0;
+    // 按字段逐一读取，跳过不需要的字段
+    statFile >> dummy >> comm >> state
+             >> dummy >> dummy >> dummy >> dummy >> dummy  // ppid pgrp session tty_nr tpgid
+             >> dummy >> dummy >> dummy >> dummy >> dummy  // flags minflt cminflt majflt cmajflt
+             >> utimeTmp >> stimeTmp;
+    if (statFile.fail()) {
+        HILOG_ERROR(LOG_CORE, "ParseProcStat: parse stat file failed");
+        return false;
     }
-    if (fclose(fp) != 0) {
-        HILOG_ERROR(LOG_CORE, "ParseProcStat: fclose failed, errno=%{public}d", errno);
-    }
-    return success;
+    utime = static_cast<uint64_t>(utimeTmp);
+    stime = static_cast<uint64_t>(stimeTmp);
+    return true;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
