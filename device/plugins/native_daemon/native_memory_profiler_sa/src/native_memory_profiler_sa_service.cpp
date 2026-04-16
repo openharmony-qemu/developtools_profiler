@@ -1130,7 +1130,7 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     auto pidInfoIter = g_pidInfo.find(pid);
     auto fileNameInfoIter = g_fileNameInfo.find(pid);
     if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
-        PROFILER_LOG_WARN(LOG_CORE, "ReleaseForStopHook: api task file info missing");
+        PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
     } else {
         std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
         if (!COMMON::CopyFileFast(config->fd, destPath)) {
@@ -1155,23 +1155,17 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
         std::lock_guard<std::mutex> guard(g_mtx);
         g_nameAndFilePathCtx.erase(config->processName);
         g_nameAndFilePathCtx.erase(config->filePath);
-    } else {
-        g_nameAndFilePathCtx.erase(config->processName);
-        g_nameAndFilePathCtx.erase(config->filePath);
-    }
-    if (config->startType == START_TYPE_API) {
-        if (isAsync) {
-            std::lock_guard<std::mutex> guard(g_mtx);
-            ret = CopyApiCollectorFile(pid, config, resultPath);
-        } else {
+        if (config->startType == START_TYPE_API) {
             ret = CopyApiCollectorFile(pid, config, resultPath);
         }
-    }
-    if (isAsync) {
-        std::lock_guard<std::mutex> guard(g_mtx);
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
     } else {
+        g_nameAndFilePathCtx.erase(config->processName);
+        g_nameAndFilePathCtx.erase(config->filePath);
+        if (config->startType == START_TYPE_API) {
+            ret = CopyApiCollectorFile(pid, config, resultPath);
+        }
         g_pidCtx.erase(config->pid);
         g_pidInfo.erase(static_cast<pid_t>(pid));
     }
