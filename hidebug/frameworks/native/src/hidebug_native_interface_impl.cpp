@@ -16,6 +16,8 @@
 #include "hidebug_native_interface.h"
 
 #include <chrono>
+#include <cstdio>
+#include <ctime>
 #include <fstream>
 #include <memory>
 #include <mutex>
@@ -205,7 +207,11 @@ private:
     bool CheckTraceErrorCode();
 private:
     double GetCpuUsageBySelf(pid_t pid);
+    bool ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime);
     bool cpuUsageTaskFlag_ = false;
+    uint64_t lastUtime_ = 0;
+    uint64_t lastStime_ = 0;
+    int64_t  lastWallNs_ = 0;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
@@ -235,27 +241,89 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 {
     static double cpuUsage = 0.0;
-    static int delayTime = 10000000;
+    // delayTime 单位：微秒，10s = 10,000,000 us
+    static constexpr int64_t delayTime = 10 * 1000 * 1000;
+    // sysconf 调用一次即可
+    static const long ticksPerSec = sysconf(_SC_CLK_TCK);
+
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
-    static std::shared_ptr<OHOS::HiviewDFX::UCollectUtil::CpuCollector> cpuCollector =
-        OHOS::HiviewDFX::UCollectUtil::CpuCollector::Create();
-    if (cpuCollector == nullptr) {
-        HILOG_ERROR(LOG_CORE, "Create CpuCollector Failed");
-        return cpuUsage;
-    }
-    static std::function<void()> task = [&]() {
-        auto collectResult = cpuCollector->CollectProcessCpuStatInfo(pid);
-        if (collectResult.retCode != UCollect::UcError::SUCCESS) {
-            HILOG_ERROR(LOG_CORE, "Get cpu usage failed, retCode: %{public}d", static_cast<int>(collectResult.retCode));
+
+    // Lambda 捕获 this 和 pid，用于定时任务内部更新 cpuUsage
+    static std::function<void()> task = [this, pid]() {
+        uint64_t curUtime = 0;
+        uint64_t curStime = 0;
+        if (!ParseProcStat(pid, curUtime, curStime)) {
+            ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
+            return;
         }
-        cpuUsage = collectResult.data.cpuUsage;
+
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        int64_t curWallNs = static_cast<int64_t>(ts.tv_sec) * 1000000000LL + ts.tv_nsec;
+
+        if (lastWallNs_ != 0) {
+            int64_t wallDeltaNs = curWallNs - lastWallNs_;
+            uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
+            if (wallDeltaNs > 0 && ticksPerSec > 0) {
+                // cpuDelta 单位是 jiffies，转成秒再除以墙钟秒数
+                double cpuDeltaSec = static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);
+                double wallDeltaSec = static_cast<double>(wallDeltaNs) / 1e9;
+                cpuUsage = cpuDeltaSec / wallDeltaSec;
+            }
+        }
+
+        lastUtime_   = curUtime;
+        lastStime_   = curStime;
+        lastWallNs_  = curWallNs;
+
         ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     };
+
+    // 首次调用：立即采集一次基准快照，然后启动定时任务
+    uint64_t initUtime = 0;
+    uint64_t initStime = 0;
+    if (ParseProcStat(pid, initUtime, initStime)) {
+        struct timespec ts;
+        clock_gettime(CLOCK_MONOTONIC, &ts);
+        lastUtime_   = initUtime;
+        lastStime_   = initStime;
+        lastWallNs_  = static_cast<int64_t>(ts.tv_sec) * 1000000000LL + ts.tv_nsec;
+    }
+
     ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     cpuUsageTaskFlag_ = true;
     return cpuUsage;
+}
+
+bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
+{
+    char path[64];
+    if (snprintf(path, sizeof(path), "/proc/%d/stat", static_cast<int>(pid)) < 0) {
+        return false;
+    }
+    FILE* fp = fopen(path, "r");
+    if (fp == nullptr) {
+        HILOG_ERROR(LOG_CORE, "ParseProcStat: open %{public}s failed, errno=%{public}d", path, errno);
+        return false;
+    }
+    // /proc/[pid]/stat 字段说明（1-based）:
+    // 1:pid 2:comm 3:state 4:ppid 5:pgrp 6:session 7:tty_nr 8:tpgid
+    // 9:flags 10:minflt 11:cminflt 12:majflt 13:cmajflt
+    // 14:utime 15:stime
+    unsigned long utimeTmp = 0;
+    unsigned long stimeTmp = 0;
+    int ret = fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d %*u %*u %*u %*u %*u %lu %lu",
+                     &utimeTmp, &stimeTmp);
+    fclose(fp);
+    if (ret != 2) { // 期望解析出 utime 和 stime 共2个字段
+        HILOG_ERROR(LOG_CORE, "ParseProcStat: fscanf failed, ret=%{public}d", ret);
+        return false;
+    }
+    utime = static_cast<uint64_t>(utimeTmp);
+    stime = static_cast<uint64_t>(stimeTmp);
+    return true;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
