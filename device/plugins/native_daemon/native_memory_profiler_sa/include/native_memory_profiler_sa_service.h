@@ -105,6 +105,7 @@ private:
     static int32_t PidAndNameConflict(std::shared_ptr<NativeMemoryProfilerSaConfig>& config);
     static void NotifyProfilingResult(const std::shared_ptr<TaskConfig>& config, int32_t errorCode,
         const std::string& filePath);
+    static int32_t CopyApiCollectorFile(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath);
     static int32_t ReleaseForStopHook(uint32_t pid, std::shared_ptr<TaskConfig> config, std::string& resultPath,
         bool isAsync = false);
 
