@@ -55,6 +55,8 @@ constexpr uint32_t MAX_TRACE_DURATION = 15 * 1000; // 15s
 constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
 constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
 constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
+constexpr size_t PROC_STAT_SUFFIX_OFFSET = 2;
+constexpr int PROC_STAT_SKIP_FIELD_COUNT = 10;
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
@@ -262,7 +264,8 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
             int64_t wallDeltaNs = curWallNs - lastWallNs_;
             uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
             if (wallDeltaNs > 0 && ticksPerSec > 0) {
-                double cpuDeltaSec = static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);                                                    
+                double cpuDeltaSec =
+                    static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);
                 double wallDeltaSec = static_cast<double>(wallDeltaNs) / 1e9;
                 cpuUsage = cpuDeltaSec / wallDeltaSec;
             }
@@ -291,51 +294,51 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
-      const std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
-      std::ifstream statFile(path);
-      if (!statFile.is_open()) {
-          return false;
-      }
+    const std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
+    std::ifstream statFile(path);
+    if (!statFile.is_open()) {
+        return false;
+    }
 
-      std::string line;
-      if (!std::getline(statFile, line) || line.empty()) {
-          return false;
-      }
+    std::string line;
+    if (!std::getline(statFile, line) || line.empty()) {
+        return false;
+    }
 
-      const size_t lparen = line.find('(');
-      const size_t rparen = line.rfind(')');
-      if (lparen == std::string::npos || rparen == std::string::npos || rparen <= lparen) {
-          return false;
-      }
+    const size_t lparen = line.find('(');
+    const size_t rparen = line.rfind(')');
+    if (lparen == std::string::npos || rparen == std::string::npos || rparen <= lparen) {
+        return false;
+    }
 
-      if (rparen + 2 >= line.size()) {
-          return false;
-      }
+    if (rparen + PROC_STAT_SUFFIX_OFFSET >= line.size()) {
+        return false;
+    }
 
-      std::istringstream iss(line.substr(rparen + 2));
+    std::istringstream iss(line.substr(rparen + PROC_STAT_SUFFIX_OFFSET));
 
-      char state = '\0';
-      unsigned long long skip = 0;
-      unsigned long long utimeTmp = 0;
-      unsigned long long stimeTmp = 0;
+    char state = '\0';
+    unsigned long long skip = 0;
+    unsigned long long utimeTmp = 0;
+    unsigned long long stimeTmp = 0;
 
-      if (!(iss >> state)) {
-          return false;
-      }
+    if (!(iss >> state)) {
+        return false;
+    }
 
-      for (int i = 0; i < 10; ++i) {
-          if (!(iss >> skip)) {
-              return false;
-          }
-      }
+    for (int i = 0; i < PROC_STAT_SKIP_FIELD_COUNT; ++i) {
+        if (!(iss >> skip)) {
+            return false;
+        }
+    }
 
-      if (!(iss >> utimeTmp >> stimeTmp)) {
-          return false;
-      }
+    if (!(iss >> utimeTmp >> stimeTmp)) {
+        return false;
+    }
 
-      utime = static_cast<uint64_t>(utimeTmp);
-      stime = static_cast<uint64_t>(stimeTmp);
-      return true;
+    utime = static_cast<uint64_t>(utimeTmp);
+    stime = static_cast<uint64_t>(stimeTmp);
+    return true;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
