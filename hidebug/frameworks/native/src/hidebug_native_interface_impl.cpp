@@ -241,16 +241,11 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 {
     static double cpuUsage = 0.0;
-    // delayTime 单位：微秒，10s = 10,000,000 us
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
-    // sysconf 调用一次即可
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
-
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
-
-    // Lambda 捕获 this 和 pid，用于定时任务内部更新 cpuUsage
     static std::function<void()> task = [this, pid]() {
         uint64_t curUtime = 0;
         uint64_t curStime = 0;
@@ -267,8 +262,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
             int64_t wallDeltaNs = curWallNs - lastWallNs_;
             uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
             if (wallDeltaNs > 0 && ticksPerSec > 0) {
-                // cpuDelta 单位是 jiffies，转成秒再除以墙钟秒数
-                double cpuDeltaSec = static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);
+                double cpuDeltaSec = static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);                                                    
                 double wallDeltaSec = static_cast<double>(wallDeltaNs) / 1e9;
                 cpuUsage = cpuDeltaSec / wallDeltaSec;
             }
@@ -280,8 +274,6 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
         ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     };
-
-    // 首次调用：立即采集一次基准快照，然后启动定时任务
     uint64_t initUtime = 0;
     uint64_t initStime = 0;
     if (ParseProcStat(pid, initUtime, initStime)) {
@@ -299,33 +291,51 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
-    std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
-    std::ifstream statFile(path);
-    if (!statFile.is_open()) {
-        HILOG_ERROR(LOG_CORE, "ParseProcStat: open stat file failed, errno=%{public}d", errno);
-        return false;
-    }
-    // /proc/[pid]/stat 字段说明（1-based）:
-    // 1:pid 2:comm 3:state 4:ppid 5:pgrp 6:session 7:tty_nr 8:tpgid
-    // 9:flags 10:minflt 11:cminflt 12:majflt 13:cmajflt
-    // 14:utime 15:stime
-    std::string comm;
-    char state = 0;
-    int dummy = 0;
-    unsigned long utimeTmp = 0;
-    unsigned long stimeTmp = 0;
-    // 按字段逐一读取，跳过不需要的字段
-    statFile >> dummy >> comm >> state >>
-        dummy >> dummy >> dummy >> dummy >> dummy >>  // ppid pgrp session tty_nr tpgid
-        dummy >> dummy >> dummy >> dummy >> dummy >>  // flags minflt cminflt majflt cmajflt
-        utimeTmp >> stimeTmp;
-    if (statFile.fail()) {
-        HILOG_ERROR(LOG_CORE, "ParseProcStat: parse stat file failed");
-        return false;
-    }
-    utime = static_cast<uint64_t>(utimeTmp);
-    stime = static_cast<uint64_t>(stimeTmp);
-    return true;
+      const std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
+      std::ifstream statFile(path);
+      if (!statFile.is_open()) {
+          return false;
+      }
+
+      std::string line;
+      if (!std::getline(statFile, line) || line.empty()) {
+          return false;
+      }
+
+      const size_t lparen = line.find('(');
+      const size_t rparen = line.rfind(')');
+      if (lparen == std::string::npos || rparen == std::string::npos || rparen <= lparen) {
+          return false;
+      }
+
+      if (rparen + 2 >= line.size()) {
+          return false;
+      }
+
+      std::istringstream iss(line.substr(rparen + 2));
+
+      char state = '\0';
+      unsigned long long skip = 0;
+      unsigned long long utimeTmp = 0;
+      unsigned long long stimeTmp = 0;
+
+      if (!(iss >> state)) {
+          return false;
+      }
+
+      for (int i = 0; i < 10; ++i) {
+          if (!(iss >> skip)) {
+              return false;
+          }
+      }
+
+      if (!(iss >> utimeTmp >> stimeTmp)) {
+          return false;
+      }
+
+      utime = static_cast<uint64_t>(utimeTmp);
+      stime = static_cast<uint64_t>(stimeTmp);
+      return true;
 }
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
