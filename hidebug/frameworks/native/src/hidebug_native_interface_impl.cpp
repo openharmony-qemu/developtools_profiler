@@ -21,6 +21,7 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
+#include <sstream>
 #include <sys/stat.h>
 #include <vector>
 #include <unistd.h>
