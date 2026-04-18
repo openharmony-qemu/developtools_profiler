@@ -38,6 +38,7 @@ ohos_shared_library("ohhidebug") {
 
   external_deps = [
     "bounds_checking_function:libsec_shared",
+    "c_utils:utils",
     "faultloggerd:dfx_signalhandler",
     "faultloggerd:libbacktrace_local",
     "faultloggerd:libdfx_dumpcatcher",
