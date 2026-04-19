@@ -416,7 +416,7 @@ void StackPreprocess::TakeResultsFromCacheFile(int fd)
         }
     }
     close(fd);
-    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%llu]completed, ret %d.", readfileSize, ret);
+    PROFILER_LOG_INFO(LOG_CORE, "TakeResultsFromCacheFile [%{public}" PRIu64 "]completed, ret %d.", readfileSize, ret);
 }
 
 void StackPreprocess::InitializeDirector()
