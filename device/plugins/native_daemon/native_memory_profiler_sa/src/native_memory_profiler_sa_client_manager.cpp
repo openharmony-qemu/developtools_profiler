@@ -351,6 +351,8 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     nConfig->statisticsInterval_ = FIVE_MINUTES;
     nConfig->jsStackReport_ = true;
     nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
+    nConfig->asyncStackEnable_ = config.asyncStackEnable;
+    nConfig->asyncFlag_ = config.asyncFlag;
     return InvokeWithProxy([fd, &nConfig](NativeMemoryProfilerSaProxy& proxy) {
         return proxy.DumpData(fd, nConfig);
     });
@@ -370,7 +372,8 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     config->mallocDisable_ = true;
     config->mmapDisable_ = true;
     config->memtraceEnable_ = true;
-    config->asyncStackEnable_ = false;
+    config->asyncStackEnable_ = saConfig.asyncStackEnable;
+    config->asyncFlag_ = saConfig.asyncFlag;
     config->traceMask_ = saConfig.mask;
     config->shareMemorySize_ = CALL_STACK_SMS;
     std::vector<std::vector<uint64_t>> gpuRange;

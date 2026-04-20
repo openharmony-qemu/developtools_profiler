@@ -989,6 +989,15 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
                 context.SendFileDescriptor(eventFd);
             }
         }
+        // Send unique_stack_table fd for async stack collection
+        if (clientConfig.asyncStackEnable && iter->second->hookMgr->uniqueTableBlock_ != nullptr) {
+            int uniqueTableFd = iter->second->hookMgr->uniqueTableBlock_->GetfileDescriptor();
+            context.SendFileDescriptor(uniqueTableFd);
+            PROFILER_LOG_INFO(LOG_CORE, "ProtocolProc: sent unique_stack_table fd=%d to pid=%d",
+                uniqueTableFd, peerConfig);
+        } else if (clientConfig.asyncStackEnable) {
+            PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: uniqueTableBlock_ is nullptr for pid=%d", peerConfig);
+        }
         iter->second->hookMgr->ResetStartupParam();
     } else {
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc: send config failed");
