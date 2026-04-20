@@ -21,7 +21,6 @@
 #include <fstream>
 #include <memory>
 #include <mutex>
-#include <sstream>
 #include <sys/stat.h>
 #include <vector>
 #include <unistd.h>
@@ -296,49 +295,50 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
     const std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
-    std::ifstream statFile(path);
-    if (!statFile.is_open()) {
+    FILE* fp = fopen(path.c_str(), "r");
+    if (fp == nullptr) {
         return false;
     }
 
-    std::string line;
-    if (!std::getline(statFile, line) || line.empty()) {
+    char buf[512];
+    if (fgets(buf, sizeof(buf), fp) == nullptr) {
+        fclose(fp);
         return false;
     }
+    fclose(fp);
 
-    const size_t lparen = line.find('(');
+    std::string line(buf);
+
     const size_t rparen = line.rfind(')');
-    if (lparen == std::string::npos || rparen == std::string::npos || rparen <= lparen) {
+    if (rparen == std::string::npos || rparen + PROC_STAT_SUFFIX_OFFSET >= line.size()) {
         return false;
     }
 
-    if (rparen + PROC_STAT_SUFFIX_OFFSET >= line.size()) {
+    std::string rest = line.substr(rparen + PROC_STAT_SUFFIX_OFFSET);
+    size_t pos = rest.find(' ');
+    if (pos == std::string::npos) {
         return false;
     }
-
-    std::istringstream iss(line.substr(rparen + PROC_STAT_SUFFIX_OFFSET));
-
-    char state = '\0';
-    unsigned long long skip = 0;
-    unsigned long long utimeTmp = 0;
-    unsigned long long stimeTmp = 0;
-
-    if (!(iss >> state)) {
-        return false;
-    }
+    pos++;
 
     for (int i = 0; i < PROC_STAT_SKIP_FIELD_COUNT; ++i) {
-        if (!(iss >> skip)) {
+        pos = rest.find(' ', pos);
+        if (pos == std::string::npos) {
             return false;
         }
+        pos++;
     }
 
-    if (!(iss >> utimeTmp >> stimeTmp)) {
+    size_t utimeEnd = rest.find(' ', pos);
+    if (utimeEnd == std::string::npos) {
         return false;
     }
+    utime = std::stoull(rest.substr(pos, utimeEnd - pos));
+    pos = utimeEnd + 1;
 
-    utime = static_cast<uint64_t>(utimeTmp);
-    stime = static_cast<uint64_t>(stimeTmp);
+    size_t stimeEnd = rest.find(' ', pos);
+    stime = std::stoull(rest.substr(pos, stimeEnd == std::string::npos ? std::string::npos : stimeEnd - pos));
+
     return true;
 }
 
