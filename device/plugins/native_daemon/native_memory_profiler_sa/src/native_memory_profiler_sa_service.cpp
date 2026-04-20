@@ -27,6 +27,7 @@
 #include "logging.h"
 #include "native_memory_profiler_sa_callback_proxy.h"
 #include <sys/socket.h>
+#include <unistd.h>
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -72,6 +73,57 @@ static std::mutex g_asyncStoppingPidsMtx;
 const bool G_REGISTER_RESUTL = SystemAbility::MakeAndRegisterAbility(
     DelayedSingleton<NativeMemoryProfilerSaService>::GetInstance().get());
 #endif
+
+bool SendFileCacheFd(SocketContext &context, HookManager& hookMgr, int32_t pid, uint16_t fileIndex)
+{
+    int cacheFd = hookMgr.CreateFileCacheFd();
+    if (cacheFd < 0) {
+        return false;
+    }
+    HookCacheFileMsg cacheFileMsg(pid, fileIndex, CACHE_FILE_CREATED);
+    bool ret = context.SendHookConfig(reinterpret_cast<uint8_t*>(&cacheFileMsg), sizeof(cacheFileMsg)) &&
+        context.SendFileDescriptor(cacheFd);
+    close(cacheFd);
+    return ret;
+}
+
+void SendHookCommand(pid_t pid, uint32_t cmd)
+{
+    std::unique_lock<std::mutex> lock(g_pidFdMtx);
+    auto it = g_pidFds.find(pid);
+    if (it == g_pidFds.end() || it->second <= 0) {
+        return;
+    }
+    int sockFd = it->second;
+    lock.unlock();
+
+    struct ProtocolHead phead;
+    phead.protoType = PROTOCOL_TYPE_PROTOBUF;
+    phead.protoSize = sizeof(cmd) + sizeof(struct ProtocolHead);
+    if (send(sockFd, reinterpret_cast<int8_t*>(&phead), sizeof(phead), 0) == -1) {
+        return;
+    }
+    (void)send(sockFd, reinterpret_cast<int8_t*>(&cmd), sizeof(cmd), 0);
+}
+
+bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32_t pid, const std::string& name)
+{
+    if (!hookMgr.PrepareFileCacheContext(pid, name)) {
+        return false;
+    }
+    for (uint16_t fileIndex = 0; fileIndex < FILE_CACHE_FD_COUNT; ++fileIndex) {
+        int cacheFd = hookMgr.CreateFileCacheFd();
+        if (cacheFd < 0) {
+            return false;
+        }
+        bool ret = context.SendFileDescriptor(cacheFd);
+        close(cacheFd);
+        if (!ret) {
+            return false;
+        }
+    }
+    return true;
+}
 }
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
@@ -829,12 +881,23 @@ bool NativeMemoryProfilerSaService::ReceiveCacheFileMsg(SocketContext &context, 
         ClientConfig clientConfig;
         iter->second->hookMgr->GetClientConfig(clientConfig);
         if (clientConfig.enableFileCacheMode) {
-            // in file cache mode, receive cached file fd from native_hook
-            if (cacheFileMsg.msgType == CACHE_FILE_CREATED) {
+            if (cacheFileMsg.msgType == CACHE_FILE_READY) {
                 int cacheFd = context.ReceiveFileDiscriptor();
                 PROFILER_LOG_INFO(LOG_CORE, "ReceiveCacheFileMsg pid:%d index %u",
                     cacheFileMsg.hookPid, cacheFileMsg.fileIndex);
-                iter->second->hookMgr->HandleCachedFileFdByPid(cacheFileMsg.hookPid, cacheFd, cacheFileMsg.fileIndex);
+                if (!iter->second->hookMgr->HandleCachedFileFdByPid(cacheFileMsg.hookPid,
+                    cacheFd, cacheFileMsg.fileIndex)) {
+                    close(cacheFd);
+                    return false;
+                }
+                if (!iter->second->hookMgr->IsCacheFileStopRequested(cacheFileMsg.hookPid) &&
+                    !SendFileCacheFd(context, *(iter->second->hookMgr),
+                    cacheFileMsg.hookPid, cacheFileMsg.fileIndex)) {
+                    PROFILER_LOG_ERROR(LOG_CORE, "ReceiveCacheFileMsg replenish fd failed");
+                    return false;
+                }
+            } else if (cacheFileMsg.msgType == CACHE_FILE_STOP) {
+                return iter->second->hookMgr->HandleCacheFileStopByPid(cacheFileMsg.hookPid);
             }
             return true;
         }
@@ -903,10 +966,14 @@ bool NativeMemoryProfilerSaService::ProtocolProc(SocketContext &context, uint32_
             clientConfig.freeEventOnlyAddrEnable = true;
         }
         clientConfig.isSaMode = true;
-        context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig));
+        if (!context.SendHookConfig(reinterpret_cast<uint8_t *>(&clientConfig), sizeof(clientConfig))) {
+            return false;
+        }
         if (clientConfig.enableFileCacheMode) {
-            int eventFd = iter->second->hookMgr->GetFileNotifierFd(peerConfig, bundleName);
-            context.SendFileDescriptor(eventFd);
+            if (!SendInitialFileCacheFds(context, *(iter->second->hookMgr), peerConfig, bundleName)) {
+                PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send initial file cache fds failed");
+                return false;
+            }
         } else {
             int sharedMemCount = (clientConfig.offlineSymbolization) ? SHARED_MEMORY_NUM : 1;
             std::vector<int> fdVec = iter->second->hookMgr->GetFds(peerConfig, bundleName, sharedMemCount);
@@ -1147,8 +1214,12 @@ int32_t NativeMemoryProfilerSaService::ReleaseForStopHook(uint32_t pid, std::sha
     std::string& resultPath, bool isAsync)
 {
     int32_t ret = RET_OK;
-    CloseSocketFd(static_cast<pid_t>(pid));
+    if (config->hookMgr->GetHookConfig().use_file_cache_mode()) {
+        config->hookMgr->RequestCacheFileStop(static_cast<pid_t>(pid));
+        SendHookCommand(static_cast<pid_t>(pid), STOP_HOOK_CMD);
+    }
     config->hookMgr->StopPluginSession({});
+    CloseSocketFd(static_cast<pid_t>(pid));
     config->hookMgr->DestroyPluginSession({});
     if (isAsync) {
         std::lock_guard<std::mutex> guard(g_mtx);

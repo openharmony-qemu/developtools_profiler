@@ -105,6 +105,26 @@ static TagMapping g_tagMappings[] = {
     {TAG_RES_DART_HEAP, RecordStatisticsEvent::DART_HEAP, false},
     {TAG_RES_RN_HERMES_HEAP, RecordStatisticsEvent::RN_HERMES_HEAP, false},
 };
+
+bool NeedBuildIdForPath(const CallFrame& callFrame)
+{
+    if (callFrame.isJsFrame_) {
+        return false;
+    }
+    std::string_view filePath = callFrame.filePath_;
+    if (filePath.empty()) {
+        return false;
+    }
+    constexpr std::array<std::string_view, 6> scriptExts = {
+        ".ts", ".ets", ".js", ".mjs", ".cjs", ".abc"
+    };
+    for (const auto ext : scriptExts) {
+        if (filePath.size() >= ext.size() && filePath.substr(filePath.size() - ext.size()) == ext) {
+            return false;
+        }
+    }
+    return true;
+}
 }
 
 std::vector<uint64_t> StackPreprocess::FindAddrs(uint64_t addr, size_t size)
@@ -1913,7 +1933,9 @@ inline void StackPreprocess::ReportFilePathMap(CallFrame& callFrame, T& stackDat
         filePathMap->set_id(callFrame.filePathId_);
         filePathMap->set_name(std::string(callFrame.filePath_));
         filePathMap->set_pid(pid_);
-        filePathMap->set_build_id(GetBuildId(std::string(callFrame.filePath_)));
+        if (NeedBuildIdForPath(callFrame)) {
+            filePathMap->set_build_id(GetBuildId(std::string(callFrame.filePath_)));
+        }
     }
 }
 

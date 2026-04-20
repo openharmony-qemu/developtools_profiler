@@ -146,6 +146,7 @@ constexpr uint32_t SNAPSHOT_REQUEST_CMD = 0xADD50001;
 constexpr uint32_t ALIVE_ADDR_SNAPSHOT_MARKER = 0xADD50002;
 constexpr uint32_t ALIVE_ADDR_SNAPSHOT_END_MARKER = 0xADD50003;
 constexpr uint32_t FINAL_SNAPSHOT_REQUEST_CMD = 0xADD50004;
+constexpr uint32_t STOP_HOOK_CMD = 0xADD50005;
 
 enum SymbolType {
     NATIVE_SYMBOL,
@@ -157,6 +158,9 @@ enum CacheFileMsgType {
     CACHE_FILE_READY,
     CACHE_FILE_STOP,
 };
+
+constexpr uint16_t FILE_CACHE_FD_COUNT = 3;
+constexpr uint16_t INVALID_CACHE_FILE_INDEX = UINT16_MAX;
 
 struct Range {
     uint64_t start;

@@ -48,7 +48,7 @@ StackWriter::StackWriter(std::string name,
         }
         eventNotifier_ = nullptr;
     } else if (useFileCache_) {
-        cacheFileWriter_ = std::make_shared<CacheFileWriter>(eventFd, size);
+        cacheFileWriter_ = std::make_shared<CacheFileWriter>(static_cast<uint32_t>(smbFd));
         eventNotifier_ = nullptr;
         shareMemoryBlock_ = nullptr;
     } else {
@@ -175,6 +175,22 @@ void StackWriter::PrepareCacheFileWriter(FileEventCallback callback)
         return;
     }
     cacheFileWriter_->Prepare(callback);
+}
+
+bool StackWriter::AddFileCacheDescriptor(uint16_t fileIndex, int fd)
+{
+    if (!useFileCache_ || cacheFileWriter_ == nullptr) {
+        return false;
+    }
+    return cacheFileWriter_->AddCacheFile(fileIndex, fd);
+}
+
+void StackWriter::EnterStopFileCacheMode()
+{
+    if (!useFileCache_ || cacheFileWriter_ == nullptr) {
+        return;
+    }
+    cacheFileWriter_->EnterStopMode();
 }
 
 bool StackWriter::Flush()

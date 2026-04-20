@@ -46,6 +46,8 @@ public:
     bool PrepareFlush();
     bool IsFileCacheMode();
     void PrepareCacheFileWriter(FileEventCallback callback);
+    bool AddFileCacheDescriptor(uint16_t fileIndex, int fd);
+    void EnterStopFileCacheMode();
     void StopFileCache();
 
 private:

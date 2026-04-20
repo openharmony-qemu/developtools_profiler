@@ -33,9 +33,20 @@ public:
     void AddPidInfo(pid_t pid, uid_t uid, gid_t gid);
     void RemovePidInfo(pid_t pid);
     void SendCommand(pid_t pid, uint32_t cmd);
+    bool HasSocketFd(pid_t pid);
+    void ClientDisconnectCallback(int socketFd);
 private:
     bool StartService(const std::string& unixSocketName);
+    bool HandlePeerMessage(SocketContext &context, const int8_t *buf, uint32_t size);
+    bool ResolveProcessName(int32_t peerConfig, std::string& procName);
+    bool CheckConnectionPermission(SocketContext &context);
+    bool SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
+    bool SendSharedMemoryFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
+    bool SendAsyncStackFd(SocketContext &context);
+    void SaveSocketFd(SocketContext &context, pid_t pid);
     void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
+    bool SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t fileIndex);
+    bool SendInitialFileCacheFds(SocketContext &context, int32_t pid, const std::string& name);
 
 private:
     std::shared_ptr<ServiceEntry> serviceEntry_{nullptr};

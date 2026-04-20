@@ -15,6 +15,7 @@
 
 #include "hook_manager.h"
 
+#include <fcntl.h>
 #include <limits>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -56,6 +57,8 @@ constexpr int32_t RESPONSE_MAX_PID_COUNT = 8;
 constexpr int32_t ONLY_NMD_TYPE = 2;
 constexpr int32_t SIMP_NMD = 3;
 constexpr int DOUBLE = 2;
+constexpr mode_t FILE_CACHE_MODE = S_IRUSR | S_IWUSR;
+const std::string FILE_CACHE_TEMPLATE = "native_hook_cache_XXXXXX";
 constexpr uint64_t ALL_NESTED_MASK_TYPE = ASYNC_TYPE_LIBUV_SEND | ASYNC_TYPE_FFRT_POOL | ASYNC_TYPE_FFRT_QUEUE |
     ASYNC_TYPE_EVENTHANDLER | ASYNC_TYPE_PROFILER;
 #ifndef __aarch64__
@@ -358,19 +361,6 @@ void HookManager::UpdateAsyncFlagConfig()
 
 void HookManager::UpdateFileCacheModeConfig()
 {
-    // enableFileCacheMode is enabled only when the target process is an application.
-    for (const auto& pid : hookConfig_.expand_pids()) {
-        if (pid <= 0 || !COMMON::CheckIsApplication(pid, "")) {
-            hookConfig_.set_use_file_cache_mode(false);
-            return;
-        }
-    }
-    const std::string processName = hookConfig_.process_name();
-    if (!processName.empty() && !COMMON::CheckIsApplication(0, processName)) {
-        hookConfig_.set_use_file_cache_mode(false);
-        return;
-    }
-
     uint32_t fileCacheBufferSize = hookConfig_.file_cache_buffer_size();
     if (fileCacheBufferSize < MIN_FILE_CACHE_MEMORY_SIZE || fileCacheBufferSize > MAX_FILE_CACHE_MEMORY_SIZE) {
         hookConfig_.set_file_cache_buffer_size(MAX_FILE_CACHE_MEMORY_SIZE);
@@ -535,6 +525,8 @@ bool HookManager::HandleFileCacheHookContext(const std::shared_ptr<HookManagerCt
 
     ctx->readyFilePoller->Init();
     ctx->readyFilePoller->Start();
+    ctx->cacheFileStopReceived = false;
+    ctx->cacheFileStopRequested = false;
     return true;
 }
 
@@ -579,6 +571,128 @@ bool HookManager::HandleSharedMemoryHookContext(const std::shared_ptr<HookManage
     return true;
 }
 
+std::shared_ptr<HookManager::HookManagerCtx> HookManager::FindHookContext(int32_t pid, const std::string& name)
+{
+    for (const auto& item : hookCtx_) {
+        if (item != nullptr && (item->pid == pid || item->processName == name)) {
+            return item;
+        }
+    }
+    return nullptr;
+}
+
+void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx)
+{
+    int frontFd = ctx->GetFdQueueFront();
+    ctx->PopFrontFdQueue();
+    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
+    if (noDataQueue_) {
+        ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
+    } else {
+        ReadFromCacheFile(ctx, frontFd);
+    }
+    if (ctx->cacheFileStopReceived && ctx->GetFdQueueSize() == 0 && ctx->stackPreprocess != nullptr) {
+        ctx->stackPreprocess->SetIsCacheFileParseDone(true);
+        if (ctx->stackData != nullptr) {
+            ctx->stackData->Close();
+        }
+    }
+}
+
+void HookManager::WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (hookConfig_.allocator_sampling_enable() && item->stackPreprocess != nullptr) {
+        item->stackPreprocess->WaitForFinalSnapshot();
+    }
+}
+
+void HookManager::StopSignalProcess(pid_t pid)
+{
+    if (kill(pid, SIGNAL_STOP_HOOK) != -1) {
+        return;
+    }
+    const int bufSize = 256;
+    char buf[bufSize] = {0};
+    (void)strerror_r(errno, buf, bufSize);
+}
+
+void HookManager::StopFileCacheProcess(pid_t pid)
+{
+    RequestCacheFileStop(pid);
+    if (hookService_ == nullptr) {
+        (void)HandleCacheFileStopByPid(pid);
+        return;
+    }
+    hookService_->SendCommand(pid, STOP_HOOK_CMD);
+    if (!hookService_->HasSocketFd(pid)) {
+        (void)HandleCacheFileStopByPid(pid);
+    }
+}
+
+bool HookManager::FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        return false;
+    }
+    item->cacheFileStopReceived = true;
+    if (item->GetFdQueueSize() > 0) {
+        return true;
+    }
+    item->stackPreprocess->SetIsCacheFileParseDone(true);
+    if (item->stackData != nullptr) {
+        item->stackData->Close();
+    }
+    return true;
+}
+
+void HookManager::HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item)
+{
+    PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
+    if (hookConfig_.use_file_cache_mode()) {
+        (void)FinalizeCacheFileStop(item);
+    }
+}
+
+void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item->pid <= 0) {
+        HandleInvalidPidStop(item);
+        return;
+    }
+    pid_t pid = static_cast<pid_t>(item->pid);
+    if (hookConfig_.use_file_cache_mode()) {
+        StopFileCacheProcess(pid);
+        return;
+    }
+    StopSignalProcess(pid);
+}
+
+bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item)
+{
+    CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
+    item->stackPreprocess->StopTakeResults();
+    PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
+    if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
+        item->stackPreprocess->UpdateStatisticsTime();
+        item->stackPreprocess->FlushRecordStatistics();
+    }
+    if (hookConfig_.malloc_free_matching_interval() > 0) {
+        item->stackPreprocess->FlushRecordApplyAndReleaseMatchData();
+    }
+    if (item->stackData != nullptr) {
+        item->stackData->Close();
+    }
+    return true;
+}
+
+void HookManager::CleanupHookServiceContext(pid_t pid)
+{
+    if (pid > 0 && hookService_ != nullptr) {
+        hookService_->CloseSocketFd(pid);
+        hookService_->RemovePidInfo(pid);
+    }
+}
+
 void HookManager::CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>& ctx, int sharedMemCount)
 {
     clockid_t pluginDataClockId = COMMON::GetClockId(hookConfig_.clock());
@@ -599,13 +713,9 @@ void HookManager::CreateNoQueueDataHandler(const std::shared_ptr<HookManagerCtx>
     } else {
         ctx->readyFilePoller->AddFileDescriptor(
             ctx->readyFileNotifier->GetFd(),
-            [&ctx] {
-                int frontFd = ctx->GetFdQueueFront();
-                ctx->PopFrontFdQueue();
-                PROFILER_LOG_INFO(LOG_CORE, "NoQueueDataHandler pop fd, queue size%zu",
-                    ctx->GetFdQueueSize());
+            [this, &ctx] {
                 ctx->readyFileNotifier->Take();
-                ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
+                this->HandleReadyCacheFile(ctx);
             });
         PROFILER_LOG_INFO(LOG_CORE, "NoQueueDataHandler add readyFilePoller");
     }
@@ -632,12 +742,8 @@ bool HookManager::CreateQueueDataHandler(const std::shared_ptr<HookManagerCtx>& 
         ctx->readyFilePoller->AddFileDescriptor(
             ctx->readyFileNotifier->GetFd(),
             [this, &ctx] {
-                int frontFd = ctx->GetFdQueueFront();
-                ctx->PopFrontFdQueue();
-                PROFILER_LOG_INFO(LOG_CORE, "QueueDataHandler pop fd, queue size%zu",
-                    ctx->GetFdQueueSize());
                 ctx->readyFileNotifier->Take();
-                this->ReadFromCacheFile(ctx, frontFd);
+                this->HandleReadyCacheFile(ctx);
             });
         PROFILER_LOG_INFO(LOG_CORE, "QueueDataHandler add readyFilePoller");
     }
@@ -1317,6 +1423,13 @@ bool HookManager::DestroyPluginSession(const std::vector<uint32_t>& pluginIds)
                 item->readyFilePoller->Stop();
                 item->readyFilePoller->Finalize();
             }
+            while (item->GetFdQueueSize() > 0) {
+                int cacheFd = item->GetFdQueueFront();
+                item->PopFrontFdQueue();
+                if (cacheFd >= 0) {
+                    close(cacheFd);
+                }
+            }
         } else {
             for (size_t i = 0; i < item->eventPollerList.size(); ++i) {
                 if (item->eventPollerList[i] && item->eventNotifierList[i]) {
@@ -1384,35 +1497,12 @@ bool HookManager::StopPluginSession(const std::vector<uint32_t>& pluginIds)
         }
     }
     for (const auto& item : hookCtx_) {
-        if (hookConfig_.allocator_sampling_enable() && item->stackPreprocess != nullptr) {
-            item->stackPreprocess->WaitForFinalSnapshot();
+        WaitFinalSnapshotIfNeeded(item);
+        StopTargetProcess(item);
+        if (!FinalizeStoppedContext(item)) {
+            return false;
         }
-        if (item->pid > 0) {
-            if (kill(item->pid, SIGNAL_STOP_HOOK) == -1) {
-                const int bufSize = 256;
-                char buf[bufSize] = {0};
-                strerror_r(errno, buf, bufSize);
-            }
-            if (hookService_) {
-                hookService_->CloseSocketFd(static_cast<pid_t>(item->pid));
-                hookService_->RemovePidInfo(static_cast<pid_t>(item->pid));
-            }
-        } else if (item->pid <= 0) {
-            PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
-        }
-        CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
-        item->stackPreprocess->StopTakeResults();
-        PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
-        if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
-            item->stackPreprocess->UpdateStatisticsTime();
-            item->stackPreprocess->FlushRecordStatistics();
-        }
-        if (hookConfig_.malloc_free_matching_interval() > 0) {
-            item->stackPreprocess->FlushRecordApplyAndReleaseMatchData();
-        }
-        if (item->stackData != nullptr) {
-            item->stackData->Close();
-        }
+        CleanupHookServiceContext(static_cast<pid_t>(item->pid));
     }
     if (!SetLocalHandle("0")) {
         PROFILER_LOG_WARN(LOG_CORE, "reset preload param failed");
@@ -1657,6 +1747,48 @@ void HookManager::WriteHookConfig()
     }
 }
 
+bool HookManager::PrepareFileCacheContext(int32_t pid, const std::string& name)
+{
+    auto item = FindHookContext(pid, name);
+    if (item == nullptr) {
+        return false;
+    }
+    if (item->pid == -1) {
+        item->pid = pid;
+    }
+    item->cacheFileStopReceived = false;
+    item->cacheFileStopRequested = false;
+    if (item->stackPreprocess != nullptr) {
+        item->stackPreprocess->SetPid(pid);
+        item->stackPreprocess->SetIsCacheFileParseDone(false);
+    }
+    return true;
+}
+
+int HookManager::CreateFileCacheFd()
+{
+    std::string tempPath = fileCacheDir_ + FILE_CACHE_TEMPLATE;
+    std::vector<char> tempPathBuf(tempPath.begin(), tempPath.end());
+    tempPathBuf.push_back('\0');
+    int fd = mkstemp(tempPathBuf.data());
+    if (fd < 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateFileCacheFd mkstemp failed errno=%d", errno);
+        return -1;
+    }
+    if (fchmod(fd, FILE_CACHE_MODE) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateFileCacheFd fchmod failed errno=%d", errno);
+        close(fd);
+        (void)unlink(tempPathBuf.data());
+        return -1;
+    }
+    if (unlink(tempPathBuf.data()) != 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "CreateFileCacheFd unlink failed errno=%d", errno);
+        close(fd);
+        return -1;
+    }
+    return fd;
+}
+
 std::vector<int> HookManager::GetFds(int32_t pid, const std::string& name, int sharedMemCount)
 {
     for (const auto& item : hookCtx_) {
@@ -1695,35 +1827,40 @@ void HookManager::SetMemLeakFd(uint32_t fd)
 
 bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
 {
-    for (const auto& item : hookCtx_) {
-        if (item != nullptr && item->pid == pid) {
-            if (item->stackPreprocess != nullptr) {
-                item->stackPreprocess->SetIsStartTakeData(true);
-            }
-            item->PushBackFdQueue(fd);
-            PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid push fd, queue size %zu",
-                item->GetFdQueueSize());
-            return true;
-        }
+    (void)fileIndex;
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        return false;
     }
-
-    return false;
+    if (item->stackPreprocess != nullptr) {
+        item->stackPreprocess->SetIsStartTakeData(true);
+    }
+    item->PushBackFdQueue(fd);
+    PROFILER_LOG_INFO(LOG_CORE, "HandleCachedFileFdByPid push fd, queue size %zu", item->GetFdQueueSize());
+    if (item->readyFileNotifier != nullptr && !item->readyFileNotifier->Post(1)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "HandleCachedFileFdByPid post ready notifier failed");
+        return false;
+    }
+    return true;
 }
 
-int HookManager::GetFileNotifierFd(int32_t pid, const std::string& name)
+bool HookManager::HandleCacheFileStopByPid(pid_t pid)
 {
-    for (const auto& item : hookCtx_) {
-        if (item->pid == pid || item->processName == name) {
-            if (item->pid == -1) {
-                item->pid = pid;
-            }
-            item->stackPreprocess->SetPid(pid);
-            if (!item->readyFileNotifier) {
-                return -1;
-            }
-            return item->readyFileNotifier->GetFd();
-        }
+    auto item = FindHookContext(pid, "");
+    return FinalizeCacheFileStop(item);
+}
+
+void HookManager::RequestCacheFileStop(pid_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    if (item != nullptr) {
+        item->cacheFileStopRequested = true;
     }
-    return -1;
+}
+
+bool HookManager::IsCacheFileStopRequested(pid_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    return item != nullptr && item->cacheFileStopRequested;
 }
 }

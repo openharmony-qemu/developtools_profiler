@@ -125,6 +125,54 @@ HWTEST_F(StackPreprocessExtTest, StopTakeResultsTest, TestSize.Level0)
 }
 
 /*
+@tc.name: NeedBuildIdForJsPathTest
+@tc.desc: js related paths should skip build id resolution.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, NeedBuildIdForJsPathTest, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    BatchNativeHookData jsData;
+
+    CallFrame tsFrame(1);
+    tsFrame.filePath_ = "pages/index.ts";
+    tsFrame.filePathId_ = 1;
+    tsFrame.isJsFrame_ = true;
+    tsFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    preprocess.ReportFilePathMap(tsFrame, jsData);
+    ASSERT_EQ(jsData.events().size(), 1);
+    EXPECT_EQ(jsData.events(0).file_path().build_id(), "");
+
+    BatchNativeHookData etsData;
+    CallFrame etsFrame(2);
+    etsFrame.filePath_ = "entry/src/main/ets/pages/Index.ets";
+    etsFrame.filePathId_ = 2;
+    etsFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    preprocess.ReportFilePathMap(etsFrame, etsData);
+    ASSERT_EQ(etsData.events().size(), 1);
+    EXPECT_EQ(etsData.events(0).file_path().build_id(), "");
+
+    BatchNativeHookData scriptData;
+    CallFrame jsFrame(3);
+    jsFrame.filePath_ = "bundle/default.js";
+    jsFrame.filePathId_ = 3;
+    jsFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    preprocess.ReportFilePathMap(jsFrame, scriptData);
+    ASSERT_EQ(scriptData.events().size(), 1);
+    EXPECT_EQ(scriptData.events(0).file_path().build_id(), "");
+
+    BatchNativeHookData soData;
+    CallFrame soFrame(4);
+    soFrame.filePath_ = "";
+    soFrame.filePathId_ = 4;
+    soFrame.needReport_ |= FILE_PATH_ID_REPORT;
+    preprocess.ReportFilePathMap(soFrame, soData);
+    ASSERT_EQ(soData.events().size(), 1);
+    EXPECT_EQ(soData.events(0).file_path().build_id(), "");
+}
+
+/*
 @tc.name: ForceStopTest
 @tc.desc: test ForceStop method.
 @tc.type: FUNC
