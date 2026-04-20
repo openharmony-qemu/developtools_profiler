@@ -34,6 +34,10 @@
 #include "stack_preprocess.h"
 #include "native_memory_profiler_sa_config.h"
 #include "writer_adapter.h"
+#include "app_mgr_interface.h"
+#include "app_mgr_proxy.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class ProfilerPluginConfig;
@@ -231,6 +235,7 @@ private:
         uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
     void CreateMemLeakFile();
     std::string GetMemLeakFileName(MemLeakFormat format);
+    void UpdateFreezeExcludedPid(bool isAdd, int32_t targetPid, int32_t profilerPid);
 
     std::shared_ptr<HookService> hookService_;
     std::shared_ptr<CommandPoller> commandPoller_;
