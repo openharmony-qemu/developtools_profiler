@@ -593,9 +593,6 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     }
     if (ctx->cacheFileStopReceived && ctx->GetFdQueueSize() == 0 && ctx->stackPreprocess != nullptr) {
         ctx->stackPreprocess->SetIsCacheFileParseDone(true);
-        if (ctx->stackData != nullptr) {
-            ctx->stackData->Close();
-        }
     }
 }
 
@@ -639,9 +636,6 @@ bool HookManager::FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& i
         return true;
     }
     item->stackPreprocess->SetIsCacheFileParseDone(true);
-    if (item->stackData != nullptr) {
-        item->stackData->Close();
-    }
     return true;
 }
 

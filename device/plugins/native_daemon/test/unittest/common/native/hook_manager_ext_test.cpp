@@ -76,6 +76,20 @@ public:
 protected:
     std::shared_ptr<HookManager> hookManager_;
     std::shared_ptr<CommandPoller> commandPoller_;
+
+    std::shared_ptr<HookManager::HookManagerCtx> CreateFileCacheCtx(int32_t pid)
+    {
+        NativeHookConfig config;
+        config.set_use_file_cache_mode(true);
+        config.set_clock("monotonic");
+        hookManager_->SetHookConfig(config);
+        auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
+        ctx->stackData = std::make_shared<StackDataRepeater>(8);
+        ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookManager_->hookConfig_,
+            CLOCK_MONOTONIC);
+        hookManager_->hookCtx_.push_back(ctx);
+        return ctx;
+    }
 };
 
 /*
@@ -170,6 +184,48 @@ HWTEST_F(HookManagerExtTest, CreateFileCacheFd, TestSize.Level0)
     ASSERT_GT(read(fd, buffer, sizeof(buffer)), 0);
     EXPECT_STREQ(buffer, content);
     close(fd);
+}
+
+/*
+ * @tc.name: HandleReadyCacheFileKeepsPendingStackData
+ * @tc.desc: test HandleReadyCacheFile does not close pending stack data on final cache file.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleReadyCacheFileKeepsPendingStackData, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ASSERT_TRUE(ctx->stackData->PutRawStack(std::make_shared<HookRecord>(), true));
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+
+    ctx->cacheFileStopReceived = true;
+    ctx->PushBackFdQueue(-1);
+    hookManager_->HandleReadyCacheFile(ctx);
+
+    EXPECT_EQ(ctx->GetFdQueueSize(), 0u);
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_FALSE(ctx->stackData->closed_);
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: HandleCacheFileStopByPidKeepsPendingStackData
+ * @tc.desc: test stop callback does not clear pending stack data when fd queue is empty.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleCacheFileStopByPidKeepsPendingStackData, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ASSERT_TRUE(ctx->stackData->PutRawStack(std::make_shared<HookRecord>(), true));
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+
+    EXPECT_TRUE(hookManager_->HandleCacheFileStopByPid(TEST_PID));
+
+    EXPECT_TRUE(ctx->cacheFileStopReceived);
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_FALSE(ctx->stackData->closed_);
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
 }
 
 /*
