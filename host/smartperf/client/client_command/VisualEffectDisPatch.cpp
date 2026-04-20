@@ -43,6 +43,7 @@ int32_t GameScheduleEventCallbackImpl::OnGameScheduleEvent(int32_t type, std::ma
 
 std::map<std::string, std::string> VisualEffectDisPatch::ItemData()
 {
+    SetCollectNum();
     LOGD("VisualEffectDisPatch:ItemData map size(%u)", visualEffectDisPatchItemData.size());
     std::map<std::string, std::string> dataMap = visualEffectDisPatchItemData;
     visualEffectDisPatchItemData = {};
@@ -63,7 +64,7 @@ void VisualEffectDisPatch::SetCollectNum()
 {
     if (type_ == captureFileFlag_) {
         int collectNum = SPUtilesTye::StringToSometype<int>(visualEffectDisPatchItemData["maxCollectNum"]);
-        if (collectNum <= 1 || collectNum >= static_cast<int>(maxFileFlag_)) {
+        if (collectNum < 1 || collectNum > static_cast<int>(maxFileFlag_)) {
             collectNum = 1;
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);

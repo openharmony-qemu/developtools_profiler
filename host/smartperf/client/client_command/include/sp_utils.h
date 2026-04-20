@@ -179,7 +179,6 @@ std::string GetWinId();
 void GetWinIdNum(std::string &hidumperStr, std::string &winId);
 void EnDumpFun(const std::string &winId);
 void OverDumpFun();
-size_t GetDirSize(const std::string &dirPath);
 };
 }
 }
