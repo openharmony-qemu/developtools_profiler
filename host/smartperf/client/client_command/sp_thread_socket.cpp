@@ -836,9 +836,9 @@ void SpThreadSocket::GetCatchTraceResult(std::string& retCode, SpServerSocket &s
         }
         SendTraceFile(recvBuf, spSocket);
     } else if (iterator->first == MessageType::CAPTURE_FAILED) {
-        VisualEffectAnalysis::GetInstance().SetCatchTraceFlag();
+        VisualEffectDisPatch::GetInstance().SetCatchTraceFlag();
     } else if (iterator->first == MessageType::OVER_SPECIFICATION) {
-        VisualEffectAnalysis::GetInstance().SetSpeciFlag();
+        VisualEffectDisPatch::GetInstance().SetSpeciFlag();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
@@ -862,7 +862,7 @@ void SpThreadSocket::SendTraceFile(const std::string& recvBuf, SpServerSocket &s
             collectTraceNum_++;
         } else {
             spSocket.Sendto(std::string("Over_specification::Times"));
-            VisualEffectAnalysis::GetInstance().SetSpeciFlag();
+            VisualEffectDisPatch::GetInstance().SetSpeciFlag();
         }
     }
 }
