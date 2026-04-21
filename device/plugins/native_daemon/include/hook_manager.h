@@ -92,6 +92,7 @@ public:
         std::shared_ptr<EpollEventPoller> readyFilePoller;
         std::atomic_bool cacheFileStopReceived = false;
         std::atomic_bool cacheFileStopRequested = false;
+        std::atomic_bool cacheFileClientDisconnected = false;
         void FlushStackArray();
         int GetFdQueueFront();
         size_t GetFdQueueSize();
@@ -130,6 +131,7 @@ public:
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
     bool HandleCacheFileStopByPid(pid_t pid);
+    bool HandleClientDisconnectedByPid(pid_t pid);
     void RequestCacheFileStop(pid_t pid);
     bool IsCacheFileStopRequested(pid_t pid);
     bool PrepareFileCacheContext(int32_t pid, const std::string& name);
@@ -219,9 +221,12 @@ private:
     void HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx);
     void WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item);
     void StopSignalProcess(pid_t pid);
-    void StopFileCacheProcess(pid_t pid);
+    bool SendStopCommandIfConnected(pid_t pid);
+    void PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& item);
+    void StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item);
     void StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item);
     bool FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item);
+    void FinishFileCacheStopIfDrained(const std::shared_ptr<HookManagerCtx>& item);
     void HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item);
     bool FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item);
     void CleanupHookServiceContext(pid_t pid);

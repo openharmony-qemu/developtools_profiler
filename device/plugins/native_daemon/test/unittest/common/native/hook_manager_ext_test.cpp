@@ -17,6 +17,7 @@
 #include <cstring>
 #include <fstream>
 #include <sstream>
+#include <fcntl.h>
 #include <unistd.h>
 #include "hook_socket_client.h"
 #include "parameters.h"
@@ -81,6 +82,20 @@ protected:
     {
         NativeHookConfig config;
         config.set_use_file_cache_mode(true);
+        config.set_clock("monotonic");
+        hookManager_->SetHookConfig(config);
+        auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
+        ctx->stackData = std::make_shared<StackDataRepeater>(8);
+        ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookManager_->hookConfig_,
+            CLOCK_MONOTONIC);
+        hookManager_->hookCtx_.push_back(ctx);
+        return ctx;
+    }
+
+    std::shared_ptr<HookManager::HookManagerCtx> CreateSharedMemoryCtx(int32_t pid)
+    {
+        NativeHookConfig config;
+        config.set_use_file_cache_mode(false);
         config.set_clock("monotonic");
         hookManager_->SetHookConfig(config);
         auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
@@ -226,6 +241,78 @@ HWTEST_F(HookManagerExtTest, HandleCacheFileStopByPidKeepsPendingStackData, Test
     EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
     EXPECT_FALSE(ctx->stackData->closed_);
     EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: StopTargetProcessWithoutSocketUsesImmediateLocalExit
+ * @tc.desc: test shared memory mode marks producer done when control socket is unavailable.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, StopTargetProcessWithoutSocketUsesImmediateLocalExit, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ctx->stackPreprocess->SetIsStartTakeData(true);
+
+    hookManager_->StopTargetProcess(ctx);
+
+    // The current stop path does not clear isStartTakeData_ immediately.
+    // Instead it marks the data source as terminated so the consumer can
+    // drain the existing queue before the take-results thread exits.
+    EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
+    EXPECT_TRUE(ctx->stackData->IsProducerFinished());
+    EXPECT_FALSE(ctx->stackPreprocess->isStopTakeData_);
+}
+
+/*
+ * @tc.name: HandleCacheFileClientDisconnectedByPidDrainsCurrentFiles
+ * @tc.desc: test no-queue file cache mode exits after parsing queued files when client is disconnected.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidDrainsCurrentFiles, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->noDataQueue_ = true;
+
+    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
+    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_, CLOCK_MONOTONIC);
+    hookManager_->hookCtx_.push_back(ctx);
+
+    char tempPath[] = "/data/local/tmp/file_cache_stop_XXXXXX";
+    int fd = mkstemp(tempPath);
+    ASSERT_GE(fd, 0);
+    ASSERT_EQ(unlink(tempPath), 0);
+    ctx->PushBackFdQueue(fd);
+
+    EXPECT_TRUE(hookManager_->HandleClientDisconnectedByPid(TEST_PID));
+    EXPECT_TRUE(ctx->cacheFileClientDisconnected);
+    EXPECT_FALSE(ctx->stackPreprocess->isStopTakeData_);
+
+    hookManager_->HandleReadyCacheFile(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+    EXPECT_TRUE(ctx->stackPreprocess->isStopTakeData_);
+    EXPECT_EQ(ctx->GetFdQueueSize(), 0u);
+}
+
+/*
+ * @tc.name: HandleClientDisconnectedByPidMarksSharedMemoryProducerDone
+ * @tc.desc: test shared memory mode marks producer done when client is disconnected.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidMarksSharedMemoryProducerDone, TestSize.Level0)
+{
+    auto ctx = CreateSharedMemoryCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+    ASSERT_TRUE(ctx->stackData != nullptr);
+
+    EXPECT_TRUE(hookManager_->HandleClientDisconnectedByPid(TEST_PID));
+
+    EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
+    EXPECT_TRUE(ctx->stackData->IsProducerFinished());
 }
 
 /*

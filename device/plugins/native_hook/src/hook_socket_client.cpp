@@ -218,10 +218,14 @@ bool HookSocketClient::HandleControlCommand(uint32_t cmd)
     if (cmd != STOP_HOOK_CMD) {
         return true;
     }
+    PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: received STOP_HOOK_CMD, pid %d", pid_);
     bool expected = false;
     if (stopRequested_.compare_exchange_strong(expected, true,
         std::memory_order_release, std::memory_order_relaxed)) {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: trigger hook end, pid %d", pid_);
         (void)ohos_malloc_hook_on_end();
+    } else {
+        PROFILER_LOG_INFO(LOG_CORE, "HandleControlCommand: stop already requested, pid %d", pid_);
     }
     return true;
 }
@@ -611,12 +615,15 @@ bool HookSocketClient::SendEndMsg()
     StackRawData rawdata = {{{{0}}}};
     rawdata.type = END_MSG;
     if (g_disableHook || unixSocketClient_ == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendEndMsg: hook disabled or client missing, pid %d", pid_);
         return false;
     }
     if (!config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
     }
     int sharedMemCount = *sharedMemCount_;
+    PROFILER_LOG_INFO(LOG_CORE, "SendEndMsg: send END_MSG, pid %d, sharedMemCount %d, fileCacheMode %d",
+        pid_, sharedMemCount, config_->enableFileCacheMode);
     for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
         auto& writer = stackWriterList_[smbIndex];
         if (writer) {

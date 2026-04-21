@@ -39,6 +39,10 @@
 #include "hook_record.h"
 #include "hook_record_factory.h"
 #include "unique_stack_table.h"
+#include "app_mgr_interface.h"
+#include "app_mgr_proxy.h"
+#include "iservice_registry.h"
+#include "system_ability_definition.h"
 
 namespace OHOS::Developtools::NativeDaemon {
 namespace {
@@ -593,9 +597,7 @@ void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ct
     } else {
         ReadFromCacheFile(ctx, frontFd);
     }
-    if (ctx->cacheFileStopReceived && ctx->GetFdQueueSize() == 0 && ctx->stackPreprocess != nullptr) {
-        ctx->stackPreprocess->SetIsCacheFileParseDone(true);
-    }
+    FinishFileCacheStopIfDrained(ctx);
 }
 
 void HookManager::WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item)
@@ -615,38 +617,79 @@ void HookManager::StopSignalProcess(pid_t pid)
     (void)strerror_r(errno, buf, bufSize);
 }
 
-void HookManager::StopFileCacheProcess(pid_t pid)
+bool HookManager::SendStopCommandIfConnected(pid_t pid)
 {
-    RequestCacheFileStop(pid);
-    if (hookService_ == nullptr) {
-        (void)HandleCacheFileStopByPid(pid);
+    if (hookService_ == nullptr || !hookService_->HasSocketFd(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: no control socket for pid %d", pid);
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "SendStopCommandIfConnected: send STOP_HOOK_CMD to pid %d", pid);
+    hookService_->SendCommand(pid, STOP_HOOK_CMD);
+    return true;
+}
+
+void HookManager::PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "PrepareImmediateStop: hook context invalid");
         return;
     }
-    hookService_->SendCommand(pid, STOP_HOOK_CMD);
-    if (!hookService_->HasSocketFd(pid)) {
-        (void)HandleCacheFileStopByPid(pid);
+    if (hookConfig_.use_file_cache_mode()) {
+        PROFILER_LOG_INFO(LOG_CORE, "PrepareImmediateStop: file cache mode stop pid %d without active client",
+            item->pid);
+        (void)FinalizeCacheFileStop(item);
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "PrepareImmediateStop: mark data source terminated for pid %d", item->pid);
+    item->stackPreprocess->SetDataSourceTerminated();
+}
+
+void HookManager::StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item)
+{
+    pid_t pid = static_cast<pid_t>(item->pid);
+    PROFILER_LOG_INFO(LOG_CORE, "StopFileCacheProcess: request stop for pid %d", pid);
+    RequestCacheFileStop(pid);
+    if (!SendStopCommandIfConnected(pid)) {
+        PROFILER_LOG_INFO(LOG_CORE, "StopFileCacheProcess: client unavailable, finalize current cache files pid %d",
+            pid);
+        (void)FinalizeCacheFileStop(item);
+    }
+}
+
+void HookManager::FinishFileCacheStopIfDrained(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        return;
+    }
+    if (!item->cacheFileStopReceived || item->GetFdQueueSize() > 0) {
+        return;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "FinishFileCacheStopIfDrained: pid %d cache queue drained", item->pid);
+    item->stackPreprocess->SetIsCacheFileParseDone(true);
+    if (noDataQueue_ && item->cacheFileClientDisconnected) {
+        PROFILER_LOG_INFO(LOG_CORE,
+            "FinishFileCacheStopIfDrained: pid %d client disconnected, stop after current cache files", item->pid);
+        item->stackPreprocess->SetIsStopTakeData(true);
     }
 }
 
 bool HookManager::FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item)
 {
     if (item == nullptr || item->stackPreprocess == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "FinalizeCacheFileStop: hook context invalid");
         return false;
     }
+    PROFILER_LOG_INFO(LOG_CORE, "FinalizeCacheFileStop: pid %d, queue size %zu, clientDisconnected %d",
+        item->pid, item->GetFdQueueSize(), item->cacheFileClientDisconnected.load());
     item->cacheFileStopReceived = true;
-    if (item->GetFdQueueSize() > 0) {
-        return true;
-    }
-    item->stackPreprocess->SetIsCacheFileParseDone(true);
+    FinishFileCacheStopIfDrained(item);
     return true;
 }
 
 void HookManager::HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item)
 {
     PROFILER_LOG_INFO(LOG_CORE, "StopPluginSession: pid(%d) is less or equal zero.", item->pid);
-    if (hookConfig_.use_file_cache_mode()) {
-        (void)FinalizeCacheFileStop(item);
-    }
+    PrepareImmediateStop(item);
 }
 
 void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
@@ -656,12 +699,18 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
         return;
     }
     pid_t pid = static_cast<pid_t>(item->pid);
+    PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: begin stop pid %d, fileCacheMode %d", pid,
+        hookConfig_.use_file_cache_mode());
+    StopSignalProcess(pid);
     if (hookConfig_.use_file_cache_mode()) {
-        StopFileCacheProcess(pid);
+        StopFileCacheProcess(item);
         return;
     }
-    StopSignalProcess(pid);
+    if (!SendStopCommandIfConnected(pid)) {
+        PrepareImmediateStop(item);
+    }
     UpdateFreezeExcludedPid(false, static_cast<int32_t>(item->pid), getpid());
+    PROFILER_LOG_INFO(LOG_CORE, "StopTargetProcess: finish stop dispatch pid %d", pid);
 }
 
 bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item)
@@ -685,7 +734,9 @@ bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& 
 void HookManager::CleanupHookServiceContext(pid_t pid)
 {
     if (pid > 0 && hookService_ != nullptr) {
-        hookService_->CloseSocketFd(pid);
+        if (hookService_->HasSocketFd(pid)) {
+            hookService_->CloseSocketFd(pid);
+        }
         hookService_->RemovePidInfo(pid);
     }
 }
@@ -1772,6 +1823,7 @@ bool HookManager::PrepareFileCacheContext(int32_t pid, const std::string& name)
     }
     item->cacheFileStopReceived = false;
     item->cacheFileStopRequested = false;
+    item->cacheFileClientDisconnected = false;
     if (item->stackPreprocess != nullptr) {
         item->stackPreprocess->SetPid(pid);
         item->stackPreprocess->SetIsCacheFileParseDone(false);
@@ -1861,6 +1913,27 @@ bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)
 bool HookManager::HandleCacheFileStopByPid(pid_t pid)
 {
     auto item = FindHookContext(pid, "");
+    return FinalizeCacheFileStop(item);
+}
+
+bool HookManager::HandleClientDisconnectedByPid(pid_t pid)
+{
+    auto item = FindHookContext(pid, "");
+    if (item == nullptr) {
+        PROFILER_LOG_WARN(LOG_CORE, "HandleClientDisconnectedByPid: hook context not found for pid %d", pid);
+        return false;
+    }
+    PROFILER_LOG_INFO(LOG_CORE, "HandleClientDisconnectedByPid: pid %d disconnected, fileCacheMode %d", pid,
+        hookConfig_.use_file_cache_mode());
+    if (!hookConfig_.use_file_cache_mode()) {
+        if (item->stackPreprocess == nullptr) {
+            PROFILER_LOG_WARN(LOG_CORE, "HandleClientDisconnectedByPid: stackPreprocess null for pid %d", pid);
+            return false;
+        }
+        item->stackPreprocess->SetDataSourceTerminated();
+        return true;
+    }
+    item->cacheFileClientDisconnected = true;
     return FinalizeCacheFileStop(item);
 }
 
