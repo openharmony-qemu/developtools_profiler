@@ -264,8 +264,8 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
         if (wallDeltaMs > 0 && ticksPerSec > 0) {
             double cpuDeltaMs = cpuDelta * 1000.0 / ticksPerSec;
             cpuUsage = cpuDeltaMs / wallDeltaMs;
-        } 
-        lastUtime_  = curUtime; 
+        }
+        lastUtime_  = curUtime;
         lastStime_  = curStime;
         lastWallMs_ = curWallMs;
 
