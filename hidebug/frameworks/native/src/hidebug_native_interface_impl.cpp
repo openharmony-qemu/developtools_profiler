@@ -55,8 +55,7 @@ constexpr uint32_t MAX_TRACE_DURATION = 15 * 1000; // 15s
 constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
 constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
 constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
-constexpr size_t PROC_STAT_SUFFIX_OFFSET = 2;
-constexpr int PROC_STAT_SKIP_FIELD_COUNT = 10;
+constexpr int PROC_STAT_SKIP_FIELD_COUNT = 12;
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
@@ -213,7 +212,7 @@ private:
     bool cpuUsageTaskFlag_ = false;
     uint64_t lastUtime_ = 0;
     uint64_t lastStime_ = 0;
-    int64_t  lastWallNs_ = 0;
+    int64_t  lastWallMs_ = 0;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
@@ -252,95 +251,76 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
         uint64_t curUtime = 0;
         uint64_t curStime = 0;
         if (!ParseProcStat(pid, curUtime, curStime)) {
-            ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
+            HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
             return;
         }
 
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        int64_t curWallNs = static_cast<int64_t>(ts.tv_sec) * 1000000000LL + ts.tv_nsec;
+        int64_t curWallMs = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
 
-        if (lastWallNs_ != 0) {
-            int64_t wallDeltaNs = curWallNs - lastWallNs_;
-            uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
-            if (wallDeltaNs > 0 && ticksPerSec > 0) {
-                double cpuDeltaSec =
-                    static_cast<double>(cpuDelta) / static_cast<double>(ticksPerSec);
-                double wallDeltaSec = static_cast<double>(wallDeltaNs) / 1e9;
-                cpuUsage = cpuDeltaSec / wallDeltaSec;
-            }
-        }
-
-        lastUtime_   = curUtime;
-        lastStime_   = curStime;
-        lastWallNs_  = curWallNs;
+        int64_t wallDeltaMs = curWallMs - lastWallMs_;
+        uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
+        if (wallDeltaMs > 0 && ticksPerSec > 0) {
+            double cpuDeltaMs = cpuDelta * 1000.0 / ticksPerSec;
+            cpuUsage = cpuDeltaMs / wallDeltaMs;
+        } 
+        lastUtime_  = curUtime; 
+        lastStime_  = curStime;
+        lastWallMs_ = curWallMs;
 
         ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     };
-    uint64_t initUtime = 0;
-    uint64_t initStime = 0;
-    if (ParseProcStat(pid, initUtime, initStime)) {
-        struct timespec ts;
-        clock_gettime(CLOCK_MONOTONIC, &ts);
-        lastUtime_   = initUtime;
-        lastStime_   = initStime;
-        lastWallNs_  = static_cast<int64_t>(ts.tv_sec) * 1000000000LL + ts.tv_nsec;
-    }
-
-    ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
+    task();
     cpuUsageTaskFlag_ = true;
     return cpuUsage;
 }
 
 bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
 {
-    const std::string path = "/proc/" + std::to_string(static_cast<int>(pid)) + "/stat";
+    const std::string path = "/proc/self/stat";
     FILE* fp = fopen(path.c_str(), "r");
     if (fp == nullptr) {
         return false;
     }
-
     char buf[512];
     if (fgets(buf, sizeof(buf), fp) == nullptr) {
         fclose(fp);
         return false;
     }
     if (fclose(fp) == -1) {
-        HILOG_ERROR(LOG_CORE, "close file failed, %{public}d, %{public}s", errno, strerror(errno));
+        HILOG_ERROR(LOG_CORE, "close file failed:%{public}d, %{public}s", errno, strerror(errno));
         return false;
     }
 
     std::string line(buf);
-
-    const size_t rparen = line.rfind(')');
-    if (rparen == std::string::npos || rparen + PROC_STAT_SUFFIX_OFFSET >= line.size()) {
+    auto pos = line.find(')');
+    if (pos == std::string::npos || pos + 1 >= line.size()) {
+        HILOG_ERROR(LOG_CORE, "find thread failed:%{public}d, %{public}s", errno, strerror(errno));
         return false;
     }
-
-    std::string rest = line.substr(rparen + PROC_STAT_SUFFIX_OFFSET);
-    size_t pos = rest.find(' ');
-    if (pos == std::string::npos) {
-        return false;
-    }
-    pos++;
-
-    for (int i = 0; i < PROC_STAT_SKIP_FIELD_COUNT; ++i) {
-        pos = rest.find(' ', pos);
-        if (pos == std::string::npos) {
+    for (int i = 0 ; i < PROC_STAT_SKIP_FIELD_COUNT; i++) {
+        pos = line.find(' ', pos);
+        if (pos == std::string::npos || pos + 1 >= line.size()) {
+            HILOG_ERROR(LOG_CORE, "find thread failed:%{public}d, %{public}s", errno, strerror(errno));
             return false;
         }
         pos++;
     }
-
-    size_t utimeEnd = rest.find(' ', pos);
+    int utimeStart = pos;
+    int utimeEnd = line.find(' ', utimeStart) - 1;
     if (utimeEnd == std::string::npos) {
+        HILOG_ERROR(LOG_CORE, "find utimeEnd failed");
         return false;
     }
-    utime = std::stoull(rest.substr(pos, utimeEnd - pos));
-    pos = utimeEnd + 1;
-
-    size_t stimeEnd = rest.find(' ', pos);
-    stime = std::stoull(rest.substr(pos, stimeEnd == std::string::npos ? std::string::npos : stimeEnd - pos));
+    int stimestart = utimeEnd + 2;
+    int stimeEnd = line.find(' ', stimestart) - 1;
+    if (stimeEnd == std::string::npos) {
+        HILOG_ERROR(LOG_CORE, "find stimeEnd failed");
+        return false;
+    }
+    utime = std::stoull(line.substr(utimeStart, utimeEnd - utimeStart + 1));
+    stime = std::stoull(line.substr(stimestart, stimeEnd - stimestart + 1));
 
     return true;
 }
