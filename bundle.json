@@ -160,6 +160,15 @@
             "header_files": []
           },
           "name": "//developtools/profiler/device/plugins/preload_client:hiprofiler_preload_client"
+        },
+        {
+          "header": {
+            "header_base": "//developtools/profiler/hidebug/interfaces/innerkits/native/hidebug_dump/include",
+            "header_files": [
+              "hidebug_dump.h"
+            ]
+          },
+          "name": "//developtools/profiler/hidebug/interfaces/innerkits/native/hidebug_dump:hidebug_dump"
         }
       ],
       "test": [
