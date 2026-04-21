@@ -884,6 +884,7 @@ std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
     int pidValue = hookConfig_.pid();
     std::string processName = hookConfig_.process_name();
     COMMON::IsProcessExist(processName, pidValue);
+    pidValue = hookConfig_.startup_mode() ? 0 : hookConfig_.pid(); // startmode, pid is unknown, set default value 0
     return DEFAULT_PATH + "memleak-native-orphansnapshot-" + std::to_string(pidValue) + suffix;
 }
 
