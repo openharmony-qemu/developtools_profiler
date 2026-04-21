@@ -305,7 +305,10 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint6
         fclose(fp);
         return false;
     }
-    fclose(fp);
+    if (fclose(fp) == -1) {
+        HILOG_ERROR(LOG_CORE, "close file failed, %{public}d, %{public}s", errno, strerror(errno));
+        return false;
+    }
 
     std::string line(buf);
 
