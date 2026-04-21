@@ -69,8 +69,10 @@ void VisualEffectDisPatch::SetCollectNum()
         }
         std::string sendMessage = "haveSchedule::" + std::to_string(collectNum);
         ipcCallback_(sendMessage);
+        type_ = 1;
     } else if (type_ == 0) {
         ipcCallback_("haveSchedule");
+        type_ = 1;
     }
 }
 
