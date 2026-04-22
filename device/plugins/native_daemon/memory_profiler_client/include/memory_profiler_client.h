@@ -16,6 +16,7 @@
 #ifndef MEMORY_PROFILER_CLIENT_H
 #define MEMORY_PROFILER_CLIENT_H
 
+#include <functional>
 #include <vector>
 
 #include <sys/types.h>
@@ -25,6 +26,8 @@
 namespace OHOS {
 namespace Developtools {
 namespace NativeDaemon {
+using ProfilingCallback = std::function<void(int32_t, const std::string&)>;
+
 class MemoryProfilerClient {
 public:
     MemoryProfilerClient() = default;
@@ -34,9 +37,11 @@ public:
      * @desc: Start memory profiler on simplified memory configuration.
      * @param duration: The profiling duration in seconds.
      * @param config: The simplified memory profiler configuration.
+     * @param profilingCallback: The callback to be invoked when profiling result is ready, can be nullptr.
      * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    virtual ResProfilerErrorCode Start(uint32_t duration, SimplifiedMemConfig& config) = 0;
+    virtual ResProfilerErrorCode Start(uint32_t duration, SimplifiedMemConfig& config,
+        ProfilingCallback profilingCallback = nullptr) = 0;
 
     /**
      * @desc: Start memory profiler on memory API configuration.
@@ -48,9 +53,11 @@ public:
      * OH_RES_TYPE_GPU = 3
      * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * @param config: The memory API profiler configuration.
+     * @param profilingCallback: The callback to be invoked when profiling result is ready, can be nullptr.
      * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    virtual ResProfilerErrorCode Start(int32_t resourceType, MemAPIConfig& config) = 0;
+    virtual ResProfilerErrorCode Start(int32_t resourceType, MemAPIConfig& config,
+        ProfilingCallback profilingCallback = nullptr) = 0;
 
     /**
      * @desc: Start simplified nmd mode profiler.

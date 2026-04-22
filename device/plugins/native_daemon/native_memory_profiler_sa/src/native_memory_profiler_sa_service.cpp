@@ -547,6 +547,12 @@ int32_t NativeMemoryProfilerSaService::StopHook(uint32_t pid, std::string name, 
             pid, name.c_str(), ret);
         return ret;
     }
+    pid_t callingPid = IPCSkeleton::GetCallingPid();
+    if (config->startType == START_TYPE_API && pid != static_cast<uint32_t>(callingPid)) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Permission Denied,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_PERMISSION_DENIED);
+    }
     std::string resultPath;
     int32_t retRelease = ReleaseForStopHook(pid, config, resultPath);
     int32_t callbackError = retRelease == RET_OK ? finishErrorCode :
