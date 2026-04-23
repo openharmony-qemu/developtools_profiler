@@ -213,7 +213,7 @@ private:
     uint64_t lastUtime_ = 0;
     uint64_t lastStime_ = 0;
     int64_t  lastWallMs_ = 0;
-    srd::mutext cpuUsageMutex_;
+    std::mutex cpuUsageMutex_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
@@ -245,14 +245,14 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
     static double cpuUsage = 0.0;
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
-    lock_guard<std::mutex> guard(cpuUsageMutex_);
+    std::lock_guard<std::mutex> guard(cpuUsageMutex_);
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
     static std::function<void()> task = [this, pid]() {
         uint64_t curUtime = 0;
         uint64_t curStime = 0;
-        if (!ParseProcStat(pid, curUtime, curStime)) {
+        if (!ParseProcStat(curUtime, curStime)) {
             HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
             return;
         }
@@ -310,13 +310,13 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
         pos++;
     }
     int utimeStart = pos;
-    int utimeEnd = line.find(' ', utimeStart) - 1;
+    auto utimeEnd = line.find(' ', utimeStart) - 1;
     if (utimeEnd == std::string::npos) {
         HILOG_ERROR(LOG_CORE, "find utimeEnd failed");
         return false;
     }
     int stimestart = utimeEnd + 2;
-    int stimeEnd = line.find(' ', stimestart) - 1;
+    auto stimeEnd = line.find(' ', stimestart) - 1;
     if (stimeEnd == std::string::npos) {
         HILOG_ERROR(LOG_CORE, "find stimeEnd failed");
         return false;
