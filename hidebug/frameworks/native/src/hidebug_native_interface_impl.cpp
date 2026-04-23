@@ -245,7 +245,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
     }
     cpuUsageTask_ = [ticksPerSec]() {
         uint64_t curUtime = 0;
-        uint64_t curStime = 0;  
+        uint64_t curStime = 0;
         if (!ParseProcStat(curUtime, curStime)) {
             HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
             return;
