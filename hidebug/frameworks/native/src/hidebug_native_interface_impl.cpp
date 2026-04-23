@@ -296,13 +296,13 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
     std::string line(buf);
     auto pos = line.find(')');
     if (pos == std::string::npos || pos + 1 >= line.size()) {
-        HILOG_ERROR(LOG_CORE, "find thread failed:%{public}d, %{public}s", errno, strerror(errno));
+        HILOG_ERROR(LOG_CORE, "find thread failed");
         return false;
     }
     for (int i = 0 ; i < PROC_STAT_SKIP_FIELD_COUNT; i++) {
         pos = line.find(' ', pos);
         if (pos == std::string::npos || pos + 1 >= line.size()) {
-            HILOG_ERROR(LOG_CORE, "find thread failed:%{public}d, %{public}s", errno, strerror(errno));
+            HILOG_ERROR(LOG_CORE, "find thread failed");
             return false;
         }
         pos++;
