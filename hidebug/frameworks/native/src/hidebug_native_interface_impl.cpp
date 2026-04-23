@@ -187,6 +187,8 @@ public:
     HidebugNativeInterfaceImpl(const HidebugNativeInterfaceImpl&) = delete;
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
+    double GetCpuUsageBySelf(pid_t pid) override;
+    bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
         uint32_t limitsize, std::string &file) override;
@@ -207,12 +209,11 @@ public:
 private:
     bool CheckTraceErrorCode();
 private:
-    double GetCpuUsageBySelf(pid_t pid);
-    bool ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime);
     bool cpuUsageTaskFlag_ = false;
     uint64_t lastUtime_ = 0;
     uint64_t lastStime_ = 0;
     int64_t  lastWallMs_ = 0;
+    srd::mutext cpuUsageMutex_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
@@ -244,6 +245,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
     static double cpuUsage = 0.0;
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
+    lock_guard<std::mutex> guard(cpuUsageMutex_);
     if (cpuUsageTaskFlag_) {
         return cpuUsage;
     }
@@ -271,12 +273,12 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
         ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
     };
-    task();
     cpuUsageTaskFlag_ = true;
+    task();
     return cpuUsage;
 }
 
-bool HidebugNativeInterfaceImpl::ParseProcStat(pid_t pid, uint64_t& utime, uint64_t& stime)
+bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
 {
     const std::string path = "/proc/self/stat";
     FILE* fp = fopen(path.c_str(), "r");

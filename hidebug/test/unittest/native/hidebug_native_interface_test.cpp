@@ -15,6 +15,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <unistd.h>
 
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
@@ -119,6 +120,67 @@ HWTEST_F(HidebugNativeInterfaceTest, RequestTraceTest, TestSize.Level1)
     } else {
         ASSERT_EQ(interface.RequestTrace("", 0, 0, task), TRACE_ABNORMAL);
     }
+}
+
+/**
+ * @tc.name: ParseProcStatTest_Success
+ * @tc.desc: test ParseProcStat success, utime and stime should be valid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, ParseProcStatTest_Success, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    uint64_t utime = 0;
+    uint64_t stime = 0;
+    bool ret = interface.ParseProcStat(utime, stime);
+    ASSERT_TRUE(ret);
+    ASSERT_GE(utime + stime, 0ULL);
+}
+
+/**
+ * @tc.name: ParseProcStatTest_ValueIncrease
+ * @tc.desc: test ParseProcStat twice, cpu ticks should be non-decreasing after cpu work.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, ParseProcStatTest_ValueIncrease, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    uint64_t utime1 = 0, stime1 = 0;
+    uint64_t utime2 = 0, stime2 = 0;
+    ASSERT_TRUE(interface.ParseProcStat(utime1, stime1));
+
+    volatile uint64_t x = 0;
+    for (int i = 0; i < 100000000; i++) {
+        x += i;
+    }
+
+    ASSERT_TRUE(interface.ParseProcStat(utime2, stime2));
+    ASSERT_GE(utime2 + stime2, utime1 + stime1);
+}
+
+/**
+ * @tc.name: GetCpuUsageTest_ReturnNonNegative
+ * @tc.desc: test GetCpuUsage return value should be non-negative.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_ReturnNonNegative, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    double usage = interface.GetCpuUsage();
+    ASSERT_GE(usage, 0.0);
+}
+
+/**
+ * @tc.name: GetCpuUsageTest_SecondCallReturnsCached
+ * @tc.desc: test GetCpuUsage second call returns cached value without recalculation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_SecondCallReturnsCached, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    double first  = interface.GetCpuUsage();
+    double second = interface.GetCpuUsage();
+    ASSERT_DOUBLE_EQ(first, second);
 }
 }
 }
