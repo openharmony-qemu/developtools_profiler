@@ -239,7 +239,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
     static const long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
-    
+
     if (cpuUsageTaskFlag_.load()) {
         return cpuUsage;
     }
@@ -259,7 +259,11 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
         uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
         if (DeltaMs > 0 && ticksPerSec > 0) {
             double cpuDeltaMs = cpuDelta * 1000.0 / ticksPerSec;
-            cpuUsage = cpuDeltaMs / DeltaMs / coreCount;
+            if (coreCount > 0) {
+                cpuUsage = cpuDeltaMs / DeltaMs / coreCount;
+            } else {
+                cpuUsage = cpuDeltaMs / DeltaMs;
+            }
         }
         lastUtime_.store(curUtime);
         lastStime_.store(curStime);
