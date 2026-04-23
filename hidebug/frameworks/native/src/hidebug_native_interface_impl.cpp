@@ -208,7 +208,7 @@ public:
 private:
     bool CheckTraceErrorCode();
 private:
-    std::atomic<bool>     cpuUsageTaskFlag_{false};
+    std::atomic<bool> cpuUsageTaskFlag_{false};
     std::atomic<uint64_t> lastUtime_{0};
     std::atomic<uint64_t> lastStime_{0};
     std::atomic<int64_t>  lastTimeMs_{0};
