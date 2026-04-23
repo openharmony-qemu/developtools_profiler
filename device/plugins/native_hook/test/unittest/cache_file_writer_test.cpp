@@ -98,8 +98,8 @@ HWTEST_F(CacheFileWriterTest, WriteFailsWithoutWritableFd, TestSize.Level0)
 
 HWTEST_F(CacheFileWriterTest, RotateReturnsReadyFd, TestSize.Level0)
 {
-    CacheFileWriter writer(1);
     std::vector<FileEventRecord> events;
+    CacheFileWriter writer(1);
     writer.Prepare([&events](uint16_t fileIndex, uint16_t eventType, int fd) {
         FileEventRecord record = {fileIndex, eventType, -1};
         if (fd >= 0) {
@@ -113,6 +113,8 @@ HWTEST_F(CacheFileWriterTest, RotateReturnsReadyFd, TestSize.Level0)
     writer.currentFileFd_ = writer.pendingFileFds_[0];
     writer.pendingFileFds_[0] = -1;
     writer.currentFileIndex_ = 0;
+    uint8_t existingData[TEST_DATA_SIZE] = {0x11};
+    ASSERT_TRUE(writer.WriteToFile(existingData, sizeof(existingData)));
     writer.currentFileSize_ = 96 * 1024 * 1024;
     uint8_t data[TEST_DATA_SIZE] = {0x33};
     writer.WriteToMemoryCache(data, sizeof(data));
@@ -122,13 +124,15 @@ HWTEST_F(CacheFileWriterTest, RotateReturnsReadyFd, TestSize.Level0)
     EXPECT_EQ(events[0].fileIndex, 0);
     EXPECT_EQ(writer.currentFileIndex_, 1);
     EXPECT_FALSE(ReadAll(events[0].dupFd).empty());
+    EXPECT_FALSE(ReadAll(writer.currentFileFd_).empty());
     close(events[0].dupFd);
+    writer.Prepare(nullptr);
 }
 
 HWTEST_F(CacheFileWriterTest, StopModeSkipsMaxFileSizeRotation, TestSize.Level0)
 {
-    CacheFileWriter writer(1);
     std::vector<FileEventRecord> events;
+    CacheFileWriter writer(1);
     writer.Prepare([&events](uint16_t fileIndex, uint16_t eventType, int fd) {
         FileEventRecord record = {fileIndex, eventType, -1};
         if (fd >= 0) {
@@ -150,6 +154,7 @@ HWTEST_F(CacheFileWriterTest, StopModeSkipsMaxFileSizeRotation, TestSize.Level0)
     EXPECT_TRUE(events.empty());
     EXPECT_EQ(writer.currentFileIndex_, 0);
     EXPECT_GT(writer.currentFileSize_, 96 * 1024 * 1024);
+    writer.Prepare(nullptr);
 }
 
 HWTEST_F(CacheFileWriterTest, WaitForNextCacheFileTimeout, TestSize.Level0)
@@ -171,8 +176,8 @@ HWTEST_F(CacheFileWriterTest, WaitForNextCacheFileTimeout, TestSize.Level0)
 
 HWTEST_F(CacheFileWriterTest, StopReturnsReadyThenStop, TestSize.Level0)
 {
-    CacheFileWriter writer(1);
     std::vector<FileEventRecord> events;
+    CacheFileWriter writer(1);
     writer.Prepare([&events](uint16_t fileIndex, uint16_t eventType, int fd) {
         FileEventRecord record = {fileIndex, eventType, -1};
         if (fd >= 0) {
@@ -193,6 +198,7 @@ HWTEST_F(CacheFileWriterTest, StopReturnsReadyThenStop, TestSize.Level0)
     EXPECT_EQ(events[1].fileIndex, INVALID_CACHE_FILE_INDEX);
     EXPECT_FALSE(ReadAll(events[0].dupFd).empty());
     close(events[0].dupFd);
+    writer.Prepare(nullptr);
 }
 
 HWTEST_F(CacheFileWriterTest, AddDuplicateSlotFails, TestSize.Level0)

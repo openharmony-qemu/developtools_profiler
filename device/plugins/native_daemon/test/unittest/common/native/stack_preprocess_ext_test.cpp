@@ -192,6 +192,36 @@ HWTEST_F(StackPreprocessExtTest, ForceStopTest, TestSize.Level0)
 }
 
 /*
+@tc.name: ParseRecordsFromBufferStopsGracefullyOnEndMsg
+@tc.desc: test ParseRecordsFromBuffer treats END_MSG as graceful stop instead of parse failure.
+@tc.type: FUNC
+*/
+HWTEST_F(StackPreprocessExtTest, ParseRecordsFromBufferStopsGracefullyOnEndMsg, TestSize.Level0)
+{
+    NativeHookConfig hookConfig;
+    hookConfig.set_use_file_cache_mode(true);
+    StackPreprocess preprocess(nullptr, hookConfig, 0);
+    preprocess.SetFactory(std::make_shared<HookRecordFactory>(hookConfig));
+
+    constexpr uint32_t payloadSize = sizeof(BaseStackRawData);
+    std::array<uint8_t, sizeof(uint32_t) + payloadSize> buffer = {};
+    uint32_t totalSize = payloadSize;
+    ASSERT_EQ(memcpy_s(buffer.data(), sizeof(totalSize), &totalSize, sizeof(totalSize)), EOK);
+
+    auto* baseData = reinterpret_cast<BaseStackRawData*>(buffer.data() + sizeof(uint32_t));
+    baseData->type = END_MSG;
+
+    StackPreprocess::ParseContext ctx = {0, 0};
+    RawStackPtr rawData = nullptr;
+    std::shared_ptr<HookRecord> hookRecord = nullptr;
+
+    EXPECT_TRUE(preprocess.ParseRecordsFromBuffer(buffer.data(),
+        static_cast<uint32_t>(buffer.size()), ctx, rawData, hookRecord));
+    EXPECT_TRUE(preprocess.isStopTakeData_);
+    EXPECT_EQ(ctx.offset, static_cast<uint32_t>(buffer.size()));
+}
+
+/*
 @tc.name: SetFlushSizeTest
 @tc.desc: test SetFlushSize method with different sizes.
 @tc.type: FUNC

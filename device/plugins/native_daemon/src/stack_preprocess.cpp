@@ -328,12 +328,30 @@ bool StackPreprocess::StartTakeResults()
     thread_ = std::move(demuxer);
     isStopTakeData_ = false;
     SetIsStartTakeData(false);
+    dataSourceTerminated_ = false;
     return true;
 }
 
 void StackPreprocess::SetStopTakeData()
 {
     if (hookConfig_.use_file_cache_mode()) {
+        SetIsStopTakeData(true);
+    }
+}
+
+void StackPreprocess::SetDataSourceTerminated(bool dataSourceTerminated)
+{
+    dataSourceTerminated_ = dataSourceTerminated;
+    PROFILER_LOG_INFO(LOG_CORE, "SetDataSourceTerminated: pid %d, terminated %d, hasRepeater %d",
+        pid_, dataSourceTerminated, dataRepeater_ != nullptr);
+    if (!dataSourceTerminated) {
+        return;
+    }
+    if (dataRepeater_ != nullptr) {
+        dataRepeater_->SetProducerFinished();
+        return;
+    }
+    if (!hookConfig_.use_file_cache_mode()) {
         SetIsStopTakeData(true);
     }
 }
@@ -385,7 +403,13 @@ bool StackPreprocess::StopTakeResults()
 #endif
     PROFILER_LOG_INFO(LOG_CORE, "start StopTakeResults");
     if (!hookConfig_.use_file_cache_mode()) {
-        if (isStartTakeData_) {
+        if (dataSourceTerminated_) {
+            PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: data source already terminated, pid %d", pid_);
+            if (!dataRepeater_) {
+                ForceStop();
+            }
+        } else if (isStartTakeData_) {
+            PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: schedule timeout force stop, pid %d", pid_);
             int32_t timerFd = scheduleTaskManager_.ScheduleTask(
                 std::bind(&StackPreprocess::ForceStop, this), WAIT_STOP_TIME, true);
             if (timerFd == -1) {
@@ -393,9 +417,11 @@ bool StackPreprocess::StopTakeResults()
                 return false;
             }
         } else {
+            PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: no active data, force stop immediately, pid %d", pid_);
             ForceStop();
         }
     } else {
+        PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults: enter file cache stop task, pid %d", pid_);
         StopCacheFileTask();
     }
 
@@ -562,6 +588,10 @@ bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvai
 
         const int8_t* dataPtr = reinterpret_cast<const int8_t*>(buffer + ctx.offset);
         if (!ProcessRawData(dataPtr, totalSize, rawData, hookRecord)) {
+            if (isStopTakeData_) {
+                ctx.offset += totalSize;
+                break;
+            }
             PROFILER_LOG_ERROR(LOG_CORE, "ParseRecordsFromBuffer ProcessRawData failed, skip current record");
             ctx.offset += totalSize;
             continue;

@@ -40,8 +40,13 @@ public:
     std::shared_ptr<HookRecord> TakeRawData(uint32_t during, clockid_t clockId, uint32_t batchCount,
         std::shared_ptr<HookRecord> batchRawStack[], uint32_t statInterval, bool& isTimeOut);
     void Close();
+    void SetProducerFinished(bool producerFinished = true);
     void Reset();
     size_t Size();
+    bool IsProducerFinished() const
+    {
+        return producerFinished_;
+    }
     void ClearCache()
     {
         std::unique_lock<std::mutex> lock(cacheMutex_);
@@ -59,6 +64,7 @@ private:
     size_t maxSize_;
     uint64_t reducedStackCount_;
     std::atomic_bool closed_;
+    std::atomic_bool producerFinished_;
 
     DISALLOW_COPY_AND_MOVE(StackDataRepeater);
 };
