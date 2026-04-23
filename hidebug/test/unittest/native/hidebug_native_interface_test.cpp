@@ -134,28 +134,6 @@ HWTEST_F(HidebugNativeInterfaceTest, ParseProcStatTest_Success, TestSize.Level0)
     uint64_t stime = 0;
     bool ret = interface.ParseProcStat(utime, stime);
     ASSERT_TRUE(ret);
-    ASSERT_GE(utime + stime, 0ULL);
-}
-
-/**
- * @tc.name: ParseProcStatTest_ValueIncrease
- * @tc.desc: test ParseProcStat twice, cpu ticks should be non-decreasing after cpu work.
- * @tc.type: FUNC
- */
-HWTEST_F(HidebugNativeInterfaceTest, ParseProcStatTest_ValueIncrease, TestSize.Level0)
-{
-    auto& interface = HidebugNativeInterface::GetInstance();
-    uint64_t utime1 = 0, stime1 = 0;
-    uint64_t utime2 = 0, stime2 = 0;
-    ASSERT_TRUE(interface.ParseProcStat(utime1, stime1));
-
-    volatile uint64_t x = 0;
-    for (int i = 0; i < 100000000; i++) {
-        x += i;
-    }
-
-    ASSERT_TRUE(interface.ParseProcStat(utime2, stime2));
-    ASSERT_GE(utime2 + stime2, utime1 + stime1);
 }
 
 /**

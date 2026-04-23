@@ -187,7 +187,6 @@ public:
     HidebugNativeInterfaceImpl(const HidebugNativeInterfaceImpl&) = delete;
     HidebugNativeInterfaceImpl& operator =(const HidebugNativeInterfaceImpl&) = delete;
     double GetCpuUsage() override;
-    double GetCpuUsageBySelf(pid_t pid) override;
     bool ParseProcStat(uint64_t& utime, uint64_t& stime) override;
     std::map<uint32_t, double> GetAppThreadCpuUsage() override;
     TraceErrorCode StartAppTraceCapture(uint64_t tags, uint32_t flag,
@@ -209,10 +208,11 @@ public:
 private:
     bool CheckTraceErrorCode();
 private:
-    bool cpuUsageTaskFlag_ = false;
-    uint64_t lastUtime_ = 0;
-    uint64_t lastStime_ = 0;
-    int64_t  lastWallMs_ = 0;
+    std::atomic<bool>     cpuUsageTaskFlag_{false};
+    std::atomic<uint64_t> lastUtime_{0};
+    std::atomic<uint64_t> lastStime_{0};
+    std::atomic<int64_t>  lastTimeMs_{0};
+    std::function<void()> cpuUsageTask_;
     std::mutex cpuUsageMutex_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
@@ -236,22 +236,16 @@ HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
-    static pid_t pid = getprocpid();
-    return GetCpuUsageBySelf(pid);
-}
-
-double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
-{
     static double cpuUsage = 0.0;
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
     std::lock_guard<std::mutex> guard(cpuUsageMutex_);
-    if (cpuUsageTaskFlag_) {
+    if (cpuUsageTaskFlag_.load()) {
         return cpuUsage;
     }
-    static std::function<void()> task = [this, pid]() {
+    cpuUsageTask_ = [ticksPerSec]() {
         uint64_t curUtime = 0;
-        uint64_t curStime = 0;
+        uint64_t curStime = 0;  
         if (!ParseProcStat(curUtime, curStime)) {
             HILOG_ERROR(LOG_CORE, "get cpuUsageInfo Failed");
             return;
@@ -259,22 +253,22 @@ double HidebugNativeInterfaceImpl::GetCpuUsageBySelf(pid_t pid)
 
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        int64_t curWallMs = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+        int64_t curTimeMs = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
 
-        int64_t wallDeltaMs = curWallMs - lastWallMs_;
-        uint64_t cpuDelta = (curUtime - lastUtime_) + (curStime - lastStime_);
-        if (wallDeltaMs > 0 && ticksPerSec > 0) {
+        int64_t DeltaMs = curTimeMs - lastTimeMs_.load();
+        uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
+        if (DeltaMs > 0 && ticksPerSec > 0) {
             double cpuDeltaMs = cpuDelta * 1000.0 / ticksPerSec;
-            cpuUsage = cpuDeltaMs / wallDeltaMs;
+            cpuUsage = cpuDeltaMs / DeltaMs;
         }
-        lastUtime_  = curUtime;
-        lastStime_  = curStime;
-        lastWallMs_ = curWallMs;
+        lastUtime_.store(curUtime);
+        lastStime_.store(curStime);
+        lastTimeMs_.store(curTimeMs);
 
-        ffrt::submit(task, {}, {}, ffrt::task_attr().delay(delayTime));
+        ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(delayTime));
     };
-    cpuUsageTaskFlag_ = true;
-    task();
+    cpuUsageTaskFlag_.store(true);
+    cpuUsageTask_();
     return cpuUsage;
 }
 
