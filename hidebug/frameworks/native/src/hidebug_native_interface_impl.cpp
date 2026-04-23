@@ -213,7 +213,6 @@ private:
     std::atomic<uint64_t> lastStime_{0};
     std::atomic<int64_t>  lastTimeMs_{0};
     std::function<void()> cpuUsageTask_;
-    std::mutex cpuUsageMutex_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
@@ -239,11 +238,11 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
     static double cpuUsage = 0.0;
     static constexpr int64_t delayTime = 10 * 1000 * 1000;
     static const long ticksPerSec = sysconf(_SC_CLK_TCK);
-    std::lock_guard<std::mutex> guard(cpuUsageMutex_);
+    
     if (cpuUsageTaskFlag_.load()) {
         return cpuUsage;
     }
-    cpuUsageTask_ = [ticksPerSec]() {
+    cpuUsageTask_ = [this]() {
         uint64_t curUtime = 0;
         uint64_t curStime = 0;
         if (!ParseProcStat(curUtime, curStime)) {
