@@ -161,7 +161,31 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return;
     }
-    StopHook(static_cast<uint32_t>(pidval));
+    bool isAPI = false;
+    std::string name = "";
+    // Lock the mutex to ensure safe access to the shared resource g_pidCtx
+    {
+        std::lock_guard<std::mutex> guard(g_mtx);
+        std::shared_ptr<TaskConfig> config = nullptr;
+        auto taskIter = g_pidCtx.find(pidval);
+        if (taskIter != g_pidCtx.end()) {
+            config = taskIter->second;
+        }
+        isAPI = (config->startType == START_TYPE_API);
+        name = config->processName;
+    }
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        auto fdTimerIter = g_timerFdInfo.find(pidval);
+        if (fdTimerIter != g_timerFdInfo.end()) {
+            // delete schedule task.
+            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
+            g_timerFdInfo.erase(fdTimerIter);
+        }
+    }
+    // Note: The same mutex g_mtx is also used in the StopHook function.
+    // Be cautious to avoid potential deadlocks.
+    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAPI);
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -502,8 +526,8 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         g_asyncStoppingPids.insert(pid);
     }
 
-    std::thread([pid, config, finishErrorCode, this]() {
-        this->StopHookTask(pid, config, finishErrorCode);
+    std::thread([pid, config, finishErrorCode]() {
+        StopHookTask(pid, config, finishErrorCode);
         std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
         g_asyncStoppingPids.erase(pid);
     }).detach();
@@ -613,10 +637,10 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     hook->StartPluginSession(&g_pidInfo);
 
     int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
-        [this, config, filePath = config->filePath_] {
+        [config, filePath = config->filePath_] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
-            int32_t retStop = this->StopHookByType(config->pid_, config->processName_,
+            int32_t retStop = StopHookByType(config->pid_, config->processName_,
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
                 config->startType_ == START_TYPE_API);
             if (retStop != RET_OK) {
