@@ -214,6 +214,7 @@ private:
     std::atomic<int64_t>  lastTimeMs_{0};
     std::function<void()> cpuUsageTask_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
+    std::mutex threadCpuMutex_;
     std::mutex traceMutex_;
     uint32_t traceErrorCode_ = 0;
     std::string date_;
@@ -302,7 +303,7 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
     for (int i = 0 ; i < PROC_STAT_SKIP_FIELD_COUNT; i++) {
         pos = line.find(' ', pos);
         if (pos == std::string::npos || pos + 1 >= line.size()) {
-            HILOG_ERROR(LOG_CORE, "find thread failed");
+            HILOG_ERROR(LOG_CORE, "find utime failed");
             return false;
         }
         pos++;
@@ -327,8 +328,11 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
 
 std::map<uint32_t, double> HidebugNativeInterfaceImpl::GetAppThreadCpuUsage()
 {
-    if (threadCpu_ == nullptr) {
-        threadCpu_ = std::make_unique<HidebugAppThreadCpu>();
+    {
+        std::lock_guard<std::mutex> guard(threadCpuMutex_);
+        if (threadCpu_ == nullptr) {
+            threadCpu_ = std::make_unique<HidebugAppThreadCpu>();
+        }
     }
     auto collectResult = threadCpu_->CollectThreadStatInfos();
     if (collectResult.retCode != UCollect::UcError::SUCCESS) {
