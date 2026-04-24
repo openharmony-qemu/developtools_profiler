@@ -25,6 +25,7 @@
 #include "async_stack.h"
 #include "command_poller.h"
 #include "hook_manager.h"
+#include "share_memory_allocator.h"
 #include "hook_service.h"
 #include "native_memory_profiler_sa_config.h"
 
@@ -37,6 +38,7 @@ const int TEST_SMB_PAGES = 1024;
 const int TEST_FILTER_SIZE = 512;
 const int TEST_MAX_STACK_DEPTH = 20;
 const int TEST_MAX_JS_STACK_DEPTH = 10;
+const uint32_t TEST_PAGE_BYTES = 4096;
 const std::string TEST_NMD_FILE_PATH = "/data/local/tmp/nmd_test_process.txt";
 
 class HookManagerExtTest : public ::testing::Test {
@@ -84,10 +86,12 @@ protected:
         config.set_use_file_cache_mode(true);
         config.set_clock("monotonic");
         hookManager_->SetHookConfig(config);
+        hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
         auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
         ctx->stackData = std::make_shared<StackDataRepeater>(8);
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookManager_->hookConfig_,
             CLOCK_MONOTONIC);
+        ctx->stackPreprocess->SetFactory(hookManager_->factory_);
         hookManager_->hookCtx_.push_back(ctx);
         return ctx;
     }
@@ -98,12 +102,70 @@ protected:
         config.set_use_file_cache_mode(false);
         config.set_clock("monotonic");
         hookManager_->SetHookConfig(config);
+        hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
         auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
         ctx->stackData = std::make_shared<StackDataRepeater>(8);
         ctx->stackPreprocess = std::make_shared<StackPreprocess>(ctx->stackData, hookManager_->hookConfig_,
             CLOCK_MONOTONIC);
+        ctx->stackPreprocess->SetFactory(hookManager_->factory_);
         hookManager_->hookCtx_.push_back(ctx);
         return ctx;
+    }
+
+    std::shared_ptr<HookManager::HookManagerCtx> CreateNoQueueFileCacheCtx(int32_t pid)
+    {
+        hookManager_->factory_ = std::make_shared<HookRecordFactory>(hookManager_->hookConfig_);
+        auto ctx = std::make_shared<HookManager::HookManagerCtx>(pid);
+        ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_,
+            CLOCK_MONOTONIC);
+        ctx->stackPreprocess->SetFactory(hookManager_->factory_);
+        hookManager_->hookCtx_.push_back(ctx);
+        return ctx;
+    }
+
+    void AppendSharedMemoryRecord(const std::shared_ptr<HookManager::HookManagerCtx>& ctx, uint16_t type)
+    {
+        static uint32_t blockIndex = 0;
+        ASSERT_TRUE(ctx != nullptr);
+        auto block = ShareMemoryAllocator::GetInstance().CreateMemoryBlockLocal(
+            "hook_mgr_ext_" + std::to_string(++blockIndex), TEST_PAGE_BYTES);
+        ASSERT_TRUE(block != nullptr);
+
+        StackRawData rawData = {};
+        rawData.type = type;
+        rawData.pid = TEST_PID;
+        rawData.tid = TEST_PID;
+        rawData.mallocSize = 64;
+        rawData.nodeType = 1;
+        rawData.nodeId = 1;
+        rawData.ts = {1, 1};
+        ASSERT_TRUE(block->PutRaw(reinterpret_cast<const int8_t*>(&rawData), sizeof(rawData)));
+        ctx->shareMemoryBlockList.push_back(block);
+    }
+
+    int CreateCacheFileWithRecord(uint16_t type)
+    {
+        char tempPath[] = "/data/local/tmp/cache_record_XXXXXX";
+        int fd = mkstemp(tempPath);
+        EXPECT_GE(fd, 0);
+        EXPECT_EQ(unlink(tempPath), 0);
+        if (fd < 0) {
+            return -1;
+        }
+
+        StackRawData rawData = {};
+        rawData.type = type;
+        rawData.pid = TEST_PID;
+        rawData.tid = TEST_PID;
+        rawData.mallocSize = 64;
+        rawData.nodeType = 1;
+        rawData.nodeId = 1;
+        rawData.ts = {1, 1};
+        uint32_t totalSize = sizeof(rawData);
+        EXPECT_EQ(write(fd, &totalSize, sizeof(totalSize)), static_cast<ssize_t>(sizeof(totalSize)));
+        EXPECT_EQ(write(fd, &rawData, sizeof(rawData)), static_cast<ssize_t>(sizeof(rawData)));
+        EXPECT_EQ(lseek(fd, 0, SEEK_SET), 0);
+        return fd;
     }
 };
 
@@ -224,6 +286,46 @@ HWTEST_F(HookManagerExtTest, HandleReadyCacheFileKeepsPendingStackData, TestSize
 }
 
 /*
+ * @tc.name: ReadFromCacheFileFlushesPendingBatch
+ * @tc.desc: test ReadFromCacheFile flushes the final partial record batch into stackData.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, ReadFromCacheFileFlushesPendingBatch, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    int fd = CreateCacheFileWithRecord(MALLOC_MSG);
+    ASSERT_GE(fd, 0);
+
+    hookManager_->ReadFromCacheFile(ctx, fd);
+
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
+}
+
+/*
+ * @tc.name: FinishFileCacheStopWaitsForActiveParse
+ * @tc.desc: test FinishFileCacheStopIfDrained does not finish while current cache file is still parsing.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, FinishFileCacheStopWaitsForActiveParse, TestSize.Level0)
+{
+    auto ctx = CreateFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    ctx->cacheFileStopReceived = true;
+    ctx->cacheFileParsing = true;
+    hookManager_->FinishFileCacheStopIfDrained(ctx);
+
+    EXPECT_FALSE(ctx->stackPreprocess->isCacheFileParseDone_);
+
+    ctx->cacheFileParsing = false;
+    hookManager_->FinishFileCacheStopIfDrained(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->isCacheFileParseDone_);
+}
+
+/*
  * @tc.name: HandleCacheFileStopByPidKeepsPendingStackData
  * @tc.desc: test stop callback does not clear pending stack data when fd queue is empty.
  * @tc.type: FUNC
@@ -253,15 +355,14 @@ HWTEST_F(HookManagerExtTest, StopTargetProcessWithoutSocketUsesImmediateLocalExi
     auto ctx = CreateSharedMemoryCtx(TEST_PID);
     ASSERT_TRUE(ctx != nullptr);
     ctx->stackPreprocess->SetIsStartTakeData(true);
+    AppendSharedMemoryRecord(ctx, MALLOC_MSG);
 
     hookManager_->StopTargetProcess(ctx);
 
-    // The current stop path does not clear isStartTakeData_ immediately.
-    // Instead it marks the data source as terminated so the consumer can
-    // drain the existing queue before the take-results thread exits.
     EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
     EXPECT_TRUE(ctx->stackData->IsProducerFinished());
     EXPECT_FALSE(ctx->stackPreprocess->isStopTakeData_);
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
 }
 
 /*
@@ -277,9 +378,8 @@ HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidDrainsCurrentFiles, Te
     hookManager_->SetHookConfig(config);
     hookManager_->noDataQueue_ = true;
 
-    auto ctx = std::make_shared<HookManager::HookManagerCtx>(TEST_PID);
-    ctx->stackPreprocess = std::make_shared<StackPreprocess>(nullptr, hookManager_->hookConfig_, CLOCK_MONOTONIC);
-    hookManager_->hookCtx_.push_back(ctx);
+    auto ctx = CreateNoQueueFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
 
     char tempPath[] = "/data/local/tmp/file_cache_stop_XXXXXX";
     int fd = mkstemp(tempPath);
@@ -299,6 +399,36 @@ HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidDrainsCurrentFiles, Te
 }
 
 /*
+ * @tc.name: HandleReadyCacheFileWithEndMsgStopsImmediately
+ * @tc.desc: test file cache END_MSG stops parsing immediately and remaining queued files stay untouched.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HookManagerExtTest, HandleReadyCacheFileWithEndMsgStopsImmediately, TestSize.Level0)
+{
+    NativeHookConfig config;
+    config.set_use_file_cache_mode(true);
+    config.set_clock("monotonic");
+    hookManager_->SetHookConfig(config);
+    hookManager_->noDataQueue_ = true;
+
+    auto ctx = CreateNoQueueFileCacheCtx(TEST_PID);
+    ASSERT_TRUE(ctx != nullptr);
+
+    int endFd = CreateCacheFileWithRecord(END_MSG);
+    int mallocFd = CreateCacheFileWithRecord(MALLOC_MSG);
+    ASSERT_GE(endFd, 0);
+    ASSERT_GE(mallocFd, 0);
+    ctx->PushBackFdQueue(endFd);
+    ctx->PushBackFdQueue(mallocFd);
+
+    hookManager_->HandleReadyCacheFile(ctx);
+
+    EXPECT_TRUE(ctx->stackPreprocess->isStopTakeData_);
+    EXPECT_FALSE(ctx->stackPreprocess->IsDataSourceTerminated());
+    EXPECT_EQ(ctx->GetFdQueueSize(), 1u);
+}
+
+/*
  * @tc.name: HandleClientDisconnectedByPidMarksSharedMemoryProducerDone
  * @tc.desc: test shared memory mode marks producer done when client is disconnected.
  * @tc.type: FUNC
@@ -308,11 +438,13 @@ HWTEST_F(HookManagerExtTest, HandleClientDisconnectedByPidMarksSharedMemoryProdu
     auto ctx = CreateSharedMemoryCtx(TEST_PID);
     ASSERT_TRUE(ctx != nullptr);
     ASSERT_TRUE(ctx->stackData != nullptr);
+    AppendSharedMemoryRecord(ctx, MALLOC_MSG);
 
     EXPECT_TRUE(hookManager_->HandleClientDisconnectedByPid(TEST_PID));
 
     EXPECT_TRUE(ctx->stackPreprocess->IsDataSourceTerminated());
     EXPECT_TRUE(ctx->stackData->IsProducerFinished());
+    EXPECT_EQ(ctx->stackData->Size(), 1u);
 }
 
 /*

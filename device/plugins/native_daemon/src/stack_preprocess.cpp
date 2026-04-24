@@ -347,11 +347,7 @@ void StackPreprocess::SetDataSourceTerminated(bool dataSourceTerminated)
     if (!dataSourceTerminated) {
         return;
     }
-    if (dataRepeater_ != nullptr) {
-        dataRepeater_->SetProducerFinished();
-        return;
-    }
-    if (!hookConfig_.use_file_cache_mode()) {
+    if (dataRepeater_ == nullptr && !hookConfig_.use_file_cache_mode()) {
         SetIsStopTakeData(true);
     }
 }
@@ -543,15 +539,14 @@ void StackPreprocess::ForceStop()
     }
 }
 
-void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
-                                           const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
+bool StackPreprocess::DrainPendingShmemData(const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
 {
-    eventNotifier->Take();
+    CHECK_NOTNULL(shareMemoryBlock, false, "shareMemoryBlock is null!");
     InitializeDirector();
 
     RawStackPtr rawData = nullptr;
     std::shared_ptr<HookRecord> hookRecord = nullptr;
-
+    bool drained = false;
     while (!isStopTakeData_) {
         bool ret = shareMemoryBlock->TakeData(
             [&](const int8_t data[], uint32_t size) -> bool {
@@ -560,7 +555,16 @@ void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>&
         if (!ret) {
             break;
         }
+        drained = true;
     }
+    return drained;
+}
+
+void StackPreprocess::TakeResultsFromShmem(const std::shared_ptr<EventNotifier>& eventNotifier,
+                                           const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock)
+{
+    eventNotifier->Take();
+    DrainPendingShmemData(shareMemoryBlock);
 }
 
 bool StackPreprocess::ParseRecordsFromBuffer(uint8_t* buffer, uint32_t totalAvail, ParseContext& ctx,

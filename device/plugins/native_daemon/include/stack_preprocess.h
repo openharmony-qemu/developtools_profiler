@@ -192,6 +192,7 @@ public:
     void WaitForFinalSnapshot();
     void ForceStop();
     void SetDataSourceTerminated(bool dataSourceTerminated = true);
+    bool DrainPendingShmemData(const std::shared_ptr<ShareMemoryBlock>& shareMemoryBlock);
     bool IsDataSourceTerminated() const
     {
         return dataSourceTerminated_;
