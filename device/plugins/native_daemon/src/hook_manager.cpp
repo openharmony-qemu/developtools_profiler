@@ -1001,7 +1001,6 @@ int HookManager::CreateMemLeakFile()
         PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
         return fileFd;
     }
-    fdsan_exchange_owner_tag(fileFd, 0, FD_TAG);
     tempMemLeakFd_ = fileFd;
     PROFILER_LOG_INFO(LOG_CORE, "Create tempMemLeak file success. fd: %d, type: %d, filename: %s",
         tempMemLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
@@ -1656,7 +1655,7 @@ bool HookManager::CloseMemLeakTempFile()
     if (tempMemLeakFd_ <= 0) {
         return true;
     }
-    fdsan_close_with_tag(tempMemLeakFd_, FD_TAG);
+    close(tempMemLeakFd_);
     tempMemLeakFd_ = -1;
     std::string tempPath = fileCacheDir_ + memLeakFileName_;
     if (unlink(tempPath.data()) != 0) {
