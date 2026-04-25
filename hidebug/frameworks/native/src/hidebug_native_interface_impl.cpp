@@ -56,6 +56,7 @@ constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
 constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
 constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
 constexpr int PROC_STAT_SKIP_FIELD_COUNT = 12;
+constexpr int64_t CPU_USAGE_DELAY_TIME = 10 * 1000 * 1000;
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
 {
@@ -213,6 +214,8 @@ private:
     std::atomic<uint64_t> lastStime_{0};
     std::atomic<int64_t>  lastTimeMs_{0};
     std::function<void()> cpuUsageTask_;
+    long cpuTicksPerSec_;
+    long cpuCoreCount_;
     std::unique_ptr<HidebugAppThreadCpu> threadCpu_;
     std::mutex threadCpuMutex_;
     std::mutex traceMutex_;
@@ -237,13 +240,12 @@ HidebugNativeInterface& HidebugNativeInterface::GetInstance()
 double HidebugNativeInterfaceImpl::GetCpuUsage()
 {
     static double cpuUsage = 0.0;
-    static constexpr int64_t delayTime = 10 * 1000 * 1000;
-    static const long ticksPerSec = sysconf(_SC_CLK_TCK);
-    static const long coreCount = sysconf(_SC_NPROCESSORS_ONLN);
 
     if (cpuUsageTaskFlag_.load()) {
         return cpuUsage;
     }
+    cpuTicksPerSec_ = sysconf(_SC_CLK_TCK);
+    cpuCoreCount_ = sysconf(_SC_NPROCESSORS_ONLN);
     cpuUsageTask_ = [this]() {
         uint64_t curUtime = 0;
         uint64_t curStime = 0;
@@ -270,7 +272,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
         lastStime_.store(curStime);
         lastTimeMs_.store(curTimeMs);
 
-        ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(delayTime));
+        ffrt::submit(cpuUsageTask_, {}, {}, ffrt::task_attr().delay(CPU_USAGE_DELAY_TIME));
     };
     cpuUsageTaskFlag_.store(true);
     cpuUsageTask_();
@@ -296,32 +298,24 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
 
     std::string line(buf);
     auto pos = line.find(')');
-    if (pos == std::string::npos || pos + 1 >= line.size()) {
+    if (pos == std::string::npos || pos + 2 > line.size()) {
         HILOG_ERROR(LOG_CORE, "find thread failed");
         return false;
     }
-    for (int i = 0 ; i < PROC_STAT_SKIP_FIELD_COUNT; i++) {
-        pos = line.find(' ', pos);
-        if (pos == std::string::npos || pos + 1 >= line.size()) {
-            HILOG_ERROR(LOG_CORE, "find utime failed");
-            return false;
-        }
-        pos++;
-    }
-    int utimeStart = pos;
-    auto utimeEnd = line.find(' ', utimeStart) - 1;
-    if (utimeEnd == std::string::npos) {
-        HILOG_ERROR(LOG_CORE, "find utimeEnd failed");
+
+    auto fields = SplitStr(line.substr(pos + 2), ' ', [](std::string& token) {
+        return !token.empty();
+    });
+
+    constexpr size_t UTIME_INDEX = PROC_STAT_SKIP_FIELD_COUNT - 1;
+    constexpr size_t STIME_INDEX = PROC_STAT_SKIP_FIELD_COUNT;
+    if (fields.size() <= STIME_INDEX) {
+        HILOG_ERROR(LOG_CORE, "proc stat fields not enough");
         return false;
     }
-    int stimestart = utimeEnd + 2;
-    auto stimeEnd = line.find(' ', stimestart) - 1;
-    if (stimeEnd == std::string::npos) {
-        HILOG_ERROR(LOG_CORE, "find stimeEnd failed");
-        return false;
-    }
-    utime = std::stoull(line.substr(utimeStart, utimeEnd - utimeStart + 1));
-    stime = std::stoull(line.substr(stimestart, stimeEnd - stimestart + 1));
+
+    utime = std::stoull(fields[UTIME_INDEX]);
+    stime = std::stoull(fields[STIME_INDEX]);
 
     return true;
 }
