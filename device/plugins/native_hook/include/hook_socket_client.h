@@ -65,6 +65,7 @@ private:
     void HandleSharedMemoryMode(SocketContext &context);
     void LogReceivedConfig();
     void PrepareWriters(SocketContext &context);
+    void ReceiveMemLeakFd(SocketContext &context);
     void HandleCommonConfig();
     void SendOptionalReports();
     bool ParseTargetMapsIfNeeded();
@@ -75,6 +76,7 @@ private:
     std::shared_ptr<UnixSocketClient> unixSocketClient_;
     std::vector<int> smbFds_;
     std::vector<int> eventFds_;
+    int memLeakRecvFd_ = -1;
     int pid_;
     int nmdType_ = -1;
     ClientConfig *config_ = nullptr;

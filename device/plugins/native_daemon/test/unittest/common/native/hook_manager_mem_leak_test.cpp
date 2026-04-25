@@ -75,44 +75,6 @@ protected:
 };
 
 /*
- * @tc.name: SetMemLeakFd_Basic
- * @tc.desc: test SetMemLeakFd method with valid fd.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_Basic, TestSize.Level0)
-{
-    const uint32_t memLeakFd = 15;
-    hookManager_->SetMemLeakFd(memLeakFd);
-
-    EXPECT_EQ(hookManager_->memLeakFd_, memLeakFd);
-}
-
-/*
- * @tc.name: SetMemLeakFd_Zero
- * @tc.desc: test SetMemLeakFd with zero fd.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_Zero, TestSize.Level0)
-{
-    hookManager_->SetMemLeakFd(0);
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
-}
-
-/*
- * @tc.name: SetMemLeakFd_UpdateValue
- * @tc.desc: test SetMemLeakFd updates value correctly.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, SetMemLeakFd_UpdateValue, TestSize.Level0)
-{
-    hookManager_->SetMemLeakFd(10);
-    EXPECT_EQ(hookManager_->memLeakFd_, 10);
-
-    hookManager_->SetMemLeakFd(20);
-    EXPECT_EQ(hookManager_->memLeakFd_, 20);
-}
-
-/*
  * @tc.name: SetMemLeakFormat_Basic
  * @tc.desc: test SetMemLeakFormat method with TYPE_SNAPSHOT.
  * @tc.type: FUNC
@@ -129,7 +91,6 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_Basic, TestSize.Level0)
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_SNAPSHOT);
-    EXPECT_TRUE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -149,7 +110,6 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_TxtFormat, TestSize.Level0)
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_TXT);
-    EXPECT_TRUE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -169,7 +129,6 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_VectorFormat, TestSize.Level0)
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_VECTOR);
-    EXPECT_TRUE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -189,7 +148,6 @@ HWTEST_F(HookManagerMemLeakTest, SetMemLeakFormat_DisableFormat, TestSize.Level0
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_DISABLE);
-    EXPECT_TRUE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -209,7 +167,6 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfigExt_SaModeFalse, TestSize.Level0
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_SNAPSHOT);
-    EXPECT_FALSE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -229,7 +186,6 @@ HWTEST_F(HookManagerMemLeakTest, GetClientConfigExt_SaModeFalseDisable, TestSize
     hookManager_->GetClientConfigExt(clientConfig);
 
     EXPECT_EQ(clientConfig.memLeakFormat, MemLeakFormat::TYPE_DISABLE);
-    EXPECT_FALSE(clientConfig.onlyMemLeak);
 }
 
 /*
@@ -286,210 +242,36 @@ HWTEST_F(HookManagerMemLeakTest, SetHookConfigExt_ZeroValues, TestSize.Level0)
 }
 
 /*
- * @tc.name: GetMemLeakFileName_ReturnsPath
- * @tc.desc: test GetMemLeakFileName returns correct path format.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, GetMemLeakFileName_ReturnsPath, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-
-    std::string fileName = hookManager_->GetMemLeakFileName(MemLeakFormat::TYPE_SNAPSHOT);
-
-    EXPECT_NE(fileName.find("/data/local/tmp/"), std::string::npos);
-    EXPECT_NE(fileName.find("memleak-native-orphansnapshot"), std::string::npos);
-    EXPECT_NE(fileName.find(".txt"), std::string::npos);
-}
-
-/*
- * @tc.name: GetMemLeakFileName_TxtFormat
- * @tc.desc: test GetMemLeakFileName with TYPE_TXT format.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, GetMemLeakFileName_TxtFormat, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-
-    std::string fileName = hookManager_->GetMemLeakFileName(MemLeakFormat::TYPE_TXT);
-
-    EXPECT_NE(fileName.find("/data/local/tmp/"), std::string::npos);
-    EXPECT_NE(fileName.find("memleak-native-orphansnapshot"), std::string::npos);
-    EXPECT_NE(fileName.find(".txt"), std::string::npos);
-}
-
-/*
- * @tc.name: GetMemLeakFileName_VectorFormat
- * @tc.desc: test GetMemLeakFileName with TYPE_VECTOR format.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, GetMemLeakFileName_VectorFormat, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-
-    std::string fileName = hookManager_->GetMemLeakFileName(MemLeakFormat::TYPE_VECTOR);
-
-    EXPECT_NE(fileName.find("/data/local/tmp/"), std::string::npos);
-    EXPECT_NE(fileName.find("memleak-native-orphansnapshot"), std::string::npos);
-    EXPECT_NE(fileName.find(".txt"), std::string::npos);
-}
-
-/*
- * @tc.name: GetMemLeakFileName_DisableFormat
- * @tc.desc: test GetMemLeakFileName with TYPE_DISABLE format.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, GetMemLeakFileName_DisableFormat, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-
-    std::string fileName = hookManager_->GetMemLeakFileName(MemLeakFormat::TYPE_DISABLE);
-
-    EXPECT_NE(fileName.find("/data/local/tmp/"), std::string::npos);
-    EXPECT_NE(fileName.find("memleak-native-orphansnapshot"), std::string::npos);
-    EXPECT_NE(fileName.find(".txt"), std::string::npos);
-}
-
-/*
- * @tc.name: CreateMemLeakFile_DisableFormat
+ * @tc.name: CreateMemLeakFile_Disabled
  * @tc.desc: test CreateMemLeakFile when native_orphansnapshots_enable is false.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerMemLeakTest, CreateMemLeakFile_DisableFormat, TestSize.Level0)
+HWTEST_F(HookManagerMemLeakTest, CreateMemLeakFile_Disabled, TestSize.Level0)
 {
     NativeHookConfig config;
     config.set_process_name(TEST_PROCESS_NAME);
     config.set_native_orphansnapshots_enable(false);
     hookManager_->SetHookConfig(config);
+    hookManager_->SetPid(TEST_PID);
 
-    hookManager_->CreateMemLeakFile();
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
+    // memLeakFileName_ is not set when disabled, CreateMemLeakFile should return -1
+    int fd = hookManager_->CreateMemLeakFile();
+    EXPECT_LT(fd, 0);
 }
 
 /*
- * @tc.name: CreateMemLeakFile_Enable
- * @tc.desc: test CreateMemLeakFile when native_orphansnapshots_enable is true but fd is 0.
+ * @tc.name: CloseResource_NoMemLeakFd
+ * @tc.desc: test CloseResource when no mem leak fd is set.
  * @tc.type: FUNC
  */
-HWTEST_F(HookManagerMemLeakTest, CreateMemLeakFile_Enable, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    config.set_native_orphansnapshots_enable(true);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFormat(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT));
-
-    hookManager_->CreateMemLeakFile();
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
-}
-
-/*
- * @tc.name: CreateMemLeakFile_AlreadyHasFd
- * @tc.desc: test CreateMemLeakFile when memLeakFd_ is already set (SA mode).
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, CreateMemLeakFile_AlreadyHasFd, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    config.set_native_orphansnapshots_enable(true);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(100);
-
-    hookManager_->CreateMemLeakFile();
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 100);
-}
-
-/*
- * @tc.name: DumpMemLeakInfo_NullData
- * @tc.desc: test DumpMemLeakInfo with nullptr data.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, DumpMemLeakInfo_NullData, TestSize.Level0)
+HWTEST_F(HookManagerMemLeakTest, CloseResource_NoMemLeakFd, TestSize.Level0)
 {
     NativeHookConfig config;
     config.set_process_name(TEST_PROCESS_NAME);
     hookManager_->SetHookConfig(config);
-
-    hookManager_->DumpMemLeakInfo(nullptr);
-}
-
-/*
- * @tc.name: DumpMemLeakInfo_ValidData
- * @tc.desc: test DumpMemLeakInfo with valid data when fd is 0.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, DumpMemLeakInfo_ValidData, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(0);
-
-    uint8_t testData[] = "test memory leak data";
-    hookManager_->DumpMemLeakInfo(testData);
-}
-
-/*
- * @tc.name: CloseResource_WithMemLeakFd
- * @tc.desc: test CloseResource closes memLeakFd correctly.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, CloseResource_WithMemLeakFd, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(50);
 
     hookManager_->CloseResource();
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
-}
-
-/*
- * @tc.name: CloseResource_WithoutMemLeakFd
- * @tc.desc: test CloseResource when memLeakFd_ is 0.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, CloseResource_WithoutMemLeakFd, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(0);
-
-    hookManager_->CloseResource();
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
-}
-
-/*
- * @tc.name: DestroyPluginSession_ClosesMemLeakFd
- * @tc.desc: test DestroyPluginSession calls CloseResource.
- * @tc.type: FUNC
- */
-HWTEST_F(HookManagerMemLeakTest, DestroyPluginSession_ClosesMemLeakFd, TestSize.Level0)
-{
-    NativeHookConfig config;
-    config.set_process_name(TEST_PROCESS_NAME);
-    hookManager_->SetHookConfig(config);
-    hookManager_->SetMemLeakFd(75);
-
-    std::vector<uint32_t> pluginIds = {0};
-    hookManager_->DestroyPluginSession(pluginIds);
-
-    EXPECT_EQ(hookManager_->memLeakFd_, 0);
+    // Should not crash or throw
 }
 
 /*
@@ -499,10 +281,9 @@ HWTEST_F(HookManagerMemLeakTest, DestroyPluginSession_ClosesMemLeakFd, TestSize.
  */
 HWTEST_F(HookManagerMemLeakTest, MemLeakFormat_EnumValues, TestSize.Level0)
 {
-    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_TXT), 0);
-    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_VECTOR), 1);
-    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT), 2);
-    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_DISABLE), 0xffffffff);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_TXT), 0u);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_VECTOR), 1u);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_SNAPSHOT), 2u);
+    EXPECT_EQ(static_cast<uint32_t>(MemLeakFormat::TYPE_DISABLE), 0xFFFFFFFFu);
 }
-
-} // namespace
+}

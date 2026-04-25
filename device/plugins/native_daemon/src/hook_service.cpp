@@ -200,6 +200,21 @@ bool HookService::SendAsyncStackFd(SocketContext &context)
     return true;
 }
 
+bool HookService::SendMemLeakFd(SocketContext &context)
+{
+    if (clientConfig_.memLeakFormat == MemLeakFormat::TYPE_DISABLE) {
+        return true;
+    }
+    int fd = hookMgr_->CreateMemLeakFile();
+    if (fd <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "SendMemLeakFd invalid fd");
+        return false;
+    }
+    context.SendFileDescriptor(fd);
+    PROFILER_LOG_INFO(LOG_CORE, "SendMemLeakFd sent fd %d", fd);
+    return true;
+}
+
 void HookService::SaveSocketFd(SocketContext &context, pid_t pid)
 {
     std::unique_lock<std::mutex> socketLock(pidFdMtx_);
@@ -283,7 +298,7 @@ bool HookService::ProtocolProc(SocketContext &context, uint32_t pnum, const int8
         PROFILER_LOG_ERROR(LOG_CORE, "ProtocolProc send client config failed");
         return false;
     }
-    if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context)) {
+    if (!SendPeerFds(context, peerConfig, procName) || !SendAsyncStackFd(context) || !SendMemLeakFd(context)) {
         return false;
     }
     hookMgr_->ResetStartupParam();

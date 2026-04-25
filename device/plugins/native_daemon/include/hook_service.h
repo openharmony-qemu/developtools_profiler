@@ -43,6 +43,7 @@ private:
     bool SendPeerFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendSharedMemoryFds(SocketContext &context, int32_t peerConfig, const std::string& procName);
     bool SendAsyncStackFd(SocketContext &context);
+    bool SendMemLeakFd(SocketContext &context);
     void SaveSocketFd(SocketContext &context, pid_t pid);
     void ReceiveCacheFileMsg(SocketContext &context, const int8_t *buf);
     bool SendFileCacheFd(SocketContext &context, int32_t pid, uint16_t fileIndex);
