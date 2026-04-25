@@ -264,7 +264,7 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
         int64_t DeltaMs = curTimeMs - lastTimeMs_.load();
         uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
         if (DeltaMs > 0 && cpuTicksPerSec_ > 0) {
-            double cpuDeltaMs = cpuDelta * 1000.0 / cpuTicksPerSec_;
+            double cpuDeltaMs = cpuDelta * MILLISECONDS_PER_SECOND / cpuTicksPerSec_;
             if (cpuCoreCount_ > 0) {
                 cpuUsage = cpuDeltaMs / DeltaMs / cpuCoreCount_;
             } else {
