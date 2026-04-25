@@ -302,6 +302,7 @@ void HookSocketClient::ReceiveMemLeakFd(SocketContext &context)
         return;
     }
     memLeakRecvFd_ = context.ReceiveFileDiscriptor();
+    fdsan_exchange_owner_tag(memLeakRecvFd_, 0, FD_TAG);
     PROFILER_LOG_INFO(LOG_CORE, "ReceiveMemLeakFd fd=%d", memLeakRecvFd_);
 }
 
