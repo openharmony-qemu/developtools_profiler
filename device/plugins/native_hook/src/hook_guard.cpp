@@ -170,6 +170,7 @@ uint16_t GetPredefinedTagId(unsigned long long mask)
         {RES_THREAD_MASK, static_cast<uint16_t>(THREAD_MASK_INDEX + 1)},
         {RES_JS_HEAP_MASK, static_cast<uint16_t>(JS_HEAP_MASK_INDEX + 1)},
         {RES_ARKTS_HEAP_MASK, static_cast<uint16_t>(ARKTS_HEAP_MASK_INDEX + 1)},
+        {RES_ARKTS_STATIC_HEAP, static_cast<uint16_t>(ARKTS_STATIC_HEAP_MASK_INDEX + 1)},
         {RES_KOTLIN_HEAP_MASK, static_cast<uint16_t>(KOTLIN_HEAP_MASK_INDEX + 1)},
         {RES_DMABUF_MASK, static_cast<uint16_t>(DMABUF_MASK_INDEX + 1)},
         {RES_ARK_GLOBAL_HANDLE, static_cast<uint16_t>(ARK_GLOBAL_HANDLE_INDEX + 1)},
