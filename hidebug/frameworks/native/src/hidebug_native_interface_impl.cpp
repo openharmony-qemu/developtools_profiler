@@ -57,7 +57,7 @@ constexpr uint32_t MAX_TRACE_DURATION = 15 * 1000; // 15s
 constexpr uint8_t MAX_TRACE_FILE_NUM = 3;
 constexpr const char TRACE_PATH[] = "/data/storage/el2/log/trace/";
 constexpr const char TRACE_FILE_SUFFIX[] = ".sys";
-constexpr int PROC_STAT_SKIP_FIELD_COUNT = 12;
+constexpr int PROC_STAT_SKIP_FIELD_COUNT = 13;
 constexpr int64_t CPU_USAGE_DELAY_TIME = 10 * 1000 * 1000;
 
 int GetNativeMemInfo(NativeMemInfo& nativeMemInfo)
@@ -300,13 +300,7 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
     }
 
     std::string line(buf);
-    auto pos = line.find(')');
-    if (pos == std::string::npos) {
-        HILOG_ERROR(LOG_CORE, "find thread failed");
-        return false;
-    }
-
-    auto fields = SplitStr(line.substr(pos), ' ', [](std::string& token) {
+    auto fields = SplitStr(line, ' ', [](std::string& token) {
         return !token.empty();
     });
 
