@@ -17,6 +17,7 @@
 
 #include <fcntl.h>
 #include <limits>
+#include <sys/sendfile.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <cstdlib>
@@ -875,7 +876,6 @@ int HookManager::CreateMemLeakFile()
         PROFILER_LOG_ERROR(LOG_CORE, "Create memLeak file failed!");
         return fileFd;
     }
-    fdsan_exchange_owner_tag(fileFd, 0, FD_TAG);
     tempMemLeakFd_ = fileFd;
     PROFILER_LOG_INFO(LOG_CORE, "Create tempMemLeak file success. fd: %d, type: %d, filename: %s",
         tempMemLeakFd_, memLeakFormat_, memLeakFileName_.c_str());
@@ -887,7 +887,8 @@ std::string HookManager::GetMemLeakFileName(MemLeakFormat format)
     int pidValue = hookConfig_.pid();
     std::string processName = hookConfig_.process_name();
     COMMON::IsProcessExist(processName, pidValue);
-    pidValue = hookConfig_.startup_mode() ? 0 : hookConfig_.pid(); // startmode, pid is unknown, set default value 0
+    // startmode, pid is unknown, set default value 0
+    pidValue = hookConfig_.startup_mode() ? 0 : hookConfig_.pid();
     return MEM_LEAK_FILE_PERFIX + std::to_string(pidValue) + MEM_LEAK_FILE_SUFFIX;
 }
 
@@ -1091,21 +1092,36 @@ void HookManager::DumpNmdInfo(const char* nmdResult)
     PROFILER_LOG_INFO(LOG_CORE, "Data successfully written to nmd file");
 }
 
-void HookManager::DumpMemLeakInfo(uint8_t* data)
+void HookManager::DumpMemLeakInfo()
 {
-    if (data == nullptr || !hookConfig_.native_orphansnapshots_enable()) {
+    PROFILER_LOG_INFO(LOG_CORE, "DumpMemLeakInfo start");
+    if (!hookConfig_.native_orphansnapshots_enable()) {
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo disabled");
         return;
     }
     if (tempMemLeakFd_ < 0) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDone tmpMemLeakFd_ err");
+        PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo tmpMemLeakFd_ err");
         return;
     }
-    std::string finalPath = MEM_LEAK_FILE_PATH + memLeakFileName_;
-    if (!COMMON::CopyFileFast(tempMemLeakFd_, finalPath)) {
-        PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDone CopyFileFast failed");
+    if (saMode_ && memLeakFd_ > 0) {
+        lseek(tempMemLeakFd_, 0, SEEK_SET);
+        struct stat statBuf;
+        if (fstat(tempMemLeakFd_, &statBuf) == 0) {
+            off_t offset = 0;
+            ssize_t total = sendfile(static_cast<int>(memLeakFd_), tempMemLeakFd_, &offset, statBuf.st_size);
+            if (total != statBuf.st_size) {
+                PROFILER_LOG_ERROR(LOG_CORE, "DumpMemLeakInfo sendfile failed, expected %zd, wrote %zd",
+                                   static_cast<ssize_t>(statBuf.st_size), total);
+            }
+            fsync(static_cast<int>(memLeakFd_));
+        }
+    } else {
+        std::string finalPath = MEM_LEAK_FILE_PATH + memLeakFileName_;
+        if (!COMMON::CopyFileFast(tempMemLeakFd_, finalPath)) {
+            PROFILER_LOG_ERROR(LOG_CORE, "HandleMemLeakDone CopyFileFast failed");
+        }
     }
     CloseMemLeakTempFile();
-
 }
 
 void HookManager::CollectGwpAsanFrames(std::unordered_map<uintptr_t, DfxFrame>& frameMap, uint8_t* allocDataPtr,
@@ -1218,7 +1234,7 @@ bool HookManager::TakeDataHandler(const std::shared_ptr<HookManagerCtx>& hookCtx
     }
 
     if (type == MEM_LEAK_MSG) {
-        DumpMemLeakInfo(rawStack->data);
+        DumpMemLeakInfo();
         return true;
     }
 
@@ -1485,10 +1501,14 @@ void HookManager::CloseResource()
 
 bool HookManager::CloseMemLeakTempFile()
 {
+    if (memLeakFd_ > 0) {
+        close(memLeakFd_);
+        memLeakFd_ = -1;
+    }
     if (tempMemLeakFd_ <= 0) {
         return true;
     }
-    fdsan_close_with_tag(tempMemLeakFd_, FD_TAG);
+    close(tempMemLeakFd_);
     tempMemLeakFd_ = -1;
     std::string tempPath = fileCacheDir_ + memLeakFileName_;
     if (unlink(tempPath.data()) != 0) {
@@ -1849,6 +1869,11 @@ void HookManager::SetNmdInfo(std::pair<uint32_t, uint32_t> info)
 void HookManager::SetGwpFd(uint32_t fd)
 {
     gwpFd_ = fd;
+}
+
+void HookManager::SetMemLeakFd(uint32_t fd)
+{
+    memLeakFd_ = fd;
 }
 
 bool HookManager::HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex)

@@ -195,7 +195,7 @@ private:
     bool printMallocNmd_ = false;
     unsigned long long traceMask_ = 0;
     bool saMode_ = false;
-    void DumpMemLeakInfo(uint8_t* data);
+    void DumpMemLeakInfo();
     bool CheckProcess();
     unsigned long long ConvertTagToMask() const;
     bool CheckProcessName();

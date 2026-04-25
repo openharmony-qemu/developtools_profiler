@@ -298,14 +298,13 @@ void HookSocketClient::ReceiveMemLeakFd(SocketContext &context)
         return;
     }
     memLeakRecvFd_ = context.ReceiveFileDiscriptor();
-    fdsan_exchange_owner_tag(memLeakRecvFd_, 0, FD_TAG);
     PROFILER_LOG_INFO(LOG_CORE, "ReceiveMemLeakFd fd=%d", memLeakRecvFd_);
 }
 
 void HookSocketClient::SendOptionalReports()
 {
     HandleCommonConfig();
-    if (config_->onlyMemLeak && config_->memLeakFormat != MemLeakFormat::TYPE_DISABLE) {
+    if (config_->onlyMemLeak) {
         GetAndSendMemLeakInfo();
     }
     if (config_->allocatorSamplingEnable) {
@@ -627,6 +626,9 @@ bool HookSocketClient::SendEndMsg()
     rawdata.type = END_MSG;
     if (g_disableHook || unixSocketClient_ == nullptr) {
         return false;
+    }
+    if (!config_->onlyMemLeak) {
+        GetAndSendMemLeakInfo();
     }
     int sharedMemCount = *sharedMemCount_;
     for (int smbIndex = 0; smbIndex < sharedMemCount; ++smbIndex) {
