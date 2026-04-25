@@ -47,6 +47,8 @@ namespace HiviewDFX {
 
 namespace {
 constexpr int64_t SECOND_TO_NANOSECOND = 1000 * 1000 * 1000;
+constexpr int64_t MILLISECONDS_PER_SECOND = 1000;
+constexpr int64_t NANOSECONDS_PER_MILLISECOND = 1000 * 1000;
 constexpr size_t MAX_LEN_OF_TRACE_PREFIX = 20;
 constexpr uint32_t MIN_TRACE_BUFFER_SIZE = 1024; // 1M
 constexpr uint32_t MAX_TRACE_BUFFER_SIZE = 15 * 1024; // 15M
@@ -256,14 +258,15 @@ double HidebugNativeInterfaceImpl::GetCpuUsage()
 
         struct timespec ts;
         clock_gettime(CLOCK_MONOTONIC, &ts);
-        int64_t curTimeMs = ts.tv_sec * 1000LL + ts.tv_nsec / 1000000LL;
+        int64_t curTimeMs = ts.tv_sec * MILLISECONDS_PER_SECOND +
+                            ts.tv_nsec / NANOSECONDS_PER_MILLISECOND;
 
         int64_t DeltaMs = curTimeMs - lastTimeMs_.load();
         uint64_t cpuDelta = (curUtime - lastUtime_.load()) + (curStime - lastStime_.load());
-        if (DeltaMs > 0 && ticksPerSec > 0) {
-            double cpuDeltaMs = cpuDelta * 1000.0 / ticksPerSec;
-            if (coreCount > 0) {
-                cpuUsage = cpuDeltaMs / DeltaMs / coreCount;
+        if (DeltaMs > 0 && cpuTicksPerSec_ > 0) {
+            double cpuDeltaMs = cpuDelta * 1000.0 / cpuTicksPerSec_;
+            if (cpuCoreCount_ > 0) {
+                cpuUsage = cpuDeltaMs / DeltaMs / cpuCoreCount_;
             } else {
                 cpuUsage = cpuDeltaMs / DeltaMs;
             }
@@ -307,8 +310,8 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
         return !token.empty();
     });
 
-    int utimeIndex = PROC_STAT_SKIP_FIELD_COUNT;
-    int stimeIndex = PROC_STAT_SKIP_FIELD_COUNT + 1;
+    uint64_t utimeIndex = PROC_STAT_SKIP_FIELD_COUNT;
+    uint64_t stimeIndex = PROC_STAT_SKIP_FIELD_COUNT + 1;
     if (fields.size() <= stimeIndex) {
         HILOG_ERROR(LOG_CORE, "proc stat fields not enough");
         return false;
