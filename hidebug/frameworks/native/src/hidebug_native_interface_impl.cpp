@@ -298,24 +298,24 @@ bool HidebugNativeInterfaceImpl::ParseProcStat(uint64_t& utime, uint64_t& stime)
 
     std::string line(buf);
     auto pos = line.find(')');
-    if (pos == std::string::npos || pos + 2 > line.size()) {
+    if (pos == std::string::npos) {
         HILOG_ERROR(LOG_CORE, "find thread failed");
         return false;
     }
 
-    auto fields = SplitStr(line.substr(pos + 2), ' ', [](std::string& token) {
+    auto fields = SplitStr(line.substr(pos), ' ', [](std::string& token) {
         return !token.empty();
     });
 
-    constexpr size_t UTIME_INDEX = PROC_STAT_SKIP_FIELD_COUNT - 1;
-    constexpr size_t STIME_INDEX = PROC_STAT_SKIP_FIELD_COUNT;
-    if (fields.size() <= STIME_INDEX) {
+    int utimeIndex = PROC_STAT_SKIP_FIELD_COUNT;
+    int stimeIndex = PROC_STAT_SKIP_FIELD_COUNT + 1;
+    if (fields.size() <= stimeIndex) {
         HILOG_ERROR(LOG_CORE, "proc stat fields not enough");
         return false;
     }
 
-    utime = std::stoull(fields[UTIME_INDEX]);
-    stime = std::stoull(fields[STIME_INDEX]);
+    utime = std::stoull(fields[utimeIndex]);
+    stime = std::stoull(fields[stimeIndex]);
 
     return true;
 }
