@@ -171,6 +171,11 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         if (taskIter != g_pidCtx.end()) {
             config = taskIter->second;
         }
+        if (config == nullptr) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "ClientDisconnectCallback: config not found for pid %d, skip cleanup", pidval);
+            return;
+        }
         isAPI = (config->startType == START_TYPE_API);
         name = config->processName;
     }
