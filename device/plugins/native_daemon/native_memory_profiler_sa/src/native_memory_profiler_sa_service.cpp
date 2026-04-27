@@ -584,6 +584,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      std::string& args, const sptr<IRemoteObject>& callback)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
+    if (config->processName_.empty() && config->pid_ > 0) {
+        config->processName_ = COMMON::GetBundleNameByPid(config->pid_);
+    }
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
@@ -1231,7 +1234,8 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
         PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
     } else {
-        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
+        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, config->processName,
+                                                        fileNameInfoIter->second);
         if (!COMMON::CopyFileFast(config->fd, destPath)) {
             PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
             return RET_ERR;

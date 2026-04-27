@@ -71,6 +71,7 @@ void ParseMemStatsFromString(std::string& stats, std::vector<SimplifiedMemStats>
 }
 
 static std::mutex g_profilingCallbackMutex;
+static std::mutex g_countFileMutex;
 static NativeMemoryProfilerSaClientManager::ProfilingCallback g_profilingCallback = nullptr;
 static std::string g_currentFilePath;
 static int32_t g_currentType = 0;
@@ -390,6 +391,30 @@ int32_t NativeMemoryProfilerSaClientManager::Start(int fd, pid_t pid, uint32_t d
     });
 }
 
+int32_t NativeMemoryProfilerSaClientManager::StartMemProfiler(uint32_t duration, SimplifiedMemConfig& config,
+    ProfilingCallback callback)
+{
+    CHECK_TRUE(duration >= DEFINE_MIN_MAX_DURATION && duration <= DEFINE_MAX_MAX_DURATION,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG), "Invalid duration: %u", duration);
+    CHECK_TRUE(config.sampleSize >= DEFINE_MIN_SAMPLE_INTERVAL,
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG), "Invalid sampleSize: %zu", config.sampleSize);
+
+    std::shared_ptr<NativeMemoryProfilerSaConfig> nConfig = std::make_shared<NativeMemoryProfilerSaConfig>();
+    nConfig->duration_ = duration;
+    nConfig->largestSize_ = config.largestSize;
+    nConfig->secondLargestSize_ = config.secondLargestSize;
+    nConfig->maxGrowthSize_ = config.maxGrowthSize;
+    nConfig->sampleInterval_ = config.sampleSize;
+    nConfig->shareMemorySize_ = CALL_STACK_SMS;
+    nConfig->statisticsInterval_ = FIVE_MINUTES;
+    nConfig->jsStackReport_ = true;
+    nConfig->maxJsStackDepth_ = JS_STACK_DEPS;
+    nConfig->mallocDisable_ = false;
+    nConfig->mmapDisable_ = false;
+    nConfig->memtraceEnable_ = false;
+    return StartByType(static_cast<int32_t>(InternalResourceType::OH_RES_TYPE_NATIVE), nConfig, callback);
+}
+
 int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
     int32_t type, MemAPIConfig* inputConfig, ProfilingCallback callback)
 {
@@ -404,12 +429,6 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
         return static_cast<int32_t>(inputConfRet);
     }
 
-    if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
-        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
-            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
-        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
-    }
-
     std::shared_ptr<NativeMemoryProfilerSaConfig> config = std::make_shared<NativeMemoryProfilerSaConfig>();
     int32_t retParse = ParseResType(type, config);
     if (retParse != 0) {
@@ -421,6 +440,12 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
         PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: ParseNormalConfig failed");
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);
     }
+    return StartByType(type, config, callback);
+}
+
+int32_t NativeMemoryProfilerSaClientManager::StartByType(int32_t type,
+    std::shared_ptr<NativeMemoryProfilerSaConfig>& config, ProfilingCallback callback)
+{
     config->pid_ = getpid();
     std::string filename = GenerateFileName(type, config->pid_);
     std::string fullPath = NAPI_FILE_PATH_PREFIX + filename;
@@ -430,6 +455,13 @@ int32_t NativeMemoryProfilerSaClientManager::StartProfilerByType(
     }
     config->typeFileName_ = filename;
     config->startType_ = 1; // 1:API
+
+    std::lock_guard<std::mutex> lock(g_countFileMutex);
+    if (GetMemProfilerUseCountToday() >= MAX_MEM_PROFILER_USE_COUNT_PER_DAY) {
+        PROFILER_LOG_ERROR(LOG_CORE, "Daily use count exceeded,errorcode is:%d.",
+            static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED));
+        return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_DAILY_QUOTA_EXCEEDED);
+    }
 
     if (!UpdateMemProfilerUserCount()) {
         return static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG);

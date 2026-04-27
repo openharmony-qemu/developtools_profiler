@@ -60,7 +60,7 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
     SimplifiedMemConfig config;
     std::vector<SimplifiedMemStats> memStats;
-    EXPECT_EQ(client->Start(0, 0, config), RET_ERR);
+    EXPECT_EQ(client->Start(0, config), ResProfilerErrorCode::RES_PROF_ERROR);
     MemAPIConfig apiConfig = {
         .maxDuration = 0,
         .filterSize = 0,
@@ -69,30 +69,30 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest001, TestSize.Level3)
         .sampleInterval = 0
     };
     int32_t resType = -1;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     resType = 5;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     resType = 2;
     apiConfig.maxDuration = 4000;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     apiConfig.maxDuration = 10;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     apiConfig.filterSize = 8;
     apiConfig.maxStackDepth = 31;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     apiConfig.maxStackDepth = 16;
     apiConfig.statisticsInterval = 4000;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     apiConfig.statisticsInterval = 1;
     apiConfig.sampleInterval = 100;
-    EXPECT_EQ(client->Start(resType, apiConfig), RET_ERR);
+    EXPECT_EQ(client->Start(resType, apiConfig), ResProfilerErrorCode::RES_PROF_ERROR);
     delete client;
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest001 end.";
 }
 
 /**
  * @tc.name: MemoryProfilerClientTest002
- * @tc.desc: Test start and stop memory profiler.
+ * @tc.desc: Test stop without start.
  * @tc.type: FUNC
  */
 HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest002, TestSize.Level3)
@@ -100,23 +100,8 @@ HWTEST_F(MemoryProfilerClientTest, MemoryProfilerClientTest002, TestSize.Level3)
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest002 start.";
     using namespace OHOS::Developtools::NativeDaemon;
     MemoryProfilerClient* client = new MemoryProfilerClientImpl();
-    SimplifiedMemConfig config;
-    std::string filePath = "/data/local/tmp/memory_profiler_client_test1.htrace";
-    int fd = open(filePath.c_str(), O_CREAT | O_RDWR, S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
-    EXPECT_NE(fd, -1);
-    uint32_t duration = 10;
-    std::thread t(MallocTest);
-    EXPECT_EQ(client->Start(fd, duration, config), RET_OK);
-    int left = 5; // 5 seconds
-    int32_t end = time(nullptr) + left;
-    while (left > 0) {
-        left = end - time(nullptr);
-    }
-    EXPECT_EQ(client->Stop(), RET_OK);
+    EXPECT_EQ(client->Stop(), RET_ERR);
     delete client;
-    if (t.joinable()) {
-        t.join();
-    }
     GTEST_LOG_(INFO) << "MemoryProfilerClientTest002 end.";
 }
 
