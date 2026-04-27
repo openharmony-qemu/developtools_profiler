@@ -247,7 +247,8 @@ void VisualEffectAnalysis::PushPowerToMap()
     long long jittersTime = SPUtilesTye::StringToSometype<long long>(dynamic_Effect_Rs_Data_["timestamp"]);
     if (findTimeFlag_) {
         for (; i_ < size; i_++) {
-            powerTime_ = SPUtilesTye::StringToSometype<long long>((powerResult_[i_])["powerTime"]);
+            std::string powerTime = (powerResult_[i_])["powerTime"];
+            powerTime_ = SPUtilesTye::StringToSometype<long long>(powerTime);
             if (jittersTime < powerTime_) {
                 dynamic_Effect_Rs_Data_["currentNow"] = (powerResult_[i_])["currentNow"];
                 dynamic_Effect_Rs_Data_["voltageNow"] = (powerResult_[i_])["voltageNow"];
@@ -338,7 +339,7 @@ int VisualEffectAnalysis::GetClusterNum(const std::string &line)
             end = line.length();
         }
         std::string cpu_id_str = line.substr(start, end - start);
-        cpu_id = std::stoi(cpu_id_str);
+        cpu_id = SPUtilesTye::StringToSometype<int>(cpu_id_str);
     }
     return cpu_id;
 }

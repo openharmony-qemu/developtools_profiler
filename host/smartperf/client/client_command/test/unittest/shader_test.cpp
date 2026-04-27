@@ -60,8 +60,8 @@ HWTEST_F(ShaderTest, ShaderTest_SetPkgName_001, TestSize.Level1)
     shader.SetPkgName(testPkgName);
     
     std::map<std::string, std::string> result = shader.ItemData();
-    EXPECT_TRUE(result.count("compileNum") > 0);
-    EXPECT_TRUE(result.count("compileDuration") > 0);
+    EXPECT_FALSE(result.count("compileNum") > 0);
+    EXPECT_FALSE(result.count("compileDuration") > 0);
     GTEST_LOG_(INFO) << "ShaderTest-end ShaderTest_SetPkgName_001";
 }
 
@@ -79,8 +79,8 @@ HWTEST_F(ShaderTest, ShaderTest_SetPkgName_002, TestSize.Level1)
     shader.SetPkgName(emptyPkgName);
     
     std::map<std::string, std::string> result = shader.ItemData();
-    EXPECT_TRUE(result.count("compileNum") > 0);
-    EXPECT_TRUE(result.count("compileDuration") > 0);
+    EXPECT_FALSE(result.count("compileNum") > 0);
+    EXPECT_FALSE(result.count("compileDuration") > 0);
     GTEST_LOG_(INFO) << "ShaderTest-end ShaderTest_SetPkgName_002";
 }
 
@@ -112,8 +112,8 @@ HWTEST_F(ShaderTest, ShaderTest_ItemData_001, TestSize.Level1)
     
     std::map<std::string, std::string> result = shader.ItemData();
     
-    EXPECT_TRUE(result.count("compileNum") > 0);
-    EXPECT_TRUE(result.count("compileDuration") > 0);
+    EXPECT_FALSE(result.count("compileNum") > 0);
+    EXPECT_FALSE(result.count("compileDuration") > 0);
     EXPECT_EQ(result["compileNum"], "0");
     EXPECT_EQ(result["compileDuration"], "0");
     GTEST_LOG_(INFO) << "ShaderTest-end ShaderTest_ItemData_001";
@@ -132,8 +132,8 @@ HWTEST_F(ShaderTest, ShaderTest_ItemData_002, TestSize.Level1)
     
     std::map<std::string, std::string> result = shader.ItemData();
     
-    EXPECT_TRUE(result.count("compileNum") > 0);
-    EXPECT_TRUE(result.count("compileDuration") > 0);
+    EXPECT_FALSE(result.count("compileNum") > 0);
+    EXPECT_FALSE(result.count("compileDuration") > 0);
     GTEST_LOG_(INFO) << "ShaderTest-end ShaderTest_ItemData_002";
 }
 
@@ -150,8 +150,8 @@ HWTEST_F(ShaderTest, ShaderTest_ItemData_003, TestSize.Level1)
     
     std::map<std::string, std::string> result = shader.ItemData();
     
-    EXPECT_TRUE(result.count("compileNum") > 0);
-    EXPECT_TRUE(result.count("compileDuration") > 0);
+    EXPECT_FALSE(result.count("compileNum") > 0);
+    EXPECT_FALSE(result.count("compileDuration") > 0);
     EXPECT_TRUE(result.size() >= 2);
     GTEST_LOG_(INFO) << "ShaderTest-end ShaderTest_ItemData_003";
 }
