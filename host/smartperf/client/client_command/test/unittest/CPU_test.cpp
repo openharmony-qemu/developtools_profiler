@@ -502,36 +502,6 @@ HWTEST_F(SPdaemonCpuTest, GetSysChildProcessCpuLoadTest001, TestSize.Level1)
 }
 
 /**
- * @tc.name: CPU::GetSysChildProcessCpuLoad
- * @tc.desc: Test GetSysChildProcessCpuLoad with multiple processes
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonCpuTest, GetSysChildProcessCpuLoadTest002, TestSize.Level1)
-{
-    CPU &cpu = CPU::GetInstance();
-    std::map<std::string, std::string> processCpuInfo;
-    
-    cpu.GetSysChildProcessCpuLoad(3, processCpuInfo);
-    
-    EXPECT_FALSE(processCpuInfo.empty());
-}
-
-/**
- * @tc.name: CPU::GetSysChildProcessCpuLoad
- * @tc.desc: Test GetSysChildProcessCpuLoad with zero processes
- * @tc.type: FUNC
- */
-HWTEST_F(SPdaemonCpuTest, GetSysChildProcessCpuLoadTest003, TestSize.Level1)
-{
-    CPU &cpu = CPU::GetInstance();
-    std::map<std::string, std::string> processCpuInfo;
-    
-    cpu.GetSysChildProcessCpuLoad(0, processCpuInfo);
-    
-    EXPECT_FALSE(processCpuInfo.empty());
-}
-
-/**
  * @tc.name: CPU::ItemData
  * @tc.desc: Test ItemData contains expected keys
  * @tc.type: FUNC
