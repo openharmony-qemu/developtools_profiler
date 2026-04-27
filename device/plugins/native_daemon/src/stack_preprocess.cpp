@@ -96,6 +96,7 @@ static TagMapping g_tagMappings[] = {
     {TAG_RES_THREAD_PTHREAD, RecordStatisticsEvent::THREAD, false},
     {TAG_RES_THREAD_ALL, RecordStatisticsEvent::THREAD, false},
     {TAG_RES_ARKTS_HEAP_MASK, RecordStatisticsEvent::ARKTS_HEAP, false},
+    {TAG_RES_ARKTS_STATIC_HEAP, RecordStatisticsEvent::ARKTS_STATIC_HEAP, false},
     {TAG_RES_JS_HEAP_MASK, RecordStatisticsEvent::JS_HEAP, false},
     {TAG_RES_KOTLIN_HEAP_MASK, RecordStatisticsEvent::KMP_HEAP, false},
     {TAG_RES_DMABUF_MASK, RecordStatisticsEvent::DMA, true},
@@ -258,6 +259,7 @@ void StackPreprocess::InitializeGpuData()
     SaveMemTag(THREAD_PTHREAD_INDEX + 1, TAG_RES_THREAD_PTHREAD);
     SaveMemTag(THREAD_MASK_INDEX + 1, TAG_RES_THREAD_ALL);
     SaveMemTag(ARKTS_HEAP_MASK_INDEX + 1, TAG_RES_ARKTS_HEAP_MASK);
+    SaveMemTag(ARKTS_STATIC_HEAP_MASK_INDEX + 1, TAG_RES_ARKTS_STATIC_HEAP);
     SaveMemTag(JS_HEAP_MASK_INDEX + 1, TAG_RES_JS_HEAP_MASK);
     SaveMemTag(KOTLIN_HEAP_MASK_INDEX + 1, TAG_RES_KOTLIN_HEAP_MASK);
     SaveMemTag(DMABUF_MASK_INDEX + 1, TAG_RES_DMABUF_MASK);

@@ -53,7 +53,7 @@ inline uint32_t NormalizeUniqueStackTableSize(uint32_t size)
 const size_t FILTER_STACK_DEPTH = 2;
 const size_t MAX_CALL_FRAME_UNWIND_SIZE = MAX_UNWIND_DEPTH + FILTER_STACK_DEPTH;
 const size_t GPU_TYPE_COUNT = 5;
-const size_t RESTRACE_TYPE_COUNT = 23;
+const size_t RESTRACE_TYPE_COUNT = 24;
 const size_t GPU_RANGE_COUNT = 2;
 const size_t GPU_VK_INDEX = 0;
 const size_t GPU_GLES_IMAGE_INDEX = 1;
@@ -79,6 +79,7 @@ const size_t ARK_GLOBAL_HANDLE_INDEX = 20;
 const size_t ARK_LOCAL_HANDLE_INDEX = 21;
 const size_t VMA_ARKWEB_INDEX = 22;
 const size_t DART_HEAP_INDEX = 23;
+const size_t ARKTS_STATIC_HEAP_MASK_INDEX = 24;
 // dlopen function minimum stack depth
 const int32_t DLOPEN_MIN_UNWIND_DEPTH = 5;
 // default max js stack depth

@@ -379,6 +379,24 @@ HWTEST_F(NativeHookTest, NormalHookRestraceTest011, TestSize.Level0)
 }
 
 /**
+ * @tc.name: native hook
+ * @tc.desc: Test hook restrace with ArkTS static heap.
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeHookTest, NormalHookRestraceTest012, TestSize.Level0)
+{
+    EXPECT_TRUE(ohos_malloc_hook_initialize(&__libc_malloc_default_dispatch, nullptr, nullptr));
+    EXPECT_TRUE(ohos_malloc_hook_on_start(nullptr));
+    char* mem = new char[1];
+    ohos_malloc_hook_restrace(RES_ARKTS_STATIC_HEAP, mem, 1, TAG_RES_ARKTS_STATIC_HEAP, true);
+    ohos_malloc_hook_restrace(RES_ARKTS_STATIC_HEAP, mem, 1, TAG_RES_ARKTS_STATIC_HEAP, false);
+    delete[] mem;
+
+    EXPECT_TRUE(ohos_malloc_hook_on_end());
+    sleep(WAIT_THREAD_TIME);
+}
+
+/**
  * @tc.name: ResTraceMoveTest
  * @tc.desc: Test memory move.
  * @tc.type: FUNC

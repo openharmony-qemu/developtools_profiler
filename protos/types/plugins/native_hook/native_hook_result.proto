@@ -166,6 +166,7 @@ enum TraceType {
     ARK_LOCAL_HANDLE = 14;
     VMA_ARKWEB = 15;
     DART_HEAP = 16;
+    ARKTS_STATIC_HEAP = 17;
 };
 
 message TraceAllocEvent {
@@ -235,6 +236,7 @@ message RecordStatisticsEvent {
         ARK_LOCAL_HANDLE = 18;
         VMA_ARKWEB = 19;
         DART_HEAP = 20;
+        ARKTS_STATIC_HEAP = 21;
     };
     MemoryType type = 3;
     uint64 apply_count = 4;

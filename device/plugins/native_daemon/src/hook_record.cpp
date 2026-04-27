@@ -149,6 +149,7 @@ void HookRecord::SetTraceType(T* event, std::string tagName)
         {TAG_RES_KOTLIN_HEAP_MASK, TraceType::KMP_HEAP},
         {"ashmem", TraceType::ASHMEM},
         {TAG_RES_ARKTS_HEAP_MASK, TraceType::ARKTS_HEAP},
+        {TAG_RES_ARKTS_STATIC_HEAP, TraceType::ARKTS_STATIC_HEAP},
         {TAG_RES_JS_HEAP_MASK, TraceType::JS_HEAP},
         {TAG_RES_DMABUF_MASK, TraceType::DMA},
         {TAG_RES_ARK_GLOBAL_HANDLE, TraceType::ARK_GLOBAL_HANDLE},
