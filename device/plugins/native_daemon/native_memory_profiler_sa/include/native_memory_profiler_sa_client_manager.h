@@ -86,6 +86,7 @@ public:
 private:
     static int32_t StartByType(int32_t type, std::shared_ptr<NativeMemoryProfilerSaConfig>& config,
         ProfilingCallback callback);
+    static int32_t StopSync();
     static int32_t OnDemandStart(OHOS::sptr<OHOS::ISystemAbilityManager> sam,
         OHOS::sptr<OHOS::IRemoteObject> &remoteObject);
     static int32_t CheckStatus();

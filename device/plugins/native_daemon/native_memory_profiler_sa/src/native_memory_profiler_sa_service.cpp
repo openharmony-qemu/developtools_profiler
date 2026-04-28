@@ -462,6 +462,31 @@ int32_t NativeMemoryProfilerSaService::Stop()
     return RET_OK;
 }
 
+int32_t NativeMemoryProfilerSaService::StopSync()
+{
+    pid_t pid = IPCSkeleton::GetCallingPid();
+    if (pid <= 0) {
+        PROFILER_LOG_ERROR(LOG_CORE, "invalid pid: %d", pid);
+        return RET_ERR;
+    }
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        auto fdTimerIter = g_timerFdInfo.find(pid);
+        if (fdTimerIter != g_timerFdInfo.end()) {
+            // delete schedule task.
+            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
+            g_timerFdInfo.erase(fdTimerIter);
+        }
+    }
+    int32_t retStopHook = StopHook(static_cast<uint32_t>(pid), "",
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS));
+    PROFILER_LOG_INFO(LOG_CORE, "StopHook ret:%d", retStopHook);
+    if (retStopHook != RET_OK) {
+        return retStopHook;
+    }
+    return RET_OK;
+}
+
 int32_t NativeMemoryProfilerSaService::Stop(uint32_t pid)
 {
     if (!HasProfilingPermission()) {

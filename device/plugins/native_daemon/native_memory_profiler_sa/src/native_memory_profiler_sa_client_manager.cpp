@@ -233,6 +233,17 @@ int32_t NativeMemoryProfilerSaClientManager::Stop(std::string& filePath)
     return Stop();
 }
 
+int32_t NativeMemoryProfilerSaClientManager::StopSync()
+{
+    auto service = GetRemoteService();
+    if (service == nullptr) {
+        PROFILER_LOG_ERROR(LOG_CORE, "NativeMemoryProfilerSaClientManager: stop GetRemoteService failed");
+        return RET_ERR;
+    }
+    NativeMemoryProfilerSaProxy proxy(service);
+    return proxy.StopSync();
+}
+
 int32_t NativeMemoryProfilerSaClientManager::DumpData(uint32_t fd,
                                                       std::shared_ptr<NativeMemoryProfilerSaConfig>& config)
 {
@@ -317,7 +328,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
         std::string replyStats;
         int32_t r = proxy.Start(config, replyStats);
         if (r != RET_OK) {
-            if (config->startType_ == 1 && proxy.Stop() != RET_OK) {
+            if (config->startType_ == 1 && proxy.StopSync() != RET_OK) {
                 PROFILER_LOG_ERROR(LOG_CORE, "StartPrintSimplifiedNmd Stop failed.");
             }
             return r;
@@ -328,7 +339,7 @@ int32_t NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(pid_t pid,
         }
         ParseMemStatsFromString(replyStats, memStats);
         if (config->startType_ == 1) {
-            r = proxy.Stop();
+            r = proxy.StopSync();
             CHECK_TRUE(r == RET_OK, r, "StartPrintSimplifiedNmd Stop failed.");
         }
         return RET_OK;

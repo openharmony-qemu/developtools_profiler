@@ -46,6 +46,7 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(uint32_t duration, Simplifi
             PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
         };
     }
+    PROFILER_LOG_INFO(LOG_CORE, "Start memory profiler by simplified memory config");
     int32_t ret = NativeMemoryProfilerSaClientManager::StartMemProfiler(duration, config, profilingCallback);
     if (ret < static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS) ||
         ret > static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR)) {
@@ -65,6 +66,7 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAP
             PROFILER_LOG_INFO(LOG_CORE, "Hiprofiler native memory ret:%d", errCode);
         };
     }
+    PROFILER_LOG_INFO(LOG_CORE, "Start memory profiler by resourceType: %d", resourceType);
     int32_t ret = NativeMemoryProfilerSaClientManager::StartProfilerByType(resourceType, &config, profilingCallback);
     if (ret < static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS) ||
         ret > static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_ERROR)) {
@@ -75,11 +77,13 @@ ResProfilerErrorCode MemoryProfilerClientImpl::Start(int32_t resourceType, MemAP
 
 int32_t MemoryProfilerClientImpl::StartPrintSimplifiedNmd(std::vector<SimplifiedMemStats>& memStats)
 {
+    PROFILER_LOG_INFO(LOG_CORE, "Start simplified nmd mode profiler");
     return NativeMemoryProfilerSaClientManager::StartPrintSimplifiedNmd(getpid(), memStats);
 }
 
 int32_t MemoryProfilerClientImpl::Stop()
 {
+    PROFILER_LOG_INFO(LOG_CORE, "Stop memory profiler");
     int32_t ret =  NativeMemoryProfilerSaClientManager::Stop();
     if (ret != RET_OK) {
         PROFILER_LOG_ERROR(LOG_CORE, "Stop memory profiler failed, ret = %d", ret);

@@ -52,6 +52,9 @@ int32_t NativeMemoryProfilerSaStub::OnRemoteRequest(uint32_t code, MessageParcel
         case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_PID_VOID) : {
             return StubStopPidVoid(data, reply);
         }
+        case static_cast<uint32_t>(NativeMemoryProfilerSaInterfaceCode::STOP_HOOK_SYNC) : {
+            return StubStopSync(data, reply);
+        }
         default : {
             PROFILER_LOG_ERROR(LOG_CORE, "Unknown code:%u", code);
             return IPCObjectStub::OnRemoteRequest(code, data, reply, options);
@@ -95,6 +98,11 @@ int32_t NativeMemoryProfilerSaStub::StubStopName(MessageParcel &data, MessagePar
 int32_t NativeMemoryProfilerSaStub::StubStopPidVoid(MessageParcel &data, MessageParcel &reply)
 {
     return Stop();
+}
+
+int32_t NativeMemoryProfilerSaStub::StubStopSync(MessageParcel &data, MessageParcel &reply)
+{
+    return StopSync();
 }
 
 int32_t NativeMemoryProfilerSaStub::StubDumpFile(MessageParcel &data, MessageParcel &reply)
