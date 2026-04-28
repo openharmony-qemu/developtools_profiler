@@ -46,6 +46,8 @@
 #include "debug_logger.h"
 #include "noncopyable.h"
 
+#define EXPORT_API __attribute__((visibility("default")))
+
 // data and value
 /*
 long long always 64 only in ILP64, int is 64 otherwise int is always 32
@@ -165,7 +167,7 @@ void HexDump(const uint8_t *buf, size_t size, size_t max_size = 0);
 
 std::string &StringTrim(std::string &s);
 
-std::vector<std::string> StringSplit(std::string source, std::string split = ",");
+EXPORT_API std::vector<std::string> StringSplit(std::string source, std::string split = ",");
 
 void AdvancedSplitString(const std::string_view& str, const std::string& delimiters, std::vector<std::string>& elems);
 
@@ -179,7 +181,7 @@ bool IsSameCommand(std::string cmdLine, std::string cmdName);
 
 std::vector<pid_t> GetSubthreadIDs(const pid_t pid);
 
-bool IsDigits(const std::string &str);
+EXPORT_API bool IsDigits(const std::string &str);
 
 bool IsHexDigits(const std::string &str);
 

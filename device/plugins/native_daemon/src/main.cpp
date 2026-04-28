@@ -22,7 +22,6 @@
 #include "writer_adapter.h"
 #include "hook_standalone.h"
 #include "hook_common.h"
-#include "native_memory_profiler_sa_service.h"
 
 using namespace OHOS::Developtools::NativeDaemon;
 
@@ -262,16 +261,7 @@ int main(int argc, char* argv[])
 
     if (argc > 1) {
         if (argc == 2 && strcmp(argv[1], "sa") == 0) { // 2: argc size
-            if (!OHOS::Developtools::NativeDaemon::NativeMemoryProfilerSaService::StartServiceAbility()) {
-                if (lockFileFd > 0) {
-                    flock(lockFileFd, LOCK_UN);
-                    close(lockFileFd);
-                }
-                return 0;
-            }
-            while (true) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_ONE_SECOND));
-            }
+            return 0;
         } else {
             if (!COMMON::GetDeveloperMode()) {
                 if (lockFileFd > 0) {
