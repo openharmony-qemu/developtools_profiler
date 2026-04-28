@@ -48,6 +48,9 @@ namespace OHOS::Developtools::NativeDaemon {
 namespace {
 constexpr int DEFAULT_EVENT_POLLING_INTERVAL = 5000;
 constexpr uint32_t PAGE_BYTES = 4096;
+constexpr uint32_t SHMEM_DRAIN_POLL_MS = 10;
+constexpr uint32_t SHMEM_DRAIN_QUIET_ROUNDS = 3;
+constexpr uint32_t SHMEM_DRAIN_TIMEOUT_MS = 5000;
 std::shared_ptr<Writer> g_buffWriter;
 const std::string STARTUP = "startup:";
 const std::string PARAM_NAME = "libc.hook_mode";
@@ -590,14 +593,19 @@ std::shared_ptr<HookManager::HookManagerCtx> HookManager::FindHookContext(int32_
 
 void HookManager::HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx)
 {
+    if (ctx == nullptr || ctx->GetFdQueueSize() == 0) {
+        return;
+    }
     int frontFd = ctx->GetFdQueueFront();
-    ctx->PopFrontFdQueue();
-    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
+    ctx->cacheFileParsing = true;
     if (noDataQueue_) {
         ctx->stackPreprocess->TakeResultsFromCacheFile(frontFd);
     } else {
         ReadFromCacheFile(ctx, frontFd);
     }
+    ctx->PopFrontFdQueue();
+    ctx->cacheFileParsing = false;
+    PROFILER_LOG_INFO(LOG_CORE, "HandleReadyCacheFile pop fd, queue size%zu", ctx->GetFdQueueSize());
     FinishFileCacheStopIfDrained(ctx);
 }
 
@@ -642,7 +650,64 @@ void HookManager::PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& it
         return;
     }
     PROFILER_LOG_INFO(LOG_CORE, "PrepareImmediateStop: mark data source terminated for pid %d", item->pid);
+    FinalizeSharedMemoryTermination(item);
+}
+
+void HookManager::FinalizeSharedMemoryTermination(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr || item->stackPreprocess->IsDataSourceTerminated()) {
+        return;
+    }
+    StopSharedMemoryPollers(item);
+    uint32_t quietRounds = 0;
+    uint32_t waitedMs = 0;
+    while (waitedMs < SHMEM_DRAIN_TIMEOUT_MS && quietRounds < SHMEM_DRAIN_QUIET_ROUNDS) {
+        if (DrainPendingSharedMemory(item)) {
+            quietRounds = 0;
+        } else {
+            quietRounds++;
+            if (quietRounds >= SHMEM_DRAIN_QUIET_ROUNDS) {
+                break;
+            }
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(SHMEM_DRAIN_POLL_MS));
+        waitedMs += SHMEM_DRAIN_POLL_MS;
+    }
     item->stackPreprocess->SetDataSourceTerminated();
+    if (item->stackData != nullptr) {
+        item->stackData->SetProducerFinished();
+    }
+}
+
+bool HookManager::DrainPendingSharedMemory(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr || item->stackPreprocess == nullptr) {
+        return false;
+    }
+    bool drained = false;
+    for (size_t i = 0; i < item->shareMemoryBlockList.size(); ++i) {
+        if (item->shareMemoryBlockList[i] == nullptr) {
+            continue;
+        }
+        if (noDataQueue_) {
+            drained = item->stackPreprocess->DrainPendingShmemData(item->shareMemoryBlockList[i]) || drained;
+        } else {
+            drained = DrainSharedMemoryBlock(item, static_cast<int>(i), false) || drained;
+        }
+    }
+    return drained;
+}
+
+void HookManager::StopSharedMemoryPollers(const std::shared_ptr<HookManagerCtx>& item)
+{
+    if (item == nullptr) {
+        return;
+    }
+    for (const auto& poller : item->eventPollerList) {
+        if (poller != nullptr) {
+            (void)poller->Stop();
+        }
+    }
 }
 
 void HookManager::StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item)
@@ -662,14 +727,15 @@ void HookManager::FinishFileCacheStopIfDrained(const std::shared_ptr<HookManager
     if (item == nullptr || item->stackPreprocess == nullptr) {
         return;
     }
-    if (!item->cacheFileStopReceived || item->GetFdQueueSize() > 0) {
+    bool cacheInputEnded = item->cacheFileStopReceived || item->stackPreprocess->IsDataSourceTerminated();
+    if (!cacheInputEnded || item->GetFdQueueSize() > 0 || item->cacheFileParsing) {
         return;
     }
     PROFILER_LOG_INFO(LOG_CORE, "FinishFileCacheStopIfDrained: pid %d cache queue drained", item->pid);
     item->stackPreprocess->SetIsCacheFileParseDone(true);
-    if (noDataQueue_ && item->cacheFileClientDisconnected) {
+    if (noDataQueue_ && (item->cacheFileClientDisconnected || item->stackPreprocess->IsDataSourceTerminated())) {
         PROFILER_LOG_INFO(LOG_CORE,
-            "FinishFileCacheStopIfDrained: pid %d client disconnected, stop after current cache files", item->pid);
+            "FinishFileCacheStopIfDrained: pid %d input ended, stop after current cache files", item->pid);
         item->stackPreprocess->SetIsStopTakeData(true);
     }
 }
@@ -717,6 +783,9 @@ void HookManager::StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item)
 bool HookManager::FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item)
 {
     CHECK_TRUE(item->stackPreprocess != nullptr, false, "stop StackPreprocess FAIL");
+    if (!hookConfig_.use_file_cache_mode() && !item->stackPreprocess->IsDataSourceTerminated()) {
+        FinalizeSharedMemoryTermination(item);
+    }
     item->stackPreprocess->StopTakeResults();
     PROFILER_LOG_INFO(LOG_CORE, "StopTakeResults success");
     if (hookConfig_.statistics_interval() > 0 && !hookConfig_.allocator_sampling_enable()) {
@@ -1337,9 +1406,27 @@ bool HookManager::ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& h
 
 void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex)
 {
+    DrainSharedMemoryBlock(hookCtx, sharedMemoryIndex, true);
+}
+
+void HookManager::FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx)
+{
+    if (hookCtx == nullptr || g_rawStackCount == 0) {
+        return;
+    }
+    hookCtx->FlushStackArray();
+}
+
+bool HookManager::DrainSharedMemoryBlock(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex,
+    bool takeNotifier)
+{
     std::shared_ptr<ShareMemoryBlock> shareMemoryBlock = hookCtx->shareMemoryBlockList[sharedMemoryIndex];
-    CHECK_NOTNULL(shareMemoryBlock, NO_RETVAL, "smb is null!");
-    hookCtx->eventNotifierList[sharedMemoryIndex]->Take();
+    CHECK_NOTNULL(shareMemoryBlock, false, "smb is null!");
+    if (takeNotifier && sharedMemoryIndex < hookCtx->eventNotifierList.size() &&
+        hookCtx->eventNotifierList[sharedMemoryIndex] != nullptr) {
+        hookCtx->eventNotifierList[sharedMemoryIndex]->Take();
+    }
+    bool drained = false;
     while (true) {
         std::shared_ptr<HookRecord> hookRecord = nullptr;
         std::shared_ptr<RawStack> rawStack = nullptr;
@@ -1349,10 +1436,13 @@ void HookManager::ReadShareMemory(const std::shared_ptr<HookManagerCtx>& hookCtx
         if (!ret) {
             break;
         }
+        drained = true;
         if (!ProcessRawStackByType(hookCtx, hookRecord, rawStack)) {
             break;
         }
     }
+    FlushPendingRawStackArray(hookCtx);
+    return drained;
 }
 
 bool HookManager::ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
@@ -1465,6 +1555,7 @@ void HookManager::ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookC
         }
     }
 
+    FlushPendingRawStackArray(hookCtx);
     close(fd);
     PROFILER_LOG_INFO(LOG_CORE, "ReadFromCacheFile [%" PRIu64 "]completed, ret %d.", readfileSize, ret);
 }
@@ -1825,9 +1916,11 @@ bool HookManager::PrepareFileCacheContext(int32_t pid, const std::string& name)
     item->cacheFileStopReceived = false;
     item->cacheFileStopRequested = false;
     item->cacheFileClientDisconnected = false;
+    item->cacheFileParsing = false;
     if (item->stackPreprocess != nullptr) {
         item->stackPreprocess->SetPid(pid);
         item->stackPreprocess->SetIsCacheFileParseDone(false);
+        item->stackPreprocess->SetDataSourceTerminated(false);
     }
     return true;
 }
@@ -1931,7 +2024,7 @@ bool HookManager::HandleClientDisconnectedByPid(pid_t pid)
             PROFILER_LOG_WARN(LOG_CORE, "HandleClientDisconnectedByPid: stackPreprocess null for pid %d", pid);
             return false;
         }
-        item->stackPreprocess->SetDataSourceTerminated();
+        FinalizeSharedMemoryTermination(item);
         return true;
     }
     item->cacheFileClientDisconnected = true;

@@ -90,6 +90,7 @@ public:
         std::deque<int> cachedFileFdQueue;
         std::shared_ptr<EventNotifier> readyFileNotifier;
         std::shared_ptr<EpollEventPoller> readyFilePoller;
+        std::atomic_bool cacheFileParsing = false;
         std::atomic_bool cacheFileStopReceived = false;
         std::atomic_bool cacheFileStopRequested = false;
         std::atomic_bool cacheFileClientDisconnected = false;
@@ -223,6 +224,9 @@ private:
     void StopSignalProcess(pid_t pid);
     bool SendStopCommandIfConnected(pid_t pid);
     void PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& item);
+    void FinalizeSharedMemoryTermination(const std::shared_ptr<HookManagerCtx>& item);
+    bool DrainPendingSharedMemory(const std::shared_ptr<HookManagerCtx>& item);
+    void StopSharedMemoryPollers(const std::shared_ptr<HookManagerCtx>& item);
     void StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item);
     void StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item);
     bool FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item);
@@ -236,6 +240,9 @@ private:
         std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
     bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
         std::shared_ptr<RawStack>& rawStack);
+    bool DrainSharedMemoryBlock(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex,
+        bool takeNotifier);
+    void FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx);
     bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
         uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
     void CreateMemLeakFile();
