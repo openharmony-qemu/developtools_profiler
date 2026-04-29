@@ -21,6 +21,8 @@
 #include <set>
 #include <vector>
 
+#define EXPORT_API __attribute__((visibility("default")))
+
 struct HookData {
     std::set<std::string> pids = {};
     uint32_t smbSize {0};
@@ -72,8 +74,8 @@ struct HookData {
 };
 
 namespace OHOS::Developtools::Profiler::Hook {
-bool StartHook(HookData& hookData);
-void EndHook();
+EXPORT_API bool StartHook(HookData& hookData);
+EXPORT_API void EndHook();
 } // namespace OHOS::Developtools::Profiler::Hook
 
 #endif // HOOK_STANDALONE_H

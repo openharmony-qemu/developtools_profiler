@@ -128,6 +128,12 @@ bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
 {
+    char buffer[PATH_MAX + 1] = {0};
+    readlink("/proc/self/exe", buffer, PATH_MAX);
+    std::string processName = buffer;
+    if (processName == "/system/bin/native_daemon") {
+        return;
+    }
     serviceName_ = "HookService";
     g_serviceEntry = std::make_shared<ServiceEntry>();
     if (!g_serviceEntry->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH,

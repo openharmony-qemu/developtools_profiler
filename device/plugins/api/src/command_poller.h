@@ -27,9 +27,10 @@ class StopSessionCmd;
 #include "logging.h"
 #include "plugin_service.ipc.h"
 
+#define EXPORT_API __attribute__((visibility("default")))
 using ManagerInterfacePtr = STD_PTR(shared, ManagerInterface);
 
-class CommandPoller : public IPluginServiceClient {
+class EXPORT_API CommandPoller : public IPluginServiceClient {
 public:
     explicit CommandPoller(const ManagerInterfacePtr& p);
     ~CommandPoller();
@@ -42,7 +43,7 @@ public:
     virtual void PushResult(const ProfilerPluginState& pluginState, uint32_t pluginId);
 
     uint32_t GetRequestId();
-    bool OnConnect();
+    EXPORT_API bool OnConnect();
 
 protected:
     bool OnGetCommandResponse(SocketContext& context, ::GetCommandResponse& response) override;

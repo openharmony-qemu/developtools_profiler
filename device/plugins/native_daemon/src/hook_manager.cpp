@@ -80,6 +80,10 @@ static thread_local std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> g_
 static thread_local uint32_t g_rawStackCount = 0;
 }
 
+HookManager::HookManager()
+{
+}
+
 HookManager::~HookManager()
 {
     hookService_ = nullptr;

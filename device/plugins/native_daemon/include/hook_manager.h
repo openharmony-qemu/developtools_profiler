@@ -39,6 +39,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
+#define EXPORT_API __attribute__((visibility("default")))
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class ProfilerPluginConfig;
 class PluginResult;
@@ -71,7 +72,7 @@ struct GwpAllocationData {
 
 namespace OHOS::Developtools::NativeDaemon {
 class HookService;
-class HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
+class EXPORT_API HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
 public:
     struct HookManagerCtx {
         HookManagerCtx(int32_t pid) : pid(pid) {}
@@ -100,9 +101,9 @@ public:
         void PushBackFdQueue(int fd);
         void PopFrontFdQueue();
     };
-    HookManager() = default;
+    EXPORT_API HookManager();
     ~HookManager();
-    bool RegisterAgentPlugin(const std::string& pluginPath);
+    EXPORT_API bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 
     bool LoadPlugin(const std::string& pluginPath) override;
