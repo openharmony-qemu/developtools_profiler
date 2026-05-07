@@ -28,12 +28,11 @@ public:
 
     /**
      * @desc: Start memory profiler on simplified memory configuration.
-     * @param fd: The file descriptor to write the profiling result.
      * @param duration: The profiling duration in seconds.
      * @param config: The simplified memory profiler configuration.
-     * @return: RET_OK on success, RET_ERR on failure.
+     * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    int32_t Start(int fd, uint32_t duration, SimplifiedMemConfig& config);
+    ResProfilerErrorCode Start(uint32_t duration, SimplifiedMemConfig& config);
 
     /**
      * @desc: Start memory profiler on memory API configuration.
@@ -45,9 +44,9 @@ public:
      * OH_RES_TYPE_GPU = 3
      * OH_RES_TYPE_GLOBAL_HANDLE = 4
      * @param config: The memory API profiler configuration.
-     * @return: RET_OK on success, RET_ERR on failure.
+     * @return: RES_PROF_SUCCESS on success, specific error code on failure.
      */
-    int32_t Start(int32_t resourceType, MemAPIConfig& config);
+    ResProfilerErrorCode Start(int32_t resourceType, MemAPIConfig& config);
 
     /**
      * @desc: Start simplified nmd mode profiler.

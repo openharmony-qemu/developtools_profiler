@@ -831,18 +831,39 @@ void SpThreadSocket::GetCatchTraceResult(std::string& retCode, SpServerSocket &s
     std::unordered_map<MessageType, std::string>::const_iterator iterator, const std::string& recvBuf)
 {
     if (iterator->first == MessageType::CATCH_TRACE_SUCCESS) {
-        bytrace.hiviewTrace = SplitMsg(recvBuf);
-        bytrace.CpTraceFile();
-        if (SPUtils::GetDirSize(std::string("/data/local/tmp/hitrace")) > maxTraceSize_) {
-            spSocket.Sendto(std::string("Over_specification"));
-            VisualEffectDisPatch::GetInstance().SetSpeciFlag();
+        if (!std::filesystem::exists(traceDir)) {
+            SPUtils::CreateDir(traceDir);
         }
+        SendTraceFile(recvBuf, spSocket);
     } else if (iterator->first == MessageType::CAPTURE_FAILED) {
         VisualEffectDisPatch::GetInstance().SetCatchTraceFlag();
+    } else if (iterator->first == MessageType::OVER_SPECIFICATION) {
+        VisualEffectDisPatch::GetInstance().SetSpeciFlag();
     } else {
         retCode = iterator->second;
         spSocket.Sendto(retCode);
-        LOGD("UDP sendData: (%s)", retCode.c_str());
+        LOGD("UDP send Data:(%s)", retCode.c_str());
+    }
+}
+
+void SpThreadSocket::SendTraceFile(const std::string& recvBuf, SpServerSocket &spSocket)
+{
+    if (collectTraceNum_ < maxTraceSize_) {
+        std::string traceFileName = SplitMsg(recvBuf);
+        size_t pos = traceFileName.find("trace_");
+        if (pos != std::string::npos) {
+            std::string traceFile = traceFileName.substr(pos);
+            std::string cmdResult;
+            std::string cmd = "cp -r " + traceOriginPath + traceFile + " " + traceDir;
+            SPUtils::LoadCmd(cmd, cmdResult);
+            GetSocketPort(recvBuf);
+            const std::string sendTraceFileName = traceDir + traceFile;
+            ConnectAndSendFile(spSocket, sendTraceFileName);
+            collectTraceNum_++;
+        } else {
+            spSocket.Sendto(std::string("Over_specification::Times"));
+            VisualEffectDisPatch::GetInstance().SetSpeciFlag();
+        }
     }
 }
 std::string SpThreadSocket::SocketErrorTypeToString(SocketErrorType errorType) const

@@ -128,6 +128,12 @@ bool SendInitialFileCacheFds(SocketContext &context, HookManager& hookMgr, int32
 
 NativeMemoryProfilerSaService::NativeMemoryProfilerSaService() : SystemAbility(NATIVE_DAEMON_SYSTEM_ABILITY_ID, true)
 {
+    char buffer[PATH_MAX + 1] = {0};
+    readlink("/proc/self/exe", buffer, PATH_MAX);
+    std::string processName = buffer;
+    if (processName == "/system/bin/native_daemon") {
+        return;
+    }
     serviceName_ = "HookService";
     g_serviceEntry = std::make_shared<ServiceEntry>();
     if (!g_serviceEntry->StartServer(DEFAULT_UNIX_SOCKET_HOOK_PATH,
@@ -161,7 +167,36 @@ void NativeMemoryProfilerSaService::ClientDisconnectCallback(int socketFd)
         PROFILER_LOG_ERROR(LOG_CORE, "StopHook failed, no profiling permission!");
         return;
     }
-    StopHook(static_cast<uint32_t>(pidval));
+    bool isAPI = false;
+    std::string name = "";
+    // Lock the mutex to ensure safe access to the shared resource g_pidCtx
+    {
+        std::lock_guard<std::mutex> guard(g_mtx);
+        std::shared_ptr<TaskConfig> config = nullptr;
+        auto taskIter = g_pidCtx.find(pidval);
+        if (taskIter != g_pidCtx.end()) {
+            config = taskIter->second;
+        }
+        if (config == nullptr) {
+            PROFILER_LOG_WARN(LOG_CORE,
+                "ClientDisconnectCallback: config not found for pid %d, skip cleanup", pidval);
+            return;
+        }
+        isAPI = (config->startType == START_TYPE_API);
+        name = config->processName;
+    }
+    {
+        std::lock_guard<std::mutex> guard(g_timerFdMtx);
+        auto fdTimerIter = g_timerFdInfo.find(pidval);
+        if (fdTimerIter != g_timerFdInfo.end()) {
+            // delete schedule task.
+            g_scheduleTaskManager.UnscheduleTask(fdTimerIter->second);
+            g_timerFdInfo.erase(fdTimerIter);
+        }
+    }
+    // Note: The same mutex g_mtx is also used in the StopHook function.
+    // Be cautious to avoid potential deadlocks.
+    StopHookByType(pidval, name, static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_SUCCESS), isAPI);
 }
 
 bool NativeMemoryProfilerSaService::StartServiceAbility()
@@ -502,8 +537,8 @@ int32_t NativeMemoryProfilerSaService::StopHookAsync(uint32_t pid, int32_t finis
         g_asyncStoppingPids.insert(pid);
     }
 
-    std::thread([pid, config, finishErrorCode, this]() {
-        this->StopHookTask(pid, config, finishErrorCode);
+    std::thread([pid, config, finishErrorCode]() {
+        StopHookTask(pid, config, finishErrorCode);
         std::lock_guard<std::mutex> guard(g_asyncStoppingPidsMtx);
         g_asyncStoppingPids.erase(pid);
     }).detach();
@@ -560,6 +595,9 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
                                                      std::string& args, const sptr<IRemoteObject>& callback)
 {
     std::lock_guard<std::mutex> guard(g_mtx);
+    if (config->processName_.empty() && config->pid_ > 0) {
+        config->processName_ = COMMON::GetBundleNameByPid(config->pid_);
+    }
     if (config->filePath_.empty() && fd == 0) {
         std::string filePathStr = (config->pid_ > 0) ? std::to_string(config->pid_) : config->processName_;
         config->filePath_ = FILE_PATH_HEAD + filePathStr + FILE_PATH_TAIL;
@@ -613,10 +651,10 @@ int32_t NativeMemoryProfilerSaService::StartHookLock(std::shared_ptr<NativeMemor
     hook->StartPluginSession(&g_pidInfo);
 
     int32_t timerFd = g_scheduleTaskManager.ScheduleTask(
-        [this, config, filePath = config->filePath_] {
+        [config, filePath = config->filePath_] {
             PROFILER_LOG_INFO(LOG_CORE, "NativeMemoryProfilerSaService:This task will be stopped.errorcode is:%d.",
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION));
-            int32_t retStop = this->StopHookByType(config->pid_, config->processName_,
+            int32_t retStop = StopHookByType(config->pid_, config->processName_,
                 static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_AUTO_STOPPED_BY_DURATION),
                 config->startType_ == START_TYPE_API);
             if (retStop != RET_OK) {
@@ -1207,7 +1245,8 @@ int32_t NativeMemoryProfilerSaService::CopyApiCollectorFile(uint32_t pid, std::s
     if (pidInfoIter == g_pidInfo.end() || fileNameInfoIter == g_fileNameInfo.end()) {
         PROFILER_LOG_WARN(LOG_CORE, "CopyApiCollectorFile: api task file info missing");
     } else {
-        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, fileNameInfoIter->second);
+        std::string destPath = COMMON::GetFullTracePath(pidInfoIter->second.first, pid, config->processName,
+                                                        fileNameInfoIter->second);
         if (!COMMON::CopyFileFast(config->fd, destPath)) {
             PROFILER_LOG_ERROR(LOG_CORE, "Copy file into bundle failed");
             return RET_ERR;

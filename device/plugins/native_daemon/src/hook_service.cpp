@@ -265,8 +265,9 @@ void HookService::ClientDisconnectCallback(int socketFd)
             }
         }
     }
-    if (pid > 0 && hookMgr_ != nullptr && clientConfig_.enableFileCacheMode) {
-        (void)hookMgr_->HandleCacheFileStopByPid(pid);
+    PROFILER_LOG_INFO(LOG_CORE, "ClientDisconnectCallback: socket %d disconnected, pid %d", socketFd, pid);
+    if (pid > 0 && hookMgr_ != nullptr) {
+        (void)hookMgr_->HandleClientDisconnectedByPid(pid);
     }
 }
 
@@ -342,10 +343,12 @@ void HookService::SendCommand(pid_t pid, uint32_t cmd)
     std::unique_lock<std::mutex> lock(pidFdMtx_);
     auto it = pidFds_.find(pid);
     if (it == pidFds_.end() || it->second <= 0) {
+        PROFILER_LOG_WARN(LOG_CORE, "SendCommand: control socket unavailable, pid %d cmd %u", pid, cmd);
         return;
     }
     int sockFd = it->second;
     lock.unlock();
+    PROFILER_LOG_INFO(LOG_CORE, "SendCommand: send cmd %u to pid %d via socket %d", cmd, pid, sockFd);
 
     struct ProtocolHead phead;
     phead.protoType = PROTOCOL_TYPE_PROTOBUF;

@@ -59,7 +59,8 @@ enum class MessageType {
     GET_GPU_INFO,
     GET_CYCLE,
     CATCH_TRACE_SUCCESS,
-    CAPTURE_FAILED
+    CAPTURE_FAILED,
+    OVER_SPECIFICATION
 };
 
 const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
@@ -104,6 +105,7 @@ const std::unordered_map<MessageType, std::string> MESSAGE_MAP = {
     { MessageType::GET_CYCLE, std::string("get_cycle") },
     { MessageType::CATCH_TRACE_SUCCESS, std::string("catch_trace_success") },
     { MessageType::CAPTURE_FAILED, std::string("capture_failed") },
+    { MessageType::OVER_SPECIFICATION, std::string("over_specification") },
 };
 
 enum class CommandType {

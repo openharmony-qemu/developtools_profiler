@@ -1047,11 +1047,14 @@ std::string GetBundleNameByPid(int32_t pid)
     return bundleName;
 }
 
-std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& filename)
+std::string GetFullTracePath(pid_t uid, pid_t pid, const std::string& processName, const std::string& filename)
 {
     const pid_t uidBase = 200000;
-    return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + GetBundleNameByPid(pid) +
-        HTRACE_PATH_SUFFIX + filename;
+    std::string bundleName = processName;
+    if (bundleName.empty()) {
+        bundleName = GetBundleNameByPid(pid);
+    }
+    return HTRACE_PATH_PREFIX + std::to_string(uid / uidBase) + "/base/" + bundleName + HTRACE_PATH_SUFFIX + filename;
 }
 
 double GetFreeRomPercent(const std::string path)

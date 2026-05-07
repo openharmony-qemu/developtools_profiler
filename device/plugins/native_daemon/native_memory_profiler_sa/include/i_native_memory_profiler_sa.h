@@ -20,6 +20,7 @@
 #include "system_ability_definition.h"
 #include "native_memory_profiler_sa_interface_code.h"
 #include "define_macro.h"
+#include "mem_config.h"
 #include "native_memory_profiler_sa_config.h"
 
 namespace OHOS::Developtools::NativeDaemon {

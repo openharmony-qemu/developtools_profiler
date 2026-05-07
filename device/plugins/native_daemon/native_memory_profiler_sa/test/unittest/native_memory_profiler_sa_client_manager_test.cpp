@@ -389,4 +389,43 @@ HWTEST_F(NativeMemoryProfilerSaClientManagerTest, GetMemProfilerUseCountTodayTes
     EXPECT_EQ(NativeMemoryProfilerSaClientManager::GetMemProfilerUseCountToday(), 0);
 }
 
+/**
+ * @tc.name: StartMemProfilerInvalidArgTest
+ * @tc.desc: StartMemProfiler should reject invalid duration or sample interval
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartMemProfilerInvalidArgTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    SimplifiedMemConfig config;
+    config.sampleSize = 384;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartMemProfiler(0, config, nullptr),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG));
+
+    config.sampleSize = 100;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartMemProfiler(10, config, nullptr),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG));
+}
+
+/**
+ * @tc.name: StartProfilerByTypeInvalidArgTest
+ * @tc.desc: StartProfilerByType should reject nullptr and invalid resource type
+ * @tc.type: FUNC
+ */
+HWTEST_F(NativeMemoryProfilerSaClientManagerTest, StartProfilerByTypeInvalidArgTest, TestSize.Level2)
+{
+    using namespace OHOS::Developtools::NativeDaemon;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(0, nullptr, nullptr),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_INVALID_ARG));
+
+    MemAPIConfig inputConfig;
+    inputConfig.maxDuration = 10;
+    inputConfig.filterSize = 8;
+    inputConfig.maxStackDepth = 16;
+    inputConfig.statisticsInterval = 120;
+    inputConfig.sampleInterval = 512;
+    EXPECT_EQ(NativeMemoryProfilerSaClientManager::StartProfilerByType(5, &inputConfig, nullptr),
+        static_cast<int32_t>(ResProfilerErrorCode::RES_PROF_RESOURCE_TYPE_INVALID_ARG));
+}
+
 #endif // NATIVE_MEMORY_PROFILER_SA_CLINET_MANAGER_TEST_H

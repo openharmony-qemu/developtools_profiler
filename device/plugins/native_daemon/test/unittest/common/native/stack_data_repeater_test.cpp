@@ -167,6 +167,7 @@ HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest010, TestSize.Level1)
     stackDataRepeater->Close();
     stackDataRepeater->Reset();
     ASSERT_FALSE(stackDataRepeater->closed_);
+    ASSERT_FALSE(stackDataRepeater->IsProducerFinished());
 }
 
 /*
@@ -231,6 +232,26 @@ HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest014, TestSize.Level1)
     stackDataRepeater->Close();
     std::array<std::shared_ptr<HookRecord>, CACHE_ARRAY_SIZE> rawDataArray;
     ASSERT_FALSE(stackDataRepeater->PutRawStackArray(rawDataArray, 0));
+}
+
+/*
+@tc.name: StackDataRepeaterTest014A
+@tc.desc: test producer finished keeps queued data readable and stops after drain.
+@tc.type: FUNC
+*/
+HWTEST_F(StackDataRepeaterTest, StackDataRepeaterTest014A, TestSize.Level1)
+{
+    bool isTimeOut = false;
+    HookRecordPtr batchRawStack[CACHE_ARRAY_SIZE] = {nullptr};
+    auto hookRecord = std::make_shared<HookRecord>();
+    ASSERT_TRUE(stackDataRepeater->PutRawStack(hookRecord, true));
+
+    stackDataRepeater->SetProducerFinished();
+    ASSERT_TRUE(stackDataRepeater->IsProducerFinished());
+    ASSERT_NE(stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, 1, batchRawStack, 1, isTimeOut), nullptr);
+    ASSERT_FALSE(isTimeOut);
+    ASSERT_EQ(stackDataRepeater->TakeRawData(100, CLOCK_REALTIME, 1, batchRawStack, 1, isTimeOut), nullptr);
+    ASSERT_FALSE(isTimeOut);
 }
 
 /*

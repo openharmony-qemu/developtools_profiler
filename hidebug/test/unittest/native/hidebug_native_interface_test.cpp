@@ -15,6 +15,7 @@
 
 #include <cstdlib>
 #include <filesystem>
+#include <unistd.h>
 
 #include <gtest/hwext/gtest-ext.h>
 #include <gtest/hwext/gtest-tag.h>
@@ -119,6 +120,45 @@ HWTEST_F(HidebugNativeInterfaceTest, RequestTraceTest, TestSize.Level1)
     } else {
         ASSERT_EQ(interface.RequestTrace("", 0, 0, task), TRACE_ABNORMAL);
     }
+}
+
+/**
+ * @tc.name: ParseProcStatTest_Success
+ * @tc.desc: test ParseProcStat success, utime and stime should be valid.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, ParseProcStatTest_Success, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    uint64_t utime = 0;
+    uint64_t stime = 0;
+    bool ret = interface.ParseProcStat(utime, stime);
+    ASSERT_TRUE(ret);
+}
+
+/**
+ * @tc.name: GetCpuUsageTest_ReturnNonNegative
+ * @tc.desc: test GetCpuUsage return value should be non-negative.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_ReturnNonNegative, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    double usage = interface.GetCpuUsage();
+    ASSERT_GE(usage, 0.0);
+}
+
+/**
+ * @tc.name: GetCpuUsageTest_SecondCallReturnsCached
+ * @tc.desc: test GetCpuUsage second call returns cached value without recalculation.
+ * @tc.type: FUNC
+ */
+HWTEST_F(HidebugNativeInterfaceTest, GetCpuUsageTest_SecondCallReturnsCached, TestSize.Level0)
+{
+    auto& interface = HidebugNativeInterface::GetInstance();
+    double first  = interface.GetCpuUsage();
+    double second = interface.GetCpuUsage();
+    ASSERT_DOUBLE_EQ(first, second);
 }
 }
 }

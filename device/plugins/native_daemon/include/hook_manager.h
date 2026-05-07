@@ -39,6 +39,7 @@
 #include "iservice_registry.h"
 #include "system_ability_definition.h"
 
+#define EXPORT_API __attribute__((visibility("default")))
 using BatchNativeHookDataPtr = STD_PTR(shared, BatchNativeHookData);
 class ProfilerPluginConfig;
 class PluginResult;
@@ -71,7 +72,7 @@ struct GwpAllocationData {
 
 namespace OHOS::Developtools::NativeDaemon {
 class HookService;
-class HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
+class EXPORT_API HookManager : public ManagerInterface, public std::enable_shared_from_this<HookManager> {
 public:
     struct HookManagerCtx {
         HookManagerCtx(int32_t pid) : pid(pid) {}
@@ -90,17 +91,19 @@ public:
         std::deque<int> cachedFileFdQueue;
         std::shared_ptr<EventNotifier> readyFileNotifier;
         std::shared_ptr<EpollEventPoller> readyFilePoller;
+        std::atomic_bool cacheFileParsing = false;
         std::atomic_bool cacheFileStopReceived = false;
         std::atomic_bool cacheFileStopRequested = false;
+        std::atomic_bool cacheFileClientDisconnected = false;
         void FlushStackArray();
         int GetFdQueueFront();
         size_t GetFdQueueSize();
         void PushBackFdQueue(int fd);
         void PopFrontFdQueue();
     };
-    HookManager() = default;
+    EXPORT_API HookManager();
     ~HookManager();
-    bool RegisterAgentPlugin(const std::string& pluginPath);
+    EXPORT_API bool RegisterAgentPlugin(const std::string& pluginPath);
     bool UnregisterAgentPlugin(const std::string& pluginPath);
 
     bool LoadPlugin(const std::string& pluginPath) override;
@@ -130,6 +133,7 @@ public:
     void ReadFromCacheFile(const std::shared_ptr<HookManagerCtx>& hookCtx, int fd);
     bool HandleCachedFileFdByPid(pid_t pid, int fd, uint32_t fileIndex);
     bool HandleCacheFileStopByPid(pid_t pid);
+    bool HandleClientDisconnectedByPid(pid_t pid);
     void RequestCacheFileStop(pid_t pid);
     bool IsCacheFileStopRequested(pid_t pid);
     bool PrepareFileCacheContext(int32_t pid, const std::string& name);
@@ -220,9 +224,15 @@ private:
     void HandleReadyCacheFile(const std::shared_ptr<HookManagerCtx>& ctx);
     void WaitFinalSnapshotIfNeeded(const std::shared_ptr<HookManagerCtx>& item);
     void StopSignalProcess(pid_t pid);
-    void StopFileCacheProcess(pid_t pid);
+    bool SendStopCommandIfConnected(pid_t pid);
+    void PrepareImmediateStop(const std::shared_ptr<HookManagerCtx>& item);
+    void FinalizeSharedMemoryTermination(const std::shared_ptr<HookManagerCtx>& item);
+    bool DrainPendingSharedMemory(const std::shared_ptr<HookManagerCtx>& item);
+    void StopSharedMemoryPollers(const std::shared_ptr<HookManagerCtx>& item);
+    void StopFileCacheProcess(const std::shared_ptr<HookManagerCtx>& item);
     void StopTargetProcess(const std::shared_ptr<HookManagerCtx>& item);
     bool FinalizeCacheFileStop(const std::shared_ptr<HookManagerCtx>& item);
+    void FinishFileCacheStopIfDrained(const std::shared_ptr<HookManagerCtx>& item);
     void HandleInvalidPidStop(const std::shared_ptr<HookManagerCtx>& item);
     bool FinalizeStoppedContext(const std::shared_ptr<HookManagerCtx>& item);
     void CleanupHookServiceContext(pid_t pid);
@@ -232,6 +242,9 @@ private:
         std::shared_ptr<RawStack>& rawStack, const int8_t *data, uint32_t size);
     bool ProcessRawStackByType(const std::shared_ptr<HookManagerCtx>& hookCtx, std::shared_ptr<HookRecord>& hookRecord,
         std::shared_ptr<RawStack>& rawStack);
+    bool DrainSharedMemoryBlock(const std::shared_ptr<HookManagerCtx>& hookCtx, int sharedMemoryIndex,
+        bool takeNotifier);
+    void FlushPendingRawStackArray(const std::shared_ptr<HookManagerCtx>& hookCtx);
     bool ParseRecordsFromBuffer(const std::shared_ptr<HookManagerCtx>& hookCtx, uint8_t* buffer,
         uint32_t totalAvail, uint32_t& offset, uint64_t& readfileSize);
     std::string GetMemLeakFileName(MemLeakFormat format);

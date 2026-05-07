@@ -21,6 +21,7 @@ StackDataRepeater::StackDataRepeater(size_t maxSize)
 {
     maxSize_ = maxSize;
     closed_ = false;
+    producerFinished_ = false;
     reducedStackCount_ = 0;
 }
 
@@ -38,10 +39,10 @@ bool StackDataRepeater::PutRawStackArray(std::array<std::shared_ptr<HookRecord>,
                           rawDataQueue_.size());
         return true;
     }
-    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
+    while (rawDataQueue_.size() >= maxSize_ && !closed_ && !producerFinished_) {
         slotCondVar_.wait(lock);
     }
-    if (closed_) {
+    if (closed_ || producerFinished_) {
         return false;
     }
     for (uint32_t i = 0; i < batchCount; i++) {
@@ -62,6 +63,17 @@ void StackDataRepeater::Reset()
 {
     std::unique_lock<std::mutex> lock(mutex_);
     closed_ = false;
+    producerFinished_ = false;
+}
+
+void StackDataRepeater::SetProducerFinished(bool producerFinished)
+{
+    {
+        std::unique_lock<std::mutex> lock(mutex_);
+        producerFinished_ = producerFinished;
+    }
+    itemCondVar_.notify_all();
+    slotCondVar_.notify_all();
 }
 
 void StackDataRepeater::Close()
@@ -70,6 +82,7 @@ void StackDataRepeater::Close()
         std::unique_lock<std::mutex> lock(mutex_);
         rawDataQueue_.clear();
         closed_ = true;
+        producerFinished_ = true;
     }
     PROFILER_LOG_INFO(LOG_CORE, "StackDataRepeater Close, reducedStackCount_ : %" PRIx64 " ", reducedStackCount_);
     slotCondVar_.notify_all();
@@ -86,10 +99,10 @@ bool StackDataRepeater::PutRawStack(const HookRecordPtr& hookData, bool isRecord
                           rawDataQueue_.size());
         return true;
     }
-    while (rawDataQueue_.size() >= maxSize_ && !closed_) {
+    while (rawDataQueue_.size() >= maxSize_ && !closed_ && !producerFinished_) {
         slotCondVar_.wait(lock);
     }
-    if (closed_) {
+    if (closed_ || producerFinished_) {
         return false;
     }
 
@@ -125,19 +138,22 @@ HookRecordPtr StackDataRepeater::TakeRawData(uint32_t during, clockid_t clockId,
     std::unique_lock<std::mutex> lock(mutex_);
     if (statInterval > 0 &&
         !itemCondVar_.wait_for(lock, std::chrono::milliseconds(during),
-                               [&] { return ((!rawDataQueue_.empty()) || (closed_)); })) {
-        if (rawDataQueue_.empty() && !closed_) {
+                               [&] { return ((!rawDataQueue_.empty()) || closed_ || producerFinished_); })) {
+        if (rawDataQueue_.empty() && !closed_ && !producerFinished_) {
             isTimeOut = true;
             lock.unlock();
             slotCondVar_.notify_one();
             return nullptr;
         }
     } else {
-        while (rawDataQueue_.empty() && !closed_) {
+        while (rawDataQueue_.empty() && !closed_ && !producerFinished_) {
             itemCondVar_.wait(lock);
         }
     }
     if (closed_) {
+        return nullptr;
+    }
+    if (producerFinished_ && rawDataQueue_.empty()) {
         return nullptr;
     }
     HookRecordPtr hookData = nullptr;
